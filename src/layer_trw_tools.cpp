@@ -296,7 +296,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (wp_params.closest_wp) {
 
 			/* Select. */
-			this->tree_view->select_and_expose(*this->waypoints_iters.at(wp_params.closest_wp_uid));
+			this->tree_view->select_and_expose(this->waypoints.at(wp_params.closest_wp_uid)->index);
 
 			/* Too easy to move it so must be holding shift to start immediately moving it
 			   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
@@ -346,7 +346,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (tp_params.closest_tp) {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(*this->tracks_iters.at(tp_params.closest_track_uid));
+			this->tree_view->select_and_expose(this->tracks.at(tp_params.closest_track_uid)->index);
 
 			tool->ed->is_waypoint = false;
 
@@ -385,7 +385,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (tp_params.closest_tp)  {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(*this->routes_iters.at(tp_params.closest_track_uid));
+			this->tree_view->select_and_expose(this->routes.at(tp_params.closest_track_uid)->index);
 
 			tool->ed->is_waypoint = false;
 
@@ -458,32 +458,14 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 			}
 
 			this->track_right_click_menu = GTK_MENU (gtk_menu_new());
-#endif
 
-			sg_uid_t uid = 0;;
-			if (trk->is_route) {
-				uid = LayerTRWc::find_uid_of_track(this->routes, trk);
-			} else {
-				uid = LayerTRWc::find_uid_of_track(this->tracks, trk);
-			}
-#ifdef K
-			if (uid) {
 
-				GtkTreeIter *iter;
-				if (trk->is_route) {
-					iter = this->routes_iters.at(uid);
-				} else {
-					iter = this->tracks_iters.at(uid);
-				}
-
-				this->sublayer_add_menu_items(this->track_right_click_menu,
-							      NULL,
-							      trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
-							      uid,
-							      iter,
-							      viewport);
-
-			}
+			this->sublayer_add_menu_items(this->track_right_click_menu,
+						      NULL,
+						      trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
+						      trk->uid,
+						      trk->index,
+						      viewport);
 
 			gtk_menu_popup(this->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 #endif
@@ -503,19 +485,13 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 
 			this->wp_right_click_menu = GTK_MENU (gtk_menu_new());
 
-			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, waypoint);
-			if (wp_uid) {
-				GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
+			this->sublayer_add_menu_items(this->wp_right_click_menu,
+						      NULL,
+						      SublayerType::WAYPOINT,
+						      waypoint->uid,
+						      waypoint->index,
+						      viewport);
 
-
-				this->sublayer_add_menu_items(this->wp_right_click_menu,
-							      NULL,
-							      SublayerType::WAYPOINT,
-							      wp_uid,
-							      iter,
-							      viewport);
-
-			}
 			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
 			return true;
@@ -666,7 +642,7 @@ static bool tool_edit_waypoint_click_cb(Layer * layer, QMouseEvent * event, Laye
 			trw->waypoint_rightclick = false;
 		}
 
-		trw->tree_view->select_and_expose(*trw->waypoints_iters.at(params.closest_wp_uid));
+		trw->tree_view->select_and_expose(trw->waypoints.at(params.closest_wp_uid)->index);
 
 		trw->current_wp = params.closest_wp;
 		trw->current_wp_uid = params.closest_wp_uid;
@@ -779,7 +755,7 @@ static bool tool_edit_waypoint_release_cb(Layer * layer, QMouseEvent * event, La
 		}
 		if (trw->current_wp) {
 			trw->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp_uid, trw->waypoints_iters.at(trw->current_wp_uid), tool->viewport);
+			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp_uid, trw->waypoints.at(trw->current_wp_uid)->index, tool->viewport);
 			gtk_menu_popup(trw->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
 		trw->waypoint_rightclick = false;
@@ -1473,7 +1449,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 	}
 
 	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(*trw->tracks_iters.at(params.closest_track_uid));
+		trw->tree_view->select_and_expose(trw->tracks.at(params.closest_track_uid)->index);
 
 		trw->selected_tp.iter = params.closest_tp_iter;
 		trw->selected_tp.valid = true;
@@ -1496,7 +1472,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 	}
 
 	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(*trw->routes_iters.at(params.closest_track_uid));
+		trw->tree_view->select_and_expose(trw->routes.at(params.closest_track_uid)->index);
 
 		trw->selected_tp.iter = params.closest_tp_iter;
 		trw->selected_tp.iter = params.closest_tp_iter;

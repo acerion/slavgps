@@ -617,10 +617,10 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 			struct LatLon maxmin[2] = { {0,0}, {0,0} };
 			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
 			this->zoom_to_show_latlons(viewport, maxmin);
-			this->tree_view->select_and_expose(*tracks_iters.at(df.trk_uid));
+			this->tree_view->select_and_expose(this->tracks.at(df.trk_uid)->index);
 		} else if (df.wp) {
 			viewport->set_center_coord(&df.wp->coord, true);
-			this->tree_view->select_and_expose(*waypoints_iters.at(df.wp_uid));
+			this->tree_view->select_and_expose(this->waypoints.at(df.wp_uid)->index);
 		}
 		this->emit_changed();
 	}
@@ -1398,11 +1398,8 @@ LayerTRW::~LayerTRW()
 
 	/* kamilTODO: call destructors of objects in these maps. */
 	this->waypoints.clear();
-	this->waypoints_iters.clear();
 	this->tracks.clear();
-	this->tracks_iters.clear();
 	this->routes.clear();
-	this->routes_iters.clear();
 
 #ifdef K
 	if (this->wp_right_click_menu) {
@@ -1657,13 +1654,6 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 
 		delete icon;
 
-
-		if (trk->is_route) {
-			this->routes_iters.insert({{ i->first, &trk->index }});
-		} else {
-			this->tracks_iters.insert({{ i->first, &trk->index }});
-		}
-
 		if (!trk->visible) {
 			a_tree_view->set_visibility(trk->index, false);
 		}
@@ -1683,8 +1673,6 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 		i->second->set_uid(i->first);
 		a_tree_view->add_sublayer(i->second, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
-
-		this->waypoints_iters.insert({{ i->first, &i->second->index }});
 
 		if (!i->second->visible) {
 			a_tree_view->set_visibility(i->second->index, false);
@@ -2265,30 +2253,6 @@ std::unordered_map<sg_uid_t, Waypoint *> & LayerTRW::get_waypoints()
 
 
 
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_tracks_iters()
-{
-	return tracks_iters;
-}
-
-
-
-
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_routes_iters()
-{
-	return routes_iters;
-}
-
-
-
-
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_waypoints_iters()
-{
-	return waypoints_iters;
-}
-
-
-
-
 bool LayerTRW::is_empty()
 {
 	return ! (tracks.size() || routes.size() || waypoints.size());
@@ -2599,13 +2563,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		} else {
 			panel->get_viewport()->set_center_coord(&wp->coord, true);
 			panel->emit_update_cb();
-
-			/* Find and select on the side panel. */
-			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
-			if (wp_uid) {
-				TreeIndex * index = this->waypoints_iters.at(wp_uid);
-				this->tree_view->select_and_expose(*index);
-			}
+			this->tree_view->select_and_expose(wp->index);
 
 			break;
 		}
@@ -3201,8 +3159,6 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(wp->index, wp->visible);
 
-		waypoints_iters.insert({{ global_wp_uid, &wp->index }});
-
 		/* Sort now as post_read is not called on a realized waypoint. */
 		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	}
@@ -3243,8 +3199,6 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
-		tracks_iters.insert({{ global_tr_uuid, &trk->index }});
-
 		/* Sort now as post_read is not called on a realized track. */
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
@@ -3279,8 +3233,6 @@ void LayerTRW::add_route(Track * trk, char const * name)
 
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
-
-		routes_iters.insert({{ global_rt_uuid, &trk->index }});
 
 		/* Sort now as post_read is not called on a realized route. */
 		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
@@ -3536,26 +3488,19 @@ bool LayerTRW::delete_track(Track * trk)
 		this->route_finder_added_track = NULL;
 	}
 
-	sg_uid_t uid = LayerTRWc::find_uid_of_track(tracks, trk);
-	if (uid) {
-		/* Could be current_tp, so we have to check. */
-		this->cancel_tps_of_track(trk);
+	/* Could be current_tp, so we have to check. */
+	this->cancel_tps_of_track(trk);
 
-		TreeIndex * it = tracks_iters.at(uid);
-		if (it) {
-			qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
-			this->tree_view->erase(*it);
-			tracks_iters.erase(uid);
-			tracks.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
+	qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
+	this->tree_view->erase(trk->index);
+	tracks.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
-			/* If last sublayer, then remove sublayer container. */
-			if (tracks.size() == 0) {
-				this->tree_view->erase(this->tracks_node->get_index());
-			}
-		}
-		/* In case it was selected (no item delete signal ATM). */
-		this->get_window()->clear_highlight();
+	/* If last sublayer, then remove sublayer container. */
+	if (tracks.size() == 0) {
+		this->tree_view->erase(this->tracks_node->get_index());
 	}
+	/* In case it was selected (no item delete signal ATM). */
+	this->get_window()->clear_highlight();
 
 	return was_visible;
 }
@@ -3583,26 +3528,19 @@ bool LayerTRW::delete_route(Track * trk)
 		this->route_finder_added_track = NULL;
 	}
 
-	sg_uid_t uid = LayerTRWc::find_uid_of_track(routes, trk);
-	if (uid) {
-		/* Could be current_tp, so we have to check. */
-		this->cancel_tps_of_track(trk);
+	/* Could be current_tp, so we have to check. */
+	this->cancel_tps_of_track(trk);
 
-		TreeIndex * it = routes_iters.at(uid);
+	this->tree_view->erase(trk->index);
+	routes.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
-		if (it) {
-			this->tree_view->erase(*it);
-			routes_iters.erase(uid);
-			routes.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
-
-			/* If last sublayer, then remove sublayer container. */
-			if (routes.size() == 0) {
-				this->tree_view->erase(this->routes_node->get_index());
-			}
-		}
-		/* In case it was selected (no item delete signal ATM). */
-		this->get_window()->clear_highlight();
+	/* If last sublayer, then remove sublayer container. */
+	if (routes.size() == 0) {
+		this->tree_view->erase(this->routes_node->get_index());
 	}
+
+	/* In case it was selected (no item delete signal ATM). */
+	this->get_window()->clear_highlight();
 
 	return was_visible;
 }
@@ -3625,27 +3563,19 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 	bool was_visible = wp->visible;
 
-	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(waypoints, wp);
-	if (uid) {
-		TreeIndex * it = waypoints_iters.at(uid);
+	this->tree_view->erase(wp->index);
 
-		if (it) {
-			this->tree_view->erase(*it);
-			waypoints_iters.erase(uid);
+	this->highest_wp_number_remove_wp(wp->name);
 
-			this->highest_wp_number_remove_wp(wp->name);
+	/* kamilTODO: should this line be inside of "if (it)"? */
+	waypoints.erase(wp->uid); /* Last because this frees the name. */
 
-			/* kamilTODO: should this line be inside of "if (it)"? */
-			waypoints.erase(uid); /* Last because this frees the name. */
-
-			/* If last sublayer, then remove sublayer container. */
-			if (waypoints.size() == 0) {
-				this->tree_view->erase(this->waypoints_node->get_index());
-			}
-		}
-		/* In case it was selected (no item delete signal ATM). */
-		this->get_window()->clear_highlight();
+	/* If last sublayer, then remove sublayer container. */
+	if (waypoints.size() == 0) {
+		this->tree_view->erase(this->waypoints_node->get_index());
 	}
+	/* In case it was selected (no item delete signal ATM). */
+	this->get_window()->clear_highlight();
 
 	return was_visible;
 }
@@ -3661,9 +3591,9 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 bool LayerTRW::delete_waypoint_by_name(char const * name)
 {
 	/* Currently only the name is used in this waypoint find function. */
-	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint_by_name(waypoints, name);
-	if (uid) {
-		return delete_waypoint(waypoints.at(uid));
+	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, name);
+	if (wp) {
+		return delete_waypoint(wp);
 	} else {
 		return false;
 	}
@@ -3705,8 +3635,10 @@ void LayerTRW::delete_all_routes()
 		this->cancel_current_tp(false);
 	}
 
-	LayerTRWc::remove_item_from_treeview(this->routes_iters, this->tree_view);
-	this->routes_iters.clear(); /* kamilTODO: call destructors of route iters. */
+	for (auto i = this->routes.begin(); i != this->routes.end(); i++) {
+		tree_view->erase(i->second->index);
+	}
+
 	this->routes.clear(); /* kamilTODO: call destructors of routes. */
 
 	this->tree_view->erase(this->routes_node->get_index());
@@ -3725,8 +3657,10 @@ void LayerTRW::delete_all_tracks()
 		this->cancel_current_tp(false);
 	}
 
-	LayerTRWc::remove_item_from_treeview(this->tracks_iters, this->tree_view);
-	this->tracks_iters.clear();
+	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+		tree_view->erase(i->second->index);
+	}
+
 	this->tracks.clear(); /* kamilTODO: call destructors of tracks. */
 
 	this->tree_view->erase(this->tracks_node->get_index());
@@ -3745,8 +3679,10 @@ void LayerTRW::delete_all_waypoints()
 
 	this->highest_wp_number_reset();
 
-	LayerTRWc::remove_item_from_treeview(this->waypoints_iters, this->tree_view);
-	this->waypoints_iters.clear();
+	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+		tree_view->erase(i->second->index);
+	}
+
 	this->waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
 
 	this->tree_view->erase(this->waypoints_node->get_index());
@@ -3854,19 +3790,12 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 {
 	wp->set_name(new_name);
 
-	/* Now update the treeview as well.
-	   Need key of it for treeview update. */
-	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
-	if (uid) {
-		TreeIndex * index = this->waypoints_iters.at(uid);
-		if (index && index->isValid()) {
-			this->tree_view->set_name(*index, new_name);
-			this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
-		} else if (!index || !index->isValid()) {
-			qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
-		} else {
-			;
-		}
+	/* Update the treeview as well. */
+	if (wp->index.isValid()) {
+		this->tree_view->set_name(wp->index, new_name);
+		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
+	} else {
+		qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
 	}
 }
 
@@ -3878,18 +3807,11 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
  */
 void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 {
-	/* Update the treeview.
-	   Need key of it for treeview update. */
-	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
-	if (uid) {
-		TreeIndex * index = this->waypoints_iters.at(uid);
-		if (index && index->isValid()) {
-			this->tree_view->set_icon(*index, get_wp_sym_small(wp->symbol));
-		} else if (!index || !index->isValid()) {
-			qDebug() << "EE: TRW Layer: trying to reset icon of waypoint with invalid index";
-		} else {
-			;
-		}
+	/* Update the treeview. */
+	if (wp->index.isValid()) {
+		this->tree_view->set_icon(wp->index, get_wp_sym_small(wp->symbol));
+	} else {
+		qDebug() << "EE: TRW Layer: trying to reset icon of waypoint with invalid index";
 	}
 }
 
@@ -3967,34 +3889,11 @@ void LayerTRW::track_statistics_cb(void)
  */
 void LayerTRW::update_treeview(Track * trk)
 {
-	sg_uid_t uid = 0;
-	if (trk->is_route) {
-		uid = LayerTRWc::find_uid_of_track(this->routes, trk);
-	} else {
-		uid = LayerTRWc::find_uid_of_track(this->tracks, trk);
-	}
-
-	if (uid) {
-		/* kamilFIXME: uid should be a valid key of either routes_iters or tracks_iters, but there is no such key in the maps yet. Check why. */
-		qDebug() << "II: Layer TRW: update tree view: uid =" << uid << ", size of tracks_iters =" << this->tracks_iters.size() << ", size of routes_iters =" << this->routes_iters.size();
-
-		TreeIndex * index = NULL;
-		if (trk->is_route) {
-			if (this->routes_iters.size()) {
-				index = this->routes_iters.at(uid);
-			}
-		} else {
-			if (this->tracks_iters.size()) {
-				index = this->tracks_iters.at(uid);
-			}
-		}
-
-		if (index && index->isValid()) {
-			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
-			pixmap.fill(trk->color);
-			QIcon icon(pixmap);
-			this->tree_view->set_icon(*index, &icon);
-		}
+	if (trk->index.isValid()) {
+		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
+		pixmap.fill(trk->color);
+		QIcon icon(pixmap);
+		this->tree_view->set_icon(trk->index, &icon);
 	}
 }
 
@@ -4965,18 +4864,10 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 			this->selected_track = new_track;
 			this->selected_track->calculate_bounds();
 
-			sg_uid_t uid = 0;
-			if (new_track->is_route) {
-				this->add_route(new_track, name);
-				uid = LayerTRWc::find_uid_of_track(this->routes, new_track);
-			} else {
-				this->add_track(new_track, name);
-				uid = LayerTRWc::find_uid_of_track(this->tracks, new_track);
-			}
 			/* kamilTODO: how it's possible that a new track will already have an uid? */
-			fprintf(stderr, "uid of new track is %u\n", uid);
+			qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
 
-			this->current_tp_uid = uid;
+			this->current_tp_uid = new_track->uid;
 
 			this->emit_changed();
 			free(name);
@@ -5605,24 +5496,13 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		char * newname = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 		trk->set_name(newname);
 
-		/* We need key of it for treeview update.
-		   TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
-		sg_uid_t uid = LayerTRWc::find_uid_of_track(tracks_table, trk);
-		if (uid) {
-			TreeIndex * index = NULL;
+		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
+		if (trk->index.isValid()) {
+			this->tree_view->set_name(trk->index, newname);
 			if (ontrack) {
-				index = this->tracks_iters.at(uid);
+				this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 			} else {
-				index = this->routes_iters.at(uid);
-			}
-
-			if (index && index->isValid()) {
-				this->tree_view->set_name(*index, newname);
-				if (ontrack) {
-					this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
-				} else {
-					this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
-				}
+				this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 			}
 		}
 		free(newname);
@@ -5890,7 +5770,6 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 void LayerTRW::waypoints_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->waypoints_iters, this->tree_view, false);
 	LayerTRWc::set_waypoints_visibility(this->waypoints, false);
 	/* Redraw. */
 	this->emit_changed();
@@ -5901,7 +5780,6 @@ void LayerTRW::waypoints_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::waypoints_visibility_on_cb(void) /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->waypoints_iters, this->tree_view, true);
 	LayerTRWc::set_waypoints_visibility(this->waypoints, true);
 	/* Redraw. */
 	this->emit_changed();
@@ -5912,7 +5790,6 @@ void LayerTRW::waypoints_visibility_on_cb(void) /* Slot. */
 
 void LayerTRW::waypoints_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::iter_visibility_toggle(this->waypoints_iters, this->tree_view);
 	LayerTRWc::waypoints_toggle_visibility(this->waypoints);
 	/* Redraw. */
 	this->emit_changed();
@@ -5923,7 +5800,6 @@ void LayerTRW::waypoints_visibility_toggle_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->tracks_iters, this->tree_view, false);
 	LayerTRWc::set_tracks_visibility(this->tracks, false);
 	/* Redraw. */
 	this->emit_changed();
@@ -5934,7 +5810,6 @@ void LayerTRW::tracks_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_on_cb(void) /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->tracks_iters, this->tree_view, true);
 	LayerTRWc::set_tracks_visibility(this->tracks, true);
 	/* Redraw. */
 	this->emit_changed();
@@ -5945,7 +5820,6 @@ void LayerTRW::tracks_visibility_on_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::iter_visibility_toggle(this->tracks_iters, this->tree_view);
 	LayerTRWc::tracks_toggle_visibility(this->tracks);
 	/* Redraw. */
 	this->emit_changed();
@@ -5956,7 +5830,6 @@ void LayerTRW::tracks_visibility_toggle_cb(void) /* Slot. */
 
 void LayerTRW::routes_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->routes_iters, this->tree_view, false);
 	LayerTRWc::set_tracks_visibility(this->routes, false);
 	/* Redraw. */
 	this->emit_changed();
@@ -5967,7 +5840,6 @@ void LayerTRW::routes_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::routes_visibility_on_cb() /* Slot. */
 {
-	LayerTRWc::set_iter_visibility(this->routes_iters, this->tree_view, true);
 	LayerTRWc::set_tracks_visibility(this->routes, true);
 	/* Redraw. */
 	this->emit_changed();
@@ -5978,7 +5850,6 @@ void LayerTRW::routes_visibility_on_cb() /* Slot. */
 
 void LayerTRW::routes_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::iter_visibility_toggle(this->routes_iters, this->tree_view);
 	LayerTRWc::tracks_toggle_visibility(this->routes);
 	/* Redraw. */
 	this->emit_changed();
@@ -7500,11 +7371,8 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	#if 0
 	rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
-	rv->waypoints_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	rv->tracks = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	rv->tracks_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	rv->routes_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	#endif
 
 	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */

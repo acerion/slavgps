@@ -97,19 +97,16 @@ namespace SlavGPS {
 
 	class LayerTRWc {
 	public:
-		static sg_uid_t find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk);
-		static sg_uid_t find_uid_of_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & input, char const * name);
-		static Track *  find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);
-		static sg_uid_t find_uid_of_waypoint(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp);
+		static Track * find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);
+		static Waypoint * find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, const char * name);
 		static bool find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, date_finder_type * df);
 		static bool find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, date_finder_type * df);
-		static Waypoint * find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, const char * name);
+
 		static void find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, struct LatLon maxmin[2]);
 		static void single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Viewport * viewport);
 
 		static void list_wp_uids(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, GList ** l);
 		static void list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GList ** l);
-		static void remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
 
 		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude);
 		static GList * find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track *> & tracks, Track * orig_trk, unsigned int threshold);
@@ -120,8 +117,6 @@ namespace SlavGPS {
 		static QString has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
 
 
-		static void iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
-		static void set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view, bool on_off);
 		static void set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool on_off);
 		static void waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
 		static void set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off);

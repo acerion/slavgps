@@ -138,10 +138,10 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 	sg_uid_t uid = this->menu_data.waypoint_uid;
 
 	if (uid) {
-		TreeIndex * index = trw->get_waypoints_iters().at(uid);
+		TreeIndex const & index = trw->get_waypoints().at(uid)->index;
 
-		if (index && index->isValid()) {
-			trw->tree_view->select_and_expose(*index);
+		if (index.isValid()) {
+			trw->tree_view->select_and_expose(index);
 		}
 	}
 }
@@ -410,27 +410,23 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * event)
 	}
 
 
-	sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(trw->get_waypoints(), wp);
-	if (wp_uuid) {
-		this->menu_data.trw = trw;
-		this->menu_data.waypoint = wp;
-		this->menu_data.waypoint_uid = wp_uuid;
-		this->menu_data.viewport = trw->get_window()->get_viewport();
+	this->menu_data.trw = trw;
+	this->menu_data.waypoint = wp;
+	this->menu_data.waypoint_uid = wp->uid;
+	this->menu_data.viewport = trw->get_window()->get_viewport();
 
-		QMenu menu(this);
+	QMenu menu(this);
 #if 0
-		/* When multiple rows are selected, the number of applicable operation is lower. */
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
-		if (gtk_tree_selection_count_selected_rows (selection) != 1) {
-			this->add_copy_menu_items(QMenu & menu);
-		}
+	/* When multiple rows are selected, the number of applicable operation is lower. */
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
+	if (gtk_tree_selection_count_selected_rows (selection) != 1) {
+		this->add_copy_menu_items(QMenu & menu);
+	}
 #else
-		this->add_menu_items(menu);
+	this->add_menu_items(menu);
 #endif
 
-		menu.exec(QCursor::pos());
-		return;
-	}
+	menu.exec(QCursor::pos());
 	return;
 }
 

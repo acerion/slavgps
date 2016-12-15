@@ -188,10 +188,6 @@ namespace SlavGPS {
 		std::unordered_map<sg_uid_t, Track *> & get_routes();
 		std::unordered_map<sg_uid_t, Waypoint *> & get_waypoints();
 
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_tracks_iters();
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_routes_iters();
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_waypoints_iters();
-
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
 		bool get_waypoints_visibility();
@@ -384,17 +380,14 @@ namespace SlavGPS {
 
 
 		std::unordered_map<sg_uid_t, Track *> tracks;
-		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
 		Sublayer * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
 		std::unordered_map<sg_uid_t, Track *> routes;
-		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
 		Sublayer * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
 		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
-		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
 		Sublayer * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 

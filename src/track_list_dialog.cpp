@@ -108,16 +108,7 @@ void TrackListDialog::track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid
 		return;
 	}
 
-	TreeIndex * index = NULL;
-	if (trk->is_route) {
-		index = trw->get_routes_iters().at(trk_uid);
-	} else {
-		index = trw->get_tracks_iters().at(trk_uid);
-	}
-
-	if (index) {
-		trw->tree_view->select_and_expose(*index);
-	}
+	trw->tree_view->select_and_expose(trk->index);
 }
 
 
@@ -314,17 +305,10 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * event)
 		return;
 	}
 
-	sg_uid_t trk_uid = 0;
-	if (trk->is_route) {
-		trk_uid = LayerTRWc::find_uid_of_track(trw->get_routes(), trk);
-	} else {
-		trk_uid = LayerTRWc::find_uid_of_track(trw->get_tracks(), trk);
-	}
-
-	if (trk_uid) {
+	if (trk->uid) { /* TODO: compare to constant. */
 		this->menu_data.trw = trw;
 		this->menu_data.trk = trk;
-		this->menu_data.trk_uid = trk_uid;
+		this->menu_data.trk_uid = trk->uid;
 		this->menu_data.viewport = trw->get_window()->get_viewport();
 
 		QMenu menu(this);

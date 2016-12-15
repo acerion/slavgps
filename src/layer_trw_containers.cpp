@@ -161,20 +161,6 @@ void LayerTRWc::find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tr
 
 
 
-sg_uid_t LayerTRWc::find_uid_of_waypoint(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp)
-{
-	std::unordered_map<sg_uid_t, Waypoint *>::const_iterator i;
-	for (i = waypoints.begin(); i != waypoints.end(); i++) {
-		if (i->second == wp) {
-			return i->first;
-		}
-	}
-	return 0;
-}
-
-
-
-
 void LayerTRWc::single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Viewport * viewport)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
@@ -206,33 +192,6 @@ void LayerTRWc::list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GL
 
 
 
-sg_uid_t LayerTRWc::find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk)
-{
-	for (auto i = input.begin(); i != input.end(); i++) {
-		if (i->second == trk) {
-			return i->first;
-		}
-	}
-	return 0;
-}
-
-
-
-
-/* kamilTODO: convert to "Waypoint * LayerTRWc::find_waypoint_by_name() */
-sg_uid_t LayerTRWc::find_uid_of_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & input, char const * name)
-{
-	for (auto i = input.begin(); i != input.end(); i++) {
-		if (0 == strcmp(name, i->second->name ) ) {
-			return i->first;
-		}
-	}
-	return 0;
-}
-
-
-
-
 #if 0
 Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name)
 {
@@ -244,16 +203,6 @@ Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & in
 	return NULL;
 }
 #endif
-
-
-
-
-void LayerTRWc::remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
-{
-	for (auto i = items.begin(); i != items.end(); i++) {
-		tree_view->erase(*i->second);
-	}
-}
 
 
 
@@ -477,34 +426,13 @@ QString LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Way
 /**
  *
  */
-void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
-{
-	for (auto i = items.begin(); i != items.end(); i++) {
-#ifdef K
-		tree_view->toggle_visibility(i->second);
-#endif
-	}
-}
-
-
-
-
-void LayerTRWc::set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view, bool on_off)
-{
-	for (auto i = items.begin(); i != items.end(); i++) {
-#ifdef K
-		tree_view->set_visibility(i->second, on_off);
-#endif
-	}
-}
-
-
-
-
 void LayerTRWc::set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool on_off)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		i->second->visible = on_off;
+#ifdef K
+		tree_view->set_visibility(i->second->index, on_off);
+#endif
 	}
 }
 
@@ -515,6 +443,9 @@ void LayerTRWc::waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoin
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		i->second->visible = !i->second->visible;
+#ifdef K
+		tree_view->toggle_visibility(i->second->index);
+#endif
 	}
 }
 
@@ -525,6 +456,9 @@ void LayerTRWc::set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tr
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->visible = on_off;
+#ifdef K
+		tree_view->set_visibility(i->second->index, on_off);
+#endif
 	}
 }
 
@@ -535,6 +469,9 @@ void LayerTRWc::tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> &
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->visible = !i->second->visible;
+#ifdef K
+		tree_view->toggle_visibility(i->second->index);
+#endif
 	}
 }
 
