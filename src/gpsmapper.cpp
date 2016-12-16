@@ -106,7 +106,7 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 
 
 
-static void write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+static void write_waypoints(FILE * f, Waypoints & waypoints)
 {
 	static struct LatLon ll;
 
@@ -142,7 +142,7 @@ static void write_trackpoint(Trackpoint * tp, FILE * f)
 
 
 
-static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
+static void write_track(FILE * f, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		unsigned int len = print_rgn_stuff(i->second->comment, f);
@@ -161,7 +161,7 @@ static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks
 
 void SlavGPS::gpsmapper_write_file(FILE * f, LayerTRW * trw)
 {
-	std::unordered_map<sg_uid_t, Track *> & tracks = trw->get_tracks();
+	Tracks & tracks = trw->get_tracks();
 	auto waypoints = trw->get_waypoints();
 
 	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",

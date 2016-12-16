@@ -1534,7 +1534,7 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints, Viewport * viewport)
+void LayerTRW::draw_highlight_items(Tracks * tracks, Waypoints * selected_waypoints, Viewport * viewport)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1630,7 +1630,7 @@ QIcon * get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
+void LayerTRW::realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -1662,7 +1662,7 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
+void LayerTRW::realize_waypoints(Waypoints & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		time_t timestamp = 0;
@@ -1807,7 +1807,7 @@ int LayerTRW::get_property_tracks_line_thickness()
 /*
  * Build up multiple routes information.
  */
-static void trw_layer_routes_tooltip(std::unordered_map<sg_uid_t, Track *> & tracks, double * length)
+static void trw_layer_routes_tooltip(Tracks & tracks, double * length)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		*length = *length + i->second->get_length();
@@ -1828,7 +1828,7 @@ typedef struct {
 /*
  * Build up layer multiple track information via updating the tooltip_tracks structure.
  */
-static void trw_layer_tracks_tooltip(std::unordered_map<sg_uid_t, Track *> & tracks, tooltip_tracks * tt)
+static void trw_layer_tracks_tooltip(Tracks & tracks, tooltip_tracks * tt)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -2227,7 +2227,7 @@ bool LayerTRW::selected(TreeItemType type, Sublayer * sublayer)
 
 
 
-std::unordered_map<sg_uid_t, Track *> & LayerTRW::get_tracks()
+Tracks & LayerTRW::get_tracks()
 {
 	return tracks;
 }
@@ -2235,7 +2235,7 @@ std::unordered_map<sg_uid_t, Track *> & LayerTRW::get_tracks()
 
 
 
-std::unordered_map<sg_uid_t, Track *> & LayerTRW::get_routes()
+Tracks & LayerTRW::get_routes()
 {
 	return routes;
 }
@@ -2243,7 +2243,7 @@ std::unordered_map<sg_uid_t, Track *> & LayerTRW::get_routes()
 
 
 
-std::unordered_map<sg_uid_t, Waypoint *> & LayerTRW::get_waypoints()
+Waypoints & LayerTRW::get_waypoints()
 {
 	return waypoints;
 }
@@ -5453,7 +5453,7 @@ void LayerTRW::astro_cb(void)
  * Note the panel is a required parameter to enable the update of the names displayed
  * Specify if on tracks or else on routes
  */
-void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & tracks_table, bool ontrack)
+void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool ontrack)
 {
 	if (tracks_table.empty()) {
 		qDebug() << "EE: LayerTRW: ::uniquify() called for empty tracks/routes set";
@@ -6699,7 +6699,7 @@ void LayerTRW::calculate_bounds_waypoints()
 
 
 
-void LayerTRW::calculate_bounds_track(std::unordered_map<sg_uid_t, Track *> & tracks)
+void LayerTRW::calculate_bounds_track(Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->calculate_bounds();

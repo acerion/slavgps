@@ -127,7 +127,7 @@ namespace SlavGPS {
 		LayerTRW * selected_trw = NULL;
 		Tracks * selected_tracks = NULL;
 		Track * selected_track = NULL;
-		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints = NULL;
+		Waypoints * selected_waypoints = NULL;
 		Waypoint * selected_waypoint = NULL;
 		/* Only use for individual track or waypoint. */
 		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */

@@ -60,7 +60,7 @@ using namespace SlavGPS;
 
 
 
-Track * LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, char const * date)
+Track * LayerTRWc::find_track_by_date(Tracks & tracks, char const * date)
 {
 	char date_buf[20];
 	Track * trk = NULL;
@@ -86,7 +86,7 @@ Track * LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tr
 
 
 
-Waypoint * LayerTRWc::find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, char const * date)
+Waypoint * LayerTRWc::find_waypoint_by_date(Waypoints & waypoints, char const * date)
 {
 	char date_buf[20];
 	Waypoint * wp = NULL;
@@ -114,7 +114,7 @@ Waypoint * LayerTRWc::find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoin
  * ATM use a case sensitive find.
  * Finds the first one.
  */
-Waypoint * LayerTRWc::find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, const char * name)
+Waypoint * LayerTRWc::find_waypoint_by_name(Waypoints & waypoints, const char * name)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		if (i->second && i->second->name) {
@@ -133,7 +133,7 @@ Waypoint * LayerTRWc::find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoin
  * ATM use a case sensitive find.
  * Finds the first one.
  */
-Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & tracks, char const * name)
+Track * LayerTRWc::find_track_by_name(Tracks & tracks, char const * name)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -149,7 +149,7 @@ Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & tr
 
 
 
-void LayerTRWc::find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, struct LatLon maxmin[2])
+void LayerTRWc::find_maxmin_in_tracks(Tracks & tracks, struct LatLon maxmin[2])
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		LayerTRW::find_maxmin_in_track(i->second, maxmin);
@@ -159,7 +159,7 @@ void LayerTRWc::find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tr
 
 
 
-void LayerTRWc::single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Viewport * viewport)
+void LayerTRWc::single_waypoint_jump(Waypoints & waypoints, Viewport * viewport)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		/* NB do not care if wp is visible or not. */
@@ -170,7 +170,7 @@ void LayerTRWc::single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & 
 
 
 
-void LayerTRWc::list_wp_uids(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, GList ** l)
+void LayerTRWc::list_wp_uids(Waypoints & waypoints, GList ** l)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		*l = g_list_append(*l, (void *) ((long) i->first)); /* kamilTODO: i->first or i->second? */
@@ -180,7 +180,7 @@ void LayerTRWc::list_wp_uids(std::unordered_map<sg_uid_t, Waypoint *> & waypoint
 
 
 
-void LayerTRWc::list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GList ** l)
+void LayerTRWc::list_trk_uids(Tracks & tracks, GList ** l)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		*l = g_list_append(*l, (void *) ((long) i->first)); /* kamilTODO: i->first or i->second? */
@@ -191,7 +191,7 @@ void LayerTRWc::list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GL
 
 
 #if 0
-Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name)
+Track * LayerTRWc::find_track_by_name(Tracks & input, char const * name)
 {
 	for (auto i = input.begin(); i != input.end(); i++) {
 		if (0 == strcmp(i->second->name, name)) {
@@ -205,7 +205,7 @@ Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & in
 
 
 
-std::list<sg_uid_t> * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude)
+std::list<sg_uid_t> * LayerTRWc::find_tracks_with_timestamp_type(Tracks * tracks, bool with_timestamps, Track * exclude)
 {
 	std::list<sg_uid_t> * result = new std::list<sg_uid_t>;
 
@@ -246,7 +246,7 @@ std::list<sg_uid_t> * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_
  * If the original track orig_trk is close enough (threshold)
  * to given track, then the given track is added to returned list.
  */
-GList * LayerTRWc::find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track *> & tracks, Track * orig_trk, unsigned int threshold)
+GList * LayerTRWc::find_nearby_tracks_by_time(Tracks & tracks, Track * orig_trk, unsigned int threshold)
 {
 	GList * nearby_tracks = NULL;
 
@@ -301,7 +301,7 @@ GList * LayerTRWc::find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track
 
 /* c.f. get_sorted_track_name_list()
    but don't add the specified track to the list (normally current track). */
-std::list<QString> LayerTRWc::get_sorted_track_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, Track const * self)
+std::list<QString> LayerTRWc::get_sorted_track_name_list_exclude_self(Tracks * tracks, Track const * self)
 {
 	std::list<QString> result;
 	for (auto i = tracks->begin(); i != tracks->end(); i++) {
@@ -334,7 +334,7 @@ static void trw_layer_sorted_name_list(void * key, void * value, void * udata)
 
 
 
-std::list<QString> LayerTRWc::get_sorted_wp_name_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+std::list<QString> LayerTRWc::get_sorted_wp_name_list(Waypoints & waypoints)
 {
 	std::list<QString> result;
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
@@ -348,7 +348,7 @@ std::list<QString> LayerTRWc::get_sorted_wp_name_list(std::unordered_map<sg_uid_
 
 
 
-std::list<QString> LayerTRWc::get_sorted_track_name_list(std::unordered_map<sg_uid_t, Track *> & tracks)
+std::list<QString> LayerTRWc::get_sorted_track_name_list(Tracks & tracks)
 {
 	std::list<QString> result;
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
@@ -367,7 +367,7 @@ std::list<QString> LayerTRWc::get_sorted_track_name_list(std::unordered_map<sg_u
 /**
  * Find out if any tracks have the same name in this hash table.
  */
-QString LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks)
+QString LayerTRWc::has_duplicate_track_names(Tracks & tracks)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
@@ -396,7 +396,7 @@ QString LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track 
 /**
  * Find out if any waypoints have the same name in this layer.
  */
-QString LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+QString LayerTRWc::has_duplicate_waypoint_names(Waypoints & waypoints)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
@@ -424,7 +424,7 @@ QString LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Way
 /**
  *
  */
-void LayerTRWc::set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool on_off)
+void LayerTRWc::set_waypoints_visibility(Waypoints & waypoints, bool on_off)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		i->second->visible = on_off;
@@ -437,7 +437,7 @@ void LayerTRWc::set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *
 
 
 
-void LayerTRWc::waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+void LayerTRWc::waypoints_toggle_visibility(Waypoints & waypoints)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		i->second->visible = !i->second->visible;
@@ -450,7 +450,7 @@ void LayerTRWc::waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoin
 
 
 
-void LayerTRWc::set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off)
+void LayerTRWc::set_tracks_visibility(Tracks & tracks, bool on_off)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->visible = on_off;
@@ -463,7 +463,7 @@ void LayerTRWc::set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tr
 
 
 
-void LayerTRWc::tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> & tracks)
+void LayerTRWc::tracks_toggle_visibility(Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->visible = !i->second->visible;
@@ -476,7 +476,7 @@ void LayerTRWc::tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> &
 
 
 
-std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, std::unordered_map<sg_uid_t, Track *> & tracks)
+std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		target->push_back(i->second);
@@ -488,7 +488,7 @@ std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, st
 
 
 
-void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WaypointSearch * search)
+void LayerTRWc::waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch * search)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		Waypoint * wp = i->second;
@@ -527,7 +527,7 @@ void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint
 
 
 
-void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TrackpointSearch * search)
+void LayerTRWc::track_search_closest_tp(Tracks & tracks, TrackpointSearch * search)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -566,7 +566,7 @@ void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & 
 
 
 /* Params are: viewport, event, last match found or NULL. */
-char * LayerTRWc::tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, int event_x, int event_y, Viewport * viewport)
+char * LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport)
 {
 	char * found = NULL;
 
@@ -595,7 +595,7 @@ char * LayerTRWc::tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> 
 
 
 
-GSList * LayerTRWc::image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+GSList * LayerTRWc::image_wp_make_list(Waypoints & waypoints)
 {
 	GSList * pics = NULL;
 
@@ -615,7 +615,7 @@ GSList * LayerTRWc::image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> 
 
 
 
-void LayerTRWc::waypoints_convert(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, VikCoordMode * dest_mode)
+void LayerTRWc::waypoints_convert(Waypoints & waypoints, VikCoordMode * dest_mode)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		vik_coord_convert(&(i->second->coord), *dest_mode);
@@ -625,7 +625,7 @@ void LayerTRWc::waypoints_convert(std::unordered_map<sg_uid_t, Waypoint *> & way
 
 
 
-void LayerTRWc::track_convert(std::unordered_map<sg_uid_t, Track *> & tracks, VikCoordMode * dest_mode)
+void LayerTRWc::track_convert(Tracks & tracks, VikCoordMode * dest_mode)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		i->second->convert(*dest_mode);

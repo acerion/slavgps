@@ -636,7 +636,7 @@ static void gpspoint_process_key_and_value(char const * key, unsigned int key_le
 
 
 
-static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & data)
+static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 {
 	for (auto i = data.begin(); i != data.end(); i++) {
 
@@ -807,7 +807,7 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 
 
 
-static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
+static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 

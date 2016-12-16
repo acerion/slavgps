@@ -777,7 +777,7 @@ void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp)
 
 
 
-void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, DrawingParams * dp)
+void trw_layer_draw_track_cb(Tracks & tracks, DrawingParams * dp)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		if (BBOX_INTERSECT (i->second->bbox, dp->bbox)) {
@@ -1015,7 +1015,7 @@ void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp)
 
 
 
-void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints, DrawingParams * dp)
+void trw_layer_draw_waypoints_cb(Waypoints * waypoints, DrawingParams * dp)
 {
 	if (BBOX_INTERSECT (dp->trw->waypoints_bbox, dp->bbox)) {
 		for (auto i = waypoints->begin(); i != waypoints->end(); i++) {

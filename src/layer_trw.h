@@ -184,9 +184,9 @@ namespace SlavGPS {
 		void add_route(Track * trk, char const * name);
 		void add_waypoint(Waypoint * wp, char const * name);
 
-		std::unordered_map<sg_uid_t, Track *> & get_tracks();
-		std::unordered_map<sg_uid_t, Track *> & get_routes();
-		std::unordered_map<sg_uid_t, Waypoint *> & get_waypoints();
+		Tracks & get_tracks();
+		Tracks & get_routes();
+		Waypoints & get_waypoints();
 
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
@@ -207,11 +207,11 @@ namespace SlavGPS {
 		void draw_highlight(Viewport * viewport);
 
 		void draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport);
-		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
+		void draw_highlight_items(Tracks * tracks, Waypoints * waypoints, Viewport * viewport);
 
 
-		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
+		void realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
+		void realize_waypoints(Waypoints & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -287,7 +287,7 @@ namespace SlavGPS {
 
 
 
-		void uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack);
+		void uniquify_tracks(LayersPanel * panel, Tracks & track_table, bool ontrack);
 		void sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order);
 
 		void uniquify_waypoints(LayersPanel * panel);
@@ -315,7 +315,7 @@ namespace SlavGPS {
 
 		void calculate_bounds_waypoints();
 
-		static void calculate_bounds_track(std::unordered_map<sg_uid_t, Track *> & tracks);
+		static void calculate_bounds_track(Tracks & tracks);
 
 		void calculate_bounds_tracks();
 
@@ -380,15 +380,15 @@ namespace SlavGPS {
 
 
 
-		std::unordered_map<sg_uid_t, Track *> tracks;
+		Tracks tracks;
 		Sublayer * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
-		std::unordered_map<sg_uid_t, Track *> routes;
+		Tracks routes;
 		Sublayer * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
-		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
+		Waypoints waypoints;
 		Sublayer * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 

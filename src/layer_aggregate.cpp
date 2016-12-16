@@ -446,7 +446,8 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
-		std::unordered_map<sg_uid_t, Waypoint *> & wps = ((LayerTRW *) (*iter))->get_waypoints();
+		/* TODO: move this to layer trw containers. */
+		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoints();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints->push_back(i->second);
 		}

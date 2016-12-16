@@ -1226,7 +1226,7 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
 		/* Gather waypoints in a list, then sort. */
-		std::unordered_map<sg_uid_t, Waypoint *> & waypoints = trw->get_waypoints();
+		Waypoints & waypoints = trw->get_waypoints();
 		int index = 0;
 		GList * gl = NULL;
 		for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
@@ -1246,7 +1246,7 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 		//gl = g_hash_table_get_values(vik_trw_layer_get_tracks (trw));
 		/* Forming the list manually seems to produce one that is more likely to be nearer to the creation order. */
 
-		std::unordered_map<sg_uid_t, Track *> tracks = trw->get_tracks();
+		Tracks & tracks = trw->get_tracks();
 		for (auto i = tracks.begin(); i != tracks.end(); i++) {
 			gl = g_list_prepend(gl, i->second);
 		}
@@ -1266,7 +1266,7 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 	/* Routes sorted by name. */
 	if (trw->get_routes_visibility() || (options && options->hidden)) {
 
-		std::unordered_map<sg_uid_t, Track *> routes = trw->get_routes();
+		Tracks & routes = trw->get_routes();
 		int index = 0;
 		for (auto i = routes.begin(); i != routes.end(); i++) {
 			glrte = g_list_insert(glrte, i->second, index);

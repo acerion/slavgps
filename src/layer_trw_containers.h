@@ -90,41 +90,41 @@ namespace SlavGPS {
 
 	class LayerTRWc {
 	public:
-		static Track * find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);
-		static Waypoint * find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, const char * name);
-		static Track * find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, char const * date_str);
-		static Waypoint * find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, char const * date_str);
+		static Track * find_track_by_name(Tracks & input, char const * name);
+		static Waypoint * find_waypoint_by_name(Waypoints & waypoints, const char * name);
+		static Track * find_track_by_date(Tracks & tracks, char const * date_str);
+		static Waypoint * find_waypoint_by_date(Waypoints & waypoints, char const * date_str);
 
-		static void find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, struct LatLon maxmin[2]);
-		static void single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Viewport * viewport);
+		static void find_maxmin_in_tracks(Tracks & tracks, struct LatLon maxmin[2]);
+		static void single_waypoint_jump(Waypoints & waypoints, Viewport * viewport);
 
-		static void list_wp_uids(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, GList ** l);
-		static void list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GList ** l);
+		static void list_wp_uids(Waypoints & waypoints, GList ** l);
+		static void list_trk_uids(Tracks & tracks, GList ** l);
 
-		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude);
-		static GList * find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track *> & tracks, Track * orig_trk, unsigned int threshold);
-		static std::list<QString> get_sorted_track_name_list(std::unordered_map<sg_uid_t, Track *> & tracks);
-		static std::list<QString> get_sorted_track_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, Track const * self);
-		static std::list<QString> get_sorted_wp_name_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
-		static QString has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks);
-		static QString has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
-
-
-		static void set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool on_off);
-		static void waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
-		static void set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off);
-		static void tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> & tracks);
-
-		static std::list<Track *> * get_track_values(std::list<Track *> * target, std::unordered_map<sg_uid_t, Track *> & tracks);
-		static void waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WaypointSearch * search);
-		static void track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TrackpointSearch * search);
-
-		static char * tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, int event_x, int event_y, Viewport * viewport);
-		static GSList * image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
+		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(Tracks * tracks, bool with_timestamps, Track * exclude);
+		static GList * find_nearby_tracks_by_time(Tracks & tracks, Track * orig_trk, unsigned int threshold);
+		static std::list<QString> get_sorted_track_name_list(Tracks & tracks);
+		static std::list<QString> get_sorted_track_name_list_exclude_self(Tracks * tracks, Track const * self);
+		static std::list<QString> get_sorted_wp_name_list(Waypoints & waypoints);
+		static QString has_duplicate_track_names(Tracks & tracks);
+		static QString has_duplicate_waypoint_names(Waypoints & waypoints);
 
 
-		static void waypoints_convert(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, VikCoordMode * dest_mode);
-		static void track_convert(std::unordered_map<sg_uid_t, Track *> & tracks, VikCoordMode * dest_mode);
+		static void set_waypoints_visibility(Waypoints & waypoints, bool on_off);
+		static void waypoints_toggle_visibility(Waypoints & waypoints);
+		static void set_tracks_visibility(Tracks & tracks, bool on_off);
+		static void tracks_toggle_visibility(Tracks & tracks);
+
+		static std::list<Track *> * get_track_values(std::list<Track *> * target, Tracks & tracks);
+		static void waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch * search);
+		static void track_search_closest_tp(Tracks & tracks, TrackpointSearch * search);
+
+		static char * tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport);
+		static GSList * image_wp_make_list(Waypoints & waypoints);
+
+
+		static void waypoints_convert(Waypoints & waypoints, VikCoordMode * dest_mode);
+		static void track_convert(Tracks & tracks, VikCoordMode * dest_mode);
 	};
 
 

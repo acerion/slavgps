@@ -335,7 +335,7 @@ static void trw_layer_geotag_track(Track * trk, geotag_options_t *options)
 
 
 
-static void trw_layer_geotag_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, geotag_options_t *options)
+static void trw_layer_geotag_tracks(Tracks & tracks, geotag_options_t *options)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		trw_layer_geotag_track(i->second, options);
