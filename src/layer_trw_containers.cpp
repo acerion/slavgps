@@ -488,7 +488,7 @@ std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, st
 
 
 
-void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WPSearchParams * params)
+void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WaypointSearch * search)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		Waypoint * wp = i->second;
@@ -497,30 +497,28 @@ void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint
 		}
 
 		int x, y;
-		params->viewport->coord_to_screen(&(wp->coord), &x, &y);
+		search->viewport->coord_to_screen(&wp->coord, &x, &y);
 
 		/* If waypoint has an image then use the image size to select. */
-		if (params->draw_images && wp->image) {
+		if (search->draw_images && wp->image) {
 
 			int slackx = wp->image_width / 2;
 			int slacky = wp->image_height / 2;
 
-			if (x <= params->x + slackx && x >= params->x - slackx
-			    && y <= params->y + slacky && y >= params->y - slacky) {
+			if (x <= search->x + slackx && x >= search->x - slackx
+			    && y <= search->y + slacky && y >= search->y - slacky) {
 
-				params->closest_wp_uid = i->first;
-				params->closest_wp = wp;
-				params->closest_x = x;
-				params->closest_y = y;
+				search->closest_wp = wp;
+				search->closest_x = x;
+				search->closest_y = y;
 			}
-		} else if (abs(x - params->x) <= WAYPOINT_SIZE_APPROX && abs(y - params->y) <= WAYPOINT_SIZE_APPROX
-			   && ((!params->closest_wp)        /* Was the old waypoint we already found closer than this one? */
-			       || abs(x - params->x) + abs(y - params->y) < abs(x - params->closest_x) + abs(y - params->closest_y))) {
+		} else if (abs(x - search->x) <= WAYPOINT_SIZE_APPROX && abs(y - search->y) <= WAYPOINT_SIZE_APPROX
+			   && ((!search->closest_wp)        /* Was the old waypoint we already found closer than this one? */
+			       || abs(x - search->x) + abs(y - search->y) < abs(x - search->closest_x) + abs(y - search->closest_y))) {
 
-			params->closest_wp_uid = i->first;
-			params->closest_wp = wp;
-			params->closest_x = x;
-			params->closest_y = y;
+			search->closest_wp = wp;
+			search->closest_x = x;
+			search->closest_y = y;
 		}
 
 	}
@@ -529,7 +527,7 @@ void LayerTRWc::waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint
 
 
 
-void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TPSearchParams * params)
+void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TrackpointSearch * search)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -539,7 +537,7 @@ void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & 
 			continue;
 		}
 
-		if (!BBOX_INTERSECT (trk->bbox, params->bbox)) {
+		if (!BBOX_INTERSECT (trk->bbox, search->bbox)) {
 			continue;
 		}
 
@@ -547,17 +545,17 @@ void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & 
 		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 
 			int x, y;
-			params->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
+			search->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
 
-			if (abs(x - params->x) <= TRACKPOINT_SIZE_APPROX && abs(y - params->y) <= TRACKPOINT_SIZE_APPROX
-			    && ((!params->closest_tp)        /* Was the old trackpoint we already found closer than this one? */
-				|| abs(x - params->x) + abs(y - params->y) < abs(x - params->closest_x) + abs(y - params->closest_y))) {
+			if (abs(x - search->x) <= TRACKPOINT_SIZE_APPROX && abs(y - search->y) <= TRACKPOINT_SIZE_APPROX
+			    && ((!search->closest_tp)        /* Was the old trackpoint we already found closer than this one? */
+				|| abs(x - search->x) + abs(y - search->y) < abs(x - search->closest_x) + abs(y - search->closest_y))) {
 
-				params->closest_track_uid = (sg_uid_t) ((long) i->first);
-				params->closest_tp = *iter;
-				params->closest_tp_iter = iter;
-				params->closest_x = x;
-				params->closest_y = y;
+				search->closest_track = i->second;
+				search->closest_tp = *iter;
+				search->closest_tp_iter = iter;
+				search->closest_x = x;
+				search->closest_y = y;
 			}
 
 		}

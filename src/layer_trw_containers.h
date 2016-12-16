@@ -58,27 +58,32 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		int x, y;
-		int closest_x, closest_y;
-		bool draw_images;
-		sg_uid_t closest_wp_uid;
-		Waypoint * closest_wp;
-		Viewport * viewport;
-	} WPSearchParams;
+	class WaypointSearch {
+	public:
+		int x = 0;
+		int y = 0;
+		int closest_x = 0;
+		int closest_y = 0;
+		bool draw_images = false;
+		Waypoint * closest_wp = NULL;
+		Viewport * viewport = NULL;
+	};
 
 
 
 
-	typedef struct {
-		int x, y;
-		int closest_x, closest_y;
-		sg_uid_t closest_track_uid;
-		Trackpoint * closest_tp;
-		Viewport * viewport;
+	class TrackpointSearch {
+	public:
+		int x = 0;
+		int y = 0;
+		int closest_x = 0;
+		int closest_y = 0;
+		Track * closest_track = NULL;
+		Trackpoint * closest_tp = NULL;
+		Viewport * viewport = NULL;
 		TrackPoints::iterator closest_tp_iter;
 		LatLonBBox bbox;
-	} TPSearchParams;
+	};
 
 
 
@@ -111,8 +116,8 @@ namespace SlavGPS {
 		static void tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> & tracks);
 
 		static std::list<Track *> * get_track_values(std::list<Track *> * target, std::unordered_map<sg_uid_t, Track *> & tracks);
-		static void waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WPSearchParams * params);
-		static void track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TPSearchParams * params);
+		static void waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WaypointSearch * search);
+		static void track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TrackpointSearch * search);
 
 		static char * tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, int event_x, int event_y, Viewport * viewport);
 		static GSList * image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);

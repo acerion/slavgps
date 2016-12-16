@@ -395,7 +395,6 @@ namespace SlavGPS {
 
 		/* Waypoint editing tool. */
 		Waypoint * current_wp = NULL;
-		sg_uid_t current_wp_uid = 0;
 		bool moving_wp = false;
 		bool waypoint_rightclick = false;
 

@@ -2142,7 +2142,6 @@ bool LayerTRW::selected(TreeItemType type, Sublayer * sublayer)
 {
 	/* Reset. */
 	this->current_wp = NULL;
-	this->current_wp_uid = 0;
 	this->cancel_current_tp(false);
 
 	/* Clear statusbar. */
@@ -3555,9 +3554,8 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 	}
 
 	if (wp == current_wp) {
-		current_wp = NULL;
-		current_wp_uid = 0;
-		moving_wp = false;
+		this->current_wp = NULL;
+		this->moving_wp = false;
 	}
 
 	bool was_visible = wp->visible;
@@ -3673,7 +3671,6 @@ void LayerTRW::delete_all_tracks()
 void LayerTRW::delete_all_waypoints()
 {
 	this->current_wp = NULL;
-	this->current_wp_uid = 0;
 	this->moving_wp = false;
 
 	this->highest_wp_number_reset();

@@ -104,19 +104,16 @@ static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey * e
 //  Not overly bothered about having a snap to route trackpoint capability
 Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, int x, int y)
 {
-	TPSearchParams params;
+	TrackpointSearch search;
+	search.x = x;
+	search.y = y;
+	search.viewport = viewport;
 
-	params.x = x;
-	params.y = y;
-	params.viewport = viewport;
-	params.closest_track_uid = 0;
-	params.closest_tp = NULL;
+	search.viewport->get_bbox(&search.bbox);
 
-	params.viewport->get_bbox(&params.bbox);
+	LayerTRWc::track_search_closest_tp(this->tracks, &search);
 
-	LayerTRWc::track_search_closest_tp(this->tracks, &params);
-
-	return params.closest_tp;
+	return search.closest_tp;
 }
 
 
@@ -124,18 +121,15 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 
 Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int x, int y)
 {
-	WPSearchParams params;
+	WaypointSearch search;
+	search.x = x;
+	search.y = y;
+	search.viewport = viewport;
+	search.draw_images = this->drawimages;
 
-	params.x = x;
-	params.y = y;
-	params.viewport = viewport;
-	params.draw_images = this->drawimages;
-	params.closest_wp = NULL;
-	params.closest_wp_uid = 0;
+	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &search);
 
-	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
-
-	return params.closest_wp;
+	return search.closest_wp;
 }
 
 
@@ -231,8 +225,7 @@ bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerToo
 		this->current_wp->coord = new_coord;
 		this->calculate_bounds_waypoints();
 		/* Reset waypoint pointer. */
-		this->current_wp    = NULL;
-		this->current_wp_uid = 0;
+		this->current_wp = NULL;
 	} else {
 		if (this->selected_tp.valid) {
 			(*this->selected_tp.iter)->coord = new_coord;
@@ -283,25 +276,23 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
 	if (this->waypoints_visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
-		WPSearchParams wp_params;
-		wp_params.viewport = viewport;
-		wp_params.x = event->x();
-		wp_params.y = event->y();
-		wp_params.draw_images = this->drawimages;
-		wp_params.closest_wp_uid = 0;
-		wp_params.closest_wp = NULL;
+		WaypointSearch wp_search;
+		wp_search.viewport = viewport;
+		wp_search.x = event->x();
+		wp_search.y = event->y();
+		wp_search.draw_images = this->drawimages;
 
-		LayerTRWc::waypoint_search_closest_tp(this->waypoints, &wp_params);
+		LayerTRWc::waypoint_search_closest_tp(this->waypoints, &wp_search);
 
-		if (wp_params.closest_wp) {
+		if (wp_search.closest_wp) {
 
 			/* Select. */
-			this->tree_view->select_and_expose(this->waypoints.at(wp_params.closest_wp_uid)->index);
+			this->tree_view->select_and_expose(wp_search.closest_wp->index);
 
 			/* Too easy to move it so must be holding shift to start immediately moving it
 			   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 			if (event->modifiers() & Qt::ShiftModifier
-			    || (this->current_wp == wp_params.closest_wp && !this->current_wp->image)) {
+			    || (this->current_wp == wp_search.closest_wp && !this->current_wp->image)) {
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->ed->trw = this;
@@ -310,8 +301,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 				marker_begin_move(tool, event->x(), event->y());
 			}
 
-			this->current_wp =     wp_params.closest_wp;
-			this->current_wp_uid = wp_params.closest_wp_uid;
+			this->current_wp = wp_search.closest_wp;
 
 #ifdef K
 			if (event->type == GDK_2BUTTON_PRESS) {
@@ -331,29 +321,27 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	}
 
 	/* Used for both track and route lists. */
-	TPSearchParams tp_params;
-	tp_params.viewport = viewport;
-	tp_params.x = event->x();
-	tp_params.y = event->y();
-	tp_params.closest_track_uid = 0;
-	tp_params.closest_tp = NULL;
-	//tp_params.closest_tp_iter = NULL;
-	tp_params.bbox = bbox;
+	TrackpointSearch tp_search;
+	tp_search.viewport = viewport;
+	tp_search.x = event->x();
+	tp_search.y = event->y();
+	//tp_search.closest_tp_iter = NULL;
+	tp_search.bbox = bbox;
 
 	if (this->tracks_visible) {
-		LayerTRWc::track_search_closest_tp(this->tracks, &tp_params);
+		LayerTRWc::track_search_closest_tp(this->tracks, &tp_search);
 
-		if (tp_params.closest_tp) {
+		if (tp_search.closest_tp) {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(this->tracks.at(tp_params.closest_track_uid)->index);
+			this->tree_view->select_and_expose(tp_search.closest_track->index);
 
 			tool->ed->is_waypoint = false;
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
 			if (event->modifiers() & Qt::ControlModifier
-			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
+			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
@@ -361,13 +349,13 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 				marker_begin_move(tool, event->x(), event->y());
 			}
 
-			this->selected_tp.iter = tp_params.closest_tp_iter;
+			this->selected_tp.iter = tp_search.closest_tp_iter;
 			this->selected_tp.valid = true;
 
-			this->current_tp_uid = tp_params.closest_track_uid;
-			this->selected_track = this->tracks.at(tp_params.closest_track_uid);
+			this->current_tp_uid = tp_search.closest_track->uid;
+			this->selected_track = tp_search.closest_track;
 
-			this->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
+			this->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
 
 			if (this->tpwin) {
 				this->my_tpwin_set_tp();
@@ -380,19 +368,19 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 
 	/* Try again for routes. */
 	if (this->routes_visible) {
-		LayerTRWc::track_search_closest_tp(this->routes, &tp_params);
+		LayerTRWc::track_search_closest_tp(this->routes, &tp_search);
 
-		if (tp_params.closest_tp)  {
+		if (tp_search.closest_tp)  {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(this->routes.at(tp_params.closest_track_uid)->index);
+			this->tree_view->select_and_expose(tp_search.closest_track->index);
 
 			tool->ed->is_waypoint = false;
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
 			if (event->modifiers() & Qt::ControlModifier
-			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
+			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
@@ -400,13 +388,13 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 				marker_begin_move(tool, event->x(), event->y());
 			}
 
-			this->selected_tp.iter = tp_params.closest_tp_iter;
+			this->selected_tp.iter = tp_search.closest_tp_iter;
 			this->selected_tp.valid = true;
 
-			this->current_tp_uid = tp_params.closest_track_uid;
-			this->selected_track = this->routes.at(tp_params.closest_track_uid);
+			this->current_tp_uid = tp_search.closest_track->uid;
+			this->selected_track = tp_search.closest_track;
 
-			this->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
+			this->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
 
 			if (this->tpwin) {
 				this->my_tpwin_set_tp();
@@ -418,8 +406,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	}
 
 	/* These aren't the droids you're looking for. */
-	this->current_wp    = NULL;
-	this->current_wp_uid = 0;
+	this->current_wp = NULL;
 	this->cancel_current_tp(false);
 
 	/* Blank info. */
@@ -620,32 +607,30 @@ static bool tool_edit_waypoint_click_cb(Layer * layer, QMouseEvent * event, Laye
 		}
 	}
 
-	WPSearchParams params;
-	params.viewport = tool->viewport;
-	params.x = event->x();
-	params.y = event->y();
-	params.draw_images = trw->drawimages;
-	params.closest_wp_uid = 0;
-	params.closest_wp = NULL;
-	LayerTRWc::waypoint_search_closest_tp(trw->waypoints, &params);
-	if (trw->current_wp && (trw->current_wp == params.closest_wp)) {
+	WaypointSearch search;
+	search.viewport = tool->viewport;
+	search.x = event->x();
+	search.y = event->y();
+	search.draw_images = trw->drawimages;
+
+	LayerTRWc::waypoint_search_closest_tp(trw->waypoints, &search);
+	if (trw->current_wp && (trw->current_wp == search.closest_wp)) {
 		if (event->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			marker_begin_move(tool, event->x(), event->y());
 		}
 		return false;
-	} else if (params.closest_wp) {
+	} else if (search.closest_wp) {
 		if (event->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			trw->waypoint_rightclick = false;
 		}
 
-		trw->tree_view->select_and_expose(trw->waypoints.at(params.closest_wp_uid)->index);
+		trw->tree_view->select_and_expose(search.closest_wp->index);
 
-		trw->current_wp = params.closest_wp;
-		trw->current_wp_uid = params.closest_wp_uid;
+		trw->current_wp = search.closest_wp;
 
 		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
 		trw->emit_changed();
@@ -653,7 +638,6 @@ static bool tool_edit_waypoint_click_cb(Layer * layer, QMouseEvent * event, Laye
 	}
 
 	trw->current_wp = NULL;
-	trw->current_wp_uid = 0;
 	trw->waypoint_rightclick = false;
 	trw->emit_changed();
 
@@ -755,7 +739,7 @@ static bool tool_edit_waypoint_release_cb(Layer * layer, QMouseEvent * event, La
 		}
 		if (trw->current_wp) {
 			trw->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp_uid, trw->waypoints.at(trw->current_wp_uid)->index, tool->viewport);
+			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp->uid, trw->waypoints.at(trw->current_wp_uid)->index, tool->viewport);
 			gtk_menu_popup(trw->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
 		trw->waypoint_rightclick = false;
@@ -1393,15 +1377,13 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	TPSearchParams params;
-	params.viewport = tool->viewport;
-	params.x = event->x();
-	params.y = event->y();
-	params.closest_track_uid = 0;
-	params.closest_tp = NULL;
-	//params.closest_tp_iter = NULL;
+	TrackpointSearch search;
+	search.viewport = tool->viewport;
+	search.x = event->x();
+	search.y = event->y();
+	//search.closest_tp_iter = NULL;
 
-	tool->viewport->get_bbox(&params.bbox);
+	tool->viewport->get_bbox(&search.bbox);
 
 	if (event->button() != Qt::LeftButton) {
 		return false;
@@ -1445,20 +1427,20 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 #else
 	if (1) {
 #endif
-		LayerTRWc::track_search_closest_tp(trw->tracks, &params);
+		LayerTRWc::track_search_closest_tp(trw->tracks, &search);
 	}
 
-	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(trw->tracks.at(params.closest_track_uid)->index);
+	if (search.closest_tp) {
+		trw->tree_view->select_and_expose(search.closest_track->index);
 
-		trw->selected_tp.iter = params.closest_tp_iter;
+		trw->selected_tp.iter = search.closest_tp_iter;
 		trw->selected_tp.valid = true;
 
-		trw->current_tp_uid = params.closest_track_uid;
+		trw->current_tp_uid = search.closest_track->uid;
 
-		trw->selected_track = trw->tracks.at(params.closest_track_uid);
+		trw->selected_track = search.closest_track;
 		trw->trackpoint_properties_show();
-		trw->set_statusbar_msg_info_trkpt(params.closest_tp);
+		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
 		trw->emit_changed();
 		return true;
 	}
@@ -1468,20 +1450,20 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 #else
 	if (1) {
 #endif
-		LayerTRWc::track_search_closest_tp(trw->routes, &params);
+		LayerTRWc::track_search_closest_tp(trw->routes, &search);
 	}
 
-	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(trw->routes.at(params.closest_track_uid)->index);
+	if (search.closest_tp) {
+		trw->tree_view->select_and_expose(search.closest_track->index);
 
-		trw->selected_tp.iter = params.closest_tp_iter;
-		trw->selected_tp.iter = params.closest_tp_iter;
+		trw->selected_tp.iter = search.closest_tp_iter;
+		trw->selected_tp.iter = search.closest_tp_iter;
 		trw->selected_tp.valid = true;
 
-		trw->current_tp_uid = params.closest_track_uid;
-		trw->selected_track = trw->routes.at(params.closest_track_uid);
+		trw->current_tp_uid = search.closest_track->uid;
+		trw->selected_track = search.closest_track;
 		trw->trackpoint_properties_show();
-		trw->set_statusbar_msg_info_trkpt(params.closest_tp);
+		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
 		trw->emit_changed();
 		return true;
 	}
