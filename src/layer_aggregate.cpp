@@ -464,7 +464,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
-	vik_trw_layer_waypoint_list_show_dialog(title, this, true);
+	waypoint_list_dialog(title, this, true);
 }
 
 

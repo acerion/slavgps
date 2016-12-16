@@ -7283,7 +7283,7 @@ void LayerTRW::track_list_dialog_cb(void)
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
-	vik_trw_layer_waypoint_list_show_dialog(title, this, false);
+	waypoint_list_dialog(title, this, false);
 }
 
 

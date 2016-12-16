@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_waypoint_list_show_dialog(QString const & title, Layer * layer, bool is_aggregate_layer);
+	void waypoint_list_dialog(QString const & title, Layer * layer, bool is_aggregate_layer);
 
 
 
@@ -68,6 +68,7 @@ namespace SlavGPS {
 
 		void copy_selected_only_visible_columns_cb(void);
 		void copy_selected_with_position_cb(void);
+		void accept_cb(void);
 
 	private:
 		void add(Waypoint * wp, LayerTRW * trw, HeightUnit height_units, const char * date_format);
@@ -87,8 +88,7 @@ namespace SlavGPS {
 
 		struct {
 			LayerTRW * trw;
-			Waypoint * waypoint;
-			sg_uid_t waypoint_uid;
+			Waypoint * wp;
 			Viewport * viewport;
 		} menu_data;
 	};

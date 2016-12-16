@@ -47,6 +47,7 @@ namespace SlavGPS {
 
 
 	class Waypoint : public Sublayer {
+		Q_OBJECT
 	public:
 		Waypoint();
 		Waypoint(const Waypoint& other);
