@@ -72,6 +72,8 @@ namespace SlavGPS {
 
 		static void delete_waypoint(Waypoint *);
 
+		void convert(VikCoordMode dest_mode);
+
 
 		VikCoord coord;
 		bool visible = true;

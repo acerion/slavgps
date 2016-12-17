@@ -117,8 +117,6 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 
-static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode);
-
 static char * font_size_to_string(int font_size);
 
 
@@ -790,7 +788,7 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 
 		this->add_waypoint(wp);
 
-		waypoint_convert(wp, &this->coord_mode);
+		wp->convert(this->coord_mode);
 		this->calculate_bounds_waypoints();
 
 		/* Consider if redraw necessary for the new item. */
@@ -1341,7 +1339,7 @@ static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 				Waypoint * wp = Waypoint::unmarshall(data + sizeof_len_and_subtype, 0);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
 				trw->add_waypoint(wp);
-				waypoint_convert(wp, &trw->coord_mode);
+				wp->convert(trw->coord_mode);
 			}
 			if (sublayer_type == SublayerType::ROUTE) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
@@ -6908,21 +6906,13 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 
 
 
-static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode)
-{
-	vik_coord_convert(&wp->coord, *dest_mode);
-}
-
-
-
-
 void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
 {
 	if (this->coord_mode != dest_mode) {
 		this->coord_mode = dest_mode;
-		LayerTRWc::waypoints_convert(this->waypoints, &dest_mode);
-		LayerTRWc::track_convert(this->tracks, &dest_mode);
-		LayerTRWc::track_convert(this->routes, &dest_mode);
+		LayerTRWc::waypoints_convert(this->waypoints, dest_mode);
+		LayerTRWc::tracks_convert(this->tracks, dest_mode);
+		LayerTRWc::tracks_convert(this->routes, dest_mode);
 	}
 }
 

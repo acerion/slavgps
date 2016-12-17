@@ -343,3 +343,11 @@ void Waypoint::delete_waypoint(Waypoint * wp)
 	delete wp;
 	return;
 }
+
+
+
+
+void Waypoint::convert(VikCoordMode dest_mode)
+{
+	vik_coord_convert(&this->coord, dest_mode);
+}

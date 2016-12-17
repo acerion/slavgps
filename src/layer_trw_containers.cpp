@@ -615,19 +615,19 @@ GSList * LayerTRWc::image_wp_make_list(Waypoints & waypoints)
 
 
 
-void LayerTRWc::waypoints_convert(Waypoints & waypoints, VikCoordMode * dest_mode)
+void LayerTRWc::waypoints_convert(Waypoints & waypoints, VikCoordMode dest_mode)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		vik_coord_convert(&(i->second->coord), *dest_mode);
+		i->second->convert(dest_mode);
 	}
 }
 
 
 
 
-void LayerTRWc::track_convert(Tracks & tracks, VikCoordMode * dest_mode)
+void LayerTRWc::tracks_convert(Tracks & tracks, VikCoordMode dest_mode)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		i->second->convert(*dest_mode);
+		i->second->convert(dest_mode);
 	}
 }

@@ -123,8 +123,8 @@ namespace SlavGPS {
 		static GSList * image_wp_make_list(Waypoints & waypoints);
 
 
-		static void waypoints_convert(Waypoints & waypoints, VikCoordMode * dest_mode);
-		static void track_convert(Tracks & tracks, VikCoordMode * dest_mode);
+		static void waypoints_convert(Waypoints & waypoints, VikCoordMode dest_mode);
+		static void tracks_convert(Tracks & tracks, VikCoordMode dest_mode);
 	};
 
 
