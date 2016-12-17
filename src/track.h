@@ -151,6 +151,7 @@ namespace SlavGPS {
 	*/
 
 	class Track : public Sublayer {
+		Q_OBJECT
 	public:
 
 		Track();
