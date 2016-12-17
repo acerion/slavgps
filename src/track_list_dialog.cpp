@@ -101,10 +101,10 @@ static void track_select_cb(GtkTreeSelection * selection, void * data)
 
 /* Instead of hooking automatically on treeview item selection,
    this is performed on demand via the specific menu request. */
-void TrackListDialog::track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid)
+void TrackListDialog::track_select(LayerTRW * trw, Track * trk)
 {
-	if (trk_uid == SG_UID_INITIAL || trk_uid == SG_UID_NONE) {
-		qDebug() << "EE: Track List Dialog: track uid invalid:" << trk_uid;
+	if (!trw || !trk) {
+		qDebug() << "EE: Track List Dialog: layer or track is NULL:" << (qintptr) trw << (qintptr) trk;
 		return;
 	}
 
@@ -136,7 +136,6 @@ void TrackListDialog::track_view_cb(void)
 {
 	LayerTRW * trw = this->menu_data.trw;
 	Track * trk = this->menu_data.trk;
-	sg_uid_t uid = this->menu_data.trk_uid;
 	Viewport * viewport = this->menu_data.viewport;
 
 
@@ -149,7 +148,7 @@ void TrackListDialog::track_view_cb(void)
 
 	trw->zoom_to_show_latlons(viewport, maxmin);
 
-	this->track_select(trw, trk, uid);
+	this->track_select(trw, trk);
 }
 
 
@@ -293,40 +292,37 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * event)
 	qDebug() << "II: Track List: selected track" << child->text();
 
 	child = parent_item->child(index.row(), TRACK_POINTER_COLUMN);
-	QVariant variant = child->data(RoleLayerData);
-	Track * trk = (Track *) variant.toULongLong();
-
+	Track * trk = child->data(RoleLayerData).value<Track *>();
+	if (!trk) {
+		qDebug() << "EE: Track List Dialog: null track in context menu handler";
+		return;
+	}
 
 	child = parent_item->child(index.row(), LAYER_POINTER_COLUMN);
-	variant = child->data(RoleLayerData);
-	LayerTRW * trw = (LayerTRW *) variant.value<Layer *>();
+	LayerTRW * trw = (LayerTRW *) child->data(RoleLayerData).value<Layer *>();
 	if (trw->type != LayerType::TRW) {
 		qDebug() << "EE: Track List: layer type is not TRW:" << (int) trw->type;
 		return;
 	}
 
-	if (trk->uid) { /* TODO: compare to constant. */
-		this->menu_data.trw = trw;
-		this->menu_data.trk = trk;
-		this->menu_data.trk_uid = trk->uid;
-		this->menu_data.viewport = trw->get_window()->get_viewport();
 
-		QMenu menu(this);
+	this->menu_data.trw = trw;
+	this->menu_data.trk = trk;
+	this->menu_data.viewport = trw->get_window()->get_viewport();
+
+	QMenu menu(this);
 #if 0
-		/* When multiple rows are selected, the number of applicable operation is lower. */
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
-		if (gtk_tree_selection_count_selected_rows (selection) != 1) {
-			this->add_copy_menu_items(QMenu & menu);
-		}
-
-		this->add_copy_menu_item(menu);
-#else
-		this->add_menu_items(menu);
-#endif
-		menu.exec(QCursor::pos());
-		return;
+	/* When multiple rows are selected, the number of applicable operation is lower. */
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
+	if (gtk_tree_selection_count_selected_rows (selection) != 1) {
+		this->add_copy_menu_items(QMenu & menu);
 	}
 
+	this->add_copy_menu_item(menu);
+#else
+	this->add_menu_items(menu);
+#endif
+	menu.exec(QCursor::pos());
 	return;
 }
 
@@ -529,7 +525,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 	/* TRACK_POINTER_COLUMN */
 	item = new QStandardItem();
-	variant = QVariant::fromValue((qulonglong) trk);
+	variant = QVariant::fromValue(trk);
 	item->setData(variant, RoleLayerData);
 	items << item;
 

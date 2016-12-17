@@ -73,7 +73,7 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		void add_copy_menu_item(QMenu & menu);
 
-		void track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid);
+		void track_select(LayerTRW * trw, Track * trk);
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;
@@ -87,7 +87,6 @@ namespace SlavGPS {
 		struct {
 			LayerTRW * trw;
 			Track * trk;
-			sg_uid_t trk_uid;
 			Viewport * viewport;
 		} menu_data;
 	};
