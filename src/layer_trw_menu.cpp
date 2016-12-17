@@ -350,22 +350,22 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	QAction * qa = NULL;
 	bool rv = false;
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINT
-	    || this->menu_data->sublayer->type == SublayerType::TRACK
-	    || this->menu_data->sublayer->type == SublayerType::ROUTE) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::TRACK
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 
 		rv = true;
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("&Properties")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_item_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->property_dialog) {
 				qa->setEnabled(false);
 			}
 		}
-		if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 			Track * trk = this->routes.at(this->menu_data->sublayer->uid);
 			if (trk && trk->property_dialog) {
 				qa->setEnabled(false);
@@ -373,19 +373,19 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 	}
 
-	if (this->menu_data->sublayer->type == SublayerType::TRACK
-	    || this->menu_data->sublayer->type == SublayerType::ROUTE) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("P&rofile")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_item_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->property_dialog) {
 				qa->setEnabled(false);
 			}
 		}
-		if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 			Track * trk = this->routes.at(this->menu_data->sublayer->uid);
 			if (trk && trk->property_dialog) {
 				qa->setEnabled(false);
@@ -393,9 +393,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 	}
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINT
-	    || this->menu_data->sublayer->type == SublayerType::TRACK
-	    || this->menu_data->sublayer->type == SublayerType::ROUTE) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::TRACK
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 
 
 
@@ -408,7 +408,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QString(_("Delete")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_sublayer_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::WAYPOINT) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT) {
 
 			/* Always create separator as now there is always at least the transform menu option. */
 			menu.addSeparator();
@@ -467,9 +467,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINTS
-	    || this->menu_data->sublayer->type == SublayerType::TRACKS
-	    || this->menu_data->sublayer->type == SublayerType::ROUTES) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::TRACKS
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTES) {
 
 		qa = menu.addAction(QIcon::fromTheme("edit-paste"), QString(_("Paste")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
@@ -486,7 +486,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->layers_panel && (this->menu_data->sublayer->type == SublayerType::WAYPOINTS || this->menu_data->sublayer->type == SublayerType::WAYPOINT)) {
+	if (this->menu_data->layers_panel && (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS || this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT)) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("&New Waypoint...")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_waypoint_cb()));
@@ -494,7 +494,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINTS) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS) {
 		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View All Waypoints")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_waypoints_cb()));
 
@@ -526,7 +526,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 
-	if (this->menu_data->sublayer->type == SublayerType::TRACKS) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACKS) {
 		rv = true;
 
 		if (this->current_trk && !this->current_trk->is_route) {
@@ -571,7 +571,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->sublayer->type == SublayerType::ROUTES) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTES) {
 		rv = true;
 
 		if (this->current_trk && this->current_trk->is_route) {
@@ -618,9 +618,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINTS
-	    || this->menu_data->sublayer->type == SublayerType::TRACKS
-	    || this->menu_data->sublayer->type == SublayerType::ROUTES) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::TRACKS
+	    || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTES) {
 
 		QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QString(_("_Sort")));
 
@@ -639,19 +639,19 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), QString(_("&Upload")));
 
-	if (this->menu_data->sublayer->type == SublayerType::TRACK || this->menu_data->sublayer->type == SublayerType::ROUTE) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 
-		if (this->current_trk && this->menu_data->sublayer->type == SublayerType::TRACK && !this->current_trk->is_route) {
+		if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::TRACK && !this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Track")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();
-		} else if (this->current_trk && this->menu_data->sublayer->type == SublayerType::ROUTE && this->current_trk->is_route) {
+		} else if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE && this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();
 		}
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("_View Track")));
 		} else {
 			qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("_View Route")));
@@ -680,7 +680,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_min_alt_cb()));
 
 			/* Routes don't have speeds. */
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = goto_submenu->addAction(QIcon::fromTheme("media-seek-forward"), QString(_("_Maximum Speed")));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_max_speed_cb()));
 			}
@@ -691,7 +691,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			QMenu * combine_submenu = menu.addMenu(QIcon::fromTheme("CONNECT"), QString(_("Co&mbine")));
 
 			/* Routes don't have times or segments... */
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = combine_submenu->addAction(QString(_("&Merge By Time...")));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (merge_by_timestamp_cb()));
 
@@ -702,14 +702,14 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			qa = combine_submenu->addAction(QString(_("Merge &With Other Tracks...")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (merge_with_other_cb()));
 
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = combine_submenu->addAction(QString(_("&Append Track...")));
 			} else {
 				qa = combine_submenu->addAction(QString(_("&Append Route...")));
 			}
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (append_track_cb()));
 
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = combine_submenu->addAction(QString(_("Append _Route...")));
 			} else {
 				qa = combine_submenu->addAction(QString(_("Append _Track...")));
@@ -723,7 +723,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			QMenu * split_submenu = menu.addMenu(QIcon::fromTheme("DISCONNECT"), QString(_("&Split")));
 
 			/* Routes don't have times or segments... */
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = split_submenu->addAction(QString(_("_Split By Time...")));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_timestamp_cb()));
 
@@ -799,7 +799,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 				qa->setToolTip(QString(_("Set unknown elevation values to the last known value")));
 			}
 
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), QString(_("C_onvert to a Route")));
 			} else {
 				qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), QString(_("C_onvert to a Track")));
@@ -807,7 +807,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (convert_track_route_cb()));
 
 			/* Routes don't have timestamps - so these are only available for tracks. */
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = transform_submenu->addAction(QString(_("_Anonymize Times")));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (anonymize_times_cb()));
 				qa->setToolTip(QString(_("Shift timestamps to a relative offset from 1901-01-01")));
@@ -819,21 +819,21 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QIcon::fromTheme("go-back"), QString(_("_Reverse Track")));
 		} else {
 			qa = menu.addAction(QIcon::fromTheme("go-back"), QString(_("_Reverse Route")));
 		}
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (reverse_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 			qa = menu.addAction(QIcon::fromTheme("edit-find"), QString(_("Refine Route...")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (route_refine_cb()));
 		}
 
 		/* ATM This function is only available via the layers panel, due to the method in finding out the maps in use. */
 		if (this->menu_data->layers_panel) {
-			if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), QString(_("Down_load Maps Along Track...")));
 			} else {
 				qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), QString(_("Down_load Maps Along Route...")));
@@ -841,27 +841,27 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_map_along_track_cb()));
 		}
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QIcon::fromTheme("document-save-as"), QString(_("_Export Track as GPX...")));
 		} else {
 			qa = menu.addAction(QIcon::fromTheme("document-save-as"), QString(_("_Export Route as GPX...")));
 		}
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_gpx_track_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QIcon::fromTheme("list-add"), QString(_("E_xtend Track End")));
 		} else {
 			qa = menu.addAction(QIcon::fromTheme("list-add"), QString(_("E_xtend Route End")));
 		}
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_cb()));
 
-		if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
+		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 			qa = menu.addAction(QIcon::fromTheme("vik-icon-Route Finder"), QString(_("Extend _Using Route Finder")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_route_finder_cb()));
 		}
 
 		/* ATM can't upload a single waypoint but can do waypoints to a GPS. */
-		if (this->menu_data->sublayer->type != SublayerType::WAYPOINT) {
+		if (this->menu_data->sublayer->sublayer_type != SublayerType::WAYPOINT) {
 
 			qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), QString(_("_Upload to GPS...")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (gps_upload_any_cb()));
@@ -872,7 +872,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	/* These are only made available if a suitable program is installed. */
 	if ((have_astro_program || have_diary_program)
-	    && (this->menu_data->sublayer->type == SublayerType::TRACK || this->menu_data->sublayer->type == SublayerType::WAYPOINT)) {
+	    && (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK || this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT)) {
 
 		if (have_diary_program) {
 			qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QString(_("_Diary")));
@@ -906,14 +906,14 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 #ifdef VIK_CONFIG_GOOGLE
-	if (this->menu_data->sublayer->type == SublayerType::ROUTE && (this->is_valid_google_route(this->menu_data->sublayer->uid))) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE && (this->is_valid_google_route(this->menu_data->sublayer->uid))) {
 		qa = menu.addAction(QIcon::fromTheme("applications-internet"), QString(_("_View Google Directions")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (google_route_webpage_cb()));
 	}
 #endif
 
 	/* Some things aren't usable with routes. */
-	if (this->menu_data->sublayer->type == SublayerType::TRACK) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 #ifdef VIK_CONFIG_OPENSTREETMAP
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), QString(_("Upload to _OSM...")));
 		/* Convert internal pointer into track. */
@@ -946,7 +946,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 #endif
 	}
 
-	if (this->menu_data->sublayer->type == SublayerType::TRACK || this->menu_data->sublayer->type == SublayerType::ROUTE) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 		/* Only show on viewport popmenu when a trackpoint is selected. */
 		if (!this->menu_data->layers_panel && this->selected_tp.valid) {
 
@@ -957,7 +957,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 	}
 
-	if (this->menu_data->sublayer->type == SublayerType::WAYPOINTS || this->menu_data->sublayer->type == SublayerType::WAYPOINT) {
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS || this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT) {
 
 		QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QString(_("&Transform")));
 		{
