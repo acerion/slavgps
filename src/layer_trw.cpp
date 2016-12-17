@@ -3139,6 +3139,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 
 	wp->set_name(name);
 	wp->set_uid(global_wp_uid);
+	this->waypoints.insert({{ wp->uid, wp }});
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3163,7 +3164,6 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 	}
 
 	this->highest_wp_number_add_wp(name);
-	waypoints.insert({{ wp->uid, wp }});
 }
 
 
@@ -3178,6 +3178,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 
 	trk->set_name(name);
 	trk->set_uid(global_tr_uuid);
+	this->tracks.insert({{ trk->uid, trk }});
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3202,8 +3203,6 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
 
-	tracks.insert({{ trk->uid, trk }});
-
 	this->update_treeview(trk);
 }
 
@@ -3219,6 +3218,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 
 	trk->set_name(name);
 	trk->set_uid(global_rt_uuid);
+	this->routes.insert({{ trk->uid, trk }});
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3236,8 +3236,6 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		/* Sort now as post_read is not called on a realized route. */
 		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 	}
-
-	routes.insert({{ trk->uid, trk }});
 
 	this->update_treeview(trk);
 }
@@ -4852,34 +4850,46 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 		return;
 	}
 
-	if (this->selected_tp.iter != this->current_trk->begin()
-	    && this->selected_tp.iter != std::prev(this->current_trk->end())) {
-
-		char * name = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
-		if (name) {
-
-			/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
-			Trackpoint * selected = new Trackpoint(**this->selected_tp.iter);
-
-			Track * new_track = new Track(*this->current_trk, std::next(this->selected_tp.iter), this->current_trk->end());
-			new_track->push_front(selected);
-
-			this->current_trk->erase(std::next(this->selected_tp.iter), this->current_trk->end());
-			this->current_trk->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
-
-			this->selected_tp.iter = new_track->begin();
-			this->current_trk = new_track;
-			this->current_trk->calculate_bounds();
-
-			/* kamilTODO: how it's possible that a new track will already have an uid? */
-			qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
-
-			this->current_trk = new_track;
-
-			this->emit_changed();
-			free(name);
-		}
+	if (this->selected_tp.iter == this->current_trk->begin()) {
+		/* First TP in track. Don't split. This function shouldn't be called at all. */
+		qDebug() << "WW: Layer TRW: attempting to split track on first tp";
+		return;
 	}
+
+	if (this->selected_tp.iter == std::prev(this->current_trk->end())) {
+		/* Last TP in track. Don't split. This function shouldn't be called at all. */
+		qDebug() << "WW: Layer TRW: attempting to split track on last tp";
+		return;
+	}
+
+	char * name = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
+	if (!name) {
+		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->current_trk->name;
+		return;
+	}
+
+	/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
+	Trackpoint * selected = new Trackpoint(**this->selected_tp.iter);
+
+	Track * new_track = new Track(*this->current_trk, std::next(this->selected_tp.iter), this->current_trk->end());
+	new_track->push_front(selected);
+
+	this->current_trk->erase(std::next(this->selected_tp.iter), this->current_trk->end());
+	this->current_trk->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
+
+	this->selected_tp.iter = new_track->begin();
+	this->current_trk = new_track;
+	this->current_trk->calculate_bounds();
+
+	/* kamilTODO: how it's possible that a new track will already have an uid? */
+	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
+
+	this->current_trk = new_track;
+
+	this->add_track(new_track, name);
+
+	this->emit_changed();
+	free(name);
 }
 
 
