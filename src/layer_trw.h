@@ -405,7 +405,6 @@ namespace SlavGPS {
 		} selected_tp;
 
 		Track * selected_track = NULL;  /* Track, to which belongs currently selected trackpoint (tp)? */
-		sg_uid_t current_tp_uid = 0;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
 
 		PropertiesDialogTP * tpwin = NULL;
 
@@ -453,10 +452,10 @@ namespace SlavGPS {
 		std::vector<QPen> track_pens;
 		QPen track_1color_pen;
 		QColor track_color;
-		QPen current_track_pen;
+		QPen current_trk_pen;
 		/* Separate pen for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
-		QPen current_track_new_point_pen;
+		QPen current_trk_new_point_pen;
 
 		QPen track_bg_pen;
 		QColor track_bg_color;
@@ -473,8 +472,10 @@ namespace SlavGPS {
 		GdkFunction wpbgand;
 
 
+		/* Track or Route that user currently operates.
+		   Reference to an object already existing in ::tracks or ::routes. */
+		Track * current_trk = NULL;
 
-		Track * current_track = NULL; /* ATM shared between new tracks and new routes. */
 		uint16_t ct_x1;
 		uint16_t ct_y1;
 		uint16_t ct_x2;

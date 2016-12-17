@@ -127,8 +127,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	menu.addSeparator();
 
-	if (this->current_track) {
-		if (this->current_track->is_route) {
+	if (this->current_trk) {
+		if (this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 		} else {
 			qa = menu.addAction(QString(_("_Finish Track")));
@@ -202,12 +202,12 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), QString(_("New &Track")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_track_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!this->current_trk);
 
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), QString(_("New &Route")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_route_cb()));
 		/* Make it available only when a new route is *not* already in progress. */
-		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!this->current_trk);
 	}
 
 
@@ -529,7 +529,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	if (this->menu_data->sublayer->type == SublayerType::TRACKS) {
 		rv = true;
 
-		if (this->current_track && !this->current_track->is_route) {
+		if (this->current_trk && !this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("&Finish Track")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 
@@ -542,7 +542,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("&New Track")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_track_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!this->current_trk);
 
 		qa = menu.addAction(QIcon::fromTheme("list-remove"), QString(_("Delete &All Tracks")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_tracks_cb()));
@@ -574,7 +574,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	if (this->menu_data->sublayer->type == SublayerType::ROUTES) {
 		rv = true;
 
-		if (this->current_track && this->current_track->is_route) {
+		if (this->current_trk && this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 			/* Reuse finish track method. */
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
@@ -588,7 +588,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("_New Route")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_route_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!this->current_trk);
 
 		qa = menu.addAction(QIcon::fromTheme("list-delete"), QString(_("Delete _All Routes")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_routes_cb()));
@@ -641,11 +641,11 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	if (this->menu_data->sublayer->type == SublayerType::TRACK || this->menu_data->sublayer->type == SublayerType::ROUTE) {
 
-		if (this->current_track && this->menu_data->sublayer->type == SublayerType::TRACK && !this->current_track->is_route) {
+		if (this->current_trk && this->menu_data->sublayer->type == SublayerType::TRACK && !this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Track")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();
-		} else if (this->current_track && this->menu_data->sublayer->type == SublayerType::ROUTE && this->current_track->is_route) {
+		} else if (this->current_trk && this->menu_data->sublayer->type == SublayerType::ROUTE && this->current_trk->is_route) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();

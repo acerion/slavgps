@@ -390,7 +390,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 			free(name_start);
 		}
 		/* Don't draw end label if this is the one being created. */
-		if (trk != dp->trw->current_track) {
+		if (trk != dp->trw->current_trk) {
 			if (trk->draw_name_mode == TRACK_DRAWNAME_END
 			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END
 			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
@@ -539,8 +539,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 	bool drawing_highlight = false;
 	/* Current track - used for creation. */
-	if (trk == dp->trw->current_track) {
-		main_pen = dp->trw->current_track_pen;
+	if (trk == dp->trw->current_trk) {
+		main_pen = dp->trw->current_trk_pen;
 	} else {
 		if (dp->highlight) {
 			/* Draw all tracks of the layer in special colour.

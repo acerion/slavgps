@@ -651,7 +651,7 @@ void LayerTRW::delete_sublayer(Sublayer * sublayer)
 
 void LayerTRW::cut_sublayer(Sublayer * sublayer)
 {
-	if (!sublayer == SG_UID_NONE) {
+	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: 'cut sublayer' received NULL sublayer";
 		return;
 	}
@@ -1575,15 +1575,15 @@ void LayerTRW::new_track_pens(void)
 	/* Ensure new track drawing heeds line thickness setting,
 	   however always have a minium of 2, as 1 pixel is really narrow. */
 	int new_track_width = (this->line_thickness < 2) ? 2 : this->line_thickness;
-	this->current_track_pen = QPen(QColor("#FF0000"));
-	this->current_track_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_track_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	this->current_trk_pen = QPen(QColor("#FF0000"));
+	this->current_trk_pen.setWidth(new_track_width);
+	//gdk_gc_set_line_attributes(this->current_trk_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
 
 	/* 'new_point' pen is exactly the same as the current track pen. */
-	this->current_track_new_point_pen = QPen(QColor("#FF0000"));
-	this->current_track_new_point_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_track_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	this->current_trk_new_point_pen = QPen(QColor("#FF0000"));
+	this->current_trk_new_point_pen.setWidth(new_track_width);
+	//gdk_gc_set_line_attributes(this->current_trk_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
 	this->track_pens.clear();
 	this->track_pens.resize(VIK_TRW_LAYER_TRACK_GC);
@@ -2081,9 +2081,9 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 		need2free = true;
 	} else {
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
-		tp_prev = selected_track->get_tp_prev(tp);
+		tp_prev = this->current_trk->get_tp_prev(tp);
 	}
-	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, selected_track, NAN);
+	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_trk, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 	free(msg);
 
@@ -2978,19 +2978,19 @@ void LayerTRW::new_track_create_common(char * name)
 {
 	qDebug() << "II: Layer TRW: new track create common, track name" << name;
 
-	this->current_track = new Track();
-	this->current_track->set_defaults();
-	this->current_track->visible = true;
+	this->current_trk = new Track();
+	this->current_trk->set_defaults();
+	this->current_trk->visible = true;
 
 	if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
 		/* Create track with the preferred colour from the layer properties. */
-		this->current_track->color = this->track_color;
+		this->current_trk->color = this->track_color;
 	} else {
-		this->current_track->color = QColor("#aa22dd"); //QColor("#000000");
+		this->current_trk->color = QColor("#aa22dd"); //QColor("#000000");
 	}
 
-	this->current_track->has_color = true;
-	this->add_track(this->current_track, name);
+	this->current_trk->has_color = true;
+	this->add_track(this->current_trk, name);
 }
 
 
@@ -2998,7 +2998,7 @@ void LayerTRW::new_track_create_common(char * name)
 
 void LayerTRW::new_track_cb() /* Slot. */
 {
-	if (!this->current_track) {
+	if (!this->current_trk) {
 		char * name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
 		this->new_track_create_common(name);
 		free(name);
@@ -3013,14 +3013,14 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 void LayerTRW::new_route_create_common(char * name)
 {
-	this->current_track = new Track();
-	this->current_track->set_defaults();
-	this->current_track->visible = true;
-	this->current_track->is_route = true;
+	this->current_trk = new Track();
+	this->current_trk->set_defaults();
+	this->current_trk->visible = true;
+	this->current_trk->is_route = true;
 	/* By default make all routes red. */
-	this->current_track->has_color = true;
-	this->current_track->color = QColor("red");
-	this->add_route(this->current_track, name);
+	this->current_trk->has_color = true;
+	this->current_trk->color = QColor("red");
+	this->add_route(this->current_trk, name);
 }
 
 
@@ -3028,7 +3028,7 @@ void LayerTRW::new_route_create_common(char * name)
 
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
-	if (!this->current_track) {
+	if (!this->current_trk) {
 		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
 		this->new_route_create_common(name);
 		free(name);
@@ -3058,7 +3058,7 @@ void LayerTRW::full_view_routes_cb(void) /* Slot. */
 
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
-	this->current_track = NULL;
+	this->current_trk = NULL;
 	this->route_finder_started = false;
 	this->emit_changed();
 }
@@ -3162,7 +3162,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 	}
 
 	this->highest_wp_number_add_wp(name);
-	waypoints.insert({{ global_wp_uid, wp }});
+	waypoints.insert({{ wp->uid, wp }});
 }
 
 
@@ -3201,7 +3201,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
 
-	tracks.insert({{ global_tr_uuid, trk }});
+	tracks.insert({{ trk->uid, trk }});
 
 	this->update_treeview(trk);
 }
@@ -3236,7 +3236,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 	}
 
-	routes.insert({{ global_rt_uuid, trk }});
+	routes.insert({{ trk->uid, trk }});
 
 	this->update_treeview(trk);
 }
@@ -3247,7 +3247,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 /* to be called whenever a track has been deleted or may have been changed. */
 void LayerTRW::cancel_tps_of_track(Track * trk)
 {
-	if (this->selected_track == trk) {
+	if (this->current_trk == trk) {
 		this->cancel_current_tp(false);
 	}
 }
@@ -3323,19 +3323,19 @@ void LayerTRW::filein_add_waypoint(char * name, Waypoint * wp)
 
 void LayerTRW::filein_add_track(char * name, Track * trk)
 {
-	if (this->route_finder_append && this->current_track) {
+	if (this->route_finder_append && this->current_trk) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
 
 		/* Enforce end of current track equal to start of tr. */
-		Trackpoint * cur_end = this->current_track->get_tp_last();
+		Trackpoint * cur_end = this->current_trk->get_tp_last();
 		Trackpoint * new_start = trk->get_tp_first();
 		if (cur_end && new_start) {
 			if (!vik_coord_equals(&cur_end->coord, &new_start->coord)) {
-				this->current_track->add_trackpoint(new Trackpoint(*cur_end), false);
+				this->current_trk->add_trackpoint(new Trackpoint(*cur_end), false);
 			}
 		}
 
-		this->current_track->steal_and_append_trackpoints(trk);
+		this->current_trk->steal_and_append_trackpoints(trk);
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
@@ -3472,11 +3472,9 @@ bool LayerTRW::delete_track(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_track) {
-		this->current_track = NULL;
-		selected_track = NULL;
-		current_tp_uid = 0;
-		moving_tp = false;
+	if (trk == this->current_trk) {
+		this->current_trk = NULL;
+		this->moving_tp = false;
 		this->route_finder_started = false;
 	}
 
@@ -3513,11 +3511,9 @@ bool LayerTRW::delete_route(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_track) {
-		this->current_track = NULL;
-		selected_track = NULL;
-		current_tp_uid = 0;
-		moving_tp = false;
+	if (trk == this->current_trk) {
+		this->current_trk = NULL;
+		this->moving_tp = false;
 	}
 
 	bool was_visible = trk->visible;
@@ -3626,9 +3622,9 @@ bool LayerTRW::delete_track_by_name(const char * name, bool is_route)
 
 void LayerTRW::delete_all_routes()
 {
-	this->current_track = NULL;
+	this->current_trk = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->selected_track) {
+	if (this->current_trk) {
 		this->cancel_current_tp(false);
 	}
 
@@ -3648,9 +3644,9 @@ void LayerTRW::delete_all_routes()
 
 void LayerTRW::delete_all_tracks()
 {
-	this->current_track = NULL;
+	this->current_trk = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->selected_track) {
+	if (this->current_trk) {
 		this->cancel_current_tp(false);
 	}
 
@@ -4031,7 +4027,7 @@ void LayerTRW::extend_track_end_cb(void)
 		return;
 	}
 
-	this->current_track = trk;
+	this->current_trk = trk;
 #ifdef K
 	this->get_window()->enable_layer_tool(LayerType::TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 #endif
@@ -4057,7 +4053,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 #ifdef K
 	this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_ROUTE_FINDER);
 #endif
-	this->current_track = trk;
+	this->current_trk = trk;
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
@@ -4841,29 +4837,29 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 		return;
 	}
 
-	if (this->selected_tp.iter != this->selected_track->begin()
-	    && this->selected_tp.iter != std::prev(this->selected_track->end())) {
+	if (this->selected_tp.iter != this->current_trk->begin()
+	    && this->selected_tp.iter != std::prev(this->current_trk->end())) {
 
-		char * name = this->new_unique_sublayer_name(sublayer_type, this->selected_track->name);
+		char * name = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
 		if (name) {
 
 			/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
 			Trackpoint * selected = new Trackpoint(**this->selected_tp.iter);
 
-			Track * new_track = new Track(*this->selected_track, std::next(this->selected_tp.iter), this->selected_track->end());
+			Track * new_track = new Track(*this->current_trk, std::next(this->selected_tp.iter), this->current_trk->end());
 			new_track->push_front(selected);
 
-			this->selected_track->erase(std::next(this->selected_tp.iter), this->selected_track->end());
-			this->selected_track->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
+			this->current_trk->erase(std::next(this->selected_tp.iter), this->current_trk->end());
+			this->current_trk->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
 
 			this->selected_tp.iter = new_track->begin();
-			this->selected_track = new_track;
-			this->selected_track->calculate_bounds();
+			this->current_trk = new_track;
+			this->current_trk->calculate_bounds();
 
 			/* kamilTODO: how it's possible that a new track will already have an uid? */
 			qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
 
-			this->current_tp_uid = new_track->uid;
+			this->current_trk = new_track;
 
 			this->emit_changed();
 			free(name);
@@ -5097,8 +5093,8 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
 		/* Set to current to the available adjacent trackpoint. */
 		this->selected_tp.iter = new_tp_iter;
 
-		if (this->selected_track) {
-			this->selected_track->calculate_bounds();
+		if (this->current_trk) {
+			this->current_trk->calculate_bounds();
 		}
 	} else {
 		this->cancel_current_tp(false);
@@ -6105,7 +6101,7 @@ char const * LayerTRW::sublayer_rename_request(Sublayer * sublayer, const char *
 
 		/* Update any subwindows that could be displaying this track which has changed name.
 		   Only one Track Edit Window. */
-		if (this->selected_track == trk && this->tpwin) {
+		if (this->current_trk == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
 
@@ -6143,7 +6139,7 @@ char const * LayerTRW::sublayer_rename_request(Sublayer * sublayer, const char *
 
 		/* Update any subwindows that could be displaying this track which has changed name.
 		   Only one Track Edit Window. */
-		if (this->selected_track == trk && this->tpwin) {
+		if (this->current_trk == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
 
@@ -6231,12 +6227,12 @@ void LayerTRW::insert_tp_beside_current_tp(bool before)
 	Trackpoint * tp_other = NULL;
 
 	if (before) {
-		if (this->selected_tp.iter == this->selected_track->begin()) {
+		if (this->selected_tp.iter == this->current_trk->begin()) {
 			return;
 		}
 		tp_other = *std::prev(this->selected_tp.iter);
 	} else {
-		if (std::next(this->selected_tp.iter) == this->selected_track->end()) {
+		if (std::next(this->selected_tp.iter) == this->current_trk->end()) {
 			return;
 		}
 		tp_other = *std::next(this->selected_tp.iter);
@@ -6250,17 +6246,11 @@ void LayerTRW::insert_tp_beside_current_tp(bool before)
 		/* Insert new point into the appropriate trackpoint list,
 		   either before or after the current trackpoint as directed. */
 
-		Track * trk = this->tracks.at(this->current_tp_uid);
-		if (!trk) {
-			/* Otherwise try routes. */
-			trk = this->routes.at(this->current_tp_uid);
+		if (this->current_trk) {
+			this->current_trk->insert(tp_current, tp_new, before);
+		} else {
+			/* TODO: under which conditions this ::insert_tp_beside_current_tp() would be called and ->current_trk would be NULL? */
 		}
-
-		if (!trk) {
-			return;
-		}
-
-		trk->insert(tp_current, tp_new, before);
 	}
 }
 
@@ -6289,8 +6279,7 @@ void LayerTRW::cancel_current_tp(bool destroy)
 	if (this->selected_tp.valid) {
 		this->selected_tp.valid = false;
 
-		this->selected_track = NULL;
-		this->current_tp_uid = 0;
+		this->current_trk = NULL;
 		this->emit_changed();
 	}
 }
@@ -6300,12 +6289,12 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 void LayerTRW::my_tpwin_set_tp()
 {
-	Track * trk = this->selected_track;
+	Track * trk = this->current_trk;
 	VikCoord vc;
 	/* Notional center of a track is simply an average of the bounding box extremities. */
 	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
-	this->tpwin->set_tp(this->selected_track, &this->selected_tp.iter, trk->name, this->selected_track->is_route);
+	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->is_route);
 }
 
 
@@ -6324,23 +6313,18 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 	}
 
 	if (response == SG_TRACK_SPLIT
-	    && this->selected_tp.iter != this->selected_track->begin()
-	    && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+	    && this->selected_tp.iter != this->current_trk->begin()
+	    && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
-		this->split_at_selected_trackpoint(this->selected_track->is_route ? SublayerType::ROUTE : SublayerType::TRACK);
+		this->split_at_selected_trackpoint(this->current_trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK);
 		this->my_tpwin_set_tp();
 
 	} else if (response == SG_TRACK_DELETE) {
 
-		Track * tr = this->tracks.at(this->current_tp_uid);
-		if (tr == NULL) {
-			tr = this->routes.at(this->current_tp_uid);
-		}
-		if (tr == NULL) {
+		if (!this->current_trk) {
 			return;
 		}
-
-		this->trackpoint_selected_delete(tr);
+		this->trackpoint_selected_delete(this->current_trk);
 
 		if (this->selected_tp.valid) {
 			/* Reset dialog with the available adjacent trackpoint. */
@@ -6350,24 +6334,24 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		this->emit_changed();
 
 	} else if (response == SG_TRACK_FORWARD
-		   && this->selected_track
-		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+		   && this->current_trk
+		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
 		this->selected_tp.iter++;
 		this->my_tpwin_set_tp();
 		this->emit_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
 	} else if (response == SG_TRACK_BACK
-		   && this->selected_track
-		   && this->selected_tp.iter != this->selected_track->begin()) {
+		   && this->current_trk
+		   && this->selected_tp.iter != this->current_trk->begin()) {
 
 		this->selected_tp.iter--;
 		this->my_tpwin_set_tp();
 		this->emit_changed();
 
 	} else if (response == SG_TRACK_INSERT
-		   && this->selected_track
-		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+		   && this->current_trk
+		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
 		this->insert_tp_beside_current_tp(false);
 		this->emit_changed();
@@ -6492,7 +6476,7 @@ void LayerTRW::trackpoint_properties_show()
 
 
 	if (this->selected_tp.valid) {
-		if (this->selected_track) {
+		if (this->current_trk) {
 			this->my_tpwin_set_tp();
 		}
 	}
