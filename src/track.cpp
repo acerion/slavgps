@@ -185,8 +185,13 @@ void Track::free()
 
 
 
-Track::Track()
+Track::Track(bool is_route)
 {
+	if (is_route) {
+		this->sublayer_type = SublayerType::ROUTE;
+	} else {
+		this->sublayer_type = SublayerType::TRACK;
+	}
 	this->trackpointsB = new TrackPoints;
 
 	memset(&color, 0, sizeof (GdkColor));
@@ -207,7 +212,7 @@ Track::Track()
  *
  * Returns: the copied Track.
  */
-Track::Track(const Track & from) : Track()
+Track::Track(const Track & from) : Track(from.sublayer_type == SublayerType::ROUTE)
 {
 	/* Copy points. */
 	for (auto iter = from.trackpointsB->begin(); iter != from.trackpointsB->end(); iter++) {
@@ -217,7 +222,6 @@ Track::Track(const Track & from) : Track()
 
 	//this->name = g_strdup(from.name); /* kamilFIXME: in original code initialization of name is duplicated. */
 	this->visible = from.visible;
-	this->is_route = from.is_route;
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;
 
@@ -1785,10 +1789,9 @@ void Track::marshall(uint8_t **data, size_t *datalen)
  */
 Track * Track::unmarshall(uint8_t *data, size_t datalen)
 {
-	Track * new_trk = new Track();
+	Track * new_trk = new Track(((Track *)data)->sublayer_type == SublayerType::ROUTE);
 	/* Basic properties: */
 	new_trk->visible = ((Track *)data)->visible;
-	new_trk->is_route = ((Track *)data)->is_route;
 	new_trk->draw_name_mode = ((Track *)data)->draw_name_mode;
 	new_trk->max_number_dist_labels = ((Track *)data)->max_number_dist_labels;
 	new_trk->has_color = ((Track *)data)->has_color;

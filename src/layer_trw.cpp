@@ -1514,7 +1514,9 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
 	init_drawing_params(&dp, this, viewport, true);
 
 	if (trk) {
-		bool draw = (trk->is_route && this->routes_visible) || (!trk->is_route && this->tracks_visible);
+		bool draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible)
+			|| (trk->sublayer_type == SublayerType::TRACK && this->tracks_visible);
+
 		if (draw) {
 			trw_layer_draw_track_cb(NULL, trk, &dp);
 		}
@@ -1648,7 +1650,7 @@ void LayerTRW::realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex c
 			timestamp = tpt->timestamp;
 		}
 
-		trk->set_uid(i->first);
+		//trk->set_uid(i->first);
 		a_tree_view->add_sublayer(trk, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
 
 		delete icon;
@@ -1670,7 +1672,7 @@ void LayerTRW::realize_waypoints(Waypoints & waypoints, Layer * parent_layer, Tr
 			timestamp = i->second->timestamp;
 		}
 
-		i->second->set_uid(i->first);
+		//i->second->set_uid(i->first);
 		a_tree_view->add_sublayer(i->second, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
 		if (!i->second->visible) {
@@ -2978,7 +2980,7 @@ void LayerTRW::new_track_create_common(char * name)
 {
 	qDebug() << "II: Layer TRW: new track create common, track name" << name;
 
-	this->current_trk = new Track();
+	this->current_trk = new Track(false);
 	this->current_trk->set_defaults();
 	this->current_trk->visible = true;
 
@@ -3013,10 +3015,9 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 void LayerTRW::new_route_create_common(char * name)
 {
-	this->current_trk = new Track();
+	this->current_trk = new Track(true);
 	this->current_trk->set_defaults();
 	this->current_trk->visible = true;
-	this->current_trk->is_route = true;
 	/* By default make all routes red. */
 	this->current_trk->has_color = true;
 	this->current_trk->color = QColor("red");
@@ -3137,6 +3138,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 	global_wp_uid++;
 
 	wp->set_name(name);
+	wp->set_uid(global_wp_uid);
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3151,7 +3153,6 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		/* Visibility column always needed for waypoints. */
-		wp->set_uid(global_wp_uid);
 		this->tree_view->add_sublayer(wp, this, this->waypoints_node->get_index(), name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
@@ -3176,6 +3177,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 	global_tr_uuid++;
 
 	trk->set_name(name);
+	trk->set_uid(global_tr_uuid);
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3191,7 +3193,6 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for tracks. */
-		trk->set_uid(global_tr_uuid);
 		this->tree_view->add_sublayer(trk, this, this->tracks_node->get_index(), name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
@@ -3217,6 +3218,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 	global_rt_uuid++;
 
 	trk->set_name(name);
+	trk->set_uid(global_rt_uuid);
 
 	if (this->realized) {
 		/* Do we need to create the sublayer?
@@ -3226,7 +3228,6 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for routes. */
-		trk->set_uid(global_rt_uuid);
 		this->tree_view->add_sublayer(trk, this, this->routes_node->get_index(), name, NULL, true, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
@@ -3341,7 +3342,7 @@ void LayerTRW::filein_add_track(char * name, Track * trk)
 	} else {
 
 		/* No more uniqueness of name forced when loading from a file. */
-		if (trk->is_route) {
+		if (trk->sublayer_type == SublayerType::ROUTE) {
 			this->add_route(trk, name);
 		} else {
 			this->add_track(trk, name);
@@ -3951,7 +3952,7 @@ void LayerTRW::convert_track_route_cb(void)
 
 	/* Converting a track to a route can be a bit more complicated,
 	   so give a chance to change our minds: */
-	if (!trk->is_route
+	if (trk->sublayer_type == SublayerType::TRACK
 	    && ((trk->get_segment_count() > 1)
 		|| (trk->get_average_speed() > 0.0))) {
 
@@ -3964,13 +3965,13 @@ void LayerTRW::convert_track_route_cb(void)
 	Track * trk_copy = new Track(*trk);
 
 	/* Convert. */
-	trk_copy->is_route = !trk_copy->is_route;
+	trk_copy->sublayer_type = trk_copy->sublayer_type == SublayerType::ROUTE ? SublayerType::TRACK : SublayerType::ROUTE;
 
 	/* ATM can't set name to self - so must create temporary copy. */
 	char *name = g_strdup(trk_copy->name);
 
 	/* Delete old one and then add new one. */
-	if (trk->is_route) {
+	if (trk->sublayer_type == SublayerType::ROUTE) {
 		this->delete_route(trk);
 		this->add_track(trk_copy, name);
 	} else {
@@ -4029,7 +4030,7 @@ void LayerTRW::extend_track_end_cb(void)
 
 	this->current_trk = trk;
 #ifdef K
-	this->get_window()->enable_layer_tool(LayerType::TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
+	this->get_window()->enable_layer_tool(LayerType::TRW, trk->sublayer_type == SublayerType::ROUTE ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 #endif
 
 	if (!trk->empty()) {
@@ -4541,7 +4542,10 @@ void LayerTRW::merge_with_other_cb(void)
 								  other_tracks_names,
 								  true,
 								  QString(_("Merge with...")),
-								  trk->is_route ? QString(_("Select route to merge with")) : QString(_("Select track to merge with")));
+
+								  trk->sublayer_type == SublayerType::ROUTE
+								  ? QString(_("Select route to merge with"))
+								  : QString(_("Select track to merge with")));
 	delete other_tracks;
 
 	if (merge_list.empty()) {
@@ -4551,7 +4555,7 @@ void LayerTRW::merge_with_other_cb(void)
 
 	for (auto iter = merge_list.begin(); iter != merge_list.end(); iter++) {
 		Track * merge_track = NULL;
-		if (trk->is_route) {
+		if (trk->sublayer_type == SublayerType::ROUTE) {
 			merge_track = this->get_route(iter->toUtf8().data());
 		} else {
 			merge_track = this->get_track(iter->toUtf8().data());
@@ -4560,7 +4564,7 @@ void LayerTRW::merge_with_other_cb(void)
 		if (merge_track) {
 			qDebug() << "II: Layer TRW: we have a merge track";
 			trk->steal_and_append_trackpoints(merge_track);
-			if (trk->is_route) {
+			if (trk->sublayer_type == SublayerType::ROUTE) {
 				this->delete_route(merge_track);
 			} else {
 				this->delete_track(merge_track);
@@ -4607,9 +4611,14 @@ void LayerTRW::append_track_cb(void)
 	std::list<QString> append_list = a_dialog_select_from_list(this->get_window(),
 								   other_tracks_names,
 								   false,
-								   trk->is_route ? _("Append Route"): _("Append Track"),
-								   trk->is_route ? _("Select the route to append after the current route") :
-								   _("Select the track to append after the current track"));
+
+								   trk->sublayer_type == SublayerType::ROUTE
+								   ? _("Append Route")
+								   : _("Append Track"),
+
+								   trk->sublayer_type == SublayerType::ROUTE
+								   ? _("Select the route to append after the current route")
+								   : _("Select the track to append after the current track"));
 
 	/* It's a list, but shouldn't contain more than one other track! */
 	if (append_list.empty()) {
@@ -4620,7 +4629,7 @@ void LayerTRW::append_track_cb(void)
 		/* TODO: at present this uses the first track found by name,
 		   which with potential multiple same named tracks may not be the one selected... */
 		Track * append_track = NULL;
-		if (trk->is_route) {
+		if (trk->sublayer_type == SublayerType::ROUTE) {
 			append_track = this->get_route(iter->toUtf8().data());
 		} else {
 			append_track = this->get_track(iter->toUtf8().data());
@@ -4628,7 +4637,7 @@ void LayerTRW::append_track_cb(void)
 
 		if (append_track) {
 			trk->steal_and_append_trackpoints(append_track);
-			if (trk->is_route) {
+			if (trk->sublayer_type == SublayerType::ROUTE) {
 				this->delete_route(append_track);
 			} else {
 				this->delete_track(append_track);
@@ -4679,8 +4688,14 @@ void LayerTRW::append_other_cb(void)
 	std::list<QString> append_list = a_dialog_select_from_list(this->get_window(),
 								   other_tracks_names,
 								   false,
-								   trk->is_route ? QString(_("Append Track")) : QString(_("Append Route")),
-								   trk->is_route ? QString(_("Select the track to append after the current route")) : QString(_("Select the route to append after the current track")));
+
+								   trk->sublayer_type == SublayerType::ROUTE
+								   ? QString(_("Append Track"))
+								   : QString(_("Append Route")),
+
+								   trk->sublayer_type == SublayerType::ROUTE
+								   ? QString(_("Select the track to append after the current route"))
+								   : QString(_("Select the route to append after the current track")));
 
 	if (append_list.empty()) {
 		return;
@@ -4695,7 +4710,7 @@ void LayerTRW::append_other_cb(void)
 
 		/* Get FROM THE OTHER TYPE list. */
 		Track * append_track = NULL;
-		if (trk->is_route) {
+		if (trk->sublayer_type == SublayerType::ROUTE) {
 			append_track = this->get_track(iter->toUtf8().data());
 		} else {
 			append_track = this->get_route(iter->toUtf8().data());
@@ -4703,7 +4718,7 @@ void LayerTRW::append_other_cb(void)
 
 		if (append_track) {
 
-			if (!append_track->is_route
+			if (append_track->sublayer_type != SublayerType::ROUTE
 			    && ((append_track->get_segment_count() > 1)
 				|| (append_track->get_average_speed() > 0.0))) {
 
@@ -4718,7 +4733,7 @@ void LayerTRW::append_other_cb(void)
 			trk->steal_and_append_trackpoints(append_track);
 
 			/* Delete copied which is FROM THE OTHER TYPE list. */
-			if (trk->is_route) {
+			if (trk->sublayer_type == SublayerType::ROUTE) {
 				this->delete_track(append_track);
 			} else {
 				this->delete_route(append_track);
@@ -5014,7 +5029,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 		Track * copy = new Track(*orig, (*iter)->begin(), (*iter)->end());
 
 		char * new_tr_name = NULL;
-		if (orig->is_route) {
+		if (orig->sublayer_type == SublayerType::ROUTE) {
 			new_tr_name = this->new_unique_sublayer_name(SublayerType::ROUTE, orig->name);
 			this->add_route(copy, new_tr_name);
 		} else {
@@ -5026,7 +5041,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 	}
 
 	/* Remove original track and then update the display. */
-	if (orig->is_route) {
+	if (orig->sublayer_type == SublayerType::ROUTE) {
 		this->delete_route(orig);
 	} else {
 		this->delete_track(orig);
@@ -6294,7 +6309,7 @@ void LayerTRW::my_tpwin_set_tp()
 	/* Notional center of a track is simply an average of the bounding box extremities. */
 	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
-	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->is_route);
+	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->sublayer_type == SublayerType::ROUTE);
 }
 
 
@@ -6316,7 +6331,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 	    && this->selected_tp.iter != this->current_trk->begin()
 	    && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
-		this->split_at_selected_trackpoint(this->current_trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK);
+		this->split_at_selected_trackpoint(this->current_trk->sublayer_type);
 		this->my_tpwin_set_tp();
 
 	} else if (response == SG_TRACK_DELETE) {

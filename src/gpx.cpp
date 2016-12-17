@@ -300,9 +300,8 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 
 	case tt_trk:
 	case tt_rte:
-		c_tr = new Track();
+		c_tr = new Track(current_tag == tt_rte);
 		c_tr->set_defaults();
-		c_tr->is_route = (current_tag == tt_rte) ? true : false;
 		c_tr->visible = true;
 		if (get_attr(attr, "hidden"))
 			c_tr->visible = false;
@@ -1088,7 +1087,7 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(f, "<%s%s>\n  <name>%s</name>\n",
-		trk->is_route ? "rte" : "trk",
+		trk->sublayer_type == SublayerType::ROUTE ? "rte" : "trk",
 		trk->visible ? "" : " hidden=\"hidden\"",
 		tmp);
 	free(tmp);
@@ -1118,7 +1117,7 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	}
 
 	/* No such thing as a rteseg! */
-	if (!trk->is_route) {
+	if (trk->sublayer_type == SublayerType::TRACK) {
 		fprintf(f, "  <trkseg>\n");
 	}
 
@@ -1136,11 +1135,11 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	}
 
 	/* NB apparently no such thing as a rteseg! */
-	if (!trk->is_route) {
+	if (trk->sublayer_type == SublayerType::TRACK) {
 		fprintf(f, "  </trkseg>\n");
 	}
 
-	fprintf(f, "</%s>\n", trk->is_route ? "rte" : "trk");
+	fprintf(f, "</%s>\n", trk->sublayer_type == SublayerType::ROUTE ? "rte" : "trk");
 }
 
 

@@ -394,7 +394,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool visible = trw->visible && trk->visible;
-	visible = visible && (trk->is_route ? trw->get_routes_visibility() : trw->get_tracks_visibility());
+	visible = visible && (trk->sublayer_type == SublayerType::ROUTE ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 	unsigned int trk_duration = 0; /* In minutes. */
 	if (!trk->empty()) {

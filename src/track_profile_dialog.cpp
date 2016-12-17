@@ -2569,9 +2569,9 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		char *new_tr_name;
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				new_tr_name = trw->new_unique_sublayer_name(this->trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
+				new_tr_name = trw->new_unique_sublayer_name(this->trk->sublayer_type,
 									    this->trk->name);
-				if (this->trk->is_route) {
+				if (this->trk->sublayer_type == SublayerType::ROUTE) {
 					trw->add_route(*iter, new_tr_name);
 				} else {
 					trw->add_track(*iter, new_tr_name);
@@ -2584,7 +2584,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		if (tracks) {
 			delete tracks;
 			/* Don't let track destroy this dialog. */
-			if (this->trk->is_route) {
+			if (this->trk->sublayer_type == SublayerType::ROUTE) {
 				trw->delete_route(trk);
 			} else {
 				trw->delete_track(trk);
@@ -2607,12 +2607,12 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			break;
 		}
 
-		char *r_name = trw->new_unique_sublayer_name(this->trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
-							     this->trk->name);
+		char *r_name = trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
 
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
 		/* kamilTODO: originally the constructor was just Track(). Should we really pass original trk to constructor? */
+		/* TODO: move more copying of the stuff into constructor. */
 		Track * trk_right = new Track(*trk, iter, trk->end());
 		trk->erase(iter, trk->end());
 
@@ -2620,9 +2620,9 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			trk_right->set_comment(trk->comment);
 		}
 		trk_right->visible = trk->visible;
-		trk_right->is_route = trk->is_route;
+		trk_right->sublayer_type = trk->sublayer_type;
 
-		if (this->trk->is_route) {
+		if (this->trk->sublayer_type == SublayerType::ROUTE) {
 			trw->add_route(trk_right, r_name);
 		} else {
 			trw->add_track(trk_right, r_name);

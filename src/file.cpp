@@ -949,7 +949,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 			switch (file_type) {
 			case FILE_TYPE_GPX:
 				/* trk defined so can set the option. */
-				options.is_route = trk->is_route;
+				options.is_route = trk->sublayer_type == SublayerType::ROUTE;
 				a_gpx_write_track_file(trk, f, &options);
 				break;
 			default:

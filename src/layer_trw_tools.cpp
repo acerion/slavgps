@@ -447,7 +447,7 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 
 			this->sublayer_add_menu_items(this->track_right_click_menu,
 						      NULL,
-						      trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
+						      trk->sublayer_type,
 						      trk->uid,
 						      trk->index,
 						      viewport);
@@ -1058,7 +1058,7 @@ static bool tool_new_track_key_press_cb(Layer * layer, GdkEventKey * event, Laye
 	if (this->current_trk && event->keyval == GDK_Escape) {
 		/* Bin track if only one point as it's not very useful. */
 		if (this->current_trk->get_tp_count() == 1) {
-			if (this->current_trk->is_route) {
+			if (this->current_trk->sublayer_type == SublayerType::ROUTE) {
 				this->delete_route(this->current_trk);
 			} else {
 				this->delete_track(this->current_trk);
@@ -1152,7 +1152,7 @@ static bool tool_new_track_click_cb(Layer * layer, QMouseEvent * event, LayerToo
 
 	/* If current is a route - switch to new track. */
 	if (event->button() == Qt::LeftButton) {
-		if ((!trw->current_trk || (trw->current_trk && trw->current_trk->is_route))) {
+		if ((!trw->current_trk || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE))) {
 		char *name = trw->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		QString new_name(name);
 		if (a_vik_get_ask_for_create_track_name()) {
@@ -1256,7 +1256,7 @@ static bool tool_new_route_click_cb(Layer * layer, QMouseEvent * event, LayerToo
 	/* If current is a track - switch to new route */
 	if (event->button() == Qt::LeftButton
 	    && (!trw->current_trk
-		|| (trw->current_trk && !trw->current_trk->is_route))) {
+		|| (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE))) {
 
 		char * name = trw->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
 		QString new_name(name);
@@ -1622,10 +1622,10 @@ static bool tool_extended_route_finder_click_cb(Layer * layer, QMouseEvent * eve
 		return false;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
-	else if (trw->current_trk && trw->current_trk->is_route && !trw->current_trk->get_tp_first()) {
+	else if (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE && !trw->current_trk->get_tp_first()) {
 		return trw->tool_new_track_or_route_click(event, tool->viewport);
 
-	} else if ((trw->current_trk && trw->current_trk->is_route)
+	} else if ((trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)
 		   || ((event->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
 
 		struct LatLon start, end;

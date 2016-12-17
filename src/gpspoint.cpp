@@ -395,7 +395,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			}
 		} else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name) {
 			have_read_something = true;
-			Track * trk = new Track();
+			Track * trk = new Track(line_type == GPSPOINT_TYPE_ROUTE);
 			/* NB don't set defaults here as all properties are stored in the GPS_POINT format. */
 			// vik_track_set_defaults (pl);
 
@@ -405,7 +405,6 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			}
 
 			trk->visible = line_visible;
-			trk->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
 
 			if (line_comment) {
 				trk->set_comment(line_comment);
@@ -823,7 +822,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		}
 
 		char * tmp_name = slashdup(trk->name);
-		fprintf(f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name);
+		fprintf(f, "type=\"%s\" name=\"%s\"", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track", tmp_name);
 		free(tmp_name);
 
 		if (trk->comment) {
@@ -867,11 +866,11 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		}
 		fprintf(f, "\n");
 
-		TP_write_info_type tp_write_info = { f, trk->is_route };
+		TP_write_info_type tp_write_info = { f, trk->sublayer_type == SublayerType::ROUTE };
 		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 			a_gpspoint_write_trackpoint(*iter, &tp_write_info);
 		}
-		fprintf(f, "type=\"%send\"\n", trk->is_route ? "route" : "track");
+		fprintf(f, "type=\"%send\"\n", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track");
 	}
 }
 

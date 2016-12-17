@@ -128,7 +128,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	menu.addSeparator();
 
 	if (this->current_trk) {
-		if (this->current_trk->is_route) {
+		if (this->current_trk->sublayer_type == SublayerType::ROUTE) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 		} else {
 			qa = menu.addAction(QString(_("_Finish Track")));
@@ -529,7 +529,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACKS) {
 		rv = true;
 
-		if (this->current_trk && !this->current_trk->is_route) {
+		if (this->current_trk && this->current_trk->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QString(_("&Finish Track")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 
@@ -574,7 +574,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTES) {
 		rv = true;
 
-		if (this->current_trk && this->current_trk->is_route) {
+		if (this->current_trk && this->current_trk->sublayer_type == SublayerType::ROUTE) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 			/* Reuse finish track method. */
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
@@ -641,11 +641,11 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 
-		if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::TRACK && !this->current_trk->is_route) {
+		if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::TRACK && this->current_trk->sublayer_type == SublayerType::TRACK) {
 			qa = menu.addAction(QString(_("_Finish Track")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();
-		} else if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE && this->current_trk->is_route) {
+		} else if (this->current_trk && this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE && this->current_trk->sublayer_type == SublayerType::ROUTE) {
 			qa = menu.addAction(QString(_("_Finish Route")));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
 			menu.addSeparator();

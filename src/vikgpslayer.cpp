@@ -1856,7 +1856,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 
 	if (layer->realtime_record) {
 		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
-		layer->realtime_track = new Track();
+		layer->realtime_track = new Track(false);
 		layer->realtime_track->visible = true;
 		trw->add_track(layer->realtime_track, make_track_name(trw));
 	}

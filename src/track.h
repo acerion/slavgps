@@ -135,7 +135,7 @@ namespace SlavGPS {
 
 
 	/*
-	  Instead of having a separate VikRoute type, routes are
+	  Instead of having a separate Route type, routes are
 	  considered tracks.  Thus all track operations must cope with
 	  a 'route' version.
 
@@ -153,8 +153,9 @@ namespace SlavGPS {
 	class Track : public Sublayer {
 		Q_OBJECT
 	public:
-
-		Track();
+		/* Track/Route differentiation is made either explicitly (through 'is_route' argument)
+		   or implicitly (is copied from 'from' argument'). */
+		Track(bool is_route);
 		Track(const Track& from);
 		Track(const Track& from, TrackPoints::iterator first, TrackPoints::iterator last);
 		~Track();
@@ -255,7 +256,6 @@ namespace SlavGPS {
 
 		TrackPoints * trackpointsB = NULL;
 		bool visible = false;
-		bool is_route = false;
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
 		uint8_t max_number_dist_labels = 0;
 		char * comment = NULL;
