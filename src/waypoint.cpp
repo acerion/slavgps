@@ -20,8 +20,9 @@
  */
 
 #include <glib.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
+#include <mutex>
 
 #include "coords.h"
 #include "coord.h"
@@ -40,9 +41,19 @@ using namespace SlavGPS;
 
 
 
+/* Simple UID implementation using an integer. */
+static sg_uid_t global_wp_uid = SG_UID_INITIAL;
+static std::mutex wp_uid_mutex;
+
+
+
+
 Waypoint::Waypoint()
 {
-	name = strdup(_("Waypoint"));
+	this->name = strdup(_("Waypoint"));
+	wp_uid_mutex.lock();
+	this->uid = ++global_wp_uid;
+	wp_uid_mutex.unlock();
 
 	/* kamilTODO: what about image_width / image_height? */
 }

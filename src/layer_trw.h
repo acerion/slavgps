@@ -180,9 +180,9 @@ namespace SlavGPS {
 
 		bool create_new_tracks(Track * orig, std::list<TrackPoints *> * tracks_data);
 
-		void add_track(Track * trk, char const * name);
-		void add_route(Track * trk, char const * name);
-		void add_waypoint(Waypoint * wp, char const * name);
+		void add_track(Track * trk);
+		void add_route(Track * trk);
+		void add_waypoint(Waypoint * wp);
 
 		Tracks & get_tracks();
 		Tracks & get_routes();
@@ -245,8 +245,8 @@ namespace SlavGPS {
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
 		 * These copy the name, so you should free it if necessary. */
-		void filein_add_waypoint(char * name, Waypoint * wp);
-		void filein_add_track(char * name, Track * trk);
+		void filein_add_waypoint(Waypoint * wp, char const * name);
+		void filein_add_track(Track * trk, char const * name);
 
 
 

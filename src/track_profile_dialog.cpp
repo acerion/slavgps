@@ -2566,19 +2566,18 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
 		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
 		std::list<Track *> * tracks = trk->split_into_segments();
-		char *new_tr_name;
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				new_tr_name = trw->new_unique_sublayer_name(this->trk->sublayer_type,
-									    this->trk->name);
+				char * new_tr_name = trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
+				(*iter)->set_name(new_tr_name);
+				free(new_tr_name);
+
 				if (this->trk->sublayer_type == SublayerType::ROUTE) {
-					trw->add_route(*iter, new_tr_name);
+					trw->add_route(*iter);
 				} else {
-					trw->add_track(*iter, new_tr_name);
+					trw->add_track(*iter);
 				}
 				(*iter)->calculate_bounds();
-
-				free(new_tr_name);
 			}
 		}
 		if (tracks) {
@@ -2621,16 +2620,16 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 		trk_right->visible = trk->visible;
 		trk_right->sublayer_type = trk->sublayer_type;
+		trk_right->set_name(r_name);
+		free(r_name);
 
 		if (this->trk->sublayer_type == SublayerType::ROUTE) {
-			trw->add_route(trk_right, r_name);
+			trw->add_route(trk_right);
 		} else {
-			trw->add_track(trk_right, r_name);
+			trw->add_track(trk_right);
 		}
 		trk->calculate_bounds();
 		trk_right->calculate_bounds();
-
-		free(r_name);
 
 		trw->emit_changed();
 	}

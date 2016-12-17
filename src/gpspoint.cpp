@@ -356,7 +356,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 
 			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &line_latlon);
 
-			trw->filein_add_waypoint(line_name, wp);
+			trw->filein_add_waypoint(wp, line_name);
 			free(line_name);
 			line_name = NULL;
 
@@ -432,7 +432,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			trk->max_number_dist_labels = line_dist_label;
 
 			/* trk->trackpoints = NULL; */ /* kamilTODO: why it was here? */
-			trw->filein_add_track(line_name, trk);
+			trw->filein_add_track(trk, line_name);
 			free(line_name);
 			line_name = NULL;
 

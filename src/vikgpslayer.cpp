@@ -1858,7 +1858,10 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
 		layer->realtime_track = new Track(false);
 		layer->realtime_track->visible = true;
-		trw->add_track(layer->realtime_track, make_track_name(trw));
+		char * name = make_track_name(trw);
+		layer->realtime_track->set_name(name);
+		free(name);
+		trw->add_track(layer->realtime_track);
 	}
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4

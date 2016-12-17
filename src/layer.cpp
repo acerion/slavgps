@@ -1255,11 +1255,3 @@ sg_uid_t Sublayer::get_uid(void)
 {
 	return this->uid;
 }
-
-
-
-
-void Sublayer::set_uid(sg_uid_t u)
-{
-	this->uid = u;
-}

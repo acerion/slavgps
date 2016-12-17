@@ -138,7 +138,6 @@ namespace SlavGPS {
 		~Sublayer() {};
 
 		sg_uid_t get_uid(void);
-		void set_uid(sg_uid_t u);
 
 	//protected:
 		SublayerType sublayer_type;

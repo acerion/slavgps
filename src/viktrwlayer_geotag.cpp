@@ -420,7 +420,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 				}
 
 				if (!updated_waypoint) {
-					options->trw->filein_add_waypoint(name, wp);
+					options->trw->filein_add_waypoint(wp, name);
 				}
 
 				free(name);
@@ -479,7 +479,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 					if (!name) {
 						name = strdup(file_basename(options->image));
 					}
-					options->trw->filein_add_waypoint(name, wp);
+					options->trw->filein_add_waypoint(wp, name);
 					free(name);
 				}
 

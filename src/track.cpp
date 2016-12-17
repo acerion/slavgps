@@ -26,16 +26,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cassert>
+#include <mutex>
+#include <cstring>
+#include <cmath>
 
 #include <glib.h>
 #include <time.h>
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
 
 #include "coords.h"
 #include "coord.h"
@@ -48,6 +44,15 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+/* Simple UID implementation using an integer. */
+static sg_uid_t global_trk_uid = SG_UID_INITIAL;
+static sg_uid_t global_rt_uid = SG_UID_INITIAL;
+static std::mutex trk_uid_mutex;
+static std::mutex rt_uid_mutex;
 
 
 
@@ -189,9 +194,18 @@ Track::Track(bool is_route)
 {
 	if (is_route) {
 		this->sublayer_type = SublayerType::ROUTE;
+
+		rt_uid_mutex.lock();
+		this->uid = ++global_rt_uid;
+		rt_uid_mutex.unlock();
 	} else {
 		this->sublayer_type = SublayerType::TRACK;
+
+		trk_uid_mutex.lock();
+		this->uid = ++global_trk_uid;
+		trk_uid_mutex.unlock();
 	}
+
 	this->trackpointsB = new TrackPoints;
 
 	memset(&color, 0, sizeof (GdkColor));

@@ -127,12 +127,12 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 		if (!name) {
 			name = strdup(file_basename(filename));
 		}
-		((LayerTRW *) trw)->filein_add_waypoint(name, wp);
+		((LayerTRW *) trw)->filein_add_waypoint(wp, name);
 		free(name);
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		((LayerTRW *) trw)->filein_add_waypoint((char *) file_basename(filename), wp);
+		((LayerTRW *) trw)->filein_add_waypoint(wp, (char *) file_basename(filename));
 		wp->set_image(filename);
 		/* Simply set position to the current center. */
 		wp->coord = *(viewport->get_center());

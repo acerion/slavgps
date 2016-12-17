@@ -193,7 +193,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 			if (!name) {
 				name = strdup(file_basename(filename));
 			}
-			trw->filein_add_waypoint(name, wp);
+			trw->filein_add_waypoint(wp, name);
 			free(name);
 		} else {
 			adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));

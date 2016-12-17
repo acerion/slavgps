@@ -781,16 +781,16 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 		return false;
 	}
 
-	char *name;
-
 	if (sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
-		this->add_waypoint(wp, name);
-		waypoint_convert(wp, &this->coord_mode);
+		char * name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
+		wp->set_name(name);
 		std::free(name);
 
+		this->add_waypoint(wp);
+
+		waypoint_convert(wp, &this->coord_mode);
 		this->calculate_bounds_waypoints();
 
 		/* Consider if redraw necessary for the new item. */
@@ -801,11 +801,15 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	}
 	if (sublayer->sublayer_type == SublayerType::TRACK) {
 		Track * trk = Track::unmarshall(item, len);
+
 		/* When copying - we'll create a new name based on the original. */
-		name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
-		this->add_track(trk, name);
-		trk->convert(this->coord_mode);
+		char * name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
+		trk->set_name(name);
 		std::free(name);
+
+		this->add_track(trk);
+
+		trk->convert(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->tracks_visible && trk->visible) {
@@ -816,10 +820,12 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	if (sublayer->sublayer_type == SublayerType::ROUTE) {
 		Track * trk = Track::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
-		this->add_route(trk, name);
+		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
+		trk->set_name(name);
+		free(name);
+
+		this->add_route(trk);
 		trk->convert(this->coord_mode);
-		std::free(name);
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->routes_visible && trk->visible) {
@@ -1327,23 +1333,20 @@ static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 			// Also remember to (attempt to) convert each coordinate in case this is pasted into a different drawmode
 			if (sublayer_type == SublayerType::TRACK) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
-				char *name = g_strdup(trk->name);
-				trw->add_track(trk, name);
-				std::free(name);
+				/* Unmarshalling already sets track name, so we don't have to do it here. */
+				trw->add_track(trk);
 				trk->convert(trw->coord_mode);
 			}
 			if (sublayer_type == SublayerType::WAYPOINT) {
 				Waypoint * wp = Waypoint::unmarshall(data + sizeof_len_and_subtype, 0);
-				char *name = g_strdup(wp->name);
-				trw->add_waypoint(wp, name);
-				std::free(name);
+				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
+				trw->add_waypoint(wp);
 				waypoint_convert(wp, &trw->coord_mode);
 			}
 			if (sublayer_type == SublayerType::ROUTE) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
-				char *name = g_strdup(trk->name);
-				trw->add_route(trk, name);
-				std::free(name);
+				/* Unmarshalling already sets route name, so we don't have to do it here. */
+				trw->add_route(trk);
 				trk->convert(trw->coord_mode);
 			}
 		}
@@ -1650,7 +1653,6 @@ void LayerTRW::realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex c
 			timestamp = tpt->timestamp;
 		}
 
-		//trk->set_uid(i->first);
 		a_tree_view->add_sublayer(trk, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
 
 		delete icon;
@@ -1672,7 +1674,6 @@ void LayerTRW::realize_waypoints(Waypoints & waypoints, Layer * parent_layer, Tr
 			timestamp = i->second->timestamp;
 		}
 
-		//i->second->set_uid(i->first);
 		a_tree_view->add_sublayer(i->second, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
 		if (!i->second->visible) {
@@ -2588,7 +2589,8 @@ bool LayerTRW::new_waypoint(Window * parent, const VikCoord * def_coord)
 
 	if (returned_name) {
 		wp->visible = true;
-		this->add_waypoint(wp, returned_name);
+		wp->set_name(returned_name);
+		this->add_waypoint(wp);
 		free(default_name);
 		free(returned_name);
 		return true;
@@ -2992,7 +2994,8 @@ void LayerTRW::new_track_create_common(char * name)
 	}
 
 	this->current_trk->has_color = true;
-	this->add_track(this->current_trk, name);
+	this->current_trk->set_name(name);
+	this->add_track(this->current_trk);
 }
 
 
@@ -3021,7 +3024,9 @@ void LayerTRW::new_route_create_common(char * name)
 	/* By default make all routes red. */
 	this->current_trk->has_color = true;
 	this->current_trk->color = QColor("red");
-	this->add_route(this->current_trk, name);
+	this->current_trk->set_name(name);
+
+	this->add_route(this->current_trk);
 }
 
 
@@ -3130,15 +3135,8 @@ void LayerTRW::osm_traces_upload_track_cb(void)
 
 
 
-/* Fake Waypoint UUIDs with simple increasing integer. */
-static sg_uid_t global_wp_uid = SG_UID_INITIAL;
-
-void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
+void LayerTRW::add_waypoint(Waypoint * wp)
 {
-	global_wp_uid++;
-
-	wp->set_name(name);
-	wp->set_uid(global_wp_uid);
 	this->waypoints.insert({{ wp->uid, wp }});
 
 	if (this->realized) {
@@ -3154,7 +3152,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		/* Visibility column always needed for waypoints. */
-		this->tree_view->add_sublayer(wp, this, this->waypoints_node->get_index(), name, NULL /* wp->symbol */, true, timestamp);
+		this->tree_view->add_sublayer(wp, this, this->waypoints_node->get_index(), wp->name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(wp->index, wp->visible);
@@ -3163,21 +3161,14 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	}
 
-	this->highest_wp_number_add_wp(name);
+	this->highest_wp_number_add_wp(wp->name);
 }
 
 
 
 
-/* Fake Track UUIDs with simple increasing integer. */
-static sg_uid_t global_tr_uuid = SG_UID_INITIAL;
-
-void LayerTRW::add_track(Track * trk, char const * name)
+void LayerTRW::add_track(Track * trk)
 {
-	global_tr_uuid++;
-
-	trk->set_name(name);
-	trk->set_uid(global_tr_uuid);
 	this->tracks.insert({{ trk->uid, trk }});
 
 	if (this->realized) {
@@ -3194,7 +3185,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for tracks. */
-		this->tree_view->add_sublayer(trk, this, this->tracks_node->get_index(), name, NULL, true, timestamp);
+		this->tree_view->add_sublayer(trk, this, this->tracks_node->get_index(), trk->name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
@@ -3209,15 +3200,8 @@ void LayerTRW::add_track(Track * trk, char const * name)
 
 
 
-/* Fake Route UUIDs with simple increasing integer. */
-static sg_uid_t global_rt_uuid = SG_UID_INITIAL;
-
-void LayerTRW::add_route(Track * trk, char const * name)
+void LayerTRW::add_route(Track * trk)
 {
-	global_rt_uuid++;
-
-	trk->set_name(name);
-	trk->set_uid(global_rt_uuid);
 	this->routes.insert({{ trk->uid, trk }});
 
 	if (this->realized) {
@@ -3228,7 +3212,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for routes. */
-		this->tree_view->add_sublayer(trk, this, this->routes_node->get_index(), name, NULL, true, 0); /* Routes don't have times. */
+		this->tree_view->add_sublayer(trk, this, this->routes_node->get_index(), trk->name, NULL, true, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
@@ -3310,17 +3294,18 @@ char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char
 
 
 
-void LayerTRW::filein_add_waypoint(char * name, Waypoint * wp)
+void LayerTRW::filein_add_waypoint(Waypoint * wp, char const * name)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
-	this->add_waypoint(wp, name);
+	wp->set_name(name);
+	this->add_waypoint(wp);
 }
 
 
 
 
-void LayerTRW::filein_add_track(char * name, Track * trk)
+void LayerTRW::filein_add_track(Track * trk, char const * name)
 {
 	if (this->route_finder_append && this->current_trk) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
@@ -3338,12 +3323,12 @@ void LayerTRW::filein_add_track(char * name, Track * trk)
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
-
+		trk->set_name(name);
 		/* No more uniqueness of name forced when loading from a file. */
 		if (trk->sublayer_type == SublayerType::ROUTE) {
-			this->add_route(trk, name);
+			this->add_route(trk);
 		} else {
-			this->add_track(trk, name);
+			this->add_track(trk);
 		}
 
 		if (this->route_finder_check_added_track) {
@@ -3373,12 +3358,14 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 
 	if (sublayer_type == SublayerType::TRACK) {
 		Track * trk = this->tracks.at(sublayer_uid);
+		Track * trk2 = new Track(*trk);
 
 		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
-
-		Track * trk2 = new Track(*trk);
-		trw_dest->add_track(trk2, newname);
+		trk2->set_name(newname);
 		free(newname);
+
+		trw_dest->add_track(trk2);
+
 		this->delete_track(trk);
 		/* Reset layer timestamps in case they have now changed. */
 		trw_dest->tree_view->set_timestamp(trw_dest->index, trw_dest->get_timestamp());
@@ -3387,23 +3374,27 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 
 	if (sublayer_type == SublayerType::ROUTE) {
 		Track * trk = this->routes.at(sublayer_uid);
+		Track * trk2 = new Track(*trk);
 
 		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
-
-		Track * trk2 = new Track(*trk);
-		trw_dest->add_route(trk2, newname);
+		trk2->set_name(newname);
 		free(newname);
+
+		trw_dest->add_route(trk2);
+
 		this->delete_route(trk);
 	}
 
 	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(sublayer_uid);
-
-		char *newname = trw_dest->new_unique_sublayer_name(sublayer_type, wp->name);
-
 		Waypoint * wp2 = new Waypoint(*wp);
-		trw_dest->add_waypoint(wp2, newname);
+
+		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, wp->name);
+		wp2->set_name(newname);
 		free(newname);
+
+		trw_dest->add_waypoint(wp2);
+
 		this->delete_waypoint(wp);
 
 		/* Recalculate bounds even if not renamed as maybe dragged between layers. */
@@ -3971,14 +3962,16 @@ void LayerTRW::convert_track_route_cb(void)
 	/* Delete old one and then add new one. */
 	if (trk->sublayer_type == SublayerType::ROUTE) {
 		this->delete_route(trk);
-		this->add_track(trk_copy, name);
+		trk_copy->set_name(name);
+		this->add_track(trk_copy);
 	} else {
 		/* Extra route conversion bits... */
 		trk_copy->merge_segments();
 		trk_copy->to_routepoints();
 
 		this->delete_track(trk);
-		this->add_route(trk_copy, name);
+		trk_copy->set_name(name);
+		this->add_route(trk_copy);
 	}
 	free(name);
 
@@ -4886,10 +4879,12 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 
 	this->current_trk = new_track;
 
-	this->add_track(new_track, name);
+	new_track->set_name(name);
+	free(name);
+
+	this->add_track(new_track);
 
 	this->emit_changed();
-	free(name);
 }
 
 
@@ -5041,10 +5036,12 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 		char * new_tr_name = NULL;
 		if (orig->sublayer_type == SublayerType::ROUTE) {
 			new_tr_name = this->new_unique_sublayer_name(SublayerType::ROUTE, orig->name);
-			this->add_route(copy, new_tr_name);
+			copy->set_name(new_tr_name);
+			this->add_route(copy);
 		} else {
 			new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, orig->name);
-			this->add_track(copy, new_tr_name);
+			copy->set_name(new_tr_name);
+			this->add_track(copy);
 		}
 		free(new_tr_name);
 		copy->calculate_bounds();
@@ -5092,8 +5089,10 @@ void LayerTRW::split_segments_cb(void)
 	for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 		if (*iter) {
 			char * new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
-			this->add_track(*iter, new_tr_name);
+			(*iter)->set_name(new_tr_name);
 			free(new_tr_name);
+
+			this->add_track(*iter);
 		}
 	}
 	if (tracks) {
