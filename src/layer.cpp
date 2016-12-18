@@ -884,7 +884,7 @@ bool Layer::selected(TreeItemType type, Sublayer * sublayer)
 
 
 
-bool Layer::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport)
+bool Layer::select_tool_context_menu(QMouseEvent * event, Viewport * viewport)
 {
 	return false;
 }

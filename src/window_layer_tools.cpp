@@ -1418,12 +1418,6 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 				tool->window->select_move = true;
 			}
 		}
-	} else if (event->button() == Qt::RightButton) {
-		if (layer && layer->type == LayerType::TRW && layer->visible) {
-
-			/* See if a TRW item is selected, and show menu for the item. */
-			layer->show_selected_viewport_menu(event, tool->window->viewport);
-		}
 	}
 
 	return LayerToolFuncStatus::ACK;
@@ -1474,6 +1468,13 @@ static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event
 	/* End of this select movement. */
 	tool->window->select_move = false;
 #endif
+
+	if (event->button() == Qt::RightButton) {
+		if (layer && layer->type == LayerType::TRW && layer->visible) {
+			/* See if a TRW item is selected, and show menu for the item. */
+			layer->select_tool_context_menu(event, tool->window->viewport);
+		}
+	}
 
 	return LayerToolFuncStatus::ACK;
 }

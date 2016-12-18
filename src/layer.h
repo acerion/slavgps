@@ -184,11 +184,11 @@ namespace SlavGPS {
 		virtual bool selected(TreeItemType type, Sublayer * sublayer);
 		bool layer_selected(TreeItemType type, Sublayer * sublayer);
 
-		virtual bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
-
+		/* Methods for generic "Select" tool. */
 		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		virtual bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		virtual bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(uint16_t selection);

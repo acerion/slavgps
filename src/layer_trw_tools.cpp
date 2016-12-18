@@ -416,7 +416,13 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 
 
 
-bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport)
+/**
+   Show context menu for the currently selected item.
+
+   This function is called when generic Select tool is selected from tool bar.
+   It would be nice to somehow merge this function with code used when "edit track/route/waypoint" tool is selected.
+*/
+bool LayerTRW::select_tool_context_menu(QMouseEvent * event, Viewport * viewport)
 {
 	if (event->button() != Qt::RightButton) {
 		return false;
@@ -426,17 +432,15 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 		return false;
 	}
 
+#ifdef K
 	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
 		return false;
 	}
+#endif
 
-	/* Post menu for the currently selected item. */
-
-	/* See if a track is selected */
-	Track * trk = this->get_window()->get_selected_track();
-	if (trk && trk->visible) {
-		if (trk->name) {
-			this->menu_data->sublayer = trk;
+	if (this->current_trk && this->current_trk->visible) { /* Track or Route. */
+		if (this->current_trk->name) {
+			this->menu_data->sublayer = this->current_trk;
 			this->menu_data->viewport = viewport;
 
 			QMenu menu(viewport);
@@ -445,14 +449,9 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 			menu.exec(QCursor::pos());
 			return true;
 		}
-	}
-
-	/* See if a waypoint is selected. */
-	Waypoint * waypoint = this->get_window()->get_selected_waypoint();
-	if (waypoint && waypoint->visible) {
-		if (waypoint->name) {
-
-			this->menu_data->sublayer = waypoint;
+	} else if (this->current_wp && this->current_wp->visible) {
+		if (this->current_wp->name) {
+			this->menu_data->sublayer = this->current_wp;
 			this->menu_data->viewport = viewport;
 
 			QMenu menu(viewport);
@@ -461,6 +460,8 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 			menu.exec(QCursor::pos());
 			return true;
 		}
+	} else {
+		; /* No Track/Route/Waypoint selected. */
 	}
 	return false;
 }

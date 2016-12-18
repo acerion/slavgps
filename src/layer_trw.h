@@ -139,11 +139,11 @@ namespace SlavGPS {
 
 		bool selected(TreeItemType type, Sublayer * sublayer);
 
-		bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
-
+		/* Methods for generic "Select" tool. */
 		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
 		void set_menu_selection(uint16_t selection);
 		uint16_t get_menu_selection();
