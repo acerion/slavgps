@@ -505,16 +505,11 @@ namespace SlavGPS {
 
 		bool has_verified_thumbnails;
 
-		GtkMenu * wp_right_click_menu = NULL;
-		GtkMenu * track_right_click_menu = NULL;
-
 		/* Menu. */
 		LayerMenuItem menu_selection;
 
-
 		/* One per layer. */
 		GtkWidget * tracks_analysis_dialog = NULL;
-
 
 
 	public slots:

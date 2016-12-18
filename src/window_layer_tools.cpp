@@ -1418,12 +1418,11 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 				tool->window->select_move = true;
 			}
 		}
-	} else if ((event->button() == Qt::RightButton) && (layer && layer->type == LayerType::TRW)) {
-		if (layer->visible) {
-			/* Act on currently selected item to show menu. */
-			if (tool->window->selected_track || tool->window->selected_waypoint) {
-				layer->show_selected_viewport_menu(event, tool->window->viewport);
-			}
+	} else if (event->button() == Qt::RightButton) {
+		if (layer && layer->type == LayerType::TRW && layer->visible) {
+
+			/* See if a TRW item is selected, and show menu for the item. */
+			layer->show_selected_viewport_menu(event, tool->window->viewport);
 		}
 	}
 

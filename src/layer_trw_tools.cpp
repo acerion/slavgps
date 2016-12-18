@@ -435,26 +435,14 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 	/* See if a track is selected */
 	Track * trk = this->get_window()->get_selected_track();
 	if (trk && trk->visible) {
-
 		if (trk->name) {
-#ifdef K
-			if (this->track_right_click_menu) {
-				g_object_ref_sink(G_OBJECT(this->track_right_click_menu));
-			}
+			this->menu_data->sublayer = trk;
+			this->menu_data->viewport = viewport;
 
-			this->track_right_click_menu = GTK_MENU (gtk_menu_new());
+			QMenu menu(viewport);
 
-
-			this->sublayer_add_menu_items(this->track_right_click_menu,
-						      NULL,
-						      trk->sublayer_type,
-						      trk->uid,
-						      trk->index,
-						      viewport);
-
-			gtk_menu_popup(this->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-#endif
-
+			this->sublayer_add_menu_items(menu);
+			menu.exec(QCursor::pos());
 			return true;
 		}
 	}
@@ -463,24 +451,15 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 	Waypoint * waypoint = this->get_window()->get_selected_waypoint();
 	if (waypoint && waypoint->visible) {
 		if (waypoint->name) {
-#ifdef K
-			if (this->wp_right_click_menu) {
-				g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
-			}
 
-			this->wp_right_click_menu = GTK_MENU (gtk_menu_new());
+			this->menu_data->sublayer = waypoint;
+			this->menu_data->viewport = viewport;
 
-			this->sublayer_add_menu_items(this->wp_right_click_menu,
-						      NULL,
-						      SublayerType::WAYPOINT,
-						      waypoint->uid,
-						      waypoint->index,
-						      viewport);
+			QMenu menu(viewport);
 
-			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-
+			this->sublayer_add_menu_items(menu);
+			menu.exec(QCursor::pos());
 			return true;
-#endif
 		}
 	}
 	return false;
@@ -693,57 +672,54 @@ static bool tool_edit_waypoint_release_cb(Layer * layer, QMouseEvent * event, La
 		return false;
 	}
 
+#ifdef K
 	if (!tool->ed->holding) {
 		return false;
 	}
+#endif
 
-	if (!event->button() == Qt::LeftButton) {
-		return false;
-	}
+	if (event->button() == Qt::LeftButton) {
+		VikCoord new_coord;
+		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
-	VikCoord new_coord;
-	tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
-
-	/* Snap to trackpoint. */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
-		if (tp) {
-			new_coord = tp->coord;
+		/* Snap to trackpoint. */
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+			if (tp) {
+				new_coord = tp->coord;
+			}
 		}
-	}
 
-	/* Snap to waypoint. */
-	if (event->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
-		if (wp && wp != trw->current_wp) {
-			new_coord = wp->coord;
+		/* Snap to waypoint. */
+		if (event->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+			if (wp && wp != trw->current_wp) {
+				new_coord = wp->coord;
+			}
 		}
-	}
 
-	marker_end_move(tool);
+		marker_end_move(tool);
 
-	trw->current_wp->coord = new_coord;
+		trw->current_wp->coord = new_coord;
 
-	trw->calculate_bounds_waypoints();
-	trw->emit_changed();
-	return true;
+		trw->calculate_bounds_waypoints();
+		trw->emit_changed();
+		return true;
 
-#ifdef K
-	/* TODO: PUT IN RIGHT PLACE!!! */
-	if (event->button() == Qt::RightButton && trw->waypoint_rightclick) {
-
-		if (trw->wp_right_click_menu) {
-			g_object_ref_sink(G_OBJECT(trw->wp_right_click_menu));
-		}
+	} else if (event->button() == Qt::RightButton && trw->waypoint_rightclick) {
 		if (trw->current_wp) {
-			trw->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp->uid, trw->waypoints.at(trw->current_wp_uid)->index, tool->viewport);
-			gtk_menu_popup(trw->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+			trw->menu_data->sublayer = trw->current_wp;
+			trw->menu_data->viewport = tool->viewport;
+
+			QMenu menu;
+			trw->sublayer_add_menu_items(menu);
+			menu.exec(QCursor::pos());
 		}
 		trw->waypoint_rightclick = false;
+
+	} else {
+		return false;
 	}
-#endif
-	return false;
 }
 
 

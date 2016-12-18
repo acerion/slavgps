@@ -1402,14 +1402,6 @@ LayerTRW::~LayerTRW()
 	this->routes.clear();
 
 #ifdef K
-	if (this->wp_right_click_menu) {
-		g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
-	}
-
-	if (this->track_right_click_menu) {
-		g_object_ref_sink(G_OBJECT(this->track_right_click_menu));
-	}
-
 	if (this->tracklabellayout != NULL) {
 		g_object_unref(G_OBJECT (this->tracklabellayout));
 	}
