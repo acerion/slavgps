@@ -403,6 +403,7 @@ void LayersPanel::show_context_menu(TreeIndex const & index, Layer * layer)
 		menu = this->create_context_menu(false);
 	}
 	menu->exec(QCursor::pos());
+	delete menu;
 }
 
 
