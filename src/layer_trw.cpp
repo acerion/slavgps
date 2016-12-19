@@ -21,10 +21,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-/* WARNING: If you go beyond this point, we are NOT responsible for any ill effects on your sanity. */
-/* viktrwlayer.c -- 8000+ lines can make a difference in the state of things. */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -2703,7 +2700,7 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
 
-static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *datasource)
+static void trw_layer_acquire(LayerTRW * layer, LayersPanel * panel, VikDataSourceInterface *datasource)
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -2728,7 +2725,7 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 void LayerTRW::acquire_from_gps_cb(void)
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_gps_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_gps_interface);
 #endif
 }
 
@@ -2741,7 +2738,7 @@ void LayerTRW::acquire_from_gps_cb(void)
 void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_routing_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_routing_interface);
 #endif
 }
 
@@ -2754,7 +2751,7 @@ void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_url_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_url_interface);
 #endif
 }
 
@@ -2768,7 +2765,7 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_osm_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_osm_interface);
 #endif
 }
 
@@ -2781,7 +2778,7 @@ void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_osm_my_traces_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_osm_my_traces_interface);
 #endif
 }
 #endif
@@ -2796,7 +2793,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(values, &vik_datasource_gc_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_gc_interface);
 #endif
 }
 #endif
@@ -2811,7 +2808,7 @@ void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_geotag_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_geotag_interface);
 
 	/* Re-verify thumbnails as they may have changed. */
 	this->has_verified_thumbnails = false;
@@ -2829,7 +2826,7 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
 #ifdef K
-	trw_layer_acquire(data, &vik_datasource_file_interface);
+	trw_layer_acquire(layer, panel, &vik_datasource_file_interface);
 #endif
 }
 
@@ -3767,7 +3764,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 		this->tree_view->set_name(wp->index, new_name);
 		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	} else {
-		qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
+		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";
 	}
 }
 
@@ -3783,7 +3780,7 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 	if (wp->index.isValid()) {
 		this->tree_view->set_icon(wp->index, get_wp_sym_small(wp->symbol));
 	} else {
-		qDebug() << "EE: TRW Layer: trying to reset icon of waypoint with invalid index";
+		qDebug() << "EE: Layer TRW: trying to reset icon of waypoint with invalid index";
 	}
 }
 
@@ -5466,7 +5463,7 @@ void LayerTRW::astro_cb(void)
 void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool ontrack)
 {
 	if (tracks_table.empty()) {
-		qDebug() << "EE: LayerTRW: ::uniquify() called for empty tracks/routes set";
+		qDebug() << "EE: Layer TRW: ::uniquify() called for empty tracks/routes set";
 		return;
 	}
 
@@ -5492,8 +5489,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 
 		if (!trk) {
 			/* Broken :( */
-			qDebug() << "EE: can't retrieve track/route with duplicate name" << duplicate_name;
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
+			qDebug() << "EE: Layer TRW: can't retrieve track/route with duplicate name" << duplicate_name;
 			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, _("Internal Error during making tracks/routes unique"));
 			return;
 		}
@@ -5685,7 +5681,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 {
 	if (this->waypoints.empty()) {
-		qDebug() << "EE: LayerTRW: ::uniquify() called for empty waypoints set";
+		qDebug() << "EE: Layer TRW: ::uniquify() called for empty waypoints set";
 		return;
 	}
 
@@ -5705,7 +5701,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		Waypoint * wp = this->get_waypoint(duplicate_name.toUtf8().data());
 		if (!wp) {
 			/* Broken :( */
-			qDebug() << "EE: can't retrieve waypoint with duplicate name" << duplicate_name;
+			qDebug() << "EE: Layer TRW: can't retrieve waypoint with duplicate name" << duplicate_name;
 			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(_("Internal Error during making waypoints unique")));
 			return;
 		}
@@ -6401,7 +6397,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
 
 	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
 	if (dia_pos_x <= 2 || dia_pos_y <= 2) {
-		qDebug() << "WW: LayerTRW: can't position dialog window";
+		qDebug() << "WW: Layer TRW: can't position dialog window";
 		return;
 	}
 
@@ -6913,7 +6909,6 @@ void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
 
 void LayerTRW::set_menu_selection(uint16_t selection)
 {
-	//fprintf(stderr, "=============== set menu selection\n");
 	this->menu_selection = (LayerMenuItem) selection; /* kamil: invalid cast? */
 }
 
@@ -6922,7 +6917,6 @@ void LayerTRW::set_menu_selection(uint16_t selection)
 
 uint16_t LayerTRW::get_menu_selection()
 {
-	//fprintf(stderr, "=============== get menu selection\n");
 	return this->menu_selection;
 }
 
@@ -7034,7 +7028,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 			}
 		}
 	} else {
-		fprintf(stderr, "MESSAGE: %s: this feature works only in Mercator mode\n", __FUNCTION__);
+		qDebug() << "WW: Layer TRW: 'download map' feature works only in Mercator mode";
 	}
 
 	if (fillins) {

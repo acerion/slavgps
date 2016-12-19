@@ -59,16 +59,6 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		TreeIndex * parent_index;
-		TreeIndex * index;
-		Layer * layer;
-		TreeView * tree_view;
-	} trw_data4_t;
-
-
-
-
 	class TRWMetadata {
 
 	public:
@@ -682,42 +672,26 @@ namespace SlavGPS {
 
 
 
-}
-
-
-
-
-typedef struct {
-	SlavGPS::LayerTRW * layer;
-	SlavGPS::LayersPanel * panel;
-} trw_menu_layer_t;
+} /* namespace SlavGPS */
 
 
 
 
 QIcon * get_wp_sym_small(char * symbol);
 
-/* Exposed Layer Interface function definitions.
-   Intended only for use by other trw_layer subwindows. */
-//void trw_layer_verify_thumbnails(VikLayer * vtl);
-void trw_layer_calculate_bounds_waypoints(VikLayer *vtl);
 
 
-typedef struct {
-	bool    has_same_track_name;
-	const char *same_track_name;
-} same_track_name_udata;
 
 int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data);
 int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata);
+bool is_valid_geocache_name(char *str);
+
+
 
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
 
 
-
-
-bool is_valid_geocache_name(char *str);
 
 
 #endif /* #ifndef _SG_LAYER_TRW_H_ */
