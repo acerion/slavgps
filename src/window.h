@@ -168,7 +168,7 @@ namespace SlavGPS {
 
 	private slots:
 		void center_changed_cb(void);
-		void layer_tools_cb(QAction * a);
+		void layer_tool_cb(QAction * a);
 		void preferences_cb(void);
 		void open_file_cb(void);
 

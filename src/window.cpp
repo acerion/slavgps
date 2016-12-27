@@ -656,56 +656,13 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 
 
+/* Called when user selects a layer in tree view. */
 void Window::selected_layer(Layer * layer)
 {
-	QString layer_type(QString(layer->get_interface(layer->type)->layer_type_string));
+	QString layer_type(layer->get_interface(layer->type)->layer_type_string);
 	qDebug() << "II: Window: selected layer type" << layer_type;
 
-	bool window_tool_still_active = false;
-	QAction * qa = this->tb->set_other_groups_disabled(layer_type);
-	if (qa) {
-		if (qa->actionGroup()->objectName() == "generic") {
-			window_tool_still_active = true;
-		} else {
-			/* qa is still-active button in non-window, not-this-layer group. Deactivate. */
-			qa->setChecked(false);
-		}
-	}
-
-
-	qa = this->tb->set_group_enabled(layer_type);
-	if (qa) {
-		if (window_tool_still_active) {
-			/* There is already one button active (in 'window' tools group).
-			   No need to have more than one button checked. */
-		} else {
-			/* We have switched from one layer-specific group to another.
-			   No button in "generic" group is active. Some button needs to be active, though. */
-			qa->setChecked(true);
-		}
-	} else {
-		if (layer->type != LayerType::AGGREGATE) {
-			qDebug() << "EE: Window: can't find any action in newly selected layer group" << layer_type;
-		}
-	}
-
-#if 0
-	if (!this->action_group) {
-		return;
-	}
-
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		VikLayerInterface * layer_interface = Layer::get_interface(type);
-		int tool_count = layer_interface->tools_count;
-
-		for (int tool = 0; tool < tool_count; tool++) {
-			GtkAction * action = gtk_action_group_get_action(this->action_group,
-									 layer_interface->layer_tools[tool]->id_string);
-			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(type)->layer_tools[tool]->id_string, type == layer->type);
-		}
-	}
-#endif
+	this->tb->selected_layer(layer_type);
 }
 
 
@@ -853,7 +810,8 @@ void Window::create_ui(void)
 		this->menu_tools->addActions(group->actions());
 		this->tb->add_group(group);
 
-		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tools_cb(QAction *)));
+		/* The same callback for all layer tools. */
+		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
 		default_qa->setChecked(true);
 		default_qa->trigger();
 		this->tb->activate_tool(default_qa);
@@ -885,9 +843,10 @@ void Window::create_ui(void)
 			this->toolbar->addActions(group->actions());
 			this->menu_tools->addActions(group->actions());
 			this->tb->add_group(group);
-			this->tb->set_group_disabled(name);
+			group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
 
-			connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tools_cb(QAction *)));
+			/* The same callback for all layer tools. */
+			connect(group, SIGNAL (triggered(QAction *)), this, SLOT (layer_tool_cb(QAction *)));
 		}
 	}
 
@@ -1067,45 +1026,31 @@ void Window::create_ui(void)
 
 
 
-void Window::layer_tools_cb(QAction * qa)
+
+/* Callback common for all layer tool actions. */
+void Window::layer_tool_cb(QAction * qa)
 {
-	QString tool_name = qa->objectName();
-	QString group_name = qa->actionGroup()->objectName();
-
-	if (qa->actionGroup()->objectName() == "generic") {
-		/* User selected tool in "generic" group, but that is not a good reason to
-		   disable whole layer-specific group. Only deactivate the old tool. */
+	/* Handle old tool first. */
+	QAction * old_qa = this->tb->get_active_tool_action();
+	if (old_qa) {
+		qDebug() << "II: Window: deactivating old tool" << old_qa->objectName();
+		this->tb->deactivate_tool(old_qa);
 	} else {
-		/* This can happen only of we are switching from tool in
-		   "generic" group to tool in a layer group. */
-		qDebug() << "II: Window: switching from \"generic\" tool to" << group_name << "tool";
-	}
-
-
-	QAction * old_action = this->tb->get_active_tool();
-	if (old_action) {
-		qDebug() << "II: Window: deactivating old tool" << old_action->objectName();
-		if (this->tb->deactivate_tool(old_action)) {
-			old_action->setChecked(false);
-		}
-	} else {
+		/* The only valid situation when it happens is only during start up of application. */
 		qDebug() << "WW: Window: no old action found";
 	}
 
 
-	QAction * first_action = this->tb->set_group_enabled(group_name);
-	if (first_action) {
-		/* First action in the group is the default one for newly enabled group. */
-		this->tb->activate_tool(first_action);
-	} else {
+	/* Now handle newly selected tool. */
+	if (qa) {
 		this->tb->activate_tool(qa);
+
+		QString tool_name = qa->objectName();
+		qDebug() << "II: Window: setting 'release' cursor for" << tool_name;
+		this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
+		this->current_tool = this->tb->get_tool(tool_name);
+		this->display_tool_name();
 	}
-
-
-	qDebug() << "II: Window: setting 'release' cursor for" << tool_name;
-	this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
-	this->current_tool = this->tb->get_tool(tool_name);
-	this->display_tool_name();
 }
 
 

@@ -38,14 +38,17 @@ namespace SlavGPS {
 
 		void activate_tool(QAction * qa);
 		bool deactivate_tool(QAction * qa);
-		void activate_layer_tools(QString const & layer_type);
+		//void activate_layer_tools(QString const & layer_type);
 
+
+		void selected_layer(QString const & group_name);
 
 		QAction * set_group_enabled(QString const & group_name);
-		QAction * set_group_disabled(QString const & group_name);
-		QAction * set_other_groups_disabled(QString const & group_name);
+		//QAction * set_group_disabled(QString const & group_name);
+		//void set_other_groups_disabled(QString const & group_name);
 		QActionGroup * get_group(QString const & group_name);
-		QAction * get_active_tool(void);
+		QAction * get_active_tool_action(void);
+		LayerTool * get_active_tool(void);
 
 
 		QCursor const * get_cursor_click(QString const & tool_name);

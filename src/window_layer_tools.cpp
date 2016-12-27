@@ -159,6 +159,39 @@ bool LayerToolsBox::deactivate_tool(QAction * qa)
 
 
 
+/* A new layer is selected. Update state of tool groups in tool box accordingly. */
+void LayerToolsBox::selected_layer(QString const & group_name)
+{
+	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
+
+		QString name((*group)->objectName());
+
+		if (group_name == name) {
+			/* This is a group for our newly selected layer. It should become enabled. */
+			if ((*group)->isEnabled()) {
+				/* The group is already enabled, other groups are already disabled.
+				   Nothing more to do in this function. */
+				break;
+			} else {
+				qDebug() << "II: Layer Tool Box: enabling tool group '" << name << "'";
+				(*group)->setEnabled(true);
+			}
+		} else if ("generic" == name) {
+			/* This group is always enabled, and should never be disabled. */
+			continue;
+		} else {
+			/* Group other than "group_name". Disable. */
+			if ((*group)->isEnabled()) {
+				qDebug() << "II: Layer Tool Box: disabling tool group '" << name << "'";
+				(*group)->setEnabled(false);
+			}
+		}
+	}
+}
+
+
+
+
 /**
    Enable all buttons in given actions group
 
@@ -196,7 +229,7 @@ QAction * LayerToolsBox::set_group_enabled(QString const & group_name)
 
 
 
-
+#if 0
 /**
    Disable all buttons in given actions group
 
@@ -219,43 +252,38 @@ QAction * LayerToolsBox::set_group_disabled(QString const & group_name)
 
 	return group->checkedAction();
 }
+#endif
 
 
 
-
-
+#if 0
 /**
    Disable all buttons in groups other than given actions group
 
    Make an exception for actions group called "generic" - this one should be always enabled.
-
-   If any action is checked (active), return that action. The function doesn't un-check that action.
 */
-QAction * LayerToolsBox::set_other_groups_disabled(QString const & group_name)
+void LayerToolsBox::set_other_groups_disabled(QString const & group_name)
 {
-	QActionGroup * this_group = this->get_group(group_name);
-	if (!this_group) {
-		/* This may be a valid situation for layers that don't have any tools (e.g. Aggregate). */
-		qDebug() << "II: Layer Tools: can't find group" << group_name << "to disable";
-	}
-
-	QAction * ret = NULL;
-
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
-		if (group_name == (*group)->objectName()) {
+
+		QString other_group_name((*group)->objectName());
+
+		if (group_name == other_group_name) {
 			/* Disable other groups, not this group. */
 			continue;
 		}
-		QString name((*group)->objectName());
-		QAction * checked = this->set_group_disabled(name);
-		if (checked) {
-			ret = checked;
+
+		if ("generic" == other_group_name) {
+			/* Don't disable an action group that should always be enabled. */
+			continue;
 		}
+
+		this->set_group_disabled(other_group_name);
 	}
 
-	return ret;
+	return;
 }
-
+#endif
 
 
 
@@ -276,7 +304,7 @@ QActionGroup * LayerToolsBox::get_group(QString const & group_name)
 
 
 
-QAction * LayerToolsBox::get_active_tool(void)
+QAction * LayerToolsBox::get_active_tool_action(void)
 {
 	return this->active_tool_qa;
 }
@@ -284,6 +312,14 @@ QAction * LayerToolsBox::get_active_tool(void)
 
 
 
+LayerTool * LayerToolsBox::get_active_tool(void)
+{
+	return this->active_tool;
+}
+
+
+
+#if 0
 void LayerToolsBox::activate_layer_tools(QString const & layer_type)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
@@ -300,7 +336,7 @@ void LayerToolsBox::activate_layer_tools(QString const & layer_type)
 		}
 	}
 }
-
+#endif
 
 
 
