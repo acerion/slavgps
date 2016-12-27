@@ -26,6 +26,7 @@
 
 #include <QtWidgets>
 
+#include "window_layer_tools.h"
 #include "window.h"
 #include "viewport.h"
 #include "layer.h"
@@ -64,7 +65,7 @@ Window::Window()
 	this->create_actions();
 
 
-	this->tb = new LayerToolsBox(this);
+	this->layer_tool_box = new LayerToolBox(this);
 
 	this->create_ui();
 
@@ -82,7 +83,7 @@ Window::Window()
 
 	this->viking_vtb = vik_toolbar_new();
 
-	this->tb = new LayerToolsBox(this);
+	this->layer_tool_box = new LayerToolBox(this);
 
 	window_create_ui(this);
 	this->set_filename(NULL);
@@ -662,7 +663,7 @@ void Window::selected_layer(Layer * layer)
 	QString layer_type(layer->get_interface(layer->type)->layer_type_string);
 	qDebug() << "II: Window: selected layer type" << layer_type;
 
-	this->tb->selected_layer(layer_type);
+	this->layer_tool_box->selected_layer(layer_type);
 }
 
 
@@ -684,9 +685,9 @@ LayersPanel * Window::get_layers_panel()
 
 
 
-LayerToolsBox * Window::get_layer_tools_box(void)
+LayerToolBox * Window::get_layer_tools_box(void)
 {
-	return this->tb;
+	return this->layer_tool_box;
 }
 
 
@@ -792,29 +793,29 @@ void Window::create_ui(void)
 		this->toolbar->addSeparator();
 
 
-		qa = this->tb->add_tool(selecttool_create(this, this->viewport));
+		qa = this->layer_tool_box->add_tool(selecttool_create(this, this->viewport));
 		group->addAction(qa);
 		default_qa = qa;
 
-		qa = this->tb->add_tool(ruler_create(this, this->viewport));
+		qa = this->layer_tool_box->add_tool(ruler_create(this, this->viewport));
 		group->addAction(qa);
 
-		qa = this->tb->add_tool(zoomtool_create(this, this->viewport));
+		qa = this->layer_tool_box->add_tool(zoomtool_create(this, this->viewport));
 		group->addAction(qa);
 
-		qa = this->tb->add_tool(pantool_create(this, this->viewport));
+		qa = this->layer_tool_box->add_tool(pantool_create(this, this->viewport));
 		group->addAction(qa);
 
 
 		this->toolbar->addActions(group->actions());
 		this->menu_tools->addActions(group->actions());
-		this->tb->add_group(group);
+		this->layer_tool_box->add_group(group);
 
 		/* The same callback for all layer tools. */
 		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
 		default_qa->setChecked(true);
 		default_qa->trigger();
-		this->tb->activate_tool(default_qa);
+		this->layer_tool_box->activate_tool(default_qa);
 	}
 
 
@@ -835,14 +836,14 @@ void Window::create_ui(void)
 			for (j = 0; j < Layer::get_interface(i)->tools_count; j++) {
 
 				LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](this, this->viewport);
-				QAction * qa = this->tb->add_tool(layer_tool);
+				QAction * qa = this->layer_tool_box->add_tool(layer_tool);
 				group->addAction(qa);
 
 				assert (layer_tool->layer_type == i);
 			}
 			this->toolbar->addActions(group->actions());
 			this->menu_tools->addActions(group->actions());
-			this->tb->add_group(group);
+			this->layer_tool_box->add_group(group);
 			group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
 
 			/* The same callback for all layer tools. */
@@ -922,9 +923,9 @@ void Window::create_ui(void)
 	   so that it can be applied to the UI in one action group add function call below. */
 	GtkRadioActionEntry * radio_actions = NULL;
 	unsigned int n_radio_actions = 0;
-	for (unsigned int i = 0; i < window->tb->n_tools; i++) {
+	for (unsigned int i = 0; i < window->layer_tool_box->n_tools; i++) {
 		radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
-		radio_actions[n_radio_actions] = window->tb->tools[i]->radioActionEntry;
+		radio_actions[n_radio_actions] = window->layer_tool_box->tools[i]->radioActionEntry;
 		++n_radio_actions;
 		radio_actions[n_radio_actions].value = n_radio_actions;
 	}
@@ -959,7 +960,7 @@ void Window::create_ui(void)
 		for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
 
 			LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](window, window->viewport);
-			window->tb->add_tool(layer_tool);
+			window->layer_tool_box->add_tool(layer_tool);
 			assert (layer_tool->layer_type == i);
 
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
@@ -1031,10 +1032,10 @@ void Window::create_ui(void)
 void Window::layer_tool_cb(QAction * qa)
 {
 	/* Handle old tool first. */
-	QAction * old_qa = this->tb->get_active_tool_action();
+	QAction * old_qa = this->layer_tool_box->get_active_tool_action();
 	if (old_qa) {
 		qDebug() << "II: Window: deactivating old tool" << old_qa->objectName();
-		this->tb->deactivate_tool(old_qa);
+		this->layer_tool_box->deactivate_tool(old_qa);
 	} else {
 		/* The only valid situation when it happens is only during start up of application. */
 		qDebug() << "WW: Window: no old action found";
@@ -1043,12 +1044,12 @@ void Window::layer_tool_cb(QAction * qa)
 
 	/* Now handle newly selected tool. */
 	if (qa) {
-		this->tb->activate_tool(qa);
+		this->layer_tool_box->activate_tool(qa);
 
 		QString tool_name = qa->objectName();
 		qDebug() << "II: Window: setting 'release' cursor for" << tool_name;
-		this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
-		this->current_tool = this->tb->get_tool(tool_name);
+		this->viewport->setCursor(*this->layer_tool_box->get_cursor_release(tool_name));
+		this->current_tool = this->layer_tool_box->get_tool(tool_name);
 		this->display_tool_name();
 	}
 }

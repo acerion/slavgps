@@ -26,8 +26,6 @@
 #include <cassert>
 #include <cstring>
 
-//#include <gdk/gdkkeysyms.h>
-
 #include "window.h"
 #include "window_layer_tools.h"
 #include "coords.h"
@@ -50,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-LayerToolsBox::~LayerToolsBox()
+LayerToolBox::~LayerToolBox()
 {
 	for (unsigned int tt = 0; tt < this->n_tools; tt++) {
 		delete this->tools[tt];
@@ -60,7 +58,7 @@ LayerToolsBox::~LayerToolsBox()
 
 
 
-QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
+QAction * LayerToolBox::add_tool(LayerTool * layer_tool)
 {
 #if 0
 	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
@@ -82,7 +80,7 @@ QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 
 
 
-LayerTool * LayerToolsBox::get_tool(QString const & tool_id)
+LayerTool * LayerToolBox::get_tool(QString const & tool_id)
 {
 	for (unsigned i = 0; i < this->n_tools; i++) {
 		if (tool_id == this->tools[i]->id_string) {
@@ -95,7 +93,7 @@ LayerTool * LayerToolsBox::get_tool(QString const & tool_id)
 
 
 
-void LayerToolsBox::activate_tool(QAction * qa)
+void LayerToolBox::activate_tool(QAction * qa)
 {
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
@@ -133,7 +131,7 @@ void LayerToolsBox::activate_tool(QAction * qa)
 
 
 
-bool LayerToolsBox::deactivate_tool(QAction * qa)
+bool LayerToolBox::deactivate_tool(QAction * qa)
 {
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
@@ -160,7 +158,7 @@ bool LayerToolsBox::deactivate_tool(QAction * qa)
 
 
 /* A new layer is selected. Update state of tool groups in tool box accordingly. */
-void LayerToolsBox::selected_layer(QString const & group_name)
+void LayerToolBox::selected_layer(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 
@@ -197,7 +195,7 @@ void LayerToolsBox::selected_layer(QString const & group_name)
 
    If group is non-empty, return first action in that group.
 */
-QAction * LayerToolsBox::set_group_enabled(QString const & group_name)
+QAction * LayerToolBox::set_group_enabled(QString const & group_name)
 {
 	QActionGroup * group = this->get_group(group_name);
 	if (!group) {
@@ -237,7 +235,7 @@ QAction * LayerToolsBox::set_group_enabled(QString const & group_name)
 
    If a group is "generic", its buttons are not disabled. Its active button (if present) is returned nonetheless.
 */
-QAction * LayerToolsBox::set_group_disabled(QString const & group_name)
+QAction * LayerToolBox::set_group_disabled(QString const & group_name)
 {
 	QActionGroup * group = this->get_group(group_name);
 	if (!group) {
@@ -262,7 +260,7 @@ QAction * LayerToolsBox::set_group_disabled(QString const & group_name)
 
    Make an exception for actions group called "generic" - this one should be always enabled.
 */
-void LayerToolsBox::set_other_groups_disabled(QString const & group_name)
+void LayerToolBox::set_other_groups_disabled(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 
@@ -290,7 +288,7 @@ void LayerToolsBox::set_other_groups_disabled(QString const & group_name)
 /**
    Find group by object name
 */
-QActionGroup * LayerToolsBox::get_group(QString const & group_name)
+QActionGroup * LayerToolBox::get_group(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 		if ((*group)->objectName() == group_name) {
@@ -304,7 +302,7 @@ QActionGroup * LayerToolsBox::get_group(QString const & group_name)
 
 
 
-QAction * LayerToolsBox::get_active_tool_action(void)
+QAction * LayerToolBox::get_active_tool_action(void)
 {
 	return this->active_tool_qa;
 }
@@ -312,7 +310,7 @@ QAction * LayerToolsBox::get_active_tool_action(void)
 
 
 
-LayerTool * LayerToolsBox::get_active_tool(void)
+LayerTool * LayerToolBox::get_active_tool(void)
 {
 	return this->active_tool;
 }
@@ -320,7 +318,7 @@ LayerTool * LayerToolsBox::get_active_tool(void)
 
 
 #if 0
-void LayerToolsBox::activate_layer_tools(QString const & layer_type)
+void LayerToolBox::activate_layer_tools(QString const & layer_type)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 		bool is_window_tools = (*group)->objectName() == "generic";
@@ -340,7 +338,7 @@ void LayerToolsBox::activate_layer_tools(QString const & layer_type)
 
 
 
-void LayerToolsBox::add_group(QActionGroup * group)
+void LayerToolBox::add_group(QActionGroup * group)
 {
 	this->action_groups.push_back(group);
 }
@@ -348,7 +346,7 @@ void LayerToolsBox::add_group(QActionGroup * group)
 
 
 
-QCursor const * LayerToolsBox::get_cursor_click(QString const & tool_id)
+QCursor const * LayerToolBox::get_cursor_click(QString const & tool_id)
 {
 	return this->get_tool(tool_id)->cursor_release;
 }
@@ -356,7 +354,7 @@ QCursor const * LayerToolsBox::get_cursor_click(QString const & tool_id)
 
 
 
-QCursor const * LayerToolsBox::get_cursor_release(QString const & tool_id)
+QCursor const * LayerToolBox::get_cursor_release(QString const & tool_id)
 {
 	return this->get_tool(tool_id)->cursor_release;
 }
@@ -364,7 +362,7 @@ QCursor const * LayerToolsBox::get_cursor_release(QString const & tool_id)
 
 
 
-void LayerToolsBox::click(QMouseEvent * event)
+void LayerToolBox::click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
@@ -404,7 +402,7 @@ void LayerToolsBox::click(QMouseEvent * event)
 
 
 
-void LayerToolsBox::double_click(QMouseEvent * event)
+void LayerToolBox::double_click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
@@ -445,7 +443,7 @@ void LayerToolsBox::double_click(QMouseEvent * event)
 
 
 
-void LayerToolsBox::move(QMouseEvent * event)
+void LayerToolBox::move(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
@@ -490,7 +488,7 @@ void LayerToolsBox::move(QMouseEvent * event)
 
 
 
-void LayerToolsBox::release(QMouseEvent * event)
+void LayerToolBox::release(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {

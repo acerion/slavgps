@@ -16,7 +16,6 @@
 #include "viewport.h"
 #include "layer.h"
 #include "layer_trw.h"
-#include "window_layer_tools.h"
 #include "statusbar.h"
 #include "file.h"
 
@@ -40,10 +39,15 @@ namespace SlavGPS {
 
 
 
+	class LayerToolBox;
+
+
+
+
 	class Window : public QMainWindow {
 		Q_OBJECT
 
-	friend class LayerToolsBox;
+	friend class LayerToolBox;
 
 	public:
 		Window();
@@ -61,7 +65,7 @@ namespace SlavGPS {
 		LayersPanel * get_layers_panel(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
-		LayerToolsBox * get_layer_tools_box(void);
+		LayerToolBox * get_layer_tools_box(void);
 		StatusBar * get_statusbar(void);
 
 		SlavGPS::LayersPanel * layers_panel = NULL;
@@ -229,7 +233,7 @@ namespace SlavGPS {
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 
-		LayerToolsBox * tb = NULL;
+		LayerToolBox * layer_tool_box = NULL;
 
 		QCursor * busy_cursor = NULL;
 		QCursor * viewport_cursor = NULL; /* Only a reference. */

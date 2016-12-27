@@ -36,6 +36,7 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 
+#include "window_layer_tools.h"
 #include "viewport.h"
 #include "window.h"
 #include "coords.h"

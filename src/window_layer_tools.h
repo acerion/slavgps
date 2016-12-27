@@ -26,11 +26,11 @@ namespace SlavGPS {
 
 
 
-	class LayerToolsBox {
+	class LayerToolBox {
 
 	public:
-		LayerToolsBox(Window * win) : window(win) {};
-		~LayerToolsBox();
+		LayerToolBox(Window * win) : window(win) {};
+		~LayerToolBox();
 
 		QAction * add_tool(LayerTool * layer_tool);
 		void add_group(QActionGroup * group);
