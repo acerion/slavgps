@@ -43,5 +43,52 @@ SlavGPS::LayerTool * tool_extended_route_finder_create(SlavGPS::Window * window,
 
 
 
+namespace SlavGPS {
+
+
+
+
+	class LayerToolTRWNewWaypoint : public LayerTool {
+	public:
+		LayerToolTRWNewWaypoint(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWEditTrackpoint : public LayerTool {
+	public:
+		LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWExtendedRouteFinder : public LayerTool {
+	public:
+		LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWShowPicture : public LayerTool {
+	public:
+		LayerToolTRWShowPicture(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWEditWaypoint : public LayerTool {
+	public:
+		LayerToolTRWEditWaypoint(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWNewTrack : public LayerTool {
+	public:
+		LayerToolTRWNewTrack(Window * window, Viewport * viewport);
+	};
+
+	class LayerToolTRWNewRoute : public LayerTool {
+	public:
+		LayerToolTRWNewRoute(Window * window, Viewport * viewport);
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
 
 #endif /* #ifndef _SG_LAYER_TRW_TOOLS_H_ */

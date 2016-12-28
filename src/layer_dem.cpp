@@ -1321,26 +1321,29 @@ static void free_dem_download_params(DEMDownloadParams * p)
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::DEM);
+	return new LayerToolDEMDownload(window, viewport);
+}
 
-	dem_tools[0] = layer_tool;
 
-	layer_tool->layer_type = LayerType::DEM;
-	layer_tool->id_string = QString("dem.download");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/dem_download_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("&DEM Download"));
-	layer_tool->radioActionEntry.accelerator = NULL;
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) dem_layer_download_click;
-	layer_tool->release = (ToolMouseFunc) dem_layer_download_release;
+LayerToolDEMDownload::LayerToolDEMDownload(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::DEM)
+{
+	this->id_string = QString("dem.download");
 
-	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/dem_download_18.png");
+	this->radioActionEntry.label       = strdup(N_("&DEM Download"));
+	this->radioActionEntry.accelerator = NULL;
+	this->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
+	this->radioActionEntry.value       = 0;
 
-	return layer_tool;
+	this->click = (ToolMouseFunc) dem_layer_download_click;
+	this->release = (ToolMouseFunc) dem_layer_download_release;
+
+	this->cursor_click = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	dem_tools[0] = this;
 }
 
 

@@ -791,34 +791,38 @@ static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1
 
 LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
-
-	layer_tool->layer_type = LayerType::NUM_TYPES;
-	layer_tool->id_string = QString("generic.ruler");
-
-	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/ruler_18.png");
-	layer_tool->radioActionEntry.label = strdup(N_("&Ruler"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
-	layer_tool->radioActionEntry.value = 2;
-
-	layer_tool->deactivate = ruler_deactivate;
-	layer_tool->click = (ToolMouseFunc) ruler_click;
-	layer_tool->move = (ToolMouseMoveFunc) ruler_move;
-	layer_tool->release = (ToolMouseFunc) ruler_release;
-	layer_tool->key_press = ruler_key_press;
-
-	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
-	//shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_ruler_pixbuf;
-
-
-	layer_tool->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
-	memset(layer_tool->ruler, 0, sizeof (ruler_tool_state_t));
-
-	return layer_tool;
+	return new LayerToolRuler(window, viewport);
 }
+
+
+
+
+LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+{
+	this->id_string = QString("generic.ruler");
+
+	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/ruler_18.png");
+	this->radioActionEntry.label = strdup(N_("&Ruler"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
+	this->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
+	this->radioActionEntry.value = 2;
+
+	this->deactivate = ruler_deactivate;
+	this->click = (ToolMouseFunc) ruler_click;
+	this->move = (ToolMouseMoveFunc) ruler_move;
+	this->release = (ToolMouseFunc) ruler_release;
+	this->key_press = ruler_key_press;
+
+	this->cursor_click = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	//shape = Qt::BitmapCursor;
+	//this->cursor_data = &cursor_ruler_pixbuf;
+
+
+	this->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
+	memset(this->ruler, 0, sizeof (ruler_tool_state_t));
+}
+
 
 
 
@@ -1059,31 +1063,34 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 
 LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
+	return new LayerToolZoom(window, viewport);
+}
 
-	layer_tool->layer_type = LayerType::NUM_TYPES;
-	layer_tool->id_string = QString("generic.zoom");
 
-	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/zoom_18.png");
-	layer_tool->radioActionEntry.label = strdup(N_("&Zoom"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>Z");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
-	layer_tool->radioActionEntry.value = 1;
 
-	layer_tool->click = (ToolMouseFunc) zoomtool_click;
-	layer_tool->move = (ToolMouseMoveFunc) zoomtool_move;
-	layer_tool->release = (ToolMouseFunc) zoomtool_release;
 
-	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+{
+	this->id_string = QString("generic.zoom");
 
-	//layer_tool->cursor_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_zoom_pixbuf;
+	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/zoom_18.png");
+	this->radioActionEntry.label = strdup(N_("&Zoom"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>Z");
+	this->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
+	this->radioActionEntry.value = 1;
 
-	layer_tool->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
-	memset(layer_tool->zoom, 0, sizeof (zoom_tool_state_t));
+	this->click = (ToolMouseFunc) zoomtool_click;
+	this->move = (ToolMouseMoveFunc) zoomtool_move;
+	this->release = (ToolMouseFunc) zoomtool_release;
 
-	return layer_tool;
+	this->cursor_click = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	//this->cursor_shape = Qt::BitmapCursor;
+	//this->cursor_data = &cursor_zoom_pixbuf;
+
+	this->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
+	memset(this->zoom, 0, sizeof (zoom_tool_state_t));
 }
 
 
@@ -1277,25 +1284,25 @@ static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, L
 
 LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
+	return new LayerToolPan(window, viewport);
+}
 
-	layer_tool->layer_type = LayerType::NUM_TYPES;
-	layer_tool->id_string = QString("generic.pan");
+LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+{
+	this->id_string = QString("generic.pan");
 
-	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/pan_22.png");
-	layer_tool->radioActionEntry.label = strdup(N_("&Pan"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>P");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
-	layer_tool->radioActionEntry.value = 0;
+	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/pan_22.png");
+	this->radioActionEntry.label = strdup(N_("&Pan"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>P");
+	this->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
+	this->radioActionEntry.value = 0;
 
-	layer_tool->click = (ToolMouseFunc) pantool_click;
-	layer_tool->move = (ToolMouseMoveFunc) pantool_move;
-	layer_tool->release = (ToolMouseFunc) pantool_release;
+	this->click = (ToolMouseFunc) pantool_click;
+	this->move = (ToolMouseMoveFunc) pantool_move;
+	this->release = (ToolMouseFunc) pantool_release;
 
-	layer_tool->cursor_click = new QCursor(Qt::ClosedHandCursor);
-	layer_tool->cursor_release = new QCursor(Qt::OpenHandCursor);
-
-	return layer_tool;
+	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
+	this->cursor_release = new QCursor(Qt::OpenHandCursor);
 }
 
 
@@ -1381,28 +1388,31 @@ static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event
 
 LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
+	return new LayerToolSelect(window, viewport);
+}
 
-	layer_tool->layer_type = LayerType::NUM_TYPES;
-	layer_tool->id_string = QString("generic.select");
 
-	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/select_18.png");
-	layer_tool->radioActionEntry.label = strdup(N_("&Select"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>S");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Select Tool"));
-	layer_tool->radioActionEntry.value = 3;
 
-	layer_tool->click = (ToolMouseFunc) selecttool_click;
-	layer_tool->move = (ToolMouseMoveFunc) selecttool_move;
-	layer_tool->release = (ToolMouseFunc) selecttool_release;
 
-	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+{
+	this->id_string = QString("generic.select");
 
-	layer_tool->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/select_18.png");
+	this->radioActionEntry.label = strdup(N_("&Select"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>S");
+	this->radioActionEntry.tooltip = strdup(N_("Select Tool"));
+	this->radioActionEntry.value = 3;
 
-	return layer_tool;
+	this->click = (ToolMouseFunc) selecttool_click;
+	this->move = (ToolMouseMoveFunc) selecttool_move;
+	this->release = (ToolMouseFunc) selecttool_release;
+
+	this->cursor_click = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
 }
 
 

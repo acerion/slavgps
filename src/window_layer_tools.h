@@ -82,6 +82,37 @@ namespace SlavGPS {
 
 
 
+	class LayerToolZoom : public LayerTool {
+	public:
+		LayerToolZoom(Window * window, Viewport * viewport);
+		~LayerToolZoom();
+	};
+
+
+
+	class LayerToolRuler : public LayerTool {
+	public:
+		LayerToolRuler(Window * window, Viewport * viewport);
+		~LayerToolRuler();
+	};
+
+
+	class LayerToolPan : public LayerTool {
+	public:
+		LayerToolPan(Window * window, Viewport * viewport);
+		~LayerToolPan();
+	};
+
+
+	class LayerToolSelect : public LayerTool {
+	public:
+		LayerToolSelect(Window * window, Viewport * viewport);
+		~LayerToolSelect();
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 

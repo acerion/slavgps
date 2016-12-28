@@ -88,6 +88,14 @@ namespace SlavGPS {
 
 
 
+	class LayerToolDEMDownload : public LayerTool {
+	public:
+		LayerToolDEMDownload(Window * window, Viewport * viewport);
+	};
+
+
+
+
 }
 
 

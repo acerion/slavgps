@@ -40,6 +40,7 @@
 
 #include "layer_trw.h"
 #include "layer_trw_draw.h"
+#include "layer_trw_tools.h"
 #include "dialog.h"
 #include "dems.h"
 
@@ -525,30 +526,33 @@ static void marker_end_move(LayerTool * tool)
 
 LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWEditWaypoint(window, viewport);
+}
 
-	trw_layer_tools[4] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("EditWaypoint");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_wp_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("&Edit Waypoint"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>E");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Waypoint"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_edit_waypoint_click_cb;
-	layer_tool->move = (ToolMouseMoveFunc) tool_edit_waypoint_move_cb;
-	layer_tool->release = (ToolMouseFunc) tool_edit_waypoint_release_cb;
+LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("EditWaypoint");
 
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_wp_18.png");
+	this->radioActionEntry.label       = strdup(N_("&Edit Waypoint"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>E");
+	this->radioActionEntry.tooltip     = strdup(N_("Edit Waypoint"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->click = (ToolMouseFunc) tool_edit_waypoint_click_cb;
+	this->move = (ToolMouseMoveFunc) tool_edit_waypoint_move_cb;
+	this->release = (ToolMouseFunc) tool_edit_waypoint_release_cb;
 
-	return layer_tool;
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[4] = this;
 }
 
 
@@ -730,33 +734,36 @@ static bool tool_edit_waypoint_release_cb(Layer * layer, QMouseEvent * event, La
 
 LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWNewTrack(window, viewport);
+}
 
-	trw_layer_tools[1] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("CreateTrack");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_tr_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Create &Track"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>T");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Track"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_new_track_click_cb;
-	layer_tool->double_click = (ToolMouseFunc) tool_new_track_double_click_cb;
-	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;
-	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb;
-	layer_tool->key_press = tool_new_track_key_press_cb;
+LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("CreateTrack");
 
-	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_tr_18.png");
+	this->radioActionEntry.label       = strdup(N_("Create &Track"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>T");
+	this->radioActionEntry.tooltip     = strdup(N_("Create Track"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->click = (ToolMouseFunc) tool_new_track_click_cb;
+	this->double_click = (ToolMouseFunc) tool_new_track_double_click_cb;
+	this->move = (ToolMouseMoveFunc) tool_new_track_move_cb;
+	this->release = (ToolMouseFunc) tool_new_track_release_cb;
+	this->key_press = tool_new_track_key_press_cb;
 
-	return layer_tool;
+	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[1] = this;
 }
 
 
@@ -1192,32 +1199,33 @@ static void tool_new_track_release_cb(Layer * layer, QMouseEvent * event, LayerT
 
 LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWNewRoute(window, viewport);
+}
 
-	trw_layer_tools[2] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("CreateRoute");
+LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("CreateRoute");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_route_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Create &Route"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>B");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Route"));
-	layer_tool->radioActionEntry.value       = 0;
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_route_18.png");
+	this->radioActionEntry.label       = strdup(N_("Create &Route"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>B");
+	this->radioActionEntry.tooltip     = strdup(N_("Create Route"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_new_route_click_cb;
-	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
-	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb;  /* Reuse this track method for a route. */
-	layer_tool->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
+	this->click = (ToolMouseFunc) tool_new_route_click_cb;
+	this->move = (ToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
+	this->release = (ToolMouseFunc) tool_new_track_release_cb;  /* Reuse this track method for a route. */
+	this->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
 
-	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	return layer_tool;
+	trw_layer_tools[2] = this;
 }
 
 
@@ -1257,28 +1265,30 @@ static bool tool_new_route_click_cb(Layer * layer, QMouseEvent * event, LayerToo
 
 LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWNewWaypoint(window, viewport);
+}
 
-	trw_layer_tools[0] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("CreateWaypoint");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_wp_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Create &Waypoint"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>W");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Waypoint"));
-	layer_tool->radioActionEntry.value       = 0;
+LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("CreateWaypoint");
 
-	layer_tool->click = (ToolMouseFunc) tool_new_waypoint_click_cb;
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_wp_18.png");
+	this->radioActionEntry.label       = strdup(N_("Create &Waypoint"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>W");
+	this->radioActionEntry.tooltip     = strdup(N_("Create Waypoint"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->click = (ToolMouseFunc) tool_new_waypoint_click_cb;
 
-	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	return layer_tool;
+	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[0] = this;
 }
 
 
@@ -1312,30 +1322,33 @@ static bool tool_new_waypoint_click_cb(Layer * layer, QMouseEvent * event, Layer
 
 LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWEditTrackpoint(window, viewport);
+}
 
-	trw_layer_tools[5] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("EditTrackpoint");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_tr_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Edit Trac&kpoint"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>K");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Trackpoint"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_edit_trackpoint_click_cb;
-	layer_tool->move = (ToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
-	layer_tool->release = (ToolMouseFunc) tool_edit_trackpoint_release_cb;
+LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("EditTrackpoint");
 
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_tr_18.png");
+	this->radioActionEntry.label       = strdup(N_("Edit Trac&kpoint"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>K");
+	this->radioActionEntry.tooltip     = strdup(N_("Edit Trackpoint"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->click = (ToolMouseFunc) tool_edit_trackpoint_click_cb;
+	this->move = (ToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
+	this->release = (ToolMouseFunc) tool_edit_trackpoint_release_cb;
 
-	return layer_tool;
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[5] = this;
 }
 
 
@@ -1529,32 +1542,35 @@ static bool tool_edit_trackpoint_release_cb(Layer * layer, QMouseEvent * event, 
 
 LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWExtendedRouteFinder(window, viewport);
+}
 
-	trw_layer_tools[3] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("ExtendedRouteFinder");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_find_route_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Route &Finder"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>F");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Route Finder"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_extended_route_finder_click_cb;
-	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
-	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb; /* Reuse these track methods on a route. */
-	layer_tool->key_press = tool_extended_route_finder_key_press_cb;
+LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("ExtendedRouteFinder");
 
-	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_find_route_18.png");
+	this->radioActionEntry.label       = strdup(N_("Route &Finder"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>F");
+	this->radioActionEntry.tooltip     = strdup(N_("Route Finder"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->click = (ToolMouseFunc) tool_extended_route_finder_click_cb;
+	this->move = (ToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
+	this->release = (ToolMouseFunc) tool_new_track_release_cb; /* Reuse these track methods on a route. */
+	this->key_press = tool_extended_route_finder_key_press_cb;
 
-	return layer_tool;
+	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[3] = this;
 }
 
 
@@ -1690,28 +1706,31 @@ static bool tool_extended_route_finder_key_press_cb(Layer * layer, GdkEventKey *
 
 LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
+	return new LayerToolTRWShowPicture(window, viewport);
+}
 
-	trw_layer_tools[6] = layer_tool;
 
-	layer_tool->layer_type = LayerType::TRW;
-	layer_tool->id_string = QString("ShowPicture");
 
-	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_show_picture_18.png");
-	layer_tool->radioActionEntry.label       = strdup(N_("Show P&icture"));
-	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>I");
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Show Picture"));
-	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (ToolMouseFunc) tool_show_picture_click_cb;
+LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+{
+	this->id_string = QString("ShowPicture");
 
-	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
-	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_show_picture_18.png");
+	this->radioActionEntry.label       = strdup(N_("Show P&icture"));
+	this->radioActionEntry.accelerator = strdup("<control><shift>I");
+	this->radioActionEntry.tooltip     = strdup(N_("Show Picture"));
+	this->radioActionEntry.value       = 0;
 
-	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+	this->click = (ToolMouseFunc) tool_show_picture_click_cb;
 
-	return layer_tool;
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(this->ed, 0, sizeof (tool_ed_t));
+
+	trw_layer_tools[6] = this;
 }
 
 
