@@ -299,7 +299,6 @@ namespace SlavGPS {
 
 
 	typedef LayerTool * (*ToolConstructorFunc) (Window *, Viewport *);
-	typedef bool (*ToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);
 
 
 
@@ -328,8 +327,6 @@ namespace SlavGPS {
 		virtual bool key_press_(Layer * layer, QKeyEvent * event) { return false; }; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 		virtual void activate_(Layer * layer) { return; };
 		virtual void deactivate_(Layer * layer) { return; };
-
-		ToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
 		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, 0 };
 

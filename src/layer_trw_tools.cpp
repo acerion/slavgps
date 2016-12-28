@@ -67,7 +67,7 @@ using namespace SlavGPS;
 
 extern LayerTool * trw_layer_tools[];
 
-static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool);
+static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * event);
 static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * event);
 static LayerToolFuncStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * event);
 
@@ -723,8 +723,6 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport)
 	this->radioActionEntry.tooltip     = strdup(N_("Create Track"));
 	this->radioActionEntry.value       = 0;
 
-	this->key_press = tool_new_track_key_press_cb;
-
 	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -733,6 +731,14 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport)
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
 	trw_layer_tools[1] = this;
+}
+
+
+
+
+bool LayerToolTRWNewTrack::key_press_(Layer * layer, QKeyEvent * event)
+{
+	return tool_new_track_key_press(this, (LayerTRW *) layer, event);
 }
 
 
@@ -1010,9 +1016,8 @@ void LayerTRW::undo_trackpoint_add()
 
 
 
-static bool tool_new_track_key_press_cb(Layer * layer, GdkEventKey * event, LayerTool * tool)
+static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * event)
 {
-	LayerTRW * trw = (LayerTRW *) layer;
 #ifdef K
 	if (this->current_trk && event->keyval == GDK_Escape) {
 		/* Bin track if only one point as it's not very useful. */
@@ -1196,8 +1201,6 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport)
 	this->radioActionEntry.tooltip     = strdup(N_("Create Route"));
 	this->radioActionEntry.value       = 0;
 
-	this->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
-
 	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1252,6 +1255,14 @@ LayerToolFuncStatus LayerToolTRWNewRoute::move_(Layer * layer, QMouseEvent * eve
 LayerToolFuncStatus LayerToolTRWNewRoute::release_(Layer * layer, QMouseEvent * event)
 {
 	return tool_new_track_release(this, (LayerTRW *) layer, event);
+}
+
+
+
+
+bool LayerToolTRWNewRoute::key_press_(Layer * layer, QKeyEvent * event)
+{
+	return tool_new_track_key_press(this, (LayerTRW *) layer, event);
 }
 
 
@@ -1548,8 +1559,6 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 	this->radioActionEntry.tooltip     = strdup(N_("Route Finder"));
 	this->radioActionEntry.value       = 0;
 
-	this->key_press = tool_extended_route_finder_key_press_cb;
-
 	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1684,7 +1693,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 
 
 
-static bool tool_extended_route_finder_key_press_cb(Layer * layer, GdkEventKey * event, LayerTool * tool)
+bool LayerToolTRWExtendedRouteFinder::key_press_(Layer * layer, QKeyEvent * event)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 

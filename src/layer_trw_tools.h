@@ -71,6 +71,7 @@ namespace SlavGPS {
 		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
 	class LayerToolTRWShowPicture : public LayerTool {
@@ -97,6 +98,7 @@ namespace SlavGPS {
 		LayerToolFuncStatus double_click_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
 	class LayerToolTRWNewRoute : public LayerTool {
@@ -106,6 +108,7 @@ namespace SlavGPS {
 		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
 
