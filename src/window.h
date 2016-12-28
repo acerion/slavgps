@@ -13,9 +13,6 @@
 #include <QCloseEvent>
 
 #include "layers_panel.h"
-#include "viewport.h"
-#include "layer.h"
-#include "layer_trw.h"
 #include "statusbar.h"
 #include "file.h"
 
@@ -39,7 +36,10 @@ namespace SlavGPS {
 
 
 
+	class Layer;
+	class LayerTRW;
 	class LayerToolBox;
+	class Viewport;
 
 
 
