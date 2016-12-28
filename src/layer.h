@@ -302,15 +302,6 @@ namespace SlavGPS {
 
 
 
-	struct ActionEntry {
-		char const * stock_id;
-		char const * label;
-		char const * accelerator;
-		char const * tooltip;
-		int value;
-	};
-
-
 
 	class LayerTool {
 
@@ -328,7 +319,10 @@ namespace SlavGPS {
 		virtual void activate_(Layer * layer) { return; };
 		virtual void deactivate_(Layer * layer) { return; };
 
-		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, 0 };
+		QString action_icon_path;
+		QString action_label;
+		QString action_tooltip;
+		QKeySequence action_accelerator;
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
 
@@ -345,7 +339,7 @@ namespace SlavGPS {
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */
 
-		char layer_type_string[30]; /* For debug purposes only. */
+		char debug_string[100]; /* For debug purposes only. */
 	};
 
 

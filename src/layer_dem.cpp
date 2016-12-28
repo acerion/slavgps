@@ -1331,11 +1331,10 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window, Viewport * viewport)
 {
 	this->id_string = QString("dem.download");
 
-	this->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/dem_download_18.png");
-	this->radioActionEntry.label       = strdup(N_("&DEM Download"));
-	this->radioActionEntry.accelerator = NULL;
-	this->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
-	this->radioActionEntry.value       = 0;
+	this->action_icon_path   = ":/icons/layer_tool/dem_download_18.png";
+	this->action_label       = QObject::tr("&DEM Download");
+	this->action_tooltip     = QObject::tr("DEM Download");
+	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);

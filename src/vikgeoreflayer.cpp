@@ -1127,11 +1127,10 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) :
 {
 	this->id_string = QString("GeorefMoveMap");
 
-	this->radioActionEntry.stock_id    = strdup("vik-icon-Georef Move Map");
-	this->radioActionEntry.label       = strdup(N_("_Georef Move Map"));
-	this->radioActionEntry.accelerator = NULL;
-	this->radioActionEntry.tooltip     = strdup(N_("Georef Move Map"));
-	this->radioActionEntry.value       = 0;
+	this->action_icon_path   = "vik-icon-Georef Move Map";
+	this->action_label       = QObject::tr("_Georef Move Map");
+	this->action_tooltip     = QObject::tr("Georef Move Map");
+	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geomove_pixbuf;
@@ -1181,11 +1180,10 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) :
 {
 	this->id_string = QString("GeorefZoomTool");
 
-	this->radioActionEntry.stock_id    = strdup("vik-icon-Georef Zoom Tool");
-	this->radioActionEntry.label       = strdup(N_("Georef Z_oom Tool"));
-	this->radioActionEntry.accelerator = NULL;
-	this->radioActionEntry.tooltip     = strdup(N_("Georef Zoom Tool"));
-	this->radioActionEntry.value       = 0;
+	this->action_icon_path   = "vik-icon-Georef Zoom Tool";
+	this->action_label       = QObject::tr("Georef Z&oom Tool");
+	this->action_tooltip     = QObject::tr("Georef Zoom Tool");
+	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geozoom_pixbuf;

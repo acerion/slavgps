@@ -1049,10 +1049,10 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 	this->viewport = viewport;
 	this->layer_type = layer_type;
 	if (layer_type == LayerType::NUM_TYPES) {
-		strcpy(this->layer_type_string, "LayerType::generic");
+		strcpy(this->debug_string, "LayerType::generic");
 	} else {
-		strcpy(this->layer_type_string, "LayerType::");
-		strcpy(this->layer_type_string + 11, Layer::get_interface(layer_type)->layer_type_string);
+		strcpy(this->debug_string, "LayerType::");
+		strcpy(this->debug_string + 11, Layer::get_interface(layer_type)->layer_type_string);
 	}
 }
 
@@ -1109,7 +1109,7 @@ LayerTool::~LayerTool()
 */
 QString LayerTool::get_description() const
 {
-	return QString(this->radioActionEntry.tooltip);
+	return this->action_tooltip;
 }
 
 

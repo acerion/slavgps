@@ -942,10 +942,10 @@ void Window::create_ui(void)
 		gtk_icon_set_unref(icon_set);
 
 		action.name = Layer::get_interface(i)->name;
-		action.stock_id = Layer::get_interface(i)->name;
-		action.label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(i)->name);
-		action.accelerator = Layer::get_interface(i)->accelerator;
-		action.tooltip = NULL;
+		action.action_icon_path = Layer::get_interface(i)->name;
+		action.action_label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(i)->name);
+		action.action_tooltip = NULL;
+		action.action_accelerator = Layer::get_interface(i)->accelerator;
 		action.callback = (GCallback)menu_layer_new_cb;
 		gtk_action_group_add_actions(action_group, &action, 1, window);
 
@@ -988,10 +988,10 @@ void Window::create_ui(void)
 		// For default layers use action names of the form 'Layer<LayerName>'
 		// This is to avoid clashing with just the layer name used above for the tool actions
 		action_dl.name = g_strconcat("Layer", Layer::get_interface(i)->fixed_layer_name, NULL);
-		action_dl.stock_id = NULL;
-		action_dl.label = g_strconcat("_", Layer::get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
-		action_dl.accelerator = NULL;
-		action_dl.tooltip = NULL;
+		action_dl.action_icon_path = NULL;
+		action_dl.action_label = g_strconcat("_", Layer::get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
+		action_dl.action_tooltip = NULL;
+		// action_dl.action_accelerator = ...; /* Empty accelerator. */
 		action_dl.callback = (GCallback)layer_defaults_cb;
 		gtk_action_group_add_actions(action_group, &action_dl, 1, window);
 		free((char*)action_dl.name);

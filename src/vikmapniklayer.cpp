@@ -1177,11 +1177,10 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewp
 {
 	this->id_string = QString("MapnikFeatures");
 
-	this->radioActionEntry.stock_id = strdup(GTK_STOCK_INFO);
-	this->radioActionEntry.label = strdup(N_("_Mapnik Features"));
-	this->radioActionEntry.accelerator = NULL;
-	this->radioActionEntry.tooltip = strdup(N_("Mapnik Features"));
-	this->radioActionEntry.value = 0;
+	this->action_icon_path   = GTK_STOCK_INFO;
+	this->action_label       = QObject::tr("&Mapnik Features");
+	this->action_tooltip     = QObject::tr("Mapnik Features");
+	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::ArrowCursor;
 	this->cursor_data = NULL;

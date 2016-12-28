@@ -2145,11 +2145,10 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewpor
 {
 	this->id_string = QString("MapsDownload");
 
-	this->radioActionEntry.stock_id = strdup("vik-icon-Maps Download");
-	this->radioActionEntry.label = strdup(N_("_Maps Download"));
-	this->radioActionEntry.accelerator = NULL;
-	this->radioActionEntry.tooltip = strdup(N_("Maps Download"));
-	this->radioActionEntry.value = 0;
+	this->action_icon_path   = "vik-icon-Maps Download";
+	this->action_label       = QObject::tr("_Maps Download");
+	this->action_tooltip     = QObject::tr("Maps Download");
+	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixbuf;

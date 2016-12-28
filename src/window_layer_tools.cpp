@@ -63,12 +63,11 @@ QAction * LayerToolBox::add_tool(LayerTool * layer_tool)
 #if 0
 	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
 #endif
-	QString label(layer_tool->radioActionEntry.label);
-	QAction * qa = new QAction(label, this->window);
+	QAction * qa = new QAction(layer_tool->action_label, this->window);
 
 	qa->setObjectName(layer_tool->id_string);
 	qDebug() << "DD: Layer Tools: Created qaction with name" << qa->objectName() << qa;
-	qa->setIcon(QIcon(QString(layer_tool->radioActionEntry.stock_id)));
+	qa->setIcon(QIcon(layer_tool->action_icon_path));
 	qa->setCheckable(true);
 
 	this->tools.push_back(layer_tool);
@@ -762,11 +761,10 @@ LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool
 {
 	this->id_string = QString("generic.ruler");
 
-	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/ruler_18.png");
-	this->radioActionEntry.label = strdup(N_("&Ruler"));
-	this->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
-	this->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
-	this->radioActionEntry.value = 2;
+	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
+	this->action_label       = QObject::tr("&Ruler");
+	this->action_tooltip     = QObject::tr("Ruler Tool");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_U; /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1021,11 +1019,10 @@ LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(w
 {
 	this->id_string = QString("generic.zoom");
 
-	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/zoom_18.png");
-	this->radioActionEntry.label = strdup(N_("&Zoom"));
-	this->radioActionEntry.accelerator = strdup("<control><shift>Z");
-	this->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
-	this->radioActionEntry.value = 1;
+	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
+	this->action_label       = QObject::tr("&Zoom");
+	this->action_tooltip     = QObject::tr("Zoom Tool");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Z;
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1231,11 +1228,10 @@ LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(win
 {
 	this->id_string = QString("generic.pan");
 
-	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/pan_22.png");
-	this->radioActionEntry.label = strdup(N_("&Pan"));
-	this->radioActionEntry.accelerator = strdup("<control><shift>P");
-	this->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
-	this->radioActionEntry.value = 0;
+	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
+	this->action_label       = QObject::tr("&Pan");
+	this->action_tooltip     = QObject::tr("Pan Tool");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_P;
 
 	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
 	this->cursor_release = new QCursor(Qt::OpenHandCursor);
@@ -1327,11 +1323,10 @@ LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTo
 {
 	this->id_string = QString("generic.select");
 
-	this->radioActionEntry.stock_id = strdup(":/icons/layer_tool/select_18.png");
-	this->radioActionEntry.label = strdup(N_("&Select"));
-	this->radioActionEntry.accelerator = strdup("<control><shift>S");
-	this->radioActionEntry.tooltip = strdup(N_("Select Tool"));
-	this->radioActionEntry.value = 3;
+	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
+	this->action_label       = QObject::tr("&Select");
+	this->action_tooltip     = QObject::tr("Select Tool");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_S;
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
