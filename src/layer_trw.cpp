@@ -365,10 +365,9 @@ LayerInterface vik_trw_layer_interface = {
 	trw_layer_tools,
 	7,
 
-	trw_layer_params,
+	trw_layer_params, /* Parameters. */
 	NUM_PARAMS,
-	params_groups, /* params_groups */
-	sizeof(params_groups)/sizeof(params_groups[0]),    /* number of groups */
+	params_groups,    /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

@@ -247,10 +247,9 @@ LayerInterface vik_dem_layer_interface = {
 	dem_tools,
 	1,
 
-	dem_layer_params,
+	dem_layer_params, /* Parameters. */
 	NUM_PARAMS,
-	NULL,
-	0,
+	NULL,             /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

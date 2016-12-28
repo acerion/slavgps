@@ -271,10 +271,9 @@ VikLayerInterface vik_maps_layer_interface = {
 	maps_tools,
 	1,
 
-	maps_layer_params,
+	maps_layer_params, /* Parameters. */
 	NUM_PARAMS,
-	NULL,
-	0,
+	NULL,              /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

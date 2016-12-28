@@ -133,10 +133,9 @@ VikLayerInterface vik_georef_layer_interface = {
 	georef_tools,
 	2,
 
-	georef_layer_params,
+	georef_layer_params, /* Parameters. */
 	NUM_PARAMS,
-	NULL,
-	0,
+	NULL,                /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

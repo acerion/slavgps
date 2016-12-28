@@ -340,10 +340,9 @@ VikLayerInterface vik_gps_layer_interface = {
 	NULL,
 	0,
 
-	gps_layer_params,
+	gps_layer_params,   /* Parameters. */
 	NUM_PARAMS,
-	params_groups,
-	sizeof(params_groups)/sizeof(params_groups[0]),
+	params_groups,      /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

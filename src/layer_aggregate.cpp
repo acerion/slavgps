@@ -65,10 +65,9 @@ LayerInterface vik_aggregate_layer_interface = {
 	NULL,
 	0,
 
-	NULL,
+	NULL, /* Parameters. */
 	0,
-	NULL,
-	0,
+	NULL, /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

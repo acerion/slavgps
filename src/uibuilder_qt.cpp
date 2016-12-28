@@ -296,6 +296,7 @@ PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent) : QD
 	this->tabs = new QTabWidget();
 	this->vbox = new QVBoxLayout;
 
+	//this->tabs->setTabBarAutoHide(true); /* TODO: enable when this method becomes widely available. */
 
 	//this->vbox->addLayout(this->form);
 	this->vbox->addWidget(this->tabs);
@@ -345,11 +346,12 @@ void PropertiesDialog::fill(Preferences * preferences)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			form = this->insert_tab(QString("page"));
+			QString page_label = tr("Properties");
+			form = this->insert_tab(page_label);
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Preferences Builder: created tab" << QString("page");
+			qDebug() << "II: Preferences Builder: created tab" << page_label;
 		} else {
 			form = form_iter->second;
 		}
@@ -370,7 +372,6 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 void PropertiesDialog::fill(Layer * layer)
 {
-#if 1
 	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
@@ -383,11 +384,14 @@ void PropertiesDialog::fill(Layer * layer)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			form = this->insert_tab(QString("page"));
+			QString page_label = layer->get_interface()->params_groups
+				? layer->get_interface()->params_groups[group_id]
+				: tr("Properties");
+			form = this->insert_tab(page_label);
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Parameters Builder: created tab" << QString("page");
+			qDebug() << "II: Parameters Builder: created tab" << page_label;
 		} else {
 			form = form_iter->second;
 		}
@@ -399,22 +403,6 @@ void PropertiesDialog::fill(Layer * layer)
 		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
-#else
-	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
-	if (!params) {
-		return;
-	}
-	std::map<param_id_t, Parameter *>::iterator iter = params->begin();
-	std::map<param_id_t, Parameter *>::iterator end = params->end();
-
-	do {
-		QString label("page");
-		QFormLayout * form = this->insert_tab(label);
-		qDebug() << "II: Preferences Builder: adding widgets to tab" << label;
-
-		iter = this->add_widgets_to_tab(form, layer, iter, end);
-	} while (iter != params->end());
-#endif
 }
 
 
@@ -435,11 +423,14 @@ void PropertiesDialog::fill(LayerInterface * interface)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			form = this->insert_tab(QString("page"));
+			QString page_label = interface->params_groups
+				? interface->params_groups[group_id]
+				: tr("Properties");
+			form = this->insert_tab(page_label);
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Parameters Builder: created tab" << QString("page");
+			qDebug() << "II: Parameters Builder: created tab" << page_label;
 		} else {
 			form = form_iter->second;
 		}
@@ -459,7 +450,7 @@ void PropertiesDialog::fill(LayerInterface * interface)
 void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 {
 	int i = 0;
-	QFormLayout * form = this->insert_tab(QString("page"));
+	QFormLayout * form = this->insert_tab(tr("Properties"));
 	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group, form));
 	ParameterValue param_value; // = layer->get_param_value(i, false);
 	Parameter * param = NULL;

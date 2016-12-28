@@ -356,7 +356,6 @@ namespace SlavGPS {
 		Parameter * params;
 		uint16_t    params_count;
 		char     ** params_groups;
-		uint8_t     params_groups_count;
 
 		/* Menu items to be created. */
 		LayerMenuItem    menu_items_selection;

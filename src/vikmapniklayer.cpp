@@ -133,10 +133,9 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	mapnik_tools,
 	1,
 
-	mapnik_layer_params,
+	mapnik_layer_params, /* Parameters. */
 	NUM_PARAMS,
-	NULL,
-	0,
+	NULL,                /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 

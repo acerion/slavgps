@@ -94,11 +94,9 @@ LayerInterface vik_coord_layer_interface = {
 	NULL,
 	0,
 
-	coord_layer_params,
+	coord_layer_params, /* Parameters. */
 	PARAM_MAX,
-
-	NULL,
-	0,
+	NULL,               /* Parameter groups. */
 
 	VIK_MENU_ITEM_ALL,
 
