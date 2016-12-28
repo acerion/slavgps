@@ -343,13 +343,14 @@ namespace SlavGPS {
 
 	class LayerInterface {
 	public:
-		LayerInterfaceConfigure configure;
+		LayerInterface(LayerInterfaceConfigure config_function);
 
+		LayerInterfaceConfigure configure = NULL;
 
 		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-		Parameter * params;
-		uint16_t    params_count;
-		char     ** params_groups;
+		Parameter * params = NULL;
+		uint16_t    params_count = 0;
+		char     ** params_groups = NULL;
 
 		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. */
 		QString layer_name;            /* Translate-able name used for display purposes. */

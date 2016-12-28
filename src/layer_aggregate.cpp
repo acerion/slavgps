@@ -51,13 +51,8 @@ static void aggregate_layer_interface_configure(LayerInterface * interface);
 
 
 
-LayerInterface vik_aggregate_layer_interface = {
-	aggregate_layer_interface_configure,
 
-	NULL, /* Parameters. */
-	0,
-	NULL, /* Parameter groups. */
-};
+LayerInterface vik_aggregate_layer_interface(aggregate_layer_interface_configure);
 
 
 

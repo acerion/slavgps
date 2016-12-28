@@ -260,19 +260,16 @@ void maps_layer_set_cache_default(MapsCacheLayout layout)
 
 
 
-VikLayerInterface vik_maps_layer_interface = {
-	maps_layer_interface_configure,
-
-	maps_layer_params, /* Parameters. */
-	NUM_PARAMS,
-	NULL,              /* Parameter groups. */
-};
+LayerInterface vik_maps_layer_interface(maps_layer_interface_configure);
 
 
 
 
 void maps_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = maps_layer_params; /* Parameters. */
+	interface->params_count = NUM_PARAMS;
+
 	strndup(interface->layer_type_string, "Map", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
 

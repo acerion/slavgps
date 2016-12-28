@@ -118,19 +118,16 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
 
 
 
-VikLayerInterface vik_mapnik_layer_interface = {
-	mapnik_layer_interface_configure,
-
-	mapnik_layer_params, /* Parameters. */
-	NUM_PARAMS,
-	NULL,                /* Parameter groups. */
-};
+LayerInterface vik_mapnik_layer_interface(mapnik_layer_interface_configure);
 
 
 
 
 void mapnik_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = mapnik_layer_params; /* Parameters. */
+	interface->params_count = NUM_PARAMS,
+
 	strndup(interface->layer_type_string, "Mapnik Rendering", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
 

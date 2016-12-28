@@ -84,13 +84,14 @@ static Parameter coord_layer_params[] = {
 
 
 
-LayerInterface vik_coord_layer_interface = {
-	coord_layer_interface_configure,
-
+LayerInterface vik_coord_layer_interface(coord_layer_interface_configure);
+#if 0
+= {
 	coord_layer_params, /* Parameters. */
 	PARAM_MAX,
 	NULL               /* Parameter groups. */
 };
+#endif
 
 
 

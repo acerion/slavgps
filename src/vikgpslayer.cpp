@@ -331,19 +331,20 @@ static Parameter gps_layer_params[] = {
 	{ NUM_PARAMS,                       NULL,                        ParameterType::PTR,     VIK_LAYER_GROUP_NONE, NULL,                                   WidgetType::NONE,              NULL,                    NULL, NULL, NULL,                        NULL, NULL }, /* Guard. */
 };
 
-VikLayerInterface vik_gps_layer_interface = {
-	gps_layer_interface_configure,
 
-	gps_layer_params,   /* Parameters. */
-	NUM_PARAMS,
-	params_groups,      /* Parameter groups. */
-};
+
+
+LayerInterface vik_gps_layer_interface(gps_layer_interface_configure);
 
 
 
 
 void gps_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = gps_layer_params;       /* Parameters. */
+	interface->params_count = NUM_PARAMS;
+	interface->params_groups = params_groups;   /* Parameter groups. */
+
 	strndup(interface->layer_type_string, "GPS", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
 

@@ -114,19 +114,18 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
 
 
-VikLayerInterface vik_georef_layer_interface = {
-	georef_layer_interface_configure,
 
-	georef_layer_params, /* Parameters. */
-	NUM_PARAMS,
-	NULL,                /* Parameter groups. */
-};
+
+LayerInterface vik_georef_layer_interface(georef_layer_interface_configure);
 
 
 
 
 void georef_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = georef_layer_params; /* Parameters. */
+	interface->params_count = NUM_PARAMS;
+
 	strndup(interface->layer_type_string, "GeoRef Map", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
 

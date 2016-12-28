@@ -183,6 +183,14 @@ LayerInterface * Layer::get_interface(void)
 
 
 
+LayerInterface::LayerInterface(LayerInterfaceConfigure config_function)
+{
+	this->configure = config_function;
+}
+
+
+
+
 void Layer::preconfigure_interfaces(void)
 {
 	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {

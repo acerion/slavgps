@@ -237,19 +237,16 @@ static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/si
 
 
 
-LayerInterface vik_dem_layer_interface = {
-	dem_layer_interface_configure,
-
-	dem_layer_params, /* Parameters. */
-	NUM_PARAMS,
-	NULL,             /* Parameter groups. */
-};
+LayerInterface vik_dem_layer_interface(dem_layer_interface_configure);
 
 
 
 
 void dem_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = dem_layer_params; /* Parameters. */
+	interface->params_count = NUM_PARAMS;
+
 	strncpy(interface->layer_type_string, "DEM", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
 

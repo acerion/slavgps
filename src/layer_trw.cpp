@@ -322,19 +322,20 @@ static void trw_layer_interface_configure(LayerInterface * interface);
 static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values);
 /* End Layer Interface function definitions */
 
-LayerInterface vik_trw_layer_interface = {
-	trw_layer_interface_configure,
 
-	trw_layer_params, /* Parameters. */
-	NUM_PARAMS,
-	params_groups,    /* Parameter groups. */
-};
+
+
+LayerInterface vik_trw_layer_interface(trw_layer_interface_configure);
 
 
 
 
 void trw_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = trw_layer_params;        /* Parameters. */
+	interface->params_count = NUM_PARAMS;
+	interface->params_groups = params_groups;    /* Parameter groups. */
+
 	strncpy(interface->layer_type_string, "TrackWaypoint", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
 
