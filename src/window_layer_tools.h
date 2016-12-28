@@ -81,6 +81,13 @@ namespace SlavGPS {
 
 
 
+	typedef struct {
+		GdkPixmap * pixmap = NULL;
+		/* Track zoom bounds for zoom tool with shift modifier: */
+		bool bounds_active = false;
+		int start_x = 0;
+		int start_y = 0;
+	} zoom_tool_state_t;
 
 	class LayerToolZoom : public LayerTool {
 	public:
@@ -90,9 +97,17 @@ namespace SlavGPS {
 		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+
+	private:
+		zoom_tool_state_t * zoom = NULL;
 	};
 
 
+	typedef struct {
+		bool has_start_coord = false;
+		VikCoord start_coord;
+		bool invalidate_start_coord = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
+	} ruler_tool_state_t;
 
 	class LayerToolRuler : public LayerTool {
 	public:
@@ -104,6 +119,9 @@ namespace SlavGPS {
 		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 		void deactivate_(Layer * layer);
 		bool key_press_(Layer * layer, QKeyEvent * event);
+
+	private:
+		ruler_tool_state_t * ruler = NULL;
 	};
 
 

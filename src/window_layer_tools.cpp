@@ -759,7 +759,7 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 
 LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
 {
-	this->id_string = QString("generic.ruler");
+	this->id_string = "generic.ruler";
 
 	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
 	this->action_label       = QObject::tr("&Ruler");
@@ -771,11 +771,18 @@ LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool
 	//shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_ruler_pixbuf;
 
-
-	this->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
-	memset(this->ruler, 0, sizeof (ruler_tool_state_t));
+	this->ruler = new ruler_tool_state_t;
 }
 
+
+
+
+LayerToolRuler::~LayerToolRuler()
+{
+	delete this->cursor_click;
+	delete this->cursor_release;
+	delete this->ruler;
+}
 
 
 
@@ -1017,7 +1024,7 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 
 LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
 {
-	this->id_string = QString("generic.zoom");
+	this->id_string = "generic.zoom";
 
 	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
 	this->action_label       = QObject::tr("&Zoom");
@@ -1030,8 +1037,17 @@ LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(w
 	//this->cursor_shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_zoom_pixbuf;
 
-	this->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
-	memset(this->zoom, 0, sizeof (zoom_tool_state_t));
+	this->zoom = new zoom_tool_state_t;
+}
+
+
+
+
+LayerToolZoom::~LayerToolZoom()
+{
+	delete this->cursor_click;
+	delete this->cursor_release;
+	delete this->zoom;
 }
 
 
@@ -1240,6 +1256,15 @@ LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(win
 
 
 
+LayerToolPan::~LayerToolPan()
+{
+	delete this->cursor_click;
+	delete this->cursor_release;
+}
+
+
+
+
 /* NB Double clicking means this gets called THREE times!!! */
 LayerToolFuncStatus LayerToolPan::click_(Layer * layer, QMouseEvent * event)
 {
@@ -1331,10 +1356,18 @@ LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTo
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new tool_ed_t;
 }
 
+
+
+
+LayerToolSelect::~LayerToolSelect()
+{
+	delete this->cursor_click;
+	delete this->cursor_release;
+	delete this->ed;
+}
 
 
 

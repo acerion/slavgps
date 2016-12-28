@@ -95,15 +95,6 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		bool has_start_coord;
-		VikCoord start_coord;
-		bool invalidate_start_coord; /* Discard/invalidate ->start_coord on release of left mouse button? */
-	} ruler_tool_state_t;
-
-
-
-
-	typedef struct {
 		LayerTRW * trw = NULL; /* LayerTRW. */
 		bool holding = false;
 		bool moving = false;
@@ -112,16 +103,6 @@ namespace SlavGPS {
 		int oldx = 0;
 		int oldy = 0;
 	} tool_ed_t;
-
-
-
-	typedef struct {
-		GdkPixmap *pixmap;
-		/* Track zoom bounds for zoom tool with shift modifier: */
-		bool bounds_active;
-		int start_x;
-		int start_y;
-	} zoom_tool_state_t;
 
 
 
@@ -333,8 +314,6 @@ namespace SlavGPS {
 		Viewport * viewport = NULL;
 
 		tool_ed_t * ed = NULL;
-		ruler_tool_state_t * ruler = NULL;
-		zoom_tool_state_t * zoom = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */
