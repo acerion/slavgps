@@ -86,6 +86,10 @@ namespace SlavGPS {
 	public:
 		LayerToolZoom(Window * window, Viewport * viewport);
 		~LayerToolZoom();
+
+		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
 	};
 
 
@@ -94,6 +98,12 @@ namespace SlavGPS {
 	public:
 		LayerToolRuler(Window * window, Viewport * viewport);
 		~LayerToolRuler();
+
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		void deactivate_(Layer * layer);
+		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
 
@@ -101,6 +111,10 @@ namespace SlavGPS {
 	public:
 		LayerToolPan(Window * window, Viewport * viewport);
 		~LayerToolPan();
+
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 	};
 
 
@@ -108,6 +122,10 @@ namespace SlavGPS {
 	public:
 		LayerToolSelect(Window * window, Viewport * viewport);
 		~LayerToolSelect();
+
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
 	};
 
 

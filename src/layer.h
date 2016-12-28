@@ -33,6 +33,7 @@
 #include <QPersistentModelIndex>
 #include <QIcon>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QCursor>
 #include <QMenu>
 #include <QString>
@@ -55,7 +56,7 @@
  * layer was selected (find way/trackpoint).
  */
 enum class LayerToolFuncStatus {
-	IGNORED = 0,
+	IGNORE = 0,
 	ACK,
 	ACK_REDRAW_ABOVE,
 	ACK_REDRAW_ALL,
@@ -324,12 +325,14 @@ namespace SlavGPS {
 
 		QString get_description() const;
 
-		ToolActivationFunc activate = NULL;
-		ToolActivationFunc deactivate = NULL;
-		ToolMouseFunc click = NULL;
-		ToolMouseFunc double_click = NULL;
-		ToolMouseMoveFunc move = NULL;
-		ToolMouseFunc release = NULL;
+		virtual LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
+		virtual LayerToolFuncStatus double_click_(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
+		virtual LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
+		virtual LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
+		virtual bool key_press_(Layer * layer, QKeyEvent * event) { return false; };
+		virtual void activate_(Layer * layer) { return; };
+		virtual void deactivate_(Layer * layer) { return; };
+
 		ToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
 		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, 0 };

@@ -1337,9 +1337,6 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window, Viewport * viewport)
 	this->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
 	this->radioActionEntry.value       = 0;
 
-	this->click = (ToolMouseFunc) dem_layer_download_click;
-	this->release = (ToolMouseFunc) dem_layer_download_release;
-
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 

@@ -115,14 +115,10 @@ void LayerToolBox::activate_tool(QAction * qa)
 	}
 
 	if (this->active_tool) {
-		if (this->active_tool->deactivate) {
-			this->active_tool->deactivate(NULL, this->active_tool);
-		}
+		this->active_tool->deactivate_(NULL);
 	}
 	qDebug() << "II: Layer Tools: activating tool" << tool_id;
-	if (tool->activate) {
-		tool->activate(layer, tool);
-	}
+	tool->activate_(layer);
 	this->active_tool = tool;
 	this->active_tool_qa = qa;
 }
@@ -144,9 +140,7 @@ bool LayerToolBox::deactivate_tool(QAction * qa)
 
 	assert (this->active_tool);
 
-	if (tool->deactivate) {
-		tool->deactivate(NULL, tool);
-	}
+	tool->deactivate_(NULL);
 	qa->setChecked(false);
 
 	this->active_tool = NULL;
@@ -378,12 +372,6 @@ void LayerToolBox::click(QMouseEvent * event)
 	}
 
 
-	if (!this->active_tool->click) {
-		qDebug() << "EE: Layer Tools: tool" << this->active_tool->id_string << "doesn't have 'click' method";
-		return;
-	}
-
-
 	LayerType layer_tool_type = this->active_tool->layer_type;
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
@@ -393,8 +381,8 @@ void LayerToolBox::click(QMouseEvent * event)
 	}
 
 	qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
-	this->active_tool->click(layer, event, this->active_tool);
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
+	this->active_tool->click_(layer, event);
 
 	return;
 }
@@ -418,12 +406,6 @@ void LayerToolBox::double_click(QMouseEvent * event)
 	}
 
 
-	if (!this->active_tool->double_click) {
-		qDebug() << "EE: Layer Tools: tool" << this->active_tool->id_string << "doesn't have 'double click' method";
-		return;
-	}
-
-
 	LayerType layer_tool_type = this->active_tool->layer_type;
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
@@ -434,8 +416,8 @@ void LayerToolBox::double_click(QMouseEvent * event)
 
 
 	qDebug() << "II: Layer Tools: double click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
-	this->active_tool->double_click(layer, event, this->active_tool);
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
+	this->active_tool->double_click_(layer, event);
 
 	return;
 }
@@ -459,12 +441,6 @@ void LayerToolBox::move(QMouseEvent * event)
 	}
 
 
-	if (!this->active_tool->move) {
-		qDebug() << "EE: Layer Tools: tool" << this->active_tool->id_string << "doesn't have 'move' method";
-		return;
-	}
-
-
 	LayerType layer_tool_type = this->active_tool->layer_type;
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
@@ -476,7 +452,7 @@ void LayerToolBox::move(QMouseEvent * event)
 
 	qDebug() << "II: Layer Tools: move received, passing to tool" << this->active_tool->get_description();
 
-	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
+	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->move_(layer, event)) {
 #if 0
 		gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
 #endif
@@ -504,12 +480,6 @@ void LayerToolBox::release(QMouseEvent * event)
 	}
 
 
-	if (!this->active_tool->release) {
-		qDebug() << "EE: Layer Tools: tool" << this->active_tool->id_string << "doesn't have 'release' method";
-		return;
-	}
-
-
 	LayerType layer_tool_type = this->active_tool->layer_type;
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
@@ -520,8 +490,8 @@ void LayerToolBox::release(QMouseEvent * event)
 
 
 	qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release);
-	this->active_tool->release(layer, event, this->active_tool);
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO: move this into release() method. */
+	this->active_tool->release_(layer, event);
 
 	return;
 }
@@ -558,15 +528,6 @@ static int draw_buf(draw_buf_data_t * data)
 #endif
 	return false;
 }
-
-
-
-
-static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static void ruler_deactivate(Layer * layer, LayerTool * tool);
-static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool);
 
 
 
@@ -807,12 +768,6 @@ LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool
 	this->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
 	this->radioActionEntry.value = 2;
 
-	this->deactivate = ruler_deactivate;
-	this->click = (ToolMouseFunc) ruler_click;
-	this->move = (ToolMouseMoveFunc) ruler_move;
-	this->release = (ToolMouseFunc) ruler_release;
-	this->key_press = ruler_key_press;
-
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 	//shape = Qt::BitmapCursor;
@@ -827,7 +782,7 @@ LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool
 
 
 
-static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->click()";
 
@@ -838,20 +793,20 @@ static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, Layer
 	if (event->button() == Qt::LeftButton) {
 		char * lat = NULL;
 		char * lon = NULL;
-		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
+		this->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
-		if (tool->ruler->has_start_coord) {
+		if (this->ruler->has_start_coord) {
 			DistanceUnit distance_unit = a_vik_get_units_distance();
 			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
-				sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &tool->ruler->start_coord));
+				sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &this->ruler->start_coord));
 				break;
 			case DistanceUnit::MILES:
-				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(vik_coord_diff(&coord, &tool->ruler->start_coord)));
+				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(vik_coord_diff(&coord, &this->ruler->start_coord)));
 				break;
 			case DistanceUnit::NAUTICAL_MILES:
-				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&coord, &tool->ruler->start_coord)));
+				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&coord, &this->ruler->start_coord)));
 				break;
 			default:
 				sprintf(temp, "Just to keep the compiler happy");
@@ -859,19 +814,19 @@ static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, Layer
 			}
 
 			qDebug() << "II: Layer Tools: Ruler: second click, dropping start coordinates";
-			tool->ruler->has_start_coord = false;
+			this->ruler->has_start_coord = false;
 		} else {
 			sprintf(temp, "%s %s", lat, lon);
 			qDebug() << "II: Layer Tools: Ruler: first click, saving start coordinates";
-			tool->ruler->has_start_coord = true;
+			this->ruler->has_start_coord = true;
 		}
 
 		QString message(temp);
-		tool->window->get_statusbar()->set_message(StatusBarField::INFO, message);
-		tool->ruler->start_coord = coord;
+		this->window->get_statusbar()->set_message(StatusBarField::INFO, message);
+		this->ruler->start_coord = coord;
 	} else {
-		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
-		tool->window->draw_update_cb();
+		this->viewport->set_center_screen((int) event->x(), (int) event->y());
+		this->window->draw_update_cb();
 	}
 
 	return LayerToolFuncStatus::ACK;
@@ -880,7 +835,7 @@ static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, Layer
 
 
 
-static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->move()";
 
@@ -888,7 +843,7 @@ static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerT
 	VikCoord coord;
 	char temp[128] = { 0 };
 
-	if (!tool->ruler->has_start_coord) {
+	if (!this->ruler->has_start_coord) {
 		qDebug() << "II: Layer Tools: Ruler: not drawing, we don't have start coordinates";
 		return LayerToolFuncStatus::ACK;
 	}
@@ -896,8 +851,8 @@ static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerT
 	static QPixmap * buf = NULL;
 	char * lat = NULL;
 	char * lon = NULL;
-	int w1 = tool->viewport->get_width();
-	int h1 = tool->viewport->get_height();
+	int w1 = this->viewport->get_width();
+	int h1 = this->viewport->get_height();
 	if (!buf) {
 		qDebug() << "II: Layer Tools: Ruler: creating new pixmap of size" << w1 << h1;
 		buf = new QPixmap(w1, h1);
@@ -911,35 +866,35 @@ static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerT
 	buf->fill(QColor("transparent"));
 	//buf->fill();
 
-	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
+	this->viewport->screen_to_coord(event->x(), event->y(), &coord);
 	vik_coord_to_latlon(&coord, &ll);
 
 	int start_x;
 	int start_y;
-	tool->viewport->coord_to_screen(&tool->ruler->start_coord, &start_x, &start_y);
+	this->viewport->coord_to_screen(&this->ruler->start_coord, &start_x, &start_y);
 
-	//gdk_draw_drawable(buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc,
-	//		  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
+	//gdk_draw_drawable(buf, gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc,
+	//		  this->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
 
 	QPen pen("black");
 	pen.setWidth(1);
-	//draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->start_coord)));
-	draw_ruler(tool->viewport, buf, pen, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &tool->ruler->start_coord));
+	//draw_ruler(this->viewport, buf, gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &this->ruler->start_coord));
+	draw_ruler(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &this->ruler->start_coord));
 
 	if (draw_buf_done) {
 #if 0
 		static draw_buf_data_t pass_along;
-		pass_along.window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
-		pass_along.gdk_style = gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc;
+		pass_along.window = gtk_widget_get_window(this->viewport->get_toolkit_widget());
+		pass_along.gdk_style = gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc;
 		pass_along.pixmap = buf;
 		g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 		draw_buf_done = false;
 
 #else
-		QPainter painter(tool->viewport->scr_buffer);
+		QPainter painter(this->viewport->scr_buffer);
 		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 		painter.drawPixmap(0, 0, *buf);
-		tool->viewport->update();
+		this->viewport->update();
 		draw_buf_done = true;
 #endif
 
@@ -950,23 +905,23 @@ static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerT
 	DistanceUnit distance_unit = a_vik_get_units_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &tool->ruler->start_coord));
+		sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &this->ruler->start_coord));
 		break;
 	case DistanceUnit::MILES:
-		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (vik_coord_diff(&coord, &tool->ruler->start_coord)));
+		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (vik_coord_diff(&coord, &this->ruler->start_coord)));
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (vik_coord_diff(&coord, &tool->ruler->start_coord)));
+		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (vik_coord_diff(&coord, &this->ruler->start_coord)));
 		break;
 	default:
 		sprintf(temp, "Just to keep the compiler happy");
 		qDebug() << "EE: Layer Tools: Ruler move: unknown distance unit:" << (int) distance_unit;
 	}
 
-	tool->window->get_statusbar()->set_message(StatusBarField::INFO, QString(temp));
+	this->window->get_statusbar()->set_message(StatusBarField::INFO, QString(temp));
 
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
-	tool->ruler->invalidate_start_coord = true;
+	this->ruler->invalidate_start_coord = true;
 
 	return LayerToolFuncStatus::ACK;
 }
@@ -974,14 +929,14 @@ static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerT
 
 
 
-static LayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolRuler::release_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "II: Layer Tools: Ruler: ->release()";
-	if (tool->ruler->invalidate_start_coord) {
+	if (this->ruler->invalidate_start_coord) {
 		/* In ->move() we have been using ->start_coord to draw a ruler.
 		   Now the ->start_coord is unnecessary and should be discarded. */
-		tool->ruler->invalidate_start_coord = false;
-		tool->ruler->has_start_coord = false;
+		this->ruler->invalidate_start_coord = false;
+		this->ruler->has_start_coord = false;
 	}
 	return LayerToolFuncStatus::ACK;
 }
@@ -989,22 +944,22 @@ static LayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, Lay
 
 
 
-static void ruler_deactivate(Layer * layer, LayerTool * tool)
+void LayerToolRuler::deactivate_(Layer * layer)
 {
 	qDebug() << "II: Layer Tools: Ruler: ->deactivate() called";
-	tool->window->draw_update_cb();
+	this->window->draw_update_cb();
 }
 
 
 
 
-static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
+bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 {
 #if 0
 	if (event->keyval == GDK_Escape) {
-		tool->ruler->invalidate_start_coord = false;
-		tool->ruler->has_start_coord = false;
-		ruler_deactivate(layer, tool);
+		this->ruler->invalidate_start_coord = false;
+		this->ruler->has_start_coord = false;
+		this->deactivate_(layer);
 		return true;
 	}
 #endif
@@ -1020,13 +975,6 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 /********************************************************************************
  ** Zoom tool code
  ********************************************************************************/
-
-
-
-
-static LayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -1079,10 +1027,6 @@ LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(w
 	this->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
 	this->radioActionEntry.value = 1;
 
-	this->click = (ToolMouseFunc) zoomtool_click;
-	this->move = (ToolMouseMoveFunc) zoomtool_move;
-	this->release = (ToolMouseFunc) zoomtool_release;
-
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
@@ -1096,7 +1040,7 @@ LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(w
 
 
 
-static LayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Zoom: ->click() called";
 #if 0
@@ -1161,7 +1105,7 @@ static LayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, La
 
 
 
-static LayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
 {
 #if 0
 	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
@@ -1214,7 +1158,7 @@ static LayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, Lay
 
 
 
-static LayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 {
 #if 0
 	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
@@ -1275,17 +1219,13 @@ static LayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, 
 
 
 
-static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
-
-
-
-
 LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 {
 	return new LayerToolPan(window, viewport);
 }
+
+
+
 
 LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
 {
@@ -1297,10 +1237,6 @@ LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(win
 	this->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
 	this->radioActionEntry.value = 0;
 
-	this->click = (ToolMouseFunc) pantool_click;
-	this->move = (ToolMouseMoveFunc) pantool_move;
-	this->release = (ToolMouseFunc) pantool_release;
-
 	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
 	this->cursor_release = new QCursor(Qt::OpenHandCursor);
 }
@@ -1309,10 +1245,10 @@ LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(win
 
 
 /* NB Double clicking means this gets called THREE times!!! */
-static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolPan::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Pan: ->click() called";
-	tool->window->modified = true;
+	this->window->modified = true;
 #if 0
 	if (event->type == GDK_2BUTTON_PRESS) {
 		/* Zoom in / out on double click.
@@ -1320,15 +1256,15 @@ static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, Lay
 		if (event->button() == Qt::LeftButton) {
 			unsigned int modifier = event->modifiers() & GDK_SHIFT_MASK;
 			if (modifier) {
-				tool->window->viewport->zoom_out();
+				this->window->viewport->zoom_out();
 			} else {
-				tool->window->viewport->zoom_in();
+				this->window->viewport->zoom_in();
 			}
 		} else if (event->button() == Qt::RightButton) {
-			tool->window->viewport->zoom_out();
+			this->window->viewport->zoom_out();
 		}
 
-		tool->window->draw_update();
+		this->window->draw_update();
 	} else {
 #endif
 
@@ -1336,7 +1272,7 @@ static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, Lay
 		/* Standard pan click. */
 		if (event->button() == Qt::LeftButton) {
 			qDebug() << "DD: Layer Tools: Pan click: window->pan_click()";
-			tool->window->pan_click(event);
+			this->window->pan_click(event);
 		}
 #if 0
 	}
@@ -1347,10 +1283,10 @@ static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, Lay
 
 
 
-static LayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolPan::move_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
-	tool->window->pan_move(event);
+	this->window->pan_move(event);
 
 	return LayerToolFuncStatus::ACK;
 }
@@ -1358,10 +1294,10 @@ static LayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, Laye
 
 
 
-static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolPan::release_(Layer * layer, QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton) {
-		tool->window->pan_release(event);
+		this->window->pan_release(event);
 	}
 	return LayerToolFuncStatus::ACK;
 }
@@ -1375,13 +1311,6 @@ static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, L
 /********************************************************************************
  ** Select tool code
  ********************************************************************************/
-
-
-
-
-static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -1403,10 +1332,6 @@ LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTo
 	this->radioActionEntry.accelerator = strdup("<control><shift>S");
 	this->radioActionEntry.tooltip = strdup(N_("Select Tool"));
 	this->radioActionEntry.value = 3;
-
-	this->click = (ToolMouseFunc) selecttool_click;
-	this->move = (ToolMouseMoveFunc) selecttool_move;
-	this->release = (ToolMouseFunc) selecttool_release;
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1456,27 +1381,27 @@ static void click_layer_selected(Layer * layer, clicker * ck)
 
 
 
-static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools:" << tool->id_string << "->click() called";
+	qDebug() << "DD: Layer Tools:" << this->id_string << "->click() called";
 
-	tool->window->select_move = false;
+	this->window->select_move = false;
 
 	/* Only allow selection on primary button. */
 	if (event->button() == Qt::LeftButton) {
 
 		if (event->modifiers() & VIK_MOVE_MODIFIER) {
-			tool->window->pan_click(event);
+			this->window->pan_click(event);
 		} else {
 			/* Enable click to apply callback to potentially all track/waypoint layers. */
 			/* Useful as we can find things that aren't necessarily in the currently selected layer. */
-			std::list<Layer *> * layers = tool->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
+			std::list<Layer *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
 			clicker ck;
 			ck.cont = true;
-			ck.viewport = tool->window->viewport;
+			ck.viewport = this->window->viewport;
 			qDebug() << "DD: Layer Tools: Select click:" << __FUNCTION__ << __LINE__;
 			ck.event = event;
-			ck.tool = tool;
+			ck.tool = this;
 			for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 				click_layer_selected(*iter, &ck);
 			}
@@ -1485,7 +1410,7 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 			/* If nothing found then deselect & redraw screen if necessary to remove the highlight. */
 			if (ck.cont) {
 				GtkTreeIter iter;
-				TreeView * tree_view = tool->window->layers_panel->get_treeview();
+				TreeView * tree_view = this->window->layers_panel->get_treeview();
 
 				TreeIndex const & index = tree_view->get_selected_item();
 				if (index.isValid()) {
@@ -1495,14 +1420,14 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 					    || tree_view->get_layer(index)->type == LayerType::TRW) {
 
 						tree_view->unselect(index);
-						if (tool->window->clear_highlight()) {
-							tool->window->draw_update();
+						if (this->window->clear_highlight()) {
+							this->window->draw_update();
 						}
 					}
 				}
 			} else {
 				/* Something found - so enable movement. */
-				tool->window->select_move = true;
+				this->window->select_move = true;
 			}
 		}
 	}
@@ -1513,18 +1438,18 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 
 
 
-static LayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 {
 #if 0
-	if (tool->window->select_move) {
+	if (this->window->select_move) {
 		/* Don't care about trw here. */
-		if (tool->ed->trw) {
-			layer->select_move(event, tool->viewport, tool); /* kamilFIXME: layer->select_move or trw->select_move? */
+		if (this->ed->trw) {
+			layer->select_move(event, this->viewport, tool); /* kamilFIXME: layer->select_move or trw->select_move? */
 		}
 	} else {
 		/* Optional Panning. */
 		if (event->modifiers() & VIK_MOVE_MODIFIER) {
-			tool->window->pan_move(event);
+			this->window->pan_move(event);
 		}
 	}
 #endif
@@ -1534,32 +1459,33 @@ static LayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, L
 
 
 
-static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event)
 {
 #if 0
-	if (tool->window->select_move) {
+	if (this->window->select_move) {
 		/* Don't care about trw here. */
-		if (tool->ed->trw) {
-			((LayerTRW *) tool->ed->trw)->select_release(event, tool->viewport, tool);
+		if (this->ed->trw) {
+			((LayerTRW *) this->ed->trw)->select_release(event, this->viewport, tool);
 		}
 	}
 
 	if (event->button() == Qt::LeftButton && (event->modifiers() & VIK_MOVE_MODIFIER)) {
-		tool->window->pan_release(event);
+		this->window->pan_release(event);
 	}
 
 	/* Force pan off in case it was on. */
-	tool->window->pan_move_flag = false;
-	tool->window->pan_x = tool->window->pan_y = -1;
+	this->window->pan_move_flag = false;
+	this->window->pan_x = -1;
+	this->window->pan_y = -1;
 
 	/* End of this select movement. */
-	tool->window->select_move = false;
+	this->window->select_move = false;
 #endif
 
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->type == LayerType::TRW && layer->visible) {
 			/* See if a TRW item is selected, and show menu for the item. */
-			layer->select_tool_context_menu(event, tool->window->viewport);
+			layer->select_tool_context_menu(event, this->window->viewport);
 		}
 	}
 
