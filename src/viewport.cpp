@@ -42,6 +42,7 @@
 #include "coords.h"
 #include "dems.h"
 #include "mapcoord.h"
+#include "layer_toolbox.h"
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"

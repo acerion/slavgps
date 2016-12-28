@@ -160,7 +160,7 @@ namespace SlavGPS {
 		//VikCoord trigger_center;
 
 
-		LayerToolBox * tb = NULL;
+		LayerToolbox * tb = NULL;
 
 
 

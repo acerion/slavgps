@@ -38,7 +38,7 @@ namespace SlavGPS {
 
 	class Layer;
 	class LayerTRW;
-	class LayerToolBox;
+	class LayerToolbox;
 	class Viewport;
 
 
@@ -47,7 +47,7 @@ namespace SlavGPS {
 	class Window : public QMainWindow {
 		Q_OBJECT
 
-	friend class LayerToolBox;
+	friend class LayerToolbox;
 
 	public:
 		Window();
@@ -65,7 +65,7 @@ namespace SlavGPS {
 		LayersPanel * get_layers_panel(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
-		LayerToolBox * get_layer_tools_box(void);
+		LayerToolbox * get_layer_tools_box(void);
 		StatusBar * get_statusbar(void);
 
 		SlavGPS::LayersPanel * layers_panel = NULL;
@@ -233,7 +233,7 @@ namespace SlavGPS {
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 
-		LayerToolBox * layer_tool_box = NULL;
+		LayerToolbox * layer_toolbox = NULL;
 
 		QCursor * busy_cursor = NULL;
 		QCursor * viewport_cursor = NULL; /* Only a reference. */
