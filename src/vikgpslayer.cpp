@@ -334,18 +334,9 @@ static Parameter gps_layer_params[] = {
 VikLayerInterface vik_gps_layer_interface = {
 	gps_layer_interface_configure,
 
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-	NULL,
-	0,
-
 	gps_layer_params,   /* Parameters. */
 	NUM_PARAMS,
 	params_groups,      /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */    gps_layer_unmarshall,
-	/* (LayerFuncChangeParam) */   NULL,
 };
 
 
@@ -359,6 +350,10 @@ void gps_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = tr("GPS");
 	// interface->action_accelerator = ...; /* Empty accelerator. */
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->unmarshall = gps_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 

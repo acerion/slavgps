@@ -119,33 +119,6 @@ static char * font_size_to_string(int font_size);
 
 
 
-// Note for the following tool GtkRadioActionEntry texts:
-//  the very first text value is an internal name not displayed anywhere
-//  the first N_ text value is the name used for menu entries - hence has an underscore for the keyboard accelerator
-//    * remember not to clash with the values used for VikWindow level tools (Pan, Zoom, Ruler + Select)
-//  the second N_ text value is used for the button tooltip (i.e. generally don't want an underscore here)
-//  the value is always set to 0 and the tool loader in VikWindow will set the actual appropriate value used
-LayerTool * trw_layer_tools[] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-enum {
-	TOOL_CREATE_WAYPOINT = 0,
-	TOOL_CREATE_TRACK,
-	TOOL_CREATE_ROUTE,
-	TOOL_ROUTE_FINDER,
-	TOOL_EDIT_WAYPOINT,
-	TOOL_EDIT_TRACKPOINT,
-	TOOL_SHOW_PICTURE,
-	NUM_TOOLS
-};
-
 /****** PARAMETERS ******/
 
 static char *params_groups[] = { (char *) N_("Waypoints"), (char *) N_("Tracks"), (char *) N_("Waypoint Images"), (char *) N_("Tracks Advanced"), (char *) N_("Metadata") };
@@ -352,27 +325,9 @@ static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values
 LayerInterface vik_trw_layer_interface = {
 	trw_layer_interface_configure,
 
-	{ tool_new_waypoint_create,          /* (ToolConstructorFunc) */
-	  tool_new_track_create,             /* (ToolConstructorFunc) */
-	  tool_new_route_create,             /* (ToolConstructorFunc) */
-	  tool_extended_route_finder_create, /* (ToolConstructorFunc) */
-	  tool_edit_waypoint_create,         /* (ToolConstructorFunc) */
-	  tool_edit_trackpoint_create,       /* (ToolConstructorFunc) */
-	  tool_show_picture_create },        /* (ToolConstructorFunc) */
-
-	trw_layer_tools,
-	7,
-
 	trw_layer_params, /* Parameters. */
 	NUM_PARAMS,
 	params_groups,    /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */   trw_layer_unmarshall,
-	/* (LayerFuncChangeParam) */  trw_layer_change_param,
-	NULL,
-	NULL
 };
 
 
@@ -386,6 +341,19 @@ void trw_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = QObject::tr("TrackWaypoint");
 	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, tool_new_waypoint_create          }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    tool_new_track_create             }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    tool_new_route_create             }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    tool_extended_route_finder_create }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   tool_edit_waypoint_create         }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, tool_edit_trackpoint_create       }});
+	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
+
+	interface->unmarshall = trw_layer_unmarshall;
+	interface->change_param = trw_layer_change_param;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 

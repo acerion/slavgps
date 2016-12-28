@@ -457,7 +457,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window, Viewport * v
 	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[4] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT, this }});
 }
 
 
@@ -660,7 +660,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport)
 	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[1] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_TRACK, this }});
 }
 
 
@@ -1136,7 +1136,7 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport)
 	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[2] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE, this }});
 }
 
 
@@ -1220,7 +1220,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window, Viewport * vie
 	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[0] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, this }});
 }
 
 
@@ -1275,7 +1275,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window, Viewport
 	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[5] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, this }});
 }
 
 
@@ -1491,7 +1491,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[3] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER, this }});
 }
 
 
@@ -1661,7 +1661,7 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window, Viewport * vie
 	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(this->ed, 0, sizeof (tool_ed_t));
 
-	trw_layer_tools[6] = this;
+	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE, this }});
 }
 
 

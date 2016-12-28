@@ -260,27 +260,12 @@ void maps_layer_set_cache_default(MapsCacheLayout layout)
 
 
 
-static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (ToolConstructorFunc) */
-
 VikLayerInterface vik_maps_layer_interface = {
 	maps_layer_interface_configure,
-	"Map",
-	N_("Map"),
-	"<control><shift>M",
-	&vikmapslayer_pixbuf,
-
-	{ maps_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL },
-	maps_tools,
-	1,
 
 	maps_layer_params, /* Parameters. */
 	NUM_PARAMS,
 	NULL,              /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */   maps_layer_unmarshall,
-	/* (LayerFuncChangeParam) */  maps_layer_change_param,
 };
 
 
@@ -294,6 +279,13 @@ void maps_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = tr("Map");
 	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->layer_tool_constructors.insert({{ 0, maps_layer_download_create }});
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+
+	interface->unmarshall = maps_layer_unmarshall;
+	interface->change_param = maps_layer_change_param;
 }
 
 
@@ -2167,7 +2159,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewpor
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixbuf;
 
-	maps_tools[0] = this;
+	Layer::get_interface(LayerType::MAPS)->layer_tools.insert({{ 0, this }});
 }
 
 

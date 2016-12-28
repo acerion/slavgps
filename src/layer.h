@@ -345,32 +345,29 @@ namespace SlavGPS {
 	public:
 		LayerInterfaceConfigure configure;
 
-		ToolConstructorFunc layer_tool_constructors[7];
-		LayerTool        ** layer_tools;
-		uint16_t            tools_count;
-
 
 		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
 		Parameter * params;
 		uint16_t    params_count;
 		char     ** params_groups;
 
-		/* Menu items to be created. */
-		LayerMenuItem    menu_items_selection;
-
-		LayerFuncUnmarshall unmarshall;
-
-		/* For I/O. */
-		LayerFuncChangeParam           change_param;
-
-		std::map<param_id_t, Parameter *> * layer_parameters;
-		std::map<param_id_t, ParameterValue> * parameter_value_defaults;
-
 		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. */
 		QString layer_name;            /* Translate-able name used for display purposes. */
 
 		QKeySequence action_accelerator;
 		QIcon action_icon;
+
+		std::map<int, ToolConstructorFunc> layer_tool_constructors;  /* Tool index -> Layer Tool constructor function. */
+		std::map<int, LayerTool *>         layer_tools;              /* Tool index -> Layer Tool. */
+
+		LayerFuncUnmarshall  unmarshall = NULL;
+		LayerFuncChangeParam change_param = NULL;
+
+		/* Menu items to be created. */
+		LayerMenuItem menu_items_selection;
+
+		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
+		std::map<param_id_t, ParameterValue> * parameter_value_defaults = NULL;
 	};
 
 

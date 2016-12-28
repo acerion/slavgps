@@ -48,6 +48,20 @@ namespace SlavGPS {
 
 
 
+	enum {
+		LAYER_TRW_TOOL_CREATE_WAYPOINT = 0,
+		LAYER_TRW_TOOL_CREATE_TRACK,
+		LAYER_TRW_TOOL_CREATE_ROUTE,
+		LAYER_TRW_TOOL_ROUTE_FINDER,
+		LAYER_TRW_TOOL_EDIT_WAYPOINT,
+		LAYER_TRW_TOOL_EDIT_TRACKPOINT,
+		LAYER_TRW_TOOL_SHOW_PICTURE,
+		LAYER_TRW_TOOL_MAX
+	};
+
+
+
+
 	class LayerToolTRWNewWaypoint : public LayerTool {
 	public:
 		LayerToolTRWNewWaypoint(Window * window, Viewport * viewport);

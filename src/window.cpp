@@ -127,7 +127,7 @@ Window::Window()
 		     (void *) this); // This auto packs toolbar into the vbox
 	// Must be performed post toolbar init
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		for (int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
+		for (int j = 0; j < Layer::get_interface(i)->layer_tools.size(); j++) {
 			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(i)->layer_tools[j]->id_string, false);
 		}
 	}
@@ -821,21 +821,24 @@ void Window::create_ui(void)
 
 
 	{
+		LayerInterface * interface = NULL;
 		for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 
-			if (!Layer::get_interface(i)->tools_count) {
+			interface = Layer::get_interface(i);
+
+			if (interface->layer_tool_constructors.empty()) {
 				continue;
 			}
 			this->toolbar->addSeparator();
 			this->menu_tools->addSeparator();
 
 			QActionGroup * group = new QActionGroup(this);
-			group->setObjectName(Layer::get_interface(i)->layer_name);
+			group->setObjectName(interface->layer_name);
 
 			unsigned int j = 0;
-			for (j = 0; j < Layer::get_interface(i)->tools_count; j++) {
+			for (j = 0; j < interface->layer_tool_constructors.size(); j++) {
 
-				LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](this, this->viewport);
+				LayerTool * layer_tool = interface->layer_tool_constructors[j](this, this->viewport);
 				QAction * qa = this->layer_toolbox->add_tool(layer_tool);
 				group->addAction(qa);
 
@@ -1005,7 +1008,7 @@ void Window::create_ui(void)
 	gtk_ui_manager_insert_action_group(uim, action_group, 0);
 
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
+		for (unsigned int j = 0; j < Layer::get_interface(i)->layer_tools.size(); j++) {
 			GtkAction * action = gtk_action_group_get_action(action_group,
 									 Layer::get_interface(i)->layer_tools[j]->id_string);
 			g_object_set(action, "sensitive", false, NULL);

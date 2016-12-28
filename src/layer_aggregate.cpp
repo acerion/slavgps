@@ -54,20 +54,9 @@ static void aggregate_layer_interface_configure(LayerInterface * interface);
 LayerInterface vik_aggregate_layer_interface = {
 	aggregate_layer_interface_configure,
 
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-	NULL,
-	0,
-
 	NULL, /* Parameters. */
 	0,
 	NULL, /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */   aggregate_layer_unmarshall,
-	/* (LayerFuncChangeParam) */  NULL,
-	NULL,
-	NULL,
 };
 
 
@@ -81,6 +70,10 @@ void aggregate_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = QObject::tr("Aggregate");
 	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->unmarshall = aggregate_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 

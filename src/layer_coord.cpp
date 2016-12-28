@@ -87,21 +87,9 @@ static Parameter coord_layer_params[] = {
 LayerInterface vik_coord_layer_interface = {
 	coord_layer_interface_configure,
 
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-	NULL,
-	0,
-
 	coord_layer_params, /* Parameters. */
 	PARAM_MAX,
-	NULL,               /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	coord_layer_unmarshall, /* (LayerFuncUnmarshall) */
-	NULL,                   /* (LayerFuncChangeParam) */
-
-	NULL,
-	NULL
+	NULL               /* Parameter groups. */
 };
 
 
@@ -115,6 +103,10 @@ void coord_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = QObject::tr("Coordinate");
 	// interface->action_accelerator = ...; /* Empty accelerator. */
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->unmarshall = coord_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 

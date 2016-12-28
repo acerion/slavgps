@@ -192,8 +192,6 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 static bool dem_layer_download_release(Layer * vdl, QMouseEvent * event, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * event, LayerTool * tool);
 
-static LayerTool * dem_tools[] = { NULL };
-
 
 
 
@@ -242,21 +240,9 @@ static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/si
 LayerInterface vik_dem_layer_interface = {
 	dem_layer_interface_configure,
 
-	{ dem_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc)  */
-	dem_tools,
-	1,
-
 	dem_layer_params, /* Parameters. */
 	NUM_PARAMS,
 	NULL,             /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */   dem_layer_unmarshall,
-	/* (LayerFuncChangeParam) */  NULL,
-
-	NULL,
-	NULL
 };
 
 
@@ -270,6 +256,12 @@ void dem_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = QObject::tr("DEM");
 	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
+
+	interface->unmarshall = dem_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -1350,7 +1342,7 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window, Viewport * viewport)
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	dem_tools[0] = this;
+	Layer::get_interface(LayerType::DEM)->layer_tools.insert({{ 0, this }} ); /* There is only one tool, so this magic number is not that bad. */
 }
 
 

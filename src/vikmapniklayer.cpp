@@ -115,30 +115,15 @@ static Layer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 static void mapnik_layer_interface_configure(LayerInterface * interface);
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
 
-/* See comment in viktrwlayer.c for advice on values used.
-   FUTURE: */
-static LayerTool * mapnik_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-	// Layer Info
-	// Zoom All?
-
 
 
 
 VikLayerInterface vik_mapnik_layer_interface = {
 	mapnik_layer_interface_configure,
 
-	{ mapnik_feature_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc) */
-	mapnik_tools,
-	1,
-
 	mapnik_layer_params, /* Parameters. */
 	NUM_PARAMS,
 	NULL,                /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */    mapnik_layer_unmarshall,
-	/* (LayerFuncChangeParam) */   NULL,
 };
 
 
@@ -152,6 +137,12 @@ void mapnik_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = tr("Mapnik Rendering");
 	// interface->action_accelerator =  ...; /* Empty accelerator. */
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
+
+	interface->unmarshall = mapnik_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -1195,7 +1186,7 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewp
 	this->cursor_shape = Qt::ArrowCursor;
 	this->cursor_data = NULL;
 
-	mapnik_tools[0] = this;
+	Layer::get_interface(LayerType::MAPNIK)->layer_tools.insert({{ 0, this }});
 }
 
 

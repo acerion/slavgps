@@ -66,6 +66,14 @@ static VikParameterValue image_default(void)
 
 
 enum {
+	LAYER_GEOREF_TOOL_MOVE = 0,
+	LAYER_GEOREF_TOOL_ZOOM
+};
+
+
+
+
+enum {
 	PARAM_IMAGE = 0,
 	PARAM_CE,
 	PARAM_CN,
@@ -105,40 +113,13 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
 
-/* See comment in viktrwlayer.c for advice on values used. */
-static LayerTool * georef_tools[] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
 
 VikLayerInterface vik_georef_layer_interface = {
 	georef_layer_interface_configure,
 
-	{ georef_layer_move_create,   /* (ToolConstructorFunc) */
-	  georef_layer_zoom_create,   /* (ToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL,
-	},
-
-	georef_tools,
-	2,
-
 	georef_layer_params, /* Parameters. */
 	NUM_PARAMS,
 	NULL,                /* Parameter groups. */
-
-	VIK_MENU_ITEM_ALL,
-
-	/* (LayerFuncUnmarshall) */    georef_layer_unmarshall,
-	/* (LayerFuncChangeParam) */   NULL,
 };
 
 
@@ -152,6 +133,13 @@ void georef_layer_interface_configure(LayerInterface * interface)
 	interface->layer_name = tr("GeoRef Map");
 	// interface->action_accelerator = ...; /* Empty accelerator. */
 	// interface->action_icon = ...; /* Set elsewhere. */
+
+	interface->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_MOVE, georef_layer_move_create }});
+	interface->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
+
+	interface->unmarshall = georef_layer_unmarshall;
+
+	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -1145,7 +1133,7 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) :
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geomove_pixbuf;
 
-	georef_tools[0] = this;
+	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, this }});
 }
 
 
@@ -1198,7 +1186,7 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) :
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geozoom_pixbuf;
 
-	georef_tools[1] = this;
+	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, this }});
 }
 
 
