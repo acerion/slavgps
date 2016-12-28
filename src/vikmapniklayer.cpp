@@ -113,7 +113,6 @@ Parameter mapnik_layer_params[] = {
 
 static Layer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
-static bool mapnik_feature_release_cb(Layer * layer, GdkEventButton *event, LayerTool * tool);
 
 /* See comment in viktrwlayer.c for advice on values used.
    FUTURE: */
@@ -1168,37 +1167,38 @@ void LayerMapnik::tile_info()
 
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::MAPNIK);
-
-	mapnik_tools[0] = layer_tool;
-
-	layer_tool->layer_type = LayerType::MAPNIK;
-	layer_tool->id_string = QString("MapnikFeatures");
-
-	layer_tool->radioActionEntry.stock_id = strdup(GTK_STOCK_INFO);
-	layer_tool->radioActionEntry.label = strdup(N_("_Mapnik Features"));
-	layer_tool->radioActionEntry.accelerator = NULL;
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Mapnik Features"));
-	layer_tool->radioActionEntry.value = 0;
-
-	layer_tool->release = (ToolMouseFunc) mapnik_feature_release_cb;
-
-	layer_tool->cursor_shape = Qt::ArrowCursor;
-	layer_tool->cursor_data = NULL;
-
-	return layer_tool;
+	return new LayerToolMapnikFeature(window, viewport);
 }
 
 
 
 
-static bool mapnik_feature_release_cb(Layer * layer, GdkEventButton *event, LayerTool * tool)
+LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::MAPNIK)
+{
+	this->id_string = QString("MapnikFeatures");
+
+	this->radioActionEntry.stock_id = strdup(GTK_STOCK_INFO);
+	this->radioActionEntry.label = strdup(N_("_Mapnik Features"));
+	this->radioActionEntry.accelerator = NULL;
+	this->radioActionEntry.tooltip = strdup(N_("Mapnik Features"));
+	this->radioActionEntry.value = 0;
+
+	this->cursor_shape = Qt::ArrowCursor;
+	this->cursor_data = NULL;
+
+	mapnik_tools[0] = this;
+}
+
+
+
+
+LayerToolFuncStatus LayerToolMapnikFeature::release_(Layer * layer, QMouseEvent * event)
 {
 	if (!layer) {
 		return false;
 	}
 
-	return ((LayerMapnik *) layer)->feature_release(event, tool);
+	return ((LayerMapnik *) layer)->feature_release(event, this);
 }
 
 

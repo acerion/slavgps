@@ -130,8 +130,6 @@ static unsigned int map_type_to_map_index(MapTypeID map_type);
 
 
 static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport);
-static bool maps_layer_download_release(Layer * layer, GdkEventButton *event, LayerTool * tool);
-static bool maps_layer_download_click(Layer * layer, GdkEventButton *event, LayerTool * tool);
 
 
 
@@ -2078,10 +2076,10 @@ static void maps_layer_tile_info(LayerMaps * layer)
 
 
 
-static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, LayerTool * tool)
+LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent * event)
 {
 	if (!_layer || _layer->type != LayerType::MAPS) {
-		return false;
+		return LayerToolFuncStatus::IGNORE;
 	}
 
 	LayerMaps * layer = (LayerMaps *) _layer;
@@ -2089,18 +2087,19 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
 			VikCoord ul, br;
-			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
-			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
-			start_download_thread(layer, tool->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
+			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
+			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
+			start_download_thread(layer, this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
-			return true;
+			return LayerToolFuncStatus::ACK;
 		} else {
-			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
-			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
+			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
+			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
 
-			layer->redownload_viewport = tool->viewport;
+			layer->redownload_viewport = this->viewport;
 
-			layer->dl_tool_x = layer->dl_tool_y = -1;
+			layer->dl_tool_x = -1;
+			layer->dl_tool_y = -1;
 
 			if (!layer->dl_right_click_menu) {
 				GtkWidget *item;
@@ -2128,7 +2127,7 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 			gtk_widget_show_all(GTK_WIDGET(layer->dl_right_click_menu));
 		}
 	}
-	return false;
+	return LayerToolFuncStatus::IGNORE;
 }
 
 
@@ -2136,50 +2135,52 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 
 static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::MAPS);
-
-	maps_tools[0] = layer_tool;
-	layer_tool->id_string = QString("MapsDownload");
-
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Maps Download");
-	layer_tool->radioActionEntry.label = strdup(N_("_Maps Download"));
-	layer_tool->radioActionEntry.accelerator = NULL;
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Maps Download"));
-	layer_tool->radioActionEntry.value = 0;
-
-	layer_tool->click = (ToolMouseFunc) maps_layer_download_click;
-	layer_tool->release = (ToolMouseFunc) maps_layer_download_release;
-
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-	layer_tool->cursor_data = &cursor_mapdl_pixbuf;
-
-	return layer_tool;
+	return new LayerToolMapsDownload(window, viewport);
 }
 
 
 
 
-static bool maps_layer_download_click(Layer * _layer, GdkEventButton *event, LayerTool * tool)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewport) : LayerTool: window, viewport, LayerType::MAPS)
+{
+	this->id_string = QString("MapsDownload");
+
+	this->radioActionEntry.stock_id = strdup("vik-icon-Maps Download");
+	this->radioActionEntry.label = strdup(N_("_Maps Download"));
+	this->radioActionEntry.accelerator = NULL;
+	this->radioActionEntry.tooltip = strdup(N_("Maps Download"));
+	this->radioActionEntry.value = 0;
+
+	this->cursor_shape = Qt::BitmapCursor;
+	this->cursor_data = &cursor_mapdl_pixbuf;
+
+	maps_tools[0] = this;
+}
+
+
+
+
+LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
 	if (!_layer || _layer->type != LayerType::MAPS) {
-		return false;
+		return LayerToolFuncStatus::IGNORE;
 	}
 
 	LayerMaps * layer = (LayerMaps *) _layer;
 
 	MapSource *map = map_sources[layer->map_index];
-	if (map->get_drawmode() == tool->viewport->get_drawmode()
-	    && map->coord_to_tile(tool->viewport->get_center(),
-				  layer->xmapzoom ? layer->xmapzoom : tool->viewport->get_xmpp(),
-				  layer->ymapzoom ? layer->ymapzoom : tool->viewport->get_ympp(),
+	if (map->get_drawmode() == this->viewport->get_drawmode()
+	    && map->coord_to_tile(this->viewport->get_center(),
+				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_xmpp(),
+				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
 				  &tmp)) {
 
 		layer->dl_tool_x = event->x;
 		layer->dl_tool_y = event->y;
-		return true;
+		return LayerToolFuncStatus::ACK;
 	}
-	return false;
+	return LayerToolFuncStatus::IGNORE;
 }
 
 

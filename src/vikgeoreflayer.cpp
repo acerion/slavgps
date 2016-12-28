@@ -101,11 +101,8 @@ static LayerGeoref * georef_layer_new(Viewport * viewport);
 
 /* Tools. */
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
-static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
-static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
 
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
-static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
 
 /* See comment in viktrwlayer.c for advice on values used. */
 static LayerTool * georef_tools[] = {
@@ -1120,34 +1117,34 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::GEOREF);
-
-	georef_tools[0] = layer_tool;
-
-	layer_tool->layer_type = LayerType::GEOREF;
-	layer_tool->id_string = QString("GeorefMoveMap");
-
-	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Move Map");
-	layer_tool->radioActionEntry.label       = strdup(N_("_Georef Move Map"));
-	layer_tool->radioActionEntry.accelerator = NULL;
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Move Map"));
-	layer_tool->radioActionEntry.value       = 0;
-
-	layer_tool->click = (ToolMouseFunc) georef_layer_move_press_cb;
-	layer_tool->release = (ToolMouseFunc) georef_layer_move_release_cb;
-
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-	layer_tool->cursor_data = &cursor_geomove_pixbuf;
-
-	return layer_tool;
+	return new LayerToolGeorefMove(window, viewport);
 }
 
 
 
 
-static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)
+LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
 {
-	return ((LayerGeoref *) vgl)->move_release(event, tool);
+	this->id_string = QString("GeorefMoveMap");
+
+	this->radioActionEntry.stock_id    = strdup("vik-icon-Georef Move Map");
+	this->radioActionEntry.label       = strdup(N_("_Georef Move Map"));
+	this->radioActionEntry.accelerator = NULL;
+	this->radioActionEntry.tooltip     = strdup(N_("Georef Move Map"));
+	this->radioActionEntry.value       = 0;
+
+	this->cursor_shape = Qt::BitmapCursor;
+	this->cursor_data = &cursor_geomove_pixbuf;
+
+	georef_tools[0] = this;
+}
+
+
+
+
+LayerToolFuncStatus LayerToolGeorefMove::release_(Layer * vgl, QMouseEvent * event)
+{
+	return ((LayerGeoref *) vgl)->move_release(event, this);
 }
 
 
@@ -1174,33 +1171,34 @@ bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::GEOREF);
-
-	georef_tools[1] = layer_tool;
-
-	layer_tool->layer_type = LayerType::GEOREF;
-	layer_tool->id_string = QString("GeorefZoomTool");
-
-	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Zoom Tool");
-	layer_tool->radioActionEntry.label       = strdup(N_("Georef Z_oom Tool"));
-	layer_tool->radioActionEntry.accelerator = NULL;
-	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Zoom Tool"));
-	layer_tool->radioActionEntry.value       = 0;
-
-	layer_tool->click = (ToolMouseFunc) georef_layer_zoom_press_cb;
-
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-	layer_tool->cursor_data = &cursor_geozoom_pixbuf;
-
-	return layer_tool;
+	return new LayerToolGeorefZoom(window, viewport);
 }
 
 
 
 
-static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)
+LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
 {
-	return ((LayerGeoref *) vgl)->zoom_press(event, tool);
+	this->id_string = QString("GeorefZoomTool");
+
+	this->radioActionEntry.stock_id    = strdup("vik-icon-Georef Zoom Tool");
+	this->radioActionEntry.label       = strdup(N_("Georef Z_oom Tool"));
+	this->radioActionEntry.accelerator = NULL;
+	this->radioActionEntry.tooltip     = strdup(N_("Georef Zoom Tool"));
+	this->radioActionEntry.value       = 0;
+
+	this->cursor_shape = Qt::BitmapCursor;
+	this->cursor_data = &cursor_geozoom_pixbuf;
+
+	georef_tools[1] = this;
+}
+
+
+
+
+bool LayerToolGeorefZoom::click_(Layer * vgl, QMouseEvent * event)
+{
+	return ((LayerGeoref *) vgl)->zoom_press(event, this);
 }
 
 
@@ -1233,9 +1231,9 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 
 
 
-static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool)
+LayerToolFuncStatus LayerToolGeorefMove::click_(Layer * vgl, QMouseEvent *event)
 {
-	return ((LayerGeoref *) vgl)->move_press(event, tool);
+	return ((LayerGeoref *) vgl)->move_press(event, this);
 }
 
 

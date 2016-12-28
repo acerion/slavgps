@@ -105,6 +105,14 @@ namespace SlavGPS {
 
 
 
+	class LayerToolMapnikFeature : public LayerTool {
+	public:
+		LayerToolMapnikFeature(Window * window, Viewport * viewport);
+
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+	};
+
+
 }
 
 

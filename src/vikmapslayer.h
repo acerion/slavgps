@@ -132,6 +132,16 @@ namespace SlavGPS {
 
 
 
+	class LayerToolMapsDownload : public LayerTool {
+	public:
+		LayerToolMapsDownload(Window * window, Viewport * viewport);
+
+		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+	};
+
+
+
 } /* namespace SlavGPS */
 
 
