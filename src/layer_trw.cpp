@@ -345,14 +345,12 @@ Parameter trw_layer_params[] = {
 
 /* Layer Interface function definitions */
 static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+static void trw_layer_interface_configure(LayerInterface * interface);
 static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values);
 /* End Layer Interface function definitions */
 
 LayerInterface vik_trw_layer_interface = {
-	"TrackWaypoint",
-	N_("TrackWaypoint"),
-	"<control><shift>Y",
-	NULL, //&viktrwlayer_pixbuf,
+	trw_layer_interface_configure,
 
 	{ tool_new_waypoint_create,          /* (ToolConstructorFunc) */
 	  tool_new_track_create,             /* (ToolConstructorFunc) */
@@ -376,6 +374,19 @@ LayerInterface vik_trw_layer_interface = {
 	NULL,
 	NULL
 };
+
+
+
+
+void trw_layer_interface_configure(LayerInterface * interface)
+{
+	strncpy(interface->layer_type_string, "TrackWaypoint", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+
+	interface->layer_name = QObject::tr("TrackWaypoint");
+	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 
@@ -7369,7 +7380,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 
 
-	this->rename(vik_trw_layer_interface.name);
+	this->rename(vik_trw_layer_interface.layer_name.toUtf8().constData());
 
 	if (viewport == NULL
 #ifdef K

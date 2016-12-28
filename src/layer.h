@@ -336,20 +336,18 @@ namespace SlavGPS {
 	/* Layer interface functions. */
 	typedef Layer * (* LayerFuncUnmarshall)  (uint8_t *, int, Viewport *);
 	typedef void    (* LayerFuncChangeParam) (GtkWidget *, ui_change_values *);
+	typedef void    (* LayerInterfaceConfigure) (LayerInterface * interface);
 
 
 
 
 	class LayerInterface {
 	public:
-		const char  * layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
-		const char  * name;              /* Translate-able name used for display purposes. */
-		const char  * accelerator;
-		const QIcon * icon;
+		LayerInterfaceConfigure configure;
 
 		ToolConstructorFunc layer_tool_constructors[7];
-		LayerTool           ** layer_tools;
-		uint16_t               tools_count;
+		LayerTool        ** layer_tools;
+		uint16_t            tools_count;
 
 
 		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
@@ -367,6 +365,12 @@ namespace SlavGPS {
 
 		std::map<param_id_t, Parameter *> * layer_parameters;
 		std::map<param_id_t, ParameterValue> * parameter_value_defaults;
+
+		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. */
+		QString layer_name;            /* Translate-able name used for display purposes. */
+
+		QKeySequence action_accelerator;
+		QIcon action_icon;
 	};
 
 

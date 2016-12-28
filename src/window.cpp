@@ -354,9 +354,9 @@ void Window::create_actions(void)
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
 
 			for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-				qa = defaults_submenu->addAction("&" + QString(Layer::get_interface(i)->name) + "...");
+				qa = defaults_submenu->addAction("&" + QString(Layer::get_interface(i)->layer_name) + "...");
 				qa->setData(QVariant((int) i));
-				qa->setIcon(*Layer::get_interface(i)->icon);
+				qa->setIcon(Layer::get_interface(i)->action_icon);
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_layer_defaults_cb()));
 			}
 		}
@@ -766,7 +766,7 @@ QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 		QVariant variant((int) i);
 		QAction * qa = new QAction("new layer", this);
 		qa->setData(variant);
-		qa->setIcon(*Layer::get_interface(i)->icon);
+		qa->setIcon(Layer::get_interface(i)->action_icon);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(menu_layer_new_cb(void)));
 
 		menu->addAction(qa);
@@ -830,8 +830,7 @@ void Window::create_ui(void)
 			this->menu_tools->addSeparator();
 
 			QActionGroup * group = new QActionGroup(this);
-			QString name(Layer::get_interface(i)->name);
-			group->setObjectName(name);
+			group->setObjectName(Layer::get_interface(i)->layer_name);
 
 			unsigned int j = 0;
 			for (j = 0; j < Layer::get_interface(i)->tools_count; j++) {

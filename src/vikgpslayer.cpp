@@ -72,6 +72,7 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+static void gps_layer_interface_configure(LayerInterface * interface);
 
 
 typedef struct {
@@ -331,10 +332,7 @@ static Parameter gps_layer_params[] = {
 };
 
 VikLayerInterface vik_gps_layer_interface = {
-	"GPS",
-	N_("GPS"),
-	NULL,
-	&vikgpslayer_pixbuf,
+	gps_layer_interface_configure,
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
@@ -349,6 +347,19 @@ VikLayerInterface vik_gps_layer_interface = {
 	/* (LayerFuncUnmarshall) */    gps_layer_unmarshall,
 	/* (LayerFuncChangeParam) */   NULL,
 };
+
+
+
+
+void gps_layer_interface_configure(LayerInterface * interface)
+{
+	strndup(interface->layer_type_string, "GPS", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+
+	interface->layer_name = tr("GPS");
+	// interface->action_accelerator = ...; /* Empty accelerator. */
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 

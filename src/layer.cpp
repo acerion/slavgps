@@ -188,9 +188,10 @@ void Layer::preconfigure_interfaces(void)
 	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
 
 		LayerInterface * interface = Layer::get_interface(i);
+		interface->configure(interface);
 		QString path = QString(":/icons/layer/") + QString(interface->layer_type_string).toLower() + QString(".png");
-		qDebug() << "path is" << path;
-		interface->icon = new QIcon(path);
+		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
+		interface->action_icon = QIcon(path);
 
 		interface->parameter_value_defaults = new std::map<param_id_t, ParameterValue>;
 
@@ -332,7 +333,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	if (interactive) {
 		if (layer->properties_dialog(viewport)) {
 			/* We translate the name here in order to avoid translating name set by user. */
-			layer->rename(_(layer->get_interface()->name));
+			layer->rename(_(layer->get_interface()->layer_name.toUtf8().constData()));
 		} else {
 			layer->unref(); /* Cancel that. */
 			delete layer;

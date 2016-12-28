@@ -124,6 +124,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 
 
 static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+static void maps_layer_interface_configure(LayerInterface * interface);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static unsigned int map_type_to_map_index(MapTypeID map_type);
@@ -262,6 +263,7 @@ void maps_layer_set_cache_default(MapsCacheLayout layout)
 static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (ToolConstructorFunc) */
 
 VikLayerInterface vik_maps_layer_interface = {
+	maps_layer_interface_configure,
 	"Map",
 	N_("Map"),
 	"<control><shift>M",
@@ -280,6 +282,19 @@ VikLayerInterface vik_maps_layer_interface = {
 	/* (LayerFuncUnmarshall) */   maps_layer_unmarshall,
 	/* (LayerFuncChangeParam) */  maps_layer_change_param,
 };
+
+
+
+
+void maps_layer_interface_configure(LayerInterface * interface)
+{
+	strndup(interface->layer_type_string, "Map", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+
+	interface->layer_name = tr("Map");
+	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 

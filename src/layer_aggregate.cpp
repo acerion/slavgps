@@ -47,19 +47,12 @@ using namespace SlavGPS;
 
 
 static Layer * aggregate_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-
+static void aggregate_layer_interface_configure(LayerInterface * interface);
 
 
 
 LayerInterface vik_aggregate_layer_interface = {
-	"Aggregate",
-	_("Aggregate"),
-	"<control><shift>A",
-#ifdef SLAVGPS_QT
-	NULL,
-#else
-	&vikaggregatelayer_pixbuf,
-#endif
+	aggregate_layer_interface_configure,
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
@@ -76,6 +69,19 @@ LayerInterface vik_aggregate_layer_interface = {
 	NULL,
 	NULL,
 };
+
+
+
+
+void aggregate_layer_interface_configure(LayerInterface * interface)
+{
+	strncpy(interface->layer_type_string, "Aggregate", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+
+	interface->layer_name = QObject::tr("Aggregate");
+	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 
@@ -945,7 +951,7 @@ LayerAggregate::LayerAggregate()
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
 	this->interface = &vik_aggregate_layer_interface;
 
-	this->rename(vik_aggregate_layer_interface.name);
+	this->rename(vik_aggregate_layer_interface.layer_name.toUtf8().constData());
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
 }

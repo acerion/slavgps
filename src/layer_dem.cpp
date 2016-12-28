@@ -83,6 +83,8 @@ using namespace SlavGPS;
 #define UNUSED_LINE_THICKNESS 3
 
 static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+static void dem_layer_interface_configure(LayerInterface * interface);
+
 static void srtm_draw_existence(Viewport * viewport);
 
 #ifdef VIK_CONFIG_DEM24K
@@ -238,10 +240,7 @@ static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/si
 
 
 LayerInterface vik_dem_layer_interface = {
-	"DEM",
-	N_("DEM"),
-	"<control><shift>D",
-	NULL,
+	dem_layer_interface_configure,
 
 	{ dem_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc)  */
 	dem_tools,
@@ -259,6 +258,19 @@ LayerInterface vik_dem_layer_interface = {
 	NULL,
 	NULL
 };
+
+
+
+
+void dem_layer_interface_configure(LayerInterface * interface)
+{
+	strncpy(interface->layer_type_string, "DEM", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+
+	interface->layer_name = QObject::tr("DEM");
+	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 

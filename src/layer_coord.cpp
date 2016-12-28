@@ -41,7 +41,7 @@ using namespace SlavGPS;
 
 
 static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-
+static void coord_layer_interface_configure(LayerInterface * interface);
 
 
 
@@ -85,10 +85,7 @@ static Parameter coord_layer_params[] = {
 
 
 LayerInterface vik_coord_layer_interface = {
-	"Coord",
-	N_("Coordinate"),
-	NULL,
-	NULL,
+	coord_layer_interface_configure,
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
@@ -106,6 +103,19 @@ LayerInterface vik_coord_layer_interface = {
 	NULL,
 	NULL
 };
+
+
+
+
+void coord_layer_interface_configure(LayerInterface * interface)
+{
+	strncpy(interface->layer_type_string, "Coord", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+
+	interface->layer_name = QObject::tr("Coordinate");
+	// interface->action_accelerator = ...; /* Empty accelerator. */
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 

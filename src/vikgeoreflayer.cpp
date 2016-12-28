@@ -97,6 +97,7 @@ Parameter georef_layer_params[] = {
 
 
 static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+static void georef_layer_interface_configure(LayerInterface * interface);
 static LayerGeoref * georef_layer_new(Viewport * viewport);
 
 /* Tools. */
@@ -116,10 +117,7 @@ static LayerTool * georef_tools[] = {
 };
 
 VikLayerInterface vik_georef_layer_interface = {
-	"GeoRef Map",
-	N_("GeoRef Map"),
-	NULL,
-	&vikgeoreflayer_pixbuf, /* Icon. */
+	georef_layer_interface_configure,
 
 	{ georef_layer_move_create,   /* (ToolConstructorFunc) */
 	  georef_layer_zoom_create,   /* (ToolConstructorFunc) */
@@ -142,6 +140,19 @@ VikLayerInterface vik_georef_layer_interface = {
 	/* (LayerFuncUnmarshall) */    georef_layer_unmarshall,
 	/* (LayerFuncChangeParam) */   NULL,
 };
+
+
+
+
+void georef_layer_interface_configure(LayerInterface * interface)
+{
+	strndup(interface->layer_type_string, "GeoRef Map", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+
+	interface->layer_name = tr("GeoRef Map");
+	// interface->action_accelerator = ...; /* Empty accelerator. */
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 

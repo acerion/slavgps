@@ -891,7 +891,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	/* LayersTreeColumn::ICON */ /* Old code: layer_type == LayerType::NUM_TYPES ? 0 : this->layer_type_icons[(int) layer_type], */
 	item = new QStandardItem(QString(layer->debug_string));
 	item->setToolTip(tooltip);
-	item->setIcon(*layer->get_interface()->icon);
+	item->setIcon(layer->get_interface()->action_icon);
 	item->setEditable(false); /* Don't allow editing layer type string. */
 	items << item;
 

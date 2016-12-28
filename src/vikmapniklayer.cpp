@@ -112,6 +112,7 @@ Parameter mapnik_layer_params[] = {
 
 
 static Layer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static void mapnik_layer_interface_configure(LayerInterface * interface);
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
 
 /* See comment in viktrwlayer.c for advice on values used.
@@ -124,10 +125,7 @@ static LayerTool * mapnik_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 
 VikLayerInterface vik_mapnik_layer_interface = {
-	"Mapnik Rendering",
-	N_("Mapnik Rendering"),
-	NULL,
-	&vikmapniklayer_pixbuf, // icon
+	mapnik_layer_interface_configure,
 
 	{ mapnik_feature_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc) */
 	mapnik_tools,
@@ -142,6 +140,19 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	/* (LayerFuncUnmarshall) */    mapnik_layer_unmarshall,
 	/* (LayerFuncChangeParam) */   NULL,
 };
+
+
+
+
+void mapnik_layer_interface_configure(LayerInterface * interface)
+{
+	strndup(interface->layer_type_string, "Mapnik Rendering", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
+	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+
+	interface->layer_name = tr("Mapnik Rendering");
+	// interface->action_accelerator =  ...; /* Empty accelerator. */
+	// interface->action_icon = ...; /* Set elsewhere. */
+}
 
 
 
