@@ -31,19 +31,25 @@
 #include "coords.h"
 //#include "vikutils.h"
 #include "icons/icons.h"
-#include "slav_qt.h"
-
-
-
-
-#ifndef N_
-#define N_(s) s
-#endif
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#ifdef WINDOWS
+/* Hopefully Alt keys by default. */
+#define SG_MOVE_MODIFIER Qt::AltModifier
+#else
+/* Alt+mouse on Linux desktops tends to be used by the desktop manager.
+   Thus use an alternate modifier - you may need to set something into this group.
+   Viking used GDK_MOD5_MASK.
+*/
+#define SG_MOVE_MODIFIER Qt::ControlModifier
+#endif
 
 
 
@@ -220,64 +226,6 @@ QAction * LayerToolBox::set_group_enabled(QString const & group_name)
 
 
 
-#if 0
-/**
-   Disable all buttons in given actions group
-
-   If any action is checked (active), return that action. The function doesn't un-check that action.
-
-   If a group is "generic", its buttons are not disabled. Its active button (if present) is returned nonetheless.
-*/
-QAction * LayerToolBox::set_group_disabled(QString const & group_name)
-{
-	QActionGroup * group = this->get_group(group_name);
-	if (!group) {
-		qDebug() << "EE: Layer Tools: can't find group" << group_name << "to disable";
-		return NULL;
-	}
-
-	if (group_name != "generic") { /* Generic tools are always enabled - they work for every type of layer. */
-		qDebug() << "II: Layer Tools: setting group" << group_name << "disabled";
-		group->setEnabled(false);
-	}
-
-	return group->checkedAction();
-}
-#endif
-
-
-
-#if 0
-/**
-   Disable all buttons in groups other than given actions group
-
-   Make an exception for actions group called "generic" - this one should be always enabled.
-*/
-void LayerToolBox::set_other_groups_disabled(QString const & group_name)
-{
-	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
-
-		QString other_group_name((*group)->objectName());
-
-		if (group_name == other_group_name) {
-			/* Disable other groups, not this group. */
-			continue;
-		}
-
-		if ("generic" == other_group_name) {
-			/* Don't disable an action group that should always be enabled. */
-			continue;
-		}
-
-		this->set_group_disabled(other_group_name);
-	}
-
-	return;
-}
-#endif
-
-
-
 /**
    Find group by object name
 */
@@ -308,26 +256,6 @@ LayerTool * LayerToolBox::get_active_tool(void)
 	return this->active_tool;
 }
 
-
-
-#if 0
-void LayerToolBox::activate_layer_tools(QString const & layer_type)
-{
-	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
-		bool is_window_tools = (*group)->objectName() == "generic";
-		bool activate = (*group)->objectName() == layer_type;
-
-		(*group)->setEnabled(activate || is_window_tools);
-
-		if (activate) {
-			QList<QAction *>::const_iterator action = (*group)->actions().constBegin();
-			if (action != (*group)->actions().constEnd()) {
-				(*action)->setChecked(true);
-			}
-		}
-	}
-}
-#endif
 
 
 
@@ -453,7 +381,7 @@ void LayerToolBox::move(QMouseEvent * event)
 
 	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->move_(layer, event)) {
 #if 0
-		gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
+		gtk_widget_grab_focus(this->window->viewport);
 #endif
 	}
 
@@ -498,9 +426,9 @@ void LayerToolBox::release(QMouseEvent * event)
 
 
 
-/********************************************************************************
- ** Ruler tool code
- ********************************************************************************/
+/**********************************************
+ ***************** Tools code *****************
+ ***********************************************/
 
 
 
@@ -509,8 +437,8 @@ static bool draw_buf_done = true;
 
 typedef struct {
 	QWindow * window;
-	GdkGC * gdk_style;
-	GdkPixmap * pixmap;
+	//GdkGC * gdk_style;
+	QPixmap * pixmap;
 } draw_buf_data_t;
 
 
@@ -535,7 +463,7 @@ static int draw_buf(draw_buf_data_t * data)
    @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
    @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
 */
-static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance)
+void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance)
 {
 	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
 #if 0
@@ -830,7 +758,7 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 		this->window->get_statusbar()->set_message(StatusBarField::INFO, message);
 		this->ruler->start_coord = coord;
 	} else {
-		this->viewport->set_center_screen((int) event->x(), (int) event->y());
+		this->viewport->set_center_screen(event->x(), event->y());
 		this->window->draw_update_cb();
 	}
 
@@ -878,19 +806,18 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 	int start_y;
 	this->viewport->coord_to_screen(&this->ruler->start_coord, &start_x, &start_y);
 
-	//gdk_draw_drawable(buf, gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc,
+	//gdk_draw_drawable(buf, gtk_widget_get_style(this->viewport)->black_gc,
 	//		  this->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
 
 	QPen pen("black");
 	pen.setWidth(1);
-	//draw_ruler(this->viewport, buf, gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &this->ruler->start_coord));
-	draw_ruler(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &this->ruler->start_coord));
+	LayerToolRuler::draw(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &this->ruler->start_coord));
 
 	if (draw_buf_done) {
 #if 0
 		static draw_buf_data_t pass_along;
-		pass_along.window = gtk_widget_get_window(this->viewport->get_toolkit_widget());
-		pass_along.gdk_style = gtk_widget_get_style(this->viewport->get_toolkit_widget())->black_gc;
+		pass_along.window = gtk_widget_get_window(this->viewport);
+		pass_along.gdk_style = gtk_widget_get_style(this->viewport)->black_gc;
 		pass_along.pixmap = buf;
 		g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 		draw_buf_done = false;
@@ -960,26 +887,18 @@ void LayerToolRuler::deactivate_(Layer * layer)
 
 bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 {
+	if (event->key() == Qt::Key_Escape) {
 #if 0
-	if (event->keyval == GDK_Escape) {
 		this->ruler->invalidate_start_coord = false;
 		this->ruler->has_start_coord = false;
 		this->deactivate_(layer);
 		return true;
-	}
 #endif
+	}
+
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
 	return false;
 }
-
-/*** End ruler code. ********************************************************/
-
-
-
-
-/********************************************************************************
- ** Zoom tool code
- ********************************************************************************/
 
 
 
@@ -987,28 +906,26 @@ bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 /*
  * In case the screen size has changed
  */
-static void zoomtool_resize_pixmap(LayerTool * tool)
+void LayerToolZoom::resize_pixmap(void)
 {
 	/* Allocate a drawing area the size of the viewport. */
-	int w1 = tool->window->viewport->get_width();
-	int h1 = tool->window->viewport->get_height();
+	int w1 = this->window->viewport->get_width();
+	int h1 = this->window->viewport->get_height();
 
-#if 0
-
-	if (!tool->zoom->pixmap) {
+	if (!this->zoom->pixmap) {
 		/* Totally new. */
-		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(tool->window->viewport->get_toolkit_widget()), w1, h1, -1);
-	}
+		this->zoom->pixmap = new QPixmap(w1, h1); /* TODO: Where do we delete this? */
+	} else {
 
-	int w2, h2;
-	gdk_drawable_get_size(tool->zoom->pixmap, &w2, &h2);
+		int w2 = this->zoom->pixmap->width();
+		int h2 = this->zoom->pixmap->height();
 
-	if (w1 != w2 || h1 != h2) {
-		/* Has changed - delete and recreate with new values. */
-		g_object_unref(G_OBJECT (tool->zoom->pixmap));
-		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(tool->window->viewport->get_toolkit_widget()), w1, h1, -1);
+		if (w1 != w2 || h1 != h2) {
+			/* Has changed - delete and recreate with new values. */
+			delete this->zoom->pixmap;
+			this->zoom->pixmap = new QPixmap(w1, h1); /* TODO: Where do we delete this? */
+		}
 	}
-#endif
 }
 
 
@@ -1033,7 +950,6 @@ LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(w
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-
 	//this->cursor_shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_zoom_pixbuf;
 
@@ -1056,58 +972,59 @@ LayerToolZoom::~LayerToolZoom()
 LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Zoom: ->click() called";
+
+	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 #if 0
-	tool->window->modified = true;
-	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	this->window->modified = true;
 
 	VikCoord coord;
-	int center_x = tool->window->viewport->get_width() / 2;
-	int center_y = tool->window->viewport->get_height() / 2;
+	int center_x = this->window->viewport->get_width() / 2;
+	int center_y = this->window->viewport->get_height() / 2;
 
 	bool skip_update = false;
 
-	tool->zoom->bounds_active = false;
+	this->zoom->bounds_active = false;
 
-	if (modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
+	if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
 		/* This zoom is on the center position. */
-		tool->window->viewport->set_center_screen(center_x, center_y);
+		this->window->viewport->set_center_screen(center_x, center_y);
 		if (event->button() == Qt::LeftButton) {
-			tool->window->viewport->zoom_in();
+			this->window->viewport->zoom_in();
 		} else if (event->button() == Qt::RigthButton) {
-			tool->window->viewport->zoom_out();
+			this->window->viewport->zoom_out();
 		}
-	} else if (modifiers == GDK_CONTROL_MASK) {
+	} else if (modifiers == Qt::ControlModifier) {
 		/* This zoom is to recenter on the mouse position. */
-		tool->window->viewport->set_center_screen((int) event->x, (int) event->y);
+		this->window->viewport->set_center_screen(event->x(), event->y());
 		if (event->button() == Qt::LeftButton) {
-			tool->window->viewport->zoom_in();
+			this->window->viewport->zoom_in();
 		} else if (event->button() == Qt::RightButton) {
-			tool->window->viewport->zoom_out();
+			this->window->viewport->zoom_out();
 		}
-	} else if (modifiers == GDK_SHIFT_MASK) {
+	} else if (modifiers == Qt::ShiftModifier) {
 		/* Get start of new zoom bounds. */
 		if (event->button() == Qt::LeftButton) {
-			tool->zoom->bounds_active = true;
-			tool->zoom->start_x = (int) event->x;
-			tool->zoom->start_y = (int) event->y;
+			this->zoom->bounds_active = true;
+			this->zoom->start_x = event->x();
+			this->zoom->start_y = event->y();
 			skip_update = true;
 		}
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
-		tool->window->viewport->screen_to_coord(event->x, event->y, &coord);
+		this->window->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		if (event->button() == Qt::LeftButton) {
-			tool->window->viewport->zoom_in();
+			this->window->viewport->zoom_in();
 		} else if (event->button() == Qt::RightButton) {
-			tool->window->viewport->zoom_out();
+			this->window->viewport->zoom_out();
 		}
 		int x, y;
-		tool->window->viewport->coord_to_screen(&coord, &x, &y);
-		tool->window->viewport->set_center_screen(center_x + (x - event->x),
-							  center_y + (y - event->y));
+		this->window->viewport->coord_to_screen(&coord, &x, &y);
+		this->window->viewport->set_center_screen(center_x + (x - event->x()),
+							  center_y + (y - event->y()));
 	}
 
 	if (!skip_update) {
-		tool->window->draw_update();
+		this->window->draw_update();
 	}
 
 #endif
@@ -1120,49 +1037,49 @@ LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 
 LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
 {
+	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 #if 0
-	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
-	if (tool->zoom->bounds_active && modifiers == GDK_SHIFT_MASK) {
-		zoomtool_resize_pixmap(tool);
+	if (this->zoom->bounds_active && modifiers == Qt::ShiftModifier) {
+		this->resize_pixmap();
 
 		/* Blank out currently drawn area. */
-		gdk_draw_drawable(tool->zoom->pixmap,
-				  gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc,
-				  tool->window->viewport->get_pixmap(),
+		gdk_draw_drawable(this->zoom->pixmap,
+				  gtk_widget_get_style(this->window->viewport)->black_gc,
+				  this->window->viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 
 		/* Calculate new box starting point & size in pixels. */
 		int xx, yy, width, height;
-		if (event->y > tool->zoom->start_y) {
-			yy = tool->zoom->start_y;
-			height = event->y - tool->zoom->start_y;
+		if (event->y() > this->zoom->start_y) {
+			yy = this->zoom->start_y;
+			height = event->y() - this->zoom->start_y;
 		} else {
-			yy = event->y;
-			height = tool->zoom->start_y - event->y;
+			yy = event->y();
+			height = this->zoom->start_y - event->y();
 		}
-		if (event->x > tool->zoom->start_x) {
-			xx = tool->zoom->start_x;
-			width = event->x - tool->zoom->start_x;
+		if (event->x() > this->zoom->start_x) {
+			xx = this->zoom->start_x;
+			width = event->x() - this->zoom->start_x;
 		} else {
-			xx = event->x;
-			width = tool->zoom->start_x - event->x;
+			xx = event->x();
+			width = this->zoom->start_x - event->x();
 		}
 
 		/* Draw the box. */
-		draw_rectangle(tool->zoom->pixmap, gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc, xx, yy, width, height);
+		draw_rectangle(this->zoom->pixmap, gtk_widget_get_style(this->window->viewport)->black_gc, xx, yy, width, height);
 
 		/* Only actually draw when there's time to do so. */
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
-			pass_along.window = gtk_widget_get_window(tool->window->viewport->get_toolkit_widget());
-			pass_along.gdk_style = gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc;
-			pass_along.pixmap = tool->zoom->pixmap;
+			pass_along.window = gtk_widget_get_window(this->window->viewport);
+			pass_along.gdk_style = gtk_widget_get_style(this->window->viewport)->black_gc;
+			pass_along.pixmap = this->zoom->pixmap;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
 			draw_buf_done = false;
 		}
 	} else {
-		tool->zoom->bounds_active = false;
+		this->zoom->bounds_active = false;
 	}
 #endif
 	return LayerToolFuncStatus::ACK;
@@ -1173,18 +1090,18 @@ LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
 
 LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 {
-#if 0
-	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 
+#if 0
 	/* Ensure haven't just released on the exact same position
 	   i.e. probably haven't moved the mouse at all. */
-	if (tool->zoom->bounds_active && modifiers == GDK_SHIFT_MASK
-	    && (event->x < tool->zoom->start_x-5 || event->x > tool->zoom->start_x+5)
-	    && (event->y < tool->zoom->start_y-5 || event->y > tool->zoom->start_y+5)) {
+	if (this->zoom->bounds_active && modifiers == Qt::ShiftModifier
+	    && (event->x() < this->zoom->start_x - 5 || event->x() > this->zoom->start_x + 5)
+	    && (event->y() < this->zoom->start_y - 5 || event->y() > this->zoom->start_y + 5)) {
 
 		VikCoord coord1, coord2;
-		tool->window->viewport->screen_to_coord(tool->zoom->start_x, tool->zoom->start_y, &coord1);
-		tool->window->viewport->screen_to_coord(event->x, event->y, &coord2);
+		this->window->viewport->screen_to_coord(this->zoom->start_x, this->zoom->start_y, &coord1);
+		this->window->viewport->screen_to_coord(event->x(), event->y(), &coord2);
 
 		/* From the extend of the bounds pick the best zoom level
 		   c.f. trw_layer_zoom_to_show_latlons().
@@ -1193,41 +1110,31 @@ LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 		vik_coord_to_latlon(&coord1, &maxmin[0]);
 		vik_coord_to_latlon(&coord2, &maxmin[1]);
 
-		vu_zoom_to_show_latlons_common(tool->window->viewport->get_coord_mode(), tool->window->viewport, maxmin, VIK_VIEWPORT_MIN_ZOOM, false);
+		vu_zoom_to_show_latlons_common(this->window->viewport->get_coord_mode(), this->window->viewport, maxmin, VIK_VIEWPORT_MIN_ZOOM, false);
 	} else {
 		/* When pressing shift and clicking for zoom, then jump three levels. */
-		if (modifiers == GDK_SHIFT_MASK) {
+		if (modifiers == Qt::ShiftModifier) {
 			/* Zoom in/out by three if possible. */
-			tool->window->viewport->set_center_screen(event->x, event->y);
+			this->window->viewport->set_center_screen(event->x(), event->y());
 			if (event->button() == Qt::LeftButton) {
-				tool->window->viewport->zoom_in();
-				tool->window->viewport->zoom_in();
-				tool->window->viewport->zoom_in();
+				this->window->viewport->zoom_in();
+				this->window->viewport->zoom_in();
+				this->window->viewport->zoom_in();
 			} else if (event->button() == Qt::RightButton) {
-				tool->window->viewport->zoom_out();
-				tool->window->viewport->zoom_out();
-				tool->window->viewport->zoom_out();
+				this->window->viewport->zoom_out();
+				this->window->viewport->zoom_out();
+				this->window->viewport->zoom_out();
 			}
 		}
 	}
 
-	tool->window->draw_update();
+	this->window->draw_update();
 
 	/* Reset. */
-	tool->zoom->bounds_active = false;
+	this->zoom->bounds_active = false;
 #endif
 	return LayerToolFuncStatus::ACK;
 }
-
-
-/*** End zoom code. ********************************************************/
-
-
-
-
-/********************************************************************************
- ** Pan tool code
- ********************************************************************************/
 
 
 
@@ -1242,7 +1149,7 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 
 LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
 {
-	this->id_string = QString("generic.pan");
+	this->id_string = "generic.pan";
 
 	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
 	this->action_label       = QObject::tr("&Pan");
@@ -1275,7 +1182,7 @@ LayerToolFuncStatus LayerToolPan::click_(Layer * layer, QMouseEvent * event)
 		/* Zoom in / out on double click.
 		   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 		if (event->button() == Qt::LeftButton) {
-			unsigned int modifier = event->modifiers() & GDK_SHIFT_MASK;
+			unsigned int modifier = event->modifiers() & Qt::ShiftModifier;
 			if (modifier) {
 				this->window->viewport->zoom_out();
 			} else {
@@ -1324,16 +1231,6 @@ LayerToolFuncStatus LayerToolPan::release_(Layer * layer, QMouseEvent * event)
 }
 
 
-/*** End pan code. ********************************************************/
-
-
-
-
-/********************************************************************************
- ** Select tool code
- ********************************************************************************/
-
-
 
 
 LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
@@ -1346,7 +1243,7 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 
 LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
 {
-	this->id_string = QString("generic.select");
+	this->id_string = "generic.select";
 
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");
@@ -1371,43 +1268,6 @@ LayerToolSelect::~LayerToolSelect()
 
 
 
-typedef struct {
-	bool cont;
-	Viewport * viewport;
-	QMouseEvent * event;
-	LayerTool * tool;
-} clicker;
-
-
-
-
-static void click_layer_selected(Layer * layer, clicker * ck)
-{
-	/* Do nothing when function call returns true,
-	   i.e. stop on first found item. */
-	if (ck->cont) {
-		if (layer->visible) {
-			ck->cont = !layer->select_click(ck->event, ck->viewport, ck->tool);
-		}
-	}
-}
-
-
-
-#if 1
-#ifdef WINDOWS
-/* Hopefully Alt keys by default. */
-#define VIK_MOVE_MODIFIER GDK_MOD1_MASK
-#else
-/* Alt+mouse on Linux desktops tend to be used by the desktop manager.
-   Thus use an alternate modifier - you may need to set something into this group.
-   Viking used GDK_MOD5_MASK.
-*/
-#define VIK_MOVE_MODIFIER Qt::ControlModifier
-#endif
-#endif
-
-
 
 LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 {
@@ -1416,47 +1276,51 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 	this->window->select_move = false;
 
 	/* Only allow selection on primary button. */
-	if (event->button() == Qt::LeftButton) {
+	if (event->button() != Qt::LeftButton) {
+		return LayerToolFuncStatus::IGNORE;
+	}
 
-		if (event->modifiers() & VIK_MOVE_MODIFIER) {
-			this->window->pan_click(event);
-		} else {
-			/* Enable click to apply callback to potentially all track/waypoint layers. */
-			/* Useful as we can find things that aren't necessarily in the currently selected layer. */
-			std::list<Layer *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
-			clicker ck;
-			ck.cont = true;
-			ck.viewport = this->window->viewport;
-			qDebug() << "DD: Layer Tools: Select click:" << __FUNCTION__ << __LINE__;
-			ck.event = event;
-			ck.tool = this;
-			for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-				click_layer_selected(*iter, &ck);
+
+	if (event->modifiers() & SG_MOVE_MODIFIER) {
+		this->window->pan_click(event);
+	} else {
+		/* Enable click to apply callback to potentially all track/waypoint layers. */
+		/* Useful as we can find things that aren't necessarily in the currently selected layer. */
+		std::list<Layer *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
+
+		bool found = false;
+		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+			/* Stop on first layer that reports "we clicked on some object in this layer". */
+			if (layer->visible) {
+				if (layer->select_click(event, this->window->viewport, this)) {
+					found = true;
+					break;
+				}
 			}
-			delete layers;
+		}
+		delete layers;
 
-			/* If nothing found then deselect & redraw screen if necessary to remove the highlight. */
-			if (ck.cont) {
-				GtkTreeIter iter;
-				TreeView * tree_view = this->window->layers_panel->get_treeview();
+		if (!found) {
+			/* Deselect & redraw screen if necessary to remove the highlight. */
 
-				TreeIndex const & index = tree_view->get_selected_item();
-				if (index.isValid()) {
-					/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
-					TreeItemType type = tree_view->get_item_type(index);
-					if (type == TreeItemType::SUBLAYER
-					    || tree_view->get_layer(index)->type == LayerType::TRW) {
+			TreeView * tree_view = this->window->layers_panel->get_treeview();
+			TreeIndex const & index = tree_view->get_selected_item();
 
-						tree_view->unselect(index);
-						if (this->window->clear_highlight()) {
-							this->window->draw_update();
-						}
+			if (index.isValid()) {
+				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
+				TreeItemType type = tree_view->get_item_type(index);
+				if (type == TreeItemType::SUBLAYER
+				    || tree_view->get_layer(index)->type == LayerType::TRW) {
+
+					tree_view->unselect(index);
+					if (this->window->clear_highlight()) {
+						this->window->draw_update();
 					}
 				}
-			} else {
-				/* Something found - so enable movement. */
-				this->window->select_move = true;
 			}
+		} else {
+			/* Something found - so enable movement. */
+			this->window->select_move = true;
 		}
 	}
 
@@ -1476,7 +1340,7 @@ LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 		}
 	} else {
 		/* Optional Panning. */
-		if (event->modifiers() & VIK_MOVE_MODIFIER) {
+		if (event->modifiers() & SG_MOVE_MODIFIER) {
 			this->window->pan_move(event);
 		}
 	}
@@ -1497,7 +1361,7 @@ LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event
 		}
 	}
 
-	if (event->button() == Qt::LeftButton && (event->modifiers() & VIK_MOVE_MODIFIER)) {
+	if (event->button() == Qt::LeftButton && (event->modifiers() & SG_MOVE_MODIFIER)) {
 		this->window->pan_release(event);
 	}
 
@@ -1519,5 +1383,3 @@ LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event
 
 	return LayerToolFuncStatus::ACK;
 }
-
-/*** End select tool code. ********************************************************/

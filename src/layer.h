@@ -300,6 +300,10 @@ namespace SlavGPS {
 		virtual void activate_(Layer * layer) { return; };
 		virtual void deactivate_(Layer * layer) { return; };
 
+		void marker_begin_move(int x, int y);
+		void marker_moveto(int x, int y);
+		void marker_end_move(void);
+
 		QString action_icon_path;
 		QString action_label;
 		QString action_tooltip;

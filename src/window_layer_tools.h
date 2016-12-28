@@ -1,5 +1,5 @@
-#ifndef _H_WINDOW_LAYER_TOOLS_H_
-#define _H_WINDOW_LAYER_TOOLS_H_
+#ifndef _H_GENERIC_LAYER_TOOLS_H_
+#define _H_GENERIC_LAYER_TOOLS_H_
 
 
 
@@ -10,7 +10,6 @@
 #include <QCursor>
 
 #include "layer.h"
-#include "slav_qt.h"
 
 
 
@@ -38,18 +37,13 @@ namespace SlavGPS {
 
 		void activate_tool(QAction * qa);
 		bool deactivate_tool(QAction * qa);
-		//void activate_layer_tools(QString const & layer_type);
-
 
 		void selected_layer(QString const & group_name);
 
 		QAction * set_group_enabled(QString const & group_name);
-		//QAction * set_group_disabled(QString const & group_name);
-		//void set_other_groups_disabled(QString const & group_name);
 		QActionGroup * get_group(QString const & group_name);
 		QAction * get_active_tool_action(void);
 		LayerTool * get_active_tool(void);
-
 
 		QCursor const * get_cursor_click(QString const & tool_name);
 		QCursor const * get_cursor_release(QString const & tool_name);
@@ -82,7 +76,7 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		GdkPixmap * pixmap = NULL;
+		QPixmap * pixmap = NULL;
 		/* Track zoom bounds for zoom tool with shift modifier: */
 		bool bounds_active = false;
 		int start_x = 0;
@@ -99,6 +93,7 @@ namespace SlavGPS {
 		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
 
 	private:
+		void resize_pixmap(void);
 		zoom_tool_state_t * zoom = NULL;
 	};
 
@@ -122,6 +117,7 @@ namespace SlavGPS {
 
 	private:
 		ruler_tool_state_t * ruler = NULL;
+		static void draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance);
 	};
 
 
@@ -154,4 +150,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _H_WINDOW_LAYER_TOOLS_H_ */
+#endif /* #ifndef _H_GENERIC_LAYER_TOOLS_H_ */

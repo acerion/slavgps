@@ -1115,6 +1115,64 @@ QString LayerTool::get_description() const
 
 
 
+/* Background drawing hook, to be passed the viewport. */
+static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
+
+
+
+
+void LayerTool::marker_begin_move(int x, int y)
+{
+	assert (this->ed);
+
+	this->ed->holding = true;
+
+	this->ed->ed_pen = new QPen(QColor("black"));
+	this->ed->ed_pen->setWidth(2);
+
+	//gdk_gc_set_function(this->ed->en_pen, GDK_INVERT);
+	this->viewport->draw_rectangle(*this->ed->ed_pen, x-3, y-3, 6, 6);
+	this->viewport->sync();
+	this->ed->oldx = x;
+	this->ed->oldy = y;
+	this->ed->moving = false;
+}
+
+
+
+
+void LayerTool::marker_moveto(int x, int y)
+{
+	assert (this->ed);
+
+	this->viewport->draw_rectangle(*this->ed->ed_pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
+	this->viewport->draw_rectangle(*this->ed->ed_pen, x-3, y-3, 6, 6);
+	this->ed->oldx = x;
+	this->ed->oldy = y;
+	this->ed->moving = true;
+
+	if (tool_sync_done) {
+		this->viewport->sync();
+		tool_sync_done = true;
+	}
+}
+
+
+
+
+void LayerTool::marker_end_move(void)
+{
+	assert (this->ed);
+
+	this->viewport->draw_rectangle(*this->ed->ed_pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
+	delete this->ed->ed_pen;
+	this->ed->holding = false;
+	this->ed->moving = false;
+}
+
+
+
+
 bool Layer::compare_timestamp_descending(Layer * first, Layer * second)
 {
 	return first->get_timestamp() > second->get_timestamp();
