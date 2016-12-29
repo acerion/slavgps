@@ -50,6 +50,45 @@ namespace SlavGPS {
 
 
 
+
+	/* Coord display format. */
+	enum class DegreeFormat {
+		DDD,
+		DMM,
+		DMS,
+		RAW,
+	};
+
+
+
+
+	enum class DistanceUnit {
+		KILOMETRES,
+		MILES,
+		NAUTICAL_MILES,
+	};
+
+
+
+
+	enum class SpeedUnit {
+		KILOMETRES_PER_HOUR,
+		MILES_PER_HOUR,
+		METRES_PER_SECOND,
+		KNOTS
+	};
+
+
+
+
+	enum class HeightUnit {
+		METRES,
+		FEET,
+	};
+
+
+
+
 	enum class SublayerType {
 		NONE,
 		TRACKS,
@@ -168,57 +207,6 @@ int viking_version_to_number(char *version);
 
 /* Very first run. */
 bool a_vik_very_first_run();
-
-/* Global preferences */
-void a_vik_preferences_init();
-
-/* Coord display preferences. */
-typedef enum {
-	VIK_DEGREE_FORMAT_DDD,
-	VIK_DEGREE_FORMAT_DMM,
-	VIK_DEGREE_FORMAT_DMS,
-	VIK_DEGREE_FORMAT_RAW,
-} vik_degree_format_t;
-
-vik_degree_format_t a_vik_get_degree_format();
-
-
-
-
-/* Distance preferences. */
-enum class DistanceUnit {
-	KILOMETRES,
-	MILES,
-	NAUTICAL_MILES,
-};
-
-DistanceUnit a_vik_get_units_distance();
-
-
-
-
-/* Speed preferences. */
-enum class SpeedUnit {
-	KILOMETRES_PER_HOUR,
-	MILES_PER_HOUR,
-	METRES_PER_SECOND,
-	KNOTS
-};
-
-SpeedUnit a_vik_get_units_speed();
-
-
-
-
-/* Height (Depth) preferences. */
-enum class HeightUnit {
-	METRES,
-	FEET,
-};
-
-HeightUnit a_vik_get_units_height();
-
-
 
 
 bool a_vik_get_use_large_waypoint_icons();
@@ -355,8 +343,6 @@ int a_vik_get_recent_number_files();
 #define KPOINTER_TO_INT(p) ((int) (long) (p))
 /* GPOINTER_TO_UINT */
 #define KPOINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
-/* GUINT_TO_POINTER */
-#define KUINT_TO_POINTER(u) ((void *) (unsigned long) (u))
 
 
 

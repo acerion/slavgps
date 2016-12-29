@@ -99,7 +99,7 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 {
 	if (this->cur_tp && (!this->sync_to_tp_block)) {
 		/* Always store internally in metres. */
-		HeightUnit height_units = a_vik_get_units_height();
+		HeightUnit height_units = Preferences::get_unit_height();
 		switch (height_units) {
 		case HeightUnit::METRES:
 			this->cur_tp->altitude = this->alt->value();
@@ -290,7 +290,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	this->lon->setValue(ll.lon);
 
 
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_units = Preferences::get_unit_height();
 	switch (height_units) {
 	case HeightUnit::METRES:
 		this->alt->setValue(tp->altitude);
@@ -308,8 +308,8 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	this->sync_to_tp_block = false; /* Don't update while setting data. */
 
 
-	SpeedUnit speed_units = a_vik_get_units_speed();
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	if (this->cur_tp) {
 		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:

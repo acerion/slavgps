@@ -54,6 +54,7 @@ renaming functions and defining LatLon and UTM structs.
 #include "viking.h"
 #include "globals.h"
 #include "stdio.h"
+#include "preferences.h"
 #else
 #define DEG2RAD(x) ((x)*(M_PI/180))
 #define RAD2DEG(x) ((x)*(180/M_PI))
@@ -271,22 +272,22 @@ void a_coords_latlon_to_string ( const struct LatLon *latlon,
 	}
 
 #ifdef HAVE_VIKING
-  vik_degree_format_t format = a_vik_get_degree_format ();
+  DegreeFormat format = Preferences::get_degree_format();
 
   switch (format) {
-  case VIK_DEGREE_FORMAT_DDD:
+  case DegreeFormat::DDD:
     *lat = convert_lat_dec_to_ddd ( latlon->lat );
     *lon = convert_lon_dec_to_ddd ( latlon->lon );
     break;
-  case VIK_DEGREE_FORMAT_DMM:
+  case DegreeFormat::DMM:
     *lat = convert_lat_dec_to_dmm ( latlon->lat );
     *lon = convert_lon_dec_to_dmm ( latlon->lon );
     break;
-  case VIK_DEGREE_FORMAT_DMS:
+  case DegreeFormat::DMS:
     *lat = convert_lat_dec_to_dms ( latlon->lat );
     *lon = convert_lon_dec_to_dms ( latlon->lon );
     break;
-  case VIK_DEGREE_FORMAT_RAW:
+  case DegreeFormat::RAW:
     *lat = g_strdup_printf ( "%.6f", latlon->lat );
     *lon = g_strdup_printf ( "%.6f", latlon->lon );
     break;

@@ -151,15 +151,15 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	get_distance_string(tmp_buf, sizeof (tmp_buf), a_vik_get_units_distance(), ts.length);
+	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), ts.length);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	get_distance_string(tmp_buf, sizeof (tmp_buf), a_vik_get_units_distance(), ts.length / ts.count);
+	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), ts.length / ts.count);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	SpeedUnit speed_unit = a_vik_get_units_speed();
+	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	if (ts.max_speed > 0) {
 		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, ts.max_speed);
 	} else {
@@ -176,7 +176,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL (content[cnt++]), tmp_buf);
 
 
-	switch (a_vik_get_units_height()) {
+	switch (Preferences::get_unit_height()) {
 		/* Note always round off height value output since sub unit accuracy is overkill. */
 	case HeightUnit::FEET:
 		if (ts.min_alt != VIK_VAL_MIN_ALT) {

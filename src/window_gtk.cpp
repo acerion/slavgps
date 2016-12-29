@@ -1760,7 +1760,7 @@ static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** 
 		w *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[4]));
 		h *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[5]));
 	}
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (glong)w, (glong)h, (w*h/1000000));

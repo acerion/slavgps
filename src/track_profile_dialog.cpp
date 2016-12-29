@@ -41,6 +41,7 @@
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
+#include "preferences.h"
 
 
 
@@ -872,7 +873,7 @@ void speed_label_update(QLabel * label, double value)
 	static char tmp_buf[20];
 	/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 	   No conversions needed as already in appropriate units. */
-	SpeedUnit speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
 	switch (speed_units) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), value);
@@ -1163,7 +1164,7 @@ int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * event)
 void distance_label_update(QLabel * label, double meters_from_start)
 {
 	static char tmp_buf[20];
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, meters_from_start);
 	label->setText(QString(tmp_buf));
 
@@ -1176,7 +1177,7 @@ void distance_label_update(QLabel * label, double meters_from_start)
 void elevation_label_update(QLabel * label, Trackpoint * tp)
 {
 	static char tmp_buf[20];
-	if (a_vik_get_units_height() == HeightUnit::FEET) {
+	if (Preferences::get_unit_height() == HeightUnit::FEET) {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
@@ -1192,7 +1193,7 @@ void elevation_label_update(QLabel * label, Trackpoint * tp)
 void dist_dist_label_update(QLabel * label, double distance)
 {
 	static char tmp_buf[20];
-	switch (a_vik_get_units_distance()) {
+	switch (Preferences::get_unit_distance()) {
 	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", distance);
 		break;
@@ -1250,7 +1251,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
 				/* Convert into height units. */
-				if (a_vik_get_units_height() == HeightUnit::FEET) {
+				if (Preferences::get_unit_height() == HeightUnit::FEET) {
 					elev = VIK_METERS_TO_FEET(elev);
 				}
 				/* No conversion needed if already in metres. */
@@ -1441,7 +1442,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_units = Preferences::get_unit_height();
 	if (height_units == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (unsigned int i = 0; i < graph_width; i++) {
@@ -1495,7 +1496,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
+	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
 
 	if (this->w_ed_show_dem->checkState()
@@ -1621,7 +1622,7 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
+	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
 
 	if (this->w_gd_show_gps_speed->checkState()) {
@@ -1704,7 +1705,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 	}
 
 	/* Convert into appropriate units. */
-	SpeedUnit speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
 	for (unsigned int i = 0; i < graph_width; i++) {
 		this->speeds[i] = convert_speed_mps_to(speed_units, this->speeds[i]);
 	}
@@ -1815,7 +1816,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 	}
 
 	/* Convert into appropriate units. */
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	for (unsigned int i = 0; i < graph_width; i++) {
 		this->distances[i] = convert_distance_meters_to(distance_unit, this->distances[i]);
 	}
@@ -1916,7 +1917,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_units = Preferences::get_unit_height();
 	if (height_units == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (unsigned int i = 0; i < graph_width; i++) {
@@ -1985,7 +1986,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 				int16_t elev = dem_cache_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
 				if (elev != VIK_DEM_INVALID_ELEVATION) {
 					/* Convert into height units. */
-					if (a_vik_get_units_height() == HeightUnit::FEET) {
+					if (Preferences::get_unit_height() == HeightUnit::FEET) {
 						elev = VIK_METERS_TO_FEET(elev);
 					}
 					/* No conversion needed if already in metres. */
@@ -2049,7 +2050,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	}
 
 	/* Convert into appropriate units. */
-	SpeedUnit speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
 	for (unsigned int i = 0; i < graph_width; i++) {
 		this->speeds_dist[i] = convert_speed_mps_to(speed_units, this->speeds_dist[i]);
 	}
@@ -2103,7 +2104,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
+	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
 
 	if (this->w_sd_show_gps_speed->checkState()) {

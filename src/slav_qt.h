@@ -60,6 +60,6 @@ typedef int VikTrwLayerTpwin;
 
 #endif
 
-HeightUnit a_vik_get_units_height();
+
 
 #endif

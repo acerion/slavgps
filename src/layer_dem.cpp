@@ -55,6 +55,7 @@
 #endif
 #include "globals.h"
 #include "download.h"
+#include "preferences.h"
 
 
 
@@ -412,7 +413,7 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, Viewport
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
 			this->min_elev = VIK_FEET_TO_METERS(param_value.d);
 		} else {
 			this->min_elev = param_value.d;
@@ -421,7 +422,7 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, Viewport
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
 			this->max_elev = VIK_FEET_TO_METERS(param_value.d);
 		} else {
 			this->max_elev = param_value.d;
@@ -510,7 +511,7 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->min_elev);
 		} else {
 			rv.d = this->min_elev;
@@ -519,7 +520,7 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->max_elev);
 		} else {
 			rv.d = this->max_elev;

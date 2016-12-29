@@ -95,7 +95,7 @@ int main(int argc, char ** argv)
 
 #endif
 	a_settings_init();
-	a_preferences_init();
+	Preferences::init();
 
 	/*
 	  First stage initialization.
@@ -108,7 +108,7 @@ int main(int argc, char ** argv)
 	  them so subsequent initial attempts to get those preferences
 	  return the default value, until the values have changed.
 	*/
-	a_vik_preferences_init();
+	Preferences::register_default_values();
 
 
 	a_layer_defaults_init();
@@ -208,7 +208,7 @@ int main(int argc, char ** argv)
 	dem_cache_uninit();
 #endif
 	a_layer_defaults_uninit();
-	a_preferences_uninit();
+	Preferences::uninit();
 	a_settings_uninit();
 #if 0
 

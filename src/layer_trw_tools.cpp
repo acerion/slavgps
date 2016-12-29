@@ -42,6 +42,7 @@
 #include "dialog.h"
 #include "dems.h"
 #include "util.h"
+#include "preferences.h"
 
 
 
@@ -702,7 +703,7 @@ static char* distance_string(double distance)
 	char str[128];
 
 	/* Draw label with distance. */
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::MILES:
 		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
@@ -752,7 +753,7 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 	char *str_total = distance_string(distance);
 
 	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
-		if (a_vik_get_units_height() == HeightUnit::METRES) {
+		if (Preferences::get_unit_height() == HeightUnit::METRES) {
 			g_sprintf(str_gain_loss, _(" - Gain %dm:Loss %dm"), (int)elev_gain, (int)elev_loss);
 		} else {
 			g_sprintf(str_gain_loss, _(" - Gain %dft:Loss %dft"), (int)VIK_METERS_TO_FEET(elev_gain), (int)VIK_METERS_TO_FEET(elev_loss));

@@ -159,7 +159,7 @@ ParameterValue bfilter_compress_params_defaults[] = {
  */
 static void datasource_bfilter_compress_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
 {
-	char units = a_vik_get_units_distance() == DistanceUnit::KILOMETRES ? 'k' : ' ';
+	char units = Preferences::get_unit_distance() == DistanceUnit::KILOMETRES ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
 	   However several things:
 	   - mainly that typical values to use for the error relate to method being used - so hard to explain and then give a default sensible value in the UI.

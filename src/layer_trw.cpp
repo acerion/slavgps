@@ -56,6 +56,7 @@
 #include "globals.h"
 #include "uibuilder.h"
 #include "layers_panel.h"
+#include "preferences.h"
 
 #ifdef K
 #include "vikmapslayer.h"
@@ -1893,7 +1894,7 @@ QString LayerTRW::tooltip()
 		tbuf2[0] = '\0';
 		if (tt.length > 0.0) {
 			/* Setup info dependent on distance units. */
-			DistanceUnit distance_unit = a_vik_get_units_distance();
+			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
 			double len_in_units = convert_distance_meters_to(distance_unit, tt.length);
 
@@ -1915,7 +1916,7 @@ QString LayerTRW::tooltip()
 		if (rlength > 0.0) {
 
 			/* Setup info dependent on distance units. */
-			DistanceUnit distance_unit = a_vik_get_units_distance();
+			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
 			double len_in_units = convert_distance_meters_to(distance_unit, rlength);
 			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
@@ -1986,7 +1987,7 @@ QString LayerTRW::sublayer_tooltip(Sublayer * sublayer)
 				}
 				/* Get length and consider the appropriate distance units. */
 				double tr_len = trk->get_length();
-				DistanceUnit distance_unit = a_vik_get_units_distance();
+				DistanceUnit distance_unit = Preferences::get_unit_distance();
 				switch (distance_unit) {
 				case DistanceUnit::KILOMETRES:
 					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
@@ -2073,7 +2074,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
 	char tmp_buf1[64];
-	switch (a_vik_get_units_height()) {
+	switch (Preferences::get_unit_height()) {
 	case HeightUnit::FEET:
 		snprintf(tmp_buf1, sizeof(tmp_buf1), _("Wpt: Alt %dft"), (int) round(VIK_METERS_TO_FEET(wp->altitude)));
 		break;

@@ -197,7 +197,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 					 150.0, 200.0, 250.0, 500.0, 1000.0};
 
 	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels + 1);
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 
 	/* Convert to specified unit to find the friendly breakdown value. */
 	dist = convert_distance_meters_to(distance_unit, dist);

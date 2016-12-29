@@ -48,6 +48,15 @@ using namespace SlavGPS;
 
 
 
+extern Parameter io_prefs[];
+extern Parameter io_prefs_non_windows[];
+extern Parameter io_prefs_external_gpx[];
+extern Parameter startup_prefs[];
+extern Parameter prefs_advanced[];
+extern Parameter general_prefs[];
+
+
+
 
 static Preferences preferences;
 
@@ -341,7 +350,7 @@ void a_preferences_register(Parameter * parameter, ParameterValue default_value,
 
 
 
-void a_preferences_init()
+void Preferences::init()
 {
 	preferences_groups_init();
 
@@ -357,7 +366,7 @@ void a_preferences_init()
 
 
 
-void a_preferences_uninit()
+void Preferences::uninit()
 {
 	preferences_groups_uninit();
 
@@ -372,7 +381,7 @@ ParameterValue * a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);
-		/* Since we can't load the file in a_preferences_init (no params registered yet),
+		/* Since we can't load the file in Preferences::init() (no params registered yet),
 		   do it once before we get the first key. */
 		preferences_load_from_file();
 		loaded = true;
@@ -404,10 +413,132 @@ std::map<param_id_t, Parameter *>::iterator Preferences::end()
 
 
 
-/* Startup Preferences. */
-
-
 bool Preferences::get_restore_window_state(void)
 {
 	return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state")->b;
+}
+
+
+
+
+void Preferences::register_default_values()
+{
+	fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number((char *) VIKING_VERSION));
+
+	/* Defaults for the options are setup here. */
+	a_preferences_register_group(VIKING_PREFERENCES_GROUP_KEY, _("General"));
+
+	ParameterValue tmp;
+	tmp.u = (uint32_t) DegreeFormat::DMS;
+	a_preferences_register(&general_prefs[0], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	tmp.u = (uint32_t) DistanceUnit::KILOMETRES;
+	a_preferences_register(&general_prefs[1], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	tmp.u = (uint32_t) SpeedUnit::KILOMETRES_PER_HOUR;
+	a_preferences_register(&general_prefs[2], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	tmp.u = (uint32_t) HeightUnit::METRES;
+	a_preferences_register(&general_prefs[3], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	tmp.b = true;
+	a_preferences_register(&general_prefs[4], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	/* Maintain the default location to New York. */
+	tmp.d = 40.714490;
+	a_preferences_register(&general_prefs[5], tmp, VIKING_PREFERENCES_GROUP_KEY);
+	tmp.d = -74.007130;
+	a_preferences_register(&general_prefs[6], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	tmp.u = VIK_TIME_REF_LOCALE;
+	a_preferences_register(&general_prefs[7], tmp, VIKING_PREFERENCES_GROUP_KEY);
+
+	/* New Tab. */
+	a_preferences_register_group(VIKING_PREFERENCES_STARTUP_GROUP_KEY, _("Startup"));
+
+	tmp.b = false;
+	a_preferences_register(&startup_prefs[0], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
+
+	tmp.b = false;
+	a_preferences_register(&startup_prefs[1], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
+
+	tmp.u = VIK_STARTUP_METHOD_HOME_LOCATION;
+	a_preferences_register(&startup_prefs[2], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
+
+	tmp.s = "";
+	a_preferences_register(&startup_prefs[3], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
+
+	tmp.b = false;
+	a_preferences_register(&startup_prefs[4], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
+
+	/* New Tab. */
+	a_preferences_register_group(VIKING_PREFERENCES_IO_GROUP_KEY, _("Export/External"));
+
+	tmp.u = VIK_KML_EXPORT_UNITS_METRIC;
+	a_preferences_register(&io_prefs[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+
+	tmp.u = VIK_GPX_EXPORT_TRK_SORT_TIME;
+	a_preferences_register(&io_prefs[1], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+
+	tmp.b = VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE;
+	a_preferences_register(&io_prefs[2], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+
+#ifndef WINDOWS
+	tmp.s = "xdg-open";
+	a_preferences_register(&io_prefs_non_windows[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+#endif
+
+	/* JOSM for OSM editing around a GPX track. */
+	tmp.s = "josm";
+	a_preferences_register(&io_prefs_external_gpx[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+	/* Add a second external program - another OSM editor by default. */
+	tmp.s = "merkaartor";
+	a_preferences_register(&io_prefs_external_gpx[1], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+
+	/* 'Advanced' Properties. */
+	a_preferences_register_group(VIKING_PREFERENCES_ADVANCED_GROUP_KEY, _("Advanced"));
+
+	tmp.u = VIK_FILE_REF_FORMAT_ABSOLUTE;
+	a_preferences_register(&prefs_advanced[0], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
+
+	tmp.b = true;
+	a_preferences_register(&prefs_advanced[1], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
+
+	tmp.b = true;
+	a_preferences_register(&prefs_advanced[2], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
+
+	tmp.i = 10; /* Seemingly GTK's default for the number of recent files. */
+	a_preferences_register(&prefs_advanced[3], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
+}
+
+
+
+
+DegreeFormat Preferences::get_degree_format(void)
+{
+	return (DegreeFormat) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "degree_format")->u;
+}
+
+
+
+
+DistanceUnit Preferences::get_unit_distance()
+{
+	return (DistanceUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
+}
+
+
+
+
+SpeedUnit Preferences::get_unit_speed(void)
+{
+	return (SpeedUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_speed")->u;
+}
+
+
+
+
+HeightUnit Preferences::get_unit_height(void)
+{
+	return (HeightUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
 }

@@ -31,6 +31,7 @@
 #include "coords.h"
 //#include "vikutils.h"
 #include "icons/icons.h"
+#include "preferences.h"
 
 
 
@@ -203,7 +204,7 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 		char str[128];
 
 		/* Draw label with distance. */
-		DistanceUnit distance_unit = a_vik_get_units_distance();
+		DistanceUnit distance_unit = Preferences::get_unit_distance();
 		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
 			if (distance >= 1000 && distance < 100000) {
@@ -351,7 +352,7 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (this->ruler->has_start_coord) {
-			DistanceUnit distance_unit = a_vik_get_units_distance();
+			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
 				sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &this->ruler->start_coord));
@@ -455,7 +456,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 
 
 	a_coords_latlon_to_string(&ll, &lat, &lon);
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &this->ruler->start_coord));

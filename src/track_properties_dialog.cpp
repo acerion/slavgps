@@ -44,6 +44,7 @@
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
+#include "preferences.h"
 
 
 
@@ -181,7 +182,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	/* NB This value not shown yet - but is used by internal calculations. */
 	this->track_length = this->trk->get_length();
 	this->track_length_inc_gaps = this->trk->get_length_including_gaps();
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 
 	static char tmp_buf[50];
 
@@ -208,7 +209,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	this->statistics_form->addRow(QString("Duplicate Points:"), this->w_duptp_count);
 
 
-	SpeedUnit speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
 	double tmp_speed = this->trk->get_max_speed();
 	if (tmp_speed == 0) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
@@ -273,7 +274,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	free(altitudes);
 	altitudes = NULL;
 
-	HeightUnit height_unit = a_vik_get_units_height();
+	HeightUnit height_unit = Preferences::get_unit_height();
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {

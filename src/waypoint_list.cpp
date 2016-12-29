@@ -31,10 +31,10 @@
 #include "waypoint_properties.h"
 #include "util.h"
 #include "settings.h"
+#include "preferences.h"
 
 #ifdef K
 #include "clipboard.h"
-#include "globals.h"
 #endif
 
 
@@ -482,7 +482,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		return;
 	}
 
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_units = Preferences::get_unit_height();
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));

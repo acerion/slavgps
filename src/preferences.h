@@ -41,6 +41,10 @@ namespace SlavGPS {
 
 	class Preferences {
 	public:
+		static void init();
+		static void uninit();
+		static void register_default_values();
+
 		void set_param_value(param_id_t id, ParameterValue value);
 		ParameterValue get_param_value(param_id_t id);
 
@@ -48,6 +52,12 @@ namespace SlavGPS {
 		std::map<param_id_t, Parameter *>::iterator end();
 
 		static bool get_restore_window_state(void);
+
+
+		static DistanceUnit get_unit_distance(void);
+		static SpeedUnit    get_unit_speed(void);
+		static HeightUnit   get_unit_height(void);
+		static DegreeFormat get_degree_format(void);
 	};
 
 
@@ -62,9 +72,6 @@ namespace SlavGPS {
 
 
 
-
-void a_preferences_init();
-void a_preferences_uninit();
 
 /* Pref should be persistent thruout the life of the preference. */
 

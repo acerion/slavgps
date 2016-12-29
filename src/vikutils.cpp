@@ -92,7 +92,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		values[i] = '\0';
 	}
 
-	SpeedUnit speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
 	char * speed_units_str = get_speed_unit_string(speed_units);
 
 	char * separator = strdup(" | ");
@@ -162,7 +162,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		}
 
 		case 'A': {
-			HeightUnit height_units = a_vik_get_units_height();
+			HeightUnit height_units = Preferences::get_unit_height();
 			switch (height_units) {
 			case HeightUnit::FEET:
 				values[i] = g_strdup_printf(_("%sAlt %dfeet"), separator, (int)round(VIK_METERS_TO_FEET(tp->altitude)));
@@ -186,7 +186,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				int diff = (int) round(vik_coord_diff(&(tp->coord), &(tp_prev->coord)));
 
 				char * dist_units_str = NULL;
-				DistanceUnit distance_unit = a_vik_get_units_distance();
+				DistanceUnit distance_unit = Preferences::get_unit_distance();
 				/* Expect the difference between track points to be small hence use metres or yards. */
 				switch (distance_unit) {
 				case DistanceUnit::MILES:
@@ -241,7 +241,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				double dist = diste - distd;
 				char dist_unit_str[16] = { 0 };
 
-				DistanceUnit distance_unit = a_vik_get_units_distance();
+				DistanceUnit distance_unit = Preferences::get_unit_distance();
 				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
 				dist = convert_distance_meters_to(distance_unit, dist);
 				values[i] = g_strdup_printf(_("%sTo End %.2f%s"), separator, dist, dist_unit_str);
@@ -255,7 +255,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				double distd = trk->get_length_to_trackpoint(tp);
 				char dist_unit_str[16] = { 0 };
 
-				DistanceUnit distance_unit = a_vik_get_units_distance();
+				DistanceUnit distance_unit = Preferences::get_unit_distance();
 				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
 				distd = convert_distance_meters_to(distance_unit, distd);
 				values[i] = g_strdup_printf(_("%sDistance along %.2f%s"), separator, distd, dist_unit_str);

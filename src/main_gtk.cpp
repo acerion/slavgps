@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 	a_vik_very_first_run();
 
 	a_settings_init();
-	a_preferences_init();
+	Preferences::init();
 
 	/*
 	  First stage initialization.
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 	  them so subsequent initial attempts to get those preferences
 	  return the default value, until the values have changed.
 	*/
-	a_vik_preferences_init();
+	Preferences::register_default_values();
 
 	layer_defaults_init();
 

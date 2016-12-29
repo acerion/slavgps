@@ -36,6 +36,7 @@
 #include "window.h"
 #include "vikutils.h"
 #include "util.h"
+#include "preferences.h"
 
 
 
@@ -537,9 +538,9 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 void TrackListDialog::build_model(bool hide_layer_names)
 {
-	DistanceUnit distance_units = a_vik_get_units_distance();
-	SpeedUnit speed_units = a_vik_get_units_speed();
-	HeightUnit height_units = a_vik_get_units_height();
+	DistanceUnit distance_units = Preferences::get_unit_distance();
+	SpeedUnit speed_units = Preferences::get_unit_speed();
+	HeightUnit height_units = Preferences::get_unit_height();
 
 
 	this->model = new QStandardItemModel();

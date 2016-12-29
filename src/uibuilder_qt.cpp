@@ -465,7 +465,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	char * lon = g_strdup_printf("%f", ll.lon);
 	char * alt = NULL;
 
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_units = Preferences::get_unit_height();
 	switch (height_units) {
 	case HeightUnit::METRES:
 		alt = g_strdup_printf("%f", wp->altitude);

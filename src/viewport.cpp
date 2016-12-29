@@ -43,6 +43,7 @@
 #include "dems.h"
 #include "mapcoord.h"
 #include "layer_toolbox.h"
+#include "preferences.h"
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"
@@ -584,7 +585,7 @@ void Viewport::draw_scale()
 	this->screen_to_coord(0,                                 this->size_height / 2, &left);
 	this->screen_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2, &right);
 
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		base_distance = vik_coord_diff(&left, &right); /* In meters. */
@@ -2266,7 +2267,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
 	int16_t alt;
 	static char pointer_buf[BUFFER_SIZE] = { 0 };
 	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
-		if (a_vik_get_units_height() == HeightUnit::METRES) {
+		if (Preferences::get_unit_height() == HeightUnit::METRES) {
 			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dm", lat, lon, alt);
 		} else {
 			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dft", lat, lon, (int) VIK_METERS_TO_FEET(alt));
