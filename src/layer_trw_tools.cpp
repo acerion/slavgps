@@ -1152,7 +1152,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 	/* If current is a track - switch to new route */
 	if (event->button() == Qt::LeftButton
 	    && (!trw->current_trk
-		|| (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE))) {
+		|| (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::TRACK))) {
 
 		char * name = trw->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
 		QString new_name(name);
