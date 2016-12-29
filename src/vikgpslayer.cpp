@@ -453,7 +453,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
-			   as this will always be performed later on in vik_gps_layer_realize(). */
+			   as this will always be performed later on in vik_gps_layer_connect_to_tree(). */
 		}
 		alm_next;
 	}
@@ -755,7 +755,7 @@ void LayerGPS::add_menu_items(QMenu & menu)
 LayerGPS::~LayerGPS()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
-		if (this->realized) {
+		if (this->connected_to_tree) {
 			this->disconnect_layer_signal(this->trw_children[i]);
 		}
 		this->trw_children[i]->unref();
@@ -783,13 +783,13 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
+void LayerGPS::connect_to_tree(TreeView * tree_view_, GtkTreeIter *layer_iter)
 {
 	GtkTreeIter iter;
 
 	this->tree_view = tree_view_;
 	this->iter = *layer_iter;
-	this->realized = true;
+	this->connected_to_tree = true;
 
 	/* TODO set to garmin by default.
 	   if (a_babel_device_list)
@@ -805,7 +805,7 @@ void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 		if (!trw->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}
-		trw->realize(this->tree_view, &iter);
+		trw->connect_to_tree(this->tree_view, &iter);
 		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(Layer::child_layer_changed_cb), (Layer *) this);
 	}
 }

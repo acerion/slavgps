@@ -65,7 +65,7 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(QMenu & menu);
-		void realize(TreeView * tree_view, TreeIndex const & layer_index);
+		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);

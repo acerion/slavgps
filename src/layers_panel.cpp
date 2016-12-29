@@ -140,7 +140,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	this->toplayer->rename(_("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0);
-	this->toplayer->realize(this->tree_view, this->toplayer_item);
+	this->toplayer->connect_to_tree(this->tree_view, this->toplayer_item);
 
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
@@ -477,14 +477,14 @@ void LayersPanel::add_layer(Layer * layer)
 			current = this->tree_view->get_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
 		}
-		assert (current->realized);
+		assert(current->connected_to_tree);
 		replace_index = current->index;
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
 			Layer * tmp_layer = this->tree_view->get_parent_layer(current->index);
 			current = tmp_layer;
-			assert (current->realized);
+			assert(current->connected_to_tree);
 		}
 
 

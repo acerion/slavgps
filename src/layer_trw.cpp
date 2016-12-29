@@ -1653,8 +1653,9 @@ void LayerTRW::realize_waypoints(Waypoints & waypoints, Layer * parent_layer, Tr
 
 void LayerTRW::add_tracks_node(void)
 {
+	assert(this->connected_to_tree);
+
 	this->tracks_node = new Sublayer(SublayerType::TRACKS);
-	/* TODO: assert that this layer is realized. */
 	this->tree_view->add_sublayer(this->tracks_node, this, this->index, _("Tracks"), NULL, false, 0);
 }
 
@@ -1663,7 +1664,8 @@ void LayerTRW::add_tracks_node(void)
 
 void LayerTRW::add_waypoints_node(void)
 {
-	/* TODO: assert that this layer is realized. */
+	assert(this->connected_to_tree);
+
 	this->waypoints_node = new Sublayer(SublayerType::WAYPOINTS);
 	this->tree_view->add_sublayer(this->waypoints_node, this, this->index, _("Waypoints"), NULL, false, 0);
 }
@@ -1673,7 +1675,8 @@ void LayerTRW::add_waypoints_node(void)
 
 void LayerTRW::add_routes_node(void)
 {
-	/* TODO: assert that this layer is realized. */
+	assert(this->connected_to_tree);
+
 	this->routes_node = new Sublayer(SublayerType::ROUTES);
 	this->tree_view->add_sublayer(this->routes_node, this, this->index, _("Routes"), NULL, false, 0);
 }
@@ -1681,11 +1684,11 @@ void LayerTRW::add_routes_node(void)
 
 
 
-void LayerTRW::realize(TreeView * tree_view_, TreeIndex const & layer_index)
+void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;
 	this->index = layer_index;
-	this->realized = true;
+	this->connected_to_tree = true;
 
 	if (this->tracks.size() > 0) {
 		this->add_tracks_node();
@@ -3105,10 +3108,8 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 {
 	this->waypoints.insert({{ wp->uid, wp }});
 
-	if (this->realized) {
-		/* Do we need to create the sublayer?
-		   TODO: this condition should be unnecessary for realized layer, right? */
-		if (waypoints.size() == 0) {
+	if (this->connected_to_tree) {
+		if (waypoints.size() == 1) { /* We compare against '1' because we already added a first wp to ::waypoints() at the beginning of this function. */
 			this->add_waypoints_node();
 		}
 
@@ -3123,7 +3124,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(wp->index, wp->visible);
 
-		/* Sort now as post_read is not called on a realized waypoint. */
+		/* Sort now as post_read is not called on a waypoint connected to tree. */
 		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	}
 
@@ -3137,10 +3138,8 @@ void LayerTRW::add_track(Track * trk)
 {
 	this->tracks.insert({{ trk->uid, trk }});
 
-	if (this->realized) {
-		/* Do we need to create the sublayer?
-		   TODO: this condition should be unnecessary for realized layer, right? */
-		if (tracks.size() == 0) {
+	if (this->connected_to_tree) {
+		if (tracks.size() == 1) { /* We compare against '1' because we already added a first trk to ::tracks() at the beginning of this function. */
 			this->add_tracks_node();
 		}
 
@@ -3156,7 +3155,7 @@ void LayerTRW::add_track(Track * trk)
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
-		/* Sort now as post_read is not called on a realized track. */
+		/* Sort now as post_read is not called on a track connected to tree. */
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
 
@@ -3170,10 +3169,8 @@ void LayerTRW::add_route(Track * trk)
 {
 	this->routes.insert({{ trk->uid, trk }});
 
-	if (this->realized) {
-		/* Do we need to create the sublayer?
-		   TODO: this condition should be unnecessary for realized layer, right? */
-		if (routes.size() == 0) {
+	if (this->connected_to_tree) {
+		if (routes.size() == 1) { /* We compare against '1' because we already added a first trk to ::routes() at the beginning of this function. */
 			this->add_routes_node();
 		}
 
@@ -3183,7 +3180,7 @@ void LayerTRW::add_route(Track * trk)
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
-		/* Sort now as post_read is not called on a realized route. */
+		/* Sort now as post_read is not called on a route connected to tree. */
 		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 	}
 
@@ -6798,7 +6795,7 @@ time_t LayerTRW::get_timestamp()
 
 void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
-	if (this->realized) {
+	if (this->connected_to_tree) {
 		this->verify_thumbnails();
 	}
 	this->track_alloc_colors();

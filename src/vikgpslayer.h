@@ -118,7 +118,7 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void change_coord_mode(VikCoordMode mode);
 		void add_menu_items(QMenu & menu);
-		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
+		void connect_to_tree(TreeView * tree_view, GtkTreeIter * layer_iter);
 		bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 

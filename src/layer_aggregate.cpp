@@ -151,13 +151,13 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 		put_above = false;
 	}
 
-	if (this->realized) {
+	if (this->connected_to_tree) {
 		TreeIndex const & new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, layer->get_timestamp(), replace_index);
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
 
-		layer->realize(this->tree_view, new_index);
+		layer->connect_to_tree(this->tree_view, new_index);
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
 			this->tree_view->expand(this->index);
@@ -217,19 +217,19 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 
-	if (this->realized) {
+	if (this->connected_to_tree) {
 		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
 
-		layer->realize(this->tree_view, new_index);
+		layer->connect_to_tree(this->tree_view, new_index);
 
 		if (this->children->empty()) {
 			this->tree_view->expand(this->index);
 		}
 	} else {
-		qDebug() << "Not realized";
+		qDebug() << "EE: Layer Aggregate: Aggregate Layer not connected to tree";
 	}
 
 	if (put_above) {
@@ -681,7 +681,7 @@ void LayerAggregate::clear()
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		this->disconnect_layer_signal(layer);
-		if (layer->realized) {
+		if (layer->connected_to_tree) {
 			layer->tree_view->erase(layer->index);
 		}
 		delete layer;
@@ -843,11 +843,11 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-void LayerAggregate::realize(TreeView * tree_view_, TreeIndex const & layer_index)
+void LayerAggregate::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;
 	this->index = layer_index;
-	this->realized = true;
+	this->connected_to_tree = true;
 
 	if (this->children->empty()) {
 		return;
@@ -859,7 +859,7 @@ void LayerAggregate::realize(TreeView * tree_view_, TreeIndex const & layer_inde
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
-		layer->realize(this->tree_view, new_index);
+		layer->connect_to_tree(this->tree_view, new_index);
 	}
 }
 

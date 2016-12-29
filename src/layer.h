@@ -203,7 +203,7 @@ namespace SlavGPS {
 
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
-		virtual void realize(TreeView * tree_view, TreeIndex const & layer_index);
+		virtual void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
@@ -250,7 +250,7 @@ namespace SlavGPS {
 
 		char * name = NULL;
 		bool visible = true;
-		bool realized = false;
+		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
 		Viewport * viewport = NULL;  /* Simply a reference. */
 
 		/* For explicit "polymorphism" (function type switching). */
