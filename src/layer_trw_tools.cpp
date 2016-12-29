@@ -34,7 +34,6 @@
 #include <cctype>
 #include <cassert>
 
-//#include <glib.h>
 #include <glib/gstdio.h>
 
 #include "layer_trw.h"
@@ -181,7 +180,6 @@ bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerToo
 		}
 	}
 
-	fprintf(stderr, "%s:%d: calling marker_end_move\n", __FUNCTION__, __LINE__);
 	tool->marker_end_move();
 
 	/* Determine if working on a waypoint or a trackpoint. */
@@ -290,7 +288,6 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	tp_search.viewport = viewport;
 	tp_search.x = event->x();
 	tp_search.y = event->y();
-	//tp_search.closest_tp_iter = NULL;
 	tp_search.bbox = bbox;
 
 	if (this->tracks_visible) {
@@ -1044,8 +1041,16 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 	trw->route_finder_started = false;
 
 	/* If current is a route - switch to new track. */
-	if (event->button() == Qt::LeftButton) {
-		if ((!trw->current_trk || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE))) {
+	if (event->button() != Qt::LeftButton) {
+		/* TODO: this shouldn't even happen. */
+		return LayerToolFuncStatus::IGNORE;
+	}
+
+	/* If either no track/route was being created
+	   or we were in the middle of creating a route... */
+	if (!trw->current_trk
+	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)) {
+
 		char *name = trw->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		QString new_name(name);
 		if (a_vik_get_ask_for_create_track_name()) {
@@ -1056,7 +1061,6 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 		}
 		trw->new_track_create_common(new_name.toUtf8().data());
 		free(name);
-		}
 	}
 
 	return trw->tool_new_track_or_route_click(event, this->viewport);
@@ -1149,10 +1153,15 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 	/* If we were running the route finder, cancel it. */
 	trw->route_finder_started = false;
 
-	/* If current is a track - switch to new route */
-	if (event->button() == Qt::LeftButton
-	    && (!trw->current_trk
-		|| (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::TRACK))) {
+	if (event->button() != Qt::LeftButton) {
+		/* TODO: this shouldn't even happen. */
+		return LayerToolFuncStatus::IGNORE;
+	}
+
+	/* If either no track/route was being created
+	   or we were in the middle of creating a track.... */
+	if (!trw->current_trk
+	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::TRACK)) {
 
 		char * name = trw->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
 		QString new_name(name);
