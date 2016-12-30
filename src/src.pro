@@ -11,7 +11,6 @@ SOURCES += main.cpp \
     viewport.cpp \
     coord.cpp \
     coords.cpp \
-    globals.cpp \
     degrees_converters.cpp \
     slav_qt.cpp \
     layer_defaults.cpp \
