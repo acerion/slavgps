@@ -304,7 +304,7 @@ void TreeView::select_cb(void) /* Slot. */
 	}
 
 	Layer * layer = this->get_layer(layer_index);
-	Window * window = layer->get_window();
+	Window * window = this->layers_panel->get_window();
 	TreeItemType tree_item_type = this->get_item_type(index);
 
 	Sublayer * sublayer = NULL;
@@ -969,8 +969,11 @@ TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, Tr
 
 
 
-TreeView::TreeView(QWidget * parent) : QTreeView(parent)
+TreeView::TreeView(LayersPanel * layers_panel) : QTreeView((QWidget *) layers_panel)
 {
+	this->layers_panel = layers_panel;
+
+
 	this->model = new QStandardItemModel();
 
 
@@ -1096,6 +1099,14 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 	} else {
 		qDebug() << "EE: Tree View: edited item in column" << index->column();
 	}
+}
+
+
+
+
+LayersPanel * TreeView::get_layers_panel(void)
+{
+	return this->layers_panel;
 }
 
 

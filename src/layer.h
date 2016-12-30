@@ -251,7 +251,7 @@ namespace SlavGPS {
 		char * name = NULL;
 		bool visible = true;
 		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
-		Viewport * viewport = NULL;  /* Simply a reference. */
+		//Viewport * viewport = NULL;  /* Simply a reference. */
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;

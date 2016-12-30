@@ -2387,7 +2387,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
-	if (this->auto_set_view(this->viewport)) {
+	if (this->auto_set_view(this->menu_data->viewport)) {
 		this->get_window()->get_layers_panel()->emit_update_cb();
 	} else {
 		dialog_info("This layer has no waypoints or trackpoints.", this->get_window());

@@ -777,9 +777,6 @@ ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(Param
 */
 void Layer::set_initial_parameter_values(Viewport * viewport)
 {
-	/* Sneaky initialize of the viewport value here. */
-	this->viewport = viewport;
-
 	char const * layer_name = this->get_interface()->layer_type_string;
 	ParameterValue param_value;
 
@@ -1204,7 +1201,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	return this->viewport->get_window();
+	return this->tree_view->get_layers_panel()->get_window();
 }
 
 

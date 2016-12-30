@@ -76,6 +76,7 @@ namespace SlavGPS {
 
 	class Layer;
 	class Sublayer;
+	class LayersPanel;
 
 
 
@@ -83,7 +84,7 @@ namespace SlavGPS {
 	class TreeView : public QTreeView {
 		Q_OBJECT
 	public:
-		TreeView(QWidget * parent);
+		TreeView(LayersPanel * panel);
 		TreeView();
 
 		~TreeView();
@@ -123,6 +124,8 @@ namespace SlavGPS {
 		void expand(TreeIndex const & index);
 		void sort_children(TreeIndex const & parent_index, vik_layer_sort_order_t order);
 
+		LayersPanel * get_layers_panel(void);
+
 		TreeIndex const go_up_to_layer(TreeIndex const & index);
 
 		bool editing = false;
@@ -138,6 +141,9 @@ namespace SlavGPS {
 
 	signals:
 		void layer_needs_redraw(sg_uid_t uid);
+
+	private:
+		LayersPanel * layers_panel = NULL; /* Just a reference to panel, in which the tree is embedded. */
 	};
 
 
