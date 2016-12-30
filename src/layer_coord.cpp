@@ -85,19 +85,15 @@ static Parameter coord_layer_params[] = {
 
 
 LayerInterface vik_coord_layer_interface(coord_layer_interface_configure);
-#if 0
-= {
-	coord_layer_params, /* Parameters. */
-	PARAM_MAX,
-	NULL               /* Parameter groups. */
-};
-#endif
 
 
 
 
 void coord_layer_interface_configure(LayerInterface * interface)
 {
+	interface->params = coord_layer_params; /* Parameters. */
+	interface->params_count = PARAM_MAX;
+
 	strncpy(interface->layer_type_string, "Coord", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
 	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
 
