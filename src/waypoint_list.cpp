@@ -133,10 +133,10 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 
 	GError * err = NULL;
 	char * quoted_file = g_shell_quote(wp->image);
-	char * cmd = g_strdup_printf("%s %s", a_vik_get_image_viewer(), quoted_file);
+	char * cmd = g_strdup_printf("%s %s", Preferences::get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (! g_spawn_command_line_async(cmd, &err)) {
-		dialog_error(QString("Could not launch %1 to open file.").arg(QString(a_vik_get_image_viewer()), trw->get_window());
+		dialog_error(QString("Could not launch %1 to open file.").arg(Preferences::get_image_viewer(), trw->get_window());
 		g_error_free(err);
 	}
 	free(cmd);

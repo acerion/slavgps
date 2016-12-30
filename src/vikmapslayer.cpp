@@ -736,7 +736,7 @@ ParameterValue LayerMaps::get_param_value(param_id_t id, bool is_file_operation)
 			rv.s = "";
 			set = true;
 		} else if (is_file_operation && this->cache_dir) {
-			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				char *cwd = g_get_current_dir();
 				if (cwd) {
 					rv.s = file_GetRelativeFilename(cwd, this->cache_dir);

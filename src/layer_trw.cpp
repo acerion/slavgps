@@ -2470,7 +2470,7 @@ void LayerTRW::export_via_babel_cb(void) /* Slot. */
 void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 {
 #ifdef K
-	vik_trw_layer_export_external_gpx(this, a_vik_get_external_gpx_program_1());
+	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_1());
 #endif
 }
 
@@ -2480,7 +2480,7 @@ void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 {
 #ifdef K
-	vik_trw_layer_export_external_gpx(this, a_vik_get_external_gpx_program_2());
+	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_2());
 #endif
 }
 

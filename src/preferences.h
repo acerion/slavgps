@@ -58,6 +58,31 @@ namespace SlavGPS {
 		static SpeedUnit    get_unit_speed(void);
 		static HeightUnit   get_unit_height(void);
 		static DegreeFormat get_degree_format(void);
+
+
+		static bool get_use_large_waypoint_icons();
+		static double get_default_lat();
+		static double get_default_lon();
+		static vik_time_ref_frame_t get_time_ref_frame();
+		static vik_kml_export_units_t get_kml_export_units();
+		static vik_gpx_export_trk_sort_t get_gpx_export_trk_sort();
+		static vik_gpx_export_wpt_sym_name_t get_gpx_export_wpt_sym_name();
+#ifndef WINDOWS
+		/* Windows automatically uses the system defined viewer.
+		   ATM for other systems need to specify the program to use. */
+		static char const * get_image_viewer();
+#endif
+		static char const * get_external_gpx_program_1();
+		static char const * get_external_gpx_program_2();
+		static vik_file_ref_format_t get_file_ref_format();
+		static bool get_ask_for_create_track_name();
+		static bool get_create_track_tooltip();
+		static int get_recent_number_files();
+		static bool get_add_default_map_layer();
+		static vik_startup_method_t get_startup_method();
+		static char const * get_startup_file();
+		static bool get_check_version();
+
 	};
 
 

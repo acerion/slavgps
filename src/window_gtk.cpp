@@ -1388,8 +1388,8 @@ static void acquire_from_url(GtkAction * a, Window * window)
 static void goto_default_location(GtkAction * a, Window * window)
 {
 	struct LatLon ll;
-	ll.lat = a_vik_get_default_lat();
-	ll.lon = a_vik_get_default_long();
+	ll.lat = Preferences::get_default_lat();
+	ll.lon = Preferences::get_default_lon();
 	window->viewport->set_center_latlon(&ll, true);
 	window->layers_panel->emit_update();
 }

@@ -2,6 +2,8 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2008, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2010-2013, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #include <string>
@@ -40,6 +41,7 @@
 #include "util.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
+#include "vikutils.h"
 
 
 
@@ -48,12 +50,124 @@ using namespace SlavGPS;
 
 
 
-extern Parameter io_prefs[];
-extern Parameter io_prefs_non_windows[];
-extern Parameter io_prefs_external_gpx[];
-extern Parameter startup_prefs[];
-extern Parameter prefs_advanced[];
-extern Parameter general_prefs[];
+
+static label_id_t params_degree_formats[] = {
+	{ "DDD",  (int32_t) DegreeFormat::DDD },
+	{ "DMM",  (int32_t) DegreeFormat::DMM },
+	{ "DMS",  (int32_t) DegreeFormat::DMS },
+	{ "Raw",  (int32_t) DegreeFormat::RAW },
+	{ NULL,   9                           } };
+
+static label_id_t params_units_distance[] = {
+	{ "Kilometres",     (int32_t) DistanceUnit::KILOMETRES     },
+	{ "Miles",          (int32_t) DistanceUnit::MILES          },
+	{ "Nautical Miles", (int32_t) DistanceUnit::NAUTICAL_MILES },
+	{ NULL,             9                                      } };
+
+static label_id_t params_units_speed[] = {
+	{ "km/h",  (int32_t) SpeedUnit::KILOMETRES_PER_HOUR },
+	{ "mph",   (int32_t) SpeedUnit::MILES_PER_HOUR      },
+	{ "m/s",   (int32_t) SpeedUnit::METRES_PER_SECOND   },
+	{ "knots", (int32_t) SpeedUnit::KNOTS               },
+	{ NULL,    9                                        } };
+
+static label_id_t params_units_height[] = {
+	{ "Metres", (int32_t) HeightUnit::METRES },
+	{ "Feet",   (int32_t) HeightUnit::FEET   },
+	{ NULL,     9                            } };
+
+static ParameterScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
+static ParameterScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
+
+static label_id_t params_time_ref_frame[] = {
+	{ "Locale", 0 },
+	{ "World",  1 },
+	{ "UTC",    2 },
+	{ NULL,     3 } };
+
+static Parameter general_prefs[] = {
+	{ 0, VIKING_PREFERENCES_NAMESPACE "degree_format",            ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            WidgetType::COMBOBOX,        params_degree_formats, NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_NAMESPACE "units_distance",           ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           WidgetType::COMBOBOX,        params_units_distance, NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_NAMESPACE "units_speed",              ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              WidgetType::COMBOBOX,        params_units_speed,    NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_NAMESPACE "units_height",             ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Height units:"),             WidgetType::COMBOBOX,        params_units_height,   NULL, NULL, NULL, NULL, NULL },
+	{ 4, VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                  NULL, NULL, NULL, NULL, NULL },
+	{ 5, VIKING_PREFERENCES_NAMESPACE "default_latitude",         ParameterType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  params_scales_lat,     NULL, NULL, NULL, NULL, NULL },
+	{ 6, VIKING_PREFERENCES_NAMESPACE "default_longitude",        ParameterType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  params_scales_long,    NULL, NULL, NULL, NULL, NULL },
+	{ 7, VIKING_PREFERENCES_NAMESPACE "time_reference_frame",     ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
+	{ 8, NULL,                                                    ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
+};
+
+/* External/Export Options */
+
+static label_id_t params_kml_export_units[] = {
+	{ "Metric",   0 },
+	{ "Statute",  1 },
+	{ "Nautical", 2 },
+	{ NULL,       3 } };
+
+static label_id_t params_gpx_export_trk_sort[] = {
+	{ "Alphabetical",  0 },
+	{ "Time",          1 },
+	{ "Creation",      2 },
+	{ NULL,            3 } };
+
+static label_id_t params_gpx_export_wpt_symbols[] = {
+	{ "Title Case", 0 },
+	{ "Lowercase",  1 },
+	{ NULL,         2 } };
+
+static Parameter io_prefs[] = {
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), WidgetType::COMBOBOX, params_kml_export_units,       NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"),       WidgetType::COMBOBOX, params_gpx_export_trk_sort,    NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
+	{ 3, NULL,                                                       ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
+};
+
+#ifndef WINDOWS
+static Parameter io_prefs_non_windows[] = {
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, NULL,                                           ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+};
+#endif
+
+static Parameter io_prefs_external_gpx[] = {
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 2, NULL,                                             ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+};
+
+static label_id_t params_vik_fileref[] = {
+	{ "Absolute", 0 },
+	{ "Relative", 1 },
+	{ NULL,       2 } };
+
+static ParameterScale params_recent_files[] = { {-1, 25, 1, 0} };
+
+static Parameter prefs_advanced[] = {
+	{ 0, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files",       ParameterType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
+	{ 4, NULL,                                                              ParameterType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
+};
+
+static label_id_t params_startup_methods[] = {
+	{ "Home Location",  0 },
+	{ "Last Location",  1 },
+	{ "Specified File", 2 },
+	{ "Auto Location",  3 },
+	{ NULL,             4 } };
+
+static Parameter startup_prefs[] = {
+	{ 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
+	{ 1, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
+	{ 2, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          WidgetType::COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file",          ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("Startup File:"),            WidgetType::FILEENTRY,   NULL,                   NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'"), NULL, NULL, NULL },
+	{ 4, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version",         ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
+	{ 5, NULL,                                                         ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
+};
+/* End of Options static stuff. */
+
 
 
 
@@ -423,7 +537,7 @@ bool Preferences::get_restore_window_state(void)
 
 void Preferences::register_default_values()
 {
-	fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number((char *) VIKING_VERSION));
+	fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number(VIKING_VERSION));
 
 	/* Defaults for the options are setup here. */
 	a_preferences_register_group(VIKING_PREFERENCES_GROUP_KEY, _("General"));
@@ -541,4 +655,155 @@ SpeedUnit Preferences::get_unit_speed(void)
 HeightUnit Preferences::get_unit_height(void)
 {
 	return (HeightUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
+}
+
+
+//
+
+bool Preferences::get_use_large_waypoint_icons()
+{
+	return a_preferences_get(VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons")->b;
+}
+
+
+
+
+double Preferences::get_default_lat()
+{
+	double data = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "default_latitude")->d;
+	//return data;
+	return 55.0;
+}
+
+
+
+
+double Preferences::get_default_lon()
+{
+	double data = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "default_longitude")->d;
+	//return data;
+	return 16.0;
+}
+
+
+
+
+vik_time_ref_frame_t Preferences::get_time_ref_frame()
+{
+	return (vik_time_ref_frame_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "time_reference_frame")->u;
+}
+
+
+
+
+/* External/Export Options. */
+
+vik_kml_export_units_t Preferences::get_kml_export_units()
+{
+	return (vik_kml_export_units_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units")->u;
+}
+
+
+
+
+vik_gpx_export_trk_sort_t Preferences::get_gpx_export_trk_sort()
+{
+	return (vik_gpx_export_trk_sort_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort")->u;
+}
+
+
+
+
+vik_gpx_export_wpt_sym_name_t Preferences::get_gpx_export_wpt_sym_name()
+{
+	return (vik_gpx_export_wpt_sym_name_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names")->b;
+}
+
+
+
+
+#ifndef WINDOWS
+char const * Preferences::get_image_viewer()
+{
+	return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "image_viewer")->s;
+}
+#endif
+
+
+
+
+char const * Preferences::get_external_gpx_program_1()
+{
+	return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1")->s;
+}
+
+char const * Preferences::get_external_gpx_program_2()
+{
+	return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2")->s;
+}
+
+
+
+
+/* Advanced Options */
+
+vik_file_ref_format_t Preferences::get_file_ref_format()
+{
+	return (vik_file_ref_format_t) a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode")->u;
+}
+
+
+
+
+bool Preferences::get_ask_for_create_track_name()
+{
+	return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name")->b;
+}
+
+
+
+
+bool Preferences::get_create_track_tooltip()
+{
+	return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip")->b;
+}
+
+
+
+
+int Preferences::get_recent_number_files()
+{
+	return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files")->i;
+}
+
+
+
+
+bool Preferences::get_add_default_map_layer()
+{
+	return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer")->b;
+}
+
+
+
+
+vik_startup_method_t Preferences::get_startup_method()
+{
+	return (vik_startup_method_t) a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method")->u;
+}
+
+
+
+
+char const * Preferences::get_startup_file()
+{
+	return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file")->s;
+}
+
+
+
+
+bool Preferences::get_check_version()
+{
+	return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version")->b;
 }

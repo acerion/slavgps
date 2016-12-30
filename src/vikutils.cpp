@@ -34,13 +34,13 @@
 #include "util.h"
 #include "settings.h"
 #include "misc/kdtree.h"
+#include "dir.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
 #include "vikmapslayer.h"
 #include "ui_util.h"
-#include "dir.h"
 #include "layer_defaults.h"
 #include "dialog.h"
 #include "clipboard.h"
@@ -535,7 +535,7 @@ static void latest_version_thread(GtkWindow * window)
  */
 void SlavGPS::vu_check_latest_version(GtkWindow * window)
 {
-	if (!a_vik_get_check_version()) {
+	if (!Preferences::get_check_version()) {
 		return;
 	}
 
@@ -905,7 +905,7 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Vik
 		return NULL;
 	}
 	char * str = NULL;
-	switch (a_vik_get_time_ref_frame()) {
+	switch (Preferences::get_time_ref_frame()) {
 		case VIK_TIME_REF_UTC:
 			str = (char *) malloc(64);
 			strftime(str, 64, format, gmtime(time)); /* Always 'GMT'. */
@@ -1102,4 +1102,68 @@ void SlavGPS::vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewp
 		zoom = zoom * 2;
 		viewport->set_zoom(zoom);
 	}
+}
+
+
+
+
+bool vik_debug = false;
+bool vik_verbose = false;
+bool vik_version = false;
+
+/**
+ * @version:  The string of the Viking version.
+ *            This should be in the form of N.N.N.N, where the 3rd + 4th numbers are optional
+ *            Often you'll want to pass in VIKING_VERSION
+ *
+ * Returns: a single number useful for comparison.
+ */
+int SlavGPS::viking_version_to_number(char const * version)
+{
+	/* Basic method, probably can be improved. */
+	int version_number = 0;
+	char** parts = g_strsplit(version, ".", 0);
+	int part_num = 0;
+	char *part = parts[part_num];
+	/* Allow upto 4 parts to the version number. */
+	while (part && part_num < 4) {
+		/* Allow each part to have upto 100. */
+		version_number = version_number + (atol(part) * pow(100, 3-part_num));
+		part_num++;
+		part = parts[part_num];
+	}
+	g_strfreev(parts);
+	return version_number;
+}
+
+
+
+
+/**
+ * Detect when Viking is run for the very first time.
+ * Call this very early in the startup sequence to ensure subsequent correct results.
+ * The return value is cached, since later on the test will no longer be true.
+ */
+bool a_vik_very_first_run()
+{
+	static bool vik_very_first_run_known = false;
+	static bool vik_very_first_run = false;
+
+	/* Use cached result if available. */
+	if (vik_very_first_run_known) {
+		return vik_very_first_run;
+	}
+
+	char * dir = get_viking_dir_no_create();
+	/* NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking. */
+	if (dir) {
+		/* If directory exists - Viking has been run before. */
+		vik_very_first_run = ! g_file_test(dir, G_FILE_TEST_EXISTS);
+		free(dir);
+	} else {
+		vik_very_first_run = true;
+	}
+	vik_very_first_run_known = true;
+
+	return vik_very_first_run;
 }

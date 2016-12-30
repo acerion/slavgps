@@ -152,12 +152,12 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 
 	struct UTM utm;
 	struct LatLon ll;
-	ll.lat = a_vik_get_default_lat();
-	ll.lon = a_vik_get_default_long();
+	ll.lat = Preferences::get_default_lat();
+	ll.lon = Preferences::get_default_lon();
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
 
-	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
+	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		double lat, lon, dzoom;
 		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &lat)) {
 			ll.lat = lat;
@@ -231,7 +231,7 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 Viewport::~Viewport()
 {
 	qDebug() << "II: Viewport: ~Viewport called";
-	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
+	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		struct LatLon ll;
 		vik_coord_to_latlon(&(this->center), &ll);
 		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);

@@ -72,6 +72,13 @@ namespace SlavGPS {
 	void vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position);
 
 
+	/* Allow comparing versions. */
+	int viking_version_to_number(char const * version);
+
+	/* Very first run. */
+	bool a_vik_very_first_run();
+
+
 
 
 }

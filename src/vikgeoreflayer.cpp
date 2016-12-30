@@ -261,7 +261,7 @@ ParameterValue LayerGeoref::get_param_value(param_id_t id, bool is_file_operatio
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
-			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				char *cwd = g_get_current_dir();
 				if (cwd) {
 					rv.s = file_GetRelativeFilename(cwd, this->image);

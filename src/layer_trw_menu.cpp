@@ -37,6 +37,7 @@
 
 #include "util.h"
 #include "layer_trw.h"
+#include "preferences.h"
 
 #ifdef K
 #include <gdk/gdkkeysyms.h>
@@ -184,10 +185,10 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = export_submenu->addAction(tr("Export via GPSbabel..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_via_babel_cb()));
 
-		qa = export_submenu->addAction(tr("Open with External Program&1: %1").arg(QString(a_vik_get_external_gpx_program_1())));
+		qa = export_submenu->addAction(tr("Open with External Program&1: %1").arg(Preferences::get_external_gpx_program_1()));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_with_external_gpx_1_cb()));
 
-		qa = export_submenu->addAction(tr("Open with External Program&2: %1").arg(QString(a_vik_get_external_gpx_program_2())));
+		qa = export_submenu->addAction(tr("Open with External Program&2: %1").arg(Preferences::get_external_gpx_program_2()));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_with_external_gpx_2_cb()));
 	}
 

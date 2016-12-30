@@ -394,7 +394,7 @@ ParameterValue LayerMapnik::get_param_value(param_id_t id, bool is_file_operatio
 			param_value.s = this->filename_css;
 			bool set = false;
 			if (is_file_operation) {
-				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
 						param_value.s = file_GetRelativeFilename(cwd, this->filename_css);
@@ -414,7 +414,7 @@ ParameterValue LayerMapnik::get_param_value(param_id_t id, bool is_file_operatio
 			param_value.s = this->filename_xml;
 			bool set = false;
 			if (is_file_operation) {
-				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
 						param_value.s = file_GetRelativeFilename(cwd, this->filename_xml);

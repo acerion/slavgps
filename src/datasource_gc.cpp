@@ -276,8 +276,8 @@ static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, 
 	double lat, lon;
 	if (2 != sscanf(gtk_entry_get_text(GTK_ENTRY(widgets->center_entry)), "%lf,%lf", &lat, &lon)) {
 		fprintf(stderr, _("WARNING: Broken input - using some defaults\n"));
-		lat = a_vik_get_default_lat();
-		lon = a_vik_get_default_long();
+		lat = Preferences::get_default_lat();
+		lon = Preferences::get_default_lon();
 	}
 	/* Convert double as string in C locale. */
 	slat = a_coords_dtostr(lat);

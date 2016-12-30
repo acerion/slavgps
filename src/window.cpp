@@ -1133,12 +1133,12 @@ void Window::pan_release(QMouseEvent * event)
 void Window::preferences_cb(void) /* Slot. */
 {
 #if 0
-	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
+	bool wp_icon_size = Preferences::get_use_large_waypoint_icons();
 #endif
 	preferences_show_window(this);
 #if 0
 	// Has the waypoint size setting changed?
-	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
+	if (wp_icon_size != Preferences::get_use_large_waypoint_icons()) {
 		// Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed
 		clear_garmin_icon_syms();
 
@@ -1150,7 +1150,7 @@ void Window::preferences_cb(void) /* Slot. */
 
 
 	// Ensure TZ Lookup initialized
-	if (a_vik_get_time_ref_frame() == VIK_TIME_REF_WORLD) {
+	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
 		vu_setup_lat_lon_tz_lookup();
 	}
 
@@ -1871,7 +1871,7 @@ void Window::update_recent_files(QString const & path)
 
 	this->recent_files.push_front(path);
 
-	unsigned int limit = a_vik_get_recent_number_files();
+	unsigned int limit = Preferences::get_recent_number_files();
 
 	/* Remove "oldest" files from the list. */
 	while (this->recent_files.size() > limit) {
@@ -2022,15 +2022,15 @@ void Window::finish_new(void)
 		return;
 	}
 
-	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
-		this->open_file(a_vik_get_startup_file(), true);
+	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
+		this->open_file(Preferences::get_startup_file(), true);
 		if (this->filename) {
 			return;
 		}
 	}
 
 	/* Maybe add a default map layer. */
-	if (a_vik_get_add_default_map_layer()) {
+	if (Preferences::get_add_default_map_layer()) {
 #ifdef K
 		LayerMaps * layer = new LayerMaps(this->viewport);
 		layer->rename(_("Default Map"));
@@ -2043,7 +2043,7 @@ void Window::finish_new(void)
 
 	/* If not loaded any file, maybe try the location lookup. */
 	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
-		if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
+		if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
 
 			this->status_bar->set_message(StatusBarField::INFO, _("Trying to determine location..."));
 #ifdef K

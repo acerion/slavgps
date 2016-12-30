@@ -487,7 +487,7 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 		}
 		if (is_file_operation) {
 			/* Save in relative format if necessary. */
-			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				rv.sl = dem_layer_convert_to_relative_filenaming(rv.sl);
 			}
 		}

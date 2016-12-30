@@ -53,6 +53,7 @@
 #include "gpx.h"
 #include "fileutils.h"
 #include "globals.h"
+#include "preferences.h"
 
 
 
@@ -977,7 +978,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 				break;
 			case FILE_TYPE_KML:
 				fclose(f);
-				switch (a_vik_get_kml_export_units()) {
+				switch (Preferences::get_kml_export_units()) {
 				case VIK_KML_EXPORT_UNITS_STATUTE:
 #ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml", filename, NULL, NULL);

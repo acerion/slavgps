@@ -202,14 +202,7 @@ extern bool vik_debug;
 extern bool vik_verbose;
 extern bool vik_version;
 
-/* Allow comparing versions. */
-int viking_version_to_number(char *version);
 
-/* Very first run. */
-bool a_vik_very_first_run();
-
-
-bool a_vik_get_use_large_waypoint_icons();
 
 /* Location preferences. */
 typedef enum {
@@ -217,8 +210,6 @@ typedef enum {
 	VIK_LOCATION_LONG,
 } vik_location_t;
 
-double a_vik_get_default_lat();
-double a_vik_get_default_long();
 
 
 
@@ -230,9 +221,6 @@ typedef enum {
 	VIK_TIME_REF_UTC,
 } vik_time_ref_frame_t;
 
-vik_time_ref_frame_t a_vik_get_time_ref_frame();
-
-
 
 
 /* KML export preferences. */
@@ -242,9 +230,6 @@ typedef enum {
 	VIK_KML_EXPORT_UNITS_NAUTICAL,
 } vik_kml_export_units_t;
 
-vik_kml_export_units_t a_vik_get_kml_export_units();
-
-
 
 
 typedef enum {
@@ -253,30 +238,11 @@ typedef enum {
 	VIK_GPX_EXPORT_TRK_SORT_CREATION,
 } vik_gpx_export_trk_sort_t;
 
-vik_gpx_export_trk_sort_t a_vik_get_gpx_export_trk_sort();
 
 typedef enum {
 	VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
 	VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
 } vik_gpx_export_wpt_sym_name_t;
-
-vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name();
-
-
-
-
-#ifndef WINDOWS
-/* Windows automatically uses the system defined viewer.
-   ATM for other systems need to specify the program to use. */
-const char* a_vik_get_image_viewer();
-#endif
-
-
-
-
-const char* a_vik_get_external_gpx_program_1();
-
-const char* a_vik_get_external_gpx_program_2();
 
 
 
@@ -287,30 +253,12 @@ typedef enum {
 	VIK_FILE_REF_FORMAT_RELATIVE,
 } vik_file_ref_format_t;
 
-vik_file_ref_format_t a_vik_get_file_ref_format();
-
-bool a_vik_get_ask_for_create_track_name();
-
-bool a_vik_get_create_track_tooltip();
-
-
-
-bool a_vik_get_add_default_map_layer();
-
 typedef enum {
 	VIK_STARTUP_METHOD_HOME_LOCATION,
 	VIK_STARTUP_METHOD_LAST_LOCATION,
 	VIK_STARTUP_METHOD_SPECIFIED_FILE,
 	VIK_STARTUP_METHOD_AUTO_LOCATION,
 } vik_startup_method_t;
-
-vik_startup_method_t a_vik_get_startup_method();
-
-const char *a_vik_get_startup_file();
-
-bool a_vik_get_check_version();
-
-int a_vik_get_recent_number_files();
 
 
 

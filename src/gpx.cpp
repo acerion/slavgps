@@ -51,6 +51,7 @@
 #include "gpx.h"
 #include "viking.h"
 #include "globals.h"
+#include "preferences.h"
 #include <expat.h>
 
 
@@ -937,7 +938,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	}
 	if (wp->symbol) {
 		tmp = entitize(wp->symbol);
-		if (a_vik_gpx_export_wpt_sym_name()) {
+		if (Preferences::get_gpx_export_wpt_sym_name()) {
 			/* Lowercase the symbol name. */
 			char * tmp2 = g_utf8_strdown(tmp, -1);
 			fprintf(f, "  <sym>%s</sym>\n",  tmp2);
@@ -1252,9 +1253,9 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 		gl = g_list_reverse(gl);
 
 		/* Sort method determined by preference. */
-		if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME) {
+		if (Preferences::get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME) {
 			gl = g_list_sort(gl, Track::compare_timestamp);
-		} else if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA) {
+		} else if (Preferences::get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA) {
 			gl = g_list_sort(gl, gpx_track_compare_name);
 		} else {
 			;

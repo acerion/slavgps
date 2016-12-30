@@ -692,7 +692,7 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 		if (wp->image) {
 			char * tmp_image = NULL;
 			char * cwd = NULL;
-			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				cwd = g_get_current_dir();
 				if (cwd) {
 					tmp_image = g_strdup(file_GetRelativeFilename(cwd, wp->image));
