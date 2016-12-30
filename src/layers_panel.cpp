@@ -536,8 +536,9 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 
 	TreeIndex const & index = this->tree_view->get_selected_item();
 	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
-		if (this->tree_view->get_layer(index)->type == LayerType::AGGREGATE) {
-			dialog_info("Aggregate Layer has no settable properties.", this->get_window());
+		LayerType layer_type = this->tree_view->get_layer(index)->type;
+		if (Layer::get_interface(layer_type)->params_count == 0) {
+			dialog_info(tr("This layer type has no configurable properties."), this->get_window());
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {

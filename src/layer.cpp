@@ -338,7 +338,9 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 
 	assert (layer);
 
-	if (interactive) {
+	if (interactive
+	    && Layer::get_interface(layer_type)->params_count != 0) {
+
 		if (layer->properties_dialog(viewport)) {
 			/* We translate the name here in order to avoid translating name set by user. */
 			layer->rename(_(layer->get_interface()->layer_name.toUtf8().constData()));
@@ -352,20 +354,6 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	return layer;
 }
 
-
-
-
-
-bool vik_layer_properties(Layer * layer, Viewport * viewport)
-{
-#ifndef SLAVGPS_QT
-	if (layer->type == LayerType::GEOREF) {
-		return layer->properties_dialog(viewport);
-	}
-#endif
-
-	return layer->properties_dialog(viewport);
-}
 
 
 
