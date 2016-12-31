@@ -65,7 +65,6 @@ namespace SlavGPS {
 	class LayerMaps : public Layer {
 	public:
 		LayerMaps();
-		LayerMaps(Viewport * viewport);
 		~LayerMaps();
 
 

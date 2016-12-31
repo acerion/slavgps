@@ -48,7 +48,6 @@ namespace SlavGPS {
 	class LayerMapnik : public Layer {
 	public:
 		LayerMapnik();
-		LayerMapnik(Viewport * viewport);
 		~LayerMapnik();
 
 

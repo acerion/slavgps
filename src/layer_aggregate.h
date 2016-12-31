@@ -53,7 +53,6 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		LayerAggregate();
-		LayerAggregate(Viewport * viewport);
 		~LayerAggregate();
 
 

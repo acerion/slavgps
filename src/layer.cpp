@@ -306,27 +306,28 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	Layer * layer = NULL;
 
 	if (layer_type == LayerType::AGGREGATE) {
-		layer = new LayerAggregate(viewport);
+		layer = new LayerAggregate();
 
 	} else if (layer_type == LayerType::TRW) {
 		layer = new LayerTRW(viewport);
+
 	} else if (layer_type == LayerType::COORD) {
-		layer = new LayerCoord(viewport);
+		layer = new LayerCoord();
 	}
 #ifndef SLAVGPS_QT
 	else if (layer_type == LayerType::MAPS) {
-		layer = new LayerMaps(viewport);
+		layer = new LayerMaps();
 	}
 #endif
 	else if (layer_type == LayerType::DEM) {
-		layer = new LayerDEM(viewport);
+		layer = new LayerDEM();
 	}
 #ifndef SLAVGPS_QT
 	else if (layer_type == LayerType::GEOREF) {
 		layer = new LayerGeoref(viewport);
 #ifdef HAVE_LIBMAPNIK
 	} else if (layer_type == LayerType::MAPNIK) {
-		layer = new LayerMapnik(viewport);
+		layer = new LayerMapnik();
 #endif
 	} else if (layer_type == LayerType::GPS) {
 		layer = new LayerGPS(viewport);

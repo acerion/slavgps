@@ -56,7 +56,6 @@ namespace SlavGPS {
 	class LayerDEM : public Layer {
 	public:
 		LayerDEM();
-		LayerDEM(Viewport * viewport);
 		~LayerDEM();
 
 		/* Layer interface methods. */

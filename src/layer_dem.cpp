@@ -275,7 +275,7 @@ QString LayerDEM::tooltip()
 
 static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	LayerDEM * layer = new LayerDEM(viewport);
+	LayerDEM * layer = new LayerDEM();
 
 	/* TODO: share ->colors[] between layers. */
 	layer->colors[0] = new QColor(layer->base_color);
@@ -1524,36 +1524,23 @@ LayerDEM::LayerDEM()
 
 	this->files = new std::list<char *>;
 	this->dem_type = 0;
-}
-
-
-
-
-LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
-{
-	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
-	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
-
-	/* Make new color only if we need it (copy layer -> use old). */
-
-	/* Ensure the base color is available so the default colour can be applied. */
-	if (viewport) {
-		this->colors[0] = new QColor("#0000FF");
-	}
 
 	this->set_initial_parameter_values();
 
+	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
+	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
 
-	if (viewport) {
-		/* TODO: share ->colors[] between layers. */
-		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-			if (i > 0) {
-				this->colors[i] = new QColor(dem_height_colors[i]);
-			}
-		}
+	/* Ensure the base color is available so the default colour can be applied. */
+	this->colors[0] = new QColor("#0000FF");
 
-		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			this->gradients[i] = new QColor(dem_gradient_colors[i]);
+	/* TODO: share ->colors[] between layers. */
+	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+		if (i > 0) {
+			this->colors[i] = new QColor(dem_height_colors[i]);
 		}
+	}
+
+	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		this->gradients[i] = new QColor(dem_gradient_colors[i]);
 	}
 }

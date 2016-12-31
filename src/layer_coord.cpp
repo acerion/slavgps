@@ -414,15 +414,7 @@ LayerCoord::LayerCoord()
 	strcpy(this->debug_string, "LayerType::COORD");
 	this->interface = &vik_coord_layer_interface;
 
-	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
-}
-
-
-
-
-LayerCoord::LayerCoord(Viewport * viewport) : LayerCoord::LayerCoord()
-{
-	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord(viewport)";
-
 	this->set_initial_parameter_values();
+
+	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }

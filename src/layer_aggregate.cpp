@@ -943,10 +943,3 @@ LayerAggregate::LayerAggregate()
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
 }
-
-
-
-
-LayerAggregate::LayerAggregate(Viewport * viewport) : LayerAggregate()
-{
-}

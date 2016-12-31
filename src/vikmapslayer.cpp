@@ -2719,18 +2719,10 @@ LayerMaps::LayerMaps()
 
 	this->type = LayerType::MAPS;
 	strcpy(this->type_string, "MAPS");
-	this->interface = (&vik_maps_layer_interface, layer_params);
+	this->interface = &vik_maps_layer_interface;
+
+	this->set_initial_parameter_values();
 
 	memset(&redownload_ul, 0, sizeof (VikCoord));
 	memset(&redownload_br, 0, sizeof (VikCoord));
-}
-
-
-
-
-LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
-{
-	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
-
-	this->set_initial_parameter_values();
 }
