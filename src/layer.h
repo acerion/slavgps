@@ -141,7 +141,7 @@ namespace SlavGPS {
 		static Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 		void           unmarshall_params(uint8_t * data, int len);
 
-		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
+		static Layer * new_(LayerType layer_type, Viewport * viewport);
 
 		void emit_changed(void);
 		void emit_changed_although_invisible(void);
@@ -245,13 +245,9 @@ namespace SlavGPS {
 
 
 
-		static bool properties_dialog(Layer * layer, Viewport * viewport);
-
-
 		char * name = NULL;
 		bool visible = true;
 		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
-		//Viewport * viewport = NULL;  /* Simply a reference. */
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;

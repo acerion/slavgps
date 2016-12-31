@@ -297,9 +297,9 @@ char const * Layer::get_name()
 
 
 
-Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
+Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 {
-	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->layer_type_string << "layer; interactive =" << interactive;
+	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->layer_type_string << "layer";
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
@@ -342,19 +342,6 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	}
 
 	assert (layer);
-
-	if (interactive
-	    && Layer::get_interface(layer_type)->params_count != 0) {
-
-		if (layer->properties_dialog(viewport)) {
-			/* We translate the name here in order to avoid translating name set by user. */
-			layer->rename(_(layer->get_interface()->layer_name.toUtf8().constData()));
-		} else {
-			layer->unref(); /* Cancel that. */
-			delete layer;
-			layer = NULL;
-		}
-	}
 
 	return layer;
 }

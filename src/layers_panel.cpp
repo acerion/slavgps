@@ -425,18 +425,30 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
-	Layer * layer = Layer::new_(layer_type, this->viewport, ask_user);
-	if (layer) {
-		this->add_layer(layer);
-
-		this->viewport->configure();
-		qDebug() << "II: Layers Panel: calling layer->draw() for" << layer->get_interface(layer->type)->layer_type_string << __FUNCTION__ << __LINE__;
-		layer->draw(this->viewport);
-
-		return true;
+	Layer * layer = Layer::new_(layer_type, this->viewport);
+	if (!layer) {
+		return false;
 	}
 
-	return false;
+	LayerInterface * interface = Layer::get_interface(layer_type);
+
+	if (ask_user && interface->params_count != 0) {
+		if (!layer->properties_dialog(viewport)) {
+			delete layer;
+			return false;
+		}
+
+		/* We translate the name here in order to avoid translating name set by user. */
+		layer->rename(_(interface->layer_name.toUtf8().constData()));
+	}
+
+	this->add_layer(layer);
+
+	this->viewport->configure();
+	qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << interface->layer_type_string;
+	layer->draw(this->viewport);
+
+	return true;
 }
 
 

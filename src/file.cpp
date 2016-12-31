@@ -418,7 +418,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 #endif
 
 					} else { /* Any other LayerType::X type. */
-						Layer * layer = Layer::new_(layer_type, viewport, false);
+						Layer * layer = Layer::new_(layer_type, viewport);
 						stack->data = (void *) layer;
 						params = Layer::get_interface(layer_type)->params;
 						params_count = Layer::get_interface(layer_type)->params_count;

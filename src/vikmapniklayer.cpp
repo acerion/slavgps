@@ -452,7 +452,7 @@ ParameterValue LayerMapnik::get_param_value(param_id_t id, bool is_file_operatio
  * ATM don't have any version issues AFAIK.
  * Tested with carto 0.14.0.
  */
-bool LayerMapnik::carto_load(Viewport * viewport)
+bool LayerMapnik::carto_load(void)
 {
 	char *mystdout = NULL;
 	char *mystderr = NULL;
@@ -470,7 +470,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	/* NB Running carto may take several seconds, especially for
 	   large style sheets like the default OSM Mapnik style (~6
 	   seconds on my system). */
-	Window * window = viewport->get_window();
+	Window * window = this->get_window();
 	if (window) {
 		// char *msg = g_strdup_printf(); // kamil kamil
 		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command);
@@ -490,7 +490,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 #endif
 		if (mystderr)
 			if (strlen(mystderr) > 1) {
-				dialog_error(QString("Error running carto command:\n%1").arg(QString(mystderr)), viewport->get_window());
+				dialog_error(QString("Error running carto command:\n%1").arg(QString(mystderr)), this->get_window());
 				answer = false;
 			}
 		if (mystdout) {
@@ -567,7 +567,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 	if (do_carto)
 		/* Don't load the XML config if carto load fails. */
-		if (!this->carto_load(viewport)) {
+		if (!this->carto_load()) {
 			return;
 		}
 
@@ -971,7 +971,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	Viewport * viewport = values->viewport;
 
 	/* Don't load the XML config if carto load fails. */
-	if (!lmk->carto_load(viewport)) {
+	if (!lmk->carto_load()) {
 		return;
 	}
 
