@@ -78,6 +78,8 @@ namespace SlavGPS {
 		void pan_click(QMouseEvent * event);
 		void pan_move(QMouseEvent * event);
 		void pan_release(QMouseEvent * event);
+		void pan_off(void);
+		bool get_pan_move(void);
 
 		char type_string[30];
 

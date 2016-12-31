@@ -994,21 +994,6 @@ static void toolbar_sync(Window * window, char const *name, bool state)
 
 
 
-/**
- * Retrieves window's pan_move_flag.
- *
- * Should be removed as soon as possible.
- *
- * Returns: window's pan_move
- **/
-bool Window::get_pan_move()
-{
-	return this->pan_move_flag;
-}
-
-
-
-
 static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 {
 	char * filename = gtk_recent_chooser_get_current_uri(chooser);

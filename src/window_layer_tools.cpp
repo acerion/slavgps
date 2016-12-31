@@ -955,11 +955,10 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 
 LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 {
-#if 0
 	if (this->window->select_move) {
 		/* Don't care about trw here. */
 		if (this->sublayer_edit->trw) {
-			layer->select_move(event, this->viewport, tool); /* kamilFIXME: layer->select_move or trw->select_move? */
+			layer->select_move(event, this->viewport, this); /* kamilFIXME: layer->select_move or trw->select_move? */
 		}
 	} else {
 		/* Optional Panning. */
@@ -967,7 +966,6 @@ LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 			this->window->pan_move(event);
 		}
 	}
-#endif
 	return LayerToolFuncStatus::ACK;
 }
 
@@ -976,11 +974,10 @@ LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 
 LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event)
 {
-#if 0
 	if (this->window->select_move) {
 		/* Don't care about trw here. */
 		if (this->sublayer_edit->trw) {
-			((LayerTRW *) this->sublayer_edit->trw)->select_release(event, this->viewport, tool);
+			((LayerTRW *) this->sublayer_edit->trw)->select_release(event, this->viewport, this);
 		}
 	}
 
@@ -989,13 +986,10 @@ LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event
 	}
 
 	/* Force pan off in case it was on. */
-	this->window->pan_move_flag = false;
-	this->window->pan_x = -1;
-	this->window->pan_y = -1;
+	this->window->pan_off();
 
 	/* End of this select movement. */
 	this->window->select_move = false;
-#endif
 
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->type == LayerType::TRW && layer->visible) {

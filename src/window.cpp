@@ -1120,13 +1120,37 @@ void Window::pan_release(QMouseEvent * event)
 						  this->viewport->get_height() / 2 - event->y() + this->pan_y);
 	}
 
-	this->pan_move_flag = false;
-	this->pan_x = -1;
-	this->pan_y = -1;
+	this->pan_off();
 	if (do_draw) {
 		this->draw_update();
 	}
 }
+
+
+
+
+void Window::pan_off(void)
+{
+	this->pan_move_flag = false;
+	this->pan_x = -1;
+	this->pan_y = -1;
+}
+
+
+
+
+/**
+ * Retrieves window's pan_move_flag.
+ *
+ * Should be removed as soon as possible.
+ *
+ * Returns: window's pan_move
+ **/
+bool Window::get_pan_move(void)
+{
+	return this->pan_move_flag;
+}
+
 
 
 
