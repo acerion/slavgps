@@ -127,6 +127,7 @@ namespace SlavGPS {
 		LayersPanel * get_layers_panel(void);
 
 		TreeIndex const go_up_to_layer(TreeIndex const & index);
+		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
 
 		bool editing = false;
 		bool was_a_toggle = false;

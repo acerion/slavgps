@@ -325,7 +325,16 @@ void TreeView::select_cb(void) /* Slot. */
 
 
 
-/* Go up the tree to find a Layer. */
+/*
+  Go up the tree to find a Layer.
+
+  If @param index already refers to a layer, the function doesn't
+  really go up, it returns the same index.
+
+  If you want to skip item pointed to by @param index and start from
+  its parent, you have to calculate parent by yourself before passing
+  an index to this function.
+*/
 TreeIndex const TreeView::go_up_to_layer(TreeIndex const & index)
 {
         TreeIndex this_index = index;
@@ -340,6 +349,47 @@ TreeIndex const TreeView::go_up_to_layer(TreeIndex const & index)
 	}
 
 	return this_index; /* Even if while() loop executes zero times, this_index is still a valid index. */
+}
+
+
+
+
+/*
+  Go up the tree to find a Layer of given type.
+
+  If @param index already refers to layer of given type, the function
+  doesn't really go up, it returns the same index.
+
+  If you want to skip item pointed to by @param index and start from
+  its parent, you have to calculate parent by yourself before passing
+  an index to this function.
+*/
+TreeIndex const TreeView::go_up_to_layer(TreeIndex const & index, LayerType layer_type)
+{
+        TreeIndex this_index = index;
+	TreeIndex parent_index;
+
+	while (1) {
+		if (!this_index.isValid()) {
+			return this_index; /* Returning copy of invalid index. */
+		}
+
+		if (TreeItemType::LAYER == this->get_item_type(this_index)
+		    && this->get_layer(this_index)->type == layer_type) {
+
+			return this_index; /* Returning index of matching layer. */
+		}
+
+		/* Go one step up to parent. */
+		parent_index = this_index.parent();
+
+		/* Parent also may be invalid. */
+		if (!parent_index.isValid()) {
+			return parent_index; /* Returning copy of invalid index. */
+		}
+
+		this_index = QPersistentModelIndex(parent_index);
+	}
 }
 
 

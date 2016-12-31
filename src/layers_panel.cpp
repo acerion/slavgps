@@ -466,7 +466,7 @@ void LayersPanel::add_layer(Layer * layer)
 	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
 
 	TreeIndex const & selected_index = this->tree_view->get_selected_item();
-	if (true) { /* kamilFIXME: "if (!selected_index) { */
+	if (!selected_index.isValid()) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
@@ -491,24 +491,26 @@ void LayersPanel::add_layer(Layer * layer)
 		assert(current->connected_to_tree);
 		replace_index = current->index;
 
-		/* Go further up until you find first aggregate layer. */
-		while (current->type != LayerType::AGGREGATE) {
-			Layer * tmp_layer = this->tree_view->get_parent_layer(current->index);
-			current = tmp_layer;
-			assert(current->connected_to_tree);
-		}
+		/* A new layer can be inserted only under an Aggregate layer.
+		   Find first one in tree hierarchy (going up). */
+		TreeIndex aggregate_index = this->tree_view->go_up_to_layer(current->index, LayerType::AGGREGATE);
+		if (aggregate_index.isValid()) {
+			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_layer(aggregate_index);
+			assert(aggregate->connected_to_tree);
 
-
-		LayerAggregate * aggregate = (LayerAggregate *) current;
-#ifndef SLAVGPS_QT
-		if (replace_index.isValid()) {
-			aggregate->insert_layer(layer, replace_index);
+			if (false
+#ifdef K
+			    replace_index.isValid()
+#endif
+			    ) {
+				aggregate->insert_layer(layer, replace_index);
+			} else {
+				aggregate->add_layer(layer, true);
+			}
 		} else {
-#endif
-			aggregate->add_layer(layer, true);
-#ifndef SLAVGPS_QT
+			/* TODO: add error handling? */
+			qDebug() << "EE: Layers Panel: add layer: failure, can't find aggregate layer";
 		}
-#endif
 	}
 
 	this->emit_update_cb();
