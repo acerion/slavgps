@@ -115,7 +115,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 
 	LayerAggregate * aggregate = new LayerAggregate();
 
-	aggregate->unmarshall_params(data + sizeof (int), alm_size, viewport);
+	aggregate->unmarshall_params(data + sizeof (int), alm_size);
 	alm_next;
 
 	while (len > 0) {

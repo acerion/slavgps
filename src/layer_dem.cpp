@@ -287,7 +287,7 @@ static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 		layer->gradients[i] = new QColor(dem_gradient_colors[i]);
 	}
 
-	layer->unmarshall_params(data, len, viewport);
+	layer->unmarshall_params(data, len);
 	return layer;
 }
 
@@ -389,7 +389,7 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 
 
 
-bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation)
+bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -1541,7 +1541,7 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 		this->colors[0] = new QColor("#0000FF");
 	}
 
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 
 
 	if (viewport) {

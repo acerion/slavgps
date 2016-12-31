@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
-		bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
+		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
 	private:

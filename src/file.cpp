@@ -81,11 +81,6 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	Layer * layer;
-	Viewport * viewport;
-} LayerAndVp;
-
 typedef struct _Stack Stack;
 
 struct _Stack {
@@ -326,11 +321,11 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 
 
-static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * layer_and_vp)
+static void string_list_set_param(int i, std::list<char *> * list, Layer * layer)
 {
 	ParameterValue param_value;
 	param_value.sl = list;
-	layer_and_vp->layer->set_param_value(i, param_value, layer_and_vp->viewport, true);
+	layer->set_param_value(i, param_value, true);
 }
 
 
@@ -435,10 +430,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
 				} else {
 					/* Add any string lists we've accumulated. */
-					LayerAndVp layer_and_vp;
-					layer_and_vp.layer = (Layer *) stack->data;
-					layer_and_vp.viewport = viewport;
-					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, &layer_and_vp);
+					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, (Layer *) stack->data);
 					g_hash_table_remove_all(string_lists);
 
 					if (stack->data && stack->under->data) {
@@ -616,7 +608,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							default: x.s = line;
 							}
 							Layer * l_a_y_e_r = (Layer *) stack->data;
-							l_a_y_e_r->set_param_value(i, x, viewport, true);
+							l_a_y_e_r->set_param_value(i, x, true);
 						}
 						found_match = true;
 						break;

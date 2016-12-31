@@ -444,7 +444,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 
 	LayerGPS * layer = new LayerGPS(viewport);
 
-	layer->unmarshall_params(data + sizeof (int), alm_size, viewport);
+	layer->unmarshall_params(data + sizeof (int), alm_size);
 	alm_next;
 
 	int i = 0;
@@ -467,7 +467,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 
 
 
-bool LayerGPS::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
+bool LayerGPS::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
@@ -2023,7 +2023,7 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 	this->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {

@@ -112,7 +112,7 @@ void coord_layer_interface_configure(LayerInterface * interface)
 static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord();
-	layer->unmarshall_params(data, len, viewport);
+	layer->unmarshall_params(data, len);
 	return layer;
 }
 
@@ -120,7 +120,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 /* Viewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation)
+bool LayerCoord::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -424,5 +424,5 @@ LayerCoord::LayerCoord(Viewport * viewport) : LayerCoord::LayerCoord()
 {
 	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord(viewport)";
 
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 }

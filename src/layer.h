@@ -139,7 +139,7 @@ namespace SlavGPS {
 		static void    marshall(Layer * layer, uint8_t ** data, int * len);
 		void           marshall_params(uint8_t ** data, int * datalen);
 		static Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
-		void           unmarshall_params(uint8_t * data, int len, Viewport * viewport);
+		void           unmarshall_params(uint8_t * data, int len);
 
 		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
 
@@ -210,7 +210,7 @@ namespace SlavGPS {
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
+		virtual bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
 
 
 		static LayerType type_from_string(char const * str);
@@ -231,7 +231,7 @@ namespace SlavGPS {
 		void rename_no_copy(char * new_name);
 		void draw_visible(Viewport * viewport);
 
-		void set_initial_parameter_values(Viewport * viewport);
+		void set_initial_parameter_values(void);
 
 		Window * get_window(void);
 

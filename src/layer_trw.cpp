@@ -868,7 +868,7 @@ char * font_size_to_string(int font_size)
 
 
 
-bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
+bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_TV:
@@ -1281,7 +1281,7 @@ static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 	// First the overall layer parameters
 	memcpy(&pl, data, sizeof(pl));
 	data += sizeof(pl);
-	trw->unmarshall_params(data, pl, viewport);
+	trw->unmarshall_params(data, pl);
 	data += pl;
 
 	int consumed_length = pl;
@@ -7334,7 +7334,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */
 
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */

@@ -468,7 +468,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 
 
-void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
+void Layer::unmarshall_params(uint8_t * data, int datalen)
 {
 	char *s;
 	uint8_t *b = (uint8_t *) data;
@@ -499,7 +499,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				s[vlm_size] = 0;
 				vlm_read(s);
 				param_value.s = s;
-				this->set_param_value(iter->first, param_value, viewport, false);
+				this->set_param_value(iter->first, param_value, false);
 				free(s);
 				break;
 			case ParameterType::STRING_LIST: {
@@ -515,14 +515,14 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 					list->push_back(s);
 				}
 				param_value.sl = list;
-				this->set_param_value(iter->first, param_value, viewport, false);
+				this->set_param_value(iter->first, param_value, false);
 				/* Don't free -- string list is responsibility of the layer. */
 
 				break;
 			}
 			default:
 				vlm_read(&param_value);
-				this->set_param_value(iter->first, param_value, viewport, false);
+				this->set_param_value(iter->first, param_value, false);
 				break;
 			}
 		}
@@ -618,7 +618,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 		std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
-			bool set = this->set_param_value(iter->first, param_value, viewport, false);
+			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
 				must_redraw = true;
 			}
@@ -775,7 +775,7 @@ ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(Param
    These initial/default values of parameters are stored in the Layer Interface.
    This method copies the values from the interface into given layer.
 */
-void Layer::set_initial_parameter_values(Viewport * viewport)
+void Layer::set_initial_parameter_values(void)
 {
 	char const * layer_name = this->get_interface()->layer_type_string;
 	ParameterValue param_value;
@@ -790,7 +790,7 @@ void Layer::set_initial_parameter_values(Viewport * viewport)
 			   Only DEM files uses this currently. */
 			if (iter->second->type != ParameterType::STRING_LIST) {
 				param_value = defaults->at(iter->first);
-				this->set_param_value(iter->first, param_value, viewport, true); /* Possibly comes from a file. */
+				this->set_param_value(iter->first, param_value, true); /* Possibly comes from a file. */
 			}
 		}
 	}
@@ -1029,7 +1029,7 @@ ParameterValue Layer::get_param_value(param_id_t id, bool is_file_operation) con
 
 
 
-bool Layer::set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation)
+bool Layer::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
 {
 	return false;
 }

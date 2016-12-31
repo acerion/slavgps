@@ -178,7 +178,7 @@ static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 {
 	LayerGeoref * grl = georef_layer_new(viewport);
 
-	grl->unmarshall_params(data, len, viewport);
+	grl->unmarshall_params(data, len);
 
 	if (grl->image) {
 		grl->post_read(viewport, true);
@@ -189,7 +189,7 @@ static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerGeoref::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
+bool LayerGeoref::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:
@@ -463,7 +463,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 	if (gx) {
 		if (!from_file) {
-			dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), viewport->get_window());
+			dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), this->get_window());
 		}
 		g_error_free (gx);
 	} else {
@@ -1326,7 +1326,7 @@ LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
 {
 	/* Since GeoRef layer doesn't use uibuilder initializing this
 	   way won't do anything yet... */
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_ympp();

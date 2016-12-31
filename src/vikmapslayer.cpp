@@ -655,7 +655,7 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 
 
 
-bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
+bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -685,7 +685,7 @@ bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, Viewport * vie
 					/* Check if licence for this map type has been shown before. */
 					if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
 						if (viewport) {
-							maps_show_license(viewport->get_toolkit_window(), map);
+							maps_show_license(this->get_window(), map);
 						}
 						a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 					}
@@ -970,7 +970,7 @@ static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewpor
 {
 	LayerMaps * layer = new LayerMaps();
 
-	layer->unmarshall_params(data, len, viewport);
+	layer->unmarshall_params(data, len);
 	layer->post_read(viewport, false);
 	return layer;
 }
@@ -2732,5 +2732,5 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
 
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 }

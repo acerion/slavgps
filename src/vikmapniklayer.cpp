@@ -350,7 +350,7 @@ static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 	layer->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
-	layer->unmarshall_params(data, len, viewport);
+	layer->unmarshall_params(data, len);
 
 	return layer;
 }
@@ -358,7 +358,7 @@ static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerMapnik::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
+bool LayerMapnik::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
@@ -573,7 +573,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 	char* ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (ans) {
-		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
+		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
 		free(ans);
 	} else {
 		this->loaded = true;
@@ -1248,7 +1248,7 @@ LayerMapnik::LayerMapnik()
 
 LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
 {
-	this->set_initial_parameter_values(viewport);
+	this->set_initial_parameter_values();
 	this->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = mapnik_interface_new();
