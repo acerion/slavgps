@@ -94,14 +94,19 @@ namespace SlavGPS {
 
 
 
-	class ToolEd {
+	/*
+	  Stuff related to editing TRW's sublayers.
+	  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
+	  The points can be selected by either TRW-specific edit tools, or by generic select tool.
+	*/
+	class SublayerEdit {
 	public:
-		ToolEd();
+		SublayerEdit();
 
-		LayerTRW * trw = NULL; /* LayerTRW. */
+		LayerTRW * trw = NULL;
 		bool holding = false;
 		bool moving = false;
-		bool is_waypoint = false; /* Otherwise a track. */
+		SublayerType sublayer_type = SublayerType::NONE; /* WAYPOINT or TRACK or ROUTE. */
 		QPen pen;
 		int oldx = 0;
 		int oldy = 0;
@@ -299,9 +304,12 @@ namespace SlavGPS {
 		virtual void activate_(Layer * layer) { return; };
 		virtual void deactivate_(Layer * layer) { return; };
 
-		void marker_begin_move(int x, int y);
-		void marker_moveto(int x, int y);
-		void marker_end_move(void);
+		/* Start holding a TRW point. */
+		void sublayer_edit_click(int x, int y);
+		/* A TRW point that is being held is now also moved around. */
+		void sublayer_edit_move(int x, int y);
+		/* Stop holding (i.e. release) a TRW point. */
+		void sublayer_edit_release(void);
 
 		QString action_icon_path;
 		QString action_label;
@@ -316,7 +324,8 @@ namespace SlavGPS {
 		Window * window = NULL;
 		Viewport * viewport = NULL;
 
-		ToolEd * ed = NULL;
+		/* This should be moved to class LayerToolTRW. */
+		SublayerEdit * sublayer_edit = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */

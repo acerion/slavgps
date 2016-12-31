@@ -1091,7 +1091,7 @@ LayerTool::~LayerTool()
 	delete this->cursor_click;
 	delete this->cursor_release;
 
-	delete this->ed; /* This may bot be the best place to do this delete (::ed is alloced in subclasses)... */
+	delete this->sublayer_edit; /* This may not be the best place to do this delete (::sublayer_edit is alloced in subclasses)... */
 }
 
 
@@ -1114,32 +1114,34 @@ static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
 
 
 
-void LayerTool::marker_begin_move(int x, int y)
+void LayerTool::sublayer_edit_click(int x, int y)
 {
-	assert (this->ed);
+	assert (this->sublayer_edit);
 
-	this->ed->holding = true;
+	/* We have clicked on a point, and we are holding it.
+	   We hold it during move, until we release it. */
+	this->sublayer_edit->holding = true;
 
-	//gdk_gc_set_function(this->ed->en_pen, GDK_INVERT);
-	this->viewport->draw_rectangle(this->ed->pen, x - 3, y - 3, 6, 6);
+	//gdk_gc_set_function(this->sublayer_edit->pen, GDK_INVERT);
+	this->viewport->draw_rectangle(this->sublayer_edit->pen, x - 3, y - 3, 6, 6);
 	this->viewport->sync();
-	this->ed->oldx = x;
-	this->ed->oldy = y;
-	this->ed->moving = false;
+	this->sublayer_edit->oldx = x;
+	this->sublayer_edit->oldy = y;
+	this->sublayer_edit->moving = false;
 }
 
 
 
 
-void LayerTool::marker_moveto(int x, int y)
+void LayerTool::sublayer_edit_move(int x, int y)
 {
-	assert (this->ed);
+	assert (this->sublayer_edit);
 
-	this->viewport->draw_rectangle(this->ed->pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
-	this->viewport->draw_rectangle(this->ed->pen, x - 3, y - 3, 6, 6);
-	this->ed->oldx = x;
-	this->ed->oldy = y;
-	this->ed->moving = true;
+	this->viewport->draw_rectangle(this->sublayer_edit->pen, this->sublayer_edit->oldx - 3, this->sublayer_edit->oldy - 3, 6, 6);
+	this->viewport->draw_rectangle(this->sublayer_edit->pen, x - 3, y - 3, 6, 6);
+	this->sublayer_edit->oldx = x;
+	this->sublayer_edit->oldy = y;
+	this->sublayer_edit->moving = true;
 
 	if (tool_sync_done) {
 		this->viewport->sync();
@@ -1150,13 +1152,13 @@ void LayerTool::marker_moveto(int x, int y)
 
 
 
-void LayerTool::marker_end_move(void)
+void LayerTool::sublayer_edit_release(void)
 {
-	assert (this->ed);
+	assert (this->sublayer_edit);
 
-	this->viewport->draw_rectangle(this->ed->pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
-	this->ed->holding = false;
-	this->ed->moving = false;
+	this->viewport->draw_rectangle(this->sublayer_edit->pen, this->sublayer_edit->oldx - 3, this->sublayer_edit->oldy - 3, 6, 6);
+	this->sublayer_edit->holding = false;
+	this->sublayer_edit->moving = false;
 }
 
 
@@ -1306,7 +1308,7 @@ sg_uid_t Sublayer::get_uid(void)
 
 
 
-ToolEd::ToolEd()
+SublayerEdit::SublayerEdit()
 {
 	this->pen.setColor(QColor("black"));
 	this->pen.setWidth(2);

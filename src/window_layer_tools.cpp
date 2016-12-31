@@ -875,7 +875,7 @@ LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTo
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = new ToolEd;
+	this->sublayer_edit = new SublayerEdit;
 }
 
 
@@ -885,7 +885,8 @@ LayerToolSelect::~LayerToolSelect()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
-	delete this->ed;
+
+	delete this->sublayer_edit;
 }
 
 
@@ -957,7 +958,7 @@ LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 #if 0
 	if (this->window->select_move) {
 		/* Don't care about trw here. */
-		if (this->ed->trw) {
+		if (this->sublayer_edit->trw) {
 			layer->select_move(event, this->viewport, tool); /* kamilFIXME: layer->select_move or trw->select_move? */
 		}
 	} else {
@@ -978,8 +979,8 @@ LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event
 #if 0
 	if (this->window->select_move) {
 		/* Don't care about trw here. */
-		if (this->ed->trw) {
-			((LayerTRW *) this->ed->trw)->select_release(event, this->viewport, tool);
+		if (this->sublayer_edit->trw) {
+			((LayerTRW *) this->sublayer_edit->trw)->select_release(event, this->viewport, tool);
 		}
 	}
 
