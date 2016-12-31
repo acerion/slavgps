@@ -62,6 +62,15 @@ namespace SlavGPS {
 
 
 
+	class LayerMapsInterface : public LayerInterface {
+	public:
+		LayerMapsInterface();
+		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+	};
+
+
+
+
 	class LayerMaps : public Layer {
 	public:
 		LayerMaps();

@@ -49,6 +49,15 @@ namespace SlavGPS {
 
 
 
+	class LayerAggregateInterface : public LayerInterface {
+	public:
+		LayerAggregateInterface();
+		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+	};
+
+
+
+
 	class LayerAggregate : public Layer {
 		Q_OBJECT
 	public:

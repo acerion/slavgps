@@ -62,18 +62,18 @@ using namespace SlavGPS;
 /* Functions common to all layers. */
 /* TODO longone: rename interface free -> finalize. */
 
-extern LayerInterface vik_aggregate_layer_interface;
-extern LayerInterface vik_trw_layer_interface;
-extern LayerInterface vik_coord_layer_interface;
+extern LayerAggregateInterface vik_aggregate_layer_interface;
+extern LayerTRWInterface vik_trw_layer_interface;
+extern LayerCoordInterface vik_coord_layer_interface;
 #ifndef SLAVGPS_QT
-extern LayerInterface vik_georef_layer_interface;
-extern LayerInterface vik_gps_layer_interface;
-extern LayerInterface vik_maps_layer_interface;
+extern LayerGeorefInterface vik_georef_layer_interface;
+extern LayerGPSInterface vik_gps_layer_interface;
+extern LayerMapsInterface vik_maps_layer_interface;
 #endif
-extern LayerInterface vik_dem_layer_interface;
+extern LayerDEMInterface vik_dem_layer_interface;
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
-extern LayerInterface vik_mapnik_layer_interface;
+extern LayerMapnikInterface vik_mapnik_layer_interface;
 #endif
 #endif
 
@@ -183,9 +183,23 @@ LayerInterface * Layer::get_interface(void)
 
 
 
-LayerInterface::LayerInterface(LayerInterfaceConfigure config_function)
+LayerInterface::LayerInterface()
 {
-	this->configure = config_function;
+}
+
+
+
+
+Layer * LayerInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+{
+	return NULL;
+}
+
+
+
+
+void LayerInterface::change_param(GtkWidget *, ui_change_values * )
+{
 }
 
 
@@ -196,7 +210,7 @@ void Layer::preconfigure_interfaces(void)
 	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
 
 		LayerInterface * interface = Layer::get_interface(i);
-		interface->configure(interface);
+
 		QString path = QString(":/icons/layer/") + QString(interface->layer_type_string).toLower() + QString(".png");
 		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
@@ -527,12 +541,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	header_t * header = (header_t *) data;
-
-	if (vik_layer_interfaces[(int) header->layer_type]->unmarshall) {
-		return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
-	} else {
-		return NULL;
-	}
+	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
 }
 
 

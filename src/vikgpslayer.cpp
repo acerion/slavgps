@@ -71,8 +71,6 @@ using namespace SlavGPS;
 extern std::vector<BabelDevice *> a_babel_device_list;
 
 
-static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void gps_layer_interface_configure(LayerInterface * interface);
 
 
 typedef struct {
@@ -334,27 +332,25 @@ static Parameter gps_layer_params[] = {
 
 
 
-LayerInterface vik_gps_layer_interface(gps_layer_interface_configure);
+LayerGPSInterface vik_gps_layer_interface;
 
 
 
 
-void gps_layer_interface_configure(LayerInterface * interface)
+void LayerGPSInterface::LayerGPSInterface()
 {
-	interface->params = gps_layer_params;       /* Parameters. */
-	interface->params_count = NUM_PARAMS;
-	interface->params_groups = params_groups;   /* Parameter groups. */
+	this->params = gps_layer_params;       /* Parameters. */
+	this->params_count = NUM_PARAMS;
+	this->params_groups = params_groups;   /* Parameter groups. */
 
-	strndup(interface->layer_type_string, "GPS", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+	strndup(this->layer_type_string, "GPS", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
 
-	interface->layer_name = tr("GPS");
-	// interface->action_accelerator = ...; /* Empty accelerator. */
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = tr("GPS");
+	// this->action_accelerator = ...; /* Empty accelerator. */
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->unmarshall = gps_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -435,7 +431,7 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 
 
 /* "Paste". */
-static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
@@ -458,7 +454,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 		}
 		alm_next;
 	}
-	//  fprintf(stdout, "gps_layer_unmarshall ended with len=%d\n", len);
+	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << len;
 	assert (len == 0);
 	return layer;
 #undef alm_size

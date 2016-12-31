@@ -113,6 +113,16 @@ namespace SlavGPS {
 
 
 
+	class LayerTRWInterface : public LayerInterface {
+	public:
+		LayerTRWInterface();
+		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		void change_param(GtkWidget * widget, ui_change_values * values);
+	};
+
+
+
+
 	class LayerTRW : public Layer {
 		Q_OBJECT
 	public:

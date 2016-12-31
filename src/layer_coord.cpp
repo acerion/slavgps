@@ -40,10 +40,6 @@ using namespace SlavGPS;
 
 
 
-static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void coord_layer_interface_configure(LayerInterface * interface);
-
-
 
 static ParameterScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
@@ -84,32 +80,30 @@ static Parameter coord_layer_params[] = {
 
 
 
-LayerInterface vik_coord_layer_interface(coord_layer_interface_configure);
+LayerCoordInterface vik_coord_layer_interface;
 
 
 
 
-void coord_layer_interface_configure(LayerInterface * interface)
+LayerCoordInterface::LayerCoordInterface()
 {
-	interface->params = coord_layer_params; /* Parameters. */
-	interface->params_count = PARAM_MAX;
+	this->params = coord_layer_params; /* Parameters. */
+	this->params_count = PARAM_MAX;
 
-	strncpy(interface->layer_type_string, "Coord", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+	strncpy(this->layer_type_string, "Coord", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	interface->layer_name = QObject::tr("Coordinate");
-	// interface->action_accelerator = ...; /* Empty accelerator. */
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = QObject::tr("Coordinate");
+	// this->action_accelerator = ...; /* Empty accelerator. */
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->unmarshall = coord_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
 
 
-static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerCoordInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord();
 	layer->unmarshall_params(data, len);

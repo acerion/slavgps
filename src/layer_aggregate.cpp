@@ -46,29 +46,21 @@ using namespace SlavGPS;
 
 
 
-static Layer * aggregate_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void aggregate_layer_interface_configure(LayerInterface * interface);
+LayerAggregateInterface vik_aggregate_layer_interface;
 
 
 
 
-LayerInterface vik_aggregate_layer_interface(aggregate_layer_interface_configure);
-
-
-
-
-void aggregate_layer_interface_configure(LayerInterface * interface)
+LayerAggregateInterface::LayerAggregateInterface()
 {
-	strncpy(interface->layer_type_string, "Aggregate", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+	strncpy(this->layer_type_string, "Aggregate", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	interface->layer_name = QObject::tr("Aggregate");
-	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = QObject::tr("Aggregate");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->unmarshall = aggregate_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -106,7 +98,7 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 
 
 
-static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+Layer * LayerAggregateInterface::unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
@@ -126,7 +118,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		}
 		alm_next;
 	}
-	// fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
+	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << len;
 	return aggregate;
 #undef alm_size
 #undef alm_next

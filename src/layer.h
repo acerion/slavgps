@@ -329,19 +329,12 @@ namespace SlavGPS {
 
 
 
-	/* Layer interface functions. */
-	typedef Layer * (* LayerFuncUnmarshall)  (uint8_t *, int, Viewport *);
-	typedef void    (* LayerFuncChangeParam) (GtkWidget *, ui_change_values *);
-	typedef void    (* LayerInterfaceConfigure) (LayerInterface * interface);
-
-
-
-
 	class LayerInterface {
 	public:
-		LayerInterface(LayerInterfaceConfigure config_function);
+		LayerInterface();
 
-		LayerInterfaceConfigure configure = NULL;
+		virtual Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		virtual void change_param(GtkWidget *, ui_change_values *);
 
 		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
 		Parameter * params = NULL;
@@ -357,8 +350,6 @@ namespace SlavGPS {
 		std::map<int, ToolConstructorFunc> layer_tool_constructors;  /* Tool index -> Layer Tool constructor function. */
 		std::map<int, LayerTool *>         layer_tools;              /* Tool index -> Layer Tool. */
 
-		LayerFuncUnmarshall  unmarshall = NULL;
-		LayerFuncChangeParam change_param = NULL;
 
 		/* Menu items to be created. */
 		LayerMenuItem menu_items_selection;
@@ -366,6 +357,7 @@ namespace SlavGPS {
 		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
 		std::map<param_id_t, ParameterValue> * parameter_value_defaults = NULL;
 	};
+
 
 
 

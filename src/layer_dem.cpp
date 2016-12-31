@@ -83,9 +83,6 @@ using namespace SlavGPS;
 
 #define UNUSED_LINE_THICKNESS 3
 
-static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void dem_layer_interface_configure(LayerInterface * interface);
-
 static void srtm_draw_existence(Viewport * viewport);
 
 #ifdef VIK_CONFIG_DEM24K
@@ -238,28 +235,26 @@ static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/si
 
 
 
-LayerInterface vik_dem_layer_interface(dem_layer_interface_configure);
+LayerDEMInterface vik_dem_layer_interface;
 
 
 
 
-void dem_layer_interface_configure(LayerInterface * interface)
+LayerDEMInterface::LayerDEMInterface()
 {
-	interface->params = dem_layer_params; /* Parameters. */
-	interface->params_count = NUM_PARAMS;
+	this->params = dem_layer_params; /* Parameters. */
+	this->params_count = NUM_PARAMS;
 
-	strncpy(interface->layer_type_string, "DEM", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+	strncpy(this->layer_type_string, "DEM", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	interface->layer_name = QObject::tr("DEM");
-	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = QObject::tr("DEM");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
+	this->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
 
-	interface->unmarshall = dem_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -273,7 +268,7 @@ QString LayerDEM::tooltip()
 
 
 
-static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM();
 

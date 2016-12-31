@@ -317,45 +317,36 @@ Parameter trw_layer_params[] = {
 
 /****** END PARAMETERS ******/
 
-/* Layer Interface function definitions */
-static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void trw_layer_interface_configure(LayerInterface * interface);
-static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values);
-/* End Layer Interface function definitions */
+
+
+
+LayerTRWInterface vik_trw_layer_interface;
 
 
 
 
-LayerInterface vik_trw_layer_interface(trw_layer_interface_configure);
-
-
-
-
-void trw_layer_interface_configure(LayerInterface * interface)
+LayerTRWInterface::LayerTRWInterface()
 {
-	interface->params = trw_layer_params;        /* Parameters. */
-	interface->params_count = NUM_PARAMS;
-	interface->params_groups = params_groups;    /* Parameter groups. */
+	this->params = trw_layer_params;        /* Parameters. */
+	this->params_count = NUM_PARAMS;
+	this->params_groups = params_groups;    /* Parameter groups. */
 
-	strncpy(interface->layer_type_string, "TrackWaypoint", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] = '\0';
+	strncpy(this->layer_type_string, "TrackWaypoint", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	interface->layer_name = QObject::tr("TrackWaypoint");
-	interface->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = QObject::tr("TrackWaypoint");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, tool_new_waypoint_create          }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    tool_new_track_create             }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    tool_new_route_create             }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    tool_extended_route_finder_create }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   tool_edit_waypoint_create         }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, tool_edit_trackpoint_create       }});
-	interface->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, tool_new_waypoint_create          }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    tool_new_track_create             }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    tool_new_route_create             }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    tool_extended_route_finder_create }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   tool_edit_waypoint_create         }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, tool_edit_trackpoint_create       }});
+	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
 
-	interface->unmarshall = trw_layer_unmarshall;
-	interface->change_param = trw_layer_change_param;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -1130,7 +1121,7 @@ ParameterValue LayerTRW::get_param_value(param_id_t id, bool is_file_operation) 
 
 
 
-static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values)
+void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * values)
 {
 	// This '-3' is to account for the first few parameters not in the properties
 	const int OFFSET = -3;
@@ -1272,7 +1263,7 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 
 
 
-static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerTRWInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerTRW * trw = new LayerTRW();
 	trw->set_coord_mode(viewport->get_coord_mode());

@@ -111,35 +111,31 @@ Parameter mapnik_layer_params[] = {
 
 
 
-static Layer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static void mapnik_layer_interface_configure(LayerInterface * interface);
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
 
 
 
 
-LayerInterface vik_mapnik_layer_interface(mapnik_layer_interface_configure);
+LayerMapnikInterface vik_mapnik_layer_interface;
 
 
 
 
-void mapnik_layer_interface_configure(LayerInterface * interface)
+LayerMapnikInterface::LayerMapnikInterface()
 {
-	interface->params = mapnik_layer_params; /* Parameters. */
-	interface->params_count = NUM_PARAMS,
+	this->params = mapnik_layer_params; /* Parameters. */
+	this->params_count = NUM_PARAMS,
 
-	strndup(interface->layer_type_string, "Mapnik Rendering", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+	strndup(this->layer_type_string, "Mapnik Rendering", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
 
-	interface->layer_name = tr("Mapnik Rendering");
-	// interface->action_accelerator =  ...; /* Empty accelerator. */
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = tr("Mapnik Rendering");
+	// this->action_accelerator =  ...; /* Empty accelerator. */
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
+	this->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
 
-	interface->unmarshall = mapnik_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -343,7 +339,7 @@ void LayerMapnik::set_cache_dir(char const * name)
 
 
 
-static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerMapnikInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 

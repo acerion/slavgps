@@ -68,6 +68,14 @@ namespace SlavGPS {
 
 
 
+	class LayerGeorefInterface : public LayerInterface {
+	public:
+		LayerGeorefInterface();
+		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+	};
+
+
+
 
 	class LayerGeoref : public Layer {
 	public:

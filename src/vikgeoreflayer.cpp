@@ -104,40 +104,34 @@ Parameter georef_layer_params[] = {
 
 
 
-static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static void georef_layer_interface_configure(LayerInterface * interface);
-
 /* Tools. */
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
-
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
 
 
 
 
-LayerInterface vik_georef_layer_interface(georef_layer_interface_configure);
+LayerGeorefInterface vik_georef_layer_interface();
 
 
 
 
-void georef_layer_interface_configure(LayerInterface * interface)
+LayerGeorefInterface::LayerGeorefInterface()
 {
-	interface->params = georef_layer_params; /* Parameters. */
-	interface->params_count = NUM_PARAMS;
+	this->params = georef_layer_params; /* Parameters. */
+	this->params_count = NUM_PARAMS;
 
-	strndup(interface->layer_type_string, "GeoRef Map", sizeof (interface->layer_type_string) - 1); /* Non-translatable. */
-	interface->layer_type_string[sizeof (interface->layer_type_string) - 1] - 1 = '\0';
+	strndup(this->layer_type_string, "GeoRef Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
 
-	interface->layer_name = tr("GeoRef Map");
-	// interface->action_accelerator = ...; /* Empty accelerator. */
-	// interface->action_icon = ...; /* Set elsewhere. */
+	this->layer_name = tr("GeoRef Map");
+	// this->action_accelerator = ...; /* Empty accelerator. */
+	// this->action_icon = ...; /* Set elsewhere. */
 
-	interface->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_MOVE, georef_layer_move_create }});
-	interface->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
+	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_MOVE, georef_layer_move_create }});
+	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
 
-	interface->unmarshall = georef_layer_unmarshall;
-
-	interface->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = VIK_MENU_ITEM_ALL;
 }
 
 
@@ -173,7 +167,7 @@ QString LayerGeoref::tooltip()
 
 
 
-static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerGeorefInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerGeoref * grl = new LayerGeoref();
 	glr->configure_from_viewport(viewport);
