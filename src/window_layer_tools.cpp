@@ -875,7 +875,7 @@ LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTo
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = new tool_ed_t;
+	this->ed = new ToolEd;
 }
 
 

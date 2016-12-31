@@ -94,15 +94,18 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
+	class ToolEd {
+	public:
+		ToolEd();
+
 		LayerTRW * trw = NULL; /* LayerTRW. */
 		bool holding = false;
 		bool moving = false;
 		bool is_waypoint = false; /* Otherwise a track. */
-		QPen * ed_pen = NULL;
+		QPen pen;
 		int oldx = 0;
 		int oldy = 0;
-	} tool_ed_t;
+	};
 
 
 
@@ -313,7 +316,7 @@ namespace SlavGPS {
 		Window * window = NULL;
 		Viewport * viewport = NULL;
 
-		tool_ed_t * ed = NULL;
+		ToolEd * ed = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */

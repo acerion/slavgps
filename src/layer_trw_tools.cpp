@@ -452,8 +452,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window, Viewport * v
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT, this }});
 }
@@ -655,8 +654,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport)
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_TRACK, this }});
 }
@@ -1138,8 +1136,7 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport)
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE, this }});
 }
@@ -1227,8 +1224,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window, Viewport * vie
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, this }});
 }
@@ -1282,8 +1278,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window, Viewport
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, this }});
 }
@@ -1498,8 +1493,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER, this }});
 }
@@ -1668,8 +1662,7 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window, Viewport * vie
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(this->ed, 0, sizeof (tool_ed_t));
+	this->ed = new ToolEd;
 
 	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE, this }});
 }

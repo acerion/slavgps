@@ -1086,14 +1086,12 @@ LayerTool::~LayerTool()
 		free(zoom);
 		zoom = NULL;
 	}
-	if (ed) {
-		free(ed);
-		ed = NULL;
-	}
 #endif
 
 	delete this->cursor_click;
 	delete this->cursor_release;
+
+	delete this->ed; /* This may bot be the best place to do this delete (::ed is alloced in subclasses)... */
 }
 
 
@@ -1122,11 +1120,8 @@ void LayerTool::marker_begin_move(int x, int y)
 
 	this->ed->holding = true;
 
-	this->ed->ed_pen = new QPen(QColor("black"));
-	this->ed->ed_pen->setWidth(2);
-
 	//gdk_gc_set_function(this->ed->en_pen, GDK_INVERT);
-	this->viewport->draw_rectangle(*this->ed->ed_pen, x-3, y-3, 6, 6);
+	this->viewport->draw_rectangle(this->ed->pen, x - 3, y - 3, 6, 6);
 	this->viewport->sync();
 	this->ed->oldx = x;
 	this->ed->oldy = y;
@@ -1140,8 +1135,8 @@ void LayerTool::marker_moveto(int x, int y)
 {
 	assert (this->ed);
 
-	this->viewport->draw_rectangle(*this->ed->ed_pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
-	this->viewport->draw_rectangle(*this->ed->ed_pen, x-3, y-3, 6, 6);
+	this->viewport->draw_rectangle(this->ed->pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
+	this->viewport->draw_rectangle(this->ed->pen, x - 3, y - 3, 6, 6);
 	this->ed->oldx = x;
 	this->ed->oldy = y;
 	this->ed->moving = true;
@@ -1159,8 +1154,7 @@ void LayerTool::marker_end_move(void)
 {
 	assert (this->ed);
 
-	this->viewport->draw_rectangle(*this->ed->ed_pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
-	delete this->ed->ed_pen;
+	this->viewport->draw_rectangle(this->ed->pen, this->ed->oldx - 3, this->ed->oldy - 3, 6, 6);
 	this->ed->holding = false;
 	this->ed->moving = false;
 }
@@ -1307,4 +1301,13 @@ void Layer::location_info_cb(void) /* Slot. */
 sg_uid_t Sublayer::get_uid(void)
 {
 	return this->uid;
+}
+
+
+
+
+ToolEd::ToolEd()
+{
+	this->pen.setColor(QColor("black"));
+	this->pen.setWidth(2);
 }
