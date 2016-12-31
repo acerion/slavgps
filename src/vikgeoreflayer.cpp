@@ -106,7 +106,6 @@ Parameter georef_layer_params[] = {
 
 static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 static void georef_layer_interface_configure(LayerInterface * interface);
-static LayerGeoref * georef_layer_new(Viewport * viewport);
 
 /* Tools. */
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
@@ -176,7 +175,8 @@ QString LayerGeoref::tooltip()
 
 static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	LayerGeoref * grl = georef_layer_new(viewport);
+	LayerGeoref * grl = new LayerGeoref();
+	glr->configure_from_viewport(viewport);
 
 	grl->unmarshall_params(data, len);
 
@@ -300,32 +300,6 @@ ParameterValue LayerGeoref::get_param_value(param_id_t id, bool is_file_operatio
 		break;
 	}
 	return rv;
-}
-
-
-
-
-static LayerGeoref * georef_layer_new(Viewport * viewport)
-{
-	LayerGeoref * grl = new LayerGeoref();
-
-	/* Make these defaults based on the current view. */
-	grl->mpp_northing = viewport->get_ympp();
-	grl->mpp_easting = viewport->get_xmpp();
-	vik_coord_to_utm(viewport->get_center(), &(grl->corner));
-
-	grl->image = NULL;
-	grl->pixbuf = NULL;
-	grl->click_x = -1;
-	grl->click_y = -1;
-	grl->scaled = NULL;
-	grl->scaled_width = 0;
-	grl->scaled_height = 0;
-	grl->ll_br.lat = 0.0;
-	grl->ll_br.lon = 0.0;
-	grl->alpha = 255;
-
-	return grl;
 }
 
 
@@ -1269,8 +1243,8 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 					       VikCoord *coord_tl,
 					       VikCoord *coord_br)
 {
-	LayerGeoref * grl = georef_layer_new(viewport);
-
+	LayerGeoref * grl = new LayerGeoref();
+	glr->configure_from_viewport(viewport);
 	grl->rename(name);
 	grl->pixbuf = pixbuf;
 
@@ -1317,22 +1291,23 @@ LayerGeoref::LayerGeoref()
 	this->type = LayerType::GEOREF;
 	strcpy(this->type_string, "GEOREF");
 	this->interface = &vik_georef_layer_interface;
+
+	/* Since GeoRef layer doesn't use uibuilder initializing this
+	   way won't do anything yet... */
+	this->set_initial_parameter_values();
+
+	this->ll_br.lat = 0.0;
+	this->ll_br.lon = 0.0;
 }
 
 
 
 
-LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
+/* To be called right after constructor. */
+void LayerGeoref::configure_from_viewport(Viewport const * viewport)
 {
-	/* Since GeoRef layer doesn't use uibuilder initializing this
-	   way won't do anything yet... */
-	this->set_initial_parameter_values();
-
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_ympp();
 	this->mpp_easting = viewport->get_xmpp();
-	vik_coord_to_utm(viewport->get_center(), &(this->corner));
-
-	this->ll_br.lat = 0.0;
-	this->ll_br.lon = 0.0;
+	vik_coord_to_utm(viewport->get_center(), &this->corner);
 }

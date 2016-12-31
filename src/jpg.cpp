@@ -112,7 +112,8 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 	if (trw == NULL || trw->type != LayerType::TRW) {
 		/* Create layer if necessary. */
 
-		trw = (LayerTRW *) new LayerTRW(viewport);
+		trw = (LayerTRW *) new LayerTRW();
+		trw->set_coord_mode(viewport->get_coord_mode());
 		trw->rename(file_basename(filename));
 		create_layer = true;
 	}

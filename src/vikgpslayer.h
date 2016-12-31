@@ -109,7 +109,6 @@ namespace SlavGPS {
 	class LayerGPS : public Layer {
 	public:
 		LayerGPS();
-		LayerGPS(Viewport * viewport);
 		~LayerGPS();
 
 		/* Layer interface methods. */
@@ -132,6 +131,7 @@ namespace SlavGPS {
 		bool rt_ask_retry();
 
 
+		void set_coord_mode(VikCoordMode mode);
 
 
 		LayerTRW * trw_children[NUM_TRW] = { 0 };

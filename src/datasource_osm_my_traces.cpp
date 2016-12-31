@@ -719,7 +719,8 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 		if (create_new_layer) {
 			/* Have data but no layer - so create one. */
-			target_layer = new LayerTRW(adw->viewport);
+			target_layer = new LayerTRW();
+			target_layer->set_coord_mode(adw->viewport->get_coord_mode());
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
 				target_layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
 			} else {

@@ -404,7 +404,8 @@ static void acquire(Window * window,
 		}
 	}
 	if (wi->creating_new_layer) {
-		wi->trw = new LayerTRW(w->viewport);
+		wi->trw = new LayerTRW();
+		wi->trw->set_coord_mode(w->viewport->get_coord_mode());
 		wi->trw->rename(_(source_interface->layer_title));
 	}
 

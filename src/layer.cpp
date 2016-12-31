@@ -309,7 +309,8 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 		layer = new LayerAggregate();
 
 	} else if (layer_type == LayerType::TRW) {
-		layer = new LayerTRW(viewport);
+		layer = new LayerTRW();
+		((LayerTRW *) layer)->set_coord_mode(viewport->get_coord_mode());
 
 	} else if (layer_type == LayerType::COORD) {
 		layer = new LayerCoord();
@@ -324,13 +325,16 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	}
 #ifndef SLAVGPS_QT
 	else if (layer_type == LayerType::GEOREF) {
-		layer = new LayerGeoref(viewport);
+		layer = new LayerGeoref();
+		((LayerGeoref *) layer)->configure_form_viewport(viewport);
+
 #ifdef HAVE_LIBMAPNIK
 	} else if (layer_type == LayerType::MAPNIK) {
 		layer = new LayerMapnik();
 #endif
 	} else if (layer_type == LayerType::GPS) {
-		layer = new LayerGPS(viewport);
+		layer = new LayerGPS();
+		((LayerGPS *) layer)->set_coord_mode(viewport->get_coord_mode());
 	}
 #endif
 	else {

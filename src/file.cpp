@@ -802,7 +802,8 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
 		bool success = true; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
-		LayerTRW * layer = new LayerTRW(viewport);
+		LayerTRW * layer = new LayerTRW();
+		layer->set_coord_mode(viewport->get_coord_mode());
 		layer->rename(file_basename(filename));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */

@@ -442,7 +442,8 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
-	LayerGPS * layer = new LayerGPS(viewport);
+	LayerGPS * layer = new LayerGPS();
+	layer->set_coord_mode(viewport->get_coord_mode());
 
 	layer->unmarshall_params(data + sizeof (int), alm_size);
 	alm_next;
@@ -2001,25 +2002,17 @@ LayerGPS::LayerGPS()
 	this->type = LayerType::GPS;
 	strcpy(this->type_string, "GPS");
 	this->interface = &vik_gps_layer_interface;
-}
 
-
-
-
-LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
-{
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 
-	if (viewport) {
-		this->realtime_track_gc = viewport->new_pen("#203070", 2);
-		this->realtime_track_bg_gc = viewport->new_pen("grey", 2);
-		this->realtime_track_pt1_gc = viewport->new_pen("red", 2);
-		this->realtime_track_pt2_gc = viewport->new_pen("green", 2);
-		this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
-	}
+	this->realtime_track_gc = viewport->new_pen("#203070", 2);
+	this->realtime_track_bg_gc = viewport->new_pen("grey", 2);
+	this->realtime_track_pt1_gc = viewport->new_pen("red", 2);
+	this->realtime_track_pt2_gc = viewport->new_pen("green", 2);
+	this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
 
-	this->gpsd_host = NULL; //strdup("host");
-	this->gpsd_port = NULL; //strdup("port");
+	this->gpsd_host = NULL; //strdup("host"); TODO
+	this->gpsd_port = NULL; //strdup("port"); TODO
 
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
@@ -2027,7 +2020,18 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {
-		this->trw_children[i] = new LayerTRW(viewport);
+		this->trw_children[i] = new LayerTRW();
 		this->trw_children[i]->set_menu_selection(VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+	}
+}
+
+
+
+
+/* To be called right after constructor. */
+void LayerGPS::set_coord_mode(VikCoordMode mode)
+{
+	for (int i = 0; i < NUM_TRW; i++) {
+		this->trw_children[i]->set_coord_mode(mode);
 	}
 };

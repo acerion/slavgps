@@ -87,6 +87,7 @@ namespace SlavGPS {
 
 
 
+		void configure_from_viewport(Viewport const * viewport);
 
 
 		void create_image_file();

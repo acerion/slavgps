@@ -117,7 +117,6 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		LayerTRW();
-		LayerTRW(Viewport * viewport);
 		~LayerTRW();
 
 
@@ -316,7 +315,7 @@ namespace SlavGPS {
 		time_t get_timestamp_waypoints();
 
 
-
+		void set_coord_mode(VikCoordMode mode);
 		VikCoordMode get_coord_mode();
 
 		bool uniquify(LayersPanel * panel);

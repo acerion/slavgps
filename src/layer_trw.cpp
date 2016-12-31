@@ -1274,7 +1274,8 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 
 static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	LayerTRW * trw = new LayerTRW(viewport);
+	LayerTRW * trw = new LayerTRW();
+	trw->set_coord_mode(viewport->get_coord_mode());
 
 	int pl;
 
@@ -7290,47 +7291,6 @@ LayerTRW::LayerTRW() : Layer()
 	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
-}
-
-
-
-
-LayerTRW::LayerTRW(Viewport * viewport) : Layer()
-{
-	this->type = LayerType::TRW;
-	strcpy(this->debug_string, "TRW");
-	this->interface = &vik_trw_layer_interface;
-
-	memset(&coord_mode, 0, sizeof (VikCoordMode));
-
-	/*
-	 It's not entirely clear the benefits of hash tables usage
-	 here - possibly the simplicity of first implementation for
-	 unique names.  Now with the name of the item stored as part
-	 of the item - these tables are effectively straightforward
-	 lists.
-
-	 For this reworking I've choosen to keep the use of hash
-	 tables since for the expected data sizes - even many hundreds
-	 of waypoints and tracks is quite small in the grand scheme of
-	 things, and with normal PC processing capabilities - it has
-	 negligibile performance impact.  This also minimized the
-	 amount of rework - as the management of the hash tables
-	 already exists.
-
-	 The hash tables are indexed by simple integers acting as a
-	 UUID hash, which again shouldn't affect performance much we
-	 have to maintain a uniqueness (as before when multiple names
-	 where not allowed), this is to ensure it refers to the same
-	 item in the data structures used on the viewport and on the
-	 layers panel.
-	*/
-
-	#if 0
-	rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
-	rv->tracks = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	#endif
 
 	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */
 
@@ -7345,41 +7305,48 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
 
-
-
 	this->rename(vik_trw_layer_interface.layer_name.toUtf8().constData());
 
-	if (viewport == NULL
-#ifdef K
-	    || gtk_widget_get_window(viewport->get_toolkit_widget()) == NULL
-#endif
-	    ) {
-		;
-	} else {
-#ifdef K
-		this->wplabellayout = gtk_widget_create_pango_layout(viewport->get_toolkit_widget(), NULL);
-		pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->get_toolkit_widget())->font_desc);
 
-		this->tracklabellayout = gtk_widget_create_pango_layout(viewport->get_toolkit_widget(), NULL);
-		pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->get_toolkit_widget())->font_desc);
+#ifdef K
+	this->wplabellayout = gtk_widget_create_pango_layout(viewport, NULL);
+	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
+
+	this->tracklabellayout = gtk_widget_create_pango_layout(viewport, NULL);
+	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
 #endif
 
-		this->new_track_pens();
+	this->new_track_pens();
 
-		this->waypoint_pen = QPen(this->waypoint_color);
-		this->waypoint_pen.setWidth(2);
+	this->waypoint_pen = QPen(this->waypoint_color);
+	this->waypoint_pen.setWidth(2);
 
-		this->waypoint_text_pen = QPen(this->waypoint_text_color);
-		this->waypoint_text_pen.setWidth(1);
+	this->waypoint_text_pen = QPen(this->waypoint_text_color);
+	this->waypoint_text_pen.setWidth(1);
 
-		this->waypoint_bg_pen = QPen(this->waypoint_bg_color);
-		this->waypoint_bg_pen.setWidth(1);
+	this->waypoint_bg_pen = QPen(this->waypoint_bg_color);
+	this->waypoint_bg_pen.setWidth(1);
 #ifdef K
-		gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
+	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif
 
-		this->coord_mode = viewport->get_coord_mode();
 
-		this->menu_selection = this->interface->menu_items_selection;
-	}
+	this->menu_selection = this->interface->menu_items_selection;
+
+
+#if 0
+	rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
+	rv->tracks = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+	rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+#endif
+
+}
+
+
+
+
+/* To be called right after constructor. */
+void LayerTRW::set_coord_mode(VikCoordMode mode)
+{
+	this->coord_mode = mode;
 }
