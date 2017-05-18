@@ -7,6 +7,9 @@ RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
     window.cpp \
+    acquire.cpp \
+    datasource_file.cpp \
+    babel.cpp \
     window_layer_tools.cpp \
     viewport.cpp \
     coord.cpp \
@@ -116,7 +119,9 @@ HEADERS += window.h \
     preferences.h \
     settings.h \
     statusbar.h \
-    modules.h
+    modules.h \
+    acquire.h \
+    babel.h
 
 
 # For glib library.

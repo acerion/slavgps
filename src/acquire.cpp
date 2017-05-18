@@ -43,10 +43,20 @@ using namespace SlavGPS;
 
 
 
+VikDataSourceInterface vik_datasource_gps_interface;
+VikDataSourceInterface vik_datasource_geojson_interface;
+VikDataSourceInterface vik_datasource_routing_interface;
+VikDataSourceInterface vik_datasource_osm_interface;
+VikDataSourceInterface vik_datasource_osm_my_traces_interface;
+VikDataSourceInterface vik_datasource_geotag_interface;
+VikDataSourceInterface vik_datasource_wikipedia_interface;
+VikDataSourceInterface vik_datasource_url_interface;
+
+
 
 /************************ FILTER LIST *******************/
 // extern VikDataSourceInterface vik_datasource_gps_interface;
-
+#ifdef K
 /*** Input is LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_simplify_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_compress_interface;
@@ -56,16 +66,19 @@ extern VikDataSourceInterface vik_datasource_bfilter_manual_interface;
 /*** Input is a track and a LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_polygon_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
+#endif
 
 /*** Input is a track. ***/
 
 const VikDataSourceInterface * filters[] = {
+#ifdef K
 	&vik_datasource_bfilter_simplify_interface,
 	&vik_datasource_bfilter_compress_interface,
 	&vik_datasource_bfilter_dup_interface,
 	&vik_datasource_bfilter_manual_interface,
 	&vik_datasource_bfilter_polygon_interface,
 	&vik_datasource_bfilter_exclude_polygon_interface,
+#endif
 };
 
 const unsigned int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
@@ -95,6 +108,7 @@ typedef struct {
 
 static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t * w)
 {
+#ifdef K
 	if (w->source_interface->is_thread) {
 		gdk_threads_enter();
 		if (!w->running) {
@@ -110,6 +124,7 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
 	if (w->source_interface->progress_func) {
 		w->source_interface->progress_func(c, data, w);
 	}
+#endif
 }
 
 
@@ -124,7 +139,9 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
 static void on_complete_process(w_and_interface_t * wi)
 {
 	if (wi->w->running) {
+#ifdef K
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Done."));
+#endif
 		if (wi->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
@@ -133,15 +150,19 @@ static void on_complete_process(w_and_interface_t * wi)
 				Layer * layer = wi->trw;
 				wi->w->panel->get_top_layer()->add_layer(layer, true);
 			} else {
+#ifdef K
 				gtk_label_set_text(GTK_LABEL(wi->w->status), _("No data."));
+#endif
 			}
 		}
+#ifdef K
 		if (wi->w->source_interface->keep_dialog_open) {
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT, true);
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_REJECT, false);
 		} else {
 			gtk_dialog_response(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT);
 		}
+#endif
 		/* Main display update. */
 		if (wi->trw) {
 			wi->trw->post_read(wi->w->viewport, true);
@@ -149,7 +170,7 @@ static void on_complete_process(w_and_interface_t * wi)
 			if (wi->w->source_interface->autoview) {
 				wi->trw->auto_set_view(wi->w->panel->get_viewport());
 			}
-			wi->w->panel->emit_update();
+			wi->w->panel->emit_update_cb();
 		}
 	} else {
 		/* Cancelled. */
@@ -190,7 +211,7 @@ static void get_from_anything(w_and_interface_t * wi)
 	}
 	free_process_options(wi->po);
 	free(wi->options);
-
+#ifdef K
 	if (wi->w->running && !result) {
 		gdk_threads_enter();
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Error: acquisition failed."));
@@ -203,6 +224,7 @@ static void get_from_anything(w_and_interface_t * wi)
 		on_complete_process(wi);
 		gdk_threads_leave();
 	}
+#endif
 
 	if (source_interface->cleanup_func) {
 		source_interface->cleanup_func(wi->w->user_data);
@@ -272,7 +294,7 @@ static void acquire(Window * window,
 	}
 
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
-
+#ifdef K
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
 	if (source_interface->add_setup_widgets_func) {
@@ -309,6 +331,7 @@ static void acquire(Window * window,
 			return; /* TODO: do we have to free anything here? */
 		}
 	}
+#endif
 
 	/* CREATE INPUT DATA & GET OPTIONS */
 	ProcessOptions * po = (ProcessOptions *) malloc(sizeof (ProcessOptions));
@@ -346,7 +369,7 @@ static void acquire(Window * window,
 	if (source_interface->off_func) {
 		source_interface->off_func(pass_along_data, &args_off, &fd_off);
 	}
-
+#ifdef K
 	/* Cleanup for option dialogs. */
 	if (source_interface->add_setup_widgets_func) {
 		gtk_widget_destroy(dialog);
@@ -354,6 +377,7 @@ static void acquire(Window * window,
 	} else if (source_interface->params) {
 		a_uibuilder_free_paramdatas(paramdatas, source_interface->params, source_interface->params_count);
 	}
+#endif
 
 	acq_dialog_widgets_t * w = (acq_dialog_widgets_t *) malloc(sizeof (acq_dialog_widgets_t));
 	w_and_interface_t * wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
@@ -364,6 +388,7 @@ static void acquire(Window * window,
 	wi->trw = trw;
 	wi->creating_new_layer = (!trw); /* Default if Auto Layer Management is passed in. */
 
+#ifdef K
 	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
 	gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
@@ -378,6 +403,7 @@ static void acquire(Window * window,
 		gtk_widget_show_all(dialog);
 	}
 	w->status = status;
+#endif
 
 	w->window = window;
 	w->panel = panel;
@@ -386,6 +412,7 @@ static void acquire(Window * window,
 		source_interface->add_progress_widgets_func(dialog, user_data);
 	}
 	w->user_data = user_data;
+
 
 	if (mode == VIK_DATASOURCE_ADDTOLAYER) {
 		Layer * current_selected = w->panel->get_selected_layer();
@@ -406,9 +433,12 @@ static void acquire(Window * window,
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(w->viewport->get_coord_mode());
+#ifdef K
 		wi->trw->rename(_(source_interface->layer_title));
+#endif
 	}
 
+#ifdef K
 	if (source_interface->is_thread) {
 		if (po->babelargs || po->url || po->shell_command) {
 #if GLIB_CHECK_VERSION (2, 32, 0)
@@ -442,6 +472,7 @@ static void acquire(Window * window,
 			gtk_dialog_run(GTK_DIALOG (dialog));
 		}
 	} else {
+#endif
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		if (source_interface->process_func) {
 			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
@@ -453,20 +484,27 @@ static void acquire(Window * window,
 		free(options);
 
 		on_complete_process(wi);
+#ifdef K
 		/* Actually show it if necessary. */
 		if (wi->w->source_interface->keep_dialog_open) {
 			gtk_dialog_run(GTK_DIALOG(dialog));
 		}
+#endif
 
 		free(w);
 		free(wi);
+#ifdef K
 	}
+#endif
 
+
+#ifdef K
 	gtk_widget_destroy(dialog);
 
 	if (cleanup_function) {
 		cleanup_function(source_interface);
 	}
+#endif
 }
 
 
@@ -510,9 +548,11 @@ typedef struct {
 
 static void acquire_trwlayer_callback(GObject *menuitem, pass_along * data)
 {
+#ifdef K
 	VikDataSourceInterface * iface = (VikDataSourceInterface *) g_object_get_data (menuitem, "vik_acq_iface");
 
 	acquire(data->window, data->panel, data->viewport, iface->mode, iface, data->trw, data->trk, NULL, NULL);
+#endif
 }
 
 
@@ -534,6 +574,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 		trk
 	};
 
+#ifdef K
 	for (unsigned int i = 0; i < N_FILTERS; i++) {
 		if (filters[i]->inputtype == inputtype) {
 			if (! menu_item) { /* Do this just once, but return NULL if no filters. */
@@ -549,6 +590,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 			gtk_widget_show(item);
 		}
 	}
+#endif
 
 	return menu_item;
 }

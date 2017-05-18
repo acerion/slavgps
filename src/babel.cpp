@@ -487,20 +487,25 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options)
 {
 	if (!process_options) {
+		qDebug() << "EE: Babel: no process options";
 		return false;
 	}
 
 	if (process_options->url) {
+		qDebug() << "II: Babel: ->url";
 		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options);
 	}
 
 	if (process_options->babelargs) {
+		qDebug() << "II: Babel: ->babelargs";
 		return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options);
 	}
 
 	if (process_options->shell_command) {
+		qDebug() << "II: Babel: ->shell_command";
 		return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, download_options);
 	}
+	qDebug() << "II: Babel: convert_from returns false";
 	return false;
 }
 
@@ -617,7 +622,9 @@ static void load_feature_parse_line (char *line)
 				set_mode (&(device->mode), tokens[1]);
 				device->name = g_strdup(tokens[2]);
 				device->label = g_strndup (tokens[4], 50); /* Limit really long label text. */
+#ifdef K
 				a_babel_device_list.push_back(device);
+#endif
 				fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
 					device->name,
 					device->mode.waypointsRead, device->mode.waypointsWrite,
@@ -695,7 +702,7 @@ static bool load_feature()
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 
 
@@ -780,6 +787,7 @@ void a_babel_uninit ()
 		}
 	}
 
+#ifdef K
 	if (a_babel_device_list.size()) {
 		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
 			BabelDevice * device = *iter;
@@ -792,6 +800,7 @@ void a_babel_uninit ()
 			// a_babel_device_list.erase(iter);
 		}
 	}
+#endif
 
 }
 
@@ -805,5 +814,8 @@ void a_babel_uninit ()
  */
 bool a_babel_available()
 {
+	return true;
+#ifdef K
 	return !a_babel_device_list.empty();
+#endif
 }

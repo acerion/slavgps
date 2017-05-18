@@ -32,6 +32,7 @@
 #include "background.h"
 #include "preferences.h"
 #include "settings.h"
+#include "babel.h"
 
 
 
@@ -116,8 +117,10 @@ int main(int argc, char ** argv)
 
 #if 0
 	curl_download_init();
+#endif
 
 	a_babel_init();
+#ifdef K
 
 	/* Init modules/plugins. */
 	modules_init();
@@ -137,8 +140,9 @@ int main(int argc, char ** argv)
 	*/
 #endif
 	a_background_post_init();
-#if 0
 	a_babel_post_init();
+#if 0
+
 	modules_post_init();
 
 	/* May need to initialize the Positonal TimeZone lookup. */
@@ -200,8 +204,8 @@ int main(int argc, char ** argv)
 
 	int rv = app.exec();
 
-#if 0
 	a_babel_uninit();
+#if 0
 	a_toolbar_uninit();
 	a_background_uninit();
 	map_cache_uninit();

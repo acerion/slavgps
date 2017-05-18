@@ -28,7 +28,7 @@
 
 #include <cstdint>
 
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
 #include "window.h"
 #include "layers_panel.h"

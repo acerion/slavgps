@@ -30,12 +30,12 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
 //#include "viking.h"
 #include "babel.h"
 #include "gpx.h"
-#include "babel_ui.h"
+//#include "babel_ui.h"
 #include "acquire.h"
 
 
@@ -119,6 +119,7 @@ static void * datasource_file_init(acq_vik_t * avt)
 
 static void add_file_filter(void * data, void * user_data)
 {
+#ifdef K
 	GtkFileChooser * chooser = GTK_FILE_CHOOSER (user_data);
 	char const * label = ((BabelFile*) data)->label;
 	char const * ext = ((BabelFile*) data)->ext;
@@ -147,6 +148,7 @@ static void add_file_filter(void * data, void * user_data)
 	}
 
 	free(pattern);
+#endif
 }
 
 
@@ -155,6 +157,7 @@ static void add_file_filter(void * data, void * user_data)
 /* See VikDataSourceInterface. */
 static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
+#ifdef K
 	datasource_file_widgets_t * widgets = (datasource_file_widgets_t *) user_data;
 	GtkWidget *filename_label, *type_label;
 
@@ -196,6 +199,7 @@ static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * vie
 	gtk_box_pack_start(box, type_label, false, false, 5);
 	gtk_box_pack_start(box, widgets->type, false, false, 5);
 	gtk_widget_show_all(dialog);
+#endif
 }
 
 
@@ -204,6 +208,7 @@ static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * vie
 /* See VikDataSourceInterface/ */
 static void datasource_file_get_process_options(datasource_file_widgets_t *widgets, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3)
 {
+#ifdef K
 	/* Retrieve the file selected. */
 	char * filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(widgets->file));
 
@@ -224,10 +229,17 @@ static void datasource_file_get_process_options(datasource_file_widgets_t *widge
 	po->babelargs = g_strdup_printf("-i %s", type);
 	po->filename = g_strdup(filename);
 
+#endif
+
+	po->babelargs = g_strdup_printf("-i nmea");
+	po->filename = g_strdup("nmea.txt");
+
+#ifdef K
 	/* Free memory. */
 	free(filename);
 
 	fprintf(stderr, _("DEBUG: using babel args '%s' and file '%s'\n"), po->babelargs, po->filename);
+#endif
 }
 
 

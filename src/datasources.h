@@ -18,38 +18,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIK_DATASOURCES_H
-#define __VIK_DATASOURCES_H
+#ifndef _SG_DATASOURCES_H_
+#define _SG_DATASOURCES_H_
 
 #include "acquire.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace SlavGPS {
 
-
-extern SlavGPS::VikDataSourceInterface vik_datasource_gps_interface;
-extern SlavGPS::VikDataSourceInterface vik_datasource_file_interface;
-extern SlavGPS::VikDataSourceInterface vik_datasource_routing_interface;
-#ifdef VIK_CONFIG_OPENSTREETMAP
-extern SlavGPS::VikDataSourceInterface vik_datasource_osm_interface;
-extern SlavGPS::VikDataSourceInterface vik_datasource_osm_my_traces_interface;
-#endif
 #ifdef VIK_CONFIG_GEOCACHES
-void a_datasource_gc_init();
-extern SlavGPS::VikDataSourceInterface vik_datasource_gc_interface;
-#endif
-#ifdef VIK_CONFIG_GEOTAG
-extern SlavGPS::VikDataSourceInterface vik_datasource_geotag_interface;
-#endif
-#ifdef VIK_CONFIG_GEONAMES
-extern SlavGPS::VikDataSourceInterface vik_datasource_wikipedia_interface;
-#endif
-extern SlavGPS::VikDataSourceInterface vik_datasource_url_interface;
-extern SlavGPS::VikDataSourceInterface vik_datasource_geojson_interface;
-
-#ifdef __cplusplus
-}
+	void a_datasource_gc_init();
 #endif
 
-#endif
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_DATASOURCES_H_ */
