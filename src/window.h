@@ -15,6 +15,7 @@
 #include "layers_panel.h"
 #include "statusbar.h"
 #include "file.h"
+#include "acquire.h"
 
 
 
@@ -41,6 +42,8 @@ namespace SlavGPS {
 	class LayerToolbox;
 	class Viewport;
 
+	struct _VikDataSourceInterface;
+	typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
 
 
@@ -169,6 +172,29 @@ namespace SlavGPS {
 
 		void show_centers_cb();
 
+		void my_acquire(VikDataSourceInterface * datasource);
+		void acquire_from_gps_cb(void);
+		void acquire_from_file_cb(void);
+		void acquire_from_geojson_cb(void);
+		void acquire_from_routing_cb(void);
+#ifdef VIK_CONFIG_OPENSTREETMAP
+		void acquire_from_osm_cb(void);
+		void acquire_from_my_osm_cb(void);
+#endif
+
+#ifdef VIK_CONFIG_GEOCACHES
+		void acquire_from_gc_cb(void);
+#endif
+
+#ifdef VIK_CONFIG_GEOTAG
+		void acquire_from_geotag_cb(void);
+#endif
+
+#ifdef VIK_CONFIG_GEONAMES
+		void acquire_from_wikipedia_cb(void);
+#endif
+
+		void acquire_from_url_cb(void);
 
 	protected:
 
@@ -220,6 +246,7 @@ namespace SlavGPS {
 		QMenu * menu_help = NULL;
 
 		QMenu * submenu_recent_files = NULL;
+		QMenu * submenu_file_acquire = NULL;
 
 		SlavGPS::Layer * trigger = NULL;
 		VikCoord trigger_center;
