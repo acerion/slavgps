@@ -58,7 +58,7 @@ static char * last_folder_uri = NULL;
 
 static void * datasource_geotag_init(acq_vik_t * avt);
 static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_geotag_get_process_options(void * user_data, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3);
 static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, void * not_used);
 static void datasource_geotag_cleanup(void * user_data);
 
@@ -153,8 +153,10 @@ static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * v
 
 
 
-static void datasource_geotag_get_process_options(void * user_data, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *)user_data;
 	/* Retrieve the files selected. */
 	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
@@ -169,6 +171,8 @@ static void datasource_geotag_get_process_options(void * user_data, ProcessOptio
 
 	/* Return some value so *thread* processing will continue */
 	po->babelargs = strdup("fake command"); /* Not really used, thus no translations. */
+
+	return po;
 }
 
 

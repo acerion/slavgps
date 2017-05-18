@@ -65,14 +65,20 @@ typedef void (*BabelStatusFunc)(BabelProgressCode, void *, void *);
  *
  * Need to specify at least one of babelargs, URL or shell_command.
  */
-typedef struct {
-	char* babelargs;       /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
-	char* filename;        /* Input filename (or device port e.g. /dev/ttyS0). */
-	char* input_file_type; /* If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
-	char* url;             /* URL input rather than a filename. */
-	char* babel_filters;   /* Optional filter arguments to gpsbabel. */
-	char* shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
-} ProcessOptions;
+struct ProcessOptions {
+public:
+	ProcessOptions();
+	ProcessOptions(const char * args, const char * filename, const char * input_file_type, const char * url);
+
+	~ProcessOptions();
+
+	char * babelargs = NULL;       /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
+	char * filename = NULL;        /* Input filename (or device port e.g. /dev/ttyS0). */
+	char * input_file_type = NULL; /* If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
+	char * url = NULL;             /* URL input rather than a filename. */
+	char * babel_filters = NULL;   /* Optional filter arguments to gpsbabel. */
+	char * shell_command = NULL;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
+} ;
 
 /**
  * BabelMode:

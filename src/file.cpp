@@ -54,6 +54,7 @@
 #include "fileutils.h"
 #include "globals.h"
 #include "preferences.h"
+#include "babel.h"
 
 
 
@@ -808,13 +809,11 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-#ifdef K
 			/* Implicit Conversion. */
-			ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
+			ProcessOptions po((char *) "-i kml", filename, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
-#endif
 		}
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */

@@ -145,8 +145,10 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 
 
 
-static void datasource_get_process_options(void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2)
+static ProcessOptions * datasource_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	datasource_t *data = (datasource_t*) user_data;
 
 	WebToolDatasource * web_tool_datasource = (WebToolDatasource *) data->web_tool_datasource;
@@ -182,6 +184,8 @@ static void datasource_get_process_options(void * user_data, ProcessOptions *po,
 
 	options = NULL;
 	po->babel_filters = web_tool_datasource->babel_filter_args;
+
+	return po;
 }
 
 

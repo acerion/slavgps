@@ -73,7 +73,7 @@ static int last_type = 0;
 
 static void * datasource_file_init(acq_vik_t * avt);
 static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_file_get_process_options(datasource_file_widgets_t * widgets, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_file_get_process_options(datasource_file_widgets_t * widgets, void * not_used, char const * not_used2, char const * not_used3);
 static void datasource_file_cleanup(void * data);
 
 
@@ -206,8 +206,9 @@ static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * vie
 
 
 /* See VikDataSourceInterface/ */
-static void datasource_file_get_process_options(datasource_file_widgets_t *widgets, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_file_get_process_options(datasource_file_widgets_t *widgets, void * not_used, char const * not_used2, char const * not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
 #ifdef K
 	/* Retrieve the file selected. */
 	char * filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(widgets->file));
@@ -238,8 +239,10 @@ static void datasource_file_get_process_options(datasource_file_widgets_t *widge
 	/* Free memory. */
 	free(filename);
 
-	fprintf(stderr, _("DEBUG: using babel args '%s' and file '%s'\n"), po->babelargs, po->filename);
+	qDebug() << "II: Datasource File: using Babel args" << po->babelargs << "and file" << po->filename;
 #endif
+
+	return po;
 }
 
 

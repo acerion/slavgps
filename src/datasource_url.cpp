@@ -65,7 +65,7 @@ static int last_type = -1;
 
 static void * datasource_url_init(acq_vik_t * avt);
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_url_get_process_options(datasource_url_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_url_get_process_options(datasource_url_widgets_t * widgets, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3);
 static void datasource_url_cleanup(void * data);
 
 
@@ -191,8 +191,10 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 
 
 
-static void datasource_url_get_process_options(datasource_url_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_url_get_process_options(datasource_url_widgets_t * widgets, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	/* Retrieve the user entered value. */
 	char const * value = gtk_entry_get_text(GTK_ENTRY(widgets->url));
 
@@ -210,6 +212,8 @@ static void datasource_url_get_process_options(datasource_url_widgets_t * widget
 	/* Support .zip + bzip2 files directly. */
 	download_options->convert_file = a_try_decompress_file;
 	download_options->follow_location = 5;
+
+	return po;
 }
 
 

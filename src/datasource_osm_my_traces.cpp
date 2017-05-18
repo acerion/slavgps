@@ -64,7 +64,7 @@ typedef struct {
 
 static void * datasource_osm_my_traces_init(acq_vik_t *avt);
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
-static void datasource_osm_my_traces_get_process_options(void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2);
+static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2);
 static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused);
 static void datasource_osm_my_traces_cleanup(void * data);
 
@@ -150,8 +150,10 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 
 
-static void datasource_osm_my_traces_get_process_options(void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2)
+static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
 
 	/* Overwrite authentication info. */
@@ -161,6 +163,8 @@ static void datasource_osm_my_traces_get_process_options(void * user_data, Proce
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
 	options = NULL;
+
+	return po;
 }
 
 

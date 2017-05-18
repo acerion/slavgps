@@ -73,7 +73,7 @@ typedef struct {
 
 static void * datasource_gc_init(acq_vik_t *avt);
 static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
-static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3);
+static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets);
 static char *datasource_gc_check_existence();
 
@@ -267,8 +267,10 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 
 
 
-static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3)
+static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, void * not_used, const char *not_used2, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	//char *safe_string = g_shell_quote (gtk_entry_get_text (GTK_ENTRY(widgets->center_entry)));
 	char *safe_user = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "username")->s);
 	char *safe_pass = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "password")->s);
@@ -302,6 +304,8 @@ static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, 
 	free(safe_pass);
 	free(slat);
 	free(slon);
+
+	return po;
 }
 
 

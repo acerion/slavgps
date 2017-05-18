@@ -182,18 +182,36 @@ static void on_complete_process(w_and_interface_t * wi)
 
 
 
-
-static void free_process_options(ProcessOptions *po)
+ProcessOptions::ProcessOptions()
 {
-	if (po) {
-		free(po->babelargs);
-		free(po->filename);
-		free(po->input_file_type);
-		free(po->babel_filters);
-		free(po->url);
-		free(po->shell_command);
-		free(po);
+}
+
+
+ProcessOptions::ProcessOptions(const char * args, const char * filename, const char * input_file_type, const char * url)
+{
+	if (args) {
+		this->babelargs = strdup(args);
 	}
+	if (filename) {
+		this->filename = strdup(filename);
+	}
+	if (input_file_type) {
+		this->input_file_type = strdup(input_file_type);
+	}
+	if (url) {
+		this->url = strdup(url);
+	}
+}
+
+
+ProcessOptions::~ProcessOptions()
+{
+	free(this->babelargs);
+	free(this->filename);
+	free(this->input_file_type);
+	free(this->babel_filters);
+	free(this->url);
+	free(this->shell_command);
 }
 
 
@@ -209,7 +227,7 @@ static void get_from_anything(w_and_interface_t * wi)
 	if (source_interface->process_func) {
 		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->w, wi->options);
 	}
-	free_process_options(wi->po);
+	delete wi->po;
 	free(wi->options);
 #ifdef K
 	if (wi->w->running && !result) {
@@ -334,13 +352,12 @@ static void acquire(Window * window,
 #endif
 
 	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions * po = (ProcessOptions *) malloc(sizeof (ProcessOptions));
-	memset(po, 0, sizeof (ProcessOptions));
+	ProcessOptions * po = NULL;
 
 	if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER) {
 		char * name_src = a_gpx_write_tmp_file(trw, NULL);
 
-		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, NULL);
+		po = source_interface->get_process_options(pass_along_data, NULL, name_src, NULL);
 
 		util_add_to_deletion_list(name_src);
 
@@ -349,7 +366,7 @@ static void acquire(Window * window,
 		char * name_src = a_gpx_write_tmp_file(trw, NULL);
 		char * name_src_track = a_gpx_write_track_tmp_file(trk, NULL);
 
-		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, name_src_track);
+		po = source_interface->get_process_options(pass_along_data, NULL, name_src, name_src_track);
 
 		util_add_to_deletion_list(name_src);
 		util_add_to_deletion_list(name_src_track);
@@ -359,11 +376,14 @@ static void acquire(Window * window,
 	} else if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRACK) {
 		char *name_src_track = a_gpx_write_track_tmp_file(trk, NULL);
 
-		source_interface->get_process_options_func(pass_along_data, po, NULL, NULL, name_src_track);
+		po = source_interface->get_process_options(pass_along_data, NULL, NULL, name_src_track);
 
 		free(name_src_track);
-	} else if (source_interface->get_process_options_func)
-		source_interface->get_process_options_func(pass_along_data, po, options, NULL, NULL);
+	} else if (source_interface->get_process_options) {
+		po = source_interface->get_process_options(pass_along_data, options, NULL, NULL);
+	} else {
+		/* kamil: what now? */
+	}
 
 	/* Get data for Off command. */
 	if (source_interface->off_func) {
@@ -454,7 +474,7 @@ static void acquire(Window * window,
 			} else {
 				if (args_off) {
 					/* Turn off. */
-					ProcessOptions off_po = { args_off, fd_off, NULL, NULL, NULL, NULL };
+					ProcessOptions off_po(args_off, fd_off, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 					a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
 					free(args_off);
 				}
@@ -480,7 +500,7 @@ static void acquire(Window * window,
 				dialog_error(QString(_("Error: acquisition failed.")), window);
 			}
 		}
-		free_process_options(po);
+		delete po;
 		free(options);
 
 		on_complete_process(wi);

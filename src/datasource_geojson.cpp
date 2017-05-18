@@ -54,7 +54,7 @@ static char * last_folder_uri = NULL;
 
 static void * datasource_geojson_init(acq_vik_t * avt);
 static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_geojson_get_process_options(datasource_geojson_user_data_t * user_data, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_data_t * user_data, void * not_used, char const * not_used2, char const * not_used3);
 static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, DownloadFileOptions * options_unused);
 static void datasource_geojson_cleanup(void * data);
 

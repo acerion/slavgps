@@ -108,14 +108,14 @@ namespace SlavGPS {
 	/**
 	 * VikDataSourceGetProcessOptionsFunc:
 	 * @user_data: provided by #VikDataSourceInterface.init_func or dialog with params
-	 * @process_options: main options controlling the behaviour of #VikDataSourceInterface.process_func
 	 * @download_options: optional options for downloads from URLs for #VikDataSourceInterface.process_func
 	 * @input_file_name:
 	 * @input_track_file_name:
 	 *
 	 * Set both to %NULL to signal refusal (ie already downloading).
+	 @return process options: main options controlling the behaviour of #VikDataSourceInterface.process_func
 	 */
-	typedef void (* VikDataSourceGetProcessOptionsFunc) (void * user_data, ProcessOptions * process_options, void * download_options, const char * input_file_name, const char * input_track_file_name);
+	typedef ProcessOptions * (* VikDataSourceGetProcessOptionsFunc) (void * user_data, void * download_options, const char * input_file_name, const char * input_track_file_name);
 
 	/**
 	 * VikDataSourceProcessFunc:
@@ -169,7 +169,7 @@ namespace SlavGPS {
 		VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
 		/***                    ***/
 
-		VikDataSourceGetProcessOptionsFunc get_process_options_func;
+		VikDataSourceGetProcessOptionsFunc get_process_options;
 
 		VikDataSourceProcessFunc process_func;
 

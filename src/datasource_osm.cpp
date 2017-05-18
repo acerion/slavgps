@@ -61,7 +61,7 @@ static double last_page_number = 0;
 
 static void * datasource_osm_init(acq_vik_t * avt);
 static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * notused1, char const * notused2);
+static ProcessOptions * datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, DownloadFileOptions * options, char const * notused1, char const * notused2);
 static void datasource_osm_cleanup(void * data);
 
 
@@ -124,8 +124,10 @@ static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * view
 
 
 
-static void datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * notused1, char const * notused2)
+static ProcessOptions * datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, DownloadFileOptions * options, char const * notused1, char const * notused2)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	int page = 0;
 
 	LatLonBBoxStrings bbox_strings;
@@ -138,6 +140,8 @@ static void datasource_osm_get_process_options(datasource_osm_widgets_t * widget
 	/* NB Download is of GPX type. */
 	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.sminlon, bbox_strings.sminlat, bbox_strings.smaxlon, bbox_strings.smaxlat, page);
 	options = NULL; /* i.e. use the default download settings. */
+
+	return po;
 }
 
 

@@ -1200,7 +1200,7 @@ static void gps_comm_thread(GpsSession *sess)
 	bool result;
 
 	if (sess->direction == GPSDirection::DOWN) {
-		ProcessOptions po = { sess->babelargs, sess->port, NULL, NULL, NULL, NULL };
+		ProcessOptions po(sess->babelargs, sess->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 		result = a_babel_convert_from(sess->trw, &po, (BabelStatusFunc) gps_download_progress_func, sess, NULL);
 	} else {
 		result = a_babel_convert_to(sess->trw, sess->trk, sess->babelargs, sess->port,
@@ -1384,7 +1384,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
 			char *device_off = g_strdup_printf("-i %s,%s", protocol, "power_off");
-			ProcessOptions po = { device_off, port, NULL, NULL, NULL, NULL };
+			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
 				dialog_error("Could not turn off device.", layer->get_window());

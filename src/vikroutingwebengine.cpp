@@ -451,7 +451,7 @@ static bool vik_routing_web_engine_find(VikRoutingEngine * self, LayerTRW * trw,
 	DownloadFileOptions *options = vik_routing_web_engine_get_download_options(self);
 
 	char * format = vik_routing_engine_get_format (self);
-	ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
+	ProcessOptions po(NULL, NULL, format, uri); /* kamil FIXME: memory leak through these pointers? */
 	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options);
 
 	free(uri);
@@ -606,7 +606,7 @@ static bool vik_routing_web_engine_refine(VikRoutingEngine * self, LayerTRW * tr
 
 	/* Convert and insert data in model. */
 	char * format = vik_routing_engine_get_format(self);
-	ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
+	ProcessOptions po(NULL, NULL, format, uri); /* kamil FIXME: memory leak through these pointers? */
 	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options);
 
 	free(uri);

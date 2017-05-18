@@ -59,7 +59,7 @@ static char * last_to_str = NULL;
 
 static void * datasource_routing_init(acq_vik_t * avt);
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static void datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3);
 static void datasource_routing_cleanup(void * data);
 
 
@@ -138,8 +138,10 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 
 
-static void datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	/* Retrieve directions. */
 	char const * from = gtk_entry_get_text(GTK_ENTRY(widgets->from_entry));
 	char const * to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
@@ -148,7 +150,7 @@ static void datasource_routing_get_process_options(datasource_routing_widgets_t 
 	last_engine = gtk_combo_box_get_active(GTK_COMBO_BOX(widgets->engines_combo));
 	VikRoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
-		return;
+		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}
 
 	po->url = vik_routing_engine_get_url_from_directions(engine, from, to);
@@ -161,6 +163,8 @@ static void datasource_routing_get_process_options(datasource_routing_widgets_t 
 
 	last_from_str = g_strdup(from);
 	last_to_str = g_strdup(to);
+
+	return po;
 }
 
 

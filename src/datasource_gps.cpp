@@ -59,7 +59,7 @@ static bool gps_acquire_in_progress = false;
 static int last_active = -1;
 
 static void * datasource_gps_init_func(acq_vik_t *avt);
-static void datasource_gps_get_process_options(void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3);
+static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gps_cleanup(void * user_data);
 static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog_widgets_t *w);
 static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
@@ -249,8 +249,10 @@ bool datasource_gps_get_do_waypoints(void * user_data)
 
 
 
-static void datasource_gps_get_process_options(void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3)
+static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	char *device = NULL;
 	char *tracks = NULL;
 	char *routes = NULL;
@@ -292,6 +294,8 @@ static void datasource_gps_get_process_options(void * user_data, ProcessOptions 
 	po->filename = g_strdup(datasource_gps_get_descriptor(user_data));
 
 	fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
+
+	return po;
 }
 
 

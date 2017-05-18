@@ -67,14 +67,18 @@ ParameterValue bfilter_simplify_params_defaults[] = {
 
 
 
-static void datasource_bfilter_simplify_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_simplify_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
 	po->babel_filters = g_strdup_printf("-x simplify,count=%d", paramdatas[0].u);
 
 	/* Store for subsequent default use. */
 	bfilter_simplify_params_defaults[0].u = paramdatas[0].u;
+
+	return po;
 }
 
 
@@ -157,8 +161,10 @@ ParameterValue bfilter_compress_params_defaults[] = {
 /**
  * http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
  */
-static void datasource_bfilter_compress_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_compress_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	char units = Preferences::get_unit_distance() == DistanceUnit::KILOMETRES ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
 	   However several things:
@@ -172,6 +178,8 @@ static void datasource_bfilter_compress_get_process_options(ParameterValue *para
 
 	/* Store for subsequent default use. */
 	bfilter_compress_params_defaults[0].d = paramdatas[0].d;
+
+	return po;
 }
 
 
@@ -234,11 +242,15 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 
 
 
-static void datasource_bfilter_dup_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_dup_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
 	po->babel_filters = strdup("-x duplicate,location");
+
+	return po;
 }
 
 
@@ -280,11 +292,15 @@ Parameter bfilter_manual_params[] = {
 
 
 
-static void datasource_bfilter_manual_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_manual_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
 	po->babel_filters = g_strconcat("-x ", paramdatas[0].s, NULL);
+
+	return po;
 }
 
 
@@ -320,9 +336,13 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 
 
 /* TODO: shell_escape stuff. */
-static void datasource_bfilter_polygon_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
+static ProcessOptions * datasource_bfilter_polygon_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
 {
+	ProcessOptions * po = new ProcessOptions();
+
 	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,file=- -o gpx -F -", input_track_filename, input_filename);
+
+	return po;
 }
 
 
@@ -358,9 +378,12 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 
 
 /* TODO: shell_escape stuff */
-static void datasource_bfilter_exclude_polygon_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
+static ProcessOptions * datasource_bfilter_exclude_polygon_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
 {
+	ProcessOptions * po = new ProcessOptions();
 	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,exclude,file=- -o gpx -F -", input_track_filename, input_filename);
+
+	return po;
 }
 
 
