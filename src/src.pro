@@ -121,6 +121,7 @@ HEADERS += window.h \
     statusbar.h \
     modules.h \
     acquire.h \
+    datasource_file.h \
     babel.h
 
 

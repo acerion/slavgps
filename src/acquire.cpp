@@ -312,6 +312,12 @@ static void acquire(Window * window,
 	}
 
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
+
+
+	if (source_interface->add_setup_widgets_func) {
+		source_interface->add_setup_widgets_func(dialog, viewport, user_data);
+	}
+
 #ifdef K
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */

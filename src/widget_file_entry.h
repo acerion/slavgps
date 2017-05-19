@@ -48,6 +48,9 @@ namespace SlavGPS {
 		void set_filename(QString & filename);
 		QString get_filename();
 
+		/* kamil TODO: add setter for file filters. */
+		QFileDialog * file_selector = NULL;
+
 
 	private slots:
 
@@ -59,7 +62,7 @@ namespace SlavGPS {
 		QPushButton * browse = NULL;
 		QHBoxLayout * hbox = NULL;
 
-		QFileDialog * file_selector = NULL;
+
 
 		QString selector_title;
 		QString selector_filename;
