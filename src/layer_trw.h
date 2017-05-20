@@ -56,6 +56,8 @@ namespace SlavGPS {
 	class LayerTRW;
 	class LayersPanel;
 
+	struct _VikDataSourceInterface;
+	typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
 
 
@@ -665,6 +667,8 @@ namespace SlavGPS {
 #endif
 		void google_route_webpage_cb(void);
 
+	public:
+		void acquire(VikDataSourceInterface *datasource);
 
 	private:
 		/* Add a node in tree view, under which layers' tracks/waypoints/routes will be displayed. */

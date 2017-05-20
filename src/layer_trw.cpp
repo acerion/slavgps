@@ -110,6 +110,26 @@ using namespace SlavGPS;
 
 
 
+extern VikDataSourceInterface vik_datasource_gps_interface;
+extern VikDataSourceInterface vik_datasource_file_interface;
+extern VikDataSourceInterface vik_datasource_routing_interface;
+#ifdef VIK_CONFIG_OPENSTREETMAP
+extern VikDataSourceInterface vik_datasource_osm_interface;
+extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
+#endif
+#ifdef VIK_CONFIG_GEOCACHES
+extern VikDataSourceInterface vik_datasource_gc_interface;
+#endif
+#ifdef VIK_CONFIG_GEOTAG
+extern VikDataSourceInterface vik_datasource_geotag_interface;
+#endif
+#ifdef VIK_CONFIG_GEONAMES
+extern VikDataSourceInterface vik_datasource_wikipedia_interface;
+#endif
+extern VikDataSourceInterface vik_datasource_url_interface;
+extern VikDataSourceInterface vik_datasource_geojson_interface;
+
+
 
 static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord);
 
@@ -2311,10 +2331,12 @@ void LayerTRW::find_maxmin(struct LatLon maxmin[2])
 {
 	/* Continually reuse maxmin to find the latest maximum and minimum values.
 	   First set to waypoints bounds. */
-	maxmin[0].lat = this->waypoints_bbox.north;
-	maxmin[1].lat = this->waypoints_bbox.south;
-	maxmin[0].lon = this->waypoints_bbox.east;
-	maxmin[1].lon = this->waypoints_bbox.west;
+	if (this->waypoints.size() > 1) { /* kamil TODO this condition may have to be improved. */
+		maxmin[0].lat = this->waypoints_bbox.north;
+		maxmin[1].lat = this->waypoints_bbox.south;
+		maxmin[0].lon = this->waypoints_bbox.east;
+		maxmin[1].lon = this->waypoints_bbox.west;
+	}
 
 	LayerTRWc::find_maxmin_in_tracks(tracks, maxmin);
 	LayerTRWc::find_maxmin_in_tracks(routes, maxmin);
@@ -2675,12 +2697,10 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
 
-static void trw_layer_acquire(LayerTRW * layer, LayersPanel * panel, VikDataSourceInterface *datasource)
+void LayerTRW::acquire(VikDataSourceInterface *datasource)
 {
-#ifdef K
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
-	Window * window = layer->get_window();
+	Window * window = this->get_window();
+	LayersPanel * panel = window->get_layers_panel();
 	Viewport * viewport =  window->get_viewport();
 
 	vik_datasource_mode_t mode = datasource->mode;
@@ -2688,7 +2708,6 @@ static void trw_layer_acquire(LayerTRW * layer, LayersPanel * panel, VikDataSour
 		mode = VIK_DATASOURCE_ADDTOLAYER;
 	}
 	a_acquire(window, panel, viewport, mode, datasource, NULL, NULL);
-#endif
 }
 
 
@@ -2699,9 +2718,7 @@ static void trw_layer_acquire(LayerTRW * layer, LayersPanel * panel, VikDataSour
  */
 void LayerTRW::acquire_from_gps_cb(void)
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_gps_interface);
-#endif
+	this->acquire(&vik_datasource_gps_interface);
 }
 
 
@@ -2712,9 +2729,7 @@ void LayerTRW::acquire_from_gps_cb(void)
  */
 void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_routing_interface);
-#endif
+	this->acquire(&vik_datasource_routing_interface);
 }
 
 
@@ -2725,9 +2740,7 @@ void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_url_interface);
-#endif
+	this->acquire(&vik_datasource_url_interface);
 }
 
 
@@ -2739,9 +2752,7 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_osm_interface);
-#endif
+	this->acquire(&vik_datasource_osm_interface);
 }
 
 
@@ -2752,9 +2763,7 @@ void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_osm_my_traces_interface);
-#endif
+	this->acquire(&vik_datasource_osm_my_traces_interface);
 }
 #endif
 
@@ -2767,9 +2776,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_gc_interface);
-#endif
+	this->acquire(&vik_datasource_gc_interface);
 }
 #endif
 
@@ -2782,13 +2789,11 @@ void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_geotag_interface);
+	this->acquire(&vik_datasource_geotag_interface);
 
 	/* Re-verify thumbnails as they may have changed. */
 	this->has_verified_thumbnails = false;
 	this->verify_thumbnails();
-#endif
 }
 #endif
 
@@ -2800,9 +2805,7 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
-#ifdef K
-	trw_layer_acquire(layer, panel, &vik_datasource_file_interface);
-#endif
+	this->acquire(&vik_datasource_file_interface);
 }
 
 
