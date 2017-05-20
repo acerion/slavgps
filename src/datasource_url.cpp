@@ -55,10 +55,10 @@ typedef struct {
 
 
 
-extern std::vector<BabelFile *> a_babel_file_list;
+extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last file format selected. */
-static int last_type = -1;
+static int last_type_id = -1;
 
 
 
@@ -109,7 +109,7 @@ static void * datasource_url_init(acq_vik_t * avt)
 
 static void fill_combo_box(void * data, void * user_data)
 {
-	char const * label = ((BabelFile *) data)->label;
+	char const * label = ((BabelFileType *) data)->label;
 	vik_combo_box_text_append (GTK_WIDGET(user_data), label);
 }
 
@@ -122,10 +122,10 @@ static int wanted_entry = -1;
 
 
 
-static void find_type(BabelFile * babel_file, char const * type_name)
+static void find_type(BabelFileType * file_type, char const * type_name)
 {
 	find_entry++;
-	if (!g_strcmp0(babel_file->name, type_name)) {
+	if (!g_strcmp0(file_type->name, type_name)) {
 		wanted_entry = find_entry;
 	}
 }
@@ -146,33 +146,33 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 
 	GtkWidget * type_label = gtk_label_new(_("File type:"));
 
-	if (last_type < 0) {
+	if (last_type_id < 0) {
 		find_entry = -1;
 		wanted_entry = -1;
 		char *type = NULL;
 		if (a_settings_get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, &type)) {
 			/* Use setting. */
 			if (type) {
-				for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-					find_type(*iter, type);
+				for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+					find_type(iter->second, type);
 				}
 			}
 		} else {
 			/* Default to GPX if possible. */
-			for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-				find_type(*iter, "gpx");
+			for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+				find_type(iter->second, "gpx");
 			}
 		}
 		/* If not found set it to the first entry, otherwise use the entry. */
-		last_type = (wanted_entry < 0) ? 0 : wanted_entry;
+		last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
 	if (a_babel_available()) {
 		widgets->type = vik_combo_box_text_new();
-		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-			fill_combo_box(*iter, widgets->type);
+		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+			fill_combo_box(iter->second, widgets->type);
 		}
-		gtk_combo_box_set_active(GTK_COMBO_BOX (widgets->type), last_type);
+		gtk_combo_box_set_active(GTK_COMBO_BOX (widgets->type), last_type_id);
 	} else {
 		/* Only GPX (not using GPSbabel). */
 		widgets->type = gtk_label_new (_("GPX"));
@@ -199,12 +199,12 @@ static ProcessOptions * datasource_url_get_process_options(datasource_url_widget
 	char const * value = gtk_entry_get_text(GTK_ENTRY(widgets->url));
 
 	if (GTK_IS_COMBO_BOX (widgets->type)) {
-		last_type = gtk_combo_box_get_active(GTK_COMBO_BOX (widgets->type));
+		last_type_id = gtk_combo_box_get_active(GTK_COMBO_BOX (widgets->type));
 	}
 
 	po->input_file_type = NULL; /* Default to gpx. */
-	if (a_babel_file_list.size()) {
-		po->input_file_type = g_strdup(a_babel_file_list[last_type]->name);
+	if (a_babel_file_types.size()) {
+		po->input_file_type = g_strdup(a_babel_file_types.at(last_type_id)->name);
 	}
 
 	po->url = g_strdup(value);

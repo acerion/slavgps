@@ -52,7 +52,7 @@ typedef struct {
 
 
 
-extern std::vector<BabelFile *> a_babel_file_list;
+extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last used directory. */
 static char * last_folder_uri = NULL;
@@ -61,7 +61,7 @@ static char * last_folder_uri = NULL;
 /* Nb: we use a complex strategy for this because the UI is rebuild each
    time, so it is not possible to reuse directly the GtkFileFilter as they are
    differents. */
-static BabelFile *last_file_filter = NULL;
+static BabelFileType * last_file_type = NULL;
 
 /* The last file format selected. */
 static int last_type = 0;
@@ -105,7 +105,6 @@ VikDataSourceInterface vik_datasource_file_interface = {
 
 
 
-
 DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent) : QDialog(NULL)
 {
 	this->setWindowTitle(title);
@@ -113,14 +112,22 @@ DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * pare
 }
 
 
+
+
 DataSourceFileDialog::~DataSourceFileDialog()
 {
+	delete this->file_types;
 }
+
+
+
 
 void DataSourceFileDialog::accept_cb(void) /* Slot. */
 {
 	this->accept();
 }
+
+
 
 
 void DataSourceFileDialog::build_ui(void)
@@ -159,13 +166,13 @@ void DataSourceFileDialog::build_ui(void)
 
 	this->file_entry->file_selector->setNameFilters(filter);
 
-	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+	for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
 
-		QString a = QString((*iter)->label) + "(" + QString((*iter)->ext) + ")";
+		QString a = QString((iter->second)->label) + "(" + QString((iter->second)->ext) + ")";
 		qDebug() << "II: -------- Data Source File: adding file filter " << a;
 		filter << a;
 
-		char const * ext = (*iter)->ext;
+		char const * ext = (iter->second)->ext;
 		if (ext == NULL || ext[0] == '\0') {
 			/* No file extension => no filter. */
 			continue;
@@ -187,9 +194,9 @@ void DataSourceFileDialog::build_ui(void)
 	}
 
 #ifdef K
-	g_object_set_data(G_OBJECT(filter), "Babel", babel_file);
+	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
 	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_filter == babel_file) {
+	if (last_file_type == file_type) {
 		/* Previous selection used this filter. */
 		gtk_file_chooser_set_filter(this->file_entry, filter);
 	}
@@ -208,7 +215,7 @@ void DataSourceFileDialog::build_ui(void)
 #ifdef K
 	GtkFileFilter *all_filter = gtk_file_filter_new();
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	if (last_file_filter == NULL) {
+	if (last_file_type == NULL) {
 		/* No previously selected filter or 'All files' selected. */
 		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
 	}
@@ -218,11 +225,11 @@ void DataSourceFileDialog::build_ui(void)
 	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
 	this->file_types = a_babel_ui_file_type_selector_new(mode);
 #ifdef K
-	g_signal_connect(G_OBJECT(data_source_file_dialog->type), "changed",
+	g_signal_connect(G_OBJECT(data_source_file_dialog->file_types), "changed",
 			 G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), dialog);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(data_source_file_dialog->type), last_type);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(data_source_file_dialog->file_types), last_type);
 	/* Manually call the callback to fix the state. */
-	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(data_source_file_dialog->type), dialog);
+	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(data_source_file_dialog->file_types), dialog);
 #endif
 	this->vbox->addWidget(this->file_types);
 
@@ -259,10 +266,10 @@ static void * datasource_file_init(acq_vik_t * avt)
 
 
 
-void DataSourceFileDialog::add_file_filter(BabelFile * babel_file)
+void DataSourceFileDialog::add_file_type_filter(BabelFileType * file_type)
 {
-	char const * label = babel_file->label;
-	char const * ext = babel_file->ext;
+	char const * label = file_type->label;
+	char const * ext = file_type->ext;
 	if (ext == NULL || ext[0] == '\0') {
 		/* No file extension => no filter. */
 		return;
@@ -282,9 +289,9 @@ void DataSourceFileDialog::add_file_filter(BabelFile * babel_file)
 		free(name);
 	}
 
-	g_object_set_data(G_OBJECT(filter), "Babel", babel_file);
+	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
 	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_filter == babel_file) {
+	if (last_file_type == file_type) {
 		/* Previous selection used this filter. */
 		gtk_file_chooser_set_filter(this->file_entry, filter);
 	}
@@ -317,8 +324,7 @@ static ProcessOptions * datasource_file_get_process_options(datasource_file_widg
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	/* Retrieve the selected file. */
-	po->filename = strdup(data_source_file_dialog->file_entry->get_filename().toUtf8().data());
+
 
 #ifdef K
 	/* Memorize the directory for later use. */
@@ -327,18 +333,17 @@ static ProcessOptions * datasource_file_get_process_options(datasource_file_widg
 
 	/* Memorize the file filter for later use. */
 	GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry));
-	last_file_filter = (BabelFile *) g_object_get_data(G_OBJECT(filter), "Babel");
+	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
 
 	/* Retrieve and memorize file format selected. */
-	char * type = NULL;
-	last_type = gtk_combo_box_get_active(GTK_COMBO_BOX (data_source_file_dialog->type));
-	type = (a_babel_ui_file_type_selector_get(data_source_file_dialog->type))->name;
+	last_type = gtk_combo_box_get_active(GTK_COMBO_BOX (data_source_file_dialog->file_types));
+
+#endif
+	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types))->name;
 
 	/* Generate the process options. */
-	po->babelargs = g_strdup_printf("-i %s", type);
-#endif
-
-	po->babelargs = g_strdup_printf("-i nmea");
+	po->babelargs = g_strdup_printf("-i %s", selected);
+	po->filename = strdup(data_source_file_dialog->file_entry->get_filename().toUtf8().data());
 
 	qDebug() << "II: Datasource File: using Babel args" << po->babelargs << "and file" << po->filename;
 

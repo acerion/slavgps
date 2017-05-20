@@ -192,7 +192,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false
 		    || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
 
-			BabelFile * active = a_babel_ui_file_type_selector_get(babel_selector);
+			BabelFileType * active = a_babel_ui_file_type_selector_get(babel_selector);
 			if (active == NULL) {
 				dialog_error("You did not select a valid file format.", trw->get_window());
 			} else {

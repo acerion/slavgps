@@ -30,33 +30,20 @@
 
 
 
-extern std::vector<BabelFile *> a_babel_file_list;
+extern std::map<int, BabelFileType *> a_babel_file_types;
 
-static void babel_ui_selector_add_entry(BabelFile * file, GtkWidget * combo)
+
+
+
+void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data)
 {
-#ifdef K
-	GList * formats = (GList *) g_object_get_data(G_OBJECT(combo), "formats");
-	formats = g_list_append ( formats, file );
-	g_object_set_data(G_OBJECT(combo), "formats", formats);
+	/* Retrieve selected file type. */
+	BabelFileType * file_type = a_babel_ui_file_type_selector_get(combo);
 
-	const char *label = file->label;
-	vik_combo_box_text_append(combo, label);
-#endif
-}
-
-
-
-
-void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * widget, void * user_data )
-{
 #ifdef K
 	/* user_data is the GtkDialog */
 	GtkDialog * dialog = GTK_DIALOG(user_data);
-
-	/* Retrieve the associated file format descriptor */
-	BabelFile * file = a_babel_ui_file_type_selector_get(GTK_WIDGET(widget));
-
-	if (file) {
+	if (file_type) {
 		/* Not NULL => valid selection */
 		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, true);
 	} else {
@@ -70,63 +57,57 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * widget, void * u
 
 
 /**
- * @mode: the mode to filter the file types
- *
- * Create a file type selector.
- *
- * This widget relies on a combo box listing labels of file formats.
- * We store in the "data" of the GtkWidget a list with the BabelFile
- * entries, in order to retrieve the selected file format.
- *
- * Returns: a GtkWidget
- */
+   \brief Create a list of gpsbabel file types
+
+   \param mode: the mode to filter the file types
+
+   \return list of file types
+*/
 QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
 {
 	QComboBox * combo = new QComboBox();
 
-	/* Add a first label to invite user to select a file format.
+	/* Add a first label to invite user to select a file type.
 	   id == -1 distinguishes this entry. */
-	int i = -1;
-	combo->addItem("Select a file format", i);
-	i++;
+	combo->addItem("Select a file type", -1);
 
-	/* Add all known and compatible file formats */
-	if (mode.tracksRead && mode.routesRead && mode.waypointsRead
-	    && !mode.tracksWrite && !mode.routesWrite && !mode.waypointsWrite) {
+	/* Add all known and compatible file types */
+	if (mode.tracks_read
+	    && mode.routes_read
+	    && mode.waypoints_read
+	    && !mode.tracks_write
+	    && !mode.routes_write
+	    && !mode.waypoints_write) {
 
-		/* Run a function on all file formats with any kind of read method
+		/* Run a function on all file types with any kind of read method
 		   (which is almost all but not quite - e.g. with GPSBabel v1.4.4
 		   - PalmDoc is write only waypoints). */
-		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
 
-			BabelFile * currentFile = *iter;
+			BabelFileType * file_type = iter->second;
 			/* Call function when any read mode found. */
-			if (currentFile->mode.waypointsRead
-			    || currentFile->mode.tracksRead
-			    || currentFile->mode.routesRead) {
+			if (file_type->mode.waypoints_read
+			    || file_type->mode.tracks_read
+			    || file_type->mode.routes_read) {
 
-				combo->addItem(QString(currentFile->label), i);
-				i++;
-				//babel_ui_selector_add_entry(currentFile, combo);
+				combo->addItem(QString(file_type->label), iter->first);
 			}
 		}
 	} else {
-		/* Run a function on all file formats supporting a given mode. */
-		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-			BabelFile * currentFile = *iter;
+		/* Run a function on all file types supporting a given mode. */
+		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+			BabelFileType * file_type = iter->second;
 			/* Check compatibility of modes. */
 			bool compat = true;
-			if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
-			if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
-			if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
-			if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
-			if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
-			if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
+			if (mode.waypoints_read  && !file_type->mode.waypoints_read)  compat = false;
+			if (mode.waypoints_write && !file_type->mode.waypoints_write) compat = false;
+			if (mode.tracks_read     && !file_type->mode.tracks_read)     compat = false;
+			if (mode.tracks_write    && !file_type->mode.tracks_write)    compat = false;
+			if (mode.routes_read     && !file_type->mode.routes_read)     compat = false;
+			if (mode.routes_write    && !file_type->mode.routes_write)    compat = false;
 			/* Do call. */
 			if (compat) {
-				combo->addItem(QString(currentFile->label), i);
-				i++;
-				//babel_ui_selector_add_entry(currentFile, combo);
+				combo->addItem(QString(file_type->label), iter->first);
 			}
 		}
 	}
@@ -141,54 +122,40 @@ QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
 
 
 /**
- * @selector: the selector to destroy
- *
- * Destroy the selector and any related data.
- */
-void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector )
-{
-#ifdef K
-	GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
-	free( formats );
-#endif
-}
-
-
-
-
-/**
    \brief Retrieve the selected file type
 
-   \param selector: the selector
+   \param combo: list with gpsbabel file types
 
-   \return the selected BabelFile or NULL
+   \return the selected BabelFileType or NULL
 */
-BabelFile * a_babel_ui_file_type_selector_get(GtkWidget * selector)
+BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo)
 {
-#ifdef K
-	int active = gtk_combo_box_get_active(GTK_COMBO_BOX(selector));
-	if (active >= 0) {
-		GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
-		return (BabelFile*) g_list_nth_data(formats, active);
-	} else {
+	/* ID that was used in combo->addItem(<file type>, id);
+	   A special item has been added with id == -1.
+	   All other items have been added with id >= 0. */
+	int i = combo->currentData().toInt();
+	if (i == -1) {
+		qDebug() << "II: Babel: selected file type: NONE";
 		return NULL;
+	} else {
+		BabelFileType * file_type = a_babel_file_types.at(i);
+		qDebug() << "II: Babel: selected file type:" << file_type->name << file_type->label;
+		return file_type;
 	}
-#endif
 }
 
 
 
 
 /**
- * @tracks:
- * @routes:
- * @waypoints:
- *
- * Creates a selector for babel modes.
- * This selector is based on 3 checkboxes.
- *
- * Returns: a GtkWidget packing all checkboxes.
- */
+   \brief Create a selector for babel modes. This selector is based on 3 checkboxes.
+
+   \param tracks:
+   \param routes:
+   \param waypoints:
+
+   \return a layout widget packing all checkboxes
+*/
 QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
 {
 	QHBoxLayout * hbox = new QHBoxLayout();
@@ -213,14 +180,13 @@ QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
 
 
 /**
- * a_babel_ui_modes_get:
- * @container:
- * @tracks: return value
- * @routes: return value
- * @waypoints: return value
- *
- * Retrieve state of checkboxes.
- */
+   \brief Retrieve state of checkboxes
+
+   \param hbox:
+   \param tracks: return value
+   \param routes: return value
+   \param waypoints: return value
+*/
 void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints)
 {
 	QWidget * widget = NULL;

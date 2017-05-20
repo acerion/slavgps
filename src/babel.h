@@ -85,12 +85,12 @@ public:
  * Store the Read/Write support offered by gpsbabel for a given format.
  */
 typedef struct {
-	unsigned waypointsRead : 1;
-	unsigned waypointsWrite : 1;
-	unsigned tracksRead : 1;
-	unsigned tracksWrite : 1;
-	unsigned routesRead : 1;
-	unsigned routesWrite : 1;
+	unsigned waypoints_read : 1;
+	unsigned waypoints_write : 1;
+	unsigned tracks_read : 1;
+	unsigned tracks_write : 1;
+	unsigned routes_read : 1;
+	unsigned routes_write : 1;
 } BabelMode;
 
 /**
@@ -107,7 +107,6 @@ typedef struct {
 } BabelDevice;
 
 /**
- * BabelFile:
  * @name: gpsbabel's identifier of the format
  * @ext: file's extension for this format
  * @label: human readable label
@@ -119,7 +118,7 @@ typedef struct {
 	char *name;
 	char *ext;
 	char *label;
-} BabelFile;
+} BabelFileType;
 
 /* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );

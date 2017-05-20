@@ -23,16 +23,15 @@
 #define _VIKING_BABEL_UI_H
 
 #include <cstdint>
+
 #include <QComboBox>
 #include <QHBoxLayout>
 
-#include "slav_qt.h"
 #include "babel.h"
 
 QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode);
-void a_babel_ui_file_type_selector_destroy(GtkWidget * selector);
-BabelFile * a_babel_ui_file_type_selector_get(GtkWidget * selector);
-void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * widget, void * user_data);
+BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo);
+void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data);
 
 QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints);
 void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints);

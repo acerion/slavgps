@@ -34,7 +34,7 @@
 #include "config.h"
 #endif
 
-#include <vector>
+#include <map>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -78,9 +78,9 @@ static char *gpsbabel_loc = NULL;
 static char *unbuffer_loc = NULL;
 
 /**
- * List of file formats supported by gpsbabel.
- */
-std::vector<BabelFile *> a_babel_file_list;
+   Collection of file types supported by gpsbabel.
+*/
+std::map<int, BabelFileType *> a_babel_file_types;
 
 /**
  * List of device supported by gpsbabel.
@@ -551,12 +551,12 @@ bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, cons
 
 static void set_mode(BabelMode *mode, char *smode)
 {
-	mode->waypointsRead  = smode[0] == 'r';
-	mode->waypointsWrite = smode[1] == 'w';
-	mode->tracksRead     = smode[2] == 'r';
-	mode->tracksWrite    = smode[3] == 'w';
-	mode->routesRead     = smode[4] == 'r';
-	mode->routesWrite    = smode[5] == 'w';
+	mode->waypoints_read  = smode[0] == 'r';
+	mode->waypoints_write = smode[1] == 'w';
+	mode->tracks_read     = smode[2] == 'r';
+	mode->tracks_write    = smode[3] == 'w';
+	mode->routes_read     = smode[4] == 'r';
+	mode->routes_write    = smode[5] == 'w';
 }
 
 
@@ -583,12 +583,15 @@ static void load_feature_parse_line (char *line)
 #ifdef K
 				a_babel_device_list.push_back(device);
 #endif
-				fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
-					device->name,
-					device->mode.waypointsRead, device->mode.waypointsWrite,
-					device->mode.tracksRead, device->mode.tracksWrite,
-					device->mode.routesRead, device->mode.routesWrite,
-					tokens[1]);
+				qDebug() << "DD: Babel: new gpsbabel device:"
+					 << device->name
+					 << device->mode.waypoints_read
+					 << device->mode.waypoints_write
+					 << device->mode.tracks_read
+					 << device->mode.tracks_write
+					 << device->mode.routes_read
+					 << device->mode.routes_write
+					 << tokens[1];
 			} else {
 				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
 			}
@@ -598,18 +601,28 @@ static void load_feature_parse_line (char *line)
 			    && tokens[3] != NULL
 			    && tokens[4] != NULL) {
 
-				BabelFile * file = (BabelFile *) malloc(sizeof (BabelFile));
-				set_mode (&(file->mode), tokens[1]);
-				file->name = g_strdup(tokens[2]);
-				file->ext = g_strdup(tokens[3]);
-				file->label = g_strdup(tokens[4]);
-				a_babel_file_list.push_back(file);
-				fprintf(stderr, "DEBUG: New gpsbabel file: %s, %d%d%d%d%d%d(%s)\n",
-					file->name,
-					file->mode.waypointsRead, file->mode.waypointsWrite,
-					file->mode.tracksRead, file->mode.tracksWrite,
-					file->mode.routesRead, file->mode.routesWrite,
-					tokens[1]);
+				static int type_id = 0;
+
+				BabelFileType * file_type = (BabelFileType *) malloc(sizeof (BabelFileType));
+				set_mode (&(file_type->mode), tokens[1]);
+				file_type->name = g_strdup(tokens[2]);
+				file_type->ext = g_strdup(tokens[3]);
+				file_type->label = g_strdup(tokens[4]);
+				a_babel_file_types.insert({{ type_id, file_type }});
+				qDebug() << "II: Babel: gpsbabel file type #"
+					 << type_id
+					 << ": "
+					 << file_type->name
+					 << " "
+					 << file_type->mode.waypoints_read
+					 << file_type->mode.waypoints_write
+					 << file_type->mode.tracks_read
+					 << file_type->mode.tracks_write
+					 << file_type->mode.routes_read
+					 << file_type->mode.routes_write
+					 << " "
+					 << tokens[1];
+				type_id++;
 			} else {
 				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
 			}
@@ -623,7 +636,7 @@ static void load_feature_parse_line (char *line)
 
 
 
-static void load_feature_cb (BabelProgressCode code, void * line, void * user_data)
+static void load_feature_cb(BabelProgressCode code, void * line, void * user_data)
 {
 	if (line != NULL) {
 		load_feature_parse_line((char *) line);
@@ -726,22 +739,22 @@ void a_babel_post_init()
 /**
  * Free resources acquired by a_babel_init.
  */
-void a_babel_uninit ()
+void a_babel_uninit()
 {
 	free(gpsbabel_loc);
 	free(unbuffer_loc);
 
-	if (a_babel_file_list.size()) {
-		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-			BabelFile * file = *iter;
-			fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file->name, file->label);
-			free(file->name);
-			free(file->ext);
-			free(file->label);
+	if (a_babel_file_types.size()) {
+		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+			BabelFileType * file_type = iter->second;
+			fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file_type->name, file_type->label);
+			free(file_type->name);
+			free(file_type->ext);
+			free(file_type->label);
 
-			/* kamilFIXME: how should we do this? How to destroy BabelFile? */
+			/* kamilFIXME: how should we do this? How to destroy BabelFileType? */
 			// free(*iter);
-			// a_babel_file_list.erase(iter);
+			// a_babel_file_types.erase(iter);
 		}
 	}
 

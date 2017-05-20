@@ -38,7 +38,7 @@ public:
 
 	SlavGPS::SGFileEntry * file_entry = NULL;
 
-	void add_file_filter(BabelFile * babel_file);
+	void add_file_type_filter(BabelFileType * babel_file_type);
 };
 
 
