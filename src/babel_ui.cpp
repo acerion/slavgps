@@ -18,46 +18,58 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <glib/gi18n.h>
 
-#include <stdlib.h>
+#include <cstdlib>
+
+#include <QCheckBox>
+#include <QTranslator>
 
 #include "babel.h"
 #include "babel_ui.h"
-#include "vik_compat.h"
 
 
-static void babel_ui_selector_add_entry_cb ( void * data, void * user_data )
+
+
+extern std::vector<BabelFile *> a_babel_file_list;
+
+static void babel_ui_selector_add_entry(BabelFile * file, GtkWidget * combo)
 {
-  BabelFile *file = (BabelFile*)data;
-  GtkWidget *combo = GTK_WIDGET(user_data);
+#ifdef K
+	GList * formats = (GList *) g_object_get_data(G_OBJECT(combo), "formats");
+	formats = g_list_append ( formats, file );
+	g_object_set_data(G_OBJECT(combo), "formats", formats);
 
-  GList *formats = (GList *) g_object_get_data ( G_OBJECT(combo), "formats" );
-  formats = g_list_append ( formats, file );
-  g_object_set_data ( G_OBJECT(combo), "formats", formats );
-
-  const char *label = file->label;
-  vik_combo_box_text_append ( combo, label );
+	const char *label = file->label;
+	vik_combo_box_text_append(combo, label);
+#endif
 }
 
-void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, void * user_data )
+
+
+
+void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * widget, void * user_data )
 {
-  /* user_data is the GtkDialog */
-  GtkDialog *dialog = GTK_DIALOG(user_data);
+#ifdef K
+	/* user_data is the GtkDialog */
+	GtkDialog * dialog = GTK_DIALOG(user_data);
 
-  /* Retrieve the associated file format descriptor */
-  BabelFile *file = a_babel_ui_file_type_selector_get ( GTK_WIDGET(widget) );
+	/* Retrieve the associated file format descriptor */
+	BabelFile * file = a_babel_ui_file_type_selector_get(GTK_WIDGET(widget));
 
-  if ( file )
-    /* Not NULL => valid selection */
-    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, true );
-  else
-    /* NULL => invalid selection */
-    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, false );
+	if (file) {
+		/* Not NULL => valid selection */
+		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, true);
+	} else {
+		/* NULL => invalid selection */
+		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, false);
+	}
+#endif
 }
+
+
+
 
 /**
- * a_babel_ui_file_type_selector_new:
  * @mode: the mode to filter the file types
  *
  * Create a file type selector.
@@ -68,66 +80,106 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, void 
  *
  * Returns: a GtkWidget
  */
-GtkWidget *a_babel_ui_file_type_selector_new ( BabelMode mode )
+QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
 {
-  GList *formats = NULL;
-  /* Create the combo */
-  GtkWidget * combo = vik_combo_box_text_new ();
+	QComboBox * combo = new QComboBox();
 
-  /* Add a first label to invite user to select a file format */
-  /* We store a NULL pointer to distinguish this entry */
-  formats = g_list_append ( formats, NULL );
-  vik_combo_box_text_append ( combo, _("Select a file format") );
+	/* Add a first label to invite user to select a file format.
+	   id == -1 distinguishes this entry. */
+	int i = -1;
+	combo->addItem("Select a file format", i);
+	i++;
 
-  /* Prepare space for file format list */
-  g_object_set_data ( G_OBJECT(combo), "formats", formats );
+	/* Add all known and compatible file formats */
+	if (mode.tracksRead && mode.routesRead && mode.waypointsRead
+	    && !mode.tracksWrite && !mode.routesWrite && !mode.waypointsWrite) {
 
-  /* Add all known and compatible file formats */
-  if ( mode.tracksRead && mode.routesRead && mode.waypointsRead &&
-       !mode.tracksWrite && !mode.routesWrite && !mode.waypointsWrite )
-    a_babel_foreach_file_read_any ( babel_ui_selector_add_entry_cb, combo );
-  else
-    a_babel_foreach_file_with_mode ( mode, babel_ui_selector_add_entry_cb, combo );
+		/* Run a function on all file formats with any kind of read method
+		   (which is almost all but not quite - e.g. with GPSBabel v1.4.4
+		   - PalmDoc is write only waypoints). */
+		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
 
-  /* Initialize the selection with the really first entry */
-  gtk_combo_box_set_active ( GTK_COMBO_BOX(combo), 0 );
+			BabelFile * currentFile = *iter;
+			/* Call function when any read mode found. */
+			if (currentFile->mode.waypointsRead
+			    || currentFile->mode.tracksRead
+			    || currentFile->mode.routesRead) {
 
-  return combo;
+				combo->addItem(QString(currentFile->label), i);
+				i++;
+				//babel_ui_selector_add_entry(currentFile, combo);
+			}
+		}
+	} else {
+		/* Run a function on all file formats supporting a given mode. */
+		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+			BabelFile * currentFile = *iter;
+			/* Check compatibility of modes. */
+			bool compat = true;
+			if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
+			if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
+			if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
+			if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
+			if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
+			if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
+			/* Do call. */
+			if (compat) {
+				combo->addItem(QString(currentFile->label), i);
+				i++;
+				//babel_ui_selector_add_entry(currentFile, combo);
+			}
+		}
+	}
+
+	/* Initialize the selection with the really first entry */
+	combo->setCurrentIndex(0);
+
+	return combo;
 }
 
+
+
+
 /**
- * a_babel_ui_file_type_selector_destroy:
  * @selector: the selector to destroy
  *
  * Destroy the selector and any related data.
  */
 void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector )
 {
-  GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
-  free( formats );
+#ifdef K
+	GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
+	free( formats );
+#endif
 }
 
+
+
+
 /**
- * a_babel_ui_file_type_selector_get:
- * @selector: the selector
- *
- * Retrieve the selected file type.
- *
- * Returns: the selected BabelFile or NULL
- */
-BabelFile *a_babel_ui_file_type_selector_get ( GtkWidget *selector )
+   \brief Retrieve the selected file type
+
+   \param selector: the selector
+
+   \return the selected BabelFile or NULL
+*/
+BabelFile * a_babel_ui_file_type_selector_get(GtkWidget * selector)
 {
-  int active = gtk_combo_box_get_active ( GTK_COMBO_BOX(selector) );
-  if (active >= 0) {
-    GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
-    return (BabelFile*)g_list_nth_data ( formats, active );
-  } else {
-    return NULL;
-  }
+#ifdef K
+	int active = gtk_combo_box_get_active(GTK_COMBO_BOX(selector));
+	if (active >= 0) {
+		GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
+		return (BabelFile*) g_list_nth_data(formats, active);
+	} else {
+		return NULL;
+	}
+#endif
 }
 
+
+
+
 /**
- * a_babel_ui_modes_new:
  * @tracks:
  * @routes:
  * @waypoints:
@@ -137,28 +189,28 @@ BabelFile *a_babel_ui_file_type_selector_get ( GtkWidget *selector )
  *
  * Returns: a GtkWidget packing all checkboxes.
  */
-GtkWidget *a_babel_ui_modes_new ( bool tracks, bool routes, bool waypoints )
+QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
 {
-  GtkWidget *hbox = gtk_hbox_new( false, 0 );
-  GtkWidget *button = NULL;
+	QHBoxLayout * hbox = new QHBoxLayout();
+	QCheckBox * checkbox = NULL;
 
-  button = gtk_check_button_new_with_label ( _("Tracks") );
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(button), tracks );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
-  gtk_widget_show ( button );
+	checkbox = new QCheckBox(QObject::tr("Tracks"));
+	checkbox->setChecked(tracks);
+	hbox->addWidget(checkbox);
 
-  button = gtk_check_button_new_with_label ( _("Routes") );
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(button), routes );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
-  gtk_widget_show ( button );
+	checkbox = new QCheckBox(QObject::tr("Routes"));
+	checkbox->setChecked(routes);
+	hbox->addWidget(checkbox);
 
-  button = gtk_check_button_new_with_label ( _("Waypoints") );
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(button), waypoints );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
-  gtk_widget_show ( button );
+	checkbox = new QCheckBox(QObject::tr("Waypoints"));
+	checkbox->setChecked(waypoints);
+	hbox->addWidget(checkbox);
 
-  return hbox;
+	return hbox;
 }
+
+
+
 
 /**
  * a_babel_ui_modes_get:
@@ -169,17 +221,31 @@ GtkWidget *a_babel_ui_modes_new ( bool tracks, bool routes, bool waypoints )
  *
  * Retrieve state of checkboxes.
  */
-void a_babel_ui_modes_get ( GtkWidget *container, bool *tracks, bool *routes, bool *waypoints )
+void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints)
 {
-  GList* children = gtk_container_get_children ( GTK_CONTAINER(container) );
-  GtkWidget *child = NULL;
+	QWidget * widget = NULL;
+	QCheckBox * checkbox = NULL;
 
-  child = (GtkWidget *) g_list_nth_data ( children, 0 );
-  *tracks = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
+	widget = hbox->itemAt(0)->widget();
+	if (!widget) {
+		qDebug() << "EE: Babel UI: failed to get widget 0";
+		return;
+	}
+	*tracks = ((QCheckBox *) widget)->isChecked();
 
-  child = (GtkWidget *) g_list_nth_data ( children, 1 );
-  *routes = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
+	widget = hbox->itemAt(1)->widget();
+	if (!widget) {
+		qDebug() << "EE: Babel UI: failed to get widget 1";
+		return;
+	}
+	*routes = ((QCheckBox *) widget)->isChecked();
 
-  child = (GtkWidget *) g_list_nth_data ( children, 2 );
-  *waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
+	widget = hbox->itemAt(2)->widget();
+	if (!widget) {
+		qDebug() << "EE: Babel UI: failed to get widget 2";
+		return;
+	}
+	*waypoints = ((QCheckBox *) widget)->isChecked();
+
+	return;
 }

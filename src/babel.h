@@ -121,9 +121,6 @@ typedef struct {
 	char *label;
 } BabelFile;
 
-void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data);
-void a_babel_foreach_file_read_any (GFunc func, void * user_data);
-
 /* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
 

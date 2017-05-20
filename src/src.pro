@@ -10,6 +10,7 @@ SOURCES += main.cpp \
     acquire.cpp \
     datasource_file.cpp \
     babel.cpp \
+    babel_ui.cpp \
     window_layer_tools.cpp \
     viewport.cpp \
     coord.cpp \
@@ -122,7 +123,85 @@ HEADERS += window.h \
     modules.h \
     acquire.h \
     datasource_file.h \
-    babel.h
+    babel.h \
+    babel_ui.h
+
+
+
+# bing.cpp
+# bingmapsource.cpp
+# bluemarble.cpp
+# clipboard.cpp
+# datasource_bfilter.cpp
+# datasource_gc.cpp
+# datasource_geojson.cpp
+# datasource_geotag.cpp
+# datasource_gps.cpp
+# datasource_osm.cpp
+# datasource_osm_my_traces.cpp
+# datasource_routing.cpp
+# datasource_url.cpp
+# datasource_wikipedia.cpp
+# expedia.cpp
+# garminsymbols.cpp
+# geojson.cpp
+# geonames.cpp
+# geonamessearch.cpp
+# geotag_exif.cpp
+# google.cpp
+# googlesearch.cpp
+# gpsmapper.cpp
+# gpspoint.cpp
+# jpg.cpp
+# kmz.cpp
+# mapcache.cpp
+# mapnik_interface.cpp
+# maputils.cpp
+# metatile.cpp
+# osm.cpp
+# osm-traces.cpp
+# print.cpp
+# print-preview.cpp
+# qrc_cursors.cpp
+# qrc_icons.cpp
+# terraserver.cpp
+# terraservermapsource.cpp
+# thumbnails.cpp
+# toolbar.cpp
+# track_statistics.cpp
+# vik_compat.cpp
+# vikenumtypes.cpp
+# vikexttool.cpp
+# vikexttool_datasources.cpp
+# vikexttools.cpp
+# vikfileentry.cpp
+# vikfilelist.cpp
+# vikgeoreflayer.cpp
+# vikgobjectbuilder.cpp
+# vikgoto.cpp
+# vikgototool.cpp
+# vikgotoxmltool.cpp
+# vikgpslayer.cpp
+# vikmapniklayer.cpp
+# vikmapslayer_compat.cpp
+# vikmapslayer.cpp
+# vikmapsource.cpp
+# vikmaptype.cpp
+# vikradiogroup.cpp
+# vikrouting.cpp
+# vikroutingengine.cpp
+# vikroutingwebengine.cpp
+# vikslippymapsource.cpp
+# viktmsmapsource.cpp
+# viktrwlayer_analysis.cpp
+# viktrwlayer_export.cpp
+# viktrwlayer_geotag.cpp
+# vikwebtoolbounds.cpp
+# vikwebtoolcenter.cpp
+# vikwebtool.cpp
+# vikwebtool_datasource.cpp
+# vikwebtoolformat.cpp
+# vikwmscmapsource.cpp
 
 
 # For glib library.

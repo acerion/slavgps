@@ -154,7 +154,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	}
 
 	/* Build the extra part of the widget. */
-	GtkWidget * babel_selector = a_babel_ui_file_type_selector_new(mode);
+	QComboBox * babel_selector = a_babel_ui_file_type_selector_new(mode);
 	GtkWidget * label = gtk_label_new(_("File format:"));
 	GtkWidget * hbox = gtk_hbox_new(false, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), label, true, true, 0);

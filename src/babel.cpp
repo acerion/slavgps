@@ -91,55 +91,6 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 /**
- * Run a function on all file formats supporting a given mode.
- */
-void a_babel_foreach_file_with_mode(BabelMode mode, GFunc func, void * user_data)
-{
-	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-		BabelFile * currentFile = *iter;
-		/* Check compatibility of modes. */
-		bool compat = true;
-		if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
-		if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
-		if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
-		if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
-		if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
-		if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
-		/* Do call. */
-		if (compat) {
-			func(currentFile, user_data);
-		}
-	}
-}
-
-
-
-
-/**
- * @func:      The function to be called on any file format with a read method
- * @user_data: Data passed into the function
- *
- * Run a function on all file formats with any kind of read method
- * (which is almost all but not quite - e.g. with GPSBabel v1.4.4 - PalmDoc is write only waypoints).
- */
-void a_babel_foreach_file_read_any(GFunc func, void * user_data)
-{
-	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-		BabelFile *currentFile = *iter;
-		/* Call function when any read mode found. */
-		if (currentFile->mode.waypointsRead
-		    || currentFile->mode.tracksRead
-		    || currentFile->mode.routesRead) {
-
-			func(currentFile, user_data);
-		}
-	}
-}
-
-
-
-
-/**
  * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
  * @babelargs: A string containing gpsbabel command line filter options. No file types or names should
  *             be specified.

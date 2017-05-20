@@ -33,7 +33,7 @@
 #include "datasource_file.h"
 #include "babel.h"
 #include "gpx.h"
-//#include "babel_ui.h"
+#include "babel_ui.h"
 #include "acquire.h"
 
 
@@ -205,27 +205,31 @@ void DataSourceFileDialog::build_ui(void)
 
 
 
-	this->file_types = new QComboBox();
-
-	label_id_t values[] = {
-		{ "one", 1 },
-		{ "two", 2 },
-		{ "three", 3 },
-		{ NULL, 0 }
-	};
-
-	int i = 0;
-	while (values[i].label) {
-		QString label(values[i].label);
-		this->file_types->addItem(label, values[i].id);
-		i++;
+#ifdef K
+	GtkFileFilter *all_filter = gtk_file_filter_new();
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
+	if (last_file_filter == NULL) {
+		/* No previously selected filter or 'All files' selected. */
+		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
 	}
+#endif
+	/* The file format selector. */
+	/* Propose any readable file. */
+	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
+	this->file_types = a_babel_ui_file_type_selector_new(mode);
+#ifdef K
+	g_signal_connect(G_OBJECT(data_source_file_dialog->type), "changed",
+			 G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), dialog);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(data_source_file_dialog->type), last_type);
+	/* Manually call the callback to fix the state. */
+	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(data_source_file_dialog->type), dialog);
+#endif
 	this->vbox->addWidget(this->file_types);
 
 
 
 	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton("&Save and Close", QDialogButtonBox::AcceptRole);
+	this->button_box->addButton("&Ok", QDialogButtonBox::AcceptRole);
 	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceFileDialog::accept_cb);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -303,25 +307,6 @@ static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * vie
 	data_source_file_dialog->file_entry->file_selector->setNameFilters(filter);
 	data_source_file_dialog->exec();
 
-
-#ifdef K
-	GtkFileFilter *all_filter = gtk_file_filter_new();
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	if (last_file_filter == NULL) {
-		/* No previously selected filter or 'All files' selected. */
-		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	}
-
-	/* The file format selector. */
-	/* Propose any readable file. */
-	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
-	data_source_file_dialog->type = a_babel_ui_file_type_selector_new(mode);
-	g_signal_connect(G_OBJECT(data_source_file_dialog->type), "changed",
-			 G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), dialog);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(data_source_file_dialog->type), last_type);
-	/* Manually call the callback to fix the state. */
-	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(data_source_file_dialog->type), dialog);
-#endif
 }
 
 
