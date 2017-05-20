@@ -43,6 +43,8 @@
 #include <unistd.h>
 #endif
 
+#include <QTemporaryFile>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -249,29 +251,32 @@ static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_d
  * Runs args[0] with the arguments and uses the GPX module
  * to import the GPX data into layer vt. Assumes that upon
  * running the command, the data will appear in the (usually
- * temporary) file name_dst.
+ * temporary) file source_file_name.
  *
- * Returns: %true on success.
- */
-static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data)
+
+ @return true on success
+ @return false otherwise
+*/
+static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char * source_file_name, void * user_data)
 {
-	bool ret = false;
+	if (!babel_general_convert(cb, args, user_data)) {
+		return false;
+	}
 
-	if (babel_general_convert(cb, args, user_data)) {
-
+	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
-		if (trw == NULL) {
-			return true;
-		}
-
-		FILE * f = fopen(name_dst, "r");
-		if (f) {
-			ret = a_gpx_read_file(trw, f);
-			fclose(f);
-			f = NULL;
-		}
+		return true;
 	}
+
+	FILE * f = fopen(source_file_name, "r");
+	if (!f) {
+		return false;
+	}
+
+	bool ret = a_gpx_read_file(trw, f);
+	fclose(f);
+	f = NULL;
 
 	return ret;
 }
@@ -297,60 +302,62 @@ static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char 
  */
 bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used)
 {
-	int i,j;
-	int fd_dst;
-	char *name_dst = NULL;
-	bool ret = false;
-	char *args[64];
-
-	if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
-		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
-		close(fd_dst);
-
-		if (gpsbabel_loc) {
-			char **sub_args = g_strsplit(babelargs, " ", 0);
-			char **sub_filters = NULL;
-
-			i = 0;
-			if (unbuffer_loc) {
-				args[i++] = unbuffer_loc;
-			}
-			args[i++] = gpsbabel_loc;
-			for (j = 0; sub_args[j]; j++) {
-				/* Some version of gpsbabel can not take extra blank arg. */
-				if (sub_args[j][0] != '\0') {
-					args[i++] = sub_args[j];
-				}
-			}
-			args[i++] = (char *) "-f";
-			args[i++] = (char *)from;
-			if (babelfilters) {
-				sub_filters = g_strsplit(babelfilters, " ", 0);
-				for (j = 0; sub_filters[j]; j++) {
-					/* Some version of gpsbabel can not take extra blank arg. */
-					if (sub_filters[j][0] != '\0') {
-						args[i++] = sub_filters[j];
-					}
-				}
-			}
-			args[i++] = (char *) "-o";
-			args[i++] = (char *) "gpx";
-			args[i++] = (char *) "-F";
-			args[i++] = name_dst;
-			args[i] = NULL;
-
-			ret = babel_general_convert_from(trw, cb, args, name_dst, user_data);
-
-			g_strfreev(sub_args);
-			if (sub_filters) {
-				g_strfreev(sub_filters);
-			}
-		} else {
-			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
-		}
-		(void) remove(name_dst);
-		free(name_dst);
+	if (!gpsbabel_loc) {
+		qDebug() << "EE: Babel: gpsbabel not found in PATH";
+		return false;
 	}
+
+	//QTemporaryFile tmp_file("tmp-viking.XXXXXX");
+	QTemporaryFile tmp_file;
+	if (!tmp_file.open()) {
+		qDebug() << "EE: Babel: from filter: failed to open temporary file for processing";
+		return false;
+	}
+	const char * tmp_name = tmp_file.fileName().toUtf8().constData();
+	qDebug() << "II: Babel: from filter: temporary file:" << tmp_name << " ";
+	tmp_file.close(); /* We have to close it here, otherwise gpsbabel won't be able to write to it. */
+
+
+	char **sub_args = g_strsplit(babelargs, " ", 0);
+	char **sub_filters = NULL;
+
+	int i = 0;
+	char *args[64] = { 0 };
+	if (unbuffer_loc) {
+		args[i++] = unbuffer_loc;
+	}
+	args[i++] = gpsbabel_loc;
+	for (int j = 0; sub_args[j]; j++) {
+		/* Some version of gpsbabel can not take extra blank arg. */
+		if (sub_args[j][0] != '\0') {
+			args[i++] = sub_args[j];
+		}
+	}
+	args[i++] = (char *) "-f";
+	args[i++] = (char *)from;
+	if (babelfilters) {
+		sub_filters = g_strsplit(babelfilters, " ", 0);
+		for (int j = 0; sub_filters[j]; j++) {
+			/* Some version of gpsbabel can not take extra blank arg. */
+			if (sub_filters[j][0] != '\0') {
+				args[i++] = sub_filters[j];
+			}
+		}
+	}
+	args[i++] = (char *) "-o";
+	args[i++] = (char *) "gpx";
+	args[i++] = (char *) "-F";
+	args[i++] = (char *) tmp_name;
+	args[i] = NULL;
+
+	bool ret = babel_general_convert_from(trw, cb, args, tmp_name, user_data);
+
+	g_strfreev(sub_args);
+	if (sub_filters) {
+		g_strfreev(sub_filters);
+	}
+
+	tmp_file.remove(); /* Close and remove. */
 
 	return ret;
 }
