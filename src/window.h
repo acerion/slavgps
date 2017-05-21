@@ -37,6 +37,15 @@ namespace SlavGPS {
 
 
 
+	typedef enum {
+		VW_GEN_SINGLE_IMAGE,
+		VW_GEN_DIRECTORY_OF_IMAGES,
+		VW_GEN_KMZ_FILE,
+	} img_generation_t;
+
+
+
+
 	class Layer;
 	class LayerTRW;
 	class LayerToolbox;
@@ -124,6 +133,13 @@ namespace SlavGPS {
 
 		void finish_new(void);
 
+		void draw_to_image_file_current_window_cb(GtkWidget * widget, GdkEventButton * event, void ** pass_along);
+		void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** pass_along);
+		char * draw_image_filename(img_generation_t img_gen);
+		void draw_to_image_file(img_generation_t img_gen);
+		void save_image_file(char const *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
+		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+
 
 		static void set_redraw_trigger(Layer * layer);
 
@@ -143,6 +159,7 @@ namespace SlavGPS {
 		LayerTRW * containing_trw = NULL;
 
 
+		QAction * qa_layer_properties = NULL;
 
 
 	public slots:
@@ -195,6 +212,11 @@ namespace SlavGPS {
 #endif
 
 		void acquire_from_url_cb(void);
+
+
+		void draw_to_image_file_cb(void);
+		void draw_to_image_dir_cb(void);
+		void print_cb(void);
 
 	protected:
 
@@ -254,8 +276,6 @@ namespace SlavGPS {
 		char * filename = NULL;
 
 		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
-
-		QAction * qa_layer_properties = NULL;
 
 		/* Tool management state. */
 		LayerTool * current_tool = NULL;

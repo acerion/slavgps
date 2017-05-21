@@ -12,6 +12,7 @@
 #ifdef SLAVGPS_QT
 typedef int VikLayer;
 
+typedef int GtkSpinButton;
 typedef int GdkEventConfigure;
 typedef int GtkToggleButton;
 typedef int GdkGC;
