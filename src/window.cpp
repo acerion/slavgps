@@ -73,6 +73,9 @@ extern VikDataSourceInterface vik_datasource_geojson_interface;
 
 
 
+static QComboBox * create_zoom_combo_all_levels(QWidget * parent);
+
+
 /* The last used directories. */
 static QUrl last_folder_files_url;
 
@@ -2502,70 +2505,64 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 
 
 
-void Window::draw_to_image_file_current_window_cb(GtkWidget* widget, GdkEventButton * event, void ** pass_along)
+void ViewportToImageDialog::draw_to_image_file_current_window_cb(void) /* Slot */
 {
-#ifdef K
-	Window * window = (Window *) pass_along[0];
-	GtkSpinButton *width_spin = GTK_SPIN_BUTTON(pass_along[1]), *height_spin = GTK_SPIN_BUTTON(pass_along[2]);
+	int active = this->zoom_combo->currentIndex();
+	double zoom = pow(2, active - 2);
 
-	int active = gtk_combo_box_get_active(GTK_COMBO_BOX(pass_along[3]));
-	double zoom = pow(2, active-2);
-
-	double width_min, width_max, height_min, height_max;
-
-	gtk_spin_button_get_range(width_spin, &width_min, &width_max);
-	gtk_spin_button_get_range(height_spin, &height_min, &height_max);
+	double width_min = this->width_spin->minimum();
+	double width_max = this->width_spin->maximum();
+	double height_min = this->height_spin->minimum();
+	double height_max = this->height_spin->maximum();
 
 	/* TODO: support for xzoom and yzoom values */
-	int width = window->viewport->get_width() * window->viewport->get_xmpp() / zoom;
-	int height = window->viewport->get_height() * window->viewport->get_xmpp() / zoom;
+	int width = this->viewport->get_width() * this->viewport->get_xmpp() / zoom;
+	int height = this->viewport->get_height() * this->viewport->get_xmpp() / zoom;
 
 	if (width > width_max || width < width_min || height > height_max || height < height_min) {
-		dialog_info("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.");
+		dialog_info("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.", NULL);
 	}
 
-	gtk_spin_button_set_value(width_spin, width);
-	gtk_spin_button_set_value(height_spin, height);
-#endif
+	qDebug() << "DD: Viewport: Save: current viewport size:" << this->viewport->get_width() << "/" << this->viewport->get_height() << ", zoom:" << zoom << ", xmpp:" << this->viewport->get_xmpp();
+	this->width_spin->setValue(width);
+	this->height_spin->setValue(height);
+
+	return;
 }
 
 
 
 
-void Window::draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** pass_along)
+void ViewportToImageDialog::draw_to_image_file_total_area_cb(void)
 {
-#ifdef K
-	GtkSpinButton *width_spin = GTK_SPIN_BUTTON(pass_along[1]), *height_spin = GTK_SPIN_BUTTON(pass_along[2]);
+	int active = this->zoom_combo->currentIndex();
+	double zoom = pow(2, active - 2);
 
-	int active = gtk_combo_box_get_active(GTK_COMBO_BOX(pass_along[3]));
-	double zoom = pow(2, active-2);
-
-	char *label_text;
-	double w = gtk_spin_button_get_value(width_spin) * zoom;
-	double h = gtk_spin_button_get_value(height_spin) * zoom;
-	if (pass_along[4]) { /* save many images; find TOTAL area covered */
-		w *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[4]));
-		h *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[5]));
+	char * label_text = NULL;
+	double w = this->width_spin->value() * zoom;
+	double h = this->height_spin->value() * zoom;
+	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
+		w *= this->tiles_width_spin->value();
+		h *= this->tiles_height_spin->value();
 	}
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (glong)w, (glong)h, (w*h/1000000));
+		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (long) w, (long) h, (w * h / 1000000));
 		break;
 	case DistanceUnit::MILES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. miles)"), (glong)w, (glong)h, (w*h/2589988.11));
+		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. miles)"), (long) w, (long) h, (w * h / 2589988.11));
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. NM)"), (glong)w, (glong)h, (w*h/(1852.0*1852.0)));
+		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. NM)"), (long) w, (long) h, (w * h / (1852.0 * 1852.0)));
 		break;
 	default:
 		label_text = g_strdup_printf("Just to keep the compiler happy");
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
+		qDebug() << "EE: Viewport: Save: wrong distance unit:" << (int) distance_unit;
 	}
 
-	gtk_label_set_text(GTK_LABEL(pass_along[6]), label_text);
+	this->total_area_label.setText(QString(label_text));
 	free(label_text);
-#endif
 }
 
 
@@ -2669,174 +2666,354 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 
 
 
-void Window::draw_to_image_file(img_generation_t img_gen)
+ViewportToImageDialog::ViewportToImageDialog(QString const & title, Viewport * viewport, QWidget * parent) : QDialog(NULL)
 {
-#ifdef K
-	/* todo: default for answers inside Window or static (thruout instance) */
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Save to Image File"),
-							 this->get_toolkit_window(),
-							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							 GTK_STOCK_CANCEL,
-							 GTK_RESPONSE_REJECT,
-							 GTK_STOCK_OK,
-							 GTK_RESPONSE_ACCEPT,
-							 NULL);
+	this->setWindowTitle(title);
+	this->parent = parent;
+	this->viewport = viewport;
+}
 
-	// only used for VW_GEN_DIRECTORY_OF_IMAGES
-	GtkWidget *tiles_width_spin = NULL, *tiles_height_spin = NULL;
 
-	GtkWidget * width_label = gtk_label_new(_("Width(pixels):"));
-	GtkWidget * width_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_width, 10, 50000, 10, 100, 0)), 10, 0);
-	GtkWidget * height_label = gtk_label_new(_("Height (pixels):"));
-	GtkWidget * height_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_height, 10, 50000, 10, 100, 0)), 10, 0);
-#ifdef WINDOWS
-	GtkWidget *win_warning_label = gtk_label_new(_("WARNING: USING LARGE IMAGES OVER 10000x10000\nMAY CRASH THE PROGRAM!"));
-#endif
-	GtkWidget * zoom_label = gtk_label_new(_("Zoom (meters per pixel):"));
-	/* TODO: separate xzoom and yzoom factors */
-	GtkWidget * zoom_combo = create_zoom_combo_all_levels();
+
+
+ViewportToImageDialog::~ViewportToImageDialog()
+{
+	delete this->button_box;
+	delete this->vbox;
+	delete this->zoom_combo;
+}
+
+
+
+
+void ViewportToImageDialog::accept_cb(void) /* Slot. */
+{
+	this->accept();
+}
+
+
+
+
+void ViewportToImageDialog::build_ui(img_generation_t img_gen)
+{
+	qDebug() << "II: Viewport To Image Dialog: building dialog UI";
+
+	this->vbox = new QVBoxLayout;
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+
+	QLabel * label = new QLabel(tr("Width (pixels):"));
+	this->vbox->addWidget(label);
+
+
+	this->width_spin = new QSpinBox();
+	this->width_spin->setMinimum(0);
+	this->width_spin->setMaximum(10 * 1024);
+	this->width_spin->setSingleStep(1);
+	this->vbox->addWidget(this->width_spin);
+	//connect(this->width_spin, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
+
+
+	label = new QLabel(tr("Height (pixels):"));
+	this->vbox->addWidget(label);
+
+
+	this->height_spin = new QSpinBox();
+	this->height_spin->setMinimum(0);
+	this->height_spin->setMaximum(10 * 1024);
+	this->height_spin->setSingleStep(1);
+	this->vbox->addWidget(this->height_spin);
+	//connect(&this->height_spin, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
+
+
+
+	label = new QLabel(tr("Zoom (meters per pixel):"));
+	this->vbox->addWidget(label);
+
+
+	this->zoom_combo = create_zoom_combo_all_levels(NULL);
 
 	double mpp = this->viewport->get_xmpp();
 	int active = 2 + round(log(mpp) / log(2));
 
-	// Can we not hard code size here?
+	/* Can we not hard code size here? */
 	if (active > 17) {
 		active = 17;
 	}
 	if (active < 0) {
 		active = 0;
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(zoom_combo), active);
+	this->zoom_combo->setCurrentIndex(active);
+	this->vbox->addWidget(this->zoom_combo);
 
-	GtkWidget * total_size_label = gtk_label_new(NULL);
 
-	GtkWidget * current_window_button = gtk_button_new_with_label(_("Area in current viewable window"));
-	void * current_window_pass_along[7];
-	current_window_pass_along[0] = this;
-	current_window_pass_along[1] = width_spin;
-	current_window_pass_along[2] = height_spin;
-	current_window_pass_along[3] = zoom_combo;
-	current_window_pass_along[4] = NULL; // Only for directory of tiles: width
-	current_window_pass_along[5] = NULL; // Only for directory of tiles: height
-	current_window_pass_along[6] = total_size_label;
-	g_signal_connect(G_OBJECT(current_window_button), "button_press_event", G_CALLBACK(draw_to_image_file_current_window_cb), current_window_pass_along);
+	this->total_area_label.setText(tr("Total Area"));
+	this->vbox->addWidget(&this->total_area_label);
 
-	GtkWidget *png_radio = gtk_radio_button_new_with_label(NULL, _("Save as PNG"));
-	GtkWidget *jpeg_radio = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(png_radio), _("Save as JPEG"));
+
+	this->use_current_area_button.setText("Area in current viewport");
+	this->vbox->addWidget(&this->use_current_area_button);
+	connect(&this->use_current_area_button, SIGNAL(clicked()), this, SLOT(draw_to_image_file_current_window_cb()));
+
+
+
 
 	if (img_gen == VW_GEN_KMZ_FILE) {
 		// Don't show image type selection if creating a KMZ (always JPG internally)
 		// Start with viewable area by default
-		draw_to_image_file_current_window_cb(current_window_button, NULL, current_window_pass_along);
+		this->draw_to_image_file_current_window_cb();
 	} else {
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), jpeg_radio, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), png_radio, false, false, 0);
-	}
+		std::list<QString> labels;
+		labels.push_back(tr("Save as PNG"));
+		labels.push_back(tr("Save as JPEG"));
+		//labels.push_back(label);
+		QString title(tr("Output format"));
+		this->output_format_radios = new SGRadioGroup(title, labels, this);
+		this->vbox->addWidget(this->output_format_radios);
 
-	if (!this->draw_image_save_as_png) {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jpeg_radio), true);
-	}
-
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), width_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), width_spin, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), height_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), height_spin, false, false, 0);
-#ifdef WINDOWS
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), win_warning_label, false, false, 0);
+#ifdef K
+		if (!this->draw_image_save_as_png) {
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jpeg_radio), true);
+		}
 #endif
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), current_window_button, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), zoom_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), zoom_combo, false, false, 0);
+	}
 
 	if (img_gen == VW_GEN_DIRECTORY_OF_IMAGES) {
-		GtkWidget *tiles_width_label, *tiles_height_label;
 
-		tiles_width_label = gtk_label_new(_("East-west image tiles:"));
-		tiles_width_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(5, 1, 10, 1, 100, 0)), 1, 0);
-		tiles_height_label = gtk_label_new(_("North-south image tiles:"));
-		tiles_height_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(5, 1, 10, 1, 100, 0)), 1, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tiles_width_label, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tiles_width_spin, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tiles_height_label, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tiles_height_spin, false, false, 0);
+		label = new QLabel(tr("East-west image tiles:"));
+		this->vbox->addWidget(label);
 
-		current_window_pass_along[4] = tiles_width_spin;
-		current_window_pass_along[5] = tiles_height_spin;
-		g_signal_connect(G_OBJECT(tiles_width_spin), "value-changed", G_CALLBACK(draw_to_image_file_total_area_cb), current_window_pass_along);
-		g_signal_connect(G_OBJECT(tiles_height_spin), "value-changed", G_CALLBACK(draw_to_image_file_total_area_cb), current_window_pass_along);
+		this->tiles_width_spin = new QSpinBox();
+		this->tiles_width_spin->setRange(1, 10);
+		this->tiles_width_spin->setSingleStep(1);
+		this->tiles_width_spin->setValue(5);
+		this->vbox->addWidget(this->tiles_width_spin);
+
+		label = new QLabel(tr("North-south image tiles:"));
+		this->vbox->addWidget(label);
+
+		this->tiles_height_spin = new QSpinBox();
+		this->tiles_height_spin->setRange(1, 10);
+		this->tiles_height_spin->setSingleStep(1);
+		this->tiles_height_spin->setValue(5);
+		this->vbox->addWidget(this->tiles_height_spin);
+
+		connect(this->tiles_width_spin, SIGNAL(valueChanged(int)), this, SLOT(draw_to_image_file_total_area_cb()));
+		connect(this->tiles_height_spin, SIGNAL(valueChanged(int)), this, SLOT(draw_to_image_file_total_area_cb()));
 	}
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), total_size_label, false, false, 0);
-	g_signal_connect(G_OBJECT(width_spin), "value-changed", G_CALLBACK(draw_to_image_file_total_area_cb), current_window_pass_along);
-	g_signal_connect(G_OBJECT(height_spin), "value-changed", G_CALLBACK(draw_to_image_file_total_area_cb), current_window_pass_along);
-	g_signal_connect(G_OBJECT(zoom_combo), "changed", G_CALLBACK(draw_to_image_file_total_area_cb), current_window_pass_along);
 
-	draw_to_image_file_total_area_cb(NULL, current_window_pass_along); /* set correct size info now */
+	connect(this->width_spin, SIGNAL(valueChanged(int)), this, SLOT(draw_to_image_file_total_area_cb()));
+	connect(this->height_spin, SIGNAL(valueChanged(int)), this, SLOT(draw_to_image_file_total_area_cb()));
 
+	connect(this->zoom_combo, SIGNAL(currentIndexChanged(int)), this, SLOT(draw_to_image_file_total_area_cb()));
+
+	this->draw_to_image_file_total_area_cb(); /* Set correct size info now. */
+
+#ifdef K
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	gtk_widget_show_all(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		gtk_widget_hide(GTK_WIDGET(dialog));
-
-		char *fn = draw_image_filename(this, img_gen);
-		if (!fn) {
-			return;
-		}
-
-		int active_z = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo));
-		double zoom = pow(2, active_z-2);
-
-		if (img_gen == VW_GEN_SINGLE_IMAGE) {
-			save_image_file(this, fn,
-					this->draw_image_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(width_spin)),
-					this->draw_image_height = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(height_spin)),
-					zoom,
-					this->draw_image_save_as_png = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)),
-					false);
-		} else if (img_gen == VW_GEN_KMZ_FILE) {
-			// Remove some viewport overlays as these aren't useful in KMZ file.
-			bool restore_xhair = this->viewport->get_draw_centermark();
-			if (restore_xhair) {
-				this->viewport->set_draw_centermark(false);
-			}
-			bool restore_scale = this->viewport->get_draw_scale();
-			if (restore_scale) {
-				this->viewport->set_draw_scale(false);
-			}
-
-			save_image_file(this,
-					fn,
-					gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(width_spin)),
-					gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(height_spin)),
-					zoom,
-					false, // JPG
-					true);
-
-			if (restore_xhair) {
-				this->viewport->set_draw_centermark(true);
-			}
-
-			if (restore_scale) {
-				this->viewport->set_draw_scale(true);
-			}
-
-			if (restore_xhair || restore_scale) {
-				this->draw_update();
-			}
-		} else {
-			// NB is in UTM mode ATM
-			this->save_image_dir(fn,
-				       this->draw_image_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(width_spin)),
-				       this->draw_image_height = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(height_spin)),
-				       zoom,
-				       this->draw_image_save_as_png = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)),
-				       gtk_spin_button_get_value(GTK_SPIN_BUTTON(tiles_width_spin)),
-				       gtk_spin_button_get_value(GTK_SPIN_BUTTON(tiles_height_spin)));
-		}
-
-		free(fn);
-	}
-	gtk_widget_destroy(GTK_WIDGET(dialog));
 #endif
+
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton("&Ok", QDialogButtonBox::AcceptRole);
+	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &ViewportToImageDialog::accept_cb);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	this->vbox->addWidget(this->button_box);
+
+	this->accept();
+}
+
+
+
+
+void Window::draw_to_image_file(img_generation_t img_gen)
+{
+	ViewportToImageDialog dialog(tr("Save to Image File"), this->get_viewport(), NULL);
+	dialog.build_ui(img_gen);
+	if (QDialog::Accepted != dialog.exec()) {
+		return;
+	}
+
+#ifdef K
+	char * file_path = draw_image_filename(this, img_gen);
+	if (!file_path) {
+		return;
+	}
+#else
+	char * file_path = strdup("~/out.jpeg");
+#endif
+
+	int active_z = dialog.zoom_combo->currentIndex();
+	double zoom = pow(2, active_z - 2);
+	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
+
+	if (img_gen == VW_GEN_SINGLE_IMAGE) {
+		this->save_image_file(file_path,
+				      this->draw_image_width = dialog.width_spin->value(),
+				      this->draw_image_height = dialog.height_spin->value(),
+				      zoom,
+				      this->draw_image_save_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				      false);
+	} else if (img_gen == VW_GEN_KMZ_FILE) {
+
+		/* Remove some viewport overlays as these aren't useful in KMZ file. */
+		bool restore_xhair = this->viewport->get_draw_centermark();
+		if (restore_xhair) {
+			this->viewport->set_draw_centermark(false);
+		}
+		bool restore_scale = this->viewport->get_draw_scale();
+		if (restore_scale) {
+			this->viewport->set_draw_scale(false);
+		}
+
+		this->save_image_file(file_path,
+				      dialog.width_spin->value(),
+				      dialog.height_spin->value(),
+				      zoom,
+				      false, // JPG
+				      true);
+
+		if (restore_xhair) {
+			this->viewport->set_draw_centermark(true);
+		}
+
+		if (restore_scale) {
+			this->viewport->set_draw_scale(true);
+		}
+
+		if (restore_xhair || restore_scale) {
+			this->draw_update();
+		}
+	} else {
+		/* UTM mode ATM. */
+		this->save_image_dir(file_path,
+				     this->draw_image_width = dialog.width_spin->value(),
+				     this->draw_image_height = dialog.height_spin->value(),
+				     zoom,
+				     this->draw_image_save_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				     dialog.tiles_width_spin->value(),
+				     dialog.tiles_height_spin->value());
+	}
+
+	free(file_path);
+}
+
+
+
+
+
+ /* Menu View -> Zoom -> Value. */
+static void zoom_changed_cb(void)
+{
+#ifdef K
+	qDebug() << "II: Window: Zoom Changed Callback";
+
+	Viewport * viewport = this->get_viewport();
+
+	GtkWidget * aw = gtk_menu_get_active(GTK_MENU (menushell));
+	int active = KPOINTER_TO_INT (g_object_get_data(G_OBJECT (aw), "position"));
+
+	double zoom_request = pow(2, active - 5);
+
+	/* But has it really changed? */
+	double current_zoom = viewport->get_zoom();
+	if (current_zoom != 0.0 && zoom_request != current_zoom) {
+		viewport->set_zoom(zoom_request);
+		/* Force drawing update. */
+		this->draw_update();
+	}
+#endif
+}
+
+
+
+
+/**
+ * @mpp: The initial zoom level.
+ */
+static GtkWidget * create_zoom_menu_all_levels(double mpp)
+{
+#ifdef K
+	GtkWidget * menu = gtk_menu_new();
+	char * itemLabels[] = { (char *) "0.031", (char *) "0.063", (char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", (char *) "2048", (char *) "4096", (char *) "8192", (char *) "16384", (char *) "32768" };
+
+	for (int i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
+		GtkWidget *item = gtk_menu_item_new_with_label(itemLabels[i]);
+		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		gtk_widget_show(item);
+		g_object_set_data(G_OBJECT (item), "position", KINT_TO_POINTER(i));
+	}
+
+	int active = 5 + round(log(mpp) / log(2));
+	// Ensure value derived from mpp is in bounds of the menu
+	if (active >= G_N_ELEMENTS(itemLabels)) {
+		active = G_N_ELEMENTS(itemLabels) - 1;
+	}
+	if (active < 0) {
+		active = 0;
+	}
+	gtk_menu_set_active(GTK_MENU(menu), active);
+
+	return menu;
+#endif
+}
+
+
+
+
+static QComboBox * create_zoom_combo_all_levels(QWidget * parent)
+{
+	QComboBox * combo = new QComboBox(parent);
+
+	combo->addItem("0.25");
+	combo->addItem("0.5");
+	combo->addItem("1");
+	combo->addItem("2");
+	combo->addItem("4");
+	combo->addItem("8");
+	combo->addItem("16");
+	combo->addItem("32");
+	combo->addItem("64");
+	combo->addItem("128");
+	combo->addItem("256");
+	combo->addItem("512");
+	combo->addItem("1024");
+	combo->addItem("2048");
+	combo->addItem("4096");
+	combo->addItem("8192");
+	combo->addItem("16384");
+	combo->addItem("32768");
+
+	combo->setToolTip(QObject::tr("Select zoom level"));
+
+	return combo;
+}
+
+
+
+
+static int zoom_popup_handler(GtkWidget * widget)
+{
+#if 0
+	if (!widget) {
+		return false;
+	}
+
+	if (!GTK_IS_MENU (widget)) {
+		return false;
+	}
+
+	/* The "widget" is the menu that was supplied when
+	 * g_signal_connect_swapped() was called.
+	 */
+	GtkMenu * menu = GTK_MENU (widget);
+
+	gtk_menu_popup(menu, NULL, NULL, NULL, NULL,
+		       1, gtk_get_current_event_time());
+#endif
+	return true;
 }

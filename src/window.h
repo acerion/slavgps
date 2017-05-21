@@ -11,12 +11,16 @@
 #include <QMouseEvent>
 #include <QCursor>
 #include <QCloseEvent>
+#include <QSpinBox>
+#include <QComboBox>
+#include <QPushButton>
 
 #include "layers_panel.h"
 #include "statusbar.h"
 #include "file.h"
 #include "acquire.h"
-
+#include "widget_file_entry.h"
+#include "widget_radio_group.h"
 
 
 
@@ -133,8 +137,6 @@ namespace SlavGPS {
 
 		void finish_new(void);
 
-		void draw_to_image_file_current_window_cb(GtkWidget * widget, GdkEventButton * event, void ** pass_along);
-		void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** pass_along);
 		char * draw_image_filename(img_generation_t img_gen);
 		void draw_to_image_file(img_generation_t img_gen);
 		void save_image_file(char const *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
@@ -161,6 +163,10 @@ namespace SlavGPS {
 
 		QAction * qa_layer_properties = NULL;
 
+
+		unsigned int draw_image_width;
+		unsigned int draw_image_height;
+		bool draw_image_save_as_png = false;
 
 	public slots:
 		void menu_layer_new_cb(void);
@@ -316,6 +322,42 @@ namespace SlavGPS {
 		std::list<QString> recent_files;
 	};
 
+
+
+
+
+	class ViewportToImageDialog : public QDialog {
+		Q_OBJECT
+	public:
+		ViewportToImageDialog(QString const & title, Viewport * viewport, QWidget * parent = NULL);
+		~ViewportToImageDialog();
+
+		void build_ui(img_generation_t img_gen);
+
+	private slots:
+		void accept_cb(void);
+		void draw_to_image_file_current_window_cb(void);
+		void draw_to_image_file_total_area_cb();
+
+	public:
+		Viewport * viewport = NULL;
+		QWidget * parent = NULL;
+		QDialogButtonBox * button_box = NULL;
+		QVBoxLayout * vbox = NULL;
+
+		QSpinBox * width_spin = NULL;
+		QSpinBox * height_spin = NULL;
+
+		/* Only used for VW_GEN_DIRECTORY_OF_IMAGES */
+		QSpinBox * tiles_width_spin = NULL;
+		QSpinBox * tiles_height_spin = NULL;
+
+		QPushButton use_current_area_button;
+		QComboBox * zoom_combo = NULL;
+		QLabel total_area_label;
+
+		SGRadioGroup * output_format_radios = NULL;
+	};
 
 
 

@@ -146,10 +146,6 @@ namespace SlavGPS {
 		//bool modified = false;
 		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
-		unsigned int draw_image_width;
-		unsigned int draw_image_height;
-		bool draw_image_save_as_png = false;
-
 
 		GtkUIManager * uim = NULL;
 
