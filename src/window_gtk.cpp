@@ -95,12 +95,6 @@ static std::list<Window *> window_list;
 
 
 
-/* The last used directories. */
-static char *last_folder_images_uri = NULL;
-
-
-
-
 enum {
 	VW_NEWWINDOW_SIGNAL,
 	VW_OPENWINDOW_SIGNAL,
@@ -135,7 +129,6 @@ static void destroy_window(GtkWidget * widget, void * data)
 {
 	if (! --window_count) {
 		free(last_folder_files_uri);
-		free(last_folder_images_uri);
 		gtk_main_quit();
 	}
 }

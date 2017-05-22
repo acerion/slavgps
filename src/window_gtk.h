@@ -47,15 +47,6 @@
 
 
 
-typedef enum {
-	VW_GEN_SINGLE_IMAGE,
-	VW_GEN_DIRECTORY_OF_IMAGES,
-	VW_GEN_KMZ_FILE,
-} img_generation_t;
-
-
-
-
 namespace SlavGPS {
 
 
@@ -106,10 +97,6 @@ namespace SlavGPS {
 
 		bool export_to(std::list<Layer *> * layers, VikFileType_t vft, char const * dir, char const * extension);
 		void export_to_common(VikFileType_t vft, char const * extension);
-
-		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
-		void draw_to_image_file(img_generation_t img_gen);
-
 
 		char const * get_filename_2();
 

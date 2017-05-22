@@ -13,6 +13,7 @@ SOURCES += main.cpp \
     babel_ui.cpp \
     window_layer_tools.cpp \
     viewport.cpp \
+    viewport_utils.cpp \
     coord.cpp \
     coords.cpp \
     degrees_converters.cpp \
@@ -70,6 +71,7 @@ SOURCES += main.cpp \
 HEADERS += window.h \
     window_layer_tools.h \
     viewport.h \
+    viewport_utils.h \
     coord.h \
     coords.h \
     globals.h \
