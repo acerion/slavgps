@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include <QtWidgets>
+#include <QFileDialog>
 
 #include "window_layer_tools.h"
 #include "window.h"
@@ -2331,13 +2332,14 @@ void Window::print_cb(void)
 
 
 
-void Window::save_image_file(char const *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz)
+void Window::save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz)
 {
+	double old_xmpp;
+	double old_ympp;
+
 #ifdef K
 	/* more efficient way: stuff draws directly to pixbuf (fork viewport) */
 	GdkPixbuf *pixbuf_to_save;
-	double old_xmpp, old_ympp;
-	GError *error = NULL;
 
 	GtkWidget * msgbox = gtk_message_dialog_new(this->get_toolkit_window(),
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -2348,14 +2350,17 @@ void Window::save_image_file(char const *fn, unsigned int w, unsigned int h, dou
 	g_signal_connect_swapped(msgbox, "response", G_CALLBACK (gtk_widget_destroy), msgbox);
 	// Ensure dialog shown
 	gtk_widget_show_all(msgbox);
+#endif
 	/* Try harder... */
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
+#ifdef K
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
 	// Despite many efforts & variations, GTK on my Linux system doesn't show the actual msgbox contents :(
 	// At least the empty box can give a clue something's going on + the statusbar msg...
 	// Windows version under Wine OK!
+#endif
 
 	/* backup old zoom & set new */
 	old_xmpp = this->viewport->get_xmpp();
@@ -2368,18 +2373,16 @@ void Window::save_image_file(char const *fn, unsigned int w, unsigned int h, dou
 	/* draw all layers */
 	this->draw_redraw();
 
-	/* save buffer as file. */
-	pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
-	if (!pixbuf_to_save) {
-		fprintf(stderr, "WARNING: Failed to generate internal pixmap size: %d x %d\n", w, h);
-		gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate internal image.\n\nTry creating a smaller image."));
+	/* Save buffer as file. */
+	QPixmap * pixmap = this->viewport->get_pixmap();
+	//pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 
-		/* goto cleanup; */
+	if (!pixmap) {
+		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", w, h);
+
 		this->status_bar->set_message(StatusBarField::INFO, QString(""));
-		gtk_dialog_add_button(GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK);
-		gtk_dialog_run(GTK_DIALOG(msgbox)); // Don't care about the result
+		dialog_error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
 
-		/* pretend like nothing happened ;) */
 		this->viewport->set_xmpp(old_xmpp);
 		this->viewport->set_ympp(old_ympp);
 		this->viewport->configure();
@@ -2388,49 +2391,50 @@ void Window::save_image_file(char const *fn, unsigned int w, unsigned int h, dou
 		return;
 	}
 
-	int ans = 0; // Default to success
+	bool success = true;
 
 	if (save_kmz) {
+#ifdef K
 		double north, east, south, west;
 		this->viewport->get_min_max_lat_lon(&south, &north, &west, &east);
-		ans = kmz_save_file(pixbuf_to_save, fn, north, east, south, west);
+		ans = kmz_save_file(pixbuf_to_save, file_path, north, east, south, west);
+#endif
 	} else {
-		gdk_pixbuf_save(pixbuf_to_save, fn, save_as_png ? "png" : "jpeg", &error, NULL);
-		if (error) {
-			fprintf(stderr, "WARNING: Unable to write to file %s: %s\n", fn, error->message);
-			g_error_free(error);
-			ans = 42;
+		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
+		if (!pixmap->save(file_path, save_as_png ? "png" : "jpeg")) {
+			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_path;
+			success = false;
 		}
 	}
 
-	if (ans == 0) {
-		gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msgbox), _("Image file generated."));
-	} else {
-		gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate image file."));
-	}
+#ifdef K
+	g_object_unref(G_OBJECT(pixmap));
+#endif
 
-	g_object_unref(G_OBJECT(pixbuf_to_save));
+	QString message;
+	if (success) {
+		message = tr("Image file generated.");
+	} else {
+		message = tr("Failed to generate image file.");
+	}
 
 	/* Cleanup. */
 
 	this->status_bar->set_message(StatusBarField::INFO, QString(""));
-	gtk_dialog_add_button(GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK);
-	gtk_dialog_run(GTK_DIALOG(msgbox)); // Don't care about the result
+	dialog_info(message, this);
 
-	/* pretend like nothing happened ;) */
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->configure();
 	this->draw_update();
-#endif
 }
 
 
 
 
-void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
+void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
 {
-	unsigned long size = sizeof(char) * (strlen(fn) + 15);
+	unsigned long size = sizeof(char) * (file_path.length() + 15);
 	char *name_of_file = (char *) malloc(size);
 	struct UTM utm;
 
@@ -2448,8 +2452,8 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 
 	assert (this->viewport->get_coord_mode() == VIK_COORD_UTM);
 #ifdef K
-	if (g_mkdir(fn,0777) != 0) {
-		fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, fn);
+	if (g_mkdir(file_path.toUtf8.constData(), 0777) != 0) {
+		qDebug() << "WW: Window: Save Viewport to Image: failed to create directory" << file_path;
 	}
 
 	struct UTM utm_orig = *((const struct UTM *) this->viewport->get_center());
@@ -2457,7 +2461,7 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 	GError *error = NULL;
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
-			snprintf(name_of_file, size, "%s%cy%d-x%d.%s", fn, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
+			snprintf(name_of_file, size, "%s%cy%d-x%d.%s", file_path, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
 				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (w*zoom);
@@ -2506,76 +2510,14 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
  */
 char * Window::draw_image_filename(img_generation_t img_gen)
 {
+	QString result;
+	if (img_gen == VW_GEN_DIRECTORY_OF_IMAGES) {
 #ifdef K
-	char * fn = NULL;
-	if (img_gen != VW_GEN_DIRECTORY_OF_IMAGES) {
-		// Single file
-		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save Image"),
-								 this->get_toolkit_window(),
-								 GTK_FILE_CHOOSER_ACTION_SAVE,
-								 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-								 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-								 NULL);
-		if (last_folder_images_uri) {
-			gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_images_uri);
-		}
-
-		GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-		/* Add filters */
-		GtkFileFilter *filter;
-		filter = gtk_file_filter_new();
-		gtk_file_filter_set_name(filter, _("All"));
-		gtk_file_filter_add_pattern(filter, "*");
-		gtk_file_chooser_add_filter(chooser, filter);
-
-		if (img_gen == VW_GEN_KMZ_FILE) {
-			filter = gtk_file_filter_new();
-			gtk_file_filter_set_name(filter, _("KMZ"));
-			gtk_file_filter_add_mime_type(filter, "vnd.google-earth.kmz");
-			gtk_file_filter_add_pattern(filter, "*.kmz");
-			gtk_file_chooser_add_filter(chooser, filter);
-			gtk_file_chooser_set_filter(chooser, filter);
-		} else {
-			filter = gtk_file_filter_new();
-			gtk_file_filter_set_name(filter, _("JPG"));
-			gtk_file_filter_add_mime_type(filter, "image/jpeg");
-			gtk_file_chooser_add_filter(chooser, filter);
-
-			if (!this->draw_image_save_as_png) {
-				gtk_file_chooser_set_filter(chooser, filter);
-			}
-
-			filter = gtk_file_filter_new();
-			gtk_file_filter_set_name(filter, _("PNG"));
-			gtk_file_filter_add_mime_type(filter, "image/png");
-			gtk_file_chooser_add_filter(chooser, filter);
-
-			if (this->draw_image_save_as_png) {
-				gtk_file_chooser_set_filter(chooser, filter);
-			}
-		}
-
-		gtk_window_set_transient_for(GTK_WINDOW(dialog), this->get_toolkit_window());
-		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
-
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			free(last_folder_images_uri);
-			last_folder_images_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
-
-			fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
-				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(dialog))) {
-					fn = NULL;
-				}
-			}
-		}
-		gtk_widget_destroy(dialog);
-	} else {
 		// A directory
 		// For some reason this method is only written to work in UTM...
 		if (this->viewport->get_coord_mode() != VIK_COORD_UTM) {
 			dialog_error("You must be in UTM mode to use this feature", this);
-			return fn;
+			return result;
 		}
 
 		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Choose a directory to hold images"),
@@ -2588,12 +2530,60 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+			result = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		}
 		gtk_widget_destroy(dialog);
-	}
-	return fn;
 #endif
+	} else {
+		QFileDialog dialog(this, tr("Save Image"));
+		dialog.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+		dialog.setAcceptMode(QFileDialog::AcceptSave);
+
+		QStringList mime;
+		mime << "application/octet-stream"; /* "All files (*)" */
+		if (img_gen == VW_GEN_KMZ_FILE) {
+			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
+		} else {
+			if (!this->draw_image_save_as_png) {
+				mime << "image/jpeg";
+			}
+			if (this->draw_image_save_as_png) {
+				mime << "image/png";
+			}
+		}
+		dialog.setMimeTypeFilters(mime);
+
+#ifdef K
+		if (last_folder_images_uri) {
+			gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_images_uri);
+		}
+#endif
+
+
+		if (QDialog::Accepted == dialog.exec()) {
+#ifdef K
+			free(last_folder_images_uri);
+			last_folder_images_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
+#endif
+
+			result = dialog.selectedFiles().at(0);
+			qDebug() << "II: Viewport: Save to Image: target file:" << result;
+#ifdef K
+			if (g_file_test(result, G_FILE_TEST_EXISTS)) {
+				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result))), GTK_WINDOW(dialog))) {
+					result = NULL;
+				}
+			}
+#endif
+		}
+	}
+	qDebug() << "DD: Viewport: Save to Image: result:" << result << "strdup:" << strdup(result.toUtf8().constData());
+	if (result.length()) {
+		return strdup(result.toUtf8().constData());
+	} else {
+		qDebug() << "DD: Viewport: Save to Image: returning NULL\n";
+		return NULL;
+	}
 }
 
 
@@ -2607,21 +2597,17 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 		return;
 	}
 
-#ifdef K
 	char * file_path = this->draw_image_filename(img_gen);
 	if (!file_path) {
 		return;
 	}
-#else
-	char * file_path = strdup("~/out.jpeg");
-#endif
 
 	int active_z = dialog.zoom_combo->currentIndex();
 	double zoom = pow(2, active_z - 2);
 	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
 
 	if (img_gen == VW_GEN_SINGLE_IMAGE) {
-		this->save_image_file(file_path,
+		this->save_image_file(QString(file_path),
 				      this->draw_image_width = dialog.width_spin->value(),
 				      this->draw_image_height = dialog.height_spin->value(),
 				      zoom,
@@ -2639,7 +2625,7 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 			this->viewport->set_draw_scale(false);
 		}
 
-		this->save_image_file(file_path,
+		this->save_image_file(QString(file_path),
 				      dialog.width_spin->value(),
 				      dialog.height_spin->value(),
 				      zoom,
@@ -2659,7 +2645,7 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 		}
 	} else {
 		/* UTM mode ATM. */
-		this->save_image_dir(file_path,
+		this->save_image_dir(QString(file_path),
 				     this->draw_image_width = dialog.width_spin->value(),
 				     this->draw_image_height = dialog.height_spin->value(),
 				     zoom,

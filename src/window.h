@@ -133,8 +133,8 @@ namespace SlavGPS {
 
 		char * draw_image_filename(img_generation_t img_gen);
 		void draw_viewport_to_image_file(img_generation_t img_gen);
-		void save_image_file(char const *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
-		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		void save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
+		void save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
 
 		static void set_redraw_trigger(Layer * layer);
