@@ -181,6 +181,7 @@ namespace SlavGPS {
 
 		void zoom_cb(void);
 		void zoom_to_cb(void);
+		void zoom_level_selected_cb(QAction * qa);
 
 
 		void show_background_jobs_window_cb(void);

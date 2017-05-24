@@ -21,6 +21,7 @@
  *
  */
 
+#include <vector>
 
 #include <cassert>
 
@@ -75,6 +76,11 @@ extern VikDataSourceInterface vik_datasource_geojson_interface;
 
 /* The last used directories. */
 static QUrl last_folder_files_url;
+
+
+
+
+static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * parent);
 
 
 
@@ -156,12 +162,6 @@ Window::Window()
 	}
 
 	vik_ext_tool_datasources_add_menu_items(this, this->uim);
-
-	GtkWidget * zoom_levels = gtk_ui_manager_get_widget(this->uim, "/MainMenu/View/SetZoom");
-	GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels(this->viewport->get_zoom());
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(zoom_levels), zoom_levels_menu);
-	g_signal_connect(G_OBJECT(zoom_levels_menu), "selection-done", G_CALLBACK(zoom_changed_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viking_vs), "clicked", G_CALLBACK(zoom_popup_handler), zoom_levels_menu);
 
 	g_signal_connect(this->get_toolkit_object(), "delete_event", G_CALLBACK (delete_event), NULL);
 
@@ -516,6 +516,11 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_in);
 		this->menu_view->addAction(qa_view_zoom_out);
 		this->menu_view->addAction(qa_view_zoom_to);
+
+
+		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_zoom(), "Zoom", this->menu_view);
+		this->menu_view->addMenu(zoom_submenu);
+		connect(zoom_submenu, SIGNAL(triggered(QAction *)), this, SLOT(zoom_level_selected_cb(QAction *)));
 
 
 		this->menu_view->addSeparator();
@@ -2661,18 +2666,15 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 
 
 
- /* Menu View -> Zoom -> Value. */
-static void zoom_changed_cb(void)
+/* Menu View -> Zoom -> Value. */
+void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 {
-#ifdef K
-	qDebug() << "II: Window: Zoom Changed Callback";
+	int level = qa->data().toInt();
+	qDebug() << "SLOT: Window: 'Zoom Changed' callback" << qa->text() << level;
 
 	Viewport * viewport = this->get_viewport();
 
-	GtkWidget * aw = gtk_menu_get_active(GTK_MENU (menushell));
-	int active = KPOINTER_TO_INT (g_object_get_data(G_OBJECT (aw), "position"));
-
-	double zoom_request = pow(2, active - 5);
+	double zoom_request = pow(2, level - 5);
 
 	/* But has it really changed? */
 	double current_zoom = viewport->get_zoom();
@@ -2681,7 +2683,51 @@ static void zoom_changed_cb(void)
 		/* Force drawing update. */
 		this->draw_update();
 	}
-#endif
+}
+
+
+
+std::vector<QAction *> zoom_actions;
+const char * zoom_action_labels[] = {
+	"0.031",   /* 0 */
+	"0.063",   /* 1 */
+	"0.125",   /* 2 */
+	"0.25",    /* 3 */
+	"0.5",     /* 4 */
+	"1",       /* 5 */
+	"2",
+	"4",
+	"8",
+	"16",
+	"32",
+	"64",
+	"128",
+	"256",
+	"512",
+	"1024",
+	"2048",
+	"4096",
+	"8192",
+	"16384",
+	"32768",
+	NULL
+};
+
+
+
+bool create_zoom_actions(void)
+{
+	int i = 0;
+	QAction * qa = NULL;
+	while (zoom_action_labels[i]) {
+		QString const label(zoom_action_labels[i]);
+		qa = new QAction(label, NULL);
+		qa->setData(i);
+		zoom_actions.push_back(qa);
+		i++;
+	}
+
+	return true;
 }
 
 
@@ -2690,12 +2736,28 @@ static void zoom_changed_cb(void)
 /**
  * @mpp: The initial zoom level.
  */
-static GtkWidget * create_zoom_menu_all_levels(double mpp)
+static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * parent)
 {
-#ifdef K
-	GtkWidget * menu = gtk_menu_new();
-	char * itemLabels[] = { (char *) "0.031", (char *) "0.063", (char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", (char *) "2048", (char *) "4096", (char *) "8192", (char *) "16384", (char *) "32768" };
+	QMenu * menu = NULL;
+	if (parent) {
+		qDebug() << "II: Window: Zoom: creating zoom menu with parent...";
+		menu = parent->addMenu(label);
+		qDebug() << "II: Window: Zoom:       ... success";
+	} else {
+		qDebug() << "II: Window: Zoom: creating zoom menu without parent...";
+		menu = new QMenu(label);
+		qDebug() << "II: Window: Zoom:       ... success";
+	}
 
+	if (!zoom_actions.size()) {
+		create_zoom_actions();
+	}
+
+	for (auto iter = zoom_actions.begin(); iter != zoom_actions.end(); iter++) {
+		menu->addAction(*iter);
+	}
+
+#ifdef K
 	for (int i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
 		GtkWidget *item = gtk_menu_item_new_with_label(itemLabels[i]);
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
@@ -2712,9 +2774,9 @@ static GtkWidget * create_zoom_menu_all_levels(double mpp)
 		active = 0;
 	}
 	gtk_menu_set_active(GTK_MENU(menu), active);
+#endif
 
 	return menu;
-#endif
 }
 
 
@@ -2724,24 +2786,11 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 {
 	QComboBox * combo = new QComboBox(parent);
 
-	combo->addItem("0.25");
-	combo->addItem("0.5");
-	combo->addItem("1");
-	combo->addItem("2");
-	combo->addItem("4");
-	combo->addItem("8");
-	combo->addItem("16");
-	combo->addItem("32");
-	combo->addItem("64");
-	combo->addItem("128");
-	combo->addItem("256");
-	combo->addItem("512");
-	combo->addItem("1024");
-	combo->addItem("2048");
-	combo->addItem("4096");
-	combo->addItem("8192");
-	combo->addItem("16384");
-	combo->addItem("32768");
+	int i = 0;
+	while (zoom_action_labels[i]) {
+		combo->addItem(zoom_action_labels[i]);
+		i++;
+	}
 
 	combo->setToolTip(QObject::tr("Select zoom level"));
 
