@@ -187,8 +187,8 @@ static Parameter dem_layer_params[] = {
 
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport);
-static bool dem_layer_download_release(Layer * vdl, QMouseEvent * event, LayerTool * tool);
-static bool dem_layer_download_click(Layer * vdl, QMouseEvent * event, LayerTool * tool);
+static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
+static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 
 
 
@@ -982,13 +982,13 @@ public:
 
 
 
-DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer)
+DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer_dem)
 {
 	this->dest = std::string(full_path);
 	this->lat = ll->lat;
 	this->lon = ll->lon;
-	this->layer = layer;
-	this->source = layer->source;
+	this->layer = layer_dem;
+	this->source = layer_dem->source;
 	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
 }
 
@@ -1323,7 +1323,7 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 
 
 
-LayerToolDEMDownload::LayerToolDEMDownload(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::DEM)
+LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::DEM)
 {
 	this->id_string = QString("dem.download");
 
@@ -1365,9 +1365,9 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	int intlon = (int) floor(ll.lon);
 	const char * continent_dir = srtm_continent_dir(intlat, intlon);
 
-	char * source = NULL;
+	char * src = NULL;
 	if (continent_dir) {
-		source = g_strdup_printf("http://%s%s%s/%c%02d%c%03d.hgt.zip",
+		src = g_strdup_printf("http://%s%s%s/%c%02d%c%03d.hgt.zip",
 					   SRTM_HTTP_SITE,
 					   SRTM_HTTP_URI,
 					   continent_dir,
@@ -1377,7 +1377,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 					   ABS(intlon));
 	} else {
 		/* Probably not over any land... */
-		source = strdup(_("No DEM File Available"));
+		src = strdup(_("No DEM File Available"));
 	}
 
 #ifdef VIK_CONFIG_DEM24K
@@ -1394,37 +1394,37 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 		if (g_stat(filename.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(source).arg(filename).arg(time_buf);
+			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(src).arg(filename).arg(time_buf);
 		} else {
 			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(filename);
 		}
 	} else {
-		message = QString("Source: %1\n\nNo DEM File!").arg(QString(source));
+		message = QString("Source: %1\n\nNo DEM File!").arg(QString(src));
 	}
 
 	/* Show the info. */
 	dialog_info(message, this->get_window());
 
-	free(source);
+	free(src);
 }
 
 
 
 
-static bool dem_layer_download_release(Layer * vdl, QMouseEvent * event, LayerTool * tool)
+static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool)
 {
-	return ((LayerDEM *) vdl)->download_release(event, tool);
+	return ((LayerDEM *) vdl)->download_release(ev, tool);
 }
 
 
 
 
-bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
+bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	Coord coord;
 	static struct LatLon ll;
 
-	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
+	tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
 	vik_coord_to_latlon(&coord, &ll);
 
 	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
@@ -1444,7 +1444,7 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 		return true;
 	}
 
-	if (event->button() == Qt::LeftButton) {
+	if (ev->button() == Qt::LeftButton) {
 		std::string dem_full_path = std::string(MAPS_CACHE_DIR_3 + std::string(dem_file));
 		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path.c_str();
 
@@ -1467,7 +1467,7 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 			this->emit_changed();
 		}
 
-	} else if (event->button() == Qt::RightButton) {
+	} else if (ev->button() == Qt::RightButton) {
 		qDebug() << "II: Layer DEM: release right button";
 		if (!this->right_click_menu) {
 
@@ -1497,7 +1497,7 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 
 
 
-static bool dem_layer_download_click(Layer * vdl, QMouseEvent * event, LayerTool * tool)
+static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool)
 {
 	/* Choose & keep track of cache dir.
 	 * Download in background thread.

@@ -1206,17 +1206,17 @@ double * Track::make_speed_map(const uint16_t num_chunks)
 
 	/* In the following computation, we iterate through periods of time of duration chunk_size.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int index = 0; /* index of the current trackpoint. */
+	int tp_index = 0; /* index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
 		/* We are now covering the interval from t[0] + i * chunk_size to t[0] + (i + 1) * chunk_size.
 		   Find the first trackpoint outside the current interval, averaging the speeds between intermediate trackpoints. */
-		if (t[0] + i * chunk_size >= t[index]) {
+		if (t[0] + i * chunk_size >= t[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;
-			while (t[0] + i * chunk_size >= t[index]) {
-				acc_s += (s[index+1] - s[index]);
-				acc_t += (t[index+1] - t[index]);
-				index++;
+			while (t[0] + i * chunk_size >= t[tp_index]) {
+				acc_s += (s[tp_index+1] - s[tp_index]);
+				acc_t += (t[tp_index+1] - t[tp_index]);
+				tp_index++;
 			}
 			out[i] = acc_s / acc_t;
 		} else if (i) {
@@ -1266,16 +1266,16 @@ double * Track::make_distance_map(const uint16_t num_chunks)
 
 	/* In the following computation, we iterate through periods of time of duration chunk_size.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int index = 0; /* index of the current trackpoint. */
+	int tp_index = 0; /* index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
 		/* We are now covering the interval from t[0] + i * chunk_size to t[0] + (i + 1) * chunk_size.
 		   find the first trackpoint outside the current interval, averaging the distance between intermediate trackpoints. */
-		if (t[0] + i * chunk_size >= t[index]) {
+		if (t[0] + i * chunk_size >= t[tp_index]) {
 			double acc_s = 0;
 			/* No need for acc_t. */
-			while (t[0] + i * chunk_size >= t[index]) {
-				acc_s += (s[index + 1] - s[index]);
-				index++;
+			while (t[0] + i * chunk_size >= t[tp_index]) {
+				acc_s += (s[tp_index + 1] - s[tp_index]);
+				tp_index++;
 			}
 			/* The only bit that's really different from the speed map - just keep an accululative record distance. */
 			out[i] = i ? out[i - 1] + acc_s : acc_s;
@@ -1345,16 +1345,16 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks)
 
 	/* In the following computation, we iterate through periods of time of duration chunk_size.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int index = 0; /* index of the current trackpoint. */
+	int tp_index = 0; /* index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
 		/* We are now covering the interval from t[0] + i * chunk_size to t[0] + (i + 1) * chunk_size.
 		   find the first trackpoint outside the current interval, averaging the heights between intermediate trackpoints. */
-		if (t[0] + i * chunk_size >= t[index]) {
-			double acc_s = s[index]; /* Initialise to first point. */
+		if (t[0] + i * chunk_size >= t[tp_index]) {
+			double acc_s = s[tp_index]; /* Initialise to first point. */
 
-			while (t[0] + i * chunk_size >= t[index]) {
-				acc_s += (s[index + 1] - s[index]);
-				index++;
+			while (t[0] + i * chunk_size >= t[tp_index]) {
+				acc_s += (s[tp_index + 1] - s[tp_index]);
+				tp_index++;
 			}
 
 			out[i] = acc_s;
@@ -1405,16 +1405,16 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 
 	/* Iterate through a portion of the track to get an average speed for that part.
 	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
-	int index = 0; /* Index of the current trackpoint. */
+	int tp_index = 0; /* Index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
 		/* Similar to the make_speed_map, but instead of using a time chunk, use a distance chunk. */
-		if (s[0] + i * chunk_size >= s[index]) {
+		if (s[0] + i * chunk_size >= s[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;
-			while (s[0] + i * chunk_size >= s[index]) {
-				acc_s += (s[index + 1] - s[index]);
-				acc_t += (t[index + 1] - t[index]);
-				index++;
+			while (s[0] + i * chunk_size >= s[tp_index]) {
+				acc_s += (s[tp_index + 1] - s[tp_index]);
+				acc_t += (t[tp_index + 1] - t[tp_index]);
+				tp_index++;
 			}
 			out[i] = acc_s / acc_t;
 		} else if (i) {
@@ -2182,8 +2182,8 @@ VikCoord * Track::cut_back_to_double_point()
 
 	*rv = (*this->trackpointsB->begin())->coord;
 
-	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
-		delete *iter;
+	for (auto iter2 = this->trackpointsB->begin(); iter2 != this->trackpointsB->end(); iter2++) {
+		delete *iter2;
 	}
 	this->trackpointsB->erase(iter, this->trackpointsB->end());
 	this->trackpointsB->clear();

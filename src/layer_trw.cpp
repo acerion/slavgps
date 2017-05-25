@@ -510,12 +510,12 @@ TRWMetadata * LayerTRW::get_metadata()
 
 
 
-void LayerTRW::set_metadata(TRWMetadata * metadata)
+void LayerTRW::set_metadata(TRWMetadata * meta_data)
 {
 	if (this->metadata) {
 		LayerTRW::metadata_free(this->metadata);
 	}
-	this->metadata = metadata;
+	this->metadata = meta_data;
 }
 
 
@@ -770,9 +770,9 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	if (sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		char * name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
-		wp->set_name(name);
-		std::free(name);
+		char * uniq_name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
+		wp->set_name(uniq_name);
+		std::free(uniq_name);
 
 		this->add_waypoint(wp);
 
@@ -789,9 +789,9 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 		Track * trk = Track::unmarshall(item, len);
 
 		/* When copying - we'll create a new name based on the original. */
-		char * name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
-		trk->set_name(name);
-		std::free(name);
+		char * uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
+		trk->set_name(uniq_name);
+		std::free(uniq_name);
 
 		this->add_track(trk);
 
@@ -806,9 +806,9 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	if (sublayer->sublayer_type == SublayerType::ROUTE) {
 		Track * trk = Track::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
-		trk->set_name(name);
-		free(name);
+		char * uniq_name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
+		trk->set_name(uniq_name);
+		free(uniq_name);
 
 		this->add_route(trk);
 		trk->convert(this->coord_mode);
@@ -1496,10 +1496,10 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
 	init_drawing_params(&dp, this, viewport, true);
 
 	if (trk) {
-		bool draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible)
+		bool do_draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible)
 			|| (trk->sublayer_type == SublayerType::TRACK && this->tracks_visible);
 
-		if (draw) {
+		if (do_draw) {
 			trw_layer_draw_track_cb(NULL, trk, &dp);
 		}
 	}
@@ -1518,7 +1518,7 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_highlight_items(Tracks * tracks, Waypoints * selected_waypoints, Viewport * viewport)
+void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypoints, Viewport * viewport)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1531,11 +1531,11 @@ void LayerTRW::draw_highlight_items(Tracks * tracks, Waypoints * selected_waypoi
 	static DrawingParams dp;
 	init_drawing_params(&dp, this, viewport, true);
 
-	if (tracks) {
-		bool is_routes = (tracks == &routes);
-		bool draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
-		if (draw) {
-			trw_layer_draw_track_cb(*tracks, &dp);
+	if (tracks_) {
+		bool is_routes = (tracks_ == &routes);
+		bool do_draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
+		if (do_draw) {
+			trw_layer_draw_track_cb(*tracks_, &dp);
 		}
 	}
 
@@ -1614,9 +1614,9 @@ QIcon * get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
+void LayerTRW::realize_tracks(Tracks & tracks_, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+	for (auto i = tracks_.begin(); i != tracks_.end(); i++) {
 		Track * trk = i->second;
 
 		QIcon * icon = NULL;
@@ -1645,9 +1645,9 @@ void LayerTRW::realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex c
 
 
 
-void LayerTRW::realize_waypoints(Waypoints & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
+void LayerTRW::realize_waypoints(Waypoints & waypoints_, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+	for (auto i = waypoints_.begin(); i != waypoints_.end(); i++) {
 		time_t timestamp = 0;
 		if (i->second->has_timestamp) {
 			timestamp = i->second->timestamp;
@@ -2123,7 +2123,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action.
  */
-bool LayerTRW::selected(TreeItemType type, Sublayer * sublayer)
+bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 {
 	/* Reset. */
 	this->current_wp = NULL;
@@ -2132,7 +2132,7 @@ bool LayerTRW::selected(TreeItemType type, Sublayer * sublayer)
 	/* Clear statusbar. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
 
-	switch (type)	{
+	switch (item_type) {
 	case TreeItemType::LAYER:
 		{
 			this->get_window()->set_selected_trw_layer(this);
@@ -2272,9 +2272,9 @@ bool LayerTRW::get_waypoints_visibility()
  * Get waypoint by name - not guaranteed to be unique
  * Finds the first one
  */
-Waypoint * LayerTRW::get_waypoint(const char * name)
+Waypoint * LayerTRW::get_waypoint(const char * wp_name)
 {
-	return LayerTRWc::find_waypoint_by_name(waypoints, name);
+	return LayerTRWc::find_waypoint_by_name(waypoints, wp_name);
 }
 
 
@@ -2284,9 +2284,9 @@ Waypoint * LayerTRW::get_waypoint(const char * name)
  * Get track by name - not guaranteed to be unique
  * Finds the first one
  */
-Track * LayerTRW::get_track(const char * name)
+Track * LayerTRW::get_track(const char * name_)
 {
-	return LayerTRWc::find_track_by_name(tracks, name);
+	return LayerTRWc::find_track_by_name(tracks, name_);
 }
 
 
@@ -2296,9 +2296,9 @@ Track * LayerTRW::get_track(const char * name)
  * Get route by name - not guaranteed to be unique
  * Finds the first one
  */
-Track * LayerTRW::get_route(const char * name)
+Track * LayerTRW::get_route(const char * name_)
 {
-	return LayerTRWc::find_track_by_name(routes, name);
+	return LayerTRWc::find_track_by_name(routes, name_);
 }
 
 
@@ -2538,10 +2538,10 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 	while (dialog.exec() == QDialog::Accepted) {
-		QString name = dialog.textValue();
+		QString name_ = dialog.textValue();
 
 		/* Find *first* wp with the given name. */
-		Waypoint * wp = this->get_waypoint(name.toUtf8().data());
+		Waypoint * wp = this->get_waypoint(name_.toUtf8().data());
 
 		if (!wp) {
 			dialog_error(_("Waypoint not found in this layer."), this->get_window());
@@ -2559,7 +2559,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(Window * parent, const VikCoord * def_coord)
+bool LayerTRW::new_waypoint(Window * parent_window, const VikCoord * def_coord)
 {
 	char * default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
@@ -2569,7 +2569,7 @@ bool LayerTRW::new_waypoint(Window * parent, const VikCoord * def_coord)
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	char * returned_name = waypoint_properties_dialog(parent, default_name, this, wp, this->coord_mode, true, &updated);
+	char * returned_name = waypoint_properties_dialog(parent_window, default_name, this, wp, this->coord_mode, true, &updated);
 
 	if (returned_name) {
 		wp->visible = true;
@@ -2943,9 +2943,9 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 
 
 
-void LayerTRW::new_track_create_common(char * name)
+void LayerTRW::new_track_create_common(char * name_)
 {
-	qDebug() << "II: Layer TRW: new track create common, track name" << name;
+	qDebug() << "II: Layer TRW: new track create common, track name" << name_;
 
 	this->current_trk = new Track(false);
 	this->current_trk->set_defaults();
@@ -2959,7 +2959,7 @@ void LayerTRW::new_track_create_common(char * name)
 	}
 
 	this->current_trk->has_color = true;
-	this->current_trk->set_name(name);
+	this->current_trk->set_name(name_);
 	this->add_track(this->current_trk);
 }
 
@@ -2969,9 +2969,9 @@ void LayerTRW::new_track_create_common(char * name)
 void LayerTRW::new_track_cb() /* Slot. */
 {
 	if (!this->current_trk) {
-		char * name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
-		this->new_track_create_common(name);
-		free(name);
+		char * name_ = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
+		this->new_track_create_common(name_);
+		free(name_);
 #ifdef K
 		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
 #endif
@@ -2981,7 +2981,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 
 
-void LayerTRW::new_route_create_common(char * name)
+void LayerTRW::new_route_create_common(char * name_)
 {
 	this->current_trk = new Track(true);
 	this->current_trk->set_defaults();
@@ -2989,7 +2989,7 @@ void LayerTRW::new_route_create_common(char * name)
 	/* By default make all routes red. */
 	this->current_trk->has_color = true;
 	this->current_trk->color = QColor("red");
-	this->current_trk->set_name(name);
+	this->current_trk->set_name(name_);
 
 	this->add_route(this->current_trk);
 }
@@ -3000,9 +3000,9 @@ void LayerTRW::new_route_create_common(char * name)
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
 	if (!this->current_trk) {
-		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
-		this->new_route_create_common(name);
-		free(name);
+		char * name_ = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
+		this->new_route_create_common(name_);
+		free(name_);
 #ifdef K
 		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
 #endif
@@ -3219,10 +3219,10 @@ void LayerTRW::reset_waypoints()
 /**
  * Allocates a unique new name.
  */
-char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char * name)
+char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char * name_)
 {
 	int i = 2; /* kamilTODO: static? */
-	char * newname = g_strdup(name);
+	char * newname = g_strdup(name_);
 
 	void * id = NULL;
 	do {
@@ -3240,7 +3240,7 @@ char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char
 		}
 		/* If found a name already in use try adding 1 to it and we try again. */
 		if (id) {
-			char * new_newname = g_strdup_printf("%s#%d", name, i);
+			char * new_newname = g_strdup_printf("%s#%d", name_, i);
 			free(newname);
 			newname = new_newname;
 			i++;
@@ -3253,18 +3253,18 @@ char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char
 
 
 
-void LayerTRW::filein_add_waypoint(Waypoint * wp, char const * name)
+void LayerTRW::filein_add_waypoint(Waypoint * wp, char const * name_)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
-	wp->set_name(name);
+	wp->set_name(name_);
 	this->add_waypoint(wp);
 }
 
 
 
 
-void LayerTRW::filein_add_track(Track * trk, char const * name)
+void LayerTRW::filein_add_track(Track * trk, char const * name_)
 {
 	if (this->route_finder_append && this->current_trk) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
@@ -3282,7 +3282,7 @@ void LayerTRW::filein_add_track(Track * trk, char const * name)
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
-		trk->set_name(name);
+		trk->set_name(name_);
 		/* No more uniqueness of name forced when loading from a file. */
 		if (trk->sublayer_type == SublayerType::ROUTE) {
 			this->add_route(trk);
@@ -3530,10 +3530,10 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
  * NOTE: ATM this will delete the first encountered Waypoint with the specified name
  *   as there be multiple waypoints with the same name
  */
-bool LayerTRW::delete_waypoint_by_name(char const * name)
+bool LayerTRW::delete_waypoint_by_name(char const * name_)
 {
 	/* Currently only the name is used in this waypoint find function. */
-	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, name);
+	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, name_);
 	if (wp) {
 		return delete_waypoint(wp);
 	} else {
@@ -3549,15 +3549,15 @@ bool LayerTRW::delete_waypoint_by_name(char const * name)
  * NOTE: ATM this will delete the first encountered Track with the specified name
  *   as there may be multiple tracks with the same name within the specified hash table
  */
-bool LayerTRW::delete_track_by_name(const char * name, bool is_route)
+bool LayerTRW::delete_track_by_name(const char * name_, bool is_route)
 {
 	if (is_route) {
-		Track * trk = LayerTRWc::find_track_by_name(routes, name);
+		Track * trk = LayerTRWc::find_track_by_name(routes, name_);
 		if (trk) {
 			return delete_route(trk);
 		}
 	} else {
-		Track * trk = LayerTRWc::find_track_by_name(tracks, name);
+		Track * trk = LayerTRWc::find_track_by_name(tracks, name_);
 		if (trk) {
 			return delete_track(trk);
 		}
@@ -3916,12 +3916,12 @@ void LayerTRW::convert_track_route_cb(void)
 	trk_copy->sublayer_type = trk_copy->sublayer_type == SublayerType::ROUTE ? SublayerType::TRACK : SublayerType::ROUTE;
 
 	/* ATM can't set name to self - so must create temporary copy. */
-	char *name = g_strdup(trk_copy->name);
+	char * name_ = g_strdup(trk_copy->name);
 
 	/* Delete old one and then add new one. */
 	if (trk->sublayer_type == SublayerType::ROUTE) {
 		this->delete_route(trk);
-		trk_copy->set_name(name);
+		trk_copy->set_name(name_);
 		this->add_track(trk_copy);
 	} else {
 		/* Extra route conversion bits... */
@@ -3929,10 +3929,10 @@ void LayerTRW::convert_track_route_cb(void)
 		trk_copy->to_routepoints();
 
 		this->delete_track(trk);
-		trk_copy->set_name(name);
+		trk_copy->set_name(name_);
 		this->add_route(trk_copy);
 	}
-	free(name);
+	free(name_);
 
 	/* Update in case color of track / route changes when moving between sublayers. */
 	this->emit_changed();
@@ -4040,11 +4040,11 @@ void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip
 		return;
 	}
 
-	unsigned long changed = trk->apply_dem_data(skip_existing_elevations);
+	unsigned long changed_ = trk->apply_dem_data(skip_existing_elevations);
 	/* Inform user how much was changed. */
 	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
-	snprintf(str, 64, tmp_str, changed);
+	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
+	snprintf(str, 64, tmp_str, changed_);
 	dialog_info(str, this->get_window());
 }
 
@@ -4086,11 +4086,11 @@ void LayerTRW::apply_dem_data_only_missing_cb(void)
  */
 void LayerTRW::smooth_it(Track * trk, bool flat)
 {
-	unsigned long changed = trk->smooth_missing_elevation_data(flat);
+	unsigned long changed_ = trk->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
 	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
-	snprintf(str, 64, tmp_str, changed);
+	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
+	snprintf(str, 64, tmp_str, changed_);
 	dialog_info(str, this->get_window());
 }
 
@@ -4128,11 +4128,11 @@ void LayerTRW::missing_elevation_data_flat_cb(void)
 /**
  * Commonal helper function.
  */
-void LayerTRW::wp_changed_message(int changed)
+void LayerTRW::wp_changed_message(int changed_)
 {
 	char str[64];
-	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed);
-	snprintf(str, 64, tmp_str, changed);
+	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed_);
+	snprintf(str, 64, tmp_str, changed_);
 	dialog_info(str, this->get_window());
 }
 
@@ -4147,21 +4147,21 @@ void LayerTRW::apply_dem_data_wpt_all_cb(void)
 		return;
 	}
 
-	int changed = 0;
+	int changed_ = 0;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		/* Single Waypoint. */
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 		Waypoint * wp = this->waypoints.at(wp_uid);
 		if (wp) {
-			changed = (int) wp->apply_dem_data(false);
+			changed_ = (int) wp->apply_dem_data(false);
 		}
 	} else {
 		/* All waypoints. */
 		for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
-			changed = changed + (int) i->second->apply_dem_data(false);
+			changed_ = changed_ + (int) i->second->apply_dem_data(false);
 		}
 	}
-	this->wp_changed_message(changed);
+	this->wp_changed_message(changed_);
 }
 
 
@@ -4175,21 +4175,21 @@ void LayerTRW::apply_dem_data_wpt_only_missing_cb(void)
 		return;
 	}
 
-	int changed = 0;
+	int changed_ = 0;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		/* Single Waypoint. */
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 		Waypoint * wp = this->waypoints.at(wp_uid);
 		if (wp) {
-			changed = (int) wp->apply_dem_data(true);
+			changed_ = (int) wp->apply_dem_data(true);
 		}
 	} else {
 		/* All waypoints. */
 		for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
-			changed = changed + (int) i->second->apply_dem_data(true);
+			changed_ = changed_ + (int) i->second->apply_dem_data(true);
 		}
 	}
-	this->wp_changed_message(changed);
+	this->wp_changed_message(changed_);
 }
 
 
@@ -4814,17 +4814,17 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 		return;
 	}
 
-	char * name = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
-	if (!name) {
+	char * name_ = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
+	if (!name_) {
 		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->current_trk->name;
 		return;
 	}
 
 	/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
-	Trackpoint * selected = new Trackpoint(**this->selected_tp.iter);
+	Trackpoint * selected_ = new Trackpoint(**this->selected_tp.iter);
 
 	Track * new_track = new Track(*this->current_trk, std::next(this->selected_tp.iter), this->current_trk->end());
-	new_track->push_front(selected);
+	new_track->push_front(selected_);
 
 	this->current_trk->erase(std::next(this->selected_tp.iter), this->current_trk->end());
 	this->current_trk->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
@@ -4838,8 +4838,8 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 
 	this->current_trk = new_track;
 
-	new_track->set_name(name);
-	free(name);
+	new_track->set_name(name_);
+	free(name_);
 
 	this->add_track(new_track);
 
@@ -4911,8 +4911,8 @@ void LayerTRW::split_by_timestamp_cb(void)
 	}
 
 	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
-	for (auto iter = points.begin(); iter != points.end(); iter++) {
-		delete *iter;
+	for (auto iter2 = points.begin(); iter2 != points.end(); iter2++) {
+		delete *iter2;
 	}
 
 	return;
@@ -5044,8 +5044,8 @@ void LayerTRW::split_segments_cb(void)
 		return;
 	}
 
-	std::list<Track *> * tracks = trk->split_into_segments();
-	for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
+	std::list<Track *> * tracks_ = trk->split_into_segments();
+	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
 		if (*iter) {
 			char * new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 			(*iter)->set_name(new_tr_name);
@@ -5054,8 +5054,8 @@ void LayerTRW::split_segments_cb(void)
 			this->add_track(*iter);
 		}
 	}
-	if (tracks) {
-		delete tracks;
+	if (tracks_) {
+		delete tracks_;
 		/* Remove original track. */
 		this->delete_track(trk);
 		this->emit_changed();
@@ -5483,7 +5483,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 		newname = NULL;
 
 		/* Try to find duplicate names again in the updated set of tracks. */
-		QString duplicate_name = LayerTRWc::has_duplicate_track_names(tracks_table);
+		QString duplicate_name_ = LayerTRWc::has_duplicate_track_names(tracks_table); /* kamilTODO: there is a variable in this class with this name. */
 	}
 
 	/* Update. */
@@ -5495,24 +5495,24 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 
 void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order)
 {
-	TreeIndex index;
+	TreeIndex tree_index;
 
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:
-		index = this->tracks_node->get_index();
+		tree_index = this->tracks_node->get_index();
 		this->track_sort_order = order;
 		break;
 	case SublayerType::ROUTES:
-		index = this->routes_node->get_index();
+		tree_index = this->routes_node->get_index();
 		this->track_sort_order = order;
 		break;
 	default: // SublayerType::WAYPOINTS:
-		index = this->waypoints_node->get_index();
+		tree_index = this->waypoints_node->get_index();
 		this->wp_sort_order = order;
 		break;
 	}
 
-	this->tree_view->sort_children(index, order);
+	this->tree_view->sort_children(tree_index, order);
 }
 
 
@@ -5835,11 +5835,11 @@ void LayerTRW::routes_visibility_toggle_cb(void) /* Slot. */
 /**
  * Helper function to construct a list of #waypoint_layer_t.
  */
-std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints)
+std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints_)
 {
 	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
 	/* Build waypoints_and_layers list. */
-	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
+	for (auto iter = waypoints_->begin(); iter != waypoints_->end(); iter++) {
 		waypoint_layer_t * element = (waypoint_layer_t *) malloc(sizeof (waypoint_layer_t));
 		element->wp = *iter;
 		element->trw = this;
@@ -5887,11 +5887,11 @@ static void trw_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 /**
  * Helper function to construct a list of #track_layer_t.
  */
-std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks)
+std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks_)
 {
 	/* Build tracks_and_layers list. */
 	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
-	for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
+	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
 		track_layer_t * element = (track_layer_t *) malloc(sizeof (track_layer_t));
 		element->trk = *iter;
 		element->trw = this;
@@ -5927,14 +5927,14 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Laye
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(SublayerType sublayer_type)
 {
-	std::list<Track *> * tracks = new std::list<Track *>;
+	std::list<Track *> * tracks_ = new std::list<Track *>;
 	if (sublayer_type == SublayerType::TRACKS) {
-		tracks = LayerTRWc::get_track_values(tracks, this->get_tracks());
+		tracks_ = LayerTRWc::get_track_values(tracks_, this->get_tracks());
 	} else {
-		tracks = LayerTRWc::get_track_values(tracks, this->get_routes());
+		tracks_ = LayerTRWc::get_track_values(tracks_, this->get_routes());
 	}
 
-	return this->create_tracks_and_layers_list_helper(tracks);
+	return this->create_tracks_and_layers_list_helper(tracks_);
 }
 
 
@@ -6354,12 +6354,12 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
  */
 void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
 {
-	Window * parent = this->get_window(); /* i.e. the main window. */
+	Window * parent_window = this->get_window(); /* i.e. the main window. */
 
-	int win_pos_x = parent->x();
-	int win_pos_y = parent->y();
-	int win_size_x = parent->width();
-	int win_size_y = parent->height();
+	int win_pos_x = parent_window->x();
+	int win_pos_y = parent_window->y();
+	int win_size_x = parent_window->width();
+	int win_size_y = parent_window->height();
 
 	int dia_pos_x = dialog->x();
 	int dia_pos_y = dialog->y();
@@ -6383,7 +6383,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
 
 	int dest_x = 0;
 	int dest_y = 0;
-	if (!gtk_widget_translate_coordinates(viewport->get_toolkit_widget(), GTK_WIDGET(parent), 0, 0, &dest_x, &dest_y)) {
+	if (!gtk_widget_translate_coordinates(viewport->get_toolkit_widget(), GTK_WIDGET(parent_window), 0, 0, &dest_x, &dest_y)) {
 		return;
 	}
 
@@ -6713,21 +6713,21 @@ void LayerTRW::sort_all()
 time_t LayerTRW::get_timestamp_tracks()
 {
 	time_t timestamp = 0;
-	std::list<Track *> * tracks = new std::list<Track *>;
-	tracks = LayerTRWc::get_track_values(tracks, this->tracks);
+	std::list<Track *> * tracks_ = new std::list<Track *>;
+	tracks_ = LayerTRWc::get_track_values(tracks_, this->tracks);
 
-	if (!tracks->empty()) {
-		tracks->sort(Track::compare_timestamp);
+	if (!tracks_->empty()) {
+		tracks_->sort(Track::compare_timestamp);
 
 		/* Only need to check the first track as they have been sorted by time. */
-		Track * trk = *(tracks->begin());
+		Track * trk = *(tracks_->begin());
 		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
 			timestamp = tpt->timestamp;
 		}
 	}
-	delete tracks;
+	delete tracks_;
 	return timestamp;
 }
 
@@ -7201,10 +7201,10 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 {
-	std::list<Track *> * tracks = new std::list<Track *>;
-	tracks = LayerTRWc::get_track_values(tracks, this->get_tracks());
-	tracks = LayerTRWc::get_track_values(tracks, this->get_routes());
-	return this->create_tracks_and_layers_list_helper(tracks);
+	std::list<Track *> * tracks_ = new std::list<Track *>;
+	tracks_ = LayerTRWc::get_track_values(tracks_, this->get_tracks());
+	tracks_ = LayerTRWc::get_track_values(tracks_, this->get_routes());
+	return this->create_tracks_and_layers_list_helper(tracks_);
 }
 
 

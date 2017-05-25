@@ -272,13 +272,13 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
-			std::list<Layer const *> * children = ((LayerAggregate *) current)->get_children();
-			aggregates->data = (void *) children;
+			std::list<Layer const *> * children_ = ((LayerAggregate *) current)->get_children();
+			aggregates->data = (void *) children_;
 #ifdef K
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&aggregates);
-			std::list<Layer const *> * children = ((LayerGPS *) current)->get_children();
-			aggregates->data = (void *) children;
+			std::list<Layer const *> * children_ = ((LayerGPS *) current)->get_children();
+			aggregates->data = (void *) children_;
 #endif
 		} else {
 			((std::list<Layer const *> *) aggregates->data)->pop_front();

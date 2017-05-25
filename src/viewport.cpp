@@ -140,9 +140,9 @@ QColor * Viewport::get_background_qcolor()
 
 
 
-Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
+Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 {
-	this->window = parent;
+	this->window = parent_window;
 
 	this->installEventFilter(this);
 
@@ -328,9 +328,9 @@ QPen Viewport::get_highlight_pen()
 
 
 
-void Viewport::set_highlight_thickness(int width)
+void Viewport::set_highlight_thickness(int w)
 {
-	this->highlight_pen.setWidth(width);
+	this->highlight_pen.setWidth(w);
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
 	// GDK_JOIN_ROUND
@@ -339,10 +339,10 @@ void Viewport::set_highlight_thickness(int width)
 
 
 
-QPen * Viewport::new_pen(char const * colorname, int width)
+QPen * Viewport::new_pen(char const * colorname, int w)
 {
 	QPen * pen = new QPen(colorname);
-	pen->setWidth(width);
+	pen->setWidth(w);
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
 	// GDK_JOIN_ROUND
@@ -352,10 +352,10 @@ QPen * Viewport::new_pen(char const * colorname, int width)
 
 
 
-QPen * Viewport::new_pen(const QColor & color, int width)
+QPen * Viewport::new_pen(const QColor & color, int w)
 {
 	QPen * pen = new QPen(color);
-	pen->setWidth(width);
+	pen->setWidth(w);
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
 	// GDK_JOIN_ROUND
@@ -737,13 +737,13 @@ void Viewport::draw_copyrights(void)
 
 	/* Copyright text will be in bottom-right corner. */
 	/* Use no more than half of width of viewport. */
-	int x = 0.5 * this->size_width;
-	int y = 0.7 * this->size_height;
-	int w = this->size_width - x - PAD;
-	int h = this->size_height - y - PAD;
+	int x_size = 0.5 * this->size_width;
+	int y_size = 0.7 * this->size_height;
+	int w_size = this->size_width - x_size - PAD;
+	int h_size = this->size_height - y_size - PAD;
 
 	QPointF box_start = QPointF(this->size_width - PAD, this->size_height - PAD); /* Anchor in bottom-right corner. */
-	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w, -h);
+	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w_size, -h_size);
 	this->draw_text(QFont("Helvetica", 12), this->pen_marks_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, result, 0);
 
 #undef MAX_COPYRIGHTS_LEN
@@ -807,14 +807,14 @@ void Viewport::draw_centermark()
 
 void Viewport::draw_logo()
 {
-	int x = this->size_width - PAD;
-	int y = PAD;
+	int x_size = this->size_width - PAD;
+	int y_size = PAD;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
 		QPixmap const * logo = *iter;
-		int w = logo->width();
-		int h = logo->height();
-		this->draw_pixmap(*logo, 0, 0, x - w, y, w, h);
-		x = x - w - PAD;
+		int w_size = logo->width();
+		int h_size = logo->height();
+		this->draw_pixmap(*logo, 0, 0, x_size - w_size, y_size, w_size, h_size);
+		x_size = x_size - w_size - PAD;
 	}
 }
 
@@ -1079,7 +1079,7 @@ void Viewport::update_centers()
  * Show the list of forward/backward positions.
  * ATM only for debug usage.
  */
-void Viewport::show_centers(Window * parent)
+void Viewport::show_centers(Window * parent_window)
 {
 	std::list<QString> texts;
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
@@ -1106,7 +1106,7 @@ void Viewport::show_centers(Window * parent)
 	/* No i18n as this is just for debug.
 	   Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
-	std::list<QString> result = a_dialog_select_from_list(parent,
+	std::list<QString> result = a_dialog_select_from_list(parent_window,
 							      texts,
 							      false,
 							      QString("Back/Forward Locations"),
@@ -1357,16 +1357,16 @@ char Viewport::rightmost_zone()
 
 
 
-void Viewport::set_center_screen(int x, int y)
+void Viewport::set_center_screen(int x1, int y1)
 {
 	if (coord_mode == VIK_COORD_UTM) {
 		/* Slightly optimized. */
-		center.east_west += xmpp * (x - (this->size_width / 2));
-		center.north_south += ympp * ((this->size_height / 2) - y);
+		center.east_west += xmpp * (x1 - (this->size_width / 2));
+		center.north_south += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
 		VikCoord tmp;
-		this->screen_to_coord(x, y, &tmp);
+		this->screen_to_coord(x1, y1, &tmp);
 		set_center_coord(&tmp, false);
 	}
 }
@@ -1390,7 +1390,7 @@ int Viewport::get_height()
 
 
 
-void Viewport::screen_to_coord(int x, int y, VikCoord * coord)
+void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
 {
 	if (coord_mode == VIK_COORD_UTM) {
 		int zone_delta;
@@ -1399,22 +1399,22 @@ void Viewport::screen_to_coord(int x, int y, VikCoord * coord)
 
 		utm->zone = center.utm_zone;
 		utm->letter = center.utm_letter;
-		utm->easting = ((x - (this->size_width_2)) * xmpp) + center.east_west;
+		utm->easting = ((pos_x - (this->size_width_2)) * xmpp) + center.east_west;
 		zone_delta = floor((utm->easting - EASTING_OFFSET) / utm_zone_width + 0.5);
 		utm->zone += zone_delta;
 		utm->easting -= zone_delta * utm_zone_width;
-		utm->northing = (((this->size_height_2) - y) * ympp) + center.north_south;
+		utm->northing = (((this->size_height_2) - pos_y) * ympp) + center.north_south;
 	} else if (coord_mode == VIK_COORD_LATLON) {
 		coord->mode = VIK_COORD_LATLON;
 		if (drawmode == ViewportDrawMode::LATLON) {
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
-			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y));
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
 		} else if (drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+			calcxy_rev(&(coord->east_west), &(coord->north_south), pos_x, pos_y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 		} else if (drawmode == ViewportDrawMode::MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize. */
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
-			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y)));
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
 		} else {
 			;
 		}
@@ -1430,7 +1430,7 @@ void Viewport::screen_to_coord(int x, int y, VikCoord * coord)
  * avoiding the need to do it here all the time.
  * For good measure the half width and height values are also pre calculated too.
  */
-void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
+void Viewport::coord_to_screen(const VikCoord * coord, int * pos_x, int * pos_y)
 {
 	static VikCoord tmp;
 
@@ -1441,29 +1441,29 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
 	}
 
 	if (this->coord_mode == VIK_COORD_UTM) {
-		struct UTM *center = (struct UTM *) &(this->center);
+		struct UTM *a_center = (struct UTM *) &(this->center);
 		struct UTM *utm = (struct UTM *) coord;
-		if (center->zone != utm->zone && this->one_utm_zone){
-			*x = *y = VIK_VIEWPORT_UTM_WRONG_ZONE;
+		if (a_center->zone != utm->zone && this->one_utm_zone){
+			*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 			return;
 		}
 
-		*x = ((utm->easting - center->easting) / this->xmpp) + (this->size_width_2) -
-			(center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
-		*y = (this->size_height_2) - ((utm->northing - center->northing) / this->ympp);
+		*pos_x = ((utm->easting - a_center->easting) / this->xmpp) + (this->size_width_2) -
+			(a_center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
+		*pos_y = (this->size_height_2) - ((utm->northing - a_center->northing) / this->ympp);
 	} else if (this->coord_mode == VIK_COORD_LATLON) {
-		struct LatLon *center = (struct LatLon *) &(this->center);
+		struct LatLon *a_center = (struct LatLon *) &(this->center);
 		struct LatLon *ll = (struct LatLon *) coord;
 		double xx,yy;
 		if (this->drawmode == ViewportDrawMode::LATLON) {
-			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
-			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (center->lat - ll->lat));
+			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - a_center->lon));
+			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (a_center->lat - ll->lat));
 		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy (&xx, &yy, center->lon, center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
-			*x = xx; *y = yy;
+			calcxy (&xx, &yy, a_center->lon, a_center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+			*pos_x = xx; *pos_y = yy;
 		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
-			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
-			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(center->lat) - MERCLAT(ll->lat)));
+			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - a_center->lon));
+			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(a_center->lat) - MERCLAT(ll->lat)));
 		}
 	}
 }
@@ -1556,50 +1556,50 @@ void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
 
 
 
-void Viewport::draw_rectangle(const QPen & pen, int x, int y, int width, int height)
+void Viewport::draw_rectangle(const QPen & pen, int pos_x, int pos_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (x > -32 && x < this->size_width + 32 && y > -32 && y < this->size_height + 32) {
+	if (pos_x > -32 && pos_x < this->size_width + 32 && pos_y > -32 && pos_y < this->size_height + 32) {
 
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-		painter.drawRect(x, y, width, height);
+		painter.drawRect(pos_x, pos_y, rect_width, rect_height);
 	}
 }
 
 
 
 
-void Viewport::fill_rectangle(const QColor & color, int x, int y, int width, int height)
+void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (x > -32 && x < this->size_width + 32 && y > -32 && y < this->size_height + 32) {
+	if (pos_x > -32 && pos_x < this->size_width + 32 && pos_y > -32 && pos_y < this->size_height + 32) {
 
 		QPainter painter(this->scr_buffer);
-		painter.fillRect(x, y, width, height, color);
+		painter.fillRect(pos_x, pos_y, rect_width, rect_height, color);
 	}
 }
 
 
 
 
-void Viewport::draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text)
+void Viewport::draw_text(QFont const & text_font, QPen const & pen, int pos_x, int pos_y, QString const & text)
 {
-	if (x > -100 && x < this->size_width + 100 && y > -100 && y < this->size_height + 100) {
+	if (pos_x > -100 && pos_x < this->size_width + 100 && pos_y > -100 && pos_y < this->size_height + 100) {
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-		painter.setFont(font);
-		painter.drawText(x, y, text);
+		painter.setFont(text_font);
+		painter.drawText(pos_x, pos_y, text);
 	}
 }
 
 
 
 
-void Viewport::draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset)
+void Viewport::draw_text(QFont const & text_font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset)
 {
 	QPainter painter(this->scr_buffer);
-	painter.setFont(font);
+	painter.setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
@@ -1658,11 +1658,11 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int des
 
 
 
-void Viewport::draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled)
+void Viewport::draw_arc(QPen const & pen, int pos_x, int pos_y, int size_w, int size_h, int angle1, int angle2, bool filled)
 {
 	QPainter painter(this->scr_buffer);
 	painter.setPen(pen);
-	painter.drawArc(x, y, width, height, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
+	painter.drawArc(pos_x, pos_y, size_w, size_h, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
 }
 
 
@@ -1828,9 +1828,9 @@ ViewportDrawMode Viewport::get_drawmode()
 
 
 /******** Triggering. *******/
-void Viewport::set_trigger(Layer * trigger)
+void Viewport::set_trigger(Layer * trg)
 {
-	this->trigger = trigger;
+	this->trigger = trg;
 }
 
 
@@ -2080,7 +2080,7 @@ Window * Viewport::get_window(void)
 
 
 
-void Viewport::paintEvent(QPaintEvent *event)
+void Viewport::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << "II: Viewport: paintEvent()" << __FUNCTION__ << __LINE__;
 
@@ -2098,7 +2098,7 @@ void Viewport::paintEvent(QPaintEvent *event)
 
 
 
-void Viewport::resizeEvent(QResizeEvent * event)
+void Viewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << "II: Viewport: resize event";
 	this->configure();
@@ -2112,22 +2112,22 @@ void Viewport::resizeEvent(QResizeEvent * event)
 
 
 
-void Viewport::mousePressEvent(QMouseEvent * event)
+void Viewport::mousePressEvent(QMouseEvent * ev)
 {
-	qDebug() << "II: Viewport: mouse press event, button" << (int) event->button();
+	qDebug() << "II: Viewport: mouse press event, button" << (int) ev->button();
 
-	this->window->get_layer_tools_box()->click(event);
+	this->window->get_layer_tools_box()->click(ev);
 
-	event->accept();
+	ev->accept();
 }
 
 
 
 
-bool Viewport::eventFilter(QObject * object, QEvent * event)
+bool Viewport::eventFilter(QObject * object, QEvent * ev)
 {
-	if (event->type() == QEvent::MouseButtonDblClick) {
-		QMouseEvent * m = (QMouseEvent *) event;
+	if (ev->type() == QEvent::MouseButtonDblClick) {
+		QMouseEvent * m = (QMouseEvent *) ev;
 		qDebug() << "II: Viewport: mouse DOUBLE CLICK event, button" << (int) m->button();
 
 		if (m->button() == Qt::LeftButton) {
@@ -2143,43 +2143,43 @@ bool Viewport::eventFilter(QObject * object, QEvent * event)
 
 
 
-void Viewport::mouseMoveEvent(QMouseEvent * event)
+void Viewport::mouseMoveEvent(QMouseEvent * ev)
 {
-	this->draw_mouse_motion_cb(event);
+	this->draw_mouse_motion_cb(ev);
 
-	if (event->buttons() != Qt::NoButton) {
+	if (ev->buttons() != Qt::NoButton) {
 		// qDebug() << "II: Viewport: mouse move with buttons";
-		this->window->get_layer_tools_box()->move(event);
+		this->window->get_layer_tools_box()->move(ev);
 	} else {
 		//qDebug() << "II: Viewport: mouse move without buttons";
 	}
 
-	emit this->cursor_moved(this, event);
+	emit this->cursor_moved(this, ev);
 
-	event->accept();
+	ev->accept();
 }
 
 
-void Viewport::mouseReleaseEvent(QMouseEvent * event)
+void Viewport::mouseReleaseEvent(QMouseEvent * ev)
 {
-	qDebug() << "II: Viewport: mouse release event, button" << (int) event->button();
+	qDebug() << "II: Viewport: mouse release event, button" << (int) ev->button();
 
-	this->window->get_layer_tools_box()->release(event);
-	emit this->button_released(this, event);
+	this->window->get_layer_tools_box()->release(ev);
+	emit this->button_released(this, ev);
 
-	event->accept();
+	ev->accept();
 }
 
 
 
 
-void Viewport::wheelEvent(QWheelEvent * event)
+void Viewport::wheelEvent(QWheelEvent * ev)
 {
-	QPoint angle = event->angleDelta();
-	qDebug() << "II: Viewport: wheel event, buttons =" << (int) event->buttons() << "angle =" << angle.y();
-	event->accept();
+	QPoint angle = ev->angleDelta();
+	qDebug() << "II: Viewport: wheel event, buttons =" << (int) ev->buttons() << "angle =" << angle.y();
+	ev->accept();
 
-	const Qt::KeyboardModifiers modifiers = event->modifiers(); // (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	const Qt::KeyboardModifiers modifiers = ev->modifiers(); // (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	const int w = this->get_width();
 	const int h = this->get_height();
@@ -2209,18 +2209,18 @@ void Viewport::wheelEvent(QWheelEvent * event)
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
 		VikCoord coord;
-		int x, y;
+		int pos_x, pos_y;
 		int center_x = w / 2;
 		int center_y = h / 2;
-		this->screen_to_coord(event->x(), event->y(), &coord);
+		this->screen_to_coord(ev->x(), ev->y(), &coord);
 		if (scroll_up) {
 			this->zoom_in();
 		} else {
 			this->zoom_out();
 		}
-		this->coord_to_screen(&coord, &x, &y);
-		this->set_center_screen(center_x + (x - event->x()),
-					center_y + (y - event->y()));
+		this->coord_to_screen(&coord, &pos_x, &pos_y);
+		this->set_center_screen(center_x + (pos_x - ev->x()),
+					center_y + (pos_y - ev->y()));
 	}
 
 	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
@@ -2230,23 +2230,23 @@ void Viewport::wheelEvent(QWheelEvent * event)
 
 
 
-void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
+void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 {
 #define BUFFER_SIZE 50
 	QPoint position = this->mapFromGlobal(QCursor::pos());
 
 #if 0   /* Verbose debug. */
-	qDebug() << "II: Viewport: difference in cursor position: dx = " << position.x() - event->x() << ", dy = " << position.y() - event->y();
+	qDebug() << "II: Viewport: difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
 #endif
 
-	int x = position.x();
-	int y = position.y();
+	int pos_x = position.x();
+	int pos_y = position.y();
 
-	//this->window->tb->move(event); /* TODO: uncomment this. */
+	//this->window->tb->move(ev); /* TODO: uncomment this. */
 
 	static VikCoord coord;
 	static struct UTM utm;
-	this->screen_to_coord(x, y, &coord);
+	this->screen_to_coord(pos_x, pos_y, &coord);
 	vik_coord_to_utm(&coord, &utm);
 
 	char * lat = NULL;
@@ -2282,7 +2282,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
 	QString message(pointer_buf);
 	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);
 
-	//this->window->pan_move(event); /* TODO: uncomment this. */
+	//this->window->pan_move(ev); /* TODO: uncomment this. */
 #undef BUFFER_SIZE
 }
 

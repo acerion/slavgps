@@ -176,7 +176,7 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 	{
 		/* Two axis inside a compass.
 		   Varying angle will rotate the axis. I don't know why you would need this :) */
-		float angle = 0;
+		//float angle = 0;
 		int c2 = (CR + dist * 2) * sin(baseangle);
 		int s2 = (CR + dist * 2) * cos(baseangle);
 		painter.drawLine(x1 - c2, y1 - s2, x1 + c2, y1 + s2);
@@ -307,7 +307,7 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolRuler::LayerToolRuler(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+LayerToolRuler::LayerToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.ruler";
 
@@ -561,7 +561,7 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolZoom::LayerToolZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+LayerToolZoom::LayerToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.zoom";
 
@@ -769,7 +769,7 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolPan::LayerToolPan(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.pan";
 
@@ -863,7 +863,7 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolSelect::LayerToolSelect(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::NUM_TYPES)
+LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.select";
 

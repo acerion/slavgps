@@ -105,10 +105,10 @@ VikDataSourceInterface vik_datasource_file_interface = {
 
 
 
-DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent) : QDialog(NULL)
+DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent_widget) : QDialog(NULL)
 {
 	this->setWindowTitle(title);
-	this->parent = parent;
+	this->parent = parent_widget;
 }
 
 

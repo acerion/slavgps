@@ -338,10 +338,10 @@ SGItem::SGItem() : QStandardItem()
 
 
 
-SGItem::SGItem(QString const & text) : QStandardItem(text)
+SGItem::SGItem(QString const & text_) : QStandardItem(text_)
 {
-	this->setText(text);
-	this->setData(QVariant::fromValue(text), RoleLayerData);
+	this->setText(text_);
+	this->setData(QVariant::fromValue(text_), RoleLayerData);
 }
 
 

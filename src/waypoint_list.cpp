@@ -296,9 +296,9 @@ void WaypointListDialog::add_menu_items(QMenu & menu)
 
 
 
-void WaypointListDialog::contextMenuEvent(QContextMenuEvent * event)
+void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
-	QPoint orig = event->pos();
+	QPoint orig = ev->pos();
 	QPoint v = this->view->pos();
 	QPoint t = this->view->viewport()->pos();
 
@@ -604,12 +604,12 @@ void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer, bool is
 
 
 
-WaypointListDialog::WaypointListDialog(QString const & title, QWidget * parent) : QDialog(parent)
+WaypointListDialog::WaypointListDialog(QString const & title, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(title);
 
 	this->button_box = new QDialogButtonBox();
-	this->parent = parent;
+	this->parent = parent_widget;
 	this->button_box->addButton("&Close", QDialogButtonBox::AcceptRole);
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &WaypointListDialog::accept_cb);
 	this->vbox = new QVBoxLayout;

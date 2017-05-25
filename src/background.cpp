@@ -82,7 +82,7 @@ enum {
 
 class BackgroundProgress : public QStyledItemDelegate {
 public:
-	BackgroundProgress(QObject * parent) : QStyledItemDelegate(parent) {};
+	BackgroundProgress(QObject * parent_object) : QStyledItemDelegate(parent_object) {};
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
@@ -245,13 +245,13 @@ void a_background_show_window()
 
 void BackgroundWindow::remove_job(QStandardItem * item)
 {
-	QStandardItem * parent = this->model->invisibleRootItem();
-	QStandardItem * child = parent->child(item->row(), PROGRESS_COLUMN);
+	QStandardItem * parent_item = this->model->invisibleRootItem();
+	QStandardItem * child = parent_item->child(item->row(), PROGRESS_COLUMN);
 
 	background_job_t * job = (background_job_t *) child->data(RoleLayerData).toULongLong();
 
 	if (job->index && job->index->isValid()) {
-		qDebug() << "II: Background: removing job" << parent->child(item->row(), TITLE_COLUMN)->text();
+		qDebug() << "II: Background: removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
 
 		job->remove_from_list = false;
 		this->model->removeRow(job->index->row());
@@ -330,9 +330,9 @@ void a_background_post_init()
 
 
 
-void a_background_post_init_window(QWidget * parent)
+void a_background_post_init_window(QWidget * parent_widget)
 {
-	bgwindow = new BackgroundWindow(parent);
+	bgwindow = new BackgroundWindow(parent_widget);
 }
 
 
@@ -378,7 +378,7 @@ void a_background_remove_window(Window * window)
 
 
 
-BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
+BackgroundWindow::BackgroundWindow(QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->button_box = new QDialogButtonBox();
 	this->close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
@@ -477,8 +477,8 @@ void BackgroundWindow::remove_selected_cb()
 		if (!index.isValid()) {
 			continue;
 		}
-		QStandardItem * item = this->model->itemFromIndex(index);
-		this->remove_job(item);
+		QStandardItem * item_ = this->model->itemFromIndex(index);
+		this->remove_job(item_);
 
 		this->model->removeRows(indexes.last().row(), 1);
 		indexes.removeLast();
@@ -493,9 +493,9 @@ void BackgroundWindow::remove_selected_cb()
 
 void BackgroundWindow::remove_all_cb()
 {
-	QModelIndex parent = QModelIndex();
-	for (int r = this->model->rowCount(parent) - 1; r >= 0; --r) {
-		QModelIndex index = this->model->index(r, 0, parent);
+	QModelIndex parent_index = QModelIndex();
+	for (int r = this->model->rowCount(parent_index) - 1; r >= 0; --r) {
+		QModelIndex index = this->model->index(r, 0, parent_index);
 		QVariant name = model->data(index);
 		qDebug() << "II: Background: removing job" << name;
 

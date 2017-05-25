@@ -561,9 +561,9 @@ Layer::~Layer()
 
 
 
-bool Layer::layer_selected(TreeItemType type, Sublayer * sublayer)
+bool Layer::layer_selected(TreeItemType item_type, Sublayer * sublayer)
 {
-	bool result = this->selected(type, sublayer);
+	bool result = this->selected(item_type, sublayer);
 	if (result) {
 		return result;
 	} else {
@@ -814,7 +814,7 @@ Layer::Layer()
 
 
 
-bool Layer::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -822,7 +822,7 @@ bool Layer::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * t
 
 
 
-bool Layer::select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -838,7 +838,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 
 
-bool Layer::select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -870,7 +870,7 @@ QString Layer::sublayer_tooltip(Sublayer * sublayer)
 
 
 
-bool Layer::selected(TreeItemType type, Sublayer * sublayer)
+bool Layer::selected(TreeItemType item_type, Sublayer * sublayer)
 {
 	return false;
 }
@@ -879,7 +879,7 @@ bool Layer::selected(TreeItemType type, Sublayer * sublayer)
 
 
 
-bool Layer::select_tool_context_menu(QMouseEvent * event, Viewport * viewport)
+bool Layer::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 {
 	return false;
 }
@@ -1038,11 +1038,11 @@ bool Layer::set_param_value(uint16_t id, ParameterValue param_value, bool is_fil
 
 
 
-LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
+LayerTool::LayerTool(Window * window_, Viewport * viewport_, LayerType layer_type_)
 {
-	this->window = window;
-	this->viewport = viewport;
-	this->layer_type = layer_type;
+	this->window = window_;
+	this->viewport = viewport_;
+	this->layer_type = layer_type_;
 	if (layer_type == LayerType::NUM_TYPES) {
 		strcpy(this->debug_string, "LayerType::generic");
 	} else {

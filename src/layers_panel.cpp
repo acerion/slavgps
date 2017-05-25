@@ -57,16 +57,16 @@ typedef struct {
 
 
 static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text);
-static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event);
+static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * ev);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
 
 
 
 
-LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
+LayersPanel::LayersPanel(Window * parent_window) : QWidget((QWidget *) parent_window)
 {
-	this->window = parent;
+	this->window = parent_window;
 	this->panel_box = new QVBoxLayout;
 
 	{
@@ -175,9 +175,9 @@ LayersPanel::~LayersPanel()
 
 
 
-void LayersPanel::set_viewport(Viewport * viewport)
+void LayersPanel::set_viewport(Viewport * vp)
 {
-	this->viewport = viewport;
+	this->viewport = vp;
 	/* TODO: also update GCs (?) */
 }
 
@@ -248,9 +248,9 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		Layer * parent = this->tree_view->get_parent_layer(index);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer(index));
-		parent->emit_changed_although_invisible();
+		Layer * parent_layer = this->tree_view->get_parent_layer(index);
+		visible = parent_layer->sublayer_toggle_visible(this->tree_view->get_sublayer(index));
+		parent_layer->emit_changed_although_invisible();
 		break;
 	}
 	default:
@@ -294,8 +294,8 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
-		Layer * parent = this->tree_view->get_parent_layer(index);
-		const char *name = parent->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
+		Layer * parent_layer = this->tree_view->get_parent_layer(index);
+		const char *name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
 		if (name) {
 			this->tree_view->set_name(index, name);
 		}
@@ -306,18 +306,18 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 
 
 
-bool LayersPanel::button_press_cb(QMouseEvent * event)
+bool LayersPanel::button_press_cb(QMouseEvent * ev)
 {
 	/* I don't understand what's going on with mouse buttons in this function. */
 
-	if (event->button() == Qt::RightButton) {
-		TreeIndex * index = this->tree_view->get_index_at_pos(event->x(), event->y());
+	if (ev->button() == Qt::RightButton) {
+		TreeIndex * index = this->tree_view->get_index_at_pos(ev->x(), ev->y());
 #ifdef K
 		if (index && index->isValid()) {
-			this->popup(index, (MouseButton) event->button);
+			this->popup(index, (MouseButton) ev->button);
 			this->tree_view->select(&iter);
 		} else {
-			this->popup(NULL, (MouseButton) event->button);
+			this->popup(NULL, (MouseButton) ev->button);
 		}
 		return true;
 #endif
@@ -329,19 +329,19 @@ bool LayersPanel::button_press_cb(QMouseEvent * event)
 
 
 
-static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event)
+static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * ev)
 {
-	return panel->key_press(event);
+	return panel->key_press(ev);
 }
 
 
 
 
-bool LayersPanel::key_press(GdkEventKey * event)
+bool LayersPanel::key_press(GdkEventKey * ev)
 {
 #ifndef SLAVGPS_QT
 	/* Accept all forms of delete keys. */
-	if (event->keyval == GDK_Delete || event->keyval == GDK_KP_Delete || event->keyval == GDK_BackSpace) {
+	if (ev->keyval == GDK_Delete || ev->keyval == GDK_KP_Delete || ev->keyval == GDK_BackSpace) {
 		this->delete_selected();
 		return true;
 	}
@@ -529,11 +529,11 @@ void LayersPanel::move_item(bool up)
 
 	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
 	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
 
-		if (parent) { /* Not toplevel. */
+		if (parent_layer) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
-			parent->move_layer(selected_index, up);
+			parent_layer->move_layer(selected_index, up);
 			this->emit_update_cb();
 #endif
 		}
@@ -589,9 +589,9 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 	TreeItemType type = this->tree_view->get_item_type(index);
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 
-		if (parent) {
+		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
@@ -600,10 +600,10 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 			a_clipboard_copy_selected(this);
 
-			if (parent->type == LayerType::AGGREGATE) {
+			if (parent_layer->type == LayerType::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent->delete_layer(index)) {
+				if (parent_layer->delete_layer(index)) {
 					this->emit_update_cb();
 				}
 			}
@@ -669,19 +669,19 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
-		if (parent) {
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
 			}
 
-			if (parent->type == LayerType::AGGREGATE) {
+			if (parent_layer->type == LayerType::AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent->delete_layer(index)) {
+				if (parent_layer->delete_layer(index)) {
 					this->emit_update_cb();
 				}
 			}
@@ -716,12 +716,12 @@ Layer * LayersPanel::get_selected_layer()
 	TreeIndex layer_index = index;
 	TreeItemType type = this->tree_view->get_item_type(layer_index);
 	while (type != TreeItemType::LAYER) {
-		TreeIndex parent = layer_index.parent();
-		if (!parent.isValid()) {
+		TreeIndex parent_index = layer_index.parent();
+		if (!parent_index.isValid()) {
 			return NULL;
 		}
-		type = this->tree_view->get_item_type(parent);
-		layer_index = parent;
+		type = this->tree_view->get_item_type(parent_index);
+		layer_index = parent_index;
 	}
 	return this->tree_view->get_layer(layer_index);
 #endif
@@ -746,14 +746,14 @@ static void layers_move_item_down_cb(LayersPanel * panel)
 
 
 #if 0
-bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
+bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
 {
 	Layer * layer = panel->get_selected_layer();
 	if (layer && layer->type == layer_type) {
-		tool_func(layer, event, viewport);
+		tool_func(layer, ev, viewport);
 		return true;
 	} else if (panel->toplayer->visible &&
-		   panel->toplayer->layer_tool(layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
+		   panel->toplayer->layer_tool(layer_type, tool_func, ev, viewport) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
 	return false;
@@ -860,9 +860,9 @@ Window * LayersPanel::get_window()
 
 
 
-void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
+void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 {
-	if (!this->tree_view->geometry().contains(event->pos())) {
+	if (!this->tree_view->geometry().contains(ev->pos())) {
 		qDebug() << "II: Layers Panel: context menu event outside tree view";
 		/* We want to handle only events that happen inside of tree view. */
 		return;
@@ -870,7 +870,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 
 	qDebug() << "II: Layers Panel: context menu event inside tree view";
 
-	QPoint orig = event->pos();
+	QPoint orig = ev->pos();
 	QPoint v = this->tree_view->pos();
 	QPoint t = this->tree_view->viewport()->pos();
 
@@ -896,9 +896,9 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 			layer = this->tree_view->get_layer(index);
 			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
 
-			QModelIndex parent = index.parent();
-			if (parent.isValid()) {
-				QModelIndex index2 = parent.child(ind.row(), 0);
+			QModelIndex parent_index = index.parent();
+			if (parent_index.isValid()) {
+				QModelIndex index2 = parent_index.child(ind.row(), 0);
 				qDebug() << "II: Layers Panel: context menu event: item" << index << "index2" << index2;
 				if (index.isValid()) {
 					qDebug() << "II: Layers Panel: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->tree_view->model->itemFromIndex(index2)->text();
@@ -925,7 +925,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: tree view not hit";
-		if (!this->tree_view->viewport()->geometry().contains(event->pos())) {
+		if (!this->tree_view->viewport()->geometry().contains(ev->pos())) {
 			qDebug() << "II: Layers Panel: context menu event outside of tree view's viewport";
 			return;
 		}

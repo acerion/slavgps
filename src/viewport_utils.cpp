@@ -28,16 +28,16 @@ void ViewportToImageDialog::get_size_from_viewport_cb(void) /* Slot */
 	double height_max = this->height_spin->maximum();
 
 	/* TODO: support for xzoom and yzoom values */
-	int width = this->viewport->get_width() * this->viewport->get_xmpp() / zoom;
-	int height = this->viewport->get_height() * this->viewport->get_xmpp() / zoom;
+	int width_size = this->viewport->get_width() * this->viewport->get_xmpp() / zoom;
+	int height_size = this->viewport->get_height() * this->viewport->get_xmpp() / zoom;
 
-	if (width > width_max || width < width_min || height > height_max || height < height_min) {
+	if (width_size > width_max || width_size < width_min || height_size > height_max || height_size < height_min) {
 		dialog_info("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.", NULL);
 	}
 
 	qDebug() << "DD: Viewport: Save: current viewport size:" << this->viewport->get_width() << "/" << this->viewport->get_height() << ", zoom:" << zoom << ", xmpp:" << this->viewport->get_xmpp();
-	this->width_spin->setValue(width);
-	this->height_spin->setValue(height);
+	this->width_spin->setValue(width_size);
+	this->height_spin->setValue(height_size);
 
 	return;
 }
@@ -80,11 +80,11 @@ void ViewportToImageDialog::calculate_total_area_cb(void)
 
 
 
-ViewportToImageDialog::ViewportToImageDialog(QString const & title, Viewport * viewport, QWidget * parent) : QDialog(NULL)
+ViewportToImageDialog::ViewportToImageDialog(QString const & title, Viewport * vp, QWidget * parent_widget) : QDialog(NULL)
 {
 	this->setWindowTitle(title);
 	this->parent = parent;
-	this->viewport = viewport;
+	this->viewport = vp;
 }
 
 

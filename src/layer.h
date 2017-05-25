@@ -413,7 +413,7 @@ namespace SlavGPS {
 
 
 
-Q_DECLARE_METATYPE(SlavGPS::Layer*);
+Q_DECLARE_METATYPE(SlavGPS::Layer*)
 
 
 

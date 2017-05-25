@@ -69,19 +69,20 @@ extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
 #endif
 
 /*** Input is a track. ***/
-
-const VikDataSourceInterface * filters[] = {
 #ifdef K
+const VikDataSourceInterface * filters[] = {
+
 	&vik_datasource_bfilter_simplify_interface,
 	&vik_datasource_bfilter_compress_interface,
 	&vik_datasource_bfilter_dup_interface,
 	&vik_datasource_bfilter_manual_interface,
 	&vik_datasource_bfilter_polygon_interface,
 	&vik_datasource_bfilter_exclude_polygon_interface,
-#endif
+
 };
 
 const unsigned int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
+#endif
 
 Track * filter_track = NULL;
 
@@ -187,19 +188,19 @@ ProcessOptions::ProcessOptions()
 }
 
 
-ProcessOptions::ProcessOptions(const char * args, const char * filename, const char * input_file_type, const char * url)
+ProcessOptions::ProcessOptions(const char * args, const char * file_name, const char * file_type, const char * input_url)
 {
 	if (args) {
 		this->babelargs = strdup(args);
 	}
 	if (filename) {
-		this->filename = strdup(filename);
+		this->filename = strdup(file_name);
 	}
-	if (input_file_type) {
-		this->input_file_type = strdup(input_file_type);
+	if (file_type) {
+		this->input_file_type = strdup(file_type);
 	}
-	if (url) {
-		this->url = strdup(url);
+	if (input_url) {
+		this->url = strdup(input_url);
 	}
 }
 

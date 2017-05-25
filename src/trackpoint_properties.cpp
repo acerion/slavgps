@@ -412,12 +412,12 @@ PropertiesDialogTP::PropertiesDialogTP()
 
 
 
-PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
+PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(QString("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
-	this->parent = parent;
+	this->parent = parent_widget;
 
 	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
 	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);

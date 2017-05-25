@@ -36,7 +36,7 @@ using namespace SlavGPS;
 
 
 
-SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent) : QWidget(parent)
+SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->selector_title = title;
 

@@ -35,7 +35,7 @@ using namespace SlavGPS;
 
 
 
-SGColorButton::SGColorButton(QColor const & color_, QWidget * parent = NULL) : QToolButton (parent)
+SGColorButton::SGColorButton(QColor const & color_, QWidget * parent_widget = NULL) : QToolButton (parent_widget)
 {
 	this->set_style(color_);
 
@@ -56,10 +56,10 @@ SGColorButton::~SGColorButton()
 
 void SGColorButton::set_style(QColor const & color_)
 {
-	QString style = "background-color: rgb(%1, %2, %3);";
-	style = style.arg(color_.red()).arg(color_.green()).arg(color_.blue());
-	style += "border: none;";
-	this->setStyleSheet(style);
+	QString style_ = "background-color: rgb(%1, %2, %3);";
+	style_ = style_.arg(color_.red()).arg(color_.green()).arg(color_.blue());
+	style_ += "border: none;";
+	this->setStyleSheet(style_);
 
 }
 

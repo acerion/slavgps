@@ -61,9 +61,9 @@ using namespace SlavGPS;
 
 extern LayerTool * trw_layer_tools[];
 
-static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * event);
-static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * event);
-static LayerToolFuncStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * event);
+static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * ev);
+static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev);
+static LayerToolFuncStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev);
 
 
 
@@ -105,7 +105,7 @@ Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int 
 
 
 
-bool LayerTRW::select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	if (!tool->sublayer_edit->holding) {
 		return false;
@@ -113,23 +113,23 @@ bool LayerTRW::select_move(QMouseEvent * event, Viewport * viewport, LayerTool *
 
 	VikCoord new_coord;
 
-	viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Here always allow snapping back to the original location.
 	   This is useful when one decides not to move the thing after all.
 	   If one wants to move the item only a little bit then don't hold down the 'snap' key! */
 
 	/* Snap to trackpoint. */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) {
+		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
 	}
 
 	/* Snap to waypoint. */
-	if (event->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ShiftModifier) {
+		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (wp) {
 			new_coord = wp->coord;
 		}
@@ -146,13 +146,13 @@ bool LayerTRW::select_move(QMouseEvent * event, Viewport * viewport, LayerTool *
 
 
 
-bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	if (!tool->sublayer_edit->holding) {
 		return false;
 	}
 
-	if (!event->button() == Qt::LeftButton) {
+	if (!ev->button() == Qt::LeftButton) {
 		return false;
 	}
 
@@ -164,19 +164,19 @@ bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerToo
 	}
 
 	VikCoord new_coord;
-	viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint. */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) {
+		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
 	}
 
 	/* Snap to waypoint. */
-	if (event->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ShiftModifier) {
+		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (wp) {
 			new_coord = wp->coord;
 		}
@@ -225,9 +225,9 @@ bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerToo
   The item found is automatically selected.
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in window.c
  */
-bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		return false;
 	}
 
@@ -248,8 +248,8 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	if (this->waypoints_visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
 		WaypointSearch wp_search;
 		wp_search.viewport = viewport;
-		wp_search.x = event->x();
-		wp_search.y = event->y();
+		wp_search.x = ev->x();
+		wp_search.y = ev->y();
 		wp_search.draw_images = this->drawimages;
 
 		LayerTRWc::waypoint_search_closest_tp(this->waypoints, &wp_search);
@@ -261,20 +261,20 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 
 			/* Too easy to move it so must be holding shift to start immediately moving it
 			   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
-			if (event->modifiers() & Qt::ShiftModifier
+			if (ev->modifiers() & Qt::ShiftModifier
 			    || (this->current_wp == wp_search.closest_wp && !this->current_wp->image)) {
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->sublayer_edit->trw = this;
 				tool->sublayer_edit->sublayer_type = SublayerType::WAYPOINT;
 
-				tool->sublayer_edit_click(event->x(), event->y());
+				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
 
 			this->current_wp = wp_search.closest_wp;
 
 #ifdef K
-			if (event->type == GDK_2BUTTON_PRESS) {
+			if (ev->type == GDK_2BUTTON_PRESS) {
 				if (this->current_wp->image) {
 					trw_menu_sublayer_t data;
 					memset(&data, 0, sizeof (trw_menu_sublayer_t));
@@ -293,8 +293,8 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	/* Used for both track and route lists. */
 	TrackpointSearch tp_search;
 	tp_search.viewport = viewport;
-	tp_search.x = event->x();
-	tp_search.y = event->y();
+	tp_search.x = ev->x();
+	tp_search.y = ev->y();
 	tp_search.bbox = bbox;
 
 	if (this->tracks_visible) {
@@ -309,13 +309,13 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
-			if (event->modifiers() & Qt::ControlModifier
+			if (ev->modifiers() & Qt::ControlModifier
 			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->sublayer_edit->trw = this;
-				tool->sublayer_edit_click(event->x(), event->y());
+				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
 
 			this->selected_tp.iter = tp_search.closest_tp_iter;
@@ -347,13 +347,13 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
-			if (event->modifiers() & Qt::ControlModifier
+			if (ev->modifiers() & Qt::ControlModifier
 			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->sublayer_edit->trw = this;
-				tool->sublayer_edit_click(event->x(), event->y());
+				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
 
 			this->selected_tp.iter = tp_search.closest_tp_iter;
@@ -391,9 +391,9 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
    This function is called when generic Select tool is selected from tool bar.
    It would be nice to somehow merge this function with code used when "edit track/route/waypoint" tool is selected.
 */
-bool LayerTRW::select_tool_context_menu(QMouseEvent * event, Viewport * viewport)
+bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 {
-	if (event->button() != Qt::RightButton) {
+	if (ev->button() != Qt::RightButton) {
 		return false;
 	}
 
@@ -446,7 +446,7 @@ LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("EditWaypoint");
 
@@ -466,7 +466,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window, Viewport * v
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -486,12 +486,12 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent 
 		int x, y;
 		this->viewport->coord_to_screen(&trw->current_wp->coord, &x, &y);
 
-		if (abs(x - (int) round(event->x())) <= WAYPOINT_SIZE_APPROX
-		    && abs(y - (int) round(event->y())) <= WAYPOINT_SIZE_APPROX) {
-			if (event->button() == Qt::RightButton) {
+		if (abs(x - (int) round(ev->x())) <= WAYPOINT_SIZE_APPROX
+		    && abs(y - (int) round(ev->y())) <= WAYPOINT_SIZE_APPROX) {
+			if (ev->button() == Qt::RightButton) {
 				trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 			} else {
-				this->sublayer_edit_click(event->x(), event->y());
+				this->sublayer_edit_click(ev->x(), ev->y());
 			}
 			return LayerToolFuncStatus::ACK;
 		}
@@ -499,20 +499,20 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent 
 
 	WaypointSearch search;
 	search.viewport = this->viewport;
-	search.x = event->x();
-	search.y = event->y();
+	search.x = ev->x();
+	search.y = ev->y();
 	search.draw_images = trw->drawimages;
 
 	LayerTRWc::waypoint_search_closest_tp(trw->waypoints, &search);
 	if (trw->current_wp && (trw->current_wp == search.closest_wp)) {
-		if (event->button() == Qt::RightButton) {
+		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
-			this->sublayer_edit_click(event->x(), event->y());
+			this->sublayer_edit_click(ev->x(), ev->y());
 		}
 		return LayerToolFuncStatus::IGNORE;
 	} else if (search.closest_wp) {
-		if (event->button() == Qt::RightButton) {
+		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			trw->waypoint_rightclick = false;
@@ -537,7 +537,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent 
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -550,16 +550,16 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent *
 	}
 
 	VikCoord new_coord;
-	this->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 
-	if (event->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
+		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
-	} else if (event->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
-		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+	} else if (ev->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
+		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 		if (wp && wp != trw->current_wp) {
 			new_coord = wp->coord;
 		}
@@ -577,7 +577,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent *
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -589,21 +589,21 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEven
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (event->button() == Qt::LeftButton) {
+	if (ev->button() == Qt::LeftButton) {
 		VikCoord new_coord;
-		this->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+		this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 		/* Snap to trackpoint. */
-		if (event->modifiers() & Qt::ControlModifier) {
-			Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+		if (ev->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
 		}
 
 		/* Snap to waypoint. */
-		if (event->modifiers() & Qt::ShiftModifier) {
-			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+		if (ev->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 			if (wp && wp != trw->current_wp) {
 				new_coord = wp->coord;
 			}
@@ -617,7 +617,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEven
 		trw->emit_changed();
 		return LayerToolFuncStatus::ACK;
 
-	} else if (event->button() == Qt::RightButton && trw->waypoint_rightclick) {
+	} else if (ev->button() == Qt::RightButton && trw->waypoint_rightclick) {
 		if (trw->current_wp) {
 			trw->menu_data->sublayer = trw->current_wp;
 			trw->menu_data->viewport = this->viewport;
@@ -645,7 +645,7 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("CreateTrack");
 
@@ -666,9 +666,9 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window, Viewport * viewport)
 
 
 
-bool LayerToolTRWNewTrack::key_press_(Layer * layer, QKeyEvent * event)
+bool LayerToolTRWNewTrack::key_press_(Layer * layer, QKeyEvent * ev)
 {
-	return tool_new_track_key_press(this, (LayerTRW *) layer, event);
+	return tool_new_track_key_press(this, (LayerTRW *) layer, ev);
 }
 
 
@@ -796,15 +796,15 @@ void LayerTRW::update_statusbar()
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewTrack::move_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_move(this, (LayerTRW *) layer, event);
+	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
 
 
 
 
-static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * event)
+static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev)
 {
 	qDebug() << "II: Layer TRW: new track's move()" << trw->draw_sync_done;
 	qDebug() << "II: Layer TRW: new track's move()" << trw->current_trk;
@@ -848,8 +848,8 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 		   thus when we come to reset to the background it would include what we have already drawn!! */
 		QPainter painter(pixmap);
 		painter.setPen(trw->current_trk_new_point_pen);
-		qDebug() << "II: Layer TRW: drawing line" << x1 << y1 << event->x() << event->y();
-		painter.drawLine(x1, y1, event->x(), event->y());
+		qDebug() << "II: Layer TRW: drawing line" << x1 << y1 << ev->x() << ev->y();
+		painter.drawLine(x1, y1, ev->x(), ev->y());
 
 		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
 
@@ -859,7 +859,7 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 		/* Now add distance to where the pointer is. */
 		VikCoord coord;
 		struct LatLon ll;
-		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
+		tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		double last_step = vik_coord_diff(&coord, &last_tpt->coord);
 		distance = distance + last_step;
@@ -897,8 +897,8 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 
 			int xd,yd;
 			/* Offset from cursor a bit depending on font size. */
-			xd = event->x + 10;
-			yd = event->y - hd;
+			xd = ev->x + 10;
+			yd = ev->y - hd;
 
 			/* Create a background block to make the text easier to read over the background map. */
 			GdkGC *background_block_gc = tool->viewport->new_pen("#cccccc", 1);
@@ -913,7 +913,7 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 
 		double angle;
 		double baseangle;
-		tool->viewport->compute_bearing(x1, y1, event->x(), event->y(), &angle, &baseangle);
+		tool->viewport->compute_bearing(x1, y1, ev->x(), ev->y(), &angle, &baseangle);
 
 		/* Update statusbar with full gain/loss information. */
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, trw);
@@ -946,9 +946,9 @@ void LayerTRW::undo_trackpoint_add()
 
 
 
-static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * event)
+static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * ev)
 {
-	if (trw->current_trk && event->key() == Qt::Key_Escape) {
+	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
 		/* Bin track if only one point as it's not very useful. */
 		if (trw->current_trk->get_tp_count() == 1) {
 			if (trw->current_trk->sublayer_type == SublayerType::ROUTE) {
@@ -960,7 +960,7 @@ static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent
 		trw->current_trk = NULL;
 		trw->emit_changed();
 		return true;
-	} else if (trw->current_trk && event->key() == Qt::Key_Backspace) {
+	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
 		trw->undo_trackpoint_add();
 		trw->update_statusbar();
 		trw->emit_changed();
@@ -978,20 +978,20 @@ static bool tool_new_track_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent
  *  . enables adding a point via normal click
  *  . enables removal of last point via right click
  */
-LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport)
+LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * viewport)
 {
 	if (this->type != LayerType::TRW) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (event->button() == Qt::MiddleButton) {
+	if (ev->button() == Qt::MiddleButton) {
 		/* As the display is panning, the new track pixmap is now invalid so don't draw it
 		   otherwise this drawing done results in flickering back to an old image. */
 		this->draw_sync_do = false;
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (event->button() == Qt::RightButton) {
+	if (ev->button() == Qt::RightButton) {
 		if (!this->current_trk) {
 			return LayerToolFuncStatus::IGNORE;
 		}
@@ -1002,11 +1002,11 @@ LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * event,
 	}
 
 	Trackpoint * tp = new Trackpoint();
-	viewport->screen_to_coord(event->x(), event->y(), &tp->coord);
+	viewport->screen_to_coord(ev->x(), ev->y(), &tp->coord);
 
 	/* Snap to other TP. */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) {
+		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (other_tp) {
 			tp->coord = other_tp->coord;
 		}
@@ -1025,8 +1025,8 @@ LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * event,
 	/* TODO: I think that in current implementation of handling of double click we don't need these fields. */
 	this->ct_x1 = this->ct_x2;
 	this->ct_y1 = this->ct_y2;
-	this->ct_x2 = event->x();
-	this->ct_y2 = event->y();
+	this->ct_x2 = ev->x();
+	this->ct_y2 = ev->y();
 
 	this->emit_changed();
 
@@ -1036,7 +1036,7 @@ LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * event,
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1044,7 +1044,7 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 	trw->route_finder_started = false;
 
 	/* If current is a route - switch to new track. */
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
 		return LayerToolFuncStatus::IGNORE;
 	}
@@ -1066,20 +1066,20 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 		free(name);
 	}
 
-	return trw->tool_new_track_or_route_click(event, this->viewport);
+	return trw->tool_new_track_or_route_click(ev, this->viewport);
 }
 
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::double_click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewTrack::double_click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->type != LayerType::TRW) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
@@ -1097,17 +1097,17 @@ LayerToolFuncStatus LayerToolTRWNewTrack::double_click_(Layer * layer, QMouseEve
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewTrack::release_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_release(this, (LayerTRW *) layer, event);
+	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
 
 
 
 
-static LayerToolFuncStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * event)
+static LayerToolFuncStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev)
 {
-	if (event->button() == Qt::MiddleButton) {
+	if (ev->button() == Qt::MiddleButton) {
 		/* Pan moving ended - enable potential point drawing again. */
 		trw->draw_sync_do = true;
 		trw->draw_sync_done = true;
@@ -1127,7 +1127,7 @@ LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 }
 
 
-LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("CreateRoute");
 
@@ -1148,14 +1148,14 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window, Viewport * viewport)
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	/* If we were running the route finder, cancel it. */
 	trw->route_finder_started = false;
 
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
 		return LayerToolFuncStatus::IGNORE;
 	}
@@ -1177,31 +1177,31 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 		trw->new_route_create_common(new_name.toUtf8().data());
 		free(name);
 	}
-	return trw->tool_new_track_or_route_click(event, this->viewport);
+	return trw->tool_new_track_or_route_click(ev, this->viewport);
 }
 
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewRoute::move_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_move(this, (LayerTRW *) layer, event);
+	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
 
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewRoute::release_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_release(this, (LayerTRW *) layer, event);
+	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
 
 
 
 
-bool LayerToolTRWNewRoute::key_press_(Layer * layer, QKeyEvent * event)
+bool LayerToolTRWNewRoute::key_press_(Layer * layer, QKeyEvent * ev)
 {
-	return tool_new_track_key_press(this, (LayerTRW *) layer, event);
+	return tool_new_track_key_press(this, (LayerTRW *) layer, ev);
 }
 
 
@@ -1216,7 +1216,7 @@ LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("CreateWaypoint");
 
@@ -1236,7 +1236,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window, Viewport * vie
 
 
 
-LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1245,7 +1245,7 @@ LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent *
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	this->viewport->screen_to_coord(event->x(), event->y(), &coord);
+	this->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
 	if (trw->new_waypoint(trw->get_window(), &coord)) {
 		trw->calculate_bounds_waypoints();
 		if (trw->visible) {
@@ -1270,7 +1270,7 @@ LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("EditTrackpoint");
 
@@ -1297,19 +1297,19 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window, Viewport
  * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	TrackpointSearch search;
 	search.viewport = this->viewport;
-	search.x = event->x();
-	search.y = event->y();
+	search.x = ev->x();
+	search.y = ev->y();
 	//search.closest_tp_iter = NULL;
 
 	this->viewport->get_bbox(&search.bbox);
 
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
@@ -1335,10 +1335,10 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEven
 		this->viewport->coord_to_screen(&tp->coord, &x, &y);
 
 		if (trw->current_trk->visible
-		    && abs(x - (int) round(event->x())) < TRACKPOINT_SIZE_APPROX
-		    && abs(y - (int) round(event->y())) < TRACKPOINT_SIZE_APPROX) {
+		    && abs(x - (int) round(ev->x())) < TRACKPOINT_SIZE_APPROX
+		    && abs(y - (int) round(ev->y())) < TRACKPOINT_SIZE_APPROX) {
 
-			this->sublayer_edit_click(event->x(), event->y());
+			this->sublayer_edit_click(ev->x(), ev->y());
 			return LayerToolFuncStatus::ACK;
 		}
 
@@ -1392,7 +1392,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEven
 
 
 
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1405,11 +1405,11 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent
 	}
 
 	VikCoord new_coord;
-	this->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint. */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) {
+		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 		if (tp && tp != *trw->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
@@ -1425,7 +1425,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent
 
 
 
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1433,7 +1433,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEv
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (event->button() != Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
@@ -1442,11 +1442,11 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEv
 	}
 
 	VikCoord new_coord;
-	this->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint */
-	if (event->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, event->x(), event->y());
+	if (ev->modifiers() & Qt::ControlModifier) {
+		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
 		if (tp && tp != *trw->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
@@ -1484,7 +1484,7 @@ LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewpo
 
 
 
-LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("ExtendedRouteFinder");
 
@@ -1505,17 +1505,17 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::move_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_move(this, (LayerTRW *) layer, event);
+	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
 
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::release_(Layer * layer, QMouseEvent * ev)
 {
-	return tool_new_track_release(this, (LayerTRW *) layer, event);
+	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
 
 
@@ -1544,26 +1544,26 @@ void LayerTRW::tool_extended_route_finder_undo()
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	VikCoord tmp;
 
-	this->viewport->screen_to_coord(event->x(), event->y(), &tmp);
-	if (event->button() == Qt::RightButton && trw->current_trk) {
+	this->viewport->screen_to_coord(ev->x(), ev->y(), &tmp);
+	if (ev->button() == Qt::RightButton && trw->current_trk) {
 		trw->tool_extended_route_finder_undo();
 
-	} else if (event->button() == Qt::MiddleButton) {
+	} else if (ev->button() == Qt::MiddleButton) {
 		trw->draw_sync_do = false;
 		return LayerToolFuncStatus::IGNORE;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
 	else if (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE && !trw->current_trk->get_tp_first()) {
-		return trw->tool_new_track_or_route_click(event, this->viewport);
+		return trw->tool_new_track_or_route_click(ev, this->viewport);
 
 	} else if ((trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)
-		   || ((event->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
+		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
 
 		struct LatLon start, end;
 
@@ -1613,7 +1613,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		trw->current_trk = NULL;
 
 		/* Create a new route where we will add the planned route to. */
-		LayerToolFuncStatus ret = this->click_(trw, event);
+		LayerToolFuncStatus ret = this->click_(trw, ev);
 
 		trw->route_finder_started = true;
 
@@ -1626,16 +1626,16 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 
 
 
-bool LayerToolTRWExtendedRouteFinder::key_press_(Layer * layer, QKeyEvent * event)
+bool LayerToolTRWExtendedRouteFinder::key_press_(Layer * layer, QKeyEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	if (trw->current_trk && event->key() == Qt::Key_Escape) {
+	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
 		trw->route_finder_started = false;
 		trw->current_trk = NULL;
 		trw->emit_changed();
 		return true;
-	} else if (trw->current_trk && event->key() == Qt::Key_Backspace) {
+	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
 		trw->tool_extended_route_finder_undo();
 		return true;
 	} else {
@@ -1654,7 +1654,7 @@ LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::TRW)
+LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("ShowPicture");
 
@@ -1697,7 +1697,7 @@ void LayerTRW::show_picture_cb(void) /* Slot. */
 
 
 
-LayerToolFuncStatus LayerToolTRWShowPicture::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolTRWShowPicture::click_(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1705,7 +1705,7 @@ LayerToolFuncStatus LayerToolTRWShowPicture::click_(Layer * layer, QMouseEvent *
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	char * found = LayerTRWc::tool_show_picture_wp(trw->waypoints, event->x(), event->y(), this->viewport);
+	char * found = LayerTRWc::tool_show_picture_wp(trw->waypoints, ev->x(), ev->y(), this->viewport);
 	if (found) {
 #ifdef K
 		trw_menu_sublayer_t data;

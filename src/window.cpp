@@ -1114,27 +1114,27 @@ void Window::layer_tool_cb(QAction * qa)
 
 
 
-void Window::pan_click(QMouseEvent * event)
+void Window::pan_click(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan click";
 	/* Set panning origin. */
 	this->pan_move_flag = false;
-	this->pan_x = event->x();
-	this->pan_y = event->y();
+	this->pan_x = ev->x();
+	this->pan_y = ev->y();
 }
 
 
 
 
-void Window::pan_move(QMouseEvent * event)
+void Window::pan_move(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan move";
 	if (this->pan_x != -1) {
-		this->viewport->set_center_screen(this->viewport->get_width() / 2 - event->x() + this->pan_x,
-						  this->viewport->get_height() / 2 - event->y() + this->pan_y);
+		this->viewport->set_center_screen(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
+						  this->viewport->get_height() / 2 - ev->y() + this->pan_y);
 		this->pan_move_flag = true;
-		this->pan_x = event->x();
-		this->pan_y = event->y();
+		this->pan_x = ev->x();
+		this->pan_y = ev->y();
 		this->draw_update();
 	}
 }
@@ -1142,7 +1142,7 @@ void Window::pan_move(QMouseEvent * event)
 
 
 
-void Window::pan_release(QMouseEvent * event)
+void Window::pan_release(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan release";
 	bool do_draw = true;
@@ -1170,8 +1170,8 @@ void Window::pan_release(QMouseEvent * event)
 		}
 #endif
 	} else {
-		this->viewport->set_center_screen(this->viewport->get_width() / 2 - event->x() + this->pan_x,
-						  this->viewport->get_height() / 2 - event->y() + this->pan_y);
+		this->viewport->set_center_screen(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
+						  this->viewport->get_height() / 2 - ev->y() + this->pan_y);
 	}
 
 	this->pan_off();
@@ -1239,7 +1239,7 @@ void Window::preferences_cb(void) /* Slot. */
 
 
 
-void Window::closeEvent(QCloseEvent * event)
+void Window::closeEvent(QCloseEvent * ev)
 {
 #if 0
 #ifdef VIKING_PROMPT_IF_MODIFIED
@@ -1255,12 +1255,12 @@ void Window::closeEvent(QCloseEvent * event)
 									  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
 									  QMessageBox::Yes);
 		if (reply == QMessageBox::No) {
-			event->accept();
+			ev->accept();
 		} else if (reply == QMessageBox::Yes) {
 			//save_file(NULL, window);
-			event->accept();
+			ev->accept();
 		} else {
-			event->ignore();
+			ev->ignore();
 		}
 	}
 
@@ -1970,16 +1970,16 @@ void Window::update_recent_files(QString const & path)
 
 
 
-void Window::update_recently_used_document(char const * filename)
+void Window::update_recently_used_document(char const * file_name)
 {
 #ifdef K
 	/* Update Recently Used Document framework */
 	GtkRecentManager *manager = gtk_recent_manager_get_default();
 	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
 	char *groups[] = { (char *) "viking", NULL};
-	GFile * file = g_file_new_for_commandline_arg(filename);
+	GFile * file = g_file_new_for_commandline_arg(file_name);
 	char * uri = g_file_get_uri(file);
-	char * basename = g_path_get_basename(filename);
+	char * basename = g_path_get_basename(file_name);
 	g_object_unref(file);
 	file = NULL;
 
@@ -2037,14 +2037,14 @@ void Window::clear_busy_cursor()
 
 
 
-void Window::set_filename(char const * filename)
+void Window::set_filename(char const * file_name)
 {
 	if (this->filename) {
 		free(this->filename);
 		this->filename = NULL;
 	}
 	if (filename) {
-		this->filename = strdup(filename);
+		this->filename = strdup(file_name);
 	}
 
 	/* Refresh window's title */
@@ -2439,8 +2439,8 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 
 void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
 {
-	unsigned long size = sizeof(char) * (file_path.length() + 15);
-	char *name_of_file = (char *) malloc(size);
+	unsigned long a_size = sizeof(char) * (file_path.length() + 15);
+	char *name_of_file = (char *) malloc(a_size);
 	struct UTM utm;
 
 	/* *** copied from above *** */
@@ -2466,7 +2466,7 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 	GError *error = NULL;
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
-			snprintf(name_of_file, size, "%s%cy%d-x%d.%s", file_path, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
+			snprintf(name_of_file, a_size, "%s%cy%d-x%d.%s", file_path, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
 				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (w*zoom);
@@ -2672,14 +2672,12 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	int level = qa->data().toInt();
 	qDebug() << "SLOT: Window: 'Zoom Changed' callback" << qa->text() << level;
 
-	Viewport * viewport = this->get_viewport();
-
 	double zoom_request = pow(2, level - 5);
 
 	/* But has it really changed? */
-	double current_zoom = viewport->get_zoom();
+	double current_zoom = this->viewport->get_zoom();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
-		viewport->set_zoom(zoom_request);
+		this->viewport->set_zoom(zoom_request);
 		/* Force drawing update. */
 		this->draw_update();
 	}

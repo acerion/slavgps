@@ -334,7 +334,7 @@ void LayerAggregate::change_coord_mode(VikCoordMode mode)
 void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
 	LayersPanel * panel = this->menu_data->layers_panel;
-	TreeView * tree_view = panel->get_treeview();
+	TreeView * treeview = panel->get_treeview(); /* kamilTODO: There is already tree_view in LayerAggregate */
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -342,7 +342,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		tree_view->toggle_visibility(layer->index);
+		treeview->toggle_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_changed();
@@ -685,14 +685,14 @@ void LayerAggregate::clear()
 
 
 /* Delete a layer specified by \p index. */
-bool LayerAggregate::delete_layer(TreeIndex const & index)
+bool LayerAggregate::delete_layer(TreeIndex const & tree_index)
 {
-	assert(index.isValid());
+	assert(tree_index.isValid());
 
-	Layer * layer = this->tree_view->get_layer(index);
+	Layer * layer = this->tree_view->get_layer(tree_index);
 	bool was_visible = layer->visible;
 
-	this->tree_view->erase(index);
+	this->tree_view->erase(tree_index);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if (layer->the_same_object(*i)) {
@@ -909,15 +909,15 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
  */
 QString LayerAggregate::tooltip()
 {
-	QString tooltip;
+	QString tool_tip;
 
 	size_t size = this->children->size();
 	if (size) {
 		/* Could have a more complicated tooltip that numbers each
 		   type of layers, but for now a simple overall count. */
-		tooltip = QString(tr("%n layer(s)", "", size));
+		tool_tip = QString(tr("%n layer(s)", "", size));
 	}
-	return tooltip;
+	return tool_tip;
 }
 
 

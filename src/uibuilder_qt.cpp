@@ -284,7 +284,7 @@ ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *paren
 
 
 
-PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent) : QDialog(parent)
+PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(title);
 

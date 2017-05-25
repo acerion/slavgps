@@ -175,7 +175,7 @@ namespace SlavGPS {
 
 
 
-Q_DECLARE_METATYPE(SlavGPS::TreeItem*);
+Q_DECLARE_METATYPE(SlavGPS::TreeItem*)
 
 
 

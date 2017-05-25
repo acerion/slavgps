@@ -33,7 +33,7 @@ namespace SlavGPS {
 
 		QAction * add_tool(LayerTool * layer_tool);
 		void add_group(QActionGroup * group);
-		LayerTool * get_tool(QString const & tool_name);;
+		LayerTool * get_tool(QString const & tool_name);
 
 		void activate_tool(QAction * qa);
 		bool deactivate_tool(QAction * qa);

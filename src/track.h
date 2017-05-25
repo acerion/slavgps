@@ -281,7 +281,7 @@ namespace SlavGPS {
 
 
 
-Q_DECLARE_METATYPE(SlavGPS::Track*);
+Q_DECLARE_METATYPE(SlavGPS::Track*)
 
 
 

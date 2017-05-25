@@ -39,7 +39,7 @@ using namespace SlavGPS;
 
 
 
-SGRadioGroup::SGRadioGroup(QString & title, std::list<QString> & labels, QWidget * parent) : QGroupBox(parent)
+SGRadioGroup::SGRadioGroup(QString & title_, std::list<QString> & labels, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;

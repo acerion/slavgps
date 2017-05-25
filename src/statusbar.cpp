@@ -101,7 +101,7 @@ static void vik_statusbar_init(VikStatusbar * vs)
 
 
 
-StatusBar::StatusBar(QWidget * parent) : QStatusBar(parent)
+StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 {
 	this->fields.assign((int) StatusBarField::NUM_FIELDS, NULL);
 

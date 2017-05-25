@@ -83,7 +83,7 @@ time_t SlavGPS::date_dialog(QWidget * parent, QString const & title, time_t date
 
 
 
-SGDateTimeDialog::SGDateTimeDialog(QWidget * parent, QDateTime const & date_time) : QDialog(parent)
+SGDateTimeDialog::SGDateTimeDialog(QWidget * parent_widget, QDateTime const & date_time) : QDialog(parent_widget)
 {
 	this->vbox = new QVBoxLayout;
 	this->calendar = new QCalendarWidget(this);
@@ -130,18 +130,18 @@ time_t SGDateTimeDialog::get_timestamp()
 
 
 
-void SGDateTimeDialog::show_clock(bool show)
+void SGDateTimeDialog::show_clock(bool do_show)
 {
-	this->clock->setVisible(show);
+	this->clock->setVisible(do_show);
 }
 
 
 
 
 
-SGDateTime::SGDateTime(time_t date_time, QWidget * parent) : QPushButton(parent)
+SGDateTime::SGDateTime(time_t date_time, QWidget * parent_widget) : QPushButton(parent_widget)
 {
-	this->dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(date_time));
+	this->dialog = new SGDateTimeDialog(parent_widget, QDateTime::fromTime_t(date_time));
 	this->dialog->setWindowTitle(QString("Edit Date/Time"));
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }

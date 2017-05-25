@@ -267,9 +267,9 @@ void TrackListDialog::add_menu_items(QMenu & menu)
 
 
 
-void TrackListDialog::contextMenuEvent(QContextMenuEvent * event)
+void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
-	QPoint orig = event->pos();
+	QPoint orig = ev->pos();
 	QPoint v = this->view->pos();
 	QPoint t = this->view->viewport()->pos();
 
@@ -332,7 +332,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * event)
 
 #if 0
 static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
-					      GdkEventButton * event,
+					      GdkEventButton * ev,
 					      void * tracks_and_layers)
 {
 	/* Only on right clicks... */
@@ -704,12 +704,12 @@ void SlavGPS::track_list_dialog(QString const & title, Layer * layer, SublayerTy
 
 
 
-TrackListDialog::TrackListDialog(QString const & title, QWidget * parent) : QDialog(parent)
+TrackListDialog::TrackListDialog(QString const & title, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(title);
 
 	this->button_box = new QDialogButtonBox();
-	this->parent = parent;
+	this->parent = parent_widget;
 
 	this->button_box->addButton("&Save and Close", QDialogButtonBox::AcceptRole);
 	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
