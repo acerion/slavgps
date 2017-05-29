@@ -164,8 +164,6 @@ HEADERS += window.h \
 # osm-traces.cpp
 # print.cpp
 # print-preview.cpp
-# qrc_cursors.cpp
-# qrc_icons.cpp
 # terraserver.cpp
 # terraservermapsource.cpp
 # thumbnails.cpp
@@ -176,10 +174,7 @@ HEADERS += window.h \
 # vikexttool.cpp
 # vikexttool_datasources.cpp
 # vikexttools.cpp
-# vikfileentry.cpp
-# vikfilelist.cpp
 # vikgeoreflayer.cpp
-# vikgobjectbuilder.cpp
 # vikgoto.cpp
 # vikgototool.cpp
 # vikgotoxmltool.cpp
@@ -189,7 +184,6 @@ HEADERS += window.h \
 # vikmapslayer.cpp
 # vikmapsource.cpp
 # vikmaptype.cpp
-# vikradiogroup.cpp
 # vikrouting.cpp
 # vikroutingengine.cpp
 # vikroutingwebengine.cpp
