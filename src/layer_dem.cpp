@@ -1520,13 +1520,13 @@ LayerDEM::LayerDEM()
 	this->files = new std::list<char *>;
 	this->dem_type = 0;
 
-	this->set_initial_parameter_values();
-
 	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
 	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
 
 	/* Ensure the base color is available so the default colour can be applied. */
 	this->colors[0] = new QColor("#0000FF");
+
+	this->set_initial_parameter_values();
 
 	/* TODO: share ->colors[] between layers. */
 	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
