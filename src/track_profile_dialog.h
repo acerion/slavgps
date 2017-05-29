@@ -281,9 +281,6 @@ namespace SlavGPS {
 
 	void track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport);
 
-	/* Update this profile dialog e.g. if the track has been renamed. */
-	void track_profile_dialog_update(Track * trk);
-
 
 
 

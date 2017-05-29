@@ -62,7 +62,9 @@ void SlavGPS::track_properties_dialog(Window * parent,
 	TrackPropertiesDialog dialog(QString("Track Profile"), layer, trk, start_on_stats, parent);
 	dialog.create_properties_page();
 	dialog.create_statistics_page();
+	trk->set_properties_dialog(&dialog);
 	dialog.exec();
+	trk->clear_properties_dialog();
 }
 
 
@@ -70,7 +72,7 @@ void SlavGPS::track_properties_dialog(Window * parent,
 
 TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
 {
-	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
+	this->setWindowTitle(QString(tr("%1 - Track Properties")).arg(a_trk->name));
 
 	this->trw = a_layer;
 	this->trk = a_trk;
@@ -106,9 +108,6 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a
 	delete old;
 	this->setLayout(this->vbox);
 
-#ifdef K
-	this->trk->set_property_dialog(dialog);
-#endif
 	if (start_on_stats) {
 		this->tabs->setCurrentIndex(1);
 	}
@@ -170,7 +169,7 @@ void TrackPropertiesDialog::create_properties_page(void)
 	this->w_number_distlabels->setMinimum(0);
 	this->w_number_distlabels->setMaximum(100);
 	this->w_number_distlabels->setSingleStep(1);
-	this->w_number_distlabels->setToolTip(_("Maximum number of distance labels to be shown"));
+	this->w_number_distlabels->setToolTip(tr("Maximum number of distance labels to be shown"));
 	this->properties_form->addRow(QString("Distance Labels:"), this->w_number_distlabels);
 }
 
@@ -360,40 +359,15 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		this->w_time_dur->setToolTip(tip);
 		free(tip);
 	} else {
-		this->w_time_start = ui_label_new_selectable(_("No Data"), this);
+		this->w_time_start = ui_label_new_selectable(tr("No Data"), this);
 		this->statistics_form->addRow(QString("Start:"), this->w_time_start);
 
-		this->w_time_end = ui_label_new_selectable(_("No Data"), this);
+		this->w_time_end = ui_label_new_selectable(tr("No Data"), this);
 		this->statistics_form->addRow(QString("End:"), this->w_time_end);
 
-		this->w_time_dur = ui_label_new_selectable(_("No Data"), this);
+		this->w_time_dur = ui_label_new_selectable(tr("No Data"), this);
 		this->statistics_form->addRow(QString("Duration:"), this->w_time_dur);
 	}
-}
-
-
-
-
-/**
- * Update this property dialog
- * e.g. if the track has been renamed.
- */
-void SlavGPS::track_properties_dialog_update(Track * trk)
-{
-	/* If not displayed do nothing. */
-	if (!trk->property_dialog) {
-		return;
-	}
-
-	/* Update title with current name. */
-	if (trk->name) {
-#ifdef K
-		char * title = g_strdup_printf(_("%s - Track Properties"), trk->name);
-		gtk_window_set_title(GTK_WINDOW(trk->property_dialog), title);
-		free(title);
-#endif
-	}
-
 }
 
 

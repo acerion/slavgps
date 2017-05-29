@@ -40,6 +40,9 @@
 #include "settings.h"
 #include "util.h"
 
+#include "track_profile_dialog.h"
+#include "track_properties_dialog.h"
+
 
 
 
@@ -161,18 +164,71 @@ void Track::ref()
 
 
 
-void Track::set_property_dialog(GtkWidget * dialog)
+void Track::set_properties_dialog(TrackPropertiesDialog * dialog)
 {
-	/* Warning: does not check for existing dialog */
-	property_dialog = dialog;
+	this->properties_dialog = dialog;
 }
 
 
 
 
-void Track::clear_property_dialog()
+void Track::clear_properties_dialog()
 {
-	property_dialog = NULL;
+	this->properties_dialog = NULL;
+}
+
+
+
+
+/**
+   @brief Update track properties dialog e.g. if the track has been renamed
+*/
+void Track::update_properties_dialog(void)
+{
+	/* If not displayed do nothing. */
+	if (!this->properties_dialog) {
+		return;
+	}
+
+	/* Update title with current name. */
+	if (this->name) {
+		this->properties_dialog->setWindowTitle(QString(tr("%1 - Track Properties")).arg(this->name));
+	}
+}
+
+
+
+
+void Track::set_profile_dialog(TrackProfileDialog * dialog)
+{
+	this->profile_dialog = dialog;
+}
+
+
+
+
+void Track::clear_profile_dialog()
+{
+	this->profile_dialog = NULL;
+}
+
+
+
+
+/**
+   @brief Update track profile dialog e.g. if the track has been renamed
+*/
+void Track::update_profile_dialog(void)
+{
+	/* If not displayed do nothing. */
+	if (!this->property_dialog) {
+		return;
+	}
+
+	/* Update title with current name. */
+	if (this->name) {
+		this->profile_dialog->setWindowTitle(QString(tr("%1 - Track Profile")).arg(this->name));
+	}
 }
 
 
@@ -274,14 +330,6 @@ Track::~Track()
 	free_string(&source);
 	free_string(&type);
 	free_string(&name);
-
-#ifdef K
-	if (property_dialog) {
-		if (GTK_IS_WIDGET (property_dialog)) {
-			gtk_widget_destroy(GTK_WIDGET (property_dialog));
-		}
-	}
-#endif
 }
 
 
@@ -2405,5 +2453,6 @@ VikCoordMode Track::get_coord_mode()
 /* Comparison function used to sort trackpoints. */
 bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 {
+	/* kamilFIXME: shouldn't this be difftime()? */
 	return a->timestamp < b->timestamp;
 }

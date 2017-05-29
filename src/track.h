@@ -79,6 +79,10 @@ namespace SlavGPS {
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
 
+	class TrackPropertiesDialog;
+	class TrackProfileDialog;
+
+
 
 
 	class Trackpoint {
@@ -242,8 +246,14 @@ namespace SlavGPS {
 
 		static int compare_timestamp(const void * x, const void * y);
 
-		void set_property_dialog(GtkWidget *dialog);
-		void clear_property_dialog();
+		void set_properties_dialog(TrackPropertiesDialog * dialog);
+		void update_properties_dialog(void);
+		void clear_properties_dialog();
+
+		void set_profile_dialog(TrackProfileDialog * dialog);
+		void update_profile_dialog(void);
+		void clear_profile_dialog();
+
 
 		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);
 		TrackPoints::iterator delete_trackpoint(TrackPoints::iterator iter);
@@ -252,6 +262,8 @@ namespace SlavGPS {
 		TrackPoints::iterator get_last();
 		std::list<Rect *> * get_rectangles(LatLon * wh);
 		VikCoordMode get_coord_mode();
+
+
 
 
 		TrackPoints * trackpointsB = NULL;
@@ -268,6 +280,10 @@ namespace SlavGPS {
 		bool has_color = false;
 		QColor color;
 		LatLonBBox bbox;
+
+		TrackPropertiesDialog * properties_dialog = NULL;
+		TrackProfileDialog * profile_dialog = NULL;
+
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();

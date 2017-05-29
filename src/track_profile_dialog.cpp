@@ -138,21 +138,6 @@ static void gradient_label_update(QLabel * label, double gradient);
 
 TrackProfileDialog::~TrackProfileDialog()
 {
-#ifdef K
-	if (widgets->elev_graph_saved_img.img)
-		g_object_unref(widgets->elev_graph_saved_img.img);
-	if (widgets->gradient_graph_saved_img.img)
-		g_object_unref(widgets->gradient_graph_saved_img.img);
-	if (widgets->speed_graph_saved_img.img)
-		g_object_unref(widgets->speed_graph_saved_img.img);
-	if (widgets->dist_graph_saved_img.img)
-		g_object_unref(widgets->dist_graph_saved_img.img);
-	if (widgets->elev_time_graph_saved_img.img)
-		g_object_unref(widgets->elev_time_graph_saved_img.img);
-	if (widgets->speed_dist_graph_saved_img.img)
-		g_object_unref(widgets->speed_dist_graph_saved_img.img);
-#endif
-
 	if (this->altitudes) {
 		free(this->altitudes);
 	}
@@ -386,7 +371,7 @@ void TrackProfileDialog::draw_marks(Viewport * viewport,
 	} else {
 		saved_img->img = gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_TOP + graph_height);
 	}
-	saved_img->saved = true;
+	saved_img->valid = true;
 #endif
 
 	/* Now draw marks on this fresh image. */
@@ -2724,7 +2709,9 @@ QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
 void SlavGPS::track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport)
 {
 	TrackProfileDialog dialog(QString("Track Profile"), layer, trk, panel, viewport, parent);
+	trk->set_profile_dialog(&dialog);
 	dialog.exec();
+	trk->clear_profile_dialog();
 }
 
 
@@ -2914,35 +2901,4 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 	this->labels_font.setFamily("Helvetica");
 	this->labels_font.setPointSize(11);
-
-#ifdef K
-	/* On dialog realization configure_event causes the graphs to be initially drawn. */
-	widgets->configure_dialog = true;
-
-	g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK (destroy_cb), widgets);
-
-	trk->set_property_dialog(dialog);
-#endif
-}
-
-
-
-
-/**
- * Update this profile dialog
- * e.g. if the track has been renamed.
- */
-void SlavGPS::track_profile_dialog_update(Track * trk)
-{
-	/* If not displayed do nothing. */
-	if (!trk->property_dialog) {
-		return;
-	}
-
-	/* Update title with current name. */
-	if (trk->name) {
-#ifdef K
-		trk->property_dialog->setWindowTitle(QString(_("%1 - Track Profile")).arg(a_trk->name));
-#endif
-	}
 }

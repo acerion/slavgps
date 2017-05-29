@@ -113,11 +113,6 @@ namespace SlavGPS {
 
 	void track_properties_dialog(Window * parent, LayerTRW * layer, Track * trk, bool start_on_stats = false);
 
-	/**
-	 * Update this property dialog e.g. if the track has been renamed
-	 */
-	void track_properties_dialog_update(Track * trk);
-
 
 
 

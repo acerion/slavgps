@@ -6087,8 +6087,9 @@ char const * LayerTRW::sublayer_rename_request(Sublayer * sublayer, const char *
 			this->tpwin->set_track_name(newname);
 		}
 
-		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
-		track_profile_dialog_update(trk);
+		/* Update the dialog windows if any of them is visible. */
+		trk->update_properties_dialog();
+		trk->update_profile_dialog();
 
 		this->tree_view->set_name(sublayer->index, newname);
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
@@ -6125,8 +6126,9 @@ char const * LayerTRW::sublayer_rename_request(Sublayer * sublayer, const char *
 			this->tpwin->set_track_name(newname);
 		}
 
-		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
-		track_profile_dialog_update(trk);
+		/* Update the dialog windows if any of them is visible. */
+		trk->update_properties_dialog();
+		trk->update_profile_dialog();
 
 		this->tree_view->set_name(sublayer->index, newname);
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
