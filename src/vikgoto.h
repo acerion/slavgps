@@ -19,13 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _SG_SEARCH_H_
-#define _SG_SEARCH_H_
+#ifndef _SG_GOTO_H_
+#define _SG_GOTO_H_
 
 
 
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "window.h"
 #include "viewport.h"
@@ -54,4 +54,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_SEARCH_H_ */
+#endif /* #ifndef _SG_GOTO_H_ */

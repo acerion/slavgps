@@ -44,6 +44,7 @@
 #include "file.h"
 #include "fileutils.h"
 #include "datasources.h"
+#include "vikgoto.h"
 
 
 
@@ -429,7 +430,7 @@ void Window::create_actions(void)
 		qa = new QAction(tr("Go to &Location..."), this);
 		qa->setToolTip("Go to address/place using text search");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_address(void)));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_address_cb(void)));
 		this->menu_view->addAction(qa);
 
 		qa = new QAction(tr("&Go to Lat/Lon..."), this);
@@ -1388,9 +1389,7 @@ void Window::goto_default_location_cb(void)
 
 void Window::goto_address_cb()
 {
-#ifdef K
 	a_vik_goto(this, this->viewport);
-#endif
 	this->layers_panel->emit_update_cb();
 }
 
@@ -1403,13 +1402,12 @@ void Window::goto_lat_lon_cb(void)
 
 	struct LatLon ll, llold;
 	vik_coord_to_latlon(this->viewport->get_center(), &llold);
-#ifdef K
-	if (a_dialog_goto_latlon(window->get_toolkit_window(), &ll, &llold)) {
+
+	if (dialog_goto_latlon(this, &ll, &llold)) {
 		vik_coord_load_from_latlon(&new_center, this->viewport->get_coord_mode(), &ll);
 	} else {
 		return;
 	}
-#endif
 
 	this->viewport->set_center_coord(&new_center, true);
 	this->draw_update();
@@ -1424,13 +1422,12 @@ void Window::goto_utm_cb(void)
 
 	struct UTM utm, utmold;
 	vik_coord_to_utm(this->viewport->get_center(), &utmold);
-#ifdef K
-	if (a_dialog_goto_utm(window->get_toolkit_window(), &utm, &utmold)) {
+
+	if (dialog_goto_utm(this, &utm, &utmold)) {
 		vik_coord_load_from_utm(&new_center, this->viewport->get_coord_mode(), &utm);
 	} else {
 		return;
 	}
-#endif
 
 	this->viewport->set_center_coord(&new_center, true);
 	this->draw_update();

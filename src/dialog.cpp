@@ -90,13 +90,9 @@ void dialog_error(QString const & message, QWidget * parent)
 
 
 
-#if 0
-
-
-
-
-bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old)
+bool dialog_goto_latlon(SlavGPS::Window * parent, struct LatLon * ll, const struct LatLon * old)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Go to Lat/Lon"),
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -145,14 +141,16 @@ bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct Lat
 	}
 
 	gtk_widget_destroy(dialog);
+#endif
 	return false;
 }
 
 
 
 
-bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old)
+bool dialog_goto_utm(SlavGPS::Window * parent, struct UTM * utm, const struct UTM * old)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Go to UTM"),
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -220,8 +218,14 @@ bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old
 	}
 
 	gtk_widget_destroy(dialog);
+#endif
 	return false;
 }
+
+
+
+
+#if 0
 
 
 

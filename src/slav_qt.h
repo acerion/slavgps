@@ -12,6 +12,8 @@
 #ifdef SLAVGPS_QT
 typedef int VikLayer;
 
+typedef int GtkEntry;
+typedef int GParamSpec;
 typedef int GtkSpinButton;
 typedef int GdkEventConfigure;
 typedef int GtkToggleButton;

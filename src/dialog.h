@@ -55,12 +55,12 @@ void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padd
 
 void a_dialog_about(QWidget * parent);
 
-#ifdef K
+
 
 /* Okay, everthing below here is an architechtural flaw. */
-bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old);
-bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
-#endif
+bool dialog_goto_latlon(SlavGPS::Window * parent, struct LatLon * ll, const struct LatLon * old);
+bool dialog_goto_utm(SlavGPS::Window * parent, struct UTM * utm, const struct UTM * old);
+
 char * a_dialog_get_date(SlavGPS::Window * parent, char const * title);
 #ifdef K
 bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);

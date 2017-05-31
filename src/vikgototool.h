@@ -24,8 +24,7 @@
 
 
 
-
-#include <stdint.h>
+#include <cstdint>
 
 #include "coords.h"
 #include "viewport.h"
@@ -34,9 +33,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 

@@ -33,25 +33,15 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-//#include "viking.h"
 #include "vikgototool.h"
 #include "vikgoto.h"
 #include "dialog.h"
-#include "vik_compat.h"
 #include "settings.h"
 
 
 
 
 using namespace SlavGPS;
-
-
-
-
-/* Compatibility. */
-#if ! GLIB_CHECK_VERSION(2,22,0)
-#define g_mapped_file_unref g_mapped_file_free
-#endif
 
 
 
@@ -103,39 +93,17 @@ char * SlavGPS::a_vik_goto_get_search_string_for_this_place(Window * window)
 
 
 
-static void display_no_tool(Window * window)
+static bool prompt_try_again(Window * parent, QString const & msg)
 {
-	GtkWidget *dialog = NULL;
 
-	dialog = gtk_message_dialog_new(window->get_toolkit_window(), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("No goto tool available."));
-
-	gtk_dialog_run(GTK_DIALOG(dialog));
-
-	gtk_widget_destroy(dialog);
-}
-
-
-
-
-static bool prompt_try_again(Window * window, const char *msg)
-{
-	GtkWidget *dialog = NULL;
-	bool ret = true;
-
-	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
-
-	GtkWidget *goto_label = gtk_label_new(msg);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	gtk_widget_show_all(dialog);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		ret = false;
+	QMessageBox::StandardButton reply = QMessageBox::question(parent, QObject::tr("goto"), msg,
+								  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+								  QMessageBox::Yes);
+	if (reply != QMessageBox::Yes) {
+		return false;
+	} else {
+		return true;
 	}
-
-	gtk_widget_destroy(dialog);
-	return ret;
 }
 
 
@@ -186,9 +154,11 @@ static void get_provider()
 
 static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * button)
 {
+#ifdef K
 	bool has_text = gtk_entry_get_text_length(entry) > 0;
 	gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 	gtk_widget_set_sensitive(button, has_text);
+#endif
 }
 
 
@@ -196,6 +166,7 @@ static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * bu
 
 static char *a_prompt_for_goto_string(Window * window)
 {
+#ifdef K
 	GtkWidget *dialog = NULL;
 
 	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
@@ -258,6 +229,7 @@ static char *a_prompt_for_goto_string(Window * window)
 	}
 
 	return(goto_str);   /* goto_str needs to be freed by caller. */
+#endif
 }
 
 
@@ -294,7 +266,7 @@ void SlavGPS::a_vik_goto(Window * window, Viewport * viewport)
 	bool more = true;
 
 	if (goto_tools.empty()) {
-		display_no_tool(window);
+		dialog_warning(QObject::tr("No goto tool available."), window);
 		return;
 	}
 

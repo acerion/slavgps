@@ -6,6 +6,8 @@ QT = core gui widgets
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    vikgoto.cpp \
+    vikgototool.cpp \
     window.cpp \
     acquire.cpp \
     datasource_file.cpp \
@@ -69,6 +71,8 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    vikgoto.h \
+    vikgototool.h \
     window_layer_tools.h \
     viewport.h \
     viewport_utils.h \
@@ -175,8 +179,6 @@ HEADERS += window.h \
 # vikexttool_datasources.cpp
 # vikexttools.cpp
 # vikgeoreflayer.cpp
-# vikgoto.cpp
-# vikgototool.cpp
 # vikgotoxmltool.cpp
 # vikgpslayer.cpp
 # vikmapniklayer.cpp
