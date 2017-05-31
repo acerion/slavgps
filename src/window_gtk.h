@@ -52,15 +52,6 @@ namespace SlavGPS {
 
 
 
-	class LayerTRW;
-	class LayersPanel;
-	class Window;
-	class LayerTool;
-	class Window;
-
-
-
-
 	class Window {
 	public:
 
@@ -69,91 +60,27 @@ namespace SlavGPS {
 
 		/* To call from main to start things off: */
 		static Window * new_window();
-
-
 		void finish_new();
-
-		void draw_redraw();
-		void draw_status();
 		void draw_scroll(GdkEventScroll * event);
-		void draw_sync();
-		void draw_update();
-
 		void open_file(char const * filename, bool change_filename);
-
 		char const * get_filename();
 		void set_filename(char const * filename);
-
-		void set_busy_cursor();
-		void clear_busy_cursor();
-
-		void toggle_draw_scale(GtkAction * a);
-		void toggle_draw_centermark(GtkAction * a);
-		void toggle_draw_highlight(GtkAction * a);
-
 		bool window_save();
-
-		void update_recently_used_document(char const * filename);
-
 		bool export_to(std::list<Layer *> * layers, VikFileType_t vft, char const * dir, char const * extension);
 		void export_to_common(VikFileType_t vft, char const * extension);
-
 		char const * get_filename_2();
-
 		void selected_layer(Layer * layer);
-		Viewport * get_viewport();
-
-
 		GtkWidget * get_drawmode_button(ViewportDrawMode mode);
-
 		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
 
-
-
-		GtkWindow * get_toolkit_window(void);
-		GtkWindow * get_toolkit_window_2(void);
-		GtkWidget * get_toolkit_widget(void);
-		void * get_toolkit_object(void);
-
-
-		void pan_click(GdkEventButton * event);
-		void pan_move(GdkEventMotion * event);
-		void pan_release(GdkEventButton * event);
-
-
-
-		Viewport * viewport = NULL;
-		LayersPanel * layers_panel = NULL;
-		VikStatusbar * viking_vs = NULL;
-		VikToolbar * viking_vtb = NULL;
 
 		//char * filename = NULL;
 		//bool modified = false;
 		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
-
-		GtkUIManager * uim = NULL;
-
-		GThread  * thread = NULL;
 		/* Half-drawn update. */
 		//Layer * trigger = NULL;
 		//VikCoord trigger_center;
-
-
-		LayerToolbox * tb = NULL;
-
-
-
-		GtkWidget * hpaned = NULL;
-		GtkWidget * main_vbox = NULL;
-		GtkWidget * menu_hbox = NULL;
-
-		GtkActionGroup * action_group = NULL;
-
-		GtkWindow * gtk_window_ = NULL;
-
-	private:
-		char type_string[30] = { 0 };
 
 	}; /* class Window */
 
@@ -161,13 +88,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-SlavGPS::Window * window_from_widget(void * widget);
-GtkWindow * toolkit_window_from_widget(void * widget);
-void window_init(void);
 
 
 
