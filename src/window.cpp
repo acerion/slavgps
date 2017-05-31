@@ -333,14 +333,13 @@ void Window::create_actions(void)
 	this->menu_bar->addMenu(this->menu_help);
 	setMenuBar(this->menu_bar);
 
+	QAction * qa = NULL;
 
 	/* "File" menu. */
 	QAction * qa_file_new = NULL;
 	QAction * qa_file_open = NULL;
 	QAction * qa_file_exit = NULL;
 	{
-		QAction * qa = NULL;
-
 		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), _("&New file..."));
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
@@ -393,7 +392,6 @@ void Window::create_actions(void)
 
 	/* "Edit" menu. */
 	{
-		QAction * qa = NULL;
 		qa = new QAction("&Preferences", this);
 		qa->setIcon(QIcon::fromTheme("preferences-other"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
@@ -417,6 +415,51 @@ void Window::create_actions(void)
 	QAction * qa_view_zoom_out = NULL;
 	QAction * qa_view_zoom_to = NULL;
 	{
+
+
+		this->menu_view->addSeparator();
+
+
+		qa = new QAction(tr("Go to the &Default Location"), this);
+		qa->setToolTip("Go to the default location");
+		qa->setIcon(QIcon::fromTheme("go-home"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_default_location_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("Go to &Location..."), this);
+		qa->setToolTip("Go to address/place using text search");
+		qa->setIcon(QIcon::fromTheme("go-jump"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_address(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("&Go to Lat/Lon..."), this);
+		qa->setToolTip("Go to arbitrary lat/lon coordinate");
+		qa->setIcon(QIcon::fromTheme("go-jump"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_lat_lon_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("Go to UTM..."), this);
+		qa->setToolTip("Go to arbitrary UTM coordinate");
+		qa->setIcon(QIcon::fromTheme("go-jump"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_utm_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("Go to the Pre&vious Location"), this);
+		qa->setToolTip("Go to the previous location");
+		qa->setIcon(QIcon::fromTheme("go-previous"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_previous_location_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("Go to the &Next Location"), this);
+		qa->setToolTip("Go to the next location");
+		qa->setIcon(QIcon::fromTheme("go-next"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_next_location_cb(void)));
+		this->menu_view->addAction(qa);
+
+
+		this->menu_view->addSeparator();
+
+
 		this->qa_view_full_screen = new QAction("&Full Screen", this);
 		this->qa_view_full_screen->setShortcut(Qt::Key_F11);
 		this->qa_view_full_screen->setCheckable(true);
@@ -526,7 +569,7 @@ void Window::create_actions(void)
 		this->menu_view->addSeparator();
 
 
-		QAction * qa = new QAction("Background &Jobs", this);
+		qa = new QAction("Background &Jobs", this);
 		qa->setIcon(QIcon::fromTheme("emblem-system"));
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_background_jobs_window_cb(void)));
 		this->menu_view->addAction(qa);
@@ -1325,6 +1368,105 @@ void Window::closeEvent(QCloseEvent * ev)
 		free(accel_file_name);
 #endif
 
+	}
+}
+
+
+
+
+void Window::goto_default_location_cb(void)
+{
+	struct LatLon ll;
+	ll.lat = Preferences::get_default_lat();
+	ll.lon = Preferences::get_default_lon();
+	this->viewport->set_center_latlon(&ll, true);
+	this->layers_panel->emit_update_cb();
+}
+
+
+
+
+void Window::goto_address_cb()
+{
+#ifdef K
+	a_vik_goto(this, this->viewport);
+#endif
+	this->layers_panel->emit_update_cb();
+}
+
+
+
+
+void Window::goto_lat_lon_cb(void)
+{
+	VikCoord new_center;
+
+	struct LatLon ll, llold;
+	vik_coord_to_latlon(this->viewport->get_center(), &llold);
+#ifdef K
+	if (a_dialog_goto_latlon(window->get_toolkit_window(), &ll, &llold)) {
+		vik_coord_load_from_latlon(&new_center, this->viewport->get_coord_mode(), &ll);
+	} else {
+		return;
+	}
+#endif
+
+	this->viewport->set_center_coord(&new_center, true);
+	this->draw_update();
+}
+
+
+
+
+void Window::goto_utm_cb(void)
+{
+	VikCoord new_center;
+
+	struct UTM utm, utmold;
+	vik_coord_to_utm(this->viewport->get_center(), &utmold);
+#ifdef K
+	if (a_dialog_goto_utm(window->get_toolkit_window(), &utm, &utmold)) {
+		vik_coord_load_from_utm(&new_center, this->viewport->get_coord_mode(), &utm);
+	} else {
+		return;
+	}
+#endif
+
+	this->viewport->set_center_coord(&new_center, true);
+	this->draw_update();
+}
+
+
+
+
+void Window::goto_previous_location_cb(void)
+{
+	bool changed = this->viewport->go_back();
+
+	/* Recheck buttons sensitivities, as the center changed signal
+	   is not sent on back/forward changes (otherwise we would get
+	   stuck in an infinite loop!). */
+	this->center_changed_cb();
+
+	if (changed) {
+		this->draw_update();
+	}
+}
+
+
+
+
+void Window::goto_next_location_cb(void)
+{
+	bool changed = this->viewport->go_forward();
+
+	/* Recheck buttons sensitivities, as the center changed signal
+	   is not sent on back/forward changes (otherwise we would get
+	   stuck in an infinite loop!). */
+	this->center_changed_cb();
+
+	if (changed) {
+		this->draw_update();
 	}
 }
 

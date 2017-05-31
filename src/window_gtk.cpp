@@ -21,56 +21,6 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#include <cctype>
-#include <cassert>
-
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gprintf.h>
-#include <glib/gi18n.h>
-#include <gio/gio.h>
-#include <gdk/gdkkeysyms.h>
-
-#include "background.h"
-#include "acquire.h"
-#include "datasources.h"
-#include "geojson.h"
-#include "vikgoto.h"
-#include "dems.h"
-#include "mapcache.h"
-#include "print.h"
-#include "preferences.h"
-#include "layer_defaults.h"
-#include "icons/icons.h"
-#include "vikexttools.h"
-#include "vikexttool_datasources.h"
-#include "garminsymbols.h"
-#include "vikmapslayer.h"
-#include "geonamessearch.h"
-#include "vikutils.h"
-#include "dir.h"
-#include "kmz.h"
-#include "file.h"
-#include "fileutils.h"
-#include "dialog.h"
-#include "clipboard.h"
-#include "settings.h"
-#include "globals.h"
-#include "vik_compat.h"
-
 
 
 
@@ -91,15 +41,6 @@ static std::list<Window *> window_list;
 #define DRAW_IMAGE_DEFAULT_WIDTH 1280
 #define DRAW_IMAGE_DEFAULT_HEIGHT 1024
 #define DRAW_IMAGE_DEFAULT_SAVE_AS_PNG true
-
-
-
-
-enum {
-	VW_NEWWINDOW_SIGNAL,
-	VW_OPENWINDOW_SIGNAL,
-	VW_LAST_SIGNAL
-};
 
 
 
@@ -547,14 +488,6 @@ static void newwindow_cb(GtkAction *a, Window * window)
 
 
 
-static void draw_sync_cb(Window * window)
-{
-	window->draw_sync();
-}
-
-
-
-
 static void window_configure_event(Window * window)
 {
 	static int first = 1;
@@ -670,38 +603,6 @@ static void draw_pan_cb(GtkAction * a, Window * window)
 
 
 
-static void draw_goto_cb(GtkAction * a, Window * window)
-{
-	VikCoord new_center;
-
-	if (!strcmp(gtk_action_get_name(a), "GotoLL")) {
-		struct LatLon ll, llold;
-		vik_coord_to_latlon(window->viewport->get_center(), &llold);
-		if (a_dialog_goto_latlon(window->get_toolkit_window(), &ll, &llold)) {
-			vik_coord_load_from_latlon(&new_center, window->viewport->get_coord_mode(), &ll);
-		} else {
-			return;
-		}
-	} else if (!strcmp(gtk_action_get_name(a), "GotoUTM")) {
-		struct UTM utm, utmold;
-		vik_coord_to_utm(window->viewport->get_center(), &utmold);
-		if (a_dialog_goto_utm(window->get_toolkit_window(), &utm, &utmold)) {
-			vik_coord_load_from_utm(&new_center, window->viewport->get_coord_mode(), &utm);
-		} else {
-			return;
-		}
-	} else {
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-		return;
-	}
-
-	window->viewport->set_center_coord(&new_center, true);
-	window->draw_update();
-}
-
-
-
-
 /**
  * center_changed_cb:
  */
@@ -722,32 +623,6 @@ static void center_changed_cb(Window * window)
 	}
 
 	toolbar_action_set_sensitive(window->viking_vtb, "GoForward", window->viewport->forward_available());
-}
-
-
-
-
-/**
- * draw_goto_back_and_forth:
- */
-static void draw_goto_back_and_forth(GtkAction * a, Window * window)
-{
-	bool changed = false;
-	if (!strcmp(gtk_action_get_name(a), "GoBack")) {
-		changed = window->viewport->go_back();
-	} else if (!strcmp(gtk_action_get_name(a), "GoForward")) {
-		changed = window->viewport->go_forward();
-	} else {
-		return;
-	}
-
-	// Recheck buttons sensitivities, as the center changed signal is not sent on back/forward changes
-	//  (otherwise we would get stuck in an infinite loop!)
-	center_changed_cb(window);
-
-	if (changed) {
-		window->draw_update();
-	}
 }
 
 
@@ -1149,29 +1024,6 @@ static void file_properties_cb(GtkAction * a, Window * window)
 
 
 
-
-
-
-static void goto_default_location(GtkAction * a, Window * window)
-{
-	struct LatLon ll;
-	ll.lat = Preferences::get_default_lat();
-	ll.lon = Preferences::get_default_lon();
-	window->viewport->set_center_latlon(&ll, true);
-	window->layers_panel->emit_update();
-}
-
-
-
-
-static void goto_address(GtkAction * a, Window * window)
-{
-	a_vik_goto(window, window->viewport);
-	window->layers_panel->emit_update();
-}
-
-
-
 static void mapcache_flush_cb(GtkAction * a, Window * window)
 {
 	map_cache_flush();
@@ -1499,12 +1351,6 @@ static GtkActionEntry entries[] = {
 	{ "Exit",                GTK_STOCK_QUIT,           N_("E_xit"),                              "<control>W",       N_("Exit the program"),                                   (GCallback) window_close              },
 	{ "SaveExit",            GTK_STOCK_QUIT,           N_("Save and Exit"),                      NULL,               N_("Save and Exit the program"),                          (GCallback) save_file_and_exit        },
 
-	{ "GoBack",              GTK_STOCK_GO_BACK,        N_("Go to the Pre_vious Location"),       NULL,               N_("Go to the previous location"),                        (GCallback) draw_goto_back_and_forth  },
-	{ "GoForward",           GTK_STOCK_GO_FORWARD,     N_("Go to the _Next Location"),           NULL,               N_("Go to the next location"),                            (GCallback) draw_goto_back_and_forth  },
-	{ "GotoDefaultLocation", GTK_STOCK_HOME,           N_("Go to the _Default Location"),        NULL,               N_("Go to the default location"),                         (GCallback) goto_default_location     },
-	{ "GotoSearch",          GTK_STOCK_JUMP_TO,        N_("Go to _Location..."),    	     NULL,               N_("Go to address/place using text search"),              (GCallback) goto_address              },
-	{ "GotoLL",              GTK_STOCK_JUMP_TO,        N_("_Go to Lat/Lon..."),                  NULL,               N_("Go to arbitrary lat/lon coordinate"),                 (GCallback) draw_goto_cb              },
-	{ "GotoUTM",             GTK_STOCK_JUMP_TO,        N_("Go to UTM..."),                       NULL,               N_("Go to arbitrary UTM coordinate"),                     (GCallback) draw_goto_cb              },
 	{ "Refresh",             GTK_STOCK_REFRESH,        N_("_Refresh"),                           "F5",               N_("Refresh any maps displayed"),                         (GCallback) draw_refresh_cb           },
 	{ "SetHLColor",          GTK_STOCK_SELECT_COLOR,   N_("Set _Highlight Color..."),            NULL,               N_("Set Highlight Color"),                                (GCallback) set_highlight_color       },
 	{ "SetBGColor",          GTK_STOCK_SELECT_COLOR,   N_("Set Bac_kground Color..."),           NULL,               N_("Set Background Color"),                               (GCallback) set_bg_color              },

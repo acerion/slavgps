@@ -170,6 +170,14 @@ namespace SlavGPS {
 		void draw_update_cb(void);
 
 
+		void goto_default_location_cb(void);
+		void goto_address_cb(void);
+		void goto_lat_lon_cb(void);
+		void goto_utm_cb(void);
+		void goto_previous_location_cb(void);
+		void goto_next_location_cb(void);
+
+
 		void view_full_screen_cb(bool new_state);
 
 		void view_side_panel_cb(bool new_state);
