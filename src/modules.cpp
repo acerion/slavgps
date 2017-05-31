@@ -51,7 +51,7 @@
 #include "vikmapslayer.h"
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
-#include "vikgoto.h"
+#include "goto.h"
 #include "vikrouting.h"
 
 /* Loadable types */

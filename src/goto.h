@@ -29,7 +29,7 @@
 
 #include "window.h"
 #include "viewport.h"
-#include "vikgototool.h"
+#include "goto_tool.h"
 
 
 

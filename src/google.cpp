@@ -29,7 +29,7 @@
 #include "google.h"
 #include "vikexttools.h"
 #include "vikwebtoolcenter.h"
-#include "vikgoto.h"
+#include "goto.h"
 #include "googlesearch.h"
 #include "vikrouting.h"
 #include "vikroutingwebengine.h"

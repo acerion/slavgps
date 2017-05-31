@@ -163,7 +163,7 @@ Window * Window::new_window()
  * @window:     The window that will get updated
  * @threaddata: Data used by our background thread mechanism
  *
- * Use the features in vikgoto to determine where we are
+ * Use the features in goto module to determine where we are
  * Then set up the viewport:
  *  1. To goto the location
  *  2. Set an appropriate level zoom for the location type

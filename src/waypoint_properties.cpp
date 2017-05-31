@@ -34,7 +34,7 @@
 #endif
 #include "thumbnails.h"
 //#include "viking.h"
-#include "vikgoto.h"
+#include "goto.h"
 #include "vikutils.h"
 #include "vikfileentry.h"
 #endif

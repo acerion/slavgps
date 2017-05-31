@@ -44,7 +44,7 @@
 #include "file.h"
 #include "fileutils.h"
 #include "datasources.h"
-#include "vikgoto.h"
+#include "goto.h"
 
 
 

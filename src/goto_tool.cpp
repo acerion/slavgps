@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include "vikgototool.h"
+#include "goto_tool.h"
 #include "util.h"
 
 #include <string.h>

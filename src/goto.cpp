@@ -33,8 +33,8 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "vikgototool.h"
-#include "vikgoto.h"
+#include "goto_tool.h"
+#include "goto.h"
 #include "dialog.h"
 #include "settings.h"
 

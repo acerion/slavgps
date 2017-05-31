@@ -26,7 +26,7 @@
 
 
 
-#include "vikgototool.h"
+#include "goto_tool.h"
 #include "coords.h"
 
 
