@@ -1114,6 +1114,17 @@ void Window::layer_tool_cb(QAction * qa)
 
 
 
+void Window::activate_layer_tool(LayerType layer_type, int tool_id)
+{
+	this->layer_toolbox->deactivate_current_tool();
+	this->layer_toolbox->activate_tool(layer_type, tool_id);
+
+	return;
+}
+
+
+
+
 void Window::pan_click(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan click";

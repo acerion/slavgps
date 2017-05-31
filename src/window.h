@@ -139,6 +139,8 @@ namespace SlavGPS {
 
 		static void set_redraw_trigger(Layer * layer);
 
+		void activate_layer_tool(LayerType layer_type, int tool_id);
+
 		/* Display controls. */
 		bool select_move = false;
 

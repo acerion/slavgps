@@ -2140,7 +2140,7 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 
 LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewport) : LayerTool: window, viewport, LayerType::MAPS)
 {
-	this->id_string = QString("MapsDownload");
+	this->id_string = QString("maps.download");
 
 	this->action_icon_path   = "vik-icon-Maps Download";
 	this->action_label       = QObject::tr("_Maps Download");

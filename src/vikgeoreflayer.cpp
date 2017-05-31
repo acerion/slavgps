@@ -1090,7 +1090,7 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 
 LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
 {
-	this->id_string = QString("GeorefMoveMap");
+	this->id_string = QString("georef.move_map");
 
 	this->action_icon_path   = "vik-icon-Georef Move Map";
 	this->action_label       = QObject::tr("_Georef Move Map");
@@ -1143,7 +1143,7 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 
 LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
 {
-	this->id_string = QString("GeorefZoomTool");
+	this->id_string = QString("georef.zoom");
 
 	this->action_icon_path   = "vik-icon-Georef Zoom Tool";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");

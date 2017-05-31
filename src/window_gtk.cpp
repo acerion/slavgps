@@ -858,14 +858,6 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window)
 
 
 
-void Window::enable_layer_tool(LayerType layer_type, int tool_id)
-{
-	gtk_action_activate(gtk_action_group_get_action(this->action_group, Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name));
-}
-
-
-
-
 // Be careful with usage - as it may trigger actions being continually alternately by the menu and toolbar items
 // DON'T Use this from menu callback with toggle toolbar items!!
 static void toolbar_sync(Window * window, char const *name, bool state)

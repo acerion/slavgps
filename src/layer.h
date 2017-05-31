@@ -315,6 +315,7 @@ namespace SlavGPS {
 		QString action_label;
 		QString action_tooltip;
 		QKeySequence action_accelerator;
+		QAction * qa = NULL;
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
 
@@ -328,6 +329,7 @@ namespace SlavGPS {
 		SublayerEdit * sublayer_edit = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
+		int id;
 		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */
 
 		char debug_string[100]; /* For debug purposes only. */

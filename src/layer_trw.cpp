@@ -2972,9 +2972,8 @@ void LayerTRW::new_track_cb() /* Slot. */
 		char * name_ = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
 		this->new_track_create_common(name_);
 		free(name_);
-#ifdef K
-		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
-#endif
+
+		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_TRACK);
 	}
 }
 
@@ -3003,9 +3002,8 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 		char * name_ = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
 		this->new_route_create_common(name_);
 		free(name_);
-#ifdef K
-		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
-#endif
+
+		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_ROUTE);
 	}
 }
 
@@ -3979,9 +3977,8 @@ void LayerTRW::extend_track_end_cb(void)
 	}
 
 	this->current_trk = trk;
-#ifdef K
-	this->get_window()->enable_layer_tool(LayerType::TRW, trk->sublayer_type == SublayerType::ROUTE ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
-#endif
+
+	this->get_window()->activate_layer_tool(LayerType::TRW, trk->sublayer_type == SublayerType::ROUTE ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!trk->empty()) {
 		goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
@@ -4001,9 +3998,9 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	if (!trk) {
 		return;
 	}
-#ifdef K
-	this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_ROUTE_FINDER);
-#endif
+
+	this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_ROUTE_FINDER);
+
 	this->current_trk = trk;
 	this->route_finder_started = true;
 

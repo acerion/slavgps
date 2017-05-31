@@ -448,7 +448,7 @@ LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 
 LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("EditWaypoint");
+	this->id_string = QString("trw.edit_waypoint");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_wp_18.png";
 	this->action_label       = QObject::tr("&Edit Waypoint");
@@ -647,7 +647,7 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 
 LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("CreateTrack");
+	this->id_string = QString("trw.create_track");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_tr_18.png";
 	this->action_label       = QObject::tr("Create &Track");
@@ -1129,7 +1129,7 @@ LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 
 LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("CreateRoute");
+	this->id_string = QString("trw.create_route");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_route_18.png";
 	this->action_label       = QObject::tr("Create &Route");
@@ -1218,7 +1218,7 @@ LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 
 LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("CreateWaypoint");
+	this->id_string = QString("trw.create_waypoint");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_wp_18.png";
 	this->action_label       = QObject::tr("Create &Waypoint");
@@ -1272,7 +1272,7 @@ LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 
 LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("EditTrackpoint");
+	this->id_string = QString("trw.edit_trackpoint");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_tr_18.png";
 	this->action_label       = QObject::tr("Edit Trac&kpoint");
@@ -1486,7 +1486,7 @@ LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewpo
 
 LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("ExtendedRouteFinder");
+	this->id_string = QString("trw.extended_route_finder");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_find_route_18.png";
 	this->action_label       = QObject::tr("Route &Finder");
@@ -1656,7 +1656,7 @@ LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 
 LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("ShowPicture");
+	this->id_string = QString("trw.show_picture");
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_show_picture_18.png";
 	this->action_label       = QObject::tr("Show P&icture");

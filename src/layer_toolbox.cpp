@@ -72,6 +72,8 @@ QAction * LayerToolbox::add_tool(LayerTool * layer_tool)
 	this->tools.push_back(layer_tool);
 	this->n_tools++;
 
+	layer_tool->qa = qa;
+
 	return qa;
 }
 
@@ -146,6 +148,93 @@ bool LayerToolbox::deactivate_tool(QAction * qa)
 	return false;
 }
 
+
+
+
+void LayerToolbox::activate_tool(LayerType layer_type, int tool_id)
+{
+	LayerTool * new_tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
+	if (!new_tool) {
+		qDebug() << "EE: Layer Tools: Trying to activate a non-existent tool" << tool_id;
+		return;
+	}
+
+	if (this->active_tool) {
+		if (this->active_tool == new_tool) {
+			/* Don't re-activate the same tool. */
+			return;
+		}
+		this->active_tool->deactivate_(NULL);
+	}
+
+	qDebug() << "II: Layer Tools: activating tool" << tool_id;
+	Layer * layer = this->window->layers_panel->get_selected_layer();
+#if 0
+	if (!layer) {
+		return;
+	}
+#endif
+	new_tool->activate_(layer);
+	this->active_tool = new_tool;
+	this->active_tool_qa = new_tool->qa;
+
+	this->active_tool->qa->setChecked(true);
+
+	return;
+}
+
+
+
+
+
+void LayerToolbox::deactivate_tool(LayerType layer_type, int tool_id)
+{
+	LayerTool * tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
+	if (!tool) {
+		qDebug() << "EE: Layer Tools: Deactivate tool: can't find tool to deactivate:" << (int) layer_type << tool_id;
+		return;
+	}
+
+	if (this->active_tool != tool) {
+		qDebug() << "WW: Layer Tools: Deactivate tool: trying to deactivate inactive tool:" << (int) layer_type << tool_id;
+		return;
+	}
+
+	Layer * layer = this->window->layers_panel->get_selected_layer();
+	tool->deactivate_(layer);
+	tool->qa->setChecked(false);
+	this->active_tool = NULL;
+	this->active_tool_qa = NULL;
+
+	return;
+}
+
+
+
+void LayerToolbox::deactivate_current_tool(void)
+{
+	this->deactivate_tool(this->active_tool);
+	this->active_tool = NULL;
+	this->active_tool_qa = NULL;
+}
+
+
+
+/**
+   @brief Simple wrapper
+
+   @param tool - tool to deactivate
+*/
+void LayerToolbox::deactivate_tool(LayerTool * tool)
+{
+	if (!tool) {
+		qDebug() << "WW: Layer Tools: deactivate tool: passed NULL tool to deactivate";
+		return;
+	}
+
+	Layer * layer = this->window->layers_panel->get_selected_layer();
+	tool->deactivate_(layer);
+}
 
 
 

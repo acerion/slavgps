@@ -110,8 +110,6 @@ namespace SlavGPS {
 
 
 
-		void enable_layer_tool(LayerType layer_type, int tool_id);
-
 		GtkWindow * get_toolkit_window(void);
 		GtkWindow * get_toolkit_window_2(void);
 		GtkWidget * get_toolkit_widget(void);

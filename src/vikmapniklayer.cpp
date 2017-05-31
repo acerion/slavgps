@@ -1169,7 +1169,7 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::MAPNIK)
 {
-	this->id_string = QString("MapnikFeatures");
+	this->id_string = QString("mapnik.features");
 
 	this->action_icon_path   = GTK_STOCK_INFO;
 	this->action_label       = QObject::tr("&Mapnik Features");
