@@ -27,14 +27,11 @@
 
 
 
-
 using namespace SlavGPS;
 
 
 
 
-
-/* initialisation */
 void SlavGPS::geonames_init()
 {
 	/* Goto */
@@ -44,5 +41,4 @@ void SlavGPS::geonames_init()
 						 "/geonames/geoname/lat",
 						 "/geonames/geoname/lng");
 	vik_goto_register(geonames);
-	//g_object_unref(geonames);
 }

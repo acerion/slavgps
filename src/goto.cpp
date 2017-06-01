@@ -99,6 +99,8 @@ static bool prompt_try_again(Window * parent, QString const & msg)
 	QMessageBox::StandardButton reply = QMessageBox::question(parent, QObject::tr("goto"), msg,
 								  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
 								  QMessageBox::Yes);
+
+
 	if (reply != QMessageBox::Yes) {
 		return false;
 	} else {
@@ -166,70 +168,85 @@ static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * bu
 
 static char *a_prompt_for_goto_string(Window * window)
 {
-#ifdef K
-	GtkWidget *dialog = NULL;
+	QDialog dialog(window);
+	dialog.setWindowTitle(QObject::tr("goto"));
 
-	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
+	QVBoxLayout vbox;
+	QLayout * old = dialog.layout();
+	delete old;
+	dialog.setLayout(&vbox);
 
-	GtkWidget *tool_label = gtk_label_new(_("goto provider:"));
-	GtkWidget *tool_list = vik_combo_box_text_new();
+
+	QLabel tool_label(QObject::tr("goto provider:"));
+	vbox.addWidget(&tool_label);
+
+
+	QComboBox providers_combo;
+	int i = 0;
 	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 		GotoTool * goto_tool = *iter;
-		char * label = goto_tool->get_label();
-		vik_combo_box_text_append(tool_list, label);
+		QString label(goto_tool->get_label());
+		providers_combo.addItem(label, i);
+		i++;
 	}
-
 	get_provider();
-	gtk_combo_box_set_active(GTK_COMBO_BOX(tool_list), last_goto_tool);
+	providers_combo.setCurrentIndex(last_goto_tool);
+	vbox.addWidget(&providers_combo);
 
-	GtkWidget *goto_label = gtk_label_new(_("Enter address or place name:"));
-	GtkWidget *goto_entry = gtk_entry_new();
+
+	QLabel prompt_label(QObject::tr("Enter address or place name:"));
+	vbox.addWidget(&prompt_label);
+
+
+	QLineEdit input_field;
+	QObject::connect(&input_field, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+#ifdef K
 	if (last_goto_str) {
 		gtk_entry_set_text(GTK_ENTRY(goto_entry), last_goto_str);
 	}
-
-	/* 'ok' when press return in the entry. */
-	g_signal_connect_swapped(goto_entry, "activate", G_CALLBACK(accept), dialog);
-
+#endif
+#ifdef K
 #if GTK_CHECK_VERSION (2,20,0)
 	GtkWidget *ok_button = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	text_changed_cb(GTK_ENTRY(goto_entry), NULL, ok_button);
 	g_signal_connect(goto_entry, "notify::text", G_CALLBACK (text_changed_cb), ok_button);
 #endif
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_label, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_list, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_entry, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	gtk_widget_show_all(dialog);
+#endif
+	vbox.addWidget(&input_field);
+
+
+	QDialogButtonBox button_box;
+	button_box.addButton(QDialogButtonBox::Ok);
+	button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+	vbox.addWidget(&button_box);
+
 
 	/* Ensure the text field has focus so we can start typing straight away. */
-	gtk_widget_grab_focus(goto_entry);
+	input_field.setFocus(Qt::OtherFocusReason);
 
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
+
+	if (dialog.exec() != QDialog::Accepted) {
 		return NULL;
 	}
 
+
 	/* TODO check if list is empty. */
-	last_goto_tool = gtk_combo_box_get_active(GTK_COMBO_BOX(tool_list));
+	last_goto_tool = providers_combo.currentIndex();
 	char * provider = goto_tools[last_goto_tool]->get_label();
+#ifdef K
 	a_settings_set_string(VIK_SETTINGS_GOTO_PROVIDER, provider);
-
-	char *goto_str = g_strdup(gtk_entry_get_text(GTK_ENTRY(goto_entry)));
-
-	gtk_widget_destroy(dialog);
-
+#endif
+	char * goto_str = strdup(input_field.text().toUtf8().constData());
 	if (goto_str[0] != '\0') {
 		if (last_goto_str) {
 			free(last_goto_str);
 		}
-		last_goto_str = g_strdup(goto_str);
+		last_goto_str = strdup(goto_str);
 	}
 
-	return(goto_str);   /* goto_str needs to be freed by caller. */
-#endif
+	return goto_str; /* goto_str needs to be freed by caller. */
 }
 
 

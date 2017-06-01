@@ -8,6 +8,8 @@ RESOURCES = icons.qrc cursors.qrc
 SOURCES += main.cpp \
     goto.cpp \
     goto_tool.cpp \
+    vikgotoxmltool.cpp \
+    geonames.cpp \
     window.cpp \
     acquire.cpp \
     datasource_file.cpp \
@@ -73,6 +75,8 @@ SOURCES += main.cpp \
 HEADERS += window.h \
     goto.h \
     goto_tool.h \
+    vikgotoxmltool.h \
+    geonames.h \
     window_layer_tools.h \
     viewport.h \
     viewport_utils.h \
@@ -151,7 +155,6 @@ HEADERS += window.h \
 # expedia.cpp
 # garminsymbols.cpp
 # geojson.cpp
-# geonames.cpp
 # geonamessearch.cpp
 # geotag_exif.cpp
 # google.cpp
@@ -179,7 +182,6 @@ HEADERS += window.h \
 # vikexttool_datasources.cpp
 # vikexttools.cpp
 # vikgeoreflayer.cpp
-# vikgotoxmltool.cpp
 # vikgpslayer.cpp
 # vikmapniklayer.cpp
 # vikmapslayer_compat.cpp

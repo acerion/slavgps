@@ -198,7 +198,7 @@ char * GotoToolXML::get_url_format()
 
 
 
-bool GotoToolXML::parse_file_for_latlon(char *filename, struct LatLon *ll)
+bool GotoToolXML::parse_file_for_latlon(char *filename, struct LatLon *ll_)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
@@ -262,8 +262,8 @@ bool GotoToolXML::parse_file_for_latlon(char *filename, struct LatLon *ll)
 	xml_context = NULL;
 	fclose (file);
 
-	if (ll != NULL) {
-		*ll = this->ll;
+	if (ll_ != NULL) {
+		*ll_ = this->ll;
 	}
 
 	if (isnan(this->ll.lat) || isnan(this->ll.lat)) {

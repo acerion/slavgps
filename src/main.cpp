@@ -33,6 +33,7 @@
 #include "preferences.h"
 #include "settings.h"
 #include "babel.h"
+#include "modules.h"
 
 
 
@@ -120,10 +121,12 @@ int main(int argc, char ** argv)
 #endif
 
 	a_babel_init();
-#ifdef K
 
 	/* Init modules/plugins. */
 	modules_init();
+#ifdef K
+
+
 
 	vik_georef_layer_init();
 	maps_layer_init();

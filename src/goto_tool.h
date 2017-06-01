@@ -55,7 +55,7 @@ namespace SlavGPS {
 	protected:
 
 		int id;
-		char * label;
+		char * label = NULL;
 
 	}; /* class GotoTool */
 

@@ -37,6 +37,7 @@
 
 #include "modules.h"
 
+#include "geonames.h"
 #ifdef K
 #include "bing.h"
 #include "google.h"
@@ -45,7 +46,6 @@
 #include "osm.h"
 #include "osm-traces.h"
 #include "bluemarble.h"
-#include "geonames.h"
 #include "dir.h"
 #include "datasources.h"
 #include "vikmapslayer.h"
@@ -293,9 +293,11 @@ void SlavGPS::modules_init()
 #ifdef VIK_CONFIG_BLUEMARBLE
 	bluemarble_init();
 #endif
-#ifdef VIK_CONFIG_GEONAMES
+#endif
+#if 1 //#ifdef VIK_CONFIG_GEONAMES
 	geonames_init();
 #endif
+#ifdef K
 #ifdef VIK_CONFIG_GEOCACHES
 	a_datasource_gc_init();
 #endif

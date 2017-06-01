@@ -59,11 +59,11 @@ namespace SlavGPS {
 
 
 		/* This should be private. */
-		char * url_format; /* The format of the URL */
-		char * lat_path;   /* XPath of the latitude */
-		char * lat_attr;   /* XML attribute of the latitude. */
-		char * lon_path;   /* XPath of the longitude. */
-		char * lon_attr;   /* XML attribute of the longitude. */
+		char * url_format = NULL; /* The format of the URL */
+		char * lat_path = NULL;   /* XPath of the latitude */
+		char * lat_attr = NULL;   /* XML attribute of the latitude. */
+		char * lon_path = NULL;   /* XPath of the longitude. */
+		char * lon_attr = NULL;   /* XML attribute of the longitude. */
 
 		struct LatLon ll;
 
