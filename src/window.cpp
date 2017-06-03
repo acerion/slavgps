@@ -430,13 +430,13 @@ void Window::create_actions(void)
 		qa = new QAction(tr("Go to &Location..."), this);
 		qa->setToolTip("Go to address/place using text search");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_address_cb(void)));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_location_cb(void)));
 		this->menu_view->addAction(qa);
 
 		qa = new QAction(tr("&Go to Lat/Lon..."), this);
 		qa->setToolTip("Go to arbitrary lat/lon coordinate");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_lat_lon_cb(void)));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_latlon_cb(void)));
 		this->menu_view->addAction(qa);
 
 		qa = new QAction(tr("Go to UTM..."), this);
@@ -1387,29 +1387,19 @@ void Window::goto_default_location_cb(void)
 
 
 
-void Window::goto_address_cb()
+void Window::goto_location_cb()
 {
-	a_vik_goto(this, this->viewport);
+	goto_location(this, this->viewport);
 	this->layers_panel->emit_update_cb();
 }
 
 
 
 
-void Window::goto_lat_lon_cb(void)
+void Window::goto_latlon_cb(void)
 {
-	VikCoord new_center;
-
-	struct LatLon ll, llold;
-	vik_coord_to_latlon(this->viewport->get_center(), &llold);
-
-	if (dialog_goto_latlon(this, &ll, &llold)) {
-		vik_coord_load_from_latlon(&new_center, this->viewport->get_coord_mode(), &ll);
-	} else {
-		return;
-	}
-
-	this->viewport->set_center_coord(&new_center, true);
+	/* TODO: call draw_update() conditionally? */
+	goto_latlon(this, this->viewport);
 	this->draw_update();
 }
 
@@ -1418,18 +1408,8 @@ void Window::goto_lat_lon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	VikCoord new_center;
-
-	struct UTM utm, utmold;
-	vik_coord_to_utm(this->viewport->get_center(), &utmold);
-
-	if (dialog_goto_utm(this, &utm, &utmold)) {
-		vik_coord_load_from_utm(&new_center, this->viewport->get_coord_mode(), &utm);
-	} else {
-		return;
-	}
-
-	this->viewport->set_center_coord(&new_center, true);
+	/* TODO: call draw_update() conditionally? */
+	goto_utm(this, this->viewport);
 	this->draw_update();
 }
 

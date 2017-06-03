@@ -171,8 +171,8 @@ namespace SlavGPS {
 
 
 		void goto_default_location_cb(void);
-		void goto_address_cb(void);
-		void goto_lat_lon_cb(void);
+		void goto_location_cb(void);
+		void goto_latlon_cb(void);
 		void goto_utm_cb(void);
 		void goto_previous_location_cb(void);
 		void goto_next_location_cb(void);

@@ -58,8 +58,6 @@ void a_dialog_about(QWidget * parent);
 
 
 /* Okay, everthing below here is an architechtural flaw. */
-bool dialog_goto_latlon(SlavGPS::Window * parent, struct LatLon * ll, const struct LatLon * old);
-bool dialog_goto_utm(SlavGPS::Window * parent, struct UTM * utm, const struct UTM * old);
 
 char * a_dialog_get_date(SlavGPS::Window * parent, char const * title);
 #ifdef K
