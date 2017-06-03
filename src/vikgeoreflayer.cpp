@@ -39,7 +39,7 @@
 #include "icons/icons.h"
 #include "vikmapslayer.h"
 #include "vikgeoreflayer.h"
-#include "vikfileentry.h"
+#include "widget_file_entry.h"
 #include "dialog.h"
 #include "file.h"
 #include "settings.h"

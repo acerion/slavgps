@@ -22,15 +22,13 @@
 
 
 
-#include <gdk-pixbuf/gdk-pixdata.h>
-#include <gdk-pixbuf/gdk-pixbuf-core.h>
-
 #include "viewport.h"
 #include "coord.h"
 #include "mapcoord.h"
 #include "bbox.h"
 #include "download.h"
 #include "map_ids.h"
+#include "slav_qt.h"
 
 
 

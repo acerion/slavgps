@@ -27,8 +27,6 @@
 #include "config.h"
 #endif
 
-#include <gtk/gtk.h>
-#include <gdk-pixbuf/gdk-pixdata.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -36,13 +34,8 @@
 #include <deque>
 #include <cstdlib>
 #include <cassert>
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
+#include <cstring>
+#include <cmath>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -62,17 +55,16 @@
 #include "ui_util.h"
 #include "map_ids.h"
 #include "layer_defaults.h"
-#include "vikfileentry.h"
+#include "widget_file_entry.h"
 #include "dialog.h"
 #include "file.h"
 #include "settings.h"
 #include "globals.h"
-#include "vik_compat.h"
+//#include "vik_compat.h"
 #include "uibuilder.h"
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"
-#include <gio/gio.h>
 #endif
 
 
@@ -223,7 +215,9 @@ Parameter maps_layer_params[] = {
 	{ PARAM_MAPTYPE,       "mode",           ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
 	{ PARAM_CACHE_DIR,     "directory",      ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
 	{ PARAM_CACHE_LAYOUT,  "cache_type",     ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
+#ifdef K
 	{ PARAM_FILE,          "mapfile",        ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+#endif
 	{ PARAM_ALPHA,         "alpha",          ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
 	{ PARAM_AUTODOWNLOAD,  "autodownload",   ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,                               NULL, NULL, vik_lpd_true_default, NULL, NULL },
 	{ PARAM_ONLYMISSING,   "adlonlymissing", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), vik_lpd_false_default, NULL, NULL },
@@ -267,10 +261,10 @@ LayerMapsInterface::LayerMapsInterface()
 	this->params = maps_layer_params; /* Parameters. */
 	this->params_count = NUM_PARAMS;
 
-	strndup(this->layer_type_string, "Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
+	strncpy(this->layer_type_string, "Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. kamilTODO: verify this line. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	this->layer_name = tr("Map");
+	this->layer_name = QObject::tr("Map");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -292,7 +286,7 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
 };
 
 
@@ -456,11 +450,13 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 MapTypeID maps_layer_get_default_map_type()
 {
 	LayerInterface * vli = Layer::get_interface(LayerType::MAPS);
+#ifdef K
 	ParameterValue vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", ParameterType::UINT); /* kamilTODO: get the default value from LayerInterface. */
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}
 	return (MapTypeID) vlpd.u;
+#endif
 }
 
 
@@ -595,13 +591,13 @@ void LayerMaps::set_cache_dir(char const * dir)
 
 
 
-void LayerMaps::set_file(char const * name)
+void LayerMaps::set_file(char const * name_)
 {
 	if (this->filename) {
 		free(this->filename);
 	}
 
-	this->filename = g_strdup(name);
+	this->filename = g_strdup(name_);
 }
 
 
@@ -640,10 +636,12 @@ static unsigned int map_type_to_map_index(MapTypeID map_type)
  */
 static void maps_show_license(GtkWindow *parent, MapSource *map)
 {
+#ifdef K
 	a_dialog_license(parent,
 			 map->get_label(),
 			 map->get_license(),
 			 map->get_license_url());
+#endif
 }
 
 
@@ -678,9 +676,11 @@ bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, bool is_file_o
 				if (map->get_license() != NULL) {
 					/* Check if licence for this map type has been shown before. */
 					if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
+#ifdef K
 						if (viewport) {
 							maps_show_license(this->get_window(), map);
 						}
+#endif
 						a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 					}
 				}
@@ -773,7 +773,7 @@ ParameterValue LayerMaps::get_param_value(param_id_t id, bool is_file_operation)
 
 
 
-
+#ifdef K
 void LayerMapsInterface::change_param(GtkWidget * widget, ui_change_values * values)
 {
 	switch (values->param_id) {
@@ -867,7 +867,7 @@ void LayerMapsInterface::change_param(GtkWidget * widget, ui_change_values * val
 	default: break;
 	}
 }
-
+#endif
 
 
 
@@ -879,7 +879,9 @@ LayerMaps::~LayerMaps()
 	free(this->cache_dir);
 	this->cache_dir = NULL;
 	if (this->dl_right_click_menu) {
+#ifdef K
 		g_object_ref_sink(G_OBJECT(this->dl_right_click_menu));
+#endif
 	}
 
 	free(this->last_center);
@@ -891,11 +893,13 @@ LayerMaps::~LayerMaps()
 	MapSource * map = map_sources[this->map_index];
 	if (map->is_mbtiles()) {
 		if (this->mbtiles) {
+#ifdef K
 			int ans = sqlite3_close(this->mbtiles);
 			if (ans != SQLITE_OK) {
 				/* Only to console for information purposes only. */
 				fprintf(stderr, "WARNING: SQL Close problem: %d\n", ans);
 			}
+#endif
 		}
 	}
 #endif
@@ -926,6 +930,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 #ifdef HAVE_SQLITE3_H
 	/* Do some SQL stuff. */
 	if (map->is_mbtiles()) {
+#ifdef K
 		int ans = sqlite3_open_v2(this->filename,
 					  &(this->mbtiles),
 					  SQLITE_OPEN_READONLY,
@@ -937,6 +942,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 			dialog_error(QString("Failed to open MBTiles file: %1").arg(QString(this->filename)), viewport->get_window());
 			this->mbtiles = NULL;
 		}
+#endif
 	}
 #endif
 
@@ -980,10 +986,12 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf);
 
 static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double yshrinkfactor)
 {
+#ifdef K
 	uint16_t width = gdk_pixbuf_get_width(pixbuf), height = gdk_pixbuf_get_height(pixbuf);
 	GdkPixbuf * tmp = gdk_pixbuf_scale_simple(pixbuf, ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), GDK_INTERP_BILINEAR);
 	g_object_unref(G_OBJECT(pixbuf));
 	return tmp;
+#endif
 }
 
 
@@ -1015,6 +1023,7 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 	bool finished = false;
 
 	sqlite3_stmt *sql_stmt = NULL;
+#ifdef K
 	int ans = sqlite3_prepare_v2(sql, statement, -1, &sql_stmt, NULL);
 	if (ans != SQLITE_OK) {
 		fprintf(stderr, "WARNING: %s: %s - %d: %s\n", __FUNCTION__, "prepare failure", ans, statement);
@@ -1038,6 +1047,7 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 					finished = true;
 				} else {
 					/* Convert these blob bytes into a pixbuf via these streaming operations. */
+#ifdef K
 					GInputStream *stream = g_memory_input_stream_new_from_data(data, bytes, NULL);
 					GError *error = NULL;
 					pixbuf = gdk_pixbuf_new_from_stream(stream, NULL, &error);
@@ -1046,6 +1056,7 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 						g_error_free(error);
 					}
 					g_input_stream_close(stream, NULL, NULL);
+#endif
 				}
 			}
 			break;
@@ -1063,6 +1074,7 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 	(void)sqlite3_finalize(sql_stmt);
 
 	free(statement);
+#endif
 
 	return pixbuf;
 }
@@ -1113,6 +1125,7 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, in
 	}
 
 	err_msg[0] = 0;
+#ifdef K
 	int len = metatile_read(layer->cache_dir, xx, yy, zz, buf, tile_max, &compressed, err_msg);
 
 	if (len > 0) {
@@ -1142,6 +1155,7 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, in
 		fprintf(stderr, "WARNING: FAILED:%s %s", __FUNCTION__, err_msg);
 		return NULL;
 	}
+#endif
 }
 
 
@@ -1207,6 +1221,7 @@ static void get_cache_filename(const char *cache_dir,
 static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
+#ifdef K
 	GdkPixbuf * pixbuf = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixbuf) {
 		//fprintf(stderr, "MapsLayer: MAP CACHE HIT\n");
@@ -1240,6 +1255,7 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 		}
 	}
 	return pixbuf;
+#endif
 }
 
 
@@ -1250,6 +1266,7 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
 	GdkPixbuf * pixbuf = NULL;
 
 	if (g_file_test(filename_buf, G_FILE_TEST_EXISTS) == true) {
+#ifdef K
 		GError * gx = NULL;
 		pixbuf = gdk_pixbuf_new_from_file(filename_buf, &gx);
 
@@ -1269,6 +1286,7 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
 			}
 			pixbuf = NULL;
 		}
+#endif
 	}
 
 	return pixbuf;
@@ -1334,8 +1352,10 @@ bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, i
 		if (pixbuf) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+#ifdef K
 			viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 			g_object_unref(pixbuf);
+#endif
 			return true;
 		}
 	}
@@ -1366,8 +1386,10 @@ bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int
 					int src_y = 0;
 					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
+#ifdef K
 					viewport->draw_pixmap(pixbuf, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					g_object_unref(pixbuf);
+#endif
 					return true;
 				}
 			}
@@ -1455,6 +1477,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 					ulm.y = y;
 					pixbuf = get_pixbuf(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
 					if (pixbuf) {
+#ifdef K
 						width = gdk_pixbuf_get_width (pixbuf);
 						height = gdk_pixbuf_get_height(pixbuf);
 
@@ -1465,6 +1488,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 						viewport->draw_pixmap(pixbuf, 0, 0, xx, yy, width, height);
 						g_object_unref(pixbuf);
+#endif
 					}
 				}
 			}
@@ -1505,8 +1529,10 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						}
 
 						if (g_file_test(path_buf, G_FILE_TEST_EXISTS) == true) {
+#ifdef K
 							GdkGC *black_gc = gtk_widget_get_style(viewport->get_toolkit_widget())->black_gc;
 							viewport->draw_line(black_gc, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
+#endif
 						}
 					} else {
 						/* Try correct scale first. */
@@ -1515,8 +1541,10 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						if (pixbuf) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+#ifdef K
 							viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 							g_object_unref(pixbuf);
+#endif
 						} else {
 							/* Otherwise try different scales. */
 							if (SCALE_SMALLER_ZOOM_FIRST) {
@@ -1541,6 +1569,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				/* Grid drawing here so it gets drawn on top of the map.
 				   Thus loop around x & y again, but this time separately.
 				   Only showing grid for the current scale */
+#ifdef K
 				GdkGC *black_gc = viewport->get_toolkit_widget()->style->black_gc;
 				/* Draw single grid lines across the whole screen. */
 				int width = viewport->get_width();
@@ -1560,6 +1589,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 					viewport->draw_line(black_gc, base_xx, yy, width, yy);
 					yy += tilesize_y;
 				}
+#endif
 			}
 
 		}
@@ -1582,6 +1612,7 @@ void LayerMaps::draw(Viewport * viewport)
 		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
 
 		/* Logo. */
+#ifdef K
 		const GdkPixbuf *logo = map_sources[this->map_index]->get_logo();
 		viewport->add_logo(logo);
 
@@ -1600,6 +1631,7 @@ void LayerMaps::draw(Viewport * viewport)
 
 			this->draw_section(viewport, &ul, &br);
 		}
+#endif
 	}
 }
 
@@ -1637,12 +1669,14 @@ static void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map
 
 static void mdi_free(MapDownloadInfo *mdi)
 {
+#ifdef K
 	vik_mutex_free(mdi->mutex);
 	free(mdi->cache_dir);
 	mdi->cache_dir = NULL;
 	free(mdi->filename_buf);
 	mdi->filename_buf = NULL;
 	free(mdi);
+#endif
 }
 
 
@@ -1701,6 +1735,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 					     map_sources[mdi->map_index]->get_file_extension());
 
 				donemaps++;
+#ifdef K
 				int res = a_background_thread_progress(threaddata, ((double)donemaps) / mdi->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
 					map_sources[mdi->map_index]->download_handle_cleanup(handle);
@@ -1793,6 +1828,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 				}
 				g_mutex_unlock(mdi->mutex);
 				mdi->mapcoord.x = mdi->mapcoord.y = 0; /* We're temporarily between downloads. */
+#endif
 			}
 		}
 	}
@@ -1994,7 +2030,9 @@ static void maps_layer_tile_info(LayerMaps * layer)
 				GdkPixbuf *pixbuf = get_pixbuf_sql_exec(layer->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixbuf) {
 					exists = strdup(_("YES"));
+#ifdef K
 					g_object_unref(G_OBJECT(pixbuf));
+#endif
 				} else {
 					exists = strdup(_("NO"));
 				}
@@ -2011,7 +2049,9 @@ static void maps_layer_tile_info(LayerMaps * layer)
 #endif
 		} else if (map->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
+#ifdef K
 			xyz_to_meta(path, sizeof(path), layer->cache_dir, ulm.x, ulm.y, 17-ulm.scale);
+#endif
 			source = g_strdup(path);
 			filename = g_strdup(path);
 		} else {
@@ -2060,9 +2100,10 @@ static void maps_layer_tile_info(LayerMaps * layer)
 		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename);
 		g_array_append_val(array, filemsg);
 	}
-
+#ifdef K
 	a_dialog_list(layer->get_toolkit_window(), _("Tile Information"), array, 5);
 	g_array_free(array, false);
+#endif
 
 	free(timemsg);
 	free(filemsg);
@@ -2084,20 +2125,25 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
 			VikCoord ul, br;
+#ifdef K
 			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
 			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
 			start_download_thread(layer, this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
+#endif
 			return LayerToolFuncStatus::ACK;
 		} else {
+#ifdef K
 			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
 			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
+#endif
 
 			layer->redownload_viewport = this->viewport;
 
 			layer->dl_tool_x = -1;
 			layer->dl_tool_y = -1;
 
+#ifdef K
 			if (!layer->dl_right_click_menu) {
 				GtkWidget *item;
 				layer->dl_right_click_menu = GTK_MENU (gtk_menu_new());
@@ -2122,6 +2168,7 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 
 			gtk_menu_popup(layer->dl_right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
 			gtk_widget_show_all(GTK_WIDGET(layer->dl_right_click_menu));
+#endif
 		}
 	}
 	return LayerToolFuncStatus::IGNORE;
@@ -2138,7 +2185,7 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 
 
 
-LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewport) : LayerTool: window, viewport, LayerType::MAPS)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPS)
 {
 	this->id_string = QString("maps.download");
 
@@ -2147,8 +2194,13 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window, Viewport * viewpor
 	this->action_tooltip     = QObject::tr("Maps Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
+	/* kamilTODO: use correct values for these cursors. */
+	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
+#ifdef K
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixbuf;
+#endif
 
 	Layer::get_interface(LayerType::MAPS)->layer_tools.insert({{ 0, this }});
 }
@@ -2172,8 +2224,8 @@ LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * 
 				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
 				  &tmp)) {
 
-		layer->dl_tool_x = event->x;
-		layer->dl_tool_y = event->y;
+		layer->dl_tool_x = event->x();
+		layer->dl_tool_y = event->y();
 		return LayerToolFuncStatus::ACK;
 	}
 	return LayerToolFuncStatus::IGNORE;
@@ -2253,7 +2305,9 @@ static void maps_layer_about(menu_array_values * values)
 
 	MapSource * map = map_sources[layer->map_index];
 	if (map->get_license()) {
+#ifdef K
 		maps_show_license(layer->get_toolkit_window(), map);
+#endif
 	} else {
 		dialog_info(map->get_label(), layer->get_window());
 	}
@@ -2312,6 +2366,7 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
 			      int default_download,
 			      int *selected_download)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -2374,6 +2429,7 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
 	*selected_download = gtk_combo_box_get_active(GTK_COMBO_BOX(download_combo));
 
 	gtk_widget_destroy(dialog);
+#endif
 	return true;
 }
 
@@ -2424,7 +2480,7 @@ static void maps_layer_download_all(menu_array_values * values)
 
 
 	char *title = g_strdup_printf (("%s: %s"), layer->get_map_label(), _("Download for Zoom Levels"));
-
+#ifdef K
 	if (!maps_dialog_zoom_between(layer->get_toolkit_window(),
 				      title,
 				      zoom_list,
@@ -2439,6 +2495,7 @@ static void maps_layer_download_all(menu_array_values * values)
 		free(title);
 		return;
 	}
+#endif
 	free(title);
 
 	/* Find out new current positions. */
@@ -2489,7 +2546,9 @@ static void maps_layer_download_all(menu_array_values * values)
 
 static void maps_layer_flush(menu_array_values * values)
 {
+#ifdef K
 	map_cache_flush_type(map_sources[values->layer->map_index]->map_type);
+#endif
 }
 
 
@@ -2497,6 +2556,7 @@ static void maps_layer_flush(menu_array_values * values)
 
 void LayerMaps::add_menu_items(QMenu & menu)
 {
+#ifdef K
 	LayersPanel * panel = (LayersPanel *) panel_;
 
 	static menu_array_values values;
@@ -2547,6 +2607,7 @@ void LayerMaps::add_menu_items(QMenu & menu)
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 		gtk_widget_show(item);
 	}
+#endif
 }
 
 
@@ -2633,11 +2694,13 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 					} else {
 						if (mdi->redownload_mode == REDOWNLOAD_BAD) {
 							/* see if this one is bad or what */
+#ifdef K
 							GError *gx = NULL;
 							GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
 							if (gx || (!pixbuf)) {
 								mdi->mapstoget++;
 							}
+#endif
 							break;
 							/* Other download cases already considered or just ignored. */
 						}
@@ -2656,7 +2719,7 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode)
 {
 	MapDownloadInfo * mdi = (MapDownloadInfo *) malloc(sizeof(MapDownloadInfo));
-
+#ifdef K
 	mdi->layer = layer;
 	mdi->map_layer_alive = true;
 	mdi->mutex = vik_mutex_new();
@@ -2680,6 +2743,7 @@ MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, boo
 	mdi->yf = MAX(ulm->y, brm->y);
 
 	mdi->mapstoget = 0;
+#endif
 
 	return mdi;
 }
@@ -2712,7 +2776,7 @@ LayerMaps::LayerMaps()
 	fprintf(stderr, "LayerMaps::LayerMaps()\n");
 
 	this->type = LayerType::MAPS;
-	strcpy(this->type_string, "MAPS");
+	strcpy(this->debug_string, "MAPS");
 	this->interface = &vik_maps_layer_interface;
 
 	this->set_initial_parameter_values();

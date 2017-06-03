@@ -51,7 +51,7 @@
 
 #include "vikmapslayer.h"
 #include "vikmapniklayer.h"
-#include "vikfileentry.h"
+#include "widget_file_entry.h"
 #include "file.h"
 #include "vik_compat.h"
 

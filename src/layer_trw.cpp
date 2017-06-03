@@ -41,6 +41,7 @@
 #include "layer_trw.h"
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
+#include "vikmapslayer.h"
 #include "vikutils.h"
 #include "track_properties_dialog.h"
 #include "waypoint_properties.h"
@@ -59,7 +60,6 @@
 #include "preferences.h"
 
 #ifdef K
-#include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
 #include "viktrwlayer_analysis.h"

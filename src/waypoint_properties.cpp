@@ -36,7 +36,7 @@
 //#include "viking.h"
 #include "goto.h"
 #include "vikutils.h"
-#include "vikfileentry.h"
+#include "widget_file_entry.h"
 #endif
 #include "waypoint_properties.h"
 #include "dialog.h"

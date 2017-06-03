@@ -40,9 +40,9 @@
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"
+#include "vikmapslayer.h"
 #include "layer_dem.h"
 #ifdef K
-#include "vikmapslayer.h"
 #include "vikgeoreflayer.h"
 #include "vikgpslayer.h"
 #include "vikmapniklayer.h"
@@ -68,8 +68,8 @@ extern LayerCoordInterface vik_coord_layer_interface;
 #ifndef SLAVGPS_QT
 extern LayerGeorefInterface vik_georef_layer_interface;
 extern LayerGPSInterface vik_gps_layer_interface;
-extern LayerMapsInterface vik_maps_layer_interface;
 #endif
+extern LayerMapsInterface vik_maps_layer_interface;
 extern LayerDEMInterface vik_dem_layer_interface;
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
@@ -154,8 +154,8 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 #ifndef SLAVGPS_QT
 	&vik_georef_layer_interface,
 	&vik_gps_layer_interface,
-	&vik_maps_layer_interface,
 #endif
+	&vik_maps_layer_interface,
 	&vik_dem_layer_interface,
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK

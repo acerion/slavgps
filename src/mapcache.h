@@ -24,14 +24,11 @@
 
 
 
-
-
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdint.h>
+#include <cstdint>
 
 #include "mapcoord.h"
 #include "map_ids.h"
-
+#include "slav_qt.h"
 
 
 

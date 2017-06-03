@@ -6,6 +6,9 @@ QT = core gui widgets
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    vikmapslayer.cpp \
+    vikmapsource.cpp \
+    mapcache.cpp \
     maputils.cpp \
     goto.cpp \
     goto_tool.cpp \
@@ -74,7 +77,10 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    vikmapslayer.h \
+    vikmapsource.h \
     maputils.h \
+    mapcache.h \
     goto.h \
     goto_tool.h \
     goto_tool_xml.h \
@@ -165,7 +171,6 @@ HEADERS += window.h \
 # gpspoint.cpp
 # jpg.cpp
 # kmz.cpp
-# mapcache.cpp
 # mapnik_interface.cpp
 # metatile.cpp
 # osm.cpp
@@ -186,8 +191,6 @@ HEADERS += window.h \
 # vikgpslayer.cpp
 # vikmapniklayer.cpp
 # vikmapslayer_compat.cpp
-# vikmapslayer.cpp
-# vikmapsource.cpp
 # vikmaptype.cpp
 # vikrouting.cpp
 # vikroutingengine.cpp

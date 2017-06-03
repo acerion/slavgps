@@ -42,7 +42,9 @@
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"
+#ifdef K
 #include <gio/gio.h>
+#endif
 #endif
 
 

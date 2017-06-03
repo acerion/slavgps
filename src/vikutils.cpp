@@ -35,11 +35,11 @@
 #include "settings.h"
 #include "misc/kdtree.h"
 #include "dir.h"
+#include "vikmapslayer.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
-#include "vikmapslayer.h"
 #include "ui_util.h"
 #include "layer_defaults.h"
 #include "dialog.h"
@@ -651,6 +651,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 }
 
 
+#endif
 
 
 /**
@@ -669,6 +670,7 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 	if (g_path_is_absolute(filename)) {
 		canonical = g_strdup(filename);
 	} else {
+#ifdef K
 		const char * vw_filename = layer->viewport->get_window()->get_filename_2();
 		char * dirpath = NULL;
 		if (vw_filename) {
@@ -687,13 +689,14 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 		canonical = file_realpath_dup(full); // resolved
 		free(full);
 		free(dirpath);
+#endif
 	}
 
 	return canonical;
 }
 
 
-
+#ifdef K
 
 /**
  * @dir: The directory from which to load the latlontz.txt file.

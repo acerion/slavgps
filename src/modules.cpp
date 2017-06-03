@@ -38,6 +38,7 @@
 #include "modules.h"
 
 #include "geonames.h"
+#include "vikmapslayer.h"
 #ifdef K
 #include "bing.h"
 #include "google.h"
@@ -48,7 +49,6 @@
 #include "bluemarble.h"
 #include "dir.h"
 #include "datasources.h"
-#include "vikmapslayer.h"
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
 #include "goto.h"
