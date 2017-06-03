@@ -335,6 +335,7 @@ void Window::create_actions(void)
 	setMenuBar(this->menu_bar);
 
 	QAction * qa = NULL;
+	QActionGroup * group = NULL;
 
 	/* "File" menu. */
 	QAction * qa_file_new = NULL;
@@ -416,6 +417,44 @@ void Window::create_actions(void)
 	QAction * qa_view_zoom_out = NULL;
 	QAction * qa_view_zoom_to = NULL;
 	{
+		this->menu_view->addSeparator();
+
+
+		group = new QActionGroup(this);
+
+		/* kamilFIXME: select initial value in the group based on... */
+
+		qa = new QAction(tr("&UTM Mode"), this);
+		qa->setData(QVariant((int) ViewportDrawMode::UTM));
+		qa->setCheckable(true);
+		qa->setChecked(true);
+		group->addAction(qa);
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("&Expedia Mode"), this);
+		qa->setData(QVariant((int) ViewportDrawMode::EXPEDIA));
+		qa->setCheckable(true);
+		group->addAction(qa);
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("&Mercator Mode"), this);
+		qa->setData(QVariant((int) ViewportDrawMode::MERCATOR));
+		qa->setCheckable(true);
+		group->addAction(qa);
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("&Lat/Lon Mode"), this);
+		qa->setData(QVariant((int) ViewportDrawMode::LATLON));
+		qa->setCheckable(true);
+		group->addAction(qa);
+		this->menu_view->addAction(qa);
+
+		connect(group, SIGNAL (triggered(QAction *)), this, SLOT (change_coord_mode_cb(QAction *)));
+#if 0
+		for (unsigned int i = 0; i < G_N_ELEMENTS (mode_entries); i++) {
+			toolbar_action_mode_entry_register(window->viking_vtb, &mode_entries[i]);
+		}
+#endif
 
 
 		this->menu_view->addSeparator();
@@ -964,7 +1003,6 @@ void Window::create_ui(void)
 	gtk_action_group_set_translation_domain(action_group, PACKAGE_NAME);
 	gtk_action_group_add_actions(action_group, entries, G_N_ELEMENTS (entries), window);
 	gtk_action_group_add_toggle_actions(action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
-	gtk_action_group_add_radio_actions(action_group, mode_entries, G_N_ELEMENTS (mode_entries), 4, (GCallback)window_change_coord_mode_cb, window);
 	if (vik_debug) {
 		if (gtk_ui_manager_add_ui_from_string(uim,
 						      "<ui><menubar name='MainMenu'><menu action='Help'>"
@@ -990,10 +1028,6 @@ void Window::create_ui(void)
 		if (toggle_entries_toolbar_cb[i]) {
 			toolbar_action_toggle_entry_register(window->viking_vtb, &toggle_entries[i], (void *) toggle_entries_toolbar_cb[i]);
 		}
-	}
-
-	for (unsigned int i = 0; i < G_N_ELEMENTS (mode_entries); i++) {
-		toolbar_action_mode_entry_register(window->viking_vtb, &mode_entries[i]);
 	}
 
 	// Use this to see if GPSBabel is available:
@@ -2948,4 +2982,33 @@ static int zoom_popup_handler(GtkWidget * widget)
 		       1, gtk_get_current_event_time());
 #endif
 	return true;
+}
+
+
+
+
+/* Really a misnomer: changes coord mode (actual coordinates) AND/OR draw mode (viewport only). */
+void Window::change_coord_mode_cb(QAction * qa)
+{
+	ViewportDrawMode drawmode = (ViewportDrawMode) qa->data().toInt();
+
+	qDebug() << "DD: Window: Coordinate mode changed to" << (int) drawmode;
+
+	/* kamilTODO: verify that this function changes mode in all the places that need to be updated. */
+
+	if (this->only_updating_coord_mode_ui) {
+		return;
+	}
+
+	ViewportDrawMode olddrawmode = this->viewport->get_drawmode();
+	if (olddrawmode != drawmode) {
+		/* this takes care of coord mode too */
+		this->viewport->set_drawmode(drawmode);
+		if (drawmode == ViewportDrawMode::UTM) {
+			this->layers_panel->change_coord_mode(VIK_COORD_UTM);
+		} else if (olddrawmode == ViewportDrawMode::UTM) {
+			this->layers_panel->change_coord_mode(VIK_COORD_LATLON);
+		}
+		this->draw_update();
+	}
 }

@@ -1225,46 +1225,6 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 
 
 
-/* really a misnomer: changes coord mode (actual coordinates) AND/OR draw mode (viewport only) */
-static void window_change_coord_mode_cb(GtkAction * old_a, GtkAction * a, Window * window)
-{
-	char const *name = gtk_action_get_name(a);
-	GtkToggleToolButton *tbutton = (GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, name);
-	if (tbutton) {
-		gtk_toggle_tool_button_set_active(tbutton, true);
-	}
-
-	ViewportDrawMode drawmode;
-	if (!strcmp(name, "ModeUTM")) {
-		drawmode = ViewportDrawMode::UTM;
-	} else if (!strcmp(name, "ModeLatLon")) {
-		drawmode = ViewportDrawMode::LATLON;
-	} else if (!strcmp(name, "ModeExpedia")) {
-		drawmode = ViewportDrawMode::EXPEDIA;
-	} else if (!strcmp(name, "ModeMercator")) {
-		drawmode = ViewportDrawMode::MERCATOR;
-	} else {
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-		return;
-	}
-
-	if (!window->only_updating_coord_mode_ui) {
-		ViewportDrawMode olddrawmode = window->viewport->get_drawmode();
-		if (olddrawmode != drawmode) {
-			/* this takes care of coord mode too */
-			window->viewport->set_drawmode(drawmode);
-			if (drawmode == ViewportDrawMode::UTM) {
-				window->layers_panel->change_coord_mode(VIK_COORD_UTM);
-			} else if (olddrawmode == ViewportDrawMode::UTM) {
-				window->layers_panel->change_coord_mode(VIK_COORD_LATLON);
-			}
-			window->draw_update();
-		}
-	}
-}
-
-
-
 
 static void set_bg_color(GtkAction * a, Window * window)
 {
@@ -1389,13 +1349,6 @@ static GtkActionEntry entries_geojson[] = {
 	{ "AcquireGeoJSON",   NULL,            N_("Import Geo_JSON File..."),   NULL,         N_("Import GeoJSON file"),                          (GCallback)acquire_from_geojson },
 };
 
-/* Radio items */
-static GtkRadioActionEntry mode_entries[] = {
-	{ "ModeUTM",         NULL,         N_("_UTM Mode"),               "<control>u", NULL, ViewportDrawMode::UTM },
-	{ "ModeExpedia",     NULL,         N_("_Expedia Mode"),           "<control>e", NULL, ViewportDrawMode::EXPEDIA },
-	{ "ModeMercator",    NULL,         N_("_Mercator Mode"),          "<control>m", NULL, ViewportDrawMode::MERCATOR },
-	{ "ModeLatLon",      NULL,         N_("Lat_/Lon Mode"),           "<control>l", NULL, ViewportDrawMode::LATLON },
-};
 
 
 

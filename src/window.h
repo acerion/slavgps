@@ -229,6 +229,10 @@ namespace SlavGPS {
 		void draw_viewport_to_image_dir_cb(void);
 		void print_cb(void);
 
+
+		void change_coord_mode_cb(QAction * qa);
+
+
 	protected:
 
 	private slots:
