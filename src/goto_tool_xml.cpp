@@ -32,7 +32,7 @@
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
-#include "vikgotoxmltool.h"
+#include "goto_tool_xml.h"
 
 
 

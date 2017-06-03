@@ -38,7 +38,7 @@
 #include "vikwebtool_datasource.h"
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
-#include "vikgotoxmltool.h"
+#include "goto_tool_xml.h"
 #include "goto.h"
 #include "vikrouting.h"
 #include "vikroutingwebengine.h"

@@ -21,7 +21,7 @@
 
 #include "geonames.h"
 
-#include "vikgotoxmltool.h"
+#include "goto_tool_xml.h"
 #include "goto.h"
 
 

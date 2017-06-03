@@ -8,7 +8,7 @@ RESOURCES = icons.qrc cursors.qrc
 SOURCES += main.cpp \
     goto.cpp \
     goto_tool.cpp \
-    vikgotoxmltool.cpp \
+    goto_tool_xml.cpp \
     geonames.cpp \
     window.cpp \
     acquire.cpp \
@@ -75,7 +75,7 @@ SOURCES += main.cpp \
 HEADERS += window.h \
     goto.h \
     goto_tool.h \
-    vikgotoxmltool.h \
+    goto_tool_xml.h \
     geonames.h \
     window_layer_tools.h \
     viewport.h \

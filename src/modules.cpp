@@ -60,7 +60,7 @@
 #include "vikwmscmapsource.h"
 #include "vikwebtoolcenter.h"
 #include "vikwebtoolbounds.h"
-#include "vikgotoxmltool.h"
+#include "goto_tool_xml.h"
 #include "vikwebtool_datasource.h"
 #include "vikroutingwebengine.h"
 
