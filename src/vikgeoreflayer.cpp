@@ -37,7 +37,7 @@
 #include "ui_util.h"
 #include "preferences.h"
 #include "icons/icons.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "vikgeoreflayer.h"
 #include "widget_file_entry.h"
 #include "dialog.h"

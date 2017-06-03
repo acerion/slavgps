@@ -24,7 +24,7 @@
 
 #include "terraserver.h"
 #include "terraservermapsource.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "map_ids.h"
 
 

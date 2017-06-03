@@ -40,7 +40,7 @@
 #include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 
 #include "expedia.h"
 

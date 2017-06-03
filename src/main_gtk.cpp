@@ -47,7 +47,7 @@
 #include "preferences.h"
 #include "layer_defaults.h"
 #include "globals.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "vikgeoreflayer.h"
 #include "vikrouting.h"
 #include "vikutils.h"

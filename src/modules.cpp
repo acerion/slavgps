@@ -38,7 +38,7 @@
 #include "modules.h"
 
 #include "geonames.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #ifdef K
 #include "bing.h"
 #include "google.h"

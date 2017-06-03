@@ -40,7 +40,7 @@
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "layer_dem.h"
 #ifdef K
 #include "vikgeoreflayer.h"

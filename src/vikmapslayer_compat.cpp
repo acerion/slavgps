@@ -25,7 +25,7 @@
 
 #include <cassert>
 
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "vikmapslayer_compat.h"
 #include "vikmaptype.h"
 

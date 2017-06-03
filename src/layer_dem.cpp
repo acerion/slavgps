@@ -41,7 +41,7 @@
 #include <glib/gi18n.h>
 
 #include "background.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "layer_dem.h"
 #include "dem.h"
 #include "dems.h"

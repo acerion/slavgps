@@ -35,7 +35,7 @@
 #include "settings.h"
 #include "misc/kdtree.h"
 #include "dir.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"

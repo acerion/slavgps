@@ -29,7 +29,7 @@
 
 #include "osm.h"
 #include "map_ids.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "vikslippymapsource.h"
 #include "vikwmscmapsource.h"
 #include "vikwebtoolcenter.h"

@@ -26,7 +26,7 @@
 #include <glib/gi18n.h>
 
 #include "bing.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "bingmapsource.h"
 #include "vikwebtoolcenter.h"
 #include "vikexttools.h"

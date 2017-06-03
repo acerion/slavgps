@@ -6,7 +6,7 @@ QT = core gui widgets
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
-    vikmapslayer.cpp \
+    layer_map.cpp \
     vikmapsource.cpp \
     mapcache.cpp \
     maputils.cpp \
@@ -77,7 +77,7 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
-    vikmapslayer.h \
+    layer_map.h \
     vikmapsource.h \
     maputils.h \
     mapcache.h \

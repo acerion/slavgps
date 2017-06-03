@@ -49,7 +49,7 @@
 #include "mapcache.h"
 #include "background.h"
 #include "preferences.h"
-#include "vikmapslayer.h"
+#include "layer_map.h"
 #include "icons/icons.h"
 #include "metatile.h"
 #include "ui_util.h"
@@ -2515,7 +2515,7 @@ static void maps_layer_download_all(menu_array_values * values)
 		map_count = map_count + layer->how_many_maps(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
 	}
 
-	fprintf(stderr, "DEBUG: vikmapslayer: download request map count %d for method %d", map_count, selected_download_method);
+	fprintf(stderr, "DEBUG: Layer Map: download request map count %d for method %d", map_count, selected_download_method);
 
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
