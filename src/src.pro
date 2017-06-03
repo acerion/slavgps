@@ -6,6 +6,7 @@ QT = core gui widgets
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    maputils.cpp \
     goto.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
@@ -73,6 +74,7 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    maputils.h \
     goto.h \
     goto_tool.h \
     goto_tool_xml.h \
@@ -165,7 +167,6 @@ HEADERS += window.h \
 # kmz.cpp
 # mapcache.cpp
 # mapnik_interface.cpp
-# maputils.cpp
 # metatile.cpp
 # osm.cpp
 # osm-traces.cpp
