@@ -38,8 +38,9 @@
 #include "viewport.h"
 #include "ui_util.h"
 #include "date_time_dialog.h"
-#if 0
 #include "degrees_converters.h"
+#if 0
+
 #include "authors.h"
 #include "documenters.h"
 #include "vik_compat.h"
@@ -92,57 +93,61 @@ void dialog_error(QString const & message, QWidget * parent)
 
 bool dialog_goto_latlon(SlavGPS::Window * parent, struct LatLon * ll, const struct LatLon * old)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Go to Lat/Lon"),
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *latlabel, *lonlabel;
-	GtkWidget *lat, *lon;
-	char *tmp_lat, *tmp_lon;
+	char buffer[64] = { 0 };
 
-	latlabel = gtk_label_new(_("Latitude:"));
-	lat = gtk_entry_new();
-	tmp_lat = g_strdup_printf("%f", old->lat);
-	gtk_entry_set_text(GTK_ENTRY(lat), tmp_lat);
-	free(tmp_lat);
 
-	lonlabel = gtk_label_new(_("Longitude:"));
-	lon = gtk_entry_new();
-	tmp_lon = g_strdup_printf("%f", old->lon);
-	gtk_entry_set_text(GTK_ENTRY(lon), tmp_lon);
-	free(tmp_lon);
+	QDialog dialog(parent);
+	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
 
-	gtk_widget_show(latlabel);
-	gtk_widget_show(lonlabel);
-	gtk_widget_show(lat);
-	gtk_widget_show(lon);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), latlabel,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lat, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lonlabel,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lon,  false, false, 0);
+	QVBoxLayout vbox;
+	QLayout * old_layout = dialog.layout();
+	delete old_layout;
+	dialog.setLayout(&vbox);
 
-	/* 'ok' when press return in the entry. */
-	g_signal_connect_swapped(lat, "activate", G_CALLBACK(accept), dialog);
-	g_signal_connect_swapped(lon, "activate", G_CALLBACK(accept), dialog);
 
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	QLabel lat_label(QObject::tr("Latitude:"));
+	vbox.addWidget(&lat_label);
 
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		ll->lat = convert_dms_to_dec(gtk_entry_get_text(GTK_ENTRY(lat)));
-		ll->lon = convert_dms_to_dec(gtk_entry_get_text(GTK_ENTRY(lon)));
-		gtk_widget_destroy(dialog);
+
+	QLineEdit lat_input;
+	QObject::connect(&lat_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	snprintf(buffer, sizeof (buffer), "%f", old->lat);
+	lat_input.setText(buffer);
+	vbox.addWidget(&lat_input);
+
+
+	QLabel lon_label(QObject::tr("Longitude:"));
+	vbox.addWidget(&lon_label);
+
+
+	QLineEdit lon_input;
+	QObject::connect(&lon_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	snprintf(buffer, sizeof (buffer), "%f", old->lon);
+	lon_input.setText(buffer);
+	vbox.addWidget(&lon_input);
+
+
+	QDialogButtonBox button_box;
+	button_box.addButton(QDialogButtonBox::Ok);
+	button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+	vbox.addWidget(&button_box);
+
+
+	/* Ensure the first text field has focus so we can start typing straight away. */
+	lat_input.setFocus(Qt::OtherFocusReason);
+
+
+	if (dialog.exec() == QDialog::Accepted) {
+		/* kamilTODO: what's going on here? Why we use these functions? */
+		ll->lat = SlavGPS::convert_dms_to_dec(lat_input.text().toUtf8().constData());
+		ll->lon = SlavGPS::convert_dms_to_dec(lon_input.text().toUtf8().constData());
 		return true;
+	} else {
+		return false;
 	}
-
-	gtk_widget_destroy(dialog);
-#endif
-	return false;
 }
 
 
@@ -150,76 +155,92 @@ bool dialog_goto_latlon(SlavGPS::Window * parent, struct LatLon * ll, const stru
 
 bool dialog_goto_utm(SlavGPS::Window * parent, struct UTM * utm, const struct UTM * old)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Go to UTM"),
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *norlabel, *easlabel, *nor, *eas;
-	GtkWidget *zonehbox, *zonespin, *letterentry;
-	char *tmp_eas, *tmp_nor;
-	char tmp_letter[2];
+	char buffer[64] = { 0 };
 
-	norlabel = gtk_label_new(_("Northing:"));
-	nor = gtk_entry_new();
-	tmp_nor = g_strdup_printf("%ld",(long) old->northing);
-	gtk_entry_set_text(GTK_ENTRY(nor), tmp_nor);
-	free(tmp_nor);
 
-	easlabel = gtk_label_new(_("Easting:"));
-	eas = gtk_entry_new();
-	tmp_eas = g_strdup_printf("%ld", (long) old->easting);
-	gtk_entry_set_text(GTK_ENTRY(eas), tmp_eas);
-	free(tmp_eas);
+	QDialog dialog(parent);
+	dialog.setWindowTitle(QObject::tr("Go to UTM"));
 
-	zonehbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(zonehbox), gtk_label_new(_("Zone:")), false, false, 5);
-	zonespin = gtk_spin_button_new((GtkAdjustment *) gtk_adjustment_new(old->zone, 1, 60, 1, 5, 0), 1, 0);
-	gtk_box_pack_start(GTK_BOX(zonehbox), zonespin, true, true, 5);
-	gtk_box_pack_start(GTK_BOX(zonehbox), gtk_label_new(_("Letter:")), false, false, 5);
-	letterentry = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(letterentry), 1);
-	gtk_entry_set_width_chars(GTK_ENTRY(letterentry), 2);
-	tmp_letter[0] = old->letter;
-	tmp_letter[1] = '\0';
-	gtk_entry_set_text(GTK_ENTRY(letterentry), tmp_letter);
-	gtk_box_pack_start(GTK_BOX(zonehbox), letterentry, false, false, 5);
 
-	gtk_widget_show(norlabel);
-	gtk_widget_show(easlabel);
-	gtk_widget_show(nor);
-	gtk_widget_show(eas);
+	QVBoxLayout vbox;
+	QLayout * old_layout = dialog.layout();
+	delete old_layout;
+	dialog.setLayout(&vbox);
 
-	gtk_widget_show_all(zonehbox);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), norlabel, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nor, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), easlabel,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), eas,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), zonehbox,  false, false, 0);
+	QLabel northing_label(QObject::tr("Northing:"));
+	vbox.addWidget(&northing_label);
 
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		const char *letter;
-		utm->northing = atof(gtk_entry_get_text(GTK_ENTRY(nor)));
-		utm->easting = atof(gtk_entry_get_text(GTK_ENTRY(eas)));
-		utm->zone = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(zonespin));
-		letter = gtk_entry_get_text(GTK_ENTRY(letterentry));
+	QLineEdit northing_input;
+	QObject::connect(&northing_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	snprintf(buffer, sizeof (buffer), "%f", old->northing);
+	northing_input.setText(buffer);
+	vbox.addWidget(&northing_input);
+
+
+	QLabel easting_label(QObject::tr("Easting:"));
+	vbox.addWidget(&easting_label);
+
+
+	QLineEdit easting_input;
+	QObject::connect(&easting_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	snprintf(buffer, sizeof (buffer), "%f", old->easting);
+	easting_input.setText(buffer);
+	vbox.addWidget(&easting_input);
+
+
+	QLabel zone_label(QObject::tr("Zone:"));
+	vbox.addWidget(&zone_label);
+
+
+	QSpinBox zone_spinbox;
+	QObject::connect(&zone_spinbox, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	zone_spinbox.setValue(old->zone);
+	zone_spinbox.setMinimum(1);
+	zone_spinbox.setMaximum(60);
+	zone_spinbox.setSingleStep(1);
+	vbox.addWidget(&zone_spinbox);
+
+
+	QLabel letter_label(QObject::tr("Letter:"));
+	vbox.addWidget(&letter_label);
+
+
+	QLineEdit letter_input;
+	QObject::connect(&letter_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
+	buffer[0] = old->letter;
+	buffer[1] = '\0';
+	letter_input.setText(buffer);
+	letter_input.setMaxLength(1);
+	letter_input.setInputMask("A");
+	vbox.addWidget(&letter_input);
+
+
+	QDialogButtonBox button_box;
+	button_box.addButton(QDialogButtonBox::Ok);
+	button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+	vbox.addWidget(&button_box);
+
+
+	/* Ensure the first text field has focus so we can start typing straight away. */
+	northing_input.setFocus(Qt::OtherFocusReason);
+
+
+	if (dialog.exec() == QDialog::Accepted) {
+		utm->northing = atof(northing_input.text().toUtf8().constData()); /* kamilTODO: why atof()? */
+		utm->easting = atof(easting_input.text().toUtf8().constData());
+		utm->zone = zone_spinbox.value();
+		const char * letter = letter_input.text().toUtf8().constData();
 		if (*letter) {
 			utm->letter = toupper(*letter);
 		}
-		gtk_widget_destroy(dialog);
 		return true;
+	} else {
+		return false;
 	}
-
-	gtk_widget_destroy(dialog);
-#endif
-	return false;
 }
 
 

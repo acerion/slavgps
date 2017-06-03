@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 	int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon * ll, char ** name);
 	void a_vik_goto(Window * window, Viewport * viewport);
-	char * a_vik_goto_get_search_string_for_this_place(Window * window);
+	char * a_vik_goto_get_search_string_for_this_location(Window * window);
 
 
 

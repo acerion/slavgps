@@ -29,14 +29,12 @@
 #include <cstring>
 
 #include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "goto_tool.h"
 #include "goto.h"
 #include "dialog.h"
 #include "settings.h"
+#include "util.h"
 
 
 
@@ -46,21 +44,21 @@ using namespace SlavGPS;
 
 
 
-static char *last_goto_str = NULL;
-static VikCoord *last_coord = NULL;
-static char *last_successful_goto_str = NULL;
+static int last_goto_idx = -1;
+static char * last_location = NULL;
+static VikCoord * last_coord = NULL;
+static char * last_successful_location = NULL;
 
 std::vector<GotoTool *> goto_tools;
 
 #define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
-int last_goto_tool = -1;
 
 
 
 
 void SlavGPS::vik_goto_register(GotoTool * goto_tool)
 {
-	goto_tools.push_back(goto_tool); /* , g_object_ref(tool); */
+	goto_tools.push_back(goto_tool);
 }
 
 
@@ -76,7 +74,7 @@ void SlavGPS::vik_goto_unregister_all()
 
 
 
-char * SlavGPS::a_vik_goto_get_search_string_for_this_place(Window * window)
+char * SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 {
 	if (!last_coord) {
 		return NULL;
@@ -84,7 +82,7 @@ char * SlavGPS::a_vik_goto_get_search_string_for_this_place(Window * window)
 
 	const VikCoord * cur_center = window->get_viewport()->get_center();
 	if (vik_coord_equals(cur_center, last_coord)) {
-		return(last_successful_goto_str);
+		return(last_successful_location);
 	} else {
 		return NULL;
 	}
@@ -95,60 +93,47 @@ char * SlavGPS::a_vik_goto_get_search_string_for_this_place(Window * window)
 
 static bool prompt_try_again(Window * parent, QString const & msg)
 {
-
-	QMessageBox::StandardButton reply = QMessageBox::question(parent, QObject::tr("goto"), msg,
-								  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
-								  QMessageBox::Yes);
-
-
-	if (reply != QMessageBox::Yes) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
-
-
-
-static int find_entry = -1;
-static int wanted_entry = -1;
-
-static void find_provider(GotoTool * goto_tool, char * provider)
-{
-	find_entry++;
-	if (0 == strcmp(goto_tool->get_label(), provider)) {
-		wanted_entry = find_entry;
-	}
+	return QMessageBox::Yes == QMessageBox::question(parent, QObject::tr("goto"), msg,
+							 QMessageBox::No | QMessageBox::Yes,
+							 QMessageBox::Yes);
 }
 
 
 
 
 /**
- * Setup last_goto_tool value.
- */
-static void get_provider()
-{
-	/* Use setting for the provider if available. */
-	if (last_goto_tool < 0) {
-		find_entry = -1;
-		wanted_entry = -1;
-		char *provider = NULL;
-		if (a_settings_get_string(VIK_SETTINGS_GOTO_PROVIDER, &provider)) {
-			/* Use setting. */
-			if (provider) {
-				for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
-					find_provider(*iter, provider);
-				}
+   Get last_goto_idx value.
 
-			}
-			/* If not found set it to the first entry, otherwise use the entry. */
-			last_goto_tool = (wanted_entry < 0) ? 0 : wanted_entry;
-		} else {
-			last_goto_tool = 0;
-		}
+   Use setting for the provider if necessary and available.
+*/
+static int get_last_provider_index(void)
+{
+	if (last_goto_idx >= 0) {
+		return last_goto_idx;
 	}
+
+	int found_entry = -1;
+	char * provider = NULL;
+	if (a_settings_get_string(VIK_SETTINGS_GOTO_PROVIDER, &provider)) {
+		/* Use setting. */
+		if (provider) {
+			int i = 0;
+			for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
+				GotoTool * goto_tool = *iter;
+				if (0 == strcmp(goto_tool->get_label(), provider)) {
+					found_entry = i;
+					break;
+				}
+				i++;
+			}
+		}
+		/* If not found set it to the first entry, otherwise use the entry. */
+		last_goto_idx = (found_entry < 0) ? 0 : found_entry;
+	} else {
+		last_goto_idx = 0;
+	}
+
+	return last_goto_idx;
 }
 
 
@@ -166,7 +151,16 @@ static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * bu
 
 
 
-static char *a_prompt_for_goto_string(Window * window)
+/**
+   @brief Get name of a location to go to
+
+   Returned pointer is owned by caller.
+
+   @return NULL on errors
+   @return NULL if empty string has been entered
+   @return non-NULL string with location entered in dialog on success
+*/
+static char * goto_location_dialog_box(Window * window)
 {
 	QDialog dialog(window);
 	dialog.setWindowTitle(QObject::tr("goto"));
@@ -189,22 +183,21 @@ static char *a_prompt_for_goto_string(Window * window)
 		providers_combo.addItem(label, i);
 		i++;
 	}
-	get_provider();
-	providers_combo.setCurrentIndex(last_goto_tool);
+	last_goto_idx = get_last_provider_index();
+	providers_combo.setCurrentIndex(last_goto_idx);
 	vbox.addWidget(&providers_combo);
 
 
-	QLabel prompt_label(QObject::tr("Enter address or place name:"));
+	QLabel prompt_label(QObject::tr("Enter address or location name:"));
 	vbox.addWidget(&prompt_label);
 
 
 	QLineEdit input_field;
 	QObject::connect(&input_field, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-#ifdef K
-	if (last_goto_str) {
-		gtk_entry_set_text(GTK_ENTRY(goto_entry), last_goto_str);
+	if (last_location) {
+		/* Notice that this may be not a *successful* location. */
+		input_field.setText(last_location);
 	}
-#endif
 #ifdef K
 #if GTK_CHECK_VERSION (2,20,0)
 	GtkWidget *ok_button = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
@@ -233,37 +226,43 @@ static char *a_prompt_for_goto_string(Window * window)
 
 
 	/* TODO check if list is empty. */
-	last_goto_tool = providers_combo.currentIndex();
-	char * provider = goto_tools[last_goto_tool]->get_label();
-#ifdef K
+	last_goto_idx = providers_combo.currentIndex();
+	char * provider = goto_tools[last_goto_idx]->get_label();
 	a_settings_set_string(VIK_SETTINGS_GOTO_PROVIDER, provider);
-#endif
-	char * goto_str = strdup(input_field.text().toUtf8().constData());
-	if (goto_str[0] != '\0') {
-		if (last_goto_str) {
-			free(last_goto_str);
-		}
-		last_goto_str = strdup(goto_str);
+	char * location = strdup(input_field.text().toUtf8().constData());
+	if (!location) {
+		qDebug() << "EE: goto: can't strdup string" << input_field.text();
+		return NULL;
 	}
 
-	return goto_str; /* goto_str needs to be freed by caller. */
+	if (location[0] == '\0') {
+		free(location);
+		location = NULL;
+	} else {
+		if (last_location) {
+			free(last_location);
+		}
+		last_location = strdup(location);
+	}
+
+	return location;
 }
 
 
 
 
 /**
- * Goto a place when we already have a string to search on.
+ * Goto a location when we already have a string to search on.
  *
  * Returns: %true if a successful lookup
  */
-static bool vik_goto_place(Window * window, Viewport * viewport, char* name, VikCoord *vcoord)
+static bool vik_goto_location(Viewport * viewport, char* name, VikCoord *vcoord)
 {
-	/* Ensure last_goto_tool is given a value. */
-	get_provider();
+	/* Ensure last_goto_idx is given a value. */
+	last_goto_idx = get_last_provider_index();
 
-	if (!goto_tools.empty() && last_goto_tool >= 0) {
-		GotoTool * goto_tool = goto_tools[last_goto_tool];
+	if (!goto_tools.empty() && last_goto_idx >= 0) {
+		GotoTool * goto_tool = goto_tools[last_goto_idx];
 		if (goto_tool) {
 			if (goto_tool->get_coord(viewport, name, vcoord) == 0) {
 				return true;
@@ -278,42 +277,40 @@ static bool vik_goto_place(Window * window, Viewport * viewport, char* name, Vik
 
 void SlavGPS::a_vik_goto(Window * window, Viewport * viewport)
 {
-	VikCoord new_center;
-	char *s_str;
-	bool more = true;
-
 	if (goto_tools.empty()) {
 		dialog_warning(QObject::tr("No goto tool available."), window);
 		return;
 	}
 
+	bool more = true;
 	do {
-		s_str = a_prompt_for_goto_string(window);
-		if ((!s_str) || (s_str[0] == 0)) {
+		char * location = goto_location_dialog_box(window);
+		if (!location) {
 			more = false;
 		} else {
-			int ans = goto_tools[last_goto_tool]->get_coord(viewport, s_str, &new_center);
+			VikCoord location_coord;
+			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location, &location_coord);
 			if (ans == 0) {
 				if (last_coord) {
 					free(last_coord);
 				}
 				last_coord = (VikCoord *) malloc(sizeof(VikCoord));
-				*last_coord = new_center;
-				if (last_successful_goto_str) {
-					free(last_successful_goto_str);
+				*last_coord = location_coord;
+				if (last_successful_location) {
+					free(last_successful_location);
 				}
-				last_successful_goto_str = g_strdup(last_goto_str);
-				viewport->set_center_coord(&new_center, true);
+				last_successful_location = g_strdup(last_location);
+				viewport->set_center_coord(&location_coord, true);
 				more = false;
 			} else if (ans == -1) {
-				if (!prompt_try_again(window, _("I don't know that place. Do you want another goto?"))) {
+				if (!prompt_try_again(window, QObject::tr("I don't know that location. Do you want another goto?"))) {
 					more = false;
 				}
-			} else if (!prompt_try_again(window, _("Service request failure. Do you want another goto?"))) {
+			} else if (!prompt_try_again(window, QObject::tr("Service request failure. Do you want another goto?"))) {
 				more = false;
 			}
+			free(location);
 		}
-		free(s_str);
 	} while (more);
 }
 
@@ -340,17 +337,16 @@ void SlavGPS::a_vik_goto(Window * window, Viewport * viewport)
  *   1 if exact latitude/longitude found
  *   2 if position only as precise as a city
  *   3 if position only as precise as a country
- * @name: Contains the name of place found. Free this string after use.
+ * @name: Contains the name of location found. Free this string after use.
  */
 int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 {
-	int result = 0;
 	*name = NULL;
 
-	char *tmpname = a_download_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
+	char * tmpname = a_download_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
 	//char *tmpname = strdup("../test/hostip2.json");
 	if (!tmpname) {
-		return result;
+		return 0;
 	}
 
 	ll->lat = 0.0;
@@ -358,12 +354,12 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 
 	GMappedFile *mf;
 	if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
-		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
+		qCritical() << QObject::tr("CRITICAL: couldn't map temp file\n");
 
 		g_mapped_file_unref(mf);
 		(void) remove(tmpname);
 		free(tmpname);
-		return result;
+		return 0;
 	}
 
 	size_t len = g_mapped_file_get_length(mf);
@@ -431,6 +427,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 		ll->lon = g_ascii_strtod(lon_buf, NULL);
 	}
 
+	int result = 0;
 	if (ll->lat != 0.0 && ll->lon != 0.0) {
 		if (ll->lat > -90.0 && ll->lat < 90.0 && ll->lon > -180.0 && ll->lon < 180.0) {
 			// Found a 'sensible' & 'precise' location
@@ -439,7 +436,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 		}
 	} else {
 		/* Hopefully city name is unique enough to lookup position on.
-		   Maybe for American places where hostip appends the State code on the end.
+		   Maybe for American locations where hostip appends the State code on the end.
 		   But if the country code is not appended if could easily get confused.
 		   e.g. 'Portsmouth' could be at least
 		   Portsmouth, Hampshire, UK or
@@ -450,7 +447,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 			fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city);
 			if (strcmp(city, "(Unknown city)") != 0) {
 				VikCoord new_center;
-				if (vik_goto_place(NULL, viewport, city, &new_center)) {
+				if (vik_goto_location(viewport, city, &new_center)) {
 					/* Got something. */
 					vik_coord_to_latlon(&new_center, ll);
 					result = 2;
@@ -465,7 +462,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 			fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country);
 			if (strcmp(country, "(Unknown Country)") != 0) {
 				VikCoord new_center;
-				if (vik_goto_place(NULL, viewport, country, &new_center)) {
+				if (vik_goto_location(viewport, country, &new_center)) {
 					/* Finally got something. */
 					vik_coord_to_latlon(&new_center, ll);
 					result = 3;

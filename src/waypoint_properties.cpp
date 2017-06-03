@@ -186,7 +186,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	commententry = gtk_entry_new();
 	char *cmt =  NULL;
 	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
-	cmt = a_vik_goto_get_search_string_for_this_place(trw->get_window());
+	cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
 	if (cmt) {
 		gtk_entry_set_text(GTK_ENTRY(commententry), cmt);
 	}
