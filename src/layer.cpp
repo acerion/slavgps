@@ -69,7 +69,7 @@ extern LayerCoordInterface vik_coord_layer_interface;
 extern LayerGeorefInterface vik_georef_layer_interface;
 extern LayerGPSInterface vik_gps_layer_interface;
 #endif
-extern LayerMapsInterface vik_maps_layer_interface;
+extern LayerMapInterface vik_map_layer_interface;
 extern LayerDEMInterface vik_dem_layer_interface;
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
@@ -155,7 +155,7 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_georef_layer_interface,
 	&vik_gps_layer_interface,
 #endif
-	&vik_maps_layer_interface,
+	&vik_map_layer_interface,
 	&vik_dem_layer_interface,
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
@@ -330,8 +330,8 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 		layer = new LayerCoord();
 	}
 #ifndef SLAVGPS_QT
-	else if (layer_type == LayerType::MAPS) {
-		layer = new LayerMaps();
+	else if (layer_type == LayerType::MAP) {
+		layer = new LayerMap();
 	}
 #endif
 	else if (layer_type == LayerType::DEM) {

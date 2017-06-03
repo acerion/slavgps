@@ -984,12 +984,12 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 		}
 
 		/* Don't add map layer if one already exists. */
-		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAPS, true);
+		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
 		bool add_map = true;
 
 		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {
 			Layer * vml = (Layer *) *iter;
-			MapTypeID type_id = ((LayerMaps *) vml)->get_map_type();
+			MapTypeID type_id = ((LayerMap *) vml)->get_map_type();
 			if (the_type_id == type_id) {
 				add_map = false;
 				break;
@@ -997,7 +997,7 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 		}
 
 		if (add_map) {
-			LayerMaps * layer = new LayerMaps(viewport);
+			LayerMap * layer = new LayerMap(viewport);
 
 			layer->set_map_type(the_type_id);
 			layer->rename(_("Map"));

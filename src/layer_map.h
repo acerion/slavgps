@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef _SG_LAYER_MAPS_H
-#define _SG_LAYER_MAPS_H
+#ifndef _SG_LAYER_MAP_H
+#define _SG_LAYER_MAP_H
 
 
 
@@ -64,19 +64,19 @@ namespace SlavGPS {
 
 
 
-	class LayerMapsInterface : public LayerInterface {
+	class LayerMapInterface : public LayerInterface {
 	public:
-		LayerMapsInterface();
+		LayerMapInterface();
 		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 	};
 
 
 
 
-	class LayerMaps : public Layer {
+	class LayerMap : public Layer {
 	public:
-		LayerMaps();
-		~LayerMaps();
+		LayerMap();
+		~LayerMap();
 
 
 		/* Layer interface methods. */
@@ -177,4 +177,4 @@ std::string& maps_layer_default_dir_2();
 
 
 
-#endif /* #ifndef _SG_LAYER_MAPS_H */
+#endif /* #ifndef _SG_LAYER_MAP_H */

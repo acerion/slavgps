@@ -135,7 +135,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 	/* These types are 'base' types in that you what other information on top. */
 	if (layer->type == LayerType::DEM
 #ifdef K
-	    || layer->type == LayerType::MAPS
+	    || layer->type == LayerType::MAP
 	    || layer->type == LayerType::GEOREF
 #endif
 	    ) {
@@ -200,7 +200,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::DEM
 #ifdef K
-		    || layer->type == LayerType::MAPS
+		    || layer->type == LayerType::MAP
 		    || layer->type == LayerType::GEOREF
 #endif
 		    ) {

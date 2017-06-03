@@ -109,7 +109,7 @@ namespace SlavGPS {
 		GEOREF,
 		GPS,
 #endif
-		MAPS,
+		MAP,
 		DEM,
 #ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK

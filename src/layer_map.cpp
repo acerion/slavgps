@@ -115,7 +115,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
+static void start_download_thread(LayerMap * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static unsigned int map_type_to_map_index(MapTypeID map_type);
 
 
@@ -251,12 +251,12 @@ void maps_layer_set_cache_default(MapsCacheLayout layout)
 
 
 
-LayerMapsInterface vik_maps_layer_interface;
+LayerMapInterface vik_map_layer_interface;
 
 
 
 
-LayerMapsInterface::LayerMapsInterface()
+LayerMapInterface::LayerMapInterface()
 {
 	this->params = maps_layer_params; /* Parameters. */
 	this->params_count = NUM_PARAMS;
@@ -335,9 +335,9 @@ void maps_layer_init()
 
 
 
-/****************************************/
-/******** MAPS LAYER TYPES **************/
-/****************************************/
+/***************************************/
+/******** MAP LAYER TYPES **************/
+/***************************************/
 
 void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 {
@@ -420,21 +420,21 @@ void maps_layer_register_map_source(MapSource * map)
 
 
 
-#define MAPS_LAYER_NTH_LABEL(n) (map_type_labels[n])
-#define MAPS_LAYER_NTH_ID(n) (map_type_ids[n])
+#define LAYER_MAP_NTH_LABEL(n) (map_type_labels[n])
+#define LAYER_MAP_NTH_ID(n) (map_type_ids[n])
 
 /**
  * Returns the actual map id (rather than the internal type index value).
  */
-MapTypeID LayerMaps::get_map_type()
+MapTypeID LayerMap::get_map_type()
 {
-	return MAPS_LAYER_NTH_ID(this->map_index);
+	return LAYER_MAP_NTH_ID(this->map_index);
 }
 
 
 
 
-void LayerMaps::set_map_type(MapTypeID map_type)
+void LayerMap::set_map_type(MapTypeID map_type)
 {
 	unsigned int map_index = map_type_to_map_index(map_type);
 	if (map_index == map_sources.size()) {
@@ -449,7 +449,7 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 
 MapTypeID maps_layer_get_default_map_type()
 {
-	LayerInterface * vli = Layer::get_interface(LayerType::MAPS);
+	LayerInterface * vli = Layer::get_interface(LayerType::MAP);
 #ifdef K
 	ParameterValue vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", ParameterType::UINT); /* kamilTODO: get the default value from LayerInterface. */
 	if (vlpd.u == 0) {
@@ -462,9 +462,9 @@ MapTypeID maps_layer_get_default_map_type()
 
 
 
-char * LayerMaps::get_map_label()
+char * LayerMap::get_map_label()
 {
-	return strdup(MAPS_LAYER_NTH_LABEL(this->map_index));
+	return strdup(LAYER_MAP_NTH_LABEL(this->map_index));
 }
 
 
@@ -547,7 +547,7 @@ std::string& maps_layer_default_dir_2()
 
 
 
-void LayerMaps::mkdir_if_default_dir()
+void LayerMap::mkdir_if_default_dir()
 {
 	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && g_file_test(this->cache_dir, G_FILE_TEST_EXISTS) == false) {
 		if (g_mkdir(this->cache_dir, 0777) != 0) {
@@ -559,7 +559,7 @@ void LayerMaps::mkdir_if_default_dir()
 
 
 
-void LayerMaps::set_cache_dir(char const * dir)
+void LayerMap::set_cache_dir(char const * dir)
 {
 	free(this->cache_dir);
 	this->cache_dir = NULL;
@@ -591,7 +591,7 @@ void LayerMaps::set_cache_dir(char const * dir)
 
 
 
-void LayerMaps::set_file(char const * name_)
+void LayerMap::set_file(char const * name_)
 {
 	if (this->filename) {
 		free(this->filename);
@@ -647,7 +647,7 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 
 
 
-bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
+bool LayerMap::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -717,7 +717,7 @@ bool LayerMaps::set_param_value(uint16_t id, ParameterValue data, bool is_file_o
 
 
 
-ParameterValue LayerMaps::get_param_value(param_id_t id, bool is_file_operation) const
+ParameterValue LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	ParameterValue rv;
 	switch (id) {
@@ -774,7 +774,7 @@ ParameterValue LayerMaps::get_param_value(param_id_t id, bool is_file_operation)
 
 
 #ifdef K
-void LayerMapsInterface::change_param(GtkWidget * widget, ui_change_values * values)
+void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * values)
 {
 	switch (values->param_id) {
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
@@ -792,7 +792,7 @@ void LayerMapsInterface::change_param(GtkWidget * widget, ui_change_values * val
 		GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
 		GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
 		/* Depends on autodownload value. */
-		LayerMaps * layer = (LayerMaps *) values->layer;
+		LayerMap * layer = (LayerMap *) values->layer;
 		bool missing_sense = sensitive && layer->autodownload;
 		if (w1) {
 			gtk_widget_set_sensitive(w1, missing_sense);
@@ -874,7 +874,7 @@ void LayerMapsInterface::change_param(GtkWidget * widget, ui_change_values * val
 /****************************************/
 /****** CREATING, COPYING, FREEING ******/
 /****************************************/
-LayerMaps::~LayerMaps()
+LayerMap::~LayerMap()
 {
 	free(this->cache_dir);
 	this->cache_dir = NULL;
@@ -908,7 +908,7 @@ LayerMaps::~LayerMaps()
 
 
 
-void LayerMaps::post_read(Viewport * viewport, bool from_file)
+void LayerMap::post_read(Viewport * viewport, bool from_file)
 {
 	MapSource * map = map_sources[this->map_index];
 
@@ -958,7 +958,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString LayerMaps::tooltip()
+QString LayerMap::tooltip()
 {
 	return this->get_map_label();
 }
@@ -966,9 +966,9 @@ QString LayerMaps::tooltip()
 
 
 
-Layer * LayerMapsInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerMapInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	LayerMaps * layer = new LayerMaps();
+	LayerMap * layer = new LayerMap();
 
 	layer->unmarshall_params(data, len);
 	layer->post_read(viewport, false);
@@ -982,7 +982,7 @@ Layer * LayerMapsInterface::unmarshall(uint8_t * data, int len, Viewport * viewp
 /****** DRAWING ******/
 /*********************/
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf);
+static GdkPixbuf * get_pixbuf_from_file(LayerMap * layer, char * filename_buf);
 
 static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double yshrinkfactor)
 {
@@ -1083,7 +1083,7 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 
 
 
-static GdkPixbuf *get_mbtiles_pixbuf(LayerMaps * layer, int xx, int yy, int zoom)
+static GdkPixbuf *get_mbtiles_pixbuf(LayerMap * layer, int xx, int yy, int zoom)
 {
 	GdkPixbuf *pixbuf = NULL;
 
@@ -1113,7 +1113,7 @@ static GdkPixbuf *get_mbtiles_pixbuf(LayerMaps * layer, int xx, int yy, int zoom
 
 
 
-static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, int zz)
+static GdkPixbuf *get_pixbuf_from_metatile(LayerMap * layer, int xx, int yy, int zz)
 {
 	const int tile_max = METATILE_MAX_SIZE;
 	char err_msg[PATH_MAX];
@@ -1218,15 +1218,15 @@ static void get_cache_filename(const char *cache_dir,
  * Caller has to decrease reference counter of returned.
  * GdkPixbuf, when buffer is no longer needed.
  */
-static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
+static GdkPixbuf * get_pixbuf(LayerMap * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
 #ifdef K
 	GdkPixbuf * pixbuf = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixbuf) {
-		//fprintf(stderr, "MapsLayer: MAP CACHE HIT\n");
+		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
 	} else {
-		//fprintf(stderr, "MapsLayer: MAP CACHE MISS\n");
+		//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
 		MapSource * map = map_sources[layer->map_index];
 		if (map->is_direct_file_access()) {
 			/* ATM MBTiles must be 'a direct access type'. */
@@ -1261,7 +1261,7 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 
 
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
+static GdkPixbuf * get_pixbuf_from_file(LayerMap * layer, char * filename_buf)
 {
 	GdkPixbuf * pixbuf = NULL;
 
@@ -1296,7 +1296,7 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
 
 
 
-static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
+static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 {
 	const VikCoord *center = viewport->get_center();
 
@@ -1338,7 +1338,7 @@ static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
 
 
 
-bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
+bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
@@ -1365,7 +1365,7 @@ bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, i
 
 
 
-bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
+bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	/* Try with bigger zooms. */
@@ -1401,7 +1401,7 @@ bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int
 
 
 
-void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
+void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
@@ -1600,7 +1600,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 
 
-void LayerMaps::draw(Viewport * viewport)
+void LayerMap::draw(Viewport * viewport)
 {
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
@@ -1654,12 +1654,12 @@ typedef struct {
 	int mapstoget;
 	int redownload_mode;
 	bool refresh_display;
-	LayerMaps * layer;
+	LayerMap * layer;
 	bool map_layer_alive;
 	GMutex *mutex;
 } MapDownloadInfo;
 
-static MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode);
+static MapDownloadInfo * mdi_new(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode);
 static char * redownload_mode_message(int redownload_mode, int mapstoget, char * label);
 static void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
 static void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
@@ -1682,7 +1682,7 @@ static void mdi_free(MapDownloadInfo *mdi)
 
 
 
-void LayerMaps::weak_ref_cb(void * ptr, GObject * dead_vml)
+void LayerMap::weak_ref_cb(void * ptr, GObject * dead_vml)
 {
 	MapDownloadInfo * mdi = (MapDownloadInfo *) ptr;
 	g_mutex_lock(mdi->mutex);
@@ -1835,7 +1835,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 	map_sources[mdi->map_index]->download_handle_cleanup(handle);
 	g_mutex_lock(mdi->mutex);
 	if (mdi->map_layer_alive) {
-		mdi->layer->weak_unref(LayerMaps::weak_ref_cb, mdi);
+		mdi->layer->weak_unref(LayerMap::weak_ref_cb, mdi);
 	}
 	g_mutex_unlock(mdi->mutex);
 	return 0;
@@ -1863,7 +1863,7 @@ static void mdi_cancel_cleanup(MapDownloadInfo *mdi)
 
 
 
-static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
+static void start_download_thread(LayerMap * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
 {
 	double xzoom = layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp();
 	double yzoom = layer->ymapzoom ? layer->ymapzoom : viewport->get_ympp();
@@ -1891,9 +1891,9 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 		mdi->mapcoord.y = 0;
 
 		if (mdi->mapstoget) {
-			char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(layer->map_index));
+			char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, LAYER_MAP_NTH_LABEL(layer->map_index));
 
-			mdi->layer->weak_ref(LayerMaps::weak_ref_cb, mdi);
+			mdi->layer->weak_ref(LayerMap::weak_ref_cb, mdi);
 			/* Launch the thread */
 			a_background_thread(BACKGROUND_POOL_REMOTE,
 					    job_description,
@@ -1912,7 +1912,7 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 
 
 
-void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
+void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -1937,7 +1937,7 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 	mdi->mapcoord.y = 0;
 
 	if (mdi->mapstoget) {
-		char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(this->map_index));
+		char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
 
 		mdi->layer->weak_ref(weak_ref_cb, mdi);
 
@@ -1965,7 +1965,7 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMaps::download_section(VikCoord * ul, VikCoord * br, double zoom)
+void LayerMap::download_section(VikCoord * ul, VikCoord * br, double zoom)
 {
 	this->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
 }
@@ -1973,7 +1973,7 @@ void LayerMaps::download_section(VikCoord * ul, VikCoord * br, double zoom)
 
 
 
-static void maps_layer_redownload_bad(LayerMaps * layer)
+static void maps_layer_redownload_bad(LayerMap * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_BAD);
 }
@@ -1981,7 +1981,7 @@ static void maps_layer_redownload_bad(LayerMaps * layer)
 
 
 
-static void maps_layer_redownload_all(LayerMaps * layer)
+static void maps_layer_redownload_all(LayerMap * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_ALL);
 }
@@ -1989,7 +1989,7 @@ static void maps_layer_redownload_all(LayerMaps * layer)
 
 
 
-static void maps_layer_redownload_new(LayerMaps * layer)
+static void maps_layer_redownload_new(LayerMap * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_NEW);
 }
@@ -2004,7 +2004,7 @@ typedef struct stat GStatBuf;
 /**
  * Display a simple dialog with information about this particular map tile
  */
-static void maps_layer_tile_info(LayerMaps * layer)
+static void maps_layer_tile_info(LayerMap * layer)
 {
 	MapSource *map = map_sources[layer->map_index];
 
@@ -2116,11 +2116,11 @@ static void maps_layer_tile_info(LayerMaps * layer)
 
 LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent * event)
 {
-	if (!_layer || _layer->type != LayerType::MAPS) {
+	if (!_layer || _layer->type != LayerType::MAP) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	LayerMaps * layer = (LayerMaps *) _layer;
+	LayerMap * layer = (LayerMap *) _layer;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
@@ -2185,7 +2185,7 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 
 
 
-LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPS)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAP)
 {
 	this->id_string = QString("maps.download");
 
@@ -2202,7 +2202,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	this->cursor_data = &cursor_mapdl_pixbuf;
 #endif
 
-	Layer::get_interface(LayerType::MAPS)->layer_tools.insert({{ 0, this }});
+	Layer::get_interface(LayerType::MAP)->layer_tools.insert({{ 0, this }});
 }
 
 
@@ -2211,11 +2211,11 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
-	if (!_layer || _layer->type != LayerType::MAPS) {
+	if (!_layer || _layer->type != LayerType::MAP) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	LayerMaps * layer = (LayerMaps *) _layer;
+	LayerMap * layer = (LayerMap *) _layer;
 
 	MapSource *map = map_sources[layer->map_index];
 	if (map->get_drawmode() == this->viewport->get_drawmode()
@@ -2235,13 +2235,13 @@ LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * 
 
 
 typedef struct {
-	LayerMaps * layer;
+	LayerMap * layer;
 	Viewport * viewport;
 } menu_array_values;
 
 static void download_onscreen_maps(menu_array_values * values, int redownload_mode)
 {
-	LayerMaps * layer = values->layer;
+	LayerMap * layer = values->layer;
 	Viewport * viewport = values->viewport;
 	ViewportDrawMode vp_drawmode = viewport->get_drawmode();
 
@@ -2301,7 +2301,7 @@ static void maps_layer_redownload_all_onscreen_maps(menu_array_values * values)
 
 static void maps_layer_about(menu_array_values * values)
 {
-	LayerMaps * layer = (LayerMaps *) values->layer;
+	LayerMap * layer = (LayerMap *) values->layer;
 
 	MapSource * map = map_sources[layer->map_index];
 	if (map->get_license()) {
@@ -2319,7 +2319,7 @@ static void maps_layer_about(menu_array_values * values)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMaps::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
+int LayerMap::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -2446,7 +2446,7 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
  */
 static void maps_layer_download_all(menu_array_values * values)
 {
-	LayerMaps * layer = values->layer;
+	LayerMap * layer = values->layer;
 	Viewport * viewport = values->viewport;
 
 	/* I don't think we should allow users to hammer the servers too much...
@@ -2554,7 +2554,7 @@ static void maps_layer_flush(menu_array_values * values)
 
 
 
-void LayerMaps::add_menu_items(QMenu & menu)
+void LayerMap::add_menu_items(QMenu & menu)
 {
 #ifdef K
 	LayersPanel * panel = (LayersPanel *) panel_;
@@ -2616,7 +2616,7 @@ void LayerMaps::add_menu_items(QMenu & menu)
 /**
  * Enable downloading maps of the current screen area either 'new' or 'everything'.
  */
-void LayerMaps::download(Viewport * viewport, bool only_new)
+void LayerMap::download(Viewport * viewport, bool only_new)
 {
 	if (!viewport) {
 		return;
@@ -2716,7 +2716,7 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 
 
 
-MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode)
+MapDownloadInfo * mdi_new(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode)
 {
 	MapDownloadInfo * mdi = (MapDownloadInfo *) malloc(sizeof(MapDownloadInfo));
 #ifdef K
@@ -2771,13 +2771,13 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 
 
 
-LayerMaps::LayerMaps()
+LayerMap::LayerMap()
 {
-	fprintf(stderr, "LayerMaps::LayerMaps()\n");
+	fprintf(stderr, "LayerMap::LayerMap()\n");
 
-	this->type = LayerType::MAPS;
-	strcpy(this->debug_string, "MAPS");
-	this->interface = &vik_maps_layer_interface;
+	this->type = LayerType::MAP;
+	strcpy(this->debug_string, "MAP");
+	this->interface = &vik_map_layer_interface;
 
 	this->set_initial_parameter_values();
 

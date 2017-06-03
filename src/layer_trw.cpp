@@ -7016,7 +7016,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		((LayerMaps *) vml)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
+		((LayerMap *) vml)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
 	}
 
 	if (fillins) {
@@ -7055,7 +7055,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	Viewport * viewport = this->get_window()->get_viewport();
 
 #ifdef K
-	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); /* Includes hidden map layer types. */
+	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
 	int num_maps = vmls->size();
 	if (!num_maps) {
 		dialog_error("No map layer in use. Create one first", this->get_window());
@@ -7071,7 +7071,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	for (auto i = vmls->begin(); i != vmls->end(); i++) {
 		vml = (Layer *) *i;
 		*lp++ = vml;
-		LayerMaps * lm = (LayerMaps *) vml;
+		LayerMap * lm = (LayerMap *) vml;
 		*np++ = lm->get_map_label();
 	}
 	/* Mark end of the array lists. */

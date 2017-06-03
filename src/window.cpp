@@ -2276,7 +2276,7 @@ void Window::finish_new(void)
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 #ifdef K
-		LayerMaps * layer = new LayerMaps(this->viewport);
+		LayerMap * layer = new LayerMap(this->viewport);
 		layer->rename(_("Default Map"));
 
 		this->layers_panel->get_top_layer()->add_layer(layer, true);
