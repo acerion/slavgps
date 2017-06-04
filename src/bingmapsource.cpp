@@ -379,10 +379,10 @@ int MapSourceBing::emit_update(void * data)
 
 
 
-int MapSourceBing::load_attributions_thread(void * threaddata)
+static int load_attributions_thread(BackgroundJob * job, background_job_t * bg_job)
 {
 	_load_attributions (self);
-	int result = a_background_thread_progress(threaddata, 1);
+	int result = a_background_thread_progress(bg_job, 1);
 	if (result != 0) {
 		return -1; /* Abort thread. */
 	}
@@ -399,11 +399,11 @@ int MapSourceBing::load_attributions_thread(void * threaddata)
 
 void MapSourceBing::async_load_attributions()
 {
-	a_background_thread(BACKGROUND_POOL_REMOTE,
-			    _("Bing attribution Loading"),            /* Job description. */
-			    (vik_thr_func) _load_attributions_thread, /* Worker function. */
-			    self,                                     /* Worker data. */
-			    NULL,
-			    NULL,
-			    1);
+	/* kamilFIXME: since object passed to a_background_thread() is of type BackgroundJob,
+	   and MapSourceBing does not inherit from BackgroundJob, we have a type error here. */
+
+	this->thread_fn = load_attributions_thread;
+	this->n_items = 1;
+
+	a_background_thread(this, BACKGROUND_POOL_REMOTE, QString(tr("Bing attribution Loading")));
 }

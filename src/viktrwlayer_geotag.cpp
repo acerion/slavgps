@@ -156,22 +156,73 @@ typedef struct {
 
 
 
-typedef struct {
-	LayerTRW * trw;
-	char *image;
-	Waypoint * wp;    /* Use specified waypoint or otherwise the track(s) if NULL. */
-	Track * trk;      /* Use specified track or all tracks if NULL. */
+class GeotagJob : public BackgroundJob {
+public:
+	GeotagJob(GeoTagWidgets * widgets);
+	~GeotagJob();
+
+	LayerTRW * trw = NULL;
+	char * image = NULL;
+	Waypoint * wp = NULL;    /* Use specified waypoint or otherwise the track(s) if NULL. */
+	Track * trk = NULL;      /* Use specified track or all tracks if NULL. */
 	/* User options... */
 	option_values_t ov;
-	std::list<char *> * files;
-	time_t PhotoTime;
+	std::list<char *> * files = NULL;
+	time_t PhotoTime = 0;
 	/* Store answer from interpolation for an image. */
-	bool found_match;
+	bool found_match = false;
 	VikCoord coord;
-	double altitude;
+	double altitude = 0;
 	/* If anything has changed. */
-	bool redraw;
-} geotag_options_t;
+	bool redraw = false;
+};
+
+
+
+GeotagJob::GeotagJob(GeoTagWidgets * widgets)
+{
+	this->thread_fn = trw_layer_geotag_thread;
+
+	this->trw = widgets->trw;
+	this->wp = widgets->wp;
+	this->trk = widgets->trk;
+	/* Values extracted from the widgets: */
+	this->ov.create_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b));
+	this->ov.overwrite_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b));
+	this->ov.write_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->write_exif_b));
+	this->ov.overwrite_gps_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_gps_exif_b));
+	this->ov.no_change_mtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->no_change_mtime_b));
+	this->ov.interpolate_segments = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b));
+	this->ov.TimeZoneHours = 0;
+	this->ov.TimeZoneMins = 0;
+
+	const char * TZString = gtk_entry_get_text(GTK_ENTRY(widgets->time_zone_b));
+	/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
+	 * If not, it's probably just a +/-xx format. In all other cases,
+	 * it will be interpreted as +/-xx, which, if given a string, returns 0. */
+	if (strstr(TZString, ":")) {
+		/* Found colon. Split into two. */
+		sscanf(TZString, "%d:%d", &this->ov.TimeZoneHours, &this->ov.TimeZoneMins);
+		if (this->ov.TimeZoneHours < 0) {
+			this->ov.TimeZoneMins *= -1;
+		}
+	} else {
+		/* No colon. Just parse. */
+		this->ov.TimeZoneHours = atoi(TZString);
+	}
+	this->ov.time_offset = atoi(gtk_entry_get_text(GTK_ENTRY(widgets->time_offset_b)));
+
+	this->redraw = false;
+
+	/* Save settings for reuse. */
+	save_default_values(this->ov);
+
+	this->files->clear();
+	std::list<char *> * a_list = vik_file_list_get_files(widgets->files);
+	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
+
+	this->n_items = options->files->size();;
+}
 
 
 
@@ -253,7 +304,7 @@ static option_values_t get_default_values()
 /**
  * Correlate the image against the specified track.
  */
-static void trw_layer_geotag_track(Track * trk, geotag_options_t *options)
+static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 {
 	/* If already found match then don't need to check this track. */
 	if (options->found_match) {
@@ -335,7 +386,7 @@ static void trw_layer_geotag_track(Track * trk, geotag_options_t *options)
 
 
 
-static void trw_layer_geotag_tracks(Tracks & tracks, geotag_options_t *options)
+static void trw_layer_geotag_tracks(Tracks & tracks, GeotagJob * options)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		trw_layer_geotag_track(i->second, options);
@@ -348,7 +399,7 @@ static void trw_layer_geotag_tracks(Tracks & tracks, geotag_options_t *options)
 /**
  * Simply align the images the waypoint position.
  */
-static void trw_layer_geotag_waypoint(geotag_options_t *options)
+static void trw_layer_geotag_waypoint(GeotagJob * options)
 {
 	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
 	if (options->ov.write_exif) {
@@ -371,7 +422,7 @@ static void trw_layer_geotag_waypoint(geotag_options_t *options)
 /**
  * Correlate the image to any track within the TrackWaypoint layer.
  */
-static void trw_layer_geotag_process(geotag_options_t *options)
+static void trw_layer_geotag_process(GeotagJob * options)
 {
 	if (!options->trw) {
 		return;
@@ -501,16 +552,12 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 
 
-/*
- * Tidy up.
- */
-static void trw_layer_geotag_thread_free(geotag_options_t * gtd)
+GeotagJob::~GeotagJob()
 {
-	if (!gtd->files->empty()) {
+	if (!this->files->empty()) {
 		/* kamilFIXME: is that all that we need to clean up? */
-		delete gtd->files;
+		delete this->files;
 	}
-	free(gtd);
 }
 
 
@@ -519,17 +566,19 @@ static void trw_layer_geotag_thread_free(geotag_options_t * gtd)
 /**
  * Run geotagging process in a separate thread.
  */
-static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
+static int trw_layer_geotag_thread(BackgroundJob * job, void * threaddata)
 {
-	unsigned int total = options->files->size();
+	GeotagJob * geotag = (GeotagJob) * job;
+
+	unsigned int total = geotag->files->size();
 	unsigned int done = 0;
 
 	/* TODO decide how to report any issues to the user... */
 
-	for (auto iter = options->files->begin(); iter != options->files->end(); iter++) {
+	for (auto iter = geotag->files->begin(); iter != geotag->files->end(); iter++) {
 		/* Foreach file attempt to geotag it. */
-		options->image = *iter;
-		trw_layer_geotag_process(options);
+		geotag->image = *iter;
+		trw_layer_geotag_process(geotag);
 
 		/* Update thread progress and detect stop requests. */
 		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
@@ -538,13 +587,13 @@ static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 		}
 	}
 
-	if (options->redraw) {
-		if (options->trw) {
-			options->trw->calculate_bounds_waypoints();
+	if (geotag->redraw) {
+		if (geotag->trw) {
+			geotag->trw->calculate_bounds_waypoints();
 			/* Ensure any new images get show. */
-			options->trw->verify_thumbnails();
+			geotag->trw->verify_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			options->trw->emit_changed(); /* NB Update from background. */
+			geotag->trw->emit_changed(); /* NB Update from background. */
 		}
 	}
 
@@ -566,58 +615,13 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 	default: {
 		/* GTK_RESPONSE_ACCEPT: */
 		/* Get options. */
-		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
-		options->trw = widgets->trw;
-		options->wp = widgets->wp;
-		options->trk = widgets->trk;
-		/* Values extracted from the widgets: */
-		options->ov.create_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b));
-		options->ov.overwrite_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b));
-		options->ov.write_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->write_exif_b));
-		options->ov.overwrite_gps_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_gps_exif_b));
-		options->ov.no_change_mtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->no_change_mtime_b));
-		options->ov.interpolate_segments = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b));
-		options->ov.TimeZoneHours = 0;
-		options->ov.TimeZoneMins = 0;
-		const char* TZString = gtk_entry_get_text(GTK_ENTRY(widgets->time_zone_b));
-		/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
-		 * If not, it's probably just a +/-xx format. In all other cases,
-		 * it will be interpreted as +/-xx, which, if given a string, returns 0. */
-		if (strstr(TZString, ":")) {
-			/* Found colon. Split into two. */
-			sscanf(TZString, "%d:%d", &options->ov.TimeZoneHours, &options->ov.TimeZoneMins);
-			if (options->ov.TimeZoneHours < 0) {
-				options->ov.TimeZoneMins *= -1;
-			}
-		} else {
-			/* No colon. Just parse. */
-			options->ov.TimeZoneHours = atoi(TZString);
-		}
-		options->ov.time_offset = atoi(gtk_entry_get_text(GTK_ENTRY(widgets->time_offset_b)));
-
-		options->redraw = false;
-
-		/* Save settings for reuse. */
-		save_default_values(options->ov);
-
-		options->files->clear();
-		std::list<char *> * a_list = vik_file_list_get_files(widgets->files);
-		options->files->insert(options->files->begin(), a_list->begin(), a_list->end());
-
+		GeotagJob * options = new GeotagJob(GeoTagWidgets * widgets);
 		int len = options->files->size();
-		char * job_description = g_strdup_printf(_("Geotagging %d Images..."), len);
+
+		const QString job_description = QString(tr("Geotagging %1 Images...")).arg(len);
 
 		/* Processing lots of files can take time - so run a background effort. */
-		a_background_thread(BACKGROUND_POOL_LOCAL,
-				    job_description,
-				    (vik_thr_func) trw_layer_geotag_thread,            /* Worker function. */
-				    options,                                           /* Worker data. */
-				    (vik_thr_free_func) trw_layer_geotag_thread_free,  /* Function to free worker data. */
-				    NULL,
-				    len);
-
-		free(job_description);
-
+		a_background_thread(options, BACKGROUND_POOL_LOCAL, job_description);
 		break;
 	}
 	}

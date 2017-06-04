@@ -65,7 +65,7 @@ typedef struct {
 	 * follow_location specifies the number of retries
 	 * to follow a redirect while downloading a page.
 	 */
-	glong follow_location;
+	long follow_location;
 
 	/**
 	 * File content checker.

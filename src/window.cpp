@@ -2257,6 +2257,88 @@ GtkWidget * Window::get_drawmode_button(ViewportDrawMode mode)
 
 
 
+static int determine_location_thread(BackgroundJob * job, background_job_t * bg_job);
+
+
+
+
+class LocatorJob : public BackgroundJob {
+public:
+	LocatorJob(Window * window_);
+	Window * window = NULL;
+};
+
+
+
+
+LocatorJob::LocatorJob(Window * window_)
+{
+	this->thread_fn = determine_location_thread;
+	this->n_items = 1; /* There is only one location to determine. */
+
+	this->window = window_;
+}
+
+
+
+
+/**
+ * @window:     The window that will get updated
+ * @bg_job: Data used by our background thread mechanism
+ *
+ * Use the features in goto module to determine where we are
+ * Then set up the viewport:
+ *  1. To goto the location
+ *  2. Set an appropriate level zoom for the location type
+ *  3. Some statusbar message feedback
+ */
+int determine_location_thread(BackgroundJob * job, background_job_t * bg_job)
+{
+	LocatorJob * locator = (LocatorJob *) job;
+
+	struct LatLon ll;
+	char * name = NULL;
+	int ans = a_vik_goto_where_am_i(locator->window->viewport, &ll, &name);
+
+	int result = a_background_thread_progress(bg_job, 1.0);
+	if (result != 0) {
+		locator->window->statusbar_update(StatusBarField::INFO, QString("Location lookup aborted"));
+		return -1; /* Abort thread */
+	}
+
+	if (ans) {
+		// Zoom out a little
+		double zoom = 16.0;
+
+		if (ans == 2) {
+			// Position found with city precision - so zoom out more
+			zoom = 128.0;
+		} else if (ans == 3) {
+			// Position found via country name search - so zoom wayyyy out
+			zoom = 2048.0;
+		}
+
+		locator->window->viewport->set_zoom(zoom);
+		locator->window->viewport->set_center_latlon(&ll, false);
+
+		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
+		free(name);
+
+		// Signal to redraw from the background
+		locator->window->layers_panel->emit_update_cb();
+	} else {
+		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
+	}
+
+	return 0;
+}
+
+
+
+
+
+
+
 /**
  * Steps to be taken once initial loading has completed.
  */
@@ -2289,15 +2371,8 @@ void Window::finish_new(void)
 		if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
 
 			this->status_bar->set_message(StatusBarField::INFO, _("Trying to determine location..."));
-#ifdef K
-			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    _("Determining location"),
-					    (vik_thr_func) determine_location_thread,
-					    this,
-					    NULL,
-					    NULL,
-					    1);
-#endif
+			LocatorJob * locator = new LocatorJob(this);
+			a_background_thread(locator, BACKGROUND_POOL_REMOTE, tr("Determining location"));
 		}
 	}
 }

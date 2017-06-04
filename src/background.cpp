@@ -115,7 +115,7 @@ int a_background_thread_progress(background_job_t * job, int progress)
 		//gtk_list_store_set(GTK_LIST_STORE(bgstore), job->index, PROGRESS_COLUMN, myfraction * 100, -1);
 	}
 
-	job->number_items--;
+	job->bg_job->n_items--;
 	bgitemcount--;
 	background_thread_update();
 
@@ -127,22 +127,15 @@ int a_background_thread_progress(background_job_t * job, int progress)
 
 static void thread_die(background_job_t * job)
 {
-	if (job->worker_data_free_func) {
-		job->worker_data_free_func(job->worker_data);
-	} else if (job->bg_job) {
-		delete job->bg_job;
-	} else {
-		; /* NOOP */
-	}
-
-	if (job->number_items) {
-		bgitemcount -= job->number_items;
+	if (job->bg_job->n_items) {
+		bgitemcount -= job->bg_job->n_items;
 		background_thread_update();
 	}
 
 	delete job->index;
 	job->index = NULL;
 
+	delete job->bg_job;
 	free(job);
 }
 
@@ -156,13 +149,7 @@ int a_background_testcancel(background_job_t * job)
 	}
 
 	if (job && job->remove_from_list) {
-		if (job->worker_data_cancel_cleanup_func) {
-			job->worker_data_cancel_cleanup_func(job->worker_data);
-		} else if (job->bg_job) {
-			job->bg_job->cleanup_on_cancel();
-		} else {
-			; /* NOOP */
-		}
+		job->bg_job->cleanup_on_cancel();
 		return -1;
 	}
 	return 0;
@@ -177,7 +164,7 @@ static void thread_helper(void * job_, void * unused_user_data)
 
 	qDebug() << "II: Background: helper function: starting worker function";
 
-	job->worker_function(job->worker_data, job);
+	job->bg_job->thread_fn(job->bg_job, job);
 
 	qDebug() << "II: Background: helper function: worker function returned, remove_from_list =" << job->remove_from_list << ", job index = " << job->index << job->index->isValid();
 
@@ -194,35 +181,24 @@ static void thread_helper(void * job_, void * unused_user_data)
 
 
 
-/**
- * @bp:      Which pool this thread should run in
- * @job_description:
- * @worker_function: worker function
- * @worker_data:
- * @worker_data_free_func: free function for worker_data
- * @worker_data_cancel_cleanup_func:
- * @number_items:
- *
- * Function to enlist new background function.
- */
-void a_background_thread(Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int number_items)
+#ifdef K /* Not used anymore */
+void a_background_thread(Background_Pool_Type bp, const QString & job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int n_items)
 {
 	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
 
-	QString job_name(job_description);
-	qDebug() << "II: Background: creating background thread" << job_name;
+	qDebug() << "II: Background: creating background thread" << job_description;
 
 	job->remove_from_list = true;
 	job->worker_function = worker_function;
 	job->worker_data = worker_data;
 	job->worker_data_free_func = worker_data_free_func;
 	job->worker_data_cancel_cleanup_func = worker_data_cancel_cleanup_func;
-	job->number_items = number_items;
+	job->n_items = n_items;
 	job->progress = 0;
-	job->index = bgwindow->insert_job(job_name, job);
+	job->index = bgwindow->insert_job(job_description, job);
 	job->bg_job = NULL;
 
-	bgitemcount += number_items;
+	bgitemcount += n_items;
 
 	/* Run the thread in the background. */
 	if (bp == BACKGROUND_POOL_REMOTE) {
@@ -236,28 +212,32 @@ void a_background_thread(Background_Pool_Type bp, char const * job_description, 
 		g_thread_pool_push(thread_pool_local, job, NULL);
 	}
 }
+#endif
 
 
 
 
-void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, int number_items)
+/**
+   @brief Run a thread function in background
+
+   @bg_job: data for thread function (contains pointer to the function)
+   @bp:      Which pool this thread should run in
+   @job_description:
+*/
+void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, const QString & job_description)
 {
 	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
 
-	QString job_name(job_description);
-	qDebug() << "II: Background: creating background thread" << job_name;
+	qDebug() << "II: Background: creating background thread" << job_description;
 
 	job->remove_from_list = true;
-	job->worker_function = worker_function;
-	job->worker_data = worker_data;
-	job->worker_data_free_func = NULL;
-	job->worker_data_cancel_cleanup_func = NULL;
-	job->number_items = number_items;
+
 	job->progress = 0;
-	job->index = bgwindow->insert_job(job_name, job);
+	job->index = bgwindow->insert_job(job_description, job);
+
 	job->bg_job = bg_job;
 
-	bgitemcount += number_items;
+	bgitemcount += bg_job->n_items;
 
 	/* Run the thread in the background. */
 	if (bp == BACKGROUND_POOL_REMOTE) {
@@ -582,7 +562,7 @@ void BackgroundWindow::show_window(void)
 
 
 
-QPersistentModelIndex * BackgroundWindow::insert_job(QString & message, background_job_t * job)
+QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, background_job_t * job)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;

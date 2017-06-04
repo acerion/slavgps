@@ -1636,11 +1636,11 @@ void LayerMap::draw(Viewport * viewport)
 /*************************/
 
 /* Pass along data to thread, exists even if layer is deleted. */
-class MapDownloadInfo : public BackgroundJob {
+class MapDownloadJob : public BackgroundJob {
 public:
-	MapDownloadInfo() {};
-	MapDownloadInfo(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode);
-	~MapDownloadInfo();
+	MapDownloadJob() {};
+	MapDownloadJob(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode);
+	~MapDownloadJob();
 
 	void cleanup_on_cancel(void);
 
@@ -1663,18 +1663,18 @@ public:
 };
 
 static char * redownload_mode_message(int redownload_mode, int mapstoget, char * label);
-static void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
-static void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
+static void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
+static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
 
 
 
 
 void LayerMap::weak_ref_cb(void * ptr, GObject * dead_vml)
 {
-	MapDownloadInfo * mdi = (MapDownloadInfo *) ptr;
-	mdi->mutex.lock();
-	mdi->map_layer_alive = false;
-	mdi->mutex.unlock();
+	MapDownloadJob * mdj = (MapDownloadJob *) ptr;
+	mdj->mutex.lock();
+	mdj->map_layer_alive = false;
+	mdj->mutex.unlock();
 }
 
 
@@ -1702,49 +1702,51 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 
 
 
-static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
+static int map_download_thread(BackgroundJob * job, background_job_t * background_job)
 {
-	void *handle = map_sources[mdi->map_index]->download_handle_init();
-	unsigned int donemaps = 0;
-	TileInfo mcoord = mdi->mapcoord;
+	MapDownloadJob * mdj = (MapDownloadJob *) job;
 
-	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
-		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
+	void *handle = map_sources[mdj->map_index]->download_handle_init();
+	unsigned int donemaps = 0;
+	TileInfo mcoord = mdj->mapcoord;
+
+	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
+		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only attempt to download a tile from supported areas. */
-			if (is_in_area(map_sources[mdi->map_index], &mcoord)) {
+			if (is_in_area(map_sources[mdj->map_index], &mcoord)) {
 				bool remove_mem_cache = false;
 				bool need_download = false;
 
-				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map_sources[mdi->map_index]->map_type,
-					     map_sources[mdi->map_index]->get_name(),
-					     &mcoord, mdi->filename_buf, mdi->maxlen,
-					     map_sources[mdi->map_index]->get_file_extension());
+				get_cache_filename(mdj->cache_dir, mdj->cache_layout,
+					     map_sources[mdj->map_index]->map_type,
+					     map_sources[mdj->map_index]->get_name(),
+					     &mcoord, mdj->filename_buf, mdj->maxlen,
+					     map_sources[mdj->map_index]->get_file_extension());
 
 				donemaps++;
 #ifdef K
-				int res = a_background_thread_progress(threaddata, ((double)donemaps) / mdi->mapstoget); /* this also calls testcancel */
+				int res = a_background_thread_progress(background_job, ((double)donemaps) / mdj->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
-					map_sources[mdi->map_index]->download_handle_cleanup(handle);
+					map_sources[mdj->map_index]->download_handle_cleanup(handle);
 					return -1;
 				}
 
-				if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
+				if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
 					need_download = true;
 					remove_mem_cache = true;
 
 				} else {  /* In case map file already exists. */
-					switch (mdi->redownload_mode) {
+					switch (mdj->redownload_mode) {
 					case REDOWNLOAD_NONE:
 						continue;
 
 					case REDOWNLOAD_BAD: {
 						/* See if this one is bad or what. */
 						GError *gx = NULL;
-						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
+						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
 						if (gx || (!pixmap)) {
-							if (remove(mdi->filename_buf)) {
-								fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
+							if (remove(mdj->filename_buf)) {
+								fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdj->filename_buf);
 							}
 							need_download = true;
 							remove_mem_cache = true;
@@ -1763,8 +1765,8 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 
 					case REDOWNLOAD_ALL:
 						/* FIXME: need a better way than to erase file in case of server/network problem. */
-						if (remove(mdi->filename_buf)) {
-							fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
+						if (remove(mdj->filename_buf)) {
+							fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdj->filename_buf);
 						}
 						need_download = true;
 						remove_mem_cache = true;
@@ -1775,26 +1777,26 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 						break;
 
 					default:
-						fprintf(stderr, "WARNING: redownload mode %d unknown\n", mdi->redownload_mode);
+						fprintf(stderr, "WARNING: redownload mode %d unknown\n", mdj->redownload_mode);
 					}
 				}
 
-				mdi->mapcoord.x = mcoord.x;
-				mdi->mapcoord.y = mcoord.y;
+				mdj->mapcoord.x = mcoord.x;
+				mdj->mapcoord.y = mcoord.y;
 
 				if (need_download) {
-					DownloadResult_t dr = map_sources[mdi->map_index]->download(&(mdi->mapcoord), mdi->filename_buf, handle);
+					DownloadResult_t dr = map_sources[mdj->map_index]->download(&(mdj->mapcoord), mdj->filename_buf, handle);
 					switch (dr) {
 					case DOWNLOAD_HTTP_ERROR:
 					case DOWNLOAD_CONTENT_ERROR: {
 						/* TODO: ?? count up the number of download errors somehow... */
-						QString msg = QString("%1: %2").arg(mdi->layer->get_map_label()).arg("Failed to download tile");
-						mdi->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
+						QString msg = QString("%1: %2").arg(mdj->layer->get_map_label()).arg("Failed to download tile");
+						mdj->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
 					case DOWNLOAD_FILE_WRITE_ERROR: {
-						QString msg = QString("%1: %2").arg(mdi->layer->get_map_label()).arg("Unable to save tile");
-						mdi->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
+						QString msg = QString("%1: %2").arg(mdj->layer->get_map_label()).arg("Unable to save tile");
+						mdj->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
 					case DOWNLOAD_SUCCESS:
@@ -1804,34 +1806,34 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 					}
 				}
 
-				mdi->mutex.lock();
+				mdj->mutex.lock();
 				if (remove_mem_cache) {
-					map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdi->map_index]->map_type, mdi->layer->filename);
+					map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdj->map_index]->map_type, mdj->layer->filename);
 				}
 
-				if (mdi->refresh_display && mdi->map_layer_alive) {
+				if (mdj->refresh_display && mdj->map_layer_alive) {
 					/* TODO: check if it's on visible area. */
-					mdi->layer->emit_changed(); /* NB update display from background. */
+					mdj->layer->emit_changed(); /* NB update display from background. */
 				}
-				mdi->mutex.unlock();
-				mdi->mapcoord.x = mdi->mapcoord.y = 0; /* We're temporarily between downloads. */
+				mdj->mutex.unlock();
+				mdj->mapcoord.x = mdj->mapcoord.y = 0; /* We're temporarily between downloads. */
 #endif
 			}
 		}
 	}
-	map_sources[mdi->map_index]->download_handle_cleanup(handle);
-	mdi->mutex.lock();
-	if (mdi->map_layer_alive) {
-		mdi->layer->weak_unref(LayerMap::weak_ref_cb, mdi);
+	map_sources[mdj->map_index]->download_handle_cleanup(handle);
+	mdj->mutex.lock();
+	if (mdj->map_layer_alive) {
+		mdj->layer->weak_unref(LayerMap::weak_ref_cb, mdj);
 	}
-	mdi->mutex.unlock();
+	mdj->mutex.unlock();
 	return 0;
 }
 
 
 
 
-void MapDownloadInfo::cleanup_on_cancel(void)
+void MapDownloadJob::cleanup_on_cancel(void)
 {
 	if (this->mapcoord.x || this->mapcoord.y) {
 		get_cache_filename(this->cache_dir, this->cache_layout,
@@ -1865,32 +1867,27 @@ static void start_download_thread(LayerMap * layer, Viewport * viewport, const V
 	if (map->coord_to_tile(ul, xzoom, yzoom, &ulm)
 	     && map->coord_to_tile(br, xzoom, yzoom, &brm)) {
 
-		MapDownloadInfo * mdi = new MapDownloadInfo(layer, &ulm, &brm, true, redownload_mode);
+		MapDownloadJob * mdj = new MapDownloadJob(layer, &ulm, &brm, true, redownload_mode);
 
-		if (mdi->redownload_mode) {
-			mdi->mapstoget = (mdi->xf - mdi->x0 + 1) * (mdi->yf - mdi->y0 + 1);
+		if (mdj->redownload_mode) {
+			mdj->mapstoget = (mdj->xf - mdj->x0 + 1) * (mdj->yf - mdj->y0 + 1);
 		} else {
-			mdi_calculate_mapstoget(mdi, map, &ulm);
+			mdj_calculate_mapstoget(mdj, map, &ulm);
 		}
 
 		/* For cleanup - no current map. */
-		mdi->mapcoord.x = 0;
-		mdi->mapcoord.y = 0;
+		mdj->mapcoord.x = 0;
+		mdj->mapcoord.y = 0;
 
-		if (mdi->mapstoget) {
-			char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, LAYER_MAP_NTH_LABEL(layer->map_index));
+		if (mdj->mapstoget) {
+			char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(layer->map_index));
 
-			mdi->layer->weak_ref(LayerMap::weak_ref_cb, mdi);
-			/* Launch the thread */
-			a_background_thread(mdi,
-					    BACKGROUND_POOL_REMOTE,
-					    job_description,
-					    (vik_thr_func) map_download_thread,     /* Worker function. */
-					    mdi,                                    /* Worker data. */
-					    mdi->mapstoget);
+			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
+			mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
+			a_background_thread(mdj, BACKGROUND_POOL_REMOTE, QString(job_description));
 			free(job_description);
 		} else {
-			delete mdi;
+			delete mdj;
 		}
 	}
 }
@@ -1914,29 +1911,24 @@ void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int
 		return;
 	}
 
-	MapDownloadInfo * mdi = new MapDownloadInfo(this, &ulm, &brm, true, redownload_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, redownload_mode);
 
-	mdi_calculate_mapstoget(mdi, map, &ulm);
+	mdj_calculate_mapstoget(mdj, map, &ulm);
 
 	/* For cleanup - no current map. */
-	mdi->mapcoord.x = 0;
-	mdi->mapcoord.y = 0;
+	mdj->mapcoord.x = 0;
+	mdj->mapcoord.y = 0;
 
-	if (mdi->mapstoget) {
-		char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
+	if (mdj->mapstoget) {
+		char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
 
-		mdi->layer->weak_ref(weak_ref_cb, mdi);
+		mdj->layer->weak_ref(weak_ref_cb, mdj);
+		mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
 
-		/* Launch the thread. */
-		a_background_thread(mdi,
-				    BACKGROUND_POOL_REMOTE,
-				    job_description,
-				    (vik_thr_func) map_download_thread,     /* Worker function. */
-				    mdi,                                    /* Worker data. */
-				    mdi->mapstoget);
+		a_background_thread(mdj, BACKGROUND_POOL_REMOTE, QString(job_description));
 		free(job_description);
 	} else {
-		delete mdi;
+		delete mdj;
 	}
 }
 
@@ -2315,17 +2307,17 @@ int LayerMap::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownl
 		return 0;
 	}
 
-	MapDownloadInfo * mdi = new MapDownloadInfo(this, &ulm, &brm, false, redownload_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, false, redownload_mode);
 
-	if (mdi->redownload_mode == REDOWNLOAD_ALL) {
-		mdi->mapstoget = (mdi->xf - mdi->x0 + 1) * (mdi->yf - mdi->y0 + 1);
+	if (mdj->redownload_mode == REDOWNLOAD_ALL) {
+		mdj->mapstoget = (mdj->xf - mdj->x0 + 1) * (mdj->yf - mdj->y0 + 1);
 	} else {
-		mdi_calculate_mapstoget_other(mdi, map, &ulm);
+		mdj_calculate_mapstoget_other(mdj, map, &ulm);
 	}
 
-	int rv = mdi->mapstoget;
+	int rv = mdj->mapstoget;
 
-	delete mdi;
+	delete mdj;
 
 	return rv;
 }
@@ -2619,24 +2611,24 @@ void LayerMap::download(Viewport * viewport, bool only_new)
 
 
 
-void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm)
+void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm)
 {
-	TileInfo mcoord = mdi->mapcoord;
+	TileInfo mcoord = mdj->mapcoord;
 	mcoord.z = ulm->z;
 	mcoord.scale = ulm->scale;
 
-	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
-		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
+	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
+		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
 			if (is_in_area(map, &mcoord)) {
-				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
+				get_cache_filename(mdj->cache_dir, mdj->cache_layout,
 						   map->map_type,
 						   map->get_name(),
-						   &mcoord, mdi->filename_buf, mdi->maxlen,
+						   &mcoord, mdj->filename_buf, mdj->maxlen,
 						   map->get_file_extension());
 
-				if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
-					mdi->mapstoget++;
+				if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
+					mdj->mapstoget++;
 				}
 			}
 		}
@@ -2648,38 +2640,38 @@ void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * 
 
 
 
-void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm)
+void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm)
 {
-	TileInfo mcoord = mdi->mapcoord;
+	TileInfo mcoord = mdj->mapcoord;
 	mcoord.z = ulm->z;
 	mcoord.scale = ulm->scale;
 
 	/* Calculate how many we need. */
-	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
-		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
+	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
+		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
 			if (is_in_area(map, &mcoord)) {
-				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
+				get_cache_filename(mdj->cache_dir, mdj->cache_layout,
 						   map->map_type,
 						   map->get_name(),
-						   &mcoord, mdi->filename_buf, mdi->maxlen,
+						   &mcoord, mdj->filename_buf, mdj->maxlen,
 						   map->get_file_extension());
-				if (mdi->redownload_mode == REDOWNLOAD_NEW) {
+				if (mdj->redownload_mode == REDOWNLOAD_NEW) {
 					/* Assume the worst - always a new file.
 					   Absolute value would require a server lookup - but that is too slow. */
-					mdi->mapstoget++;
+					mdj->mapstoget++;
 				} else {
-					if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
+					if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
 						/* Missing. */
-						mdi->mapstoget++;
+						mdj->mapstoget++;
 					} else {
-						if (mdi->redownload_mode == REDOWNLOAD_BAD) {
+						if (mdj->redownload_mode == REDOWNLOAD_BAD) {
 							/* see if this one is bad or what */
 #ifdef K
 							GError *gx = NULL;
-							QPixmap *pixmap = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
+							QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
 							if (gx || (!pixmap)) {
-								mdi->mapstoget++;
+								mdj->mapstoget++;
 							}
 #endif
 							break;
@@ -2697,8 +2689,10 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 
 
 
-MapDownloadInfo::MapDownloadInfo(LayerMap * layer_, TileInfo * ulm_, TileInfo * brm_, bool refresh_display_, int redownload_mode_)
+MapDownloadJob::MapDownloadJob(LayerMap * layer_, TileInfo * ulm_, TileInfo * brm_, bool refresh_display_, int redownload_mode_)
 {
+	this->thread_fn = map_download_thread;
+
 	this->layer = layer_;
 	this->refresh_display = refresh_display_;
 
@@ -2723,7 +2717,7 @@ MapDownloadInfo::MapDownloadInfo(LayerMap * layer_, TileInfo * ulm_, TileInfo * 
 
 
 
-MapDownloadInfo::~MapDownloadInfo()
+MapDownloadJob::~MapDownloadJob()
 {
 	free(this->cache_dir);
 	this->cache_dir = NULL;

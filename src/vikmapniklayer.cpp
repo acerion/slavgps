@@ -620,13 +620,48 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 
 
 
-typedef struct {
-	LayerMapnik * lmk;
-	VikCoord *ul;
-	VikCoord *br;
-	TileInfo *ulmc;
-	const char* request;
-} RenderInfo;
+class RenderInfo : public BackgroundJob {
+public:
+	RenderInfo::RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_);
+	~RenderInfo();
+
+	LayerMapnik * lmk = NULL;
+	VikCoord * ul = NULL;
+	VikCoord * br = NULL;
+	TileInfo * ulmc = NULL;
+	const char * request = NULL;
+};
+
+
+
+
+RenderInfo::RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_)
+{
+	this->thread_fn = render_info_background_fn;
+	this->number_items = 1;
+
+	this->lmk = layer;
+
+	this->ul = (VikCoord *) malloc(sizeof (VikCoord));
+	this->br = (VikCoord *) malloc(sizeof (VikCoord));
+	this->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
+
+	memcpy(this->ul, ul_, sizeof(VikCoord));
+	memcpy(this->br, br_, sizeof(VikCoord));
+	memcpy(this->ulmc, mul_, sizeof(TileInfo));
+	this->request = request_;
+}
+
+
+
+
+RenderInfo::~RenderInfo()
+{
+	free(this->ul);
+	free(this->br);
+	free(this->ulmc);
+	/* No need to free the request/key - as this is freed by the hash table destructor. */
+}
 
 
 
@@ -658,21 +693,11 @@ void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 
 
 
-static void render_info_free(RenderInfo *data)
+static void render_info_background_fn(BackgroundJob * job, background_job_t * bg_job)
 {
-	free(data->ul);
-	free(data->br);
-	free(data->ulmc);
-	/* NB No need to free the request/key - as this is freed by the hash table destructor. */
-	free(data);
-}
+	RenderInfo * data = (RenderInfo *) job;
 
-
-
-
-static void background(RenderInfo *data, void * threaddata)
-{
-	int res = a_background_thread_progress(threaddata, 0);
+	int res = a_background_thread_progress(bg_job, 0);
 	if (res == 0) {
 		data->lmk->render(data->ul, data->br, data->ulmc);
 	}
@@ -684,14 +709,6 @@ static void background(RenderInfo *data, void * threaddata)
 	if (res == 0) {
 		data->lmk->emit_changed(); /* NB update display from background. */
 	}
-}
-
-
-
-
-static void render_cancel_cleanup(RenderInfo *data)
-{
-	/* Anything? */
 }
 
 
@@ -719,31 +736,16 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 		return;
 	}
 
-	RenderInfo * ri = (RenderInfo *) malloc(sizeof(RenderInfo));
-	ri->lmk = this;
-	ri->ul = (VikCoord *) malloc(sizeof (VikCoord));
-	ri->br = (VikCoord *) malloc(sizeof (VikCoord));
-	ri->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
-	memcpy(ri->ul, ul, sizeof(VikCoord));
-	memcpy(ri->br, br, sizeof(VikCoord));
-	memcpy(ri->ulmc, mul, sizeof(TileInfo));
-	ri->request = request;
+	RenderInfo * ri = new RenderInfo(this, ul, br, mul, request);
 
 	g_hash_table_insert(requests, request, NULL);
 
 	tp_mutex.unlock();
 
-	char *basename = g_path_get_basename(name);
-	char * job_description = g_strdup_printf(_("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename);
+	char * basename = g_path_get_basename(name);
+	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(basename);
 	free(basename);
-	a_background_thread(BACKGROUND_POOL_LOCAL_MAPNIK,
-			    job_description,
-			    (vik_thr_func) background,             /* Worker function. */
-			    ri,                                    /* Worker function. */
-			    (vik_thr_free_func) render_info_free,  /* Function to free worker data. */
-			    (vik_thr_free_func) render_cancel_cleanup,
-			    1);
-	free(job_description);
+	a_background_thread(ri, BACKGROUND_POOL_LOCAL_MAPNIK, job_description);
 }
 
 

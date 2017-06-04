@@ -51,6 +51,13 @@
 typedef void(* vik_thr_free_func)(void *);
 typedef void(* vik_thr_func)(void *,void *);
 
+class BackgroundJob;
+struct background_job_t;
+typedef int (* background_thread_fn)(BackgroundJob *, struct background_job_t *);
+
+
+
+
 typedef enum {
 	BACKGROUND_POOL_REMOTE, /* i.e. Network requests - can have an arbitary large pool. */
 	BACKGROUND_POOL_LOCAL,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
@@ -68,19 +75,17 @@ public:
 	virtual ~BackgroundJob() {};
 
 	virtual void cleanup_on_cancel(void) {};
+
+	background_thread_fn thread_fn = NULL;
+	int n_items = 0;
 };
 
 
 
 
-typedef struct {
+typedef struct background_job_t {
 	bool remove_from_list;
-	vik_thr_func worker_function;
-	void * worker_data;
-	vik_thr_free_func worker_data_free_func;
-	vik_thr_free_func worker_data_cancel_cleanup_func;
 	QPersistentModelIndex * index;
-	int number_items;
 	int progress; /* 0 - 100% */
 	BackgroundJob * bg_job;
 } background_job_t;
@@ -95,7 +100,7 @@ public:
 	~BackgroundWindow() {};
 
 	void show_window(void);
-	QPersistentModelIndex * insert_job(QString & message, background_job_t * job);
+	QPersistentModelIndex * insert_job(const QString & message, background_job_t * job);
 	void remove_job(QStandardItem * item);
 
 	QStandardItemModel * model = NULL;
@@ -119,8 +124,7 @@ private:
 
 
 
-void a_background_thread(Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int number_items);
-void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, int number_items);
+void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, const QString & job_description);
 int a_background_thread_progress(background_job_t * job, int progress);
 int a_background_testcancel(background_job_t * job);
 void a_background_show_window();

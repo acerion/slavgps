@@ -91,18 +91,27 @@ static const OsmTraceVis_t OsmTraceVis[] = {
 	{ NULL, NULL },
 };
 
+
+
+
 /**
  * Struct hosting needed info.
  */
-typedef struct _OsmTracesInfo {
-	char * name;
-	char * description;
-	char * tags;
-	bool anonymize_times; /* ATM only available on a single track. */
-	const OsmTraceVis_t * vistype;
-	LayerTRW * trw;
-	Track * trk;
-} OsmTracesInfo;
+class OsmTracesInfo : public BackgroundJob {
+public:
+	OsmTracesInfo(LayerTRW * trw_, Track * trk_);
+
+	char * name = NULL;
+	char * description = NULL;
+	char * tags = NULL;
+	bool anonymize_times = false; /* ATM only available on a single track. */
+	const OsmTraceVis_t * vistype = NULL;
+	LayerTRW * trw = NULL;
+	Track * trk = NULL;
+};
+
+
+
 
 static Parameter prefs[] = {
 	{ 0, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL, NULL, NULL },
@@ -114,22 +123,32 @@ static Parameter prefs[] = {
 
 
 
-/**
- * Free an OsmTracesInfo struct.
- */
-static void oti_free(OsmTracesInfo *oti)
+OsmTracesInfo(LayerTRW * trw_, Track * trk_)
 {
-	if (oti) {
-		/* Fields have been g_strdup'ed. */
-		free(oti->name); oti->name = NULL;
-		free(oti->description); oti->description = NULL;
-		free(oti->tags); oti->tags = NULL;
+	this->thread_fn = osm_traces_upload_thread;
+	this->number_items = 1;
 
-		oti->trw->unref();
-		oti->trw = NULL;
-	}
-	/* Main struct has been g_malloc'ed. */
-	free(oti);
+	this->trw = trw_;
+	this->trk = trk_;
+}
+
+
+
+
+OsmTracesInfo::~OsmTracesInfo()
+{
+	/* Fields have been g_strdup'ed. */
+	free(this->name);
+	this->name = NULL;
+
+	free(this->description);
+	this->description = NULL;
+
+	free(this->tags);
+	this->tags = NULL;
+
+	this->trw->unref();
+	this->trw = NULL;
 }
 
 
@@ -299,8 +318,9 @@ static int osm_traces_upload_file(const char *user,
 /**
  * Uploading function executed by the background" thread.
  */
-static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
+static void osm_traces_upload_thread(BackgroundJob * job, background_job_t * bg_job)
 {
+	OsmTracesInfo * oti = (OsmTracesInfo *) job;
 	/* Due to OSM limits, we have to enforce ele and time fields
 	   also don't upload invisible tracks. */
 	static GpxWritingOptions options = { true, true, false, false };
@@ -546,14 +566,13 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 			      gtk_entry_get_text(GTK_ENTRY(password_entry)));
 
 		/* Storing data for the future thread. */
-		OsmTracesInfo *info = (OsmTracesInfo *) malloc(sizeof (OsmTracesInfo));
+		OsmTracesInfo * info = new OsmTracesInfo(trw, trk);
 		info->name        = g_strdup(gtk_entry_get_text(GTK_ENTRY(name_entry)));
 		info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
 		/* TODO Normalize tags: they will be used as URL part. */
 		info->tags        = g_strdup(gtk_entry_get_text(GTK_ENTRY(tags_entry)));
 		info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(GTK_COMBO_BOX(visibility))];
-		info->trw         = trw; /* kamilFIXME: it was: VIK_TRW_LAYER(g_object_ref(vtl)); */
-		info->trk         = trk;
+
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
 		} else {
@@ -564,18 +583,9 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(visibility));
 		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
-		char * job_description = g_strdup_printf(_("Uploading %s to OSM"), info->name);
+		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);
 
-		/* Launch the thread. */
-		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    job_description,
-				    (vik_thr_func) osm_traces_upload_thread, /* Worker function. */
-				    info,                                    /* Worker data. */
-				    (vik_thr_free_func) oti_free,            /* Function to free worker data. */
-				    (vik_thr_free_func) NULL,
-				    1);
-		free(job_description);
-		job_description = NULL;
+		a_background_thread(info, BACKGROUND_POOL_REMOTE, job_description);
 	}
 	gtk_widget_destroy(dia);
 }

@@ -46,6 +46,8 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 
+#include <QDebug>
+
 #if 1 //#ifdef HAVE_MAGIC_H // kamilFIXME: check dependency during configuration
 #include <magic.h>
 #endif
@@ -511,7 +513,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 	DownloadResult_t result = DOWNLOAD_SUCCESS;
 
 	if (ret != CURL_DOWNLOAD_NO_ERROR && ret != CURL_DOWNLOAD_NO_NEWER_FILE) {
-		fprintf(stderr, "DEBUG: %s: download failed: curl_download_get_url=%d\n", __FUNCTION__, ret);
+		qDebug() << "WW: Download: failed: curl_download_get_url = " << ret;
 		failure = true;
 		result = DOWNLOAD_HTTP_ERROR;
 	}

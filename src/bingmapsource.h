@@ -80,7 +80,7 @@ namespace SlavGPS {
 
 		bool parse_file_for_attributions(char *filename);
 		int emit_update(void * data);
-		int load_attributions_thread(void * threaddata);
+		background_thread_fn thread_fn = NULL;
 		void async_load_attributions();
 	};
 

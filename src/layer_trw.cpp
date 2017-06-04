@@ -6468,44 +6468,69 @@ void LayerTRW::trackpoint_properties_show()
 
 
 
+static int create_thumbnails_thread(BackgroundJob * job, background_job_t * bg_job);
+
+
 
 /* Structure for thumbnail creating data used in the background thread. */
-typedef struct {
-	LayerTRW * layer;  /* Layer needed for redrawing. */
-	GSList * pics;     /* Image list. */
-} thumbnail_create_thread_data;
+class ThumbnailCreator : public BackgroundJob {
+public:
+	ThumbnailCreator(LayerTRW * layer, GSList * pics_);
+	~ThumbnailCreator();
 
-static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * threaddata)
+	LayerTRW * layer = NULL;  /* Layer needed for redrawing. */
+	GSList * pics = NULL;     /* Image list. */
+};
+
+
+
+
+ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, GSList * pics_)
 {
-#ifdef K
-	unsigned int total = g_slist_length(tctd->pics), done = 0;
-	while (tctd->pics) {
-		a_thumbnails_create((char *) tctd->pics->data);
-		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
-		if (result != 0)
-			return -1; /* Abort thread. */
+	this->thread_fn = create_thumbnails_thread;
+	this->n_items = g_slist_length(pics_);
 
-		tctd->pics = tctd->pics->next;
+	layer = layer_;
+	pics = pics_;
+}
+
+
+
+
+static int create_thumbnails_thread(BackgroundJob * job, background_job_t * bg_job)
+{
+	ThumbnailCreator * creator = (ThumbnailCreator *) job;
+
+	unsigned int total = g_slist_length(creator->pics), done = 0;
+	while (creator->pics) {
+#ifdef K
+		a_thumbnails_create((char *) creator->pics->data);
+		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
+		if (result != 0) {
+			return -1; /* Abort thread. */
+		}
+
+		creator->pics = creator->pics->next;
+#endif
 	}
 
 	/* Redraw to show the thumbnails as they are now created. */
-	if (tctd->layer) {
-		tctd->layer->emit_changed(); /* NB update from background thread. */
+	if (creator->layer) {
+		creator->layer->emit_changed(); /* NB update from background thread. */
 	}
-#endif
+
 	return 0;
 }
 
 
 
 
-static void thumbnail_create_thread_free(thumbnail_create_thread_data * tctd)
+ThumbnailCreator::~ThumbnailCreator()
 {
-	while (tctd->pics) {
-		free(tctd->pics->data);
-		tctd->pics = g_slist_delete_link(tctd->pics, tctd->pics);
+	while (this->pics) {
+		free(this->pics->data);
+		this->pics = g_slist_delete_link(this->pics, this->pics);
 	}
-	free(tctd);
 }
 
 
@@ -6513,24 +6538,19 @@ static void thumbnail_create_thread_free(thumbnail_create_thread_data * tctd)
 
 void LayerTRW::verify_thumbnails(void)
 {
-	if (!this->has_verified_thumbnails) {
-		GSList *pics = LayerTRWc::image_wp_make_list(this->waypoints);
-		if (pics) {
-			int len = g_slist_length(pics);
-			char * job_description = g_strdup_printf(_("Creating %d Image Thumbnails..."), len);
-			thumbnail_create_thread_data * tctd = (thumbnail_create_thread_data *) malloc(sizeof (thumbnail_create_thread_data));
-			tctd->layer = this;
-			tctd->pics = pics;
-			a_background_thread(BACKGROUND_POOL_LOCAL,
-					    job_description,
-					    (vik_thr_func) create_thumbnails_thread,            /* Worker function. */
-					    tctd,                                               /* Worker data. */
-					    (vik_thr_free_func) thumbnail_create_thread_free,   /* Function to free worker data. */
-					    NULL,
-					    len);
-			free(job_description);
-		}
+	if (this->has_verified_thumbnails) {
+		return;
 	}
+
+	GSList * pics = LayerTRWc::image_wp_make_list(this->waypoints);
+	if (!pics) {
+		return;
+	}
+
+	int len = g_slist_length(pics);
+	const QString job_description = QString(tr("Creating %1 Image Thumbnails...")).arg(len);
+	ThumbnailCreator * creator = new ThumbnailCreator(this, pics);
+	a_background_thread(creator, BACKGROUND_POOL_LOCAL, job_description);
 }
 
 
