@@ -52,7 +52,7 @@ namespace SlavGPS {
 	void    dem_cache_uninit();
 	DEM   * dem_cache_load(std::string& filename);
 	DEM   * dem_cache_get(std::string& filename);
-	int     dem_cache_load_list(std::list<std::string>& filenames, background_job_t * background_job);
+	int     dem_cache_load_list(std::list<std::string>& filenames, BackgroundJob * bg_job);
 	void    dem_cache_list_free(std::list<std::string>& filenames);
 	int16_t dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
 

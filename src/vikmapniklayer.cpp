@@ -693,9 +693,9 @@ void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 
 
 
-static void render_info_background_fn(BackgroundJob * job, background_job_t * bg_job)
+static void render_info_background_fn(BackgroundJob * bg_job)
 {
-	RenderInfo * data = (RenderInfo *) job;
+	RenderInfo * data = (RenderInfo *) bg_job;
 
 	int res = a_background_thread_progress(bg_job, 0);
 	if (res == 0) {
@@ -745,7 +745,7 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 	char * basename = g_path_get_basename(name);
 	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(basename);
 	free(basename);
-	a_background_thread(ri, BACKGROUND_POOL_LOCAL_MAPNIK, job_description);
+	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
 }
 
 

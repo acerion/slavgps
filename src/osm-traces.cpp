@@ -318,9 +318,9 @@ static int osm_traces_upload_file(const char *user,
 /**
  * Uploading function executed by the background" thread.
  */
-static void osm_traces_upload_thread(BackgroundJob * job, background_job_t * bg_job)
+static void osm_traces_upload_thread(BackgroundJob * bg_job)
 {
-	OsmTracesInfo * oti = (OsmTracesInfo *) job;
+	OsmTracesInfo * oti = (OsmTracesInfo *) bg_job;
 	/* Due to OSM limits, we have to enforce ele and time fields
 	   also don't upload invisible tracks. */
 	static GpxWritingOptions options = { true, true, false, false };
@@ -585,7 +585,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);
 
-		a_background_thread(info, BACKGROUND_POOL_REMOTE, job_description);
+		a_background_thread(info, ThreadPoolType::REMOTE, job_description);
 	}
 	gtk_widget_destroy(dia);
 }

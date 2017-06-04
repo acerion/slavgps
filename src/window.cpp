@@ -2257,7 +2257,7 @@ GtkWidget * Window::get_drawmode_button(ViewportDrawMode mode)
 
 
 
-static int determine_location_thread(BackgroundJob * job, background_job_t * bg_job);
+static int determine_location_thread(BackgroundJob * bg_job);
 
 
 
@@ -2283,7 +2283,6 @@ LocatorJob::LocatorJob(Window * window_)
 
 
 /**
- * @window:     The window that will get updated
  * @bg_job: Data used by our background thread mechanism
  *
  * Use the features in goto module to determine where we are
@@ -2292,9 +2291,9 @@ LocatorJob::LocatorJob(Window * window_)
  *  2. Set an appropriate level zoom for the location type
  *  3. Some statusbar message feedback
  */
-int determine_location_thread(BackgroundJob * job, background_job_t * bg_job)
+int determine_location_thread(BackgroundJob * bg_job)
 {
-	LocatorJob * locator = (LocatorJob *) job;
+	LocatorJob * locator = (LocatorJob *) bg_job;
 
 	struct LatLon ll;
 	char * name = NULL;
@@ -2372,7 +2371,7 @@ void Window::finish_new(void)
 
 			this->status_bar->set_message(StatusBarField::INFO, _("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
-			a_background_thread(locator, BACKGROUND_POOL_REMOTE, tr("Determining location"));
+			a_background_thread(locator, ThreadPoolType::REMOTE, tr("Determining location"));
 		}
 	}
 }

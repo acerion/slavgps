@@ -1702,9 +1702,9 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 
 
 
-static int map_download_thread(BackgroundJob * job, background_job_t * background_job)
+static int map_download_thread(BackgroundJob * bg_job)
 {
-	MapDownloadJob * mdj = (MapDownloadJob *) job;
+	MapDownloadJob * mdj = (MapDownloadJob *) bg_job;
 
 	void *handle = map_sources[mdj->map_index]->download_handle_init();
 	unsigned int donemaps = 0;
@@ -1725,7 +1725,7 @@ static int map_download_thread(BackgroundJob * job, background_job_t * backgroun
 
 				donemaps++;
 #ifdef K
-				int res = a_background_thread_progress(background_job, ((double)donemaps) / mdj->mapstoget); /* this also calls testcancel */
+				int res = a_background_thread_progress(bg_job, ((double)donemaps) / mdj->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
 					map_sources[mdj->map_index]->download_handle_cleanup(handle);
 					return -1;
@@ -1884,7 +1884,7 @@ static void start_download_thread(LayerMap * layer, Viewport * viewport, const V
 
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
 			mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
-			a_background_thread(mdj, BACKGROUND_POOL_REMOTE, QString(job_description));
+			a_background_thread(mdj, ThreadPoolType::REMOTE, QString(job_description));
 			free(job_description);
 		} else {
 			delete mdj;
@@ -1925,7 +1925,7 @@ void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
 
-		a_background_thread(mdj, BACKGROUND_POOL_REMOTE, QString(job_description));
+		a_background_thread(mdj, ThreadPoolType::REMOTE, QString(job_description));
 		free(job_description);
 	} else {
 		delete mdj;

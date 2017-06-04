@@ -105,17 +105,17 @@ static void background_thread_update()
  * @callbackdata: Thread data
  * @progress:     The value should be between 0 and 100 indicating percentage of the task complete
  */
-int a_background_thread_progress(background_job_t * job, int progress)
+int a_background_thread_progress(BackgroundJob * bg_job, int progress)
 {
-	int res = a_background_testcancel(job);
+	int res = a_background_testcancel(bg_job);
 
-	if (job->index->isValid()) {
-		job->progress = progress;
+	if (bg_job->index->isValid()) {
+		bg_job->progress = progress;
 
-		//gtk_list_store_set(GTK_LIST_STORE(bgstore), job->index, PROGRESS_COLUMN, myfraction * 100, -1);
+		//gtk_list_store_set(GTK_LIST_STORE(bgstore), bg_job->index, PROGRESS_COLUMN, myfraction * 100, -1);
 	}
 
-	job->bg_job->n_items--;
+	bg_job->n_items--;
 	bgitemcount--;
 	background_thread_update();
 
@@ -125,31 +125,30 @@ int a_background_thread_progress(background_job_t * job, int progress)
 
 
 
-static void thread_die(background_job_t * job)
+static void thread_die(BackgroundJob * bg_job)
 {
-	if (job->bg_job->n_items) {
-		bgitemcount -= job->bg_job->n_items;
+	if (bg_job->n_items) {
+		bgitemcount -= bg_job->n_items;
 		background_thread_update();
 	}
 
-	delete job->index;
-	job->index = NULL;
+	delete bg_job->index;
+	bg_job->index = NULL;
 
-	delete job->bg_job;
-	free(job);
+	delete bg_job;
 }
 
 
 
 
-int a_background_testcancel(background_job_t * job)
+int a_background_testcancel(BackgroundJob * bg_job)
 {
 	if (stop_all_threads) {
 		return -1;
 	}
 
-	if (job && job->remove_from_list) {
-		job->bg_job->cleanup_on_cancel();
+	if (bg_job && bg_job->remove_from_list) {
+		bg_job->cleanup_on_cancel();
 		return -1;
 	}
 	return 0;
@@ -160,59 +159,23 @@ int a_background_testcancel(background_job_t * job)
 
 static void thread_helper(void * job_, void * unused_user_data)
 {
-	background_job_t * job = (background_job_t *) job_;
+	BackgroundJob * bg_job = (BackgroundJob *) job_;
 
 	qDebug() << "II: Background: helper function: starting worker function";
 
-	job->bg_job->thread_fn(job->bg_job, job);
+	bg_job->thread_fn(bg_job);
 
-	qDebug() << "II: Background: helper function: worker function returned, remove_from_list =" << job->remove_from_list << ", job index = " << job->index << job->index->isValid();
+	qDebug() << "II: Background: helper function: worker function returned, remove_from_list =" << bg_job->remove_from_list << ", job index = " << bg_job->index << bg_job->index->isValid();
 
-	if (job && job->remove_from_list) {
-		if (job->index && job->index->isValid()) {
+	if (bg_job && bg_job->remove_from_list) {
+		if (bg_job->index && bg_job->index->isValid()) {
 			qDebug() << "II: Background: removing job from list";
-			bgwindow->model->removeRow(job->index->row());
+			bgwindow->model->removeRow(bg_job->index->row());
 		}
 	}
 
-	thread_die(job);
+	thread_die(bg_job);
 }
-
-
-
-
-#ifdef K /* Not used anymore */
-void a_background_thread(Background_Pool_Type bp, const QString & job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int n_items)
-{
-	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
-
-	qDebug() << "II: Background: creating background thread" << job_description;
-
-	job->remove_from_list = true;
-	job->worker_function = worker_function;
-	job->worker_data = worker_data;
-	job->worker_data_free_func = worker_data_free_func;
-	job->worker_data_cancel_cleanup_func = worker_data_cancel_cleanup_func;
-	job->n_items = n_items;
-	job->progress = 0;
-	job->index = bgwindow->insert_job(job_description, job);
-	job->bg_job = NULL;
-
-	bgitemcount += n_items;
-
-	/* Run the thread in the background. */
-	if (bp == BACKGROUND_POOL_REMOTE) {
-		g_thread_pool_push(thread_pool_remote, job, NULL);
-#ifdef HAVE_LIBMAPNIK
-	} else if (bp == BACKGROUND_POOL_LOCAL_MAPNIK) {
-		g_thread_pool_push(thread_pool_local_mapnik, job, NULL);
-
-#endif
-	} else {
-		g_thread_pool_push(thread_pool_local, job, NULL);
-	}
-}
-#endif
 
 
 
@@ -221,34 +184,32 @@ void a_background_thread(Background_Pool_Type bp, const QString & job_descriptio
    @brief Run a thread function in background
 
    @bg_job: data for thread function (contains pointer to the function)
-   @bp:      Which pool this thread should run in
+   @pool_type: Which pool this thread should run in
    @job_description:
 */
-void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, const QString & job_description)
+void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description)
 {
-	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
-
 	qDebug() << "II: Background: creating background thread" << job_description;
 
-	job->remove_from_list = true;
+	bg_job->remove_from_list = true;
 
-	job->progress = 0;
-	job->index = bgwindow->insert_job(job_description, job);
+	bg_job->progress = 0;
+	bg_job->index = bgwindow->insert_job(job_description, bg_job);
 
-	job->bg_job = bg_job;
+	bg_job = bg_job;
 
 	bgitemcount += bg_job->n_items;
 
 	/* Run the thread in the background. */
-	if (bp == BACKGROUND_POOL_REMOTE) {
-		g_thread_pool_push(thread_pool_remote, job, NULL);
+	if (pool_type == ThreadPoolType::REMOTE) {
+		g_thread_pool_push(thread_pool_remote, bg_job, NULL);
 #ifdef HAVE_LIBMAPNIK
-	} else if (bp == BACKGROUND_POOL_LOCAL_MAPNIK) {
-		g_thread_pool_push(thread_pool_local_mapnik, job, NULL);
+	} else if (pool_type == ThreadPoolType::LOCAL_MAPNIK) {
+		g_thread_pool_push(thread_pool_local_mapnik, bg_job, NULL);
 
 #endif
 	} else {
-		g_thread_pool_push(thread_pool_local, job, NULL);
+		g_thread_pool_push(thread_pool_local, bg_job, NULL);
 	}
 }
 
@@ -272,13 +233,13 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 	QStandardItem * parent_item = this->model->invisibleRootItem();
 	QStandardItem * child = parent_item->child(item->row(), PROGRESS_COLUMN);
 
-	background_job_t * job = (background_job_t *) child->data(RoleLayerData).toULongLong();
+	BackgroundJob * bg_job = (BackgroundJob *) child->data(RoleLayerData).toULongLong();
 
-	if (job->index && job->index->isValid()) {
+	if (bg_job->index && bg_job->index->isValid()) {
 		qDebug() << "II: Background: removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
 
-		job->remove_from_list = false;
-		this->model->removeRow(job->index->row());
+		bg_job->remove_from_list = false;
+		this->model->removeRow(bg_job->index->row());
 	}
 }
 
@@ -458,10 +419,10 @@ BackgroundWindow::BackgroundWindow(QWidget * parent_widget) : QDialog(parent_wid
 
 		qDebug() << "II: Background: adding to initial list:" << (*iter);
 
-		background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
-		job->progress = value;
-		job->index = this->insert_job(*iter, job);
-		qDebug() << "II: Background: added to list an item with index" << job->index->isValid();
+		BackgroundJob * bg_job = new BackgroundJob();
+		bg_job->progress = value;
+		bg_job->index = this->insert_job(*iter, bg_job);
+		qDebug() << "II: Background: added to list an item with index" << bg_job->index->isValid();
 
 		value += 10;
 	}
@@ -562,7 +523,7 @@ void BackgroundWindow::show_window(void)
 
 
 
-QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, background_job_t * job)
+QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, BackgroundJob* bg_job)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -575,7 +536,7 @@ QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, ba
 
 	/* PROGRESS_COLUMN */
 	item = new QStandardItem();
-	variant = QVariant::fromValue((qulonglong) job);
+	variant = QVariant::fromValue((qulonglong) bg_job);
 	item->setData(variant, RoleBackgroundData);
 	items << item;
 
@@ -604,7 +565,7 @@ QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, ba
 */
 void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-	background_job_t * job = (background_job_t *) index.data(RoleLayerData).toULongLong();
+	BackgroundJob * bg_job = (BackgroundJob *) index.data(RoleLayerData).toULongLong();
 
 	QRect rect(option.rect.x() + 1, option.rect.y() + 1, option.rect.width() - 2, option.rect.height() - 2);
 
@@ -612,10 +573,10 @@ void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &o
 
         QStyleOptionProgressBar progressBarOption;
         progressBarOption.rect = option.rect;
-        progressBarOption.minimum = 0; /* We could get min/max/unit from background_job_t for non-percentage progress indicators. */
+        progressBarOption.minimum = 0; /* We could get min/max/unit from BackgroundJob for non-percentage progress indicators. */
         progressBarOption.maximum = 100;
-        progressBarOption.progress = job->progress;
-        progressBarOption.text = QString::number(job->progress) + "%";
+        progressBarOption.progress = bg_job->progress;
+        progressBarOption.text = QString::number(bg_job->progress) + "%";
         progressBarOption.textVisible = true;
 
         QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);

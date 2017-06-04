@@ -6468,7 +6468,7 @@ void LayerTRW::trackpoint_properties_show()
 
 
 
-static int create_thumbnails_thread(BackgroundJob * job, background_job_t * bg_job);
+static int create_thumbnails_thread(BackgroundJob * bg_job);
 
 
 
@@ -6497,9 +6497,9 @@ ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, GSList * pics_)
 
 
 
-static int create_thumbnails_thread(BackgroundJob * job, background_job_t * bg_job)
+static int create_thumbnails_thread(BackgroundJob * bg_job)
 {
-	ThumbnailCreator * creator = (ThumbnailCreator *) job;
+	ThumbnailCreator * creator = (ThumbnailCreator *) bg_job;
 
 	unsigned int total = g_slist_length(creator->pics), done = 0;
 	while (creator->pics) {
@@ -6550,7 +6550,7 @@ void LayerTRW::verify_thumbnails(void)
 	int len = g_slist_length(pics);
 	const QString job_description = QString(tr("Creating %1 Image Thumbnails...")).arg(len);
 	ThumbnailCreator * creator = new ThumbnailCreator(this, pics);
-	a_background_thread(creator, BACKGROUND_POOL_LOCAL, job_description);
+	a_background_thread(creator, ThreadPoolType::LOCAL, job_description);
 }
 
 

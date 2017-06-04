@@ -379,7 +379,7 @@ int MapSourceBing::emit_update(void * data)
 
 
 
-static int load_attributions_thread(BackgroundJob * job, background_job_t * bg_job)
+static int load_attributions_thread(BackgroundJob * bg_job)
 {
 	_load_attributions (self);
 	int result = a_background_thread_progress(bg_job, 1);
@@ -405,5 +405,5 @@ void MapSourceBing::async_load_attributions()
 	this->thread_fn = load_attributions_thread;
 	this->n_items = 1;
 
-	a_background_thread(this, BACKGROUND_POOL_REMOTE, QString(tr("Bing attribution Loading")));
+	a_background_thread(this, ThreadPoolType::REMOTE, QString(tr("Bing attribution Loading")));
 }

@@ -110,8 +110,8 @@ public:
 #define UNUSED_LINE_THICKNESS 3
 
 static void srtm_draw_existence(Viewport * viewport);
-static int dem_load_list_thread(BackgroundJob * job, background_job_t * background_job);
-static int dem_download_thread(BackgroundJob * job, background_job_t * background_job);
+static int dem_load_list_thread(BackgroundJob * bg_job);
+static int dem_download_thread(BackgroundJob * bg_job);
 
 #ifdef VIK_CONFIG_DEM24K
 static void dem24k_draw_existence(Viewport * viewport);
@@ -332,9 +332,9 @@ DemLoadJob::DemLoadJob(LayerDEM * layer_, std::list<char *> * files_)
 /*
  * Function for starting the DEM file loading as a background thread/
  */
-static int dem_load_list_thread(BackgroundJob * job, background_job_t * background_job)
+static int dem_load_list_thread(BackgroundJob * bg_job)
 {
-	DemLoadJob * load_job = (DemLoadJob *) job;
+	DemLoadJob * load_job = (DemLoadJob *) bg_job;
 
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
@@ -345,7 +345,7 @@ static int dem_load_list_thread(BackgroundJob * job, background_job_t * backgrou
 		dem_filenames.push_front(dem_filename);
 	}
 
-	if (dem_cache_load_list(dem_filenames, background_job)) {
+	if (dem_cache_load_list(dem_filenames, load_job)) {
 		/* Thread cancelled. */
 		result = -1;
 	}
@@ -465,7 +465,7 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 		if (this->files && !this->files->empty()) {
 			/* Thread Load. */
 			DemLoadJob * load_job = new DemLoadJob(this, param_value.sl);
-			a_background_thread(load_job, BACKGROUND_POOL_LOCAL, _("DEM Loading"));
+			a_background_thread(load_job, ThreadPoolType::LOCAL, _("DEM Loading"));
 		}
 
 		break;
@@ -1011,7 +1011,7 @@ DEMDownloadJob::~DEMDownloadJob()
  *  SOURCE: SRTM                                  *
  **************************************************/
 
-static void srtm_dem_download_thread(DEMDownloadJob * dl_job, background_job_t * background_job)
+static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 {
 	int intlat, intlon;
 	const char *continent_dir;
@@ -1057,7 +1057,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job, background_job_t *
 	case DOWNLOAD_NOT_REQUIRED:
 	default:
 		qDebug() << "II: Layer DEM: layer download progress = 100";
-		background_job->progress = 100;
+		dl_job->progress = 100;
 		break;
 	}
 	free(src_fn);
@@ -1156,7 +1156,7 @@ static void srtm_draw_existence(Viewport * viewport)
 
 #ifdef VIK_CONFIG_DEM24K
 
-static void dem24k_dem_download_thread(DemDownloadJob * dl_job, background_job_t * background_job)
+static void dem24k_dem_download_thread(DemDownloadJob * dl_job)
 {
 	/* TODO: dest dir. */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
@@ -1287,15 +1287,15 @@ bool LayerDEM::add_file(std::string& dem_filename)
 
 
 
-static int dem_download_thread(BackgroundJob * job, background_job_t * background_job)
+static int dem_download_thread(BackgroundJob * bg_job)
 {
-	DEMDownloadJob * dl_job = (DEMDownloadJob *) job;
+	DEMDownloadJob * dl_job = (DEMDownloadJob *) bg_job;
 
 	if (dl_job->source == DEM_SOURCE_SRTM) {
-		srtm_dem_download_thread(dl_job, background_job);
+		srtm_dem_download_thread(dl_job);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (p->source == DEM_SOURCE_DEM24K) {
-		dem24k_dem_download_thread(dl_job, background_job);
+		dem24k_dem_download_thread(dl_job);
 #endif
 	} else {
 		return 0;
@@ -1480,7 +1480,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
 			const QString job_description = QString(tr("Downloading DEM %1")).arg(dem_file);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, &ll, this);
-			a_background_thread(job, BACKGROUND_POOL_REMOTE, job_description);
+			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
 		} else {
 			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting 'changed'";
 			this->emit_changed();

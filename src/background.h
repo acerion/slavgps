@@ -48,23 +48,19 @@
 
 
 
-typedef void(* vik_thr_free_func)(void *);
-typedef void(* vik_thr_func)(void *,void *);
-
 class BackgroundJob;
-struct background_job_t;
-typedef int (* background_thread_fn)(BackgroundJob *, struct background_job_t *);
+typedef int (* background_thread_fn)(BackgroundJob *);
 
 
 
 
-typedef enum {
-	BACKGROUND_POOL_REMOTE, /* i.e. Network requests - can have an arbitary large pool. */
-	BACKGROUND_POOL_LOCAL,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
+enum class ThreadPoolType {
+	REMOTE, /* i.e. Network requests - can have an arbitary large pool. */
+	LOCAL,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
 #ifdef HAVE_LIBMAPNIK
-	BACKGROUND_POOL_LOCAL_MAPNIK,  /* Due to potential issues with multi-threading a separate configurable pool for Mapnik. */
+	LOCAL_MAPNIK,  /* Due to potential issues with multi-threading a separate configurable pool for Mapnik. */
 #endif
-} Background_Pool_Type;
+};
 
 
 
@@ -78,17 +74,11 @@ public:
 
 	background_thread_fn thread_fn = NULL;
 	int n_items = 0;
-};
-
-
-
-
-typedef struct background_job_t {
 	bool remove_from_list;
 	QPersistentModelIndex * index;
 	int progress; /* 0 - 100% */
-	BackgroundJob * bg_job;
-} background_job_t;
+};
+
 
 
 
@@ -100,7 +90,7 @@ public:
 	~BackgroundWindow() {};
 
 	void show_window(void);
-	QPersistentModelIndex * insert_job(const QString & message, background_job_t * job);
+	QPersistentModelIndex * insert_job(const QString & message, BackgroundJob * bg_job);
 	void remove_job(QStandardItem * item);
 
 	QStandardItemModel * model = NULL;
@@ -124,9 +114,9 @@ private:
 
 
 
-void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, const QString & job_description);
-int a_background_thread_progress(background_job_t * job, int progress);
-int a_background_testcancel(background_job_t * job);
+void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description);
+int a_background_thread_progress(BackgroundJob * bg_job, int progress);
+int a_background_testcancel(BackgroundJob * bg_job);
 void a_background_show_window();
 void a_background_init();
 void a_background_post_init();

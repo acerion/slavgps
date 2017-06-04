@@ -621,7 +621,7 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 		const QString job_description = QString(tr("Geotagging %1 Images...")).arg(len);
 
 		/* Processing lots of files can take time - so run a background effort. */
-		a_background_thread(options, BACKGROUND_POOL_LOCAL, job_description);
+		a_background_thread(options, ThreadPoolType::LOCAL, job_description);
 		break;
 	}
 	}
