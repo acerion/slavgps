@@ -59,6 +59,37 @@ using namespace SlavGPS;
 
 
 
+
+/* Structure for DEM data used in background thread. */
+class DemLoadJob : public BackgroundJob {
+public:
+	DemLoadJob(LayerDEM * layer, std::list<char *> * files_);
+
+	void cleanup_on_cancel(void);
+
+	LayerDEM * layer = NULL;
+};
+
+
+
+
+class DEMDownloadJob : public BackgroundJob {
+public:
+	DEMDownloadJob(std::string& full_path, struct LatLon * ll, LayerDEM * layer);
+	~DEMDownloadJob();
+
+	std::string dest;
+	double lat, lon;
+
+	std::mutex mutex;
+	LayerDEM * layer; /* NULL if not alive. */
+
+	unsigned int source;
+};
+
+
+
+
 #if 0
 #define MAPS_CACHE_DIR maps_layer_default_dir()
 #define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
@@ -79,6 +110,8 @@ using namespace SlavGPS;
 #define UNUSED_LINE_THICKNESS 3
 
 static void srtm_draw_existence(Viewport * viewport);
+static int dem_load_list_thread(BackgroundJob * job, background_job_t * background_job);
+static int dem_download_thread(BackgroundJob * job, background_job_t * background_job);
 
 #ifdef VIK_CONFIG_DEM24K
 static void dem24k_draw_existence(Viewport * viewport);
@@ -284,21 +317,11 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-/* Structure for DEM data used in background thread. */
-class DemLoadJob : public BackgroundJob {
-public:
-	DemLoadJob(LayerDEM * layer, std::list<char *> * files_);
-
-	void cleanup_on_cancel(void);
-
-	LayerDEM * layer = NULL;
-};
-
-
-
-
 DemLoadJob::DemLoadJob(LayerDEM * layer_, std::list<char *> * files_)
 {
+	this->thread_fn = dem_load_list_thread;
+	this->n_items = files_->size(); /* Number of DEM files. */
+
 	this->layer = layer_;
 	this->layer->files = files_;
 }
@@ -309,8 +332,10 @@ DemLoadJob::DemLoadJob(LayerDEM * layer_, std::list<char *> * files_)
 /*
  * Function for starting the DEM file loading as a background thread/
  */
-static int dem_layer_load_list_thread(DemLoadJob * load_job, background_job_t * background_job)
+static int dem_load_list_thread(BackgroundJob * job, background_job_t * background_job)
 {
+	DemLoadJob * load_job = (DemLoadJob *) job;
+
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
 
@@ -440,13 +465,7 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 		if (this->files && !this->files->empty()) {
 			/* Thread Load. */
 			DemLoadJob * load_job = new DemLoadJob(this, param_value.sl);
-
-			a_background_thread(load_job,
-					    BACKGROUND_POOL_LOCAL,
-					    _("DEM Loading"),                                 /* Job description. */
-					    (vik_thr_func) dem_layer_load_list_thread,        /* Worker function. */
-					    load_job,                                         /* Worker data. */
-					    param_value.sl->size()); /* Number of DEM files. */
+			a_background_thread(load_job, BACKGROUND_POOL_LOCAL, _("DEM Loading"));
 		}
 
 		break;
@@ -961,26 +980,15 @@ LayerDEM::~LayerDEM()
 /**************************************************************
  **** SOURCES & DOWNLOADING
  **************************************************************/
-class DEMDownloadParams : public BackgroundJob {
-public:
-	DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer);
-	~DEMDownloadParams();
-
-	std::string dest;
-	double lat, lon;
-
-	std::mutex mutex;
-	LayerDEM * layer; /* NULL if not alive. */
-
-	unsigned int source;
-};
 
 
 
 
-
-DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(std::string& full_path, struct LatLon * ll, LayerDEM * layer_dem)
 {
+	this->thread_fn = dem_download_thread;
+	this->n_items = 1; /* We are downloading one DEM tile at a time. */
+
 	this->dest = std::string(full_path);
 	this->lat = ll->lat;
 	this->lon = ll->lon;
@@ -992,7 +1000,7 @@ DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll,
 
 
 
-DEMDownloadParams::~DEMDownloadParams()
+DEMDownloadJob::~DEMDownloadJob()
 {
 }
 
@@ -1003,18 +1011,18 @@ DEMDownloadParams::~DEMDownloadParams()
  *  SOURCE: SRTM                                  *
  **************************************************/
 
-static void srtm_dem_download_thread(DEMDownloadParams * p, background_job_t * background_job)
+static void srtm_dem_download_thread(DEMDownloadJob * dl_job, background_job_t * background_job)
 {
 	int intlat, intlon;
 	const char *continent_dir;
 
-	intlat = (int)floor(p->lat);
-	intlon = (int)floor(p->lon);
+	intlat = (int)floor(dl_job->lat);
+	intlon = (int)floor(dl_job->lon);
 	continent_dir = srtm_continent_dir(intlat, intlon);
 
 	if (!continent_dir) {
-		if (p->layer) {
-			p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("No SRTM data available for %1, %2").arg(p->lat).arg(p->lon)); /* Float + float */
+		if (dl_job->layer) {
+			dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
 		}
 		return;
 	}
@@ -1027,16 +1035,22 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, background_job_t * b
 				       (intlon >= 0) ? 'E' : 'W',
 				       ABS(intlon));
 
-	static DownloadFileOptions options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
-	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, p->dest.c_str(), &options, NULL);
+	static DownloadFileOptions options = { false,
+					       false,
+					       NULL,
+					       1, /* Follow redirect from http to https. */
+					       a_check_map_file,
+					       NULL,
+					       NULL };
+	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.c_str(), &options, NULL);
 	switch (result) {
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
-		p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM download failure for %1, %2").arg(p->lat).arg(p->lon)); /* Float + float. */
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
-		p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(p->dest.c_str()));
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest.c_str()));
 		break;
 	}
 	case DOWNLOAD_SUCCESS:
@@ -1142,13 +1156,13 @@ static void srtm_draw_existence(Viewport * viewport)
 
 #ifdef VIK_CONFIG_DEM24K
 
-static void dem24k_dem_download_thread(DEMDownloadParams * p, void * background_job)
+static void dem24k_dem_download_thread(DemDownloadJob * dl_job, background_job_t * background_job)
 {
 	/* TODO: dest dir. */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
 					DEM24K_DOWNLOAD_SCRIPT,
-					floor(p->lat*8)/8,
-					ceil(p->lon*8)/8);
+					floor(dl_job->lat * 8) / 8,
+					ceil(dl_job->lon * 8) / 8);
 	/* FIXME: don't use system, use execv or something. check for existence. */
 	system(cmdline);
 	free(cmdline);
@@ -1241,7 +1255,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
-	DEMDownloadParams * p = (DEMDownloadParams *) ptr;
+	DEMDownloadJob * p = (DEMDownloadJob *) ptr;
 	p->mutex.lock();
 	p->layer = NULL;
 	p->mutex.unlock();
@@ -1273,38 +1287,42 @@ bool LayerDEM::add_file(std::string& dem_filename)
 
 
 
-static void dem_download_thread(DEMDownloadParams * p, background_job_t * background_job)
+static int dem_download_thread(BackgroundJob * job, background_job_t * background_job)
 {
-	if (p->source == DEM_SOURCE_SRTM) {
-		srtm_dem_download_thread(p, background_job);
+	DEMDownloadJob * dl_job = (DEMDownloadJob *) job;
+
+	if (dl_job->source == DEM_SOURCE_SRTM) {
+		srtm_dem_download_thread(dl_job, background_job);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (p->source == DEM_SOURCE_DEM24K) {
-		dem24k_dem_download_thread(p, background_job);
+		dem24k_dem_download_thread(dl_job, background_job);
 #endif
 	} else {
-		return;
+		return 0;
 	}
 
 	//gdk_threads_enter();
 
-	p->mutex.lock();
-	if (p->layer) {
-		p->layer->weak_unref(LayerDEM::weak_ref_cb, p);
+	dl_job->mutex.lock();
+	if (dl_job->layer) {
+		dl_job->layer->weak_unref(LayerDEM::weak_ref_cb, dl_job);
 
-		if (p->layer->add_file(p->dest)) {
+		if (dl_job->layer->add_file(dl_job->dest)) {
 			qDebug() << "II: Layer DEM: will emit 'layer changed' A";
-			p->layer->emit_changed(); /* NB update from background thread. */
+			dl_job->layer->emit_changed(); /* NB update from background thread. */
 		}
 	}
-	p->mutex.unlock();
+	dl_job->mutex.unlock();
 
 	//gdk_threads_leave();
+
+	return 0;
 }
 
 
 
 
-static void free_dem_download_params(DEMDownloadParams * p)
+static void free_dem_download_params(DEMDownloadJob * p)
 {
 	delete p;
 }
@@ -1333,6 +1351,26 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	Layer::get_interface(LayerType::DEM)->layer_tools.insert({{ 0, this }} ); /* There is only one tool, so this magic number is not that bad. */
+}
+
+
+
+
+LayerToolFuncStatus LayerToolDEMDownload::release_(Layer * layer, QMouseEvent * ev)
+{
+	if (layer->type != LayerType::DEM) {
+		return LayerToolFuncStatus::IGNORE;
+	}
+
+	if (ev->button() != Qt::LeftButton) {
+		return LayerToolFuncStatus::IGNORE;
+	}
+
+	if (((LayerDEM *) layer)->download_release(ev, this)) {
+		return LayerToolFuncStatus::ACK;
+	} else {
+		return LayerToolFuncStatus::IGNORE;
+	}
 }
 
 
@@ -1408,14 +1446,6 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 
 
 
-static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool)
-{
-	return ((LayerDEM *) vdl)->download_release(ev, tool);
-}
-
-
-
-
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	Coord coord;
@@ -1448,17 +1478,9 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
 			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
-			char * job_description = g_strdup_printf(_("Downloading DEM %s"), dem_file);
-			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
-
-			a_background_thread(p,
-					    BACKGROUND_POOL_REMOTE,
-					    job_description,
-					    (vik_thr_func) dem_download_thread,            /* Worker function. */
-					    p,                                             /* Worker data. */
-					    1);
-
-			free(job_description);
+			const QString job_description = QString(tr("Downloading DEM %1")).arg(dem_file);
+			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, &ll, this);
+			a_background_thread(job, BACKGROUND_POOL_REMOTE, job_description);
 		} else {
 			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting 'changed'";
 			this->emit_changed();
