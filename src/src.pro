@@ -182,7 +182,6 @@ HEADERS += window.h \
 # thumbnails.cpp
 # toolbar.cpp
 # track_statistics.cpp
-# vik_compat.cpp
 # vikenumtypes.cpp
 # vikexttool.cpp
 # vikexttool_datasources.cpp

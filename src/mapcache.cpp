@@ -20,26 +20,25 @@
  */
 
 #include <unordered_map>
+#include <mutex>
 #include <string>
 #include <list>
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "globals.h"
 #include "mapcache.h"
 #include "preferences.h"
-//#include "vik_compat.h"
-
+#include "slav_qt.h"
 
 
 
 
 using namespace SlavGPS;
-
 
 
 
@@ -55,7 +54,7 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GdkPixbuf * pixbuf;
+	QPixmap * pixmap;
 	map_cache_extra_t extra;
 } cache_item_t;
 
@@ -68,7 +67,7 @@ static std::list<std::string> keys_list;
 static size_t cache_size = 0;
 static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
-static GMutex * mc_mutex = NULL;
+static std::mutex mc_mutex;
 
 static ParameterScale params_scales[] = {
 	/* min, max, step, digits (decimal places) */
@@ -83,7 +82,7 @@ static Parameter prefs[] = {
 
 
 
-static void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra);
+static void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra);
 static void cache_remove(std::string & key);
 static void cache_remove_oldest();
 static void flush_matching(std::string & key_part);
@@ -95,7 +94,7 @@ static void flush_matching(std::string & key_part);
 static void cache_item_free(cache_item_t * ci)
 {
 #ifdef K
-	g_object_unref(ci->pixbuf);
+	g_object_unref(ci->pixmap);
 #endif
 	free(ci);
 }
@@ -109,20 +108,16 @@ void SlavGPS::map_cache_init()
 	ParameterValue tmp;
 	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
-
-#ifdef K
-	mc_mutex = vik_mutex_new();
-#endif
 }
 
 
 
 
 
-void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra)
+void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra)
 {
 	cache_item_t * ci = (cache_item_t *) malloc(sizeof (cache_item_t));
-	ci->pixbuf = pixbuf;
+	ci->pixmap = pixmap;
 	ci->extra = extra;
 
 	size_t before = maps_cache.size();
@@ -134,10 +129,10 @@ void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra)
 
 	if (after != before) {
 #ifdef K
-		cache_size += gdk_pixbuf_get_rowstride(pixbuf) * gdk_pixbuf_get_height(pixbuf);
+		cache_size += gdk_pixmap_get_rowstride(pixmap) * gdk_pixbuf_get_height(pixmap);
 #endif
-		/* ATM size of 'extra' data hardly worth trying to count (compared to pixbuf sizes)
-		   Not sure what this 100 represents anyway - probably a guess at an average pixbuf metadata size */
+		/* ATM size of 'extra' data hardly worth trying to count (compared to pixmap sizes)
+		   Not sure what this 100 represents anyway - probably a guess at an average pixmap metadata size */
 		cache_size += 100;
 	}
 
@@ -156,9 +151,9 @@ void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra)
 void cache_remove(std::string & key)
 {
 	auto iter = maps_cache.find(key);
-	if (iter != maps_cache.end() && iter->second && iter->second->pixbuf){
+	if (iter != maps_cache.end() && iter->second && iter->second->pixmap){
 #ifdef K
-		cache_size -= gdk_pixbuf_get_rowstride(iter->second->pixbuf) * gdk_pixbuf_get_height(iter->second->pixbuf);
+		cache_size -= gdk_pixbuf_get_rowstride(iter->second->pixmap) * gdk_pixbuf_get_height(iter->second->pixmap);
 #endif
 		cache_size -= 100;
 		maps_cache.erase(key);
@@ -186,14 +181,14 @@ void cache_remove_oldest()
 
 
 /**
- * Function increments reference counter of pixbuf.
+ * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void SlavGPS::map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 #ifdef K
-	if (!GDK_IS_PIXBUF(pixbuf)) {
-		fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
+	if (!GDK_IS_PIXBUF(pixmap)) {
+		fprintf(stderr, "DEBUG: Not caching corrupt pixmap for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
 		return;
 	}
 #endif
@@ -204,12 +199,12 @@ void SlavGPS::map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInf
 	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
+	mc_mutex.lock();
 #ifdef K
-	g_mutex_lock(mc_mutex);
-	g_object_ref(pixbuf);
+	g_object_ref(pixmap);
 #endif
 
-	cache_add(key, pixbuf, extra);
+	cache_add(key, pixmap, extra);
 
 	/* TODO: that should be done on preference change only... */
 	max_cache_size = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "mapcache_size")->u * 1024 * 1024;
@@ -217,7 +212,7 @@ void SlavGPS::map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInf
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();
 	}
-	g_mutex_unlock(mc_mutex);
+	mc_mutex.unlock();
 
 	static int tmp = 0;
 	if ((++tmp == 20)) {
@@ -234,26 +229,25 @@ void SlavGPS::map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInf
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
 	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
-	g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
+	mc_mutex.lock(); /* prevent returning pixmap when cache is being cleared */
 
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end()) {
 #ifdef K
-		g_object_ref(iter->second->pixbuf);
-		g_mutex_unlock(mc_mutex);
+		g_object_ref(iter->second->pixmap);
 #endif
-		return iter->second->pixbuf;
+		mc_mutex.unlock();
+
+		return iter->second->pixmap;
 	} else {
-#ifdef K
-		g_mutex_unlock(mc_mutex);
-#endif
+		mc_mutex.unlock();
 		return NULL;
 	}
 }
@@ -286,10 +280,10 @@ map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID ma
  */
 void flush_matching(std::string & key_part)
 {
-	g_mutex_lock(mc_mutex);
+	mc_mutex.lock();
 
 	if (keys_list.empty()) {
-		g_mutex_unlock(mc_mutex);
+		mc_mutex.unlock();
 		return;
 	}
 
@@ -316,7 +310,7 @@ void flush_matching(std::string & key_part)
 		}
 	}
 
-	g_mutex_unlock(mc_mutex);
+	mc_mutex.unlock();
 }
 
 
@@ -343,7 +337,7 @@ void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID 
 void SlavGPS::map_cache_flush()
 {
 	/* Everything happens within the mutex lock section. */
-	g_mutex_lock(mc_mutex);
+	mc_mutex.lock();
 
 	for (auto iter = keys_list.begin(); iter != keys_list.end(); iter++) {
 		std::string key = *iter;
@@ -356,7 +350,7 @@ void SlavGPS::map_cache_flush()
 		exit(EXIT_FAILURE);
 	}
 
-	g_mutex_unlock(mc_mutex);
+	mc_mutex.unlock();
 }
 
 
@@ -382,13 +376,10 @@ void SlavGPS::map_cache_flush_type(MapTypeID map_type)
 
 
 
-void SlavGPS::map_cache_uninit()
+void SlavGPS::map_cache_uninit(void)
 {
 	maps_cache.clear();
 	/* free list */
-#ifdef K
-	vik_mutex_free(mc_mutex);
-#endif
 }
 
 

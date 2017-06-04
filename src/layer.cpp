@@ -328,13 +328,9 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 
 	} else if (layer_type == LayerType::COORD) {
 		layer = new LayerCoord();
-	}
-#ifndef SLAVGPS_QT
-	else if (layer_type == LayerType::MAP) {
+	} else if (layer_type == LayerType::MAP) {
 		layer = new LayerMap();
-	}
-#endif
-	else if (layer_type == LayerType::DEM) {
+	} else if (layer_type == LayerType::DEM) {
 		layer = new LayerDEM();
 	}
 #ifndef SLAVGPS_QT

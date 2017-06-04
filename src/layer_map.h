@@ -164,7 +164,7 @@ namespace SlavGPS {
   http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
 */
 
-void maps_layer_init();
+void layer_map_init(void);
 void maps_layer_set_autodownload_default(bool autodownload);
 void maps_layer_set_cache_default(SlavGPS::MapsCacheLayout layout);
 SlavGPS::MapTypeID maps_layer_get_default_map_type();

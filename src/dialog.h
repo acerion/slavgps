@@ -111,9 +111,9 @@ std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> co
 }
 
 
-#ifdef K
-void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);
-#endif
+
+
+void a_dialog_license(SlavGPS::Window * parent, const char * map, const char * license, const char * url);
 
 
 

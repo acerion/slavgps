@@ -35,6 +35,7 @@
 #include "layer_defaults.h"
 #include "layers_panel.h"
 #include "layer_toolbox.h"
+#include "layer_map.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
 #include "settings.h"
@@ -2275,12 +2276,10 @@ void Window::finish_new(void)
 
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
-#ifdef K
-		LayerMap * layer = new LayerMap(this->viewport);
+		LayerMap * layer = new LayerMap();
 		layer->rename(_("Default Map"));
 
 		this->layers_panel->get_top_layer()->add_layer(layer, true);
-#endif
 
 		this->draw_update();
 	}

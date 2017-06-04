@@ -19,22 +19,23 @@
  *
  */
 
-#ifndef __SG_MAP_CACHE_H
-#define __SG_MAP_CACHE_H
+#ifndef _SG_MAP_CACHE_H_
+#define _SG_MAP_CACHE_H_
+
 
 
 
 #include <cstdint>
 
+#include <QPixmap>
+
 #include "mapcoord.h"
 #include "map_ids.h"
-#include "slav_qt.h"
 
 
 
 
 namespace SlavGPS {
-
 
 
 
@@ -46,12 +47,11 @@ namespace SlavGPS {
 
 
 
+	void map_cache_init(void);
+	void map_cache_uninit(void);
 
-	void map_cache_init();
-	void map_cache_uninit();
-
-	void map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-	GdkPixbuf * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+	void map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+	QPixmap * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
 	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
 
 	void map_cache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, char const * name);
@@ -64,11 +64,9 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
 
 
 
 
-
-#endif /* #ifndef __SG_MAP_CACHE_H */
+#endif /* #ifndef _SG_MAP_CACHE_H_ */

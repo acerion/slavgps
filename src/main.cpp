@@ -28,6 +28,9 @@
 #include "window.h"
 #include "layer.h"
 #include "layer_defaults.h"
+#include "layer_map.h"
+#include "dems.h"
+#include "mapcache.h"
 #include "download.h"
 #include "background.h"
 #include "preferences.h"
@@ -125,12 +128,11 @@ int main(int argc, char ** argv)
 	/* Init modules/plugins. */
 	modules_init();
 #ifdef K
-
-
-
 	vik_georef_layer_init();
-	maps_layer_init();
+#endif
+	layer_map_init();
 	map_cache_init();
+#ifdef K
 	a_background_init();
 
 	a_toolbar_init();
@@ -211,9 +213,9 @@ int main(int argc, char ** argv)
 #if 0
 	a_toolbar_uninit();
 	a_background_uninit();
+#endif
 	map_cache_uninit();
 	dem_cache_uninit();
-#endif
 	a_layer_defaults_uninit();
 	Preferences::uninit();
 	a_settings_uninit();

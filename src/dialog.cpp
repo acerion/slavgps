@@ -40,10 +40,8 @@
 #include "date_time_dialog.h"
 #include "degrees_converters.h"
 #if 0
-
 #include "authors.h"
 #include "documenters.h"
-#include "vik_compat.h"
 #endif
 #include "globals.h"
 
@@ -592,14 +590,16 @@ bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, c
 }
 
 
+#endif
 
 
 /**
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url)
+void a_dialog_license(Window * parent, const char * map, const char * license, const char * url)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_message_dialog_new(parent,
 						   GTK_DIALOG_DESTROY_WITH_PARENT,
 						   GTK_MESSAGE_INFO,
@@ -621,7 +621,5 @@ void a_dialog_license(GtkWindow *parent, const char *map, const char *license, c
 		}
 	} while (response != GTK_RESPONSE_DELETE_EVENT && response != GTK_RESPONSE_OK);
 	gtk_widget_destroy(dialog);
-}
-
-
 #endif
+}

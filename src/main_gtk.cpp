@@ -214,6 +214,7 @@ int main(int argc, char *argv[])
 	modules_init();
 
 	vik_georef_layer_init();
+	layer_map_init();
 	maps_layer_init();
 	map_cache_init();
 	a_background_init();
