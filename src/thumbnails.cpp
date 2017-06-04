@@ -89,17 +89,17 @@ using namespace SlavGPS;
 
 
 static char *md5_hash(const char * message);
-static GdkPixbuf *save_thumbnail(const char * pathname, GdkPixbuf * full);
-static GdkPixbuf *child_create_thumbnail(const char * path);
+static QPixmap *save_thumbnail(const char * pathname, QPixmap * full);
+static QPixmap *child_create_thumbnail(const char * path);
 
 
 
 
 bool a_thumbnails_exists(const char * filename)
 {
-	GdkPixbuf * pixbuf = a_thumbnails_get(filename);
-	if (pixbuf) {
-		g_object_unref(G_OBJECT (pixbuf));
+	QPixmap * pixmap = a_thumbnails_get(filename);
+	if (pixmap) {
+		g_object_unref(G_OBJECT (pixmap));
 		return true;
 	}
 	return false;
@@ -108,9 +108,9 @@ bool a_thumbnails_exists(const char * filename)
 
 
 
-GdkPixbuf * a_thumbnails_get_default()
+QPixmap * a_thumbnails_get_default()
 {
-	return gdk_pixbuf_from_pixdata(&thumbnails_pixbuf, false, NULL);
+	return gdk_pixbuf_from_pixdata(&thumbnails_pixmap, false, NULL);
 }
 
 
@@ -119,21 +119,21 @@ GdkPixbuf * a_thumbnails_get_default()
 /* Filename must be absolute. you could have a function to make sure it exists and absolutize it. */
 void a_thumbnails_create(const char * filename)
 {
-	GdkPixbuf * pixbuf = a_thumbnails_get(filename);
+	QPixmap * pixmap = a_thumbnails_get(filename);
 
-	if (!pixbuf) {
-		pixbuf = child_create_thumbnail(filename);
+	if (!pixmap) {
+		pixmap = child_create_thumbnail(filename);
 	}
 
-	if (pixbuf) {
-		g_object_unref(G_OBJECT (pixbuf));
+	if (pixmap) {
+		g_object_unref(G_OBJECT (pixmap));
 	}
 }
 
 
 
 
-GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h)
+QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 {
 	int w = gdk_pixbuf_get_width(src);
 	int h = gdk_pixbuf_get_height(src);
@@ -158,19 +158,19 @@ GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h)
 
 
 
-static GdkPixbuf * child_create_thumbnail(const char * path)
+static QPixmap * child_create_thumbnail(const char * path)
 {
-	GdkPixbuf * image = gdk_pixbuf_new_from_file(path, NULL);
+	QPixmap * image = gdk_pixbuf_new_from_file(path, NULL);
 	if (!image) {
 		return NULL;
 	}
 
-	GdkPixbuf * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
+	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
 	g_object_unref(G_OBJECT(image));
 	image = tmpbuf;
 
 	if (image) {
-		GdkPixbuf * thumb = save_thumbnail(path, image);
+		QPixmap * thumb = save_thumbnail(path, image);
 		g_object_unref(G_OBJECT (image));
 		return thumb;
 	}
@@ -181,14 +181,14 @@ static GdkPixbuf * child_create_thumbnail(const char * path)
 
 
 
-static GdkPixbuf * save_thumbnail(const char * pathname, GdkPixbuf * full)
+static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 {
 	struct stat info;
 	if (stat(pathname, &info) != 0) {
 		return NULL;
 	}
 
-	GdkPixbuf * thumb = a_thumbnails_scale_pixbuf(full, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
+	QPixmap * thumb = a_thumbnails_scale_pixmap(full, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
 
 	const char * orientation = gdk_pixbuf_get_option(full, "orientation");
 
@@ -283,7 +283,7 @@ static GdkPixbuf * save_thumbnail(const char * pathname, GdkPixbuf * full)
 
 
 
-GdkPixbuf * a_thumbnails_get(const char * pathname)
+QPixmap * a_thumbnails_get(const char * pathname)
 {
 	char * path = file_realpath_dup(pathname);
 	char * uri = g_strconcat("file://", path, NULL);
@@ -297,7 +297,7 @@ GdkPixbuf * a_thumbnails_get(const char * pathname)
 	const char * ssize;
 	const char * smtime;
 
-	GdkPixbuf * thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
+	QPixmap * thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
 	if (!thumb) {
 		goto err;
 	}

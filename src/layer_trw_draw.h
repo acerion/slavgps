@@ -108,13 +108,13 @@ void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, SlavGPS::Track *> & tr
 /* A cached waypoint image. */
 /* This data structure probably should be put somewhere else. */
 typedef struct {
-	GdkPixbuf * pixbuf;
+	QPixmap * pixmap;
 	char * image; /* Filename. */
-} CachedPixbuf;
+} CachedPixmap;
 
 /* These two functions probably should be put somewhere else. */
-void cached_pixbuf_free(CachedPixbuf * cp);
-int cached_pixbuf_cmp(CachedPixbuf * cp, const char * name);
+void cached_pixmap_free(CachedPixmap * cp);
+int cached_pixmap_cmp(CachedPixmap * cp, const char * name);
 
 
 

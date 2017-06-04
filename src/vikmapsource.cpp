@@ -119,7 +119,7 @@ MapSource & MapSource::operator=(MapSource map)
 	this->copyright   = g_strdup(map.copyright);
 	this->license     = g_strdup(map.license);
 	this->license_url = g_strdup(map.license_url);
-	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
+	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
 	this->name       = g_strdup(map.name);
 	this->map_type   = map.map_type;
@@ -162,7 +162,7 @@ MapSource::MapSource(MapSource & map)
 	this->copyright   = g_strdup(map.copyright);
 	this->license     = g_strdup(map.license);
 	this->license_url = g_strdup(map.license_url);
-	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
+	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
 	this->name       = g_strdup(map.name);
 	this->map_type   = map.map_type;
@@ -319,7 +319,7 @@ const char * MapSource::get_license_url()
 
 
 
-const GdkPixbuf * MapSource::get_logo()
+const QPixmap * MapSource::get_logo()
 {
 	return logo;
 }

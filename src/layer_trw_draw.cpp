@@ -834,51 +834,51 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 #ifdef K
 
-	GdkPixbuf * pixbuf = NULL;
-	GList * l = g_list_find_custom(dp->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp);
+	QPixmap * pixmap = NULL;
+	GList * l = g_list_find_custom(dp->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixmap_cmp);
 	if (l) {
-		pixbuf = ((CachedPixbuf *) l->data)->pixbuf;
+		pixmap = ((CachedPixmap *) l->data)->pixmap;
 	} else {
 		char * image = wp->image;
-		GdkPixbuf * regularthumb = a_thumbnails_get(wp->image);
+		QPixmap * regularthumb = a_thumbnails_get(wp->image);
 		if (!regularthumb) {
 			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
 			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
 		}
 		if (regularthumb) {
-			CachedPixbuf * cp = (CachedPixbuf *) malloc(sizeof (CachedPixbuf));
+			CachedPixmap * cp = (CachedPixmap *) malloc(sizeof (CachedPixmap));
 			if (dp->trw->image_size == 128) {
-				cp->pixbuf = regularthumb;
+				cp->pixmap = regularthumb;
 			} else {
-				cp->pixbuf = a_thumbnails_scale_pixbuf(regularthumb, dp->trw->image_size, dp->trw->image_size);
-				assert (cp->pixbuf);
+				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, dp->trw->image_size, dp->trw->image_size);
+				assert (cp->pixmap);
 				g_object_unref(G_OBJECT(regularthumb));
 			}
 			cp->image = g_strdup(image);
 
-			/* Apply alpha setting to the image before the pixbuf gets stored in the cache. */
+			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
 			if (dp->trw->image_alpha != 255) {
-				cp->pixbuf = ui_pixbuf_set_alpha(cp->pixbuf, dp->trw->image_alpha);
+				cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, dp->trw->image_alpha);
 			}
 
 			/* Needed so 'click picture' tool knows how big the pic is; we don't
 			   store it in cp because they may have been freed already. */
-			wp->image_width = gdk_pixbuf_get_width(cp->pixbuf);
-			wp->image_height = gdk_pixbuf_get_height(cp->pixbuf);
+			wp->image_width = gdk_pixbuf_get_width(cp->pixmap);
+			wp->image_height = gdk_pixbuf_get_height(cp->pixmap);
 
 			g_queue_push_head(dp->trw->image_cache, cp);
 			if (dp->trw->image_cache->length > dp->trw->image_cache_size) {
-				cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(dp->trw->image_cache));
+				cached_pixbuf_free((CachedPixmap *) g_queue_pop_tail(dp->trw->image_cache));
 			}
 
-			pixbuf = cp->pixbuf;
+			pixmap = cp->pixmap;
 		} else {
-			pixbuf = a_thumbnails_get_default(); /* thumbnail not yet loaded */
+			pixmap = a_thumbnails_get_default(); /* thumbnail not yet loaded */
 		}
 	}
-	if (pixbuf) {
-		int w = gdk_pixbuf_get_width(pixbuf);
-		int h = gdk_pixbuf_get_height(pixbuf);
+	if (pixmap) {
+		int w = gdk_pixbuf_get_width(pixmap);
+		int h = gdk_pixbuf_get_height(pixmap);
 
 		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < dp->width && y - (h / 2) < dp->height) { /* always draw within boundaries */
 			if (dp->highlight) {
@@ -889,7 +889,7 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 				dp->viewport->draw_rectangle(dp->viewport->get_highlight_pen(),
 							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
-			dp->viewport->draw_pixmap(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
+			dp->viewport->draw_pixmap(pixmap, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
 		return 0;
 	}
@@ -908,8 +908,8 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 #endif
 
 #ifdef K
-	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
-		dp->viewport->draw_pixmap(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
+	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixmap) {
+		dp->viewport->draw_pixmap(wp->symbol_pixmap, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixmap)/2, y - gdk_pixbuf_get_height(wp->symbol_pixmap)/2, -1, -1);
 	} else
 #endif
 		if (wp == dp->trw->current_wp) {
@@ -978,8 +978,8 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 	int width, height;
 	pango_layout_get_pixel_size(dp->trw->wplabellayout, &width, &height);
 	label_x = x - width/2;
-	if (wp->symbol_pixbuf) {
-		label_y = y - height - 2 - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2;
+	if (wp->symbol_pixmap) {
+		label_y = y - height - 2 - gdk_pixbuf_get_height(wp->symbol_pixmap)/2;
 	} else {
 		label_y = y - dp->trw->wp_size - height - 2;
 	}
@@ -1027,10 +1027,10 @@ void trw_layer_draw_waypoints_cb(Waypoints * waypoints, DrawingParams * dp)
 
 
 
-void cached_pixbuf_free(CachedPixbuf * cp)
+void cached_pixmap_free(CachedPixmap * cp)
 {
 #ifdef K
-	g_object_unref(G_OBJECT(cp->pixbuf));
+	g_object_unref(G_OBJECT(cp->pixmap));
 	free(cp->image);
 #endif
 }
@@ -1038,7 +1038,7 @@ void cached_pixbuf_free(CachedPixbuf * cp)
 
 
 
-int cached_pixbuf_cmp(CachedPixbuf * cp, const char * name)
+int cached_pixmap_cmp(CachedPixmap * cp, const char * name)
 {
 	return strcmp(cp->image, name);
 }

@@ -37,6 +37,7 @@
 #include <QCursor>
 #include <QMenu>
 #include <QString>
+#include <QPixmap>
 
 #include "uibuilder.h"
 #include "tree_view.h"
@@ -380,7 +381,7 @@ namespace SlavGPS {
 
 
 	/* TODO: put in layerspanel. */
-	GdkPixbuf * vik_layer_load_icon(LayerType layer_type);
+	QPixmap * vik_layer_load_icon(LayerType layer_type);
 
 
 

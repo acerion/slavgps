@@ -75,11 +75,11 @@ namespace SlavGPS {
 		void set_file_css(char const * name);
 		void set_cache_dir(char const * name);
 		bool carto_load(void);
-		void possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm);
+		void possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm);
 		void render(VikCoord * ul, VikCoord * br, TileInfo * ulm);
 		void thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name);
-		GdkPixbuf * load_pixbuf(TileInfo * ulm, TileInfo * brm, bool * rerender);
-		GdkPixbuf * get_pixbuf(TileInfo * ulm, TileInfo * brm);
+		QPixmap * load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender);
+		QPixmap * get_pixmap(TileInfo * ulm, TileInfo * brm);
 		void rerender();
 		void tile_info();
 		bool feature_release(GdkEventButton * event, LayerTool * tool);

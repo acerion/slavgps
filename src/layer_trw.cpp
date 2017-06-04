@@ -839,7 +839,7 @@ void trw_layer_free_copied_item(int subtype, void * item)
 
 void LayerTRW::image_cache_free()
 {
-	g_list_foreach(this->image_cache->head, (GFunc) cached_pixbuf_free, NULL);
+	g_list_foreach(this->image_cache->head, (GFunc) cached_pixmap_free, NULL);
 	g_queue_free(this->image_cache);
 }
 
@@ -992,7 +992,7 @@ bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, bool is_file_op
 	case PARAM_ICS:
 		this->image_cache_size = data.u;
 		while (this->image_cache->length > this->image_cache_size) {/* if shrinking cache_size, free pixbuf ASAP */
-			cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(this->image_cache));
+			cached_pixmap_free((CachedPixmap *) g_queue_pop_tail(this->image_cache));
 		}
 		break;
 
@@ -1601,7 +1601,7 @@ void LayerTRW::new_track_pens(void)
 QIcon * get_wp_sym_small(char *symbol)
 {
 #ifdef K
-	GdkPixbuf* wp_icon = a_get_wp_sym(symbol);
+	QPixmap * wp_icon = a_get_wp_sym(symbol);
 	/* ATM a_get_wp_sym returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the treeview may need some resizing: */
 	if (wp_icon && gdk_pixbuf_get_width(wp_icon) != SMALL_ICON_SIZE) {

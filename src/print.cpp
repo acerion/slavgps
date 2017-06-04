@@ -198,7 +198,7 @@ static void copy_row_from_rgba(unsigned char *surface_pixels, unsigned char *pix
 static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
 {
   cairo_t         *cr;
-  GdkPixbuf       *pixbuf_to_draw;
+  QPixmap       *pixmap_to_draw;
   cairo_surface_t *surface;
   unsigned char          *surface_pixels;
   unsigned char          *pixbuf_pixels;

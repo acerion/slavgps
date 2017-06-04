@@ -593,7 +593,7 @@ static char *get_filename(char *dir, unsigned int x, unsigned int y, unsigned in
 
 
 
-void LayerMapnik::possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm)
+void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 {
 	if (this->use_file_cache) {
 		if (this->file_cache_dir) {
@@ -608,7 +608,7 @@ void LayerMapnik::possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm)
 			}
 			free(dir);
 
-			if (!gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL)) {
+			if (!gdk_pixbuf_save(pixmap, filename, "png", &error, NULL)) {
 				fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 				g_error_free(error);
 			}
@@ -637,22 +637,22 @@ typedef struct {
 void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 {
 	int64_t tt1 = g_get_real_time();
-	GdkPixbuf *pixbuf = mapnik_interface_render(this->mi, ul->north_south, ul->east_west, br->north_south, br->east_west);
+	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->north_south, ul->east_west, br->north_south, br->east_west);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
-	if (!pixbuf) {
-		/* A pixbuf to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
-		pixbuf = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixbuf, false, NULL), this->tile_size_x, this->tile_size_x, GDK_INTERP_BILINEAR);
+	if (!pixmap) {
+		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
+		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, GDK_INTERP_BILINEAR);
 	}
-	this->possibly_save_pixbuf(pixbuf, ulm);
+	this->possibly_save_pixmap(pixmap, ulm);
 
 	/* NB Mapnik can apply alpha, but use our own function for now. */
 	if (this->alpha < 255) {
-		pixbuf = ui_pixbuf_scale_alpha(pixbuf, this->alpha);
+		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
-	map_cache_add(pixbuf, (map_cache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
-	g_object_unref(pixbuf);
+	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	g_object_unref(pixmap);
 }
 
 
@@ -750,28 +750,28 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 
 
 /**
- * If function returns GdkPixbuf properly, reference counter to this
+ * If function returns QPixmap properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-GdkPixbuf * LayerMapnik::load_pixbuf(TileInfo * ulm, TileInfo * brm, bool * rerender)
+QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender)
 {
 	*rerender = false;
-	GdkPixbuf *pixbuf = NULL;
+	QPixmap *pixmap = NULL;
 	char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
 	GStatBuf gsb;
 	if (g_stat(filename, &gsb) == 0) {
 		/* Get from disk. */
 		GError *error = NULL;
-		pixbuf = gdk_pixbuf_new_from_file(filename, &error);
+		pixmap = gdk_pixbuf_new_from_file(filename, &error);
 		if (error) {
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 			g_error_free(error);
 		} else {
 			if (this->alpha < 255) {
-				pixbuf = ui_pixbuf_set_alpha(pixbuf, this->alpha);
+				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
-			map_cache_add(pixbuf, (map_cache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < gsb.st_mtime) {
@@ -780,33 +780,33 @@ GdkPixbuf * LayerMapnik::load_pixbuf(TileInfo * ulm, TileInfo * brm, bool * rere
 	}
 	free(filename);
 
-	return pixbuf;
+	return pixmap;
 }
 
 
 
 
 /**
- * Caller has to decrease reference counter of returned GdkPixbuf,
+ * Caller has to decrease reference counter of returned QPixmap,
  * when buffer is no longer needed.
  */
-GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
+QPixmap * LayerMapnik::get_pixmap(TileInfo * ulm, TileInfo * brm)
 {
 	VikCoord ul; VikCoord br;
 
 	map_utils_iTMS_to_vikcoord(ulm, &ul);
 	map_utils_iTMS_to_vikcoord(brm, &br);
 
-	GdkPixbuf * pixbuf = map_cache_get(ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
-	if (pixbuf) {
+	QPixmap * pixmap = map_cache_get(ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	if (pixmap) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
 		fprintf(stderr, "MapnikLayer: MAP CACHE MISS\n");
 
 		bool rerender = false;
 		if (this->use_file_cache && this->file_cache_dir)
-			pixbuf = this->load_pixbuf(ulm, brm, &rerender);
-		if (! pixbuf || rerender) {
+			pixmap = this->load_pixmap(ulm, brm, &rerender);
+		if (! pixmap || rerender) {
 			if (true) {
 				this->thread_add(ulm, &ul, &br, ulm->x, ulm->y, ulm->z, ulm->scale, this->filename_xml);
 			} else {
@@ -817,7 +817,7 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
 		}
 	}
 
-	return pixbuf;
+	return pixmap;
 }
 
 
@@ -855,7 +855,7 @@ void LayerMapnik::draw(Viewport * viewport)
 	if (map_utils_vikcoord_to_iTMS(&ul, xzoom, yzoom, &ulm) &&
 	     map_utils_vikcoord_to_iTMS(&br, xzoom, yzoom, &brm)) {
 		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
-		GdkPixbuf *pixbuf;
+		QPixmap * pixmap;
 		VikCoord coord;
 		int xx, yy;
 
@@ -871,13 +871,13 @@ void LayerMapnik::draw(Viewport * viewport)
 				brm.x = x+1;
 				brm.y = y+1;
 
-				pixbuf = this->get_pixbuf(&ulm, &brm);
+				pixmap = this->get_pixmap(&ulm, &brm);
 
-				if (pixbuf) {
+				if (pixmap) {
 					map_utils_iTMS_to_vikcoord(&ulm, &coord);
 					viewport->coord_to_screen(&coord, &xx, &yy);
-					viewport->draw_pixmap(pixbuf, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
-					g_object_unref(pixbuf);
+					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
+					g_object_unref(pixmap);
 				}
 			}
 		}

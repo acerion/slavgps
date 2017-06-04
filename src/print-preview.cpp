@@ -425,18 +425,18 @@ vik_print_preview_event (GtkWidget        *widget,
   return false;
 }
 
-static GdkPixbuf *get_thumbnail(GdkDrawable *drawable, int thumb_width, int thumb_height)
+static QPixmap *get_thumbnail(GdkDrawable *drawable, int thumb_width, int thumb_height)
 {
   int width, height;
-  GdkPixbuf *pixbuf;
-  GdkPixbuf *thumbnail;
+  QPixmap *pixmap;
+  QPixmap *thumbnail;
 
   gdk_drawable_get_size(drawable, &width, &height);
-  pixbuf = gdk_pixbuf_get_from_drawable(NULL, drawable,
+  pixmap = gdk_pixbuf_get_from_drawable(NULL, drawable,
                                            NULL, 0, 0, 0, 0, width, height);
-  thumbnail = gdk_pixbuf_scale_simple(pixbuf, thumb_width, thumb_height,
+  thumbnail = gdk_pixbuf_scale_simple(pixmap, thumb_width, thumb_height,
                                       GDK_INTERP_BILINEAR);
-  g_object_unref(pixbuf);
+  g_object_unref(pixmap);
   return thumbnail;
 }
 
@@ -503,32 +503,32 @@ vik_print_preview_expose_event (GtkWidget        *widget,
                        left_margin + preview->image_offset_x,
                        top_margin  + preview->image_offset_y);
 
-      if (preview->pixbuf == NULL)
+      if (preview->pixmap == NULL)
         {
           GtkAllocation allocation;
           gtk_widget_get_allocation ( widget, &allocation );
           int width  = MIN (allocation.width, 1024);
           int height = MIN (allocation.height, 1024);
 
-          preview->pixbuf = get_thumbnail(drawable, width, height);
+          preview->pixmap = get_thumbnail(drawable, width, height);
         }
 
-      if (preview->pixbuf != NULL)
+      if (preview->pixmap != NULL)
         {
           int width, height;
           gdk_drawable_get_size(drawable, &width, &height);
 
           double scale_x = ((double) width /
-                             gdk_pixbuf_get_width (preview->pixbuf));
+                             gdk_pixbuf_get_width (preview->pixmap));
           double scale_y = ((double) height /
-                             gdk_pixbuf_get_height (preview->pixbuf));
+                             gdk_pixbuf_get_height (preview->pixmap));
 
           scale_x = scale_x * 72.0 / preview->image_xres;
           scale_y = scale_y * 72.0 / preview->image_yres;
 
           cairo_scale (cr, scale_x, scale_y);
 
-          gdk_cairo_set_source_pixbuf (cr, preview->pixbuf, 0, 0);
+          gdk_cairo_set_source_pixbuf (cr, preview->pixmap, 0, 0);
 
           cairo_paint (cr);
         }
@@ -559,10 +559,10 @@ vik_print_preview_size_allocate (GtkWidget        *widget,
                                   GtkAllocation    *allocation,
                                   VikPrintPreview *preview)
 {
-  if (preview->pixbuf != NULL)
+  if (preview->pixmap != NULL)
     {
-      g_object_unref (preview->pixbuf);
-      preview->pixbuf = NULL;
+      g_object_unref (preview->pixmap);
+      preview->pixmap = NULL;
     }
 }
 

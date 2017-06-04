@@ -49,7 +49,7 @@ namespace SlavGPS {
 		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data);
 		const char * get_license();
 		const char * get_license_url();
-		const GdkPixbuf * get_logo();
+		const QPixmap * get_logo();
 
 		char * get_server_hostname();
 		virtual char * get_server_path(TileInfo * src);
@@ -101,7 +101,7 @@ namespace SlavGPS {
 		char * copyright; /* The copyright of the map source. */
 		char * license;   /* The license of the map source. */
 		char * license_url; /* The URL of the license of the map source. */
-		GdkPixbuf * logo;
+		QPixmap * logo;
 
 		char * name; /* The name of the map that may be used as the file cache directory. */
 		MapTypeID map_type; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */

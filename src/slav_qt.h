@@ -23,7 +23,6 @@ typedef int GdkFont;
 typedef int GdkColor;
 typedef int GtkWindow;
 typedef int GtkWidget;
-typedef void GdkPixbuf;
 typedef int GdkFunction;
 typedef int GtkDialog;
 typedef int PangoLayout;

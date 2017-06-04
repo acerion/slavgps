@@ -213,7 +213,7 @@ void Waypoint::set_symbol(char const * symname_)
 {
 	free_string(&symbol);
 
-	/* NB symbol_pixbuf is just a reference, so no need to free it */
+	/* NB symbol_pixmap is just a reference, so no need to free it */
 
 	if (symname_ && symname_[0] != '\0') {
 #ifdef K
@@ -222,11 +222,11 @@ void Waypoint::set_symbol(char const * symname_)
 			symname_ = hashed_symname;
 		}
 		symbol = strdup(symname_);
-		this->symbol_pixbuf = a_get_wp_sym(symbol);
+		this->symbol_pixmap = a_get_wp_sym(symbol);
 #endif
 	} else {
 		symbol = NULL;
-		this->symbol_pixbuf = NULL;
+		this->symbol_pixmap = NULL;
 	}
 }
 

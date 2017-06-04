@@ -585,7 +585,7 @@ uint16_t SlavGPS::vik_layer_get_menu_items_selection(Layer * layer)
 
 
 
-GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
+QPixmap * vik_layer_load_icon(LayerType layer_type)
 {
 #ifndef SLAVGPS_QT
 	assert (layer_type < LayerType::NUM_TYPES);

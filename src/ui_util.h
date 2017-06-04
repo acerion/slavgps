@@ -27,9 +27,9 @@
 
 #include <QLabel>
 #include <QStandardItem>
+#include <QPixmap>
 
 #include <glib.h>
-//#include <gtk/gtk.h>
 #include "slav_qt.h"
 #include "track.h"
 
@@ -44,8 +44,8 @@ int ui_get_gtk_settings_integer(const char *property_name, int default_value);
 GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name);
 QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
-GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
-GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
+QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha);
+QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha);
 void ui_add_recent_file(const char * filename);
 
 

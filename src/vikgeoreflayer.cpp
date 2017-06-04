@@ -230,7 +230,7 @@ void LayerGeoref::create_image_file()
 	/* Create in .viking-maps. */
 	char *filename = g_strconcat(maps_layer_default_dir(), this->get_name(), ".jpg", NULL);
 	GError *error = NULL;
-	gdk_pixbuf_save(this->pixbuf, filename, "jpeg", &error, NULL);
+	gdk_pixbuf_save(this->pixmap, filename, "jpeg", &error, NULL);
 	if (error) {
 		fprintf(stderr, "WARNING: %s\n", error->message);
 		g_error_free(error);
@@ -251,7 +251,7 @@ ParameterValue LayerGeoref::get_param_value(param_id_t id, bool is_file_operatio
 	case PARAM_IMAGE: {
 		bool set = false;
 		if (is_file_operation) {
-			if (this->pixbuf && !this->image) {
+			if (this->pixmap && !this->image) {
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
@@ -338,9 +338,9 @@ static void georef_layer_mpp_from_coords(VikCoordMode mode, struct LatLon ll_tl,
 
 void LayerGeoref::draw(Viewport * viewport)
 {
-	if (this->pixbuf) {
+	if (this->pixmap) {
 		double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
-		GdkPixbuf *pixbuf = this->pixbuf;
+		QPixmap * pixmap = this->pixmap;
 		unsigned int layer_width = this->width;
 		unsigned int layer_height = this->height;
 
@@ -350,7 +350,7 @@ void LayerGeoref::draw(Viewport * viewport)
 		vik_coord_load_from_utm(&corner_coord, viewport->get_coord_mode(), &(this->corner));
 		viewport->coord_to_screen(&corner_coord, &x, &y);
 
-		/* Mark to scale the pixbuf if it doesn't match our dimensions. */
+		/* Mark to scale the pixmap if it doesn't match our dimensions. */
 		bool scale = false;
 		if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
 			scale = true;
@@ -364,9 +364,9 @@ void LayerGeoref::draw(Viewport * viewport)
 			if (scale) {
 				/* Rescale if necessary. */
 				if (layer_width == this->scaled_width && layer_height == this->scaled_height && this->scaled != NULL) {
-					pixbuf = this->scaled;
+					pixmap = this->scaled;
 				} else {
-					pixbuf = gdk_pixbuf_scale_simple(this->pixbuf,
+					pixmap = gdk_pixbuf_scale_simple(this->pixmap,
 									 layer_width,
 									 layer_height,
 									 GDK_INTERP_BILINEAR);
@@ -375,12 +375,12 @@ void LayerGeoref::draw(Viewport * viewport)
 						g_object_unref(this->scaled);
 					}
 
-					this->scaled = pixbuf;
+					this->scaled = pixmap;
 					this->scaled_width = layer_width;
 					this->scaled_height = layer_height;
 				}
 			}
-			viewport->draw_pixmap(pixbuf, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
+			viewport->draw_pixmap(pixmap, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
 		}
 	}
 }
@@ -418,8 +418,8 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		return;
 	}
 
-	if (this->pixbuf) {
-		g_object_unref(G_OBJECT(this->pixbuf));
+	if (this->pixmap) {
+		g_object_unref(G_OBJECT(this->pixmap));
 	}
 
 	if (this->scaled) {
@@ -427,7 +427,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		this->scaled = NULL;
 	}
 
-	this->pixbuf = gdk_pixbuf_new_from_file (this->image, &gx);
+	this->pixmap = gdk_pixbuf_new_from_file (this->image, &gx);
 
 	if (gx) {
 		if (!from_file) {
@@ -435,11 +435,11 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		}
 		g_error_free (gx);
 	} else {
-		this->width = gdk_pixbuf_get_width(this->pixbuf);
-		this->height = gdk_pixbuf_get_height(this->pixbuf);
+		this->width = gdk_pixbuf_get_width(this->pixmap);
+		this->height = gdk_pixbuf_get_height(this->pixmap);
 
-		if (this->pixbuf && this->alpha < 255) {
-			this->pixbuf = ui_pixbuf_set_alpha(this->pixbuf, this->alpha);
+		if (this->pixmap && this->alpha < 255) {
+			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
 		}
 	}
 	/* Should find length and width here too. */
@@ -770,15 +770,15 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 		return;
 	}
 	GError *gx = NULL;
-	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &gx);
+	QPixmap * pixmap = gdk_pixbuf_new_from_file(filename, &gx);
 	if (gx) {
 		dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
 		g_error_free(gx);
 		return;
 	}
 
-	unsigned int width = gdk_pixbuf_get_width(pixbuf);
-	unsigned int height = gdk_pixbuf_get_height(pixbuf);
+	unsigned int width = gdk_pixbuf_get_width(pixmap);
+	unsigned int height = gdk_pixbuf_get_height(pixmap);
 
 	if (width == 0 || height == 0) {
 		dialog_error(QString("Invalid image size: %1").arg(QString(filename)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
@@ -797,7 +797,7 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 		this->check_br_is_good_or_msg_user();
 	}
 
-	g_object_unref(G_OBJECT(pixbuf));
+	g_object_unref(G_OBJECT(pixmap));
 }
 
 
@@ -980,8 +980,8 @@ bool LayerGeoref::dialog(Viewport * viewport, GtkWindow * w)
 		this->mpp_northing = gtk_spin_button_get_value (GTK_SPIN_BUTTON(cw.y_spin));
 		this->ll_br = this->get_ll_br();
 		this->check_br_is_good_or_msg_user();
-		/* TODO check if image has changed otherwise no need to regenerate pixbuf. */
-		if (!this->pixbuf) {
+		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
+		if (!this->pixmap) {
 			if (g_strcmp0 (this->image, vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry))) != 0) {
 				this->set_image(vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry)));
 				this->post_read(viewport, false);
@@ -989,12 +989,12 @@ bool LayerGeoref::dialog(Viewport * viewport, GtkWindow * w)
 		}
 
 		this->alpha = (uint8_t) gtk_range_get_value (GTK_RANGE(alpha_scale));
-		if (this->pixbuf && this->alpha < 255) {
-			this->pixbuf = ui_pixbuf_set_alpha (this->pixbuf, this->alpha);
+		if (this->pixmap && this->alpha < 255) {
+			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
 		}
 
 		if (this->scaled && this->alpha < 255) {
-			this->scaled = ui_pixbuf_set_alpha(this->scaled, this->alpha);
+			this->scaled = ui_pixmap_set_alpha(this->scaled, this->alpha);
 		}
 
 		a_settings_set_integer (VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
@@ -1098,7 +1098,7 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) :
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_geomove_pixbuf;
+	this->cursor_data = &cursor_geomove_pixmap;
 
 	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, this }});
 }
@@ -1151,7 +1151,7 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) :
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_geozoom_pixbuf;
+	this->cursor_data = &cursor_geozoom_pixmap;
 
 	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, this }});
 }
@@ -1233,21 +1233,21 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 
 LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 					       const char *name,
-					       GdkPixbuf *pixbuf,
-					       VikCoord *coord_tl,
-					       VikCoord *coord_br)
+					       QPixmap * pixmap,
+					       VikCoord * coord_tl,
+					       VikCoord * coord_br)
 {
 	LayerGeoref * grl = new LayerGeoref();
 	glr->configure_from_viewport(viewport);
 	grl->rename(name);
-	grl->pixbuf = pixbuf;
+	grl->pixmap = pixmap;
 
 	vik_coord_to_utm(coord_tl, &(grl->corner));
 	vik_coord_to_latlon(coord_br, &(grl->ll_br));
 
-	if (grl->pixbuf) {
-		grl->width = gdk_pixbuf_get_width(grl->pixbuf);
-		grl->height = gdk_pixbuf_get_height(grl->pixbuf);
+	if (grl->pixmap) {
+		grl->width = gdk_pixbuf_get_width(grl->pixmap);
+		grl->height = gdk_pixbuf_get_height(grl->pixmap);
 
 		if (grl->width > 0 && grl->height > 0) {
 

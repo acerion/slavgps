@@ -100,7 +100,7 @@ static char * doc_kml_str(const char * name, const char * image_filename, double
 /**
  * kmz_save_file:
  *
- * @pixbuf:   The image to save
+ * @pixmap:   The image to save
  * @filename: Save the KMZ as this filename
  * @north:    Top latitude in degrees
  * @east:     Right most longitude in degrees
@@ -118,7 +118,7 @@ static char * doc_kml_str(const char * name, const char * image_filename, double
  *
  * The KMZ is a zipped file containing a KML file with the associated image.
  */
-int SlavGPS::kmz_save_file(GdkPixbuf * pixbuf, const char * filename, double north, double east, double south, double west)
+int SlavGPS::kmz_save_file(QPixmap * pixmap, const char * filename, double north, double east, double south, double west)
 {
 #ifdef HAVE_ZIP_H
 /* Older libzip compatibility: */
@@ -147,7 +147,7 @@ typedef struct zip_source zip_source_t;
 	GError *error = NULL;
 	char *buffer;
 	size_t blen;
-	gdk_pixbuf_save_to_buffer(pixbuf, &buffer, &blen, "jpeg", &error, "x-dpi", "72", "y-dpi", "72", NULL);
+	gdk_pixbuf_save_to_buffer(pixmap, &buffer, &blen, "jpeg", &error, "x-dpi", "72", "y-dpi", "72", NULL);
 	if (error) {
 		fprintf(stderr, "WARNING: Save to buffer error: %s\n", error->message);
 		g_error_free(error);
@@ -432,14 +432,14 @@ typedef struct zip_file zip_file_t;
 		bool parsed = parse_kml(buffer, len, &name, &image, &north, &south, &east, &west);
 		free(buffer);
 
-		GdkPixbuf *pixbuf = NULL;
+		QPixmap *pixmap = NULL;
 
 		if (parsed) {
 			/* Read zip for image... */
 			if (image) {
 				if (zip_stat(archive, image, ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS, &zs) == 0) {
 					zip_file_t *zfi = zip_fopen_index(archive, zs.index, 0);
-					/* Don't know a way to create a pixbuf using streams.
+					/* Don't know a way to create a pixmap using streams.
 					   Thus write out to file.
 					   Could read in chunks rather than one big buffer, but don't expect images to be that big. */
 					char *ibuffer = (char *) malloc(zs.size);
@@ -450,7 +450,7 @@ typedef struct zip_file zip_file_t;
 					} else {
 						char *image_file = util_write_tmp_file_from_bytes(ibuffer, ilen);
 						GError *error = NULL;
-						pixbuf = gdk_pixbuf_new_from_file(image_file, &error);
+						pixmap = gdk_pixbuf_new_from_file(image_file, &error);
 						if (error) {
 							fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 							g_error_free(error);
@@ -470,7 +470,7 @@ typedef struct zip_file zip_file_t;
 			ans = 129;
 		}
 
-		if (pixbuf) {
+		if (pixmap) {
 			/* Some simple detection of broken position values ?? */
 			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
 			VikCoord vc_tl, vc_br;
@@ -482,7 +482,7 @@ typedef struct zip_file zip_file_t;
 			vik_coord_load_from_latlon(&vc_tl, viewport->get_coord_mode(), &ll_tl);
 			vik_coord_load_from_latlon(&vc_br, viewport->get_coord_mode(), &ll_br);
 
-			Layer * grl = vik_georef_layer_create(viewport, name, pixbuf, &vc_tl, &vc_br);
+			Layer * grl = vik_georef_layer_create(viewport, name, pixmap, &vc_tl, &vc_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
 				top->add_layer(grl, false);

@@ -25,18 +25,18 @@
 
 
 
-//#include <glib.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdint.h>
+#include <cstdint>
+
+#include <QPixmap>
 
 
 
 
 bool a_thumbnails_exists(const char * filename);
 void a_thumbnails_create(const char * filename);
-GdkPixbuf * a_thumbnails_get(const char * filename);
-GdkPixbuf * a_thumbnails_get_default();
-GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h);
+QPixmap * a_thumbnails_get(const char * filename);
+QPixmap * a_thumbnails_get_default();
+QPixmap * a_thumbnails_scale_pixbuf(QPixmap * src, int max_w, int max_h);
 
 
 

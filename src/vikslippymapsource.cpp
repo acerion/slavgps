@@ -74,7 +74,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 	this->set_copyright(map.copyright);
 	this->set_license(map.license);
 	this->set_license_url(map.license_url);
-	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement this. */
+	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement this. */
 
 	this->set_name(map.name);
 	this->map_type = map.map_type;

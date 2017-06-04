@@ -25,7 +25,7 @@
 
 
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <time.h>
 
@@ -35,8 +35,6 @@
 #include "globals.h"
 #include "tree_view.h"
 #include "layer.h"
-
-//#include <gdk-pixbuf/gdk-pixdata.h>
 
 
 
@@ -95,7 +93,7 @@ namespace SlavGPS {
 
 		char * symbol = NULL;
 		/* Only for GUI display. */
-		QPixmap * symbol_pixbuf = NULL;
+		QPixmap * symbol_pixmap = NULL;
 	};
 
 

@@ -250,9 +250,9 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi,
 
 
 /**
- * Returns a #GdkPixbuf of the specified area. #GdkPixbuf may be NULL.
+ * Returns a QPixmap of the specified area. QPixmap may be NULL.
  */
-GdkPixbuf * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
+QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
 	if (!mi) {
 		return NULL;
@@ -272,7 +272,7 @@ GdkPixbuf * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl
 	prj.forward(p0x, p0y);
 	prj.forward(p1x, p1y);
 
-	GdkPixbuf *pixbuf = NULL;
+	QPixmap *pixmap = NULL;
 	try {
 		unsigned width  = myMap.width();
 		unsigned height = myMap.height();
@@ -289,7 +289,7 @@ GdkPixbuf * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl
 				return NULL;
 			}
 			memcpy(ImageRawDataPtr, image.raw_data(), width * height * 4);
-			pixbuf = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
+			pixmap = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
 		} else {
 			g_warning("%s not rendered", __FUNCTION__);
 		}
@@ -300,7 +300,7 @@ GdkPixbuf * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl
 		g_warning("An unknown error occurred while rendering");
 	}
 
-	return pixbuf;
+	return pixmap;
 }
 
 

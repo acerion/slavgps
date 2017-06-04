@@ -236,24 +236,24 @@ QLabel * ui_label_new_selectable(QString const & text, QWidget * parent)
 /**
  * Apply the alpha value to the specified pixbuf.
  */
-GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
+QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
 	int width, height, iii, jjj;
 
-	if (!gdk_pixbuf_get_has_alpha (pixbuf)) {
-		GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
-		g_object_unref(G_OBJECT(pixbuf));
-		pixbuf = tmp;
-	 	if (!pixbuf) {
+	if (!gdk_pixbuf_get_has_alpha (pixmap)) {
+		QPixmap * tmp = gdk_pixbuf_add_alpha(pixmap, false,0,0,0);
+		g_object_unref(G_OBJECT(pixmap));
+		pixmap = tmp;
+	 	if (!pixmap) {
 			return NULL;
 		}
 	}
 
-	pixels = gdk_pixbuf_get_pixels(pixbuf);
-	width = gdk_pixbuf_get_width(pixbuf);
-	height = gdk_pixbuf_get_height(pixbuf);
+	pixels = gdk_pixbuf_get_pixels(pixmap);
+	width = gdk_pixbuf_get_width(pixmap);
+	height = gdk_pixbuf_get_height(pixmap);
 
 	/* r,g,b,a,r,g,b,a.... */
 	for (iii = 0; iii < width; iii++) {
@@ -265,8 +265,8 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 			pixels++;
 		}
 	}
-	return pixbuf;
 #endif
+	return pixmap;
 }
 
 
@@ -275,27 +275,27 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
+QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
 	int width, height, iii, jjj;
 
-	if (!gdk_pixbuf_get_has_alpha(pixbuf)) {
-		GdkPixbuf * tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
-		g_object_unref(G_OBJECT(pixbuf));
-		pixbuf = tmp;
-		if (!pixbuf) {
+	if (!gdk_pixbuf_get_has_alpha(pixmap)) {
+		QPixmap * tmp = gdk_pixbuf_add_alpha(pixmap,false,0,0,0);
+		g_object_unref(G_OBJECT(pixmap));
+		pixmap = tmp;
+		if (!pixmap) {
 			return NULL;
 		}
 	}
 
-	pixels = gdk_pixbuf_get_pixels(pixbuf);
-	width = gdk_pixbuf_get_width(pixbuf);
-	height = gdk_pixbuf_get_height(pixbuf);
+	pixels = gdk_pixbuf_get_pixels(pixmap);
+	width = gdk_pixbuf_get_width(pixmap);
+	height = gdk_pixbuf_get_height(pixmap);
 
 	/* r,g,b,a,r,g,b,a.... */
-	for (iii = 0; iii < width; iii++)
+	for (iii = 0; iii < width; iii++) {
 		for (jjj = 0; jjj < height; jjj++) {
 			pixels += 3;
 			if (*pixels != 0) {
@@ -303,8 +303,9 @@ GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 			}
 			pixels++;
 		}
-	return pixbuf;
+	}
 #endif
+	return pixmap;
 }
 
 

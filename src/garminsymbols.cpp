@@ -42,7 +42,7 @@ static struct {
 	char * desc;
 	GdkPixdata const * data;
 	GdkPixdata const * data_large;
-	GdkPixbuf * icon;
+	QPixmap * icon;
 } garmin_syms[] = {
 	/* "sym" are in 'Title Case' like in gpsbabel. This is needed for
 	 * devices like Garmin Oregon 450. Old exports with lower case
@@ -387,7 +387,7 @@ static void init_icons()
 
 
 
-static GdkPixbuf * get_wp_sym_from_index(int i)
+static QPixmap * get_wp_sym_from_index(int i)
 {
 	/* Ensure data exists to either directly load icon or scale from the other set. */
 	if (!garmin_syms[i].icon && (garmin_syms[i].data || garmin_syms[i].data_large)) {
@@ -415,7 +415,7 @@ static GdkPixbuf * get_wp_sym_from_index(int i)
 
 
 
-GdkPixbuf *a_get_wp_sym(const char *sym)
+QPixmap * a_get_wp_sym(const char *sym)
 {
 	if (!sym) {
 		return NULL;

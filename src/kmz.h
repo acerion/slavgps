@@ -23,9 +23,8 @@
 
 
 
-
+#include <QPixmap>
 #include <glib.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "viewport.h"
 #include "layers_panel.h"
@@ -38,7 +37,7 @@ namespace SlavGPS {
 
 
 
-	int kmz_save_file(GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west);
+	int kmz_save_file(QPixmap * pixmap, const char* filename, double north, double east, double south, double west);
 	int kmz_open_file(const char* filename, Viewport * viewport, LayersPanel * panel);
 
 

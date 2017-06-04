@@ -27,6 +27,8 @@
 
 #include <cstdint>
 
+#include <QPixmap>
+
 #include "layer.h"
 
 
@@ -117,7 +119,7 @@ namespace SlavGPS {
 
 
 		char * image = NULL;
-		GdkPixbuf * pixbuf = NULL;
+		QPixmap * pixmap = NULL;
 		uint8_t alpha = 255;
 
 		struct UTM corner; /* Top Left. */
@@ -127,7 +129,7 @@ namespace SlavGPS {
 		unsigned int width = 0;
 		unsigned int height = 0;
 
-		GdkPixbuf * scaled = NULL;
+		QPixmap * scaled = NULL;
 		uint32_t scaled_width = 0;
 		uint32_t scaled_height = 0;
 
@@ -141,7 +143,7 @@ namespace SlavGPS {
 
 	LayerGeoref * vik_georef_layer_create(Viewport * viewport,
 					      const char *name,
-					      GdkPixbuf *pibxbuf,
+					      QPixmap * pixmap,
 					      VikCoord *coord_tr,
 					      VikCoord *coord_br );
 

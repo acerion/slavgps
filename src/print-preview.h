@@ -44,7 +44,7 @@ struct _VikPrintPreview
 
   GtkWidget      *area;
   GtkPageSetup   *page;
-  GdkPixbuf      *pixbuf;
+  QPixmap      *pixbuf;
   bool        dragging;
 
   GdkDrawable    *drawable;

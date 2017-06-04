@@ -24,15 +24,14 @@
 
 
 
-
+#include <QPixmap>
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
 
 
 
 
-GdkPixbuf * a_get_wp_sym(const char * sym);
+QPixmap * a_get_wp_sym(const char * sym);
 const char *a_get_hashed_sym(const char * sym);
 void a_populate_sym_list(GtkListStore * list);
 /* Use when preferences have changed to reload icons. */

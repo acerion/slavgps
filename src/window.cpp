@@ -2507,7 +2507,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 
 #ifdef K
 	/* more efficient way: stuff draws directly to pixbuf (fork viewport) */
-	GdkPixbuf *pixbuf_to_save;
+	QPixmap *pixmap_to_save;
 
 	GtkWidget * msgbox = gtk_message_dialog_new(this->get_toolkit_window(),
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -2543,7 +2543,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 
 	/* Save buffer as file. */
 	QPixmap * pixmap = this->viewport->get_pixmap();
-	//pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+	//pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 
 	if (!pixmap) {
 		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", w, h);
@@ -2565,7 +2565,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 #ifdef K
 		double north, east, south, west;
 		this->viewport->get_min_max_lat_lon(&south, &north, &west, &east);
-		ans = kmz_save_file(pixbuf_to_save, file_path, north, east, south, west);
+		ans = kmz_save_file(pixmap_to_save, file_path, north, east, south, west);
 #endif
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
@@ -2649,14 +2649,14 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 			this->draw_redraw();
 
 			/* save buffer as file. */
-			GdkPixbuf * pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
-			gdk_pixbuf_save(pixbuf_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
+			QPixmap * pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+			gdk_pixbuf_save(pixmap_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
 			if (error) {
 				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1: %2").arg(name_of_file).arg(error->message));
 				g_error_free(error);
 			}
 
-			g_object_unref(G_OBJECT(pixbuf_to_save));
+			g_object_unref(G_OBJECT(pixmap_to_save));
 		}
 	}
 

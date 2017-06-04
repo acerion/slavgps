@@ -979,14 +979,14 @@ Layer * LayerMapInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 /****** DRAWING ******/
 /*********************/
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMap * layer, char * filename_buf);
+static QPixmap * get_pixmap_from_file(LayerMap * layer, char * filename_buf);
 
-static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double yshrinkfactor)
+static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double yshrinkfactor)
 {
 #ifdef K
-	uint16_t width = gdk_pixbuf_get_width(pixbuf), height = gdk_pixbuf_get_height(pixbuf);
-	GdkPixbuf * tmp = gdk_pixbuf_scale_simple(pixbuf, ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), GDK_INTERP_BILINEAR);
-	g_object_unref(G_OBJECT(pixbuf));
+	uint16_t width = gdk_pixbuf_get_width(pixmap), height = gdk_pixbuf_get_height(pixmap);
+	QPixmap * tmp = gdk_pixbuf_scale_simple(pixmap, ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), GDK_INTERP_BILINEAR);
+	g_object_unref(G_OBJECT(pixmap));
 	return tmp;
 #endif
 }
@@ -1009,9 +1009,9 @@ static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **c
 
 
 
-static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
+static QPixmap *get_pixmap_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 {
-	GdkPixbuf *pixbuf = NULL;
+	QPixmap *pixmap = NULL;
 
 	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
 	int flip_y = (int) pow(2, zoom)-1 - yy;
@@ -1042,10 +1042,10 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 					fprintf(stderr, "WARNING: %s: %s (%d)\n", __FUNCTION__, "not enough bytes", bytes);
 					finished = true;
 				} else {
-					/* Convert these blob bytes into a pixbuf via these streaming operations. */
+					/* Convert these blob bytes into a pixmap via these streaming operations. */
 					GInputStream *stream = g_memory_input_stream_new_from_data(data, bytes, NULL);
 					GError *error = NULL;
-					pixbuf = gdk_pixbuf_new_from_stream(stream, NULL, &error);
+					pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
 					if (error) {
 						fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 						g_error_free(error);
@@ -1069,23 +1069,23 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 
 	free(statement);
 
-	return pixbuf;
+	return pixmap;
 }
 #endif
 
 
 
 
-static GdkPixbuf *get_mbtiles_pixbuf(LayerMap * layer, int xx, int yy, int zoom)
+static QPixmap *get_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
 {
-	GdkPixbuf *pixbuf = NULL;
+	QPixmap *pixmap = NULL;
 
 #ifdef HAVE_SQLITE3_H
 	if (layer->mbtiles) {
 		/*
 		  char *statement = g_strdup_printf("SELECT name FROM sqlite_master WHERE type='table';");
 		  char *errMsg = NULL;
-		  int ans = sqlite3_exec(layer->mbtiles, statement, sql_select_tile_dump_cb, pixbuf, &errMsg);
+		  int ans = sqlite3_exec(layer->mbtiles, statement, sql_select_tile_dump_cb, pixmap, &errMsg);
 		  if (ans != SQLITE_OK) {
 		  // Only to console for information purposes only
 		  fprintf(stderr, "WARNING: SQL problem: %d for %s - error: %s\n", ans, statement, errMsg);
@@ -1096,17 +1096,17 @@ static GdkPixbuf *get_mbtiles_pixbuf(LayerMap * layer, int xx, int yy, int zoom)
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		pixbuf = get_pixbuf_sql_exec(layer->mbtiles, xx, yy, zoom);
+		pixmap = get_pixmap_sql_exec(layer->mbtiles, xx, yy, zoom);
 	}
 #endif
 
-	return pixbuf;
+	return pixmap;
 }
 
 
 
 
-static GdkPixbuf *get_pixbuf_from_metatile(LayerMap * layer, int xx, int yy, int zz)
+static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int zz)
 {
 	const int tile_max = METATILE_MAX_SIZE;
 	char err_msg[PATH_MAX];
@@ -1129,12 +1129,12 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMap * layer, int xx, int yy, int
 			return NULL;
 		}
 
-		/* Convert these buf bytes into a pixbuf via these streaming operations. */
-		GdkPixbuf *pixbuf = NULL;
+		/* Convert these buf bytes into a pixmap via these streaming operations. */
+		QPixmap *pixmap = NULL;
 
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
 		GError *error = NULL;
-		pixbuf = gdk_pixbuf_new_from_stream(stream, NULL, &error);
+		pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
 		if (error) {
 			fprintf(stderr, "WARNING: %s: %s", __FUNCTION__, error->message);
 			g_error_free(error);
@@ -1142,7 +1142,7 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMap * layer, int xx, int yy, int
 		g_input_stream_close(stream, NULL, NULL);
 
 		free(buf);
-		return pixbuf;
+		return pixmap;
 	} else {
 		free(buf);
 		fprintf(stderr, "WARNING: FAILED:%s %s", __FUNCTION__, err_msg);
@@ -1156,20 +1156,20 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMap * layer, int xx, int yy, int
 
 /**
  * Caller has to decrease reference counter of returned.
- * GdkPixbuf, when buffer is no longer needed.
+ * QPixmap, when buffer is no longer needed.
  */
-static GdkPixbuf * pixbuf_apply_settings(GdkPixbuf * pixbuf, uint8_t alpha, double xshrinkfactor, double yshrinkfactor)
+static QPixmap * pixmap_apply_settings(QPixmap * pixmap, uint8_t alpha, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Apply alpha setting. */
-	if (pixbuf && alpha < 255) {
-		pixbuf = ui_pixbuf_set_alpha(pixbuf, alpha);
+	if (pixmap && alpha < 255) {
+		pixmap = ui_pixmap_set_alpha(pixmap, alpha);
 	}
 
-	if (pixbuf && (xshrinkfactor != 1.0 || yshrinkfactor != 1.0)) {
-		pixbuf = pixbuf_shrink(pixbuf, xshrinkfactor, yshrinkfactor);
+	if (pixmap && (xshrinkfactor != 1.0 || yshrinkfactor != 1.0)) {
+		pixmap = pixmap_shrink(pixmap, xshrinkfactor, yshrinkfactor);
 	}
 
-	return pixbuf;
+	return pixmap;
 }
 
 
@@ -1209,61 +1209,61 @@ static void get_cache_filename(const char *cache_dir,
 
 /**
  * Caller has to decrease reference counter of returned.
- * GdkPixbuf, when buffer is no longer needed.
+ * QPixmap, when buffer is no longer needed.
  */
-static GdkPixbuf * get_pixbuf(LayerMap * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
+static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
-#ifdef K
-	GdkPixbuf * pixbuf = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
-	if (pixbuf) {
+	QPixmap * pixmap = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+	if (pixmap) {
 		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
 	} else {
+#ifdef K
 		//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
 		MapSource * map = map_sources[layer->map_index];
 		if (map->is_direct_file_access()) {
 			/* ATM MBTiles must be 'a direct access type'. */
 			if (map->is_mbtiles()) {
-				pixbuf = get_mbtiles_pixbuf(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+				pixmap = get_mbtiles_pixmap(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else if (map->is_osm_meta_tiles()) {
-				pixbuf = get_pixbuf_from_metatile(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+				pixmap = get_pixmap_from_metatile(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else {
 				get_cache_filename(layer->cache_dir, MapsCacheLayout::OSM, map_type, NULL,
 					     mapcoord, filename_buf, buf_len,
 					     map->get_file_extension());
-				pixbuf = get_pixbuf_from_file(layer, filename_buf);
+				pixmap = get_pixmap_from_file(layer, filename_buf);
 			}
 		} else {
 			get_cache_filename(layer->cache_dir, layer->cache_layout, map_type, mapname,
 				     mapcoord, filename_buf, buf_len,
 				     map->get_file_extension());
-			pixbuf = get_pixbuf_from_file(layer, filename_buf);
+			pixmap = get_pixmap_from_file(layer, filename_buf);
 		}
 
-		if (pixbuf) {
-			pixbuf = pixbuf_apply_settings(pixbuf, layer->alpha, xshrinkfactor, yshrinkfactor);
+		if (pixmap) {
+			pixmap = pixmap_apply_settings(pixmap, layer->alpha, xshrinkfactor, yshrinkfactor);
 
-			map_cache_add(pixbuf, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
+			map_cache_add(pixmap, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
 				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 		}
-	}
-	return pixbuf;
 #endif
+	}
+	return pixmap;
 }
 
 
 
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMap * layer, char * filename_buf)
+static QPixmap * get_pixmap_from_file(LayerMap * layer, char * filename_buf)
 {
-	GdkPixbuf * pixbuf = NULL;
+	QPixmap * pixmap = NULL;
 
 	if (g_file_test(filename_buf, G_FILE_TEST_EXISTS) == true) {
 #ifdef K
 		GError * gx = NULL;
-		pixbuf = gdk_pixbuf_new_from_file(filename_buf, &gx);
+		pixmap = gdk_pixbuf_new_from_file(filename_buf, &gx);
 
-		/* Free the pixbuf on error. */
+		/* Free the pixmap on error. */
 		if (gx) {
 			if (gx->domain != GDK_PIXBUF_ERROR || gx->code != GDK_PIXBUF_ERROR_CORRUPT_IMAGE) {
 				/* Report a warning. */
@@ -1274,15 +1274,15 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMap * layer, char * filename_buf)
 			}
 
 			g_error_free(gx);
-			if (pixbuf) {
-				g_object_unref(G_OBJECT(pixbuf));
+			if (pixmap) {
+				g_object_unref(G_OBJECT(pixmap));
 			}
-			pixbuf = NULL;
+			pixmap = NULL;
 		}
 #endif
 	}
 
-	return pixbuf;
+	return pixmap;
 }
 
 
@@ -1341,13 +1341,13 @@ bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, in
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
-		GdkPixbuf * pixbuf = get_pixbuf(layer, map_type, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
-		if (pixbuf) {
+		QPixmap * pixmap = get_pixmap(layer, map_type, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+		if (pixmap) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 #ifdef K
-			viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-			g_object_unref(pixbuf);
+			viewport->draw_pixmap(pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
+			g_object_unref(pixmap);
 #endif
 			return true;
 		}
@@ -1373,15 +1373,15 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 				TileInfo ulm3 = ulm2;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
-				GdkPixbuf * pixbuf = get_pixbuf(layer, map_type, mapname, &ulm3, path_buf, max_path_len, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
-				if (pixbuf) {
+				QPixmap * pixmap = get_pixmap(layer, map_type, mapname, &ulm3, path_buf, max_path_len, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
+				if (pixmap) {
 					int src_x = 0;
 					int src_y = 0;
 					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
 #ifdef K
-					viewport->draw_pixmap(pixbuf, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
-					g_object_unref(pixbuf);
+					viewport->draw_pixmap(pixmap, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
+					g_object_unref(pixmap);
 #endif
 					return true;
 				}
@@ -1438,7 +1438,7 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 		VikCoord coord;
 		int xx, yy, width, height;
-		GdkPixbuf *pixbuf;
+		QPixmap *pixmap;
 
 		/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
 		   which can happen when using a small fixed zoom level and viewing large areas.
@@ -1468,19 +1468,19 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				for (int y = ymin; y <= ymax; y++) {
 					ulm.x = x;
 					ulm.y = y;
-					pixbuf = get_pixbuf(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
-					if (pixbuf) {
+					pixmap = get_pixmap(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
+					if (pixmap) {
 #ifdef K
-						width = gdk_pixbuf_get_width (pixbuf);
-						height = gdk_pixbuf_get_height(pixbuf);
+						width = gdk_pixbuf_get_width (pixmap);
+						height = gdk_pixbuf_get_height(pixmap);
 
 						map->tile_to_center_coord(&ulm, &coord);
 						viewport->coord_to_screen(&coord, &xx, &yy);
 						xx -= (width/2);
 						yy -= (height/2);
 
-						viewport->draw_pixmap(pixbuf, 0, 0, xx, yy, width, height);
-						g_object_unref(pixbuf);
+						viewport->draw_pixmap(pixmap, 0, 0, xx, yy, width, height);
+						g_object_unref(pixmap);
 #endif
 					}
 				}
@@ -1530,13 +1530,13 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 					} else {
 						/* Try correct scale first. */
 						int scale_factor = 1;
-						pixbuf = get_pixbuf(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
-						if (pixbuf) {
+						pixmap = get_pixmap(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+						if (pixmap) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 #ifdef K
-							viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-							g_object_unref(pixbuf);
+							viewport->draw_pixmap(pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
+							g_object_unref(pixmap);
 #endif
 						} else {
 							/* Otherwise try different scales. */
@@ -1606,7 +1606,7 @@ void LayerMap::draw(Viewport * viewport)
 
 		/* Logo. */
 #ifdef K
-		const GdkPixbuf *logo = map_sources[this->map_index]->get_logo();
+		const QPixmap *logo = map_sources[this->map_index]->get_logo();
 		viewport->add_logo(logo);
 
 		/* Get corner coords. */
@@ -1746,8 +1746,8 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 					case REDOWNLOAD_BAD: {
 						/* See if this one is bad or what. */
 						GError *gx = NULL;
-						GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
-						if (gx || (!pixbuf)) {
+						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
+						if (gx || (!pixmap)) {
 							if (remove(mdi->filename_buf)) {
 								fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
 							}
@@ -1756,7 +1756,7 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 							g_error_free(gx);
 
 						} else {
-							g_object_unref(pixbuf);
+							g_object_unref(pixmap);
 						}
 						break;
 					}
@@ -2019,10 +2019,10 @@ static void maps_layer_tile_info(LayerMap * layer)
 			char *exists = NULL;
 			int zoom = 17 - ulm.scale;
 			if (layer->mbtiles) {
-				GdkPixbuf *pixbuf = get_pixbuf_sql_exec(layer->mbtiles, ulm.x, ulm.y, zoom);
-				if (pixbuf) {
+				QPixmap *pixmap = get_pixmap_sql_exec(layer->mbtiles, ulm.x, ulm.y, zoom);
+				if (pixmap) {
 					exists = strdup(_("YES"));
-					g_object_unref(G_OBJECT(pixbuf));
+					g_object_unref(G_OBJECT(pixmap));
 				} else {
 					exists = strdup(_("NO"));
 				}
@@ -2031,7 +2031,7 @@ static void maps_layer_tile_info(LayerMap * layer)
 			}
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
-			/* NB Also handles .jpg automatically due to pixbuf_new_from() support - although just print png for now. */
+			/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
 			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
 			free(exists);
 #else
@@ -2189,7 +2189,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 #ifdef K
 	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_mapdl_pixbuf;
+	this->cursor_data = &cursor_mapdl_pixmap;
 #endif
 
 	Layer::get_interface(LayerType::MAP)->layer_tools.insert({{ 0, this }});
@@ -2684,8 +2684,8 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 							/* see if this one is bad or what */
 #ifdef K
 							GError *gx = NULL;
-							GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
-							if (gx || (!pixbuf)) {
+							QPixmap *pixmap = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
+							if (gx || (!pixmap)) {
 								mdi->mapstoget++;
 							}
 #endif
