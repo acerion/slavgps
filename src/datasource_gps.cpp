@@ -42,7 +42,6 @@
 #include "gpx.h"
 #include "acquire.h"
 #include "settings.h"
-#include "vik_compat.h"
 
 
 

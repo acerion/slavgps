@@ -48,9 +48,6 @@
 #include "icons/icons.h"
 #include "file.h"
 #include "dialog.h"
-#if 0
-#include "vik_compat.h"
-#endif
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"

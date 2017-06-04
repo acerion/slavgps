@@ -34,7 +34,7 @@
 #include "viking.h"
 #include "print.h"
 #include "print-preview.h"
-#include "vik_compat.h"
+
 
 
 

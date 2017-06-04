@@ -56,7 +56,6 @@
 #include "uibuilder.h"
 //#include "preferences.h"
 #include "globals.h"
-//#include "vik_compat.h"
 
 
 
