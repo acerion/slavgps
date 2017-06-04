@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <mutex>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -42,7 +43,6 @@
 #include "preferences.h"
 #include "settings.h"
 #include "globals.h"
-#include "vik_compat.h"
 
 
 
@@ -73,7 +73,7 @@ static char *osm_password = NULL;
 /**
  * Mutex to protect auth. token
  */
-static GMutex *login_mutex = NULL;
+static std::mutex login_mutex;
 
 /**
  * Different type of trace visibility.
@@ -150,7 +150,7 @@ static const char *get_default_user()
 
 void SlavGPS::osm_set_login(const char *user, const char *password)
 {
-	g_mutex_lock(login_mutex);
+	login_mutex.lock();
 
 	free(osm_user);
 	osm_user = NULL;
@@ -161,7 +161,7 @@ void SlavGPS::osm_set_login(const char *user, const char *password)
 	osm_user = g_strdup(user);
 	osm_password = g_strdup(password);
 
-	g_mutex_unlock(login_mutex);
+	login_mutex.unlock();
 }
 
 
@@ -169,9 +169,9 @@ void SlavGPS::osm_set_login(const char *user, const char *password)
 char * SlavGPS::osm_get_login()
 {
 	char * user_pass = NULL;
-	g_mutex_lock(login_mutex);
+	login_mutex.lock();
 	user_pass = g_strdup_printf("%s:%s", osm_user, osm_password);
-	g_mutex_unlock(login_mutex);
+	login_mutex.unlock();
 	return user_pass;
 }
 
@@ -189,8 +189,6 @@ void SlavGPS::osm_traces_init()
 	a_preferences_register(prefs, tmp, VIKING_OSM_TRACES_PARAMS_GROUP_KEY);
 	tmp.s = "";
 	a_preferences_register(prefs+1, tmp, VIKING_OSM_TRACES_PARAMS_GROUP_KEY);
-
-	login_mutex = vik_mutex_new();
 }
 
 
@@ -198,7 +196,6 @@ void SlavGPS::osm_traces_init()
 
 void SlavGPS::osm_traces_uninit()
 {
-	vik_mutex_free(login_mutex);
 }
 
 

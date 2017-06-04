@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <mutex>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
@@ -53,7 +54,6 @@
 #include "vikmapniklayer.h"
 #include "widget_file_entry.h"
 #include "file.h"
-#include "vik_compat.h"
 
 
 
@@ -203,7 +203,7 @@ static Parameter prefs[] = {
 
 
 static time_t planet_import_time;
-static GMutex *tp_mutex;
+static std::mutex tp_mutex;
 static GHashTable *requests = NULL;
 
 
@@ -241,8 +241,6 @@ void SlavGPS::vik_mapnik_layer_init(void)
  */
 void SlavGPS::vik_mapnik_layer_post_init(void)
 {
-	tp_mutex = vik_mutex_new();
-
 	/* Just storing keys only. */
 	requests = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
@@ -270,7 +268,6 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 
 void SlavGPS::vik_mapnik_layer_uninit()
 {
-	vik_mutex_free(tp_mutex);
 }
 
 
@@ -680,9 +677,9 @@ static void background(RenderInfo *data, void * threaddata)
 		data->lmk->render(data->ul, data->br, data->ulmc);
 	}
 
-	g_mutex_lock(tp_mutex);
+	tp_mutex.lock();
 	g_hash_table_remove(requests, data->request);
-	g_mutex_unlock(tp_mutex);
+	tp_mutex.unlock();
 
 	if (res == 0) {
 		data->lmk->emit_changed(); /* NB update display from background. */
@@ -714,11 +711,11 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 	unsigned int nn = name ? g_str_hash(name) : 0;
 	char *request = g_strdup_printf(REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn);
 
-	g_mutex_lock(tp_mutex);
+	tp_mutex.lock();
 
 	if (g_hash_table_lookup_extended(requests, request, NULL, NULL)) {
 		free(request);
-		g_mutex_unlock(tp_mutex);
+		tp_mutex.unlock();
 		return;
 	}
 
@@ -734,7 +731,7 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 
 	g_hash_table_insert(requests, request, NULL);
 
-	g_mutex_unlock(tp_mutex);
+	tp_mutex.unlock();
 
 	char *basename = g_path_get_basename(name);
 	char * job_description = g_strdup_printf(_("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename);

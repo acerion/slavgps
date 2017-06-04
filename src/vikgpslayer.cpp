@@ -27,6 +27,7 @@
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
+#include <mutex>
 #include <vector>
 #include <list>
 #include <cstdlib>
@@ -58,7 +59,6 @@
 #include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
-#include "vik_compat.h"
 
 
 
@@ -149,7 +149,7 @@ static char * old_params_ports[] = {
 
 
 typedef struct {
-	GMutex * mutex;
+	std::mutex mutex;
 	GPSDirection direction;
 	char * port;
 	bool ok;
@@ -849,7 +849,6 @@ bool LayerGPS::is_empty()
 
 static void gps_session_delete(GpsSession *sess)
 {
-	vik_mutex_free(sess->mutex);
 	free(sess->babelargs);
 	free(sess);
 }
@@ -861,7 +860,7 @@ static void set_total_count(int cnt, GpsSession *sess)
 {
 	char s[128];
 	gdk_threads_enter();
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (sess->ok) {
 		const char *tmp_str;
 		if (sess->direction == GPSDirection::DOWN) {
@@ -899,7 +898,7 @@ static void set_total_count(int cnt, GpsSession *sess)
 		gtk_widget_show(sess->progress_label);
 		sess->total_count = cnt;
 	}
-	g_mutex_unlock(sess->mutex);
+	sess->mutex.unlock();
 	gdk_threads_leave();
 }
 
@@ -912,7 +911,7 @@ static void set_current_count(int cnt, GpsSession *sess)
 	const char *tmp_str;
 
 	gdk_threads_enter();
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (sess->ok) {
 		if (cnt < sess->total_count) {
 			if (sess->direction == GPSDirection::DOWN) {
@@ -971,7 +970,7 @@ static void set_current_count(int cnt, GpsSession *sess)
 		}
 		gtk_label_set_text(GTK_LABEL(sess->progress_label), s);
 	}
-	g_mutex_unlock(sess->mutex);
+	sess->mutex.unlock();
 	gdk_threads_leave();
 }
 
@@ -982,12 +981,12 @@ static void set_gps_info(const char *info, GpsSession *sess)
 {
 	char s[256];
 	gdk_threads_enter();
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (sess->ok) {
 		snprintf(s, 256, _("GPS Device: %s"), info);
 		gtk_label_set_text (GTK_LABEL(sess->gps_label), s);
 	}
-	g_mutex_unlock(sess->mutex);
+	sess->mutex.unlock();
 	gdk_threads_leave();
 }
 
@@ -1048,14 +1047,14 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 	char *line;
 
 	gdk_threads_enter();
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (!sess->ok) {
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gps_session_delete(sess);
 		gdk_threads_leave();
 		g_thread_exit(NULL);
 	}
-	g_mutex_unlock(sess->mutex);
+	sess->mutex.unlock();
 	gdk_threads_leave();
 
 	switch(c) {
@@ -1063,11 +1062,11 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 		line = (char *)data;
 
 		gdk_threads_enter();
-		g_mutex_lock(sess->mutex);
+		sess->mutex.lock();
 		if (sess->ok) {
 			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Status: Working..."));
 		}
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gdk_threads_leave();
 
 		/* Tells us the type of items that will follow. */
@@ -1118,14 +1117,14 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 	static int cnt = 0;
 
 	gdk_threads_enter();
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (!sess->ok) {
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gps_session_delete(sess);
 		gdk_threads_leave();
 		g_thread_exit(NULL);
 	}
-	g_mutex_unlock(sess->mutex);
+	sess->mutex.unlock();
 	gdk_threads_leave();
 
 	switch(c) {
@@ -1133,11 +1132,11 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 		line = (char *)data;
 
 		gdk_threads_enter();
-		g_mutex_lock(sess->mutex);
+		sess->mutex.lock();
 		if (sess->ok) {
 			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Status: Working..."));
 		}
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gdk_threads_leave();
 
 		process_line_for_gps_info(line, sess);
@@ -1210,7 +1209,7 @@ static void gps_comm_thread(GpsSession *sess)
 	if (!result) {
 		gtk_label_set_text(GTK_LABEL(sess->status_label), _("Error: couldn't find gpsbabel."));
 	} else {
-		g_mutex_lock(sess->mutex);
+		sess->mutex.lock();
 		if (sess->ok) {
 			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Done."));
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT, true);
@@ -1231,15 +1230,15 @@ static void gps_comm_thread(GpsSession *sess)
 		} else {
 			/* Cancelled. */
 		}
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 	}
 
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 	if (sess->ok) {
 		sess->ok = false;
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 	} else {
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gps_session_delete(sess);
 	}
 	g_thread_exit(NULL);
@@ -1282,7 +1281,6 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	char *routes = NULL;
 	char *waypoints = NULL;
 
-	sess->mutex = vik_mutex_new();
 	sess->direction = dir;
 	sess->trw = layer;
 	sess->trk = trk;
@@ -1375,11 +1373,11 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		}
 	}
 
-	g_mutex_lock(sess->mutex);
+	sess->mutex.lock();
 
 	if (sess->ok) {
 		sess->ok = false;   /* Tell thread to stop. */
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
@@ -1391,7 +1389,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			}
 			free(device_off);
 		}
-		g_mutex_unlock(sess->mutex);
+		sess->mutex.unlock();
 		gps_session_delete(sess);
 	}
 
