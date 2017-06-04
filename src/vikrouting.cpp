@@ -81,8 +81,7 @@ void vik_routing_prefs_init()
 {
 	a_preferences_register_group(VIKING_ROUTING_PARAMS_GROUP_KEY, _("Routing"));
 
-	ParameterValue tmp;
-	tmp.s = NULL;
+	ParameterValue tmp((char *) NULL);
 	a_preferences_register(prefs, tmp, VIKING_ROUTING_PARAMS_GROUP_KEY);
 }
 

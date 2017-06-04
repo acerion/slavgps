@@ -105,9 +105,8 @@ static void cache_item_free(cache_item_t * ci)
 
 void SlavGPS::map_cache_init()
 {
-	ParameterValue tmp;
-	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
-	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
+	ParameterValue val((uint32_t) VIK_CONFIG_MAPCACHE_SIZE);
+	a_preferences_register(prefs, val, VIKING_PREFERENCES_GROUP_KEY);
 }
 
 

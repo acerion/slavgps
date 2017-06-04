@@ -63,21 +63,10 @@ using namespace SlavGPS;
 
 
 
-static ParameterValue file_default(void)
-{
-	ParameterValue data;
-	data.s = "";
-	return data;
-}
-
-static ParameterValue size_default(void) { return VIK_LPD_UINT (256); }
-static ParameterValue alpha_default(void) { return VIK_LPD_UINT (255); }
-
-static ParameterValue cache_dir_default(void)
-{
-	ParameterValue data;
-	data.s = g_strconcat(maps_layer_default_dir(), "MapnikRendering", NULL);
-	return data;
+static ParameterValue file_default(void)      { return ParameterValue(""); }
+static ParameterValue size_default(void)      { return ParameterValue((uint32_t) 256); }
+static ParameterValue alpha_default(void)     { return ParameterValue((uint32_t) 255); }
+static ParameterValue cache_dir_default(void) { return ParameterValue(g_strconcat(maps_layer_default_dir(), "MapnikRendering", NULL)); }
 }
 
 static ParameterScale scales[] = {

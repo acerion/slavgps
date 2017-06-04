@@ -60,7 +60,7 @@ namespace SlavGPS {
 		void draw_utm(Viewport * viewport);
 
 		QColor color;           /* Color of coordinate lines. */
-		uint8_t line_thickness; /* Base thickness of coordinate lines. */
+		uint32_t line_thickness; /* Base thickness of coordinate lines. */
 
 		double deg_inc;
 	};

@@ -47,15 +47,15 @@ static ParameterScale param_scales[] = {
 };
 static ParameterValue color_default(void)
 {
-	return LAYER_PARAM_COLOR (255, 0, 0, 100);
+	return ParameterValue(255, 0, 0, 100);
 }
 static ParameterValue min_inc_default(void)
 {
-	return VIK_LPD_DOUBLE (1.0);
+	return ParameterValue(1.0);
 }
 static ParameterValue line_thickness_default(void)
 {
-	return VIK_LPD_UINT (3);
+	return ParameterValue((uint32_t) 3);
 }
 
 
@@ -157,7 +157,7 @@ ParameterValue LayerCoord::get_param_value(param_id_t id, bool is_file_operation
 		rv.d = this->deg_inc * 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv.i = this->line_thickness;
+		rv.u = this->line_thickness;
 		break;
 	default:
 		break;

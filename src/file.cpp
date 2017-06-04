@@ -324,8 +324,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 static void string_list_set_param(int i, std::list<char *> * list, Layer * layer)
 {
-	ParameterValue param_value;
-	param_value.sl = list;
+	ParameterValue param_value(list);
 	layer->set_param_value(i, param_value, true);
 }
 

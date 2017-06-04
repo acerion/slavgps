@@ -267,9 +267,8 @@ void a_background_init()
 {
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	ParameterValue tmp;
+	ParameterValue tmp((uint32_t) 1); tmp.u = 1; /* Default to 1 thread due to potential crashing issues. */
 	/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
-	tmp.u = 1; /* Default to 1 thread due to potential crashing issues. */
 	a_preferences_register(&prefs_mapnik[0], tmp, "mapnik");
 #endif
 #endif

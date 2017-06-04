@@ -191,46 +191,32 @@ static char* params_sort_order[] = {
 	NULL
 };
 
-static ParameterValue black_color_default(void) {
-	ParameterValue data; data.c = { .r = 0, .g = 0, .b = 0, .a = 100 }; return data; // Black
-}
-static ParameterValue drawmode_default(void) { return VIK_LPD_UINT (DRAWMODE_BY_TRACK); }
-static ParameterValue line_thickness_default(void) { return VIK_LPD_UINT (1); }
-static ParameterValue trkpointsize_default(void) { return VIK_LPD_UINT (MIN_POINT_SIZE); }
-static ParameterValue trkdirectionsize_default(void) { return VIK_LPD_UINT (5); }
-static ParameterValue bg_line_thickness_default(void) { return VIK_LPD_UINT (0); }
-static ParameterValue trackbgcolor_default(void) {
-	ParameterValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
-}
-static ParameterValue elevation_factor_default(void) { return VIK_LPD_UINT (30); }
-static ParameterValue stop_length_default(void) { return VIK_LPD_UINT (60); }
-static ParameterValue speed_factor_default(void) { return VIK_LPD_DOUBLE (30.0); }
+static ParameterValue black_color_default(void)       { return ParameterValue(0, 0, 0, 100); } /* Black. */
+static ParameterValue drawmode_default(void)          { return ParameterValue((uint32_t) DRAWMODE_BY_TRACK); }
+static ParameterValue line_thickness_default(void)    { return ParameterValue((uint32_t) 1); }
+static ParameterValue trkpointsize_default(void)      { return ParameterValue((uint32_t) MIN_POINT_SIZE); }
+static ParameterValue trkdirectionsize_default(void)  { return ParameterValue((uint32_t) 5); }
+static ParameterValue bg_line_thickness_default(void) { return ParameterValue((uint32_t) 0); }
+static ParameterValue trackbgcolor_default(void)      { return ParameterValue(255, 255, 255, 100); }  /* White. */
+static ParameterValue elevation_factor_default(void)  { return ParameterValue((uint32_t) 30); }
+static ParameterValue stop_length_default(void)       { return ParameterValue((uint32_t) 60); }
+static ParameterValue speed_factor_default(void)      { return ParameterValue(30.0); }
+static ParameterValue tnfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }
+static ParameterValue wpfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }
+static ParameterValue wptextcolor_default(void)       { return ParameterValue(255, 255, 255, 100); } /* White. */
+static ParameterValue wpbgcolor_default(void)         { return ParameterValue(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
+static ParameterValue wpsize_default(void)            { return ParameterValue((uint32_t) 4); }
+static ParameterValue wpsymbol_default(void)          { return ParameterValue((uint32_t) WP_SYMBOL_FILLED_SQUARE); }
+static ParameterValue image_size_default(void)        { return ParameterValue((uint32_t) 64); }
+static ParameterValue image_alpha_default(void)       { return ParameterValue((uint32_t) 255); }
+static ParameterValue image_cache_size_default(void)  { return ParameterValue((uint32_t) 300); }
+static ParameterValue sort_order_default(void)        { return ParameterValue((uint32_t) 0); }
+static ParameterValue string_default(void)            { return ParameterValue(""); }
 
-static ParameterValue tnfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
-static ParameterValue wpfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
-static ParameterValue wptextcolor_default(void) {
-	ParameterValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
-}
-static ParameterValue wpbgcolor_default(void) {
-	ParameterValue data; data.c = { .r = 0x83, .g = 0x83, .b = 0xc4, .a = 100 }; return data; // Kind of Blue
-}
-static ParameterValue wpsize_default(void) { return VIK_LPD_UINT(4); }
-static ParameterValue wpsymbol_default(void) { return VIK_LPD_UINT (WP_SYMBOL_FILLED_SQUARE); }
 
-static ParameterValue image_size_default(void) { return VIK_LPD_UINT (64); }
-static ParameterValue image_alpha_default(void) { return VIK_LPD_UINT (255); }
-static ParameterValue image_cache_size_default(void) { return VIK_LPD_UINT (300); }
 
-static ParameterValue sort_order_default(void) { return VIK_LPD_UINT (0); }
 
-static ParameterValue string_default(void)
-{
-	ParameterValue data;
-	data.s = "";
-	return data;
-}
-
-// ENUMERATION MUST BE IN THE SAME ORDER AS THE NAMED PARAMS ABOVE
+/* ENUMERATION MUST BE IN THE SAME ORDER AS THE NAMED PARAMS ABOVE. */
 enum {
 	// Sublayer visibilities
 	PARAM_TV,
@@ -1549,7 +1535,7 @@ void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypo
 
 void LayerTRW::new_track_pens(void)
 {
-	int width = this->line_thickness;
+	uint32_t width = this->line_thickness;
 
 
 	this->track_bg_pen = QPen(this->track_bg_color);
@@ -1781,7 +1767,7 @@ bool LayerTRW::sublayer_toggle_visible(Sublayer * sublayer)
 /*
  * Return a property about tracks for this layer.
  */
-int LayerTRW::get_property_tracks_line_thickness()
+uint32_t LayerTRW::get_property_tracks_line_thickness()
 {
 	return this->line_thickness;
 }

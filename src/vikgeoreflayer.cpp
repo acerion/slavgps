@@ -54,11 +54,9 @@ using namespace SlavGPS;
 
 
 /*
-static VikParameterValue image_default(void)
+static ParameterValue image_default(void)
 {
-	VikParameterValue data;
-	data.s = strdup("");
-	return data;
+	return ParameterValue(strdup(""));
 }
 */
 
@@ -151,8 +149,7 @@ typedef struct {
 
 void SlavGPS::vik_georef_layer_init(void)
 {
-	ParameterValue tmp;
-	tmp.b = true;
+	ParameterValue((bool) true);
 	a_preferences_register(&io_prefs[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
 }
 

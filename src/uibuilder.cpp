@@ -37,7 +37,7 @@ using namespace SlavGPS;
 
 ParameterValue vik_lpd_true_default(void)
 {
-	return VIK_LPD_BOOLEAN (true);
+	return ParameterValue((bool) true);
 }
 
 
@@ -45,7 +45,7 @@ ParameterValue vik_lpd_true_default(void)
 
 ParameterValue vik_lpd_false_default(void)
 {
-	return VIK_LPD_BOOLEAN (false);
+	return ParameterValue((bool) false);
 }
 
 

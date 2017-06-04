@@ -78,7 +78,7 @@ static bool loaded;
    abstraction of settings file. */
 static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype, bool * success)
 {
-	ParameterValue value = VIK_LPD_BOOLEAN (false);
+	ParameterValue value((bool) false);
 
 	QString key(QString(group) + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);

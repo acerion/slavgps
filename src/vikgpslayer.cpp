@@ -196,9 +196,7 @@ enum {
 
 static ParameterValue gps_protocol_default(void)
 {
-	ParameterValue data;
-	data.s = strdup("garmin");
-	return data;
+	return ParameterValue(strdup("garmin"));
 }
 
 
@@ -206,8 +204,7 @@ static ParameterValue gps_protocol_default(void)
 
 static ParameterValue gps_port_default(void)
 {
-	ParameterValue data;
-	data.s = strdup("usb:");
+	ParameterValue data(strdup("usb:"));
 #ifndef WINDOWS
 	/* Attempt to auto set default USB serial port entry. */
 	/* Ordered to make lowest device favourite if available. */
@@ -246,13 +243,11 @@ enum {
 
 
 
-static ParameterValue moving_map_method_default(void) { return VIK_LPD_UINT (VEHICLE_POSITION_ON_SCREEN); }
+static ParameterValue moving_map_method_default(void) { return ParameterValue((uint32_t) VEHICLE_POSITION_ON_SCREEN); }
 
 static ParameterValue gpsd_host_default(void)
 {
-	ParameterValue data;
-	data.s = strdup("localhost");
-	return data;
+	return ParameterValue(strdup("localhost"));
 }
 
 
@@ -260,9 +255,7 @@ static ParameterValue gpsd_host_default(void)
 
 static ParameterValue gpsd_port_default(void)
 {
-	ParameterValue data;
-	data.s = g_strdup(DEFAULT_GPSD_PORT);
-	return data;
+	return ParameterValue(strdup(DEFAULT_GPSD_PORT));
 }
 
 
@@ -270,9 +263,7 @@ static ParameterValue gpsd_port_default(void)
 
 static ParameterValue gpsd_retry_interval_default(void)
 {
-	ParameterValue data;
-	data.s = strdup("10");
-	return data;
+	return ParameterValue(strdup("10"));
 }
 
 #endif

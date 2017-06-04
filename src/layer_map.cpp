@@ -139,7 +139,7 @@ static ParameterScale params_scales[] = {
 
 static ParameterValue id_default(void)
 {
-	return VIK_LPD_UINT(MAP_ID_MAPQUEST_OSM);
+	return ParameterValue((uint32_t) MAP_ID_MAPQUEST_OSM);
 }
 
 
@@ -147,14 +147,12 @@ static ParameterValue id_default(void)
 
 static ParameterValue directory_default(void)
 {
-	ParameterValue data;
-	ParameterValue *pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
+	ParameterValue * pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
 	if (pref) {
-		data.s = g_strdup(pref->s);
+		return ParameterValue(g_strdup(pref->s));
 	} else {
-		data.s = "";
+		return ParameterValue("");
 	}
-	return data;
 }
 
 
@@ -162,9 +160,7 @@ static ParameterValue directory_default(void)
 
 static ParameterValue file_default(void)
 {
-	ParameterValue data;
-	data.s = "";
-	return data;
+	return ParameterValue("");
 }
 
 
@@ -172,7 +168,7 @@ static ParameterValue file_default(void)
 
 static ParameterValue alpha_default(void)
 {
-	return VIK_LPD_UINT (255);
+	return ParameterValue((uint32_t) 255);
 }
 
 
@@ -180,7 +176,7 @@ static ParameterValue alpha_default(void)
 
 static ParameterValue mapzoom_default(void)
 {
-	return VIK_LPD_UINT (0);
+	return ParameterValue((uint32_t) 0);
 }
 
 
@@ -194,7 +190,7 @@ static MapsCacheLayout cache_layout_default_value = MapsCacheLayout::VIKING;
 
 static ParameterValue cache_layout_default(void)
 {
-	return VIK_LPD_UINT ((int32_t) cache_layout_default_value);
+	return ParameterValue((uint32_t) cache_layout_default_value);
 }
 
 

@@ -351,7 +351,7 @@ namespace SlavGPS {
 		void dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical);
 
 
-		int get_property_tracks_line_thickness();
+		uint32_t get_property_tracks_line_thickness();
 
 		static TRWMetadata * metadata_new();
 		static void metadata_free(TRWMetadata * metadata);
@@ -431,8 +431,8 @@ namespace SlavGPS {
 		uint8_t drawlines;
 		uint8_t drawdirections;
 		uint8_t drawdirections_size;
-		uint8_t line_thickness;
-		uint8_t bg_line_thickness;
+		uint32_t line_thickness;
+		uint32_t bg_line_thickness;
 		vik_layer_sort_order_t track_sort_order;
 
 		TRWMetadata * metadata = NULL;

@@ -34,23 +34,30 @@
 #include "globals.h"
 
 
-#ifndef SLAVGPS_QT
-#include <gtk/gtk.h>
-#endif
 
 
 /* Parameters (for I/O and Properties) */
 
-typedef union {
+union ParameterValue {
+public:
+	ParameterValue() {};
+	ParameterValue(double d_)       { d = d_; }
+	ParameterValue(uint32_t u_)     { u = u_; }
+	ParameterValue(int32_t i_)      { i = i_; }
+	ParameterValue(bool b_)         { b = b_; }
+	ParameterValue(const char * s_) { s = s_; }
+	ParameterValue(int r_, int g_, int b_, int a_) { c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
+	ParameterValue(std::list<char *> * sl_) { sl = sl_; }
+
 	double d;
 	uint32_t u;
 	int32_t i;
 	bool b;
-	const char *s;
+	const char * s;
 	struct { int r; int g; int b; int a; } c;
 	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
-} ParameterValue;
+} ;
 
 
 typedef int16_t param_id_t;
@@ -151,22 +158,6 @@ typedef enum {
 } vik_layer_sort_order_t;
 
 
-
-/* Annoyingly 'C' cannot initialize unions properly. */
-/* It's dependent on the standard used or the compiler support... */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
-#define VIK_LPD_BOOLEAN(X)     (ParameterValue) { .b = (X) }
-#define VIK_LPD_INT(X)         (ParameterValue) { .u = (X) }
-#define VIK_LPD_UINT(X)        (ParameterValue) { .i = (X) }
-#define VIK_LPD_DOUBLE(X)      (ParameterValue) { .d = (X) }
-#else
-#define VIK_LPD_BOOLEAN(X)     (ParameterValue) { (X) }
-#define VIK_LPD_INT(X)         (ParameterValue) { (X) }
-#define VIK_LPD_UINT(X)        (ParameterValue) { (X) }
-#define VIK_LPD_DOUBLE(X)      (ParameterValue) { (X) }
-#endif
-
-#define LAYER_PARAM_COLOR(R, G, B, A)  (ParameterValue) { .c = { .r = (R), .g = (G), .b = (B), .a = (A) } }
 
 
 ParameterValue vik_lpd_true_default(void);

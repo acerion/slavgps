@@ -157,7 +157,7 @@ static ParameterScale params_scales[] = {
 static ParameterValue convert_to_display(ParameterValue value)
 {
 	/* From seconds into days. */
-	return VIK_LPD_UINT (value.u / 86400);
+	return ParameterValue((uint32_t) (value.u / 86400));
 }
 
 
@@ -166,7 +166,7 @@ static ParameterValue convert_to_display(ParameterValue value)
 static ParameterValue convert_to_internal(ParameterValue value)
 {
 	/* From days into seconds. */
-	return VIK_LPD_UINT (86400 * value.u);
+	return ParameterValue((uint32_t) (86400 * value.u));
 }
 
 
@@ -181,8 +181,7 @@ static Parameter prefs[] = {
 
 void a_download_init(void)
 {
-	ParameterValue tmp;
-	tmp.u = VIK_CONFIG_DEFAULT_TILE_AGE / 86400; /* Now in days. */
+	ParameterValue tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
 #if 0
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 #endif

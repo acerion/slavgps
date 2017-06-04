@@ -143,13 +143,7 @@ static char *params_type[] = {
 
 static ParameterValue color_default(void)
 {
-	ParameterValue data;
-	data.c.r = 0;
-	data.c.g = 0;
-	data.c.b = 255;
-	data.c.a = 255;
-
-	return data;
+	return ParameterValue(0, 0, 255, 255);
 }
 
 
@@ -157,7 +151,7 @@ static ParameterValue color_default(void)
 
 static ParameterValue source_default(void)
 {
-	return VIK_LPD_UINT (DEM_SOURCE_SRTM);
+	return ParameterValue((uint32_t) DEM_SOURCE_SRTM);
 }
 
 
@@ -165,7 +159,7 @@ static ParameterValue source_default(void)
 
 static ParameterValue type_default(void)
 {
-	return VIK_LPD_UINT (DEM_TYPE_HEIGHT);
+	return ParameterValue((uint32_t) DEM_TYPE_HEIGHT);
 }
 
 
@@ -173,7 +167,7 @@ static ParameterValue type_default(void)
 
 static ParameterValue min_elev_default(void)
 {
-	return VIK_LPD_DOUBLE (0.0);
+	return ParameterValue(0.0);
 }
 
 
@@ -181,7 +175,7 @@ static ParameterValue min_elev_default(void)
 
 static ParameterValue max_elev_default(void)
 {
-	return VIK_LPD_DOUBLE (1000.0);
+	return ParameterValue(1000.0);
 }
 
 
