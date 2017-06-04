@@ -62,7 +62,13 @@ typedef enum {
 
 
 
+class BackgroundJob {
+public:
+	BackgroundJob();
+	virtual ~BackgroundJob() {};
 
+	virtual void cleanup_on_cancel(void) {};
+};
 
 
 
@@ -76,6 +82,7 @@ typedef struct {
 	QPersistentModelIndex * index;
 	int number_items;
 	int progress; /* 0 - 100% */
+	BackgroundJob * bg_job;
 } background_job_t;
 
 
@@ -113,6 +120,7 @@ private:
 
 
 void a_background_thread(Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int number_items);
+void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, int number_items);
 int a_background_thread_progress(background_job_t * job, int progress);
 int a_background_testcancel(background_job_t * job);
 void a_background_show_window();

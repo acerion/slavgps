@@ -1636,10 +1636,13 @@ void LayerMap::draw(Viewport * viewport)
 /*************************/
 
 /* Pass along data to thread, exists even if layer is deleted. */
-class MapDownloadInfo {
+class MapDownloadInfo : public BackgroundJob {
 public:
+	MapDownloadInfo() {};
 	MapDownloadInfo(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode);
 	~MapDownloadInfo();
+
+	void cleanup_on_cancel(void);
 
 	char * cache_dir = NULL;
 	char * filename_buf = NULL;
@@ -1662,14 +1665,6 @@ public:
 static char * redownload_mode_message(int redownload_mode, int mapstoget, char * label);
 static void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
 static void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
-
-
-
-
-static void mdi_free(MapDownloadInfo * mdi)
-{
-	delete mdi;
-}
 
 
 
@@ -1836,17 +1831,17 @@ static int map_download_thread(MapDownloadInfo * mdi, void * threaddata)
 
 
 
-static void mdi_cancel_cleanup(MapDownloadInfo * mdi)
+void MapDownloadInfo::cleanup_on_cancel(void)
 {
-	if (mdi->mapcoord.x || mdi->mapcoord.y) {
-		get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-				   map_sources[mdi->map_index]->map_type,
-				   map_sources[mdi->map_index]->get_name(),
-				   &mdi->mapcoord, mdi->filename_buf, mdi->maxlen,
-				   map_sources[mdi->map_index]->get_file_extension());
-		if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == true) {
-			if (remove(mdi->filename_buf)) {
-				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", mdi->filename_buf);
+	if (this->mapcoord.x || this->mapcoord.y) {
+		get_cache_filename(this->cache_dir, this->cache_layout,
+				   map_sources[this->map_index]->map_type,
+				   map_sources[this->map_index]->get_name(),
+				   &this->mapcoord, this->filename_buf, this->maxlen,
+				   map_sources[this->map_index]->get_file_extension());
+		if (g_file_test(this->filename_buf, G_FILE_TEST_EXISTS) == true) {
+			if (remove(this->filename_buf)) {
+				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", this->filename_buf);
 			}
 		}
 	}
@@ -1887,16 +1882,15 @@ static void start_download_thread(LayerMap * layer, Viewport * viewport, const V
 
 			mdi->layer->weak_ref(LayerMap::weak_ref_cb, mdi);
 			/* Launch the thread */
-			a_background_thread(BACKGROUND_POOL_REMOTE,
+			a_background_thread(mdi,
+					    BACKGROUND_POOL_REMOTE,
 					    job_description,
 					    (vik_thr_func) map_download_thread,     /* Worker function. */
 					    mdi,                                    /* Worker data. */
-					    (vik_thr_free_func) mdi_free,           /* Function to free worker data. */
-					    (vik_thr_free_func) mdi_cancel_cleanup,
 					    mdi->mapstoget);
 			free(job_description);
 		} else {
-			mdi_free(mdi);
+			delete mdi;
 		}
 	}
 }
@@ -1934,16 +1928,15 @@ void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int
 		mdi->layer->weak_ref(weak_ref_cb, mdi);
 
 		/* Launch the thread. */
-		a_background_thread(BACKGROUND_POOL_REMOTE,
+		a_background_thread(mdi,
+				    BACKGROUND_POOL_REMOTE,
 				    job_description,
 				    (vik_thr_func) map_download_thread,     /* Worker function. */
 				    mdi,                                    /* Worker data. */
-				    (vik_thr_free_func) mdi_free,           /* Function to free worker data. */
-				    (vik_thr_free_func) mdi_cancel_cleanup,
 				    mdi->mapstoget);
 		free(job_description);
 	} else {
-		mdi_free(mdi);
+		delete mdi;
 	}
 }
 
@@ -2332,7 +2325,7 @@ int LayerMap::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownl
 
 	int rv = mdi->mapstoget;
 
-	mdi_free(mdi);
+	delete mdi;
 
 	return rv;
 }

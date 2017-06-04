@@ -129,6 +129,10 @@ static void thread_die(background_job_t * job)
 {
 	if (job->worker_data_free_func) {
 		job->worker_data_free_func(job->worker_data);
+	} else if (job->bg_job) {
+		delete job->bg_job;
+	} else {
+		; /* NOOP */
 	}
 
 	if (job->number_items) {
@@ -154,6 +158,10 @@ int a_background_testcancel(background_job_t * job)
 	if (job && job->remove_from_list) {
 		if (job->worker_data_cancel_cleanup_func) {
 			job->worker_data_cancel_cleanup_func(job->worker_data);
+		} else if (job->bg_job) {
+			job->bg_job->cleanup_on_cancel();
+		} else {
+			; /* NOOP */
 		}
 		return -1;
 	}
@@ -212,6 +220,42 @@ void a_background_thread(Background_Pool_Type bp, char const * job_description, 
 	job->number_items = number_items;
 	job->progress = 0;
 	job->index = bgwindow->insert_job(job_name, job);
+	job->bg_job = NULL;
+
+	bgitemcount += number_items;
+
+	/* Run the thread in the background. */
+	if (bp == BACKGROUND_POOL_REMOTE) {
+		g_thread_pool_push(thread_pool_remote, job, NULL);
+#ifdef HAVE_LIBMAPNIK
+	} else if (bp == BACKGROUND_POOL_LOCAL_MAPNIK) {
+		g_thread_pool_push(thread_pool_local_mapnik, job, NULL);
+
+#endif
+	} else {
+		g_thread_pool_push(thread_pool_local, job, NULL);
+	}
+}
+
+
+
+
+void a_background_thread(BackgroundJob * bg_job, Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, int number_items)
+{
+	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
+
+	QString job_name(job_description);
+	qDebug() << "II: Background: creating background thread" << job_name;
+
+	job->remove_from_list = true;
+	job->worker_function = worker_function;
+	job->worker_data = worker_data;
+	job->worker_data_free_func = NULL;
+	job->worker_data_cancel_cleanup_func = NULL;
+	job->number_items = number_items;
+	job->progress = 0;
+	job->index = bgwindow->insert_job(job_name, job);
+	job->bg_job = bg_job;
 
 	bgitemcount += number_items;
 
@@ -595,4 +639,12 @@ void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &o
         progressBarOption.textVisible = true;
 
         QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
+}
+
+
+
+
+BackgroundJob::BackgroundJob()
+{
+
 }

@@ -285,9 +285,23 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 /* Structure for DEM data used in background thread. */
-typedef struct {
-	LayerDEM * layer;
-} dem_load_thread_data;
+class DemLoadJob : public BackgroundJob {
+public:
+	DemLoadJob(LayerDEM * layer, std::list<char *> * files_);
+
+	void cleanup_on_cancel(void);
+
+	LayerDEM * layer = NULL;
+};
+
+
+
+
+DemLoadJob::DemLoadJob(LayerDEM * layer_, std::list<char *> * files_)
+{
+	this->layer = layer_;
+	this->layer->files = files_;
+}
 
 
 
@@ -295,13 +309,13 @@ typedef struct {
 /*
  * Function for starting the DEM file loading as a background thread/
  */
-static int dem_layer_load_list_thread(dem_load_thread_data * dltd, background_job_t * background_job)
+static int dem_layer_load_list_thread(DemLoadJob * load_job, background_job_t * background_job)
 {
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
 
 	std::list<std::string> dem_filenames;
-	for (auto iter = dltd->layer->files->begin(); iter != dltd->layer->files->end(); iter++) {
+	for (auto iter = load_job->layer->files->begin(); iter != load_job->layer->files->end(); iter++) {
 		std::string dem_filename = std::string(*iter);
 		dem_filenames.push_front(dem_filename);
 	}
@@ -315,9 +329,9 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, background_jo
 	   Thus force draw only at the end, as loading is complete/aborted. */
 	//gdk_threads_enter();
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
-	if (dltd->layer) {
+	if (load_job->layer) {
 		qDebug() << "II: Layer DEM: will emit 'layer changed' B";
-		dltd->layer->emit_changed(); /* NB update from background thread. */
+		load_job->layer->emit_changed(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
 
@@ -327,16 +341,7 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, background_jo
 
 
 
-static void dem_layer_thread_data_free(dem_load_thread_data * data)
-{
-	/* Simple release. */
-	free(data);
-}
-
-
-
-
-static void dem_layer_thread_cancel(dem_load_thread_data * data)
+void DemLoadJob::cleanup_on_cancel(void)
 {
 	/* Abort loading.
 	   Instead of freeing the list, leave it as partially processed.
@@ -434,16 +439,13 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 		/* No need for thread if no files. */
 		if (this->files && !this->files->empty()) {
 			/* Thread Load. */
-			dem_load_thread_data * dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
-			dltd->layer = this;
-			dltd->layer->files = param_value.sl;
+			DemLoadJob * load_job = new DemLoadJob(this, param_value.sl);
 
-			a_background_thread(BACKGROUND_POOL_LOCAL,
+			a_background_thread(load_job,
+					    BACKGROUND_POOL_LOCAL,
 					    _("DEM Loading"),                                 /* Job description. */
 					    (vik_thr_func) dem_layer_load_list_thread,        /* Worker function. */
-					    dltd,                                             /* Worker data. */
-					    (vik_thr_free_func) dem_layer_thread_data_free,   /* Function to free worker data. */
-					    (vik_thr_free_func) dem_layer_thread_cancel,
+					    load_job,                                         /* Worker data. */
 					    param_value.sl->size()); /* Number of DEM files. */
 		}
 
@@ -959,7 +961,7 @@ LayerDEM::~LayerDEM()
 /**************************************************************
  **** SOURCES & DOWNLOADING
  **************************************************************/
-class DEMDownloadParams {
+class DEMDownloadParams : public BackgroundJob {
 public:
 	DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer);
 	~DEMDownloadParams();
@@ -1449,12 +1451,12 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			char * job_description = g_strdup_printf(_("Downloading DEM %s"), dem_file);
 			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
 
-			a_background_thread(BACKGROUND_POOL_REMOTE,
+			a_background_thread(p,
+					    BACKGROUND_POOL_REMOTE,
 					    job_description,
 					    (vik_thr_func) dem_download_thread,            /* Worker function. */
 					    p,                                             /* Worker data. */
-					    (vik_thr_free_func) free_dem_download_params,  /* Function to free worker data. */
-					    NULL, 1);
+					    1);
 
 			free(job_description);
 		} else {
