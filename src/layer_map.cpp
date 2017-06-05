@@ -120,7 +120,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static void start_download_thread(LayerMap * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
+
 static unsigned int map_type_to_map_index(MapTypeID map_type);
 
 
@@ -453,13 +453,11 @@ void LayerMap::set_map_type(MapTypeID map_type)
 MapTypeID maps_layer_get_default_map_type()
 {
 	LayerInterface * vli = Layer::get_interface(LayerType::MAP);
-#ifdef K
-	ParameterValue vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", ParameterType::UINT); /* kamilTODO: get the default value from LayerInterface. */
+	ParameterValue vlpd = a_layer_defaults_get(vli->layer_type_string, "mode", ParameterType::UINT); /* kamilTODO: get the default value from LayerInterface. */
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}
 	return (MapTypeID) vlpd.u;
-#endif
 }
 
 
@@ -975,12 +973,13 @@ Layer * LayerMapInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 /****** DRAWING ******/
 /*********************/
 
-static QPixmap * get_pixmap_from_file(LayerMap * layer, char * filename_buf);
+static QPixmap * get_pixmap_from_file(LayerMap * layer, const char * full_path);
 
 static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double yshrinkfactor)
 {
+	int width = pixmap->width();
+	int height = pixmap->height();
 #ifdef K
-	uint16_t width = gdk_pixbuf_get_width(pixmap), height = gdk_pixbuf_get_height(pixmap);
 	QPixmap * tmp = gdk_pixbuf_scale_simple(pixmap, ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), GDK_INTERP_BILINEAR);
 	g_object_unref(G_OBJECT(pixmap));
 	return tmp;
@@ -1214,7 +1213,6 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* ma
 	if (pixmap) {
 		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
 	} else {
-#ifdef K
 		//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
 		MapSource * map = map_sources[layer->map_index];
 		if (map->is_direct_file_access()) {
@@ -1242,7 +1240,6 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* ma
 			map_cache_add(pixmap, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
 				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 		}
-#endif
 	}
 	return pixmap;
 }
@@ -1250,37 +1247,25 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* ma
 
 
 
-static QPixmap * get_pixmap_from_file(LayerMap * layer, char * filename_buf)
+static QPixmap * get_pixmap_from_file(LayerMap * layer, const char * full_path)
 {
-	QPixmap * pixmap = NULL;
-
-	if (g_file_test(filename_buf, G_FILE_TEST_EXISTS) == true) {
-#ifdef K
-		GError * gx = NULL;
-		pixmap = gdk_pixbuf_new_from_file(filename_buf, &gx);
-
-		/* Free the pixmap on error. */
-		if (gx) {
-			if (gx->domain != GDK_PIXBUF_ERROR || gx->code != GDK_PIXBUF_ERROR_CORRUPT_IMAGE) {
-				/* Report a warning. */
-				Window * w = layer->get_window();
-				if (w) {
-					w->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file: %1").arg(gx->message));
-				}
-			}
-
-			g_error_free(gx);
-			if (pixmap) {
-				g_object_unref(G_OBJECT(pixmap));
-			}
-			pixmap = NULL;
-		}
-#endif
+	if (0 != access(full_path, F_OK | R_OK)) {
+		qDebug() << "EE: Layer Map: can't access file" << full_path;
+		return NULL;
 	}
 
+	QPixmap * pixmap = new QPixmap;
+
+	if (!pixmap->load(QString(full_path))) {
+		Window * window = layer->get_window();
+		if (window) {
+			window->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file"));
+		}
+		delete pixmap;
+		pixmap = NULL;
+	}
 	return pixmap;
 }
-
 
 
 
@@ -1341,8 +1326,8 @@ bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, in
 		if (pixmap) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+			viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 #ifdef K
-			viewport->draw_pixmap(pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 			g_object_unref(pixmap);
 #endif
 			return true;
@@ -1375,8 +1360,8 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 					int src_y = 0;
 					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
+					viewport->draw_pixmap(*pixmap, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 #ifdef K
-					viewport->draw_pixmap(pixmap, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					g_object_unref(pixmap);
 #endif
 					return true;
@@ -1394,7 +1379,8 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
-	double xshrinkfactor = 1.0, yshrinkfactor = 1.0;
+	double xshrinkfactor = 1.0;
+	double yshrinkfactor = 1.0;
 	bool existence_only = false;
 
 	if (this->xmapzoom && (this->xmapzoom != xzoom || this->ymapzoom != yzoom)) {
@@ -1433,7 +1419,7 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 		const char *mapname = map->get_name();
 
 		VikCoord coord;
-		int xx, yy, width, height;
+		int xx, yy;
 		QPixmap *pixmap;
 
 		/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
@@ -1452,10 +1438,10 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 			fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
 			if (!this->adl_only_missing && map->supports_download_only_new()) {
 				/* Try to download newer tiles. */
-				start_download_thread(this, viewport, ul, br, REDOWNLOAD_NEW);
+				this->start_download_thread(viewport, ul, br, REDOWNLOAD_NEW);
 			} else {
 				/* Download only missing tiles. */
-				start_download_thread(this, viewport, ul, br, REDOWNLOAD_NONE);
+				this->start_download_thread(viewport, ul, br, REDOWNLOAD_NONE);
 			}
 		}
 
@@ -1466,16 +1452,16 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 					ulm.y = y;
 					pixmap = get_pixmap(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
 					if (pixmap) {
-#ifdef K
-						width = gdk_pixbuf_get_width (pixmap);
-						height = gdk_pixbuf_get_height(pixmap);
+						int width = pixmap->width();
+						int height = pixmap->height();
 
 						map->tile_to_center_coord(&ulm, &coord);
 						viewport->coord_to_screen(&coord, &xx, &yy);
 						xx -= (width/2);
 						yy -= (height/2);
 
-						viewport->draw_pixmap(pixmap, 0, 0, xx, yy, width, height);
+						viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, width, height);
+#ifdef K
 						g_object_unref(pixmap);
 #endif
 					}
@@ -1518,10 +1504,8 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						}
 
 						if (g_file_test(path_buf, G_FILE_TEST_EXISTS) == true) {
-#ifdef K
-							GdkGC *black_gc = gtk_widget_get_style(viewport->get_toolkit_widget())->black_gc;
-							viewport->draw_line(black_gc, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
-#endif
+							const QPen pen (QColor("#E6202E")); /* kamilTODO: This should be black. */
+							viewport->draw_line(pen, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
 						}
 					} else {
 						/* Try correct scale first. */
@@ -1530,8 +1514,8 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						if (pixmap) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+							viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 #ifdef K
-							viewport->draw_pixmap(pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 							g_object_unref(pixmap);
 #endif
 						} else {
@@ -1558,8 +1542,9 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				/* Grid drawing here so it gets drawn on top of the map.
 				   Thus loop around x & y again, but this time separately.
 				   Only showing grid for the current scale */
-#ifdef K
-				GdkGC *black_gc = viewport->get_toolkit_widget()->style->black_gc;
+
+				const QPen pen (QColor("#E6202E")); /* kamilTODO: This should be black. */
+
 				/* Draw single grid lines across the whole screen. */
 				int width = viewport->get_width();
 				int height = viewport->get_height();
@@ -1569,16 +1554,15 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 				xx = base_xx;
 				for (int x = ((xinc == 1) ? xmin : xmax); x != xend; x+=xinc) {
-					viewport->draw_line(black_gc, xx, base_yy, xx, height);
+					viewport->draw_line(pen, xx, base_yy, xx, height);
 					xx += tilesize_x;
 				}
 
 				yy = base_yy;
 				for (int y = ((yinc == 1) ? ymin : ymax); y != yend; y+=yinc) {
-					viewport->draw_line(black_gc, base_xx, yy, width, yy);
+					viewport->draw_line(pen, base_xx, yy, width, yy);
 					yy += tilesize_y;
 				}
-#endif
 			}
 
 		}
@@ -1601,8 +1585,8 @@ void LayerMap::draw(Viewport * viewport)
 		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
 
 		/* Logo. */
-#ifdef K
-		const QPixmap *logo = map_sources[this->map_index]->get_logo();
+
+		const QPixmap * logo = map_sources[this->map_index]->get_logo();
 		viewport->add_logo(logo);
 
 		/* Get corner coords. */
@@ -1620,7 +1604,6 @@ void LayerMap::draw(Viewport * viewport)
 
 			this->draw_section(viewport, &ul, &br);
 		}
-#endif
 	}
 }
 
@@ -1720,7 +1703,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 					     map_sources[mdj->map_index]->get_file_extension());
 
 				donemaps++;
-#ifdef K
+
 				int res = a_background_thread_progress(bg_job, ((double)donemaps) / mdj->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
 					map_sources[mdj->map_index]->download_handle_cleanup(handle);
@@ -1738,18 +1721,13 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 					case REDOWNLOAD_BAD: {
 						/* See if this one is bad or what. */
-						GError *gx = NULL;
-						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
-						if (gx || (!pixmap)) {
+						QPixmap tmp_pixmap; /* Apparently this will pixmap is only for test of some kind. */
+						if (!tmp_pixmap.load(mdj->filename_buf)) {
 							if (remove(mdj->filename_buf)) {
-								fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdj->filename_buf);
+								qDebug() << "WW: Layer Map: Redownload Bad failed to remove", mdj->filename_buf;
 							}
 							need_download = true;
 							remove_mem_cache = true;
-							g_error_free(gx);
-
-						} else {
-							g_object_unref(pixmap);
 						}
 						break;
 					}
@@ -1762,7 +1740,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 					case REDOWNLOAD_ALL:
 						/* FIXME: need a better way than to erase file in case of server/network problem. */
 						if (remove(mdj->filename_buf)) {
-							fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdj->filename_buf);
+							qDebug() << "WW: Layer Map: Redownload All failed to remove", mdj->filename_buf;
 						}
 						need_download = true;
 						remove_mem_cache = true;
@@ -1812,8 +1790,10 @@ static int map_download_thread(BackgroundJob * bg_job)
 					mdj->layer->emit_changed(); /* NB update display from background. */
 				}
 				mdj->mutex.unlock();
-				mdj->mapcoord.x = mdj->mapcoord.y = 0; /* We're temporarily between downloads. */
-#endif
+
+				/* We're temporarily between downloads. */
+				mdj->mapcoord.x = 0;
+				mdj->mapcoord.y = 0;
 			}
 		}
 	}
@@ -1848,12 +1828,12 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 
 
-static void start_download_thread(LayerMap * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
+void LayerMap::start_download_thread(Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
 {
-	double xzoom = layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp();
-	double yzoom = layer->ymapzoom ? layer->ymapzoom : viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
 	TileInfo ulm, brm;
-	MapSource *map = map_sources[layer->map_index];
+	MapSource *map = map_sources[this->map_index];
 
 	/* Don't ever attempt download on direct access. */
 	if (map->is_direct_file_access()) {
@@ -1863,7 +1843,7 @@ static void start_download_thread(LayerMap * layer, Viewport * viewport, const V
 	if (map->coord_to_tile(ul, xzoom, yzoom, &ulm)
 	     && map->coord_to_tile(br, xzoom, yzoom, &brm)) {
 
-		MapDownloadJob * mdj = new MapDownloadJob(layer, &ulm, &brm, true, redownload_mode);
+		MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, redownload_mode);
 
 		if (mdj->redownload_mode) {
 			mdj->mapstoget = (mdj->xf - mdj->x0 + 1) * (mdj->yf - mdj->y0 + 1);
@@ -1876,7 +1856,7 @@ static void start_download_thread(LayerMap * layer, Viewport * viewport, const V
 		mdj->mapcoord.y = 0;
 
 		if (mdj->mapstoget) {
-			char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(layer->map_index));
+			char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
 
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
 			mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
@@ -1946,25 +1926,25 @@ void LayerMap::download_section(VikCoord * ul, VikCoord * br, double zoom)
 
 
 
-static void maps_layer_redownload_bad(LayerMap * layer)
+void LayerMap::redownload_bad_cb(void)
 {
-	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_BAD);
+	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_BAD);
 }
 
 
 
 
-static void maps_layer_redownload_all(LayerMap * layer)
+void LayerMap::redownload_all_cb(void)
 {
-	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_ALL);
+	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_ALL);
 }
 
 
 
 
-static void maps_layer_redownload_new(LayerMap * layer)
+void LayerMap::redownload_new_cb(void)
 {
-	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_NEW);
+	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_NEW);
 }
 
 
@@ -1977,30 +1957,30 @@ typedef struct stat GStatBuf;
 /**
  * Display a simple dialog with information about this particular map tile
  */
-static void maps_layer_tile_info(LayerMap * layer)
+void LayerMap::tile_info_cb(void)
 {
-	MapSource *map = map_sources[layer->map_index];
+	MapSource * map = map_sources[this->map_index];
 
-	double xzoom = layer->xmapzoom ? layer->xmapzoom : layer->redownload_viewport->get_xmpp();
-	double yzoom = layer->ymapzoom ? layer->ymapzoom : layer->redownload_viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_xmpp();
+	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_ympp();
 	TileInfo ulm;
 
-	if (!map->coord_to_tile(&(layer->redownload_ul), xzoom, yzoom, &ulm)) {
+	if (!map->coord_to_tile(&this->redownload_ul, xzoom, yzoom, &ulm)) {
 		return;
 	}
 
-	char *filename = NULL;
+	char *filename_ = NULL;
 	char *source = NULL;
 
 	if (map->is_direct_file_access()) {
 		if (map->is_mbtiles()) {
-			filename = g_strdup(layer->filename);
+			filename_ = g_strdup(this->filename);
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
 			char *exists = NULL;
 			int zoom = 17 - ulm.scale;
-			if (layer->mbtiles) {
-				QPixmap *pixmap = get_pixmap_sql_exec(layer->mbtiles, ulm.x, ulm.y, zoom);
+			if (this->mbtiles) {
+				QPixmap *pixmap = get_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixmap) {
 					exists = strdup(_("YES"));
 					g_object_unref(G_OBJECT(pixmap));
@@ -2013,35 +1993,33 @@ static void maps_layer_tile_info(LayerMap * layer)
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
 			/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
-			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
+			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename_, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
 			free(exists);
 #else
 			source = strdup(_("Source: Not available"));
 #endif
 		} else if (map->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
-#ifdef K
-			xyz_to_meta(path, sizeof(path), layer->cache_dir, ulm.x, ulm.y, 17-ulm.scale);
-#endif
+			xyz_to_meta(path, sizeof (path), this->cache_dir, ulm.x, ulm.y, 17-ulm.scale);
 			source = g_strdup(path);
-			filename = g_strdup(path);
+			filename_ = g_strdup(path);
 		} else {
-			unsigned int max_path_len = strlen(layer->cache_dir) + 40;
-			filename = (char *) malloc(max_path_len * sizeof(char));
-			get_cache_filename(layer->cache_dir, MapsCacheLayout::OSM,
+			unsigned int max_path_len = strlen(this->cache_dir) + 40;
+			filename_ = (char *) malloc(max_path_len * sizeof(char));
+			get_cache_filename(this->cache_dir, MapsCacheLayout::OSM,
 				     map->map_type,
 				     NULL,
-				     &ulm, filename, max_path_len,
+				     &ulm, filename_, max_path_len,
 				     map->get_file_extension());
-			source = g_strconcat("Source: file://", filename, NULL);
+			source = g_strconcat("Source: file://", filename_, NULL);
 		}
 	} else {
-		unsigned int max_path_len = strlen(layer->cache_dir) + 40;
-		filename = (char *) malloc(max_path_len * sizeof(char));
-		get_cache_filename(layer->cache_dir, layer->cache_layout,
+		unsigned int max_path_len = strlen(this->cache_dir) + 40;
+		filename_ = (char *) malloc(max_path_len * sizeof(char));
+		get_cache_filename(this->cache_dir, this->cache_layout,
 			     map->map_type,
 			     map->get_name(),
-			     &ulm, filename, max_path_len,
+			     &ulm, filename_, max_path_len,
 			     map->get_file_extension());
 		source = g_markup_printf_escaped("Source: http://%s%s",
 						   map->get_server_hostname(),
@@ -2054,11 +2032,11 @@ static void maps_layer_tile_info(LayerMap * layer)
 	char *filemsg = NULL;
 	char *timemsg = NULL;
 
-	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
-		filemsg = g_strconcat("Tile File: ", filename, NULL);
+	if (g_file_test(filename_, G_FILE_TEST_EXISTS)) {
+		filemsg = g_strconcat("Tile File: ", filename_, NULL);
 		/* Get some timestamp information of the tile. */
 		GStatBuf stat_buf;
-		if (g_stat(filename, &stat_buf) == 0) {
+		if (g_stat(filename_, &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
@@ -2068,18 +2046,18 @@ static void maps_layer_tile_info(LayerMap * layer)
 		g_array_append_val(array, filemsg);
 		g_array_append_val(array, timemsg);
 	} else {
-		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename);
+		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename_);
 		g_array_append_val(array, filemsg);
 	}
 #ifdef K
-	a_dialog_list(layer->get_toolkit_window(), _("Tile Information"), array, 5);
+	a_dialog_list(this->get_window(), _("Tile Information"), array, 5);
 	g_array_free(array, false);
 #endif
 
 	free(timemsg);
 	free(filemsg);
 	free(source);
-	free(filename);
+	free(filename_);
 }
 
 
@@ -2096,47 +2074,45 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
 			VikCoord ul, br;
-#ifdef K
-			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
-			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
-			start_download_thread(layer, this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
+			this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)), &ul);
+			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)), &br);
+			layer->start_download_thread(this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
-#endif
 			return LayerToolFuncStatus::ACK;
 		} else {
-#ifdef K
-			this->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
-			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
-#endif
+			this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)), &(layer->redownload_ul));
+			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)), &(layer->redownload_br));
 
 			layer->redownload_viewport = this->viewport;
 
 			layer->dl_tool_x = -1;
 			layer->dl_tool_y = -1;
 
-#ifdef K
+
 			if (!layer->dl_right_click_menu) {
+#ifdef K
 				GtkWidget *item;
 				layer->dl_right_click_menu = GTK_MENU (gtk_menu_new());
 
 				item = gtk_menu_item_new_with_mnemonic(_("Redownload _Bad Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_redownload_bad), layer);
+				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_bad_cb), layer);
 				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
 
 				item = gtk_menu_item_new_with_mnemonic(_("Redownload _New Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_redownload_new), layer);
+				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_new_cb(void)), layer);
 				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
 
 				item = gtk_menu_item_new_with_mnemonic(_("Redownload _All Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_redownload_all), layer);
+				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_all_cb(void)), layer);
 				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
 
 				item = gtk_image_menu_item_new_with_mnemonic(_("_Show Tile Information"));
 				gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_tile_info), layer);
+				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (tile_info_cb), layer);
 				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
+#endif
 			}
-
+#ifdef K
 			gtk_menu_popup(layer->dl_right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
 			gtk_widget_show_all(GTK_WIDGET(layer->dl_right_click_menu));
 #endif
@@ -2210,14 +2186,13 @@ typedef struct {
 	Viewport * viewport;
 } menu_array_values;
 
-static void download_onscreen_maps(menu_array_values * values, int redownload_mode)
+void LayerMap::download_onscreen_maps(int redownload_mode)
 {
-	LayerMap * layer = values->layer;
-	Viewport * viewport = values->viewport;
+	Viewport * viewport = this->get_window()->get_viewport();
 	ViewportDrawMode vp_drawmode = viewport->get_drawmode();
 
-	double xzoom = layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp();
-	double yzoom = layer->ymapzoom ? layer->ymapzoom : viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
 
 	VikCoord ul, br;
 	TileInfo ulm, brm;
@@ -2225,20 +2200,20 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 	viewport->screen_to_coord(0, 0, &ul);
 	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
 
-	MapSource *map = map_sources[layer->map_index];
+	MapSource *map = map_sources[this->map_index];
 	if (map->get_drawmode() == vp_drawmode
 	    && map->coord_to_tile(&ul, xzoom, yzoom, &ulm)
 	    && map->coord_to_tile(&br, xzoom, yzoom, &brm)) {
 
-		start_download_thread(layer, viewport, &ul, &br, redownload_mode);
+		this->start_download_thread(viewport, &ul, &br, redownload_mode);
 
 	} else if (map->get_drawmode() != vp_drawmode) {
 		const char * drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 		char *err = g_strdup_printf(_("Wrong drawmode for this map.\nSelect \"%s\" from View menu and try again."), _(drawmode_name));
-		dialog_error(err, layer->get_window());
+		dialog_error(err, this->get_window());
 		free(err);
 	} else {
-		dialog_error("Wrong zoom level for this map.", layer->get_window());
+		dialog_error("Wrong zoom level for this map.", this->get_window());
 	}
 
 }
@@ -2246,39 +2221,37 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 
 
 
-static void maps_layer_download_missing_onscreen_maps(menu_array_values * values)
+void LayerMap::download_missing_onscreen_maps_cb(void)
 {
-	download_onscreen_maps(values, REDOWNLOAD_NONE);
+	this->download_onscreen_maps(REDOWNLOAD_NONE);
 }
 
 
 
 
-static void maps_layer_download_new_onscreen_maps(menu_array_values * values)
+void LayerMap::download_new_onscreen_maps_cb(void)
 {
-	download_onscreen_maps(values, REDOWNLOAD_NEW);
+	this->download_onscreen_maps(REDOWNLOAD_NEW);
 }
 
 
 
 
-static void maps_layer_redownload_all_onscreen_maps(menu_array_values * values)
+void LayerMap::redownload_all_onscreen_maps_cb(void)
 {
-	download_onscreen_maps(values, REDOWNLOAD_ALL);
+	this->download_onscreen_maps(REDOWNLOAD_ALL);
 }
 
 
 
 
-static void maps_layer_about(menu_array_values * values)
+void LayerMap::about_cb(void)
 {
-	LayerMap * layer = (LayerMap *) values->layer;
-
-	MapSource * map = map_sources[layer->map_index];
+	MapSource * map = map_sources[this->map_index];
 	if (map->get_license()) {
-		maps_show_license(layer->get_window(), map);
+		maps_show_license(this->get_window(), map);
 	} else {
-		dialog_info(map->get_label(), layer->get_window());
+		dialog_info(map->get_label(), this->get_window());
 	}
 }
 
@@ -2413,10 +2386,9 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
  * Get all maps in the region for zoom levels specified by the user
  * Sort of similar to LayerTRW::download_map_along_track_cb().
  */
-static void maps_layer_download_all(menu_array_values * values)
+void LayerMap::download_all_cb(void)
 {
-	LayerMap * layer = values->layer;
-	Viewport * viewport = values->viewport;
+	Viewport * viewport = this->get_window()->get_viewport();
 
 	/* I don't think we should allow users to hammer the servers too much...
 	   Deliberately not allowing lowest zoom levels.
@@ -2448,9 +2420,9 @@ static void maps_layer_download_all(menu_array_values * values)
 	char *download_list[] = { _("Missing"), _("Bad"), _("New"), _("Reload All"), NULL };
 
 
-	char *title = g_strdup_printf (("%s: %s"), layer->get_map_label(), _("Download for Zoom Levels"));
+	char *title = g_strdup_printf (("%s: %s"), this->get_map_label(), _("Download for Zoom Levels"));
 #ifdef K
-	if (!maps_dialog_zoom_between(layer->get_toolkit_window(),
+	if (!maps_dialog_zoom_between(this->get_window(),
 				      title,
 				      zoom_list,
 				      lower_zoom,
@@ -2481,7 +2453,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	   With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		map_count = map_count + layer->how_many_maps(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
+		map_count = map_count + this->how_many_maps(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
 	}
 
 	fprintf(stderr, "DEBUG: Layer Map: download request map count %d for method %d", map_count, selected_download_method);
@@ -2489,7 +2461,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
-		dialog_error(str, layer->get_window());
+		dialog_error(str, this->get_window());
 		free(str);
 		return;
 	}
@@ -2497,7 +2469,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	/* Confirm really want to do this. */
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
-		bool ans = dialog_yes_or_no(str, layer->get_window());
+		bool ans = dialog_yes_or_no(str, this->get_window());
 		free(str);
 		if (!ans) {
 			return;
@@ -2506,18 +2478,17 @@ static void maps_layer_download_all(menu_array_values * values)
 
 	/* Get Maps - call for each zoom level (in reverse). */
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		layer->download_section_sub(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
+		this->download_section_sub(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
 	}
 }
 
 
 
 
-static void maps_layer_flush(menu_array_values * values)
+void LayerMap::flush_cb(void * data)
 {
-#ifdef K
+	menu_array_values * values = (menu_array_values *) data;
 	map_cache_flush_type(map_sources[values->layer->map_index]->map_type);
-#endif
 }
 
 
@@ -2539,32 +2510,32 @@ void LayerMap::add_menu_items(QMenu & menu)
 	/* Now with icons. */
 	item = gtk_image_menu_item_new_with_mnemonic(_("Download _Missing Onscreen Maps"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_download_missing_onscreen_maps), &values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_missing_onscreen_maps_cb(void));
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
 	if (map_sources[this->map_index]->supports_download_only_new()) {
 		item = gtk_image_menu_item_new_with_mnemonic(_("Download _New Onscreen Maps"));
 		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_download_new_onscreen_maps), &values);
+		g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_new_onscreen_maps_cb(void)));
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 		gtk_widget_show(item);
 	}
 
 	item = gtk_image_menu_item_new_with_mnemonic(_("Reload _All Onscreen Maps"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_redownload_all_onscreen_maps), &values);
+				 g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (redownload_all_onscreen_maps_cb(void)));
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
 	item = gtk_image_menu_item_new_with_mnemonic(_("Download Maps in _Zoom Levels..."));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_DND_MULTIPLE, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_download_all), &values);
+				 g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_all_cb(void));
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
 	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_about), &values);
+							  g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (about_cb(void)), layer);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
@@ -2572,7 +2543,7 @@ void LayerMap::add_menu_items(QMenu & menu)
 	if (vik_debug) {
 		item = gtk_image_menu_item_new_with_mnemonic(_("Flush Map Cache"));
 		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_flush), &values);
+		g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (flush_cb), &values);
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 		gtk_widget_show(item);
 	}
@@ -2591,16 +2562,12 @@ void LayerMap::download(Viewport * viewport, bool only_new)
 		return;
 	}
 
-	static menu_array_values values;
-	values.layer = this;
-	values.viewport = viewport;
-
 	if (only_new) {
 		/* Get only new maps. */
-		maps_layer_download_new_onscreen_maps(&values);
+		this->download_new_onscreen_maps_cb();
 	} else {
 		/* Redownload everything. */
-		maps_layer_redownload_all_onscreen_maps(&values);
+		this->redownload_all_onscreen_maps_cb();
 	}
 }
 

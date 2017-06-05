@@ -102,6 +102,8 @@ namespace SlavGPS {
 		void download_section(VikCoord * ul, VikCoord * br, double zoom);
 		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
 
+		void start_download_thread(Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
+		void download_onscreen_maps(int redownload_mode);
 
 		static void weak_ref_cb(void * ptr, GObject * dead_vml);
 
@@ -137,6 +139,18 @@ namespace SlavGPS {
 		sqlite3 * mbtiles = NULL;
 #endif
 
+	public slots:
+		void download_all_cb(void);
+		void redownload_new_cb(void);
+		void redownload_all_cb(void);
+		void redownload_all_onscreen_maps_cb(void);
+		void redownload_bad_cb(void);
+		void tile_info_cb(void);
+		void download_missing_onscreen_maps_cb(void);
+		void download_new_onscreen_maps_cb(void);
+
+		void about_cb(void);
+		void flush_cb(void * data);
 	};
 
 

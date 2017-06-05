@@ -10,6 +10,7 @@ SOURCES += main.cpp \
     vikmapsource.cpp \
     mapcache.cpp \
     maputils.cpp \
+    metatile.cpp \
     goto.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
@@ -80,6 +81,7 @@ HEADERS += window.h \
     layer_map.h \
     vikmapsource.h \
     maputils.h \
+    metatile.h \
     mapcache.h \
     goto.h \
     goto_tool.h \
@@ -172,7 +174,6 @@ HEADERS += window.h \
 # jpg.cpp
 # kmz.cpp
 # mapnik_interface.cpp
-# metatile.cpp
 # osm.cpp
 # osm-traces.cpp
 # print.cpp

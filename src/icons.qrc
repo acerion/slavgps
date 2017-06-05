@@ -3,6 +3,7 @@
 	<file>icons/layer/aggregate.png</file>
 	<file>icons/layer/trackwaypoint.png</file>
 	<file>icons/layer/coord.png</file>
+	<file>icons/layer/map.png</file>
 	<file>icons/layer/dem.png</file>
 
 	<file>icons/layer_tool/ruler_18.png</file>
