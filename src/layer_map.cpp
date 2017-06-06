@@ -42,7 +42,6 @@
 #include <unistd.h>
 #endif
 
-#include "viking.h"
 #include "vikmapsource.h"
 #include "vikslippymapsource.h"
 #include "vikutils.h"
@@ -51,7 +50,6 @@
 #include "background.h"
 #include "preferences.h"
 #include "layer_map.h"
-#include "icons/icons.h"
 #include "metatile.h"
 #include "ui_util.h"
 #include "map_ids.h"
@@ -62,6 +60,8 @@
 #include "settings.h"
 #include "globals.h"
 #include "uibuilder.h"
+
+
 
 
 #ifdef HAVE_SQLITE3_H
@@ -550,7 +550,7 @@ std::string& maps_layer_default_dir_2()
 
 void LayerMap::mkdir_if_default_dir()
 {
-	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && g_file_test(this->cache_dir, G_FILE_TEST_EXISTS) == false) {
+	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && 0 != access(this->cache_dir, F_OK)) {
 		if (g_mkdir(this->cache_dir, 0777) != 0) {
 			fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, this->cache_dir);
 		}
@@ -874,9 +874,7 @@ LayerMap::~LayerMap()
 	free(this->cache_dir);
 	this->cache_dir = NULL;
 	if (this->dl_right_click_menu) {
-#ifdef K
-		g_object_ref_sink(G_OBJECT(this->dl_right_click_menu));
-#endif
+		delete this->dl_right_click_menu;
 	}
 
 	free(this->last_center);
@@ -1104,7 +1102,7 @@ static QPixmap *get_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
 static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int zz)
 {
 	const int tile_max = METATILE_MAX_SIZE;
-	char err_msg[PATH_MAX];
+	char err_msg[PATH_MAX] = { 0 };
 	int compressed;
 
 	char * buf = (char *) malloc(tile_max);
@@ -1112,21 +1110,19 @@ static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int 
 		return NULL;
 	}
 
-	err_msg[0] = 0;
-#ifdef K
 	int len = metatile_read(layer->cache_dir, xx, yy, zz, buf, tile_max, &compressed, err_msg);
-
 	if (len > 0) {
 		if (compressed) {
 			/* Not handled yet - I don't think this is used often - so implement later if necessary. */
-			fprintf(stderr, "WARNING: Compressed metatiles not implemented:%s\n", __FUNCTION__);
+			qDebug() << "EE: Layer Map: ge pixmap from metafile: compressed metatiles not implemented";
 			free(buf);
 			return NULL;
 		}
 
 		/* Convert these buf bytes into a pixmap via these streaming operations. */
-		QPixmap *pixmap = NULL;
+		QPixmap * pixmap = NULL;
 
+#ifdef K
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
 		GError *error = NULL;
 		pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
@@ -1135,15 +1131,14 @@ static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int 
 			g_error_free(error);
 		}
 		g_input_stream_close(stream, NULL, NULL);
-
+#endif
 		free(buf);
 		return pixmap;
 	} else {
 		free(buf);
-		fprintf(stderr, "WARNING: FAILED:%s %s", __FUNCTION__, err_msg);
+		qDebug() << "EE: Layer Map: get pixmap from metafile: failed:" << err_msg;
 		return NULL;
 	}
-#endif
 }
 
 
@@ -1503,7 +1498,7 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 								     &ulm, path_buf, max_path_len, map->get_file_extension());
 						}
 
-						if (g_file_test(path_buf, G_FILE_TEST_EXISTS) == true) {
+						if (0 == access(path_buf, F_OK)) {
 							const QPen pen (QColor("#E6202E")); /* kamilTODO: This should be black. */
 							viewport->draw_line(pen, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
 						}
@@ -1710,7 +1705,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 					return -1;
 				}
 
-				if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
+				if (0 != access(mdj->filename_buf, F_OK)) {
 					need_download = true;
 					remove_mem_cache = true;
 
@@ -1817,7 +1812,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 				   map_sources[this->map_index]->get_name(),
 				   &this->mapcoord, this->filename_buf, this->maxlen,
 				   map_sources[this->map_index]->get_file_extension());
-		if (g_file_test(this->filename_buf, G_FILE_TEST_EXISTS) == true) {
+		if (0 == access(this->filename_buf, F_OK)) {
 			if (remove(this->filename_buf)) {
 				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", this->filename_buf);
 			}
@@ -2032,7 +2027,7 @@ void LayerMap::tile_info_cb(void)
 	char *filemsg = NULL;
 	char *timemsg = NULL;
 
-	if (g_file_test(filename_, G_FILE_TEST_EXISTS)) {
+	if (0 == access(filename_, F_OK)) {
 		filemsg = g_strconcat("Tile File: ", filename_, NULL);
 		/* Get some timestamp information of the tile. */
 		GStatBuf stat_buf;
@@ -2090,32 +2085,27 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 
 
 			if (!layer->dl_right_click_menu) {
-#ifdef K
-				GtkWidget *item;
-				layer->dl_right_click_menu = GTK_MENU (gtk_menu_new());
+				QAction * action = NULL;
+				layer->dl_right_click_menu = new QMenu();
 
-				item = gtk_menu_item_new_with_mnemonic(_("Redownload _Bad Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_bad_cb), layer);
-				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
+				action = new QAction(QObject::tr("Redownload &Bad Map(s)"), layer);
+				layer->dl_right_click_menu->addAction(action);
+				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_bad_cb));
 
-				item = gtk_menu_item_new_with_mnemonic(_("Redownload _New Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_new_cb(void)), layer);
-				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
+				action = new QAction(QObject::tr("Redownload &New Map(s)"), layer);
+				layer->dl_right_click_menu->addAction(action);
+				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_new_cb(void)));
 
-				item = gtk_menu_item_new_with_mnemonic(_("Redownload _All Map(s)"));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (redownload_all_cb(void)), layer);
-				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
+				action = new QAction(QObject::tr("Redownload &All Map(s)"), layer);
+				layer->dl_right_click_menu->addAction(action);
+				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_all_cb(void)));
 
-				item = gtk_image_menu_item_new_with_mnemonic(_("_Show Tile Information"));
-				gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
-				g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (tile_info_cb), layer);
-				gtk_menu_shell_append(GTK_MENU_SHELL(layer->dl_right_click_menu), item);
-#endif
+				action = new QAction(QObject::tr("&Show Tile Information"), layer);
+				layer->dl_right_click_menu->addAction(action);
+				action->setIcon(QIcon::fromTheme("help-about"));
+				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (tile_info_cb(void)));
 			}
-#ifdef K
-			gtk_menu_popup(layer->dl_right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
-			gtk_widget_show_all(GTK_WIDGET(layer->dl_right_click_menu));
-#endif
+			layer->dl_right_click_menu->exec(QCursor::pos());
 		}
 	}
 	return LayerToolFuncStatus::IGNORE;
@@ -2180,11 +2170,6 @@ LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * 
 
 
 
-
-typedef struct {
-	LayerMap * layer;
-	Viewport * viewport;
-} menu_array_values;
 
 void LayerMap::download_onscreen_maps(int redownload_mode)
 {
@@ -2297,81 +2282,86 @@ int LayerMap::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownl
 /**
  * This dialog is specific to the map layer, so it's here rather than in dialog.c
  */
-bool maps_dialog_zoom_between(GtkWindow *parent,
-			      char *title,
-			      char *zoom_list[],
+bool maps_dialog_zoom_between(Window * parent,
+			      const QString & title,
+			      const QStringList & zoom_list,
+			      const QStringList & download_list,
 			      int default_zoom1,
 			      int default_zoom2,
-			      int *selected_zoom1,
-			      int *selected_zoom2,
-			      char *download_list[],
 			      int default_download,
-			      int *selected_download)
+			      int * selected_zoom1,
+			      int * selected_zoom2,
+			      int * selected_download)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
-							GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-							NULL);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
-	GtkWidget *zoom_label1 = gtk_label_new(_("Zoom Start:"));
-	GtkWidget *zoom_combo1 = vik_combo_box_text_new();
-	char **s;
-	for (s = zoom_list; *s; s++) {
-		vik_combo_box_text_append(zoom_combo1, *s);
+
+	QDialog dialog(parent);
+	dialog.setWindowTitle(title);
+
+
+	QVBoxLayout vbox;
+	QLayout * old = dialog.layout();
+	delete old;
+	dialog.setLayout(&vbox);
+
+
+	QLabel zoom_label1(QObject::tr("Zoom Start:"));
+	vbox.addWidget(&zoom_label1);
+
+
+	QComboBox zoom_combo1;
+	for (int i = 0; i < zoom_list.size(); i++) {
+		zoom_combo1.addItem(zoom_list.at(i), i);
 	}
+	zoom_combo1.setCurrentIndex(default_zoom1);
+	vbox.addWidget(&zoom_combo1);
 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(zoom_combo1), default_zoom1);
 
-	GtkWidget *zoom_label2 = gtk_label_new(_("Zoom End:"));
-	GtkWidget *zoom_combo2 = vik_combo_box_text_new();
-	for (s = zoom_list; *s; s++) {
-		vik_combo_box_text_append(zoom_combo2, *s);
+	QLabel zoom_label2(QObject::tr("Zoom End:"));
+	vbox.addWidget(&zoom_label2);
+
+
+	QComboBox zoom_combo2;
+	for (int i = 0; i < zoom_list.size(); i++) {
+		zoom_combo2.addItem(zoom_list.at(i), i);
 	}
+	zoom_combo2.setCurrentIndex(default_zoom2);
+	vbox.addWidget(&zoom_combo2);
 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(zoom_combo2), default_zoom2);
 
-	GtkWidget *download_label = gtk_label_new(_("Download Maps Method:"));
-	GtkWidget *download_combo = vik_combo_box_text_new();
-	for (s = download_list; *s; s++) {
-		vik_combo_box_text_append(download_combo, *s);
+	QLabel download_label(QObject::tr("Download Maps Method:"));
+	vbox.addWidget(&download_label);
+
+
+	QComboBox download_combo;
+	for (int i = 0; i < download_list.size(); i++) {
+		download_combo.addItem(download_list.at(i), i);
 	}
+	download_combo.setCurrentIndex(default_download);
+	vbox.addWidget(&download_combo);
 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(download_combo), default_download);
 
-	GtkTable *box = GTK_TABLE(gtk_table_new(3, 2, false));
-	gtk_table_attach_defaults(box, GTK_WIDGET(zoom_label1), 0, 1, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(zoom_combo1), 1, 2, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(zoom_label2), 0, 1, 1, 2);
-	gtk_table_attach_defaults(box, GTK_WIDGET(zoom_combo2), 1, 2, 1, 2);
-	gtk_table_attach_defaults(box, GTK_WIDGET(download_label), 0, 1, 2, 3);
-	gtk_table_attach_defaults(box, GTK_WIDGET(download_combo), 1, 2, 2, 3);
+	/* kamilTODO: Set focus on Ok button. */
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5);
 
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
+	QDialogButtonBox button_box;
+	button_box.addButton(QDialogButtonBox::Ok);
+	button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+	vbox.addWidget(&button_box);
 
-	gtk_widget_show_all(dialog);
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
+
+	if (dialog.exec() != QDialog::Accepted) {
 		return false;
 	}
 
-	/* Return selected options. */
-	*selected_zoom1 = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo1));
-	*selected_zoom2 = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo2));
-	*selected_download = gtk_combo_box_get_active(GTK_COMBO_BOX(download_combo));
 
-	gtk_widget_destroy(dialog);
-#endif
+	/* Return selected options. */
+	*selected_zoom1 = zoom_combo1.currentIndex();
+	*selected_zoom2 = zoom_combo2.currentIndex();
+	*selected_download = download_combo.currentIndex();
+
+
 	return true;
 }
 
@@ -2394,20 +2384,31 @@ void LayerMap::download_all_cb(void)
 	   Deliberately not allowing lowest zoom levels.
 	   Still can give massive numbers to download.
 	   A screen size of 1600x1200 gives around 300,000 tiles between 1..128 when none exist before!! */
-	char *zoom_list[] = {(char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
-	double zoom_vals[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+
+	double zoom_vals[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+	int n_zoom_vals = (int) (sizeof (zoom_vals) / sizeof (zoom_vals[0]));
+	QStringList zoom_list;
+	for (int i = 0; i < n_zoom_vals; i++) {
+		char buffer[6];
+		snprintf(buffer, sizeof (buffer), "%d", (int) zoom_vals[i]);
+		zoom_list << buffer;
+	}
+
+	/* Redownload method - needs to align with REDOWNLOAD* macro values. */
+	QStringList download_list;
+	download_list << QObject::tr("Missing") << QObject::tr("Bad") << QObject::tr("New") << QObject::tr("Reload All");
 
 	int selected_zoom1, selected_zoom2, default_zoom, lower_zoom;
 	int selected_download_method;
 
 	double cur_zoom = viewport->get_zoom();
 
-	for (default_zoom = 0; default_zoom < sizeof(zoom_vals)/sizeof(double); default_zoom++) {
+	for (default_zoom = 0; default_zoom < n_zoom_vals; default_zoom++) {
 		if (cur_zoom == zoom_vals[default_zoom]) {
 			break;
 		}
 	}
-	default_zoom = (default_zoom == sizeof(zoom_vals)/sizeof(double)) ? sizeof(zoom_vals)/sizeof(double) - 1 : default_zoom;
+	default_zoom = (default_zoom == n_zoom_vals) ? n_zoom_vals - 1 : default_zoom;
 
 	/* Default to only 2 zoom levels below the current one/ */
 	if (default_zoom > 1) {
@@ -2416,28 +2417,21 @@ void LayerMap::download_all_cb(void)
 		lower_zoom = default_zoom;
 	}
 
-	/* Redownload method - needs to align with REDOWNLOAD* macro values. */
-	char *download_list[] = { _("Missing"), _("Bad"), _("New"), _("Reload All"), NULL };
 
-
-	char *title = g_strdup_printf (("%s: %s"), this->get_map_label(), _("Download for Zoom Levels"));
-#ifdef K
+	const QString title = QString(QObject::tr("%1: %2")).arg(this->get_map_label()).arg(QObject::tr("Download for Zoom Levels"));
 	if (!maps_dialog_zoom_between(this->get_window(),
 				      title,
 				      zoom_list,
+				      download_list,
 				      lower_zoom,
 				      default_zoom,
+				      REDOWNLOAD_NONE, /* AKA Missing. */
 				      &selected_zoom1,
 				      &selected_zoom2,
-				      download_list,
-				      REDOWNLOAD_NONE, /* AKA Missing. */
 				      &selected_download_method)) {
 		/* Cancelled. */
-		free(title);
 		return;
 	}
-#endif
-	free(title);
 
 	/* Find out new current positions. */
 	double min_lat, max_lat, min_lon, max_lon;
@@ -2485,10 +2479,9 @@ void LayerMap::download_all_cb(void)
 
 
 
-void LayerMap::flush_cb(void * data)
+void LayerMap::flush_cb(void)
 {
-	menu_array_values * values = (menu_array_values *) data;
-	map_cache_flush_type(map_sources[values->layer->map_index]->map_type);
+	map_cache_flush_type(map_sources[this->map_index]->map_type);
 }
 
 
@@ -2496,58 +2489,42 @@ void LayerMap::flush_cb(void * data)
 
 void LayerMap::add_menu_items(QMenu & menu)
 {
-#ifdef K
-	LayersPanel * panel = (LayersPanel *) panel_;
+	QAction * qa = NULL;
 
-	static menu_array_values values;
-	values.layer = this;
-	values.viewport = panel->get_viewport();
-
-	GtkWidget * item = gtk_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-
-	/* Now with icons. */
-	item = gtk_image_menu_item_new_with_mnemonic(_("Download _Missing Onscreen Maps"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_missing_onscreen_maps_cb(void));
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	qa = new QAction(QObject::tr("Download &Missing Onscreen Maps"), this);
+	qa->setIcon(QIcon::fromTheme("list-add"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_missing_onscreen_maps_cb(void)));
+	menu.addAction(qa);
 
 	if (map_sources[this->map_index]->supports_download_only_new()) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("Download _New Onscreen Maps"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_new_onscreen_maps_cb(void)));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = new QAction(QObject::tr("Download &New Onscreen Maps"), this);
+		qa->setIcon(QIcon::fromTheme("edit-redo"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_new_onscreen_maps_cb(void)));
+		menu.addAction(qa);
 	}
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Reload _All Onscreen Maps"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-				 g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (redownload_all_onscreen_maps_cb(void)));
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	qa = new QAction(QObject::tr("Reload &All Onscreen Maps"), this);
+	qa->setIcon(QIcon::fromTheme("view-refresh"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (redownload_all_onscreen_maps_cb(void)));
+	menu.addAction(qa);
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Download Maps in _Zoom Levels..."));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_DND_MULTIPLE, GTK_ICON_SIZE_MENU));
-				 g_signal_connect_swapped(G_OBJECT(item), "activate", this, SLOT (download_all_cb(void));
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	qa = new QAction(QObject::tr("Download Maps in &Zoom Levels..."), this);
+	qa->setIcon(QIcon::fromTheme("list-add"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_all_cb(void)));
+	menu.addAction(qa);
 
-	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-							  g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (about_cb(void)), layer);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	qa = new QAction(QObject::tr("About"), this);
+	qa->setIcon(QIcon::fromTheme("help-about"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (about_cb(void)));
+	menu.addAction(qa);
 
 	/* Typical users shouldn't need to use this functionality - so debug only ATM. */
 	if (vik_debug) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("Flush Map Cache"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", SLOT (flush_cb), &values);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = new QAction(QObject::tr("Flush Map Cache"), this);
+		qa->setIcon(QIcon::fromTheme("edit-clear"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (flush_cb(void)));
+		menu.addAction(qa);
 	}
-#endif
 }
 
 
@@ -2590,7 +2567,7 @@ void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * u
 						   &mcoord, mdj->filename_buf, mdj->maxlen,
 						   map->get_file_extension());
 
-				if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
+				if (0 != access(mdj->filename_buf, F_OK)) {
 					mdj->mapstoget++;
 				}
 			}
@@ -2613,33 +2590,35 @@ void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileIn
 	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
 		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
-			if (is_in_area(map, &mcoord)) {
-				get_cache_filename(mdj->cache_dir, mdj->cache_layout,
-						   map->map_type,
-						   map->get_name(),
-						   &mcoord, mdj->filename_buf, mdj->maxlen,
-						   map->get_file_extension());
-				if (mdj->redownload_mode == REDOWNLOAD_NEW) {
-					/* Assume the worst - always a new file.
-					   Absolute value would require a server lookup - but that is too slow. */
+			if (!is_in_area(map, &mcoord)) {
+				continue;
+			}
+
+			get_cache_filename(mdj->cache_dir, mdj->cache_layout,
+					   map->map_type,
+					   map->get_name(),
+					   &mcoord, mdj->filename_buf, mdj->maxlen,
+					   map->get_file_extension());
+			if (mdj->redownload_mode == REDOWNLOAD_NEW) {
+				/* Assume the worst - always a new file.
+				   Absolute value would require a server lookup - but that is too slow. */
+				mdj->mapstoget++;
+			} else {
+				if (0 != access(mdj->filename_buf, F_OK)) {
+					/* Missing. */
 					mdj->mapstoget++;
 				} else {
-					if (g_file_test(mdj->filename_buf, G_FILE_TEST_EXISTS) == false) {
-						/* Missing. */
-						mdj->mapstoget++;
-					} else {
-						if (mdj->redownload_mode == REDOWNLOAD_BAD) {
-							/* see if this one is bad or what */
+					if (mdj->redownload_mode == REDOWNLOAD_BAD) {
+						/* see if this one is bad or what */
 #ifdef K
-							GError *gx = NULL;
-							QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
-							if (gx || (!pixmap)) {
-								mdj->mapstoget++;
-							}
-#endif
-							break;
-							/* Other download cases already considered or just ignored. */
+						GError *gx = NULL;
+						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
+						if (gx || (!pixmap)) {
+							mdj->mapstoget++;
 						}
+#endif
+						break;
+						/* Other download cases already considered or just ignored. */
 					}
 				}
 			}

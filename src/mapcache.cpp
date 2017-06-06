@@ -52,12 +52,10 @@ using namespace SlavGPS;
 
 
 
-
 typedef struct {
 	QPixmap * pixmap;
 	map_cache_extra_t extra;
 } cache_item_t;
-
 
 
 
@@ -81,12 +79,10 @@ static Parameter prefs[] = {
 
 
 
-
 static void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra);
 static void cache_remove(std::string & key);
 static void cache_remove_oldest();
 static void flush_matching(std::string & key_part);
-
 
 
 
@@ -102,13 +98,11 @@ static void cache_item_free(cache_item_t * ci)
 
 
 
-
 void SlavGPS::map_cache_init()
 {
 	ParameterValue val((uint32_t) VIK_CONFIG_MAPCACHE_SIZE);
 	a_preferences_register(prefs, val, VIKING_PREFERENCES_GROUP_KEY);
 }
-
 
 
 
@@ -127,9 +121,7 @@ void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra)
 	size_t after = maps_cache.size();
 
 	if (after != before) {
-#ifdef K
-		cache_size += gdk_pixmap_get_rowstride(pixmap) * gdk_pixbuf_get_height(pixmap);
-#endif
+		cache_size += pixmap->width() * pixmap->height() * (pixmap->depth() / 8);
 		/* ATM size of 'extra' data hardly worth trying to count (compared to pixmap sizes)
 		   Not sure what this 100 represents anyway - probably a guess at an average pixmap metadata size */
 		cache_size += 100;
@@ -146,19 +138,16 @@ void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra)
 
 
 
-
 void cache_remove(std::string & key)
 {
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end() && iter->second && iter->second->pixmap){
-#ifdef K
-		cache_size -= gdk_pixbuf_get_rowstride(iter->second->pixmap) * gdk_pixbuf_get_height(iter->second->pixmap);
-#endif
+		QPixmap * pixmap = iter->second->pixmap;
+		cache_size -= pixmap->width() * pixmap->height() * (pixmap->depth() / 8);
 		cache_size -= 100;
 		maps_cache.erase(key);
 	}
 }
-
 
 
 
@@ -178,19 +167,16 @@ void cache_remove_oldest()
 
 
 
-
 /**
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
 void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
-#ifdef K
-	if (!GDK_IS_PIXBUF(pixmap)) {
-		fprintf(stderr, "DEBUG: Not caching corrupt pixmap for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
+	if (pixmap->isNull()) {
+		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
 		return;
 	}
-#endif
 
 	static char key_[MC_KEY_SIZE];
 
@@ -219,7 +205,6 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 		tmp = 0;
 	}
 }
-
 
 
 
@@ -254,7 +239,6 @@ QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_
 
 
 
-
 map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 	static char key_[MC_KEY_SIZE];
@@ -269,7 +253,6 @@ map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID ma
 		return (map_cache_extra_t) { 0.0 };
 	}
 }
-
 
 
 
@@ -315,7 +298,6 @@ void flush_matching(std::string & key_part)
 
 
 
-
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
@@ -328,7 +310,6 @@ void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID 
 
 	flush_matching(key);
 }
-
 
 
 
@@ -355,14 +336,12 @@ void SlavGPS::map_cache_flush()
 
 
 
-
 /**
- *  map_cache_flush_type:
- *  @map_type: Specified map type
- *
- * Just remove cache items for the specified map type
- * i.e. all related xyz+zoom+alpha+etc...
- */
+   @map_type: Specified map type
+
+   Just remove cache items for the specified map type
+   i.e. all related xyz+zoom+alpha+etc...
+*/
 void SlavGPS::map_cache_flush_type(MapTypeID map_type)
 {
 	char key_[MC_KEY_SIZE];
@@ -370,7 +349,6 @@ void SlavGPS::map_cache_flush_type(MapTypeID map_type)
 	std::string key(key_);
 	flush_matching(key);
 }
-
 
 
 
@@ -384,13 +362,11 @@ void SlavGPS::map_cache_uninit(void)
 
 
 
-
 /* Size of mapcache in memory. */
 size_t SlavGPS::map_cache_get_size()
 {
 	return cache_size;
 }
-
 
 
 

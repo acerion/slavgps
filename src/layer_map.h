@@ -31,7 +31,7 @@
 
 #include <string>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "coord.h"
 #include "layer.h"
@@ -130,7 +130,7 @@ namespace SlavGPS {
 		int dl_tool_x = -1;
 		int dl_tool_y = -1;
 
-		GtkMenu * dl_right_click_menu = NULL;
+		QMenu * dl_right_click_menu = NULL;
 		VikCoord redownload_ul, redownload_br; /* Right click menu only. */
 		Viewport * redownload_viewport = NULL;
 		char * filename = NULL;
@@ -150,7 +150,7 @@ namespace SlavGPS {
 		void download_new_onscreen_maps_cb(void);
 
 		void about_cb(void);
-		void flush_cb(void * data);
+		void flush_cb(void);
 	};
 
 
