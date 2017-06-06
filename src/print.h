@@ -21,20 +21,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_PRINT_H
-#define __VIKING_PRINT_H
+#ifndef _SG_PRINT_H_
+#define _SG_PRINT_H_
+
+
+
 
 #include "window.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 void a_print(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /*__VIKING_PRINT_H*/
+
+
+#endif /* #ifndef _SG_PRINT_H_ */

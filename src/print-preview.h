@@ -16,15 +16,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __VIK_PRINT_PREVIEW_H__
-#define __VIK_PRINT_PREVIEW_H__
-
-#include <stdint.h>
+#ifndef _SG_PRINT_PREVIEW_H_
+#define _SG_PRINT_PREVIEW_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
+#include <cstdint>
+
 
 
 
@@ -38,62 +37,59 @@ extern "C" {
 typedef struct _VikPrintPreview       VikPrintPreview;
 typedef struct _VikPrintPreviewClass  VikPrintPreviewClass;
 
-struct _VikPrintPreview
-{
-  GtkAspectFrame  parent_instance;
+struct _VikPrintPreview {
+	GtkAspectFrame  parent_instance;
 
-  GtkWidget      *area;
-  GtkPageSetup   *page;
-  QPixmap      *pixbuf;
-  bool        dragging;
+	GtkWidget      *area;
+	GtkPageSetup   *page;
+	QPixmap      *pixbuf;
+	bool        dragging;
 
-  GdkDrawable    *drawable;
+	GdkDrawable    *drawable;
 
-  double         image_offset_x;
-  double         image_offset_y;
-  double         image_offset_x_max;
-  double         image_offset_y_max;
-  double         image_xres;
-  double         image_yres;
+	double         image_offset_x;
+	double         image_offset_y;
+	double         image_offset_x_max;
+	double         image_offset_y_max;
+	double         image_xres;
+	double         image_yres;
 
-  bool        use_full_page;
+	bool        use_full_page;
 };
 
-struct _VikPrintPreviewClass
-{
-  GtkAspectFrameClass  parent_class;
+struct _VikPrintPreviewClass {
+	GtkAspectFrameClass  parent_class;
 
-  void (* offsets_changed)  (VikPrintPreview *print_preview,
-                             int              offset_x,
-                             int              offset_y);
+	void (* offsets_changed)  (VikPrintPreview *print_preview,
+				   int              offset_x,
+				   int              offset_y);
 };
 
 
-GType       vik_print_preview_get_type          (void) G_GNUC_CONST;
+GType       vik_print_preview_get_type(void) G_GNUC_CONST;
 
-GtkWidget * vik_print_preview_new               (GtkPageSetup     *page,
-                                                  GdkDrawable     *drawable);
+GtkWidget * vik_print_preview_new(GtkPageSetup     *page,
+				  GdkDrawable     *drawable);
 
-void        vik_print_preview_set_image_dpi     (VikPrintPreview *preview,
-                                                  double           xres,
-                                                  double           yres);
+void        vik_print_preview_set_image_dpi(VikPrintPreview *preview,
+					    double           xres,
+					    double           yres);
 
-void        vik_print_preview_set_page_setup    (VikPrintPreview *preview,
-                                                  GtkPageSetup     *page);
+void        vik_print_preview_set_page_setup(VikPrintPreview *preview,
+					     GtkPageSetup     *page);
 
-void        vik_print_preview_set_image_offsets (VikPrintPreview *preview,
-                                                  double           offset_x,
-                                                  double           offset_y);
+void        vik_print_preview_set_image_offsets(VikPrintPreview *preview,
+						double           offset_x,
+						double           offset_y);
 
-void        vik_print_preview_set_image_offsets_max (VikPrintPreview *preview,
-                                                      double           offset_x_max,
-                                                      double           offset_y_max);
+void        vik_print_preview_set_image_offsets_max(VikPrintPreview *preview,
+						    double           offset_x_max,
+						    double           offset_y_max);
 
-void        vik_print_preview_set_use_full_page (VikPrintPreview *preview,
-                                                  bool          full_page);
+void        vik_print_preview_set_use_full_page(VikPrintPreview *preview,
+						bool          full_page);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* __VIK_PRINT_PREVIEW_H__ */
+
+
+#endif /* #ifndef _SG_PRINT_PREVIEW_H_ */
