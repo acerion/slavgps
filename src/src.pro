@@ -147,6 +147,13 @@ HEADERS += window.h \
     babel_ui.h
 
 
+# viktrwlayer_analysis.cpp
+# viktrwlayer_export.cpp
+# viktrwlayer_geotag.cpp
+# track_statistics.cpp
+# vikgeoreflayer.cpp
+# vikgpslayer.cpp
+# vikmapniklayer.cpp
 
 # bing.cpp
 # bingmapsource.cpp
@@ -162,7 +169,6 @@ HEADERS += window.h \
 # datasource_routing.cpp
 # datasource_url.cpp
 # datasource_wikipedia.cpp
-# expedia.cpp
 # garminsymbols.cpp
 # geojson.cpp
 # geonamessearch.cpp
@@ -182,30 +188,25 @@ HEADERS += window.h \
 # terraservermapsource.cpp
 # thumbnails.cpp
 # toolbar.cpp
-# track_statistics.cpp
-# vikenumtypes.cpp
 # vikexttool.cpp
 # vikexttool_datasources.cpp
 # vikexttools.cpp
-# vikgeoreflayer.cpp
-# vikgpslayer.cpp
-# vikmapniklayer.cpp
-# vikmapslayer_compat.cpp
-# vikmaptype.cpp
 # vikrouting.cpp
 # vikroutingengine.cpp
 # vikroutingwebengine.cpp
 # vikslippymapsource.cpp
 # viktmsmapsource.cpp
-# viktrwlayer_analysis.cpp
-# viktrwlayer_export.cpp
-# viktrwlayer_geotag.cpp
 # vikwebtoolbounds.cpp
 # vikwebtoolcenter.cpp
 # vikwebtool.cpp
 # vikwebtool_datasource.cpp
 # vikwebtoolformat.cpp
 # vikwmscmapsource.cpp
+
+# vikmaptype.cpp
+# vikmapslayer_compat.cpp
+# expedia.cpp
+# vikenumtypes.cpp
 
 
 # For glib library.
