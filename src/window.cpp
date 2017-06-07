@@ -46,6 +46,7 @@
 #include "fileutils.h"
 #include "datasources.h"
 #include "goto.h"
+#include "print.h"
 
 
 
@@ -2566,9 +2567,7 @@ void Window::draw_viewport_to_image_dir_cb(void)
 
 void Window::print_cb(void)
 {
-#ifdef K
 	a_print(this, this->viewport);
-#endif
 }
 
 

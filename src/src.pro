@@ -1,11 +1,13 @@
 TEMPLATE = app
 TARGET = slavgps
 
-QT = core gui widgets
+QT = core gui widgets printsupport
 
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    print.cpp \
+    print-preview.cpp \
     layer_map.cpp \
     vikmapsource.cpp \
     mapcache.cpp \
@@ -78,6 +80,8 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    print.h \
+    print-preview.h \
     layer_map.h \
     vikmapsource.h \
     maputils.h \

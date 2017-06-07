@@ -32,6 +32,7 @@
 #include <QWidget>
 #include <QWheelEvent>
 #include <QMouseEvent>
+#include <QPrinter>
 
 #include "coord.h"
 #include "bbox.h"
@@ -333,6 +334,7 @@ namespace SlavGPS {
 
 	public slots:
 		bool configure_cb(void);
+		bool print_cb(QPrinter *);
 
 	protected:
 		bool eventFilter(QObject * object, QEvent * event);

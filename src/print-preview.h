@@ -21,18 +21,14 @@
 
 
 
+#include "slav_qt.h"
+
+#include <QPixmap>
 
 #include <cstdint>
 
 
 
-
-#define VIK_TYPE_PRINT_PREVIEW            (vik_print_preview_get_type ())
-#define VIK_PRINT_PREVIEW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_PRINT_PREVIEW, VikPrintPreview))
-#define VIK_PRINT_PREVIEW_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_TYPE_PRINT_PREVIEW, VikPrintPreviewClass))
-#define VIK_IS_PRINT_PREVIEW(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TYPE_PRINT_PREVIEW))
-#define VIK_IS_PRINT_PREVIEW_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TYPE_PRINT_PREVIEW))
-#define VIK_PRINT_PREVIEW_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_TYPE_PRINT_PREVIEW, VikPrintPreviewClass))
 
 typedef struct _VikPrintPreview       VikPrintPreview;
 typedef struct _VikPrintPreviewClass  VikPrintPreviewClass;

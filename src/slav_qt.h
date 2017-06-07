@@ -11,7 +11,21 @@
 
 #ifdef SLAVGPS_QT
 typedef int VikLayer;
-
+typedef int GdkEventExpose;
+typedef int GtkPageSetup;
+typedef int GValue;
+typedef int GtkAspectFrameClass;
+typedef int GType;
+typedef int GtkAllocation;
+typedef int GtkAspectFrame;
+typedef int GtkPrintOperation;
+typedef int GtkPrintContext;
+typedef int GtkPrintOperation;
+typedef int GtkRange;
+typedef int GtkScrollType;
+typedef int GtkUnit;
+typedef int GtkRange;
+typedef int GdkEvent;
 typedef int GtkEntry;
 typedef int GParamSpec;
 typedef int GtkSpinButton;

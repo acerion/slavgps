@@ -2343,3 +2343,37 @@ void Viewport::draw_border(void)
 
 	}
 }
+
+
+
+
+bool Viewport::print_cb(QPrinter * printer)
+{
+	//QPageLayout page_layout = printer->pageLayout();
+	printer->setPaperSize(QPrinter::A4);
+	QRectF page_rect = printer->pageRect(QPrinter::DevicePixel);
+	QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
+
+	qDebug() << "II: Viewport: print callback: page:" << page_rect << ", paper:" << paper_rect;
+
+
+	QPainter painter(printer);
+	//painter.drawPixmap(0, 0, *this->scr_buffer);
+
+	QPen pen;
+
+	pen.setColor(QColor("black"));
+	pen.setWidth(2);
+	painter.setPen(pen);
+	painter.drawRect(page_rect);
+
+	pen.setColor(QColor("red"));
+	pen.setWidth(1);
+	painter.setPen(pen);
+	QRectF new_rect(4, 4, 40, 40);
+	painter.drawRect(new_rect);
+	new_rect = QRectF(16, 16, 40, 40);
+	painter.drawRect(new_rect);
+
+	return true;
+}
