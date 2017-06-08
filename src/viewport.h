@@ -117,7 +117,7 @@ namespace SlavGPS {
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
 		VikCoordMode get_coord_mode(); // const
-		VikCoord * get_center(); // const
+		const VikCoord * get_center() const;
 		void set_coord_mode(VikCoordMode mode_);
 
 
@@ -153,8 +153,8 @@ namespace SlavGPS {
 		/* Viewport scale. */
 		void set_ympp(double ympp);
 		void set_xmpp(double xmpp);
-		double get_ympp();
-		double get_xmpp();
+		double get_ympp() const;
+		double get_xmpp() const;
 		void set_zoom(double mpp);
 		double get_zoom();
 		void zoom_in();

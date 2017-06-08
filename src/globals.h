@@ -105,16 +105,12 @@ namespace SlavGPS {
 		AGGREGATE = 0,
 		TRW,
 		COORD,
-#ifndef SLAVGPS_QT
 		GEOREF,
 		GPS,
-#endif
 		MAP,
 		DEM,
-#ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
 		MAPNIK,
-#endif
 #endif
 		NUM_TYPES // Also use this value to indicate no layer association
 	};

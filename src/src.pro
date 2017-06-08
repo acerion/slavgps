@@ -6,6 +6,9 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    vikgeoreflayer.cpp \
+    vikgpslayer.cpp \
+    vikmapniklayer.cpp \
     print.cpp \
     print-preview.cpp \
     layer_map.cpp \
@@ -80,6 +83,9 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    vikgeoreflayer.h \
+    vikgpslayer.h \
+    vikmapniklayer.h \
     print.h \
     print-preview.h \
     layer_map.h \
@@ -155,9 +161,6 @@ HEADERS += window.h \
 # viktrwlayer_export.cpp
 # viktrwlayer_geotag.cpp
 # track_statistics.cpp
-# vikgeoreflayer.cpp
-# vikgpslayer.cpp
-# vikmapniklayer.cpp
 
 # bing.cpp
 # bingmapsource.cpp
@@ -186,8 +189,6 @@ HEADERS += window.h \
 # mapnik_interface.cpp
 # osm.cpp
 # osm-traces.cpp
-# print.cpp
-# print-preview.cpp
 # terraserver.cpp
 # terraservermapsource.cpp
 # thumbnails.cpp

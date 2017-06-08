@@ -30,8 +30,8 @@
 #include "waypoint_list.h"
 #include "track_list_dialog.h"
 #include "util.h"
-#ifdef K
 #include "vikgpslayer.h"
+#ifdef K
 #include "viktrwlayer_analysis.h"
 #endif
 #include "dialog.h"
@@ -135,10 +135,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 	/* These types are 'base' types in that you what other information on top. */
 	if (layer->type == LayerType::DEM
 	    || layer->type == LayerType::MAP
-#ifdef K
-	    || layer->type == LayerType::GEOREF
-#endif
-	    ) {
+	    || layer->type == LayerType::GEOREF) {
 
 		put_above = false;
 	}
@@ -200,10 +197,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::DEM
 		    || layer->type == LayerType::MAP
-#ifdef K
-		    || layer->type == LayerType::GEOREF
-#endif
-		    ) {
+		    || layer->type == LayerType::GEOREF) {
 			put_above = false;
 		}
 	}
@@ -306,9 +300,7 @@ void LayerAggregate::draw(Viewport * viewport)
 		}
 
 		if (layer->type == LayerType::AGGREGATE
-#ifdef K
 		    || layer->type == LayerType::GPS
-#endif
 		    || !viewport->get_half_drawn()) {
 
 			qDebug() << "II: Layer Aggregate: calling draw_visible() for" << layer->name;
@@ -805,7 +797,6 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 			}
 		} else if (layer_type == LayerType::TRW) {
 			/* GPS layers contain TRW layers. cf with usage in file.c */
-#ifdef K
 			if (layer->type == LayerType::GPS) {
 				if (layer->visible || include_invisible) {
 					if (!((LayerGPS *) layer)->is_empty()) {
@@ -825,7 +816,6 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 					}
 				}
 			}
-#endif
 		}
 		child++;
 	}

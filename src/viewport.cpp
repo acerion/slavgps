@@ -938,7 +938,7 @@ double Viewport::get_zoom()
 
 
 
-double Viewport::get_xmpp()
+double Viewport::get_xmpp() const
 {
 	return xmpp;
 }
@@ -946,7 +946,7 @@ double Viewport::get_xmpp()
 
 
 
-double Viewport::get_ympp()
+double Viewport::get_ympp() const
 {
 	return ympp;
 }
@@ -982,7 +982,7 @@ void Viewport::set_ympp(double ympp_)
 
 
 
-VikCoord * Viewport::get_center()
+const VikCoord * Viewport::get_center() const
 {
 	return &center;
 }

@@ -67,7 +67,7 @@ static ParameterValue file_default(void)      { return ParameterValue(""); }
 static ParameterValue size_default(void)      { return ParameterValue((uint32_t) 256); }
 static ParameterValue alpha_default(void)     { return ParameterValue((uint32_t) 255); }
 static ParameterValue cache_dir_default(void) { return ParameterValue(g_strconcat(maps_layer_default_dir(), "MapnikRendering", NULL)); }
-}
+
 
 static ParameterScale scales[] = {
 	{ 0, 255, 5, 0 },   /* Alpha. */
@@ -87,8 +87,14 @@ enum {
 
 
 Parameter mapnik_layer_params[] = {
+
+#ifdef K
 	{ PARAM_CONFIG_CSS,     "config-file-mml", ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
 	{ PARAM_CONFIG_XML,     "config-file-xml", ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("XML Config File:"),       WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
+#else
+	{ PARAM_CONFIG_CSS,     "config-file-mml", ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   0,                                NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
+	{ PARAM_CONFIG_XML,     "config-file-xml", ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("XML Config File:"),       WidgetType::FILEENTRY,   0,                                NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
+#endif
 	{ PARAM_ALPHA,          "alpha",           ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
 	{ PARAM_USE_FILE_CACHE, "use-file-cache",  ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,                             NULL, NULL,                                vik_lpd_true_default, NULL, NULL },
 	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,                             NULL, NULL,                                cache_dir_default,    NULL, NULL },
@@ -115,10 +121,10 @@ LayerMapnikInterface::LayerMapnikInterface()
 	this->params = mapnik_layer_params; /* Parameters. */
 	this->params_count = NUM_PARAMS,
 
-	strndup(this->layer_type_string, "Mapnik Rendering", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
+	strncpy(this->layer_type_string, "Mapnik Rendering", sizeof (this->layer_type_string)); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	this->layer_name = tr("Mapnik Rendering");
+	this->layer_name = QObject::tr("Mapnik Rendering");
 	// this->action_accelerator =  ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -270,7 +276,9 @@ void SlavGPS::layer_mapnik_init(void)
 	ParameterValue *rfd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory");
 
 	if (pd && fd && rfd) {
+#ifdef K
 		mapnik_interface_initialize(pd->s, fd->s, rfd->b);
+#endif
 	} else {
 		fprintf(stderr, "CRITICAL: Unable to initialize mapnik interface from preferences\n");
 	}
@@ -279,7 +287,7 @@ void SlavGPS::layer_mapnik_init(void)
 
 
 
-QString LayerMapnik::tooltip(o)
+QString LayerMapnik::tooltip()
 {
 	return this->filename_xml;
 }
@@ -287,39 +295,39 @@ QString LayerMapnik::tooltip(o)
 
 
 
-void LayerMapnik::set_file_xml(char const * name)
+void LayerMapnik::set_file_xml(char const * name_)
 {
 	if (this->filename_xml) {
 		free(this->filename_xml);
 	}
 	/* Mapnik doesn't seem to cope with relative filenames. */
-	if (strcmp(name, "")) {
-		this->filename_xml = vu_get_canonical_filename(this, name);
+	if (strcmp(name_, "")) {
+		this->filename_xml = vu_get_canonical_filename(this, name_);
 	} else {
-		this->filename_xml = g_strdup(name);
+		this->filename_xml = g_strdup(name_);
 	}
 }
 
 
 
 
-void LayerMapnik::set_file_css(char const * name)
+void LayerMapnik::set_file_css(char const * name_)
 {
 	if (this->filename_css) {
 		free(this->filename_css);
 	}
-	this->filename_css = g_strdup(name);
+	this->filename_css = g_strdup(name_);
 }
 
 
 
 
-void LayerMapnik::set_cache_dir(char const * name)
+void LayerMapnik::set_cache_dir(char const * name_)
 {
 	if (this->file_cache_dir) {
 		free(this->file_cache_dir);
 	}
-	this->file_cache_dir = g_strdup(name);
+	this->file_cache_dir = g_strdup(name_);
 }
 
 
@@ -331,7 +339,9 @@ Layer * LayerMapnikInterface::unmarshall(uint8_t * data, int len, Viewport * vie
 
 	layer->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
+#ifdef K
 	layer->mi = mapnik_interface_new();
+#endif
 	layer->unmarshall_params(data, len);
 
 	return layer;
@@ -454,9 +464,11 @@ bool LayerMapnik::carto_load(void)
 	   seconds on my system). */
 	Window * window = this->get_window();
 	if (window) {
+#ifdef K
 		// char *msg = g_strdup_printf(); // kamil kamil
 		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command);
 		window->set_busy_cursor();
+#endif
 	}
 
 	int64_t tt1 = 0;
@@ -509,9 +521,11 @@ bool LayerMapnik::carto_load(void)
 	free(command);
 
 	if (window) {
+#ifdef K
 		QString msg = QString("%s %s %.1f %s").arg(vlpd->s).arg(" completed in ").arg((double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"))
 		window->statusbar_update(StatusBarField::INFO, msg);
 		window->clear_busy_cursor();
+#endif
 	}
 	return answer;
 }
@@ -553,6 +567,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			return;
 		}
 
+#ifdef K
 	char* ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (ans) {
 		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
@@ -563,6 +578,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			ui_add_recent_file(this->filename_xml);
 		}
 	}
+#endif
 }
 
 
@@ -586,6 +602,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 {
 	if (this->use_file_cache) {
 		if (this->file_cache_dir) {
+#ifdef K
 			GError *error = NULL;
 			char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
@@ -602,6 +619,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 				g_error_free(error);
 			}
 			free(filename);
+#endif
 		}
 	}
 }
@@ -611,7 +629,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo::RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_);
+	RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_);
 	~RenderInfo();
 
 	LayerMapnik * lmk = NULL;
@@ -623,11 +641,12 @@ public:
 
 
 
+static int render_info_background_fn(BackgroundJob * bg_job);
 
 RenderInfo::RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_)
 {
 	this->thread_fn = render_info_background_fn;
-	this->number_items = 1;
+	this->n_items = 1;
 
 	this->lmk = layer;
 
@@ -661,13 +680,16 @@ RenderInfo::~RenderInfo()
 void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 {
 	int64_t tt1 = g_get_real_time();
+#ifdef K
 	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->north_south, ul->east_west, br->north_south, br->east_west);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
 	if (!pixmap) {
+#ifdef K
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
 		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, GDK_INTERP_BILINEAR);
+#endif
 	}
 	this->possibly_save_pixmap(pixmap, ulm);
 
@@ -676,13 +698,16 @@ void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+#ifdef K
 	g_object_unref(pixmap);
+#endif
+#endif
 }
 
 
 
 
-static void render_info_background_fn(BackgroundJob * bg_job)
+static int render_info_background_fn(BackgroundJob * bg_job)
 {
 	RenderInfo * data = (RenderInfo *) bg_job;
 
@@ -711,10 +736,10 @@ static void render_info_background_fn(BackgroundJob * bg_job)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name)
+void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name_)
 {
 	/* Create request. */
-	unsigned int nn = name ? g_str_hash(name) : 0;
+	unsigned int nn = name_ ? g_str_hash(name_) : 0;
 	char *request = g_strdup_printf(REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn);
 
 	tp_mutex.lock();
@@ -724,17 +749,18 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 		tp_mutex.unlock();
 		return;
 	}
-
-	RenderInfo * ri = new RenderInfo(this, ul, br, mul, request);
+#ifdef K
+	RenderInfo * ri = new RenderInfo(this, *ul, *br, mul, request);
 
 	g_hash_table_insert(requests, request, NULL);
 
 	tp_mutex.unlock();
 
-	char * basename = g_path_get_basename(name);
+	char * basename = g_path_get_basename(name_);
 	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(basename);
 	free(basename);
 	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
+#endif
 }
 
 
@@ -744,15 +770,16 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
  * If function returns QPixmap properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender)
+QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender_)
 {
-	*rerender = false;
+	*rerender_ = false;
 	QPixmap *pixmap = NULL;
 	char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
 	GStatBuf gsb;
 	if (g_stat(filename, &gsb) == 0) {
 		/* Get from disk. */
+#ifdef K
 		GError *error = NULL;
 		pixmap = gdk_pixbuf_new_from_file(filename, &error);
 		if (error) {
@@ -766,8 +793,9 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < gsb.st_mtime) {
-			*rerender = true;
+			*rerender_ = true;
 		}
+#endif
 	}
 	free(filename);
 
@@ -794,10 +822,10 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ulm, TileInfo * brm)
 	} else {
 		fprintf(stderr, "MapnikLayer: MAP CACHE MISS\n");
 
-		bool rerender = false;
+		bool rerender_ = false;
 		if (this->use_file_cache && this->file_cache_dir)
-			pixmap = this->load_pixmap(ulm, brm, &rerender);
-		if (! pixmap || rerender) {
+			pixmap = this->load_pixmap(ulm, brm, &rerender_);
+		if (! pixmap || rerender_) {
 			if (true) {
 				this->thread_add(ulm, &ul, &br, ulm->x, ulm->y, ulm->z, ulm->scale, this->filename_xml);
 			} else {
@@ -826,10 +854,12 @@ void LayerMapnik::draw(Viewport * viewport)
 	}
 
 	if (this->mi) {
+#ifdef K
 		char *copyright = mapnik_interface_get_copyright(this->mi);
 		if (copyright) {
 			viewport->add_copyright(QString(copyright));
 		}
+#endif
 	}
 
 	VikCoord ul, br;
@@ -867,8 +897,10 @@ void LayerMapnik::draw(Viewport * viewport)
 				if (pixmap) {
 					map_utils_iTMS_to_vikcoord(&ulm, &coord);
 					viewport->coord_to_screen(&coord, &xx, &yy);
-					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
+					viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
+#ifdef K
 					g_object_unref(pixmap);
+#endif
 				}
 			}
 		}
@@ -876,6 +908,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		/* Done after so drawn on top.
 		   Just a handy guide to tile blocks. */
 		if (vik_debug && vik_verbose) {
+#ifdef K
 			GdkGC *black_gc = viewport->get_toolkit_widget()->style->black_gc;
 			int width = viewport->get_width();
 			int height = viewport->get_height();
@@ -893,6 +926,7 @@ void LayerMapnik::draw(Viewport * viewport)
 				viewport->draw_line(black_gc, 0, yy, width, yy);
 				yy += this->tile_size_x; // Yes use X ATM
 			}
+#endif
 		}
 	}
 }
@@ -902,7 +936,9 @@ void LayerMapnik::draw(Viewport * viewport)
 
 LayerMapnik::~LayerMapnik()
 {
+#ifdef K
 	mapnik_interface_free(this->mi);
+#endif
 	if (this->filename_css) {
 		free(this->filename_css);
 	}
@@ -958,7 +994,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	if (!lmk->carto_load()) {
 		return;
 	}
-
+#ifdef K
 	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
 	if (ans) {
 		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
@@ -966,6 +1002,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	} else {
 		lmk->draw(viewport);
 	}
+#endif
 }
 
 
@@ -981,6 +1018,7 @@ static void mapnik_layer_information(menu_array_values * values)
 	if (!lmk->mi) {
 		return;
 	}
+#ifdef K
 	GArray * array = mapnik_interface_get_parameters(lmk->mi);
 	if (array->len) {
 		a_dialog_list(lmk->get_toolkit_window(), _("Mapnik Information"), array, 1);
@@ -990,6 +1028,7 @@ static void mapnik_layer_information(menu_array_values * values)
 		}
 	}
 	g_array_free(array, false);
+#endif
 }
 
 
@@ -998,10 +1037,11 @@ static void mapnik_layer_information(menu_array_values * values)
 static void mapnik_layer_about(menu_array_values * values)
 {
 	LayerMapnik * lmk = values->lmk;
-
+#ifdef K
 	char * msg = mapnik_interface_about();
 	dialog_info(msg, lmk->get_window());
 	free(msg);
+#endif
 }
 
 
@@ -1009,6 +1049,7 @@ static void mapnik_layer_about(menu_array_values * values)
 
 void LayerMapnik::add_menu_items(QMenu & menu)
 {
+#ifdef K
 	LayersPanel * panel = (LayersPanel *) panel_;
 
 	static menu_array_values values = {
@@ -1051,6 +1092,7 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_about), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
+#endif
 }
 
 
@@ -1107,7 +1149,7 @@ void LayerMapnik::tile_info()
 	char *filename = get_filename(this->file_cache_dir, ulm.x, ulm.y, ulm.scale);
 	char *filemsg = NULL;
 	char *timemsg = NULL;
-
+#ifdef K
 	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
 		filemsg = g_strconcat("Tile File: ", filename, NULL);
 		/* Get some timestamp information of the tile. */
@@ -1142,6 +1184,7 @@ void LayerMapnik::tile_info()
 	free(timemsg);
 	free(filemsg);
 	free(filename);
+#endif
 }
 
 
@@ -1155,17 +1198,19 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 
 
 
-LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::MAPNIK)
+LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPNIK)
 {
 	this->id_string = QString("mapnik.features");
-
+#ifdef K
 	this->action_icon_path   = GTK_STOCK_INFO;
+#endif
 	this->action_label       = QObject::tr("&Mapnik Features");
 	this->action_tooltip     = QObject::tr("Mapnik Features");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-
+#ifdef K
 	this->cursor_shape = Qt::ArrowCursor;
 	this->cursor_data = NULL;
+#endif
 
 	Layer::get_interface(LayerType::MAPNIK)->layer_tools.insert({{ 0, this }});
 }
@@ -1173,24 +1218,24 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window, Viewport * viewp
 
 
 
-LayerToolFuncStatus LayerToolMapnikFeature::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolMapnikFeature::release_(Layer * layer, QMouseEvent * ev)
 {
 	if (!layer) {
-		return false;
+		return (LayerToolFuncStatus) false; /* kamilFIXME: check this cast of returned value. */
 	}
 
-	return ((LayerMapnik *) layer)->feature_release(event, this);
+	return (LayerToolFuncStatus) ((LayerMapnik *) layer)->feature_release(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 
 
 
-bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
+bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
-	if (event->button() == Qt::RightButton) {
-		tool->viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &this->rerender_ul);
+	if (ev->button() == Qt::RightButton) {
+		tool->viewport->screen_to_coord(MAX(0, ev->x()), MAX(0, ev->y()), &this->rerender_ul);
 		this->rerender_zoom = tool->viewport->get_zoom();
-
+#ifdef K
 		if (!this->right_click_menu) {
 			GtkWidget *item;
 			this->right_click_menu = gtk_menu_new();
@@ -1206,8 +1251,9 @@ bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
 		}
 
-		gtk_menu_popup(GTK_MENU(this->right_click_menu), NULL, NULL, NULL, NULL, event->button, event->time);
+		gtk_menu_popup(GTK_MENU(this->right_click_menu), NULL, NULL, NULL, NULL, ev->button, ev->time);
 		gtk_widget_show_all(GTK_WIDGET(this->right_click_menu));
+#endif
 	}
 
 	return false;
@@ -1219,13 +1265,15 @@ bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 LayerMapnik::LayerMapnik()
 {
 	this->type = LayerType::MAPNIK;
-	strcpy(this->type_string, "MAPNIK");
+	strcpy(this->debug_string, "MAPNIK");
 	this->interface = &vik_mapnik_layer_interface;
 
 	this->set_initial_parameter_values();
 	this->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
+#ifdef K
 	this->mi = mapnik_interface_new();
+#endif
 
 	/* kamilTODO: initialize this? */
 	//this->rerender_ul;

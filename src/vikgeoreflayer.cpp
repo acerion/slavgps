@@ -109,7 +109,7 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 
 
 
-LayerGeorefInterface vik_georef_layer_interface();
+LayerGeorefInterface vik_georef_layer_interface;
 
 
 
@@ -119,10 +119,10 @@ LayerGeorefInterface::LayerGeorefInterface()
 	this->params = georef_layer_params; /* Parameters. */
 	this->params_count = NUM_PARAMS;
 
-	strndup(this->layer_type_string, "GeoRef Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] - 1 = '\0';
+	strncpy(this->layer_type_string, "GeoRef Map", sizeof (this->layer_type_string)); /* Non-translatable. */
+	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
 
-	this->layer_name = tr("GeoRef Map");
+	this->layer_name = QObject::tr("GeoRef Map");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -150,7 +150,9 @@ typedef struct {
 void SlavGPS::vik_georef_layer_init(void)
 {
 	ParameterValue((bool) true);
+#ifdef K
 	a_preferences_register(&io_prefs[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+#endif
 }
 
 
@@ -167,7 +169,7 @@ QString LayerGeoref::tooltip()
 Layer * LayerGeorefInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerGeoref * grl = new LayerGeoref();
-	glr->configure_from_viewport(viewport);
+	grl->configure_from_viewport(viewport);
 
 	grl->unmarshall_params(data, len);
 
@@ -226,6 +228,7 @@ void LayerGeoref::create_image_file()
 {
 	/* Create in .viking-maps. */
 	char *filename = g_strconcat(maps_layer_default_dir(), this->get_name(), ".jpg", NULL);
+#ifdef K
 	GError *error = NULL;
 	gdk_pixbuf_save(this->pixmap, filename, "jpeg", &error, NULL);
 	if (error) {
@@ -234,6 +237,7 @@ void LayerGeoref::create_image_file()
 	} else {
 		this->image = g_strdup(filename);
 	}
+#endif
 
 	free(filename);
 }
@@ -337,12 +341,13 @@ void LayerGeoref::draw(Viewport * viewport)
 {
 	if (this->pixmap) {
 		double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
-		QPixmap * pixmap = this->pixmap;
-		unsigned int layer_width = this->width;
-		unsigned int layer_height = this->height;
+		QPixmap * pixmap_ = this->pixmap;
+		int layer_width = this->width;
+		int layer_height = this->height;
 
-		unsigned int width = viewport->get_width(), height = viewport->get_height();
-		int32_t x, y;
+		unsigned int width_ = viewport->get_width();
+		unsigned int height_ = viewport->get_height();
+		int x, y;
 		VikCoord corner_coord;
 		vik_coord_load_from_utm(&corner_coord, viewport->get_coord_mode(), &(this->corner));
 		viewport->coord_to_screen(&corner_coord, &x, &y);
@@ -356,28 +361,32 @@ void LayerGeoref::draw(Viewport * viewport)
 		}
 
 		/* If image not in viewport bounds - no need to draw it (or bother with any scaling). */
-		if ((x < 0 || x < width) && (y < 0 || y < height) && x+layer_width > 0 && y+layer_height > 0) {
+		if ((x < 0 || x < width_) && (y < 0 || y < height_) && x+layer_width > 0 && y+layer_height > 0) {
 
 			if (scale) {
 				/* Rescale if necessary. */
 				if (layer_width == this->scaled_width && layer_height == this->scaled_height && this->scaled != NULL) {
-					pixmap = this->scaled;
+					pixmap_ = this->scaled;
 				} else {
-					pixmap = gdk_pixbuf_scale_simple(this->pixmap,
+#ifdef K
+					pixmap_ = gdk_pixbuf_scale_simple(this->pixmap,
 									 layer_width,
 									 layer_height,
 									 GDK_INTERP_BILINEAR);
+#endif
 
 					if (this->scaled != NULL) {
+#ifdef K
 						g_object_unref(this->scaled);
+#endif
 					}
 
-					this->scaled = pixmap;
+					this->scaled = pixmap_;
 					this->scaled_width = layer_width;
 					this->scaled_height = layer_height;
 				}
 			}
-			viewport->draw_pixmap(pixmap, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
+			viewport->draw_pixmap(*pixmap_, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
 		}
 	}
 }
@@ -392,7 +401,9 @@ LayerGeoref::~LayerGeoref()
 	}
 
 	if (this->scaled != NULL) {
+#ifdef K
 		g_object_unref(this->scaled);
+#endif
 	}
 }
 
@@ -401,7 +412,7 @@ LayerGeoref::~LayerGeoref()
 
 bool LayerGeoref::properties_dialog(Viewport * viewport)
 {
-	return this->dialog(viewport, viewport->get_toolkit_window());
+	return this->dialog(viewport, viewport->get_window());
 }
 
 
@@ -416,14 +427,18 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 	}
 
 	if (this->pixmap) {
+#ifdef K
 		g_object_unref(G_OBJECT(this->pixmap));
+#endif
 	}
 
 	if (this->scaled) {
+#ifdef K
 		g_object_unref(G_OBJECT(this->scaled));
+#endif
 		this->scaled = NULL;
 	}
-
+#ifdef K
 	this->pixmap = gdk_pixbuf_new_from_file (this->image, &gx);
 
 	if (gx) {
@@ -439,6 +454,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
 		}
 	}
+#endif
 	/* Should find length and width here too. */
 }
 
@@ -452,7 +468,9 @@ void LayerGeoref::set_image(char const * image)
 	}
 
 	if (this->scaled) {
+#ifdef K
 		g_object_unref(this->scaled);
+#endif
 		this->scaled = NULL;
 	}
 	if (image == NULL) {
@@ -472,7 +490,9 @@ void LayerGeoref::set_image(char const * image)
 /* Only positive values allowed here. */
 static void double2spinwidget(GtkWidget *widget, double val)
 {
+#ifdef K
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), val > 0 ? val : -val);
+#endif
 }
 
 
@@ -546,6 +566,7 @@ static int world_file_read_file(const char* filename, double values[4])
 
 static void georef_layer_dialog_load(changeable_widgets *cw)
 {
+#ifdef K
 	GtkWidget *file_selector = gtk_file_chooser_dialog_new(_("Choose World file"),
 								NULL,
 								GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -567,6 +588,7 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 	}
 
 	gtk_widget_destroy(file_selector);
+#endif
 }
 
 
@@ -575,7 +597,7 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 static void georef_layer_export_params(georef_data_t * data)
 {
 	LayerGeoref * layer = data->layer;
-
+#ifdef K
 	GtkWidget * file_selector = gtk_file_chooser_dialog_new(_("Choose World file"),
 								NULL,
 								GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -597,6 +619,7 @@ static void georef_layer_export_params(georef_data_t * data)
 	} else {
 		gtk_widget_destroy(file_selector);
 	}
+#endif
 }
 
 
@@ -607,10 +630,11 @@ static void georef_layer_export_params(georef_data_t * data)
  * Based on simple file name conventions.
  * Only attempted if the preference is on.
  */
-static void maybe_read_world_file(VikFileEntry *vfe, void * user_data)
+static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 {
+#if 0
 	if (a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file")->b) {
-		const char* filename = vik_file_entry_get_filename(VIK_FILE_ENTRY(vfe));
+		const char* filename = vik_file_entry_get_filename(VIK_FILE_ENTRY(file_entry));
 		double values[4];
 		if (filename && user_data) {
 
@@ -635,6 +659,7 @@ static void maybe_read_world_file(VikFileEntry *vfe, void * user_data)
 			free(filew);
 		}
 	}
+#endif
 }
 
 
@@ -643,8 +668,10 @@ static void maybe_read_world_file(VikFileEntry *vfe, void * user_data)
 struct LatLon LayerGeoref::get_ll_tl()
 {
 	struct LatLon ll_tl;
+#ifdef K
 	ll_tl.lat = gtk_spin_button_get_value(GTK_SPIN_BUTTON(this->cw.lat_tl_spin));
 	ll_tl.lon = gtk_spin_button_get_value(GTK_SPIN_BUTTON(this->cw.lon_tl_spin));
+#endif
 	return ll_tl;
 }
 
@@ -654,8 +681,10 @@ struct LatLon LayerGeoref::get_ll_tl()
 struct LatLon LayerGeoref::get_ll_br()
 {
 	struct LatLon ll_br;
+#ifdef K
 	ll_br.lat = gtk_spin_button_get_value(GTK_SPIN_BUTTON(this->cw.lat_br_spin));
 	ll_br.lon = gtk_spin_button_get_value(GTK_SPIN_BUTTON(this->cw.lon_br_spin));
+#endif
 	return ll_br;
 }
 
@@ -669,6 +698,7 @@ void LayerGeoref::align_utm2ll()
 
 	struct UTM utm;
 	a_coords_latlon_to_utm(&ll_tl, &utm);
+#ifdef K
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(this->cw.ce_spin), utm.easting);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(this->cw.cn_spin), utm.northing);
 
@@ -678,6 +708,7 @@ void LayerGeoref::align_utm2ll()
 	gtk_entry_set_text(GTK_ENTRY(this->cw.utm_letter_entry), tmp_letter);
 
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(this->cw.utm_zone_spin), utm.zone);
+#endif
 }
 
 
@@ -686,6 +717,7 @@ void LayerGeoref::align_utm2ll()
 /* Align displayed Lat/Lon values with displayed UTM values. */
 void LayerGeoref::align_ll2utm()
 {
+#ifdef K
 	struct UTM corner;
 	const char *letter = gtk_entry_get_text(GTK_ENTRY(this->cw.utm_letter_entry));
 	if (*letter) {
@@ -699,6 +731,7 @@ void LayerGeoref::align_ll2utm()
 	a_coords_utm_to_latlon(&corner, &ll);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(this->cw.lat_tl_spin), ll.lat);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(this->cw.lon_tl_spin), ll.lon);
+#endif
 }
 
 
@@ -712,17 +745,19 @@ void LayerGeoref::align_ll2utm()
  */
 void LayerGeoref::align_coords()
 {
+#ifdef K
 	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(this->cw.tabs)) == 0) {
 		this->align_ll2utm();
 	} else {
 		this->align_utm2ll();
 	}
+#endif
 }
 
 
 
 
-static void switch_tab(GtkNotebook *notebook, void * tab, unsigned int tab_num, void * user_data)
+static void switch_tab(void *notebook, void * tab, unsigned int tab_num, void * user_data)
 {
 	LayerGeoref * layer = (LayerGeoref *) user_data;
 
@@ -762,6 +797,7 @@ static void calculate_mpp_from_coords_cb(GtkWidget * ww, LayerGeoref * layer)
 
 void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 {
+#ifdef K
 	const char* filename = vik_file_entry_get_filename(VIK_FILE_ENTRY(this->cw.imageentry));
 	if (!filename) {
 		return;
@@ -795,6 +831,7 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 	}
 
 	g_object_unref(G_OBJECT(pixmap));
+#endif
 }
 
 
@@ -806,10 +843,11 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 
 
 /* Returns true if OK was pressed. */
-bool LayerGeoref::dialog(Viewport * viewport, GtkWindow * w)
+bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Layer Properties"),
-							w,
+							window,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							GTK_STOCK_CANCEL,
 							GTK_RESPONSE_REJECT,
@@ -820,9 +858,7 @@ bool LayerGeoref::dialog(Viewport * viewport, GtkWindow * w)
 	/* Default to reject as user really needs to specify map file first. */
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
-#endif
 	GtkWidget *table, *wfp_hbox, *wfp_label, *wfp_button, *ce_label, *cn_label, *xlabel, *ylabel, *imagelabel;
 	changeable_widgets cw;
 
@@ -1001,6 +1037,7 @@ bool LayerGeoref::dialog(Viewport * viewport, GtkWindow * w)
 	}
 	gtk_widget_destroy (GTK_WIDGET(dialog));
 	return false;
+#endif
 }
 
 
@@ -1013,7 +1050,7 @@ static void georef_layer_zoom_to_fit(georef_data_t * data)
 
 	panel->get_viewport()->set_xmpp(layer->mpp_easting);
 	panel->get_viewport()->set_ympp(layer->mpp_northing);
-	panel->emit_update();
+	panel->emit_update_cb();
 }
 
 
@@ -1036,7 +1073,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	vik_coord_load_from_utm(&coord, viewport->get_coord_mode(), &utm);
 	viewport->set_center_coord(&coord, true);
 
-	panel->emit_update();
+	panel->emit_update_cb();
 }
 
 
@@ -1044,6 +1081,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 
 void LayerGeoref::add_menu_items(QMenu & menu)
 {
+#ifdef K
 	static georef_data_t pass_along;
 	pass_along.layer = this;
 	pass_along.panel = (LayersPanel *) panel;
@@ -1072,6 +1110,7 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(georef_layer_export_params), &pass_along);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_widget_show(item);
+#endif
 }
 
 
@@ -1085,7 +1124,7 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 
 
 
-LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
+LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
 {
 	this->id_string = QString("georef.move_map");
 
@@ -1094,8 +1133,10 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) :
 	this->action_tooltip     = QObject::tr("Georef Move Map");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
+#ifdef K
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geomove_pixmap;
+#endif
 
 	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, this }});
 }
@@ -1103,15 +1144,15 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window, Viewport * viewport) :
 
 
 
-LayerToolFuncStatus LayerToolGeorefMove::release_(Layer * vgl, QMouseEvent * event)
+LayerToolFuncStatus LayerToolGeorefMove::release_(Layer * vgl, QMouseEvent * ev)
 {
-	return ((LayerGeoref *) vgl)->move_release(event, this);
+	return (LayerToolFuncStatus) ((LayerGeoref *) vgl)->move_release(ev, this); /* kamilFIXME: resolve this cast of returned value. */
 }
 
 
 
 
-bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
+bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
@@ -1119,8 +1160,8 @@ bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 	}
 
 	if (this->click_x != -1) {
-		this->corner.easting += (event->x - this->click_x) * viewport->get_xmpp();
-		this->corner.northing -= (event->y - this->click_y) * viewport->get_ympp();
+		this->corner.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
+		this->corner.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
 		this->emit_changed();
 		return true;
 	}
@@ -1138,7 +1179,7 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 
 
 
-LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) : LayerTool(window, viewport, LayerType::GEOREF)
+LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
 {
 	this->id_string = QString("georef.zoom");
 
@@ -1146,9 +1187,10 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) :
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
 	this->action_tooltip     = QObject::tr("Georef Zoom Tool");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-
+#ifdef K
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geozoom_pixmap;
+#endif
 
 	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, this }});
 }
@@ -1156,22 +1198,22 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window, Viewport * viewport) :
 
 
 
-bool LayerToolGeorefZoom::click_(Layer * vgl, QMouseEvent * event)
+LayerToolFuncStatus LayerToolGeorefZoom::click_(Layer * vgl, QMouseEvent * ev)
 {
-	return ((LayerGeoref *) vgl)->zoom_press(event, this);
+	return (LayerToolFuncStatus) ((LayerGeoref *) vgl)->zoom_press(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 
 
 
-bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
+bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
 		return false;
 	}
 
-	if (event->button() == Qt::LeftButton) {
+	if (ev->button() == Qt::LeftButton) {
 		if (this->mpp_easting < (VIK_VIEWPORT_MAX_ZOOM / 1.05) && this->mpp_northing < (VIK_VIEWPORT_MAX_ZOOM / 1.05)) {
 			this->mpp_easting *= 1.01;
 			this->mpp_northing *= 1.01;
@@ -1191,22 +1233,22 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 
 
 
-LayerToolFuncStatus LayerToolGeorefMove::click_(Layer * vgl, QMouseEvent *event)
+LayerToolFuncStatus LayerToolGeorefMove::click_(Layer * vgl, QMouseEvent * ev)
 {
-	return ((LayerGeoref *) vgl)->move_press(event, this);
+	return (LayerToolFuncStatus) ((LayerGeoref *) vgl)->move_press(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 
 
 
-bool LayerGeoref::move_press(GdkEventButton * event, LayerTool * tool)
+bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
 		return false;
 	}
-	this->click_x = event->x;
-	this->click_y = event->y;
+	this->click_x = ev->x();
+	this->click_y = ev->y();
 	return true;
 }
 
@@ -1234,14 +1276,15 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 					       VikCoord * coord_tl,
 					       VikCoord * coord_br)
 {
+
 	LayerGeoref * grl = new LayerGeoref();
-	glr->configure_from_viewport(viewport);
+	grl->configure_from_viewport(viewport);
 	grl->rename(name);
 	grl->pixmap = pixmap;
 
 	vik_coord_to_utm(coord_tl, &(grl->corner));
 	vik_coord_to_latlon(coord_br, &(grl->ll_br));
-
+#ifdef K
 	if (grl->pixmap) {
 		grl->width = gdk_pixbuf_get_width(grl->pixmap);
 		grl->height = gdk_pixbuf_get_height(grl->pixmap);
@@ -1268,7 +1311,7 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 			return grl;
 		}
 	}
-
+#endif
 	/* Bad image. */
 	delete grl;
 	return NULL;
@@ -1280,7 +1323,7 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 LayerGeoref::LayerGeoref()
 {
 	this->type = LayerType::GEOREF;
-	strcpy(this->type_string, "GEOREF");
+	strcpy(this->debug_string, "GEOREF");
 	this->interface = &vik_georef_layer_interface;
 
 	/* Since GeoRef layer doesn't use uibuilder initializing this

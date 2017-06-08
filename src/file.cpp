@@ -39,11 +39,11 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#include "vikgpslayer.h"
 #if 0
 #include "jpg.h"
 #include "geojson.h"
 #include "babel.h"
-#include "vikgpslayer.h"
 #include "misc/strtod.h"
 #include "gpspoint.h"
 #include "gpsmapper.h"
@@ -274,12 +274,10 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 			push(&aggregates);
 			std::list<Layer const *> * children_ = ((LayerAggregate *) current)->get_children();
 			aggregates->data = (void *) children_;
-#ifdef K
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&aggregates);
 			std::list<Layer const *> * children_ = ((LayerGPS *) current)->get_children();
 			aggregates->data = (void *) children_;
-#endif
 		} else {
 			((std::list<Layer const *> *) aggregates->data)->pop_front();
 			fprintf(f, "~EndLayer\n\n");
@@ -393,10 +391,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
 				LayerType parent_type = ((Layer *) stack->data)->type;
 				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE)
-#ifdef K
-							&& (parent_type != LayerType::GPS)
-#endif
-							)) {
+							&& (parent_type != LayerType::GPS))) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
 					push(&stack); /* Inside INVALID layer. */
@@ -409,13 +404,11 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						successful_read = false;
 						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
 						stack->data = NULL;
-#ifdef K
 					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
 						params = Layer::get_interface(layer_type)->params;
 						params_count = Layer::get_interface(layer_type)->params_count;
-#endif
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::new_(layer_type, viewport);
@@ -438,10 +431,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							Layer * layer = (Layer *) stack->data;
 							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
 							layer->post_read(viewport, true);
-#ifdef K
 						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here? */
-#endif
 						} else {
 							successful_read = false;
 							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) stack->data)->type);

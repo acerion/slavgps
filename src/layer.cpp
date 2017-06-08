@@ -42,11 +42,9 @@
 #include "layer_coord.h"
 #include "layer_map.h"
 #include "layer_dem.h"
-#ifdef K
 #include "vikgeoreflayer.h"
 #include "vikgpslayer.h"
 #include "vikmapniklayer.h"
-#endif
 #include "globals.h"
 #include "tree_view.h"
 #include "uibuilder_qt.h"
@@ -65,16 +63,12 @@ using namespace SlavGPS;
 extern LayerAggregateInterface vik_aggregate_layer_interface;
 extern LayerTRWInterface vik_trw_layer_interface;
 extern LayerCoordInterface vik_coord_layer_interface;
-#ifndef SLAVGPS_QT
 extern LayerGeorefInterface vik_georef_layer_interface;
 extern LayerGPSInterface vik_gps_layer_interface;
-#endif
 extern LayerMapInterface vik_map_layer_interface;
 extern LayerDEMInterface vik_dem_layer_interface;
-#ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
 extern LayerMapnikInterface vik_mapnik_layer_interface;
-#endif
 #endif
 
 enum {
@@ -151,16 +145,12 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
 	&vik_coord_layer_interface,
-#ifndef SLAVGPS_QT
 	&vik_georef_layer_interface,
 	&vik_gps_layer_interface,
-#endif
 	&vik_map_layer_interface,
 	&vik_dem_layer_interface,
-#ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
 	&vik_mapnik_layer_interface,
-#endif
 #endif
 };
 
@@ -332,12 +322,9 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 		layer = new LayerMap();
 	} else if (layer_type == LayerType::DEM) {
 		layer = new LayerDEM();
-	}
-#ifndef SLAVGPS_QT
-	else if (layer_type == LayerType::GEOREF) {
+	} else if (layer_type == LayerType::GEOREF) {
 		layer = new LayerGeoref();
-		((LayerGeoref *) layer)->configure_form_viewport(viewport);
-
+		((LayerGeoref *) layer)->configure_from_viewport(viewport);
 #ifdef HAVE_LIBMAPNIK
 	} else if (layer_type == LayerType::MAPNIK) {
 		layer = new LayerMapnik();
@@ -345,9 +332,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 	} else if (layer_type == LayerType::GPS) {
 		layer = new LayerGPS();
 		((LayerGPS *) layer)->set_coord_mode(viewport->get_coord_mode());
-	}
-#endif
-	else {
+	} else {
 		assert (0);
 	}
 
