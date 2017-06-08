@@ -47,7 +47,7 @@
 #include "vikutils.h"
 #endif
 
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #include "settings.h"
 #include "globals.h"
 #include "icons/icons.h"

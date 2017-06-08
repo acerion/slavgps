@@ -60,7 +60,7 @@
 #include "preferences.h"
 
 #ifdef K
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #include "viktrwlayer_export.h"
 #include "viktrwlayer_analysis.h"
 #ifdef VIK_CONFIG_GEOTAG

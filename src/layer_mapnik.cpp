@@ -51,7 +51,7 @@
 #include "globals.h"
 
 #include "layer_map.h"
-#include "vikmapniklayer.h"
+#include "layer_mapnik.h"
 #include "widget_file_entry.h"
 #include "file.h"
 

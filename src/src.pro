@@ -6,9 +6,9 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
-    vikgeoreflayer.cpp \
-    vikgpslayer.cpp \
-    vikmapniklayer.cpp \
+    layer_georef.cpp \
+    layer_gps.cpp \
+    layer_mapnik.cpp \
     print.cpp \
     print-preview.cpp \
     layer_map.cpp \
@@ -83,9 +83,9 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
-    vikgeoreflayer.h \
-    vikgpslayer.h \
-    vikmapniklayer.h \
+    layer_georef.h \
+    layer_gps.h \
+    layer_mapnik.h \
     print.h \
     print-preview.h \
     layer_map.h \

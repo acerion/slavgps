@@ -39,7 +39,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #if 0
 #include "jpg.h"
 #include "geojson.h"

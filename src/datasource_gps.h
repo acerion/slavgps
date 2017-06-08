@@ -26,7 +26,7 @@
 
 #include <gtk/gtk.h>
 
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 
 
 

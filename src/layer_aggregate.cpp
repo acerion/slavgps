@@ -30,7 +30,7 @@
 #include "waypoint_list.h"
 #include "track_list_dialog.h"
 #include "util.h"
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #ifdef K
 #include "viktrwlayer_analysis.h"
 #endif

@@ -65,14 +65,13 @@
 #include "vikroutingwebengine.h"
 
 #include "vikgobjectbuilder.h"
+#endif
 
 #ifdef HAVE_LIBMAPNIK
-#include "vikmapniklayer.h"
+#include "layer_mapnik.h"
 #endif
 
-#include "vikmapniklayer.h"
-#include "vikgpslayer.h"
-#endif
+#include "layer_gps.h"
 #include "layer_trw.h"
 #include "viewport.h"
 #include "window.h"

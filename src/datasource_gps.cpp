@@ -36,7 +36,7 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #include "datasource_gps.h"
 #include "babel.h"
 #include "gpx.h"

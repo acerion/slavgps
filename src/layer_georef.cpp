@@ -38,7 +38,7 @@
 #include "preferences.h"
 #include "icons/icons.h"
 #include "layer_map.h"
-#include "vikgeoreflayer.h"
+#include "layer_georef.h"
 #include "widget_file_entry.h"
 #include "dialog.h"
 #include "file.h"

@@ -45,7 +45,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
-#include "vikgpslayer.h"
+#include "layer_gps.h"
 #include "viktrwlayer_export.h"
 #include "waypoint_properties.h"
 #include "track_profile_dialog.h"
