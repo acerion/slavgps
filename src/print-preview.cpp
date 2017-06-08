@@ -22,86 +22,27 @@
 
 
 #include "print-preview.h"
+#include "slav_qt.h"
+
+
 
 
 #define DRAWING_AREA_SIZE 200
 
 
-enum {
-	OFFSETS_CHANGED,
-	LAST_SIGNAL
-};
 
 
-static void      vik_print_preview_finalize(GObject          *object);
-
-static void      vik_print_preview_size_allocate(GtkWidget        *widget,
-						 GtkAllocation    *allocation,
-						 VikPrintPreview *preview);
-static void      vik_print_preview_realize(GtkWidget        *widget);
-static bool  vik_print_preview_event(GtkWidget        *widget,
-				     GdkEvent         *event,
-				     VikPrintPreview *preview);
-
-static bool  vik_print_preview_expose_event(GtkWidget        *widget,
-					    GdkEventExpose   *eevent,
-					    VikPrintPreview *preview);
-
-static double   vik_print_preview_get_scale(VikPrintPreview *preview);
-
-static void      vik_print_preview_get_page_margins(VikPrintPreview *preview,
-						    double          *left_margin,
-						    double          *right_margin,
-						    double          *top_margin,
-						    double          *bottom_margin);
-
-static void print_preview_queue_draw(VikPrintPreview * preview);
+static void vik_print_preview_size_allocate(GtkWidget * widget, GtkAllocation * allocation, PrintPreview * preview);
+static void vik_print_preview_realize(GtkWidget * widget);
+static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintPreview * preview);
+static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * eevent, PrintPreview * preview);
 
 
-#define parent_class vik_print_preview_parent_class
-
-static unsigned int vik_print_preview_signals[LAST_SIGNAL] = { 0 };
 
 
-#define g_marshal_value_peek_double(v)   (v)->data[0].v_double
-
-
-static void vik_print_preview_class_init(VikPrintPreviewClass *klass)
+static void vik_print_preview_init(PrintPreview * preview)
 {
 #ifdef K
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-	vik_print_preview_signals[OFFSETS_CHANGED] =
-		g_signal_new("offsets-changed",
-			      G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (VikPrintPreviewClass, offsets_changed),
-			      NULL, NULL,
-			      marshal_VOID__DOUBLE_DOUBLE,
-			      G_TYPE_NONE, 2,
-			      G_TYPE_DOUBLE,
-			      G_TYPE_DOUBLE);
-
-	object_class->finalize = vik_print_preview_finalize;
-
-	klass->offsets_changed = NULL;
-#endif
-}
-
-static void vik_print_preview_init(VikPrintPreview * preview)
-{
-#ifdef K
-	preview->page               = NULL;
-	preview->pixbuf             = NULL;
-	preview->dragging           = false;
-	preview->image_offset_x     = 0.0;
-	preview->image_offset_y     = 0.0;
-	preview->image_offset_x_max = 0.0;
-	preview->image_offset_y_max = 0.0;
-	preview->image_xres         = 230.0; // 1.0
-	preview->image_yres         = 230.0;
-	preview->use_full_page      = false;
-
 	preview->area = gtk_drawing_area_new();
 	gtk_container_add(GTK_CONTAINER (preview), preview->area);
 	gtk_widget_show(preview->area);
@@ -124,204 +65,178 @@ static void vik_print_preview_init(VikPrintPreview * preview)
 }
 
 
-static void vik_print_preview_finalize(GObject * object)
+
+
+PrintPreview::~PrintPreview()
 {
-#ifdef K
-	VikPrintPreview *preview = VIK_PRINT_PREVIEW (object);
-
-	if (preview->drawable) {
-		preview->drawable = NULL;
+	if (this->drawable) {
+		this->drawable = NULL; /* Just a reference. */
 	}
 
-	if (preview->pixbuf) {
-		g_object_unref(preview->pixbuf);
-		preview->pixbuf = NULL;
+	if (this->pixmap) {
+		delete this->pixmap;
+		this->pixmap = NULL;
 	}
 
-	if (preview->page) {
-		g_object_unref(preview->page);
-		preview->page = NULL;
+	if (this->page) {
+		delete this->page;
+		this->page = NULL;
 	}
-
-	G_OBJECT_CLASS (vik_print_preview_parent_class)->finalize(object);
-#endif
 }
 
+
+
+
 /**
- * vik_print_preview_new:
  * @page: page setup
  * @drawable_id: the drawable to print
  *
- * Creates a new #VikPrintPreview widget.
+ * Creates a new #PrintPreview widget.
  *
- * Return value: the new #VikPrintPreview widget.
+ * Return value: the new #PrintPreview widget.
  **/
-GtkWidget * vik_print_preview_new(GtkPageSetup * page,
-				  GdkDrawable        *drawable)
+PrintPreview::PrintPreview(GtkPageSetup * page_, QPixmap * drawable_)
 {
+	this->drawable = drawable_;
+
 #ifdef K
-	VikPrintPreview *preview;
-	float            ratio;
-
-	preview = (VikPrintPreview *) g_object_new(VIK_TYPE_PRINT_PREVIEW, NULL);
-
-	preview->drawable = drawable;
-
-	if (page != NULL) {
-		preview->page = gtk_page_setup_copy(page);
+	if (page) {
+		this->page = gtk_page_setup_copy(page);
 	} else {
-		preview->page = gtk_page_setup_new();
+		this->page = gtk_page_setup_new();
 	}
 
-	ratio = (gtk_page_setup_get_paper_width(preview->page, GTK_UNIT_POINTS) /
+	float ratio = (gtk_page_setup_get_paper_width(this->page, GTK_UNIT_POINTS) /
 		 gtk_page_setup_get_paper_height(preview->page, GTK_UNIT_POINTS));
 
-	gtk_aspect_frame_set(GTK_ASPECT_FRAME (preview), 0.5, 0.5, ratio, false);
+	gtk_aspect_frame_set(GTK_ASPECT_FRAME (this), 0.5, 0.5, ratio, false);
 
-	gtk_widget_set_size_request(preview->area,
-				     DRAWING_AREA_SIZE, DRAWING_AREA_SIZE);
-
-	return GTK_WIDGET (preview);
+	gtk_widget_set_size_request(this->area, DRAWING_AREA_SIZE, DRAWING_AREA_SIZE);
 #endif
 }
 
+
+
+
 /**
- * vik_print_preview_set_image_dpi:
- * @preview: a #VikPrintPreview.
  * @xres: the X resolution
  * @yres: the Y resolution
  *
  * Sets the resolution of the image/drawable displayed by the
- * #VikPrintPreview.
+ * #PrintPreview.
  **/
-void vik_print_preview_set_image_dpi(VikPrintPreview *preview,
-				     double           xres,
-				     double           yres)
+void PrintPreview::set_image_dpi(double xres, double yres)
 {
-#ifdef K
-	if (preview->image_xres != xres || preview->image_yres != yres) {
-		preview->image_xres = xres;
-		preview->image_yres = yres;
+	if (this->image_xres != xres || this->image_yres != yres) {
+		this->image_xres = xres;
+		this->image_yres = yres;
 
-		print_preview_queue_draw(preview);
+		this->queue_draw();
 	}
-#endif
 }
 
+
+
+
 /**
- * vik_print_preview_set_page_setup:
- * @preview: a #VikPrintPreview.
  * @page: the page setup to use
  *
- * Sets the page setup to use by the #VikPrintPreview.
+ * Sets the page setup to use by the #PrintPreview.
  **/
-void vik_print_preview_set_page_setup(VikPrintPreview *preview,
-				      GtkPageSetup     *page)
+void PrintPreview::set_page_setup(GtkPageSetup * page_)
 {
 #ifdef K
-	float ratio;
-
-	if (preview->page) {
-		g_object_unref(preview->page);
+	if (this->page) {
+		g_object_unref(this->page);
 	}
 
-	preview->page = gtk_page_setup_copy(page);
+	this->page = gtk_page_setup_copy(page);
 
-	ratio = (gtk_page_setup_get_paper_width(page, GTK_UNIT_POINTS) /
+	float ratio = (gtk_page_setup_get_paper_width(page, GTK_UNIT_POINTS) /
 		 gtk_page_setup_get_paper_height(page, GTK_UNIT_POINTS));
 
 	gtk_aspect_frame_set(GTK_ASPECT_FRAME (preview), 0.5, 0.5, ratio, false);
 
-	print_preview_queue_draw(preview);
+	this->queue_draw();
 #endif
 }
 
+
+
+
 /**
- * vik_print_preview_set_image_offsets:
- * @preview: a #VikPrintPreview.
  * @offset_x: the X offset
  * @offset_y: the Y offset
  *
- * Sets the offsets of the image/drawable displayed by the #VikPrintPreview.
+ * Sets the offsets of the image/drawable displayed by the #PrintPreview.
  * It does not emit the "offsets-changed" signal.
  **/
-void vik_print_preview_set_image_offsets(VikPrintPreview *preview,
-					 double           offset_x,
-					 double           offset_y)
+void PrintPreview::set_image_offsets(double offset_x, double offset_y)
 {
-#ifdef K
-	preview->image_offset_x = offset_x;
-	preview->image_offset_y = offset_y;
+	this->image_offset_x = offset_x;
+	this->image_offset_y = offset_y;
 
-	print_preview_queue_draw(preview);
-#endif
+	this->queue_draw();
 }
 
+
+
+
 /**
- * vik_print_preview_set_image_offsets_max:
- * @preview: a #VikPrintPreview.
  * @offset_x_max: the maximum X offset allowed
  * @offset_y_max: the maximum Y offset allowed
  *
  * Sets the maximum offsets of the image/drawable displayed by the
- * #VikPrintPreview.  It does not emit the "offsets-changed" signal.
+ * #PrintPreview.  It does not emit the "offsets-changed" signal.
  **/
-void vik_print_preview_set_image_offsets_max(VikPrintPreview *preview,
-					     double           offset_x_max,
-					     double           offset_y_max)
+void PrintPreview::set_image_offsets_max(double offset_x_max, double offset_y_max)
 {
-#ifdef K
-	preview->image_offset_x_max = offset_x_max;
-	preview->image_offset_y_max = offset_y_max;
+	this->image_offset_x_max = offset_x_max;
+	this->image_offset_y_max = offset_y_max;
 
-	print_preview_queue_draw(preview);
-#endif
+	this->queue_draw();
 }
 
+
+
+
 /**
- * vik_print_preview_set_use_full_page:
- * @preview: a #VikPrintPreview.
  * @full_page: true to ignore the page margins
  *
  * If @full_page is true, the page margins are ignored and the full page
  * can be used to setup printing.
  **/
-void vik_print_preview_set_use_full_page(VikPrintPreview *preview,
-					 bool          full_page)
+void PrintPreview::set_use_full_page(bool full_page)
 {
-#ifdef K
-	preview->use_full_page = full_page;
+	this->use_full_page = full_page;
 
-	print_preview_queue_draw(preview);
-#endif
+	this->queue_draw();
 }
 
-static void vik_print_preview_realize(GtkWidget *widget)
+
+
+
+static void vik_print_preview_realize(GtkWidget * widget)
 {
 #ifdef K
-	GdkCursor *cursor;
-
-	cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
-					    GDK_FLEUR);
+	GdkCursor * cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
+							GDK_FLEUR);
 	gdk_window_set_cursor(gtk_widget_get_window(widget), cursor);
 	gdk_cursor_unref(cursor);
 #endif
 }
 
-static bool
-vik_print_preview_event(GtkWidget        *widget,
-                          GdkEvent         *event,
-                          VikPrintPreview *preview)
+
+
+
+static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintPreview * preview)
 {
-#ifdef K
 	static double orig_offset_x = 0.0;
 	static double orig_offset_y = 0.0;
 	static int    start_x       = 0;
 	static int    start_y       = 0;
 
-	double        offset_x;
-	double        offset_y;
-	double        scale;
+#ifdef K
 
 	switch (event->type) {
 	case GDK_BUTTON_PRESS:
@@ -340,17 +255,17 @@ vik_print_preview_event(GtkWidget        *widget,
 		break;
 
 	case GDK_MOTION_NOTIFY:
-		scale = vik_print_preview_get_scale(preview);
+		double scale = preview->get_scale();
 
-		offset_x = (orig_offset_x + (event->motion.x - start_x) / scale);
-		offset_y = (orig_offset_y + (event->motion.y - start_y) / scale);
+		double offset_x = (orig_offset_x + (event->motion.x - start_x) / scale);
+		double offset_y = (orig_offset_y + (event->motion.y - start_y) / scale);
 
 		offset_x = CLAMP (offset_x, 0, preview->image_offset_x_max);
 		offset_y = CLAMP (offset_y, 0, preview->image_offset_y_max);
 
 		if (preview->image_offset_x != offset_x ||
 		    preview->image_offset_y != offset_y) {
-			vik_print_preview_set_image_offsets(preview, offset_x, offset_y);
+			preview->set_image_offsets(offset_x, offset_y);
 
 			g_signal_emit(preview,
 				      vik_print_preview_signals[OFFSETS_CHANGED], 0,
@@ -364,61 +279,56 @@ vik_print_preview_event(GtkWidget        *widget,
 		start_x = start_y = 0;
 		preview->dragging = false;
 
-		print_preview_queue_draw(preview);
+		preview->queue_draw();
 		break;
 
 	default:
 		break;
 	}
-
-	return false;
 #endif
+	return false;
 }
 
-static QPixmap *get_thumbnail(GdkDrawable *drawable, int thumb_width, int thumb_height)
-{
-#ifdef K
-	int width, height;
-	QPixmap *pixmap;
-	QPixmap *thumbnail;
 
+
+
+static QPixmap * get_thumbnail(QPixmap * drawable, int thumb_width, int thumb_height)
+{
+	int width, height;
+	QPixmap * thumbnail = NULL;
+
+#ifdef K
 	gdk_drawable_get_size(drawable, &width, &height);
-	pixmap = gdk_pixbuf_get_from_drawable(NULL, drawable,
-					      NULL, 0, 0, 0, 0, width, height);
+	QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, drawable,
+							NULL, 0, 0, 0, 0, width, height);
 	thumbnail = gdk_pixbuf_scale_simple(pixmap, thumb_width, thumb_height,
 					    GDK_INTERP_BILINEAR);
 	g_object_unref(pixmap);
-	return thumbnail;
 #endif
+	return thumbnail;
+
 }
 
-static bool vik_print_preview_expose_event(GtkWidget        *widget,
-					   GdkEventExpose   *eevent,
-					   VikPrintPreview *preview)
+
+
+
+static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * eevent, PrintPreview * preview)
 {
-#ifdef K
-	double  paper_width;
-	double  paper_height;
 	double  left_margin;
 	double  right_margin;
 	double  top_margin;
 	double  bottom_margin;
-	double  scale;
-	cairo_t *cr;
 
-	paper_width = gtk_page_setup_get_paper_width(preview->page,
+#ifdef K
+	double paper_width = gtk_page_setup_get_paper_width(preview->page,
 						     GTK_UNIT_POINTS);
-	paper_height = gtk_page_setup_get_paper_height(preview->page,
+	double paper_height = gtk_page_setup_get_paper_height(preview->page,
 						       GTK_UNIT_POINTS);
-	vik_print_preview_get_page_margins(preview,
-					   &left_margin,
-					   &right_margin,
-					   &top_margin,
-					   &bottom_margin);
+	preview->get_page_margins(&left_margin, &right_margin, &top_margin, &bottom_margin);
 
-	cr = gdk_cairo_create(gtk_widget_get_window(widget));
+	cairo_t cr = gdk_cairo_create(gtk_widget_get_window(widget));
 
-	scale = vik_print_preview_get_scale(preview);
+	double scale = preview->get_scale();
 
 	/* draw background */
 	cairo_scale(cr, scale, scale);
@@ -445,7 +355,7 @@ static bool vik_print_preview_expose_event(GtkWidget        *widget,
 				(double) height * 72.0 / preview->image_yres);
 		cairo_stroke(cr);
 	} else {
-		GdkDrawable *drawable = preview->drawable;
+		QPixmap * drawable = preview->drawable;
 
 		/* draw image */
 		cairo_translate(cr,
@@ -483,51 +393,53 @@ static bool vik_print_preview_expose_event(GtkWidget        *widget,
 
 	cairo_destroy(cr);
 
-	return false;
 #endif
+	return false;
 }
 
-static double vik_print_preview_get_scale(VikPrintPreview* preview)
+
+
+
+double PrintPreview::get_scale(void)
 {
 #ifdef K
-	double scale_x;
-	double scale_y;
+	double scale_x = ((double) this->area->allocation.width /
+			  gtk_page_setup_get_paper_width(this->page, GTK_UNIT_POINTS));
 
-	scale_x = ((double) preview->area->allocation.width /
-		   gtk_page_setup_get_paper_width(preview->page, GTK_UNIT_POINTS));
-
-	scale_y = ((double) preview->area->allocation.height /
-		   gtk_page_setup_get_paper_height(preview->page, GTK_UNIT_POINTS));
+	double scale_y = ((double) this->area->allocation.height /
+			  gtk_page_setup_get_paper_height(this->page, GTK_UNIT_POINTS));
 
 	return MIN (scale_x, scale_y);
 #endif
 }
 
+
+
+
 static void vik_print_preview_size_allocate(GtkWidget        *widget,
 					    GtkAllocation    *allocation,
-					    VikPrintPreview *preview)
+					    PrintPreview * preview)
 {
-#ifdef K
 	if (preview->pixmap != NULL) {
+#ifdef K
 		g_object_unref(preview->pixmap);
+#endif
 		preview->pixmap = NULL;
 	}
-#endif
 }
 
-static void vik_print_preview_get_page_margins(VikPrintPreview *preview,
-					       double          *left_margin,
-					       double          *right_margin,
-					       double          *top_margin,
-					       double          *bottom_margin)
+
+
+
+void PrintPreview::get_page_margins(double * left_margin, double * right_margin, double * top_margin, double * bottom_margin)
 {
-#ifdef K
-	if (preview->use_full_page) {
+	if (this->use_full_page) {
 		*left_margin   = 0.0;
 		*right_margin  = 0.0;
 		*top_margin    = 0.0;
 		*bottom_margin = 0.0;
 	} else {
+#ifdef K
 		*left_margin   = gtk_page_setup_get_left_margin(preview->page,
 								GTK_UNIT_POINTS);
 		*right_margin  = gtk_page_setup_get_right_margin(preview->page,
@@ -536,13 +448,17 @@ static void vik_print_preview_get_page_margins(VikPrintPreview *preview,
 							       GTK_UNIT_POINTS);
 		*bottom_margin = gtk_page_setup_get_bottom_margin(preview->page,
 								  GTK_UNIT_POINTS);
-	}
 #endif
+	}
+
 }
 
-static void print_preview_queue_draw(VikPrintPreview *preview)
+
+
+
+void PrintPreview::queue_draw(void)
 {
 #ifdef K
-	gtk_widget_queue_draw(GTK_WIDGET (preview->area));
+	gtk_widget_queue_draw(GTK_WIDGET (this->area));
 #endif
 }

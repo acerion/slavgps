@@ -21,7 +21,6 @@
 
 
 
-#include "slav_qt.h"
 
 #include <QPixmap>
 
@@ -30,60 +29,50 @@
 
 
 
-typedef struct _VikPrintPreview       VikPrintPreview;
-typedef struct _VikPrintPreviewClass  VikPrintPreviewClass;
+typedef int GtkPageSetup;
+typedef int GtkAspectFrame;
+typedef int GtkAllocation;
+typedef int GtkPrintOperation;
+typedef int GtkPrintContext;
+typedef int GtkPrintOperation;
+typedef int GtkRange;
+typedef int GtkScrollType;
 
-struct _VikPrintPreview {
-	GtkAspectFrame  parent_instance;
 
-	GtkWidget      *area;
-	GtkPageSetup   *page;
-	QPixmap      *pixbuf;
-	bool        dragging;
 
-	GdkDrawable    *drawable;
 
-	double         image_offset_x;
-	double         image_offset_y;
-	double         image_offset_x_max;
-	double         image_offset_y_max;
-	double         image_xres;
-	double         image_yres;
+struct PrintPreview {
+	PrintPreview(GtkPageSetup * page, QPixmap * drawable);
+	~PrintPreview();
 
-	bool        use_full_page;
+	void set_image_dpi(double xres, double yres);
+	void queue_draw(void);
+	double get_scale(void);
+	void set_page_setup(GtkPageSetup * page);
+	void set_image_offsets(double offset_x, double offset_y);
+	void set_image_offsets_max(double offset_x_max, double offset_y_max);
+	void set_use_full_page(bool full_page);
+
+	void get_page_margins(double * left_margin, double * right_margin, double * top_margin, double * bottom_margin);
+
+	GtkAspectFrame parent_instance;
+
+	QWidget * area = NULL;
+	GtkPageSetup * page = NULL;
+	QPixmap * pixmap = NULL;
+	bool dragging = false;
+
+	QPixmap * drawable = NULL; /* Just a reference? */
+
+	double image_offset_x = 0.0;
+	double image_offset_y = 0.0;
+	double image_offset_x_max = 0.0;
+	double image_offset_y_max = 0.0;
+	double image_xres = 230.0;
+	double image_yres = 230.0;
+
+	bool use_full_page = false;
 };
-
-struct _VikPrintPreviewClass {
-	GtkAspectFrameClass  parent_class;
-
-	void (* offsets_changed)  (VikPrintPreview *print_preview,
-				   int              offset_x,
-				   int              offset_y);
-};
-
-
-GType       vik_print_preview_get_type(void) G_GNUC_CONST;
-
-GtkWidget * vik_print_preview_new(GtkPageSetup     *page,
-				  GdkDrawable     *drawable);
-
-void        vik_print_preview_set_image_dpi(VikPrintPreview *preview,
-					    double           xres,
-					    double           yres);
-
-void        vik_print_preview_set_page_setup(VikPrintPreview *preview,
-					     GtkPageSetup     *page);
-
-void        vik_print_preview_set_image_offsets(VikPrintPreview *preview,
-						double           offset_x,
-						double           offset_y);
-
-void        vik_print_preview_set_image_offsets_max(VikPrintPreview *preview,
-						    double           offset_x_max,
-						    double           offset_y_max);
-
-void        vik_print_preview_set_use_full_page(VikPrintPreview *preview,
-						bool          full_page);
 
 
 
