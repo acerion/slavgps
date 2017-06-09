@@ -38,7 +38,7 @@
 #include "geotag_exif.h"
 #include "thumbnails.h"
 #include "background.h"
-#include "viktrwlayer_geotag.h"
+#include "layer_trw_geotag.h"
 #include "fileutils.h"
 #include "settings.h"
 #include "globals.h"

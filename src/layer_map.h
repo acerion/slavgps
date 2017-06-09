@@ -36,7 +36,7 @@
 #include "coord.h"
 #include "layer.h"
 #include "viewport.h"
-#include "vikmapsource.h"
+#include "map_source.h"
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"
 

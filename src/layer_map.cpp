@@ -42,7 +42,7 @@
 #include <unistd.h>
 #endif
 
-#include "vikmapsource.h"
+#include "map_source.h"
 #include "vikslippymapsource.h"
 #include "vikutils.h"
 #include "maputils.h"

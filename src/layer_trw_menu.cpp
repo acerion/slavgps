@@ -46,14 +46,14 @@
 #include <glib/gi18n.h>
 
 #include "layer_gps.h"
-#include "viktrwlayer_export.h"
+#include "layer_trw_export.h"
 #include "waypoint_properties.h"
 #include "track_profile_dialog.h"
-#include "viktrwlayer_analysis.h"
+#include "layer_trw_analysis.h"
 #include "track_list_dialog.h"
-#include "viktrwlayer_waypointlist.h"
+#include "waypoint_list.h"
 #ifdef VIK_CONFIG_GEOTAG
-#include "viktrwlayer_geotag.h"
+#include "layer_trw_geotag.h"
 #include "geotag_exif.h"
 #endif
 #include "garminsymbols.h"

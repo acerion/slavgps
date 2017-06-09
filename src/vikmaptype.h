@@ -19,7 +19,7 @@
 #ifndef _SG_MAP_TYPE_H_
 #define _SG_MAP_TYPE_H_
 
-#include "vikmapsource.h"
+#include "map_source.h"
 #include "vikmapslayer_compat.h"
 
 

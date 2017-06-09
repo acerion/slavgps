@@ -33,7 +33,7 @@
 #include "babel.h"
 #include "babel_ui.h"
 #include "viking.h"
-#include "viktrwlayer_export.h"
+#include "layer_trw_export.h"
 #include "gpx.h"
 #include "fileutils.h"
 #include "dialog.h"

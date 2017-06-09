@@ -6,9 +6,9 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
-    viktrwlayer_analysis.cpp \
-    viktrwlayer_export.cpp \
-    viktrwlayer_geotag.cpp \
+    layer_trw_analysis.cpp \
+    layer_trw_export.cpp \
+    layer_trw_geotag.cpp \
     track_statistics.cpp \
     jpg.cpp \
     mapnik_interface.cpp \
@@ -19,7 +19,7 @@ SOURCES += main.cpp \
     print.cpp \
     print-preview.cpp \
     layer_map.cpp \
-    vikmapsource.cpp \
+    map_source.cpp \
     mapcache.cpp \
     maputils.cpp \
     metatile.cpp \
@@ -90,9 +90,9 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
-    viktrwlayer_analysis.h \
-    viktrwlayer_export.h \
-    viktrwlayer_geotag.h \
+    layer_trw_analysis.h \
+    layer_trw_export.h \
+    layer_trw_geotag.h \
     track_statistics.h \
     jpg.h \
     mapnik_interface.h \
@@ -103,7 +103,7 @@ HEADERS += window.h \
     print.h \
     print-preview.h \
     layer_map.h \
-    vikmapsource.h \
+    map_source.h \
     maputils.h \
     metatile.h \
     mapcache.h \

@@ -24,7 +24,7 @@
 
 #include <cstdint>
 
-#include "vikmapsource.h"
+#include "map_source.h"
 
 
 

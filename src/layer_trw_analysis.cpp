@@ -33,7 +33,7 @@
 
 #include <time.h>
 
-#include "viktrwlayer_analysis.h"
+#include "layer_trw_analysis.h"
 #include "ui_util.h"
 #include "settings.h"
 #include "globals.h"

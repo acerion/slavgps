@@ -32,7 +32,7 @@
 #include "util.h"
 #include "layer_gps.h"
 #ifdef K
-#include "viktrwlayer_analysis.h"
+#include "layer_trw_analysis.h"
 #endif
 #include "dialog.h"
 #include "icons/icons.h"

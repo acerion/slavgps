@@ -17,7 +17,7 @@
  */
 
  /**
-  * SECTION:vikmapsource
+  * SECTION:map_source
   * @short_description: the base class to describe map source
   *
   * The #MapSource class is both the interface and the base class
@@ -34,7 +34,7 @@
 #include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
-#include "vikmapsource.h"
+#include "map_source.h"
 
 
 
