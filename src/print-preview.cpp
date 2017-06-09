@@ -49,18 +49,10 @@ static void vik_print_preview_init(PrintPreview * preview)
 
 	gtk_widget_add_events(GTK_WIDGET (preview->area), GDK_BUTTON_PRESS_MASK);
 
-	g_signal_connect(preview->area, "size-allocate",
-			 G_CALLBACK (vik_print_preview_size_allocate),
-			 preview);
-	g_signal_connect(preview->area, "realize",
-			 G_CALLBACK (vik_print_preview_realize),
-			 NULL);
-	g_signal_connect(preview->area, "event",
-			 G_CALLBACK (vik_print_preview_event),
-			 preview);
-	g_signal_connect(preview->area, "expose-event",
-			 G_CALLBACK (vik_print_preview_expose_event),
-			 preview);
+	QObject::connect(preview->area, SIGNAL("size-allocate"), preview, SLOT (vik_print_preview_size_allocate));
+	QObject::connect(preview->area, SIGNAL("realize"), NULL, SLOT (vik_print_preview_realize));
+	QObject::connect(preview->area, SIGNAL("event"), preview, SLOT (vik_print_preview_event));
+	QObject::connect(preview->area, SIGNAL("expose-event"), preview, SLOT (vik_print_preview_expose_event));
 #endif
 }
 

@@ -1057,41 +1057,34 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 		panel->get_viewport()
 	};
 
-	GtkWidget *item = gtk_menu_item_new();
-	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	QAction * action = NULL;
 
 	/* Typical users shouldn't need to use this functionality - so debug only ATM. */
 	if (vik_debug) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Flush Memory Cache"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_flush_memory), &values);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		action = new QAction(QObject::tr("&Flush Memory Cache"), this);
+		action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_flush_memory));
+		menu->addAction(action);
 	}
 
-	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_REFRESH, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_reload), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("Re&fresh"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_reload));
+	menu->addAction(action);
 
 	if (strcmp("", this->filename_css)) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Run Carto Command"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_carto), &values);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		action = new QAction(QObject::tr("&Run Carto Command"), this);
+		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
+		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_carto));
+		menu->addAction(action);
 	}
 
-	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_INFO, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_information), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Info"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_information));
+	menu->addAction(action);
 
-	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_about), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&About"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_about));
+	menu->addAction(action);
 #endif
 }
 
@@ -1237,22 +1230,21 @@ bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 		this->rerender_zoom = tool->viewport->get_zoom();
 #ifdef K
 		if (!this->right_click_menu) {
-			GtkWidget *item;
-			this->right_click_menu = gtk_menu_new();
+			QAction * action = NULL;
+			this->right_click_menu = new QMenu();
 
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Rerender Tile"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_rerender_cb), this);
-			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
+			action = new QAction(QObject::tr("&Rerender Tile"), this);
+			action->setIcon(QIcon::fromTheme("GTK_STOCK_REFRESH"));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_rerender_cb));
+			menu->addAction(action);
 
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Info"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_tile_info_cb), this);
-			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
+			action = new QAction(QObject::tr("&Info"), this);
+			action->setIcon(QIcon::fromTheme("GTK_STOCK_INFO"));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_tile_info_cb));
+			menu->addAction(action);
 		}
 
-		gtk_menu_popup(GTK_MENU(this->right_click_menu), NULL, NULL, NULL, NULL, ev->button, ev->time);
-		gtk_widget_show_all(GTK_WIDGET(this->right_click_menu));
+		this->right_click_menu->exec(QCursor::pos());
 #endif
 	}
 

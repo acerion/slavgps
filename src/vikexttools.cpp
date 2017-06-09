@@ -96,9 +96,9 @@ void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim
 					      label,
 					      GTK_UI_MANAGER_MENUITEM, false);
 
-			GtkAction * action = gtk_action_new(label, label, NULL, NULL);
-			g_object_set_data(G_OBJECT(action), VIK_TOOL_DATA_KEY, ext_tool);
-			g_signal_connect(G_OBJECT(action), "activate", G_CALLBACK(ext_tools_open_cb), window);
+			QAction * action = new QActionw(QString(label), this);
+			g_object_set_data(action, VIK_TOOL_DATA_KEY, ext_tool);
+			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_open_cb));
 
 			gtk_action_group_add_action(action_group, action);
 
@@ -139,18 +139,18 @@ void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * me
 		External * ext_tool = *iter;
 		char * label = ext_tool->get_label();
 		if (label) {
-			GtkWidget * item = gtk_menu_item_new_with_label(_(label));
+			QAction * action = QAction(QObject::tr(label), this);
 			free(label);
 			label = NULL;
 			// Store some data into the menu entry
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATA_KEY, ext_tool);
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_WIN_KEY, window);
 			if (vc) {
-				g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_open_at_position_cb), vc);
+				QObject::connect(action, SIGNAL (triggered(bool)), vc, SLOT (ext_tool_open_at_position_cb));
 			} else {
-				g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tools_open_cb), window);
+				QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_open_cb));
 			}
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+			menu->addAction(action);
 			gtk_widget_show(item);
 		}
 	}

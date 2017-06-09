@@ -281,10 +281,10 @@ bool TreeView::is_visible_in_tree(TreeIndex const & index)
 #ifdef K
 void TreeView::add_columns()
 {
-	g_signal_connect(renderer, "edited", G_CALLBACK (vik_treeview_edited_cb), this);
-	g_signal_connect(renderer, "editing-started", G_CALLBACK (vik_treeview_edit_start_cb), this);
-	g_signal_connect(renderer, "editing-canceled", G_CALLBACK (vik_treeview_edit_stop_cb), this);
-	g_signal_connect(renderer, "toggled", G_CALLBACK (vik_treeview_toggled_cb), this);
+	QObject::connect(renderer, SIGNAL("edited"), this, SLOT (vik_treeview_edited_cb));
+	QObject::connect(renderer, SIGNAL("editing-started"), this, SLOT (vik_treeview_edit_start_cb));
+	QObject::connect(renderer, SIGNAL("editing-canceled"), this, SLOT (vik_treeview_edit_stop_cb));
+	QObject::connect(renderer, SIGNAL("toggled"), this, SLOT (vik_treeview_toggled_cb));
 }
 #endif
 
@@ -1086,7 +1086,7 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	}
 
 	gtk_tree_view_set_reorderable(this, true);
-	g_signal_connect(gtk_tree_view_get_selection(this), "changed", G_CALLBACK(select_cb), this);
+	QObject::connect(gtk_tree_view_get_selection(this), SIGNAL("changed"), this, SLOT (select_cb));
 #endif
 }
 

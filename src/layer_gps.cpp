@@ -671,66 +671,47 @@ void LayerGPS::add_menu_items(QMenu & menu)
 {
 #ifdef K
 	static gps_layer_data_t pass_along;
-	GtkWidget *item;
 	pass_along.layer = this;
 	pass_along.panel = (LayersPanel *) panel;
 
-	item = gtk_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	QAction * action = NULL;
 
-	/* Now with icons */
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Upload to GPS"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_upload_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Upload to GPS"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_UP"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_upload_cb));
+	menu->addAction(action);
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Download from _GPS"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_download_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("Download from &GPS"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_DOWN"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_download_cb));
+	menu->addAction(action);
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	item = gtk_image_menu_item_new_with_mnemonic(this->realtime_tracking  ?
-						       "_Stop Realtime Tracking" :
-						       "_Start Realtime Tracking");
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, this->realtime_tracking ?
-					gtk_image_new_from_stock(GTK_STOCK_MEDIA_STOP, GTK_ICON_SIZE_MENU) :
-					gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_start_stop_tracking_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(this->realtime_tracking ? QObject::tr("_Stop Realtime Tracking") : QObject::tr("_Start Realtime Tracking"), this);
+	action->setIcon(this->realtime_tracking ? QIcon::fromTheme("GTK_STOCK_MEDIA_STOP") : QIcon::fromTheme("GTK_STOCK_MEDIA_PLAY"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_start_stop_tracking_cb));
+	menu->addAction(action);
 
-	item = gtk_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-
-	item = gtk_image_menu_item_new_with_mnemonic(_("Empty _Realtime"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_realtime_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("Empty &Realtime"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_realtime_cb));
+	menu->addAction(action);
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("E_mpty Upload"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_upload_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("E&mpty Upload"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_upload_cb));
+	menu->addAction(action);
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Empty Download"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_download_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Empty Download"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_download_cb));
+	menu->addAction(action);
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Empty _All"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_all_cb), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("Empty &All"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_all_cb));
+	menu->addAction(action);
 #endif
 }
 
@@ -800,7 +781,7 @@ void LayerGPS::connect_to_tree(TreeView * tree_view_, GtkTreeIter *layer_iter)
 			this->tree_view->set_visibility(&iter, false);
 		}
 		trw->connect_to_tree(this->tree_view, &iter);
-		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(Layer::child_layer_changed_cb), (Layer *) this);
+		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb));
 	}
 #endif
 }

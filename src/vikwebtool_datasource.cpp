@@ -128,7 +128,7 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 	}
 
 	/* 'ok' when press return in the entry. */
-	g_signal_connect_swapped(widgets->user_string, "activate", G_CALLBACK(accept), dialog);
+	QObject::connect(widgets->user_string, SIGNAL("activate"), dialog, SLOT (accept));
 
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));

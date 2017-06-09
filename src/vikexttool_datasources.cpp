@@ -87,13 +87,13 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, G
 		External * ext_tool = *iter;
 		char * label = ext_tool->get_label();
 		if (label) {
-			GtkWidget * item = gtk_menu_item_new_with_label(_(label));
+			QAction * action = QAction(QObject::tr(label), this);
 			free(label);
 			label = NULL;
 			/* Store tool's ref into the menu entry. */
-			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool);
-			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), window);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+			g_object_set_data(action, VIK_TOOL_DATASOURCE_KEY, ext_tool);
+			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tool_datasources_open_cb));
+			menu->addAction(action);
 			gtk_widget_show(item);
 		}
 	}

@@ -225,8 +225,7 @@ void DataSourceFileDialog::build_ui(void)
 	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
 	this->file_types = a_babel_ui_file_type_selector_new(mode);
 #ifdef K
-	g_signal_connect(G_OBJECT(data_source_file_dialog->file_types), "changed",
-			 G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), dialog);
+	QObject::connect(data_source_file_dialog->file_types, SIGNAL("changed"), dialog, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(data_source_file_dialog->file_types), last_type);
 	/* Manually call the callback to fix the state. */
 	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(data_source_file_dialog->file_types), dialog);

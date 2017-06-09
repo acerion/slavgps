@@ -316,13 +316,13 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	item = a_acquire_trwlayer_menu(this->get_window(), this->menu_data->layers_panel,
 				       this->menu_data->layers_panel->get_viewport(), this);
 	if (item) {
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		menu->addAction(action);
 	}
 
 	item = a_acquire_trwlayer_track_menu(this->get_window(), this->menu_data->layers_panel,
 					     this->menu_data->layers_panel->get_viewport(), this);
 	if (item) {
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		menu->addAction(action);
 	}
 #endif
 
@@ -936,7 +936,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 						    this->menu_data->viewport,
 						    this->tracks.at(this->menu_data->sublayer->uid));
 			if (item) {
-				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+				menu->addAction(action);
 			}
 #endif
 		}

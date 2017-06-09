@@ -175,7 +175,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	if (default_name) {
 		gtk_entry_set_text(GTK_ENTRY(nameentry), default_name);
 	}
-	g_signal_connect_swapped(nameentry, "activate", G_CALLBACK(accept), GTK_DIALOG(dialog));
+	QObject::connect(nameentry, SIGNAL("activate"), dialog, SLOT (accept));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
 
 	if (wp->comment && !strncmp(wp->comment, "http", 4)) {
@@ -210,7 +210,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 		symbolentry = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
 		gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(symbolentry), 6);
 
-		g_signal_connect(symbolentry, "changed", G_CALLBACK(symbol_entry_changed_cb), store);
+		QObject::connect(symbolentry, SIGNAL("changed"), store, SLOT (symbol_entry_changed_cb));
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, NULL, 1, NULL, 2, _("(none)"), -1);
 		a_populate_sym_list(store);
@@ -296,7 +296,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 			time(&edit_wp->timestamp);
 		}
 	}
-	g_signal_connect(G_OBJECT(timevaluebutton), "button-release-event", G_CALLBACK(time_edit_click), edit_wp);
+	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 
 
 	if (hasGeotagCB) {

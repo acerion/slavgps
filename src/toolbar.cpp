@@ -377,14 +377,11 @@ static bool toolbar_popup_menu(GtkWidget *widget, GdkEventButton *event, void * 
 {
 	/* Only display menu on right button clicks. */
 	if (event->button() == Qt::RightButton) {
-		GtkWidget *tmenu;
-		tmenu = gtk_menu_new();
-		GtkWidget *item = gtk_menu_item_new_with_mnemonic(_("_Customize"));
-		g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(configure_cb), user_data);
-		gtk_menu_shell_append(GTK_MENU_SHELL(tmenu), item);
-		gtk_menu_popup(GTK_MENU(tmenu), NULL, NULL, NULL, NULL, event->button, event->time);
-		gtk_widget_show_all(GTK_WIDGET(tmenu));
-		g_object_ref_sink(tmenu);
+		QMenu menu;
+		QAction * action = new QAction(QObject::tr("&Customize"));
+		QObject::connect(action, SIGNAL (triggered(bool)), user_data, SLOT (configure_cb));
+		menu.addAction(action);
+		menu.exec(QCursor::pos());
 		return true;
 	}
 	return false;
@@ -563,7 +560,7 @@ static void toolbar_reload(VikToolbar *vtb,
 	/* Store data in a hash so it can be freed when the toolbar is reconfigured. */
 	g_hash_table_insert(signal_data, vtb, data);
 
-	g_signal_connect(vtb->widget, "button-press-event", G_CALLBACK(toolbar_popup_menu), data);
+	QObject::connect(vtb->widget, SIGNAL("button-press-event"), data, SLOT (toolbar_popup_menu));
 
 	/* We don't need to disconnect those signals as this is done automatically when the entry
 	   widgets are destroyed, happens when the toolbar itself is destroyed. */
@@ -645,7 +642,7 @@ void toolbar_init(VikToolbar *vtb,
 		tool_actions[nn].value = nn;
 		nn++;
 	}
-	gtk_action_group_add_radio_actions(vtb->group_tools, tool_actions, nn, 0, G_CALLBACK(tool_cb), user_data);
+	gtk_action_group_add_radio_actions(vtb->group_tools, tool_actions, nn, 0, SLOT (tool_cb), user_data);
 	gtk_ui_manager_insert_action_group(vtb->uim, vtb->group_tools, 0);
 
 	vtb->group_modes = gtk_action_group_new("ModeItems");
@@ -660,7 +657,7 @@ void toolbar_init(VikToolbar *vtb,
 		mode_actions[nn].value = nn;
 		nn++;
 	}
-	gtk_action_group_add_radio_actions(vtb->group_modes, mode_actions, nn, 0, G_CALLBACK(tool_cb), user_data);
+	gtk_action_group_add_radio_actions(vtb->group_modes, mode_actions, nn, 0, SLOT (tool_cb), user_data);
 	gtk_ui_manager_insert_action_group(vtb->uim, vtb->group_modes, 0);
 
 	toolbar_reload(vtb, NULL, parent, vbox, hbox, reload_cb, user_data);
@@ -672,8 +669,7 @@ void toolbar_init(VikToolbar *vtb,
 	GtkSettings *gtk_settings = gtk_widget_get_settings(vtb->widget);
 	if (gtk_settings != NULL)
 	{
-		g_signal_connect(gtk_settings, "notify::gtk-toolbar-style",
-				 G_CALLBACK(toolbar_notify_style_cb), vtb->widget);
+		QObject::connect(gtk_settings, SIGNAL("notify::gtk-toolbar-style"), vtb->widget, SLOT (toolbar_notify_style_cb));
 	}
 
 	extra_widget_data.vtb = vtb;
@@ -1202,21 +1198,21 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	/* Drag'n'drop. */
 	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_available), GDK_BUTTON1_MASK, tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
 	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_available), tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	g_signal_connect(tree_available, "drag-data-get", G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
-	g_signal_connect(tree_available, "drag-data-received", G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
-	g_signal_connect(tree_available, "drag-motion", G_CALLBACK(tb_editor_drag_motion_cb), tbw);
+	QObject::connect(tree_available, SIGNAL("drag-data-get"), tbw, SLOT (tb_editor_drag_data_get_cb));
+	QObject::connect(tree_available, SIGNAL("drag-data-received"), tbw, SLOT (tb_editor_drag_data_rcvd_cb));
+	QObject::connect(tree_available, SIGNAL("drag-motion"), tbw, SLOT (tb_editor_drag_motion_cb));
 
 	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_used), GDK_BUTTON1_MASK, tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
 	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_used), tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	g_signal_connect(tree_used, "drag-data-get", G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
-	g_signal_connect(tree_used, "drag-data-received", G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
-	g_signal_connect(tree_used, "drag-motion", G_CALLBACK(tb_editor_drag_motion_cb), tbw);
+	QObject::connect(tree_used, SIGNAL("drag-data-get"), tbw, SLOT (tb_editor_drag_data_get_cb));
+	QObject::connect(tree_used, SIGNAL("drag-data-received"), tbw, SLOT (tb_editor_drag_data_rcvd_cb));
+	QObject::connect(tree_used, SIGNAL("drag-motion"), tbw, SLOT (tb_editor_drag_motion_cb));
 
 
 	button_add = ui_button_new_with_image(GTK_STOCK_GO_FORWARD, NULL);
 	button_remove = ui_button_new_with_image(GTK_STOCK_GO_BACK, NULL);
-	g_signal_connect(button_add, "clicked", G_CALLBACK(tb_editor_btn_add_clicked_cb), tbw);
-	g_signal_connect(button_remove, "clicked", G_CALLBACK(tb_editor_btn_remove_clicked_cb), tbw);
+	QObject::connect(button_add, SIGNAL("clicked"), tbw, SLOT (tb_editor_btn_add_clicked_cb));
+	QObject::connect(button_remove, SIGNAL("clicked"), tbw, SLOT (tb_editor_btn_remove_clicked_cb));
 
 	vbox_buttons = gtk_vbox_new(false, 6);
 	/* FIXME this is a little hack'ish, any better ideas? */
@@ -1297,10 +1293,8 @@ void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, G
 	gtk_tree_path_free(path);
 
 	/* Connect the changed signals after populating the store. */
-	g_signal_connect(tbw->store_used, "row-changed",
-			 G_CALLBACK(tb_editor_available_items_changed_cb), tbw);
-	g_signal_connect(tbw->store_used, "row-deleted",
-			 G_CALLBACK(tb_editor_available_items_deleted_cb), tbw);
+	QObject::connect(tbw->store_used, SIGNAL("row-changed"), tbw, SLOT (tb_editor_available_items_changed_cb));
+	QObject::connect(tbw->store_used, SIGNAL("row-deleted"), tbw, SLOT (tb_editor_available_items_deleted_cb));
 
 	/* Run it. */
 	gtk_dialog_run(GTK_DIALOG(tbw->dialog));

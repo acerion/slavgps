@@ -307,7 +307,7 @@ void a_background_post_init()
 #endif
 
 	/* Don't destroy win. */
-	g_signal_connect(G_OBJECT(bgwindow), "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+	QObject::connect(bgwindow, SIGNAL("delete-event"), NULL, SLOT (gtk_widget_hide_on_delete));
 #endif
 }
 

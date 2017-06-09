@@ -659,9 +659,9 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->setMinimumSize(750, 400);
 
 #ifdef K
-	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(track_select_cb), view);
-	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
-	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed_cb), tracks_and_layers);
+	//QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
+	QObject::connect(view, SIGNAL("popup-menu"), tracks_and_layers, SLOT (trw_layer_track_menu_popup));
+	QObject::connect(view, SIGNAL("button-press-event"), tracks_and_layers, SLOT (trw_layer_track_button_pressed_cb));
 #endif
 }
 

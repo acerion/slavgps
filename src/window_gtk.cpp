@@ -102,14 +102,11 @@ Window * Window::new_window()
 	if (window_count < MAX_WINDOWS) {
 		Window * window = new Window();
 
-		g_signal_connect(window->get_toolkit_object(), "destroy",
-				 G_CALLBACK (destroy_window), NULL);
-		g_signal_connect(window->get_toolkit_object(), "newwindow",
-				 G_CALLBACK (vik_window_new_window), NULL);
-		g_signal_connect(window->get_toolkit_object(), "openwindow",
-				 G_CALLBACK (open_window), NULL);
+		QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window));
+		QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (vik_window_new_window));
+		QObject::connect(window, SIGNAL("openwindow"), NULL, SLOT (open_window));
 
-		gtk_widget_show_all(window->get_toolkit_widget());
+		gtk_widget_show_all(window);
 
 		if (a_vik_get_restore_window_state()) {
 			// These settings are applied after the show all as these options hide widgets

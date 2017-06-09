@@ -175,10 +175,10 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 						switch (params[i].widget_type) {
 							/* Change conditions for other widget types can be added when needed. */
 						case WidgetType::COMBOBOX:
-							g_signal_connect(G_OBJECT(widgets[j]), "changed", G_CALLBACK(changeparam), &change_values[j]);
+							QObject::connect(widgets[j], SIGNAL("changed"), &change_values[j], SLOT (changeparam));
 							break;
 						case WidgetType::CHECKBUTTON:
-							g_signal_connect(G_OBJECT(widgets[j]), "toggled", G_CALLBACK(changeparam), &change_values[j]);
+							QObject::connect(widgets[j], SIGNAL("toggled"), SLOT (changeparam));
 							break;
 						default:
 							break;
@@ -788,7 +788,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 	case WidgetType::BUTTON:
 		if (param->type == ParameterType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
-			g_signal_connect(G_OBJECT(rv), "clicked", G_CALLBACK (vlpd.ptr), param->extra_widget_data);
+			QObject::connect(rv, SIGNAL("clicked"), param->extra_widget_data, SLOT (vlpd.ptr));
 		}
 		break;
 #endif

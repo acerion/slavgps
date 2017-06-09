@@ -278,8 +278,8 @@ bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp)
 
 	gtk_widget_show_all(table);
 
-	g_signal_connect(G_OBJECT(xspin), "value-changed", G_CALLBACK(zoom_spin_changed), pass_along);
-	g_signal_connect(G_OBJECT(yspin), "value-changed", G_CALLBACK(zoom_spin_changed), pass_along);
+	QObject::connect(xspin, SIGNAL("value-changed"), pass_along, SLOT (zoom_spin_changed));
+	QObject::connect(yspin, SIGNAL("value-changed"), pass_along, SLOT (zoom_spin_changed));
 
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 
@@ -340,7 +340,7 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
 
 	gtk_widget_show_all(table);
 
-	g_signal_connect(G_OBJECT(spin), "grab-focus", G_CALLBACK(split_spin_focused), pass_along);
+	QObject::connect(spin, SIGNAL("grab-focus"), pass_along, SLOT (split_spin_focused));
 
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 

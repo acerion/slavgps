@@ -208,7 +208,7 @@ char * goto_location_dialog(Window * window)
 #if GTK_CHECK_VERSION (2,20,0)
 	GtkWidget *ok_button = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	text_changed_cb(GTK_ENTRY(goto_entry), NULL, ok_button);
-	g_signal_connect(goto_entry, "notify::text", G_CALLBACK (text_changed_cb), ok_button);
+	QObject::connect(goto_entry, SIGNAL("notify::text"), ok_button, SLOT (text_changed_cb));
 #endif
 #endif
 	vbox.addWidget(&input_field);

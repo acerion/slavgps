@@ -610,11 +610,10 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 				gtk_menu_item_set_submenu(GTK_MENU_ITEM (menu_item), menu);
 			}
 
-			item = gtk_menu_item_new_with_label(filters[i]->window_title);
+			action = QAction(QString(filters[i]->window_title), this);
 			g_object_set_data(G_OBJECT(item), "vik_acq_iface", (void *) filters[i]);
-			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(acquire_trwlayer_callback), &data);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			QObject::connect(action, SIGNAL (triggered(bool)), &data, SLOT (acquire_trwlayer_callback));
+			menu->addAction(action);
 		}
 	}
 #endif

@@ -180,7 +180,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(file_selector), vbox);
 
 	/* Add some dynamic: only allow dialog's validation when format selection is done. */
-	g_signal_connect(babel_selector, "changed", G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), file_selector);
+	QObject::connect(babel_selector, SIGNAL("changed"), file_selector, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
 	/* Manually call the callback to fix the state. */
 	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(babel_selector), file_selector);
 

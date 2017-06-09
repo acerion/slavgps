@@ -6429,7 +6429,7 @@ void LayerTRW::trackpoint_properties_show()
 
 		connect(this->tpwin->signalMapper, SIGNAL (mapped(int)), this, SLOT (trackpoint_properties_cb(int)));
 
-		//g_signal_connect_swapped(this->tpwin, "delete-event", G_CALLBACK(trw_layer_cancel_current_tp_cb), this);
+		//QObject::connect(this->tpwin, SIGNAL("delete-event"), this, SLOT (trw_layer_cancel_current_tp_cb));
 	}
 	this->tpwin->show();
 

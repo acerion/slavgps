@@ -139,9 +139,9 @@ void a_print(Window * parent, Viewport * viewport)
 		gtk_print_operation_set_print_settings(print_oper, print_settings);
 	}
 
-	g_signal_connect(print_oper, "begin_print", G_CALLBACK(begin_print), &print_data);
-	g_signal_connect(print_oper, "draw_page", G_CALLBACK(draw_page), &print_data);
-	g_signal_connect(print_oper, "create-custom-widget", G_CALLBACK(create_custom_widget_cb), &print_data);
+	QObject::connect(print_oper, SIGNAL("begin_print"), &print_data, SLOT (begin_print));
+	QObject::connect(print_oper, SIGNAL("draw_page"), &print_data, SLOT (draw_page));
+	QObject::connect(print_oper, SIGNAL("create-custom-widget"), &print_data, SLOT (create_custom_widget_cb));
 
 	gtk_print_operation_set_custom_tab_label(print_oper, _("Image Settings"));
 
@@ -566,7 +566,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	memset(info, 0, sizeof (CustomWidgetInfo));
 
 #ifdef K
-	g_signal_connect_swapped(print_data->operation, _("done"), G_CALLBACK (custom_widgets_cleanup), info);
+	QObject::connect(print_data->operation, _("done"), info, SLOT (custom_widgets_cleanup));
 
 	info->print_data = print_data;
 
@@ -597,9 +597,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	GtkWidget * button = gtk_button_new_with_mnemonic(_("_Adjust Page Size "
 						"and Orientation"));
 	gtk_box_pack_start(GTK_BOX (main_vbox), button, false, false, 0);
-	g_signal_connect(G_OBJECT (button), "clicked",
-			 G_CALLBACK (page_setup_cb),
-			 info);
+	QObject::connect(button, SIGNAL("clicked"), info, SLOT (page_setup_cb));
 	gtk_widget_show(button);
 
 	/* Center */
@@ -623,8 +621,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_box_pack_start(GTK_BOX (hbox), combo, true, true, 0);
 	gtk_widget_show(combo);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (label), combo);
-	g_signal_connect(combo, "changed",
-			 G_CALLBACK(center_changed_cb), info);
+	QObject::connect(combo, SIGNAL("changed"), info, SLOT (center_changed_cb));
 	info->center_combo = combo;
 
 	/* ignore page margins */
@@ -633,9 +630,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button),
 				     print_data->use_full_page);
 	gtk_box_pack_start(GTK_BOX (main_vbox), button, false, false, 0);
-	g_signal_connect(button, "toggled",
-			 G_CALLBACK (full_page_toggled_cb),
-			 info);
+	QObject::connect(button, SIGNAL("toggled"), info, SLOT (full_page_toggled_cb));
 	gtk_widget_show(button);
 
 	/* scale */
@@ -664,8 +659,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_widget_show(info->scale);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (label), info->scale);
 
-	g_signal_connect(info->scale, "change_value",
-			 G_CALLBACK(scale_change_value_cb), info);
+	QObject::connect(info->scale, SIGNAL("change_value"), info, SLOT (scale_change_value_cb));
 
 
 	info->preview = new PrintPreview(setup, print_data->viewport->get_pixmap());
@@ -673,9 +667,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_box_pack_start(GTK_BOX (main_hbox), info->preview, true, true, 0);
 	gtk_widget_show(info->preview);
 
-	g_signal_connect(info->preview, "offsets-changed",
-			 G_CALLBACK (preview_offsets_changed_cb),
-			 info);
+	QObject::connect(info->preview, SIGNAL("offsets-changed"), info, SLOT (preview_offsets_changed_cb));
 
 	update_page_setup(info);
 

@@ -1027,12 +1027,11 @@ static void vu_copy_label(GtkWidget * widget)
  */
 void SlavGPS::vu_copy_label_menu(GtkWidget * widget, unsigned int button)
 {
-	GtkWidget * menu = gtk_menu_new();
-	GtkWidget * item = gtk_image_menu_item_new_from_stock (GTK_STOCK_COPY, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(vu_copy_label), widget);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, button, gtk_get_current_event_time());
+	QMenu menu;
+	action = new QAction(QObject::tr("&Copy"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), widget, SLOT (vu_copy_label));
+	menu.addAction(action);
+	menu.exec(QCursor::pos());
 }
 
 

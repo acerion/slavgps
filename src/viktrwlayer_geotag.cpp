@@ -729,10 +729,10 @@ void SlavGPS::trw_layer_geotag_dialog(GtkWindow * parent,
 
 	/* Ensure sensitivities setup. */
 	write_exif_b_cb(GTK_WIDGET(widgets->write_exif_b), widgets);
-	g_signal_connect(G_OBJECT(widgets->write_exif_b), "toggled", G_CALLBACK(write_exif_b_cb), widgets);
+	QObject::connect(widgets->write_exif_b, SIGNAL("toggled"), widgets, SLOT (write_exif_b_cb));
 
 	create_waypoints_b_cb(GTK_WIDGET(widgets->create_waypoints_b), widgets);
-	g_signal_connect(G_OBJECT(widgets->create_waypoints_b), "toggled", G_CALLBACK(create_waypoints_b_cb), widgets);
+	QObject::connect(widgets->create_waypoints_b, SIGNAL("toggled"), widgets, SLOT (create_waypoints_b_cb));
 
 	GtkWidget *cw_hbox = gtk_hbox_new(false, 0);
 	GtkWidget *create_waypoints_l = gtk_label_new(_("Create Waypoints:"));
@@ -805,7 +805,7 @@ void SlavGPS::trw_layer_geotag_dialog(GtkWindow * parent,
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), to_hbox,  false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), tz_hbox,  false, false, 0);
 
-	g_signal_connect(widgets->dialog, "response", G_CALLBACK(trw_layer_geotag_response_cb), widgets);
+	QObject::connect(widgets->dialog, SIGNAL("response"), widgets, SLOT (trw_layer_geotag_response_cb));
 
 	gtk_dialog_set_default_response(GTK_DIALOG(widgets->dialog), GTK_RESPONSE_REJECT);
 

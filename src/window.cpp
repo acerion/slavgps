@@ -166,23 +166,23 @@ Window::Window()
 
 	vik_ext_tool_datasources_add_menu_items(this, this->uim);
 
-	g_signal_connect(this->get_toolkit_object(), "delete_event", G_CALLBACK (delete_event), NULL);
+	QObject::connect(this, SIGNAL("delete_event"), NULL, SLOT (delete_event));
 
 
 	// Signals from GTK
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "expose_event", G_CALLBACK(draw_sync_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "configure_event", G_CALLBACK(window_configure_event), this);
-	gtk_widget_add_events(this->viewport->get_toolkit_widget(), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_press_event", G_CALLBACK(draw_click_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_release_event", G_CALLBACK(draw_release_cb), this);
+	QObject::connect(this->viewport, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
+	QObject::connect(this->viewport, SIGNAL("configure_event"), this, SLOT (window_configure_event));
+	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
+	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
+	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb));
+	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb));
 
 
 
-	g_signal_connect_swapped(G_OBJECT(this->layers_panel), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
+	QObject::connect(this->layers_panel, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
 	// Allow key presses to be processed anywhere
-	g_signal_connect_swapped(this->get_toolkit_object(), "key_press_event", G_CALLBACK (key_press_event_cb), this);
+	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
 
 	// Set initial button sensitivity
 	center_changed_cb(this);
@@ -253,9 +253,9 @@ Window::Window()
 	gtk_window_set_default_size(this->get_toolkit_window(), width, height);
 
 	// Only accept Drag and Drop of files onto the viewport
-	gtk_drag_dest_set(this->viewport->get_toolkit_widget(), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
-	gtk_drag_dest_add_uri_targets(this->viewport->get_toolkit_widget());
-	g_signal_connect(this->viewport->get_toolkit_widget(), "drag-data-received", G_CALLBACK(drag_data_received_cb), NULL);
+	gtk_drag_dest_set(this->viewport, GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
+	gtk_drag_dest_add_uri_targets(this->viewport);
+	QObject::connect(this->viewport, SIGNAL("drag-data-received"), NULL, SLOT (drag_data_received_cb));
 
 	// Store the thread value so comparisons can be made to determine the gdk update method
 	// Hopefully we are storing the main thread value here :)
@@ -2588,7 +2588,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 						    GTK_BUTTONS_NONE,
 						    _("Generating image file..."));
 
-	g_signal_connect_swapped(msgbox, "response", G_CALLBACK (gtk_widget_destroy), msgbox);
+	QObject::connect(msgbox, SIGNAL("response"), msgbox, SLOT (gtk_widget_destroy));
 	// Ensure dialog shown
 	gtk_widget_show_all(msgbox);
 #endif
@@ -2993,8 +2993,8 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 
 #ifdef K
 	for (int i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
-		GtkWidget *item = gtk_menu_item_new_with_label(itemLabels[i]);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		QAction * action = QAction(QString(itemLabels[i]), this);
+		menu->addAction(action);
 		gtk_widget_show(item);
 		g_object_set_data(G_OBJECT (item), "position", KINT_TO_POINTER(i));
 	}
@@ -3046,12 +3046,11 @@ static int zoom_popup_handler(GtkWidget * widget)
 	}
 
 	/* The "widget" is the menu that was supplied when
-	 * g_signal_connect_swapped() was called.
+	 * QObject::connect() was called.
 	 */
 	GtkMenu * menu = GTK_MENU (widget);
 
-	gtk_menu_popup(menu, NULL, NULL, NULL, NULL,
-		       1, gtk_get_current_event_time());
+	menu->exec(QCursor::pos());
 #endif
 	return true;
 }

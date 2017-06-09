@@ -2408,7 +2408,7 @@ Viewport * TrackProfileDialog::create_dt_viewport(void)
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
-	//g_signal_connect_swapped(G_OBJECT(widget), "destroy", G_CALLBACK(g_free), this);
+	//QObject::connect(widget, SIGNAL("destroy"), this, SLOT (g_free));
 
 	return viewport;
 }

@@ -154,7 +154,7 @@ static void modules_load_config_dir(const char * dir)
 	char * maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
 	if (access(maps, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		g_signal_connect(builder, "new-object", G_CALLBACK (modules_register_map_source), NULL);
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_map_source));
 		vik_gobject_builder_parse(builder, maps);
 		g_object_unref(builder);
 	}
@@ -164,7 +164,7 @@ static void modules_load_config_dir(const char * dir)
 	char * tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
 	if (access(tools, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		g_signal_connect(builder, "new-object", G_CALLBACK (modules_register_exttools), NULL);
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_exttools));
 		vik_gobject_builder_parse(builder, tools);
 		g_object_unref(builder);
 	}
@@ -173,7 +173,7 @@ static void modules_load_config_dir(const char * dir)
 	char * datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
 	if (access(datasources, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		g_signal_connect(builder, "new-object", G_CALLBACK (modules_register_datasources), NULL);
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_datasources));
 		vik_gobject_builder_parse(builder, datasources);
 		g_object_unref(builder);
 	}
@@ -183,7 +183,7 @@ static void modules_load_config_dir(const char * dir)
 	char * go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
 	if (access(go_to, R_OK) == 0) {
 		VikGobjectBuilder * builder = vik_gobject_builder_new();
-		g_signal_connect(builder, "new-object", G_CALLBACK (modules_register_gototools), NULL);
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_gototools));
 		vik_gobject_builder_parse(builder, go_to);
 		g_object_unref(builder);
 	}
@@ -193,7 +193,7 @@ static void modules_load_config_dir(const char * dir)
 	char * routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
 	if (access(routing, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		g_signal_connect(builder, "new-object", G_CALLBACK (modules_register_routing_engine), NULL);
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_routing_engine));
 		vik_gobject_builder_parse(builder, routing);
 		g_object_unref(builder);
 	}

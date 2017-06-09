@@ -405,8 +405,8 @@ GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
 
 	gtk_widget_show_all(dialog);
 
-	g_signal_connect(G_OBJECT(cb), "toggled", G_CALLBACK(include_invisible_toggled_cb), acb);
-	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(analyse_close), acb);
+	QObject::connect(cb, SIGNAL("toggled"), acb, SLOT (include_invisible_toggled_cb));
+	QObject::connect(dialog, SIGNAL("response"), acb, SLOT (analyse_close));
 
 	return dialog;
 }

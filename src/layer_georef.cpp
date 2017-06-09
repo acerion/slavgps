@@ -979,10 +979,10 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 
 	this->cw = cw;
 
-	g_signal_connect (G_OBJECT(this->cw.tabs), "switch-page", G_CALLBACK(switch_tab), this);
-	g_signal_connect (G_OBJECT(calc_mpp_button), "clicked", G_CALLBACK(calculate_mpp_from_coords_cb), this);
+	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab));
+	QObject::connect(calc_mpp_button, SIGNAL("clicked"), this, SLOT calculate_mpp_from_coords_cb));
 
-	g_signal_connect_swapped (G_OBJECT(wfp_button), "clicked", G_CALLBACK(georef_layer_dialog_load), &cw);
+	QObject::connect(wfp_button, SIGNAL("clicked"), &cw, SLOT (georef_layer_dialog_load));
 
 	if (response_w) {
 		gtk_widget_grab_focus (response_w);
@@ -1086,30 +1086,22 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 	pass_along.layer = this;
 	pass_along.panel = (LayersPanel *) panel;
 
-	GtkWidget *item;
+	QAction * action = NULL;
 
-	item = gtk_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Zoom to Fit Map"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_ZOOM_FIT"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_zoom_to_fit));
+	menu->addAction(action);
 
-	/* Now with icons. */
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Zoom to Fit Map"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(georef_layer_zoom_to_fit), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Goto Map Center"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_JUMP_TO"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_goto_center));
+	menu->addAction(action);
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Goto Map Center"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(georef_layer_goto_center), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Export to World File"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(georef_layer_export_params), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	action = new QAction(QObject::tr("&Export to World File"), this);
+	action->setIcon(QIcon::fromTheme("GTK_STOCK_HARDDISK"));
+	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_export_params));
+	menu->addAction(action);
 #endif
 }
 

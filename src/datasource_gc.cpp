@@ -250,8 +250,8 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	widgets->circle_onscreen = true;
 	datasource_gc_draw_circle(widgets);
 
-	g_signal_connect_swapped(G_OBJECT(widgets->center_entry), "changed", G_CALLBACK(datasource_gc_draw_circle), widgets);
-	g_signal_connect_swapped(G_OBJECT(widgets->miles_radius_spin), "value-changed", G_CALLBACK(datasource_gc_draw_circle), widgets);
+	QObject::connect(widgets->center_entry, SIGNAL("changed"), widgets, SLOT (datasource_gc_draw_circle));
+	QObject::connect(widgets->miles_radius_spin, SIGNAL("value-changed"), widgets, SLOT (datasource_gc_draw_circle));
 
 	/* Packing all these widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));

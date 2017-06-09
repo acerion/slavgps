@@ -90,7 +90,7 @@ LayersPanel::LayersPanel(Window * parent_window) : QWidget((QWidget *) parent_wi
 		this->qa_layer_add = new QAction("Add", this);
 		this->qa_layer_add->setToolTip("Add new layer");
 		this->qa_layer_add->setIcon(QIcon::fromTheme("list-add"));
-		// g_signal_connect_swapped (G_OBJECT(addbutton), "clicked", G_CALLBACK(layers_popup_cb), this);
+		// QObject::connect(addbutton, SIGNAL("clicked"), this, SLOT (layers_popup_cb));
 
 		this->qa_layer_remove = new QAction("Remove", this);
 		this->qa_layer_remove->setToolTip("Remove selected layer");
@@ -149,9 +149,9 @@ LayersPanel::LayersPanel(Window * parent_window) : QWidget((QWidget *) parent_wi
 
 
 #ifndef SLAVGPS_QT
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(button_press_cb), this);
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
+	QObject::connect(this->tree_view, this, SIGNAL("button_press_event"), SLOT (button_press_cb));
+	QObject::connect(this->tree_view, this, SIGNAL("item_edited"), SLOT (layers_item_edited_cb));
+	QObject::connect(this->tree_view, this, SIGNAL("key_press_event"), SLOT (layers_key_press_cb));
 #endif
 }
 
