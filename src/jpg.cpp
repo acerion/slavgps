@@ -106,34 +106,39 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
-	Layer * trw = top->get_window()->get_layers_panel()->get_selected_layer();
+	Layer * layer = top->get_window()->get_layers_panel()->get_selected_layer();
+	LayerTRW * trw = NULL;
 
 	bool create_layer = false;
-	if (trw == NULL || trw->type != LayerType::TRW) {
+	if (layer == NULL || layer->type != LayerType::TRW) {
 		/* Create layer if necessary. */
 
 		trw = (LayerTRW *) new LayerTRW();
 		trw->set_coord_mode(viewport->get_coord_mode());
 		trw->rename(file_basename(filename));
 		create_layer = true;
+	} else {
+		trw = (LayerTRW *) layer;
 	}
 
 	char * name = NULL;
 	Waypoint * wp = NULL;
+#ifdef K
 #ifdef VIK_CONFIG_GEOTAG
 	wp = a_geotag_create_waypoint_from_file(filename, viewport->get_coord_mode(), &name);
+#endif
 #endif
 	if (wp) {
 		/* Create name if geotag method didn't return one. */
 		if (!name) {
 			name = strdup(file_basename(filename));
 		}
-		((LayerTRW *) trw)->filein_add_waypoint(wp, name);
+		trw->filein_add_waypoint(wp, name);
 		free(name);
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		((LayerTRW *) trw)->filein_add_waypoint(wp, (char *) file_basename(filename));
+		trw->filein_add_waypoint(wp, (char *) file_basename(filename));
 		wp->set_image(filename);
 		/* Simply set position to the current center. */
 		wp->coord = *(viewport->get_center());
@@ -147,7 +152,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 	}
 
 	if (auto_zoom) {
-		((LayerTRW *) trw)->auto_set_view(viewport);
+		trw->auto_set_view(viewport);
 	}
 
 	/* ATM This routine can't fail. */

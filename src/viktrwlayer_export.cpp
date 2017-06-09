@@ -56,6 +56,7 @@ static char * last_folder_uri = NULL;
 
 void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)
 {
+#ifdef K
 	GtkWidget * file_selector;
 	char const * fn;
 	bool failed = false;
@@ -91,6 +92,7 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 	if (failed) {
 		dialog_error("The filename you requested could not be opened for writing.", layer->get_window());
 	}
+#endif
 }
 
 
@@ -127,6 +129,7 @@ void SlavGPS::vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * ext
 
 void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const * default_name)
 {
+#ifdef K
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (trw->get_routes().size()) {
 		mode.routesWrite = 1;
@@ -211,4 +214,5 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	if (failed) {
 		dialog_error("The filename you requested could not be opened for writing.", trw->get_window());
 	}
+#endif
 }

@@ -51,6 +51,7 @@ using namespace SlavGPS;
 /* Could use GtkGrids but that is Gtk3+ */
 static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
 {
+#ifdef K
 	GtkTable * table = GTK_TABLE(gtk_table_new (cnt, 2, false));
 	gtk_table_set_col_spacing(table, 0, 10);
 	for (int i = 0; i < cnt; i++) {
@@ -67,6 +68,7 @@ static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[]
 		gtk_table_attach_defaults(table, contents[i], 1, 2, i, i+1);
 	}
 	return GTK_WIDGET (table);
+#endif
 }
 
 
@@ -95,12 +97,14 @@ static char * label_texts[] = {
  */
 static GtkWidget * create_layout(GtkWidget * content[])
 {
+#ifdef K
 	int cnt = 0;
 	for (cnt = 0; cnt < G_N_ELEMENTS(label_texts); cnt++) {
 		content[cnt] = ui_label_new_selectable(NULL);
 	}
 
 	return create_table(cnt, label_texts, content);
+#endif
 }
 
 
@@ -111,6 +115,7 @@ static GtkWidget * create_layout(GtkWidget * content[])
  */
 static void table_output(TrackStatistics& ts, GtkWidget * content[])
 {
+#ifdef K
 	int cnt = 0;
 
 	char tmp_buf[64];
@@ -242,6 +247,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
+#endif
 }
 
 
@@ -282,6 +288,7 @@ typedef struct {
 
 static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse_cb_t * acb)
 {
+#ifdef K
 	bool value = false;
 	if (gtk_toggle_button_get_active(togglebutton)) {
 		value = true;
@@ -305,6 +312,7 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 
 	val_analyse(acb->widgets, acb->tracks_and_layers, value);
 	gtk_widget_show_all(acb->layout);
+#endif
 }
 
 
@@ -318,6 +326,7 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
  */
 static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 {
+#ifdef K
 	/* Save current invisible value for next time. */
 	bool do_invisible = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(data->check_button));
 	a_settings_set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
@@ -332,6 +341,7 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 	}
 
 	free(data);
+#endif
 }
 
 
@@ -355,7 +365,7 @@ GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
 				       VikTrwlayerAnalyseCloseFunc on_close_cb)
 {
 	//VikWindow *vw = VIK_WINDOW(window);
-
+#ifdef K
 	GtkWidget * dialog;
 	dialog = gtk_dialog_new_with_buttons(_("Statistics"),
 					     window,
@@ -409,4 +419,5 @@ GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
 	QObject::connect(dialog, SIGNAL("response"), acb, SLOT (analyse_close));
 
 	return dialog;
+#endif
 }

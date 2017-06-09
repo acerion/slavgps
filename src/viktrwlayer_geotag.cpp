@@ -25,15 +25,16 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <math.h>
+#include <cstdint>
+#include <cmath>
 #include <time.h>
-#include <string.h>
-#include <stdlib.h>
-#include <gtk/gtk.h>
+#include <cstring>
+#include <cstdlib>
+
+#include <glib.h>
 #include <glib/gi18n.h>
 
-//#include "viking.h"
-#include "vikfilelist.h"
+#include "widget_file_list.h"
 #include "geotag_exif.h"
 #include "thumbnails.h"
 #include "background.h"
@@ -42,10 +43,17 @@
 #include "settings.h"
 #include "globals.h"
 
+#include "slav_qt.h"
+
 
 
 
 using namespace SlavGPS;
+
+
+
+
+static int trw_layer_geotag_thread(BackgroundJob * job);
 
 
 
@@ -101,17 +109,17 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 
 typedef struct {
 	GtkWidget *dialog;
-	VikFileList *files;
+	SGFileList *files;
 	LayerTRW * trw;      /* To pass on. */
 	Waypoint * wp;       /* Use specified waypoint or otherwise the track(s) if NULL. */
 	Track * trk;         /* Use specified track or all tracks if NULL. */
 	GtkCheckButton *create_waypoints_b;
-	GtkLabel *overwrite_waypoints_l;    /* Referenced so the sensitivity can be changed. */
+	QLabel *overwrite_waypoints_l;    /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *overwrite_waypoints_b;
 	GtkCheckButton *write_exif_b;
-	GtkLabel *overwrite_gps_exif_l;   /* Referenced so the sensitivity can be changed. */
+	QLabel *overwrite_gps_exif_l;   /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *overwrite_gps_exif_b;
-	GtkLabel *no_change_mtime_l;    /* Referenced so the sensitivity can be changed. */
+	QLabel *no_change_mtime_l;    /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *no_change_mtime_b;
 	GtkCheckButton *interpolate_segments_b;
 	GtkEntry *time_zone_b;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
@@ -134,7 +142,7 @@ static GeoTagWidgets *geotag_widgets_new()
 
 static void geotag_widgets_free(GeoTagWidgets *widgets)
 {
-	/* Need to free VikFileList?? */
+	/* Need to free SGFileList?? */
 	free(widgets);
 }
 
@@ -186,6 +194,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->trw = widgets->trw;
 	this->wp = widgets->wp;
 	this->trk = widgets->trk;
+#ifdef K
 	/* Values extracted from the widgets: */
 	this->ov.create_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b));
 	this->ov.overwrite_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b));
@@ -193,9 +202,10 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->ov.overwrite_gps_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_gps_exif_b));
 	this->ov.no_change_mtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->no_change_mtime_b));
 	this->ov.interpolate_segments = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b));
+#endif
 	this->ov.TimeZoneHours = 0;
 	this->ov.TimeZoneMins = 0;
-
+#ifdef K
 	const char * TZString = gtk_entry_get_text(GTK_ENTRY(widgets->time_zone_b));
 	/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
 	 * If not, it's probably just a +/-xx format. In all other cases,
@@ -222,6 +232,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
 
 	this->n_items = options->files->size();;
+#endif
 }
 
 
@@ -404,6 +415,7 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
 	if (options->ov.write_exif) {
 		bool has_gps_exif = false;
+#ifdef K
 		char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
 		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
@@ -413,6 +425,7 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 			}
 		}
 		free(datetime);
+#endif
 	}
 }
 
@@ -438,6 +451,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 	}
 
 	bool has_gps_exif = false;
+#ifdef K
 	char* datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 
 	if (datetime) {
@@ -542,11 +556,14 @@ static void trw_layer_geotag_process(GeotagJob * options)
 			if (options->ov.write_exif) {
 				int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
 				if (ans != 0) {
-					options->trw->get_window()->statusbar_update(message, StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
+#ifdef K
+					options->trw->get_window()->statusbar_update(QString("Failed updating EXIF on %1").arg(options->image), StatusBarField::INFO);
+#endif
 				}
 			}
 		}
 	}
+#endif
 }
 
 
@@ -566,9 +583,9 @@ GeotagJob::~GeotagJob()
 /**
  * Run geotagging process in a separate thread.
  */
-static int trw_layer_geotag_thread(BackgroundJob * job, void * threaddata)
+static int trw_layer_geotag_thread(BackgroundJob * job)
 {
-	GeotagJob * geotag = (GeotagJob) * job;
+	GeotagJob * geotag = (GeotagJob *) job;
 
 	unsigned int total = geotag->files->size();
 	unsigned int done = 0;
@@ -581,7 +598,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job, void * threaddata)
 		trw_layer_geotag_process(geotag);
 
 		/* Update thread progress and detect stop requests. */
-		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
+		int result = a_background_thread_progress(job, ((double) ++done) / total);
 		if (result != 0) {
 			return -1; /* Abort thread */
 		}
@@ -608,6 +625,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job, void * threaddata)
  */
 static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidgets *widgets)
 {
+#ifdef K
 	switch (resp) {
 	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
 	case GTK_RESPONSE_REJECT:
@@ -627,6 +645,7 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 	}
 	geotag_widgets_free(widgets);
 	gtk_widget_destroy(GTK_WIDGET(dialog));
+#endif
 }
 
 
@@ -637,6 +656,7 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
  */
 static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
+#ifdef K
 	/* Overwriting & file modification times are irrelevant if not going to write EXIF! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->write_exif_b))) {
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_b), true);
@@ -649,6 +669,7 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_b), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_l), false);
 	}
+#endif
 }
 
 
@@ -656,6 +677,7 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 
 static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
+#ifdef K
 	/* Overwriting waypoints are irrelevant if not going to create them! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->create_waypoints_b))) {
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_b), true);
@@ -664,6 +686,7 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_b), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_l), false);
 	}
+#endif
 }
 
 
@@ -675,11 +698,9 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
  * @track: Optional - The particular track to use (if specified) for correlating images
  * @track_name: Optional - The name of specified track to use
  */
-void SlavGPS::trw_layer_geotag_dialog(GtkWindow * parent,
-				      LayerTRW * trw,
-				      Waypoint * wp,
-				      Track * trk)
+void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint * wp, Track * trk)
 {
+#ifdef K
 	GeoTagWidgets *widgets = geotag_widgets_new();
 
 	widgets->dialog = gtk_dialog_new_with_buttons(_("Geotag Images"),
@@ -812,4 +833,5 @@ void SlavGPS::trw_layer_geotag_dialog(GtkWindow * parent,
 	gtk_widget_show_all(widgets->dialog);
 
 	free(track_string);
+#endif
 }

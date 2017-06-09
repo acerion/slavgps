@@ -42,6 +42,8 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#include <QPixmap>
+
 #include "mapnik_interface.h"
 #include "globals.h"
 #include "settings.h"
@@ -72,36 +74,12 @@ using namespace SlavGPS;
 
 
 
-#define MAPNIK_INTERFACE_TYPE            (mapnik_interface_get_type ())
-#define MAPNIK_INTERFACE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAPNIK_INTERFACE_TYPE, MapnikInterface))
-#define MAPNIK_INTERFACE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), MAPNIK_INTERFACE_TYPE, MapnikInterfaceClass))
-#define IS_MAPNIK_INTERFACE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAPNIK_INTERFACE_TYPE))
-#define IS_MAPNIK_INTERFACE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), MAPNIK_INTERFACE_TYPE))
 
-typedef struct _MapnikInterfaceClass MapnikInterfaceClass;
-typedef struct _MapnikInterface MapnikInterface;
-
-GType mapnik_interface_get_type();
-struct _MapnikInterfaceClass
-{
-	GObjectClass object_class;
+class SlavGPS::MapnikInterface {
+public:
+	mapnik::Map * myMap = NULL;
+	char * copyright = NULL; /* Cached Mapnik parameter to save looking it up each time. */
 };
-
-static void mapnik_interface_class_init(MapnikInterfaceClass * mic)
-{
-}
-
-static void mapnik_interface_init(MapnikInterface * mi)
-{
-}
-
-struct _MapnikInterface {
-	GObject obj;
-	mapnik::Map *myMap;
-	char *copyright; /* Cached Mapnik parameter to save looking it up each time. */
-};
-
-G_DEFINE_TYPE (MapnikInterface, mapnik_interface, G_TYPE_OBJECT)
 
 
 
@@ -112,9 +90,9 @@ static mapnik::projection prj(mapnik::MAPNIK_GMERC_PROJ);
 
 
 
-MapnikInterface * SlavGPS::mapnik_interface_new()
+SlavGPS::MapnikInterface * SlavGPS::mapnik_interface_new()
 {
-	MapnikInterface * mi = MAPNIK_INTERFACE (g_object_new(MAPNIK_INTERFACE_TYPE, NULL));
+	MapnikInterface * mi = new MapnikInterface;
 	mi->myMap = new mapnik::Map;
 	mi->copyright = NULL;
 	return mi;
@@ -126,10 +104,12 @@ MapnikInterface * SlavGPS::mapnik_interface_new()
 void SlavGPS::mapnik_interface_free(MapnikInterface * mi)
 {
 	if (mi) {
-		g_free(mi->copyright);
+		if (mi->copyright) {
+			free(mi->copyright);
+		}
 		delete mi->myMap;
 	}
-	g_object_unref(G_OBJECT(mi));
+	delete mi;
 }
 
 
@@ -205,10 +185,7 @@ static void set_copyright(MapnikInterface * mi)
  * Returns NULL on success otherwise a string about what went wrong.
  * This string should be freed once it has been used.
  */
-char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi,
-					       const char * filename,
-					       unsigned int width,
-					       unsigned int height)
+char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char * filename, unsigned int width, unsigned int height)
 {
 	char * msg = NULL;
 	if (!mi) {
@@ -289,7 +266,9 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 				return NULL;
 			}
 			memcpy(ImageRawDataPtr, image.raw_data(), width * height * 4);
+#ifdef K
 			pixmap = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
+#endif
 		} else {
 			g_warning("%s not rendered", __FUNCTION__);
 		}

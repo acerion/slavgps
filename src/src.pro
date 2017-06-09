@@ -6,6 +6,13 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    viktrwlayer_analysis.cpp \
+    viktrwlayer_export.cpp \
+    viktrwlayer_geotag.cpp \
+    track_statistics.cpp \
+    jpg.cpp \
+    mapnik_interface.cpp \
+    gpsmapper.cpp \
     layer_georef.cpp \
     layer_gps.cpp \
     layer_mapnik.cpp \
@@ -83,6 +90,13 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    viktrwlayer_analysis.h \
+    viktrwlayer_export.h \
+    viktrwlayer_geotag.h \
+    track_statistics.h \
+    jpg.h \
+    mapnik_interface.h \
+    gpsmapper.h \
     layer_georef.h \
     layer_gps.h \
     layer_mapnik.h \
@@ -157,10 +171,6 @@ HEADERS += window.h \
     babel_ui.h
 
 
-# viktrwlayer_analysis.cpp
-# viktrwlayer_export.cpp
-# viktrwlayer_geotag.cpp
-# track_statistics.cpp
 
 # bing.cpp
 # bingmapsource.cpp
@@ -182,11 +192,8 @@ HEADERS += window.h \
 # geotag_exif.cpp
 # google.cpp
 # googlesearch.cpp
-# gpsmapper.cpp
 # gpspoint.cpp
-# jpg.cpp
 # kmz.cpp
-# mapnik_interface.cpp
 # osm.cpp
 # osm-traces.cpp
 # terraserver.cpp
@@ -223,4 +230,4 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -lmapnik

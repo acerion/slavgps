@@ -24,11 +24,6 @@
 
 
 
-#include <cstdint>
-
-#include <glib.h>
-#include <gtk/gtk.h>
-
 #include "layer_trw.h"
 
 
@@ -40,10 +35,7 @@ namespace SlavGPS {
 
 
 	/* To be only called from within LayerTRW. */
-	void trw_layer_geotag_dialog(GtkWindow * parent,
-				     LayerTRW * layer,
-				     Waypoint * wp,
-				     Track * trk);
+	void trw_layer_geotag_dialog(Window * parent, LayerTRW * layer, Waypoint * wp, Track * trk);
 
 
 
