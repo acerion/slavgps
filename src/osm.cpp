@@ -40,8 +40,10 @@
 #include "vikexttool_datasources.h"
 #include "goto_tool_xml.h"
 #include "goto.h"
+#ifdef K
 #include "vikrouting.h"
 #include "vikroutingwebengine.h"
+#endif
 
 
 
@@ -133,7 +135,7 @@ void osm_init (void)
 	maps_layer_register_map_source(direct_type);
 	maps_layer_register_map_source(mbtiles_type);
 	maps_layer_register_map_source(metatiles_type);
-
+#ifdef K
 	// Webtools
 	WebToolCenter * web_tool = new WebToolCenter(_("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d");
 	vik_ext_tools_register(web_tool);
@@ -166,7 +168,7 @@ void osm_init (void)
 	WebToolDatasource * web_tool_datasource = new WebToolDatasource(_("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL);
 	vik_ext_tool_datasources_register(web_tool_datasource);
 	//g_object_unref ( vwtds );
-
+#endif
 
 
 
@@ -192,7 +194,7 @@ void osm_init (void)
 
 
 
-
+#ifdef K
 	// Not really OSM but can't be bothered to create somewhere else to put it...
 	web_tool = new WebToolCenter(_("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s");
 	vik_ext_tools_register(web_tool);
@@ -210,4 +212,5 @@ void osm_init (void)
 								    NULL);
 	vik_routing_register(VIK_ROUTING_ENGINE (osrm));
 	g_object_unref(osrm);
+#endif
 }

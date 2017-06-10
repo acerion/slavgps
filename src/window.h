@@ -141,6 +141,8 @@ namespace SlavGPS {
 
 		void activate_layer_tool(LayerType layer_type, int tool_id);
 
+		void open_file(char const * filename, bool change_filename);
+
 		/* Display controls. */
 		bool select_move = false;
 
@@ -251,7 +253,6 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void open_file(char const * filename, bool change_filename);
 		void set_busy_cursor(void);
 		void clear_busy_cursor(void);
 		void set_filename(char const * filename);

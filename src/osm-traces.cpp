@@ -94,12 +94,18 @@ static const OsmTraceVis_t OsmTraceVis[] = {
 
 
 
+static int osm_traces_upload_thread(BackgroundJob * bg_job);
+
+
+
+
 /**
  * Struct hosting needed info.
  */
 class OsmTracesInfo : public BackgroundJob {
 public:
 	OsmTracesInfo(LayerTRW * trw_, Track * trk_);
+	~OsmTracesInfo();
 
 	char * name = NULL;
 	char * description = NULL;
@@ -117,16 +123,16 @@ static Parameter prefs[] = {
 	{ 0, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL, NULL, NULL },
 	{ 1, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
 
-	{ 2, NULL, ,                                        ParameterType::STRING, VIK_LAYER_GROUP_NONE, "",                  WidgetType::NONE,     NULL, NULL, NULL, NULL, NULL, NULL } /* Guard. */
+	{ 2, NULL,                                          ParameterType::STRING, VIK_LAYER_GROUP_NONE, "",                  WidgetType::NONE,     NULL, NULL, NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 
 
 
-OsmTracesInfo(LayerTRW * trw_, Track * trk_)
+OsmTracesInfo::OsmTracesInfo(LayerTRW * trw_, Track * trk_)
 {
 	this->thread_fn = osm_traces_upload_thread;
-	this->number_items = 1;
+	this->n_items = 1;
 
 	this->trw = trw_;
 	this->trk = trk_;
@@ -318,7 +324,7 @@ static int osm_traces_upload_file(const char *user,
 /**
  * Uploading function executed by the background" thread.
  */
-static void osm_traces_upload_thread(BackgroundJob * bg_job)
+static int osm_traces_upload_thread(BackgroundJob * bg_job)
 {
 	OsmTracesInfo * oti = (OsmTracesInfo *) bg_job;
 	/* Due to OSM limits, we have to enforce ele and time fields
@@ -326,7 +332,7 @@ static void osm_traces_upload_thread(BackgroundJob * bg_job)
 	static GpxWritingOptions options = { true, true, false, false };
 
 	if (!oti) {
-		return;
+		return -1;
 	}
 
 	char *filename = NULL;
@@ -348,7 +354,7 @@ static void osm_traces_upload_thread(BackgroundJob * bg_job)
 	}
 
 	if (!filename) {
-		return;
+		return -1;
 	}
 
 	/* Finally, upload it. */
@@ -384,7 +390,6 @@ static void osm_traces_upload_thread(BackgroundJob * bg_job)
 			msg = QString("%1 : %2 %3 (@%4)").arg("FAILED TO UPLOAD DATA TO OSM").arg("HTTP response code").arg(ans).arg(timestr);
 		}
 		w->statusbar_update(StatusBarField::INFO, msg);
-		free(msg);
 	}
 	/* Removing temporary file. */
 	int ret = g_unlink(filename);
@@ -406,6 +411,8 @@ void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry
 	const char *pref_user = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "username")->s;
 	const char *pref_password = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "password")->s;
 
+#ifdef K
+
 	if (osm_user != NULL && osm_user[0] != '\0') {
 		gtk_entry_set_text(GTK_ENTRY(user_entry), osm_user);
 	} else if (pref_user != NULL && pref_user[0] != '\0') {
@@ -421,6 +428,7 @@ void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry
 	}
 	/* This is a password -> invisible. */
 	gtk_entry_set_visibility(GTK_ENTRY(password_entry), false);
+#endif
 }
 
 
@@ -434,6 +442,7 @@ void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry
  */
 void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 {
+#ifdef K
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("OSM upload"),
 						     trw->get_toolkit_window(),
 						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -588,4 +597,5 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		a_background_thread(info, ThreadPoolType::REMOTE, job_description);
 	}
 	gtk_widget_destroy(dia);
+#endif
 }

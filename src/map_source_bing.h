@@ -25,6 +25,7 @@
 #include "mapcoord.h"
 #include "map_source_slippy.h"
 #include "map_ids.h"
+#include "background.h"
 
 
 
@@ -46,12 +47,12 @@ namespace SlavGPS {
 
 	class MapSourceBing : public MapSourceSlippy {
 	public:
-		MapSourceBing::MapSourceBing();
-		MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_);
-		MapSourceBing::~MapSourceBing();
+		MapSourceBing();
+		MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_);
+		~MapSourceBing();
 
-		void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data)
-		char * MapSourceBing::get_server_path(TileInfo * src);
+		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data);
+		char * get_server_path(TileInfo * src);
 
 
 		char * bing_api_key;
@@ -81,7 +82,6 @@ namespace SlavGPS {
 		bool parse_file_for_attributions(char *filename);
 		int emit_update(void * data);
 		background_thread_fn thread_fn = NULL;
-		void async_load_attributions();
 	};
 
 

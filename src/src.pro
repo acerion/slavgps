@@ -6,6 +6,30 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    bing.cpp \
+    google.cpp \
+    googlesearch.cpp \
+    map_source_slippy.cpp \
+    map_source_bing.cpp \
+    map_source_wmsc.cpp \
+    map_source_tms.cpp \
+    geonamessearch.cpp \
+    geojson.cpp \
+    kmz.cpp \
+    gpspoint.cpp \
+    thumbnails.cpp \
+    osm.cpp \
+    osm-traces.cpp \
+    datasource_bfilter.cpp \
+    datasource_gc.cpp \
+    datasource_geojson.cpp \
+    datasource_geotag.cpp \
+    datasource_gps.cpp \
+    datasource_osm.cpp \
+    datasource_osm_my_traces.cpp \
+    datasource_routing.cpp \
+    datasource_url.cpp \
+    datasource_wikipedia.cpp \
     layer_trw_analysis.cpp \
     layer_trw_export.cpp \
     layer_trw_geotag.cpp \
@@ -90,6 +114,21 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    bing.h \
+    google.h \
+    googlesearch.h \
+    map_source_slippy.h \
+    map_source_bing.h \
+    map_source_wmsc.h \
+    map_source_tms.h \
+    geonamessearch.h \
+    geojson.h \
+    kmz.h \
+    gpspoint.h \
+    thumbnails.h \
+    osm.h \
+    osm-traces.h \
+    datasource_gps.h \
     layer_trw_analysis.h \
     layer_trw_export.h \
     layer_trw_geotag.h \
@@ -171,34 +210,12 @@ HEADERS += window.h \
     babel_ui.h
 
 
-
-# bing.cpp
-# map_source_bing.cpp
+# map_source_terraserver.cpp
 # bluemarble.cpp
 # clipboard.cpp
-# datasource_bfilter.cpp
-# datasource_gc.cpp
-# datasource_geojson.cpp
-# datasource_geotag.cpp
-# datasource_gps.cpp
-# datasource_osm.cpp
-# datasource_osm_my_traces.cpp
-# datasource_routing.cpp
-# datasource_url.cpp
-# datasource_wikipedia.cpp
 # garminsymbols.cpp
-# geojson.cpp
-# geonamessearch.cpp
 # geotag_exif.cpp
-# google.cpp
-# googlesearch.cpp
-# gpspoint.cpp
-# kmz.cpp
-# osm.cpp
-# osm-traces.cpp
 # terraserver.cpp
-# map_source_terraserver.cpp
-# thumbnails.cpp
 # toolbar.cpp
 # vikexttool.cpp
 # vikexttool_datasources.cpp
@@ -206,14 +223,11 @@ HEADERS += window.h \
 # vikrouting.cpp
 # vikroutingengine.cpp
 # vikroutingwebengine.cpp
-# map_source_slippy.cpp
-# map_source_tms.cpp
 # vikwebtoolbounds.cpp
 # vikwebtoolcenter.cpp
 # vikwebtool.cpp
 # vikwebtool_datasource.cpp
 # vikwebtoolformat.cpp
-# map_source_wmsc.cpp
 
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp

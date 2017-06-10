@@ -46,11 +46,13 @@ using namespace SlavGPS;
 
 
 
-
+#ifdef K
 /* Compatibility. */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free
 #endif
+#endif
+
 
 /**
  * See http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox
@@ -142,8 +144,8 @@ static void free_geoname_list(GList * found_places)
 static void none_found(Window * window)
 {
 	GtkWidget *dialog = NULL;
-
-	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
+#ifdef K
+	dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
 	GtkWidget *search_label = gtk_label_new(_("No entries found!"));
@@ -153,13 +155,15 @@ static void none_found(Window * window)
 
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
+#endif
 }
 
 
 
 
-static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, bool multiple_selection_allowed, const char * title, const char * msg)
+static GList * a_select_geoname_from_list(Window * parent, GList * geonames, bool multiple_selection_allowed, const char * title, const char * msg)
 {
+#ifdef K
 	GtkTreeIter iter;
 	GtkCellRenderer * renderer;
 	GtkWidget *view;
@@ -182,6 +186,7 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 	/* Default to not apply - as initially nothing is selected! */
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 #endif
+
 	GtkWidget *label = gtk_label_new(msg);
 	GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -271,6 +276,7 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 		dialog_error("Nothing was selected"), parent);
 	}
 	gtk_widget_destroy(dialog);
+#endif
 	return NULL;
 }
 
@@ -279,6 +285,7 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 
 static GList *get_entries_from_file(char *file_name)
 {
+#ifdef K
 	char *text, *pat;
 	GMappedFile *mf;
 	size_t len;
@@ -443,6 +450,7 @@ static GList *get_entries_from_file(char *file_name)
 	found_places = g_list_reverse(found_places);
 	g_mapped_file_unref(mf);
 	return(found_places);
+#endif
 }
 
 
@@ -476,7 +484,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		none_found(window);
 		goto done;
 	}
-	selected = a_select_geoname_from_list(window->get_toolkit_window_2(), wiki_places, true, "Select articles", "Select the articles you want to add.");
+	selected = a_select_geoname_from_list(window, wiki_places, true, "Select articles", "Select the articles you want to add.");
 	wp_runner = selected;
 	while (wp_runner) {
 		wiki_geoname = (found_geoname *)wp_runner->data;

@@ -26,9 +26,9 @@
 
 
 #include <glib.h>
-#include <gtk/gtk.h>
 
 #include "layer_trw.h"
+#include "slav_qt.h"
 
 
 

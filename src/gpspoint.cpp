@@ -41,6 +41,7 @@
 #include "layer_trw.h"
 #include "file.h"
 #include "globals.h"
+#include "preferences.h"
 
 
 
@@ -421,12 +422,13 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			if (line_xtype) {
 				trk->set_type(line_xtype);
 			}
-
+#ifdef K
 			if (line_color) {
 				if (gdk_color_parse(line_color, &(trk->color))) {
 					trk->has_color = true;
 				}
 			}
+#endif
 
 			trk->draw_name_mode = (TrackDrawNameMode) line_name_label;
 			trk->max_number_dist_labels = line_dist_label;
@@ -848,7 +850,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 			fprintf(f, " xtype=\"%s\"", tmp);
 			free(tmp);
 		}
-
+#ifdef K
 		if (trk->has_color) {
 			fprintf(f, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
 		}
@@ -856,6 +858,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		if (trk->draw_name_mode > 0) {
 			fprintf(f, " draw_name_mode=\"%d\"", trk->draw_name_mode);
 		}
+#endif
 
 		if (trk->max_number_dist_labels > 0) {
 			fprintf(f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels);

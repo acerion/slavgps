@@ -34,8 +34,9 @@
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
+#ifdef K
 #include "vikrouting.h"
-
+#endif
 
 
 
@@ -105,7 +106,7 @@ static void * datasource_routing_init(acq_vik_t * avt)
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
 	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
-
+#ifdef K
 	/* Engine selector. */
 	GtkWidget * engine_label = gtk_label_new(_("Engine:"));
 	widgets->engines_combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
@@ -133,6 +134,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	gtk_box_pack_start(box, to_label, false, false, 5);
 	gtk_box_pack_start(box, widgets->to_entry, false, false, 5);
 	gtk_widget_show_all(dialog);
+#endif
 }
 
 
@@ -141,7 +143,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
-
+#ifdef K
 	/* Retrieve directions. */
 	char const * from = gtk_entry_get_text(GTK_ENTRY(widgets->from_entry));
 	char const * to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
@@ -165,6 +167,7 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 	last_to_str = g_strdup(to);
 
 	return po;
+#endif
 }
 
 

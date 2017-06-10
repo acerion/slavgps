@@ -27,9 +27,6 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include <gtk/gtk.h>
-
-//#include "viking.h"
 #include "acquire.h"
 #include "geotag_exif.h"
 #include "fileutils.h"
@@ -108,7 +105,7 @@ static void * datasource_geotag_init(acq_vik_t * avt)
 static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
 	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *) user_data;
-
+#ifdef K
 	/* The files selector. */
 	userdata->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
 
@@ -148,6 +145,7 @@ static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * v
 	gtk_box_pack_start(box, userdata->files, true, true, 0);
 
 	gtk_widget_show_all(dialog);
+#endif
 }
 
 
@@ -158,6 +156,7 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 	ProcessOptions * po = new ProcessOptions();
 
 	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *)user_data;
+#ifdef K
 	/* Retrieve the files selected. */
 	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
 
@@ -168,7 +167,7 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 
 	/* TODO Memorize the file filter for later use... */
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
-
+#endif
 	/* Return some value so *thread* processing will continue */
 	po->babelargs = strdup("fake command"); /* Not really used, thus no translations. */
 
@@ -191,6 +190,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 	while (cur_file) {
 		char *filename = (char *) cur_file->data;
 		char *name;
+#ifdef K
 		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, adw->viewport->get_coord_mode(), &name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
@@ -202,6 +202,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 		} else {
 			adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
 		}
+#endif
 		free(filename);
 		cur_file = g_slist_next(cur_file);
 	}

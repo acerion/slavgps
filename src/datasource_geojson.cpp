@@ -23,7 +23,6 @@
 
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
-#include <gtk/gtk.h>
 
 //#include "viking.h"
 #include "acquire.h"
@@ -102,6 +101,8 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 {
 	datasource_geojson_user_data_t * ud = (datasource_geojson_user_data_t *) user_data;
 
+#ifdef K
+
 	ud->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
 
 	/* Try to make it a nice size - otherwise seems to default to something impractically small. */
@@ -136,13 +137,16 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	gtk_box_pack_start(box, ud->files, true, true, 0);
 
 	gtk_widget_show_all(dialog);
+#endif
 }
 
 
 
 
-static void datasource_geojson_get_process_options(datasource_geojson_user_data_t * userdata, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3)
+ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_data_t * userdata, void * not_used, char const * not_used2, char const * not_used3)
 {
+	ProcessOptions * po = new ProcessOptions();
+#ifdef K
 	/* Retrieve the files selected. */
 	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
 
@@ -152,9 +156,11 @@ static void datasource_geojson_get_process_options(datasource_geojson_user_data_
 
 	/* TODO Memorize the file filter for later reuse? */
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(userdata->files));
-
+#endif
 	/* Return some value so *thread* processing will continue. */
 	po->babelargs = strdup("fake command"); /* Not really used, thus no translations. */
+
+	return po;
 }
 
 

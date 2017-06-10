@@ -19,7 +19,6 @@
  *
  */
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
 
 #include <vector>
 #include <cstdlib>
@@ -109,7 +108,9 @@ static void * datasource_url_init(acq_vik_t * avt)
 static void fill_combo_box(void * data, void * user_data)
 {
 	char const * label = ((BabelFileType *) data)->label;
+#ifdef K
 	vik_combo_box_text_append (GTK_WIDGET(user_data), label);
+#endif
 }
 
 
@@ -139,6 +140,7 @@ static void find_type(BabelFileType * file_type, char const * type_name)
 
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
+#ifdef K
 	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) user_data;
 	GtkWidget *label = gtk_label_new(_("URL:"));
 	widgets->url = gtk_entry_new();
@@ -185,6 +187,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 	gtk_box_pack_start(box, widgets->type, false, false, 5);
 
 	gtk_widget_show_all(dialog);
+#endif
 }
 
 
@@ -193,7 +196,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 static ProcessOptions * datasource_url_get_process_options(datasource_url_widgets_t * widgets, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
-
+#ifdef K
 	/* Retrieve the user entered value. */
 	char const * value = gtk_entry_get_text(GTK_ENTRY(widgets->url));
 
@@ -213,6 +216,7 @@ static ProcessOptions * datasource_url_get_process_options(datasource_url_widget
 	download_options->follow_location = 5;
 
 	return po;
+#endif
 }
 
 

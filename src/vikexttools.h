@@ -21,12 +21,11 @@
 #ifndef _SG_EXTERNAL_TOOLS_H
 #define _SG_EXTERNAL_TOOLS_H
 
-#include <stdint.h>
-
-#include <gtk/gtk.h>
+#include <cstdint>
 
 #include "window.h"
 #include "vikexttool.h"
+#include "slav_qt.h"
 
 
 

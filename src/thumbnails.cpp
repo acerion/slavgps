@@ -99,7 +99,9 @@ bool a_thumbnails_exists(const char * filename)
 {
 	QPixmap * pixmap = a_thumbnails_get(filename);
 	if (pixmap) {
+#ifdef K
 		g_object_unref(G_OBJECT (pixmap));
+#endif
 		return true;
 	}
 	return false;
@@ -110,7 +112,9 @@ bool a_thumbnails_exists(const char * filename)
 
 QPixmap * a_thumbnails_get_default()
 {
+#ifdef K
 	return gdk_pixbuf_from_pixdata(&thumbnails_pixmap, false, NULL);
+#endif
 }
 
 
@@ -126,7 +130,9 @@ void a_thumbnails_create(const char * filename)
 	}
 
 	if (pixmap) {
+#ifdef K
 		g_object_unref(G_OBJECT (pixmap));
+#endif
 	}
 }
 
@@ -135,6 +141,7 @@ void a_thumbnails_create(const char * filename)
 
 QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 {
+#ifdef K
 	int w = gdk_pixbuf_get_width(src);
 	int h = gdk_pixbuf_get_height(src);
 
@@ -153,6 +160,7 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 					       MAX(dest_h, 1),
 					       GDK_INTERP_BILINEAR);
 	}
+#endif
 }
 
 
@@ -160,6 +168,7 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 
 static QPixmap * child_create_thumbnail(const char * path)
 {
+#ifdef K
 	QPixmap * image = gdk_pixbuf_new_from_file(path, NULL);
 	if (!image) {
 		return NULL;
@@ -174,7 +183,7 @@ static QPixmap * child_create_thumbnail(const char * path)
 		g_object_unref(G_OBJECT (image));
 		return thumb;
 	}
-
+#endif
 	return NULL;
 }
 
@@ -189,7 +198,7 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 	}
 
 	QPixmap * thumb = a_thumbnails_scale_pixmap(full, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
-
+#ifdef K
 	const char * orientation = gdk_pixbuf_get_option(full, "orientation");
 
 	int original_width = gdk_pixbuf_get_width(full);
@@ -278,6 +287,7 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 	free(uri);
 
 	return thumb;
+#endif
 }
 
 
@@ -296,7 +306,7 @@ QPixmap * a_thumbnails_get(const char * pathname)
 
 	const char * ssize;
 	const char * smtime;
-
+#ifdef K
 	QPixmap * thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
 	if (!thumb) {
 		goto err;
@@ -332,6 +342,7 @@ out:
 	free(path);
 	free(thumb_path);
 	return thumb;
+#endif
 }
 
 

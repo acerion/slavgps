@@ -120,7 +120,7 @@ static void * datasource_osm_my_traces_init(acq_vik_t *avt)
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
-
+#ifdef K
 	GtkWidget *user_label;
 	GtkWidget *password_label;
 	user_label = gtk_label_new(_("Username:"));
@@ -145,6 +145,7 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 	/* Keep reference to viewport. */
 	data->viewport = viewport;
+#endif
 }
 
 
@@ -155,7 +156,7 @@ static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user
 	ProcessOptions * po = new ProcessOptions();
 
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
-
+#ifdef K
 	/* Overwrite authentication info. */
 	osm_set_login(gtk_entry_get_text(GTK_ENTRY(data->user_entry)),
 		      gtk_entry_get_text(GTK_ENTRY(data->password_entry)));
@@ -163,7 +164,7 @@ static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
 	options = NULL;
-
+#endif
 	return po;
 }
 
@@ -459,7 +460,7 @@ static GList * select_from_list(GtkWindow *parent, GList *list, const char *titl
 	GtkWidget *view;
 	char *latlon_string;
 	int column_runner;
-
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -587,16 +588,17 @@ static GList * select_from_list(GtkWindow *parent, GList *list, const char *titl
 		dialog_error("Nothing was selected", parent);
 	}
 	gtk_widget_destroy (dialog);
+#endif
 	return NULL;
 }
 
 
 
 
-static void none_found(GtkWindow *gw)
+static void none_found(Window * gw)
 {
 	GtkWidget *dialog = NULL;
-
+#ifdef K
 	dialog = gtk_dialog_new_with_buttons ("", gw, (GtkDialogFlags) 0, GTK_STOCK_OK, (GTK_RESPONSE_ACCEPT), NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("GPS Traces"));
 
@@ -607,6 +609,7 @@ static void none_found(GtkWindow *gw)
 
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
+#endif
 }
 
 
@@ -681,7 +684,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	if (g_list_length (xd->list_of_gpx_meta_data) == 0) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread) {
-			none_found(adw->window->get_toolkit_window());
+			none_found(adw->window);
 		}
 		free(xd);
 		return false;
@@ -690,12 +693,12 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	xd->list_of_gpx_meta_data = g_list_reverse(xd->list_of_gpx_meta_data);
 
 	set_in_current_view_property((datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data);
-
+#ifdef K
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_enter();
 	}
 
-	GList *selected = select_from_list(adw->window->get_toolkit_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	GList *selected = select_from_list(adw->window->get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_leave();
 	}
@@ -802,6 +805,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	}
 
 	return result;
+#endif
 }
 
 static void datasource_osm_my_traces_cleanup(void * data)

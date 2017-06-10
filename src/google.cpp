@@ -31,8 +31,10 @@
 #include "vikwebtoolcenter.h"
 #include "goto.h"
 #include "googlesearch.h"
+#ifdef K
 #include "vikrouting.h"
 #include "vikroutingwebengine.h"
+#endif
 #include "babel.h"
 
 
@@ -45,6 +47,7 @@ using namespace SlavGPS;
 
 void SlavGPS::google_init()
 {
+#ifdef K
 	// Webtools
 	WebToolCenter * web_tool = new WebToolCenter(_("Google"), "http://maps.google.com/maps/@%s,%s,%dz");
 	vik_ext_tools_register(web_tool);
@@ -56,6 +59,7 @@ void SlavGPS::google_init()
 	 GoogleGotoTool * gototool = google_goto_tool_new();
 	 vik_goto_register(VIK_GOTO_TOOL(gototool));
 	 g_object_unref(gototool);
+#endif
 #endif
 }
 
