@@ -26,7 +26,7 @@
 #include "vikwebtoolformat.h"
 #include "util.h"
 #include "globals.h"
-#include "maputils.h"
+#include "map_utils.h"
 
 
 

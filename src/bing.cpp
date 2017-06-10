@@ -27,7 +27,7 @@
 
 #include "bing.h"
 #include "layer_map.h"
-#include "bingmapsource.h"
+#include "map_source_bing.h"
 #include "vikwebtoolcenter.h"
 #include "vikexttools.h"
 #include "map_ids.h"

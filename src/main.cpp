@@ -30,7 +30,7 @@
 #include "layer_defaults.h"
 #include "layer_map.h"
 #include "dems.h"
-#include "mapcache.h"
+#include "map_cache.h"
 #include "download.h"
 #include "background.h"
 #include "preferences.h"

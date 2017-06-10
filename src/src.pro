@@ -20,8 +20,8 @@ SOURCES += main.cpp \
     print-preview.cpp \
     layer_map.cpp \
     map_source.cpp \
-    mapcache.cpp \
-    maputils.cpp \
+    map_cache.cpp \
+    map_utils.cpp \
     metatile.cpp \
     goto.cpp \
     goto_tool.cpp \
@@ -104,9 +104,9 @@ HEADERS += window.h \
     print-preview.h \
     layer_map.h \
     map_source.h \
-    maputils.h \
+    map_utils.h \
     metatile.h \
-    mapcache.h \
+    map_cache.h \
     goto.h \
     goto_tool.h \
     goto_tool_xml.h \
@@ -173,7 +173,7 @@ HEADERS += window.h \
 
 
 # bing.cpp
-# bingmapsource.cpp
+# map_source_bing.cpp
 # bluemarble.cpp
 # clipboard.cpp
 # datasource_bfilter.cpp
@@ -197,7 +197,7 @@ HEADERS += window.h \
 # osm.cpp
 # osm-traces.cpp
 # terraserver.cpp
-# terraservermapsource.cpp
+# map_source_terraserver.cpp
 # thumbnails.cpp
 # toolbar.cpp
 # vikexttool.cpp
@@ -206,14 +206,14 @@ HEADERS += window.h \
 # vikrouting.cpp
 # vikroutingengine.cpp
 # vikroutingwebengine.cpp
-# vikslippymapsource.cpp
-# viktmsmapsource.cpp
+# map_source_slippy.cpp
+# map_source_tms.cpp
 # vikwebtoolbounds.cpp
 # vikwebtoolcenter.cpp
 # vikwebtool.cpp
 # vikwebtool_datasource.cpp
 # vikwebtoolformat.cpp
-# vikwmscmapsource.cpp
+# map_source_wmsc.cpp
 
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp

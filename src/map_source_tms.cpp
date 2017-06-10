@@ -17,7 +17,7 @@
  */
 
  /**
-  * SECTION:viktmsmapsource
+  * SECTION:map_source_tms
   * @short_description: the class for TMS oriented map sources
   *
   * The #VikTmsMapSource class handles TMS oriented map sources.
@@ -44,8 +44,8 @@
 #include <cassert>
 
 #include "globals.h"
-#include "viktmsmapsource.h"
-#include "maputils.h"
+#include "map_source_tms.h"
+#include "map_utils.h"
 
 
 

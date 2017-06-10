@@ -17,7 +17,7 @@
  */
 
  /**
-  * SECTION:vikslippymapsource
+  * SECTION:map_source_slippy
   * @short_description: the class for SlippyMap oriented map sources
   *
   * The #VikSlippyMapSource class handles slippy map oriented map sources.
@@ -48,8 +48,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "vikslippymapsource.h"
-#include "maputils.h"
+#include "map_source_slippy.h"
+#include "map_utils.h"
 
 
 

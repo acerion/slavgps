@@ -55,9 +55,9 @@
 #include "vikrouting.h"
 
 /* Loadable types */
-#include "vikslippymapsource.h"
-#include "viktmsmapsource.h"
-#include "vikwmscmapsource.h"
+#include "map_source_slippy.h"
+#include "map_source_tms.h"
+#include "map_source_wmsc.h"
 #include "vikwebtoolcenter.h"
 #include "vikwebtoolbounds.h"
 #include "goto_tool_xml.h"

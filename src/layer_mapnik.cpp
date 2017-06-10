@@ -37,9 +37,9 @@
 
 #include "vikutils.h"
 #include "map_ids.h"
-#include "maputils.h"
+#include "map_utils.h"
 #include "mapcoord.h"
-#include "mapcache.h"
+#include "map_cache.h"
 #include "dir.h"
 #include "util.h"
 #include "ui_util.h"

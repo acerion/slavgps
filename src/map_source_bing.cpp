@@ -17,7 +17,7 @@
  */
 
  /**
-  * SECTION:bingmapsource
+  * SECTION:map_source_bing
   * @short_description: the class for Bing Maps
   *
   * The #BingMapSource class handles Bing map source.
@@ -45,8 +45,8 @@
 #include <glib/gi18n.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 #include "globals.h"
-#include "bingmapsource.h"
-#include "maputils.h"
+#include "map_source_bing.h"
+#include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
 #include "icons/icons.h"

@@ -22,7 +22,7 @@
 
 #include "bluemarble.h"
 #include "layer_map.h"
-#include "vikslippymapsource.h"
+#include "map_source_slippy.h"
 #include "map_ids.h"
 
 

@@ -26,7 +26,7 @@
 #include <cstdlib>
 
 #include "globals.h"
-#include "terraservermapsource.h"
+#include "map_source_terraserver.h"
 #include "coord.h"
 #include "mapcoord.h"
 

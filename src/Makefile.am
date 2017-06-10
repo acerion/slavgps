@@ -174,7 +174,7 @@ endif
 
 if TERRASERVER
 libviking_a_SOURCES += \
-	terraservermapsource.cpp terraservermapsource.h \
+	map_source_terraserver.cpp map_source_terraserver.h \
 	terraserver.cpp terraserver.h
 endif
 

@@ -23,7 +23,7 @@
 #endif
 
 #include "terraserver.h"
-#include "terraservermapsource.h"
+#include "map_source_terraserver.h"
 #include "layer_map.h"
 #include "map_ids.h"
 

@@ -23,7 +23,7 @@
 
 #include "coord.h"
 #include "mapcoord.h"
-#include "vikslippymapsource.h"
+#include "map_source_slippy.h"
 #include "map_ids.h"
 
 

@@ -17,7 +17,7 @@
  */
 
  /**
-  * SECTION:vikwmscmapsource
+  * SECTION:map_source_wmsc
   * @short_description: the class for WMS/WMS-C oriented map sources
   *
   * The #VikWmscMapSource class handles WMS/WMS-C oriented map sources.
@@ -37,8 +37,8 @@
 #include <cassert>
 
 #include "globals.h"
-#include "vikwmscmapsource.h"
-#include "maputils.h"
+#include "map_source_wmsc.h"
+#include "map_utils.h"
 
 
 

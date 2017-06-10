@@ -39,7 +39,7 @@
 #include <gdk-pixbuf/gdk-pixdata.h>
 
 #include "icons/icons.h"
-#include "mapcache.h"
+#include "map_cache.h"
 #include "background.h"
 #include "dems.h"
 #include "babel.h"

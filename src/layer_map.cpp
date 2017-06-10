@@ -43,10 +43,10 @@
 #endif
 
 #include "map_source.h"
-#include "vikslippymapsource.h"
+#include "map_source_slippy.h"
 #include "vikutils.h"
-#include "maputils.h"
-#include "mapcache.h"
+#include "map_utils.h"
+#include "map_cache.h"
 #include "background.h"
 #include "preferences.h"
 #include "layer_map.h"
@@ -938,7 +938,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	/* If the on Disk OSM Tile Layout type. */
 	if (map->map_type == MAP_ID_OSM_ON_DISK) {
 		/* Copy the directory into filename.
-		   Thus the mapcache look up will be unique when using more than one of these map types. */
+		   Thus the map cache look up will be unique when using more than one of these map types. */
 		free(this->filename);
 		this->filename = g_strdup(this->cache_dir);
 	}

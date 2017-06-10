@@ -31,7 +31,7 @@
 #include <glib/gi18n.h>
 
 #include "globals.h"
-#include "mapcache.h"
+#include "map_cache.h"
 #include "preferences.h"
 #include "slav_qt.h"
 
@@ -362,7 +362,7 @@ void SlavGPS::map_cache_uninit(void)
 
 
 
-/* Size of mapcache in memory. */
+/* Size of map cache in memory. */
 size_t SlavGPS::map_cache_get_size()
 {
 	return cache_size;
@@ -371,7 +371,7 @@ size_t SlavGPS::map_cache_get_size()
 
 
 
-/* Count of items in the mapcache. */
+/* Count of items in the map cache. */
 int SlavGPS::map_cache_get_count()
 {
 	return maps_cache.size();

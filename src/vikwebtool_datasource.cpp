@@ -33,7 +33,7 @@
 #include "vikwebtool_datasource.h"
 #include "globals.h"
 #include "acquire.h"
-#include "maputils.h"
+#include "map_utils.h"
 #include "dialog.h"
 
 

@@ -22,7 +22,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "maputils.h"
+#include "map_utils.h"
 #include "globals.h"
 
 
@@ -99,7 +99,7 @@ uint8_t SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 
 
 /**
- * SECTION:maputils
+ * SECTION:map_utils
  * @short_description: Notes about TMS / Spherical Mercator conversion
  *
  * VikCoords are in Spherical Mercator projection (#VIK_COORD_LATLON)

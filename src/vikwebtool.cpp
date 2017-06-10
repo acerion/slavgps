@@ -24,7 +24,7 @@
 
 #include "ui_util.h"
 #include "vikwebtool.h"
-#include "maputils.h"
+#include "map_utils.h"
 
 
 
