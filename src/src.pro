@@ -6,6 +6,15 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    vikwebtoolbounds.cpp \
+    vikwebtoolcenter.cpp \
+    vikwebtool.cpp \
+    vikwebtool_datasource.cpp \
+    vikwebtoolformat.cpp \
+    bluemarble.cpp \
+    vikexttool.cpp \
+    vikexttool_datasources.cpp \
+    vikexttools.cpp \
     bing.cpp \
     google.cpp \
     googlesearch.cpp \
@@ -13,6 +22,8 @@ SOURCES += main.cpp \
     map_source_bing.cpp \
     map_source_wmsc.cpp \
     map_source_tms.cpp \
+    map_source_terraserver.cpp \
+    terraserver.cpp \
     geonamessearch.cpp \
     geojson.cpp \
     kmz.cpp \
@@ -114,6 +125,15 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    vikwebtoolbounds.h \
+    vikwebtoolcenter.h \
+    vikwebtool.h \
+    vikwebtool_datasource.h \
+    vikwebtoolformat.h \
+    bluemarble.h \
+    vikexttool.h \
+    vikexttool_datasources.h \
+    vikexttools.h \
     bing.h \
     google.h \
     googlesearch.h \
@@ -121,6 +141,8 @@ HEADERS += window.h \
     map_source_bing.h \
     map_source_wmsc.h \
     map_source_tms.h \
+    map_source_terraserver.h \
+    terraserver.h \
     geonamessearch.h \
     geojson.h \
     kmz.h \
@@ -210,24 +232,13 @@ HEADERS += window.h \
     babel_ui.h
 
 
-# map_source_terraserver.cpp
-# bluemarble.cpp
 # clipboard.cpp
 # garminsymbols.cpp
 # geotag_exif.cpp
-# terraserver.cpp
 # toolbar.cpp
-# vikexttool.cpp
-# vikexttool_datasources.cpp
-# vikexttools.cpp
 # vikrouting.cpp
 # vikroutingengine.cpp
 # vikroutingwebengine.cpp
-# vikwebtoolbounds.cpp
-# vikwebtoolcenter.cpp
-# vikwebtool.cpp
-# vikwebtool_datasource.cpp
-# vikwebtoolformat.cpp
 
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp

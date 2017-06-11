@@ -25,36 +25,38 @@
 #include <cstdint>
 
 #include "map_source.h"
+#include "map_ids.h"
 
 
 
 
-#define TERRASERVER_TYPE_MAP_SOURCE             (terraserver_map_source_get_type ())
-#define TERRASERVER_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSource))
-#define TERRASERVER_MAP_SOURCE_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSourceClass))
-#define TERRASERVER_IS_MAP_SOURCE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TERRASERVER_TYPE_MAP_SOURCE))
-#define TERRASERVER_IS_MAP_SOURCE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), TERRASERVER_TYPE_MAP_SOURCE))
-#define TERRASERVER_MAP_SOURCE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSourceClass))
-
-typedef struct _TerraserverMapSourceClass TerraserverMapSourceClass;
-typedef struct _TerraserverMapSource TerraserverMapSource;
-
-struct _TerraserverMapSourceClass
-{
-	VikMapSourceDefaultClass parent_class;
-};
-
-struct _TerraserverMapSource
-{
-	VikMapSourceDefault parent_instance;
-};
-
-GType terraserver_map_source_get_type (void) G_GNUC_CONST;
+namespace SlavGPS {
 
 
 
+	class MapSourceTerraserver : public MapSource {
+	public:
+		MapSourceTerraserver();
+		MapSourceTerraserver(MapTypeID type_, const char * label_);
 
-TerraserverMapSource * terraserver_map_source_new_with_id(uint16_t id, const char * label, int type);
+
+		bool coord_to_tile(const VikCoord * src, double xmpp, double ympp, TileInfo * dest);
+		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
+		bool is_direct_file_access(void);
+		bool is_mbtiles(void);
+
+		char * get_server_hostname(void);
+		char * get_server_path(TileInfo * src);
+
+		DownloadFileOptions * get_download_options(void);
+
+		MapTypeID type = MAP_TYPE_ID_INITIAL;
+	};
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

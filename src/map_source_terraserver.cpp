@@ -19,11 +19,10 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-
+#include <cmath>
 #include <cstdlib>
+
+#include <QDebug>
 
 #include "globals.h"
 #include "map_source_terraserver.h"
@@ -38,142 +37,8 @@ using namespace SlavGPS;
 
 
 
-static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xzoom, double yzoom, TileInfo *dest);
-static void _tile_to_center_coord(VikMapSource * self, TileInfo * src, VikCoord *dest);
-static bool _is_direct_file_access(VikMapSource * self);
-static bool _is_mbtiles(VikMapSource * self);
-
-static char * _get_uri(VikMapSourceDefault * self, TileInfo * src);
-static char * _get_hostname(VikMapSourceDefault * self);
-static DownloadFileOptions * _get_download_options(VikMapSourceDefault * self);
-
 /* FIXME Huge gruik. */
 static DownloadFileOptions terraserver_options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
-
-typedef struct _TerraserverMapSourcePrivate TerraserverMapSourcePrivate;
-struct _TerraserverMapSourcePrivate
-{
-	uint8_t type;
-};
-
-#define TERRASERVER_MAP_SOURCE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSourcePrivate))
-G_DEFINE_TYPE (TerraserverMapSource, terraserver_map_source, VIK_TYPE_MAP_SOURCE_DEFAULT);
-
-
-
-
-/* Properties. */
-enum {
-	PROP_0,
-
-	PROP_TYPE,
-};
-
-
-
-
-static void terraserver_map_source_init(TerraserverMapSource * self)
-{
-	/* Initialize the object here. */
-	g_object_set(G_OBJECT (self),
-		     "tilesize-x", 200,
-		     "tilesize-y", 200,
-		     "drawmode", ViewportDrawMode::UTM,
-		     NULL);
-}
-
-
-
-
-static void terraserver_map_source_finalize(GObject * object)
-{
-	/* TODO: Add deinitalization code here. */
-
-	G_OBJECT_CLASS (terraserver_map_source_parent_class)->finalize (object);
-}
-
-
-
-
-static void terraserver_map_source_set_property(GObject      * object,
-						unsigned int   property_id,
-						const GValue * value,
-						GParamSpec   * pspec)
-{
-	TerraserverMapSource * self = TERRASERVER_MAP_SOURCE (object);
-	TerraserverMapSourcePrivate * priv = TERRASERVER_MAP_SOURCE_PRIVATE (self);
-
-	switch (property_id) {
-	case PROP_TYPE:
-		priv->type = g_value_get_uint (value);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-
-
-
-static void terraserver_map_source_get_property(GObject      * object,
-						unsigned int   property_id,
-						GValue       * value,
-						GParamSpec   * pspec)
-{
-	TerraserverMapSource * self = TERRASERVER_MAP_SOURCE (object);
-	TerraserverMapSourcePrivate * priv = TERRASERVER_MAP_SOURCE_PRIVATE (self);
-
-	switch (property_id) {
-	case PROP_TYPE:
-		g_value_set_uint (value, priv->type);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-
-
-
-static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
-{
-	GObjectClass * object_class = G_OBJECT_CLASS (klass);
-	VikMapSourceClass * grandparent_class = VIK_MAP_SOURCE_CLASS (klass);
-	VikMapSourceDefaultClass * parent_class = VIK_MAP_SOURCE_DEFAULT_CLASS (klass);
-	GParamSpec * pspec = NULL;
-
-	object_class->set_property = terraserver_map_source_set_property;
-	object_class->get_property = terraserver_map_source_get_property;
-
-	/* Overiding methods. */
-	grandparent_class->coord_to_tile = _coord_to_tile;
-	grandparent_class->tile_to_center_coord = _tile_to_center_coord;
-	grandparent_class->is_direct_file_access = _is_direct_file_access;
-	grandparent_class->is_mbtiles = _is_mbtiles;
-
-	parent_class->get_uri = _get_uri;
-	parent_class->get_hostname = _get_hostname;
-	parent_class->get_download_options = _get_download_options;
-
-	pspec = g_param_spec_uint("type",
-				  "Type",
-				  "Type of Terraserver map",
-				  0, /* Minimum value. */
-				  G_MAXUINT8, /* Maximum value. */
-				  0,  /* Default value. */
-				  (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_TYPE, pspec);
-
-	g_type_class_add_private(klass, sizeof (TerraserverMapSourcePrivate));
-
-	object_class->finalize = terraserver_map_source_finalize;
-}
 
 
 
@@ -184,7 +49,7 @@ static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
 
 
 
-static int mpp_to_scale(double mpp, uint8_t type)
+static int mpp_to_scale(double mpp, MapTypeID type)
 {
 	mpp *= 4;
 	int t = (int) mpp;
@@ -193,9 +58,9 @@ static int mpp_to_scale(double mpp, uint8_t type)
 	}
 
 	switch (t) {
-	case 1: return (type == 4) ? 8 : 0;
-	case 2: return (type == 4) ? 9 : 0;
-	case 4: return (type != 2) ? 10 : 0;
+	case 1: return (type == MAP_ID_TERRASERVER_URBAN) ? 8 : 0;
+	case 2: return (type == MAP_ID_TERRASERVER_URBAN) ? 9 : 0;
+	case 4: return (type != MAP_ID_TERRASERVER_TOPO) ? 10 : 0;
 	case 8: return 11;
 	case 16: return 12;
 	case 32: return 13;
@@ -214,20 +79,14 @@ static int mpp_to_scale(double mpp, uint8_t type)
 
 static double scale_to_mpp(int scale)
 {
-	return pow(2,scale - 10);
+	return pow(2, scale - 10);
 }
 
 
 
 
-static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xmpp, double ympp, TileInfo * dest)
+bool MapSourceTerraserver::coord_to_tile(const VikCoord * src, double xmpp, double ympp, TileInfo * dest)
 {
-	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
-		return false;
-	}
-
-	TerraserverMapSourcePrivate * priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
-	int type = priv->type;
 	if (src->mode != VIK_COORD_UTM) {
 		return false;
 	}
@@ -236,7 +95,7 @@ static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xmp
 		return false;
 	}
 
-	dest->scale = mpp_to_scale (xmpp, type);
+	dest->scale = mpp_to_scale(xmpp, this->map_type);
 	if (!dest->scale) {
 		return false;
 	}
@@ -250,7 +109,7 @@ static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xmp
 
 
 
-static bool _is_direct_file_access(VikMapSource * self)
+bool MapSourceTerraserver::is_direct_file_access(void)
 {
 	return false;
 }
@@ -258,7 +117,7 @@ static bool _is_direct_file_access(VikMapSource * self)
 
 
 
-static bool _is_mbtiles(VikMapSource * self)
+bool MapSourceTerraserver::is_mbtiles(void)
 {
 	return false;
 }
@@ -266,7 +125,7 @@ static bool _is_mbtiles(VikMapSource * self)
 
 
 
-static void _tile_to_center_coord(VikMapSource * self, TileInfo * src, VikCoord * dest)
+void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 {
 	/* FIXME: slowdown here! */
 	double mpp = scale_to_mpp (src->scale);
@@ -279,65 +138,51 @@ static void _tile_to_center_coord(VikMapSource * self, TileInfo * src, VikCoord 
 
 
 
-static char * _get_uri(VikMapSourceDefault * self, TileInfo * src)
+char * MapSourceTerraserver::get_server_path(TileInfo * src)
 {
-	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
-		return NULL;
-	}
-
-	TerraserverMapSourcePrivate * priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
-	int type = priv->type;
-	char * uri = g_strdup_printf("/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", type,
-				     src->scale, src->x, src->y, src->z);
+	char * uri = g_strdup_printf("/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", (int) this->map_type, src->scale, src->x, src->y, src->z);
 	return uri;
 }
 
 
 
 
-static char * _get_hostname(VikMapSourceDefault * self)
+char * MapSourceTerraserver::get_server_hostname(void)
 {
-	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
-		return NULL;
-	}
-
 	return g_strdup(TERRASERVER_SITE);
 }
 
 
 
 
-static DownloadFileOptions * _get_download_options(VikMapSourceDefault * self)
+DownloadFileOptions * MapSourceTerraserver::get_download_options(void)
 {
-	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
-		return NULL;
-	}
-
 	return &terraserver_options;
 }
 
 
 
 
-TerraserverMapSource * terraserver_map_source_new_with_id(uint16_t id, const char * label, int type)
+MapSourceTerraserver::MapSourceTerraserver(MapTypeID type_, const char * label_)
 {
-	char * copyright = NULL;
-	switch (type) {
-	case 1:
-		copyright = "© DigitalGlobe";
+	switch (type_) {
+	case MAP_ID_TERRASERVER_AERIAL:
+		this->copyright = strdup("© DigitalGlobe");
 		break;
-	case 2:
-		copyright = "© LandVoyage";
+	case MAP_ID_TERRASERVER_TOPO:
+		this->copyright = strdup("© LandVoyage");
 		break;
-	case 4:
-		copyright = "© DigitalGlobe";
+	case MAP_ID_TERRASERVER_URBAN:
+		this->copyright = strdup("© DigitalGlobe");
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. type=%d\n", type);
+		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) type_;
 	}
 
-	return (TerraserverMapSource *) g_object_new(TERRASERVER_TYPE_MAP_SOURCE,
-						     "id", id, "label", label, "type", type,
-						     "copyright", copyright,
-						     NULL);
+	this->label = strdup(label_);
+	this->map_type = type_;
+
+	this->tilesize_x = 200;
+	this->tilesize_y = 200;
+	this->drawmode = ViewportDrawMode::UTM;
 }

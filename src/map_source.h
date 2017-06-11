@@ -98,25 +98,25 @@ namespace SlavGPS {
 
 
 
-		char * copyright; /* The copyright of the map source. */
-		char * license;   /* The license of the map source. */
-		char * license_url; /* The URL of the license of the map source. */
-		QPixmap * logo;
+		char * copyright = NULL; /* The copyright of the map source. */
+		char * license = NULL;   /* The license of the map source. */
+		char * license_url = NULL; /* The URL of the license of the map source. */
+		QPixmap * logo = NULL;
 
-		char * name; /* The name of the map that may be used as the file cache directory. */
+		char * name = NULL; /* The name of the map that may be used as the file cache directory. */
 		MapTypeID map_type; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
-		char * label; /* The label of the map source. */
+		char * label = NULL; /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */
 
 		ViewportDrawMode drawmode; /* The mode used to draw map. */
-		char * file_extension; /* The file extension of tile files on disk. */
+		char * file_extension = NULL; /* The file extension of tile files on disk. */
 
 		DownloadFileOptions download_options;
 
-		char * server_hostname;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
-		char * server_path_format; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
+		char * server_hostname = NULL;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
+		char * server_path_format = NULL; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
 
 		// NB Probably best to keep the above fields in same order to be common across Slippy, TMS & WMS map definitions
 		uint8_t zoom_min; /* Minimum Zoom level supported by the map provider.  TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */

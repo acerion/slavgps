@@ -37,11 +37,11 @@ using namespace SlavGPS;
 
 void SlavGPS::terraserver_init()
 {
-	MapSource * map_type_1 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_TOPO, "Terraserver Topos", MAP_ID_TERRASERVER_TOPO);
-	MapSource * map_type_2 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_AERIAL, "Terraserver Aerials", MAP_ID_TERRASERVER_AERIAL);
-	MapSource * map_type_3 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_URBAN, "Terraserver Urban Areas", MAP_ID_TERRASERVER_URBAN);
+	MapSourceTerraserver * source1 = new MapSourceTerraserver(MAP_ID_TERRASERVER_TOPO, "Terraserver Topos");
+	MapSourceTerraserver * source2 = new MapSourceTerraserver(MAP_ID_TERRASERVER_AERIAL, "Terraserver Aerials");
+	MapSourceTerraserver * source3 = new MapSourceTerraserver(MAP_ID_TERRASERVER_URBAN, "Terraserver Urban Areas");
 
-	maps_layer_register_map_source(map_type_1);
-	maps_layer_register_map_source(map_type_2);
-	maps_layer_register_map_source(map_type_3);
+	maps_layer_register_map_source(source1);
+	maps_layer_register_map_source(source2);
+	maps_layer_register_map_source(source3);
 }

@@ -119,6 +119,7 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 	WebToolDatasource * ext_tool = widgets->web_tool_datasource;
 	char *label = g_strdup_printf("%s:", ext_tool->input_label);
 	QLabel * user_string_label = new QLabel(label);
+#ifdef K
 	widgets->user_string = gtk_entry_new();
 
 	char *last_str = get_last_user_string(widgets);
@@ -139,6 +140,7 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 	gtk_widget_grab_focus(widgets->user_string);
 
 	free(label);
+#endif
 }
 
 
@@ -151,6 +153,7 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	datasource_t *data = (datasource_t*) user_data;
 
 	WebToolDatasource * web_tool_datasource = (WebToolDatasource *) data->web_tool_datasource;
+#ifdef K
 
 	if (web_tool_datasource->webtool_needs_user_string()) {
 		web_tool_datasource->user_string = g_strdup(gtk_entry_get_text (GTK_ENTRY (data->user_string)));
@@ -185,6 +188,7 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	po->babel_filters = web_tool_datasource->babel_filter_args;
 
 	return po;
+#endif
 }
 
 

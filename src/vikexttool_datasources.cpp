@@ -69,9 +69,11 @@ void vik_ext_tool_datasources_unregister_all()
 
 static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
 {
+#ifdef K
 	void * ptr = g_object_get_data(G_OBJECT (widget), VIK_TOOL_DATASOURCE_KEY);
 	External * ext_tool = (External *) ptr;
 	ext_tool->open(window);
+#endif
 }
 
 
@@ -87,6 +89,7 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, Q
 		External * ext_tool = *iter;
 		char * label = ext_tool->get_label();
 		if (label) {
+#ifdef K
 			QAction * action = QAction(QObject::tr(label), this);
 			free(label);
 			label = NULL;
@@ -95,6 +98,7 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, Q
 			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tool_datasources_open_cb));
 			menu->addAction(action);
 			gtk_widget_show(item);
+#endif
 		}
 	}
 }
@@ -107,8 +111,10 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, Q
  */
 void SlavGPS::vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
 {
+#ifdef K
 	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
 	QMenu * menu = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget));
 	SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
 	gtk_widget_show(widget);
+#endif
 }

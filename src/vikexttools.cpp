@@ -76,9 +76,11 @@ void vik_ext_tools_unregister_all()
 
 static void ext_tools_open_cb(GtkWidget * widget, Window * window)
 {
+#ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
 	External * ext_tool = (External *) ptr;
 	ext_tool->open(window);
+#endif
 }
 
 
@@ -91,6 +93,7 @@ void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim
 		External * ext_tool = *iter;
 		char * label = ext_tool->get_label();
 		if (label) {
+#ifdef K
 			gtk_ui_manager_add_ui(uim, mid, "/ui/MainMenu/Tools/Exttools",
 					      _(label),
 					      label,
@@ -103,7 +106,7 @@ void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim
 			gtk_action_group_add_action(action_group, action);
 
 			g_object_unref(action);
-
+#endif
 			free(label);
 			label = NULL;
 		}
@@ -116,6 +119,7 @@ void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim
 
 static void ext_tool_open_at_position_cb(GtkWidget * widget, VikCoord * vc)
 {
+#ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
 	External * ext_tool = (External *) ptr;
 
@@ -123,6 +127,7 @@ static void ext_tool_open_at_position_cb(GtkWidget * widget, VikCoord * vc)
 	Window * window = (Window *) wptr;
 
 	ext_tool->open_at_position(window, vc);
+#endif
 }
 
 
@@ -139,6 +144,7 @@ void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu
 		External * ext_tool = *iter;
 		char * label = ext_tool->get_label();
 		if (label) {
+#ifdef K
 			QAction * action = QAction(QObject::tr(label), this);
 			free(label);
 			label = NULL;
@@ -152,6 +158,7 @@ void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu
 			}
 			menu->addAction(action);
 			gtk_widget_show(item);
+#endif
 		}
 	}
 }
