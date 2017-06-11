@@ -133,7 +133,7 @@ static void ext_tool_open_at_position_cb(GtkWidget * widget, VikCoord * vc)
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * menu, VikCoord * vc)
+void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, VikCoord * vc)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		External * ext_tool = *iter;

@@ -242,7 +242,7 @@ void vik_routing_unregister_all()
  *
  * Loop over all registered routing engines.
  */
-void vik_routing_foreach_engine(GFunc func, void * user_data)
+void vik_routing_foreach_engine(GFunc func, QComboBox * combo)
 {
 	g_list_foreach(routing_engine_list, func, user_data);
 }
@@ -258,26 +258,26 @@ void vik_routing_foreach_engine(GFunc func, void * user_data)
  *
  * @see g_list_foreach()
  */
-static void fill_engine_box(void * data, void * user_data)
+static void fill_engine_box(void * data, QComboBox * user_data)
 {
 	VikRoutingEngine * engine = (VikRoutingEngine *) data;
 	/* Retrieve combo. */
-	GtkWidget * widget = (GtkWidget *) user_data;
+	QComboBox * combo = (QComboBox *) user_data;
 
 	/* Only register engine fulfilling expected behavior. */
-	Predicate predicate = (Predicate) g_object_get_data(G_OBJECT (widget), "func");
-	void * predicate_data = g_object_get_data(G_OBJECT (widget), "user_data");
+	Predicate predicate = (Predicate) g_object_get_data(G_OBJECT (combo), "func");
+	void * predicate_data = g_object_get_data(G_OBJECT (combo), "user_data");
 	/* No predicate means to register all engines. */
 	bool ok = predicate == NULL || predicate(engine, predicate_data);
 
 	if (ok) {
 		/* Add item in widget. */
 		const char *label = vik_routing_engine_get_label(engine);
-		vik_combo_box_text_append(widget, label);
+		vik_combo_box_text_append(combo, label);
 		/* Save engine in internal list. */
-		GList *engines = (GList*) g_object_get_data(G_OBJECT (widget) , "engines");
+		GList *engines = (GList*) g_object_get_data(combo , "engines");
 		engines = g_list_append(engines, engine);
-		g_object_set_data(G_OBJECT (widget), "engines", engines);
+		g_object_set_data(combo, "engines", engines);
 	}
 }
 
@@ -298,7 +298,7 @@ static void fill_engine_box(void * data, void * user_data)
 GtkWidget * vik_routing_ui_selector_new(Predicate func, void * user_data)
 {
 	/* Create the combo */
-	GtkWidget * combo = vik_combo_box_text_new();
+	QComboBox * combo = new QComboBox();
 
 	/* Save data for foreach function. */
 	g_object_set_data(G_OBJECT (combo), "func", (void *) func);

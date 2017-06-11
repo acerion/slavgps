@@ -55,7 +55,7 @@ static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[]
 	GtkTable * table = GTK_TABLE(gtk_table_new (cnt, 2, false));
 	gtk_table_set_col_spacing(table, 0, 10);
 	for (int i = 0; i < cnt; i++) {
-		GtkWidget * label = gtk_label_new(NULL);
+		QLabel * label = new QLabel("");
 		gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5); /* Position text centrally in vertical plane. */
 		/* All text labels are set to be in bold. */
 		char * markup = g_markup_printf_escaped("<b>%s:</b>", _(labels[i]));
@@ -120,13 +120,13 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 	char tmp_buf[64];
 	snprintf(tmp_buf, sizeof(tmp_buf), "%d", ts.count);
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 
 	if (ts.count == 0) {
 		/* Blank all other fields. */
 		snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		for (int cnt = 1; cnt < G_N_ELEMENTS(label_texts); cnt++) {
-			gtk_label_set_text(GTK_LABEL(content[cnt]), tmp_buf);
+			content[cnt]->setText(tmp_buf);
 		}
 		return;
 	}
@@ -153,15 +153,13 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%s", time_start);
 	}
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-
+	content[cnt++]->setText(tmp_buf);
 
 	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), ts.length);
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-
+	content[cnt++]->setText(tmp_buf);
 
 	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), ts.length / ts.count);
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 
 
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
@@ -170,7 +168,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	} else {
 		snprintf(tmp_buf, sizeof (tmp_buf), "--");
 	}
-	gtk_label_set_text(GTK_LABEL (content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 
 
 	if (ts.duration > 0) {
@@ -178,7 +176,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	} else {
 		snprintf(tmp_buf, sizeof (tmp_buf), "--");
 	}
-	gtk_label_set_text(GTK_LABEL (content[cnt++]), tmp_buf);
+	content[cnt++]->setText(QObject::tr(tmp_buf);
 
 
 	switch (Preferences::get_unit_height()) {
@@ -189,7 +187,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		} else {
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
-		gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		if (ts.max_alt != VIK_VAL_MAX_ALT) {
@@ -197,11 +195,11 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		} else {
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
-		gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss)));
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain/ts.count)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss/ts.count)));
 		break;
@@ -212,7 +210,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		} else {
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(QObject::tr(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		if (ts.max_alt != VIK_VAL_MAX_ALT) {
@@ -220,16 +218,16 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		} else {
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(ts.elev_gain), (int)round(ts.elev_loss));
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		content[cnt++]->setText(QObject::tr(tmp_buf);
 		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(ts.elev_gain/ts.count), (int)round(ts.elev_loss/ts.count));
 		break;
 	}
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	/* Total Duration. */
@@ -237,7 +235,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	int hours   = (int) floor((ts.duration - (days * 60 * 60 * 24)) / (60 * 60));
 	int minutes = (int) ((ts.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d:%02d days:hrs:mins"), days, hours, minutes);
-	gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	/* Average Duration. */
@@ -245,7 +243,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	hours   = (int) floor(avg_dur / (60*60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes);
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	content[cnt++]->setText(tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 #endif
 }
@@ -358,7 +356,7 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
  *
  * Returns: The dialog that is created to display the analyse information.
  */
-GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
+GtkWidget * SlavGPS::vik_trw_layer_analyse_this(Window * window,
 				       const char * name,
 				       Layer * layer,
 				       SublayerType sublayer_type,
@@ -373,7 +371,7 @@ GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
 					     GTK_STOCK_CLOSE,     GTK_RESPONSE_CANCEL,
 					     NULL);
 
-	GtkWidget * name_l = gtk_label_new(NULL);
+	QLabel * name_l = new QLabel("");
 	char *myname = g_markup_printf_escaped("<b>%s</b>", name);
 	gtk_label_set_markup(GTK_LABEL(name_l), myname);
 	free(myname);

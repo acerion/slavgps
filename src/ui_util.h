@@ -36,8 +36,8 @@
 
 
 
-void open_url(GtkWindow * parent, const char * url);
-void new_email(GtkWindow * parent, const char * address);
+void open_url(SlavGPS::Window * parent, const char * url);
+void new_email(SlavGPS::Window * parent, const char * address);
 
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
 int ui_get_gtk_settings_integer(const char *property_name, int default_value);

@@ -81,7 +81,7 @@ static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
  * Add to any menu.
  * Mostly for allowing to assign for TrackWaypoint layer menus.
  */
-void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu)
+void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, QMenu * menu)
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
 		External * ext_tool = *iter;
@@ -108,7 +108,7 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, G
 void SlavGPS::vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
 {
 	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
-	GtkMenu * menu = GTK_MENU (gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget)));
+	QMenu * menu = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget));
 	SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
 	gtk_widget_show(widget);
 }

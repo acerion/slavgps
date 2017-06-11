@@ -145,7 +145,7 @@ static int get_last_provider_index(void)
 
 
 
-static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * button)
+static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * button)
 {
 #ifdef K
 	bool has_text = gtk_entry_get_text_length(entry) > 0;

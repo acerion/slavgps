@@ -444,7 +444,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 {
 #ifdef K
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("OSM upload"),
-						     trw->get_toolkit_window(),
+						     trw->get_window(),
 						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						     GTK_STOCK_CANCEL,
 						     GTK_RESPONSE_REJECT,
@@ -453,34 +453,32 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 						     NULL);
 
 	const char *name = NULL;
-	GtkWidget *user_label, *user_entry;
-	GtkWidget *password_label, *password_entry;
-	GtkWidget *name_label, *name_entry;
-	GtkWidget *description_label, *description_entry;
-	GtkWidget *tags_label, *tags_entry;
-	GtkWidget *visibility;
+	GtkWidget *user_entry;
+	GtkWidget *password_entry;
+	GtkWidget *name_entry;
+	GtkWidget *description_entry;
+	GtkWidget *tags_entry;
+	QComboBox * visibility_combo = NULL;
 	GtkWidget *anonymize_checkbutton = NULL;
 	const OsmTraceVis_t *vis_t;
 
-	user_label = gtk_label_new(_("Email:"));
+	QLabel  * user_label = new QLabel(QObject::tr("Email:"));
 	user_entry = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_entry, false, false, 0);
-	gtk_widget_set_tooltip_markup(GTK_WIDGET(user_entry),
-				      _("The email used as login\n"
-					"<small>Enter the email you use to login into www.openstreetmap.org.</small>"));
+	user_entry->setToolTip(QObject::tr("The email used as login\n"
+					   "<small>Enter the email you use to login into www.openstreetmap.org.</small>"));
 
-	password_label = gtk_label_new(_("Password:"));
+	QLabel * password_label = new QLabel(QObject::tr("Password:"));
 	password_entry = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_entry, false, false, 0);
-	gtk_widget_set_tooltip_markup(GTK_WIDGET(password_entry),
-				      _("The password used to login\n"
-					"<small>Enter the password you use to login into www.openstreetmap.org.</small>"));
+	password_entry->setToolTip(QObject::tr("The password used to login\n"
+					       "<small>Enter the password you use to login into www.openstreetmap.org.</small>"));
 
 	osm_login_widgets(user_entry, password_entry);
 
-	name_label = gtk_label_new(_("File's name:"));
+	QLabel * name_label = new QLabel(QObject::tr("File's name:"));
 	name_entry = gtk_entry_new();
 	if (trk != NULL) {
 		name = trk->name;
@@ -490,12 +488,11 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	gtk_entry_set_text(GTK_ENTRY(name_entry), name);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_entry, false, false, 0);
-	gtk_widget_set_tooltip_markup(GTK_WIDGET(name_entry),
-				      _("The name of the file on OSM\n"
-					"<small>This is the name of the file created on the server."
-					"This is not the name of the local file.</small>"));
+	name_entry->setToolTip(QObject::tr("The name of the file on OSM\n"
+					   "<small>This is the name of the file created on the server."
+					   "This is not the name of the local file.</small>"));
 
-	description_label = gtk_label_new(_("Description:"));
+	QLabel * description_label = new QLabel(QObject::tr("Description:"));
 	description_entry = gtk_entry_new();
 	const char *description = NULL;
 	if (trk != NULL) {
@@ -509,20 +506,18 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	}
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_entry, false, false, 0);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(description_entry),
-				    _("The description of the trace"));
+	description_entry->setToolTip(QObject::tr("The description of the trace"));
 
 	if (trk != NULL) {
-		GtkWidget *label = gtk_label_new(_("Anonymize Times:"));
+		QLabel * label = new QLabel(QObject::tr("Anonymize Times:"));
 		anonymize_checkbutton = gtk_check_button_new();
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), label, false, false, 0);
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), anonymize_checkbutton, false, false, 0);
-		gtk_widget_set_tooltip_text(GTK_WIDGET(anonymize_checkbutton),
-					    _("Anonymize times of the trace.\n"
-					      "<small>You may choose to make the trace identifiable, yet mask the actual real time values</small>"));
+		anonymize_checkbutton->setToolTip(QObject::tr("Anonymize times of the trace.\n"
+							      "<small>You may choose to make the trace identifiable, yet mask the actual real time values</small>"));
 	}
 
-	tags_label = gtk_label_new(_("Tags:"));
+	QLabel * tags_label = new QLabel(QObject::tr("Tags:"));
 	tags_entry = gtk_entry_new();
 	TRWMetadata * md = trw->get_metadata();
 	if (md && md->keywords) {
@@ -530,12 +525,11 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	}
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_entry, false, false, 0);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tags_entry),
-				    _("The tags associated to the trace"));
+	tags_entry->setToolTip(QObject::tr("The tags associated to the trace"));
 
-	visibility = vik_combo_box_text_new();
+	visibility_combo = new QComboBox();
 	for (vis_t = OsmTraceVis; vis_t->combostr != NULL; vis_t++) {
-		vik_combo_box_text_append(visibility, vis_t->combostr);
+		vik_combo_box_text_append(visibility_combo, vis_t->combostr);
 	}
 
 	/* Set identifiable by default or use the settings for the value. */
@@ -559,8 +553,8 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 			last_active = 0;
 		}
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(visibility), last_active);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), GTK_WIDGET(visibility), false, false, 0);
+	gtk_combo_box_set_active(visibility_combo, last_active);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), visibility_combo, false, false, 0);
 
 	/* User should think about it first... */
 	gtk_dialog_set_default_response(GTK_DIALOG(dia), GTK_RESPONSE_REJECT);
@@ -580,7 +574,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
 		/* TODO Normalize tags: they will be used as URL part. */
 		info->tags        = g_strdup(gtk_entry_get_text(GTK_ENTRY(tags_entry)));
-		info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(GTK_COMBO_BOX(visibility))];
+		info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(visibility_combo)];
 
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
@@ -589,7 +583,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		}
 
 		/* Save visibility value for default reuse. */
-		last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(visibility));
+		last_active = gtk_combo_box_get_active(visibility_combo);
 		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
 		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);

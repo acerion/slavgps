@@ -660,9 +660,9 @@ if "[Layer Type="
   push(&stack)
   new default layer of type (str_to_type) (check interface->name)
 if "[EndLayer]"
-  VikLayer *vl = stack->data;
+  Layer * layer = stack->data;
   pop(&stack);
-  vik_aggregate_layer_add_layer(stack->data, vl);
+  vik_aggregate_layer_add_layer(stack->data, layer);
 if "[LayerData]"
   vik_layer_data (VIK_LAYER_DATA(stack->data), f, viewport);
 

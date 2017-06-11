@@ -108,14 +108,14 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
 #ifdef K
 	/* Engine selector. */
-	GtkWidget * engine_label = gtk_label_new(_("Engine:"));
+	QLabel * engine_label = new QLabel(QObject::tr("Engine:"));
 	widgets->engines_combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
-	gtk_combo_box_set_active(GTK_COMBO_BOX (widgets->engines_combo), last_engine);
+	gtk_combo_box_set_active(widgets->engines_combo, last_engine);
 
 	/* From and To entries. */
-	GtkWidget * from_label = gtk_label_new(_("From:"));
+	QLabel * from_label = new QLabel(QObject::tr("From:"));
 	widgets->from_entry = gtk_entry_new();
-	GtkWidget * to_label = gtk_label_new(_("To:"));
+	QLabel * to_label = new QLabel(QObject::tr("To:"));
 	widgets->to_entry = gtk_entry_new();
 	if (last_from_str) {
 		gtk_entry_set_text(GTK_ENTRY(widgets->from_entry), last_from_str);
@@ -127,12 +127,12 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 	/* Packing all these widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start(box, engine_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->engines_combo, false, false, 5);
-	gtk_box_pack_start(box, from_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->from_entry, false, false, 5);
-	gtk_box_pack_start(box, to_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->to_entry, false, false, 5);
+	box->addWidget(engine_label);
+	box->addWidget(widgets->engines_combo);
+	box->addWidget(from_label);
+	box->addWidget(widgets->from_entry);
+	box->addWidget(to_label);
+	box->addWidget(widgets->to_entry);
 	gtk_widget_show_all(dialog);
 #endif
 }
@@ -149,7 +149,7 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 	char const * to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
 
 	/* Retrieve engine. */
-	last_engine = gtk_combo_box_get_active(GTK_COMBO_BOX(widgets->engines_combo));
+	last_engine = gtk_combo_box_get_active(widgets->engines_combo);
 	VikRoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */

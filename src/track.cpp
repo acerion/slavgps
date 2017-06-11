@@ -264,7 +264,6 @@ Track::Track(bool is_route)
 
 	this->trackpointsB = new TrackPoints;
 
-	memset(&color, 0, sizeof (GdkColor));
 	memset(&bbox, 0, sizeof (LatLonBBox));
 
 	ref_count = 1;

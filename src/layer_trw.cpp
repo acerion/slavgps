@@ -4311,13 +4311,13 @@ void LayerTRW::route_refine_cb(void)
 								GTK_STOCK_OK,
 								GTK_RESPONSE_ACCEPT,
 								NULL);
-		GtkWidget *label = gtk_label_new(_("Select routing engine"));
+		QLabel * label = new QLabel(QObject::tr("Select routing engine"));
 		gtk_widget_show_all(label);
 
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
 
 		GtkWidget * combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
-		gtk_combo_box_set_active(GTK_COMBO_BOX (combo), last_engine);
+		gtk_combo_box_set_active(combo, last_engine);
 		gtk_widget_show_all(combo);
 
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
@@ -4326,7 +4326,7 @@ void LayerTRW::route_refine_cb(void)
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			/* Dialog validated: retrieve selected engine and do the job */
-			last_engine = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+			last_engine = gtk_combo_box_get_active(combo);
 			VikRoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
 
 			/* Change cursor */
@@ -6368,7 +6368,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
 
 	int dest_x = 0;
 	int dest_y = 0;
-	if (!gtk_widget_translate_coordinates(viewport->get_toolkit_widget(), GTK_WIDGET(parent_window), 0, 0, &dest_x, &dest_y)) {
+	if (!gtk_widget_translate_coordinates(viewport->get_widget(), GTK_WIDGET(parent_window), 0, 0, &dest_x, &dest_y)) {
 		return;
 	}
 

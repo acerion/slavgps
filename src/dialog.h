@@ -49,11 +49,11 @@ QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool 
 
 #if 0
 
-void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padding);
+void a_dialog_list(SlavGPS::Window * parent, const char * title, GArray * array, int padding);
 
 #endif
 
-void a_dialog_about(QWidget * parent);
+void a_dialog_about(SlavGPS::Window * parent);
 
 
 
@@ -61,14 +61,14 @@ void a_dialog_about(QWidget * parent);
 
 char * a_dialog_get_date(SlavGPS::Window * parent, char const * title);
 #ifdef K
-bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
-bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
+bool a_dialog_custom_zoom(SlavGPS::Window * parent, double * xmpp, double * ympp);
+bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_text, unsigned int * thr);
 #endif
 
 int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
 #ifdef K
-bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
+bool a_dialog_map_n_zoom(SlavGPS::kWindow * parent, char * mapnames[], int default_map, char * zoom_list[], int default_zoom, int * selected_map, int * selected_zoom);
 #endif
 
 void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg);

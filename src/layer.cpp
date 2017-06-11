@@ -615,7 +615,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 #if 0
 	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
-						  viewport->get_toolkit_window(),
+						  viewport->get_window(),
 						  layer->get_interface()->params,
 						  layer->get_interface()->params_count,
 						  layer->get_interface()->params_groups,

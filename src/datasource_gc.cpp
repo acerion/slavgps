@@ -58,11 +58,11 @@
 
 
 typedef struct {
-	GtkWidget *num_spin;
-	GtkWidget *center_entry; /* TODO make separate widgets for lat/lon. */
-	GtkWidget *miles_radius_spin;
+	QSpinBox * num_spin;
+	GtkWidget * center_entry; /* TODO make separate widgets for lat/lon. */
+	QDoubleSpinBox * miles_radius_spin;
 
-	GdkGC *circle_gc;
+	QPen circle_pen;
 	Viewport * viewport;
 	bool circle_onscreen;
 	int circle_x, circle_y, circle_width;
@@ -169,7 +169,7 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 {
 	double lat, lon;
 	if (widgets->circle_onscreen) {
-		widgets->viewport->draw_arc(widgets->circle_gc,
+		widgets->viewport->draw_arc(widgets->circle_pen,
 					    widgets->circle_x - widgets->circle_width/2,
 					    widgets->circle_y - widgets->circle_width/2,
 					    widgets->circle_width, widgets->circle_width, 0, 360
@@ -201,10 +201,10 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 			pixels_per_meter = ((double)widgets->viewport->get_width()) / vik_coord_diff(&c1, &c2);
 
 			/* This is approximate. */
-			widgets->circle_width = gtk_spin_button_get_value_as_float (GTK_SPIN_BUTTON(widgets->miles_radius_spin))
+			widgets->circle_width = widgets->miles_radius_spin.value();
 				* METERSPERMILE * pixels_per_meter * 2;
 
-			widgets->viewport->draw_arc(widgets->circle_gc,
+			widgets->viewport->draw_arc(widgets->circle_pen,
 						    widgets->circle_x - widgets->circle_width/2,
 						    widgets->circle_y - widgets->circle_width/2,
 						    widgets->circle_width, widgets->circle_width, 0, 360,
@@ -227,16 +227,15 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
 	datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *)user_data;
-	GtkWidget *num_label, *center_label, *miles_radius_label;
 	struct LatLon ll;
 	char *s_ll;
 
-	num_label = gtk_label_new(_("Number geocaches:"));
-	widgets->num_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(20, 1, 1000, 10, 20, 0)), 10, 0);
-	center_label = gtk_label_new(_("Centered around:"));
+	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"));
+	widgets->num_spin = new QSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(20, 1, 1000, 10, 20, 0)), 10, 0);
+	QLabel * center_label = new QLabel(QObject::tr("Centered around:"));
 	widgets->center_entry = gtk_entry_new();
-	miles_radius_label = gtk_label_new("Miles Radius:");
-	widgets->miles_radius_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(5, 1, 1000, 1, 20, 0)), 25, 1);
+	QLabel * miles_radius_label = new QLabel(QObject::tr("Miles Radius:"));
+	widgets->miles_radius_spin = new QDoubleSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(5, 1, 1000, 1, 20, 0)), 25, 1);
 
 	vik_coord_to_latlon(viewport->get_center(), &ll);
 	s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon);
@@ -245,8 +244,8 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 
 
 	widgets->viewport = viewport;
-	widgets->circle_gc = viewport->new_pen("#000000", 3);
-	gdk_gc_set_function (widgets->circle_gc, GDK_INVERT);
+	widgets->circle_pen = viewport->new_pen("#000000", 3);
+	gdk_gc_set_function (widgets->circle_pen, GDK_INVERT);
 	widgets->circle_onscreen = true;
 	datasource_gc_draw_circle(widgets);
 
@@ -255,12 +254,12 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 
 	/* Packing all these widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start(box, num_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->num_spin, false, false, 5);
-	gtk_box_pack_start(box, center_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->center_entry, false, false, 5);
-	gtk_box_pack_start(box, miles_radius_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->miles_radius_spin, false, false, 5);
+	box->addWidget(num_label);
+	box->addWidget(widgets->num_spin);
+	box->addWidget(center_label);
+	box->addWidget(widgets->center_entry);
+	box->addWidget(miles_radius_label);
+	box->addWidget(widgets->miles_radius_spin);
 	gtk_widget_show_all(dialog);
 }
 
@@ -293,8 +292,8 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 	   Final output is piped into GPSbabel - hence removal of *html is done at beginning of the command sequence. */
 	po->shell_command = g_strdup_printf("rm -f ~/.geo/caches/*.html ; %s -H ~/.geo/caches -P -n%d -r%.1fM -u %s -p %s %s %s ; %s -z ~/.geo/caches/*.html ",
 					    GC_PROGRAM1,
-					    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widgets->num_spin)),
-					    gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(widgets->miles_radius_spin)),
+					    widgets->num_spin.value(),
+					    widgets->miles_radius_spin.value(),
 					    safe_user,
 					    safe_pass,
 					    slat, slon,
@@ -314,7 +313,7 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets)
 {
 	if (widgets->circle_onscreen) {
-		widgets->viewport->draw_arc(widgets->circle_gc,
+		widgets->viewport->draw_arc(widgets->circle_pen,
 					    widgets->circle_x - widgets->circle_width/2,
 					    widgets->circle_y - widgets->circle_width/2,
 					    widgets->circle_width, widgets->circle_width, 0, 360,

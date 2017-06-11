@@ -134,7 +134,7 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 	/* Packing all widgets. */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start(box, ud->files, true, true, 0);
+	box->addWidget(ud->files);
 
 	gtk_widget_show_all(dialog);
 #endif

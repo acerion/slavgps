@@ -94,7 +94,7 @@ void dialog_error(QString const & message, QWidget * parent)
 
 
 
-static void get_selected_foreach_func(GtkTreeModel *model,
+static void get_selected_foreach_func(QStandardItemModel * model,
                                       GtkTreePath *path,
                                       GtkTreeIter *iter,
                                       void * data)
@@ -227,18 +227,17 @@ bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const &
 #ifdef K
 
 
-static void zoom_spin_changed(GtkSpinButton *spin, GtkWidget *pass_along[3])
+static void zoom_spin_changed(QSpinBox * spin, GtkWidget * pass_along[3])
 {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pass_along[2])))
-		gtk_spin_button_set_value(
-					  GTK_SPIN_BUTTON(pass_along[GTK_WIDGET(spin) == pass_along[0] ? 1 : 0]),
-					  gtk_spin_button_get_value(spin));
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pass_along[GTK_WIDGET(spin) == pass_along[0] ? 1 : 0]),
+					  spin.value());
 }
 
 
 
 
-bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp)
+bool a_dialog_custom_zoom(Window * parent, double * xmpp, double * ympp)
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Zoom Factors..."),
 							parent,
@@ -248,18 +247,20 @@ bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp)
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
 							NULL);
-	GtkWidget *table, *label, *xlabel, *xspin, *ylabel, *yspin, *samecheck;
+	GtkWidget *table, *samecheck;
 	GtkWidget *pass_along[3];
+	QSpinBox * xspin = NULL;
+	QSpinBox * yxpin = NULL;
 
 	table = gtk_table_new(4, 2, false);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
 
-	label = gtk_label_new(_("Zoom factor (in meters per pixel):"));
-	xlabel = gtk_label_new(_("X (easting): "));
-	ylabel = gtk_label_new(_("Y (northing): "));
+	QLabel * label = new QLabel(QObject::tr("Zoom factor (in meters per pixel):"));
+	QLabel * xlabel = new QLabel(QObject::tr("X (easting): "));
+	QLabel * ylabel = new QLabel(QObject::tr("Y (northing): "));
 
-	pass_along[0] = xspin = gtk_spin_button_new((GtkAdjustment *) gtk_adjustment_new(*xmpp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
-	pass_along[1] = yspin = gtk_spin_button_new((GtkAdjustment *) gtk_adjustment_new(*ympp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
+	pass_along[0] = xspin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*xmpp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
+	pass_along[1] = yspin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*ympp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
 
 	pass_along[2] = samecheck = gtk_check_button_new_with_label(_("X and Y zoom factors must be equal"));
 	/* TODO -- same factor. */
@@ -284,8 +285,8 @@ bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp)
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*xmpp = gtk_spin_button_get_value(GTK_SPIN_BUTTON(xspin));
-		*ympp = gtk_spin_button_get_value(GTK_SPIN_BUTTON(yspin));
+		*xmpp = xspin.value();
+		*ympp = yspin.value();
 		gtk_widget_destroy(dialog);
 		return true;
 	}
@@ -296,7 +297,7 @@ bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp)
 
 
 
-static void split_spin_focused(GtkSpinButton *spin, GtkWidget *pass_along[1])
+static void split_spin_focused(QSpinBox * spin, GtkWidget *pass_along[1])
 {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pass_along[0]), 1);
 }
@@ -304,7 +305,7 @@ static void split_spin_focused(GtkSpinButton *spin, GtkWidget *pass_along[1])
 
 
 
-bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr)
+bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_text, unsigned int * thr)
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title_text,
 							parent,
@@ -314,13 +315,13 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
 							NULL);
-	GtkWidget *table, *t1, *t2, *t3, *t4, *spin, *label;
+	GtkWidget *table, *t1, *t2, *t3, *t4;
 	GtkWidget *pass_along[1];
 
 	table = gtk_table_new(4, 2, false);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
 
-	label = gtk_label_new(label_text);
+	QLabel * label = new QLabel(label_text);
 
 	t1 = gtk_radio_button_new_with_label(NULL, _("1 min"));
 	t2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(t1), _("1 hour"));
@@ -329,7 +330,7 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
 
 	pass_along[0] = t4;
 
-	spin = gtk_spin_button_new((GtkAdjustment *) gtk_adjustment_new(*thr, 0, 65536, 1, 5, 0), 1, 0);
+	QSpinBox * spin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*thr, 0, 65536, 1, 5, 0), 1, 0);
 
 	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
 	gtk_table_attach_defaults(GTK_TABLE(table), t1, 0, 1, 1, 2);
@@ -352,7 +353,7 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
 		} else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t3))) {
 			*thr = 60 * 24;
 		} else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t4))) {
-			*thr = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spin));
+			*thr = spin.value();
 		}
 		gtk_widget_destroy(dialog);
 		return true;
@@ -408,7 +409,7 @@ static void about_email_hook(GtkAboutDialog *about,
  * Creates a dialog with list of text.
  * Mostly useful for longer messages that have several lines of information.
  */
-void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padding)
+void a_dialog_list(Window * parent, const char * title, GArray * array, int padding)
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
 							parent,
@@ -435,7 +436,7 @@ void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padd
 #endif
 
 
-void a_dialog_about(QWidget * parent)
+void a_dialog_about(SlavGPS::Window * parent)
 {
 #ifdef K
 	const char *program_name = PACKAGE_NAME;
@@ -539,7 +540,7 @@ void a_dialog_about(QWidget * parent)
 #ifdef K
 
 
-bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom)
+bool a_dialog_map_n_zoom(Window * parent, char * mapnames[], int default_map, char * zoom_list[], int default_zoom, int * selected_map, int * selected_zoom)
 {
 	char **s;
 
@@ -550,19 +551,19 @@ bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, c
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 #endif
 
-	GtkWidget *map_label = gtk_label_new(_("Map type:"));
-	GtkWidget *map_combo = vik_combo_box_text_new();
+	QLabel * map_label = new QLabel(QObject::tr("Map type:"));
+	QComboBox * map_combo = new QComboBox();
 	for (s = mapnames; *s; s++) {
-		vik_combo_box_text_append(GTK_COMBO_BOX(map_combo), *s);
+		vik_combo_box_text_append(map_combo, *s);
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(map_combo), default_map);
+	gtk_combo_box_set_active(map_combo, default_map);
 
-	GtkWidget *zoom_label = gtk_label_new(_("Zoom level:"));
-	GtkWidget *zoom_combo = vik_combo_box_text_new();
+	QLabel * zoom_label = new QLabel(QObject::tr("Zoom level:"));
+	QComboBox * zoom_combo = new QComboBox();
 	for (s = zoom_list; *s; s++) {
-		vik_combo_box_text_append(GTK_COMBO_BOX(zoom_combo), *s);
+		vik_combo_box_text_append(zoom_combo, *s);
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(zoom_combo), default_zoom);
+	gtk_combo_box_set_active(zoom_combo, default_zoom);
 
 	GtkTable *box = GTK_TABLE(gtk_table_new(2, 2, false));
 	gtk_table_attach_defaults(box, map_label, 0, 1, 0, 1);
@@ -582,8 +583,8 @@ bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, c
 		return false;
 	}
 
-	*selected_map = gtk_combo_box_get_active(GTK_COMBO_BOX(map_combo));
-	*selected_zoom = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo));
+	*selected_map = gtk_combo_box_get_active(map_combo);
+	*selected_zoom = gtk_combo_box_get_active(zoom_combo);
 
 	gtk_widget_destroy(dialog);
 	return true;

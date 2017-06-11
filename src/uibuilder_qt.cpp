@@ -72,7 +72,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 
 
 
-//static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * *pass_along)
+//static void draw_to_image_file_total_area_cb (QSpinBox * spinbutton, void * *pass_along)
 int a_uibuilder_properties_factory(const char * dialog_name,
 				   QWindow * parent,
 				   Parameter * params,
@@ -120,7 +120,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		GtkWidget **tables = NULL; /* For more than one group. */
 
 		GtkWidget *notebook = NULL;
-		GtkWidget **labels = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
+		QLabel ** labels = (QLabel **) malloc(sizeof(QLabel *) * widget_count);
 		GtkWidget **widgets = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
 		ui_change_values * change_values = (ui_change_values *) malloc(sizeof (ui_change_values) * widget_count);
 
@@ -144,7 +144,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 				if (tab_widget_count) {
 					tables[current_group] = gtk_table_new(tab_widget_count, 1, false);
-					gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tables[current_group], gtk_label_new(groups[current_group]));
+					gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tables[current_group], new QLabel(groups[current_group]));
 				}
 			}
 		} else {
@@ -161,7 +161,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam(pass_along_getparam, i, false));
 
 				if (widgets[j]) {
-					labels[j] = gtk_label_new(_(params[i].title));
+					labels[j] = new QLabel(QObject::tr(params[i].title));
 					gtk_table_attach(GTK_TABLE(table), labels[j], 0, 1, j, j+1, (GtkAttachOptions) 0, (GtkAttachOptions) 0, 0, 0);
 					gtk_table_attach(GTK_TABLE(table), widgets[j], 1, 2, j, j+1, (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) 0, 2, 2);
 
@@ -252,7 +252,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 
 
-ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
 				       ParameterValue *params_defaults)
 {
@@ -739,8 +739,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 			if (vlpd.s) {
 				gtk_entry_set_text(GTK_ENTRY(rv), vlpd.s);
 			}
-			gtk_widget_set_tooltip_text(GTK_WIDGET(rv),
-						    _("Take care that this password will be stored clearly in a plain file."));
+			rv->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
 		}
 		break;
 #endif
@@ -803,7 +802,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 #if 0
 	if (rv && !gtk_widget_get_tooltip_text(rv)) {
 		if (param->tooltip) {
-			gtk_widget_set_tooltip_text(rv, _(param->tooltip));
+			rv->setToolTip(QObject::tr(param->tooltip);
 		}
 	}
 #endif

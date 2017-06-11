@@ -49,9 +49,9 @@ struct _VikStatusbar {
 
 
 
-static bool button_release_event(GtkWidget * widget, GdkEvent * event, void ** user_data)
+static bool button_release_event(GtkWidget * widget, QEvent * ev, void ** user_data)
 {
-	if (((GdkEventButton *) event)->button == 3) {
+	if (((GdkEventButton *) ev)->button == 3) {
 		int type = KPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "type"));
 		VikStatusbar * vs = VIK_STATUSBAR (user_data);
 		/* Right Click: so copy the text in the INFO buffer only ATM. */

@@ -147,8 +147,8 @@ Window::Window()
 	gtk_container_add(GTK_CONTAINER (this->gtk_window_), this->main_vbox);
 	this->menu_hbox = gtk_hbox_new(false, 1);
 	GtkWidget *menu_bar = gtk_ui_manager_get_widget(this->uim, "/MainMenu");
-	gtk_box_pack_start(GTK_BOX(this->menu_hbox), menu_bar, false, true, 0);
-	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->menu_hbox, false, true, 0);
+	this->menu_hbox->addWidget(menu_bar);
+	this->main_vbox->addWidget(this->menu_hbox);
 
 	toolbar_init(this->viking_vtb,
 		     this->gtk_window_,
@@ -189,10 +189,10 @@ Window::Window()
 
 	this->hpaned = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_panel, false, true);
-	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport->get_toolkit_widget(), true, true);
+	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport, true, true);
 
 	/* This packs the button into the window (a gtk container). */
-	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->hpaned, true, true, 0);
+	this->main_vbox->addWidget(this->hpaned);
 
 	gtk_box_pack_end(GTK_BOX(this->main_vbox), GTK_WIDGET(this->viking_vs), false, true, 0);
 
@@ -227,7 +227,7 @@ Window::Window()
 		bool maxed;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
 			if (maxed) {
-				gtk_window_maximize(this->get_toolkit_window());
+				gtk_window_maximize(this);
 			}
 		}
 
@@ -235,7 +235,7 @@ Window::Window()
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
 				this->show_full_screen = true;
-				gtk_window_fullscreen(this->get_toolkit_window());
+				gtk_window_fullscreen(this);
 				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
 				if (check_box) {
 					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
@@ -250,7 +250,7 @@ Window::Window()
 		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
 	}
 
-	gtk_window_set_default_size(this->get_toolkit_window(), width, height);
+	gtk_window_set_default_size(this, width, height);
 
 	// Only accept Drag and Drop of files onto the viewport
 	gtk_drag_dest_set(this->viewport, GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
@@ -1155,7 +1155,7 @@ void Window::create_ui(void)
 	window->action_group = action_group;
 
 	GtkAccelGroup * accel_group = gtk_ui_manager_get_accel_group(uim);
-	gtk_window_add_accel_group(GTK_WINDOW (window->get_toolkit_window()), accel_group);
+	gtk_window_add_accel_group(GTK_WINDOW (window), accel_group);
 	gtk_ui_manager_ensure_update(uim);
 #endif
 
@@ -1240,13 +1240,13 @@ void Window::pan_release(QMouseEvent * ev)
 
 	if (this->pan_move_flag == false) {
 		this->single_click_pending = !this->single_click_pending;
-#if 0
 		if (this->single_click_pending) {
+#if 0
 			// Store offset to use
 			this->delayed_pan_x = this->pan_x;
 			this->delayed_pan_y = this->pan_y;
 			// Get double click time
-			GtkSettings *gs = gtk_widget_get_settings(this->get_toolkit_widget());
+			GtkSettings *gs = gtk_widget_get_settings(this);
 			GValue dct = { 0 }; // = G_VALUE_INIT; // GLIB 2.30+ only
 			g_value_init(&dct, G_TYPE_INT);
 			g_object_get_property(G_OBJECT(gs), "gtk-double-click-time", &dct);
@@ -1254,12 +1254,10 @@ void Window::pan_release(QMouseEvent * ev)
 			int timer = g_value_get_int(&dct) + 50;
 			g_timeout_add(timer, (GSourceFunc) vik_window_pan_timeout, this);
 			do_draw = false;
+#endif
 		} else {
-#endif
 			this->viewport->set_center_screen(this->pan_x, this->pan_y);
-#if 0
 		}
-#endif
 	} else {
 		this->viewport->set_center_screen(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
 						  this->viewport->get_height() / 2 - ev->y() + this->pan_y);
@@ -1680,8 +1678,8 @@ void Window::zoom_to_cb(void)
 {
 	double xmpp = this->viewport->get_xmpp();
 	double ympp = this->viewport->get_ympp();
-#if 0
-	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
+#ifdef K
+	if (a_dialog_custom_zoom(window, &xmpp, &ympp)) {
 		window->viewport->set_xmpp(xmpp);
 		window->viewport->set_ympp(ympp);
 		window->draw_update();
@@ -1964,7 +1962,7 @@ void Window::open_file_cb(void)
 #else
 		if (window->filename && newwindow) {
 #endif
-			g_signal_emit(window->get_toolkit_object(), window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
+			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
 		} else {
 #endif
 
@@ -2194,9 +2192,9 @@ void Window::set_busy_cursor()
 void Window::clear_busy_cursor()
 {
 #ifdef K
-	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), NULL);
+	gdk_window_set_cursor(gtk_widget_get_window(this), NULL);
 	// Restore viewport cursor
-	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->viewport_cursor);
+	gdk_window_set_cursor(gtk_widget_get_window(this->viewport), this->viewport_cursor);
 #endif
 }
 
@@ -2582,7 +2580,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	/* more efficient way: stuff draws directly to pixbuf (fork viewport) */
 	QPixmap *pixmap_to_save;
 
-	GtkWidget * msgbox = gtk_message_dialog_new(this->get_toolkit_window(),
+	GtkWidget * msgbox = gtk_message_dialog_new(this,
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						    GTK_MESSAGE_INFO,
 						    GTK_BUTTONS_NONE,
@@ -2762,12 +2760,12 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 		}
 
 		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Choose a directory to hold images"),
-								 this->get_toolkit_window(),
+								 this,
 								 GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 								 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 								 GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
 								 NULL);
-		gtk_window_set_transient_for(GTK_WINDOW(dialog), this->get_toolkit_window());
+		gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
 		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -3048,7 +3046,7 @@ static int zoom_popup_handler(GtkWidget * widget)
 	/* The "widget" is the menu that was supplied when
 	 * QObject::connect() was called.
 	 */
-	GtkMenu * menu = GTK_MENU (widget);
+	QMenu * menu = GTK_MENU (widget);
 
 	menu->exec(QCursor::pos());
 #endif

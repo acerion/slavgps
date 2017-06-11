@@ -889,8 +889,8 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 #ifdef K
 			char *str = distance_string(distance);
 
-			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport->get_toolkit_widget(), NULL);
-			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->font_desc);
+			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport), NULL);
+			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport)->font_desc);
 			pango_layout_set_text(pl, str, -1);
 			int wd, hd;
 			pango_layout_get_pixel_size(pl, &wd, &hd);
@@ -901,12 +901,12 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 			yd = ev->y - hd;
 
 			/* Create a background block to make the text easier to read over the background map. */
-			GdkGC *background_block_gc = tool->viewport->new_pen("#cccccc", 1);
-			fill_rectangle(pixmap, background_block_gc, xd-2, yd-2, wd+4, hd+2);
+			QPen * background_block_pen = tool->viewport->new_pen("#cccccc", 1);
+			fill_rectangle(pixmap, background_block_pen, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, trw->current_trk_new_point_pen, xd, yd, pl);
 
 			g_object_unref(G_OBJECT (pl));
-			g_object_unref(G_OBJECT (background_block_gc));
+			g_object_unref(G_OBJECT (background_block_pen));
 			free(str);
 #endif
 		}

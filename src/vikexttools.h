@@ -23,6 +23,8 @@
 
 #include <cstdint>
 
+#include <QMenu>
+
 #include "window.h"
 #include "vikexttool.h"
 #include "slav_qt.h"
@@ -40,7 +42,7 @@ namespace SlavGPS {
 	void vik_ext_tools_register(External * ext_tool);
 	void vik_ext_tools_unregister_all();
 	void vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid);
-	void vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * menu, VikCoord * vc);
+	void vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, VikCoord * vc);
 
 
 

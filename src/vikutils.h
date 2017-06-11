@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 	char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 
-	void vu_check_latest_version(GtkWindow * window);
+	void vu_check_latest_version(Window * window);
 
 	void vu_set_auto_features_on_first_run(void);
 

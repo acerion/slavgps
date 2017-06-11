@@ -899,7 +899,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		   Just a handy guide to tile blocks. */
 		if (vik_debug && vik_verbose) {
 #ifdef K
-			GdkGC *black_gc = viewport->get_toolkit_widget()->style->black_gc;
+			QPen * black_pen = viewport->get_widget()->style->black_pen;
 			int width = viewport->get_width();
 			int height = viewport->get_height();
 			int xx, yy;
@@ -909,11 +909,11 @@ void LayerMapnik::draw(Viewport * viewport)
 			xx = xx - (this->tile_size_x/2);
 			yy = yy - (this->tile_size_x/2); // Yes use X ATM
 			for (int x = xmin; x <= xmax; x++) {
-				viewport->draw_line(black_gc, xx, 0, xx, height);
+				viewport->draw_line(black_pen, xx, 0, xx, height);
 				xx += this->tile_size_x;
 			}
 			for (int y = ymin; y <= ymax; y++) {
-				viewport->draw_line(black_gc, 0, yy, width, yy);
+				viewport->draw_line(black_pen, 0, yy, width, yy);
 				yy += this->tile_size_x; // Yes use X ATM
 			}
 #endif
@@ -1155,7 +1155,7 @@ void LayerMapnik::tile_info()
 		g_array_append_val(array, rendmsg);
 	}
 
-	a_dialog_list(this->get_toolkit_window(), _("Tile Information"), array, 5);
+	a_dialog_list(this->get_window(), _("Tile Information"), array, 5);
 	g_array_free(array, false);
 
 	free(rendmsg);

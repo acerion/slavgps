@@ -117,9 +117,8 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 {
 	datasource_t *widgets = (datasource_t *)user_data;
 	WebToolDatasource * ext_tool = widgets->web_tool_datasource;
-	GtkWidget *user_string_label;
 	char *label = g_strdup_printf("%s:", ext_tool->input_label);
-	user_string_label = gtk_label_new (label);
+	QLabel * user_string_label = new QLabel(label);
 	widgets->user_string = gtk_entry_new();
 
 	char *last_str = get_last_user_string(widgets);
@@ -132,8 +131,8 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start(box, user_string_label, false, false, 5);
-	gtk_box_pack_start(box, widgets->user_string, false, false, 5);
+	box->addWidget(user_string_label);
+	box->addWidget(widgets->user_string);
 	gtk_widget_show_all(dialog);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	/* NB presently the focus is overridden later on by the acquire.c code. */

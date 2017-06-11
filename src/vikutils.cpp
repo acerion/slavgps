@@ -450,7 +450,7 @@ double SlavGPS::convert_distance_meters_to(DistanceUnit distance_unit, double di
 
 
 typedef struct {
-	GtkWindow * window; /* Layer needed for redrawing. */
+	Window * window; /* Layer needed for redrawing. */
 	char * version;     /* Image list. */
 } new_version_thread_data;
 
@@ -477,7 +477,7 @@ static bool new_version_available_message(new_version_thread_data * nvtd)
 
 
 
-static void latest_version_thread(GtkWindow * window)
+static void latest_version_thread(Window * window)
 {
 	/* Need to allow a few redirects, as SF file is often served from different server. */
 	DownloadFileOptions options = { false, false, NULL, 5, NULL, NULL, NULL };
@@ -533,7 +533,7 @@ static void latest_version_thread(GtkWindow * window)
  *
  * Periodically checks the released latest VERSION file on the website to compare with the running version.
  */
-void SlavGPS::vu_check_latest_version(GtkWindow * window)
+void SlavGPS::vu_check_latest_version(Window * window)
 {
 	if (!Preferences::get_check_version()) {
 		return;
@@ -635,7 +635,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
-		VikLayerParam pref_startup_version_check[] = { { 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
+		LayerParam pref_startup_version_check[] = { { 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
 #endif

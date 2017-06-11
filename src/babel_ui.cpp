@@ -42,7 +42,7 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * us
 
 #ifdef K
 	/* user_data is the GtkDialog */
-	GtkDialog * dialog = GTK_DIALOG(user_data);
+	QDialog * dialog = (QDialog *) user_data;
 	if (file_type) {
 		/* Not NULL => valid selection */
 		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, true);

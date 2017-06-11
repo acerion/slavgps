@@ -34,7 +34,7 @@
 
 static void vik_print_preview_size_allocate(GtkWidget * widget, GtkAllocation * allocation, PrintPreview * preview);
 static void vik_print_preview_realize(GtkWidget * widget);
-static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintPreview * preview);
+static bool vik_print_preview_event(GtkWidget * widget, QEvent * ev, PrintPreview * preview);
 static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * eevent, PrintPreview * preview);
 
 
@@ -211,7 +211,7 @@ void PrintPreview::set_use_full_page(bool full_page)
 static void vik_print_preview_realize(GtkWidget * widget)
 {
 #ifdef K
-	GdkCursor * cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
+	QCursor * cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
 							GDK_FLEUR);
 	gdk_window_set_cursor(gtk_widget_get_window(widget), cursor);
 	gdk_cursor_unref(cursor);
@@ -221,7 +221,7 @@ static void vik_print_preview_realize(GtkWidget * widget)
 
 
 
-static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintPreview * preview)
+static bool vik_print_preview_event(GtkWidget * widget, QEvent * ev, PrintPreview * preview)
 {
 	static double orig_offset_x = 0.0;
 	static double orig_offset_y = 0.0;
@@ -230,18 +230,18 @@ static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintP
 
 #ifdef K
 
-	switch (event->type) {
+	switch (ev->type) {
 	case GDK_BUTTON_PRESS:
 		gdk_pointer_grab(gtk_widget_get_window(widget), false,
 				 (GdkEventMask) (GDK_BUTTON1_MOTION_MASK |
 						 GDK_BUTTON_RELEASE_MASK),
-				 NULL, NULL, event->button.time);
+				 NULL, NULL, ev->button.time);
 
 		orig_offset_x = preview->image_offset_x;
 		orig_offset_y = preview->image_offset_y;
 
-		start_x = event->button.x;
-		start_y = event->button.y;
+		start_x = ev->button.x;
+		start_y = ev->button.y;
 
 		preview->dragging = true;
 		break;
@@ -249,8 +249,8 @@ static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintP
 	case GDK_MOTION_NOTIFY:
 		double scale = preview->get_scale();
 
-		double offset_x = (orig_offset_x + (event->motion.x - start_x) / scale);
-		double offset_y = (orig_offset_y + (event->motion.y - start_y) / scale);
+		double offset_x = (orig_offset_x + (ev->motion.x - start_x) / scale);
+		double offset_y = (orig_offset_y + (ev->motion.y - start_y) / scale);
 
 		offset_x = CLAMP (offset_x, 0, preview->image_offset_x_max);
 		offset_y = CLAMP (offset_y, 0, preview->image_offset_y_max);
@@ -267,7 +267,7 @@ static bool vik_print_preview_event(GtkWidget * widget, GdkEvent * event, PrintP
 
 	case GDK_BUTTON_RELEASE:
 		gdk_display_pointer_ungrab(gtk_widget_get_display(widget),
-					   event->button.time);
+					   ev->button.time);
 		start_x = start_y = 0;
 		preview->dragging = false;
 

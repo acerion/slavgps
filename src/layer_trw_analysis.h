@@ -38,7 +38,7 @@ namespace SlavGPS {
 
 	typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, Layer *);
 
-	GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
+	GtkWidget * vik_trw_layer_analyse_this(Window * window,
 					       const char * name,
 					       Layer * layer,
 					       SublayerType sublayer_type,

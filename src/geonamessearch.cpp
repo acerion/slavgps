@@ -148,7 +148,7 @@ static void none_found(Window * window)
 	dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
-	GtkWidget *search_label = gtk_label_new(_("No entries found!"));
+	QLabel * search_label = new QLabel(QObject::tr("No entries found!"));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	gtk_widget_show_all(dialog);
@@ -187,7 +187,7 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 #endif
 
-	GtkWidget *label = gtk_label_new(msg);
+	QLabel * label = new QLabel(msg);
 	GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	GList *geoname_runner = geonames;

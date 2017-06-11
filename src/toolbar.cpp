@@ -110,7 +110,7 @@ static char *params_icon_style[] = { (char *) N_("System Default"), (char *) N_(
 
 typedef struct {
 	VikToolbar *vtb;
-	GtkWindow *parent;
+	Window * parent;
 	GtkWidget *vbox;
 	GtkWidget *hbox;
 	ReloadCB *reload_cb;
@@ -133,7 +133,7 @@ static GHashTable *signal_data;
 static GSList *toggle_overrides = NULL;
 
 /* Forward declaration. */
-void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data);
+void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, Window * parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data);
 
 
 
@@ -467,12 +467,12 @@ void toolbar_apply_settings(VikToolbar *vtb,
 	   Use reorder to ensure toolbar always comes after the menu. */
 	if (prefs_get_append_to_menu()) {
 		if (hbox) {
-			gtk_box_pack_start(GTK_BOX(hbox), vtb->widget, true, true, 0);
+			hbox->addWidget(vtb->widget);
 			gtk_box_reorder_child(GTK_BOX(hbox), vtb->widget, 1);
 		}
 	} else {
 		if (vbox) {
-			gtk_box_pack_start(GTK_BOX(vbox), vtb->widget, false, true, 0);
+			vbox->addWidget(vtb->widget);
 			gtk_box_reorder_child(GTK_BOX(vbox), vtb->widget, 1);
 		}
 	}
@@ -495,7 +495,7 @@ GtkWidget* toolbar_get_widget(VikToolbar *vtb)
 #include "toolbar.xml.h"
 static void toolbar_reload(VikToolbar *vtb,
 			   const char *markup,
-			   GtkWindow *parent,
+			   Window * parent,
 			   GtkWidget *vbox,
 			   GtkWidget *hbox,
 			   ReloadCB reload_cb,
@@ -594,7 +594,7 @@ static void toolbar_notify_style_cb(GObject *object, GParamSpec *arg1, void * da
  * Initialize the specified toolbar using the given values.
  */
 void toolbar_init(VikToolbar *vtb,
-		  GtkWindow *parent,
+		  Window * parent,
 		  GtkWidget *vbox,
 		  GtkWidget *hbox,
 		  ToolCB tool_cb,
@@ -878,7 +878,7 @@ static void tb_editor_free_path(TBEditorWidget *tbw)
 
 static void tb_editor_btn_remove_clicked_cb(GtkWidget *button, TBEditorWidget *tbw)
 {
-	GtkTreeModel *model_used;
+	QStandardItemModel *model_used;
 	GtkTreeSelection *selection_used;
 	GtkTreeIter iter_used, iter_new;
 	char *action_name;
@@ -905,7 +905,7 @@ static void tb_editor_btn_remove_clicked_cb(GtkWidget *button, TBEditorWidget *t
 
 static void tb_editor_btn_add_clicked_cb(GtkWidget *button, TBEditorWidget *tbw)
 {
-	GtkTreeModel *model_available;
+	QStandardItemModel *model_available;
 	GtkTreeSelection *selection_available, *selection_used;
 	GtkTreeIter iter_available, iter_new, iter_selected;
 	char *action_name;
@@ -960,7 +960,7 @@ static void tb_editor_drag_data_get_cb(GtkWidget *widget, GdkDragContext *contex
 {
 	GtkTreeIter iter;
 	GtkTreeSelection *selection;
-	GtkTreeModel *model;
+	QStandardItemModel *model;
 	GdkAtom atom;
 	char *name;
 
@@ -1045,7 +1045,7 @@ static void tb_editor_drag_data_rcvd_cb(GtkWidget *widget, GdkDragContext *conte
 
 
 
-static int tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
+static int tb_editor_foreach_used(QStandardItemModel *model, GtkTreePath *path,
 				  GtkTreeIter *iter, void * data)
 {
 	char *action_name;
@@ -1103,7 +1103,7 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 
 
 
-static void tb_editor_available_items_changed_cb(GtkTreeModel *model, GtkTreePath *arg1,
+static void tb_editor_available_items_changed_cb(QStandardItemModel *model, GtkTreePath *arg1,
 						 GtkTreeIter *arg2, TBEditorWidget *tbw)
 {
 	tb_editor_write_markup(tbw);
@@ -1112,7 +1112,7 @@ static void tb_editor_available_items_changed_cb(GtkTreeModel *model, GtkTreePat
 
 
 
-static void tb_editor_available_items_deleted_cb(GtkTreeModel *model, GtkTreePath *arg1,
+static void tb_editor_available_items_deleted_cb(QStandardItemModel *model, GtkTreePath *arg1,
 						 TBEditorWidget *tbw)
 {
 	tb_editor_write_markup(tbw);
@@ -1121,7 +1121,7 @@ static void tb_editor_available_items_deleted_cb(GtkTreeModel *model, GtkTreePat
 
 
 
-static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *parent, GtkWidget *toolbar, GtkWidget *vbox, GtkWidget *menu_hbox, ReloadCB reload_cb, void * user_data)
+static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent, GtkWidget *toolbar, GtkWidget *vbox, GtkWidget *menu_hbox, ReloadCB reload_cb, void * user_data)
 {
 	GtkWidget *dialog, *hbox, *vbox_buttons, *button_add, *button_remove;
 	GtkWidget *swin_available, *swin_used, *tree_available, *tree_used, *label;
@@ -1155,7 +1155,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	tbw->config.reload_cb = reload_cb;
 	tbw->config.user_data = user_data;
 
-	label = gtk_label_new(_("Select items to be displayed on the toolbar. Items can be reordered by drag and drop."));
+	label = new QLabel(QObject::tr("Select items to be displayed on the toolbar. Items can be reordered by drag and drop."));
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 
 	tree_available = gtk_tree_view_new();
@@ -1216,18 +1216,18 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 
 	vbox_buttons = gtk_vbox_new(false, 6);
 	/* FIXME this is a little hack'ish, any better ideas? */
-	gtk_box_pack_start(GTK_BOX(vbox_buttons), gtk_label_new(""), true, true, 0);
-	gtk_box_pack_start(GTK_BOX(vbox_buttons), button_add, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox_buttons), button_remove, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox_buttons), gtk_label_new(""), true, true, 0);
+	vbox_buttons->addWidget(new QLabel(QObject::tr(""));
+	vbox_buttons->addWidget(button_add);
+	vbox_buttons->addWidget(button_remove);
+	vbox_buttons->addWidget(new QLabel(QObject::tr(""));
 
 	hbox = gtk_hbox_new(false, 6);
-	gtk_box_pack_start(GTK_BOX(hbox), swin_available, true, true, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), vbox_buttons, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), swin_used, true, true, 0);
+	hbox->addWidget(swin_available);
+	hbox->addWidget(vbox_buttons);
+	hbox->addWidget(swin_used);
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), label, false, false, 6);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, true, true, 0);
+	dialog->vbox->addWidget(label);
+	dialog->vbox->addWidget(hbox);
 
 	gtk_widget_show_all(dialog);
 
@@ -1246,7 +1246,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 
 
 
-void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data)
+void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, Window * parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data)
 {
 	char *markup;
 	const char *name;

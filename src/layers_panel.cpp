@@ -57,7 +57,7 @@ typedef struct {
 
 
 static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text);
-static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * ev);
+static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
 
@@ -329,7 +329,7 @@ bool LayersPanel::button_press_cb(QMouseEvent * ev)
 
 
 
-static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * ev)
+static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev)
 {
 	return panel->key_press(ev);
 }
@@ -337,7 +337,7 @@ static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * ev)
 
 
 
-bool LayersPanel::key_press(GdkEventKey * ev)
+bool LayersPanel::key_press(QKeyEvent * ev)
 {
 #ifndef SLAVGPS_QT
 	/* Accept all forms of delete keys. */

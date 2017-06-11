@@ -158,26 +158,26 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 
 	/* Build the extra part of the widget. */
 	QComboBox * babel_selector = a_babel_ui_file_type_selector_new(mode);
-	GtkWidget * label = gtk_label_new(_("File format:"));
+	QLabel * label = new QLabel(QObject::tr("File format:"));
 	GtkWidget * hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), label, true, true, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), babel_selector, true, true, 0);
+	hbox->addWidget(label);
+	hbox->addWidget(babel_selector);
 	gtk_widget_show(babel_selector);
 	gtk_widget_show(label);
 	gtk_widget_show_all(hbox);
 
-	gtk_widget_set_tooltip_text(babel_selector, _("Select the file format."));
+	babel_selector->setToolTip(QObject::tr("Select the file format."));
 
 	GtkWidget * babel_modes = a_babel_ui_modes_new(mode.tracksWrite, mode.routesWrite, mode.waypointsWrite);
 	gtk_widget_show(babel_modes);
 
-	gtk_widget_set_tooltip_text(babel_modes, _("Select the information to process.\n"
-						   "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
-						   "Please, refer to GPSbabel if unsure."));
+	babel_modes->setToolTip(QObject::tr("Select the information to process.\n"
+					    "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
+					    "Please, refer to GPSbabel if unsure."));
 
 	GtkWidget * vbox = gtk_vbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, true, true, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), babel_modes, true, true, 0);
+	vbox->addWidget(hbox);
+	vbox->addWidget(babel_modes);
 	gtk_widget_show_all(vbox);
 
 	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(file_selector), vbox);
@@ -185,7 +185,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	/* Add some dynamic: only allow dialog's validation when format selection is done. */
 	QObject::connect(babel_selector, SIGNAL("changed"), file_selector, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
 	/* Manually call the callback to fix the state. */
-	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(babel_selector), file_selector);
+	a_babel_ui_type_selector_dialog_sensitivity_cb(babel_selector, file_selector);
 
 	/* Set possible name of the file. */
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_selector), default_name);

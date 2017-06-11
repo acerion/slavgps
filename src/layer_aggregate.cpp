@@ -255,12 +255,12 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 	/* the old switcheroo */
 	if (up && theone + 1 != val->children->end()) {
 
-		VikLayer * tmp = *(theone + 1);
+		Layer * tmp = *(theone + 1);
 		*(theone + 1) = *(theone);
 		*(theone) = tmp;
 	} else if (!up && theone - 1 != val->children->end()) {
 
-		VikLayer * tmp = *(theone - 1);
+		Layer * tmp = *(theone - 1);
 		*(theone - 1) = *(theone);
 
 		first = theone->prev;

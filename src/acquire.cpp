@@ -141,7 +141,7 @@ static void on_complete_process(w_and_interface_t * wi)
 {
 	if (wi->w->running) {
 #ifdef K
-		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Done."));
+		wi->w->status->setText(QObject::tr("Done."));
 #endif
 		if (wi->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
@@ -152,7 +152,7 @@ static void on_complete_process(w_and_interface_t * wi)
 				wi->w->panel->get_top_layer()->add_layer(layer, true);
 			} else {
 #ifdef K
-				gtk_label_set_text(GTK_LABEL(wi->w->status), _("No data."));
+				wi->w->status->setText(QObject::tr("No data."));
 #endif
 			}
 		}
@@ -233,7 +233,7 @@ static void get_from_anything(w_and_interface_t * wi)
 #ifdef K
 	if (wi->w->running && !result) {
 		gdk_threads_enter();
-		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Error: acquisition failed."));
+		wi->w->status->setText(QObject::tr("Error: acquisition failed."));
 		if (wi->creating_new_layer) {
 			wi->trw->unref();
 		}
@@ -278,7 +278,6 @@ static void acquire(Window * window,
 {
 	/* For manual dialogs. */
 	GtkWidget * dialog = NULL;
-	GtkWidget * status;
 	char * args_off = NULL;
 	char * fd_off = NULL;
 	void * user_data;
@@ -323,7 +322,7 @@ static void acquire(Window * window,
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
 	if (source_interface->add_setup_widgets_func) {
-		dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 
 		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 		GtkWidget *response_w = NULL;
@@ -346,7 +345,7 @@ static void acquire(Window * window,
 	}
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface->params) {
-		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, window->get_toolkit_window(),
+		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, window,
 						    source_interface->params, source_interface->params_count,
 						    source_interface->params_groups, source_interface->params_groups_count,
 						    source_interface->params_defaults);
@@ -416,13 +415,13 @@ static void acquire(Window * window,
 	wi->creating_new_layer = (!trw); /* Default if Auto Layer Management is passed in. */
 
 #ifdef K
-	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
 	gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
 
 	w->dialog = dialog;
 	w->running = true;
-	status = gtk_label_new(_("Working..."));
+	QLabel * status = new QLabel(QObject::tr("Working..."));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), status, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	/* May not want to see the dialog at all. */
@@ -495,7 +494,7 @@ static void acquire(Window * window,
 			}
 		} else {
 			/* This shouldn't happen... */
-			gtk_label_set_text(GTK_LABEL(w->status), _("Unable to create command\nAcquire method failed."));
+			w->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
 			gtk_dialog_run(GTK_DIALOG (dialog));
 		}
 	} else {
@@ -585,13 +584,12 @@ static void acquire_trwlayer_callback(GObject *menuitem, pass_along * data)
 
 
 
-static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, Viewport * viewport,
+static QMenu * acquire_build_menu(Window * window, LayersPanel * panel, Viewport * viewport,
 				      LayerTRW * trw, Track * trk, /* Both passed to acquire, although for many filters only one is necessary. */
 				      const char *menu_title, vik_datasource_inputtype_t inputtype)
 {
-	GtkWidget * menu_item = NULL;
+	QMenu * ret_menu = NULL;
 	GtkWidget * menu = NULL;
-	GtkWidget * item = NULL;
 
 	static pass_along data = {
 		window,
@@ -604,21 +602,20 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 #ifdef K
 	for (unsigned int i = 0; i < N_FILTERS; i++) {
 		if (filters[i]->inputtype == inputtype) {
-			if (! menu_item) { /* Do this just once, but return NULL if no filters. */
+			if (! ret_menu) { /* Do this just once, but return NULL if no filters. */
 				menu = gtk_menu_new();
-				menu_item = gtk_menu_item_new_with_mnemonic(menu_title);
-				gtk_menu_item_set_submenu(GTK_MENU_ITEM (menu_item), menu);
+				ret_menu = gtk_menu_item_new_with_mnemonic(menu_title);
+				gtk_menu_item_set_submenu(GTK_MENU_ITEM (ret_menu), menu);
 			}
 
-			action = QAction(QString(filters[i]->window_title), this);
-			g_object_set_data(G_OBJECT(item), "vik_acq_iface", (void *) filters[i]);
+			QAction * action = QAction(QString(filters[i]->window_title), this);
+			g_object_set_data(action, "vik_acq_iface", (void *) filters[i]);
 			QObject::connect(action, SIGNAL (triggered(bool)), &data, SLOT (acquire_trwlayer_callback));
 			menu->addAction(action);
 		}
 	}
 #endif
-
-	return menu_item;
+	return ret_menu;
 }
 
 
@@ -629,7 +626,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
  *
  * Returns: %NULL if no filters.
  */
-GtkWidget * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	return acquire_build_menu(window, panel, viewport, trw, NULL, _("_Filter"), VIK_DATASOURCE_INPUTTYPE_TRWLAYER);
 }
@@ -642,13 +639,13 @@ GtkWidget * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * pane
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-GtkWidget * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
 	} else {
 		char *menu_title = g_strdup_printf(_("Filter with %s"), filter_track->name);
-		GtkWidget *rv = acquire_build_menu(window, panel, viewport, trw, filter_track,
+		QMenu * rv = acquire_build_menu(window, panel, viewport, trw, filter_track,
 						   menu_title, VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK);
 		free(menu_title);
 		return rv;
@@ -663,7 +660,7 @@ GtkWidget * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel 
  *
  * Returns: %NULL if no applicable filters
  */
-GtkWidget * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
+QMenu * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
 	return acquire_build_menu(window, panel, viewport, NULL, trk, _("Filter"), VIK_DATASOURCE_INPUTTYPE_TRACK);
 }

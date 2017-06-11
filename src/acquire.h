@@ -58,7 +58,7 @@ namespace SlavGPS {
 	 * global data structure used to expose the progress dialog to the worker thread.
 	 */
 	typedef struct {
-		GtkWidget * status;
+		QLabel * status;
 		Window * window;
 		LayersPanel * panel;
 		Viewport * viewport;
@@ -197,11 +197,11 @@ namespace SlavGPS {
 		       void * userdata,
 		       VikDataSourceCleanupFunc cleanup_function);
 
-	GtkWidget * a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
+	QMenu * a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
 
-	GtkWidget * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
+	QMenu * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
 
-	GtkWidget * a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk);
+	QMenu * a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk);
 
 	void a_acquire_set_filter_track(Track * trk);
 

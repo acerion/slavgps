@@ -50,21 +50,21 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		GtkWidget * x_spin;
-		GtkWidget * y_spin;
+		QDoubleSpinBox * x_spin = NULL;
+		QDoubleSpinBox * y_spin = NULL;
 		/* UTM widgets. */
-		GtkWidget * ce_spin; /* Top left. */
-		GtkWidget * cn_spin;
-		GtkWidget * utm_zone_spin;
-		GtkWidget * utm_letter_entry;
+		QDoubleSpinBox * ce_spin = NULL; /* Top left. */
+		QDoubleSpinBox * cn_spin = NULL;
+		QSpinBox * utm_zone_spin = NULL;
+		GtkWidget * utm_letter_entry = NULL;
 
-		GtkWidget * lat_tl_spin;
-		GtkWidget * lon_tl_spin;
-		GtkWidget * lat_br_spin;
-		GtkWidget * lon_br_spin;
+		QDoubleSpinBox * lat_tl_spin = NULL;
+		QDoubleSpinBox * lon_tl_spin = NULL;
+		QDoubleSpinBox * lat_br_spin = NULL;
+		QDoubleSpinBox * lon_br_spin = NULL;
 
-		GtkWidget * tabs;
-		GtkWidget * imageentry;
+		GtkWidget * tabs = NULL;
+		GtkWidget * imageentry = NULL;
 	} changeable_widgets;
 
 

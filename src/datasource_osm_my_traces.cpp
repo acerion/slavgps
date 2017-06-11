@@ -121,26 +121,24 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
 #ifdef K
-	GtkWidget *user_label;
-	GtkWidget *password_label;
-	user_label = gtk_label_new(_("Username:"));
+	QLabel * user_label = new QLabel(QObject::tr("Username:"));
 	data->user_entry = gtk_entry_new();
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, false, false, 0);
-	gtk_widget_set_tooltip_markup(GTK_WIDGET(data->user_entry), _("The email or username used to login to OSM"));
+	data->user_entry->setToolTip(QObject::tr("The email or username used to login to OSM"));
 
-	password_label = gtk_label_new(_("Password:"));
+	QLabel * password_label = new QLabel(QObject::tr("Password:"));
 	data->password_entry = gtk_entry_new();
 
-	gtk_widget_set_tooltip_markup(GTK_WIDGET(data->password_entry), _("The password used to login to OSM"));
+	data->password_entry->setToolTip(QObject::tr("The password used to login to OSM"));
 
 	osm_login_widgets(data->user_entry, data->password_entry);
 
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start(box, password_label, false, false, 0);
-	gtk_box_pack_start(box, data->password_entry, false, false, 0);
+	box->addWidget(password_label);
+	box->addWidget(data->password_entry);
 	gtk_widget_show_all(dialog);
 
 	/* Keep reference to viewport. */
@@ -453,7 +451,7 @@ static bool read_gpx_files_metadata_xml(char *tmpname, xml_data *xd)
 
 
 
-static GList * select_from_list(GtkWindow *parent, GList *list, const char *title, const char *msg)
+static GList * select_from_list(Window * parent, GList *list, const char *title, const char *msg)
 {
 	GtkTreeIter iter;
 	GtkCellRenderer *renderer;
@@ -476,7 +474,7 @@ static GList * select_from_list(GtkWindow *parent, GList *list, const char *titl
 	/* Default to not apply - as initially nothing is selected! */
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 #endif
-	GtkWidget *label = gtk_label_new(msg);
+	QLabel * label = new QLabel(msg);
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	GList *list_runner = list;
 	while (list_runner) {
@@ -602,7 +600,7 @@ static void none_found(Window * gw)
 	dialog = gtk_dialog_new_with_buttons ("", gw, (GtkDialogFlags) 0, GTK_STOCK_OK, (GTK_RESPONSE_ACCEPT), NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("GPS Traces"));
 
-	GtkWidget *search_label = gtk_label_new(_("None found!"));
+	QLabel * search_label = new QLabel(QObject::tr("None found!"));
 	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	gtk_widget_show_all(dialog);

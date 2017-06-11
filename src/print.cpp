@@ -147,7 +147,7 @@ void a_print(Window * parent, Viewport * viewport)
 
 	res = gtk_print_operation_run(print_oper,
 				      GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				      window->get_toolkit_window(), NULL);
+				      window, NULL);
 
 	if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
 		if (print_settings) {
@@ -296,7 +296,7 @@ enum {
 
 static bool scale_change_value_cb(GtkRange *range, GtkScrollType scroll, double value, CustomWidgetInfo *pinfo);
 static void get_page_dimensions(CustomWidgetInfo *info, double *page_width, double *page_height, QPageLayout::Unit unit);
-static void center_changed_cb(GtkWidget *combo, CustomWidgetInfo *info);
+static void center_changed_cb(QComboBox * combo, CustomWidgetInfo *info);
 static void get_max_offsets(CustomWidgetInfo *info, double *offset_x_max, double *offset_y_max);
 static void update_offsets(CustomWidgetInfo *info);
 
@@ -408,7 +408,7 @@ static void set_center_none(CustomWidgetInfo * info)
 						(void *) center_changed_cb, info);
 
 		info->print_data->center = PrintCenterMode::NONE;
-		gtk_combo_box_set_active(GTK_COMBO_BOX(info->center_combo), info->print_data->center);
+		gtk_combo_box_set_active(info->center_combo, info->print_data->center);
 		g_signal_handlers_unblock_by_func(info->center_combo,
 						  (void *) center_changed_cb, info);
 #endif
@@ -509,10 +509,10 @@ static void update_offsets(CustomWidgetInfo *info)
 
 
 
-static void center_changed_cb(GtkWidget * combo, CustomWidgetInfo * info)
+static void center_changed_cb(QComboBox * combo, CustomWidgetInfo * info)
 {
 #ifdef K
-	info->print_data->center = (PrintCenterMode) gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+	info->print_data->center = (PrintCenterMode) gtk_combo_box_get_active(combo);
 #endif
 	update_offsets(info);
 
@@ -581,44 +581,43 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
 	/*  main hbox  */
 	GtkWidget * main_hbox = gtk_hbox_new(false, 12);
-	gtk_box_pack_start(GTK_BOX (layout), main_hbox, true, true, 0);
+	layout->addWidget(main_hbox);
 	gtk_widget_show(main_hbox);
 
 	/*  main vbox  */
 	GtkWidget * main_vbox = gtk_vbox_new(false, 12);
-	gtk_box_pack_start(GTK_BOX (main_hbox), main_vbox, false, false, 0);
+	main_hbox->addWidget(main_vbox);
 	gtk_widget_show(main_vbox);
 
 	GtkWidget * vbox = gtk_vbox_new(false, 6);
-	gtk_box_pack_start(GTK_BOX (main_vbox), vbox, false, false, 0);
+	main_vbox->addWidget(vbox);
 	gtk_widget_show(vbox);
 
 	/* Page Size */
 	GtkWidget * button = gtk_button_new_with_mnemonic(_("_Adjust Page Size "
 						"and Orientation"));
-	gtk_box_pack_start(GTK_BOX (main_vbox), button, false, false, 0);
+	main_vbox->addWidget(button);
 	QObject::connect(button, SIGNAL("clicked"), info, SLOT (page_setup_cb));
 	gtk_widget_show(button);
 
 	/* Center */
-	GtkWidget *combo;
 	const PrintCenterName *center;
 
 	GtkWidget * hbox = gtk_hbox_new(false, 6);
-	gtk_box_pack_start(GTK_BOX (main_vbox), hbox, false, false, 0);
+	main_vbox->addWidget(hbox);
 	gtk_widget_show(hbox);
 
-	GtkWidget * label = gtk_label_new_with_mnemonic(_("C_enter:"));
+	QLabel * label = new QLabel(QObject::tr("C&enter:"));
 	gtk_misc_set_alignment(GTK_MISC (label), 0.0, 0.5);
-	gtk_box_pack_start(GTK_BOX (hbox), label, false, false, 0);
+	hbox->addWidget(label);
 	gtk_widget_show(label);
 
-	combo = vik_combo_box_text_new();
+	QComboBox * combo = new QComboBox();
 	for (center = center_modes; center->name; center++) {
 		vik_combo_box_text_append(combo, _(center->name));
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), PrintCenterMode::BOTH);
-	gtk_box_pack_start(GTK_BOX (hbox), combo, true, true, 0);
+	gtk_combo_box_set_active(combo, PrintCenterMode::BOTH);
+	hbox->addWidget(combo);
 	gtk_widget_show(combo);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (label), combo);
 	QObject::connect(combo, SIGNAL("changed"), info, SLOT (center_changed_cb));
@@ -629,32 +628,32 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button),
 				     print_data->use_full_page);
-	gtk_box_pack_start(GTK_BOX (main_vbox), button, false, false, 0);
+	main_vbox->addWidget(button);
 	QObject::connect(button, SIGNAL("toggled"), info, SLOT (full_page_toggled_cb));
 	gtk_widget_show(button);
 
 	/* scale */
 	vbox = gtk_vbox_new(false, 1);
-	gtk_box_pack_start(GTK_BOX (main_vbox), vbox, false, false, 0);
+	main_vbox->addWidget(vbox);
 	gtk_widget_show(vbox);
 
 	hbox = gtk_hbox_new(false, 6);
-	gtk_box_pack_start(GTK_BOX (vbox), hbox, false, false, 0);
+	vbox->addWidget(hbox);
 	gtk_widget_show(hbox);
 
-	label = gtk_label_new_with_mnemonic(_("Image S_ize:"));
+	label = new QLabel(QObject::tr("Image S&ize:"));
 	gtk_misc_set_alignment(GTK_MISC (label), 0.0, 0.5);
-	gtk_box_pack_start(GTK_BOX (hbox), label, false, false, 0);
+	hbox->addWidget(label);
 	gtk_widget_show(label);
 
-	label = gtk_label_new(NULL);
+	label = new QLabel("");
 	gtk_misc_set_alignment(GTK_MISC (label), 0.0, 0.5);
 	info->scale_label = label;
-	gtk_box_pack_start(GTK_BOX (hbox), info->scale_label, true, true, 0);
+	hbox->addWidget(info->scale_label);
 	gtk_widget_show(info->scale_label);
 
 	info->scale = gtk_hscale_new_with_range(1, 100, 1);
-	gtk_box_pack_start(GTK_BOX (vbox), info->scale, true, true, 0);
+	vbox->addWidget(info->scale);
 	gtk_scale_set_draw_value(GTK_SCALE(info->scale), false);
 	gtk_widget_show(info->scale);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (label), info->scale);
@@ -664,7 +663,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
 	info->preview = new PrintPreview(setup, print_data->viewport->get_pixmap());
 	info->preview->set_use_full_page(print_data->use_full_page);
-	gtk_box_pack_start(GTK_BOX (main_hbox), info->preview, true, true, 0);
+	main_hbox->addWidget(info->preview);
 	gtk_widget_show(info->preview);
 
 	QObject::connect(info->preview, SIGNAL("offsets-changed"), info, SLOT (preview_offsets_changed_cb));

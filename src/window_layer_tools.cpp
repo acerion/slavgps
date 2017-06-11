@@ -59,7 +59,7 @@ static bool draw_buf_done = true;
 
 typedef struct {
 	QWindow * window;
-	//GdkGC * gdk_style;
+	//QPen * pen;
 	QPixmap * pixmap;
 } draw_buf_data_t;
 
@@ -70,7 +70,7 @@ static int draw_buf(draw_buf_data_t * data)
 {
 #if 0
 	gdk_threads_enter();
-	gdk_draw_drawable(data->window, data->gdk_style, data->pixmap,
+	gdk_draw_drawable(data->window, data->pen, data->pixmap,
 			  0, 0, 0, 0, -1, -1);
 	draw_buf_done = true;
 	gdk_threads_leave();
@@ -90,8 +90,8 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
 #if 0
 	PangoLayout *pl;
-	GdkGC *labgc = viewport->new_pen("#cccccc", 1);
-	GdkGC *thickgc = gdk_gc_new(d);
+	QPen * lab_pen = viewport->new_pen("#cccccc", 1);
+	QPen * thick_pen = gdk_gc_new(d);
 #endif
 
 	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
@@ -192,7 +192,7 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 		painter.drawText(x1-5, y1-CR-3*dist-8, "N");
 	}
 #if 1
-	// fill_rectangle(d, labgc, (x)-2, (y)-1, (w)+4, (h)+1);
+	// fill_rectangle(d, lab_pen, (x)-2, (y)-1, (w)+4, (h)+1);
 	// draw_rectangle(d, gc, (x)-2, (y)-1, (w)+4, (h)+1);
 	#define LABEL(x, y, w, h, text) {				\
 		painter.drawText((x), (y), text); }
@@ -291,8 +291,8 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 
 #if 0
 	g_object_unref(G_OBJECT (pl));
-	g_object_unref(G_OBJECT (labgc));
-	g_object_unref(G_OBJECT (thickgc));
+	g_object_unref(G_OBJECT (lab_pen));
+	g_object_unref(G_OBJECT (thick_pen));
 #endif
 }
 
@@ -439,7 +439,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 #if 0
 		static draw_buf_data_t pass_along;
 		pass_along.window = gtk_widget_get_window(this->viewport);
-		pass_along.gdk_style = gtk_widget_get_style(this->viewport)->black_gc;
+		pass_along.pen = gtk_widget_get_style(this->viewport)->black_gc;
 		pass_along.pixmap = buf;
 		g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 		draw_buf_done = false;
@@ -695,7 +695,7 @@ LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
 			pass_along.window = gtk_widget_get_window(this->window->viewport);
-			pass_along.gdk_style = gtk_widget_get_style(this->window->viewport)->black_gc;
+			pass_along.pen = gtk_widget_get_style(this->window->viewport)->black_gc;
 			pass_along.pixmap = this->zoom->pixmap;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
 			draw_buf_done = false;

@@ -124,13 +124,13 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 	GtkTreeIter iter;
 	char * sym;
 
-	if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo), &iter)) {
+	if (!gtk_combo_box_get_active_iter(combo, &iter)) {
 		return;
 	}
 
 	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
 	/* Note: symm is NULL when "(none)" is select (first cell is empty). */
-	gtk_widget_set_tooltip_text(combo, sym);
+	combo->setToolTip(sym);
 	free(sym);
 }
 #endif
@@ -142,7 +142,7 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
    The name to use is returned.
 */
 /* TODO: less on this side, like add track. */
-char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
 {
 #if 0
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
@@ -154,11 +154,10 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 							 GTK_RESPONSE_ACCEPT,
 							 NULL);
 
-	GtkWidget *latlabel, *lonlabel, *namelabel, *latentry, *lonentry, *altentry, *altlabel, *nameentry=NULL;
-	GtkWidget *commentlabel, *commententry, *descriptionlabel, *descriptionentry, *imagelabel, *imageentry, *symbollabel, *symbolentry;
+	GtkWidget *latlabel, *lonlabel, *latentry, *lonentry, *altentry, *altlabel, *nameentry=NULL;
+	GtkWidget *commententry, *descriptionentry, *imageentry, *symbolentry;
 	GtkWidget *sourcelabel = NULL, *sourceentry = NULL;
 	GtkWidget *typelabel = NULL, *typeentry = NULL;
-	GtkWidget *timelabel = NULL;
 	GtkWidget *timevaluebutton = NULL;
 	GtkWidget *hasGeotagCB = NULL;
 	GtkWidget *consistentGeotagCB = NULL;
@@ -168,7 +167,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 
 	*updated = false;
 
-	namelabel = gtk_label_new(_("Name:"));
+	QLabel * namelabel = new QLabel(QObject::tr("Name:"));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), namelabel, false, false, 0);
 	/* Name is now always changeable. */
 	nameentry = gtk_entry_new();
@@ -178,10 +177,11 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	QObject::connect(nameentry, SIGNAL("activate"), dialog, SLOT (accept));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
 
+	QLabel * commentlabel = NULL;
 	if (wp->comment && !strncmp(wp->comment, "http", 4)) {
 		commentlabel = gtk_link_button_new_with_label(wp->comment, _("Comment:"));
 	} else {
-		commentlabel = gtk_label_new(_("Comment:"));
+		commentlabel = new QLabel(QObject::tr("Comment:"));
 	}
 	commententry = gtk_entry_new();
 	char *cmt =  NULL;
@@ -191,19 +191,21 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 		gtk_entry_set_text(GTK_ENTRY(commententry), cmt);
 	}
 
+	QLabel * descriptionlabel = NULL;
 	if (wp->description && !strncmp(wp->description, "http", 4)) {
 		descriptionlabel = gtk_link_button_new_with_label(wp->description, _("Description:"));
 	} else {
-		descriptionlabel = gtk_label_new(_("Description:"));
+		descriptionlabel = new QLabel(QObject::tr("Description:"));
 	}
 	descriptionentry = gtk_entry_new();
 
-	imagelabel = gtk_label_new(_("Image:"));
+	QLabel * imagelabel = new QLabel(QObject::tr("Image:"));
 	imageentry = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
 
+	QLabel * symbollabel = NULL;
 	{
 		GtkCellRenderer *r;
-		symbollabel = gtk_label_new(_("Symbol:"));
+		symbollabel = new QLabel(QObject::tr("Symbol:"));
 		GtkTreeIter iter;
 
 		store = gtk_list_store_new(3, G_TYPE_STRING, GDK_TYPE_PIXBUF, G_TYPE_STRING);
@@ -238,8 +240,9 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 			/* Ensure is it a valid symbol in the given symbol set (large vs small).
 			   Not all symbols are available in both.
 			   The check prevents a Gtk Critical message. */
-			if (iter.stamp)
+			if (iter.stamp) {
 				gtk_combo_box_set_active_iter(GTK_COMBO_BOX(symbolentry), &iter);
+			}
 		}
 	}
 
@@ -274,7 +277,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 #endif
 	}
 
-	timelabel = gtk_label_new(_("Time:"));
+	QLabel * timelabel = new QLabel(QObject::tr("Time:"));
 	timevaluebutton = gtk_button_new();
 	gtk_button_set_relief(GTK_BUTTON(timevaluebutton), GTK_RELIEF_NONE);
 
@@ -301,8 +304,8 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 
 	if (hasGeotagCB) {
 		GtkWidget *hbox =  gtk_hbox_new(false, 0);
-		gtk_box_pack_start(GTK_BOX(hbox), hasGeotagCB, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(hbox), consistentGeotagCB, false, false, 0);
+		hbox->addWidget(hasGeotagCB);
+		hbox->addWidget(consistentGeotagCB);
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), hbox, false, false, 0);
 	}
 

@@ -485,9 +485,9 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 	tmp_pen.setWidth(1);
 #else
 	if (((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0)) {
-		tmp_pen = gtk_widget_get_style(dp->viewport->get_toolkit_widget())->light_gc[3];
+		tmp_pen = gtk_widget_get_style(dp->viewport)->light_gc[3];
 	} else {
-		tmp_pen = gtk_widget_get_style(dp->viewport->get_toolkit_widget())->dark_gc[0];
+		tmp_pen = gtk_widget_get_style(dp->viewport)->dark_gc[0];
 	}
 #endif
 	dp->viewport->draw_polygon(tmp_pen, points, 4, true);

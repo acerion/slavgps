@@ -62,7 +62,7 @@ typedef void (ToolCB) (GtkAction *, GtkAction *, void *); /* void * is actually 
 typedef void (ReloadCB) (GtkActionGroup *, void *); /* void * is actually a Window. */
 
 void toolbar_init(VikToolbar *vtb,
-                  GtkWindow *parent,
+                  Window * parent,
                   GtkWidget *vbox,
                   GtkWidget *hbox,
                   ToolCB tool_cb,

@@ -83,7 +83,7 @@ namespace SlavGPS {
 		/* This should be somehow private. */
 		void item_toggled(TreeIndex const & index);
 		void item_edited(TreeIndex const & index, char const * new_text);
-		bool key_press(GdkEventKey * event);
+		bool key_press(QKeyEvent * ev);
 		void move_item(bool up);
 		bool button_press_cb(QMouseEvent * event);
 

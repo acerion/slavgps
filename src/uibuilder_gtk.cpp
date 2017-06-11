@@ -70,7 +70,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		if (param->type == ParameterType::UINT && param->widget_data) {
 			/* Build a simple combobox. */
 			char **pstr = (char **) param->widget_data;
-			rv = vik_combo_box_text_new();
+			rv = new QComboBox();
 			while (*pstr) {
 				vik_combo_box_text_append(rv, *(pstr++));
 			}
@@ -81,20 +81,16 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
 					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
 						/* Match default value. */
-						gtk_combo_box_set_active(GTK_COMBO_BOX(rv), i);
+						gtk_combo_box_set_active(rv, i);
 						break;
 					}
 			} else {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), vlpd.u);
+				gtk_combo_box_set_active(rv, vlpd.u);
 			}
 		} else if (param->type == ParameterType::STRING && param->widget_data && !param->extra_widget_data) {
 			/* Build a combobox with editable text. */
 			char **pstr = (char **) param->widget_data;
-#if GTK_CHECK_VERSION (2, 24, 0)
-			rv = gtk_combo_box_text_new_with_entry();
-#else
-			rv = gtk_combo_box_entry_new_text();
-#endif
+			rv = new QComboBox();
 			if (vlpd.s) {
 				vik_combo_box_text_append(rv, vlpd.s);
 			}
@@ -104,28 +100,28 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			}
 
 			if (vlpd.s) {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
+				gtk_combo_box_set_active(rv, 0);
 			}
 		} else if (param->type == ParameterType::STRING && param->widget_data && param->extra_widget_data) {
 			/* Build a combobox with fixed selections without editable text. */
 			char **pstr = (char **) param->widget_data;
-			rv = GTK_WIDGET (vik_combo_box_text_new());
+			rv = new QComboBox();
 			while (*pstr) {
 				vik_combo_box_text_append(rv, *(pstr++));
 			}
 			if (vlpd.s) {
 				/* Set the effective default value. */
 				/* In case of value does not exist, set the first value. */
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
+				gtk_combo_box_set_active(rv, 0);
 				int i;
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
 					if (strcmp(((const char **)param->extra_widget_data)[i], vlpd.s) == 0) {
 						/* Match default value. */
-						gtk_combo_box_set_active(GTK_COMBO_BOX (rv), i);
+						gtk_combo_box_set_active(rv, i);
 						break;
 					}
 			} else {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
+				gtk_combo_box_set_active(rv, 0);
 			}
 		}
 		break;
@@ -167,7 +163,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 
 			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
-			rv = gtk_spin_button_new (GTK_ADJUSTMENT(gtk_adjustment_new(init_val, scale->min, scale->max, scale->step, scale->step, 0)), scale->step, scale->digits);
+			rv = new QSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(init_val, scale->min, scale->max, scale->step, scale->step, 0)), scale->step, scale->digits);
 		}
 		break;
 	case WidgetType::ENTRY:
@@ -185,8 +181,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			if (vlpd.s) {
 				gtk_entry_set_text(GTK_ENTRY(rv), vlpd.s);
 			}
-			gtk_widget_set_tooltip_text(GTK_WIDGET(rv),
-						    _("Take care that this password will be stored clearly in a plain file."));
+			rv->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
 		}
 		break;
 	case WidgetType::FILEENTRY:
@@ -235,7 +230,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 	}
 	if (rv && !gtk_widget_get_tooltip_text(rv)) {
 		if (param->tooltip) {
-			gtk_widget_set_tooltip_text(rv, _(param->tooltip));
+			rv->setToolTip(param->tooltip);
 		}
 	}
 	return rv;
@@ -256,7 +251,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		break;
 	case WidgetType::COMBOBOX:
 		if (param->type == ParameterType::UINT) {
-			rv.i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+			rv.i = gtk_combo_box_get_active(widget);
 			if (rv.i == -1) {
 				rv.i = 0;
 			}
@@ -269,14 +264,14 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		if (param->type == ParameterType::STRING) {
 			if (param->extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
-				int pos = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+				int pos = gtk_combo_box_get_active(widget);
 				rv.s = ((const char **)param->extra_widget_data)[pos];
 			} else {
 				/* Return raw value. */
 #if GTK_CHECK_VERSION (2, 24, 0)
 				rv.s = gtk_entry_get_text(GTK_ENTRY (gtk_bin_get_child (GTK_BIN (widget))));
 #else
-				rv.s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget));
+				rv.s = gtk_combo_box_get_active_text(widget);
 #endif
 			}
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
@@ -291,11 +286,11 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		break;
 	case WidgetType::SPINBUTTON:
 		if (param->type == ParameterType::UINT) {
-			rv.u = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+			rv.u = widget.value();
 		} else if (param->type == ParameterType::INT) {
-			rv.i = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+			rv.i = widget.value();
 		} else {
-			rv.d = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+			rv.d = widget.value();
 		}
 		break;
 	case WidgetType::ENTRY:
@@ -333,9 +328,9 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 
 
 
-//static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * *pass_along)
+//static void draw_to_image_file_total_area_cb (QSpinBox * spinbutton, void * *pass_along)
 int a_uibuilder_properties_factory(const char *dialog_name,
-				   GtkWindow *parent,
+				   Window * parent,
 				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
@@ -381,7 +376,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 		GtkWidget **tables = NULL; /* For more than one group. */
 
 		GtkWidget *notebook = NULL;
-		GtkWidget **labels = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
+		QLabels **labels = (QLabel **) malloc(sizeof(QLabel *) * widget_count);
 		GtkWidget **widgets = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
 		ui_change_values * change_values = (ui_change_values *) malloc(sizeof (ui_change_values) * widget_count);
 
@@ -405,7 +400,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 
 				if (tab_widget_count) {
 					tables[current_group] = gtk_table_new(tab_widget_count, 1, false);
-					gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tables[current_group], gtk_label_new(groups[current_group]));
+					gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tables[current_group], new QLabel(groups[current_group]));
 				}
 			}
 		} else {
@@ -422,7 +417,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam(pass_along_getparam, i, false));
 
 				if (widgets[j]) {
-					labels[j] = gtk_label_new(_(params[i].title));
+					labels[j] = new QLabel(QObject::tr(params[i].title));
 					gtk_table_attach(GTK_TABLE(table), labels[j], 0, 1, j, j+1, (GtkAttachOptions) 0, (GtkAttachOptions) 0, 0, 0);
 					gtk_table_attach(GTK_TABLE(table), widgets[j], 1, 2, j, j+1, (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) 0, 2, 2);
 
@@ -513,7 +508,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 
 
 
-ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
 				       ParameterValue *params_defaults)
 {

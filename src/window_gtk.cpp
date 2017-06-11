@@ -88,10 +88,9 @@ static void destroy_window(GtkWidget * widget, void * data)
 
 
 
-GtkWindow * vik_window_new_window(GtkWindow * w)
+Window * vik_window_new_window(Window * w)
 {
-	Window * new_window = new Window();
-	return new_window->gtk_window_;
+	return new Window();
 }
 
 
@@ -270,7 +269,7 @@ void Window::simple_map_update(bool only_new)
  * This is the global key press handler
  *  Global shortcuts are available at any time and hence are not restricted to when a certain tool is enabled
  */
-static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data)
+static bool key_press_event_cb(Window * window, QKeyEvent * event, void * data)
 {
 	// The keys handled here are not in the menuing system for a couple of reasons:
 	//  . Keeps the menu size compact (alebit at expense of discoverably)
@@ -285,24 +284,24 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 	// Standard 'Refresh' keys: F5 or Ctrl+r
 	// Note 'F5' is actually handled via draw_refresh_cb() later on
 	//  (not 'R' it's 'r' notice the case difference!!)
-	if (event->keyval == GDK_r && (event->state & modifiers) == GDK_CONTROL_MASK) {
+	if (ev->keyval == GDK_r && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		map_download = true;
 		map_download_only_new = true;
 	}
 	// Full cache reload with Ctrl+F5 or Ctrl+Shift+r [This is not in the menu system]
 	// Note the use of uppercase R here since shift key has been pressed
-	else if ((event->keyval == GDK_F5 && (event->state & modifiers) == GDK_CONTROL_MASK) ||
-		 (event->keyval == GDK_R && (event->state & modifiers) == (GDK_CONTROL_MASK + GDK_SHIFT_MASK))) {
+	else if ((ev->keyval == GDK_F5 && (ev->state & modifiers) == GDK_CONTROL_MASK) ||
+		 (ev->keyval == GDK_R && (ev->state & modifiers) == (GDK_CONTROL_MASK + GDK_SHIFT_MASK))) {
 		map_download = true;
 		map_download_only_new = false;
 	}
 	// Standard Ctrl+KP+ / Ctrl+KP- to zoom in/out respectively
-	else if (event->keyval == GDK_KEY_KP_Add && (event->state & modifiers) == GDK_CONTROL_MASK) {
+	else if (ev->keyval == GDK_KEY_KP_Add && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		window->viewport->zoom_in();
 		window->draw_update();
 		return true; // handled keypress
 	}
-	else if (event->keyval == GDK_KEY_KP_Subtract && (event->state & modifiers) == GDK_CONTROL_MASK) {
+	else if (ev->keyval == GDK_KEY_KP_Subtract && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		window->viewport->zoom_out();
 		window->draw_update();
 		return true; // handled keypress
@@ -317,7 +316,7 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 	if (layer && window->tb->active_tool && window->tb->active_tool->key_press) {
 		LayerType ltype = window->tb->active_tool->layer_type;
 		if (layer && ltype == layer->type) {
-			return window->tb->active_tool->key_press(layer, event, window->tb->active_tool);
+			return window->tb->active_tool->key_press(layer, ev, window->tb->active_tool);
 		}
 	}
 
@@ -325,13 +324,13 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 	if (window->current_tool < TOOL_LAYER) {
 		// No layer - but enable window tool keypress processing - these should be able to handle a NULL layer
 		if (window->tb->active_tool->key_press) {
-			return window->tb->active_tool->key_press(layer, event, window->tb->active_tool);
+			return window->tb->active_tool->key_press(layer, ev, window->tb->active_tool);
 		}
 	}
 
 	/* Restore Main Menu via Escape key if the user has hidden it */
 	/* This key is more likely to be used as they may not remember the function key */
-	if (event->keyval == GDK_Escape) {
+	if (ev->keyval == GDK_Escape) {
 		GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewMainMenu");
 		if (check_box) {
 			bool state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
@@ -349,11 +348,11 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 
 
 
-static bool delete_event(GtkWindow * gtk_window)
+static bool delete_event(Window * gtk_window)
 {
 #if 0 /* Moved to QT app. */
 
-	Window * window = (Window *) g_object_get_data((GObject *) gtk_window, "window");
+	Window * window = (Window *) g_object_get_data((GObject *) window, "window");
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
 	if (window->modified)
@@ -361,12 +360,11 @@ static bool delete_event(GtkWindow * gtk_window)
 	if (0)
 #endif
 	{
-		GtkDialog *dia;
-		dia = GTK_DIALOG (gtk_message_dialog_new(gtk_window, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-							 _("Do you want to save the changes you made to the document \"%s\"?\n"
-							   "\n"
-							   "Your changes will be lost if you don't save them."),
-							 window->get_filename()));
+		QDialog * dia = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+						       _("Do you want to save the changes you made to the document \"%s\"?\n"
+							 "\n"
+							 "Your changes will be lost if you don't save them."),
+						       window->get_filename());
 		gtk_dialog_add_buttons(dia, _("Don't Save"), GTK_RESPONSE_NO, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_YES, NULL);
 		switch (gtk_dialog_run(dia)) {
 		case GTK_RESPONSE_NO:
@@ -384,7 +382,7 @@ static bool delete_event(GtkWindow * gtk_window)
 	if (window_count == 1) {
 		// On the final window close - save latest state - if it's wanted...
 		if (a_vik_get_restore_window_state()) {
-			int state = gdk_window_get_state(GTK_WIDGET (gtk_window)->window);
+			int state = gdk_window_get_state(GTK_WIDGET (window)->window);
 			bool state_max = state & GDK_WINDOW_STATE_MAXIMIZED;
 			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
 
@@ -400,7 +398,7 @@ static bool delete_event(GtkWindow * gtk_window)
 			// If supersized - no need to save the enlarged width+height values
 			if (! (state_fullscreen || state_max)) {
 				int width, height;
-				gtk_window_get_size(gtk_window, &width, &height);
+				gtk_window_get_size(window, &width, &height);
 				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, width);
 				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, height);
 			}
@@ -427,7 +425,7 @@ static bool delete_event(GtkWindow * gtk_window)
 /* Drawing stuff. */
 static void newwindow_cb(GtkAction *a, Window * window)
 {
-	g_signal_emit(window->get_toolkit_object(), window_signals[VW_NEWWINDOW_SIGNAL], 0);
+	g_signal_emit(window, window_signals[VW_NEWWINDOW_SIGNAL], 0);
 }
 
 
@@ -441,9 +439,9 @@ static void window_configure_event(Window * window)
 		// This is a hack to set the cursor corresponding to the first tool
 		// FIXME find the correct way to initialize both tool and its cursor
 		first = 0;
-		window->viewport_cursor = (GdkCursor *) window->tb->get_cursor("Pan");
+		window->viewport_cursor = (QCursor *) window->tb->get_cursor("Pan");
 		/* We set cursor, even if it is NULL: it resets to default */
-		gdk_window_set_cursor(gtk_widget_get_window(window->viewport->get_toolkit_widget()), window->viewport_cursor);
+		gdk_window_set_cursor(gtk_widget_get_window(window->viewport), window->viewport_cursor);
 	}
 }
 
@@ -454,7 +452,7 @@ static void window_configure_event(Window * window)
 
 static void draw_click_cb(Window * window, GdkEventButton * event)
 {
-	gtk_widget_grab_focus(window->viewport->get_toolkit_widget());
+	gtk_widget_grab_focus(window->viewport);
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
@@ -500,7 +498,7 @@ static bool vik_window_pan_timeout(Window * window)
 
 static void draw_release_cb(Window * window, GdkEventButton * event)
 {
-	gtk_widget_grab_focus(window->viewport->get_toolkit_widget());
+	gtk_widget_grab_focus(window->viewport);
 
 	if (event->button() == Qt::MiddleButton) {  /* move / pan */
 		if (window->tb->active_tool->pan_handler) {
@@ -702,7 +700,7 @@ static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 		if (window->filename) {
 			GSList *filenames = NULL;
 			filenames = g_slist_append(filenames, path);
-			g_signal_emit(window->get_toolkit_object(), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
+			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
 			// NB: GSList & contents are freed by main.open_window
 		} else {
 			window->open_file(path, true);
@@ -722,7 +720,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 	char const * fn;
 
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save as Viking File."),
-							 window->get_toolkit_window(),
+							 window,
 							 GTK_FILE_CHOOSER_ACTION_SAVE,
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 							 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
@@ -744,7 +742,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 	// Default to a Viking file
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), window->get_toolkit_window());
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 
@@ -886,14 +884,14 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 	}
 
 	GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Export to directory"),
-							this->get_toolkit_window(),
+							this,
 							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 							GTK_STOCK_CANCEL,
 							GTK_RESPONSE_REJECT,
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
 							NULL);
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), this->get_toolkit_window());
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 	gtk_window_set_modal(GTK_WINDOW(dialog), true);
 
@@ -1134,7 +1132,7 @@ static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
 static void import_kmz_file_cb(GtkAction * a, Window * window)
 {
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Open File"),
-							 window->get_toolkit_window(),
+							 window,
 							 GTK_FILE_CHOOSER_ACTION_OPEN,
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -1174,7 +1172,7 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 static void set_bg_color(GtkAction * a, Window * window)
 {
 	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a background color"));
-	GdkColor * color = window->viewport->get_background_qcolor();
+	QColor * color = window->viewport->get_background_qcolor();
 	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
@@ -1192,7 +1190,7 @@ static void set_bg_color(GtkAction * a, Window * window)
 static void set_highlight_color(GtkAction * a, Window * window)
 {
 	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a track highlight color"));
-	GdkColor * color = window->viewport->get_highlight_qcolor();
+	QColor * color = window->viewport->get_highlight_qcolor();
 	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {

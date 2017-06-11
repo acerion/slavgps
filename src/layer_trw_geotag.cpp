@@ -108,22 +108,22 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 
 
 typedef struct {
-	GtkWidget *dialog;
-	SGFileList *files;
-	LayerTRW * trw;      /* To pass on. */
-	Waypoint * wp;       /* Use specified waypoint or otherwise the track(s) if NULL. */
-	Track * trk;         /* Use specified track or all tracks if NULL. */
-	GtkCheckButton *create_waypoints_b;
-	QLabel *overwrite_waypoints_l;    /* Referenced so the sensitivity can be changed. */
-	GtkCheckButton *overwrite_waypoints_b;
-	GtkCheckButton *write_exif_b;
-	QLabel *overwrite_gps_exif_l;   /* Referenced so the sensitivity can be changed. */
-	GtkCheckButton *overwrite_gps_exif_b;
-	QLabel *no_change_mtime_l;    /* Referenced so the sensitivity can be changed. */
-	GtkCheckButton *no_change_mtime_b;
-	GtkCheckButton *interpolate_segments_b;
-	GtkEntry *time_zone_b;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
-	GtkEntry *time_offset_b;
+	GtkWidget *dialog = NULL;
+	SGFileList *files = NULL;
+	LayerTRW * trw = NULL;      /* To pass on. */
+	Waypoint * wp = NULL;       /* Use specified waypoint or otherwise the track(s) if NULL. */
+	Track * trk = NULL;         /* Use specified track or all tracks if NULL. */
+	QCheckBox *create_waypoints_b = NULL;
+	QLabel *overwrite_waypoints_l = NULL;    /* Referenced so the sensitivity can be changed. */
+	QCheckBox *overwrite_waypoints_b = NULL;
+	QCheckBox *write_exif_b = NULL;
+	QLabel *overwrite_gps_exif_l = NULL;   /* Referenced so the sensitivity can be changed. */
+	QCheckBox *overwrite_gps_exif_b = NULL;
+	QLabel *no_change_mtime_l = NULL;    /* Referenced so the sensitivity can be changed. */
+	QCheckBox *no_change_mtime_b = NULL;
+	QCheckBox *interpolate_segments_b = NULL;
+	QLineEdit *time_zone_b = NULL;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
+	QLineEdit *time_offset_b = NULL;
 } GeoTagWidgets;
 
 
@@ -623,7 +623,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
 /**
  * Parse user input from dialog response.
  */
-static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidgets *widgets)
+static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidgets *widgets)
 {
 #ifdef K
 	switch (resp) {
@@ -719,12 +719,12 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	widgets->wp = wp;
 	widgets->trk = trk;
 	widgets->create_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->overwrite_waypoints_l = GTK_LABEL (gtk_label_new(_("Overwrite Existing Waypoints:")));
+	widgets->overwrite_waypoints_l = new QLabel(QObject::tr("Overwrite Existing Waypoints:"));
 	widgets->overwrite_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new());
 	widgets->write_exif_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->overwrite_gps_exif_l = GTK_LABEL (gtk_label_new(_("Overwrite Existing GPS Information:")));
+	widgets->overwrite_gps_exif_l = new QLabel(QObject::tr("Overwrite Existing GPS Information:"));
 	widgets->overwrite_gps_exif_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->no_change_mtime_l = GTK_LABEL (gtk_label_new(_("Keep File Modification Timestamp:")));
+	widgets->no_change_mtime_l = new QLabel(QObject::tr("Keep File Modification Timestamp:"));
 	widgets->no_change_mtime_b = GTK_CHECK_BUTTON (gtk_check_button_new());
 	widgets->interpolate_segments_b = GTK_CHECK_BUTTON (gtk_check_button_new());
 	widgets->time_zone_b = GTK_ENTRY (gtk_entry_new());
@@ -756,42 +756,42 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	QObject::connect(widgets->create_waypoints_b, SIGNAL("toggled"), widgets, SLOT (create_waypoints_b_cb));
 
 	GtkWidget *cw_hbox = gtk_hbox_new(false, 0);
-	GtkWidget *create_waypoints_l = gtk_label_new(_("Create Waypoints:"));
-	gtk_box_pack_start(GTK_BOX(cw_hbox), create_waypoints_l, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(cw_hbox), GTK_WIDGET(widgets->create_waypoints_b), false, false, 5);
+	QLabel * create_waypoints_l = new QLabel(QObject::tr("Create Waypoints:"));
+	cw_hbox->addWidget(create_waypoints_l);
+	cw_hbox->addWidget(widgets->create_waypoints_b);
 
 	GtkWidget *ow_hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(ow_hbox), GTK_WIDGET(widgets->overwrite_waypoints_l), false, false, 5);
-	gtk_box_pack_start(GTK_BOX(ow_hbox), GTK_WIDGET(widgets->overwrite_waypoints_b), false, false, 5);
+	ow_hbox->addWidget(widgets->overwrite_waypoints_l);
+	ow_hbox->addWidget(widgets->overwrite_waypoints_b);
 
 	GtkWidget *we_hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(we_hbox), gtk_label_new(_("Write EXIF:")), false, false, 5);
-	gtk_box_pack_start(GTK_BOX(we_hbox), GTK_WIDGET(widgets->write_exif_b), false, false, 5);
+	we_hbox->addWidget(new QLabel(QObject::tr("Write EXIF:")));
+	we_hbox->addWidget(widgets->write_exif_b);
 
 	GtkWidget *og_hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(og_hbox), GTK_WIDGET(widgets->overwrite_gps_exif_l), false, false, 5);
-	gtk_box_pack_start(GTK_BOX(og_hbox), GTK_WIDGET(widgets->overwrite_gps_exif_b), false, false, 5);
+	og_hbox->addWidget(widgets->overwrite_gps_exif_l);
+	og_hbox->addWidget(widgets->overwrite_gps_exif_b);
 
 	GtkWidget *fm_hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(fm_hbox), GTK_WIDGET(widgets->no_change_mtime_l), false, false, 5);
-	gtk_box_pack_start(GTK_BOX(fm_hbox), GTK_WIDGET(widgets->no_change_mtime_b), false, false, 5);
+	fm_hbox->addWidget(widgets->no_change_mtime_l);
+	fm_hbox->addWidget(widgets->no_change_mtime_b);
 
 	GtkWidget *is_hbox = gtk_hbox_new(false, 0);
-	GtkWidget *interpolate_segments_l = gtk_label_new(_("Interpolate Between Track Segments:"));
-	gtk_box_pack_start(GTK_BOX(is_hbox), interpolate_segments_l, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(is_hbox), GTK_WIDGET(widgets->interpolate_segments_b), false, false, 5);
+	QLabel * interpolate_segments_l = new QLabel(QObject::tr("Interpolate Between Track Segments:"));
+	is_hbox->addWidget(widgets->interpolate_segments_l);
+	is_hbox->addWidget(widgets->interpolate_segments_b);
 
 	GtkWidget *to_hbox = gtk_hbox_new(false, 0);
-	GtkWidget *time_offset_l = gtk_label_new(_("Image Time Offset (Seconds):"));
-	gtk_box_pack_start(GTK_BOX(to_hbox), time_offset_l, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(to_hbox), GTK_WIDGET(widgets->time_offset_b), false, false, 5);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(widgets->time_offset_b), _("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
+	QLabel * time_offset_l = new QLabel(QObject::tr("Image Time Offset (Seconds):"));
+	to_hbox->addWidget(time_offset_l);
+	to_hbox->addWidget(widgets->time_offset_b);
+	widgets->time_offset_b->setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
 
 	GtkWidget *tz_hbox = gtk_hbox_new(false, 0);
-	GtkWidget *time_zone_l = gtk_label_new(_("Image Timezone:"));
-	gtk_box_pack_start(GTK_BOX(tz_hbox), time_zone_l, false, false, 5);
-	gtk_box_pack_start(GTK_BOX(tz_hbox), GTK_WIDGET(widgets->time_zone_b), false, false, 5);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(widgets->time_zone_b), _("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
+	QLabel * time_zone_l = new QLabel(QObject::tr("Image Timezone:"));
+	tz_hbox->addWidget(time_zone_l);
+	tz_hbox->addWidget(widgets->time_zone_b);
+	widgets->time_zone_b->setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
 
 	char *track_string = NULL;
 	if (widgets->wp) {
@@ -813,7 +813,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 		track_string = g_strdup_printf(_("Using all tracks in: %s"), trw->name);
 	}
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), gtk_label_new(track_string), false, false, 5);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), new QLabel(track_string), false, false, 5);
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), GTK_WIDGET(widgets->files), true, true, 0);
 

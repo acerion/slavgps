@@ -40,7 +40,7 @@ bool vik_routing_default_find(SlavGPS::LayerTRW * trw, struct LatLon start, stru
 void vik_routing_prefs_init();
 void vik_routing_register(VikRoutingEngine * engine);
 void vik_routing_unregister_all();
-void vik_routing_foreach_engine(GFunc func, void * user_data);
+void vik_routing_foreach_engine(GFunc func, QComboBox * combo);
 
 /* UI. */
 typedef bool (* Predicate)(void * data, void * user_data);

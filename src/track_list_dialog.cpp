@@ -79,7 +79,7 @@ static void track_select_cb(GtkTreeSelection * selection, void * data)
 	}
 
 	GtkTreeView * tree_view = GTK_TREE_VIEW (data);
-	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
+	QStandardItemModel * model = gtk_tree_view_get_model(tree_view);
 
 	Track * trk;
 	gtk_tree_model_get(model, &iter, TRACK_POINTER_COLUMN, &trk, -1);
@@ -164,7 +164,7 @@ typedef struct {
 
 
 
-static void copy_selection(GtkTreeModel * model,
+static void copy_selection(QStandardItemModel * model,
 			   GtkTreePath  * path,
 			   GtkTreeIter  * iter,
 			   void         * data)

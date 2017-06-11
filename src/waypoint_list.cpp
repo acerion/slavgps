@@ -163,7 +163,7 @@ typedef struct {
  *
  * ATM The visibility flag is not copied and neither is a text representation of the waypoint symbol.
  */
-static void copy_selection(GtkTreeModel * model,
+static void copy_selection(QStandardItemModel * model,
 			   GtkTreePath  * path,
 			   GtkTreeIter  * iter,
 			   void         * data)

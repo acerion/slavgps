@@ -395,7 +395,7 @@ TreeIndex const TreeView::go_up_to_layer(TreeIndex const & index, LayerType laye
 
 
 
-static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeModel *model, GtkTreePath *path, int path_currently_selected, void * data)
+static int vik_treeview_selection_filter(GtkTreeSelection *selection, QStandardItemModel * model, GtkTreePath *path, int path_currently_selected, void * data)
 {
 	TreeView * tree_view = (TreeView *) data;
 
@@ -771,8 +771,9 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 		/* Nothing to do. */
 		return;
 	}
+
+	QStandardItemModel * model = this->model;
 #ifdef K
-	GtkTreeModel * model = this->model;
 	GtkTreeIter child;
 	if (!gtk_tree_model_iter_children(model, &child, parent_index)) {
 		return;
@@ -819,8 +820,8 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
 #ifdef K
-	GtkTreeModel *tree_model;
-	GtkTreeModel *src_model = NULL;
+	QStandardItemModel *tree_model;
+	QStandardItemModel *src_model = NULL;
 	GtkTreePath *src_path = NULL, *dest_cp = NULL;
 	bool retval = false;
 	GtkTreeIter src_iter, root_iter, dest_parent;

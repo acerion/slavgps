@@ -74,7 +74,7 @@ static bool spawn_command_line_async(const char * cmd,
 /* Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
    (non working at least in our Windows build with GTK+2.24.10 on Windows 7). */
 
-void open_url(GtkWindow * parent, const char * url)
+void open_url(Window * parent, const char * url)
 {
 #ifdef K
 #ifdef WINDOWS
@@ -93,7 +93,7 @@ void open_url(GtkWindow * parent, const char * url)
 
 
 
-void new_email(GtkWindow * parent, const char * address)
+void new_email(Window * parent, const char * address)
 {
 #ifdef K
 	char * uri = g_strdup_printf("mailto:%s", address);

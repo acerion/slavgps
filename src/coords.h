@@ -52,8 +52,8 @@ struct UTM {
 };
 
 struct LatLon {
-  double lat;
-  double lon;
+	double lat;
+	double lon;
 };
 
 int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );

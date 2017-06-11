@@ -145,25 +145,25 @@ static char * old_params_ports[] = {
 typedef struct {
 	std::mutex mutex;
 	GPSDirection direction;
-	char * port;
+	char * port = NULL;
 	bool ok;
 	int total_count;
 	int count;
-	LayerTRW * trw;
-	Track * trk;
-	char * babelargs;
-	char * window_title;
-	GtkWidget * dialog;
-	GtkWidget * status_label;
-	GtkWidget * gps_label;
-	GtkWidget * ver_label;
-	GtkWidget * id_label;
-	GtkWidget * wp_label;
-	GtkWidget * trk_label;
-	GtkWidget * rte_label;
-	GtkWidget * progress_label;
+	LayerTRW * trw = NULL;
+	Track * trk = NULL;
+	char * babelargs = NULL;
+	char * window_title = NULL;
+	GtkWidget * dialog = NULL;
+	QLabel * status_label = NULL;
+	QLabel * gps_label = NULL;
+	QLabel * ver_label = NULL;
+	QLabel * id_label = NULL;
+	QLabel * wp_label = NULL;
+	QLabel * trk_label = NULL;
+	QLabel * rte_label = NULL;
+	QLabel * progress_label = NULL;
 	GPSTransferType progress_type;
-	Viewport * viewport;
+	Viewport * viewport = NULL;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	bool realtime_tracking;
 #endif
@@ -728,27 +728,27 @@ LayerGPS::~LayerGPS()
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	this->rt_gpsd_disconnect();
-	if (this->realtime_track_gc != NULL) {
+	if (this->realtime_track_pen != NULL) {
 #ifdef K
-		g_object_unref(this->realtime_track_gc);
+		g_object_unref(this->realtime_track_pen);
 #endif
 	}
 
-	if (this->realtime_track_bg_gc != NULL) {
+	if (this->realtime_track_bg_pen != NULL) {
 #ifdef K
-		g_object_unref(this->realtime_track_bg_gc);
+		g_object_unref(this->realtime_track_bg_pen);
 #endif
 	}
 
-	if (this->realtime_track_pt1_gc != NULL) {
+	if (this->realtime_track_pt1_pen != NULL) {
 #ifdef K
-		g_object_unref(this->realtime_track_pt1_gc);
+		g_object_unref(this->realtime_track_pt1_pen);
 #endif
 	}
 
-	if (this->realtime_track_pt2_gc != NULL) {
+	if (this->realtime_track_pt2_pen != NULL) {
 #ifdef K
-		g_object_unref(this->realtime_track_pt2_gc);
+		g_object_unref(this->realtime_track_pt2_pen);
 #endif
 	}
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
@@ -874,7 +874,7 @@ static void set_total_count(int cnt, GpsSession *sess)
 		}
 
 		snprintf(s, 128, tmp_str, cnt);
-		gtk_label_set_text(GTK_LABEL(sess->progress_label), s);
+		sess->progress_label->setText(s);
 		gtk_widget_show(sess->progress_label);
 		sess->total_count = cnt;
 	}
@@ -950,7 +950,7 @@ static void set_current_count(int cnt, GpsSession *sess)
 			}
 			snprintf(s, 128, tmp_str, cnt);
 		}
-		gtk_label_set_text(GTK_LABEL(sess->progress_label), s);
+		sess->progress_label->setText(s);
 	}
 	sess->mutex.unlock();
 	gdk_threads_leave();
@@ -968,7 +968,7 @@ static void set_gps_info(const char *info, GpsSession *sess)
 	sess->mutex.lock();
 	if (sess->ok) {
 		snprintf(s, 256, _("GPS Device: %s"), info);
-		gtk_label_set_text (GTK_LABEL(sess->gps_label), s);
+		sess->gps_label->setText(s);
 	}
 	sess->mutex.unlock();
 	gdk_threads_leave();
@@ -1050,7 +1050,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 		gdk_threads_enter();
 		sess->mutex.lock();
 		if (sess->ok) {
-			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Status: Working..."));
+			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
 		gdk_threads_leave();
@@ -1121,7 +1121,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 		gdk_threads_enter();
 		sess->mutex.lock();
 		if (sess->ok) {
-			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Status: Working..."));
+			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
 		gdk_threads_leave();
@@ -1195,11 +1195,11 @@ static void gps_comm_thread(GpsSession *sess)
 	}
 #ifdef K
 	if (!result) {
-		gtk_label_set_text(GTK_LABEL(sess->status_label), _("Error: couldn't find gpsbabel."));
+		sess->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
 	} else {
 		sess->mutex.lock();
 		if (sess->ok) {
-			gtk_label_set_text(GTK_LABEL(sess->status_label), _("Done."));
+			sess->status_label->setText(QObject::tr("Done."));
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT, true);
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_REJECT, false);
 
@@ -1325,16 +1325,16 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 						    GTK_RESPONSE_ACCEPT, false);
 		gtk_window_set_title(GTK_WINDOW(sess->dialog), sess->window_title);
 
-		sess->status_label = gtk_label_new(_("Status: detecting gpsbabel"));
+		sess->status_label = new QLabel(QObject::tr("Status: detecting gpsbabel"));
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->status_label, false, false, 5);
 		gtk_widget_show_all(sess->status_label);
 
-		sess->gps_label = gtk_label_new(_("GPS device: N/A"));
-		sess->ver_label = gtk_label_new("");
-		sess->id_label = gtk_label_new("");
-		sess->wp_label = gtk_label_new("");
-		sess->trk_label = gtk_label_new("");
-		sess->rte_label = gtk_label_new("");
+		sess->gps_label = new QLabel(QObject::tr("GPS device: N/A"));
+		sess->ver_label = new QLabel("");
+		sess->id_label = new QLabel("");
+		sess->wp_label = new QLabel("");
+		sess->trk_label = new QLabel("");
+		sess->rte_label = new QLabel("");
 
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->gps_label, false, false, 5);
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->wp_label, false, false, 5);
@@ -1587,12 +1587,12 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 		//QPen const & pen, QPoint const * points, int npoints, bool filled
 #ifdef K
-		viewport->draw_polygon(this->realtime_track_bg_gc, trian_bg, 3, true);
-		viewport->draw_polygon(this->realtime_track_gc, trian, 3, true);
-		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc,
+		viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
+		viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
+		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen,
 					 x-2, y-2, 4, 4);
 #endif
-		//this->realtime_track_pt_gc = (this->realtime_track_pt_gc == this->realtime_track_pt1_gc) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc;
+		//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 	}
 }
 
@@ -1997,11 +1997,11 @@ LayerGPS::LayerGPS()
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 #ifdef K
-	this->realtime_track_gc = viewport->new_pen("#203070", 2);
-	this->realtime_track_bg_gc = viewport->new_pen("grey", 2);
-	this->realtime_track_pt1_gc = viewport->new_pen("red", 2);
-	this->realtime_track_pt2_gc = viewport->new_pen("green", 2);
-	this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
+	this->realtime_track_pen = viewport->new_pen("#203070", 2);
+	this->realtime_track_bg_pen = viewport->new_pen("grey", 2);
+	this->realtime_track_pt1_pen = viewport->new_pen("red", 2);
+	this->realtime_track_pt2_pen = viewport->new_pen("green", 2);
+	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
 #endif
 
 	this->gpsd_host = NULL; //strdup("host"); TODO

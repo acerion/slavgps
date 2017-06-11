@@ -123,7 +123,7 @@ namespace SlavGPS {
 		Waypoint * get_selected_waypoint();
 		void set_selected_waypoint(Waypoint * wp, LayerTRW * trw);
 
-		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL). */
+		/* Return the Layer of the selected track(s) or waypoint(s) are in (maybe NULL). */
 		//void * vik_window_get_containing_trw_layer(VikWindow *vw);
 
 		/* Return indicates if a redraw is necessary. */

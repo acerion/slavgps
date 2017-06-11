@@ -278,7 +278,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
 	vik_coord_load_from_latlon (&vc, VIK_COORD_LATLON, coord);
 
 	if (selected && selected->type == LayerType::TRW) {
-		((LayerTRW *) selected)->new_waypoint(selected->get_toolkit_window(), &vc);
+		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &vc);
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_changed();
 	} else {

@@ -50,8 +50,8 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GtkWidget * page_number;
-	Viewport * viewport;
+	QSpinBox * page_number = NULL;
+	Viewport * viewport = NULL;
 } datasource_osm_widgets_t;
 
 
@@ -110,15 +110,14 @@ static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * view
 {
 	datasource_osm_widgets_t * widgets = (datasource_osm_widgets_t *) user_data;
 #ifdef K
-	GtkWidget * page_number_label;
-	page_number_label = gtk_label_new (_("Page number:"));
-	widgets->page_number = gtk_spin_button_new_with_range(0, 100, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(widgets->page_number), last_page_number);
+	QLabel * page_number_label = new QLabel(QObject::tr("Page number:"));
+	widgets->page_number = new QSpinBox(0, 100, 1);
+	widgets->page_number.setValue(last_page_number);
 
 	/* Packing all widgets */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start (box, page_number_label, false, false, 5);
-	gtk_box_pack_start (box, widgets->page_number, false, false, 5);
+	box->addWidget(page_number_label);
+	box->addWidget(widgets->page_number);
 	gtk_widget_show_all(dialog);
 #endif
 }
@@ -136,7 +135,7 @@ static ProcessOptions * datasource_osm_get_process_options(datasource_osm_widget
 	widgets->viewport->get_bbox_strings(&bbox_strings);
 #ifdef K
 	/* Retrieve the specified page number. */
-	last_page_number = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widgets->page_number));
+	last_page_number = widgets->page_number.value();
 	page = last_page_number;
 #endif
 	/* NB Download is of GPX type. */

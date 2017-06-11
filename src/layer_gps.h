@@ -161,11 +161,11 @@ namespace SlavGPS {
 		GIOChannel * realtime_io_channel = NULL;
 		unsigned int realtime_io_watch_id = 0;
 		unsigned int realtime_retry_timer = 0;
-		GdkGC * realtime_track_gc = NULL;
-		GdkGC * realtime_track_bg_gc = NULL;
-		GdkGC * realtime_track_pt_gc = NULL;
-		GdkGC * realtime_track_pt1_gc = NULL;
-		GdkGC * realtime_track_pt2_gc = NULL;
+		QPen * realtime_track_pen = NULL;
+		QPen * realtime_track_bg_pen = NULL;
+		QPen * realtime_track_pt_pen = NULL;
+		QPen * realtime_track_pt1_pen = NULL;
+		QPen * realtime_track_pt2_pen = NULL;
 
 		/* Params. */
 		char * gpsd_host = NULL;

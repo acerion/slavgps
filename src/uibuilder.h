@@ -195,7 +195,7 @@ typedef struct {
 GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data);
 ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
 int a_uibuilder_properties_factory(const char *dialog_name,
-				   GtkWindow *parent,
+				   Window * parent,
 				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
@@ -208,7 +208,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
 	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
-ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
 				       ParameterValue *params_defaults);
 
