@@ -1,4 +1,9 @@
-2019.09.17
+2017.06.12
+With today's commit almost all c++ files (with the exception of most problematic ones) are a part of QT application and are compiled into final binary.
+There are still large sections of code that are disabled with preprocessor directives: gtk code, code relying on some other disabled code, code that wouldn't compile for one reason or another. But at least that one step - having (almost) all files included in compilation process - is behind me now.
+
+
+2016.09.17
 With today's commits I can display selected SRTM files in viewport.
 Still lots of work is needed, but it's a big step in good direction.
 commit 9e908b1de4feb1ca155d494ec80df4a7a5519e31
