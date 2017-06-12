@@ -1578,13 +1578,13 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 
 		/* Update UI to let user know what's going on. */
 		VikStatusbar *sb = trw->get_window()->get_statusbar();
-		VikRoutingEngine *engine = vik_routing_default_engine();
+		RoutingEngine *engine = vik_routing_default_engine();
 		if (!engine) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return LayerToolFuncStatus::ACK;
 		}
 		char *msg = g_strdup_printf(_("Querying %s for route between (%.3f, %.3f) and (%.3f, %.3f)."),
-					    vik_routing_engine_get_label(engine),
+					    engine->get_label(),
 					    start.lat, start.lon, end.lat, end.lon);
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		free(msg);
@@ -1601,8 +1601,8 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		/* Update UI to say we're done. */
 		trw->get_window()->clear_busy_cursor();
 		msg = (find_status)
-			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), vik_routing_engine_get_label(engine), start.lat, start.lon, end.lat, end.lon)
-			: g_strdup_printf(_("Error getting route from %s."), vik_routing_engine_get_label(engine));
+			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), engine->get_label(), start.lat, start.lon, end.lat, end.lon)
+			: g_strdup_printf(_("Error getting route from %s."), engine->get_label());
 
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		free(msg);

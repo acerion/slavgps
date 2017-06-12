@@ -22,7 +22,7 @@
  * SECTION:vikrouting
  * @short_description: the routing framework
  *
- * This module handles the list of #VikRoutingEngine.
+ * This module handles the list of #RoutingEngine.
  * It also handles the "default" functions.
  */
 
@@ -62,7 +62,7 @@ static GList * routing_engine_list = NULL;
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -92,8 +92,8 @@ void vik_routing_prefs_init()
 static int search_by_id(gconstpointer a, gconstpointer b)
 {
 	const char * id = (const char *) b;
-	VikRoutingEngine *engine = (VikRoutingEngine *)a;
-	char * engineId = vik_routing_engine_get_id(engine);
+	RoutingEngine *engine = (RoutingEngine *)a;
+	char * engineId = engine->get_id();
 	if (id && engine) {
 		return strcmp(id, engineId);
 	} else {
@@ -109,12 +109,12 @@ static int search_by_id(gconstpointer a, gconstpointer b)
  *
  * Returns: the found engine or %NULL.
  */
-VikRoutingEngine * vik_routing_find_engine(const char * id)
+RoutingEngine * vik_routing_find_engine(const char * id)
 {
-	VikRoutingEngine * engine = NULL;
+	RoutingEngine * engine = NULL;
 	GList * elem = g_list_find_custom(routing_engine_list, id, search_by_id);
 	if (elem) {
-		engine = (VikRoutingEngine *) elem->data;
+		engine = (RoutingEngine *) elem->data;
 	}
 	return engine;
 }
@@ -127,13 +127,13 @@ VikRoutingEngine * vik_routing_find_engine(const char * id)
  *
  * Returns: the default engine.
  */
-VikRoutingEngine * vik_routing_default_engine(void)
+RoutingEngine * vik_routing_default_engine(void)
 {
 	const char * id = a_preferences_get(VIKING_ROUTING_PARAMS_NAMESPACE "default")->s;
-	VikRoutingEngine * engine = vik_routing_find_engine(id);
+	RoutingEngine * engine = vik_routing_find_engine(id);
 	if (engine == NULL && routing_engine_list != NULL && g_list_first(routing_engine_list) != NULL) {
 		/* Fallback to first element */
-		engine = (VikRoutingEngine *) g_list_first(routing_engine_list)->data;
+		engine = (RoutingEngine *) g_list_first(routing_engine_list)->data;
 	}
 
 	return engine;
@@ -150,9 +150,9 @@ VikRoutingEngine * vik_routing_default_engine(void)
 bool vik_routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon end)
 {
 	/* The engine. */
-	VikRoutingEngine * engine = vik_routing_default_engine();
+	RoutingEngine * engine = vik_routing_default_engine();
 	/* The route computation. */
-	return vik_routing_engine_find(engine, trw, start, end);
+	return engine->find(trw, start, end);
 }
 
 
@@ -163,17 +163,17 @@ bool vik_routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon
  *
  * Register a new routing engine.
  */
-void vik_routing_register(VikRoutingEngine * engine)
+void vik_routing_register(RoutingEngine * engine)
 {
-	char * label = vik_routing_engine_get_label(engine);
-	char * id = vik_routing_engine_get_id(engine);
+	char * label = engine->get_label();
+	char * id = engine->get_id();
 	size_t len = 0;
 
 	/* Check if id already exists in list. */
 	GList * elem = g_list_find_custom(routing_engine_list, id, search_by_id);
 	if (elem != NULL) {
 		fprintf(stderr, "DEBUG: %s: %s already exists: update\n", __FUNCTION__, id);
-
+#ifdef K
 		/* Update main list. */
 		g_object_unref(elem->data);
 		elem->data = g_object_ref(engine);
@@ -188,9 +188,10 @@ void vik_routing_register(VikRoutingEngine * engine)
 		/* Update the label (possibly different). */
 		free(routing_engine_labels[len-1]);
 		routing_engine_labels[len-1] = g_strdup(label);
-
+#endif
 	} else {
 		fprintf(stderr, "DEBUG: %s: %s is new: append\n", __FUNCTION__, id);
+#ifdef K
 		routing_engine_list = g_list_append(routing_engine_list, g_object_ref(engine));
 
 		if (routing_engine_labels) {
@@ -217,6 +218,7 @@ void vik_routing_register(VikRoutingEngine * engine)
 		*/
 		prefs[0].widget_data = routing_engine_labels;
 		prefs[0].extra_widget_data = routing_engine_ids;
+#endif
 	}
 }
 
@@ -228,9 +230,11 @@ void vik_routing_register(VikRoutingEngine * engine)
  */
 void vik_routing_unregister_all()
 {
+#ifdef K
 	g_list_foreach(routing_engine_list, (GFunc) g_object_unref, NULL);
 	g_strfreev(routing_engine_labels);
 	g_strfreev(routing_engine_ids);
+#endif
 }
 
 
@@ -244,7 +248,9 @@ void vik_routing_unregister_all()
  */
 void vik_routing_foreach_engine(GFunc func, QComboBox * combo)
 {
+#ifdef K
 	g_list_foreach(routing_engine_list, func, user_data);
+#endif
 }
 
 
@@ -253,17 +259,17 @@ void vik_routing_foreach_engine(GFunc func, QComboBox * combo)
 /*
  * This function is called for all routing engine registered.
  * Following result of the predicate function, the current engine
- * is added to the combobox. In order to retrieve the VikRoutingEngine
+ * is added to the combobox. In order to retrieve the RoutingEngine
  * object, we store a list of added engine in a GObject's data "engines".
  *
  * @see g_list_foreach()
  */
 static void fill_engine_box(void * data, QComboBox * user_data)
 {
-	VikRoutingEngine * engine = (VikRoutingEngine *) data;
+	RoutingEngine * engine = (RoutingEngine *) data;
 	/* Retrieve combo. */
 	QComboBox * combo = (QComboBox *) user_data;
-
+#ifdef K
 	/* Only register engine fulfilling expected behavior. */
 	Predicate predicate = (Predicate) g_object_get_data(G_OBJECT (combo), "func");
 	void * predicate_data = g_object_get_data(G_OBJECT (combo), "user_data");
@@ -272,13 +278,14 @@ static void fill_engine_box(void * data, QComboBox * user_data)
 
 	if (ok) {
 		/* Add item in widget. */
-		const char *label = vik_routing_engine_get_label(engine);
+		const char *label = engine->get_label();
 		vik_combo_box_text_append(combo, label);
 		/* Save engine in internal list. */
 		GList *engines = (GList*) g_object_get_data(combo , "engines");
 		engines = g_list_append(engines, engine);
 		g_object_set_data(combo, "engines", engines);
 	}
+#endif
 }
 
 
@@ -290,23 +297,23 @@ static void fill_engine_box(void * data, QComboBox * user_data)
  *
  * Creates a combo box to allow selection of a routing engine.
  *
- * We use GObject data hastable to store and retrieve the VikRoutingEngine
+ * We use GObject data hastable to store and retrieve the RoutingEngine
  * associated to the selection.
  *
  * Returns: the combo box
  */
-GtkWidget * vik_routing_ui_selector_new(Predicate func, void * user_data)
+QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data)
 {
 	/* Create the combo */
 	QComboBox * combo = new QComboBox();
-
+#ifdef K
 	/* Save data for foreach function. */
 	g_object_set_data(G_OBJECT (combo), "func", (void *) func);
 	g_object_set_data(G_OBJECT (combo), "user_data", user_data);
 
 	/* Filter all engines with given user function. */
 	vik_routing_foreach_engine(fill_engine_box, combo);
-
+#endif
 	return combo;
 }
 
@@ -317,16 +324,18 @@ GtkWidget * vik_routing_ui_selector_new(Predicate func, void * user_data)
  * @combo: the GtkWidget combobox
  * @pos: the selected position
  *
- * Retrieve the VikRoutingEngine stored in a list attached to @combo
+ * Retrieve the RoutingEngine stored in a list attached to @combo
  * via the "engines" property.
  *
- * Returns: the VikRoutingEngine object associated to @pos.
+ * Returns: the RoutingEngine object associated to @pos.
  */
-VikRoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos)
+RoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos)
 {
+#ifdef K
 	/* Retrieve engine. */
 	GList *engines = (GList*) g_object_get_data (G_OBJECT (combo) , "engines");
-	VikRoutingEngine *engine = (VikRoutingEngine *) g_list_nth_data(engines, pos);
+	RoutingEngine *engine = (RoutingEngine *) g_list_nth_data(engines, pos);
 
 	return engine;
+#endif
 }

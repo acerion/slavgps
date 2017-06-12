@@ -83,7 +83,7 @@ void SlavGPS::google_post_init()
 #if 0    /* Google no longer supports the API we used. */
 
 	 if (a_babel_available()) {
-		 VikRoutingEngine * routing = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
+		 RoutingEngine * routing = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
 							   "id", "google",
 							   "label", "Google",
 							   "format", "google",

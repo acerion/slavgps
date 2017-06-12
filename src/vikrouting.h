@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+#include <QComboBox>
+
 #include <glib.h>
 
 #include "vikroutingengine.h"
@@ -38,17 +40,17 @@ bool vik_routing_default_find(SlavGPS::LayerTRW * trw, struct LatLon start, stru
 
 /* Routing engines management. */
 void vik_routing_prefs_init();
-void vik_routing_register(VikRoutingEngine * engine);
+void vik_routing_register(SlavGPS::RoutingEngine * engine);
 void vik_routing_unregister_all();
 void vik_routing_foreach_engine(GFunc func, QComboBox * combo);
 
 /* UI. */
 typedef bool (* Predicate)(void * data, void * user_data);
-GtkWidget * vik_routing_ui_selector_new(Predicate func, void * user_data);
-VikRoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos);
+QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data);
+SlavGPS::RoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos);
 
 /* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c. */
-VikRoutingEngine * vik_routing_default_engine(void);
+SlavGPS::RoutingEngine * vik_routing_default_engine(void);
 
 
 

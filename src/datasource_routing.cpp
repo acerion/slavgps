@@ -27,6 +27,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QComboBox>
+
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
@@ -34,9 +36,7 @@
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
-#ifdef K
 #include "vikrouting.h"
-#endif
 
 
 
@@ -46,7 +46,7 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GtkWidget * engines_combo;
+	QComboBox * engines_combo;
 	GtkWidget * from_entry, * to_entry;
 } datasource_routing_widgets_t;
 
@@ -150,13 +150,13 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 
 	/* Retrieve engine. */
 	last_engine = gtk_combo_box_get_active(widgets->engines_combo);
-	VikRoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
+	RoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}
 
-	po->url = vik_routing_engine_get_url_from_directions(engine, from, to);
-	po->input_file_type = g_strdup(vik_routing_engine_get_format(engine));
+	po->url = engine->get_url_from_directions(from, to);
+	po->input_file_type = g_strdup(engine->get_format());
 	options = NULL; /* i.e. use the default download settings. */
 
 	/* Save last selection. */

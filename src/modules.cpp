@@ -139,7 +139,7 @@ static void modules_register_gototools(VikGobjectBuilder * self, GObject * objec
 static void modules_register_routing_engine(VikGobjectBuilder * self, GObject * object)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	VikRoutingEngine *engine = VIK_ROUTING_ENGINE (object);
+	RoutingEngine *engine = VIK_ROUTING_ENGINE (object);
 	vik_routing_register(engine);
 }
 

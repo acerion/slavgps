@@ -4316,7 +4316,7 @@ void LayerTRW::route_refine_cb(void)
 
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
 
-		GtkWidget * combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
+		QComboBox * combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
 		gtk_combo_box_set_active(combo, last_engine);
 		gtk_widget_show_all(combo);
 
@@ -4327,7 +4327,7 @@ void LayerTRW::route_refine_cb(void)
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			/* Dialog validated: retrieve selected engine and do the job */
 			last_engine = gtk_combo_box_get_active(combo);
-			VikRoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
+			RoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
 
 			/* Change cursor */
 			this->get_window()->set_busy_cursor();
@@ -4337,7 +4337,7 @@ void LayerTRW::route_refine_cb(void)
 			this->route_finder_check_added_track = true;
 
 			/* the job */
-			vik_routing_engine_refine(routing, this, trk);
+			routing->refine(this, trk);
 
 			/* FIXME: remove or rename this hack */
 			if (this->route_finder_added_track) {

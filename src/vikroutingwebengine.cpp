@@ -23,7 +23,7 @@
  * SECTION:vikroutingwebengine
  * @short_description: A generic class for WEB based routing engine
  *
- * The #VikRoutingWebEngine class handles WEB based
+ * The #RoutingEngineWeb class handles WEB based
  * routing engine.
  */
 
@@ -38,7 +38,6 @@
 #include <glib/gstdio.h>
 
 #include "babel.h"
-
 #include "vikroutingwebengine.h"
 
 
@@ -48,57 +47,8 @@ using namespace SlavGPS;
 
 
 
-static void vik_routing_web_engine_finalize(GObject * gob);
 
-static bool vik_routing_web_engine_find(VikRoutingEngine * self, LayerTRW * trw, struct LatLon start, struct LatLon end);
-static char *vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end);
-static bool vik_routing_web_engine_supports_direction(VikRoutingEngine * self);
-static bool vik_routing_web_engine_refine(VikRoutingEngine * self, LayerTRW * trw, Track * trk);
-static bool vik_routing_web_engine_supports_refine(VikRoutingEngine * self);
-
-
-
-
-typedef struct _VikRoutingWebEnginePrivate VikRoutingWebEnginePrivate;
-struct _VikRoutingWebEnginePrivate
-{
-	char * url_base;
-
-	/* LatLon. */
-	char * url_start_ll_fmt;
-	char * url_stop_ll_fmt;
-	char * url_via_ll_fmt;
-
-	/* Directions. */
-	char * url_start_dir_fmt;
-	char * url_stop_dir_fmt;
-
-	DownloadFileOptions options;
-};
-
-#define VIK_ROUTING_WEB_ENGINE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_ROUTING_WEB_ENGINE_TYPE, VikRoutingWebEnginePrivate))
-
-/* Properties. */
-enum {
-	PROP_0,
-
-	PROP_URL_BASE,
-
-	/* LatLon. */
-	PROP_URL_START_LL,
-	PROP_URL_STOP_LL,
-	PROP_URL_VIA_LL,
-
-	/* Direction. */
-	PROP_URL_START_DIR,
-	PROP_URL_STOP_DIR,
-
-	PROP_REFERER,
-	PROP_FOLLOW_LOCATION,
-};
-
-G_DEFINE_TYPE (VikRoutingWebEngine, vik_routing_web_engine, VIK_ROUTING_ENGINE_TYPE)
-
+#ifdef K
 static void vik_routing_web_engine_set_property(GObject * object,
 						unsigned int property_id,
 						const GValue * value,
@@ -202,205 +152,52 @@ static void vik_routing_web_engine_get_property(GObject    * object,
       break;
     }
 }
+#endif
 
 
 
 
-static void vik_routing_web_engine_class_init(VikRoutingWebEngineClass * klass)
+RoutingEngineWeb::RoutingEngineWeb()
 {
-	GObjectClass * object_class;
-	VikRoutingEngineClass * parent_class;
-	GParamSpec * pspec = NULL;
-
-	object_class = G_OBJECT_CLASS (klass);
-
-	object_class->set_property = vik_routing_web_engine_set_property;
-	object_class->get_property = vik_routing_web_engine_get_property;
-	object_class->finalize = vik_routing_web_engine_finalize;
-
-	parent_class = VIK_ROUTING_ENGINE_CLASS (klass);
-
-	parent_class->find = vik_routing_web_engine_find;
-	parent_class->supports_direction = vik_routing_web_engine_supports_direction;
-	parent_class->get_url_from_directions = vik_routing_web_engine_get_url_from_directions;
-	parent_class->refine = vik_routing_web_engine_refine;
-	parent_class->supports_refine = vik_routing_web_engine_supports_refine;
-
-	/**
-	 * VikRoutingWebEngine:url-base:
-	 *
-	 * The base URL of the routing engine.
-	 */
-	pspec = g_param_spec_string("url-base",
-				    "URL's base",
-				    "The base URL of the routing engine",
-				    "<no-set>", /* Default value. */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_BASE, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:url-start-ll:
-	 *
-	 * The part of the request hosting the end point.
-	 */
-	pspec = g_param_spec_string("url-start-ll",
-				     "Start part of the URL",
-				    "The part of the request hosting the start point",
-				    "<no-set>", /* default value */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_START_LL, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:url-stop-ll:
-	 *
-	 * The part of the request hosting the end point.
-	 */
-	pspec = g_param_spec_string("url-stop-ll",
-				    "Stop part of the URL",
-				    "The part of the request hosting the end point",
-				    "<no-set>", /* Default value */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_STOP_LL, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:url-via-ll:
-	 *
-	 * The param of the request for setting a via point.
-	 */
-	pspec = g_param_spec_string("url-via-ll",
-				    "Via part of the URL",
-				    "The param of the request for setting a via point",
-				    NULL, /* Default value. */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_VIA_LL, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:url-start-dir:
-	 *
-	 * The part of the request hosting the end point.
-	 */
-	pspec = g_param_spec_string("url-start-dir",
-				    "Start part of the URL",
-				    "The part of the request hosting the start point",
-				    NULL, /* Default value. */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_START_DIR, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:url-stop-dir:
-	 *
-	 * The part of the request hosting the end point.
-	 */
-	pspec = g_param_spec_string("url-stop-dir",
-				    "Stop part of the URL",
-				    "The part of the request hosting the end point",
-				    NULL, /* Default value. */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_URL_STOP_DIR, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:referer:
-	 *
-	 * The REFERER string to use in HTTP request.
-	 */
-	pspec = g_param_spec_string("referer",
-				    "Referer",
-				    "The REFERER string to use in HTTP request",
-				    NULL, /* Default value. */
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_REFERER, pspec);
-
-
-	/**
-	 * VikRoutingWebEngine:follow-location:
-	 *
-	 * Specifies the number of retries to follow a redirect while downloading a page.
-	 */
-	pspec = g_param_spec_long("follow-location",
-				  "Follow location",
-				  "Specifies the number of retries to follow a redirect while downloading a page",
-				  0,  /* Minimum value. */
-				  G_MAXLONG, /* Maximum value. */
-				  2,  /* Default value. */
-				  (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(object_class, PROP_FOLLOW_LOCATION, pspec);
-
-	g_type_class_add_private(klass, sizeof (VikRoutingWebEnginePrivate));
+	this->options.referer = NULL;
+	this->options.follow_location = 0;
+	this->options.check_file = NULL;
+	this->options.check_file_server_time = false;
+	this->options.use_etag = false;
 }
 
 
 
 
-static void vik_routing_web_engine_init(VikRoutingWebEngine * self)
+RoutingEngineWeb::~RoutingEngineWeb()
 {
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	priv->url_base = NULL;
+	free(this->url_base);
+	this->url_base = NULL;
 
 	/* LatLon. */
-	priv->url_start_ll_fmt = NULL;
-	priv->url_stop_ll_fmt = NULL;
-	priv->url_via_ll_fmt = NULL;
+	free(this->url_start_ll_fmt);
+	this->url_start_ll_fmt = NULL;
+	free(this->url_stop_ll_fmt);
+	this->url_stop_ll_fmt = NULL;
+	free(this->url_via_ll_fmt);
+	this->url_via_ll_fmt = NULL;
 
 	/* Directions. */
-	priv->url_start_dir_fmt = NULL;
-	priv->url_stop_dir_fmt = NULL;
+	free(this->url_start_dir_fmt);
+	this->url_start_dir_fmt = NULL;
+	free(this->url_stop_dir_fmt);
+	this->url_stop_dir_fmt = NULL;
 
-	priv->options.referer = NULL;
-	priv->options.follow_location = 0;
-	priv->options.check_file = NULL;
-	priv->options.check_file_server_time = false;
-	priv->options.use_etag = false;
+	free(this->options.referer);
+	this->options.referer = NULL;
 }
 
 
 
 
-static void vik_routing_web_engine_finalize(GObject * gob)
+DownloadFileOptions * RoutingEngineWeb::get_download_options(void)
 {
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (gob);
-
-	free(priv->url_base);
-	priv->url_base = NULL;
-
-	/* LatLon. */
-	free(priv->url_start_ll_fmt);
-	priv->url_start_ll_fmt = NULL;
-	free(priv->url_stop_ll_fmt);
-	priv->url_stop_ll_fmt = NULL;
-	free(priv->url_via_ll_fmt);
-	priv->url_via_ll_fmt = NULL;
-
-	/* Directions. */
-	free(priv->url_start_dir_fmt);
-	priv->url_start_dir_fmt = NULL;
-	free(priv->url_stop_dir_fmt);
-	priv->url_stop_dir_fmt = NULL;
-
-	free(priv->options.referer);
-	priv->options.referer = NULL;
-
-	G_OBJECT_CLASS (vik_routing_web_engine_parent_class)->finalize(gob);
-}
-
-
-
-
-static DownloadFileOptions * vik_routing_web_engine_get_download_options(VikRoutingEngine * self)
-{
-	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
-		return NULL;
-	}
-
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE(self);
-
-	return &(priv->options);
+	return &this->options;
 }
 
 
@@ -418,21 +215,15 @@ static char * substitute_latlon(const char * fmt, struct LatLon ll)
 
 
 
-static char * vik_routing_web_engine_get_url_for_coords(VikRoutingEngine * self, struct LatLon start, struct LatLon end)
+char * RoutingEngineWeb::get_url_for_coords(struct LatLon start, struct LatLon end)
 {
-	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+	if (!this->url_base || !this->url_start_ll_fmt || !this->url_stop_ll_fmt) {
 		return NULL;
 	}
 
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	if (!priv->url_base || !priv->url_start_ll_fmt || !priv->url_stop_ll_fmt) {
-		return NULL;
-	}
-
-	char * startURL = substitute_latlon(priv->url_start_ll_fmt, start);
-	char * endURL = substitute_latlon(priv->url_stop_ll_fmt, end);
-	char * url = g_strconcat(priv->url_base, startURL, endURL, NULL);
+	char * startURL = substitute_latlon(this->url_start_ll_fmt, start);
+	char * endURL = substitute_latlon(this->url_stop_ll_fmt, end);
+	char * url = g_strconcat(this->url_base, startURL, endURL, NULL);
 
 	/* Free memory. */
 	free(startURL);
@@ -444,15 +235,15 @@ static char * vik_routing_web_engine_get_url_for_coords(VikRoutingEngine * self,
 
 
 
-static bool vik_routing_web_engine_find(VikRoutingEngine * self, LayerTRW * trw, struct LatLon start, struct LatLon end)
+bool RoutingEngineWeb::find(LayerTRW * trw, struct LatLon start, struct LatLon end)
 {
-	char * uri = vik_routing_web_engine_get_url_for_coords(self, start, end);
+	char * uri = this->get_url_for_coords(start, end);
 
-	DownloadFileOptions *options = vik_routing_web_engine_get_download_options(self);
+	DownloadFileOptions * options_ = this->get_download_options();
 
-	char * format = vik_routing_engine_get_format (self);
-	ProcessOptions po(NULL, NULL, format, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options);
+	char * format_ = this->get_format();
+	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
+	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options_);
 
 	free(uri);
 
@@ -462,15 +253,9 @@ static bool vik_routing_web_engine_find(VikRoutingEngine * self, LayerTRW * trw,
 
 
 
-static char * vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end)
+char * RoutingEngineWeb::get_url_from_directions(const char * start, const char * end)
 {
-	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
-		return NULL;
-	}
-
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	if (!priv->url_base || !priv->url_start_dir_fmt || !priv->url_stop_dir_fmt) {
+	if (!this->url_base || !this->url_start_dir_fmt || !this->url_stop_dir_fmt) {
 		return NULL;
 	}
 
@@ -485,7 +270,7 @@ static char * vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * 
 	from_quoted = g_strjoinv("%20", from_split);
 	to_quoted = g_strjoinv("%20", to_split);
 
-	char * url_fmt = g_strconcat(priv->url_base, priv->url_start_dir_fmt, priv->url_stop_dir_fmt, NULL);
+	char * url_fmt = g_strconcat(this->url_base, this->url_start_dir_fmt, this->url_stop_dir_fmt, NULL);
 	char * url = g_strdup_printf(url_fmt, from_quoted, to_quoted);
 
 	free(url_fmt);
@@ -501,23 +286,17 @@ static char * vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * 
 
 
 
-static bool vik_routing_web_engine_supports_direction(VikRoutingEngine * self)
+bool RoutingEngineWeb::supports_direction(void)
 {
-	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
-		return false;
-	}
-
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	return (priv->url_start_dir_fmt) != NULL;
+	return (this->url_start_dir_fmt) != NULL;
 }
 
 
 
 
 struct _append_ctx {
-	VikRoutingWebEnginePrivate * priv;
-	char ** urlParts;
+	RoutingEngineWeb * engine = NULL;
+	char ** urlParts = NULL;
 	int nb;
 };
 
@@ -532,7 +311,7 @@ static void _append_stringified_coords(void * data, void * user_data)
 	/* Stringify coordinate. */
 	struct LatLon position;
 	vik_coord_to_latlon(&(tp->coord), &position);
-	char * string = substitute_latlon(ctx->priv->url_via_ll_fmt, position);
+	char * string = substitute_latlon(ctx->engine->url_via_ll_fmt, position);
 
 	/* Append. */
 	ctx->urlParts[ctx->nb] = string;
@@ -542,25 +321,23 @@ static void _append_stringified_coords(void * data, void * user_data)
 
 
 
-static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, Track * trk)
+char * RoutingEngineWeb::get_url_for_track(Track * trk)
 {
-	char * *urlParts;
-	char * url;
+	char ** urlParts = NULL;
+	char * url = NULL;
 
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	if (!priv->url_base || !priv->url_start_ll_fmt || !priv->url_stop_ll_fmt || !priv->url_via_ll_fmt) {
+	if (!this->url_base || !this->url_start_ll_fmt || !this->url_stop_ll_fmt || !this->url_via_ll_fmt) {
 		return NULL;
 	}
 
 	/* Init temporary storage. */
 	size_t len = 1 + trk->trackpointsB->size() + 1; /* Base + trackpoints + NULL. */
 	urlParts = (char **) malloc(sizeof(char*)*len);
-	urlParts[0] = g_strdup(priv->url_base);
+	urlParts[0] = g_strdup(this->url_base);
 	urlParts[len-1] = NULL;
 
 	struct _append_ctx ctx;
-	ctx.priv = priv;
+	ctx.engine = this;
 	ctx.urlParts = urlParts;
 	ctx.nb = 1; /* First cell available, previous used for base URL. */
 
@@ -575,13 +352,13 @@ static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, 
 
 	Trackpoint * tp = *trk->trackpointsB->begin();
 	vik_coord_to_latlon(&tp->coord, &position);
-	urlParts[1] = substitute_latlon(priv->url_start_ll_fmt, position);
+	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, position);
 
 	free(urlParts[len-2]);
 
 	tp = *std::prev(trk->trackpointsB->end());
 	vik_coord_to_latlon(&tp->coord, &position);
-	urlParts[len-2] = substitute_latlon(priv->url_stop_ll_fmt, position);
+	urlParts[len-2] = substitute_latlon(this->url_stop_ll_fmt, position);
 
 	/* Concat. */
 	url = g_strjoinv(NULL, urlParts);
@@ -596,18 +373,18 @@ static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, 
 
 
 
-static bool vik_routing_web_engine_refine(VikRoutingEngine * self, LayerTRW * trw, Track * trk)
+bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 {
 	/* Compute URL. */
-	char * uri = vik_routing_web_engine_get_url_for_track(self, trk);
+	char * uri = this->get_url_for_track(trk);
 
 	/* Download data. */
-	DownloadFileOptions *options = vik_routing_web_engine_get_download_options(self);
+	DownloadFileOptions * options_ = this->get_download_options();
 
 	/* Convert and insert data in model. */
-	char * format = vik_routing_engine_get_format(self);
-	ProcessOptions po(NULL, NULL, format, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options);
+	char * format_ = this->get_format();
+	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
+	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options_);
 
 	free(uri);
 
@@ -617,13 +394,7 @@ static bool vik_routing_web_engine_refine(VikRoutingEngine * self, LayerTRW * tr
 
 
 
-static bool vik_routing_web_engine_supports_refine(VikRoutingEngine * self)
+bool RoutingEngineWeb::supports_refine(void)
 {
-	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
-		return false;
-	}
-
-	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
-
-	return priv->url_via_ll_fmt != NULL;
+	return this->url_via_ll_fmt != NULL;
 }

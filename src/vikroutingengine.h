@@ -26,8 +26,6 @@
 
 #include <cstdint>
 
-#include <glib.h>
-
 #include "layer_trw.h"
 #include "coords.h"
 #include "download.h"
@@ -36,45 +34,34 @@
 
 
 
-#define VIK_ROUTING_ENGINE_TYPE            (vik_routing_engine_get_type ())
-#define VIK_ROUTING_ENGINE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_ROUTING_ENGINE_TYPE, VikRoutingEngine))
-#define VIK_ROUTING_ENGINE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_ROUTING_ENGINE_TYPE, VikRoutingEngineClass))
-#define VIK_IS_ROUTING_ENGINE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_ROUTING_ENGINE_TYPE))
-#define VIK_IS_ROUTING_ENGINE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_ROUTING_ENGINE_TYPE))
-#define VIK_ROUTING_ENGINE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_ROUTING_ENGINE_TYPE, VikRoutingEngineClass))
+namespace SlavGPS {
+
+	class RoutingEngine {
+	public:
+		RoutingEngine();
+		~RoutingEngine();
+
+		virtual bool find(LayerTRW * trw, struct LatLon start, struct LatLon end);
+		virtual char * get_url_from_directions(const char * start, const char * end);
+		virtual bool supports_direction(void);
+		virtual bool refine(LayerTRW * trw, SlavGPS::Track * trk);
+		virtual bool supports_refine(void);
+
+		char * get_id(void) { return this->id; }
+		char * get_label(void) { return this->label; }
+		char * get_format(void) { return this->format; }
+
+		char * id = NULL;     /* The identifier of the routing engine. */
+		char * label = NULL;  /* The label of the routing engine. */
+		char * format = NULL; /* The format of the output (see gpsbabel). */
+	};
+}
 
 
 
 
-typedef struct _VikRoutingEngine VikRoutingEngine;
-typedef struct _VikRoutingEngineClass VikRoutingEngineClass;
-
-struct _VikRoutingEngineClass {
-	GObjectClass object_class;
-	bool (* find)(VikRoutingEngine * self, SlavGPS::LayerTRW * trw, struct LatLon start, struct LatLon end);
-	char * (* get_url_from_directions)(VikRoutingEngine * self, const char * start, const char * end);
-	bool (* supports_direction)(VikRoutingEngine *self);
-	bool (* refine)(VikRoutingEngine * self, SlavGPS::LayerTRW * trw, SlavGPS::Track * trk);
-	bool (* supports_refine)(VikRoutingEngine * self);
-};
-
-GType vik_routing_engine_get_type();
-
-struct _VikRoutingEngine {
-	GObject obj;
-};
-
-bool vik_routing_engine_find(VikRoutingEngine * self, SlavGPS::LayerTRW * trw, struct LatLon start, struct LatLon end);
-bool vik_routing_engine_refine(VikRoutingEngine * self, SlavGPS::LayerTRW * trw, SlavGPS::Track * trk);
-char *vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end);
-
-/* Accessors. */
-char * vik_routing_engine_get_id(VikRoutingEngine * self);
-char * vik_routing_engine_get_label(VikRoutingEngine * self);
-char * vik_routing_engine_get_format(VikRoutingEngine * self);
-
-bool vik_routing_engine_supports_direction(VikRoutingEngine * self);
-bool vik_routing_engine_supports_refine(VikRoutingEngine * self);
+// bool vik_routing_engine_supports_direction(RoutingEngine * self);
+// bool vik_routing_engine_supports_refine(RoutingEngine * self);
 
 
 

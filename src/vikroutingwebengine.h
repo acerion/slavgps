@@ -21,41 +21,56 @@
 #ifndef _WEB_ROUTING_H
 #define _WEB_ROUTING_H
 
-#include <glib.h>
-#include <stdint.h>
 
+
+
+#include <cstdint>
 
 #include "vikroutingengine.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_ROUTING_WEB_ENGINE_TYPE            (vik_routing_web_engine_get_type ())
-#define VIK_ROUTING_WEB_ENGINE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_ROUTING_WEB_ENGINE_TYPE, VikRoutingWebEngine))
-#define VIK_ROUTING_WEB_ENGINE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_ROUTING_WEB_ENGINE_TYPE, VikRoutingWebEngineClass))
-#define VIK_IS_ROUTING_WEB_ENGINE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_ROUTING_WEB_ENGINE_TYPE))
-#define VIK_IS_ROUTING_WEB_ENGINE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_ROUTING_WEB_ENGINE_TYPE))
-#define VIK_ROUTING_WEB_ENGINE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_ROUTING_WEB_ENGINE_TYPE, VikRoutingWebEngineClass))
+
+namespace SlavGPS {
 
 
-typedef struct _VikRoutingWebEngine VikRoutingWebEngine;
-typedef struct _VikRoutingWebEngineClass VikRoutingWebEngineClass;
 
-struct _VikRoutingWebEngineClass
-{
-	VikRoutingEngineClass object_class;
-};
 
-GType vik_routing_web_engine_get_type ();
+	class RoutingEngineWeb : public RoutingEngine {
 
-struct _VikRoutingWebEngine {
-	VikRoutingEngine obj;
-};
+	public:
+		RoutingEngineWeb();
+		~RoutingEngineWeb();
 
-#ifdef __cplusplus
+
+		DownloadFileOptions * get_download_options(void);
+		char * get_url_for_coords(struct LatLon start, struct LatLon end);
+		bool find(LayerTRW * trw, struct LatLon start, struct LatLon end);
+		char * get_url_from_directions(const char * start, const char * end);
+		bool supports_direction(void);
+		char * get_url_for_track(Track * trk);
+		bool refine(LayerTRW * trw, Track * trk);
+		bool supports_refine(void);
+
+		char * url_base = NULL; /* URL's base. The base URL of the routing engine. */
+
+		/* LatLon. */
+		char * url_start_ll_fmt = NULL; /* Start part of the URL. The part of the request hosting the start point. */
+		char * url_stop_ll_fmt = NULL; /* Stop part of the URL. The part of the request hosting the end point. */
+		char * url_via_ll_fmt = NULL; /* Via part of the URL. The param of the request for setting a via point. */
+
+		/* Directions. */
+		char * url_start_dir_fmt = NULL; /* Start part of the URL. The part of the request hosting the start point. */
+		char * url_stop_dir_fmt = NULL;  /* Stop part of the URL. The part of the request hosting the end point. */
+
+		DownloadFileOptions options;
+
+	};
+
+
 }
-#endif
+
+
+
 
 #endif

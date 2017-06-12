@@ -6,6 +6,9 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    vikrouting.cpp \
+    vikroutingengine.cpp \
+    vikroutingwebengine.cpp \
     vikwebtoolbounds.cpp \
     vikwebtoolcenter.cpp \
     vikwebtool.cpp \
@@ -125,6 +128,9 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    vikrouting.h \
+    vikroutingengine.h \
+    vikroutingwebengine.h \
     vikwebtoolbounds.h \
     vikwebtoolcenter.h \
     vikwebtool.h \
@@ -236,9 +242,6 @@ HEADERS += window.h \
 # garminsymbols.cpp
 # geotag_exif.cpp
 # toolbar.cpp
-# vikrouting.cpp
-# vikroutingengine.cpp
-# vikroutingwebengine.cpp
 
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp
