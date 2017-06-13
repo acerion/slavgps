@@ -38,7 +38,7 @@
 #include <glib/gstdio.h>
 
 #include "babel.h"
-#include "vikroutingwebengine.h"
+#include "routing_engine_web.h"
 
 
 

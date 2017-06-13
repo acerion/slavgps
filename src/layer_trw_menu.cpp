@@ -81,7 +81,7 @@
 #include "clipboard.h"
 #include "settings.h"
 #include "globals.h"
-#include "vikrouting.h"
+#include "routing.h"
 #include "layer_trw_draw.h"
 #include "icons/icons.h"
 #endif

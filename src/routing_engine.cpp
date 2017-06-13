@@ -37,7 +37,7 @@
 #include <glib/gi18n.h>
 
 #include "babel.h"
-#include "vikroutingengine.h"
+#include "routing_engine.h"
 
 
 

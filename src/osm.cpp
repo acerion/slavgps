@@ -41,8 +41,8 @@
 #include "goto_tool_xml.h"
 #include "goto.h"
 #ifdef K
-#include "vikrouting.h"
-#include "vikroutingwebengine.h"
+#include "routing.h"
+#include "routing_engine_web.h"
 #endif
 
 

@@ -39,8 +39,8 @@
 #include "curl_download.h"
 #include "babel.h"
 #include "preferences.h"
-#include "vikrouting.h"
-#include "vikroutingengine.h"
+#include "routing.h"
+#include "routing_engine.h"
 
 
 

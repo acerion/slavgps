@@ -32,8 +32,8 @@
 #include "goto.h"
 #include "googlesearch.h"
 #ifdef K
-#include "vikrouting.h"
-#include "vikroutingwebengine.h"
+#include "routing.h"
+#include "routing_engine_web.h"
 #endif
 #include "babel.h"
 

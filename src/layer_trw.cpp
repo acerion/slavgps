@@ -85,7 +85,7 @@
 #include "ui_util.h"
 #include "gpspoint.h"
 #include "clipboard.h"
-#include "vikrouting.h"
+#include "routing.h"
 #include "icons/icons.h"
 
 #endif

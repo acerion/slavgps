@@ -30,7 +30,7 @@
 
 #include <glib.h>
 
-#include "vikroutingengine.h"
+#include "routing_engine.h"
 
 
 

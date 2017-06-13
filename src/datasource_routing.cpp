@@ -36,7 +36,7 @@
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
-#include "vikrouting.h"
+#include "routing.h"
 
 
 

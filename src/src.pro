@@ -6,9 +6,9 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
-    vikrouting.cpp \
-    vikroutingengine.cpp \
-    vikroutingwebengine.cpp \
+    routing.cpp \
+    routing_engine.cpp \
+    routing_engine_web.cpp \
     vikwebtoolbounds.cpp \
     vikwebtoolcenter.cpp \
     vikwebtool.cpp \
@@ -128,9 +128,9 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
-    vikrouting.h \
-    vikroutingengine.h \
-    vikroutingwebengine.h \
+    routing.h \
+    routing_engine.h \
+    routing_engine_web.h \
     vikwebtoolbounds.h \
     vikwebtoolcenter.h \
     vikwebtool.h \

@@ -49,7 +49,7 @@
 #include "globals.h"
 #include "layer_map.h"
 #include "layer_georef.h"
-#include "vikrouting.h"
+#include "routing.h"
 #include "vikutils.h"
 #include "util.h"
 #include "toolbar.h"

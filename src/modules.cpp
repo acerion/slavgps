@@ -52,7 +52,7 @@
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
 #include "goto.h"
-#include "vikrouting.h"
+#include "routing.h"
 
 /* Loadable types */
 #include "map_source_slippy.h"
@@ -62,7 +62,7 @@
 #include "vikwebtoolbounds.h"
 #include "goto_tool_xml.h"
 #include "vikwebtool_datasource.h"
-#include "vikroutingwebengine.h"
+#include "routing_engine_web.h"
 
 #include "vikgobjectbuilder.h"
 #endif
