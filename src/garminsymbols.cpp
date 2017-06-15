@@ -397,7 +397,7 @@ static QPixmap * get_wp_sym_from_index(int i)
 				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL);
 			} else {
 				/* Up sample from small image. */
-				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL), 30, 30, GDK_INTERP_BILINEAR);
+				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL), 30, 30, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 			}
 		} else {
 			if (garmin_syms[i].data) {
@@ -405,7 +405,7 @@ static QPixmap * get_wp_sym_from_index(int i)
 				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL);
 			} else {
 				/* Down size large image. */
-				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL), 18, 18, GDK_INTERP_BILINEAR);
+				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL), 18, 18, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 			}
 		}
 	}

@@ -183,8 +183,6 @@ extern "C" {
 #define VIK_DEFAULT_ALTITUDE 0.0
 #define VIK_DEFAULT_DOP 0.0
 
-#define VIK_GTK_WINDOW_FROM_WIDGET(x) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
-
 
 #define DEG2RAD(x) ((x)*(M_PI/180))
 #define RAD2DEG(x) ((x)*(180/M_PI))

@@ -863,8 +863,8 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 			/* Needed so 'click picture' tool knows how big the pic is; we don't
 			   store it in cp because they may have been freed already. */
-			wp->image_width = gdk_pixbuf_get_width(cp->pixmap);
-			wp->image_height = gdk_pixbuf_get_height(cp->pixmap);
+			wp->image_width = cp->pixmap->width();
+			wp->image_height = cp->pixmap->heigth();
 
 			g_queue_push_head(dp->trw->image_cache, cp);
 			if (dp->trw->image_cache->length > dp->trw->image_cache_size) {
@@ -877,8 +877,8 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 		}
 	}
 	if (pixmap) {
-		int w = gdk_pixbuf_get_width(pixmap);
-		int h = gdk_pixbuf_get_height(pixmap);
+		int w = pixmap->width();
+		int h = pixmap->height();
 
 		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < dp->width && y - (h / 2) < dp->height) { /* always draw within boundaries */
 			if (dp->highlight) {
@@ -909,7 +909,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 #ifdef K
 	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixmap) {
-		dp->viewport->draw_pixmap(wp->symbol_pixmap, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixmap)/2, y - gdk_pixbuf_get_height(wp->symbol_pixmap)/2, -1, -1);
+		dp->viewport->draw_pixmap(wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
 	} else
 #endif
 		if (wp == dp->trw->current_wp) {
@@ -979,7 +979,7 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 	pango_layout_get_pixel_size(dp->trw->wplabellayout, &width, &height);
 	label_x = x - width/2;
 	if (wp->symbol_pixmap) {
-		label_y = y - height - 2 - gdk_pixbuf_get_height(wp->symbol_pixmap)/2;
+		label_y = y - height - 2 - wp->symbol_pixmap->height()/2;
 	} else {
 		label_y = y - dp->trw->wp_size - height - 2;
 	}

@@ -2697,7 +2697,6 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 
 	struct UTM utm_orig = *((const struct UTM *) this->viewport->get_center());
 
-	GError *error = NULL;
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
 			snprintf(name_of_file, a_size, "%s%cy%d-x%d.%s", file_path, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
@@ -2721,10 +2720,8 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 
 			/* save buffer as file. */
 			QPixmap * pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
-			gdk_pixbuf_save(pixmap_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
-			if (error) {
-				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1: %2").arg(name_of_file).arg(error->message));
-				g_error_free(error);
+			if (!pixmap_to_save->save(name_of_file, save_as_png ? "png" : "jpeg")) {
+				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(name_of_file));
 			}
 
 			g_object_unref(G_OBJECT(pixmap_to_save));

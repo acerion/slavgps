@@ -240,9 +240,9 @@ QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
-	int width, height, iii, jjj;
+	int iii, jjj;
 
-	if (!gdk_pixbuf_get_has_alpha (pixmap)) {
+	if (!pixmap->hasAlphaChannel()) {
 		QPixmap * tmp = gdk_pixbuf_add_alpha(pixmap, false,0,0,0);
 		g_object_unref(G_OBJECT(pixmap));
 		pixmap = tmp;
@@ -252,8 +252,8 @@ QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 	}
 
 	pixels = gdk_pixbuf_get_pixels(pixmap);
-	width = gdk_pixbuf_get_width(pixmap);
-	height = gdk_pixbuf_get_height(pixmap);
+	int width = pixmap->width();
+	int height = pixmap->height();
 
 	/* r,g,b,a,r,g,b,a.... */
 	for (iii = 0; iii < width; iii++) {
@@ -279,9 +279,9 @@ QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
-	int width, height, iii, jjj;
+	int iii, jjj;
 
-	if (!gdk_pixbuf_get_has_alpha(pixmap)) {
+	if (!pixmap->hasAlphaChannel()) {
 		QPixmap * tmp = gdk_pixbuf_add_alpha(pixmap,false,0,0,0);
 		g_object_unref(G_OBJECT(pixmap));
 		pixmap = tmp;
@@ -291,8 +291,8 @@ QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 	}
 
 	pixels = gdk_pixbuf_get_pixels(pixmap);
-	width = gdk_pixbuf_get_width(pixmap);
-	height = gdk_pixbuf_get_height(pixmap);
+	int width = pixmap->width();
+	int height = pixmap->height();
 
 	/* r,g,b,a,r,g,b,a.... */
 	for (iii = 0; iii < width; iii++) {

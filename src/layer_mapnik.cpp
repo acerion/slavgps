@@ -594,9 +594,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 {
 	if (this->use_file_cache) {
 		if (this->file_cache_dir) {
-#ifdef K
-			GError *error = NULL;
-			char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
+			char * filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
 			char *dir = g_path_get_dirname(filename);
 			if (!g_file_test(filename, G_FILE_TEST_EXISTS)) {
@@ -606,12 +604,10 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 			}
 			free(dir);
 
-			if (!gdk_pixbuf_save(pixmap, filename, "png", &error, NULL)) {
-				fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
-				g_error_free(error);
+			if (!pixmap->save(filename, "png")) {
+				qDebug() << "WW: Layer Mapnik: failed to save pixmap to" << filename;
 			}
 			free(filename);
-#endif
 		}
 	}
 }
@@ -679,7 +675,7 @@ void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 	if (!pixmap) {
 #ifdef K
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
-		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, GDK_INTERP_BILINEAR);
+		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
 	}
 	this->possibly_save_pixmap(pixmap, ulm);
@@ -770,11 +766,11 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
 	if (g_stat(filename, &gsb) == 0) {
 		/* Get from disk. */
 #ifdef K
-		GError *error = NULL;
-		pixmap = gdk_pixbuf_new_from_file(filename, &error);
-		if (error) {
-			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
-			g_error_free(error);
+		pixmap = new QPixmap();
+		if (!pixmap->load(filename)) {
+			delete pixmap;
+			pixmap = NULL;
+			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << filename;
 		} else {
 			if (this->alpha < 255) {
 				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);

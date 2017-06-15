@@ -293,8 +293,7 @@ static QPixmap * get_thumbnail(QPixmap * drawable, int thumb_width, int thumb_he
 	gdk_drawable_get_size(drawable, &width, &height);
 	QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, drawable,
 							NULL, 0, 0, 0, 0, width, height);
-	thumbnail = gdk_pixbuf_scale_simple(pixmap, thumb_width, thumb_height,
-					    GDK_INTERP_BILINEAR);
+	thumbnail = pixmap->scaled(thumb_width, thumb_height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	g_object_unref(pixmap);
 #endif
 	return thumbnail;
@@ -367,10 +366,8 @@ static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * 
 			int width, height;
 			gdk_drawable_get_size(drawable, &width, &height);
 
-			double scale_x = ((double) width /
-					  gdk_pixbuf_get_width(preview->pixmap));
-			double scale_y = ((double) height /
-					  gdk_pixbuf_get_height(preview->pixmap));
+			double scale_x = ((double) width / preview->pixmap->width());
+			double scale_y = ((double) height / preview->pixmap->height());
 
 			scale_x = scale_x * 72.0 / preview->image_xres;
 			scale_y = scale_y * 72.0 / preview->image_yres;

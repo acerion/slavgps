@@ -135,28 +135,22 @@ int expedia_pseudo_zone(int alti, int x, int y)
 void expedia_snip(char const * file)
 {
 	/* Load the pixbuf. */
-	GError * gx = NULL;
-	QPixmap * old = gdk_pixbuf_new_from_file(file, &gx);
-	if (gx) {
-		fprintf(stderr, _("WARNING: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message);
-		g_error_free (gx);
+	QPixmap old;
+	if (!old.load(QString(file))) {
+		qDebug() << "WW: Expedia: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!)";
 		return;
 	}
 
-	int width = gdk_pixbuf_get_width(old);
-	int height = gdk_pixbuf_get_height(old);
+	int width = old.width();
+	int height = old.heigth();
 
 	QPixmap * cropped = gdk_pixbuf_new_subpixbuf(old, WIDTH_BUFFER, HEIGHT_BUFFER,
-						       width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
+						     width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
 
-	gdk_pixbuf_save(cropped, file, "png", &gx, NULL);
-	if (gx) {
-		fprintf(stderr, _("WARNING: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message);
-		g_error_free (gx);
+	if (!cropped->save(QString(file))) {
+		qDebug() << "WW: Expedia: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!)";
 	}
-
-	g_object_unref(cropped);
-	g_object_unref(old);
+	delete cropped;
 }
 
 

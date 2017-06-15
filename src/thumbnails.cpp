@@ -141,10 +141,10 @@ void a_thumbnails_create(const char * filename)
 
 QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 {
-#ifdef K
-	int w = gdk_pixbuf_get_width(src);
-	int h = gdk_pixbuf_get_height(src);
+	int w = src->width();
+	int h = src->height();
 
+#ifdef K
 	if (w <= max_w && h <= max_h) {
 		g_object_ref(G_OBJECT (src));
 		return src;
@@ -155,10 +155,7 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 		int dest_w = w / scale;
 		int dest_h = h / scale;
 
-		return gdk_pixbuf_scale_simple(src,
-					       MAX(dest_w, 1),
-					       MAX(dest_h, 1),
-					       GDK_INTERP_BILINEAR);
+		return src->scaled(MAX(dest_w, 1), MAX(dest_h, 1), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 #endif
 }
@@ -168,11 +165,13 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 
 static QPixmap * child_create_thumbnail(const char * path)
 {
-#ifdef K
-	QPixmap * image = gdk_pixbuf_new_from_file(path, NULL);
-	if (!image) {
+	QPixmap * image = new QPixmap();
+	if (!image->load(path)) {
+		delete image;
+		image = NULL;
 		return NULL;
 	}
+#ifdef K
 
 	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
 	g_object_unref(G_OBJECT(image));
@@ -201,8 +200,8 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 #ifdef K
 	const char * orientation = gdk_pixbuf_get_option(full, "orientation");
 
-	int original_width = gdk_pixbuf_get_width(full);
-	int original_height = gdk_pixbuf_get_height(full);
+	int original_width = full->width();
+	int original_height = full->height();
 
 
 	char * swidth = g_strdup_printf("%d", original_width);
@@ -306,9 +305,10 @@ QPixmap * a_thumbnails_get(const char * pathname)
 
 	const char * ssize;
 	const char * smtime;
+
 #ifdef K
-	QPixmap * thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
-	if (!thumb) {
+	QPixmap * thumb = new QPixmap();
+	if (!thumb->load(thumb_path)) {
 		goto err;
 	}
 

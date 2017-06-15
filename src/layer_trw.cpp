@@ -1594,8 +1594,8 @@ QIcon * get_wp_sym_small(char *symbol)
 	QPixmap * wp_icon = a_get_wp_sym(symbol);
 	/* ATM a_get_wp_sym returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the treeview may need some resizing: */
-	if (wp_icon && gdk_pixbuf_get_width(wp_icon) != SMALL_ICON_SIZE) {
-		wp_icon = gdk_pixbuf_scale_simple(wp_icon, SMALL_ICON_SIZE, SMALL_ICON_SIZE, GDK_INTERP_BILINEAR);
+	if (wp_icon && wp_icon->width() != SMALL_ICON_SIZE) {
+		wp_icon = wp_icon->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 	return wp_icon;
 #endif

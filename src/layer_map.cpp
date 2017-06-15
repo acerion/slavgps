@@ -978,7 +978,7 @@ static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double ysh
 	int width = pixmap->width();
 	int height = pixmap->height();
 #ifdef K
-	QPixmap * tmp = gdk_pixbuf_scale_simple(pixmap, ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), GDK_INTERP_BILINEAR);
+	QPixmap * tmp = pixmap->scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	g_object_unref(G_OBJECT(pixmap));
 	return tmp;
 #endif
@@ -2610,13 +2610,14 @@ void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileIn
 				} else {
 					if (mdj->redownload_mode == REDOWNLOAD_BAD) {
 						/* see if this one is bad or what */
-#ifdef K
-						GError *gx = NULL;
-						QPixmap *pixmap = gdk_pixbuf_new_from_file(mdj->filename_buf, &gx);
-						if (gx || (!pixmap)) {
+						QPixmap * pixmap = new QPixmap();
+						if (!pixmap->load(mdj->filename_buf)) {
+							delete pixmap;
+							pixmap = NULL;
 							mdj->mapstoget++;
+						} else {
+							/* kamilFIXME: where do we free the pixmap? */
 						}
-#endif
 						break;
 						/* Other download cases already considered or just ignored. */
 					}

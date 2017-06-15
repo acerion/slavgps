@@ -227,17 +227,12 @@ bool LayerGeoref::set_param_value(uint16_t id, ParameterValue data, bool is_file
 void LayerGeoref::create_image_file()
 {
 	/* Create in .viking-maps. */
-	char *filename = g_strconcat(maps_layer_default_dir(), this->get_name(), ".jpg", NULL);
-#ifdef K
-	GError *error = NULL;
-	gdk_pixbuf_save(this->pixmap, filename, "jpeg", &error, NULL);
-	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
-		g_error_free(error);
+	char * filename = g_strconcat(maps_layer_default_dir(), this->get_name(), ".jpg", NULL);
+	if (!this->pixmap->save(filename, "jpeg")) {
+		qDebug() << "WW: Layer Georef: failed to save pixmap to" << filename;
 	} else {
 		this->image = g_strdup(filename);
 	}
-#endif
 
 	free(filename);
 }
@@ -369,10 +364,7 @@ void LayerGeoref::draw(Viewport * viewport)
 					pixmap_ = this->scaled;
 				} else {
 #ifdef K
-					pixmap_ = gdk_pixbuf_scale_simple(this->pixmap,
-									 layer_width,
-									 layer_height,
-									 GDK_INTERP_BILINEAR);
+					pixmap_ = this->pixmap->scaled(layer_width, layer_height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
 
 					if (this->scaled != NULL) {
@@ -439,16 +431,16 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		this->scaled = NULL;
 	}
 #ifdef K
-	this->pixmap = gdk_pixbuf_new_from_file (this->image, &gx);
-
-	if (gx) {
+	this->pixmap = new QPixmap();
+	if (!pixmap->load(this->image)) {
+		delete pixmap;
+		pixmap = NULL;
 		if (!from_file) {
-			dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), this->get_window());
+			dialog_error(QString("Couldn't open image file %1").arg(QString(this->image)), this->get_window());
 		}
-		g_error_free (gx);
 	} else {
-		this->width = gdk_pixbuf_get_width(this->pixmap);
-		this->height = gdk_pixbuf_get_height(this->pixmap);
+		this->width = this->pixmap->width();
+		this->height = this->pixmap->height();
 
 		if (this->pixmap && this->alpha < 255) {
 			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
@@ -576,9 +568,9 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 		double values[4];
 		int answer = world_file_read_file(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), values);
 		if (answer == 1) {
-			dialog_error("The World file you requested could not be opened for reading.", VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin));
+			dialog_error("The World file you requested could not be opened for reading.", this->get_window());
 		} else if (answer == 2) {
-			ialog_error("Unexpected end of file reading World file.", VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin));
+			dialog_error("Unexpected end of file reading World file.", this->get_window());
 		} else {
 			/* NB answer should == 0 for success. */
 			set_widget_values(cw, values);
@@ -781,35 +773,27 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 
 
-static void calculate_mpp_from_coords_cb(GtkWidget * ww, LayerGeoref * layer)
-{
-	layer->calculate_mpp_from_coords(ww);
-}
-
-
-
-
-void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
+void LayerGeoref::calculate_mpp_from_coords_cb(void)
 {
 	const QString filename = this->cw.imageentry->get_filename();
 	if (!filename.length()) {
 		return;
 	}
 
-#ifdef K
-	GError *gx = NULL;
-	QPixmap * pixmap = gdk_pixbuf_new_from_file(filename, &gx);
-	if (gx) {
-		dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
-		g_error_free(gx);
+	QPixmap * pixmap = new QPixmap();
+	if (!pixmap->load(filename)) {
+		delete pixmap;
+		pixmap = NULL;
+
+		dialog_error(QString("Couldn't open image file %1").arg(QString(filename)), this->get_window());
 		return;
 	}
 
-	unsigned int width = gdk_pixbuf_get_width(pixmap);
-	unsigned int height = gdk_pixbuf_get_height(pixmap);
+	int width = pixmap->width();
+	int height = pixmap->height();
 
 	if (width == 0 || height == 0) {
-		dialog_error(QString("Invalid image size: %1").arg(QString(filename)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
+		dialog_error(QString("Invalid image size: %1").arg(QString(filename)), this->get_window());
 	} else {
 		this->align_coords();
 
@@ -819,12 +803,12 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 		double xmpp, ympp;
 		georef_layer_mpp_from_coords(VIK_COORD_LATLON, ll_tl, ll_br, width, height, &xmpp, &ympp);
 
-		this->cw.x_spin.setValue(xmpp);
-		this->cw.y_spin.setValue(ympp);
+		this->cw.x_spin->setValue(xmpp);
+		this->cw.y_spin->setValue(ympp);
 
 		this->check_br_is_good_or_msg_user();
 	}
-
+#ifdef K
 	g_object_unref(G_OBJECT(pixmap));
 #endif
 }
@@ -1006,7 +990,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	this->cw = cw;
 
 	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab));
-	QObject::connect(calc_mpp_button, SIGNAL("clicked"), this, SLOT calculate_mpp_from_coords_cb));
+	QObject::connect(calc_mpp_button, SIGNAL("clicked"), this, SLOT (calculate_mpp_from_coords_cb));
 
 	QObject::connect(wfp_button, SIGNAL("clicked"), &cw, SLOT (georef_layer_dialog_load));
 
@@ -1302,10 +1286,10 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 
 	vik_coord_to_utm(coord_tl, &(grl->corner));
 	vik_coord_to_latlon(coord_br, &(grl->ll_br));
-#ifdef K
+
 	if (grl->pixmap) {
-		grl->width = gdk_pixbuf_get_width(grl->pixmap);
-		grl->height = gdk_pixbuf_get_height(grl->pixmap);
+		grl->width = grl->pixmap->width();
+		grl->height = grl->pixmap->height();
 
 		if (grl->width > 0 && grl->height > 0) {
 
@@ -1329,7 +1313,7 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 			return grl;
 		}
 	}
-#endif
+
 	/* Bad image. */
 	delete grl;
 	return NULL;

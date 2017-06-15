@@ -109,15 +109,17 @@ namespace SlavGPS {
 		void align_ll2utm();
 		void align_coords();
 		void check_br_is_good_or_msg_user();
-		void calculate_mpp_from_coords(GtkWidget * ww);
 		bool dialog(Viewport * viewport, Window * window);
 		bool move_release(QMouseEvent * event, LayerTool * tool);
 		bool zoom_press(QMouseEvent * event, LayerTool * tool);
 		bool move_press(QMouseEvent * event, LayerTool * tool);
 
 
+	public slots:
+		void calculate_mpp_from_coords_cb(void);
 
 
+	public:
 
 		char * image = NULL;
 		QPixmap * pixmap = NULL;
