@@ -460,11 +460,9 @@ bool LayerMapnik::carto_load(void)
 	   seconds on my system). */
 	Window * window = this->get_window();
 	if (window) {
-#ifdef K
 		// char *msg = g_strdup_printf(); // kamil kamil
-		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command);
+		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command));
 		window->set_busy_cursor();
-#endif
 	}
 
 	int64_t tt1 = 0;

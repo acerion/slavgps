@@ -188,7 +188,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		if (param->type == ParameterType::STRING) {
 			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, (vf_filter_type) KPOINTER_TO_INT(param->widget_data), NULL, NULL);
 			if (vlpd.s) {
-				vik_file_entry_set_filename(VIK_FILE_ENTRY(rv), vlpd.s);
+				rv->set_filename(vlpd.s);
 			}
 		}
 		break;
@@ -196,7 +196,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		if (param->type == ParameterType::STRING) {
 			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, VF_FILTER_NONE, NULL, NULL);
 			if (vlpd.s) {
-				vik_file_entry_set_filename(VIK_FILE_ENTRY(rv), vlpd.s);
+				rv->set_filename(vlpd.s);
 			}
 		}
 		break;
@@ -299,7 +299,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		break;
 	case WidgetType::FILEENTRY:
 	case WidgetType::FOLDERENTRY:
-		rv.s = vik_file_entry_get_filename(VIK_FILE_ENTRY(widget));
+		rv.s = VIK_FILE_ENTRY(widget)->get_filename();
 		break;
 	case WidgetType::FILELIST:
 		rv.sl = vik_file_list_get_files(VIK_FILE_LIST(widget));

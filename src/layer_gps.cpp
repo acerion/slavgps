@@ -1589,8 +1589,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 #ifdef K
 		viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
 		viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
-		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen,
-					 x-2, y-2, 4, 4);
+		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen, x-2, y-2, 4, 4);
 #endif
 		//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 	}
@@ -2003,7 +2002,6 @@ LayerGPS::LayerGPS()
 	this->realtime_track_pt2_pen = viewport->new_pen("green", 2);
 	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
 #endif
-
 	this->gpsd_host = NULL; //strdup("host"); TODO
 	this->gpsd_port = NULL; //strdup("port"); TODO
 

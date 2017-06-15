@@ -85,13 +85,13 @@ static bool layer_defaults_register(LayerType layer_type);
 
 void SlavGPS::layer_init(void)
 {
-#ifdef K
 	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+#ifdef K
 		/* ATM ignore the returned value. */
 		layer_defaults_register(layer_type);
-	}
 #endif
+	}
 }
 
 

@@ -129,18 +129,17 @@ void SlavGPS::vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * ext
 
 void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const * default_name)
 {
-#ifdef K
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (trw->get_routes().size()) {
-		mode.routesWrite = 1;
+		mode.routes_write = 1;
 	}
 	if (trw->get_tracks().size()) {
-		mode.tracksWrite = 1;
+		mode.tracks_write = 1;
 	}
 	if (trw->get_waypoints().size()) {
-		mode.waypointsWrite = 1;
+		mode.waypoints_write = 1;
 	}
-
+#ifdef K
 	GtkWidget * file_selector;
 	const char * fn;
 	bool failed = false;

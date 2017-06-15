@@ -38,6 +38,8 @@
 #include "util.h"
 #include "layer_trw.h"
 #include "preferences.h"
+#include "acquire.h"
+#include "vikexttools.h"
 
 #ifdef K
 #include <gdk/gdkkeysyms.h>
@@ -70,7 +72,7 @@
 #ifdef VIK_CONFIG_OPENSTREETMAP
 #include "osm-traces.h"
 #endif
-#include "acquire.h"
+
 #include "datasources.h"
 #include "datasource_gps.h"
 #include "vikexttools.h"
@@ -311,20 +313,21 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	}
 
 
+	/* kamilFIXME: .addMenu() does not make menu take ownership of the submenu. */
 
-#ifdef K
-	item = a_acquire_trwlayer_menu(this->get_window(), this->menu_data->layers_panel,
-				       this->menu_data->layers_panel->get_viewport(), this);
-	if (item) {
-		menu->addAction(action);
+
+	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(), this->menu_data->layers_panel,
+						  this->menu_data->layers_panel->get_viewport(), this);
+	if (submenu) {
+		menu.addMenu(submenu);
 	}
 
-	item = a_acquire_trwlayer_track_menu(this->get_window(), this->menu_data->layers_panel,
-					     this->menu_data->layers_panel->get_viewport(), this);
-	if (item) {
-		menu->addAction(action);
+	submenu = a_acquire_trwlayer_track_menu(this->get_window(), this->menu_data->layers_panel,
+						this->menu_data->layers_panel->get_viewport(), this);
+	if (submenu) {
+		menu.addMenu(submenu);
 	}
-#endif
+
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
@@ -334,11 +337,9 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 	qa->setEnabled((bool) (this->waypoints.size()));
 
-#ifdef K
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), NULL);
-#endif
+	vik_ext_tools_add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
 }
 
 
@@ -931,14 +932,13 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 		/* ATM This function is only available via the layers panel, due to needing a panel. */
 		if (this->menu_data->layers_panel) {
-#ifdef K
-			item = a_acquire_track_menu(this->get_window(), this->menu_data->layers_panel,
-						    this->menu_data->viewport,
-						    this->tracks.at(this->menu_data->sublayer->uid));
-			if (item) {
-				menu->addAction(action);
+			QMenu * submenu = a_acquire_track_menu(this->get_window(), this->menu_data->layers_panel,
+							       this->menu_data->viewport,
+							       this->tracks.at(this->menu_data->sublayer->uid));
+			if (submenu) {
+				/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
+				menu.addMenu(submenu);
 			}
-#endif
 		}
 
 #ifdef VIK_CONFIG_GEOTAG

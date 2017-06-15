@@ -43,6 +43,7 @@
 #include "dems.h"
 #include "util.h"
 #include "preferences.h"
+#include "routing.h"
 
 
 
@@ -1574,11 +1575,11 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		trw->route_finder_started = true;
 		trw->route_finder_append = true;  /* Merge tracks. Keep started true. */
 
-#ifdef K
+
 
 		/* Update UI to let user know what's going on. */
-		VikStatusbar *sb = trw->get_window()->get_statusbar();
-		RoutingEngine *engine = vik_routing_default_engine();
+		StatusBar * sb = trw->get_window()->get_statusbar();
+		RoutingEngine * engine = vik_routing_default_engine();
 		if (!engine) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return LayerToolFuncStatus::ACK;
@@ -1586,11 +1587,11 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		char *msg = g_strdup_printf(_("Querying %s for route between (%.3f, %.3f) and (%.3f, %.3f)."),
 					    engine->get_label(),
 					    start.lat, start.lon, end.lat, end.lon);
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
+		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 		free(msg);
 		trw->get_window()->set_busy_cursor();
 
-
+ #ifdef K
 		/* Give GTK a change to display the new status bar before querying the web. */
 		while (gtk_events_pending()) {
 			gtk_main_iteration();

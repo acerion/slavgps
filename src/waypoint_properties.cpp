@@ -155,7 +155,8 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 							 NULL);
 
 	GtkWidget *latlabel, *lonlabel, *latentry, *lonentry, *altentry, *altlabel, *nameentry=NULL;
-	GtkWidget *commententry, *descriptionentry, *imageentry, *symbolentry;
+	GtkWidget *commententry, *descriptionentry, *symbolentry;
+	SGFileEntry * imageentry = NULL;
 	GtkWidget *sourcelabel = NULL, *sourceentry = NULL;
 	GtkWidget *typelabel = NULL, *typeentry = NULL;
 	GtkWidget *timevaluebutton = NULL;
@@ -200,7 +201,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	descriptionentry = gtk_entry_new();
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Image:"));
-	imageentry = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
+	SGFileEntry * imageentry = new SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent); vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
 
 	QLabel * symbollabel = NULL;
 	{
@@ -255,7 +256,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	}
 
 	if (!is_new && wp->image) {
-		vik_file_entry_set_filename(VIK_FILE_ENTRY(imageentry), wp->image);
+		imageentry->set_filename(wp->image);
 
 #ifdef VIK_CONFIG_GEOTAG
 		/* Geotag Info [readonly]. */
@@ -341,8 +342,8 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 				wp->set_comment(gtk_entry_get_text (GTK_ENTRY(commententry)));
 			if (g_strcmp0(wp->description, gtk_entry_get_text (GTK_ENTRY(descriptionentry))))
 				wp->set_description(gtk_entry_get_text (GTK_ENTRY(descriptionentry)));
-			if (g_strcmp0(wp->image, vik_file_entry_get_filename (VIK_FILE_ENTRY(imageentry))))
-				wp->set_image(vik_file_entry_get_filename (VIK_FILE_ENTRY(imageentry)));
+			if (g_strcmp0(wp->image, imageentry->get_filename()))
+				wp->set_image(imageentry->get_filename());
 			if (g_strcmp0(wp->source, gtk_entry_get_text (GTK_ENTRY(sourceentry))))
 				wp->set_source(gtk_entry_get_text (GTK_ENTRY(sourceentry)));
 			if (g_strcmp0(wp->type, gtk_entry_get_text (GTK_ENTRY(typeentry))))

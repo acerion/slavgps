@@ -56,7 +56,7 @@ extern VikDataSourceInterface vik_datasource_url_interface;
 
 /************************ FILTER LIST *******************/
 // extern VikDataSourceInterface vik_datasource_gps_interface;
-#ifdef K
+//#ifdef K
 /*** Input is LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_simplify_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_compress_interface;
@@ -66,10 +66,10 @@ extern VikDataSourceInterface vik_datasource_bfilter_manual_interface;
 /*** Input is a track and a LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_polygon_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
-#endif
+//#endif
 
 /*** Input is a track. ***/
-#ifdef K
+//#ifdef K
 const VikDataSourceInterface * filters[] = {
 
 	&vik_datasource_bfilter_simplify_interface,
@@ -82,7 +82,7 @@ const VikDataSourceInterface * filters[] = {
 };
 
 const unsigned int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
-#endif
+//#endif
 
 Track * filter_track = NULL;
 
@@ -109,8 +109,8 @@ typedef struct {
 
 static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t * w)
 {
-#ifdef K
 	if (w->source_interface->is_thread) {
+#ifdef K
 		gdk_threads_enter();
 		if (!w->running) {
 			if (w->source_interface->cleanup_func) {
@@ -120,12 +120,12 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
 			g_thread_exit(NULL);
 		}
 		gdk_threads_leave();
+#endif
 	}
 
 	if (w->source_interface->progress_func) {
 		w->source_interface->progress_func(c, data, w);
 	}
-#endif
 }
 
 
@@ -140,9 +140,7 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
 static void on_complete_process(w_and_interface_t * wi)
 {
 	if (wi->w->running) {
-#ifdef K
 		wi->w->status->setText(QObject::tr("Done."));
-#endif
 		if (wi->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
@@ -151,19 +149,20 @@ static void on_complete_process(w_and_interface_t * wi)
 				Layer * layer = wi->trw;
 				wi->w->panel->get_top_layer()->add_layer(layer, true);
 			} else {
-#ifdef K
 				wi->w->status->setText(QObject::tr("No data."));
-#endif
 			}
 		}
-#ifdef K
 		if (wi->w->source_interface->keep_dialog_open) {
+#ifdef K
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT, true);
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_REJECT, false);
-		} else {
-			gtk_dialog_response(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT);
-		}
 #endif
+		} else {
+#ifdef K
+			gtk_dialog_response(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT);
+#endif
+		}
+
 		/* Main display update. */
 		if (wi->trw) {
 			wi->trw->post_read(wi->w->viewport, true);
@@ -230,20 +229,23 @@ static void get_from_anything(w_and_interface_t * wi)
 	}
 	delete wi->po;
 	free(wi->options);
-#ifdef K
+
 	if (wi->w->running && !result) {
+#ifdef K
 		gdk_threads_enter();
 		wi->w->status->setText(QObject::tr("Error: acquisition failed."));
 		if (wi->creating_new_layer) {
 			wi->trw->unref();
 		}
 		gdk_threads_leave();
+#endif
 	} else {
+#ifdef K
 		gdk_threads_enter();
 		on_complete_process(wi);
 		gdk_threads_leave();
-	}
 #endif
+	}
 
 	if (source_interface->cleanup_func) {
 		source_interface->cleanup_func(wi->w->user_data);
@@ -318,10 +320,10 @@ static void acquire(Window * window,
 		source_interface->add_setup_widgets_func(dialog, viewport, user_data);
 	}
 
-#ifdef K
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
 	if (source_interface->add_setup_widgets_func) {
+#ifdef K
 		dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 
 		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
@@ -342,20 +344,22 @@ static void acquire(Window * window,
 			gtk_widget_destroy(dialog);
 			return;
 		}
+#endif
 	}
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface->params) {
+#ifdef K
 		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, window,
 						    source_interface->params, source_interface->params_count,
 						    source_interface->params_groups, source_interface->params_groups_count,
 						    source_interface->params_defaults);
+#endif
 		if (paramdatas) {
 			pass_along_data = paramdatas;
 		} else {
 			return; /* TODO: do we have to free anything here? */
 		}
 	}
-#endif
 
 	/* CREATE INPUT DATA & GET OPTIONS */
 	ProcessOptions * po = NULL;
@@ -395,15 +399,18 @@ static void acquire(Window * window,
 	if (source_interface->off_func) {
 		source_interface->off_func(pass_along_data, &args_off, &fd_off);
 	}
-#ifdef K
+
 	/* Cleanup for option dialogs. */
 	if (source_interface->add_setup_widgets_func) {
+#ifdef K
 		gtk_widget_destroy(dialog);
 		dialog = NULL;
-	} else if (source_interface->params) {
-		a_uibuilder_free_paramdatas(paramdatas, source_interface->params, source_interface->params_count);
-	}
 #endif
+	} else if (source_interface->params) {
+#ifdef K
+		a_uibuilder_free_paramdatas(paramdatas, source_interface->params, source_interface->params_count);
+#endif
+	}
 
 	acq_dialog_widgets_t * w = (acq_dialog_widgets_t *) malloc(sizeof (acq_dialog_widgets_t));
 	w_and_interface_t * wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
@@ -459,9 +466,9 @@ static void acquire(Window * window,
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(w->viewport->get_coord_mode());
-#ifdef K
+//#ifdef K
 		wi->trw->rename(_(source_interface->layer_title));
-#endif
+//#endif
 	}
 
 #ifdef K
@@ -574,11 +581,11 @@ typedef struct {
 
 static void acquire_trwlayer_callback(GObject *menuitem, pass_along * data)
 {
+	VikDataSourceInterface * iface = NULL;
 #ifdef K
-	VikDataSourceInterface * iface = (VikDataSourceInterface *) g_object_get_data (menuitem, "vik_acq_iface");
-
-	acquire(data->window, data->panel, data->viewport, iface->mode, iface, data->trw, data->trk, NULL, NULL);
+	iface = (VikDataSourceInterface *) g_object_get_data (menuitem, "vik_acq_iface");
 #endif
+	acquire(data->window, data->panel, data->viewport, iface->mode, iface, data->trw, data->trk, NULL, NULL);
 }
 
 
@@ -599,9 +606,9 @@ static QMenu * acquire_build_menu(Window * window, LayersPanel * panel, Viewport
 		trk
 	};
 
-#ifdef K
 	for (unsigned int i = 0; i < N_FILTERS; i++) {
 		if (filters[i]->inputtype == inputtype) {
+#ifdef K
 			if (! ret_menu) { /* Do this just once, but return NULL if no filters. */
 				menu = gtk_menu_new();
 				ret_menu = gtk_menu_item_new_with_mnemonic(menu_title);
@@ -612,9 +619,10 @@ static QMenu * acquire_build_menu(Window * window, LayersPanel * panel, Viewport
 			g_object_set_data(action, "vik_acq_iface", (void *) filters[i]);
 			QObject::connect(action, SIGNAL (triggered(bool)), &data, SLOT (acquire_trwlayer_callback));
 			menu->addAction(action);
+#endif
 		}
 	}
-#endif
+
 	return ret_menu;
 }
 

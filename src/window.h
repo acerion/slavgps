@@ -143,6 +143,10 @@ namespace SlavGPS {
 
 		void open_file(char const * filename, bool change_filename);
 
+		void set_busy_cursor(void);
+		void clear_busy_cursor(void);
+
+
 		/* Display controls. */
 		bool select_move = false;
 
@@ -253,8 +257,6 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void set_busy_cursor(void);
-		void clear_busy_cursor(void);
 		void set_filename(char const * filename);
 		char const * get_filename(void);
 		GtkWidget * get_drawmode_button(ViewportDrawMode mode);

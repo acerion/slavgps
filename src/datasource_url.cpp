@@ -140,9 +140,10 @@ static void find_type(BabelFileType * file_type, char const * type_name)
 
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-#ifdef K
+
 	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) user_data;
 	QLabel * label = new QLabel(QObject::tr("URL:"));
+#ifdef K
 	widgets->url = gtk_entry_new();
 
 	QLabel * type_label = new QLabel(QObject::tr("File type:"));

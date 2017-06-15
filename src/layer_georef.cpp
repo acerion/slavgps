@@ -632,7 +632,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 {
 #if 0
 	if (a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file")->b) {
-		const char* filename = vik_file_entry_get_filename(VIK_FILE_ENTRY(file_entry));
+		const QString filename = file_entry->get_filename();
 		double values[4];
 		if (filename && user_data) {
 
@@ -792,11 +792,12 @@ static void calculate_mpp_from_coords_cb(GtkWidget * ww, LayerGeoref * layer)
 
 void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 {
-#ifdef K
-	const char* filename = vik_file_entry_get_filename(VIK_FILE_ENTRY(this->cw.imageentry));
-	if (!filename) {
+	const QString filename = this->cw.imageentry->get_filename();
+	if (!filename.length()) {
 		return;
 	}
+
+#ifdef K
 	GError *gx = NULL;
 	QPixmap * pixmap = gdk_pixbuf_new_from_file(filename, &gx);
 	if (gx) {
@@ -885,14 +886,14 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	cw.y_spin->setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
-	cw.imageentry = vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, maybe_read_world_file, &cw);
+	cw.imageentry = new SGFileEntry(); vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, maybe_read_world_file, &cw);
 
 	cw.ce_spin.setValue(this->corner.easting);
 	cw.cn_spin.setValue(this->corner.northing);
 	cw.x_spin.setValue(this->mpp_easting);
 	cw.y_spin.setValue(this->mpp_northing);
 	if (this->image) {
-		vik_file_entry_set_filename (VIK_FILE_ENTRY(cw.imageentry), this->image);
+		cw.imageentry->set_filename(this->image);
 	}
 
 	gtk_table_attach_defaults (GTK_TABLE(table), imagelabel, 0, 1, 0, 1);
@@ -1010,8 +1011,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 		this->check_br_is_good_or_msg_user();
 		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 		if (!this->pixmap) {
-			if (g_strcmp0 (this->image, vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry))) != 0) {
-				this->set_image(vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry)));
+			if (g_strcmp0 (this->image, cw.imageentry->get_filename()) != 0) {
+				this->set_image(cw.imageentry->get_filename());
 				this->post_read(viewport, false);
 			}
 		}

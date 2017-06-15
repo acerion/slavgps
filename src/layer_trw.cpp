@@ -59,37 +59,41 @@
 #include "layers_panel.h"
 #include "preferences.h"
 
-#ifdef K
+
 #include "layer_gps.h"
 #include "layer_trw_export.h"
 #include "layer_trw_analysis.h"
+#include "geonamessearch.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "layer_trw_geotag.h"
 #include "geotag_exif.h"
 #endif
+
+#ifdef VIK_CONFIG_OPENSTREETMAP
+#include "osm-traces.h"
+#endif
+
+#ifdef K
 #include "garminsymbols.h"
 #include "thumbnails.h"
 #include "background.h"
 #include "gpx.h"
 #include "geojson.h"
 #include "babel.h"
-#include "geonamessearch.h"
-#ifdef VIK_CONFIG_OPENSTREETMAP
-#include "osm-traces.h"
-#endif
+
+
 #include "acquire.h"
 #include "datasources.h"
 #include "datasource_gps.h"
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
-#include "gpspoint.h"
 #include "clipboard.h"
 #include "routing.h"
 #include "icons/icons.h"
-
 #endif
 
+#include "gpspoint.h"
 
 
 
@@ -2459,9 +2463,7 @@ void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 
 void LayerTRW::export_via_babel_cb(void) /* Slot. */
 {
-#ifdef K
 	vik_trw_layer_export_gpsbabel(this, _("Export Layer"), this->get_name());
-#endif
 }
 
 
@@ -2469,9 +2471,7 @@ void LayerTRW::export_via_babel_cb(void) /* Slot. */
 
 void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 {
-#ifdef K
 	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_1());
-#endif
 }
 
 
@@ -2479,9 +2479,7 @@ void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 
 void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 {
-#ifdef K
 	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_2());
-#endif
 }
 
 
@@ -2582,11 +2580,10 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function: */
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
-#ifdef K
+
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->calculate_bounds_waypoints();
 	panel->emit_update_cb();
-#endif
 }
 
 
@@ -2598,11 +2595,10 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	this->find_maxmin(maxmin);
-#ifdef K
+
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->calculate_bounds_waypoints();
 	panel->emit_update_cb();
-#endif
 }
 
 
@@ -2648,9 +2644,7 @@ void LayerTRW::geotagging_track_cb(void)
 	Track * trk = this->tracks.at(uid);
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
-#ifdef K
 	trw_layer_geotag_dialog(this->get_window(), this, NULL, trk);
-#endif
 }
 
 
@@ -2660,9 +2654,7 @@ void LayerTRW::geotagging_waypoint_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
-#ifdef K
 	trw_layer_geotag_dialog(this->get_window(), this, wp, NULL);
-#endif
 }
 
 
@@ -2672,9 +2664,7 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
-#ifdef K
 	trw_layer_geotag_dialog(this->get_window(), this, NULL, NULL);
-#endif
 }
 #endif
 
@@ -3063,9 +3053,7 @@ void LayerTRW::full_view_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 {
-#ifdef K
 	osm_traces_upload_viktrwlayer(this, NULL);
-#endif
 }
 
 
@@ -3075,9 +3063,7 @@ void LayerTRW::osm_traces_upload_track_cb(void)
 {
 	if (this->menu_data->misc) {
 		Track * trk = ((Track *) this->menu_data->misc);
-#ifdef K
 		osm_traces_upload_viktrwlayer(this, trk);
-#endif
 	}
 }
 
@@ -5929,13 +5915,11 @@ void LayerTRW::tracks_stats_cb(void)
 	if (this->tracks_analysis_dialog) {
 		return;
 	}
-#ifdef K
 	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
 								  this->name,
 								  this,
 								  SublayerType::TRACKS,
 								  trw_layer_analyse_close);
-#endif
 }
 
 
@@ -5948,13 +5932,11 @@ void LayerTRW::routes_stats_cb(void)
 		return;
 	}
 
-#ifdef K
 	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
 								  this->name,
 								  this,
 								  SublayerType::ROUTES,
 								  trw_layer_analyse_close);
-#endif
 }
 
 
@@ -5980,11 +5962,9 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 	if (!wp) {
 		return;
 	}
-#ifdef K
 	char *webpage = g_strdup_printf("http://www.geocaching.com/seek/cache_details.aspx?wp=%s", wp->name);
 	open_url(this->get_window(), webpage);
 	free(webpage);
-#endif
 }
 
 
@@ -5997,7 +5977,6 @@ void LayerTRW::waypoint_webpage_cb(void)
 	if (!wp) {
 		return;
 	}
-#ifdef K
 	if (wp->url) {
 		open_url(this->get_window(), wp->url);
 	} else if (!strncmp(wp->comment, "http", 4)) {
@@ -6005,7 +5984,6 @@ void LayerTRW::waypoint_webpage_cb(void)
 	} else if (!strncmp(wp->description, "http", 4)) {
 		open_url(this->get_window(), wp->description);
 	}
-#endif
 }
 
 
@@ -6141,9 +6119,7 @@ void LayerTRW::track_use_with_filter_cb(void)
 {
 	sg_uid_t uid = this->menu_data->sublayer->uid;
 	Track * trk = this->tracks.at(uid);
-#ifdef K
 	a_acquire_set_filter_track(trk);
-#endif
 }
 #endif
 
@@ -6167,13 +6143,11 @@ void LayerTRW::google_route_webpage_cb(void)
 	sg_uid_t uid = this->menu_data->sublayer->uid;
 	Track * trk = this->routes.at(uid);
 	if (trk) {
-#ifdef K
 		char *escaped = uri_escape(trk->comment);
 		char *webpage = g_strdup_printf("http://maps.google.com/maps?f=q&hl=en&q=%s", escaped);
 		open_url(this->get_window(), webpage);
 		free(escaped);
 		free(webpage);
-#endif
 	}
 }
 
@@ -6972,7 +6946,6 @@ static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatL
 
 void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 {
-#ifdef K
 	struct LatLon wh;
 	if (get_download_area_width(zoom_level, &wh)) {
 		return;
@@ -6981,7 +6954,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 	if (tr->empty()) {
 		return;
 	}
-
+#ifdef K
 	std::list<Rect *> * rects_to_download = tr->get_rectangles(&wh);
 
 	GList * fillins = NULL;
@@ -7263,9 +7236,7 @@ Track * LayerTRW::get_track_helper(Sublayer * sublayer)
 
 int LayerTRW::read_file(FILE * f, char const * dirpath)
 {
-#ifdef K
 	return (int) a_gpspoint_read_file(this, f, dirpath);
-#endif
 }
 
 
@@ -7273,11 +7244,9 @@ int LayerTRW::read_file(FILE * f, char const * dirpath)
 
 void LayerTRW::write_file(FILE * f) const
 {
-#ifdef K
 	fprintf(f, "\n\n~LayerData\n");
 	a_gpspoint_write_file(this, f);
 	fprintf(f, "~EndLayerData\n");
-#endif
 }
 
 

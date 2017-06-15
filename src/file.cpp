@@ -40,13 +40,13 @@
 #include <glib/gi18n.h>
 
 #include "layer_gps.h"
-#if 0
 #include "jpg.h"
-#include "geojson.h"
-#include "babel.h"
-#include "misc/strtod.h"
 #include "gpspoint.h"
 #include "gpsmapper.h"
+#include "geojson.h"
+#ifdef K
+#include "babel.h"
+#include "misc/strtod.h"
 #endif
 
 #include "file.h"
@@ -782,12 +782,10 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		} else {
 			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
 		}
-#ifdef K
 	} else if (jpg_magic_check(filename)) {
 		if (!jpg_load_file(top, filename, viewport)) {
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
-#endif
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
@@ -812,13 +810,11 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
 		} else {
-#ifdef K
 			/* Try final supported file type. */
 			if (! (success = a_gpspoint_read_file(layer, f, dirpath))) {
 				/* Failure here means we don't know how to handle the file. */
 				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 			}
-#endif
 		}
 		free(dirpath);
 
@@ -941,41 +937,29 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 		} else {
 			switch (file_type) {
 			case FILE_TYPE_GPSMAPPER:
-#ifdef K
 				gpsmapper_write_file(f, trw);
-#endif
 				break;
 			case FILE_TYPE_GPX:
 				a_gpx_write_file(trw, f, &options);
 				break;
 			case FILE_TYPE_GPSPOINT:
-#ifdef K
 				a_gpspoint_write_file(trw, f);
-#endif
 				break;
 			case FILE_TYPE_GEOJSON:
-#ifdef K
 				result = geojson_write_file(trw, f);
-#endif
 				break;
 			case FILE_TYPE_KML:
 				fclose(f);
 				switch (Preferences::get_kml_export_units()) {
 				case VIK_KML_EXPORT_UNITS_STATUTE:
-#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml", filename, NULL, NULL);
-#endif
 					break;
 				case VIK_KML_EXPORT_UNITS_NAUTICAL:
-#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml,units=n", filename, NULL, NULL);
-#endif
 					break;
 				default:
 					/* VIK_KML_EXPORT_UNITS_METRIC: */
-#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml,units=m", filename, NULL, NULL);
-#endif
 					break;
 				}
 				break;
@@ -999,11 +983,9 @@ bool SlavGPS::a_file_export_babel(LayerTRW * trw, char const * filename, char co
 				      routes ? "-r" : "",
 				      waypoints ? "-w" : "",
 				      format);
-#ifdef K
 	bool result = a_babel_convert_to(trw, NULL, args, filename, NULL, NULL);
 	free(args);
 	return result;
-#endif
 }
 
 

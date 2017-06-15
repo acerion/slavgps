@@ -30,6 +30,7 @@
 #include <QPixmap>
 
 #include "layer.h"
+#include "widget_file_entry.h"
 
 
 
@@ -64,7 +65,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * lon_br_spin = NULL;
 
 		GtkWidget * tabs = NULL;
-		GtkWidget * imageentry = NULL;
+		SGFileEntry * imageentry = NULL;
 	} changeable_widgets;
 
 

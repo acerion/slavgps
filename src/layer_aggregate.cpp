@@ -31,9 +31,7 @@
 #include "track_list_dialog.h"
 #include "util.h"
 #include "layer_gps.h"
-#ifdef K
 #include "layer_trw_analysis.h"
-#endif
 #include "dialog.h"
 #include "icons/icons.h"
 #include "globals.h"
@@ -557,8 +555,8 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
  */
 static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 {
-#ifdef K
 	LayerAggregate * aggregate = (LayerAggregate *) layer;
+#ifdef K
 	gtk_widget_destroy(dialog);
 	aggregate->tracks_analysis_dialog = NULL;
 #endif
@@ -574,13 +572,11 @@ void LayerAggregate::analyse_cb(void) /* Slot. */
 		return;
 	}
 
-#ifdef K
 	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
 								  this->name,
 								  this,
 								  SublayerType::NONE,
 								  aggregate_layer_analyse_close);
-#endif
 }
 
 

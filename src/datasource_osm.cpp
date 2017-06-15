@@ -112,7 +112,7 @@ static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * view
 #ifdef K
 	QLabel * page_number_label = new QLabel(QObject::tr("Page number:"));
 	widgets->page_number = new QSpinBox(0, 100, 1);
-	widgets->page_number.setValue(last_page_number);
+	widgets->page_number->setValue(last_page_number);
 
 	/* Packing all widgets */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
@@ -133,11 +133,11 @@ static ProcessOptions * datasource_osm_get_process_options(datasource_osm_widget
 
 	LatLonBBoxStrings bbox_strings;
 	widgets->viewport->get_bbox_strings(&bbox_strings);
-#ifdef K
+
 	/* Retrieve the specified page number. */
-	last_page_number = widgets->page_number.value();
+	last_page_number = widgets->page_number->value();
 	page = last_page_number;
-#endif
+
 	/* NB Download is of GPX type. */
 	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.sminlon, bbox_strings.sminlat, bbox_strings.smaxlon, bbox_strings.smaxlat, page);
 	options = NULL; /* i.e. use the default download settings. */

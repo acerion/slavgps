@@ -556,9 +556,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 			if (options->ov.write_exif) {
 				int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
 				if (ans != 0) {
-#ifdef K
-					options->trw->get_window()->statusbar_update(QString("Failed updating EXIF on %1").arg(options->image), StatusBarField::INFO);
-#endif
+					options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
 				}
 			}
 		}

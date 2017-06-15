@@ -120,8 +120,9 @@ static void * datasource_osm_my_traces_init(acq_vik_t *avt)
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
-#ifdef K
+
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
+#ifdef K
 	data->user_entry = gtk_entry_new();
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0);
@@ -140,10 +141,9 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 	box->addWidget(password_label);
 	box->addWidget(data->password_entry);
 	gtk_widget_show_all(dialog);
-
+#endif
 	/* Keep reference to viewport. */
 	data->viewport = viewport;
-#endif
 }
 
 
