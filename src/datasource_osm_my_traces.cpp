@@ -53,8 +53,8 @@ using namespace SlavGPS;
 #define DS_OSM_TRACES_GPX_FILES "api.openstreetmap.org/api/0.6/user/gpx_files"
 
 typedef struct {
-	GtkWidget *user_entry;
-	GtkWidget *password_entry;
+	QLineEdit user_entry;
+	QLineEdit password_entry;
 	/* NB actual user and password values are stored in oms-traces.c. */
 	Viewport * viewport;
 } datasource_osm_my_traces_t;
@@ -123,23 +123,21 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
 #ifdef K
-	data->user_entry = gtk_entry_new();
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, false, false, 0);
-	data->user_entry->setToolTip(QObject::tr("The email or username used to login to OSM"));
+	data->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	data->password_entry = gtk_entry_new();
 
-	data->password_entry->setToolTip(QObject::tr("The password used to login to OSM"));
+	data->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
 
 	osm_login_widgets(data->user_entry, data->password_entry);
 
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(password_label);
-	box->addWidget(data->password_entry);
+	box->addWidget(&data->password_entry);
 	gtk_widget_show_all(dialog);
 #endif
 	/* Keep reference to viewport. */
@@ -156,8 +154,7 @@ static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
 #ifdef K
 	/* Overwrite authentication info. */
-	osm_set_login(gtk_entry_get_text(GTK_ENTRY(data->user_entry)),
-		      gtk_entry_get_text(GTK_ENTRY(data->password_entry)));
+	osm_set_login(data->user_entry.text(), data->password_entry.text());
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */

@@ -28,6 +28,7 @@
 #include <cstdlib>
 
 #include <QComboBox>
+#include <QLineEdit>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -45,10 +46,12 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
+class datasource_routing_widgets_t {
+public:
 	QComboBox * engines_combo;
-	GtkWidget * from_entry, * to_entry;
-} datasource_routing_widgets_t;
+	QLineEdit from_entry;
+	QLineEdit to_entry;
+};
 
 
 
@@ -110,19 +113,17 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(QObject::tr("Engine:"));
 	widgets->engines_combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
-	gtk_combo_box_set_active(widgets->engines_combo, last_engine);
+	widgets->engines_combo->setCurrentIndex(last_engine);
 
 	/* From and To entries. */
 	QLabel * from_label = new QLabel(QObject::tr("From:"));
-	widgets->from_entry = gtk_entry_new();
 	QLabel * to_label = new QLabel(QObject::tr("To:"));
-	widgets->to_entry = gtk_entry_new();
 	if (last_from_str) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->from_entry), last_from_str);
+		widgets->from_entry.setText(QString(last_from_str));
 	}
 
 	if (last_to_str) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->to_entry), last_to_str);
+		widgets->to_entry.setText(QString(last_to_str));
 	}
 
 	/* Packing all these widgets. */
@@ -130,9 +131,9 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	box->addWidget(engine_label);
 	box->addWidget(widgets->engines_combo);
 	box->addWidget(from_label);
-	box->addWidget(widgets->from_entry);
+	box->addWidget(&widgets->from_entry);
 	box->addWidget(to_label);
-	box->addWidget(widgets->to_entry);
+	box->addWidget(&widgets->to_entry);
 	gtk_widget_show_all(dialog);
 #endif
 }
@@ -143,13 +144,14 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
-#ifdef K
+
 	/* Retrieve directions. */
-	char const * from = gtk_entry_get_text(GTK_ENTRY(widgets->from_entry));
-	char const * to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
+	const QString from = widgets->from_entry.text();
+	const QString to = widgets->to_entry.text();
 
 	/* Retrieve engine. */
-	last_engine = gtk_combo_box_get_active(widgets->engines_combo);
+	last_engine = widgets->engines_combo->currentIndex();
+#ifdef K
 	RoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */

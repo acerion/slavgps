@@ -731,18 +731,16 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 			widget = widget_;
 		}
 		break;
-#if 0
 	case WidgetType::PASSWORD:
 		if (param->type == ParameterType::STRING) {
-			rv = gtk_entry_new();
-			gtk_entry_set_visibility(GTK_ENTRY(rv), false);
+			QLineEdit * widget_ = new QLineEdit();
+			widget_->setEchoMode(QLineEdit::Password);
 			if (vlpd.s) {
-				gtk_entry_set_text(GTK_ENTRY(rv), vlpd.s);
+				widget_->setText(QString(vlpd.s));
 			}
-			rv->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
+			widget_->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
 		}
 		break;
-#endif
 	case WidgetType::FILEENTRY:
 		if (param->type == ParameterType::STRING) {
 			QString title("Select file");

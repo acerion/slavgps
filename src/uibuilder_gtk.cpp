@@ -81,11 +81,11 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
 					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
 						/* Match default value. */
-						gtk_combo_box_set_active(rv, i);
+						rv->setCurrentIndex(i);
 						break;
 					}
 			} else {
-				gtk_combo_box_set_active(rv, vlpd.u);
+				rv->setCurrentIndex(vlpd.u);
 			}
 		} else if (param->type == ParameterType::STRING && param->widget_data && !param->extra_widget_data) {
 			/* Build a combobox with editable text. */
@@ -100,7 +100,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			}
 
 			if (vlpd.s) {
-				gtk_combo_box_set_active(rv, 0);
+				rv->setCurrentIndex(0);
 			}
 		} else if (param->type == ParameterType::STRING && param->widget_data && param->extra_widget_data) {
 			/* Build a combobox with fixed selections without editable text. */
@@ -112,16 +112,16 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			if (vlpd.s) {
 				/* Set the effective default value. */
 				/* In case of value does not exist, set the first value. */
-				gtk_combo_box_set_active(rv, 0);
+				rv->setCurrentIndex(0);
 				int i;
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
 					if (strcmp(((const char **)param->extra_widget_data)[i], vlpd.s) == 0) {
 						/* Match default value. */
-						gtk_combo_box_set_active(rv, i);
+						rv->setCurrentIndex(i);
 						break;
 					}
 			} else {
-				gtk_combo_box_set_active(rv, 0);
+				rv->setCurrentIndex(0);
 			}
 		}
 		break;
@@ -163,23 +163,27 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 
 			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
-			rv = new QSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(init_val, scale->min, scale->max, scale->step, scale->step, 0)), scale->step, scale->digits);
+			rv = new QSpinBox();
+			rv->setValue(init_val);
+			rv->setMinimum(scale->min);
+			rv->setMaximum(scale->max);
+			rv->setSingleStep(scale->step);
 		}
 		break;
 	case WidgetType::ENTRY:
 		if (param->type == ParameterType::STRING) {
-			rv = gtk_entry_new();
+			rv = new QLineEdit();
 			if (vlpd.s) {
-				gtk_entry_set_text(GTK_ENTRY(rv), vlpd.s);
+				rv->setText(QString(vlpd.s));
 			}
 		}
 		break;
 	case WidgetType::PASSWORD:
 		if (param->type == ParameterType::STRING) {
-			rv = gtk_entry_new();
-			gtk_entry_set_visibility(GTK_ENTRY(rv), false);
+			rv = new QLineEdit();
+			rv->setEchoMode(QLineEdit::Password);
 			if (vlpd.s) {
-				gtk_entry_set_text(GTK_ENTRY(rv), vlpd.s);
+				rv->setText(QString(vlpd.s));
 			}
 			rv->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
 		}
@@ -251,7 +255,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		break;
 	case WidgetType::COMBOBOX:
 		if (param->type == ParameterType::UINT) {
-			rv.i = gtk_combo_box_get_active(widget);
+			rv.i = widget->currentIndex();
 			if (rv.i == -1) {
 				rv.i = 0;
 			}
@@ -264,14 +268,14 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		if (param->type == ParameterType::STRING) {
 			if (param->extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
-				int pos = gtk_combo_box_get_active(widget);
+				int pos = widget->currentIndex();
 				rv.s = ((const char **)param->extra_widget_data)[pos];
 			} else {
 				/* Return raw value. */
 #if GTK_CHECK_VERSION (2, 24, 0)
 				rv.s = gtk_entry_get_text(GTK_ENTRY (gtk_bin_get_child (GTK_BIN (widget))));
 #else
-				rv.s = gtk_combo_box_get_active_text(widget);
+				rv.s = widget->currentText();
 #endif
 			}
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
@@ -295,11 +299,11 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		break;
 	case WidgetType::ENTRY:
 	case WidgetType::PASSWORD:
-		rv.s = gtk_entry_get_text(GTK_ENTRY(widget));
+		rv.s = ((QLineEdit *) widget)->text();
 		break;
 	case WidgetType::FILEENTRY:
 	case WidgetType::FOLDERENTRY:
-		rv.s = VIK_FILE_ENTRY(widget)->get_filename();
+		rv.s = ((SGFileEntry *) widget)->get_filename();
 		break;
 	case WidgetType::FILELIST:
 		rv.sl = vik_file_list_get_files(VIK_FILE_LIST(widget));

@@ -226,7 +226,7 @@ void DataSourceFileDialog::build_ui(void)
 	this->file_types = a_babel_ui_file_type_selector_new(mode);
 #ifdef K
 	QObject::connect(data_source_file_dialog->file_types, SIGNAL("changed"), dialog, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
-	gtk_combo_box_set_active(data_source_file_dialog->file_types, last_type);
+	data_source_file_dialog->file_types->setCurrentIndex(last_type);
 	/* Manually call the callback to fix the state. */
 	a_babel_ui_type_selector_dialog_sensitivity_cb(data_source_file_dialog->file_types, dialog);
 #endif
@@ -333,11 +333,10 @@ static ProcessOptions * datasource_file_get_process_options(datasource_file_widg
 	/* Memorize the file filter for later use. */
 	GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry));
 	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
-
-	/* Retrieve and memorize file format selected. */
-	last_type = gtk_combo_box_get_active(data_source_file_dialog->file_types);
-
 #endif
+	/* Retrieve and memorize file format selected. */
+	last_type = data_source_file_dialog->file_types->currentIndex();
+
 	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types))->name;
 
 	/* Generate the process options. */

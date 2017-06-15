@@ -46,7 +46,7 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GtkWidget * url = NULL;
+	QLineEdit url;
 	QComboBox * type = NULL;
 } datasource_url_widgets_t;
 
@@ -140,11 +140,9 @@ static void find_type(BabelFileType * file_type, char const * type_name)
 
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-
 	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) user_data;
 	QLabel * label = new QLabel(QObject::tr("URL:"));
 #ifdef K
-	widgets->url = gtk_entry_new();
 
 	QLabel * type_label = new QLabel(QObject::tr("File type:"));
 
@@ -174,7 +172,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
 			fill_combo_box(iter->second, widgets->type);
 		}
-		gtk_combo_box_set_active(widgets->type, last_type_id);
+		widgets->type->setCurrentIndex(last_type_id);
 	} else {
 		/* Only GPX (not using GPSbabel). */
 		widgets->type = new QLabel(QObject::tr("GPX"));
@@ -183,7 +181,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 	/* Packing all widgets. */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(label);
-	box->addWidget(widgets->url);
+	box->addWidget(&widgets->url);
 	box->addWidget(type_label);
 	box->addWidget(widgets->type);
 
@@ -199,10 +197,10 @@ static ProcessOptions * datasource_url_get_process_options(datasource_url_widget
 	ProcessOptions * po = new ProcessOptions();
 #ifdef K
 	/* Retrieve the user entered value. */
-	char const * value = gtk_entry_get_text(GTK_ENTRY(widgets->url));
+	char const * value = widgets->url.text();
 
 	if (GTK_IS_COMBO_BOX (widgets->type)) {
-		last_type_id = gtk_combo_box_get_active(widgets->type);
+		last_type_id = widgets->type->currentIndex();
 	}
 
 	po->input_file_type = NULL; /* Default to gpx. */

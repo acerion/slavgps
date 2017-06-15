@@ -4303,7 +4303,7 @@ void LayerTRW::route_refine_cb(void)
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
 
 		QComboBox * combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
-		gtk_combo_box_set_active(combo, last_engine);
+		combo->setCurrentIndex(last_engine);
 		gtk_widget_show_all(combo);
 
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
@@ -4312,7 +4312,7 @@ void LayerTRW::route_refine_cb(void)
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			/* Dialog validated: retrieve selected engine and do the job */
-			last_engine = gtk_combo_box_get_active(combo);
+			last_engine = combo->currentIndex();
 			RoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
 
 			/* Change cursor */

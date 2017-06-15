@@ -58,7 +58,7 @@ typedef struct {
 	WebToolDatasource * web_tool_datasource;
 	Window * window;
 	Viewport * viewport;
-	GtkWidget * user_string;
+	QLineEdit user_string;
 } datasource_t;
 
 
@@ -106,7 +106,6 @@ static void * datasource_init(acq_vik_t *avt)
 	data->web_tool_datasource = (WebToolDatasource *) avt->userdata;
 	data->window = avt->window;
 	data->viewport = avt->viewport;
-	data->user_string = NULL;
 	return data;
 }
 
@@ -120,20 +119,18 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 	char *label = g_strdup_printf("%s:", ext_tool->input_label);
 	QLabel * user_string_label = new QLabel(label);
 #ifdef K
-	widgets->user_string = gtk_entry_new();
-
 	char *last_str = get_last_user_string(widgets);
 	if (last_str) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->user_string), last_str);
+		widgets->user_string.setText(last_str);
 	}
 
 	/* 'ok' when press return in the entry. */
-	QObject::connect(widgets->user_string, SIGNAL("activate"), dialog, SLOT (accept));
+	QObject::connect(&widgets->user_string, SIGNAL("activate"), dialog, SLOT (accept));
 
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(user_string_label);
-	box->addWidget(widgets->user_string);
+	box->addWidget(&widgets->user_string);
 	gtk_widget_show_all(dialog);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	/* NB presently the focus is overridden later on by the acquire.c code. */
@@ -156,7 +153,7 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 #ifdef K
 
 	if (web_tool_datasource->webtool_needs_user_string()) {
-		web_tool_datasource->user_string = g_strdup(gtk_entry_get_text (GTK_ENTRY (data->user_string)));
+		web_tool_datasource->user_string = data->user_string->text();
 
 		if (web_tool_datasource->user_string[0] != '\0') {
 			set_last_user_string(data, web_tool_datasource->user_string);

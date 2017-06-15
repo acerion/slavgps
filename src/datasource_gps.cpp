@@ -165,8 +165,9 @@ char* datasource_gps_get_protocol(void * user_data)
 {
 	/* Uses the list of supported devices. */
 	gps_user_data_t *w = (gps_user_data_t *)user_data;
+
+	last_active = w->proto_combo->currentIndex();
 #ifdef K
-	last_active = gtk_combo_box_get_active(w->proto_combo);
 	if (a_babel_device_list.size()) {
 		char *protocol = a_babel_device_list[last_active]->name;
 		fprintf(stderr, "%s:%d: protocol '%s'\n", __FUNCTION__, __LINE__, protocol);
@@ -190,11 +191,7 @@ char* datasource_gps_get_descriptor(void * user_data)
 {
 	gps_user_data_t *w = (gps_user_data_t *)user_data;
 #ifdef K
-#if GTK_CHECK_VERSION (2, 24, 0)
-	char *descriptor = gtk_combo_box_text_get_active_text(w->ser_combo);
-#else
-	char *descriptor = gtk_combo_box_get_active_text(w->ser_combo);
-#endif
+	char * descriptor = w->ser_combo->currentText();
 	a_settings_set_string(VIK_SETTINGS_GPS_PORT, descriptor);
 	return descriptor;
 #endif
@@ -343,9 +340,9 @@ static void datasource_gps_off(void * user_data, char **babelargs, char **file_d
 	if (a_babel_device_list.empty()) {
 		return;
 	}
-#ifdef K
-	last_active = gtk_combo_box_get_active(w->proto_combo);
-#endif
+
+	last_active = w->proto_combo->currentIndex();
+
 	device = a_babel_device_list[last_active]->name;
 	fprintf(stderr, "%s:%d: last active device: '%s'\n", __FUNCTION__, __LINE__, device);
 	if (!strcmp(device, "garmin")) {
@@ -360,11 +357,7 @@ static void datasource_gps_off(void * user_data, char **babelargs, char **file_d
 	/* Device points to static content => no free. */
 	device = NULL;
 #ifdef K
-#if GTK_CHECK_VERSION (2, 24, 0)
-	ser = gtk_combo_box_text_get_active_text(w->ser_combo);
-#else
-	ser = gtk_combo_box_get_active_text(w->ser_combo);
-#endif
+	ser = w->ser_combo->currentText();
 #endif
 	*file_descriptor = g_strdup(ser);
 }
@@ -648,7 +641,7 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
-	gtk_combo_box_set_active(w->proto_combo, last_active);
+	w->proto_combo->setCurrentIndex(last_active);
 	g_object_ref(w->proto_combo);
 
 	w->ser_l = new QLabel(QObject::tr("Serial Port:"));
@@ -707,7 +700,7 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		vik_combo_box_text_append (w->ser_combo, "usb:");
 	}
 
-	gtk_combo_box_set_active (w->ser_combo, 0);
+	w->ser_combo->setCurrentIndex(0);
 	g_object_ref(w->ser_combo);
 
 	w->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));

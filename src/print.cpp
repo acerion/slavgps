@@ -408,7 +408,7 @@ static void set_center_none(CustomWidgetInfo * info)
 						(void *) center_changed_cb, info);
 
 		info->print_data->center = PrintCenterMode::NONE;
-		gtk_combo_box_set_active(info->center_combo, info->print_data->center);
+		info->center_combo->setCurrentIndex(info->print_data->center);
 		g_signal_handlers_unblock_by_func(info->center_combo,
 						  (void *) center_changed_cb, info);
 #endif
@@ -511,9 +511,7 @@ static void update_offsets(CustomWidgetInfo *info)
 
 static void center_changed_cb(QComboBox * combo, CustomWidgetInfo * info)
 {
-#ifdef K
-	info->print_data->center = (PrintCenterMode) gtk_combo_box_get_active(combo);
-#endif
+	info->print_data->center = (PrintCenterMode) combo->currentIndex();
 	update_offsets(info);
 
 	if (info->preview) {
@@ -616,7 +614,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	for (center = center_modes; center->name; center++) {
 		vik_combo_box_text_append(combo, _(center->name));
 	}
-	gtk_combo_box_set_active(combo, PrintCenterMode::BOTH);
+	combo->setCurrentIndex(PrintCenterMode::BOTH);
 	hbox->addWidget(combo);
 	gtk_widget_show(combo);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (label), combo);

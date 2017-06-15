@@ -154,8 +154,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 							 GTK_RESPONSE_ACCEPT,
 							 NULL);
 
-	GtkWidget *latlabel, *lonlabel, *latentry, *lonentry, *altentry, *altlabel, *nameentry=NULL;
-	GtkWidget *commententry, *descriptionentry, *symbolentry;
+	GtkWidget *symbolentry;
 	SGFileEntry * imageentry = NULL;
 	GtkWidget *sourcelabel = NULL, *sourceentry = NULL;
 	GtkWidget *typelabel = NULL, *typeentry = NULL;
@@ -165,18 +164,52 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	GtkListStore *store;
 
 
+	vik_coord_to_latlon(&wp->coord, &ll);
+
+	char * alt = NULL
+	char * lat = g_strdup_printf("%f", ll.lat);
+	char * lon = g_strdup_printf("%f", ll.lon);
+	vik_units_height_t height_units = a_vik_get_units_height();
+	switch (height_units) {
+	case VIK_UNITS_HEIGHT_METRES:
+		alt = g_strdup_printf("%f", wp->altitude);
+		break;
+	case VIK_UNITS_HEIGHT_FEET:
+		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
+		break;
+	default:
+		alt = g_strdup_printf("%f", wp->altitude);
+		g_critical("Houston, we've had a problem. height=%d", height_units);
+	}
 
 	*updated = false;
 
 	QLabel * namelabel = new QLabel(QObject::tr("Name:"));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), namelabel, false, false, 0);
 	/* Name is now always changeable. */
-	nameentry = gtk_entry_new();
+	QLineEdit * nameentry = new QLineEdit();
 	if (default_name) {
-		gtk_entry_set_text(GTK_ENTRY(nameentry), default_name);
+		nameentry->setText(default_name);
 	}
 	QObject::connect(nameentry, SIGNAL("activate"), dialog, SLOT (accept));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
+
+
+
+	QLabel * latlabel = new QLabel(QObject::tr("Latitude:"));
+	QLineEdit * latentry = new QLineEdit(QString(lat));
+	free(lat);
+
+	QLabel * lonlabel = new QLabel(QObject::tr("Longitude:"));
+	QLineEdit * lonentry = new QLineEdit(QString(lon));
+	free(lon);
+
+	QLabel * altlabel = new QLabel(QObject::tr("Altitude:"));
+	QLineEdit * altentry = new QLineEdit(QString(alt));
+	free(alt);
+
+
+
 
 	QLabel * commentlabel = NULL;
 	if (wp->comment && !strncmp(wp->comment, "http", 4)) {
@@ -184,12 +217,12 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	} else {
 		commentlabel = new QLabel(QObject::tr("Comment:"));
 	}
-	commententry = gtk_entry_new();
+	QLineEdit * commententry = new QLineEdit();
 	char *cmt =  NULL;
 	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
 	cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
 	if (cmt) {
-		gtk_entry_set_text(GTK_ENTRY(commententry), cmt);
+		commententry->setText(cmt);
 	}
 
 	QLabel * descriptionlabel = NULL;
@@ -198,7 +231,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	} else {
 		descriptionlabel = new QLabel(QObject::tr("Description:"));
 	}
-	descriptionentry = gtk_entry_new();
+	QLineEdit * descriptionentry = new QLineEdit();
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Image:"));
 	SGFileEntry * imageentry = new SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent); vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
@@ -248,11 +281,11 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	}
 
 	if (!is_new && wp->comment) {
-		gtk_entry_set_text(GTK_ENTRY(commententry), wp->comment);
+		commententry->setText(wp->comment);
 	}
 
 	if (!is_new && wp->description) {
-		gtk_entry_set_text(GTK_ENTRY(descriptionentry), wp->description);
+		descriptionentry->setText(wp->description);
 	}
 
 	if (!is_new && wp->image) {
@@ -316,38 +349,38 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	}
 
 	while (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (strlen((char*)gtk_entry_get_text (GTK_ENTRY(nameentry))) == 0) {  /* TODO: other checks (isalpha or whatever). */
+		if (nameentry->text().length() == 0) {  /* TODO: other checks (isalpha or whatever). */
 			dialog_info("Please enter a name for the waypoint.", parent);
 		} else {
 			/* NB: No check for unique names - this allows generation of same named entries. */
-			char *entered_name = g_strdup((char*)gtk_entry_get_text (GTK_ENTRY(nameentry)));
+			char *entered_name = nameentry->text();
 
 			/* Do It. */
-			ll.lat = convert_dms_to_dec(gtk_entry_get_text (GTK_ENTRY(latentry)));
-			ll.lon = convert_dms_to_dec(gtk_entry_get_text (GTK_ENTRY(lonentry)));
+			ll.lat = convert_dms_to_dec(latentry->text());
+			ll.lon = convert_dms_to_dec(lonentry->text());
 			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &ll);
 			/* Always store in metres. */
 			switch (height_units) {
 			case HeightUnit::METRES:
-				wp->altitude = atof(gtk_entry_get_text(GTK_ENTRY(altentry)));
+				wp->altitude = atof(altentry->text());
 				break;
 			case HeightUnit::FEET:
-				wp->altitude = VIK_FEET_TO_METERS(atof(gtk_entry_get_text(GTK_ENTRY(altentry))));
+				wp->altitude = VIK_FEET_TO_METERS(atof(altentry->text()));
 				break;
 			default:
-				wp->altitude = atof(gtk_entry_get_text(GTK_ENTRY(altentry)));
+				wp->altitude = atof(altentry->text());
 				fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 			}
-			if (g_strcmp0(wp->comment, gtk_entry_get_text (GTK_ENTRY(commententry))))
-				wp->set_comment(gtk_entry_get_text (GTK_ENTRY(commententry)));
-			if (g_strcmp0(wp->description, gtk_entry_get_text (GTK_ENTRY(descriptionentry))))
-				wp->set_description(gtk_entry_get_text (GTK_ENTRY(descriptionentry)));
+			if (g_strcmp0(wp->comment, commententry->text()))
+				wp->set_comment(commententry->text());
+			if (g_strcmp0(wp->description, descriptionentry->text()))
+				wp->set_description(descriptionentry->text());
 			if (g_strcmp0(wp->image, imageentry->get_filename()))
 				wp->set_image(imageentry->get_filename());
-			if (g_strcmp0(wp->source, gtk_entry_get_text (GTK_ENTRY(sourceentry))))
-				wp->set_source(gtk_entry_get_text (GTK_ENTRY(sourceentry)));
-			if (g_strcmp0(wp->type, gtk_entry_get_text (GTK_ENTRY(typeentry))))
-				wp->set_type(gtk_entry_get_text (GTK_ENTRY(typeentry)));
+			if (g_strcmp0(wp->source, sourceentry->text()))
+				wp->set_source(sourceentry->text());
+			if (g_strcmp0(wp->type, typeentry->text()))
+				wp->set_type(typeentry->text());
 			if (wp->image&& *(wp->image) && (!a_thumbnails_exists(wp->image)))
 				a_thumbnails_create (wp->image);
 			if (edit_wp->timestamp) {

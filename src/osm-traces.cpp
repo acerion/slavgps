@@ -401,34 +401,28 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 
 
 
-void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry)
+void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
-	if (!user_entry || !password_entry) {
-		return;
-	}
-
 	const char *default_user = get_default_user();
 	const char *pref_user = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "username")->s;
 	const char *pref_password = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "password")->s;
 
-#ifdef K
 
 	if (osm_user != NULL && osm_user[0] != '\0') {
-		gtk_entry_set_text(GTK_ENTRY(user_entry), osm_user);
+		user_entry.setText(QString(osm_user));
 	} else if (pref_user != NULL && pref_user[0] != '\0') {
-		gtk_entry_set_text(GTK_ENTRY(user_entry), pref_user);
+		user_entry.setText(QString(pref_user));
 	} else if (default_user != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(user_entry), default_user);
+		user_entry.setText(QString(default_user));
 	}
 
 	if (osm_password != NULL && osm_password[0] != '\0') {
-		gtk_entry_set_text(GTK_ENTRY(password_entry), osm_password);
+		password_entry.setText(QString(osm_password));
 	} else if (pref_password != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(password_entry), pref_password);
+		password_entry.setText(QString(pref_password));
 	}
-	/* This is a password -> invisible. */
-	gtk_entry_set_visibility(GTK_ENTRY(password_entry), false);
-#endif
+	/* This is a password -> invisible. kamilTODO: shouldn't this be already set elsewhere as invisible? */
+	password_entry.setEchoMode(QLineEdit::Password);
 }
 
 
@@ -453,24 +447,19 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 						     NULL);
 
 	const char *name = NULL;
-	GtkWidget *user_entry;
-	GtkWidget *password_entry;
-	GtkWidget *name_entry;
-	GtkWidget *description_entry;
-	GtkWidget *tags_entry;
 	QComboBox * visibility_combo = NULL;
 	GtkWidget *anonymize_checkbutton = NULL;
 	const OsmTraceVis_t *vis_t;
 
 	QLabel  * user_label = new QLabel(QObject::tr("Email:"));
-	user_entry = gtk_entry_new();
+	QLineEdit * user_entry = new QLineEdit();
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_entry, false, false, 0);
 	user_entry->setToolTip(QObject::tr("The email used as login\n"
 					   "<small>Enter the email you use to login into www.openstreetmap.org.</small>"));
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	password_entry = gtk_entry_new();
+	QLineEdit * password_entry = new QLineEdit();
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_entry, false, false, 0);
 	password_entry->setToolTip(QObject::tr("The password used to login\n"
@@ -479,13 +468,13 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	osm_login_widgets(user_entry, password_entry);
 
 	QLabel * name_label = new QLabel(QObject::tr("File's name:"));
-	name_entry = gtk_entry_new();
+	QLineEdit * name_entry = new QLineEdit();
 	if (trk != NULL) {
 		name = trk->name;
 	} else {
 		name = trw->get_name();
 	}
-	gtk_entry_set_text(GTK_ENTRY(name_entry), name);
+	name_entry->setText(name);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_entry, false, false, 0);
 	name_entry->setToolTip(QObject::tr("The name of the file on OSM\n"
@@ -493,7 +482,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 					   "This is not the name of the local file.</small>"));
 
 	QLabel * description_label = new QLabel(QObject::tr("Description:"));
-	description_entry = gtk_entry_new();
+	QLineEdit * description_entry = new QLineEdit();
 	const char *description = NULL;
 	if (trk != NULL) {
 		description = trk->description;
@@ -502,7 +491,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		description = md ? md->description : NULL;
 	}
 	if (description) {
-		gtk_entry_set_text(GTK_ENTRY(description_entry), description);
+		description_entry->setText(description);
 	}
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_entry, false, false, 0);
@@ -518,10 +507,10 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	}
 
 	QLabel * tags_label = new QLabel(QObject::tr("Tags:"));
-	tags_entry = gtk_entry_new();
+	GtkWidget * tags_entry = new QLineEdit();
 	TRWMetadata * md = trw->get_metadata();
 	if (md && md->keywords) {
-		gtk_entry_set_text(GTK_ENTRY(tags_entry), md->keywords);
+		tags_entry->setText(md->keywords);
 	}
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_entry, false, false, 0);
@@ -553,7 +542,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 			last_active = 0;
 		}
 	}
-	gtk_combo_box_set_active(visibility_combo, last_active);
+	visibility_combo->setCurrentIndex(last_active);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), visibility_combo, false, false, 0);
 
 	/* User should think about it first... */
@@ -565,16 +554,15 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {
 
 		/* Overwrite authentication info. */
-		osm_set_login(gtk_entry_get_text(GTK_ENTRY(user_entry)),
-			      gtk_entry_get_text(GTK_ENTRY(password_entry)));
+		osm_set_login(user_entry->text(), password_entry->text());
 
 		/* Storing data for the future thread. */
 		OsmTracesInfo * info = new OsmTracesInfo(trw, trk);
-		info->name        = g_strdup(gtk_entry_get_text(GTK_ENTRY(name_entry)));
-		info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
+		info->name        = name_entry->text();
+		info->description = description_entry->text();
 		/* TODO Normalize tags: they will be used as URL part. */
-		info->tags        = g_strdup(gtk_entry_get_text(GTK_ENTRY(tags_entry)));
-		info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(visibility_combo)];
+		info->tags        = tags_entry->text();
+		info->vistype     = &OsmTraceVis[visibility_combo->currentIndex()];
 
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
@@ -583,7 +571,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		}
 
 		/* Save visibility value for default reuse. */
-		last_active = gtk_combo_box_get_active(visibility_combo);
+		last_active = visibility_combo->currentIndex();
 		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
 		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);

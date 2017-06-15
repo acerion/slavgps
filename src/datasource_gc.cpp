@@ -58,9 +58,9 @@
 
 
 typedef struct {
-	QSpinBox * num_spin;
-	GtkWidget * center_entry; /* TODO make separate widgets for lat/lon. */
-	QDoubleSpinBox * miles_radius_spin;
+	QSpinBox num_spin;
+	QLineEdit center_entry; /* TODO make separate widgets for lat/lon. */
+	QDoubleSpinBox miles_radius_spin;
 
 	QPen circle_pen;
 	Viewport * viewport;
@@ -177,7 +177,7 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 	}
 	/* Calculate widgets circle_x and circle_y. */
 	/* Split up lat,lon into lat and lon. */
-	if (2 == sscanf(gtk_entry_get_text(GTK_ENTRY(widgets->center_entry)), "%lf,%lf", &lat, &lon)) {
+	if (2 == sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {
 		struct LatLon ll;
 		VikCoord c;
 		int x, y;
@@ -231,15 +231,22 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	char *s_ll;
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"));
-	widgets->num_spin = new QSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(20, 1, 1000, 10, 20, 0)), 10, 0);
+	widgets->num_spin.setValue(20);
+	widgets->num_spin.setMinimum(1);
+	widgets->num_spin.setMaximum(1000);
+	widgets->num_spin.setSingleStep(10);
+
+
 	QLabel * center_label = new QLabel(QObject::tr("Centered around:"));
-	widgets->center_entry = gtk_entry_new();
 	QLabel * miles_radius_label = new QLabel(QObject::tr("Miles Radius:"));
-	widgets->miles_radius_spin = new QDoubleSpinBox(GTK_ADJUSTMENT(gtk_adjustment_new(5, 1, 1000, 1, 20, 0)), 25, 1);
+	widgets->miles_radius_spin.setValue(5);
+	widgets->miles_radius_spin.setMinimum(1);
+	widgets->miles_radius_spin.setMaximum(1000);
+	widgets->miles_radius_spin.setSingleStep(1);
 
 	vik_coord_to_latlon(viewport->get_center(), &ll);
 	s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon);
-	gtk_entry_set_text(GTK_ENTRY(widgets->center_entry), s_ll);
+	widgets->center_entry.setText(QString(s_ll));
 	free(s_ll);
 
 
@@ -249,7 +256,7 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	widgets->circle_onscreen = true;
 	datasource_gc_draw_circle(widgets);
 
-	QObject::connect(widgets->center_entry, SIGNAL("changed"), widgets, SLOT (datasource_gc_draw_circle));
+	QObject::connect(&widgets->center_entry, SIGNAL(editingFinished), widgets, SLOT (datasource_gc_draw_circle));
 	QObject::connect(widgets->miles_radius_spin, SIGNAL("value-changed"), widgets, SLOT (datasource_gc_draw_circle));
 
 	/* Packing all these widgets */
@@ -257,7 +264,7 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	box->addWidget(num_label);
 	box->addWidget(widgets->num_spin);
 	box->addWidget(center_label);
-	box->addWidget(widgets->center_entry);
+	box->addWidget(&widgets->center_entry);
 	box->addWidget(miles_radius_label);
 	box->addWidget(widgets->miles_radius_spin);
 	gtk_widget_show_all(dialog);
@@ -270,12 +277,12 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	//char *safe_string = g_shell_quote (gtk_entry_get_text (GTK_ENTRY(widgets->center_entry)));
+	//char *safe_string = g_shell_quote (widgets->center_entry.text());
 	char *safe_user = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "username")->s);
 	char *safe_pass = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "password")->s);
 	char *slat, *slon;
 	double lat, lon;
-	if (2 != sscanf(gtk_entry_get_text(GTK_ENTRY(widgets->center_entry)), "%lf,%lf", &lat, &lon)) {
+	if (2 != sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {
 		fprintf(stderr, _("WARNING: Broken input - using some defaults\n"));
 		lat = Preferences::get_default_lat();
 		lon = Preferences::get_default_lon();

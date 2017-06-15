@@ -147,8 +147,8 @@ static int get_last_provider_index(void)
 
 static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * button)
 {
+	bool has_text = entry->text().length() > 0;
 #ifdef K
-	bool has_text = gtk_entry_get_text_length(entry) > 0;
 	gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 	gtk_widget_set_sensitive(button, has_text);
 #endif

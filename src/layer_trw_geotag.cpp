@@ -122,8 +122,8 @@ typedef struct {
 	QLabel *no_change_mtime_l = NULL;    /* Referenced so the sensitivity can be changed. */
 	QCheckBox *no_change_mtime_b = NULL;
 	QCheckBox *interpolate_segments_b = NULL;
-	QLineEdit *time_zone_b = NULL;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
-	QLineEdit *time_offset_b = NULL;
+	QLineEdit time_zone_b;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
+	QLineEdit time_offset_b;
 } GeoTagWidgets;
 
 
@@ -206,7 +206,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->ov.TimeZoneHours = 0;
 	this->ov.TimeZoneMins = 0;
 #ifdef K
-	const char * TZString = gtk_entry_get_text(GTK_ENTRY(widgets->time_zone_b));
+	const char * TZString = widgets->time_zone_b.text();
 	/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
 	 * If not, it's probably just a +/-xx format. In all other cases,
 	 * it will be interpreted as +/-xx, which, if given a string, returns 0. */
@@ -220,7 +220,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 		/* No colon. Just parse. */
 		this->ov.TimeZoneHours = atoi(TZString);
 	}
-	this->ov.time_offset = atoi(gtk_entry_get_text(GTK_ENTRY(widgets->time_offset_b)));
+	this->ov.time_offset = atoi(widgets->time_offset_b.text());
 
 	this->redraw = false;
 
@@ -725,8 +725,6 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	widgets->no_change_mtime_l = new QLabel(QObject::tr("Keep File Modification Timestamp:"));
 	widgets->no_change_mtime_b = GTK_CHECK_BUTTON (gtk_check_button_new());
 	widgets->interpolate_segments_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->time_zone_b = GTK_ENTRY (gtk_entry_new());
-	widgets->time_offset_b = GTK_ENTRY (gtk_entry_new());
 
 	gtk_entry_set_width_chars(widgets->time_zone_b, 7);
 	gtk_entry_set_width_chars(widgets->time_offset_b, 7);
@@ -742,9 +740,9 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b), default_values.interpolate_segments);
 	char tmp_string[7];
 	snprintf(tmp_string, 7, "%+02d:%02d", default_values.TimeZoneHours, abs(default_values.TimeZoneMins));
-	gtk_entry_set_text(widgets->time_zone_b, tmp_string);
+	widgets->time_zone_b.seText(tmp_string);
 	snprintf(tmp_string, 7, "%d", default_values.time_offset);
-	gtk_entry_set_text(widgets->time_offset_b, tmp_string);
+	widgets->time_offset_b.setText(tmp_string);
 
 	/* Ensure sensitivities setup. */
 	write_exif_b_cb(GTK_WIDGET(widgets->write_exif_b), widgets);
@@ -782,14 +780,14 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	GtkWidget *to_hbox = gtk_hbox_new(false, 0);
 	QLabel * time_offset_l = new QLabel(QObject::tr("Image Time Offset (Seconds):"));
 	to_hbox->addWidget(time_offset_l);
-	to_hbox->addWidget(widgets->time_offset_b);
-	widgets->time_offset_b->setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
+	to_hbox->addWidget(&widgets->time_offset_b);
+	widgets->time_offset_b.setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
 
 	GtkWidget *tz_hbox = gtk_hbox_new(false, 0);
 	QLabel * time_zone_l = new QLabel(QObject::tr("Image Timezone:"));
 	tz_hbox->addWidget(time_zone_l);
-	tz_hbox->addWidget(widgets->time_zone_b);
-	widgets->time_zone_b->setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
+	tz_hbox->addWidget(&widgets->time_zone_b);
+	widgets->time_zone_b.setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
 
 	char *track_string = NULL;
 	if (widgets->wp) {

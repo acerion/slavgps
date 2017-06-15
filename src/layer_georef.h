@@ -56,13 +56,13 @@ namespace SlavGPS {
 		/* UTM widgets. */
 		QDoubleSpinBox * ce_spin = NULL; /* Top left. */
 		QDoubleSpinBox * cn_spin = NULL;
-		QSpinBox * utm_zone_spin = NULL;
-		GtkWidget * utm_letter_entry = NULL;
+		QSpinBox utm_zone_spin;
+		QLineEdit utm_letter_entry;
 
-		QDoubleSpinBox * lat_tl_spin = NULL;
-		QDoubleSpinBox * lon_tl_spin = NULL;
-		QDoubleSpinBox * lat_br_spin = NULL;
-		QDoubleSpinBox * lon_br_spin = NULL;
+		QDoubleSpinBox lat_tl_spin;
+		QDoubleSpinBox lon_tl_spin;
+		QDoubleSpinBox lat_br_spin;
+		QDoubleSpinBox lon_br_spin;
 
 		GtkWidget * tabs = NULL;
 		SGFileEntry * imageentry = NULL;

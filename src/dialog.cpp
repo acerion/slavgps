@@ -259,8 +259,18 @@ bool a_dialog_custom_zoom(Window * parent, double * xmpp, double * ympp)
 	QLabel * xlabel = new QLabel(QObject::tr("X (easting): "));
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing): "));
 
-	pass_along[0] = xspin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*xmpp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
-	pass_along[1] = yspin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*ympp, VIK_VIEWPORT_MIN_ZOOM, VIK_VIEWPORT_MAX_ZOOM, 1, 5, 0), 1, 8);
+	pass_along[0] = xspin = new QSpinBox();
+	xspin->setValue(*xmpp);
+	xspin->setMinimum(VIK_VIEWPORT_MIN_ZOOM);
+	xspin->setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	xspin->setSingleStep(1);
+
+	pass_along[1] = yspin = new QSpinBox();
+	yspin->setValue(*ympp);
+	yspin->setMinimum(VIK_VIEWPORT_MIN_ZOOM);
+	yspin->setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	yspin->setSingleStep(1);
+
 
 	pass_along[2] = samecheck = gtk_check_button_new_with_label(_("X and Y zoom factors must be equal"));
 	/* TODO -- same factor. */
@@ -330,7 +340,12 @@ bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_te
 
 	pass_along[0] = t4;
 
-	QSpinBox * spin = new QSpinBox((GtkAdjustment *) gtk_adjustment_new(*thr, 0, 65536, 1, 5, 0), 1, 0);
+	QSpinBox * spin = new QSpinBox();
+	spin->setValue(*thr);
+	spin->setMinimum(0);
+	spin->setMaximum(65536); /* kamilTODO: is it 65535 or 65536? Won't it cause any overflow? */
+	spin->setSingleStep(1);
+
 
 	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
 	gtk_table_attach_defaults(GTK_TABLE(table), t1, 0, 1, 1, 2);
@@ -556,14 +571,14 @@ bool a_dialog_map_n_zoom(Window * parent, char * mapnames[], int default_map, ch
 	for (s = mapnames; *s; s++) {
 		vik_combo_box_text_append(map_combo, *s);
 	}
-	gtk_combo_box_set_active(map_combo, default_map);
+	map_combo->setCurrentIndex(default_map);
 
 	QLabel * zoom_label = new QLabel(QObject::tr("Zoom level:"));
 	QComboBox * zoom_combo = new QComboBox();
 	for (s = zoom_list; *s; s++) {
 		vik_combo_box_text_append(zoom_combo, *s);
 	}
-	gtk_combo_box_set_active(zoom_combo, default_zoom);
+	zoom_combo->setCurrentIndex(default_zoom);
 
 	GtkTable *box = GTK_TABLE(gtk_table_new(2, 2, false));
 	gtk_table_attach_defaults(box, map_label, 0, 1, 0, 1);
@@ -583,8 +598,8 @@ bool a_dialog_map_n_zoom(Window * parent, char * mapnames[], int default_map, ch
 		return false;
 	}
 
-	*selected_map = gtk_combo_box_get_active(map_combo);
-	*selected_zoom = gtk_combo_box_get_active(zoom_combo);
+	*selected_map = map_combo->currentIndex();
+	*selected_zoom = zoom_combo->currentIndex();
 
 	gtk_widget_destroy(dialog);
 	return true;
