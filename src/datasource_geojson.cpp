@@ -54,7 +54,7 @@ static char * last_folder_uri = NULL;
 static void * datasource_geojson_init(acq_vik_t * avt);
 static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_data_t * user_data, void * not_used, char const * not_used2, char const * not_used3);
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, DownloadFileOptions * options_unused);
+static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions * options_unused);
 static void datasource_geojson_cleanup(void * data);
 
 
@@ -63,8 +63,8 @@ static void datasource_geojson_cleanup(void * data);
 VikDataSourceInterface vik_datasource_geojson_interface = {
 	N_("Acquire from GeoJSON"),
 	N_("GeoJSON"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	true,
 	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
 	false, /* Not thread method - open each file in the main loop. */
@@ -169,9 +169,9 @@ ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, DownloadFileOptions * options_unused)
+static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions * options_unused)
 {
-	datasource_geojson_user_data_t * user_data = (datasource_geojson_user_data_t *) adw->user_data;
+	datasource_geojson_user_data_t * user_data = (datasource_geojson_user_data_t *) acquiring->user_data;
 
 	/* Process selected files. */
 	GSList * cur_file = user_data->filelist;
@@ -181,12 +181,12 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 		char * gpx_filename = geojson_import_to_gpx(filename);
 		if (gpx_filename) {
 			/* Important that this process is run in the main thread. */
-			adw->window->open_file(gpx_filename, false);
+			acquiring->window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
 			(void) remove(gpx_filename);
 			free(gpx_filename);
 		} else {
-			adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(filename));
+			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(filename));
 		}
 
 		free(filename);

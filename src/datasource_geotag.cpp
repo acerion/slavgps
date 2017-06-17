@@ -56,7 +56,7 @@ static char * last_folder_uri = NULL;
 static void * datasource_geotag_init(acq_vik_t * avt);
 static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3);
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, void * not_used);
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring, void * not_used);
 static void datasource_geotag_cleanup(void * user_data);
 
 
@@ -65,8 +65,8 @@ static void datasource_geotag_cleanup(void * user_data);
 VikDataSourceInterface vik_datasource_geotag_interface = {
 	N_("Create Waypoints from Geotagged Images"),
 	N_("Geotagged Images"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	true,
 	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
 	true,
@@ -180,9 +180,9 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, void * not_used)
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring, void * not_used)
 {
-	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) adw->user_data;
+	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) acquiring->user_data;
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
@@ -191,7 +191,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 		char *filename = (char *) cur_file->data;
 		char *name;
 #ifdef K
-		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, adw->viewport->get_coord_mode(), &name);
+		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), &name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
 			if (!name) {
@@ -200,7 +200,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 			trw->filein_add_waypoint(wp, name);
 			free(name);
 		} else {
-			adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
+			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
 		}
 #endif
 		free(filename);

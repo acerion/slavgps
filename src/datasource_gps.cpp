@@ -60,7 +60,7 @@ static int last_active = -1;
 static void * datasource_gps_init_func(acq_vik_t *avt);
 static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gps_cleanup(void * user_data);
-static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog_widgets_t *w);
+static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
 static void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data);
 static void datasource_gps_off(void * add_widgets_data_not_used, char **babelargs, char **input_file);
@@ -71,8 +71,8 @@ static void datasource_gps_off(void * add_widgets_data_not_used, char **babelarg
 VikDataSourceInterface vik_datasource_gps_interface = {
 	N_("Acquire from GPS"),
 	N_("Acquired from GPS"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	true,
 	true,
 	true,
@@ -385,13 +385,13 @@ void datasource_gps_clean_up(void * user_data)
 
 
 
-static void set_total_count(int cnt, acq_dialog_widgets_t *w)
+static void set_total_count(int cnt, AcquireProcess * acquiring)
 {
 	char *s = NULL;
 #ifdef K
 	gdk_threads_enter();
-	if (w->running) {
-		gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+	if (acquiring->running) {
+		gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
 		const char *tmp_str;
 		switch (gps_data->progress_type) {
 		case GPSTransferType::WPT:
@@ -423,13 +423,13 @@ static void set_total_count(int cnt, acq_dialog_widgets_t *w)
 
 
 
-static void set_current_count(int cnt, acq_dialog_widgets_t *w)
+static void set_current_count(int cnt, AcquireProcess * acquiring)
 {
 #ifdef K
 	char *s = NULL;
 	gdk_threads_enter();
-	if (w->running) {
-		gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+	if (acquiring->running) {
+		gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
 
 		if (cnt < gps_data->total_count) {
 			switch (gps_data->progress_type) {
@@ -467,16 +467,17 @@ static void set_current_count(int cnt, acq_dialog_widgets_t *w)
 
 
 
-static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
+static void set_gps_info(const char *info, AcquireProcess * acquiring)
 {
 #ifdef K
 	char *s = NULL;
 	gdk_threads_enter();
-	if (w->running) {
+	if (acquiring->running) {
 		s = g_strdup_printf(_("GPS Device: %s"), info);
-		((gps_user_data_t *) w->user_data)->gps_label->setText(s);
+		((gps_user_data_t *) acquiring->user_data)->gps_label->setText(s);
 	}
-	free(s); s = NULL;
+	free(s);
+	s = NULL;
 	gdk_threads_leave();
 #endif
 }
@@ -489,18 +490,18 @@ static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog_widgets_t *w)
+static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
 	char *line;
-	gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+	gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *)data;
 #ifdef K
 		gdk_threads_enter();
-		if (w->running) {
-			w->status->setText(QObject::tr("Status: Working..."));
+		if (acquiring->running) {
+			acquiring->status->setText(QObject::tr("Status: Working..."));
 		}
 		gdk_threads_leave();
 #endif
@@ -537,7 +538,7 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog
 					info[ilen++] = ch;
 				}
 				info[ilen++] = 0;
-				set_gps_info(info, w);
+				set_gps_info(info, acquiring);
 			}
 			g_strfreev(tokens);
 		}
@@ -550,7 +551,7 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog
 			}
 
 			if (n_tokens > 1) {
-				set_gps_info(tokens[1], w);
+				set_gps_info(tokens[1], acquiring);
 			}
 			g_strfreev(tokens);
 		}
@@ -562,13 +563,13 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog
 				sscanf(line+17, "%x", &lsb);
 				sscanf(line+20, "%x", &msb);
 				cnt = lsb + msb * 256;
-				set_total_count(cnt, w);
+				set_total_count(cnt, acquiring);
 				gps_data->count = 0;
 			}
 		}
 		if (strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
 			gps_data->count++;
-			set_current_count(gps_data->count, w);
+			set_current_count(gps_data->count, acquiring);
 		}
 		break;
 	case BABEL_DONE:

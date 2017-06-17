@@ -2679,9 +2679,9 @@ void LayerTRW::acquire(VikDataSourceInterface *datasource)
 	LayersPanel * panel = window->get_layers_panel();
 	Viewport * viewport =  window->get_viewport();
 
-	vik_datasource_mode_t mode = datasource->mode;
-	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT) {
-		mode = VIK_DATASOURCE_ADDTOLAYER;
+	DatasourceMode mode = datasource->mode;
+	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DatasourceMode::ADDTOLAYER;
 	}
 	a_acquire(window, panel, viewport, mode, datasource, NULL, NULL);
 }

@@ -25,6 +25,7 @@
 #include <QPushButton>
 #include <QResource>
 
+#include "acquire.h"
 #include "window.h"
 #include "layer.h"
 #include "layer_defaults.h"
@@ -202,6 +203,8 @@ int main(int argc, char ** argv)
 
 	QResource::registerResource("icons.rcc");
 	Layer::preconfigure_interfaces();
+
+	acquire_init();
 
 	Window window;
 	window.layers_panel->set_viewport(window.viewport); /* Ugly, FIXME. */

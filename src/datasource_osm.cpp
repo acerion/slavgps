@@ -70,8 +70,8 @@ static void datasource_osm_cleanup(void * data);
 VikDataSourceInterface vik_datasource_osm_interface = {
 	N_("OSM traces"),
 	N_("OSM traces"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	true,
 	true,
 	true,

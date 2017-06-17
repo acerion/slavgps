@@ -212,8 +212,8 @@ void WebToolDatasource::open(Window * window)
 	VikDataSourceInterface data = {
 		this->get_label(),
 		this->get_label(),
-		VIK_DATASOURCE_ADDTOLAYER,
-		VIK_DATASOURCE_INPUTTYPE_NONE,
+		DatasourceMode::ADDTOLAYER,
+		DatasourceInputtype::NONE,
 		false, /* Maintain current view - rather than setting it to the acquired points. */
 		true,
 		true,

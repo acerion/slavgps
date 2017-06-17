@@ -112,8 +112,8 @@ static void * datasource_bfilter_simplify_init(acq_vik_t *not_used)
 VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 	N_("Simplify All Tracks..."),
 	N_("Simplified Tracks"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* Keep dialog open after success. */
 	true,
@@ -216,8 +216,8 @@ static void * datasource_bfilter_compress_init(acq_vik_t *not_used)
 VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 	N_("Compress Tracks..."),
 	N_("Compressed Tracks"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* Close the dialog after successful operation. */
 	true,
@@ -260,8 +260,8 @@ static ProcessOptions * datasource_bfilter_dup_get_process_options(ParameterValu
 VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 	N_("Remove Duplicate Waypoints"),
 	N_("Remove Duplicate Waypoints"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* Keep dialog open after success. */
 	true,
@@ -310,8 +310,8 @@ static ProcessOptions * datasource_bfilter_manual_get_process_options(ParameterV
 VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 	N_("Manual filter"),
 	N_("Manual filter"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* Keep dialog open after success. */
 	true,
@@ -352,8 +352,8 @@ static ProcessOptions * datasource_bfilter_polygon_get_process_options(Parameter
 VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 	N_("Waypoints Inside This"),
 	N_("Polygonized Layer"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
 	false, /* Keep dialog open after success. */
 	true,
@@ -393,8 +393,8 @@ static ProcessOptions * datasource_bfilter_exclude_polygon_get_process_options(P
 VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
 	N_("Waypoints Outside This"),
 	N_("Polygonzied Layer"),
-	VIK_DATASOURCE_CREATENEWLAYER,
-	VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK,
+	DatasourceMode::CREATENEWLAYER,
+	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
 	false, /* Keep dialog open after success. */
 	true,

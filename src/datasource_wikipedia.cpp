@@ -33,7 +33,7 @@ using namespace SlavGPS;
 
 
 
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw);
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring);
 
 
 
@@ -41,8 +41,8 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, Ba
 VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	N_("Create Waypoints from Wikipedia Articles"),
 	N_("Wikipedia Waypoints"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	false,
 	false, /* Not even using the dialog. */
 	false, /* Own method for getting data - does not fit encapsulation with current thread logic. */
@@ -69,15 +69,15 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw)
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring)
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function:. */
-	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
+	acquiring->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
 	if (trw) {
-		a_geonames_wikipedia_box(adw->window, trw, maxmin);
+		a_geonames_wikipedia_box(acquiring->window, trw, maxmin);
 		return true;
 	} else {
 		return false;

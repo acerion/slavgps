@@ -28,7 +28,8 @@
 
 #include <cstdint>
 
-//#include <gtk/gtk.h>
+#include <QObject>
+#include <QMenu>
 
 #include "window.h"
 #include "layers_panel.h"
@@ -52,37 +53,56 @@ namespace SlavGPS {
 		void * userdata;
 	} acq_vik_t;
 
-	/**
-	 * acq_dialog_widgets_t:
-	 *
-	 * global data structure used to expose the progress dialog to the worker thread.
-	 */
-	typedef struct {
-		QLabel * status;
-		Window * window;
-		LayersPanel * panel;
-		Viewport * viewport;
-		GtkWidget * dialog;
-		bool running;
-		VikDataSourceInterface * source_interface;
-		void * user_data;
-	} acq_dialog_widgets_t;
+	enum class DatasourceInputtype {
+		NONE = 0,
+		TRWLAYER,
+		TRACK,
+		TRWLAYER_TRACK
+	} ;
 
-	typedef enum {
+	enum class DatasourceMode {
 		/* Generally Datasources shouldn't use these and let the HCI decide between the create or add to layer options. */
-		VIK_DATASOURCE_CREATENEWLAYER,
-		VIK_DATASOURCE_ADDTOLAYER,
-		VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-		VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT,
-	} vik_datasource_mode_t;
+		CREATENEWLAYER,
+		ADDTOLAYER,
+		AUTO_LAYER_MANAGEMENT,
+		MANUAL_LAYER_MANAGEMENT,
+	};
 	/* TODO: replace track/layer? */
 
-	typedef enum {
-		VIK_DATASOURCE_INPUTTYPE_NONE = 0,
-		VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-		VIK_DATASOURCE_INPUTTYPE_TRACK,
-		VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK
-	} vik_datasource_inputtype_t;
+
+	/**
+	 * Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
+	 */
+	typedef void (* VikDataSourceCleanupFunc) (void * user_data);
+
+
+	/**
+	 * Global data structure used to expose the progress dialog to the worker thread.
+	 */
+	class AcquireProcess : public QObject {
+		Q_OBJECT
+	public slots:
+		void acquire_trwlayer_cb(void);
+
+
+	public:
+		void acquire(DatasourceMode mode, VikDataSourceInterface * source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function);
+		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
+
+		QLabel status;
+		Window * window = NULL;
+		LayersPanel * panel = NULL;
+		Viewport * viewport = NULL;
+		LayerTRW * trw = NULL;
+		Track * trk = NULL;
+
+		GtkWidget * dialog = NULL;
+		bool running = false;
+		VikDataSourceInterface * source_interface = NULL;
+		void * user_data = NULL;
+	};
+
+
 
 	/**
 	 * VikDataSourceInitFunc:
@@ -122,15 +142,15 @@ namespace SlavGPS {
 	 * @vtl:
 	 * @process_options: options to control the behaviour of this function (see #ProcessOptions)
 	 * @status_cb: the #VikDataSourceInterface.progress_func
-	 * @adw: the widgets and data used by #VikDataSourceInterface.progress_func
+	 * @acquiring: the widgets and data used by #VikDataSourceInterface.progress_func
 	 * @download_options: Optional options used if downloads from URLs is used.
 	 *
 	 * The actual function to do stuff - must report success/failure.
 	 */
-	typedef bool (* VikDataSourceProcessFunc) (void * trw, ProcessOptions * process_options, BabelStatusFunc, acq_dialog_widgets_t * adw, void * download_options);
+	typedef bool (* VikDataSourceProcessFunc) (void * trw, ProcessOptions * process_options, BabelStatusFunc, AcquireProcess * acquiring, void * download_options);
 
 	/* NB Same as BabelStatusFunc. */
-	typedef void  (* VikDataSourceProgressFunc) (BabelProgressCode c, void * data, acq_dialog_widgets_t * w);
+	typedef void  (* VikDataSourceProgressFunc) (BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 	/**
 	 * VikDataSourceAddProgressWidgetsFunc:
@@ -139,12 +159,7 @@ namespace SlavGPS {
 	 */
 	typedef void  (*VikDataSourceAddProgressWidgetsFunc) ( GtkWidget *dialog, void * user_data );
 
-	/**
-	 * VikDataSourceCleanupFunc:
-	 *
-	 * Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
-	 */
-	typedef void (* VikDataSourceCleanupFunc) (void * user_data);
+
 
 	typedef void (* VikDataSourceOffFunc) (void * user_data, char ** babelargs, char ** file_descriptor);
 
@@ -156,8 +171,8 @@ namespace SlavGPS {
 	struct _VikDataSourceInterface {
 		const char * window_title;
 		const char * layer_title;
-		vik_datasource_mode_t mode;
-		vik_datasource_inputtype_t inputtype;
+		DatasourceMode mode;
+		DatasourceInputtype inputtype;
 		bool autoview;
 		bool keep_dialog_open; /* ... when done. */
 
@@ -192,7 +207,7 @@ namespace SlavGPS {
 	void a_acquire(Window * window,
 		       LayersPanel * panel,
 		       Viewport * viewport,
-		       vik_datasource_mode_t mode,
+		       DatasourceMode mode,
 		       VikDataSourceInterface *source_interface,
 		       void * userdata,
 		       VikDataSourceCleanupFunc cleanup_function);
@@ -206,6 +221,8 @@ namespace SlavGPS {
 	void a_acquire_set_filter_track(Track * trk);
 
 
+	void acquire_init(void);
+	void acquire_uninit(void);
 
 
 } /* namespace SlavGPS */

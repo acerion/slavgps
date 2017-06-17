@@ -88,8 +88,8 @@ static char *datasource_gc_check_existence();
 VikDataSourceInterface vik_datasource_gc_interface = {
 	N_("Download Geocaches"),
 	N_("Geocaching.com Caches"),
-	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DatasourceInputtype::NONE,
 	true, /* Yes automatically update the display - otherwise we won't see the geocache waypoints! */
 	true,
 	true,

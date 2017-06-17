@@ -65,7 +65,7 @@ typedef struct {
 static void * datasource_osm_my_traces_init(acq_vik_t *avt);
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2);
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused);
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions *options_unused);
 static void datasource_osm_my_traces_cleanup(void * data);
 
 
@@ -74,8 +74,8 @@ static void datasource_osm_my_traces_cleanup(void * data);
 VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 	N_("OSM My Traces"),
 	N_("OSM My Traces"),
-	VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
-	VIK_DATASOURCE_INPUTTYPE_NONE,
+	DatasourceMode::MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
+	DatasourceInputtype::NONE,
 	true,
 	true,
 	false, /* Don't use thread method. */
@@ -642,9 +642,9 @@ static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList
 
 
 
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused)
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions *options_unused)
 {
-	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)adw->user_data;
+	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 
 	char *user_pass = osm_get_login();
 
@@ -679,7 +679,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	if (g_list_length (xd->list_of_gpx_meta_data) == 0) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread) {
-			none_found(adw->window);
+			none_found(acquiring->window);
 		}
 		free(xd);
 		return false;
@@ -687,20 +687,20 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	xd->list_of_gpx_meta_data = g_list_reverse(xd->list_of_gpx_meta_data);
 
-	set_in_current_view_property((datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data);
+	set_in_current_view_property((datasource_osm_my_traces_t *) acquiring->user_data, xd->list_of_gpx_meta_data);
 #ifdef K
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_enter();
 	}
 
-	GList *selected = select_from_list(adw->window->get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	GList *selected = select_from_list(acquiring->window->get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_leave();
 	}
 
 	/* If non thread - show program is 'doing something...' */
 	if (!vik_datasource_osm_my_traces_interface.is_thread) {
-		adw->window->set_busy_cursor();
+		acquiring->window->set_busy_cursor();
 	}
 
 	/* If passed in on an existing layer - we will create everything into that.
@@ -722,7 +722,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		if (create_new_layer) {
 			/* Have data but no layer - so create one. */
 			target_layer = new LayerTRW();
-			target_layer->set_coord_mode(adw->viewport->get_coord_mode());
+			target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
 				target_layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
 			} else {
@@ -740,24 +740,24 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			/* NB download type is GPX (or a compressed version). */
 			ProcessOptions my_po = *process_options;
 			my_po.url = url;
-			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, adw, &options);
+			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &options);
 			/* TODO investigate using a progress bar:
 			   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 			got_something = got_something || convert_result;
 			if (!convert_result) {
 				/* Report errors to the status bar. */
-				adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
+				acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
 			}
 			free(url);
 		}
 
 		if (convert_result) {
 			/* Can use the layer. */
-			adw->panel->get_top_layer()->add_layer(target_layer, true);
+			acquiring->panel->get_top_layer()->add_layer(target_layer, true);
 			/* Move to area of the track. */
-			target_layer->post_read(adw->window->get_viewport(), true);
-			target_layer->auto_set_view(adw->window->get_viewport());
+			target_layer->post_read(acquiring->window->get_viewport(), true);
+			target_layer->auto_set_view(acquiring->window->get_viewport());
 			vtl_last = target_layer;
 		} else {
 			if (create_new_layer) {
@@ -796,7 +796,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	}
 
 	if (!vik_datasource_osm_my_traces_interface.is_thread) {
-		adw->window->clear_busy_cursor();
+		acquiring->window->clear_busy_cursor();
 	}
 
 	return result;

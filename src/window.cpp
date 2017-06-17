@@ -2449,9 +2449,9 @@ void Window::help_about_cb(void) /* Slot. */
 
 void Window::my_acquire(VikDataSourceInterface * datasource)
 {
-	vik_datasource_mode_t mode = datasource->mode;
-	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT) {
-		mode = VIK_DATASOURCE_CREATENEWLAYER;
+	DatasourceMode mode = datasource->mode;
+	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DatasourceMode::CREATENEWLAYER;
 	}
 	a_acquire(this, this->layers_panel, this->viewport, mode, datasource, NULL, NULL);
 }
