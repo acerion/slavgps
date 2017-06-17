@@ -1393,13 +1393,9 @@ LayerTRW::~LayerTRW()
 	free(this->wp_fsize_str);
 	free(this->track_fsize_str);
 
-
-	if (this->tracks_analysis_dialog != NULL) {
-		gtk_widget_destroy(GTK_WIDGET(this->tracks_analysis_dialog));
-	}
+#endif
 
 	this->image_cache_free();
-#endif
 
 	delete this->tpwin;
 }
@@ -5840,20 +5836,6 @@ std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_l
 
 
 /**
- * Stuff to do on dialog closure.
- */
-static void trw_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
-{
-#ifdef K
-	gtk_widget_destroy(dialog);
-	((LayerTRW *) layer)->tracks_analysis_dialog = NULL;
-#endif
-}
-
-
-
-
-/**
  * Helper function to construct a list of #track_layer_t.
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks_)
@@ -5911,15 +5893,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(SublayerTyp
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	/* There can only be one! */
-	if (this->tracks_analysis_dialog) {
-		return;
-	}
-	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
-								  this->name,
-								  this,
-								  SublayerType::TRACKS,
-								  trw_layer_analyse_close);
+	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::TRACKS);
 }
 
 
@@ -5927,16 +5901,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	/* There can only be one! */
-	if (this->tracks_analysis_dialog) {
-		return;
-	}
-
-	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
-								  this->name,
-								  this,
-								  SublayerType::ROUTES,
-								  trw_layer_analyse_close);
+	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::ROUTES);
 }
 
 

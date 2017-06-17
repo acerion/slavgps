@@ -20,13 +20,21 @@
  ***********************************************************
  */
 
-#ifndef _SG_LAYER_TRW_ANALYSIS_H_
-#define _SG_LAYER_TRW_ANALYSIS_H_
+#ifndef _SG_LAYER_TRW_STATS_H_
+#define _SG_LAYER_TRW_STATS_H_
 
 
+#include <list>
 
+#include <QObject>
+#include <QDialog>
+#include <QWidget>
+#include <QGridLayout>
+#include <QCheckBox>
 
 #include "layer_trw.h"
+#include "window.h"
+#include "track_statistics.h"
 
 
 
@@ -36,13 +44,32 @@ namespace SlavGPS {
 
 
 
-	typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, Layer *);
+	class TRWStatsDialog : public QDialog {
+		Q_OBJECT
+	public:
+		TRWStatsDialog() {};
+		TRWStatsDialog(QWidget * parent_) : QDialog(parent_) {};
+		~TRWStatsDialog();
 
-	GtkWidget * vik_trw_layer_analyse_this(Window * window,
-					       const char * name,
-					       Layer * layer,
-					       SublayerType sublayer_type,
-					       VikTrwlayerAnalyseCloseFunc on_close_cb);
+
+		QGridLayout * stats_table = NULL;
+		QCheckBox * checkbox = NULL;
+		std::list<track_layer_t *> * tracks_and_layers = NULL;
+		Layer * layer = NULL; /* Just a reference. */
+		SublayerType sublayer_type;
+
+		void collect_stats(TrackStatistics & stats, bool include_invisible);
+		void display_stats(TrackStatistics & stats);
+
+	public slots:
+		void include_invisible_toggled_cb(int state);
+
+	};
+
+
+
+
+	void layer_trw_show_stats(Window * window, const QString & name, Layer * layer, SublayerType sublayer_type);
 
 
 
@@ -52,4 +79,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_LAYER_TRW_ANALYSIS_H_ */
+#endif /* #ifndef _SG_LAYER_TRW_STATS_H_ */

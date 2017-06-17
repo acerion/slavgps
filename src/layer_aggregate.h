@@ -28,6 +28,8 @@
 #include <cstdint>
 #include <list>
 
+#include <QDialog>
+
 #include "layer.h"
 #include "layer_trw.h"
 #include "viewport.h"
@@ -96,8 +98,6 @@ namespace SlavGPS {
 	private:
 		void child_visible_set(LayersPanel * panel, bool visible);
 
-		/* One per layer. */
-		GtkWidget * tracks_analysis_dialog = NULL;
 
 	private slots:
 		void child_visible_on_cb(void);

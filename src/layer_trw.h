@@ -35,6 +35,7 @@
 #include <unordered_map>
 
 #include <QStandardItem>
+#include <QDialog>
 
 #include "layer.h"
 #include "viewport.h"
@@ -508,10 +509,6 @@ namespace SlavGPS {
 
 		/* Menu. */
 		LayerMenuItem menu_selection;
-
-		/* One per layer. */
-		GtkWidget * tracks_analysis_dialog = NULL;
-
 
 	public slots:
 		void trackpoint_properties_cb(int response);

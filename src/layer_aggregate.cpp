@@ -550,33 +550,9 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 
 
-/**
- * Stuff to do on dialog closure
- */
-static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
-{
-	LayerAggregate * aggregate = (LayerAggregate *) layer;
-#ifdef K
-	gtk_widget_destroy(dialog);
-	aggregate->tracks_analysis_dialog = NULL;
-#endif
-}
-
-
-
-
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	/* There can only be one! */
-	if (this->tracks_analysis_dialog) {
-		return;
-	}
-
-	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
-								  this->name,
-								  this,
-								  SublayerType::NONE,
-								  aggregate_layer_analyse_close);
+	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::NONE);
 }
 
 
@@ -646,10 +622,6 @@ LayerAggregate::~LayerAggregate()
 		(*child)->unref();
 	}
 	// g_list_free(val->children); /* kamilFIXME: clean up the list. */
-
-	if (this->tracks_analysis_dialog) {
-		gtk_widget_destroy(this->tracks_analysis_dialog);
-	}
 #endif
 }
 
@@ -919,5 +891,4 @@ LayerAggregate::LayerAggregate()
 
 	this->rename(vik_aggregate_layer_interface.layer_name.toUtf8().constData());
 	this->children = new std::list<Layer *>;
-	this->tracks_analysis_dialog = NULL;
 }
