@@ -62,7 +62,7 @@
 
 #include "layer_gps.h"
 #include "layer_trw_export.h"
-#include "layer_trw_analysis.h"
+#include "layer_trw_stats.h"
 #include "geonamessearch.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "layer_trw_geotag.h"

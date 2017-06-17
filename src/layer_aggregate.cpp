@@ -31,7 +31,7 @@
 #include "track_list_dialog.h"
 #include "util.h"
 #include "layer_gps.h"
-#include "layer_trw_analysis.h"
+#include "layer_trw_stats.h"
 #include "dialog.h"
 #include "icons/icons.h"
 #include "globals.h"

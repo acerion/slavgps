@@ -33,7 +33,7 @@
 
 #include <time.h>
 
-#include "layer_trw_analysis.h"
+#include "layer_trw_stats.h"
 #include "ui_util.h"
 #include "settings.h"
 #include "globals.h"

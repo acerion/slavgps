@@ -44,7 +44,7 @@ SOURCES += main.cpp \
     datasource_routing.cpp \
     datasource_url.cpp \
     datasource_wikipedia.cpp \
-    layer_trw_analysis.cpp \
+    layer_trw_stats.cpp \
     layer_trw_export.cpp \
     layer_trw_geotag.cpp \
     track_statistics.cpp \
@@ -157,7 +157,7 @@ HEADERS += window.h \
     osm.h \
     osm-traces.h \
     datasource_gps.h \
-    layer_trw_analysis.h \
+    layer_trw_stats.h \
     layer_trw_export.h \
     layer_trw_geotag.h \
     track_statistics.h \

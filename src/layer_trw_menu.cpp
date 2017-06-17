@@ -51,7 +51,7 @@
 #include "layer_trw_export.h"
 #include "waypoint_properties.h"
 #include "track_profile_dialog.h"
-#include "layer_trw_analysis.h"
+#include "layer_trw_stats.h"
 #include "track_list_dialog.h"
 #include "waypoint_list.h"
 #ifdef VIK_CONFIG_GEOTAG
