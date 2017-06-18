@@ -180,6 +180,7 @@ HEADERS += window.h \
     geonames.h \
     window_layer_tools.h \
     viewport.h \
+    viewport_internal.h \
     viewport_utils.h \
     coord.h \
     coords.h \
@@ -206,6 +207,7 @@ HEADERS += window.h \
     waypoint_properties.h \
     waypoint_list.h \
     tree_view.h \
+    tree_view_internal.h \
     uibuilder.h \
     uibuilder_qt.h \
     widget_color_button.h \

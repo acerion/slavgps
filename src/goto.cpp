@@ -30,12 +30,15 @@
 
 #include <glib.h>
 
+#include <QDebug>
+
 #include "goto_tool.h"
 #include "goto.h"
 #include "dialog.h"
 #include "settings.h"
 #include "util.h"
 #include "degrees_converters.h"
+#include "viewport_internal.h"
 
 
 

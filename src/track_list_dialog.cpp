@@ -37,6 +37,7 @@
 #include "vikutils.h"
 #include "util.h"
 #include "preferences.h"
+#include "tree_view_internal.h"
 
 
 

@@ -23,6 +23,7 @@
 
 #include <QCheckBox>
 #include <QTranslator>
+#include <QDebug>
 
 #include "babel.h"
 #include "babel_ui.h"

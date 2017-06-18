@@ -30,12 +30,16 @@
 
 #include "layer_aggregate.h"
 #include "layer_trw.h"
-#include "viewport.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Viewport;
 
 
 

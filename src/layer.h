@@ -38,6 +38,7 @@
 #include <QMenu>
 #include <QString>
 #include <QPixmap>
+#include <QPen>
 
 #include "uibuilder.h"
 #include "tree_view.h"

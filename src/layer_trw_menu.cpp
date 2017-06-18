@@ -35,6 +35,7 @@
 #include <cctype>
 #include <cassert>
 
+#include "layers_panel.h"
 #include "util.h"
 #include "layer_trw.h"
 #include "preferences.h"
@@ -54,10 +55,14 @@
 #include "layer_trw_stats.h"
 #include "track_list_dialog.h"
 #include "waypoint_list.h"
+#include "layers_panel.h"
+#include "viewport_internal.h"
+
 #ifdef VIK_CONFIG_GEOTAG
 #include "layer_trw_geotag.h"
 #include "geotag_exif.h"
 #endif
+
 #include "garminsymbols.h"
 #include "thumbnails.h"
 #include "background.h"

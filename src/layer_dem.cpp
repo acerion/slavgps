@@ -36,6 +36,7 @@
 #endif
 
 #include <QMenu>
+#include <QDebug>
 
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>

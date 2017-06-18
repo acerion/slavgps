@@ -34,7 +34,6 @@
 #include <gtk/gtk.h>
 
 #include "vikwaypoint.h"
-#include "viewport.h"
 #include "vikstatus.h"
 #include "track.h"
 #include "layer.h"

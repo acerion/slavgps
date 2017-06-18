@@ -42,6 +42,8 @@
 #include <unistd.h>
 #endif
 
+#include <QDebug>
+
 #include "map_source.h"
 #include "map_source_slippy.h"
 #include "vikutils.h"
@@ -1577,7 +1579,9 @@ void LayerMap::draw(Viewport * viewport)
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
 		viewport->get_bbox(&bbox);
-		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
+#ifdef K /* linkage problem. */
+		map_sources[this->map_index]->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
+#endif
 
 		/* Logo. */
 

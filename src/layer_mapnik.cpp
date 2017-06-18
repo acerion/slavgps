@@ -29,11 +29,11 @@
 #include <cstdlib>
 #include <cctype>
 
-//#include "viking.h"
-
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+
+#include <QDebug>
 
 #include "vikutils.h"
 #include "map_ids.h"

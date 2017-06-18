@@ -30,6 +30,8 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
+#include <QDebug>
+
 #include "datasource_file.h"
 #include "babel.h"
 #include "gpx.h"

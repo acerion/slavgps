@@ -26,13 +26,16 @@
 #include <QPixmap>
 #include <glib.h>
 
-#include "viewport.h"
-#include "layers_panel.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Viewport;
+	class LayersPanel;
 
 
 

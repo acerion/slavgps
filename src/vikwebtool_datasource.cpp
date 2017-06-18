@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 
+#include "viewport_internal.h"
 #include "vikwebtool_datasource.h"
 #include "globals.h"
 #include "acquire.h"

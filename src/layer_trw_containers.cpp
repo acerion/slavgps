@@ -43,6 +43,7 @@
 
 #include "layer_trw.h"
 #include "layer_trw_containers.h"
+#include "viewport_internal.h"
 //#include "thumbnails.h"
 
 

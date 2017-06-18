@@ -33,6 +33,8 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#include <QDebug>
+
 #include "vikutils.h"
 #include "ui_util.h"
 #include "preferences.h"
@@ -44,6 +46,7 @@
 #include "file.h"
 #include "settings.h"
 #include "globals.h"
+#include "layers_panel.h"
 
 
 

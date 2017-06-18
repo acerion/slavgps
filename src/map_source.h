@@ -22,7 +22,10 @@
 
 
 
-#include "viewport.h"
+#include <QPixmap>
+#include <QString>
+
+#include "viewport_internal.h"
 #include "coord.h"
 #include "mapcoord.h"
 #include "bbox.h"

@@ -22,6 +22,7 @@
 
 #include <cstdlib>
 
+#include "viewport_internal.h"
 #include "acquire.h"
 #include "geonamessearch.h"
 

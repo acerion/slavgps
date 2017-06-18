@@ -34,6 +34,7 @@
 
 #include <glib/gi18n.h>
 
+#include "layers_panel.h"
 #include "layer_defaults.h"
 #include "layer.h"
 #include "window.h"
@@ -46,7 +47,7 @@
 #include "layer_gps.h"
 #include "layer_mapnik.h"
 #include "globals.h"
-#include "tree_view.h"
+#include "tree_view_internal.h"
 #include "uibuilder_qt.h"
 
 

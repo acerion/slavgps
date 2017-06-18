@@ -27,14 +27,18 @@
 
 #include <cstdint>
 
-#include "window.h"
-#include "viewport.h"
 #include "goto_tool.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Window;
+	class Viewport;
 
 
 

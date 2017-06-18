@@ -28,7 +28,6 @@
 #include <glib.h>
 
 #include "layer_trw.h"
-#include "window.h"
 #include "map_ids.h"
 #include "preferences.h"
 
@@ -36,6 +35,11 @@
 
 
 namespace SlavGPS {
+
+
+
+
+	class Window;
 
 
 

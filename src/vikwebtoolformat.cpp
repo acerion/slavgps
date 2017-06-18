@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "window.h"
+#include "viewport_internal.h"
 #include "vikwebtoolformat.h"
 #include "util.h"
 #include "globals.h"

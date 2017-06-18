@@ -28,6 +28,8 @@
 #include "fileutils.h"
 #include "layer_trw.h"
 #include "window.h"
+#include "viewport_internal.h"
+#include "layers_panel.h"
 #include "globals.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"

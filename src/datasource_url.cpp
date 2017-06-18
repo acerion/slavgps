@@ -23,7 +23,8 @@
 #include <vector>
 #include <cstdlib>
 
-//#include "viking.h"
+#include <QComboBox>
+
 #include "acquire.h"
 #include "babel.h"
 #include "settings.h"

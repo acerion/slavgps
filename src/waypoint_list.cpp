@@ -25,13 +25,19 @@
 #include <cassert>
 
 #include <QMenu>
+#include <QDebug>
+#include <QHeaderView>
 
+#include "layer_aggregate.h"
+#include "window.h"
+#include "viewport_internal.h"
 #include "waypoint.h"
 #include "waypoint_list.h"
 #include "waypoint_properties.h"
 #include "util.h"
 #include "settings.h"
 #include "preferences.h"
+#include "tree_view_internal.h"
 
 #ifdef K
 #include "clipboard.h"

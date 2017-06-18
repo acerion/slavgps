@@ -44,6 +44,7 @@
 #endif
 
 #include <QTemporaryFile>
+#include <QDebug>
 
 #include <glib.h>
 #include <glib/gstdio.h>

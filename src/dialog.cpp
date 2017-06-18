@@ -33,6 +33,8 @@
 #include <QDialog>
 #include <QInputDialog>
 #include <QObject>
+#include <QHeaderView>
+#include <QDebug>
 
 #include "dialog.h"
 #include "viewport.h"

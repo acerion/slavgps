@@ -37,7 +37,6 @@
 
 #include "layer.h"
 #include "layer_trw.h"
-#include "window.h"
 
 
 

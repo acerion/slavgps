@@ -26,12 +26,17 @@
 #include <cassert>
 #include <cstring>
 
+#include <QDebug>
+
 #include "window.h"
 #include "window_layer_tools.h"
 #include "coords.h"
+#include "tree_view_internal.h"
 //#include "vikutils.h"
 #include "icons/icons.h"
 #include "preferences.h"
+#include "viewport_internal.h"
+#include "layers_panel.h"
 
 
 

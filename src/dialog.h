@@ -28,6 +28,9 @@
 
 #include <QString>
 #include <QMessageBox>
+#include <QTableView>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
 
 #include "globals.h"
 #include "coords.h"

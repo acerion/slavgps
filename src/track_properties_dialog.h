@@ -37,13 +37,17 @@
 
 #include "layer_trw.h"
 #include "track.h"
-#include "window.h"
 #include "widget_color_button.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Window;
 
 
 

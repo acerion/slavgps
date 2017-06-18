@@ -31,6 +31,10 @@
 #include <glib/gprintf.h>
 #include <time.h>
 
+#include <QDebug>
+
+#include "window.h"
+#include "layer_aggregate.h"
 #include "layer_trw_stats.h"
 #include "ui_util.h"
 #include "settings.h"

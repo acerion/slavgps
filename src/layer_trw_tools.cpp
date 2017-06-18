@@ -36,9 +36,14 @@
 
 #include <glib/gstdio.h>
 
+#include <QDebug>
+#include <QPainter>
+
 #include "layer_trw.h"
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
+#include "tree_view_internal.h"
+#include "viewport_internal.h"
 #include "dialog.h"
 #include "dems.h"
 #include "util.h"

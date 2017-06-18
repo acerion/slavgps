@@ -24,9 +24,8 @@
 
 
 
-#include <stdint.h>
+#include <cstdint>
 
-#include "window.h"
 #include "vikexttool.h"
 
 
@@ -35,6 +34,10 @@
 
 namespace SlavGPS {
 
+
+
+
+	class Window;
 
 
 

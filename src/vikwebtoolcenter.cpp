@@ -27,6 +27,8 @@
 
 #include <glib.h>
 
+#include "window.h"
+#include "viewport_internal.h"
 #include "vikwebtoolcenter.h"
 #include "util.h"
 #include "globals.h"

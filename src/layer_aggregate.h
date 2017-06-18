@@ -32,7 +32,6 @@
 
 #include "layer.h"
 #include "layer_trw.h"
-#include "viewport.h"
 
 
 
@@ -43,6 +42,7 @@ namespace SlavGPS {
 
 
 	/* Forward declarations. */
+	class Viewport;
 	class LayersPanel;
 	class Track;
 	struct track_layer_t;

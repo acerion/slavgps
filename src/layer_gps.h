@@ -32,12 +32,19 @@
 #include "layer.h"
 #include "track.h"
 #include "layer_trw.h"
-#include "window.h"
+
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Viewport;
+	class LayerGPS;
+	class Window;
 
 
 
@@ -69,11 +76,6 @@ namespace SlavGPS {
 			 bool do_routes,
 			 bool do_waypoints,
 			 bool turn_off);
-
-
-
-
-	class LayerGPS;
 
 
 

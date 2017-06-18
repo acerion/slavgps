@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "window.h"
+#include "viewport_internal.h"
 #include "vikwebtoolbounds.h"
 #include "globals.h"
 

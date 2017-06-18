@@ -47,6 +47,9 @@
 #include "vikutils.h"
 #endif
 
+#include "viewport_internal.h"
+#include "layers_panel.h"
+#include "window.h"
 #include "layer_gps.h"
 #include "settings.h"
 #include "globals.h"

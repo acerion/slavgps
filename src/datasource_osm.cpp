@@ -28,7 +28,7 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
+#include "viewport_internal.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"

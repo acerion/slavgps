@@ -23,16 +23,16 @@
 #include "config.h"
 #endif
 
-#include "goto_tool.h"
-#include "util.h"
-
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
+#include "goto_tool.h"
+#include "util.h"
+#include "viewport_internal.h"
 
 
 

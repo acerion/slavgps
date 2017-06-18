@@ -49,6 +49,7 @@
 #include <glib/gi18n.h>
 
 //#include "thumbnails.h"
+#include "viewport_internal.h"
 #include "ui_util.h"
 #include "layer_trw_draw.h"
 #include "settings.h"

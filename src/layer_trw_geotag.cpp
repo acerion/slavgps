@@ -34,6 +34,8 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 
+#include <QCheckBox>
+
 #include "widget_file_list.h"
 #include "geotag_exif.h"
 #include "thumbnails.h"

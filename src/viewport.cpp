@@ -35,9 +35,12 @@
 
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QDebug>
+#include <QPainter>
 
 #include "window_layer_tools.h"
 #include "viewport.h"
+#include "viewport_internal.h"
 #include "window.h"
 #include "coords.h"
 #include "dems.h"

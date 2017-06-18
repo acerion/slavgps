@@ -32,6 +32,7 @@
 #include "layer.h"
 #include "window.h"
 #include "tree_view.h"
+#include "tree_view_internal.h"
 #include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder.h"

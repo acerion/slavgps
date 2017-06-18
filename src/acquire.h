@@ -32,15 +32,19 @@
 #include <QMenu>
 #include <QDialog>
 
-#include "window.h"
-#include "layers_panel.h"
-#include "viewport.h"
 #include "babel.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayersPanel;
+	class Viewport;
+	class Window;
 
 
 

@@ -35,9 +35,12 @@
 #include <cassert>
 
 #include <QAction>
+#include <QDebug>
 
 #include "window.h"
 #include "layer_toolbox.h"
+#include "layers_panel.h"
+#include "viewport_internal.h"
 
 
 

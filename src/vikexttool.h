@@ -22,15 +22,17 @@
 #define _SG_EXTERNAL_H
 
 
-#include "window.h"
 #include "coord.h"
-
 
 
 
 
 namespace SlavGPS {
 
+
+
+
+	class Window;
 
 
 

@@ -24,7 +24,6 @@
 
 
 
-#include "window.h"
 #include "layer_trw.h"
 #include "coords.h"
 
@@ -32,6 +31,10 @@
 
 
 namespace SlavGPS {
+
+
+
+	class Window;
 
 
 

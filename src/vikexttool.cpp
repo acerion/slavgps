@@ -20,8 +20,9 @@
  */
 
 
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 #include "vikexttool.h"
 

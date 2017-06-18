@@ -12,7 +12,6 @@
 #include <QCursor>
 #include <QCloseEvent>
 
-#include "layers_panel.h"
 #include "statusbar.h"
 #include "file.h"
 #include "acquire.h"
@@ -48,6 +47,10 @@ namespace SlavGPS {
 	class LayerTRW;
 	class LayerToolbox;
 	class Viewport;
+	class LayersPanel;
+
+
+
 
 	struct _VikDataSourceInterface;
 	typedef struct _VikDataSourceInterface VikDataSourceInterface;

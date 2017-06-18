@@ -30,6 +30,7 @@
 #include <QPen>
 #include <QDebug>
 
+#include "viewport_internal.h"
 #include "layer_coord.h"
 
 

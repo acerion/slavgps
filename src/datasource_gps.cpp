@@ -32,6 +32,9 @@
 #include <unistd.h>
 #endif
 
+#include <QCheckBox>
+#include <QComboBox>
+
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>

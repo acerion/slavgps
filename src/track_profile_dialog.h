@@ -35,15 +35,19 @@
 #include <QMouseEvent>
 
 #include "layer_trw.h"
-#include "viewport.h"
 #include "track.h"
-#include "layers_panel.h"
-#include "window.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Window;
+	class Viewport;
+	class LayersPanel;
 
 
 

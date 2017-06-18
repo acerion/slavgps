@@ -34,6 +34,8 @@
 #include <QDebug>
 
 #include "track_profile_dialog.h"
+#include "viewport_internal.h"
+#include "layers_panel.h"
 #include "dems.h"
 #include "vikutils.h"
 #include "util.h"

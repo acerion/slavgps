@@ -25,7 +25,6 @@
 
 #include <QMenu>
 
-#include "window.h"
 #include "vikexttool.h"
 #include "slav_qt.h"
 
@@ -35,6 +34,10 @@
 
 namespace SlavGPS {
 
+
+
+
+	class Window;
 
 
 

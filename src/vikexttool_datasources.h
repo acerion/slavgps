@@ -21,7 +21,6 @@
 #ifndef _SG_EXTERNAL_DATASOURCES_H
 #define _SG_EXTERNAL_DATASOURCES_H
 
-#include "window.h"
 #include "vikexttool.h"
 #include "slav_qt.h"
 
@@ -29,6 +28,11 @@
 
 
 namespace SlavGPS {
+
+
+
+
+	class Window;
 
 
 

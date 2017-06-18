@@ -27,6 +27,11 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 
+#include <QApplication>
+#include <QDebug>
+#include <QHeaderView>
+#include <QStyledItemDelegate>
+
 #include "background.h"
 #include "settings.h"
 #include "util.h"

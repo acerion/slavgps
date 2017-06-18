@@ -42,6 +42,7 @@
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
 #include "layer_map.h"
+#include "tree_view_internal.h"
 #include "vikutils.h"
 #include "track_properties_dialog.h"
 #include "waypoint_properties.h"

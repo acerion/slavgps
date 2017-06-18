@@ -30,6 +30,7 @@
 
 #include <expat.h>
 
+#include "viewport_internal.h"
 #include "gpx.h"
 #include "acquire.h"
 #include "osm-traces.h"
