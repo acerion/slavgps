@@ -583,6 +583,7 @@ static void load_feature_parse_line (char *line)
 #ifdef K
 				a_babel_device_list.push_back(device);
 #endif
+#if 0
 				qDebug() << "DD: Babel: new gpsbabel device:"
 					 << device->name
 					 << device->mode.waypoints_read
@@ -592,6 +593,7 @@ static void load_feature_parse_line (char *line)
 					 << device->mode.routes_read
 					 << device->mode.routes_write
 					 << tokens[1];
+#endif
 			} else {
 				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
 			}
@@ -609,6 +611,7 @@ static void load_feature_parse_line (char *line)
 				file_type->ext = g_strdup(tokens[3]);
 				file_type->label = g_strdup(tokens[4]);
 				a_babel_file_types.insert({{ type_id, file_type }});
+#if 0
 				qDebug() << "II: Babel: gpsbabel file type #"
 					 << type_id
 					 << ": "
@@ -622,6 +625,7 @@ static void load_feature_parse_line (char *line)
 					 << file_type->mode.routes_write
 					 << " "
 					 << tokens[1];
+#endif
 				type_id++;
 			} else {
 				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
@@ -747,7 +751,7 @@ void a_babel_uninit()
 	if (a_babel_file_types.size()) {
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
 			BabelFileType * file_type = iter->second;
-			fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file_type->name, file_type->label);
+			//fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file_type->name, file_type->label);
 			free(file_type->name);
 			free(file_type->ext);
 			free(file_type->label);
