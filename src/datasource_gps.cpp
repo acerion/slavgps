@@ -37,7 +37,6 @@
 
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "layer_gps.h"
 #include "datasource_gps.h"
@@ -45,6 +44,7 @@
 #include "gpx.h"
 #include "acquire.h"
 #include "settings.h"
+#include "util.h"
 
 
 

@@ -23,9 +23,9 @@
 
 #include <cstdlib>
 #include <list>
+#include <cmath>
 
 #include <glib.h>
-#include <glib/gi18n.h>
 
 #include <QApplication>
 #include <QDebug>
@@ -35,7 +35,7 @@
 #include "background.h"
 #include "settings.h"
 #include "util.h"
-#include "math.h"
+
 #include "uibuilder_qt.h"
 #include "globals.h"
 #if 0
@@ -110,7 +110,7 @@ static void background_thread_update()
  * @callbackdata: Thread data
  * @progress:     The value should be between 0 and 100 indicating percentage of the task complete
  */
-int a_background_thread_progress(BackgroundJob * bg_job, int progress)
+int SlavGPS::a_background_thread_progress(BackgroundJob * bg_job, int progress)
 {
 	int res = a_background_testcancel(bg_job);
 
@@ -146,7 +146,7 @@ static void thread_die(BackgroundJob * bg_job)
 
 
 
-int a_background_testcancel(BackgroundJob * bg_job)
+int SlavGPS::a_background_testcancel(BackgroundJob * bg_job)
 {
 	if (stop_all_threads) {
 		return -1;
@@ -192,7 +192,7 @@ static void thread_helper(void * job_, void * unused_user_data)
    @pool_type: Which pool this thread should run in
    @job_description:
 */
-void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description)
+void SlavGPS::a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description)
 {
 	qDebug() << "II: Background: creating background thread" << job_description;
 
@@ -224,7 +224,7 @@ void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const
 /**
  * Display the background jobs window.
  */
-void a_background_show_window()
+void SlavGPS::a_background_show_window()
 {
 	bgwindow->show();
 
@@ -285,7 +285,7 @@ void a_background_init()
 /**
  * Initialize background feature.
  */
-void a_background_post_init()
+void SlavGPS::a_background_post_init()
 {
 	/* Initialize thread pools. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
@@ -319,7 +319,7 @@ void a_background_post_init()
 
 
 
-void a_background_post_init_window(QWidget * parent_widget)
+void SlavGPS::a_background_post_init_window(QWidget * parent_widget)
 {
 	bgwindow = new BackgroundWindow(parent_widget);
 }

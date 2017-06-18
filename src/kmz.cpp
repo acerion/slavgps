@@ -19,27 +19,25 @@
  *
  */
 
-#include <cstring>
-#include <cstdio>
-
-#include <stdlib.h>
-
-#include "kmz.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+
+#include "kmz.h"
+
 #ifdef HAVE_ZIP_H
 #include <zip.h>
 #endif
-
-//#include "viking.h"
 
 #include <glib/gstdio.h>
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
 #endif
-#include <math.h>
 
 
 

@@ -31,14 +31,17 @@
 #include <QPrinter>
 #include <QPrintDialog>
 #include <QPrintPreviewDialog>
+#include <QComboBox>
 
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
+#include "window.h"
 #include "viewport_internal.h"
 #include "print.h"
 #include "print-preview.h"
+#include "slav_qt.h"
+#include "util.h"
 
 
 
@@ -88,7 +91,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context, PrintData * print_data);
 static void draw_page(GtkPrintOperation *print, GtkPrintContext *context, int page_nr, PrintData * print_data);
 
-void a_print(Window * parent, Viewport * viewport)
+void SlavGPS::a_print(Window * parent, Viewport * viewport)
 {
 #if 0
 	QPrinter printer;

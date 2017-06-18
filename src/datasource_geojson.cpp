@@ -21,13 +21,13 @@
 
 #include <cstdlib>
 
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 #include "acquire.h"
 #include "babel.h"
 #include "geojson.h"
 #include "window.h"
+#include "util.h"
 
 
 

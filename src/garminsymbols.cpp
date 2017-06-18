@@ -24,10 +24,8 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-//#include "viking.h"
 #include "garminsymbols.h"
 #include "icons/icons.h"
 #include "globals.h"

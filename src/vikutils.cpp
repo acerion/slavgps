@@ -25,11 +25,6 @@
 #include <cmath>
 #include <cstdlib>
 
-//#include <glib/gstdio.h>
-//#include <glib/gi18n.h>
-//#include <gtk/gtk.h>
-
-
 #include "vikutils.h"
 #include "util.h"
 #include "settings.h"

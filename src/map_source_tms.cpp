@@ -37,7 +37,7 @@
 #endif
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 
 #include <cstdlib>

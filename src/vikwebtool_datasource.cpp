@@ -28,7 +28,6 @@
 #include <cstdlib>
 
 #include <glib.h>
-#include <glib/gi18n.h>
 
 #include "viewport_internal.h"
 #include "vikwebtool_datasource.h"
@@ -36,6 +35,7 @@
 #include "acquire.h"
 #include "map_utils.h"
 #include "dialog.h"
+#include "util.h"
 
 
 

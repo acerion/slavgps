@@ -35,18 +35,16 @@
 #include <cstdio>
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#include <cstdlib>
 #endif
 
-
 #include <glib.h>
-#include <glib/gi18n.h>
 
 //#include "thumbnails.h"
 #include "viewport_internal.h"

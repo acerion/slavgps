@@ -32,8 +32,6 @@
 #include <QString>
 #include <QDebug>
 
-#include <glib/gi18n.h>
-
 #include "layers_panel.h"
 #include "layer_defaults.h"
 #include "layer.h"

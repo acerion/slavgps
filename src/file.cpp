@@ -37,7 +37,6 @@
 #endif
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "viewport_internal.h"
 #include "layer_gps.h"
@@ -57,6 +56,7 @@
 #include "preferences.h"
 #include "babel.h"
 #include "tree_view_internal.h"
+#include "util.h"
 
 
 

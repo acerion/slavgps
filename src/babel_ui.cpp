@@ -31,6 +31,11 @@
 
 
 
+using namespace SlavGPS;
+
+
+
+
 extern std::map<int, BabelFileType *> a_babel_file_types;
 
 
@@ -64,7 +69,7 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * us
 
    \return list of file types
 */
-QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
+QComboBox * SlavGPS::a_babel_ui_file_type_selector_new(BabelMode mode)
 {
 	QComboBox * combo = new QComboBox();
 
@@ -129,7 +134,7 @@ QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
 
    \return the selected BabelFileType or NULL
 */
-BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo)
+BabelFileType * SlavGPS::a_babel_ui_file_type_selector_get(QComboBox * combo)
 {
 	/* ID that was used in combo->addItem(<file type>, id);
 	   A special item has been added with id == -1.

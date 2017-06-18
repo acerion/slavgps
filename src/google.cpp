@@ -22,8 +22,7 @@
 #include "config.h"
 #endif
 
-#include <glib/gi18n.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "globals.h"
 #include "google.h"

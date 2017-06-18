@@ -16,21 +16,27 @@
  * You should have received a copy of the GNU Format Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifndef _SG_WEBTOOL_FORMAT_H
-#define _SG_WEBTOOL_FORMAT_H
 
-#include <stdint.h>
+#ifndef _SG_WEBTOOL_FORMAT_H_
+#define _SG_WEBTOOL_FORMAT_H_
+
+
+
+
+#include <cstdint>
 
 #include "vikwebtool.h"
 
 
 
 
-
 namespace SlavGPS {
 
+
+
+
+	class Window;
 
 
 
@@ -55,11 +61,9 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
 
 
 
 
-
-#endif /* #ifndef _SG_WEBTOOL_FORMAT_H */
+#endif /* #ifndef _SG_WEBTOOL_FORMAT_H_ */

@@ -47,7 +47,6 @@
 #include <utime.h>
 #endif
 
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #ifdef HAVE_LIBGEXIV2
 #include <gexiv2/gexiv2.h>

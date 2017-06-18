@@ -26,12 +26,12 @@
 #include <cstdlib>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "viewport_internal.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
+#include "util.h"
 
 
 

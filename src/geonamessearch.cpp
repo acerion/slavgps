@@ -30,14 +30,13 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
-//#include "viking.h"
 #include "dialog.h"
 #include "geonamessearch.h"
 #include "download.h"
 #include "util.h"
 #include "globals.h"
+#include "util.h"
 
 
 

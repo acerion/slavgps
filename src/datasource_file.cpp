@@ -28,7 +28,6 @@
 #include <cstdlib>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include <QDebug>
 
@@ -37,6 +36,7 @@
 #include "gpx.h"
 #include "babel_ui.h"
 #include "acquire.h"
+#include "util.h"
 
 
 

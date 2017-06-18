@@ -23,14 +23,13 @@
 #include "config.h"
 #endif
 
-#include <glib/gi18n.h>
-
 #include "bing.h"
 #include "layer_map.h"
 #include "map_source_bing.h"
 #include "vikwebtoolcenter.h"
 #include "vikexttools.h"
 #include "map_ids.h"
+#include "util.h"
 
 
 

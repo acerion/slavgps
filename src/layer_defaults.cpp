@@ -23,7 +23,6 @@
 #include <cstdio>
 #include <cassert>
 
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 #include <QSettings>

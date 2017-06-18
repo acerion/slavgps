@@ -19,6 +19,9 @@
 #ifndef _SG_BING_MAP_SOURCE_H_
 #define _SG_BING_MAP_SOURCE_H_
 
+
+
+
 #include <cstdint>
 
 #include "coord.h"

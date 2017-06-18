@@ -28,7 +28,6 @@
 #include <cstdlib>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "window.h"
 #include "viewport_internal.h"
@@ -59,7 +58,6 @@ extern VikDataSourceInterface vik_datasource_url_interface;
 
 /************************ FILTER LIST *******************/
 // extern VikDataSourceInterface vik_datasource_gps_interface;
-//#ifdef K
 /*** Input is LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_simplify_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_compress_interface;
@@ -69,7 +67,6 @@ extern VikDataSourceInterface vik_datasource_bfilter_manual_interface;
 /*** Input is a track and a LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_polygon_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
-//#endif
 
 /*** Input is a track. ***/
 const VikDataSourceInterface * filters[] = {
@@ -465,9 +462,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(this->viewport->get_coord_mode());
-//#ifdef K
 		wi->trw->rename(_(source_interface->layer_title));
-//#endif
 	}
 
 #ifdef K

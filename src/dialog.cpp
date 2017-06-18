@@ -41,10 +41,8 @@
 #include "ui_util.h"
 #include "date_time_dialog.h"
 #include "degrees_converters.h"
-#if 0
 #include "authors.h"
 #include "documenters.h"
-#endif
 #include "globals.h"
 
 

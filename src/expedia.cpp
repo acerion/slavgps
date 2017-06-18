@@ -25,10 +25,9 @@
 #include "config.h"
 #endif
 
-#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 
 #include <cstdlib>

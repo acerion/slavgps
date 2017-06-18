@@ -28,11 +28,11 @@
 #endif
 
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 #include <glib/gprintf.h>
 #include <gio/gio.h>
 
 #include <cstdlib>
+#include <cstring>
 
 #include "util.h"
 #include "globals.h"
@@ -42,6 +42,11 @@
 #else
 #include <unistd.h>
 #endif
+
+
+
+
+#include "util.h"
 
 
 

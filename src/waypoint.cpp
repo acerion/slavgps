@@ -31,7 +31,6 @@
 //#include "garminsymbols.h"
 #include "dems.h"
 #include "util.h"
-#include <glib/gi18n.h>
 
 
 

@@ -43,7 +43,6 @@
 #endif
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 #include <gio/gio.h>
 
 #include <QDebug>
@@ -58,6 +57,7 @@
 #include "uibuilder.h"
 //#include "preferences.h"
 #include "globals.h"
+#include "util.h"
 
 
 

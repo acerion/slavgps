@@ -33,7 +33,6 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <gdk/gdkkeysyms.h>
 

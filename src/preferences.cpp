@@ -29,10 +29,6 @@
 
 #include <QDebug>
 
-#if 0
-#include <gtk/gtk.h>
-#endif
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 #include "preferences.h"

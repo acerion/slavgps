@@ -26,10 +26,8 @@
 
 #include <list>
 
-#include <string.h>
-#include <stdlib.h>
-
-#include <glib/gi18n.h>
+#include <cstring>
+#include <cstdlib>
 
 #include "vikexttools.h"
 

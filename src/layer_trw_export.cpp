@@ -28,11 +28,9 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "babel.h"
 #include "babel_ui.h"
-#include "viking.h"
 #include "layer_trw_export.h"
 #include "gpx.h"
 #include "fileutils.h"

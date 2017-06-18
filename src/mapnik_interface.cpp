@@ -40,13 +40,13 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include <QPixmap>
 
 #include "mapnik_interface.h"
 #include "globals.h"
 #include "settings.h"
+#include "util.h"
 
 
 

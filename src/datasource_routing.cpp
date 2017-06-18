@@ -31,13 +31,12 @@
 #include <QLineEdit>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
-#include "viking.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
 #include "routing.h"
+#include "util.h"
 
 
 

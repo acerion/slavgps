@@ -40,7 +40,6 @@
 
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
 #include <gps.h>
@@ -56,6 +55,7 @@
 #include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
+#include "util.h"
 
 
 
@@ -1278,7 +1278,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	sess->trk = trk;
 	sess->port = g_strdup(port);
 	sess->ok = true;
-	sess->window_title = (dir == GPSDirection::DOWN) ? _("GPS Download") : _("GPS Upload");
+	sess->window_title = (dir == GPSDirection::DOWN) ? (char *) _("GPS Download") : (char *) _("GPS Upload");
 	sess->viewport = viewport;
 
 	/* This must be done inside the main thread as the uniquify causes screen updates

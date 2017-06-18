@@ -28,9 +28,9 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "googlesearch.h"
+#include "util.h"
 
 
 

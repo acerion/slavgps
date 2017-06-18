@@ -59,6 +59,7 @@
 #include "uibuilder.h"
 #include "layers_panel.h"
 #include "preferences.h"
+#include "util.h"
 
 
 #include "layer_gps.h"

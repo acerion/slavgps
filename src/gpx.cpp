@@ -36,23 +36,23 @@
 #include <cassert>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 #include <time.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "gpx.h"
-#include "viking.h"
 #include "globals.h"
 #include "preferences.h"
 #include <expat.h>
+
+#include "util.h"
 
 
 

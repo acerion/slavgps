@@ -16,21 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifndef __VIKING_OSM_H
-#define __VIKING_OSM_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void osm_init();
-
-#ifdef __cplusplus
-}
-#endif
+#ifndef _SG_OSM_H_
+#define _SG_OSM_H_
 
 
-#endif
+
+
+namespace SlavGPS {
+
+
+
+
+	void osm_init(void);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_OSM_H_ */

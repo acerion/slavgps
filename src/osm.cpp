@@ -24,8 +24,7 @@
 #include "config.h"
 #endif
 
-#include <glib/gi18n.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "osm.h"
 #include "map_ids.h"
@@ -40,6 +39,7 @@
 #include "vikexttool_datasources.h"
 #include "goto_tool_xml.h"
 #include "goto.h"
+#include "util.h"
 #ifdef K
 #include "routing.h"
 #include "routing_engine_web.h"

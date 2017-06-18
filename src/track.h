@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_TRACK_H_
@@ -31,20 +30,14 @@
 
 #include <list>
 #include <cstdint>
-
+#include <cmath>
 #include <time.h>
-//#include <gtk/gtk.h>
-
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
 
 #include <QColor>
 
 #include "coord.h"
 #include "bbox.h"
 #include "globals.h"
-#include "slav_qt.h"
 #include "tree_view.h"
 #include "layer.h"
 
@@ -276,7 +269,7 @@ namespace SlavGPS {
 		char * type = NULL;
 		uint8_t ref_count = 0;
 		char * name = NULL;
-		GtkWidget * property_dialog = NULL;
+		QDialog * property_dialog = NULL;
 		bool has_color = false;
 		QColor color;
 		LatLonBBox bbox;

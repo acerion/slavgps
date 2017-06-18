@@ -24,14 +24,10 @@
 
 #include <cstdlib>
 
-#include <gtk/gtk.h>
-#include <glib/gi18n.h>
-
 #include "uibuilder.h"
 #include "vikradiogroup.h"
 #include "vikfileentry.h"
 #include "vikfilelist.h"
-#include "viking.h"
 #include "globals.h"
 
 

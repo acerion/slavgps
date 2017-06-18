@@ -25,11 +25,11 @@
 #include <cstdlib>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 
 #include "acquire.h"
 #include "geotag_exif.h"
 #include "fileutils.h"
+#include "util.h"
 
 
 

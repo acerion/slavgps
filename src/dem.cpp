@@ -24,16 +24,16 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 #include <glib.h>
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#include <cstdlib>
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,22 +41,18 @@
 #include <unistd.h>
 #endif
 
-#include <stdlib.h>
-
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "compression.h"
 #include "dem.h"
 #include "coords.h"
 #include "fileutils.h"
-
+#include "util.h"
 
 
 
 
 using namespace SlavGPS;
-
 
 
 

@@ -16,8 +16,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SLAVGPS_MAP_SOURCE_H_
-#define _SLAVGPS_MAP_SOURCE_H_
+#ifndef _SG_MAP_SOURCE_H_
+#define _SG_MAP_SOURCE_H_
 
 
 
@@ -31,7 +31,6 @@
 #include "bbox.h"
 #include "download.h"
 #include "map_ids.h"
-#include "slav_qt.h"
 
 
 
@@ -145,4 +144,4 @@ namespace SlavGPS {
 
 
 
-#endif /* _SLAVGPS_MAP_SOURCE_H_ */
+#endif /* _SG_MAP_SOURCE_H_ */

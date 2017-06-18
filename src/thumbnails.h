@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_THUMBNAILS_H_
@@ -32,11 +31,21 @@
 
 
 
-bool a_thumbnails_exists(const char * filename);
-void a_thumbnails_create(const char * filename);
-QPixmap * a_thumbnails_get(const char * filename);
-QPixmap * a_thumbnails_get_default();
-QPixmap * a_thumbnails_scale_pixbuf(QPixmap * src, int max_w, int max_h);
+namespace SlavGPS {
+
+
+
+
+	bool a_thumbnails_exists(const char * filename);
+	void a_thumbnails_create(const char * filename);
+	QPixmap * a_thumbnails_get(const char * filename);
+	QPixmap * a_thumbnails_get_default();
+	QPixmap * a_thumbnails_scale_pixbuf(QPixmap * src, int max_w, int max_h);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

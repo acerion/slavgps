@@ -19,7 +19,9 @@
  */
 
 
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <cmath>
 #include <cstring>
@@ -27,7 +29,6 @@
 #include <cstdio>
 #include <cassert>
 
-#include "viking.h"
 #include "track_list_dialog.h"
 #include "track_properties_dialog.h"
 #include "clipboard.h"

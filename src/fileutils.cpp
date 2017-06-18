@@ -22,7 +22,7 @@
  * Code that is independent of any other Viking specific types
  * Otherwise see file.c
  */
-#include <string.h>
+#include <cstring>
 
 #include "fileutils.h"
 

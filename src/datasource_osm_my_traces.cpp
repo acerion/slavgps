@@ -25,7 +25,6 @@
 #include <cstdlib>
 
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 #include <expat.h>

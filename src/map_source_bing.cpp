@@ -34,20 +34,22 @@
 #endif
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#include <cstdlib>
 #endif
+
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
+
 #include "globals.h"
 #include "map_source_bing.h"
 #include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
+#include "slav_qt.h"
 #include "icons/icons.h"
 
 

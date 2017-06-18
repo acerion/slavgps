@@ -21,15 +21,16 @@
  *
  */
 
+#include <cstdlib>
+
 #include "geojson.h"
 #include "gpx.h"
 #include "globals.h"
 #include "window.h"
+#include "util.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
-#include <stdlib.h>
 
 
 

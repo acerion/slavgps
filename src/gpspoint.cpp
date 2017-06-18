@@ -28,11 +28,11 @@
 #include <cctype>
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 
 #include "gpspoint.h"

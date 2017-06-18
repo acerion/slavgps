@@ -33,9 +33,6 @@
 #include <unistd.h>
 #endif
 
-#include <glib/gi18n.h>
-
-//#include "viking.h"
 #include "tree_view.h"
 #include "clipboard.h"
 #include "dialog.h"

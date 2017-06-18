@@ -41,7 +41,6 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-//#include "viking.h"
 #include "thumbnails.h"
 #include "file.h"
 #include "icons/icons.h"
@@ -292,7 +291,7 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 
 
 
-QPixmap * a_thumbnails_get(const char * pathname)
+QPixmap * SlavGPS::a_thumbnails_get(const char * pathname)
 {
 	char * path = file_realpath_dup(pathname);
 	char * uri = g_strconcat("file://", path, NULL);

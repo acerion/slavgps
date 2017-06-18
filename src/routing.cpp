@@ -34,13 +34,13 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "curl_download.h"
 #include "babel.h"
 #include "preferences.h"
 #include "routing.h"
 #include "routing_engine.h"
+#include "util.h"
 
 
 

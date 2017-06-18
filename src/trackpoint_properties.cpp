@@ -36,7 +36,6 @@
 #include "date_time_dialog.h"
 #include "util.h"
 #if 0
-#include "viking.h"
 #include "coords.h"
 #include "coord.h"
 #include "track.h"

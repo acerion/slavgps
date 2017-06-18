@@ -18,13 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <glib/gi18n.h>
 
 #include <cstdlib>
 
 #include "viewport_internal.h"
 #include "acquire.h"
 #include "geonamessearch.h"
+#include "util.h"
 
 
 

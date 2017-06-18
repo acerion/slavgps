@@ -28,12 +28,12 @@
 #include <cstdlib>
 
 #include <glib.h>
-#include <glib/gi18n.h>
 
 #include "globals.h"
 #include "map_cache.h"
 #include "preferences.h"
 #include "slav_qt.h"
+#include "util.h"
 
 
 

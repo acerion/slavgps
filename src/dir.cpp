@@ -23,9 +23,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "viking.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

@@ -24,18 +24,13 @@
 #endif /* HAVE_CONFIG */
 
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#include <cstdlib>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 
-#include <cstdlib>
-
 #include <glib/gprintf.h>
-#include <glib/gi18n.h>
-
-#include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
 #include "icons/icons.h"

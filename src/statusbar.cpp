@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <QLabel>
 #include <QDebug>
 
 #include "statusbar.h"

@@ -36,8 +36,6 @@
 #include <QDoubleSpinBox>
 #include <QComboBox>
 
-#include <glib/gi18n.h>
-
 #include "layer.h"
 #include "uibuilder_qt.h"
 #include "globals.h"

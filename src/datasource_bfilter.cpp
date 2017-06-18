@@ -27,14 +27,13 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib/gi18n.h>
-
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
 #include "settings.h"
 #include "globals.h"
 #include "preferences.h"
+#include "util.h"
 
 
 

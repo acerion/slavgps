@@ -42,57 +42,6 @@
 #include "acquire.h"
 #include "vikexttools.h"
 
-#ifdef K
-#include <gdk/gdkkeysyms.h>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
-
-#include "layer_gps.h"
-#include "layer_trw_export.h"
-#include "waypoint_properties.h"
-#include "track_profile_dialog.h"
-#include "layer_trw_stats.h"
-#include "track_list_dialog.h"
-#include "waypoint_list.h"
-#include "layers_panel.h"
-#include "viewport_internal.h"
-
-#ifdef VIK_CONFIG_GEOTAG
-#include "layer_trw_geotag.h"
-#include "geotag_exif.h"
-#endif
-
-#include "garminsymbols.h"
-#include "thumbnails.h"
-#include "background.h"
-#include "gpx.h"
-#include "file.h"
-#include "dialog.h"
-#include "geojson.h"
-#include "babel.h"
-#include "dem.h"
-#include "dems.h"
-#include "geonamessearch.h"
-#ifdef VIK_CONFIG_OPENSTREETMAP
-#include "osm-traces.h"
-#endif
-
-#include "datasources.h"
-#include "datasource_gps.h"
-#include "vikexttools.h"
-#include "vikexttool_datasources.h"
-#include "ui_util.h"
-#include "vikutils.h"
-#include "gpspoint.h"
-#include "clipboard.h"
-#include "settings.h"
-#include "globals.h"
-#include "routing.h"
-#include "layer_trw_draw.h"
-#include "icons/icons.h"
-#endif
-
 
 
 

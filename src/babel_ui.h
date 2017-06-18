@@ -16,11 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifndef _VIKING_BABEL_UI_H
-#define _VIKING_BABEL_UI_H
+#ifndef _SG_BABEL_UI_H_
+#define _SG_BABEL_UI_H_
+
+
+
 
 #include <cstdint>
 
@@ -29,12 +31,27 @@
 
 #include "babel.h"
 
-QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode);
-BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo);
-void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data);
-
-QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints);
-void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints);
 
 
-#endif
+
+namespace SlavGPS {
+
+
+
+
+	QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode);
+	BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo);
+	void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data);
+
+	QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints);
+	void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_BABEL_UI_H_ */

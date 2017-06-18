@@ -34,8 +34,6 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib/gi18n.h>
-
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"

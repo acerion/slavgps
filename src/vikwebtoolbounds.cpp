@@ -19,8 +19,8 @@
  *
  */
 
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include "window.h"
 #include "viewport_internal.h"

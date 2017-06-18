@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifndef _SG_WINDOW_H_
-#define _SG_WINDOW_H_
+#ifndef _SG_WINDOW_GTK_H_
+#define _SG_WINDOW_GTK_H_
 
 
 
@@ -31,7 +30,6 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gtk/gtk.h>
 
 #include "vikwaypoint.h"
 #include "vikstatus.h"
@@ -91,4 +89,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WINDOW_H_ */
+#endif /* #ifndef _SG_WINDOW_GTK_H_ */

@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifndef _SG_LAYER_MAP_H
-#define _SG_LAYER_MAP_H
+#ifndef _SG_LAYER_MAP_H_
+#define _SG_LAYER_MAP_H_
 
 
 
@@ -30,7 +29,6 @@
 #endif
 
 #include <string>
-
 #include <cstdint>
 
 #include "coord.h"
@@ -41,9 +39,6 @@
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"
-#ifdef K
-#include <gio/gio.h>
-#endif
 #endif
 
 
@@ -195,4 +190,4 @@ std::string& maps_layer_default_dir_2();
 
 
 
-#endif /* #ifndef _SG_LAYER_MAP_H */
+#endif /* #ifndef _SG_LAYER_MAP_H_ */

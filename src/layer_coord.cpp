@@ -25,13 +25,12 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <glib/gi18n.h>
-
 #include <QPen>
 #include <QDebug>
 
 #include "viewport_internal.h"
 #include "layer_coord.h"
+#include "util.h"
 
 
 

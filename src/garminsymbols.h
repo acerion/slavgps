@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_GARMINSYMBOLS_H_
@@ -26,7 +25,8 @@
 
 #include <QPixmap>
 #include <glib.h>
-#include <gtk/gtk.h>
+
+#include "slav_qt.h"
 
 
 
@@ -35,7 +35,7 @@ QPixmap * a_get_wp_sym(const char * sym);
 const char *a_get_hashed_sym(const char * sym);
 void a_populate_sym_list(GtkListStore * list);
 /* Use when preferences have changed to reload icons. */
-void clear_garmin_icon_syms();
+void clear_garmin_icon_syms(void);
 
 
 

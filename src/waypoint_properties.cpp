@@ -26,14 +26,12 @@
 #include <cstdlib>
 
 #if 0
-#include <glib/gi18n.h>
 #include "degrees_converters.h"
 #include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif
 #include "thumbnails.h"
-//#include "viking.h"
 #include "goto.h"
 #include "vikutils.h"
 #include "widget_file_entry.h"

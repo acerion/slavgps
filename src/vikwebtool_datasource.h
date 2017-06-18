@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifndef _SG_WEBTOOL_DATASOURCE_H_
 #define _SG_WEBTOOL_DATASOURCE_H_
 
@@ -25,8 +25,6 @@
 
 
 #include <cstdint>
-
-#include <glib.h>
 
 #include "vikwebtool.h"
 
@@ -61,11 +59,11 @@ namespace SlavGPS {
 
 		bool webtool_needs_user_string();
 
-		char * url_format_code;
-		char * file_type;         /* Default value NULL equates to internal GPX reading. */
-		char * babel_filter_args; /* Command line filter options for gpsbabel. */
-		char * input_label;       /* Label to be shown next to the user input box if an input term is required. */
-		char * user_string;
+		char * url_format_code = NULL;
+		char * file_type = NULL;         /* Default value NULL equates to internal GPX reading. */
+		char * babel_filter_args = NULL; /* Command line filter options for gpsbabel. */
+		char * input_label = NULL;       /* Label to be shown next to the user input box if an input term is required. */
+		char * user_string = NULL;
 
 	}; /* class WebToolDatasource */
 

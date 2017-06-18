@@ -31,7 +31,6 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include <QDebug>
 
@@ -47,6 +46,7 @@
 #include "settings.h"
 #include "globals.h"
 #include "layers_panel.h"
+#include "util.h"
 
 
 

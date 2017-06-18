@@ -27,8 +27,6 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib/gi18n.h>
-
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
 

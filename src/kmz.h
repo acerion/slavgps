@@ -16,15 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifndef _SG_KMZ_H_
 #define _SG_KMZ_H_
 
 
 
 #include <QPixmap>
-#include <glib.h>
 
 
 
@@ -41,7 +40,7 @@ namespace SlavGPS {
 
 
 	int kmz_save_file(QPixmap * pixmap, const char* filename, double north, double east, double south, double west);
-	int kmz_open_file(const char* filename, Viewport * viewport, LayersPanel * panel);
+	int kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel);
 
 
 

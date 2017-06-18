@@ -19,15 +19,13 @@
  *
  */
 
-#ifndef __BOUNDING_BOX_H
-#define __BOUNDING_BOX_H
-
+#ifndef _SG_BOUNDING_BOX_H_
+#define _SG_BOUNDING_BOX_H_
 
 
 
 
 #include <glib.h>
-
 
 
 
@@ -68,5 +66,4 @@ typedef struct {
 
 
 
-
-#endif
+#endif /* #ifndef _SG_BOUNDING_BOX_H_ */

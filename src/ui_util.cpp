@@ -28,7 +28,6 @@
 #include <cstdlib>
 
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 #include <glib/gprintf.h>
 
 #include "util.h"

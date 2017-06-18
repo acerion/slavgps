@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifndef _WEB_ROUTING_H
-#define _WEB_ROUTING_H
+
+#ifndef _SG_ROUTING_ENGINE_WEB_H_
+#define _SG_ROUTING_ENGINE_WEB_H_
 
 
 
@@ -68,9 +68,11 @@ namespace SlavGPS {
 	};
 
 
-}
+
+
+} /* namespace SlavGPS */
 
 
 
 
-#endif
+#endif /* #ifndef _SG_ROUTING_ENGINE_WEB_H_ */

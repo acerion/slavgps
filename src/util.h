@@ -19,7 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_UTIL_H_
@@ -84,6 +83,11 @@ void minmax_array(const double * array, double * min, double * max, bool NO_ALT_
 
 #ifndef _
 #define _(s) s
+#endif
+
+
+#ifndef N_
+#define N_(s) s
 #endif
 
 

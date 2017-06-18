@@ -36,9 +36,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 #include <glib/gprintf.h>
-//#include <gtk/gtk.h>
 
 #include <curl/curl.h>
 
@@ -47,6 +45,11 @@
 #include "file.h"
 #include "globals.h"
 #include "curl_download.h"
+
+
+
+
+using namespace SlavGPS;
 
 
 

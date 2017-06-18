@@ -27,7 +27,6 @@
 #include <cstdlib>
 
 #include <glib.h>
-#include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 #include "goto_tool.h"

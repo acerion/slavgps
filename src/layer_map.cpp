@@ -62,6 +62,7 @@
 #include "settings.h"
 #include "globals.h"
 #include "uibuilder.h"
+#include "util.h"
 
 
 

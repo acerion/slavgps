@@ -39,7 +39,6 @@
 #include <QDebug>
 
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "background.h"
 #include "layer_map.h"
@@ -52,6 +51,7 @@
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
+#include "util.h"
 
 
 

@@ -10,6 +10,7 @@
 
 
 #ifdef SLAVGPS_QT
+typedef int GtkListStore;
 typedef int GtkUIManager;
 typedef int GtkActionGroup;
 typedef int GdkEventExpose;

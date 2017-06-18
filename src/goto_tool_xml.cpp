@@ -22,12 +22,15 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
 #ifdef HAVE_MATH_H
-#include <math.h>
+#include <cmath>
 #endif
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>

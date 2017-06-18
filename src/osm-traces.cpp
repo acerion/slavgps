@@ -34,8 +34,8 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
+#include "window.h"
 #include "layer_trw.h"
 #include "osm-traces.h"
 #include "gpx.h"
@@ -43,6 +43,7 @@
 #include "preferences.h"
 #include "settings.h"
 #include "globals.h"
+#include "util.h"
 
 
 

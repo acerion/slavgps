@@ -38,7 +38,7 @@
 #include <unordered_map>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include <cstring>
 #endif
 
 #include "layer_trw.h"
