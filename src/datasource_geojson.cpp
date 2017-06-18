@@ -68,6 +68,8 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 	true,
 	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
 	false, /* Not thread method - open each file in the main loop. */
+
+	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               datasource_geojson_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(VikDataSourceAddSetupWidgetsFunc)    datasource_geojson_add_setup_widgets,

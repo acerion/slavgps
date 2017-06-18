@@ -217,6 +217,8 @@ void WebToolDatasource::open(Window * window)
 		false, /* Maintain current view - rather than setting it to the acquired points. */
 		true,
 		true,
+
+		(DataSourceInternalDialog)            NULL,
 		(VikDataSourceInitFunc)               datasource_init,
 		(VikDataSourceCheckExistenceFunc)     NULL,
 		(VikDataSourceAddSetupWidgetsFunc)    (search ? datasource_add_setup_widgets : NULL),

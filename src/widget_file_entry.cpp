@@ -59,6 +59,10 @@ SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::Fil
 	this->setLayout(this->hbox);
 
 	connect(this->browse, SIGNAL(clicked()), this, SLOT(open_browser_cb()));
+
+	/* Input line should be primary "focus receiver" because cursor
+	   blinking in input line has a good visibility. */
+	this->setFocusProxy(this->line);
 }
 
 

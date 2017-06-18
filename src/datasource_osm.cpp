@@ -75,6 +75,8 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 	true,
 	true,
 	true,
+
+	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		        datasource_osm_init,
 	(VikDataSourceCheckExistenceFunc)	NULL,
 	(VikDataSourceAddSetupWidgetsFunc)	datasource_osm_add_setup_widgets,

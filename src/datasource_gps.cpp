@@ -76,6 +76,8 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 	true,
 	true,
 	true,
+
+	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		        datasource_gps_init_func,
 	(VikDataSourceCheckExistenceFunc)	NULL,
 	(VikDataSourceAddSetupWidgetsFunc)	datasource_gps_add_setup_widgets,

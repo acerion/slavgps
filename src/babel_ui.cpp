@@ -68,7 +68,7 @@ QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode)
 	QComboBox * combo = new QComboBox();
 
 	/* Add a first label to invite user to select a file type.
-	   id == -1 distinguishes this entry. */
+	   user data == -1 distinguishes this entry. This entry can be also recognized by index == 0. */
 	combo->addItem("Select a file type", -1);
 
 	/* Add all known and compatible file types */

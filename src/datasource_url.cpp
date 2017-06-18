@@ -77,6 +77,8 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	true,
 	true,
 	true,
+
+	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               datasource_url_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(VikDataSourceAddSetupWidgetsFunc)    datasource_url_add_setup_widgets,

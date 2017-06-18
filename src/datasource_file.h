@@ -6,10 +6,10 @@
 
 
 
+
 #include <QString>
 #include <QWidget>
 #include <QDialog>
-#include <QPushButton>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
 #include <QComboBox>
@@ -19,27 +19,39 @@
 
 
 
-class DataSourceFileDialog : public QDialog {
-	Q_OBJECT
-public:
-	DataSourceFileDialog(QString const & title, QWidget * parent = NULL);
-	~DataSourceFileDialog();
 
-	void build_ui(void);
+namespace SlavGPS {
 
-private slots:
-	void accept_cb(void);
 
-public:
-	QWidget * parent = NULL;
-	QDialogButtonBox * button_box = NULL;
-	QVBoxLayout * vbox = NULL;
-	QComboBox * file_types = NULL;
 
-	SlavGPS::SGFileEntry * file_entry = NULL;
 
-	void add_file_type_filter(BabelFileType * babel_file_type);
-};
+	class DataSourceFileDialog : public QDialog {
+		Q_OBJECT
+	public:
+		DataSourceFileDialog(QString const & title, QWidget * parent = NULL);
+		~DataSourceFileDialog();
+
+		void build_ui(void);
+
+	private slots:
+		void file_type_changed_cb(int index);
+
+	public:
+		QDialogButtonBox * button_box = NULL;
+		QVBoxLayout * vbox = NULL;
+		QComboBox * file_types_combo = NULL;
+
+		SlavGPS::SGFileEntry * file_entry = NULL;
+
+		void add_file_type_filter(BabelFileType * babel_file_type);
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
 
 
 #endif /* #define _SG_DATA_SOURCE_FILE_H_ */

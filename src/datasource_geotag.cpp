@@ -70,6 +70,8 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 	true,
 	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
 	true,
+
+	(DataSourceInternalDialog)                NULL,
 	(VikDataSourceInitFunc)		          datasource_geotag_init,
 	(VikDataSourceCheckExistenceFunc)	  NULL,
 	(VikDataSourceAddSetupWidgetsFunc)        datasource_geotag_add_setup_widgets,

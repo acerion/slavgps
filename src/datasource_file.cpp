@@ -43,15 +43,6 @@ using namespace SlavGPS;
 
 
 
-
-typedef struct {
-	GtkWidget * file;
-	GtkWidget * type;
-} datasource_file_widgets_t;
-
-
-
-
 extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last used directory. */
@@ -69,10 +60,8 @@ static int last_type = 0;
 
 
 
-static void * datasource_file_init(acq_vik_t * avt);
-static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_file_get_process_options(datasource_file_widgets_t * widgets, void * not_used, char const * not_used2, char const * not_used3);
-static void datasource_file_cleanup(void * data);
+static int datasource_file_internal_dialog(QWidget * parent);
+static ProcessOptions * datasource_file_get_process_options(void * widgets, void * not_used, char const * not_used2, char const * not_used3);
 
 
 
@@ -85,14 +74,16 @@ VikDataSourceInterface vik_datasource_file_interface = {
 	true,
 	true,
 	true,
-	(VikDataSourceInitFunc)	                datasource_file_init,
+
+	(DataSourceInternalDialog)              datasource_file_internal_dialog,
+	(VikDataSourceInitFunc)	                NULL,
 	(VikDataSourceCheckExistenceFunc)       NULL,
-	(VikDataSourceAddSetupWidgetsFunc)      datasource_file_add_setup_widgets,
+	(VikDataSourceAddSetupWidgetsFunc)      NULL,
 	(VikDataSourceGetProcessOptionsFunc)    datasource_file_get_process_options,
 	(VikDataSourceProcessFunc)              a_babel_convert_from,
 	(VikDataSourceProgressFunc)             NULL,
 	(VikDataSourceAddProgressWidgetsFunc)   NULL,
-	(VikDataSourceCleanupFunc)              datasource_file_cleanup,
+	(VikDataSourceCleanupFunc)              NULL,
 	(VikDataSourceOffFunc)                  NULL,
 
 	NULL,
@@ -105,10 +96,9 @@ VikDataSourceInterface vik_datasource_file_interface = {
 
 
 
-DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent_widget) : QDialog(NULL)
+DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent_) : QDialog(parent_)
 {
 	this->setWindowTitle(title);
-	this->parent = parent_widget;
 }
 
 
@@ -116,15 +106,7 @@ DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * pare
 
 DataSourceFileDialog::~DataSourceFileDialog()
 {
-	delete this->file_types;
-}
-
-
-
-
-void DataSourceFileDialog::accept_cb(void) /* Slot. */
-{
-	this->accept();
+	delete this->file_types_combo;
 }
 
 
@@ -169,7 +151,7 @@ void DataSourceFileDialog::build_ui(void)
 	for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
 
 		QString a = QString((iter->second)->label) + "(" + QString((iter->second)->ext) + ")";
-		qDebug() << "II: -------- Data Source File: adding file filter " << a;
+		//qDebug() << "II: Data Source File: adding file filter " << a;
 		filter << a;
 
 		char const * ext = (iter->second)->ext;
@@ -223,44 +205,44 @@ void DataSourceFileDialog::build_ui(void)
 	/* The file format selector. */
 	/* Propose any readable file. */
 	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
-	this->file_types = a_babel_ui_file_type_selector_new(mode);
-#ifdef K
-	QObject::connect(data_source_file_dialog->file_types, SIGNAL("changed"), dialog, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
-	data_source_file_dialog->file_types->setCurrentIndex(last_type);
-	/* Manually call the callback to fix the state. */
-	a_babel_ui_type_selector_dialog_sensitivity_cb(data_source_file_dialog->file_types, dialog);
-#endif
-	this->vbox->addWidget(this->file_types);
+	this->file_types_combo = a_babel_ui_file_type_selector_new(mode);
+	this->vbox->addWidget(this->file_types_combo);
 
+	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
+	this->file_types_combo->setCurrentIndex(last_type);
 
 
 	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton("&Ok", QDialogButtonBox::AcceptRole);
-	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceFileDialog::accept_cb);
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	this->button_box->addButton(QDialogButtonBox::Cancel);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 	this->vbox->addWidget(this->button_box);
 
 
+	/* Manually call the callback to set state of OK button. */
+	this->file_type_changed_cb(last_type);
 
-	this->accept();
+
+	/* Blinky cursor in input field will be visible and will bring
+	   user's eyes to widget that has a focus. */
+	this->file_entry->setFocus();
+}
+
+
+
+
+void DataSourceFileDialog::file_type_changed_cb(int index)
+{
+	qDebug() << "SLOT: Datasource File: current index changed to" << index;
+	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);
+	button->setEnabled(index != 0); /* Index is zero. User Data is -1. */
 }
 
 
 
 
 DataSourceFileDialog * data_source_file_dialog = NULL;
-
-/* See VikDataSourceInterface. */
-static void * datasource_file_init(acq_vik_t * avt)
-{
-	if (!data_source_file_dialog) {
-		data_source_file_dialog = new DataSourceFileDialog("Import File with GPSBabel", avt->window);
-	}
-
-	datasource_file_widgets_t *widgets = (datasource_file_widgets_t *) malloc(sizeof (datasource_file_widgets_t));
-	return widgets;
-}
 
 
 
@@ -303,23 +285,23 @@ void DataSourceFileDialog::add_file_type_filter(BabelFileType * file_type)
 
 
 /* See VikDataSourceInterface. */
-static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static int datasource_file_internal_dialog(QWidget * parent)
 {
-	data_source_file_dialog->build_ui();
+	if (!data_source_file_dialog) {
+		data_source_file_dialog = new DataSourceFileDialog(QObject::tr(vik_datasource_file_interface.window_title), parent);
+		data_source_file_dialog->build_ui();
+	}
 
-	QStringList filter;
-	filter << _("All files (*)");
+	data_source_file_dialog->file_entry->setFocus();
 
-	data_source_file_dialog->file_entry->file_selector->setNameFilters(filter);
-	data_source_file_dialog->exec();
-
+	return data_source_file_dialog->exec();
 }
 
 
 
 
 /* See VikDataSourceInterface/ */
-static ProcessOptions * datasource_file_get_process_options(datasource_file_widgets_t * unused, void * not_used, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_file_get_process_options(void * unused, void * not_used, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -335,9 +317,9 @@ static ProcessOptions * datasource_file_get_process_options(datasource_file_widg
 	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
 #endif
 	/* Retrieve and memorize file format selected. */
-	last_type = data_source_file_dialog->file_types->currentIndex();
+	last_type = data_source_file_dialog->file_types_combo->currentIndex();
 
-	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types))->name;
+	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types_combo))->name;
 
 	/* Generate the process options. */
 	po->babelargs = g_strdup_printf("-i %s", selected);
@@ -346,13 +328,4 @@ static ProcessOptions * datasource_file_get_process_options(datasource_file_widg
 	qDebug() << "II: Datasource File: using Babel args" << po->babelargs << "and file" << po->filename;
 
 	return po;
-}
-
-
-
-
-/* See VikDataSourceInterface. */
-static void datasource_file_cleanup(void * data)
-{
-	free(data);
 }

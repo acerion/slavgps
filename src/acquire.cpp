@@ -69,9 +69,7 @@ extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
 //#endif
 
 /*** Input is a track. ***/
-//#ifdef K
 const VikDataSourceInterface * filters[] = {
-
 	&vik_datasource_bfilter_simplify_interface,
 	&vik_datasource_bfilter_compress_interface,
 	&vik_datasource_bfilter_dup_interface,
@@ -81,8 +79,7 @@ const VikDataSourceInterface * filters[] = {
 
 };
 
-const unsigned int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
-//#endif
+const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
 
 Track * filter_track = NULL;
 
@@ -99,7 +96,7 @@ typedef struct {
 
 
 
-AcquireProcess * acquiring = NULL;
+static AcquireProcess * g_acquiring = NULL;
 
 
 /*********************************************************
@@ -281,7 +278,6 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	GtkWidget * dialog = NULL;
 	char * args_off = NULL;
 	char * fd_off = NULL;
-	void * user_data;
 	DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
 	memset(options, 0, sizeof (DownloadFileOptions));
 
@@ -297,11 +293,11 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/*** INIT AND CHECK EXISTENCE ***/
 	if (source_interface->init_func) {
-		user_data = source_interface->init_func(&avt);
+		this->user_data = source_interface->init_func(&avt);
 	} else {
-		user_data = NULL;
+		this->user_data = NULL;
 	}
-	pass_along_data = user_data;
+	pass_along_data = this->user_data;
 
 	if (source_interface->check_existence_func) {
 		char *error_str = source_interface->check_existence_func();
@@ -315,9 +311,15 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
 
 
-	if (source_interface->add_setup_widgets_func) {
-		source_interface->add_setup_widgets_func(dialog, this->viewport, user_data);
-	}
+	if (source_interface->internal_dialog) {
+		int rv = source_interface->internal_dialog(avt.window);
+		if (rv != QDialog::Accepted) {
+			if (source_interface->cleanup_func) {
+				source_interface->cleanup_func(this->user_data);
+			}
+			return;
+		}
+	} else
 
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
@@ -331,7 +333,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 #endif
 
-		source_interface->add_setup_widgets_func(dialog, this->viewport, user_data);
+		source_interface->add_setup_widgets_func(dialog, this->viewport, this->user_data);
 		gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
 
 		if (response_w) {
@@ -339,7 +341,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		}
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-			source_interface->cleanup_func(user_data);
+			source_interface->cleanup_func(this->user_data);
 			gtk_widget_destroy(dialog);
 			return;
 		}
@@ -437,9 +439,8 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #endif
 
 	if (source_interface->add_progress_widgets_func) {
-		source_interface->add_progress_widgets_func(dialog, user_data);
+		source_interface->add_progress_widgets_func(dialog, this->user_data);
 	}
-	this->user_data = user_data;
 
 
 	if (mode == DatasourceMode::ADDTOLAYER) {
@@ -550,13 +551,13 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
  */
 void SlavGPS::a_acquire(Window * window, LayersPanel * panel, Viewport * viewport, DatasourceMode mode, VikDataSourceInterface *source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function)
 {
-	acquiring->window = window;
-	acquiring->panel = panel;
-	acquiring->viewport = viewport;
-	acquiring->trw = NULL;
-	acquiring->trk = NULL;
+	g_acquiring->window = window;
+	g_acquiring->panel = panel;
+	g_acquiring->viewport = viewport;
+	g_acquiring->trw = NULL;
+	g_acquiring->trk = NULL;
 
-	acquiring->acquire(mode, source_interface, userdata, cleanup_function);
+	g_acquiring->acquire(mode, source_interface, userdata, cleanup_function);
 }
 
 
@@ -605,13 +606,13 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DatasourceInpu
  */
 QMenu * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
-	acquiring->window = window;
-	acquiring->panel = panel;
-	acquiring->viewport = viewport;
-	acquiring->trw = trw;
-	acquiring->trk = NULL;
+	g_acquiring->window = window;
+	g_acquiring->panel = panel;
+	g_acquiring->viewport = viewport;
+	g_acquiring->trw = trw;
+	g_acquiring->trk = NULL;
 
-	return acquiring->build_menu(QObject::tr("&Filter"), DatasourceInputtype::TRWLAYER);
+	return g_acquiring->build_menu(QObject::tr("&Filter"), DatasourceInputtype::TRWLAYER);
 }
 
 
@@ -627,14 +628,14 @@ QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * pa
 	if (filter_track == NULL) {
 		return NULL;
 	} else {
-		acquiring->window = window;
-		acquiring->panel = panel;
-		acquiring->viewport = viewport;
-		acquiring->trw = trw;
-		acquiring->trk = filter_track;
+		g_acquiring->window = window;
+		g_acquiring->panel = panel;
+		g_acquiring->viewport = viewport;
+		g_acquiring->trw = trw;
+		g_acquiring->trk = filter_track;
 
 		const QString submenu_label = QString(QObject::tr("Filter with %1")).arg(filter_track->name);
-		return acquiring->build_menu(submenu_label, DatasourceInputtype::TRWLAYER_TRACK);
+		return g_acquiring->build_menu(submenu_label, DatasourceInputtype::TRWLAYER_TRACK);
 	}
 }
 
@@ -648,13 +649,13 @@ QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * pa
  */
 QMenu * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
-	acquiring->window = window;
-	acquiring->panel = panel;
-	acquiring->viewport = viewport;
-	acquiring->trw = NULL;
-	acquiring->trk = trk;
+	g_acquiring->window = window;
+	g_acquiring->panel = panel;
+	g_acquiring->viewport = viewport;
+	g_acquiring->trw = NULL;
+	g_acquiring->trk = trk;
 
-	return acquiring->build_menu(QObject::tr("&Filter"), DatasourceInputtype::TRACK);
+	return g_acquiring->build_menu(QObject::tr("&Filter"), DatasourceInputtype::TRACK);
 }
 
 
@@ -678,7 +679,7 @@ void SlavGPS::a_acquire_set_filter_track(Track * trk)
 
 void SlavGPS::acquire_init(void)
 {
-	acquiring = new AcquireProcess();
+	g_acquiring = new AcquireProcess();
 }
 
 
@@ -686,5 +687,5 @@ void SlavGPS::acquire_init(void)
 
 void SlavGPS::acquire_uninit(void)
 {
-	delete acquiring;
+	delete g_acquiring;
 }

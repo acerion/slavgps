@@ -30,6 +30,7 @@
 
 #include <QObject>
 #include <QMenu>
+#include <QDialog>
 
 #include "window.h"
 #include "layers_panel.h"
@@ -125,6 +126,9 @@ namespace SlavGPS {
 	 */
 	typedef void (* VikDataSourceAddSetupWidgetsFunc) (GtkWidget * dialog, Viewport * viewport, void * user_data);
 
+
+	typedef int (* DataSourceInternalDialog) (QWidget * parent);
+
 	/**
 	 * VikDataSourceGetProcessOptionsFunc:
 	 * @user_data: provided by #VikDataSourceInterface.init_func or dialog with params
@@ -179,9 +183,11 @@ namespace SlavGPS {
 		bool is_thread;
 
 		/*** Manual UI Building. ***/
+		DataSourceInternalDialog internal_dialog;
 		VikDataSourceInitFunc init_func;
 		VikDataSourceCheckExistenceFunc check_existence_func;
 		VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
+
 		/***                    ***/
 
 		VikDataSourceGetProcessOptionsFunc get_process_options;
@@ -192,6 +198,7 @@ namespace SlavGPS {
 		VikDataSourceAddProgressWidgetsFunc add_progress_widgets_func;
 		VikDataSourceCleanupFunc cleanup_func;
 		VikDataSourceOffFunc off_func;
+
 
 		/*** UI Building.        ***/
 		Parameter *      params;
