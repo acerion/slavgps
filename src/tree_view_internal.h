@@ -47,6 +47,23 @@ namespace SlavGPS {
 	class Layer;
 	class Sublayer;
 	class LayersPanel;
+	class TreeView;
+
+
+
+
+	class TreeModel : public QStandardItemModel {
+	public:
+		TreeModel(TreeView * view_, QObject * parent_) : QStandardItemModel(parent_) { view = view_; };
+		Qt::ItemFlags flags(const QModelIndex & index) const;
+		bool canDropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
+		bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
+		Qt::DropActions supportedDropActions() const;
+
+	private:
+		TreeView * view = NULL;
+
+	};
 
 
 
@@ -104,7 +121,7 @@ namespace SlavGPS {
 		QIcon * layer_type_icons[(int) LayerType::NUM_TYPES];
 
 		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
-		QStandardItemModel * model = NULL;
+		TreeModel * model = NULL;
 
 	private slots:
 		void select_cb(void);

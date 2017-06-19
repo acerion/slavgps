@@ -773,14 +773,13 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 		return;
 	}
 
-	QStandardItemModel * model = this->model;
 #ifdef K
 	GtkTreeIter child;
-	if (!gtk_tree_model_iter_children(model, &child, parent_index)) {
+	if (!gtk_tree_model_iter_children(this->model, &child, parent_index)) {
 		return;
 	}
 
-	unsigned int length = gtk_tree_model_iter_n_children(model, parent_index);
+	unsigned int length = gtk_tree_model_iter_n_children(this->model, parent_index);
 
 	/* Create an array to store the position offsets. */
 	SortTuple *sort_array;
@@ -789,10 +788,10 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 	unsigned int ii = 0;
 	do {
 		sort_array[ii].offset = ii;
-		gtk_tree_model_get(model, &child, COLUMN_NAME, &(sort_array[ii].name), -1);
-		gtk_tree_model_get(model, &child, COLUMN_TIMESTAMP, &(sort_array[ii].timestamp), -1);
+		gtk_tree_model_get(this->model, &child, COLUMN_NAME, &(sort_array[ii].name), -1);
+		gtk_tree_model_get(this->model, &child, COLUMN_TIMESTAMP, &(sort_array[ii].timestamp), -1);
 		ii++;
-	} while (gtk_tree_model_iter_next(model, &child));
+	} while (gtk_tree_model_iter_next(this->model, &child));
 
 	/* Sort list... */
 	g_qsort_with_data(sort_array,
@@ -810,7 +809,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 	free(sort_array);
 
 	/* This is extremely fast compared to the old alphabetical insertion. */
-	gtk_tree_store_reorder(GTK_TREE_STORE(model), parent_index, positions);
+	gtk_tree_store_reorder(GTK_TREE_STORE(this->model), parent_index, positions);
 	free(positions);
 #endif
 }
@@ -1026,7 +1025,7 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	this->layers_panel = panel;
 
 
-	this->model = new QStandardItemModel();
+	this->model = new TreeModel(this, NULL);
 
 
 
@@ -1076,6 +1075,13 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	connect(this, SIGNAL(clicked(const QModelIndex &)), this, SLOT(select_cb(void)));
 	//connect(this, SIGNAL(pressed(const QModelIndex &)), this, SLOT(select_cb(void)));
 	connect(this->model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
+
+
+
+	/* Drag & Drop. */
+	this->setDragEnabled(true);
+	this->setDropIndicatorShown(true);
+	this->setAcceptDrops(true);
 
 
 #if 0
@@ -1175,4 +1181,104 @@ TreeIndex const & TreeItem::get_index(void)
 void TreeItem::set_index(TreeIndex & i)
 {
 	this->index = i;
+}
+
+
+
+
+Qt::ItemFlags TreeModel::flags(const QModelIndex & idx) const
+{
+	Qt::ItemFlags defaultFlags = QStandardItemModel::flags(idx);
+
+	if (idx.isValid()) {
+		return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
+	} else {
+		return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
+	}
+}
+
+
+
+
+bool TreeModel::canDropMimeData(const QMimeData * data_, Qt::DropAction action, int row, int column, const QModelIndex & parent_)
+{
+	Q_UNUSED(action);
+	Q_UNUSED(row);
+	Q_UNUSED(parent_);
+
+#if 0
+	if (!data_->hasFormat("application/vnd.text.list")) {
+		return false;
+	}
+
+	if (column > 0) {
+		return false;
+	}
+#endif
+
+	if (!parent_.isValid()) {
+		/* Don't let dropping items on top level. */
+		return false;
+	}
+
+
+	TreeItemType parent_type = this->view->get_item_type(parent_);
+	if (parent_type == TreeItemType::LAYER) {
+		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Layer";
+		return true;
+	} else if (parent_type == TreeItemType::SUBLAYER) {
+		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Sublayer";
+		return true;
+	} else {
+		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: wrong type of parent:" << (int) parent_type;
+		return false;
+	}
+
+
+	return true;
+}
+
+
+
+
+/*
+  http://doc.qt.io/qt-5/qabstractitemmodel.html#dropMimeData
+*/
+bool TreeModel::dropMimeData(const QMimeData * data_, Qt::DropAction action, int row, int column, const QModelIndex & parent_)
+{
+	if (!canDropMimeData(data_, action, row, column, parent_)) {
+		qDebug() << "DD: can't drop mime data";
+		return false;
+	}
+
+	if (action == Qt::IgnoreAction) {
+		qDebug() << "DD: ignore action";
+		return true;
+	}
+
+	if (row == -1 && column == -1) {
+		/* Drop onto an existing item. */
+		if (parent_.isValid()) {
+			qDebug() << "II: Tree View: Drop Mime Data: dropping onto existing item, parent =" << parent_.row() << parent_.column() << this->view->get_name(parent_) << (int) this->view->get_item_type(parent_);
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		qDebug() << "II: Tree View: Drop Mime Data: dropping as sibling, parent =" << parent_.row() << parent_.column() << row << column;
+		if (parent_.isValid()) {
+			return true;
+		} else {
+			qDebug() << "II: Tree View: Drop Mime Data: invalid parent";
+			return false;
+		}
+	}
+}
+
+
+
+
+Qt::DropActions TreeModel::supportedDropActions() const
+{
+	return Qt::MoveAction;
 }
