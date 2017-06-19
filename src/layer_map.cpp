@@ -913,10 +913,9 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 		vp_drawmode = viewport->get_drawmode();
 
 		if (map->get_drawmode() != vp_drawmode) {
-			const char *drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
-			char *msg = g_strdup_printf(_("New map cannot be displayed in the current drawmode.\nSelect \"%s\" from View menu to view it."), drawmode_name);
+			const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
+			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
 			dialog_warning(msg, viewport->get_window());
-			free(msg);
 		}
 	}
 
@@ -2198,12 +2197,11 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 		this->start_download_thread(viewport, &ul, &br, redownload_mode);
 
 	} else if (map->get_drawmode() != vp_drawmode) {
-		const char * drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
-		char *err = g_strdup_printf(_("Wrong drawmode for this map.\nSelect \"%s\" from View menu and try again."), _(drawmode_name));
+		const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
+		const QString err = QString(QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.")).arg(drawmode_name);
 		dialog_error(err, this->get_window());
-		free(err);
 	} else {
-		dialog_error("Wrong zoom level for this map.", this->get_window());
+		dialog_error(QObject::tr("Wrong zoom level for this map."), this->get_window());
 	}
 
 }

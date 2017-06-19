@@ -341,13 +341,11 @@ static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev)
 
 bool LayersPanel::key_press(QKeyEvent * ev)
 {
-#ifndef SLAVGPS_QT
 	/* Accept all forms of delete keys. */
-	if (ev->keyval == GDK_Delete || ev->keyval == GDK_KP_Delete || ev->keyval == GDK_BackSpace) {
-		this->delete_selected();
+	if (ev->key() == Qt::Key_Delete || ev->key() == Qt::Key_Backspace) {
+		this->delete_selected_cb();
 		return true;
 	}
-#endif
 	return false;
 }
 
@@ -825,13 +823,7 @@ void LayersPanel::change_coord_mode(VikCoordMode mode)
 
 void LayersPanel::set_visible(bool visible)
 {
-#ifndef SLAVGPS_QT
-	if (visible) {
-		gtk_widget_show(GTK_WIDGET (this->panel_box));
-	} else {
-		gtk_widget_hide(GTK_WIDGET (this->panel_box));
-	}
-#endif
+	this->window->show_side_panel(visible);
 	return;
 }
 

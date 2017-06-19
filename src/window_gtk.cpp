@@ -77,17 +77,6 @@ static void destroy_window(GtkWidget * widget, void * data)
 
 
 
-#define VIK_SETTINGS_WIN_SIDEPANEL "window_sidepanel"
-#define VIK_SETTINGS_WIN_STATUSBAR "window_statusbar"
-#define VIK_SETTINGS_WIN_TOOLBAR "window_toolbar"
-// Menubar setting to off is never auto saved in case it's accidentally turned off
-// It's not so obvious so to recover the menu visibility.
-// Thus this value is for setting manually via editting the settings file directly
-#define VIK_SETTINGS_WIN_MENUBAR "window_menubar"
-
-
-
-
 Window * vik_window_new_window(Window * w)
 {
 	return new Window();

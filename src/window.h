@@ -119,10 +119,13 @@ namespace SlavGPS {
 		void closeEvent(QCloseEvent * event);
 
 
+		QAction * get_drawmode_action(ViewportDrawMode mode);
+
 
 		void toggle_full_screen();
 
 		void toggle_side_panel();
+		void show_side_panel(bool visible);
 		void toggle_statusbar();
 		void toggle_main_menu();
 		//void simple_map_update(bool only_new);
@@ -282,7 +285,6 @@ namespace SlavGPS {
 		void display_tool_name();
 		void set_filename(char const * filename);
 		char const * get_filename(void);
-		GtkWidget * get_drawmode_button(ViewportDrawMode mode);
 		void update_recently_used_document(char const * filename);
 		void update_recent_files(QString const & path);
 		void open_window(void);
@@ -353,6 +355,12 @@ namespace SlavGPS {
 		QAction * qa_view_show_statusbar = NULL;
 		QAction * qa_view_show_toolbar = NULL;
 		QAction * qa_view_show_main_menu = NULL;
+
+		QAction * qa_drawmode_expedia = NULL;
+		QAction * qa_drawmode_mercator = NULL;
+		QAction * qa_drawmode_latlon = NULL;
+		QAction * qa_drawmode_utm = NULL;
+
 
 		std::list<QString> recent_files;
 	};

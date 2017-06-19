@@ -1887,17 +1887,9 @@ bool Viewport::get_half_drawn()
 
 
 
-char const * Viewport::get_drawmode_name(ViewportDrawMode mode)
+const QString Viewport::get_drawmode_name(ViewportDrawMode mode)
 {
-#ifdef SLAVGPS_QT
-	return NULL;
-#else
-	GtkWidget * mode_button = this->get_window()->get_drawmode_button(mode);
-	GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
-
-	return gtk_label_get_text(GTK_LABEL(label));
-
-#endif
+	return this->get_window()->get_drawmode_action(mode)->text();
 }
 
 

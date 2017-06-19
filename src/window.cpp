@@ -83,6 +83,17 @@ static QUrl last_folder_files_url;
 
 
 
+#define VIK_SETTINGS_WIN_SIDEPANEL "window_sidepanel"
+#define VIK_SETTINGS_WIN_STATUSBAR "window_statusbar"
+#define VIK_SETTINGS_WIN_TOOLBAR "window_toolbar"
+/* Menubar setting to off is never auto saved in case it's accidentally turned off.
+   It's not so obvious so to recover the menu visibility.
+   Thus this value is for setting manually via editting the settings file directly. */
+#define VIK_SETTINGS_WIN_MENUBAR "window_menubar"
+
+
+
+
 static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * parent);
 
 
@@ -426,30 +437,32 @@ void Window::create_actions(void)
 
 		/* kamilFIXME: select initial value in the group based on... */
 
-		qa = new QAction(tr("&UTM Mode"), this);
-		qa->setData(QVariant((int) ViewportDrawMode::UTM));
-		qa->setCheckable(true);
-		qa->setChecked(true);
-		group->addAction(qa);
-		this->menu_view->addAction(qa);
+		this->qa_drawmode_utm = new QAction(tr("&UTM Mode"), this);
+		this->qa_drawmode_utm->setData(QVariant((int) ViewportDrawMode::UTM));
+		this->qa_drawmode_utm->setCheckable(true);
+		this->qa_drawmode_utm->setChecked(true);
+		group->addAction(this->qa_drawmode_utm);
+		this->menu_view->addAction(this->qa_drawmode_utm);
 
-		qa = new QAction(tr("&Expedia Mode"), this);
-		qa->setData(QVariant((int) ViewportDrawMode::EXPEDIA));
-		qa->setCheckable(true);
-		group->addAction(qa);
-		this->menu_view->addAction(qa);
+#ifdef VIK_CONFIG_EXPEDIA
+		this->qa_drawmode_expedia = new QAction(tr("&Expedia Mode"), this);
+		this->qa_drawmode_expedia->setData(QVariant((int) ViewportDrawMode::EXPEDIA));
+		this->qa_drawmode_expedia->setCheckable(true);
+		group->addAction(this->qa_drawmode_expedia);
+		this->menu_view->addAction(this->qa_drawmode_expedia);
+#endif
 
-		qa = new QAction(tr("&Mercator Mode"), this);
-		qa->setData(QVariant((int) ViewportDrawMode::MERCATOR));
-		qa->setCheckable(true);
-		group->addAction(qa);
-		this->menu_view->addAction(qa);
+		this->qa_drawmode_mercator = new QAction(tr("&Mercator Mode"), this);
+		this->qa_drawmode_mercator->setData(QVariant((int) ViewportDrawMode::MERCATOR));
+		this->qa_drawmode_mercator->setCheckable(true);
+		group->addAction(this->qa_drawmode_mercator);
+		this->menu_view->addAction(this->qa_drawmode_mercator);
 
-		qa = new QAction(tr("&Lat/Lon Mode"), this);
-		qa->setData(QVariant((int) ViewportDrawMode::LATLON));
-		qa->setCheckable(true);
-		group->addAction(qa);
-		this->menu_view->addAction(qa);
+		this->qa_drawmode_latlon = new QAction(tr("&Lat/Lon Mode"), this);
+		this->qa_drawmode_latlon->setData(QVariant((int) ViewportDrawMode::LATLON));
+		this->qa_drawmode_latlon->setCheckable(true);
+		group->addAction(this->qa_drawmode_latlon);
+		this->menu_view->addAction(this->qa_drawmode_latlon);
 
 		connect(group, SIGNAL (triggered(QAction *)), this, SLOT (change_coord_mode_cb(QAction *)));
 #if 0
@@ -1372,28 +1385,20 @@ void Window::closeEvent(QCloseEvent * ev)
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
 			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-#if 0
+			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->view_side_panel);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->view_statusbar);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->view_toolbar);
 
-			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, window->layers_panel->get_visible());
-
-			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->viking_vs)));
-
-			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, GTK_WIDGET_VISIBLE (toolbar_get_widget(window->viking_vtb)));
-
-
-
-			// If supersized - no need to save the enlarged width+height values
+			/* If supersized - no need to save the enlarged width+height values. */
 			if (! (state_fullscreen || state_max)) {
-				int width, height;
-				gtk_window_get_size(gtk_window, &width, &height);
-				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, width);
-				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, height);
+				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
+				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
-
+#ifdef K
 			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(window->hpaned)));
 #endif
 		}
-#if 0
+#ifdef K
 		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, window->draw_image_width);
 		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
 		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->draw_image_save_as_png);
@@ -1586,6 +1591,22 @@ void Window::toggle_side_panel()
 	qDebug() << "II: Window: setting panel dock visible:" << this->view_side_panel;
 	qa->setChecked(this->view_side_panel);
 	if (this->view_side_panel) {
+		this->panel_dock->show();
+	} else {
+		this->panel_dock->hide();
+	}
+}
+
+
+
+
+void Window::show_side_panel(bool visible)
+{
+	this->view_side_panel = visible;
+	QAction * qa = this->panel_dock->toggleViewAction();
+	qDebug() << "II: Window: setting panel dock visible:" << this->view_side_panel;
+	qa->setChecked(visible);
+	if (visible) {
 		this->panel_dock->show();
 	} else {
 		this->panel_dock->hide();
@@ -2045,9 +2066,9 @@ void Window::open_file(char const * new_filename, bool change_filename)
 				this->set_filename(new_filename);
 			}
 #ifdef K
-			GtkWidget * mode_button = this->get_drawmode_button(this->viewport->get_drawmode());
+			QAction * drawmode_action = this->grepget_drawmode_action(this->viewport->get_drawmode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mode_button), true);
+			gtk_check_menu_item_set_active(drawmode_action, true);
 			this->only_updating_coord_mode_ui = false;
 #endif
 
@@ -2227,30 +2248,30 @@ char const * Window::get_filename()
 
 
 
-GtkWidget * Window::get_drawmode_button(ViewportDrawMode mode)
+QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 {
-	GtkWidget *mode_button;
-	char *buttonname;
+	QAction * qa = NULL;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
 	case ViewportDrawMode::EXPEDIA:
-		buttonname = (char *) "/ui/MainMenu/View/ModeExpedia";
+		qa = this->qa_drawmode_expedia;
 		break;
 #endif
 	case ViewportDrawMode::MERCATOR:
-		buttonname = (char *) "/ui/MainMenu/View/ModeMercator";
+		qa = this->qa_drawmode_mercator;
 		break;
+
 	case ViewportDrawMode::LATLON:
-		buttonname = (char *) "/ui/MainMenu/View/ModeLatLon";
+		qa = this->qa_drawmode_latlon;
 		break;
+
 	default:
-		buttonname = (char *) "/ui/MainMenu/View/ModeUTM";
+		qa = this->qa_drawmode_utm;
+		break;
 	}
-#ifdef K
-	mode_button = gtk_ui_manager_get_widget(this->uim, buttonname);
-#endif
-	assert(mode_button);
-	return mode_button;
+
+	assert(qa);
+	return qa;
 }
 
 
@@ -3058,7 +3079,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 {
 	ViewportDrawMode drawmode = (ViewportDrawMode) qa->data().toInt();
 
-	qDebug() << "DD: Window: Coordinate mode changed to" << (int) drawmode;
+	qDebug() << "DD: Window: Coordinate mode changed to" << qa->text() << (int) drawmode;
 
 	/* kamilTODO: verify that this function changes mode in all the places that need to be updated. */
 

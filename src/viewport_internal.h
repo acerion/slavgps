@@ -176,7 +176,7 @@ namespace SlavGPS {
 
 
 		bool is_one_zone();
-		char const * get_drawmode_name(ViewportDrawMode mode);
+		const QString get_drawmode_name(ViewportDrawMode mode);
 		void set_drawmode(ViewportDrawMode drawmode);
 		ViewportDrawMode get_drawmode();
 		/* Do not forget to update Viewport::get_drawmode_name() if you modify ViewportDrawMode. */

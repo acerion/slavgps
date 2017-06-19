@@ -67,7 +67,7 @@ namespace SlavGPS {
 		void export_to_common(VikFileType_t vft, char const * extension);
 		char const * get_filename_2();
 		void selected_layer(Layer * layer);
-		GtkWidget * get_drawmode_button(ViewportDrawMode mode);
+		QAction * get_drawmode_action(ViewportDrawMode mode);
 		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
 
 
