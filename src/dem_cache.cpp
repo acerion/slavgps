@@ -41,7 +41,7 @@ typedef struct {
 
 typedef struct {
 	const Coord * coord;
-	VikDemInterpol method;
+	DemInterpolation method;
 	int elev;
 } CoordElev;
 
@@ -59,16 +59,16 @@ struct MyQHasher
 };
 
 
-/* Filename -> DEM. */
+
+
+/* File path -> DEM. */
 static std::unordered_map<QString, LoadedDEM *, MyQHasher> loaded_dems;
 
 
 
 
 static void dem_cache_unref(const QString & file_path);
-static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
-//static GList * a_dems_list_copy(GList * dems);
-//static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
+static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
 
 
 
@@ -82,7 +82,7 @@ static void loaded_dem_free(LoadedDEM *ldem)
 
 
 
-void SlavGPS::dem_cache_uninit()
+void DEMCache::uninit(void)
 {
 	if (loaded_dems.size()) {
 		loaded_dems.clear();
@@ -92,14 +92,24 @@ void SlavGPS::dem_cache_uninit()
 
 
 
+/**
+   \brief Load a DEM tile from given file, return it
 
-/* Called when DEM tile clicked in DEM layer is available on disc.
-   The timl may been sitting on disc before, or may have been just
-   downloaded - the function gets called just the same. */
-/* To load a dem. if it was already loaded, will simply
- * reference the one already loaded and return it.
- */
-DEM * SlavGPS::dem_cache_load(const QString & file_path)
+   Read a DEM tile into DEM object, add the object to cache, return
+   the object.
+
+   If the object has already been loaded before, reading the tile and
+   adding the object to cache is skipped.
+
+   Called when DEM tile clicked in DEM layer is available on disc.
+   The tile may been sitting on disc before, or may have been just
+   downloaded - the function gets called just the same.
+
+   \param file_path: path to data file with tile data
+
+   \return DEM object representing a tile
+*/
+DEM * DEMCache::load_file_into_cache(const QString & file_path)
 {
 	auto iter = loaded_dems.find(file_path);
 	if (iter != loaded_dems.end()) { /* Found. */
@@ -138,7 +148,6 @@ static void dem_cache_unref(const QString & file_path)
 
 
 
-
 /* Probably gets called whenever DEM layer is moved in viewport.
    Probably called with tile names that are - or can be - in current viewport. */
 
@@ -146,7 +155,7 @@ static void dem_cache_unref(const QString & file_path)
  * Assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-DEM * SlavGPS::dem_cache_get(const QString & file_path)
+DEM * DEMCache::get(const QString & file_path)
 {
 	auto iter = loaded_dems.find(file_path);
 	if (iter != loaded_dems.end()) {
@@ -158,26 +167,31 @@ DEM * SlavGPS::dem_cache_get(const QString & file_path)
 
 
 
-/* Load a string list (GList of strings) of dems. You have to use get to at them later.
- * When updating a list as a parameter, this should be bfore freeing the list so
- * the same DEMs won't be loaded & unloaded.
- * Modifies the list to remove DEMs which did not load.
- */
+/**
+   \brief Load a group of DEM tiles from given list of paths
 
-/* TODO: don't delete them when they don't exist.
- * We need to warn the user, but we should keep them in the GList.
- * We need to know that they weren't referenced though when we
- * do the dem_cache_list_free().
- */
-int SlavGPS::dem_cache_load_list(std::list<QString> & filenames, BackgroundJob * bg_job)
+   When updating a list as a parameter, this should be before freeing the list so
+   the same DEMs won't be loaded & unloaded. (?)
+
+   Function modifies the list to remove DEMs which did not load.
+
+   TODO: don't delete them when they don't exist.
+   We need to warn the user, but we should keep them in the list.
+   We need to know that they weren't referenced though when we
+   do the DEMCache::unload_from_cache().
+
+   \return -1 on errors
+   \return 0 otherwise
+*/
+int DEMCache::load_files_into_cache(std::list<QString> & file_paths, BackgroundJob * bg_job)
 {
-	auto iter = filenames.begin();
+	auto iter = file_paths.begin();
 	unsigned int dem_count = 0;
-	const unsigned int dem_total = filenames.size();
-	while (iter != filenames.end()) {
-		QString dem_filename = *iter;
-		if (!dem_cache_load(dem_filename)) {
-			iter = filenames.erase(iter);
+	const unsigned int dem_total = file_paths.size();
+	while (iter != file_paths.end()) {
+		QString dem_file_path = *iter;
+		if (!DEMCache::load_file_into_cache(dem_file_path)) {
+			iter = file_paths.erase(iter);
 		} else {
 			iter++;
 		}
@@ -185,7 +199,7 @@ int SlavGPS::dem_cache_load_list(std::list<QString> & filenames, BackgroundJob *
 		if (bg_job) {
 #if 1
 			dem_count++;
-			/* NB Progress also detects abort request via the returned value. */
+			/* Progress also detects abort request via the returned value. */
 			int result = a_background_thread_progress(bg_job, ((double) dem_count) / dem_total);
 			if (result != 0) {
 				return -1; /* Abort thread. */
@@ -199,24 +213,25 @@ int SlavGPS::dem_cache_load_list(std::list<QString> & filenames, BackgroundJob *
 
 
 
-/* Takes a string list of dem filenames.
- * Unrefs all the dems (i.e. "unloads" them), then frees the
- * strings, the frees the list.
- */
-void SlavGPS::dem_cache_list_free(std::list<QString>& filenames)
+/**
+   \brief Unload DEMs specified by given file paths
+
+   The list itself is not modified.
+
+   \param file_paths: list of DEMs (specified by paths to DEM data files) to be unloaded from cache
+*/
+void DEMCache::unload_from_cache(std::list<QString> & file_paths)
 {
-	for (auto iter = filenames.begin(); iter != filenames.end(); iter++) {
+	for (auto iter = file_paths.begin(); iter != file_paths.end(); iter++) {
 		dem_cache_unref(*iter);
 		/* kamilTODO: "delete (*iter)" ? */
 	}
-
-	filenames.clear();
 }
 
 
 
 
-static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
+static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 {
 	DEM * dem = ldem->dem;
 	double lat, lon;
@@ -239,56 +254,65 @@ static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 	}
 
 	switch (ce->method) {
-	case VIK_DEM_INTERPOL_NONE:
+	case DemInterpolation::NONE:
 		ce->elev = dem->get_east_north(lon, lat);
 		break;
-	case VIK_DEM_INTERPOL_SIMPLE:
+	case DemInterpolation::SIMPLE:
 		ce->elev = dem->get_simple_interpol(lon, lat);
 		break;
-	case VIK_DEM_INTERPOL_BEST:
+	case DemInterpolation::BEST:
 		ce->elev = dem->get_shepard_interpol(lon, lat);
 		break;
 	default: break;
 	}
-	return (ce->elev != VIK_DEM_INVALID_ELEVATION);
+	return (ce->elev != DEM_INVALID_ELEVATION);
 }
 
 
 
 
 /* TODO: keep a (sorted) linked list of DEMs and select the best resolution one. */
-int16_t SlavGPS::dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method)
+int16_t DEMCache::get_elev_by_coord(const Coord * coord, DemInterpolation method)
 {
 	if (loaded_dems.empty()) {
-		return VIK_DEM_INVALID_ELEVATION;
+		return DEM_INVALID_ELEVATION;
 	}
 
 	CoordElev ce;
 	ce.coord = coord;
 	ce.method = method;
-	ce.elev = VIK_DEM_INVALID_ELEVATION;
+	ce.elev = DEM_INVALID_ELEVATION;
 
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
-		if (get_elev_by_coord((*iter).second, &ce)) {
+		if (calculate_elev_by_coord((*iter).second, &ce)) {
 			return ce.elev;
 		}
 	}
 
-	return VIK_DEM_INVALID_ELEVATION;
+	return DEM_INVALID_ELEVATION;
 }
 
 
 
 
-
 #if 0
+
+
+
+
+static GList * a_dems_list_copy(GList * dems);
+static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
+
+
+
+
 GList * a_dems_list_copy(GList * dems)
 {
 	GList * rv = g_list_copy(dems);
 	GList * iter = rv;
 	while (iter) {
-		std::string dem_filename = std::string((const char *) (iter->data));
-		if (!dem_cache_load(dem_filename)) {
+		std::string dem_file_path = std::string((const char *) (iter->data));
+		if (!DEMCache::load_file_into_cache(dem_file_path)) {
 			GList *iter_temp = iter->next; /* Delete link, don't bother strdup'ing and free'ing string. */
 			rv = g_list_remove_link(rv, iter);
 			iter = iter_temp;
@@ -303,29 +327,29 @@ GList * a_dems_list_copy(GList * dems)
 
 
 
-int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const Coord * coord)
+int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coord * coord)
 {
 	static struct UTM utm_tmp;
 	static struct LatLon ll_tmp;
-	auto iter = filenames->begin();
+	auto iter = file_paths->begin();
 	DEM * dem;
 	int elev;
 
-	while (iter != filenames->end()) {
-		dem = dem_cache_get(*iter);
+	while (iter != file_paths->end()) {
+		dem = DEMCache::get(*iter);
 		if (dem) {
 			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
 				vik_coord_to_latlon(coord, &ll_tmp);
 				ll_tmp.lat *= 3600;
 				ll_tmp.lon *= 3600;
 				elev = dem->get_east_north(ll_tmp.lon, ll_tmp.lat);
-				if (elev != VIK_DEM_INVALID_ELEVATION) {
+				if (elev != DEM_INVALID_ELEVATION) {
 					return elev;
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 				vik_coord_to_utm(coord, &utm_tmp);
 				if (utm_tmp.zone == dem->utm_zone
-				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != VIK_DEM_INVALID_ELEVATION) {
+				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != DEM_INVALID_ELEVATION) {
 
 					return elev;
 				}
@@ -333,9 +357,8 @@ int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const 
 		}
 		iter++;
 	}
-	return VIK_DEM_INVALID_ELEVATION;
+	return DEM_INVALID_ELEVATION;
 }
-
 
 
 

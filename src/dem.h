@@ -36,7 +36,7 @@ namespace SlavGPS {
 
 
 
-#define VIK_DEM_INVALID_ELEVATION -32768
+#define DEM_INVALID_ELEVATION -32768
 
 /* Unit codes. */
 #define VIK_DEM_HORIZ_UTM_METERS 2

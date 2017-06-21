@@ -2250,18 +2250,18 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	/* Change interpolate method according to scale. */
 	double zoom = this->get_zoom();
-	VikDemInterpol interpol_method;
+	DemInterpolation interpol_method;
 	if (zoom > 2.0) {
-		interpol_method = VIK_DEM_INTERPOL_NONE;
+		interpol_method = DemInterpolation::NONE;
 	} else if (zoom >= 1.0) {
-		interpol_method = VIK_DEM_INTERPOL_SIMPLE;
+		interpol_method = DemInterpolation::SIMPLE;
 	} else {
-		interpol_method = VIK_DEM_INTERPOL_BEST;
+		interpol_method = DemInterpolation::BEST;
 	}
 
 	int16_t alt;
 	static char pointer_buf[BUFFER_SIZE] = { 0 };
-	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
+	if ((alt = DEMCache::get_elev_by_coord(&coord, interpol_method)) != DEM_INVALID_ELEVATION) {
 		if (Preferences::get_unit_height() == HeightUnit::METRES) {
 			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dm", lat, lon, alt);
 		} else {

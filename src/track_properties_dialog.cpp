@@ -36,8 +36,6 @@
 #include <QDebug>
 
 #include "track_properties_dialog.h"
-
-#include "dem_cache.h"
 #include "vikutils.h"
 #include "util.h"
 #include "ui_util.h"

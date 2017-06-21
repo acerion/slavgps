@@ -219,7 +219,7 @@ int main(int argc, char ** argv)
 	a_background_uninit();
 #endif
 	map_cache_uninit();
-	dem_cache_uninit();
+	DEMCache::uninit();
 	a_layer_defaults_uninit();
 	Preferences::uninit();
 	a_settings_uninit();

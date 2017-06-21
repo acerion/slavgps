@@ -1235,8 +1235,8 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				       &(*std::prev(iter))->coord);
 		int x = (graph_width * dist) / total_length + margin;
 		if (do_dem) {
-			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
-			if (elev != VIK_DEM_INVALID_ELEVATION) {
+			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
+			if (elev != DEM_INVALID_ELEVATION) {
 				/* Convert into height units. */
 				if (Preferences::get_unit_height() == HeightUnit::FEET) {
 					elev = VIK_METERS_TO_FEET(elev);
@@ -1969,8 +1969,8 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 			/* This could be slow doing this each time... */
 			Trackpoint * tp = this->trk->get_closest_tp_by_percentage_time(((double) i / (double) graph_width), NULL);
 			if (tp) {
-				int16_t elev = dem_cache_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
-				if (elev != VIK_DEM_INVALID_ELEVATION) {
+				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
+				if (elev != DEM_INVALID_ELEVATION) {
 					/* Convert into height units. */
 					if (Preferences::get_unit_height() == HeightUnit::FEET) {
 						elev = VIK_METERS_TO_FEET(elev);

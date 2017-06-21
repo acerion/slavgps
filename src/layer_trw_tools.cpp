@@ -875,9 +875,8 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 		trw->current_trk->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 		/* Adjust elevation data (if available) for the current pointer position. */
-		double elev_new;
-		elev_new = (double) dem_cache_get_elev_by_coord(&coord, VIK_DEM_INTERPOL_BEST);
-		if (elev_new != VIK_DEM_INVALID_ELEVATION) {
+		double elev_new = (double) DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
+		if (elev_new != DEM_INVALID_ELEVATION) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
 				/* Adjust elevation of last track point. */
 				if (elev_new > last_tpt->altitude) {

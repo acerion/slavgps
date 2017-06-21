@@ -334,12 +334,12 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 
 	std::list<QString> dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
 
-	if (dem_cache_load_list(dem_filenames, load_job)) {
+	if (DEMCache::load_files_into_cache(dem_filenames, load_job)) {
 		/* Thread cancelled. */
 		result = -1;
 	}
 
-	/* ATM as each file is processed the screen is not updated (no mechanism exposed to dem_cache_load_list).
+	/* ATM as each file is processed the screen is not updated (no mechanism exposed to DEMCache::load_files_into_cache()).
 	   Thus force draw only at the end, as loading is complete/aborted. */
 	//gdk_threads_enter();
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
@@ -439,7 +439,8 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 		break;
 	case PARAM_FILES: {
 		/* Clear out old settings - if any commonalities with new settings they will have to be read again. */
-		dem_cache_list_free(this->files);
+		DEMCache::unload_from_cache(this->files);
+		this->files.clear();
 
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
 		if (param_value.sl) {
@@ -545,7 +546,7 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 
 static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 {
-	if (new_elev == VIK_DEM_INVALID_ELEVATION) {
+	if (new_elev == DEM_INVALID_ELEVATION) {
 		return 0;
 	} else {
 		return abs(new_elev - elev);
@@ -652,7 +653,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				}
 
 				int16_t elev = column->points[y];
-				if (elev == VIK_DEM_INVALID_ELEVATION) {
+				if (elev == DEM_INVALID_ELEVATION) {
 					continue; /* Don't draw it. */
 				}
 
@@ -821,7 +822,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				}
 
 				int16_t elev = column->points[y];
-				if (elev == VIK_DEM_INVALID_ELEVATION) {
+				if (elev == DEM_INVALID_ELEVATION) {
 					continue; /* don't draw it */
 				}
 
@@ -937,13 +938,13 @@ void LayerDEM::draw(Viewport * viewport)
 	}
 
 	for (auto iter = this->files.begin(); iter != this->files.end(); iter++) {
-		QString dem_filename = *iter;
-		DEM * dem = dem_cache_get(dem_filename);
+		const QString dem_file_path = *iter;
+		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
-			qDebug() << "II: Layer DEM: got file" << dem_filename << "from cache, will now draw it";
+			qDebug() << "II: Layer DEM: got file" << dem_file_path << "from cache, will now draw it";
 			this->draw_dem(viewport, dem);
 		} else {
-			qDebug() << "EE: Layer DEM: failed to get file" << dem_filename << "from cache, not drawing";
+			qDebug() << "EE: Layer DEM: failed to get file" << dem_file_path << "from cache, not drawing";
 		}
 	}
 }
@@ -969,7 +970,11 @@ LayerDEM::~LayerDEM()
 	free(this->gradients);
 
 
-	// dem_cache_list_free(this->files); // kamilFIXME: re-enable this line in future
+#ifdef K
+	DEMCache::unload_from_cache(this->files);
+	this->files.clear();
+#endif
+
 }
 
 
@@ -1271,7 +1276,7 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 		if (sb.st_size) {
 			this->files.push_front(dem_file_path);
 			qDebug () << "II: Layer DEM: will now load file" << dem_file_path << "from cache";
-			dem_cache_load(dem_file_path);
+			DEMCache::load_file_into_cache(dem_file_path);
 		}
 		return true;
 	} else {

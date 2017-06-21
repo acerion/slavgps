@@ -41,21 +41,27 @@ namespace SlavGPS {
 
 
 
-	typedef enum {
-		VIK_DEM_INTERPOL_NONE = 0,
-		VIK_DEM_INTERPOL_SIMPLE,
-		VIK_DEM_INTERPOL_BEST,
-	} VikDemInterpol;
+	enum class DemInterpolation {
+		NONE = 0,
+		SIMPLE,
+		BEST,
+	};
 
 
 
 
-	void    dem_cache_uninit();
-	DEM   * dem_cache_load(const QString & file_path);
-	DEM   * dem_cache_get(const QString & file_path);
-	int     dem_cache_load_list(std::list<QString> & filenames, BackgroundJob * bg_job);
-	void    dem_cache_list_free(std::list<QString> & filenames);
-	int16_t dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
+	class DEMCache {
+	public:
+		static void uninit(void); /* For module deinitialization. */
+
+		static DEM * load_file_into_cache(const QString & file_path);
+		static int   load_files_into_cache(std::list<QString> & file_paths, BackgroundJob * bg_job);
+		static void  unload_from_cache(std::list<QString> & file_paths);
+
+		static DEM * get(const QString & file_path);
+
+		static int16_t get_elev_by_coord(const Coord * coord, DemInterpolation method);
+	};
 
 
 

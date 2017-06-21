@@ -243,8 +243,8 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 {
 	bool updated = false;
 	if (!(skip_existing && altitude != VIK_DEFAULT_ALTITUDE)) { /* kamilTODO: check this condition. */
-		int16_t elev = dem_cache_get_elev_by_coord(&(coord), VIK_DEM_INTERPOL_BEST);
-		if (elev != VIK_DEM_INVALID_ELEVATION) {
+		int16_t elev = DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
+		if (elev != DEM_INVALID_ELEVATION) {
 			altitude = (double) elev;
 			updated = true;
 		}

@@ -296,7 +296,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 
 	/* no information for things before that */
 	for (int i = 0; i < (*cur_row); i++) {
-		this->columns[*cur_column]->points[i] = VIK_DEM_INVALID_ELEVATION;
+		this->columns[*cur_column]->points[i] = DEM_INVALID_ELEVATION;
 	}
 
 	/* now just continue */
@@ -535,7 +535,7 @@ int16_t DEM::get_xy(unsigned int col, unsigned int row)
 			return this->columns[col]->points[row];
 		}
 	}
-	return VIK_DEM_INVALID_ELEVATION;
+	return DEM_INVALID_ELEVATION;
 }
 
 
@@ -547,7 +547,7 @@ int16_t DEM::get_east_north(double east, double north)
 	if (east > this->max_east || east < this->min_east ||
 	    north > this->max_north || north < this->min_north) {
 
-		return VIK_DEM_INVALID_ELEVATION;
+		return DEM_INVALID_ELEVATION;
 	}
 
 	int col = (int) floor((east - this->min_east) / this->east_scale);
@@ -599,7 +599,7 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 	ll[3].lat = ll[0].lat;
 
 	for (int i = 0; i < 4; i++) {
-		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == VIK_DEM_INVALID_ELEVATION) {
+		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == DEM_INVALID_ELEVATION) {
 			return false;
 		}
 		dists[i] = a_coords_latlon_diff(&pos, &ll[i]);
@@ -623,7 +623,7 @@ int16_t DEM::get_simple_interpol(double east, double north)
 {
 	int16_t elevs[4], dists[4];
 	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
-		return VIK_DEM_INVALID_ELEVATION;
+		return DEM_INVALID_ELEVATION;
 	}
 
 	for (int i = 0; i < 4; i++) {
@@ -646,7 +646,7 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 {
 	int16_t elevs[4], dists[4];
 	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
-		return VIK_DEM_INVALID_ELEVATION;
+		return DEM_INVALID_ELEVATION;
 	}
 
 	int16_t max_dist = 0;

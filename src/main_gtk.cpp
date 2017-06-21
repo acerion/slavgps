@@ -36,7 +36,6 @@
 #include "icons/icons.h"
 #include "map_cache.h"
 #include "background.h"
-#include "dem_cache.h"
 #include "babel.h"
 #include "curl_download.h"
 #include "preferences.h"
@@ -271,11 +270,12 @@ int main(int argc, char *argv[])
 	gtk_main();
 	gdk_threads_leave();
 
+#if 0 /* Already moved to QT app. */
 	a_babel_uninit();
 	a_toolbar_uninit();
 	a_background_uninit();
 	map_cache_uninit();
-	dem_cache_uninit();
+	DEMCache::uninit();
 	a_layer_defaults_uninit();
 	a_preferences_uninit();
 	a_settings_uninit();
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
 	/* Clean up any temporary files. */
 	util_remove_all_in_deletion_list();
-
+#endif
 	delete first_window;
 
 	return 0;
