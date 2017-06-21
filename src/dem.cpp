@@ -441,18 +441,19 @@ static bool is_zip_file(char const * basename)
 
 
 
-bool DEM::read(char const * file)
+bool DEM::read(const QString & file_path)
 {
-	if (access(file, R_OK) != 0) {
+	const char * path = file_path.toUtf8().constData();
+	if (access(path, R_OK) != 0) {
 		return false;
 	}
 
-	const char * basename = file_basename(file);
+	const char * basename = file_basename(path);
 
 	if (is_strm_hgt(basename)) {
-		return this->read_srtm_hgt(file, basename, is_zip_file(basename));
+		return this->read_srtm_hgt(path, basename, is_zip_file(basename));
 	} else {
-		return this->read_other(file);
+		return this->read_other(path);
 	}
 }
 

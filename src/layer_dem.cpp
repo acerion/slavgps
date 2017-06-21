@@ -64,7 +64,7 @@ using namespace SlavGPS;
 /* Structure for DEM data used in background thread. */
 class DemLoadJob : public BackgroundJob {
 public:
-	DemLoadJob(LayerDEM * layer, std::list<char *> * files_);
+	DemLoadJob(LayerDEM * layer);
 
 	void cleanup_on_cancel(void);
 
@@ -76,10 +76,10 @@ public:
 
 class DEMDownloadJob : public BackgroundJob {
 public:
-	DEMDownloadJob(std::string& full_path, struct LatLon * ll, LayerDEM * layer);
+	DEMDownloadJob(const QString & full_path, struct LatLon * ll, LayerDEM * layer);
 	~DEMDownloadJob();
 
-	std::string dest;
+	QString dest;
 	double lat, lon;
 
 	std::mutex mutex;
@@ -97,7 +97,6 @@ public:
 #else
 #define MAPS_CACHE_DIR "/home/kamil/.viking-maps/"
 #define MAPS_CACHE_DIR_2 QString("/home/kamil/.viking-maps/")
-#define MAPS_CACHE_DIR_3 std::string("/home/kamil/.viking-maps/")
 #endif
 
 #define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"
@@ -285,7 +284,7 @@ LayerDEMInterface::LayerDEMInterface()
 
 QString LayerDEM::tooltip()
 {
-	return QString(tr("Number of files: %1")).arg(this->files->size());
+	return QString(tr("Number of files: %1")).arg(this->files.size());
 }
 
 
@@ -312,13 +311,12 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-DemLoadJob::DemLoadJob(LayerDEM * layer_, std::list<char *> * files_)
+DemLoadJob::DemLoadJob(LayerDEM * layer_)
 {
 	this->thread_fn = dem_load_list_thread;
-	this->n_items = files_->size(); /* Number of DEM files. */
+	this->n_items = layer_->files.size(); /* Number of DEM files. */
 
 	this->layer = layer_;
-	this->layer->files = files_;
 }
 
 
@@ -334,11 +332,7 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
 
-	std::list<std::string> dem_filenames;
-	for (auto iter = load_job->layer->files->begin(); iter != load_job->layer->files->end(); iter++) {
-		std::string dem_filename = std::string(*iter);
-		dem_filenames.push_front(dem_filename);
-	}
+	std::list<QString> dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
 
 	if (dem_cache_load_list(dem_filenames, load_job)) {
 		/* Thread cancelled. */
@@ -350,7 +344,7 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 	//gdk_threads_enter();
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
 	if (load_job->layer) {
-		qDebug() << "II: Layer DEM: will emit 'layer changed' B";
+		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' B";
 		load_job->layer->emit_changed(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
@@ -445,21 +439,27 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 		break;
 	case PARAM_FILES: {
 		/* Clear out old settings - if any commonalities with new settings they will have to be read again. */
-		// dem_cache_list_free (this->files); // kamilFIXME: re-enable this line in future.
+		dem_cache_list_free(this->files);
+
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
-		this->files = param_value.sl;
-		fprintf(stderr, "%s:%d: string list:\n", __FUNCTION__, __LINE__);
-		if (this->files) {
-			for (auto iter = this->files->begin(); iter != this->files->end(); ++iter) {
-				fprintf(stderr, " ---- '%s'\n", *iter);
+		if (param_value.sl) {
+			for (auto iter = param_value.sl->begin(); iter != param_value.sl->end(); iter++) {
+				this->files.push_back(QString(*iter));
+			}
+		}
+
+		qDebug() << "DD: Layer DEM: set param value: list of files:";
+		if (!this->files.empty()) {
+			for (auto iter = this->files.begin(); iter != this->files.end(); ++iter) {
+				qDebug() << "DD: Layer DEM: set param value: file:" << *iter;
 			}
 		} else {
-			fprintf(stderr, " ---- none\n");
+			qDebug() << "DD: Layer DEM: set param value: no files";
 		}
 		/* No need for thread if no files. */
-		if (this->files && !this->files->empty()) {
+		if (!this->files.empty()) {
 			/* Thread Load. */
-			DemLoadJob * load_job = new DemLoadJob(this, param_value.sl);
+			DemLoadJob * load_job = new DemLoadJob(this);
 			a_background_thread(load_job, ThreadPoolType::LOCAL, _("DEM Loading"));
 		}
 
@@ -482,14 +482,17 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 	switch (id) {
 
 	case PARAM_FILES:
-		rv.sl = this->files;
-		fprintf(stderr, "%s:%d: string list:\n", __FUNCTION__, __LINE__);
-		if (this->files) {
-			for (auto iter = this->files->begin(); iter != this->files->end(); ++iter) {
-				fprintf(stderr, " ---- '%s'\n", *iter);
+		rv.sl = new std::list<char *>;  /* kamilFIXME: memory leak. */
+		for (auto iter = this->files.begin(); iter != this->files.end(); iter++) {
+			rv.sl->push_back(strdup((*iter).toUtf8().constData())); /* kamilFIXME: another memory leak. */
+		}
+		qDebug() << "II: Layer DEM: get param value: string list:";
+		if (!this->files.empty()) {
+			for (auto iter = this->files.begin(); iter != this->files.end(); ++iter) {
+				qDebug() << "II: Layer DEM: get param value: string list:" << *iter;
 			}
 		} else {
-			fprintf(stderr, " ---- none\n");
+			qDebug() << "II: Layer DEM: get param value: string list: none";
 		}
 		if (is_file_operation) {
 			/* Save in relative format if necessary. */
@@ -933,14 +936,14 @@ void LayerDEM::draw(Viewport * viewport)
 #endif
 	}
 
-	for (auto iter = this->files->begin(); iter != this->files->end(); iter++) {
-		std::string dem_filename = std::string(*iter);
+	for (auto iter = this->files.begin(); iter != this->files.end(); iter++) {
+		QString dem_filename = *iter;
 		DEM * dem = dem_cache_get(dem_filename);
 		if (dem) {
-			fprintf(stderr, "DEM: got file %s from cache, drawing (%s:%d)\n", dem_filename.c_str(), __FUNCTION__, __LINE__);
+			qDebug() << "II: Layer DEM: got file" << dem_filename << "from cache, will now draw it";
 			this->draw_dem(viewport, dem);
 		} else {
-			fprintf(stderr, "DEM: failed to get file %s from cache, not drawing (%s:%d)\n", dem_filename.c_str(),  __FUNCTION__, __LINE__);
+			qDebug() << "EE: Layer DEM: failed to get file" << dem_filename << "from cache, not drawing";
 		}
 	}
 }
@@ -979,12 +982,12 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(std::string& full_path, struct LatLon * ll, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & full_path, struct LatLon * ll, LayerDEM * layer_dem)
 {
 	this->thread_fn = dem_download_thread;
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
 
-	this->dest = std::string(full_path);
+	this->dest = full_path;
 	this->lat = ll->lat;
 	this->lon = ll->lon;
 	this->layer = layer_dem;
@@ -1037,7 +1040,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 					       a_check_map_file,
 					       NULL,
 					       NULL };
-	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.c_str(), &options, NULL);
+	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &options, NULL);
 	switch (result) {
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
@@ -1045,7 +1048,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest.c_str()));
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest.toUtf8().constData()));
 		break;
 	}
 	case DOWNLOAD_SUCCESS:
@@ -1257,21 +1260,18 @@ void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
 }
 
 /* Try to add file full_path.
- * filename will be copied.
  * Returns false if file does not exists, true otherwise.
  */
-bool LayerDEM::add_file(std::string& dem_filename)
+bool LayerDEM::add_file(const QString & dem_file_path)
 {
-	if (0 == access(dem_filename.c_str(), F_OK)) {
+	if (0 == access(dem_file_path.toUtf8().constData(), F_OK)) {
 		/* Only load if file size is not 0 (not in progress). */
-		GStatBuf sb;
-		(void) stat(dem_filename.c_str(), &sb);
+		struct stat sb;
+		stat(dem_file_path.toUtf8().constData(), &sb);
 		if (sb.st_size) {
-			std::string * duped_path = new std::string(dem_filename);
-			this->files->push_front((char *) duped_path->c_str());
-			std::string dem_fullpath = std::string(*duped_path);
-			dem_cache_load(dem_fullpath);
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path->c_str());
+			this->files.push_front(dem_file_path);
+			qDebug () << "II: Layer DEM: will now load file" << dem_file_path << "from cache";
+			dem_cache_load(dem_file_path);
 		}
 		return true;
 	} else {
@@ -1303,7 +1303,7 @@ static int dem_download_thread(BackgroundJob * bg_job)
 		dl_job->layer->weak_unref(LayerDEM::weak_ref_cb, dl_job);
 
 		if (dl_job->layer->add_file(dl_job->dest)) {
-			qDebug() << "II: Layer DEM: will emit 'layer changed' A";
+			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' A";
 			dl_job->layer->emit_changed(); /* NB update from background thread. */
 		}
 	}
@@ -1467,8 +1467,8 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		std::string dem_full_path = std::string(MAPS_CACHE_DIR_3 + std::string(dem_file));
-		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path.c_str();
+		const QString dem_full_path = MAPS_CACHE_DIR_2 + QString(dem_file);
+		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path;
 
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
@@ -1531,7 +1531,6 @@ LayerDEM::LayerDEM()
 	strcpy(this->debug_string, "LayerType::DEM");
 	this->interface = &vik_dem_layer_interface;
 
-	this->files = new std::list<char *>;
 	this->dem_type = 0;
 
 	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);

@@ -70,7 +70,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		QString tooltip();
 		bool download_release(QMouseEvent * event, LayerTool * tool);
-		bool add_file(std::string& dem_filename);
+		bool add_file(const QString & dem_file_path);
 		void draw_dem(Viewport * viewport, DEM * dem);
 		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
@@ -80,7 +80,7 @@ namespace SlavGPS {
 		QPen pen;
 		QColor ** colors = NULL;
 		QColor ** gradients = NULL;
-		std::list<char *> * files = NULL;
+		std::list<QString> files;
 		double min_elev = 0;
 		double max_elev = 0;
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */

@@ -48,13 +48,24 @@ typedef struct {
 
 
 
+struct MyQHasher
+{
+	std::size_t operator()(const QString & s) const {
+		using std::hash;
+		using std::string;
+
+		return hash<string>()(s.toUtf8().constData());
+	}
+};
+
+
 /* Filename -> DEM. */
-static std::unordered_map<std::string, LoadedDEM *> loaded_dems;
+static std::unordered_map<QString, LoadedDEM *, MyQHasher> loaded_dems;
 
 
 
 
-static void dem_cache_unref(std::string& filename);
+static void dem_cache_unref(const QString & file_path);
 static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
 //static GList * a_dems_list_copy(GList * dems);
 //static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
@@ -83,27 +94,27 @@ void SlavGPS::dem_cache_uninit()
 
 
 /* Called when DEM tile clicked in DEM layer is available on disc.
-   The time may been sitting on disc before, or may have been just
+   The timl may been sitting on disc before, or may have been just
    downloaded - the function gets called just the same. */
 /* To load a dem. if it was already loaded, will simply
  * reference the one already loaded and return it.
  */
-DEM * SlavGPS::dem_cache_load(std::string& filename)
+DEM * SlavGPS::dem_cache_load(const QString & file_path)
 {
-	auto iter = loaded_dems.find(filename);
+	auto iter = loaded_dems.find(file_path);
 	if (iter != loaded_dems.end()) { /* Found. */
 		(*iter).second->ref_count++;
 		return (*iter).second->dem;
 	} else {
 		DEM * dem = new DEM();
-		if (!dem->read(filename.c_str())) {
+		if (!dem->read(file_path)) {
 			delete dem;
 			return NULL;
 		}
 		LoadedDEM * ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
 		ldem->ref_count = 1;
 		ldem->dem = dem;
-		loaded_dems[filename] = ldem;
+		loaded_dems[file_path] = ldem;
 		return dem;
 	}
 }
@@ -111,9 +122,9 @@ DEM * SlavGPS::dem_cache_load(std::string& filename)
 
 
 
-static void dem_cache_unref(std::string& filename)
+static void dem_cache_unref(const QString & file_path)
 {
-	auto iter = loaded_dems.find(filename);
+	auto iter = loaded_dems.find(file_path);
 	if (iter == loaded_dems.end()) {
 		/* This is fine - probably means the loaded list was aborted / not completed for some reason. */
 		return;
@@ -135,9 +146,9 @@ static void dem_cache_unref(std::string& filename)
  * Assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-DEM * SlavGPS::dem_cache_get(std::string& filename)
+DEM * SlavGPS::dem_cache_get(const QString & file_path)
 {
-	auto iter = loaded_dems.find(filename);
+	auto iter = loaded_dems.find(file_path);
 	if (iter != loaded_dems.end()) {
 		return (*iter).second->dem;
 	}
@@ -158,13 +169,13 @@ DEM * SlavGPS::dem_cache_get(std::string& filename)
  * We need to know that they weren't referenced though when we
  * do the dem_cache_list_free().
  */
-int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, BackgroundJob * bg_job)
+int SlavGPS::dem_cache_load_list(std::list<QString> & filenames, BackgroundJob * bg_job)
 {
 	auto iter = filenames.begin();
 	unsigned int dem_count = 0;
 	const unsigned int dem_total = filenames.size();
 	while (iter != filenames.end()) {
-		std::string dem_filename = *iter;
+		QString dem_filename = *iter;
 		if (!dem_cache_load(dem_filename)) {
 			iter = filenames.erase(iter);
 		} else {
@@ -192,7 +203,7 @@ int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, BackgroundJo
  * Unrefs all the dems (i.e. "unloads" them), then frees the
  * strings, the frees the list.
  */
-void SlavGPS::dem_cache_list_free(std::list<std::string>& filenames)
+void SlavGPS::dem_cache_list_free(std::list<QString>& filenames)
 {
 	for (auto iter = filenames.begin(); iter != filenames.end(); iter++) {
 		dem_cache_unref(*iter);

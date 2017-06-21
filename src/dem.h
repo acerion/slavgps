@@ -22,17 +22,16 @@
 #define _SG_DEM_H
 
 #include <vector>
+#include <cstdint>
 
-#include <stdint.h>
+#include <QString>
 
 #include "bbox.h"
 
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -73,7 +72,7 @@ namespace SlavGPS {
 	public:
 		~DEM();
 
-		bool read(const char * file);
+		bool read(const QString & file_path);
 
 		int16_t get_xy(unsigned int x, unsigned int y);
 		int16_t get_east_north(double east, double north);
