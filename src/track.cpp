@@ -36,7 +36,7 @@
 #include "coords.h"
 #include "coord.h"
 #include "track.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "settings.h"
 #include "util.h"
 

@@ -43,7 +43,7 @@
 #include "viewport_internal.h"
 #include "window.h"
 #include "coords.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "mapcoord.h"
 #include "layer_toolbox.h"
 #include "preferences.h"

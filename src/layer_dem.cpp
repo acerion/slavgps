@@ -44,7 +44,7 @@
 #include "layer_map.h"
 #include "layer_dem.h"
 #include "dem.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "icons/icons.h"
 #include "file.h"
 #include "dialog.h"

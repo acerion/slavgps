@@ -52,7 +52,7 @@
 #include "file.h"
 #include "dialog.h"
 #include "dem.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "util.h"
 #include "settings.h"
 #include "globals.h"

@@ -36,7 +36,7 @@
 #include "track_profile_dialog.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "vikutils.h"
 #include "util.h"
 #include "ui_util.h"

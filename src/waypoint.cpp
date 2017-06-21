@@ -29,7 +29,7 @@
 #include "waypoint.h"
 #include "globals.h"
 //#include "garminsymbols.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "util.h"
 
 

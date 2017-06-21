@@ -45,7 +45,7 @@
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
 #include "dialog.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "util.h"
 #include "preferences.h"
 #include "routing.h"

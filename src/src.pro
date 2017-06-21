@@ -106,7 +106,7 @@ SOURCES += main.cpp \
     widget_radio_group.cpp \
     date_time_dialog.cpp \
     dem.cpp \
-    dems.cpp \
+    dem_cache.cpp \
     srtm_continent.cpp \
     compression.cpp \
     fileutils.cpp \
@@ -216,7 +216,7 @@ HEADERS += window.h \
     widget_radio_group.h \
     date_time_dialog.h \
     dem.h \
-    dems.h \
+    dem_cache.h \
     compression.h \
     fileutils.h \
     util.h \

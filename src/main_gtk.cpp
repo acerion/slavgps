@@ -36,7 +36,7 @@
 #include "icons/icons.h"
 #include "map_cache.h"
 #include "background.h"
-#include "dems.h"
+#include "dem_cache.h"
 #include "babel.h"
 #include "curl_download.h"
 #include "preferences.h"
