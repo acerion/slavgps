@@ -51,7 +51,7 @@ namespace SlavGPS {
 	class LayerCoord : public Layer {
 	public:
 		LayerCoord();
-		~LayerCoord();
+		~LayerCoord() {};
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);

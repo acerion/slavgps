@@ -393,17 +393,8 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 
 
-LayerCoord::~LayerCoord()
-{
-}
-
-
-
-
 LayerCoord::LayerCoord()
 {
-	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord()";
-
 	this->type = LayerType::COORD;
 	strcpy(this->debug_string, "LayerType::COORD");
 	this->interface = &vik_coord_layer_interface;
