@@ -41,7 +41,7 @@
 #include <unistd.h>
 #endif
 
-#include <glib/gstdio.h>
+#include <QDebug>
 
 #include "compression.h"
 #include "dem.h"
@@ -74,7 +74,7 @@ static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 	*tmp = g_strtod(*buffer, &endptr);
 	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
-			fprintf(stderr, _("WARNING: Invalid DEM\n"));
+			qDebug() << "WW: DEM: invalid DEM";
 		}
 		return false;
 	}
@@ -92,7 +92,7 @@ static bool get_int_and_continue(char ** buffer, int * tmp, bool warn)
 	*tmp = strtol(*buffer, &endptr, 10);
 	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
-			fprintf(stderr, _("WARNING: Invalid DEM\n"));
+			qDebug() << "WW: DEM: invalid DEM";
 		}
 		return false;
 	}
@@ -148,7 +148,7 @@ bool DEM::parse_header(char * buffer)
 	/* skip numbers 5-19  */
 	for (int i = 0; i < 15; i++) {
 		if (!get_double_and_continue(&buffer, &val, false)) {
-			fprintf(stderr, _("WARNING: Invalid DEM header\n"));
+			qDebug() << "WW: DEM: invalid DEM header";
 			return false;
 		}
 	}
@@ -232,7 +232,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 
 	double tmp;
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
-		fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
+		qDebug() << "WW: DEM: Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
@@ -248,7 +248,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 	unsigned int n_rows = (unsigned int) tmp;
 
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
-		fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
+		qDebug() << "WW: DEM: Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
@@ -348,7 +348,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 	GError * error = NULL;
 	GMappedFile * mf;
 	if ((mf = g_mapped_file_new(file_name, false, &error)) == NULL) {
-		fprintf(stderr, _("CRITICAL: Couldn't map file %s: %s\n"), file_name, error->message);
+		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't map file" << file_name << ":" << error->message;
 		g_error_free(error);
 		return false;
 	}
@@ -377,7 +377,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 	} else if (file_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
-		fprintf(stderr, "WARNING: %s(): file %s does not have right size\n", __PRETTY_FUNCTION__, basename);
+		qDebug() << "WW: DEM: Read SRTM HGT: file" << basename << "does not have right size";
 		g_mapped_file_unref(mf);
 		return false;
 	}
@@ -561,7 +561,7 @@ int16_t DEM::get_east_north(double east, double north)
 
 
 bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
-				      int16_t * elevs, int16_t * dists)
+				   int16_t * elevs, int16_t * dists)
 {
 	int cols[4], rows[4];
 	struct LatLon ll[4];
@@ -607,9 +607,9 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 
 #if 0  /* debug */
 	for (int i = 0; i < 4; i++) {
-		fprintf(stderr, "%f:%f:%d:%d  \n", ll[i].lat, ll[i].lon, dists[i], elevs[i]);
+		qDebug() << "DD: DEM:" << i << ":" << ll[i].lat << ll[i].lon << dists[i] << elevs[i];
 	}
-	fprintf(stderr, "   north_scale=%f\n", this->north_scale);
+	qDebug() << "DD: DEM:   north_scale =" this->north_scale;
 #endif
 
 	return true;  /* all OK */
@@ -677,7 +677,7 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 		b += tmp;
 	}
 
-	// fprintf(stderr, "DEBUG: tmp=%f t=%f b=%f %f\n", tmp, t, b, t/b);
+	qDebug() << "DD: DEM: Shepard Interpolation: tmp =" << tmp << "t =" << t << "b =" << b << "t/b =" << t/b;
 
 	return (t/b);
 
@@ -729,16 +729,16 @@ bool DEM::overlap(LatLonBBox * bbox)
 	if ((bbox->north > dem_northeast.lat && bbox->south > dem_northeast.lat) ||
 	    (bbox->north < dem_southwest.lat && bbox->south < dem_southwest.lat)) {
 
-		fprintf(stderr, "DEM: no overlap 1\n");
+		qDebug() << "DD: DEM: Overlap: false 1";
 		return false;
 
 	} else if ((bbox->east > dem_northeast.lon && bbox->west > dem_northeast.lon) ||
 		   (bbox->east < dem_southwest.lon && bbox->west < dem_southwest.lon)) {
 
-		fprintf(stderr, "DEM: no overlap 2\n");
+		qDebug() << "DD: DEM: Overlap: false 2";
 		return false;
 	} else {
-		fprintf(stderr, "DEM: overlap\n");
+		qDebug() << "DD: DEM: Overlap: true";
 		return true;
 	}
 }
