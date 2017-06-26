@@ -24,19 +24,24 @@
  */
 #include <cmath>
 #include <cstdlib>
+#include <unistd.h>
 
+#include <glib.h>
+
+#include "window.h"
 #include "vikutils.h"
 #include "util.h"
 #include "settings.h"
 #include "misc/kdtree.h"
 #include "dir.h"
 #include "layer_map.h"
+#include "layer_defaults.h"
+#include "layers_panel.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
 #include "ui_util.h"
-#include "layer_defaults.h"
 #include "dialog.h"
 #include "clipboard.h"
 #include "file.h"
@@ -517,6 +522,9 @@ static void latest_version_thread(Window * window)
 
 
 
+#endif
+
+
 
 #define VIK_SETTINGS_VERSION_CHECK_PERIOD "version_check_period_days"
 
@@ -528,7 +536,7 @@ static void latest_version_thread(Window * window)
  *
  * Periodically checks the released latest VERSION file on the website to compare with the running version.
  */
-void SlavGPS::vu_check_latest_version(Window * window)
+void SGUtils::check_latest_version(Window * window)
 {
 	if (!Preferences::get_check_version()) {
 		return;
@@ -540,6 +548,8 @@ void SlavGPS::vu_check_latest_version(Window * window)
 	if (!a_settings_get_integer(VIK_SETTINGS_VERSION_CHECK_PERIOD, &check_period)) {
 		check_period = 14;
 	}
+
+#ifdef K
 
 	/* Get last checked date... */
 	GDate *gdate_last = g_date_new();
@@ -580,6 +590,7 @@ void SlavGPS::vu_check_latest_version(Window * window)
 		g_thread_create((GThreadFunc)latest_version_thread, window, false, NULL);
 #endif
 	}
+#endif
 }
 
 
@@ -588,13 +599,13 @@ void SlavGPS::vu_check_latest_version(Window * window)
 /**
  * Ask the user's opinion to set some of Viking's default behaviour.
  */
-void SlavGPS::vu_set_auto_features_on_first_run(void)
+void SGUtils::set_auto_features_on_first_run(void)
 {
 	bool auto_features = false;
 	bool set_defaults = false;
 
-	if (a_vik_very_first_run()) {
-
+	if (SGUtils::is_very_first_run()) {
+#ifdef K
 		GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 		if (dialog_yes_or_no("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences.", GTK_WINDOW(win))) {
@@ -605,9 +616,11 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 		/* Default to more standard cache layout for new users (well new installs at least). */
 		maps_layer_set_cache_default(MapsCacheLayout::OSM);
 		set_defaults = true;
+#endif
 	}
 
 	if (auto_features) {
+#ifdef K
 		/* Set Maps to autodownload. */
 		/* Ensure the default is true. */
 		maps_layer_set_autodownload_default(true);
@@ -637,6 +650,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 
 		/* Ensure settings are saved for next time. */
 		a_preferences_save_to_file();
+#endif
 	}
 
 	/* Ensure defaults are saved if changed. */
@@ -646,7 +660,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 }
 
 
-#endif
+
 
 
 /**
@@ -939,14 +953,14 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Vik
 }
 
 
-#ifdef K
+
 
 
 /**
  * Apply any startup values that have been specified from the command line.
  * Values are defaulted in such a manner not to be applied when they haven't been specified.
  */
-void SlavGPS::vu_command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id)
+void SGUtils::command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id)
 {
 	if (!window) {
 		return;
@@ -975,16 +989,16 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 
 		MapTypeID the_type_id = cmdline_type_id;
 		if (the_type_id == MAP_TYPE_ID_DEFAULT) {
-			the_type_id = maps_layer_get_default_map_type();
+			the_type_id = LayerMap::get_default_map_type();
 		}
 
 		/* Don't add map layer if one already exists. */
-		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
+		std::list<Layer *> * maps = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
 		bool add_map = true;
 
-		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {
-			Layer * vml = (Layer *) *iter;
-			MapTypeID type_id = ((LayerMap *) vml)->get_map_type();
+		for (auto iter = maps->begin(); iter != maps->end(); iter++) {
+			LayerMap * map = (LayerMap *) *iter;
+			MapTypeID type_id = map->get_map_type();
 			if (the_type_id == type_id) {
 				add_map = false;
 				break;
@@ -992,7 +1006,7 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 		}
 
 		if (add_map) {
-			LayerMap * layer = new LayerMap(viewport);
+			LayerMap * layer = new LayerMap();
 
 			layer->set_map_type(the_type_id);
 			layer->rename(_("Map"));
@@ -1004,6 +1018,8 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 }
 
 
+
+#ifdef K
 
 
 /**
@@ -1141,7 +1157,7 @@ int SlavGPS::viking_version_to_number(char const * version)
  * Call this very early in the startup sequence to ensure subsequent correct results.
  * The return value is cached, since later on the test will no longer be true.
  */
-bool a_vik_very_first_run()
+bool SGUtils::is_very_first_run(void)
 {
 	static bool vik_very_first_run_known = false;
 	static bool vik_very_first_run = false;
@@ -1155,7 +1171,7 @@ bool a_vik_very_first_run()
 	/* NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking. */
 	if (dir) {
 		/* If directory exists - Viking has been run before. */
-		vik_very_first_run = ! g_file_test(dir, G_FILE_TEST_EXISTS);
+		vik_very_first_run = (0 != access(dir, F_OK));
 		free(dir);
 	} else {
 		vik_very_first_run = true;

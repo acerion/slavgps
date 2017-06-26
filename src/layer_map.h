@@ -96,6 +96,7 @@ namespace SlavGPS {
 
 		void set_map_type(MapTypeID type_id);
 		MapTypeID get_map_type();
+		static MapTypeID get_default_map_type(void);
 
 		void download(Viewport * viewport, bool only_new);
 		void download_section(VikCoord * ul, VikCoord * br, double zoom);
@@ -180,7 +181,6 @@ namespace SlavGPS {
 void layer_map_init(void);
 void maps_layer_set_autodownload_default(bool autodownload);
 void maps_layer_set_cache_default(SlavGPS::MapsCacheLayout layout);
-SlavGPS::MapTypeID maps_layer_get_default_map_type();
 void maps_layer_register_map_source(SlavGPS::MapSource * map);
 
 

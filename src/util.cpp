@@ -27,12 +27,16 @@
 #include "config.h"
 #endif
 
+#include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 #include <gio/gio.h>
 
+#include <list>
 #include <cstdlib>
 #include <cstring>
+
+#include <QDebug>
 
 #include "util.h"
 #include "globals.h"
@@ -80,9 +84,8 @@ char * uri_escape(char * str)
 {
 	char * esc_str = (char *) malloc(3 * strlen(str));
 	char * dst = esc_str;
-	char * src;
 
-	for (src = str; *src; src++) {
+	for (const char * src = str; *src; src++) {
 		if (*src == ' ') {
 			*dst++ = '+';
 		} else if (g_ascii_isalnum(*src)) {
@@ -96,21 +99,6 @@ char * uri_escape(char * str)
 
 	return esc_str;
 }
-
-
-
-
-#if 0
-GList * str_array_to_glist(char* data[])
-{
-	GList *gl = NULL;
-	void * * p;
-	for (p = (void *)data; *p; p++) {
-		gl = g_list_prepend(gl, *p);
-	}
-	return g_list_reverse(gl);
-}
-#endif
 
 
 
@@ -164,7 +152,7 @@ bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val
 
 
 
-static GSList * deletion_list = NULL;
+static std::list<char *> deletion_list;
 
 
 
@@ -176,7 +164,8 @@ static GSList * deletion_list = NULL;
  */
 void util_add_to_deletion_list(char const * filename)
 {
-	deletion_list = g_slist_append(deletion_list, g_strdup(filename));
+	char * tmp = strdup(filename);
+	deletion_list.push_back(tmp);
 }
 
 
@@ -188,13 +177,13 @@ void util_add_to_deletion_list(char const * filename)
  */
 void util_remove_all_in_deletion_list(void)
 {
-	while (deletion_list) {
-		if (remove((const char*)deletion_list->data)) {
-			fprintf(stderr, "WARNING: %s: Failed to remove %s\n", __FUNCTION__, (char*) deletion_list->data);
+	for (auto iter = deletion_list.begin(); iter != deletion_list.end(); iter++) {
+		if (0 != remove(*iter)) {
+			qDebug() << "WW: Utils: Failed to remove" << *iter;
 		}
-		free(deletion_list->data);
-		deletion_list = g_slist_delete_link (deletion_list, deletion_list);
+		free(*iter);
 	}
+	deletion_list.clear();
 }
 
 
@@ -203,28 +192,27 @@ void util_remove_all_in_deletion_list(void)
 /**
  *  Removes characters from a string, in place.
  *
- *  @param string String to search.
+ *  @param str String to search.
  *  @param chars Characters to remove.
  *
- *  @return @a string - return value is only useful when nesting function calls, e.g.:
+ *  @return @a str - return value is only useful when nesting function calls, e.g.:
  *  @code str = utils_str_remove_chars(strdup("f_o_o"), "_"); @endcode
  *
  *  @see @c g_strdelimit.
  **/
 char * util_str_remove_chars(char * string, char const * chars)
 {
-	const char * r;
-	char * w = string;
-
 	if (!string) {
 		return NULL;
 	}
 
-	if (G_UNLIKELY(EMPTY(chars))) {
+	if ((!(chars) || !*(chars))) {
 		return string;
 	}
 
-	foreach_str(r, string) {
+	char * w = string;
+
+	for (const char * r = string; *r; r++) {
 		if (!strchr(chars, *r)) {
 			*w++ = *r;
 		}
@@ -248,7 +236,7 @@ char * util_str_remove_chars(char * string, char const * chars)
 int util_remove(char const * filename)
 {
 	if (1 /* vik_debug && vik_verbose */) {
-		fprintf(stderr, "WARNING: Not removing file: %s\n", filename);
+		qDebug() << "WW: Util: Remove: not removing file" << filename;
 		return 0;
 	} else {
 		return remove(filename);

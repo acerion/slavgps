@@ -25,8 +25,6 @@
 
 #include <cstdint>
 
-#include <glib.h>
-
 #include "layer_trw.h"
 #include "map_ids.h"
 #include "preferences.h"
@@ -52,12 +50,7 @@ namespace SlavGPS {
 	char * get_distance_string(char * buf, size_t size, DistanceUnit distance_unit, double distance);
 	double convert_distance_meters_to(DistanceUnit distance_unit, double distance);
 
-
 	char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
-
-	void vu_check_latest_version(Window * window);
-
-	void vu_set_auto_features_on_first_run(void);
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename);
 
@@ -68,7 +61,6 @@ namespace SlavGPS {
 	void vu_setup_lat_lon_tz_lookup();
 	void vu_finalize_lat_lon_tz_lookup();
 
-	void vu_command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
 
 	void vu_copy_label_menu(GtkWidget *widget, unsigned int button);
 
@@ -79,10 +71,16 @@ namespace SlavGPS {
 	/* Allow comparing versions. */
 	int viking_version_to_number(char const * version);
 
-	/* Very first run. */
-	bool a_vik_very_first_run();
 
 
+	class SGUtils {
+	public:
+		static bool is_very_first_run(void);
+		static void set_auto_features_on_first_run(void);
+		static void command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
+		static void check_latest_version(Window * window);
+
+	};
 
 
 }

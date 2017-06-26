@@ -39,11 +39,71 @@
 #include "settings.h"
 #include "babel.h"
 #include "modules.h"
+#include "vikutils.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#if 0
+
+
+/* FIXME LOCALEDIR must be configured by ./configure --localedir */
+/* But something does not work actually. */
+/* So, we need to redefine this variable on windows. */
+#ifdef WINDOWS
+#undef LOCALEDIR
+#define LOCALEDIR "locale"
+#endif
+
+#ifdef HAVE_X11_XLIB_H
+#include "X11/Xlib.h"
+#endif
+
+
+
+#if HAVE_X11_XLIB_H
+static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
+{
+	fprintf(stderr,
+		_("Ignoring Xlib error: error code %d request code %d\n"),
+		theEvent->error_code,
+		theEvent->request_code);
+	/* No exit on X errors!
+	   Mainly to handle out of memory error when requesting large pixbuf from user request.
+	   See vikwindow.c::save_image_file() */
+	return 0;
+}
+#endif
+
+
+
+/* Options. */
+static GOptionEntry entries[] = {
+	{ "debug",     'd', 0, G_OPTION_ARG_NONE,   &vik_debug,      N_("Enable debug output"), NULL },
+	{ "verbose",   'V', 0, G_OPTION_ARG_NONE,   &vik_verbose,    N_("Enable verbose output"), NULL },
+	{ "version",   'v', 0, G_OPTION_ARG_NONE,   &vik_version,    N_("Show version"), NULL },
+	{ "latitude",   0,  0, G_OPTION_ARG_DOUBLE, &startup_latitude,       N_("Latitude in decimal degrees"), NULL },
+	{ "longitude",  0,  0, G_OPTION_ARG_DOUBLE, &startup_longitude,      N_("Longitude in decimal degrees"), NULL },
+	{ "zoom",      'z', 0, G_OPTION_ARG_INT,    &startup_zoom_level_osm, N_("Zoom Level (OSM). Value can be 0 - 22"), NULL },
+	{ "map",       'm', 0, G_OPTION_ARG_INT,    &startup_map_type_id,    N_("Add a map layer by id value. Use 0 for the default map."), NULL },
+	{ NULL }
+};
+
+
+#endif
+
+
+/* Default values that won't actually get applied unless changed by command line parameter values. */
+static double startup_latitude = 0.0;
+static double startup_longitude = 0.0;
+static int startup_zoom_level_osm = -1;
+static MapTypeID startup_map_type_id = MAP_TYPE_ID_INITIAL;
+
 
 
 
@@ -96,11 +156,12 @@ int main(int argc, char ** argv)
 #if HAVE_X11_XLIB_H
 	XSetErrorHandler(myXErrorHandler);
 #endif
+#endif
+
 
 	/* Discover if this is the very first run. */
-	a_vik_very_first_run();
+	SGUtils::is_very_first_run();
 
-#endif
 	a_settings_init();
 	Preferences::init();
 
@@ -163,13 +224,9 @@ int main(int argc, char ** argv)
 
 	gdk_threads_enter();
 
-	/* Ask for confirmation of default settings on first run. */
-	vu_set_auto_features_on_first_run();
 
 	/* Create the first window. */
 	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
-
-	vu_check_latest_version(first_window);
 
 	int i = 0;
 	bool dashdash_already = false;
@@ -191,9 +248,9 @@ int main(int argc, char ** argv)
 	}
 
 	first_window->finish_new();
+#endif
 
-	vu_command_line(first_window, latitude, longitude, zoom_level_osm, map_type_id);
-
+#ifdef K
 	gtk_main();
 	gdk_threads_leave();
 #endif
@@ -207,9 +264,15 @@ int main(int argc, char ** argv)
 
 	acquire_init();
 
+	/* Ask for confirmation of default settings on first run. */
+	SGUtils::set_auto_features_on_first_run();
+
 	Window window;
 	window.layers_panel->set_viewport(window.viewport); /* Ugly, FIXME. */
+	SGUtils::command_line(&window, startup_latitude, startup_longitude, startup_zoom_level_osm, startup_map_type_id);
 	window.show();
+
+	SGUtils::check_latest_version(&window);
 
 	int rv = app.exec();
 
@@ -234,6 +297,8 @@ int main(int argc, char ** argv)
 
 	/* Clean up any temporary files. */
 	util_remove_all_in_deletion_list();
+
+	delete first_window;
 #endif
 	return rv;
 }

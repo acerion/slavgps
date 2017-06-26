@@ -78,6 +78,26 @@ static void vik_toolbar_class_init(VikToolbarClass *klass)
 
 
 
+/** Returns @c true if @a ptr is @c NULL or @c *ptr is @c false. */
+#define EMPTY(ptr) \
+	(!(ptr) || !*(ptr))
+
+
+/** Iterates all the nodes in @a list.
+ * @param node should be a (@c GSList*).
+ * @param list @c GSList to traverse. */
+#define foreach_slist(node, list) \
+	foreach_list(node, list)
+
+
+/** Iterates all the nodes in @a list.
+ * @param node should be a (@c GList*).
+ * @param list @c GList to traverse. */
+#define foreach_list(node, list) \
+	for (node = list; node != NULL; node = node->next)
+
+
+
 
 static void vik_toolbar_init(VikToolbar * vtb)
 {
