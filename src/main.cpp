@@ -40,6 +40,7 @@
 #include "babel.h"
 #include "modules.h"
 #include "vikutils.h"
+#include "curl_download.h"
 
 
 
@@ -182,9 +183,7 @@ int main(int argc, char ** argv)
 	a_layer_defaults_init();
 	a_download_init();
 
-#if 0
-	curl_download_init();
-#endif
+	CurlDownload::init();
 
 	a_babel_init();
 
@@ -287,12 +286,12 @@ int main(int argc, char ** argv)
 	Preferences::uninit();
 	a_settings_uninit();
 #if 0
-
-
 	modules_uninit();
+#endif
 
-	curl_download_uninit();
+	CurlDownload::uninit();
 
+#if 0
 	vu_finalize_lat_lon_tz_lookup();
 
 	/* Clean up any temporary files. */

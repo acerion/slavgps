@@ -40,6 +40,8 @@
 
 #include <curl/curl.h>
 
+#include <QDebug>
+
 #include "background.h"
 #include "dir.h"
 #include "file.h"
@@ -85,7 +87,7 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 		char * end_str = g_strstr_len(etag_str, len - ETAG_LEN, "\r\n");
 		if (etag_str && end_str) {
 			cdo->new_etag = g_strndup(etag_str, end_str - etag_str);
-			fprintf(stderr, "DEBUG: %s: ETAG found: %s\n", __FUNCTION__, cdo->new_etag);
+			qDebug().nospace() << "DD: Curl Download: Get Etag: ETAG found: '" << cdo->new_etag << "'";
 		}
 	}
 	return nmemb;
@@ -103,7 +105,7 @@ static int curl_progress_func(void * clientp, double dltotal, double dlnow, doub
 
 
 /* This should to be called from main() to make sure thread safe. */
-void curl_download_init()
+void CurlDownload::init(void)
 {
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_download_user_agent = g_strdup_printf ("%s/%s %s", PACKAGE, VERSION, curl_version());
@@ -113,7 +115,7 @@ void curl_download_init()
 
 
 /* This should to be called from main() to make sure thread safe. */
-void curl_download_uninit()
+void CurlDownload::uninit(void)
 {
 	curl_global_cleanup();
 }
@@ -121,20 +123,18 @@ void curl_download_uninit()
 
 
 
-int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * cdo, void * handle)
+CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * cdo, void * handle)
 {
-	CURL * curl;
 	struct curl_slist * curl_send_headers = NULL;
-	CURLcode res = CURLE_FAILED_INIT;
 
-	//fprintf(stderr, "DEBUG: %s: uri=%s\n", __PRETTY_FUNCTION__, uri);
+	qDebug().nospace() << "DD: Curl Download: Download URI '" << uri << "'";
 
-	curl = handle ? handle : curl_easy_init ();
+	CURL * curl = handle ? handle : curl_easy_init();
 	if (!curl) {
-		return CURL_DOWNLOAD_ERROR;
+		return CurlDownloadStatus::ERROR;
 	}
 	if (1 /* vik_verbose */) {
-		curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	}
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
 	if (options != NULL && options->user_pass) {
@@ -148,11 +148,11 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curl_progress_func);
 	if (options != NULL) {
-		if(options->referer != NULL) {
+		if (options->referer != NULL) {
 			curl_easy_setopt(curl, CURLOPT_REFERER, options->referer);
 		}
 
-		if(options->follow_location != 0) {
+		if (options->follow_location != 0) {
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, options->follow_location);
 		}
@@ -177,13 +177,14 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 		}
 	}
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, curl_download_user_agent);
-	res = curl_easy_perform(curl);
 
-	if (res == 0) {
-		glong response;
+	CurlDownloadStatus status;
+
+	if (0 == curl_easy_perform(curl)) {
+		long response;
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
 		if (response == 304) {         // 304 = Not Modified
-			res = (CURLcode) CURL_DOWNLOAD_NO_NEWER_FILE;
+			status = CurlDownloadStatus::NO_NEWER_FILE;
 
 		} else if (response == 200        /* http: 200 = Ok */
 			   || response == 226) {  /* ftp:  226 = success */
@@ -192,16 +193,16 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 			   when the server has a (incorrect) time earlier than the time on the file we already have. */
 			curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
 			if (size == 0) {
-				res = (CURLcode) CURL_DOWNLOAD_ERROR;
+				status = CurlDownloadStatus::ERROR;
 			} else {
-				res = (CURLcode) CURL_DOWNLOAD_NO_ERROR;
+				status = CurlDownloadStatus::NO_ERROR;
 			}
 		} else {
-			fprintf(stderr, "WARNING: %s: http response: %ld for uri %s\n", __FUNCTION__, response, uri);
-			res = (CURLcode) CURL_DOWNLOAD_ERROR;
+			qDebug().nospace() << "WW: Curl Download: Download URI: http response:" << response << "for URI '" << uri << "'";
+			status = CurlDownloadStatus::ERROR;
 		}
 	} else {
-		res = (CURLcode) CURL_DOWNLOAD_ERROR;
+		status = CurlDownloadStatus::ERROR;
 	}
 	if (!handle) {
 		curl_easy_cleanup(curl);
@@ -211,15 +212,14 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 		curl_send_headers = NULL;
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER , NULL);
 	}
-	return res;
+	return status;
 }
 
 
 
 
-int curl_download_get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * cdo, void * handle)
+CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * cdo, void * handle)
 {
-	int ret;
 	char * full = NULL;
 
 	if (strstr(hostname, "://") != NULL) {
@@ -232,7 +232,7 @@ int curl_download_get_url(const char * hostname, const char * uri, FILE * f, Dow
 		/* Compose the full url. */
 		full = g_strdup_printf("%s://%s%s", (ftp?"ftp":"http"), hostname, uri);
 	}
-	ret = curl_download_uri(full, f, options, cdo, handle);
+	CurlDownloadStatus ret = CurlDownload::download_uri(full, f, options, cdo, handle);
 	/* Free newly allocated memory, but do not free uri. */
 	if (hostname != full && uri != full) {
 		free(full);
@@ -245,7 +245,7 @@ int curl_download_get_url(const char * hostname, const char * uri, FILE * f, Dow
 
 
 
-void * curl_download_handle_init()
+void * CurlDownload::init_handle(void)
 {
 	return curl_easy_init();
 }
@@ -253,7 +253,22 @@ void * curl_download_handle_init()
 
 
 
-void curl_download_handle_cleanup(void * handle)
+void CurlDownload::uninit_handle(void * handle)
 {
 	curl_easy_cleanup(handle);
+}
+
+
+
+
+CurlDownloadOptions::~CurlDownloadOptions()
+{
+	if (this->etag) {
+		free(this->etag);
+		this->etag = NULL;
+	}
+	if (this->new_etag) {
+		free(this->new_etag);
+		this->etag = NULL;
+	}
 }

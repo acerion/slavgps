@@ -450,9 +450,8 @@ static void set_etag(char const * fn, char const * fntmp, CurlDownloadOptions * 
 
 static DownloadResult_t download(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * options, bool ftp, void * handle)
 {
-	int ret;
 	bool failure = false;
-	CurlDownloadOptions cdo = {0, NULL, NULL};
+	CurlDownloadOptions cdo;
 
 	/* Check file. */
 	if (g_file_test(fn.c_str(), G_FILE_TEST_EXISTS) == true) {
@@ -491,28 +490,22 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 	std::string tmpfilename = fn + ".tmp";
 	if (!lock_file(tmpfilename)) {
 		fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename.c_str());
-		if (options->use_etag) {
-			free(cdo.etag);
-		}
 		return DOWNLOAD_FILE_WRITE_ERROR;
 	}
 
 	FILE * f = fopen(tmpfilename.c_str(), "w+b");  /* Truncate file and open it. */
 	if (!f) {
 		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename.c_str(), g_strerror(errno));
-		if (options->use_etag) {
-			free(cdo.etag);
-		}
 		return DOWNLOAD_FILE_WRITE_ERROR;
 	}
 
 	/* Call the backend function */
-	ret = curl_download_get_url(hostname, uri, f, options, ftp, &cdo, handle);
+	CurlDownloadStatus ret = CurlDownload::get_url(hostname, uri, f, options, ftp, &cdo, handle);
 
 	DownloadResult_t result = DOWNLOAD_SUCCESS;
 
-	if (ret != CURL_DOWNLOAD_NO_ERROR && ret != CURL_DOWNLOAD_NO_NEWER_FILE) {
-		qDebug() << "WW: Download: failed: curl_download_get_url = " << ret;
+	if (ret != CurlDownloadStatus::NO_ERROR && ret != CurlDownloadStatus::NO_NEWER_FILE) {
+		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
 		result = DOWNLOAD_HTTP_ERROR;
 	}
@@ -532,14 +525,10 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 			fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename.c_str());
 		}
 		unlock_file(tmpfilename);
-		if (options != NULL && options->use_etag) {
-			free(cdo.etag);
-			free(cdo.new_etag);
-		}
 		return result;
 	}
 
-	if (ret == CURL_DOWNLOAD_NO_NEWER_FILE)  {
+	if (ret == CurlDownloadStatus::NO_NEWER_FILE)  {
 		(void) remove(tmpfilename.c_str());
 		/* Wpdate mtime of local copy.
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
@@ -565,10 +554,6 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 	}
 	unlock_file(tmpfilename);
 
-	if (options != NULL && options->use_etag) {
-		free(cdo.etag);
-		free(cdo.new_etag);
-	}
 	return DOWNLOAD_SUCCESS;
 }
 
@@ -597,7 +582,7 @@ DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri,
 
 void * a_download_handle_init()
 {
-	return curl_download_handle_init();
+	return CurlDownload::init_handle();
 }
 
 
@@ -605,7 +590,7 @@ void * a_download_handle_init()
 
 void a_download_handle_cleanup(void * handle)
 {
-	curl_download_handle_cleanup(handle);
+	CurlDownload::uninit_handle(handle);
 }
 
 
@@ -634,8 +619,7 @@ char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * option
 		return NULL;
 	}
 
-	if (curl_download_uri(uri, tmp_file, options, NULL, NULL)) {
-		/* Error. */
+	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, tmp_file, options, NULL, NULL)) {
 		fclose (tmp_file);
 		(void) remove(tmpname);
 		free(tmpname);
