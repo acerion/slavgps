@@ -109,7 +109,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		case 'S': {
 			double speed = 0.0;
 			char * speedtype = NULL;
-			if (isnan(tp->speed) && tp_prev) {
+			if (std::isnan(tp->speed) && tp_prev) {
 				if (tp->has_timestamp && tp_prev->has_timestamp) {
 					if (tp->timestamp != tp_prev->timestamp) {
 
@@ -136,7 +136,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		case 'B': {
 			double speed = 0.0;
 			char * speedtype = NULL;
-			if (isnan(climb) && tp_prev) {
+			if (std::isnan(climb) && tp_prev) {
 				if (tp->has_timestamp && tp_prev->has_timestamp) {
 					if (tp->timestamp != tp_prev->timestamp) {
 						/* Work out from previous trackpoint altitudes and time difference.
@@ -176,7 +176,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		}
 
 		case 'C': {
-			int heading = isnan(tp->course) ? 0 : (int)round(tp->course);
+			int heading = std::isnan(tp->course) ? 0 : (int)round(tp->course);
 			values[i] = g_strdup_printf(_("%sCourse %03d\302\260"), separator, heading);
 			break;
 		}
@@ -480,8 +480,8 @@ static bool new_version_available_message(new_version_thread_data * nvtd)
 static void latest_version_thread(Window * window)
 {
 	/* Need to allow a few redirects, as SF file is often served from different server. */
-	DownloadFileOptions options = { false, false, NULL, 5, NULL, NULL, NULL };
-	char * filename = a_download_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &options);
+	DownloadOptions dl_options(5);
+	char * filename = a_download_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);
 	//char *filename = strdup("VERSION");
 	if (!filename) {
 		return;

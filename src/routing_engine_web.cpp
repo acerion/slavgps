@@ -157,18 +157,6 @@ static void vik_routing_web_engine_get_property(GObject    * object,
 
 
 
-RoutingEngineWeb::RoutingEngineWeb()
-{
-	this->options.referer = NULL;
-	this->options.follow_location = 0;
-	this->options.check_file = NULL;
-	this->options.check_file_server_time = false;
-	this->options.use_etag = false;
-}
-
-
-
-
 RoutingEngineWeb::~RoutingEngineWeb()
 {
 	free(this->url_base);
@@ -188,16 +176,16 @@ RoutingEngineWeb::~RoutingEngineWeb()
 	free(this->url_stop_dir_fmt);
 	this->url_stop_dir_fmt = NULL;
 
-	free(this->options.referer);
-	this->options.referer = NULL;
+	free(this->dl_options.referer);
+	this->dl_options.referer = NULL;
 }
 
 
 
 
-DownloadFileOptions * RoutingEngineWeb::get_download_options(void)
+DownloadOptions * RoutingEngineWeb::get_download_options(void)
 {
-	return &this->options;
+	return &this->dl_options;
 }
 
 
@@ -239,11 +227,9 @@ bool RoutingEngineWeb::find(LayerTRW * trw, struct LatLon start, struct LatLon e
 {
 	char * uri = this->get_url_for_coords(start, end);
 
-	DownloadFileOptions * options_ = this->get_download_options();
-
 	char * format_ = this->get_format();
 	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options_);
+	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, &this->dl_options);
 
 	free(uri);
 
@@ -378,13 +364,10 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 	/* Compute URL. */
 	char * uri = this->get_url_for_track(trk);
 
-	/* Download data. */
-	DownloadFileOptions * options_ = this->get_download_options();
-
 	/* Convert and insert data in model. */
 	char * format_ = this->get_format();
 	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, options_);
+	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, &this->dl_options);
 
 	free(uri);
 

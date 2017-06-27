@@ -48,7 +48,7 @@ namespace SlavGPS {
 		char * get_server_hostname(void);
 		char * get_server_path(TileInfo * src);
 
-		DownloadFileOptions * get_download_options(void);
+		DownloadOptions * get_download_options(void);
 
 		MapTypeID type = MAP_TYPE_ID_INITIAL;
 	};

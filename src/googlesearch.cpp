@@ -53,22 +53,11 @@ using namespace SlavGPS;
 
 
 
-
-static DownloadFileOptions googlesearch_options = {
-	false,
-	false,
-	(char *) "http://maps.google.com/",
-	2,
-	a_check_map_file,
-	NULL,
-	NULL
-};
-
-
-
-
 GotoToolGoogle::GotoToolGoogle() : GotoTool("Google")
 {
+	this->dl_options.referer = (char *) "http://maps.google.com/";
+	this->dl_options.follow_location = 2;
+	this->dl_options.check_file = a_check_map_file;
 }
 
 
@@ -166,7 +155,7 @@ char * GotoToolGoogle::get_url_format()
 
 
 
-DownloadFileOptions * GotoToolGoogle::get_download_options()
+DownloadOptions * GotoToolGoogle::get_download_options()
 {
-	return &googlesearch_options;
+	return &this->dl_options;
 }

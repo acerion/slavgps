@@ -1779,22 +1779,22 @@ static int map_download_thread(BackgroundJob * bg_job)
 				mdj->mapcoord.y = mcoord.y;
 
 				if (need_download) {
-					DownloadResult_t dr = map_sources[mdj->map_index]->download(&(mdj->mapcoord), mdj->filename_buf, handle);
+					DownloadResult dr = map_sources[mdj->map_index]->download(&(mdj->mapcoord), mdj->filename_buf, handle);
 					switch (dr) {
-					case DOWNLOAD_HTTP_ERROR:
-					case DOWNLOAD_CONTENT_ERROR: {
+					case DownloadResult::HTTP_ERROR:
+					case DownloadResult::CONTENT_ERROR: {
 						/* TODO: ?? count up the number of download errors somehow... */
 						QString msg = QString("%1: %2").arg(mdj->layer->get_map_label()).arg("Failed to download tile");
 						mdj->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
-					case DOWNLOAD_FILE_WRITE_ERROR: {
+					case DownloadResult::FILE_WRITE_ERROR: {
 						QString msg = QString("%1: %2").arg(mdj->layer->get_map_label()).arg("Unable to save tile");
 						mdj->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
-					case DOWNLOAD_SUCCESS:
-					case DOWNLOAD_NOT_REQUIRED:
+					case DownloadResult::SUCCESS:
+					case DownloadResult::NOT_REQUIRED:
 					default:
 						break;
 					}

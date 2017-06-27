@@ -1038,26 +1038,22 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 				       (intlon >= 0) ? 'E' : 'W',
 				       ABS(intlon));
 
-	static DownloadFileOptions options = { false,
-					       false,
-					       NULL,
-					       1, /* Follow redirect from http to https. */
-					       a_check_map_file,
-					       NULL,
-					       NULL };
-	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &options, NULL);
+	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
+	dl_options.check_file = a_check_map_file;
+
+	DownloadResult result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &dl_options, NULL);
 	switch (result) {
-	case DOWNLOAD_CONTENT_ERROR:
-	case DOWNLOAD_HTTP_ERROR: {
+	case DownloadResult::CONTENT_ERROR:
+	case DownloadResult::HTTP_ERROR: {
 		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
 		break;
 	}
-	case DOWNLOAD_FILE_WRITE_ERROR: {
+	case DownloadResult::FILE_WRITE_ERROR: {
 		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest.toUtf8().constData()));
 		break;
 	}
-	case DOWNLOAD_SUCCESS:
-	case DOWNLOAD_NOT_REQUIRED:
+	case DownloadResult::SUCCESS:
+	case DownloadResult::NOT_REQUIRED:
 	default:
 		qDebug() << "II: Layer DEM: layer download progress = 100";
 		dl_job->progress = 100;

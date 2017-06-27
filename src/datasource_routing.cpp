@@ -62,7 +62,7 @@ static char * last_to_str = NULL;
 
 static void * datasource_routing_init(acq_vik_t * avt);
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
 static void datasource_routing_cleanup(void * data);
 
 
@@ -142,7 +142,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 
 
-static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -160,7 +160,7 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 
 	po->url = engine->get_url_from_directions(from, to);
 	po->input_file_type = g_strdup(engine->get_format());
-	options = NULL; /* i.e. use the default download settings. */
+	dl_options = NULL; /* i.e. use the default download settings. */
 
 	/* Save last selection. */
 	free(last_from_str);

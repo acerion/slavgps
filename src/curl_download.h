@@ -47,10 +47,10 @@ namespace SlavGPS {
 
 
 
-	class CurlDownloadOptions {
+	class CurlOptions {
 	public:
-		CurlDownloadOptions() {};
-		~CurlDownloadOptions();
+		CurlOptions() {};
+		~CurlOptions();
 
 		/* Time sent to server on header If-Modified-Since. */
 		time_t time_condition = 0;
@@ -73,8 +73,8 @@ namespace SlavGPS {
 		static void * init_handle(void);
 		static void uninit_handle(void * handle);
 
-		static CurlDownloadStatus get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * curl_options, void * handle);
-		static CurlDownloadStatus download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * curl_options, void * handle);
+		static CurlDownloadStatus get_url(const char * hostname, const char * uri, FILE * f, DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle);
+		static CurlDownloadStatus download_uri(const char * uri, FILE * f, DownloadOptions * dl_options, CurlOptions * curl_options, void * handle);
 	};
 
 

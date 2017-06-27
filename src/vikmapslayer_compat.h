@@ -41,7 +41,7 @@ namespace SlavGPS {
 		unsigned int drawmode;
 		bool (*coord_to_tile) (const VikCoord * src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
 		void (*tile_to_center_coord) (TileInfo * src, VikCoord * dest);
-		DownloadResult_t (*download) (TileInfo * src, char const * dest_fn, void * handle);
+		DownloadResult (*download) (TileInfo * src, char const * dest_fn, void * handle);
 		void *(*download_handle_init) ();
 		void (*download_handle_cleanup) (void * handle);
 		/* TODO: constant size (yay!) */

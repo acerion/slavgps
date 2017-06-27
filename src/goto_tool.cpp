@@ -86,7 +86,7 @@ char * GotoTool::get_label()
 
 
 
-DownloadFileOptions * GotoTool::get_download_options()
+DownloadOptions * GotoTool::get_download_options()
 {
 	// Default: return NULL
 	return NULL;

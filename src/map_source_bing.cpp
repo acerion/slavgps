@@ -105,7 +105,7 @@ MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const cha
 	server_hostname = strdup("ecn.t2.tiles.virtualearth.net");
 	server_path_format = strdup("/tiles/a%s.jpeg?g=587");
 	bing_api_key = g_strdup(key_);
-	download_options.check_file_server_time = true;
+	this->dl_options.check_file_server_time = true;
 	zoom_min = 0;
 	zoom_max = 19; /* NB: Might be regionally different rather than the same across the world. */
 	copyright = strdup("© 2011 Microsoft Corporation and/or its suppliers");

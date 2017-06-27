@@ -64,8 +64,8 @@ typedef struct {
 
 static void * datasource_osm_my_traces_init(acq_vik_t *avt);
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2);
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions *options_unused);
+static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 static void datasource_osm_my_traces_cleanup(void * data);
 
 
@@ -149,7 +149,7 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 
 
-static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadFileOptions *options, const char *notused1, const char *notused2)
+static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -160,7 +160,7 @@ static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
-	options = NULL;
+	dl_options = NULL;
 #endif
 	return po;
 }
@@ -644,16 +644,18 @@ static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList
 
 
 
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions *options_unused)
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 
 	char *user_pass = osm_get_login();
 
 	/* Support .zip + bzip2 files directly. */
-	DownloadFileOptions options = { false, false, NULL, 2, NULL, user_pass, a_try_decompress_file }; /* Allow a couple of redirects. */
+	DownloadOptions dl_options(2); /* Allow a couple of redirects. */
+	dl_options.convert_file = a_try_decompress_file;
+	dl_options.user_pass = user_pass;
 
-	char *tmpname = a_download_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &options);
+	char *tmpname = a_download_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &dl_options);
 	if (!tmpname) {
 		return false;
 	}
@@ -742,7 +744,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			/* NB download type is GPX (or a compressed version). */
 			ProcessOptions my_po = *process_options;
 			my_po.url = url;
-			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &options);
+			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &dl_options);
 			/* TODO investigate using a progress bar:
 			   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 

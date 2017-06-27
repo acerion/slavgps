@@ -91,7 +91,7 @@ typedef struct {
 	ProcessOptions * po;
 	bool creating_new_layer;
 	LayerTRW * trw;
-	DownloadFileOptions * options;
+	DownloadOptions * dl_options;
 } w_and_interface_t;
 
 
@@ -230,10 +230,10 @@ static void get_from_anything(w_and_interface_t * wi)
 	VikDataSourceInterface * source_interface = wi->acquiring->source_interface;
 
 	if (source_interface->process_func) {
-		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->acquiring, wi->options);
+		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->acquiring, wi->dl_options);
 	}
 	delete wi->po;
-	free(wi->options);
+	delete wi->dl_options;
 
 	if (wi->acquiring->running && !result) {
 #ifdef K
@@ -278,8 +278,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	GtkWidget * dialog = NULL;
 	char * args_off = NULL;
 	char * fd_off = NULL;
-	DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
-	memset(options, 0, sizeof (DownloadFileOptions));
+	DownloadOptions * dl_options = new DownloadOptions;
 
 	acq_vik_t avt;
 	avt.panel = this->panel;
@@ -391,7 +390,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 		free(name_src_track);
 	} else if (source_interface->get_process_options) {
-		po = source_interface->get_process_options(pass_along_data, options, NULL, NULL);
+		po = source_interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
 	} else {
 		/* kamil: what now? */
 	}
@@ -417,7 +416,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	wi->acquiring = this;
 	wi->acquiring->source_interface = source_interface;
 	wi->po = po;
-	wi->options = options;
+	wi->dl_options = dl_options;
 	wi->trw = this->trw;
 	wi->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
@@ -502,13 +501,13 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #endif
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		if (source_interface->process_func) {
-			bool success = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, options);
+			bool success = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, dl_options);
 			if (!success) {
 				dialog_error(QString(_("Error: acquisition failed.")), this->window);
 			}
 		}
 		delete po;
-		free(options);
+		delete dl_options;
 
 		on_complete_process(wi);
 #ifdef K

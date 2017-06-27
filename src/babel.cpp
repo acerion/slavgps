@@ -104,7 +104,7 @@ extern std::vector<BabelDevice *> a_babel_device_list;
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb, void * user_data, void * not_used)
+bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb, void * user_data, void * unused)
 {
 	bool ret = false;
 	char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
@@ -112,7 +112,7 @@ bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb,
 
 	if (name_src) {
 		ProcessOptions po(bargs, name_src, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
-		ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used);
+		ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadOptions *) unused);
 		(void) remove(name_src);
 		free(name_src);
 	}
@@ -383,15 +383,15 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options)
+bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options)
 {
 	/* If no download options specified, use defaults: */
-	DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
-	if (options) {
-		myoptions = *options;
+	DownloadOptions myoptions(2);;
+	if (dl_options) {
+		myoptions = *dl_options;
 	}
 	int fd_src;
-	int fetch_ret;
+	DownloadResult fetch_ret;
 	bool ret = false;
 	char *name_src = NULL;
 	char *babelargs = NULL;
@@ -404,7 +404,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 		(void) remove(name_src);
 
 		fetch_ret = a_http_download_get_url(url, "", name_src, &myoptions, NULL);
-		if (fetch_ret == DOWNLOAD_SUCCESS) {
+		if (fetch_ret == DownloadResult::SUCCESS) {
 			if (input_type != NULL || babelfilters != NULL) {
 				babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
 				ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL);
@@ -434,7 +434,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  * @process_options:  The options to control the appropriate processing function. See #ProcessOptions for more detail
  * @cb:               Optional callback function. Same usage as in a_babel_convert().
  * @user_data:        passed along to cb
- * @download_options: If downloading from a URL use these options (may be NULL)
+ * @dl_options:       If downloading from a URL use these options (may be NULL)
  *
  * Loads data into a trw layer from a file, using gpsbabel.  This routine is synchronous;
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
@@ -442,7 +442,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options)
+bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options)
 {
 	if (!process_options) {
 		qDebug() << "EE: Babel: no process options";
@@ -451,17 +451,17 @@ bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, Babel
 
 	if (process_options->url) {
 		qDebug() << "II: Babel: ->url";
-		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options);
+		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, dl_options);
 	}
 
 	if (process_options->babelargs) {
 		qDebug() << "II: Babel: ->babelargs";
-		return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options);
+		return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, dl_options);
 	}
 
 	if (process_options->shell_command) {
 		qDebug() << "II: Babel: ->shell_command";
-		return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, download_options);
+		return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, dl_options);
 	}
 	qDebug() << "II: Babel: convert_from returns false";
 	return false;

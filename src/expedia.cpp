@@ -48,14 +48,14 @@
 
 static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
 static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest);
-static DownloadResult_t expedia_download(TileInfo * src, char const * dest_fn, void * handle);
+static DownloadResult expedia_download(TileInfo * src, char const * dest_fn, void * handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
 
 
 
-static DownloadFileOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
+static DownloadOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
 
 
 
@@ -201,7 +201,7 @@ static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest)
 
 
 
-static DownloadResult_t expedia_download(TileInfo * src, const char * dest_fn, void * handle)
+static DownloadResult expedia_download(TileInfo * src, const char * dest_fn, void * handle)
 {
 	struct LatLon ll;
 	expedia_xy_to_latlon_middle(src->scale, src->x, src->y, &ll);
@@ -215,8 +215,8 @@ static DownloadResult_t expedia_download(TileInfo * src, const char * dest_fn, v
 	char uri = g_strdup_printf("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
 				   ll.lat, ll.lon, (ll.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
 
-	DownloadResult_t res = a_http_download_get_url(EXPEDIA_SITE, uri, dest_fn, &expedia_options, NULL);
-	if (res == DOWNLOAD_SUCCESS) {
+	DownloadResult res = a_http_download_get_url(EXPEDIA_SITE, uri, dest_fn, &expedia_options, NULL);
+	if (res == DownloadResult::SUCCESS) {
 		expedia_snip (dest_fn);
 	}
 	free(uri);

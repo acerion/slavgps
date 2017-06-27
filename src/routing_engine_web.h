@@ -39,11 +39,11 @@ namespace SlavGPS {
 	class RoutingEngineWeb : public RoutingEngine {
 
 	public:
-		RoutingEngineWeb();
+		RoutingEngineWeb() {};
 		~RoutingEngineWeb();
 
 
-		DownloadFileOptions * get_download_options(void);
+		DownloadOptions * get_download_options(void);
 		char * get_url_for_coords(struct LatLon start, struct LatLon end);
 		bool find(LayerTRW * trw, struct LatLon start, struct LatLon end);
 		char * get_url_from_directions(const char * start, const char * end);
@@ -63,7 +63,7 @@ namespace SlavGPS {
 		char * url_start_dir_fmt = NULL; /* Start part of the URL. The part of the request hosting the start point. */
 		char * url_stop_dir_fmt = NULL;  /* Stop part of the URL. The part of the request hosting the end point. */
 
-		DownloadFileOptions options;
+		DownloadOptions dl_options;
 
 	};
 

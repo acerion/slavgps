@@ -63,11 +63,7 @@ MapSource::MapSource()
 	drawmode = ViewportDrawMode::MERCATOR; /* ViewportDrawMode::UTM */
 	file_extension = strdup(".png");
 
-	download_options.referer = NULL;       /* The REFERER string to use in HTTP request. */
-	download_options.follow_location = 0;  /* Specifies the number of retries to follow a redirect while downloading a page. */
-	download_options.check_file = a_check_map_file;
-	download_options.check_file_server_time = false; /* Age of current cache before redownloading tile. */
-	download_options.use_etag = false;     /* Store etag in a file, and send it to server to check if we have the latest file. */
+	this->dl_options.check_file = a_check_map_file;
 
 	server_hostname = NULL;
 	server_path_format = NULL;
@@ -103,7 +99,7 @@ MapSource::~MapSource()
 
 	free(file_extension);
 
-	free(download_options.referer);
+	free(this->dl_options.referer);
 
 	free(server_hostname);
 	free(server_path_format);
@@ -131,7 +127,7 @@ MapSource & MapSource::operator=(MapSource map)
 	this->drawmode   = map.drawmode;
 	this->file_extension = g_strdup(map.file_extension);
 
-	memcpy(&this->download_options, &map.download_options, sizeof (DownloadFileOptions));
+	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
 	this->server_hostname = g_strdup(map.server_hostname);
 	this->server_path_format = g_strdup(map.server_path_format);
@@ -174,7 +170,7 @@ MapSource::MapSource(MapSource & map)
 	this->drawmode   = map.drawmode;
 	this->file_extension = g_strdup(map.file_extension);
 
-	memcpy(&this->download_options, &map.download_options, sizeof (DownloadFileOptions));
+	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
 	this->server_hostname = g_strdup(map.server_hostname);
 	this->server_path_format = g_strdup(map.server_path_format);
@@ -515,12 +511,12 @@ void MapSource::tile_to_center_coord(TileInfo *src, VikCoord *dest)
  * @dest_fn: The filename to save the result in
  * @handle:  Potential reusable Curl Handle (may be NULL)
  *
- * Returns: How successful the download was as per the type #DownloadResult_t
+ * Returns: How successful the download was as per the type #DownloadResult
  */
-DownloadResult_t MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
+DownloadResult MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
 {
 	fprintf(stderr, "MapSource download\n");
-	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
+	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
 }
 
 
@@ -558,7 +554,7 @@ char * MapSource::get_server_path(TileInfo * src)
 
 
 
-DownloadFileOptions * MapSource::get_download_options()
+DownloadOptions * MapSource::get_download_options()
 {
-	return &download_options;
+	return &this->dl_options;
 }

@@ -84,7 +84,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 	this->drawmode = map.drawmode;
 	this->set_file_extension(map.file_extension);
 
-	memcpy(&this->download_options, &map.download_options, sizeof (DownloadFileOptions));
+	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
 	this->server_hostname = g_strdup(map.server_hostname);
 	this->server_path_format = g_strdup(map.server_path_format);
@@ -156,7 +156,7 @@ bool MapSourceSlippy::is_osm_meta_tiles()
 
 bool MapSourceSlippy::supports_download_only_new()
 {
-	return download_options.check_file_server_time || download_options.use_etag;
+	return this->dl_options.check_file_server_time || this->dl_options.use_etag;
 }
 
 
@@ -193,9 +193,9 @@ char * MapSourceSlippy::get_server_path(TileInfo * src)
 
 
 
-DownloadResult_t MapSourceSlippy::download(TileInfo * src, const char * dest_fn, void * handle)
+DownloadResult MapSourceSlippy::download(TileInfo * src, const char * dest_fn, void * handle)
 {
-	DownloadResult_t result = a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
+	DownloadResult result = a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
 	//fprintf(stderr, "MapSourceSlippy::download(%s, %s) -> %d\n", get_server_hostname(), get_server_path(src), result);
 	return result;
 }

@@ -56,8 +56,8 @@ void osm_init (void)
 {
 	MapSource * mapnik_type = new MapSourceSlippy(MAP_ID_OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%d/%d/%d.png");
 	mapnik_type->set_name((char *) "OSM-Mapnik");
-	mapnik_type->download_options.check_file_server_time = false;
-	mapnik_type->download_options.use_etag = true;
+	mapnik_type->dl_options.check_file_server_time = false;
+	mapnik_type->dl_options.use_etag = true;
 	mapnik_type->zoom_min = 0;
 	mapnik_type->zoom_max = 19;
 	mapnik_type->set_copyright((char *) "© OpenStreetMap contributors");
@@ -67,8 +67,8 @@ void osm_init (void)
 
 	MapSource * cycle_type = new MapSourceSlippy(MAP_ID_OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%d/%d/%d.png");
 	cycle_type->set_name((char *) "OSM-Cycle");
-	cycle_type->download_options.check_file_server_time = true;
-	cycle_type->download_options.use_etag = false;
+	cycle_type->dl_options.check_file_server_time = true;
+	cycle_type->dl_options.use_etag = false;
 	cycle_type->zoom_min = 0;
 	cycle_type->zoom_max = 18;
 	cycle_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
@@ -77,8 +77,8 @@ void osm_init (void)
 
 	MapSource * transport_type = new MapSourceSlippy(MAP_ID_OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%d/%d/%d.png");
 	transport_type->set_name((char *) "OSM-Transport");
-	transport_type->download_options.check_file_server_time = true;
-	transport_type->download_options.use_etag = false;
+	transport_type->dl_options.check_file_server_time = true;
+	transport_type->dl_options.use_etag = false;
 	transport_type->zoom_min = 0;
 	transport_type->zoom_max = 18;
 	transport_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
@@ -87,8 +87,8 @@ void osm_init (void)
 
 	MapSource * mapquest_type = new MapSourceSlippy(MAP_ID_MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%d/%d/%d.png");
 	mapquest_type->set_name((char *) "OSM-MapQuest");
-	mapquest_type->download_options.check_file_server_time = true;
-	mapquest_type->download_options.use_etag = false;
+	mapquest_type->dl_options.check_file_server_time = true;
+	mapquest_type->dl_options.use_etag = false;
 	mapquest_type->zoom_min = 0;
 	mapquest_type->zoom_max = 19;
 	mapquest_type->set_copyright((char *) "Tiles Courtesy of MapQuest © OpenStreetMap contributors");
@@ -98,8 +98,8 @@ void osm_init (void)
 
 	MapSource * hot_type = new MapSourceSlippy(MAP_ID_OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%d/%d/%d.png");
 	hot_type->set_name((char *) "OSM-Humanitarian");
-	hot_type->download_options.check_file_server_time = true;
-	hot_type->download_options.use_etag = false;
+	hot_type->dl_options.check_file_server_time = true;
+	hot_type->dl_options.use_etag = false;
 	hot_type->zoom_min = 0;
 	hot_type->zoom_max = 20; // Super detail!!
 	hot_type->set_copyright((char *) "© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");

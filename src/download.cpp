@@ -102,7 +102,7 @@ static bool check_file_first_line(FILE * f, char * patterns[])
 
 
 
-bool a_check_html_file(FILE * f)
+bool SlavGPS::a_check_html_file(FILE * f)
 {
 	char * html_str[] = {
 		(char *) "<html",
@@ -118,7 +118,7 @@ bool a_check_html_file(FILE * f)
 
 
 
-bool a_check_map_file(FILE * f)
+bool SlavGPS::a_check_map_file(FILE * f)
 {
 	/* FIXME no more true since a_check_kml_file. */
 	return !a_check_html_file(f);
@@ -179,7 +179,7 @@ static Parameter prefs[] = {
 
 
 
-void a_download_init(void)
+void SlavGPS::a_download_init(void)
 {
 	ParameterValue tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
 #if 0
@@ -190,7 +190,7 @@ void a_download_init(void)
 
 
 
-void a_download_uninit(void)
+void SlavGPS::a_download_uninit(void)
 {
 }
 
@@ -263,7 +263,7 @@ static void uncompress_zip(char * name)
  *
  * Perform magic to decide how which type of decompression to attempt.
  */
-void a_try_decompress_file(char * name)
+void SlavGPS::a_try_decompress_file(char * name)
 {
 #ifdef HAVE_MAGIC_H
 #ifdef MAGIC_VERSION
@@ -331,7 +331,7 @@ void a_try_decompress_file(char * name)
 
 
 
-static bool get_etag_xattr(char const * fn, CurlDownloadOptions * cdo)
+static bool get_etag_xattr(char const * fn, CurlOptions * curl_options)
 {
 	bool result = false;
 
@@ -340,15 +340,15 @@ static bool get_etag_xattr(char const * fn, CurlDownloadOptions * cdo)
 	if (fileinfo) {
 		char const * etag = g_file_info_get_attribute_string(fileinfo, VIKING_ETAG_XATTR);
 		if (etag) {
-			cdo->etag = g_strdup(etag);
-			result = !!cdo->etag;
+			curl_options->etag = g_strdup(etag);
+			result = !!curl_options->etag;
 		}
 		g_object_unref(fileinfo);
 	}
 	g_object_unref(file);
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Get etag (xattr) from %s: %s\n", __FUNCTION__, fn, cdo->etag);
+		fprintf(stderr, "DEBUG: %s: Get etag (xattr) from %s: %s\n", __FUNCTION__, fn, curl_options->etag);
 	}
 
 	return result;
@@ -357,18 +357,18 @@ static bool get_etag_xattr(char const * fn, CurlDownloadOptions * cdo)
 
 
 
-static bool get_etag_file(char const * fn, CurlDownloadOptions * cdo)
+static bool get_etag_file(char const * fn, CurlOptions * curl_options)
 {
 	bool result = false;
 
 	char * etag_filename = g_strdup_printf("%s.etag", fn);
 	if (etag_filename) {
-		result = g_file_get_contents(etag_filename, &cdo->etag, NULL, NULL);
+		result = g_file_get_contents(etag_filename, &curl_options->etag, NULL, NULL);
 		free(etag_filename);
 	}
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Get etag (file) from %s: %s\n", __FUNCTION__, fn, cdo->etag);
+		fprintf(stderr, "DEBUG: %s: Get etag (file) from %s: %s\n", __FUNCTION__, fn, curl_options->etag);
 	}
 
 	return result;
@@ -377,18 +377,18 @@ static bool get_etag_file(char const * fn, CurlDownloadOptions * cdo)
 
 
 
-static void get_etag(char const * fn, CurlDownloadOptions * cdo)
+static void get_etag(char const * fn, CurlOptions * curl_options)
 {
 	/* First try to get etag from xattr, then fall back to plain file. */
-	if (!get_etag_xattr(fn, cdo) && !get_etag_file(fn, cdo)) {
+	if (!get_etag_xattr(fn, curl_options) && !get_etag_file(fn, curl_options)) {
 		fprintf(stderr, "DEBUG: %s: Failed to get etag from %s\n", __FUNCTION__, fn);
 		return;
 	}
 
 	/* Check if etag is short enough. */
-	if (strlen(cdo->etag) > 100) {
-		free(cdo->etag);
-		cdo->etag = NULL;
+	if (strlen(curl_options->etag) > 100) {
+		free(curl_options->etag);
+		curl_options->etag = NULL;
 	}
 
 	/* TODO: should check that etag is a valid string. */
@@ -397,17 +397,17 @@ static void get_etag(char const * fn, CurlDownloadOptions * cdo)
 
 
 
-static bool set_etag_xattr(char const * fn, CurlDownloadOptions * cdo)
+static bool set_etag_xattr(char const * fn, CurlOptions * curl_options)
 {
 	bool result = false;
 	GFile *file;
 
 	file = g_file_new_for_path(fn);
-	result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, cdo->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, curl_options->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	g_object_unref(file);
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Set etag (xattr) on %s: %s\n", __FUNCTION__, fn, cdo->new_etag);
+		fprintf(stderr, "DEBUG: %s: Set etag (xattr) on %s: %s\n", __FUNCTION__, fn, curl_options->new_etag);
 	}
 
 	return result;
@@ -416,19 +416,19 @@ static bool set_etag_xattr(char const * fn, CurlDownloadOptions * cdo)
 
 
 
-static bool set_etag_file(char const * fn, CurlDownloadOptions * cdo)
+static bool set_etag_file(char const * fn, CurlOptions * curl_options)
 {
 	bool result = false;
 	char * etag_filename;
 
 	etag_filename = g_strdup_printf("%s.etag", fn);
 	if (etag_filename) {
-		result = g_file_set_contents(etag_filename, cdo->new_etag, -1, NULL);
+		result = g_file_set_contents(etag_filename, curl_options->new_etag, -1, NULL);
 		free(etag_filename);
 	}
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Set etag (file) on %s: %s\n", __FUNCTION__, fn, cdo->new_etag);
+		fprintf(stderr, "DEBUG: %s: Set etag (file) on %s: %s\n", __FUNCTION__, fn, curl_options->new_etag);
 	}
 
 	return result;
@@ -437,10 +437,10 @@ static bool set_etag_file(char const * fn, CurlDownloadOptions * cdo)
 
 
 
-static void set_etag(char const * fn, char const * fntmp, CurlDownloadOptions * cdo)
+static void set_etag(char const * fn, char const * fntmp, CurlOptions * curl_options)
 {
 	/* First try to store etag in extended attribute, then fall back to plain file. */
-	if (!set_etag_xattr(fntmp, cdo) && !set_etag_file(fn, cdo)) {
+	if (!set_etag_xattr(fntmp, curl_options) && !set_etag_file(fn, curl_options)) {
 		fprintf(stderr, "DEBUG: %s: Failed to set etag on %s\n", __FUNCTION__, fn);
 	}
 }
@@ -448,18 +448,18 @@ static void set_etag(char const * fn, char const * fntmp, CurlDownloadOptions * 
 
 
 
-static DownloadResult_t download(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * options, bool ftp, void * handle)
+static DownloadResult download(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, bool ftp, void * handle)
 {
 	bool failure = false;
-	CurlDownloadOptions cdo;
+	CurlOptions curl_options;
 
 	/* Check file. */
 	if (g_file_test(fn.c_str(), G_FILE_TEST_EXISTS) == true) {
-		if (options == NULL
-		    || (!options->check_file_server_time
-			&& !options->use_etag)) {
+		if (dl_options == NULL
+		    || (!dl_options->check_file_server_time
+			&& !dl_options->use_etag)) {
 			/* Nothing to do as file already exists and we don't want to check server. */
-			return DOWNLOAD_NOT_REQUIRED;
+			return DownloadResult::NOT_REQUIRED;
 		}
 
 		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
@@ -469,14 +469,14 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
-			return DOWNLOAD_NOT_REQUIRED;
+			return DownloadResult::NOT_REQUIRED;
 		}
 
-		if (options != NULL && options->check_file_server_time) {
-			cdo.time_condition = file_time;
+		if (dl_options != NULL && dl_options->check_file_server_time) {
+			curl_options.time_condition = file_time;
 		}
-		if (options != NULL && options->use_etag) {
-			get_etag(fn.c_str(), &cdo);
+		if (dl_options != NULL && dl_options->use_etag) {
+			get_etag(fn.c_str(), &curl_options);
 		}
 
 	} else {
@@ -490,30 +490,30 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 	std::string tmpfilename = fn + ".tmp";
 	if (!lock_file(tmpfilename)) {
 		fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename.c_str());
-		return DOWNLOAD_FILE_WRITE_ERROR;
+		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
 	FILE * f = fopen(tmpfilename.c_str(), "w+b");  /* Truncate file and open it. */
 	if (!f) {
 		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename.c_str(), g_strerror(errno));
-		return DOWNLOAD_FILE_WRITE_ERROR;
+		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
 	/* Call the backend function */
-	CurlDownloadStatus ret = CurlDownload::get_url(hostname, uri, f, options, ftp, &cdo, handle);
+	CurlDownloadStatus ret = CurlDownload::get_url(hostname, uri, f, dl_options, ftp, &curl_options, handle);
 
-	DownloadResult_t result = DOWNLOAD_SUCCESS;
+	DownloadResult result = DownloadResult::SUCCESS;
 
 	if (ret != CurlDownloadStatus::NO_ERROR && ret != CurlDownloadStatus::NO_NEWER_FILE) {
 		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
-		result = DOWNLOAD_HTTP_ERROR;
+		result = DownloadResult::HTTP_ERROR;
 	}
 
-	if (!failure && options != NULL && options->check_file != NULL && ! options->check_file(f)) {
+	if (!failure && dl_options != NULL && dl_options->check_file != NULL && ! dl_options->check_file(f)) {
 		fprintf(stderr, "DEBUG: %s: file content checking failed\n", __FUNCTION__);
 		failure = true;
-		result = DOWNLOAD_CONTENT_ERROR;
+		result = DownloadResult::CONTENT_ERROR;
 	}
 
 	fclose (f);
@@ -536,14 +536,14 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 		if (g_utime(fn.c_str(), NULL) != 0)
 			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, fn.c_str());
 	} else {
-		if (options != NULL && options->convert_file) {
-			options->convert_file((char *) tmpfilename.c_str());
+		if (dl_options != NULL && dl_options->convert_file) {
+			dl_options->convert_file((char *) tmpfilename.c_str());
 		}
 
-		if (options != NULL && options->use_etag) {
-			if (cdo.new_etag) {
+		if (dl_options != NULL && dl_options->use_etag) {
+			if (curl_options.new_etag) {
 				/* Server returned an etag value. */
-				set_etag(fn.c_str(), tmpfilename.c_str(), &cdo);
+				set_etag(fn.c_str(), tmpfilename.c_str(), &curl_options);
 			}
 		}
 
@@ -554,7 +554,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
 	}
 	unlock_file(tmpfilename);
 
-	return DOWNLOAD_SUCCESS;
+	return DownloadResult::SUCCESS;
 }
 
 
@@ -564,23 +564,23 @@ static DownloadResult_t download(char const * hostname, char const * uri, const 
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle)
+DownloadResult SlavGPS::a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle)
 {
-	return download(hostname, uri, fn, opt, false, handle);
+	return download(hostname, uri, fn, dl_options, false, handle);
 }
 
 
 
 
-DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle)
+DownloadResult a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle)
 {
-	return download(hostname, uri, fn, opt, true, handle);
+	return download(hostname, uri, fn, dl_options, true, handle);
 }
 
 
 
 
-void * a_download_handle_init()
+void * SlavGPS::a_download_handle_init()
 {
 	return CurlDownload::init_handle();
 }
@@ -588,7 +588,7 @@ void * a_download_handle_init()
 
 
 
-void a_download_handle_cleanup(void * handle)
+void SlavGPS::a_download_handle_cleanup(void * handle)
 {
 	CurlDownload::uninit_handle(handle);
 }
@@ -604,7 +604,7 @@ void a_download_handle_cleanup(void * handle)
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * options)
+char * SlavGPS::a_download_uri_to_tmp_file(char const * uri, DownloadOptions * dl_options)
 {
 	int tmp_fd;
 	char * tmpname;
@@ -619,7 +619,7 @@ char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * option
 		return NULL;
 	}
 
-	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, tmp_file, options, NULL, NULL)) {
+	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, tmp_file, dl_options, NULL, NULL)) {
 		fclose (tmp_file);
 		(void) remove(tmpname);
 		free(tmpname);

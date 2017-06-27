@@ -79,15 +79,15 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 {
 #define ETAG_KEYWORD "ETag: "
 #define ETAG_LEN (sizeof(ETAG_KEYWORD)-1)
-	CurlDownloadOptions *cdo = (CurlDownloadOptions *) stream;
+	CurlOptions * curl_options = (CurlOptions *) stream;
 	size_t len = size * nmemb;
 	char * str = g_strstr_len((const char *) ptr, len, ETAG_KEYWORD);
 	if (str) {
 		char * etag_str = str + ETAG_LEN;
 		char * end_str = g_strstr_len(etag_str, len - ETAG_LEN, "\r\n");
 		if (etag_str && end_str) {
-			cdo->new_etag = g_strndup(etag_str, end_str - etag_str);
-			qDebug().nospace() << "DD: Curl Download: Get Etag: ETAG found: '" << cdo->new_etag << "'";
+			curl_options->new_etag = g_strndup(etag_str, end_str - etag_str);
+			qDebug().nospace() << "DD: Curl Download: Get Etag: ETAG found: '" << curl_options->new_etag << "'";
 		}
 	}
 	return nmemb;
@@ -123,7 +123,7 @@ void CurlDownload::uninit(void)
 
 
 
-CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * cdo, void * handle)
+CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
 {
 	struct curl_slist * curl_send_headers = NULL;
 
@@ -137,9 +137,9 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, Downlo
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	}
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
-	if (options != NULL && options->user_pass) {
+	if (dl_options != NULL && dl_options->user_pass) {
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-		curl_easy_setopt(curl, CURLOPT_USERPWD, options->user_pass);
+		curl_easy_setopt(curl, CURLOPT_USERPWD, dl_options->user_pass);
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, uri);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
@@ -147,31 +147,31 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, Downlo
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curl_progress_func);
-	if (options != NULL) {
-		if (options->referer != NULL) {
-			curl_easy_setopt(curl, CURLOPT_REFERER, options->referer);
+	if (dl_options != NULL) {
+		if (dl_options->referer != NULL) {
+			curl_easy_setopt(curl, CURLOPT_REFERER, dl_options->referer);
 		}
 
-		if (options->follow_location != 0) {
+		if (dl_options->follow_location != 0) {
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, options->follow_location);
+			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, dl_options->follow_location);
 		}
-		if (cdo != NULL) {
-			if (options->check_file_server_time && cdo->time_condition != 0) {
+		if (curl_options != NULL) {
+			if (dl_options->check_file_server_time && curl_options->time_condition != 0) {
 				/* If file exists, check against server if file is recent enough. */
 				curl_easy_setopt(curl, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
-				curl_easy_setopt(curl, CURLOPT_TIMEVALUE, cdo->time_condition);
+				curl_easy_setopt(curl, CURLOPT_TIMEVALUE, curl_options->time_condition);
 			}
-			if (options->use_etag) {
-				if (cdo->etag != NULL) {
+			if (dl_options->use_etag) {
+				if (curl_options->etag != NULL) {
 					/* Add an header on the HTTP request. */
 					char str[60];
-					snprintf(str, 60, "If-None-Match: %s", cdo->etag);
+					snprintf(str, 60, "If-None-Match: %s", curl_options->etag);
 					curl_send_headers = curl_slist_append(curl_send_headers, str);
 					curl_easy_setopt(curl, CURLOPT_HTTPHEADER , curl_send_headers);
 				}
 				/* Store the new etag from the server in an option value. */
-				curl_easy_setopt(curl, CURLOPT_WRITEHEADER, cdo);
+				curl_easy_setopt(curl, CURLOPT_WRITEHEADER, curl_options);
 				curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_get_etag_func);
 			}
 		}
@@ -218,7 +218,7 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, Downlo
 
 
 
-CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * cdo, void * handle)
+CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
 {
 	char * full = NULL;
 
@@ -232,7 +232,7 @@ CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri
 		/* Compose the full url. */
 		full = g_strdup_printf("%s://%s%s", (ftp?"ftp":"http"), hostname, uri);
 	}
-	CurlDownloadStatus ret = CurlDownload::download_uri(full, f, options, cdo, handle);
+	CurlDownloadStatus ret = CurlDownload::download_uri(full, f, dl_options, curl_options, handle);
 	/* Free newly allocated memory, but do not free uri. */
 	if (hostname != full && uri != full) {
 		free(full);
@@ -261,7 +261,7 @@ void CurlDownload::uninit_handle(void * handle)
 
 
 
-CurlDownloadOptions::~CurlDownloadOptions()
+CurlOptions::~CurlOptions()
 {
 	if (this->etag) {
 		free(this->etag);

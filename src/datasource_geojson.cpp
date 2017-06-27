@@ -54,7 +54,7 @@ static char * last_folder_uri = NULL;
 static void * datasource_geojson_init(acq_vik_t * avt);
 static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_data_t * user_data, void * not_used, char const * not_used2, char const * not_used3);
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions * options_unused);
+static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 static void datasource_geojson_cleanup(void * data);
 
 
@@ -171,7 +171,7 @@ ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadFileOptions * options_unused)
+static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	datasource_geojson_user_data_t * user_data = (datasource_geojson_user_data_t *) acquiring->user_data;
 

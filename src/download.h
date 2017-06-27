@@ -32,78 +32,77 @@
 
 
 
-/* File content check. */
-typedef bool (* VikFileContentCheckerFunc) (FILE *);
-bool a_check_map_file(FILE *);
-bool a_check_html_file(FILE *);
-bool a_check_kml_file(FILE *);
+namespace SlavGPS {
 
-/* Convert. */
-void a_try_decompress_file(char * name);
-typedef void (* VikFileContentConvertFunc) (char *); /* filename (temporary). */
 
-typedef struct {
-	/**
-	 * Check if the server has a more recent file than the one we have before downloading it.
-	 * This uses http header If-Modified-Since.
-	 */
-	bool check_file_server_time;
 
-	/**
-	 * Set if the server handle ETag.
-	 */
-	bool use_etag;
+	/* File content check. */
+	typedef bool (* VikFileContentCheckerFunc) (FILE *);
+	bool a_check_map_file(FILE *);
+	bool a_check_html_file(FILE *);
+	bool a_check_kml_file(FILE *);
 
-	/**
-	 * The REFERER string to use.
-	 * Could be NULL.
-	 */
-	char * referer;
+	/* Convert. */
+	void a_try_decompress_file(char * name);
+	typedef void (* VikFileContentConvertFunc) (char *); /* filename (temporary). */
 
-	/**
-	 * follow_location specifies the number of retries
-	 * to follow a redirect while downloading a page.
-	 */
-	long follow_location;
+	class DownloadOptions {
 
-	/**
-	 * File content checker.
-	 */
-	VikFileContentCheckerFunc check_file;
+	public:
+		DownloadOptions() {};
+		DownloadOptions(long follows) { follow_location = follows; };
 
-	/**
-	 * If need to authenticate on download.
-	 *  format: 'username:password'
-	 */
-	char * user_pass;
+		/* Check if the server has a more recent file than the
+		   one we have before downloading it. This uses http
+		   header If-Modified-Since. */
+		bool check_file_server_time = false;
 
-	/**
-	 * File manipulation if necessary such as uncompressing the downloaded file.
-	 */
-	VikFileContentConvertFunc convert_file;
+		/* Set if the server handle ETag. */
+		bool use_etag = false;
 
-} DownloadFileOptions;
+		/* The REFERER string to use. Could be NULL. */
+		char * referer = NULL;
 
-void a_download_init(void);
-void a_download_uninit(void);
+		/* follow_location specifies the number of retries to
+		   follow a redirect while downloading a page. */
+		long follow_location = 0;
 
-typedef enum {
-	DOWNLOAD_FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
-	DOWNLOAD_HTTP_ERROR       = -2,
-	DOWNLOAD_CONTENT_ERROR    = -1,
-	DOWNLOAD_SUCCESS          =  0,
-	DOWNLOAD_NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
-} DownloadResult_t;
+		/* File content checker. */
+		VikFileContentCheckerFunc check_file = NULL;
+
+		/* If need to authenticate on download. Format: 'username:password' */
+		char * user_pass = NULL;
+
+		/* File manipulation if necessary such as
+		   uncompressing the downloaded file. */
+		VikFileContentConvertFunc convert_file = NULL;
+	};
+
+	void a_download_init(void);
+	void a_download_uninit(void);
+
+	enum class DownloadResult {
+		FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
+		HTTP_ERROR       = -2,
+		CONTENT_ERROR    = -1,
+		SUCCESS          =  0,
+		NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
+	};
 
 
 
 
-DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle);
-DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle);
-void * a_download_handle_init();
-void a_download_handle_cleanup(void * handle);
+	DownloadResult a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle);
+	DownloadResult a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle);
+	void * a_download_handle_init();
+	void a_download_handle_cleanup(void * handle);
 
-char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * options);
+	char * a_download_uri_to_tmp_file(char const * uri, DownloadOptions * dl_options);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

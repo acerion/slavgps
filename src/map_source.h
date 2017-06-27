@@ -80,11 +80,11 @@ namespace SlavGPS {
 		virtual bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
 		virtual void tile_to_center_coord(TileInfo * src, VikCoord * dest);
 
-		virtual DownloadResult_t download(TileInfo * src, const char * dest_fn, void * handle);
+		virtual DownloadResult download(TileInfo * src, const char * dest_fn, void * handle);
 		void * download_handle_init();
 		void download_handle_cleanup(void * handle);
 
-		DownloadFileOptions * get_download_options();
+		DownloadOptions * get_download_options();
 
 		void set_name(char * name);
 		void set_map_type(MapTypeID map_type);
@@ -115,7 +115,7 @@ namespace SlavGPS {
 		ViewportDrawMode drawmode; /* The mode used to draw map. */
 		char * file_extension = NULL; /* The file extension of tile files on disk. */
 
-		DownloadFileOptions download_options;
+		DownloadOptions dl_options;
 
 		char * server_hostname = NULL;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
 		char * server_path_format = NULL; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */

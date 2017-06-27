@@ -37,12 +37,6 @@ using namespace SlavGPS;
 
 
 
-/* FIXME Huge gruik. */
-static DownloadFileOptions terraserver_options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
-
-
-
-
 #define TERRASERVER_SITE "msrmaps.com"
 #define MARGIN_OF_ERROR 0.001
 
@@ -155,9 +149,9 @@ char * MapSourceTerraserver::get_server_hostname(void)
 
 
 
-DownloadFileOptions * MapSourceTerraserver::get_download_options(void)
+DownloadOptions * MapSourceTerraserver::get_download_options(void)
 {
-	return &terraserver_options;
+	return &this->dl_options;
 }
 
 
@@ -185,4 +179,6 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID type_, const char * label_)
 	this->tilesize_x = 200;
 	this->tilesize_y = 200;
 	this->drawmode = ViewportDrawMode::UTM;
+
+	this->dl_options.check_file = a_check_map_file;
 }

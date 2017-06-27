@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 		char * get_server_path(TileInfo * src);
 
-		DownloadResult_t download(TileInfo * src, const char * dest_fn, void * handle);
+		DownloadResult download(TileInfo * src, const char * dest_fn, void * handle);
 
 
 		bool is_direct_file_access();

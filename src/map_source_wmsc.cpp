@@ -104,7 +104,7 @@ bool MapSourceWmsc::is_osm_meta_tiles()
 
 bool MapSourceWmsc::supports_download_only_new()
 {
-	return download_options.check_file_server_time;
+	return this->dl_options.check_file_server_time;
 }
 
 

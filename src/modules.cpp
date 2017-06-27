@@ -115,7 +115,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, GObject * object
 
 
 
-static void modules_register_datasources(VikGobjectBuilder * self, GObject * object)
+static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, GObject * object)
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
