@@ -542,7 +542,7 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 			pc = tp_percentage_by_distance(this->trk, tp, this->track_length_inc_gaps);
 		}
 
-		if (isnan(pc)) {
+		if (std::isnan(pc)) {
 			continue;
 		}
 
@@ -752,7 +752,7 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_ed(selected_pos_x, graph_width, graph_height);
 		}
@@ -803,7 +803,7 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_gd(selected_pos_x, graph_width, graph_height);
 		}
@@ -931,7 +931,7 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_st(selected_pos_x, graph_width, graph_height);
 		}
@@ -987,7 +987,7 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_dt(selected_pos_x, graph_width, graph_height);
 		}
@@ -1043,7 +1043,7 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_et(selected_pos_x, graph_width, graph_height);
 		}
@@ -1093,7 +1093,7 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
 		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = this->get_pos_y_sd(selected_pos_x, graph_width, graph_height);
 		}
@@ -1253,7 +1253,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 		}
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
-			if (!isnan((*iter)->speed)) {
+			if (!std::isnan((*iter)->speed)) {
 				int y_speed = graph_bottom - (graph_height * (*iter)->speed) / max_speed;
 				viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
 			}
@@ -1553,7 +1553,7 @@ static void draw_speed_dist(Track * trk_,
 		int x = (graph_width * dist) / total_length + GRAPH_MARGIN_LEFT;
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
-			if (!isnan((*iter)->speed)) {
+			if (!std::isnan((*iter)->speed)) {
 				int y_speed = graph_bottom - (graph_height * (*iter)->speed) / max_speed;
 				viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
 			}
@@ -1757,7 +1757,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 
 		for (auto iter = trk_->trackpointsB->begin(); iter != trk_->trackpointsB->end(); iter++) {
 			double gps_speed = (*iter)->speed;
-			if (isnan(gps_speed)) {
+			if (std::isnan(gps_speed)) {
 				continue;
 			}
 
@@ -2102,7 +2102,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 
 		for (auto iter = std::next(trk_->trackpointsB->begin()); iter != trk_->trackpointsB->end(); iter++) {
 			double gps_speed = (*iter)->speed;
-			if (isnan(gps_speed)) {
+			if (std::isnan(gps_speed)) {
 				continue;
 			}
 
@@ -2192,7 +2192,7 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 			} else {
 				pc = tp_percentage_by_distance(this->trk, this->current_tp, this->track_length_inc_gaps);
 			}
-			if (!isnan(pc)) {
+			if (!std::isnan(pc)) {
 				current_pos_x = pc * graph_width;
 				current_pos_y = (this->*get_pos_y)(current_pos_x, graph_width, graph_height);
 			}
@@ -2205,7 +2205,7 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 		} else {
 			pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
 		}
-		if (!isnan(pc)) {
+		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph_width;
 			selected_pos_y = (this->*get_pos_y)(selected_pos_x, graph_width, graph_height);
 		}

@@ -269,7 +269,7 @@ bool GotoToolXML::parse_file_for_latlon(char *filename, struct LatLon *ll_)
 		*ll_ = this->ll;
 	}
 
-	if (isnan(this->ll.lat) || isnan(this->ll.lat)) {
+	if (std::isnan(this->ll.lat) || std::isnan(this->ll.lat)) {
 		/* At least one coordinate not found */
 		return false;
 	} else {
@@ -323,7 +323,7 @@ static void _start_element(GMarkupParseContext * context,
 	GotoToolXML * self = (GotoToolXML *) user_data;
 	const GSList * stack = g_markup_parse_context_get_element_stack(context);
 	/* Longitude */
-	if (self->lon_attr != NULL && isnan(self->ll.lon) && stack_is_path(stack, self->lon_path)) {
+	if (self->lon_attr != NULL && std::isnan(self->ll.lon) && stack_is_path(stack, self->lon_path)) {
 		int i=0;
 		while (attribute_names[i] != NULL) {
 			if (strcmp(attribute_names[i], self->lon_attr) == 0) {
@@ -333,7 +333,7 @@ static void _start_element(GMarkupParseContext * context,
 		}
 	}
 	/* Latitude */
-	if (self->lat_attr != NULL && isnan(self->ll.lat) && stack_is_path(stack, self->lat_path)) {
+	if (self->lat_attr != NULL && std::isnan(self->ll.lat) && stack_is_path(stack, self->lat_path)) {
 		int i=0;
 		while (attribute_names[i] != NULL) {
 			if (strcmp(attribute_names[i], self->lat_attr) == 0) {
@@ -362,10 +362,10 @@ static void _text(GMarkupParseContext * context,
 
 	char *textl = g_strndup(text, text_len);
 	/* Store only first result */
-	if (self->lat_attr == NULL && isnan(self->ll.lat) && stack_is_path (stack, self->lat_path)) {
+	if (self->lat_attr == NULL && std::isnan(self->ll.lat) && stack_is_path (stack, self->lat_path)) {
 		self->ll.lat = g_ascii_strtod(textl, NULL);
 	}
-	if (self->lon_attr == NULL && isnan(self->ll.lon) && stack_is_path (stack, self->lon_path)) {
+	if (self->lon_attr == NULL && std::isnan(self->ll.lon) && stack_is_path (stack, self->lon_path)) {
 		self->ll.lon = g_ascii_strtod(textl, NULL);
 	}
 	free(textl);

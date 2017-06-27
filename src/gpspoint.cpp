@@ -766,14 +766,14 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 		fprintf(f, " newsegment=\"yes\"");
 	}
 
-	if (!isnan(tp->speed) || !isnan(tp->course) || tp->nsats > 0) {
+	if (!std::isnan(tp->speed) || !std::isnan(tp->course) || tp->nsats > 0) {
 		fprintf(f, " extended=\"yes\"");
-		if (!isnan(tp->speed)) {
+		if (!std::isnan(tp->speed)) {
 			char * s_speed = a_coords_dtostr(tp->speed);
 			fprintf(f, " speed=\"%s\"", s_speed);
 			free(s_speed);
 		}
-		if (!isnan(tp->course)) {
+		if (!std::isnan(tp->course)) {
 			char * s_course = a_coords_dtostr(tp->course);
 			fprintf(f, " course=\"%s\"", s_course);
 			free(s_course);

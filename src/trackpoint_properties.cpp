@@ -339,14 +339,14 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		}
 	}
 
-	if (isnan(tp->course)) {
+	if (std::isnan(tp->course)) {
 		snprintf(tmp_str, sizeof (tmp_str), "--");
 	} else {
 		snprintf(tmp_str, sizeof (tmp_str), "%05.1f\302\260", tp->course);
 	}
 	this->course->setText(QString(tmp_str));
 
-	if (isnan(tp->speed)) {
+	if (std::isnan(tp->speed)) {
 		snprintf(tmp_str, sizeof (tmp_str), "--");
 	} else {
 		get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tp->speed);

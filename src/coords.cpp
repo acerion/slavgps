@@ -121,7 +121,7 @@ double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2
   tmp2.lon = ll2->lon * PIOVER180;
   tmp3 = EquatorialRadius * acos(sin(tmp1.lat)*sin(tmp2.lat)+cos(tmp1.lat)*cos(tmp2.lat)*cos(tmp1.lon-tmp2.lon));
   // For very small differences we can sometimes get NaN returned
-  return isnan(tmp3)?0:tmp3;
+  return std::isnan(tmp3)?0:tmp3;
 }
 
 void a_coords_latlon_to_utm( const struct LatLon *latlon, struct UTM *utm )

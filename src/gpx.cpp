@@ -1010,12 +1010,12 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 	free(time_iso8601);
 	time_iso8601 = NULL;
 
-	if (!isnan(tp->course)) {
+	if (!std::isnan(tp->course)) {
 		char *s_course = a_coords_dtostr(tp->course);
 		fprintf(f, "    <course>%s</course>\n", s_course);
 		free(s_course);
 	}
-	if (!isnan(tp->speed)) {
+	if (!std::isnan(tp->speed)) {
 		char *s_speed = a_coords_dtostr(tp->speed);
 		fprintf(f, "    <speed>%s</speed>\n", s_speed);
 		free(s_speed);

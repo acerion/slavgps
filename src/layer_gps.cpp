@@ -1551,7 +1551,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 	     this->realtime_fix.fix.latitude < lnw.lat &&
 	     this->realtime_fix.fix.longitude > lnw.lon &&
 	     this->realtime_fix.fix.longitude < lse.lon &&
-	     !isnan(this->realtime_fix.fix.track)) {
+	     !std::isnan(this->realtime_fix.fix.track)) {
 
 		VikCoord gps;
 
@@ -1616,10 +1616,10 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 	if (this->realtime_record && this->realtime_fix.dirty) {
 		bool replace = false;
-		int heading = isnan(this->realtime_fix.fix.track) ? 0 : (int)floor(this->realtime_fix.fix.track);
-		int last_heading = isnan(this->last_fix.fix.track) ? 0 : (int)floor(this->last_fix.fix.track);
-		int alt = isnan(this->realtime_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->realtime_fix.fix.altitude);
-		int last_alt = isnan(this->last_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->last_fix.fix.altitude);
+		int heading = std::isnan(this->realtime_fix.fix.track) ? 0 : (int)floor(this->realtime_fix.fix.track);
+		int last_heading = std::isnan(this->last_fix.fix.track) ? 0 : (int)floor(this->last_fix.fix.track);
+		int alt = std::isnan(this->realtime_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->realtime_fix.fix.altitude);
+		int last_alt = std::isnan(this->last_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->last_fix.fix.altitude);
 
 		if (!this->realtime_track->empty()
 		    && this->realtime_fix.fix.mode > MODE_2D
@@ -1704,8 +1704,8 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	}
 
 	if ((vgpsd->gpsd.fix.mode >= MODE_2D) &&
-	    !isnan(vgpsd->gpsd.fix.latitude) &&
-	    !isnan(vgpsd->gpsd.fix.longitude)) {
+	    !std::isnan(vgpsd->gpsd.fix.latitude) &&
+	    !std::isnan(vgpsd->gpsd.fix.longitude)) {
 
 		Window * window = layer->get_window();
 		Viewport * viewport = layer->get_window()->get_viewport();
