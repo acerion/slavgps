@@ -83,10 +83,10 @@ public:
 
 
 
-
+#ifdef K
 /* Can't change prj after init - but ATM only support drawing in Spherical Mercator. */
 static mapnik::projection prj(mapnik::MAPNIK_GMERC_PROJ);
-
+#endif
 
 
 
@@ -117,6 +117,7 @@ void SlavGPS::mapnik_interface_free(MapnikInterface * mi)
 
 void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse)
 {
+#ifdef K
 	g_debug ("using mapnik version %s", MAPNIK_VERSION_STRING);
 	try {
 		if (plugins_dir) {
@@ -136,6 +137,7 @@ void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char *
 	} catch (...) {
 		g_warning("An unknown error occurred while initialising mapnik");
 	}
+#endif
 }
 
 
@@ -146,6 +148,7 @@ void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char *
  */
 static void set_copyright(MapnikInterface * mi)
 {
+#ifdef K
 	g_free(mi->copyright);
 	mi->copyright = NULL;
 
@@ -171,6 +174,7 @@ static void set_copyright(MapnikInterface * mi)
 		}
 	}
 #endif
+#endif
 }
 
 
@@ -187,6 +191,7 @@ static void set_copyright(MapnikInterface * mi)
  */
 char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char * filename, unsigned int width, unsigned int height)
 {
+#ifdef K
 	char * msg = NULL;
 	if (!mi) {
 		return strdup("Internal Error");
@@ -221,6 +226,7 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 		msg = strdup("unknown error");
 	}
 	return msg;
+#endif
 }
 
 
@@ -231,6 +237,7 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
  */
 QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
+#ifdef K
 	if (!mi) {
 		return NULL;
 	}
@@ -280,6 +287,7 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 	}
 
 	return pixmap;
+#endif
 }
 
 
@@ -308,6 +316,7 @@ char * SlavGPS::mapnik_interface_get_copyright(MapnikInterface * mi)
  */
 GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 {
+#ifdef K
 	GArray * array = g_array_new(FALSE, TRUE, sizeof (char *));
 
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
@@ -327,6 +336,7 @@ GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 	}
 
 	return array;
+#endif
 }
 
 
@@ -339,6 +349,7 @@ GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
  */
 char * SlavGPS::mapnik_interface_about(void)
 {
+#ifdef K
 	/* Normally about 10 plugins so list them all. */
 #if MAPNIK_VERSION >= 200200
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance().plugin_names();
@@ -358,4 +369,5 @@ char * SlavGPS::mapnik_interface_about(void)
 				     str.c_str(),
 				     (unsigned int) mapnik::freetype_engine::face_names().size());
 	return msg;
+#endif
 }
