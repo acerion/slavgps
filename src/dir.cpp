@@ -85,7 +85,7 @@ char const * SlavGPS::get_viking_dir(void)
 {
 	if (!viking_dir) {
 		viking_dir = get_viking_dir_no_create();
-		if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false) {
+		if (0 != access(viking_dir, F_OK)) {
 			if (g_mkdir(viking_dir, 0755) != 0) {
 				fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir);
 			}

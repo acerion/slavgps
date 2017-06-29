@@ -268,8 +268,8 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 
 		final = g_strndup(to->str, name_len);
 		if (rename(to->str, final)) {
-			fprintf(stderr, "WARNING: Failed to rename '%s' to '%s': %s\n",
-				to->str, final, g_strerror(errno));
+			int e = errno;
+			fprintf(stderr, "WARNING: Failed to rename '%s' to '%s': %s\n", to->str, final, strerror(e));
 			g_object_unref(G_OBJECT(thumb));
 			thumb = NULL; /* Return NULL */
 		}

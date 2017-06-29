@@ -745,7 +745,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (g_file_test(fn, G_FILE_TEST_EXISTS) == false || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
+		if (0 != access(fn, F_OK) || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
 			window->set_filename(fn);
 			rv = window->window_save();
 			if (rv) {
@@ -817,7 +817,7 @@ bool Window::export_to(std::list<Layer *> * layers, VikFileType_t vft, char cons
 		bool safe = false;
 		int ii = 2;
 		while (ii < 5000) {
-			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
+			if (0 == access(fn, F_OK)) {
 				// Try rename
 				free(fn);
 
@@ -925,10 +925,10 @@ static void file_properties_cb(GtkAction * a, Window * window)
 {
 	char *message = NULL;
 	if (window->filename) {
-		if (g_file_test(window->filename, G_FILE_TEST_EXISTS)) {
+		if (0 == access(window->filename, F_OK)) {
 			// Get some timestamp information of the file
-			GStatBuf stat_buf;
-			if (g_stat(window->filename, &stat_buf) == 0) {
+			struct stat stat_buf;
+			if (stat(window->filename, &stat_buf) == 0) {
 				char time_buf[64];
 				strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 				char *size = NULL;

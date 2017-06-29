@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <cassert>
+#include <unistd.h>
 
 #include <QtWidgets>
 #include <QFileDialog>
@@ -2825,13 +2826,12 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 
 			result = dialog.selectedFiles().at(0);
 			qDebug() << "II: Viewport: Save to Image: target file:" << result;
-#ifdef K
-			if (g_file_test(result, G_FILE_TEST_EXISTS)) {
-				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result))), GTK_WINDOW(dialog))) {
-					result = NULL;
+
+			if (0 == access(result.toUtf8().constData(), F_OK)) {
+				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result.toUtf8().constData()))), this, "")) {
+					result.resize(0);
 				}
 			}
-#endif
 		}
 	}
 	qDebug() << "DD: Viewport: Save to Image: result:" << result << "strdup:" << strdup(result.toUtf8().constData());

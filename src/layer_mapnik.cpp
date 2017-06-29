@@ -28,6 +28,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
+#include <unistd.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -147,12 +148,12 @@ static ParameterValue plugins_default(void)
 #ifdef WINDOWS
 	data.s = strdup("input");
 #else
-	if (g_file_test("/usr/lib/mapnik/input", G_FILE_TEST_EXISTS)) {
+	if (0 == access("/usr/lib/mapnik/input", F_OK)) {
 		data.s = strdup("/usr/lib/mapnik/input");
 		/* Current Debian locations. */
-	} else if (g_file_test("/usr/lib/mapnik/3.0/input", G_FILE_TEST_EXISTS)) {
+	} else if (0 == access("/usr/lib/mapnik/3.0/input", F_OK)) {
 		data.s = strdup("/usr/lib/mapnik/3.0/input");
-	} else if (g_file_test("/usr/lib/mapnik/2.2/input", G_FILE_TEST_EXISTS)) {
+	} else if (0 == access("/usr/lib/mapnik/2.2/input", F_OK)) {
 		data.s = strdup("/usr/lib/mapnik/2.2/input");
 	} else {
 		data.s = strdup("");
@@ -245,13 +246,13 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	g_date_time_unref(now);
 	g_date_time_unref(then);
 
-	GStatBuf gsb;
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
 	char *import_time_file = g_strconcat(get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL);
-	if (g_stat(import_time_file, &gsb) == 0) {
+	struct stat stat_buf;
+	if (stat(import_time_file, &stat_buf) == 0) {
 		/* Only update if newer. */
-		if (planet_import_time > gsb.st_mtime) {
-			planet_import_time = gsb.st_mtime;
+		if (planet_import_time > stat_buf.st_mtime) {
+			planet_import_time = stat_buf.st_mtime;
 		}
 	}
 	free(import_time_file);
@@ -533,12 +534,12 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	if (this->filename_css && strlen(this->filename_css) > 1) {
 		if (this->filename_xml && strlen(this->filename_xml) > 1) {
 			/* Compare timestamps. */
-			GStatBuf gsb1;
-			if (g_stat(this->filename_xml, &gsb1) == 0) {
-				GStatBuf gsb2;
-				if (g_stat(this->filename_css, &gsb2) == 0) {
+			struct stat stat_buf1;
+			if (stat(this->filename_xml, &stat_buf1) == 0) {
+				struct stat stat_buf2;
+				if (stat(this->filename_css, &stat_buf2) == 0) {
 					/* Is CSS file newer than the XML file. */
-					if (gsb2.st_mtime > gsb1.st_mtime) {
+					if (stat_buf2.st_mtime > stat_buf1.st_mtime) {
 						do_carto = true;
 					} else {
 						fprintf(stderr, "DEBUG: No need to run carto\n");
@@ -596,7 +597,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 			char * filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
 			char *dir = g_path_get_dirname(filename);
-			if (!g_file_test(filename, G_FILE_TEST_EXISTS)) {
+			if (0 != access(filename, F_OK)) {
 				if (g_mkdir_with_parents(dir , 0777) != 0) {
 					fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
 				}
@@ -761,8 +762,8 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
 	QPixmap *pixmap = NULL;
 	char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
 
-	GStatBuf gsb;
-	if (g_stat(filename, &gsb) == 0) {
+	struct stat stat_buf;
+	if (stat(filename, &stat_buf) == 0) {
 		/* Get from disk. */
 #ifdef K
 		pixmap = new QPixmap();
@@ -777,7 +778,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
 			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
-		if (planet_import_time < gsb.st_mtime) {
+		if (planet_import_time < stat_buf.st_mtime) {
 			*rerender_ = true;
 		}
 #endif
@@ -1121,11 +1122,11 @@ void LayerMapnik::tile_info()
 	char *filemsg = NULL;
 	char *timemsg = NULL;
 #ifdef K
-	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
+	if (0 == access(filename, F_OK)) {
 		filemsg = g_strconcat("Tile File: ", filename, NULL);
 		/* Get some timestamp information of the tile. */
-		GStatBuf stat_buf;
-		if (g_stat(filename, &stat_buf) == 0) {
+		struct stat stat_buf;
+		if (stat(filename, &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
