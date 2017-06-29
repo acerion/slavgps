@@ -655,7 +655,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	dl_options.convert_file = a_try_decompress_file;
 	dl_options.user_pass = user_pass;
 
-	char *tmpname = a_download_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &dl_options);
+	char * tmpname = Download::get_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &dl_options);
 	if (!tmpname) {
 		return false;
 	}

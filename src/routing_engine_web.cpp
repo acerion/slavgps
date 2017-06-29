@@ -183,7 +183,7 @@ RoutingEngineWeb::~RoutingEngineWeb()
 
 
 
-DownloadOptions * RoutingEngineWeb::get_download_options(void)
+const DownloadOptions * RoutingEngineWeb::get_download_options(void) const
 {
 	return &this->dl_options;
 }

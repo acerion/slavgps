@@ -181,8 +181,8 @@ int main(int argc, char ** argv)
 
 
 	a_layer_defaults_init();
-	a_download_init();
 
+	Download::init();
 	CurlDownload::init();
 
 	a_babel_init();

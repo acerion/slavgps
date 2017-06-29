@@ -72,7 +72,7 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_selector));
-		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false
+		if (0 != access(fn, F_OK)
 		    || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
 
 			free(last_folder_uri);
@@ -189,7 +189,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
-		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false
+		if (0 != access(fn, F_OK)
 		    || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
 
 			BabelFileType * active = a_babel_ui_file_type_selector_get(babel_selector);

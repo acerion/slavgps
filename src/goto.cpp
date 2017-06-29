@@ -352,7 +352,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 {
 	*name = NULL;
 
-	char * tmpname = a_download_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
+	char * tmpname = Download::get_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
 	//char *tmpname = strdup("../test/hostip2.json");
 	if (!tmpname) {
 		return 0;

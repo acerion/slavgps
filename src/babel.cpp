@@ -386,9 +386,9 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options)
 {
 	/* If no download options specified, use defaults: */
-	DownloadOptions myoptions(2);;
+	DownloadOptions babel_dl_options(2);
 	if (dl_options) {
-		myoptions = *dl_options;
+		babel_dl_options = *dl_options;
 	}
 	int fd_src;
 	DownloadResult fetch_ret;
@@ -403,7 +403,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 		close(fd_src);
 		(void) remove(name_src);
 
-		fetch_ret = a_http_download_get_url(url, "", name_src, &myoptions, NULL);
+		fetch_ret = Download::get_url_http(url, "", name_src, &babel_dl_options, NULL);
 		if (fetch_ret == DownloadResult::SUCCESS) {
 			if (input_type != NULL || babelfilters != NULL) {
 				babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
@@ -692,7 +692,7 @@ void a_babel_init()
 	ParameterValue vlpd;
 #ifdef WINDOWS
 	/* Basic guesses - could use %ProgramFiles% but this is simpler: */
-	if (g_file_test ("C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", G_FILE_TEST_EXISTS)) {
+	if (0 == access("C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", F_OK)) {
 		/* 32 bit location on a 64 bit system. */
 		vlpd.s = "C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe";
 	} else {

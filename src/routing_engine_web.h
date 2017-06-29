@@ -43,7 +43,7 @@ namespace SlavGPS {
 		~RoutingEngineWeb();
 
 
-		DownloadOptions * get_download_options(void);
+		const DownloadOptions * get_download_options(void) const;
 		char * get_url_for_coords(struct LatLon start, struct LatLon end);
 		bool find(LayerTRW * trw, struct LatLon start, struct LatLon end);
 		char * get_url_from_directions(const char * start, const char * end);

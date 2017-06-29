@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 		bool parse_file_for_latlon(char * file_name, struct LatLon * ll);
 		char * get_url_format();
-		DownloadOptions * get_download_options();
+		const DownloadOptions * get_download_options(void) const;
 
 	}; /* class GotoToolGoogle */
 

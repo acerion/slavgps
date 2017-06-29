@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 		virtual char * get_label();
 		virtual char * get_url_format() = 0;
-		virtual DownloadOptions * get_download_options();
+		virtual const DownloadOptions * get_download_options(void) const;
 		virtual bool parse_file_for_latlon(char * filename, struct LatLon * ll) = 0;
 
 		int get_coord(Viewport * viewport, char * srch_str, VikCoord * coord);

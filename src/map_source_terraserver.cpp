@@ -149,14 +149,6 @@ char * MapSourceTerraserver::get_server_hostname(void)
 
 
 
-DownloadOptions * MapSourceTerraserver::get_download_options(void)
-{
-	return &this->dl_options;
-}
-
-
-
-
 MapSourceTerraserver::MapSourceTerraserver(MapTypeID type_, const char * label_)
 {
 	switch (type_) {

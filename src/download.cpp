@@ -27,8 +27,8 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cctype>
-#include <cstring>
+//#include <cctype>
+//#include <cstring>
 #include <mutex>
 #include <algorithm>
 #include <string>
@@ -55,7 +55,7 @@
 #include "download.h"
 #include "curl_download.h"
 #include "uibuilder.h"
-//#include "preferences.h"
+#include "preferences.h"
 #include "globals.h"
 #include "util.h"
 
@@ -67,7 +67,7 @@ using namespace SlavGPS;
 
 
 
-static bool check_file_first_line(FILE * f, char * patterns[])
+static bool check_file_first_line(FILE * f, const char * patterns[])
 {
 	fpos_t pos;
 	char buf[33];
@@ -91,7 +91,7 @@ static bool check_file_first_line(FILE * f, char * patterns[])
 	if ((bp >= (buf + sizeof(buf) -1)) || ((bp - buf) >= nr)) {
 		return false;
 	}
-	for (char ** s = patterns; *s; s++) {
+	for (const char ** s = patterns; *s; s++) {
 		if (strncasecmp(*s, bp, strlen(*s)) == 0) {
 			return true;
 		}
@@ -104,11 +104,11 @@ static bool check_file_first_line(FILE * f, char * patterns[])
 
 bool SlavGPS::a_check_html_file(FILE * f)
 {
-	char * html_str[] = {
-		(char *) "<html",
-		(char *) "<!DOCTYPE html",
-		(char *) "<head",
-		(char *) "<title",
+	const char * html_str[] = {
+		"<html",
+		"<!DOCTYPE html",
+		"<head",
+		"<title",
 		NULL
 	};
 
@@ -127,10 +127,10 @@ bool SlavGPS::a_check_map_file(FILE * f)
 
 
 
-bool a_check_kml_file(FILE* f)
+bool a_check_kml_file(FILE * f)
 {
-	char * kml_str[] = {
-		(char *) "<?xml",
+	const char * kml_str[] = {
+		"<?xml",
 		NULL
 	};
 
@@ -179,19 +179,10 @@ static Parameter prefs[] = {
 
 
 
-void SlavGPS::a_download_init(void)
+void Download::init(void)
 {
 	ParameterValue tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
-#if 0
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
-#endif
-}
-
-
-
-
-void SlavGPS::a_download_uninit(void)
-{
 }
 
 
@@ -235,7 +226,7 @@ static void uncompress_zip(char * name)
 	GMappedFile * mf;
 
 	if ((mf = g_mapped_file_new(name, false, &error)) == NULL) {
-		fprintf(stderr, _("CRITICAL: Couldn't map file %s: %s\n"), name, error->message);
+		qDebug() << "EE: Download: Couldn't map file" << name << ":" << error->message;
 		g_error_free(error);
 		return;
 	}
@@ -251,7 +242,7 @@ static void uncompress_zip(char * name)
 
 	/* This overwrites any previous file contents. */
 	if (!g_file_set_contents(name, (char const *) unzip_mem, ucsize, &error)) {
-		fprintf(stderr, "CRITICAL: Couldn't write file '%s', because of %s\n", name, error->message);
+		qDebug() << "EE: Download: Couldn't write file" << name << "because of" << error->message;
 		g_error_free(error);
 	}
 }
@@ -269,7 +260,7 @@ void SlavGPS::a_try_decompress_file(char * name)
 #ifdef MAGIC_VERSION
 	/* Or magic_version() if available - probably need libmagic 5.18 or so
 	   (can't determine exactly which version the versioning became available). */
-	fprintf(stderr, "DEBUG: %s: magic version: %d\n", __FUNCTION__, MAGIC_VERSION);
+	qDebug() << "DD: Download: magic version:" << MAGIC_VERSION;
 #endif
 	magic_t myt = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
 	bool zip = false;
@@ -285,7 +276,7 @@ void SlavGPS::a_try_decompress_file(char * name)
 #endif
 		if (ml == 0) {
 			char const * magic = magic_file(myt, name);
-			fprintf(stderr, "DEBUG: %s: magic output: %s\n", __FUNCTION__, magic);
+			qDebug() << "DD: Download: magic output:" << magic;
 
 			if (g_ascii_strncasecmp(magic, "application/zip", 15) == 0) {
 				zip = true;
@@ -295,7 +286,7 @@ void SlavGPS::a_try_decompress_file(char * name)
 				bzip2 = true;
 			}
 		} else {
-			fprintf(stderr, "CRITICAL: %s: magic load database failure\n", __FUNCTION__);
+			qDebug() << "EE: Download: magic load database failure";
 		}
 
 		magic_close(myt);
@@ -311,10 +302,10 @@ void SlavGPS::a_try_decompress_file(char * name)
 		char* bz2_name = uncompress_bzip2 (name);
 		if (bz2_name) {
 			if (remove(name)) {
-				fprintf(stderr, "CRITICAL: %s: remove file failed [%s]\n", __FUNCTION__, name);
+				qDebug() << "EE: Download: remove file failed (" << name << ")";
 			}
 			if (g_rename (bz2_name, name)) {
-				fprintf(stderr, "CRITICAL: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, bz2_name, name);
+				qDebug() << "EE: Download: file rename failed [" << bz2_name << "] to [" << name << "]";
 			}
 		}
 	}
@@ -348,7 +339,7 @@ static bool get_etag_xattr(char const * fn, CurlOptions * curl_options)
 	g_object_unref(file);
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Get etag (xattr) from %s: %s\n", __FUNCTION__, fn, curl_options->etag);
+		qDebug() << "DD: Download: Get etag (xattr) from" << fn << ":" << curl_options->etag;
 	}
 
 	return result;
@@ -368,7 +359,7 @@ static bool get_etag_file(char const * fn, CurlOptions * curl_options)
 	}
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Get etag (file) from %s: %s\n", __FUNCTION__, fn, curl_options->etag);
+		qDebug() << "DD: Download: Get etag (file) from" << fn << ":" << curl_options->etag;
 	}
 
 	return result;
@@ -381,7 +372,7 @@ static void get_etag(char const * fn, CurlOptions * curl_options)
 {
 	/* First try to get etag from xattr, then fall back to plain file. */
 	if (!get_etag_xattr(fn, curl_options) && !get_etag_file(fn, curl_options)) {
-		fprintf(stderr, "DEBUG: %s: Failed to get etag from %s\n", __FUNCTION__, fn);
+		qDebug() << "DD: Download: Failed to get etag from" << fn;
 		return;
 	}
 
@@ -399,15 +390,12 @@ static void get_etag(char const * fn, CurlOptions * curl_options)
 
 static bool set_etag_xattr(char const * fn, CurlOptions * curl_options)
 {
-	bool result = false;
-	GFile *file;
-
-	file = g_file_new_for_path(fn);
-	result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, curl_options->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	GFile * file = g_file_new_for_path(fn);
+	bool result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, curl_options->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	g_object_unref(file);
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Set etag (xattr) on %s: %s\n", __FUNCTION__, fn, curl_options->new_etag);
+		qDebug() << "DD: Download: Set etag (xattr) on" << fn << ":" << curl_options->new_etag;
 	}
 
 	return result;
@@ -419,16 +407,15 @@ static bool set_etag_xattr(char const * fn, CurlOptions * curl_options)
 static bool set_etag_file(char const * fn, CurlOptions * curl_options)
 {
 	bool result = false;
-	char * etag_filename;
 
-	etag_filename = g_strdup_printf("%s.etag", fn);
+	char * etag_filename = g_strdup_printf("%s.etag", fn);
 	if (etag_filename) {
 		result = g_file_set_contents(etag_filename, curl_options->new_etag, -1, NULL);
 		free(etag_filename);
 	}
 
 	if (result) {
-		fprintf(stderr, "DEBUG: %s: Set etag (file) on %s: %s\n", __FUNCTION__, fn, curl_options->new_etag);
+		qDebug() << "DD: Download: Set etag (file) on" << fn << ":" << curl_options->new_etag;
 	}
 
 	return result;
@@ -441,20 +428,20 @@ static void set_etag(char const * fn, char const * fntmp, CurlOptions * curl_opt
 {
 	/* First try to store etag in extended attribute, then fall back to plain file. */
 	if (!set_etag_xattr(fntmp, curl_options) && !set_etag_file(fn, curl_options)) {
-		fprintf(stderr, "DEBUG: %s: Failed to set etag on %s\n", __FUNCTION__, fn);
+		qDebug() << "DD: Download: Failed to set etag on" << fn;
 	}
 }
 
 
 
 
-static DownloadResult download(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, bool ftp, void * handle)
+static DownloadResult download(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, bool ftp, void * handle)
 {
 	bool failure = false;
 	CurlOptions curl_options;
 
 	/* Check file. */
-	if (g_file_test(fn.c_str(), G_FILE_TEST_EXISTS) == true) {
+	if (0 == access(fn.c_str(), F_OK)) {
 		if (dl_options == NULL
 		    || (!dl_options->check_file_server_time
 			&& !dl_options->use_etag)) {
@@ -464,8 +451,8 @@ static DownloadResult download(char const * hostname, char const * uri, const st
 
 		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
 		/* Get the modified time of this file. */
-		GStatBuf buf;
-		(void)g_stat(fn.c_str(), &buf);
+		struct stat buf;
+		(void) stat(fn.c_str(), &buf);
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
@@ -482,20 +469,21 @@ static DownloadResult download(char const * hostname, char const * uri, const st
 	} else {
 		char *dir = g_path_get_dirname(fn.c_str());
 		if (g_mkdir_with_parents(dir , 0777) != 0) {
-			fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
+			qDebug() << "WW: Download: Failed to mkdir" << dir;
 		}
 		free(dir);
 	}
 
 	std::string tmpfilename = fn + ".tmp";
 	if (!lock_file(tmpfilename)) {
-		fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename.c_str());
+		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmpfilename.c_str();
 		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
 	FILE * f = fopen(tmpfilename.c_str(), "w+b");  /* Truncate file and open it. */
+	int e = errno;
 	if (!f) {
-		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename.c_str(), g_strerror(errno));
+		qDebug() << "WW: Download: Couldn't open temporary file" << tmpfilename.c_str() << ":" << strerror(e);
 		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
@@ -511,18 +499,18 @@ static DownloadResult download(char const * hostname, char const * uri, const st
 	}
 
 	if (!failure && dl_options != NULL && dl_options->check_file != NULL && ! dl_options->check_file(f)) {
-		fprintf(stderr, "DEBUG: %s: file content checking failed\n", __FUNCTION__);
+		qDebug() << "DD: Download: file content checking failed";
 		failure = true;
 		result = DownloadResult::CONTENT_ERROR;
 	}
 
-	fclose (f);
+	fclose(f);
 	f = NULL;
 
 	if (failure) {
-		fprintf(stderr, _("WARNING: Download error: %s\n"), fn.c_str());
+		qDebug() << "WW: Download: Download error:" << fn.c_str();
 		if (remove(tmpfilename.c_str()) != 0) {
-			fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename.c_str());
+			qDebug() << "WW: Download: Failed to remove" << tmpfilename.c_str();
 		}
 		unlock_file(tmpfilename);
 		return result;
@@ -534,7 +522,7 @@ static DownloadResult download(char const * hostname, char const * uri, const st
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
 		   coverity[toctou] */
 		if (g_utime(fn.c_str(), NULL) != 0)
-			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, fn.c_str());
+			qDebug() << "WW: Download: couldn't set time on" << fn.c_str();
 	} else {
 		if (dl_options != NULL && dl_options->convert_file) {
 			dl_options->convert_file((char *) tmpfilename.c_str());
@@ -549,7 +537,7 @@ static DownloadResult download(char const * hostname, char const * uri, const st
 
 		/* Move completely-downloaded file to permanent location. */
 		if (g_rename(tmpfilename.c_str(), fn.c_str())) {
-			fprintf(stderr, "WARNING: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, tmpfilename.c_str(), fn.c_str());
+			qDebug() << "WW: Download: file rename failed" << tmpfilename.c_str() << "to" << fn.c_str();
 		}
 	}
 	unlock_file(tmpfilename);
@@ -564,7 +552,7 @@ static DownloadResult download(char const * hostname, char const * uri, const st
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult SlavGPS::a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_http(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
 {
 	return download(hostname, uri, fn, dl_options, false, handle);
 }
@@ -572,7 +560,7 @@ DownloadResult SlavGPS::a_http_download_get_url(char const * hostname, char cons
 
 
 
-DownloadResult a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_ftp(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
 {
 	return download(hostname, uri, fn, dl_options, true, handle);
 }
@@ -580,7 +568,7 @@ DownloadResult a_ftp_download_get_url(char const * hostname, char const * uri, c
 
 
 
-void * SlavGPS::a_download_handle_init()
+void * Download::init_handle()
 {
 	return CurlDownload::init_handle();
 }
@@ -588,7 +576,7 @@ void * SlavGPS::a_download_handle_init()
 
 
 
-void SlavGPS::a_download_handle_cleanup(void * handle)
+void Download::uninit_handle(void * handle)
 {
 	CurlDownload::uninit_handle(handle);
 }
@@ -604,13 +592,13 @@ void SlavGPS::a_download_handle_cleanup(void * handle)
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-char * SlavGPS::a_download_uri_to_tmp_file(char const * uri, DownloadOptions * dl_options)
+char * Download::get_uri_to_tmp_file(char const * uri, const DownloadOptions * dl_options)
 {
 	int tmp_fd;
 	char * tmpname;
 
 	if ((tmp_fd = g_file_open_tmp("viking-download.XXXXXX", &tmpname, NULL)) == -1) {
-		fprintf(stderr, _("CRITICAL: couldn't open temp file\n"));
+		qDebug() << "EE: Download: couldn't open temp file";
 		return NULL;
 	}
 

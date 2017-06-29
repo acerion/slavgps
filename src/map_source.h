@@ -84,7 +84,7 @@ namespace SlavGPS {
 		void * download_handle_init();
 		void download_handle_cleanup(void * handle);
 
-		DownloadOptions * get_download_options();
+		const DownloadOptions * get_download_options(void) const;
 
 		void set_name(char * name);
 		void set_map_type(MapTypeID map_type);

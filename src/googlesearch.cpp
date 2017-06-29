@@ -155,7 +155,7 @@ char * GotoToolGoogle::get_url_format()
 
 
 
-DownloadOptions * GotoToolGoogle::get_download_options()
+const DownloadOptions * GotoToolGoogle::get_download_options(void) const
 {
 	return &this->dl_options;
 }

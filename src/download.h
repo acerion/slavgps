@@ -36,6 +36,18 @@ namespace SlavGPS {
 
 
 
+
+	enum class DownloadResult {
+		FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
+		HTTP_ERROR       = -2,
+		CONTENT_ERROR    = -1,
+		SUCCESS          =  0,
+		NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
+	};
+
+
+
+
 	/* File content check. */
 	typedef bool (* VikFileContentCheckerFunc) (FILE *);
 	bool a_check_map_file(FILE *);
@@ -45,6 +57,9 @@ namespace SlavGPS {
 	/* Convert. */
 	void a_try_decompress_file(char * name);
 	typedef void (* VikFileContentConvertFunc) (char *); /* filename (temporary). */
+
+
+
 
 	class DownloadOptions {
 
@@ -78,26 +93,24 @@ namespace SlavGPS {
 		VikFileContentConvertFunc convert_file = NULL;
 	};
 
-	void a_download_init(void);
-	void a_download_uninit(void);
 
-	enum class DownloadResult {
-		FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
-		HTTP_ERROR       = -2,
-		CONTENT_ERROR    = -1,
-		SUCCESS          =  0,
-		NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
+
+
+	class Download {
+	public:
+		static void init(void);
+		/* There is no uninit() function (kamilTODO: perhaps there should be one, for the handle). */
+
+		static void * init_handle(void);
+		static void uninit_handle(void * handle);
+
+		static DownloadResult get_url_http(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
+		static DownloadResult get_url_ftp(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
+
+		static char * get_uri_to_tmp_file(char const * uri, const DownloadOptions * dl_options);
 	};
 
 
-
-
-	DownloadResult a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle);
-	DownloadResult a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadOptions * dl_options, void * handle);
-	void * a_download_handle_init();
-	void a_download_handle_cleanup(void * handle);
-
-	char * a_download_uri_to_tmp_file(char const * uri, DownloadOptions * dl_options);
 
 
 

@@ -516,7 +516,7 @@ void MapSource::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 DownloadResult MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
 {
 	fprintf(stderr, "MapSource download\n");
-	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
+	return Download::get_url_http(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
 }
 
 
@@ -524,7 +524,7 @@ DownloadResult MapSource::download(TileInfo * src, const char * dest_fn, void *h
 
 void * MapSource::download_handle_init()
 {
-	return a_download_handle_init();
+	return Download::init_handle();
 }
 
 
@@ -532,7 +532,7 @@ void * MapSource::download_handle_init()
 
 void MapSource::download_handle_cleanup(void * handle)
 {
-	a_download_handle_cleanup(handle);
+	Download::uninit_handle(handle);
 }
 
 
@@ -554,7 +554,7 @@ char * MapSource::get_server_path(TileInfo * src)
 
 
 
-DownloadOptions * MapSource::get_download_options()
+const DownloadOptions * MapSource::get_download_options(void) const
 {
 	return &this->dl_options;
 }

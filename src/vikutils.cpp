@@ -481,7 +481,7 @@ static void latest_version_thread(Window * window)
 {
 	/* Need to allow a few redirects, as SF file is often served from different server. */
 	DownloadOptions dl_options(5);
-	char * filename = a_download_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);
+	char * filename = Download::get_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);
 	//char *filename = strdup("VERSION");
 	if (!filename) {
 		return;

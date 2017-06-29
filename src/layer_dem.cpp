@@ -1041,7 +1041,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
 	dl_options.check_file = a_check_map_file;
 
-	DownloadResult result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &dl_options, NULL);
+	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &dl_options, NULL);
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {
@@ -1421,8 +1421,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QString message;
 	if (0 == access(filename.toUtf8().constData(), F_OK)) {
 		/* Get some timestamp information of the file. */
-		GStatBuf stat_buf;
-		if (g_stat(filename.toUtf8().constData(), &stat_buf) == 0) {
+		struct stat stat_buf;
+		if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(src).arg(filename).arg(time_buf);

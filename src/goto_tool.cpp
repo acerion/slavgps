@@ -86,7 +86,7 @@ char * GotoTool::get_label()
 
 
 
-DownloadOptions * GotoTool::get_download_options()
+const DownloadOptions * GotoTool::get_download_options(void) const
 {
 	// Default: return NULL
 	return NULL;
@@ -118,7 +118,7 @@ int GotoTool::get_coord(Viewport * viewport, char * srch_str, VikCoord * coord)
 	fprintf(stderr, "DEBUG: %s: escaped goto: %s\n", __FUNCTION__, escaped_srch_str);
 
 	char * uri = g_strdup_printf(this->get_url_format(), escaped_srch_str);
-	char * tmpname = a_download_uri_to_tmp_file(uri, this->get_download_options());
+	char * tmpname = Download::get_uri_to_tmp_file(uri, this->get_download_options());
 	if (!tmpname) {
 		// Some kind of download error, so no tmp file
 		ret = 1;

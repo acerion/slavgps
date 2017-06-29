@@ -2055,8 +2055,8 @@ void LayerMap::tile_info_cb(void)
 	if (0 == access(filename_, F_OK)) {
 		filemsg = g_strconcat("Tile File: ", filename_, NULL);
 		/* Get some timestamp information of the tile. */
-		GStatBuf stat_buf;
-		if (g_stat(filename_, &stat_buf) == 0) {
+		struct stat stat_buf;
+		if (stat(filename_, &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);

@@ -123,7 +123,7 @@ void CurlDownload::uninit(void)
 
 
 
-CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
 {
 	struct curl_slist * curl_send_headers = NULL;
 
@@ -218,7 +218,7 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, Downlo
 
 
 
-CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
 {
 	char * full = NULL;
 

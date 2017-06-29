@@ -342,7 +342,7 @@ int MapSourceBing::load_attributions()
 	this->loading_attributions = true;
 	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key);
 
-	char * tmpname = a_download_uri_to_tmp_file(uri, this->get_download_options());
+	char * tmpname = Download::get_uri_to_tmp_file(uri, this->get_download_options());
 	if (!tmpname) {
 		ret = -1;
 		goto done;
