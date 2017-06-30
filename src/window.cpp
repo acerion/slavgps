@@ -309,12 +309,15 @@ void Window::create_layout()
 	this->setCentralWidget(viewport);
 
 
-	this->layers_panel = new SlavGPS::LayersPanel(this);
-
-	this->panel_dock = new QDockWidget(this);
+	this->panel_dock = new QDockWidget(tr("Layers"), this);
+	this->panel_dock->setAllowedAreas(Qt::TopDockWidgetArea);
+	this->layers_panel = new SlavGPS::LayersPanel(this->panel_dock, this);
 	this->panel_dock->setWidget(this->layers_panel);
-	this->panel_dock->setWindowTitle("Layers");
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
+
+	//this->panel_dock->setMaximumWidth(300);
+	//this->panel_dock->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
 
 	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
 

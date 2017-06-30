@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 	public:
 
-		LayersPanel(Window * parent);
+		LayersPanel(QWidget * parent, Window * window_);
 		~LayersPanel();
 
 		void add_layer(Layer * layer);

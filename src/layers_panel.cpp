@@ -66,10 +66,14 @@ static void layers_move_item_down_cb(LayersPanel * panel);
 
 
 
-LayersPanel::LayersPanel(Window * parent_window) : QWidget((QWidget *) parent_window)
+LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
-	this->window = parent_window;
+	this->window = window_;
 	this->panel_box = new QVBoxLayout;
+
+	this->setMaximumWidth(300);
+	this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+
 
 	{
 		this->tree_view = new TreeView(this);
