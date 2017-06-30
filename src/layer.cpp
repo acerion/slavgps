@@ -915,7 +915,7 @@ void Layer::delete_sublayer(Sublayer * sublayer)
 
 
 
-void Layer::change_coord_mode(VikCoordMode dest_mode)
+void Layer::change_coord_mode(CoordMode dest_mode)
 {
 	return;
 }

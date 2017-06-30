@@ -64,8 +64,8 @@ namespace SlavGPS {
 
 	void vu_copy_label_menu(GtkWidget *widget, unsigned int button);
 
-	void vu_zoom_to_show_latlons(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2]);
-	void vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position);
+	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2]);
+	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position);
 
 
 	/* Allow comparing versions. */

@@ -191,7 +191,7 @@ namespace SlavGPS {
 		virtual bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
 		virtual void delete_sublayer(Sublayer * sublayer);
 
-		virtual void change_coord_mode(VikCoordMode dest_mode);
+		virtual void change_coord_mode(CoordMode dest_mode);
 
 		virtual time_t get_timestamp();
 

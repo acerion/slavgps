@@ -280,7 +280,7 @@ static void reset_line(void)
  */
 bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 {
-	VikCoordMode coord_mode = trw->get_coord_mode();
+	CoordMode coord_mode = trw->get_coord_mode();
 	char *tag_start, *tag_end;
 	assert (f != NULL && trw != NULL);
 	line_type = 0;

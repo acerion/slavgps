@@ -119,7 +119,7 @@ bool MapSourceTms::supports_download_only_new()
 
 bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert (src->mode == VIK_COORD_LATLON);
+	assert (src->mode == CoordMode::LATLON);
 
 	if (xzoom != yzoom) {
 		return false;
@@ -155,7 +155,7 @@ void MapSourceTms::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
-	dest->mode = VIK_COORD_LATLON;
+	dest->mode = CoordMode::LATLON;
 	dest->east_west = (src->x + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)

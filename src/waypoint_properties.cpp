@@ -140,7 +140,7 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
    The name to use is returned.
 */
 /* TODO: less on this side, like add track. */
-char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 #if 0
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
@@ -420,7 +420,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 /* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
    The name to use is returned.
 */
-char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 	PropertiesDialog dialog(QString(wp->name), parent);
 	dialog.fill(wp, wp_params);

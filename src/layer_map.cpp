@@ -1610,7 +1610,7 @@ void LayerMap::draw(Viewport * viewport)
 		viewport->add_logo(logo);
 
 		/* Get corner coords. */
-		if (viewport->get_coord_mode() == VIK_COORD_UTM && ! viewport->is_one_zone()) {
+		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->is_one_zone()) {
 			/* UTM multi-zone stuff by Kit Transue. */
 			char leftmost_zone = viewport->leftmost_zone();
 			char rightmost_zone = viewport->rightmost_zone();
@@ -1691,9 +1691,9 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 	br.lat = map->get_lat_min();
 	br.lon = map->get_lon_max();
 	VikCoord vctl;
-	vik_coord_load_from_latlon(&vctl, VIK_COORD_LATLON, &tl);
+	vik_coord_load_from_latlon(&vctl, CoordMode::LATLON, &tl);
 	VikCoord vcbr;
-	vik_coord_load_from_latlon(&vcbr, VIK_COORD_LATLON, &br);
+	vik_coord_load_from_latlon(&vcbr, CoordMode::LATLON, &br);
 
 	return vik_coord_inside(&vc, &vctl, &vcbr);
 }

@@ -79,7 +79,7 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 {
 	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
 
-	uint8_t zoom = 17;
+	uint8_t zoom_level = 17;
 	struct LatLon ll;
 	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
 
@@ -96,7 +96,7 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (viewport->get_xmpp() == viewport->get_ympp()) {
-		zoom = this->mpp_to_zoom(viewport->get_zoom());
+		zoom_level = this->mpp_to_zoom_level(viewport->get_zoom());
 	}
 
 	/* Cannot simply use g_strdup_printf and double due to locale.
@@ -104,7 +104,7 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 	g_ascii_dtostr(strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	return g_strdup_printf(this->url_format, strlat, strlon, zoom);
+	return g_strdup_printf(this->url_format, strlat, strlon, zoom_level);
 }
 
 

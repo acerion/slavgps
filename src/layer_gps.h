@@ -124,7 +124,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		QString tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void change_coord_mode(VikCoordMode mode);
+		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
 		void connect_to_tree(TreeView * tree_view, GtkTreeIter * layer_iter);
 		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
@@ -140,7 +140,7 @@ namespace SlavGPS {
 		bool rt_ask_retry();
 
 
-		void set_coord_mode(VikCoordMode mode);
+		void set_coord_mode(CoordMode mode);
 
 
 		LayerTRW * trw_children[NUM_TRW] = { 0 };

@@ -48,7 +48,7 @@ namespace SlavGPS {
 		WebToolFormat(const char * label, const char * url_format, const char * url_format_code);
 		~WebToolFormat();
 
-		uint8_t mpp_to_zoom(double mpp);
+		uint8_t mpp_to_zoom_level(double mpp);
 		char * get_url(Window * window);
 		char * get_url_at_position(Window * window, VikCoord * vc);
 

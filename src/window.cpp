@@ -296,13 +296,9 @@ void Window::create_layout()
 
 
 	this->viewport = new SlavGPS::Viewport(this);
-	this->viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-	//layout->addWidget(viewport);
 	struct LatLon ll = { 54.0, 14.0 };
 	this->viewport->set_center_latlon(&ll, false);
-	this->viewport->xmpp = 0.01;
-	this->viewport->ympp = 0.01;
-	//viewport->show();
+
 	qDebug() << "II: Window: created Viewport with size:" << this->viewport->height() << this->viewport->width();
 
 
@@ -315,12 +311,8 @@ void Window::create_layout()
 	this->panel_dock->setWidget(this->layers_panel);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
 
-	//this->panel_dock->setMaximumWidth(300);
-	//this->panel_dock->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-
 
 	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
-
 
 
 	this->status_bar = new StatusBar(this);
@@ -719,7 +711,7 @@ void Window::draw_status()
 	static char zoom_level[22];
 	double xmpp = this->viewport->get_xmpp();
 	double ympp = this->viewport->get_ympp();
-	char *unit = this->viewport->get_coord_mode() == VIK_COORD_UTM ? (char *) "mpp" : (char *) "pixelfact";
+	const char * const unit = this->viewport->get_coord_mode() == CoordMode::UTM ? "mpp" : "pixelfact";
 	if (xmpp != ympp) {
 		snprintf(zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit);
 	} else {
@@ -2714,7 +2706,7 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 	this->viewport->configure_manually(w, h);
 	/* *** end copy from above *** */
 
-	assert (this->viewport->get_coord_mode() == VIK_COORD_UTM);
+	assert (this->viewport->get_coord_mode() == CoordMode::UTM);
 #ifdef K
 	if (g_mkdir(file_path.toUtf8.constData(), 0777) != 0) {
 		qDebug() << "WW: Window: Save Viewport to Image: failed to create directory" << file_path;
@@ -2773,10 +2765,11 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 {
 	QString result;
 	if (img_gen == VW_GEN_DIRECTORY_OF_IMAGES) {
+
 #ifdef K
-		// A directory
-		// For some reason this method is only written to work in UTM...
-		if (this->viewport->get_coord_mode() != VIK_COORD_UTM) {
+		/* A directory.
+		   For some reason this method is only written to work in UTM... */
+		if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 			dialog_error("You must be in UTM mode to use this feature", this);
 			return result;
 		}
@@ -3095,9 +3088,9 @@ void Window::change_coord_mode_cb(QAction * qa)
 		/* this takes care of coord mode too */
 		this->viewport->set_drawmode(drawmode);
 		if (drawmode == ViewportDrawMode::UTM) {
-			this->layers_panel->change_coord_mode(VIK_COORD_UTM);
+			this->layers_panel->change_coord_mode(CoordMode::UTM);
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
-			this->layers_panel->change_coord_mode(VIK_COORD_LATLON);
+			this->layers_panel->change_coord_mode(CoordMode::LATLON);
 		}
 		this->draw_update();
 	}

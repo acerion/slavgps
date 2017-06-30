@@ -170,10 +170,10 @@ ParameterValue LayerCoord::get_param_value(param_id_t id, bool is_file_operation
 
 void LayerCoord::draw(Viewport * viewport)
 {
-	if (viewport->get_coord_mode() != VIK_COORD_UTM) {
+	if (viewport->get_coord_mode() != CoordMode::UTM) {
 		this->draw_latlon(viewport);
 	}
-	if (viewport->get_coord_mode() == VIK_COORD_UTM) {
+	if (viewport->get_coord_mode() == CoordMode::UTM) {
 		this->draw_utm(viewport);
 	}
 

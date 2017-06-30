@@ -6786,7 +6786,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 
 
 
-VikCoordMode LayerTRW::get_coord_mode()
+CoordMode LayerTRW::get_coord_mode()
 {
 	return this->coord_mode;
 }
@@ -6813,7 +6813,7 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 
 
 
-void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
+void LayerTRW::change_coord_mode(CoordMode dest_mode)
 {
 	if (this->coord_mode != dest_mode) {
 		this->coord_mode = dest_mode;
@@ -6869,7 +6869,7 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 	}
 
 	VikCoord *coord = (VikCoord *) malloc(sizeof (VikCoord));
-	coord->mode = VIK_COORD_LATLON;
+	coord->mode = CoordMode::LATLON;
 
 	if (ABS(gradient) < 1) {
 		if (from->east_west > to->east_west) {
@@ -6929,7 +6929,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
 	/* Seems that ATM the function get_next_coord works only for LATLON. */
-	if (tr->get_coord_mode() == VIK_COORD_LATLON) {
+	if (tr->get_coord_mode() == CoordMode::LATLON) {
 
 		/* Fill-ins for far apart points. */
 		std::list<Rect *>::iterator cur_rect;
@@ -7226,7 +7226,7 @@ LayerTRW::LayerTRW() : Layer()
 	strcpy(this->debug_string, "TRW");
 	this->interface = &vik_trw_layer_interface;
 
-	memset(&coord_mode, 0, sizeof (VikCoordMode));
+	memset(&coord_mode, 0, sizeof (CoordMode));
 
 	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */
 
@@ -7282,7 +7282,7 @@ LayerTRW::LayerTRW() : Layer()
 
 
 /* To be called right after constructor. */
-void LayerTRW::set_coord_mode(VikCoordMode mode)
+void LayerTRW::set_coord_mode(CoordMode mode)
 {
 	this->coord_mode = mode;
 }

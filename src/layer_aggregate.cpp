@@ -312,7 +312,7 @@ void LayerAggregate::draw(Viewport * viewport)
 
 
 
-void LayerAggregate::change_coord_mode(VikCoordMode mode)
+void LayerAggregate::change_coord_mode(CoordMode mode)
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;

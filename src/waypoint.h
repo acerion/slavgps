@@ -69,7 +69,7 @@ namespace SlavGPS {
 
 		static void delete_waypoint(Waypoint *);
 
-		void convert(VikCoordMode dest_mode);
+		void convert(CoordMode dest_mode);
 
 
 		VikCoord coord;

@@ -102,7 +102,7 @@ uint8_t SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
  * SECTION:map_utils
  * @short_description: Notes about TMS / Spherical Mercator conversion
  *
- * VikCoords are in Spherical Mercator projection (#VIK_COORD_LATLON)
+ * VikCoords are in Spherical Mercator projection (#CoordMode::LATLON)
  * TileInfo are in Inverse TMS
  *
  * See: http://docs.openlayers.org/library/spherical_mercator.html
@@ -114,18 +114,18 @@ uint8_t SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 
 
 /**
- * @src:   Original #VikCoord in #VIK_COORD_LATLON format
+ * @src:   Original #VikCoord in #CoordMode::LATLON format
  * @xzoom: Viking zoom level in x direction
  * @yzoom: Viking zoom level in y direction (actually needs to be same as xzoom)
  * @dest:  The resulting Inverse TMS coordinates in #TileInfo
  *
- * Convert a #VikCoord in VIK_COORD_LATLON format into Inverse TMS coordinates.
+ * Convert a #VikCoord in CoordMode::LATLON format into Inverse TMS coordinates.
  *
  * Returns: whether the conversion was performed
  */
 bool SlavGPS::map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	if (src->mode != VIK_COORD_LATLON) {
+	if (src->mode != CoordMode::LATLON) {
 		return false;
 	}
 
@@ -157,7 +157,7 @@ static void _to_vikcoord_with_offset(const TileInfo * src, VikCoord * dest, doub
 	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
-	dest->mode = VIK_COORD_LATLON;
+	dest->mode = CoordMode::LATLON;
 	dest->east_west = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
 	dest->north_south = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
 }

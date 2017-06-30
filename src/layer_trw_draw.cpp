@@ -87,7 +87,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 	dp->coord_mode = viewport->get_coord_mode();
 	dp->one_utm_zone = viewport->is_one_zone(); /* False if some other projection besides UTM. */
 
-	if (dp->coord_mode == VIK_COORD_UTM && dp->one_utm_zone) {
+	if (dp->coord_mode == CoordMode::UTM && dp->one_utm_zone) {
 		int w2 = dp->xmpp * (dp->width / 2) + 1600 / dp->xmpp;
 		int h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
@@ -97,7 +97,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		dp->cn1 = dp->center->north_south - h2;
 		dp->cn2 = dp->center->north_south + h2;
 
-	} else if (dp->coord_mode == VIK_COORD_LATLON) {
+	} else if (dp->coord_mode == CoordMode::LATLON) {
 		VikCoord upperleft, bottomright;
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
@@ -614,7 +614,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
-		if (dp->coord_mode == VIK_COORD_LATLON
+		if (dp->coord_mode == CoordMode::LATLON
 		    && ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
 			|| (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
 
@@ -625,7 +625,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
 
 		/* kamilTODO: compare this condition with condition in trw_layer_draw_waypoint(). */
-		bool first_condition = (dp->coord_mode == VIK_COORD_UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
+		bool first_condition = (dp->coord_mode == CoordMode::UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* Only check zones if UTM & one_utm_zone. */
 		bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* Both UTM and lat lon. */
 		bool second_condition_C = tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2;
@@ -688,7 +688,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if ((!tp->newsegment) && (dp->trw->drawlines)) {
 
 				/* UTM only: zone check. */
-				if (drawpoints && dp->trw->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
+				if (drawpoints && dp->trw->coord_mode == CoordMode::UTM && tp->coord.utm_zone != dp->center->utm_zone) {
 					draw_utm_skip_insignia(dp->viewport, main_pen, x, y);
 				}
 
@@ -723,7 +723,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		} else {
 
 			if (use_prev_xy && dp->trw->drawlines && (!tp->newsegment)) {
-				if (dp->trw->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone)	{
+				if (dp->trw->coord_mode != CoordMode::UTM || tp->coord.utm_zone == dp->center->utm_zone) {
 					dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
@@ -794,8 +794,8 @@ static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
 		return;
 	}
 
-	bool cond = (dp->coord_mode == VIK_COORD_UTM && !dp->one_utm_zone)
-		|| ((dp->coord_mode == VIK_COORD_LATLON || wp->coord.utm_zone == dp->center->utm_zone) &&
+	bool cond = (dp->coord_mode == CoordMode::UTM && !dp->one_utm_zone)
+		|| ((dp->coord_mode == CoordMode::LATLON || wp->coord.utm_zone == dp->center->utm_zone) &&
 		    wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
 		    wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
 

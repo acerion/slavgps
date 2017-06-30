@@ -1106,7 +1106,7 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 
 static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
 {
-	if (window->viewport->get_coord_mode() == VIK_COORD_UTM) {
+	if (window->viewport->get_coord_mode() == CoordMode::UTM) {
 		dialog_error("This feature is not available in UTM mode");
 		return;
 	}

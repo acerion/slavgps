@@ -71,7 +71,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		QString tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void change_coord_mode(VikCoordMode mode);
+		void change_coord_mode(CoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(QMenu & menu);
 		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);

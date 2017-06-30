@@ -763,10 +763,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bleft);
 		viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &bright);
 
-		vik_coord_convert(&tleft, VIK_COORD_UTM);
-		vik_coord_convert(&tright, VIK_COORD_UTM);
-		vik_coord_convert(&bleft, VIK_COORD_UTM);
-		vik_coord_convert(&bright, VIK_COORD_UTM);
+		vik_coord_convert(&tleft, CoordMode::UTM);
+		vik_coord_convert(&tright, CoordMode::UTM);
+		vik_coord_convert(&bleft, CoordMode::UTM);
+		vik_coord_convert(&bright, CoordMode::UTM);
 
 		double max_nor = MAX(tleft.north_south, tright.north_south);
 		double min_nor = MIN(bleft.north_south, bright.north_south);
@@ -1124,10 +1124,10 @@ static void srtm_draw_existence(Viewport * viewport)
 				int x1, y1, x2, y2;
 				sw.north_south = i;
 				sw.east_west = j;
-				sw.mode = VIK_COORD_LATLON;
+				sw.mode = CoordMode::LATLON;
 				ne.north_south = i+1;
 				ne.east_west = j+1;
-				ne.mode = VIK_COORD_LATLON;
+				ne.mode = CoordMode::LATLON;
 				viewport->coord_to_screen(&sw, &x1, &y1);
 				viewport->coord_to_screen(&ne, &x2, &y2);
 
@@ -1218,10 +1218,10 @@ static void dem24k_draw_existence(Viewport * viewport)
 				int x1, y1, x2, y2;
 				sw.north_south = i;
 				sw.east_west = j-0.125;
-				sw.mode = VIK_COORD_LATLON;
+				sw.mode = CoordMode::LATLON;
 				ne.north_south = i+0.125;
 				ne.east_west = j;
-				ne.mode = VIK_COORD_LATLON;
+				ne.mode = CoordMode::LATLON;
 				viewport->coord_to_screen(&sw, &x1, &y1);
 				viewport->coord_to_screen(&ne, &x2, &y2);
 

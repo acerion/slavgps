@@ -340,14 +340,14 @@ char * WebToolDatasource::get_url(Window * window)
 	g_ascii_dtostr(scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	uint8_t zoom = 17; /* A zoomed in default. */
+	uint8_t zoom_level = 17; /* A zoomed in default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (viewport->get_xmpp() == viewport->get_ympp()) {
-		zoom = map_utils_mpp_to_zoom_level(viewport->get_zoom());
+		zoom_level = map_utils_mpp_to_zoom_level(viewport->get_zoom());
 	}
 
 	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
-	snprintf(szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom);
+	snprintf(szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom_level);
 
 	int len = 0;
 	if (this->url_format_code) {

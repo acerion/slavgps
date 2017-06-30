@@ -1052,7 +1052,7 @@ void SlavGPS::vu_copy_label_menu(GtkWidget * widget, unsigned int button)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2])
+void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2])
 {
 	vu_zoom_to_show_latlons_common(mode, viewport, maxmin, 1.0, true);
 	return;
@@ -1064,7 +1064,7 @@ void SlavGPS::vu_zoom_to_show_latlons(VikCoordMode mode, Viewport * viewport, st
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position)
+void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */

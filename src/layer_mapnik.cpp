@@ -847,8 +847,8 @@ void LayerMapnik::draw(Viewport * viewport)
 	}
 
 	VikCoord ul, br;
-	ul.mode = VIK_COORD_LATLON;
-	br.mode = VIK_COORD_LATLON;
+	ul.mode = CoordMode::LATLON;
+	br.mode = CoordMode::LATLON;
 	viewport->screen_to_coord(0, 0, &ul);
 	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
 

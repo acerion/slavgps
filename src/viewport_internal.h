@@ -87,9 +87,9 @@ namespace SlavGPS {
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
-		VikCoordMode get_coord_mode(); // const
+		CoordMode get_coord_mode(); // const
 		const VikCoord * get_center() const;
-		void set_coord_mode(VikCoordMode mode_);
+		void set_coord_mode(CoordMode mode_);
 
 
 
@@ -229,7 +229,7 @@ namespace SlavGPS {
 		double xmfactor, ymfactor;
 
 
-		VikCoordMode coord_mode;
+		CoordMode coord_mode;
 		VikCoord center;
 
 		/* centers_iter++ means moving forward in history. Thus prev(centers->end()) is the newest item.

@@ -817,7 +817,7 @@ void LayersPanel::clear()
 
 
 
-void LayersPanel::change_coord_mode(VikCoordMode mode)
+void LayersPanel::change_coord_mode(CoordMode mode)
 {
 	this->toplayer->change_coord_mode(mode);
 }

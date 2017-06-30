@@ -55,7 +55,7 @@ namespace SlavGPS {
 		virtual char * get_url(Window * window) = 0;
 		virtual char * get_url_at_position(Window * window, VikCoord * vc) = 0;
 
-		uint8_t mpp_to_zoom(double mpp);
+		uint8_t mpp_to_zoom_level(double mpp);
 
 	protected:
 		char * url_format;

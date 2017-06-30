@@ -115,7 +115,7 @@ void Viewport::init_drawing_area()
 
 double Viewport::calculate_utm_zone_width()
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		struct LatLon ll;
 
 		/* Get latitude of screen bottom. */
@@ -153,6 +153,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	this->setMinimumSize(200, 300);
 	//this->setMaximumSize(2700, 2700);
 
+
 	struct UTM utm;
 	struct LatLon ll;
 	ll.lat = Preferences::get_default_lat();
@@ -185,9 +186,9 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	ympp = zoom_y;
 	xmfactor = MERCATOR_FACTOR(xmpp);
 	ymfactor = MERCATOR_FACTOR(ympp);
-	coord_mode = VIK_COORD_LATLON;
+	coord_mode = CoordMode::LATLON;
 	drawmode = ViewportDrawMode::MERCATOR;
-	center.mode = VIK_COORD_LATLON;
+	center.mode = CoordMode::LATLON;
 	center.north_south = ll.lat;
 	center.east_west = ll.lon;
 	center.utm_zone = (int) utm.zone;
@@ -996,7 +997,7 @@ const VikCoord * Viewport::get_center() const
 /* Called every time we update coordinates/zoom. */
 void Viewport::utm_zone_check()
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		struct UTM utm;
 		struct LatLon ll;
 		a_coords_utm_to_latlon((struct UTM *) &(center), &ll);
@@ -1255,7 +1256,7 @@ void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
 		this->update_centers();
 	}
 
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -1275,7 +1276,7 @@ void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
 		this->update_centers();
 	}
 
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -1294,7 +1295,7 @@ void Viewport::set_center_coord(const VikCoord * coord, bool save_position)
 	if (save_position) {
 		update_centers();
 	}
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -1304,13 +1305,13 @@ void Viewport::set_center_coord(const VikCoord * coord, bool save_position)
 
 void Viewport::corners_for_zonen(int zone, VikCoord * ul, VikCoord * br)
 {
-	if (coord_mode != VIK_COORD_UTM) {
+	if (coord_mode != CoordMode::UTM) {
 		return;
 	}
 
 	/* Get center, then just offset. */
 	this->center_for_zonen((struct UTM *) (ul), zone);
-	ul->mode = VIK_COORD_UTM;
+	ul->mode = CoordMode::UTM;
 	*br = *ul;
 
 	ul->north_south += (ympp * this->size_height / 2);
@@ -1324,7 +1325,7 @@ void Viewport::corners_for_zonen(int zone, VikCoord * ul, VikCoord * br)
 
 void Viewport::center_for_zonen(struct UTM * center_, int zone)
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		*center_ = *((struct UTM *)(get_center()));
 		center_->easting -= (zone - center_->zone) * utm_zone_width;
 		center_->zone = zone;
@@ -1336,7 +1337,7 @@ void Viewport::center_for_zonen(struct UTM * center_, int zone)
 
 char Viewport::leftmost_zone()
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		VikCoord coord;
 		this->screen_to_coord(0, 0, &coord);
 		return coord.utm_zone;
@@ -1349,7 +1350,7 @@ char Viewport::leftmost_zone()
 
 char Viewport::rightmost_zone()
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		VikCoord coord;
 		this->screen_to_coord(this->size_width, 0, &coord);
 		return coord.utm_zone;
@@ -1362,7 +1363,7 @@ char Viewport::rightmost_zone()
 
 void Viewport::set_center_screen(int x1, int y1)
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
 		center.east_west += xmpp * (x1 - (this->size_width / 2));
 		center.north_south += ympp * ((this->size_height / 2) - y1);
@@ -1395,10 +1396,10 @@ int Viewport::get_height()
 
 void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
 {
-	if (coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == CoordMode::UTM) {
 		int zone_delta;
 		struct UTM *utm = (struct UTM *) coord;
-		coord->mode = VIK_COORD_UTM;
+		coord->mode = CoordMode::UTM;
 
 		utm->zone = center.utm_zone;
 		utm->letter = center.utm_letter;
@@ -1407,8 +1408,8 @@ void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
 		utm->zone += zone_delta;
 		utm->easting -= zone_delta * utm_zone_width;
 		utm->northing = (((this->size_height_2) - pos_y) * ympp) + center.north_south;
-	} else if (coord_mode == VIK_COORD_LATLON) {
-		coord->mode = VIK_COORD_LATLON;
+	} else if (coord_mode == CoordMode::LATLON) {
+		coord->mode = CoordMode::LATLON;
 		if (drawmode == ViewportDrawMode::LATLON) {
 			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
 			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
@@ -1443,7 +1444,7 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * pos_x, int * pos_y)
 		coord = &tmp;
 	}
 
-	if (this->coord_mode == VIK_COORD_UTM) {
+	if (this->coord_mode == CoordMode::UTM) {
 		struct UTM *a_center = (struct UTM *) &(this->center);
 		struct UTM *utm = (struct UTM *) coord;
 		if (a_center->zone != utm->zone && this->one_utm_zone){
@@ -1454,7 +1455,7 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * pos_x, int * pos_y)
 		*pos_x = ((utm->easting - a_center->easting) / this->xmpp) + (this->size_width_2) -
 			(a_center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
 		*pos_y = (this->size_height_2) - ((utm->northing - a_center->northing) / this->ympp);
-	} else if (this->coord_mode == VIK_COORD_LATLON) {
+	} else if (this->coord_mode == CoordMode::LATLON) {
 		struct LatLon *a_center = (struct LatLon *) &(this->center);
 		struct LatLon *ll = (struct LatLon *) coord;
 		double xx,yy;
@@ -1682,7 +1683,7 @@ void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints
 
 
 
-VikCoordMode Viewport::get_coord_mode()
+CoordMode Viewport::get_coord_mode()
 {
 	return coord_mode;
 }
@@ -1690,7 +1691,7 @@ VikCoordMode Viewport::get_coord_mode()
 
 
 
-void Viewport::set_coord_mode(VikCoordMode mode_)
+void Viewport::set_coord_mode(CoordMode mode_)
 {
 	coord_mode = mode_;
 	vik_coord_convert(&(center), mode_);
@@ -1803,7 +1804,7 @@ double calcR(double lat)
 
 bool Viewport::is_one_zone()
 {
-	return coord_mode == VIK_COORD_UTM && one_utm_zone;
+	return coord_mode == CoordMode::UTM && one_utm_zone;
 }
 
 
@@ -1813,9 +1814,9 @@ void Viewport::set_drawmode(ViewportDrawMode drawmode_)
 {
 	drawmode = drawmode_;
 	if (drawmode_ == ViewportDrawMode::UTM) {
-		this->set_coord_mode(VIK_COORD_UTM);
+		this->set_coord_mode(CoordMode::UTM);
 	} else {
-		this->set_coord_mode(VIK_COORD_LATLON);
+		this->set_coord_mode(CoordMode::LATLON);
 	}
 }
 
@@ -1904,10 +1905,10 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 	this->screen_to_coord(0,                this->size_height, &bleft);
 	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
-	vik_coord_convert(&tleft, VIK_COORD_LATLON);
-	vik_coord_convert(&tright, VIK_COORD_LATLON);
-	vik_coord_convert(&bleft, VIK_COORD_LATLON);
-	vik_coord_convert(&bright, VIK_COORD_LATLON);
+	vik_coord_convert(&tleft, CoordMode::LATLON);
+	vik_coord_convert(&tright, CoordMode::LATLON);
+	vik_coord_convert(&bleft, CoordMode::LATLON);
+	vik_coord_convert(&bright, CoordMode::LATLON);
 
 	*max_lat = MAX(tleft.north_south, tright.north_south);
 	*min_lat = MIN(bleft.north_south, bright.north_south);
@@ -1927,10 +1928,10 @@ void Viewport::get_bbox(LatLonBBox * bbox)
 	this->screen_to_coord(0,                this->size_height, &bleft);
 	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
-	vik_coord_convert(&tleft, VIK_COORD_LATLON);
-	vik_coord_convert(&tright, VIK_COORD_LATLON);
-	vik_coord_convert(&bleft, VIK_COORD_LATLON);
-	vik_coord_convert(&bright, VIK_COORD_LATLON);
+	vik_coord_convert(&tleft, CoordMode::LATLON);
+	vik_coord_convert(&tright, CoordMode::LATLON);
+	vik_coord_convert(&bleft, CoordMode::LATLON);
+	vik_coord_convert(&bright, CoordMode::LATLON);
 
 	bbox->north = MAX(tleft.north_south, tright.north_south);
 	bbox->south = MIN(bleft.north_south, bright.north_south);
@@ -2048,7 +2049,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		vik_coord_to_latlon(&test, &ll);
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&ll, &u);
-		vik_coord_load_from_utm(&test, VIK_COORD_UTM, &u); /* kamilFIXME: it was ViewportDrawMode::UTM. */
+		vik_coord_load_from_utm(&test, CoordMode::UTM, &u); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);

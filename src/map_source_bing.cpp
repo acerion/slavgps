@@ -162,7 +162,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
-	int level = map_utils_mpp_to_scale(zoom);
+	int scale = map_utils_mpp_to_scale(zoom);
 
 	/* Loop over all known attributions. */
 	GList * attribution = this->attributions;
@@ -178,8 +178,8 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 		struct _Attribution *current = (struct _Attribution*)attribution->data;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
-		    (17 - level) > current->minZoom &&
-		    (17 - level) < current->maxZoom) {
+		    (17 - scale) > current->minZoom &&
+		    (17 - scale) < current->maxZoom) {
 
 			(*fct)((Viewport *) data, current->attribution);
 			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);

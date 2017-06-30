@@ -301,7 +301,7 @@ ParameterValue LayerGeoref::get_param_value(param_id_t id, bool is_file_operatio
 /**
  * Return mpp for the given coords, coord mode and image size.
  */
-static void georef_layer_mpp_from_coords(VikCoordMode mode, struct LatLon ll_tl, struct LatLon ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
+static void georef_layer_mpp_from_coords(CoordMode mode, struct LatLon ll_tl, struct LatLon ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
 {
 	struct LatLon ll_tr;
 	ll_tr.lat = ll_tl.lat;
@@ -313,7 +313,7 @@ static void georef_layer_mpp_from_coords(VikCoordMode mode, struct LatLon ll_tl,
 
 	/* UTM mode should be exact MPP. */
 	double factor = 1.0;
-	if (mode == VIK_COORD_LATLON) {
+	if (mode == CoordMode::LATLON) {
 		/* NB the 1.193 - is at the Equator.
 		   http://wiki.openstreetmap.org/wiki/Zoom_levels */
 
@@ -804,7 +804,7 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		struct LatLon ll_br = this->get_ll_br();
 
 		double xmpp, ympp;
-		georef_layer_mpp_from_coords(VIK_COORD_LATLON, ll_tl, ll_br, width, height, &xmpp, &ympp);
+		georef_layer_mpp_from_coords(CoordMode::LATLON, ll_tl, ll_br, width, height, &xmpp, &ympp);
 
 		this->cw.x_spin->setValue(xmpp);
 		this->cw.y_spin->setValue(ympp);
@@ -971,7 +971,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
 
 	VikCoord vc;
-	vik_coord_load_from_utm (&vc, VIK_COORD_LATLON, &(this->corner));
+	vik_coord_load_from_utm (&vc, CoordMode::LATLON, &(this->corner));
 	cw.lat_tl_spin.setValue(vc.north_south);
 	cw.lon_tl_spin.setValue(vc.east_west);
 	cw.lat_br_spin.setValue(this->ll_br.lat);
@@ -1301,7 +1301,7 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 			struct LatLon ll_br;
 			vik_coord_to_latlon(coord_br, &ll_br);
 
-			VikCoordMode mode = viewport->get_coord_mode();
+			CoordMode mode = viewport->get_coord_mode();
 
 			double xmpp, ympp;
 			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, grl->width, grl->height, &xmpp, &ympp);

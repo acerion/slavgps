@@ -386,7 +386,7 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
-			vik_coord_load_from_latlon(&(options->coord), VIK_COORD_LATLON, &ll_result);
+			vik_coord_load_from_latlon(&(options->coord), CoordMode::LATLON, &ll_result);
 
 			/* Interpolate elevation. */
 			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);

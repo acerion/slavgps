@@ -37,7 +37,7 @@ namespace SlavGPS {
 
 
 
-	Waypoint * a_geotag_create_waypoint_from_file(const char * filename, VikCoordMode vcmode, char ** name);
+	Waypoint * a_geotag_create_waypoint_from_file(const char * filename, CoordMode vcmode, char ** name);
 
 	Waypoint * a_geotag_waypoint_positioned(const char * filename, VikCoord coord, double alt, char ** name, Waypoint * wp);
 

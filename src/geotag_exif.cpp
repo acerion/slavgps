@@ -289,7 +289,7 @@ MyReturn0:
  *
  * Returns: An allocated Waypoint or NULL if Waypoint could not be generated (e.g. no EXIF info).
  */
-Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, VikCoordMode vcmode, char **name)
+Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, CoordMode vcmode, char **name)
 {
 	/* Default return values (for failures). */
 	*name = NULL;

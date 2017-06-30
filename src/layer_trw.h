@@ -155,7 +155,7 @@ namespace SlavGPS {
 		bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
 		void delete_sublayer(Sublayer * sublayer);
 
-		void change_coord_mode(VikCoordMode dest_mode);
+		void change_coord_mode(CoordMode dest_mode);
 
 		time_t get_timestamp();
 
@@ -326,8 +326,8 @@ namespace SlavGPS {
 		time_t get_timestamp_waypoints();
 
 
-		void set_coord_mode(VikCoordMode mode);
-		VikCoordMode get_coord_mode();
+		void set_coord_mode(CoordMode mode);
+		CoordMode get_coord_mode();
 
 		bool uniquify(LayersPanel * panel);
 
@@ -411,7 +411,7 @@ namespace SlavGPS {
 		/* Track editing tool -- more specifically, moving tps. */
 		bool moving_tp = false;
 
-		VikCoordMode coord_mode;
+		CoordMode coord_mode;
 
 		int highest_wp_number = 0;
 

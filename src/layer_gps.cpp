@@ -660,7 +660,7 @@ void LayerGPS::draw(Viewport * viewport)
 
 
 
-void LayerGPS::change_coord_mode(VikCoordMode mode)
+void LayerGPS::change_coord_mode(CoordMode mode)
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i]->change_coord_mode(mode);
@@ -2025,7 +2025,7 @@ LayerGPS::LayerGPS()
 
 
 /* To be called right after constructor. */
-void LayerGPS::set_coord_mode(VikCoordMode mode)
+void LayerGPS::set_coord_mode(CoordMode mode)
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i]->set_coord_mode(mode);

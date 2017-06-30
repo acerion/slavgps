@@ -83,7 +83,7 @@ namespace SlavGPS {
 
 		Trackpoint();
 		Trackpoint(const Trackpoint& tp);
-		Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, VikCoordMode coord_mode);
+		Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode);
 		~Trackpoint();
 
 
@@ -204,7 +204,7 @@ namespace SlavGPS {
 		double get_average_speed();  // const
 		double get_average_speed_moving(int stop_length_seconds);  // const
 
-		void convert(VikCoordMode dest_mode);
+		void convert(CoordMode dest_mode);
 		double * make_elevation_map(uint16_t num_chunks);  // const
 		bool get_total_elevation_gain(double *up, double *down);  // const
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
@@ -254,7 +254,7 @@ namespace SlavGPS {
 
 		TrackPoints::iterator get_last();
 		std::list<Rect *> * get_rectangles(LatLon * wh);
-		VikCoordMode get_coord_mode();
+		CoordMode get_coord_mode();
 
 
 

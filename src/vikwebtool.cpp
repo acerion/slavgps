@@ -96,7 +96,7 @@ void WebTool::set_url_format(char const * new_url_format)
 
 
 
-uint8_t WebTool::mpp_to_zoom(double mpp)
+uint8_t WebTool::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
 }

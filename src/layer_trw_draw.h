@@ -84,7 +84,7 @@ typedef struct {
 	double cc;      /* Cosine factor in track directions. */
 	double ss;      /* Sine factor in track directions. */
 	const VikCoord * center;
-	VikCoordMode coord_mode; /* UTM or Lat/Lon. */
+	CoordMode coord_mode; /* UTM or Lat/Lon. */
 	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
 	double ce1, ce2, cn1, cn2;
 	LatLonBBox bbox;

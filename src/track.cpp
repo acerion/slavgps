@@ -367,7 +367,7 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 
 
-Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, VikCoordMode coord_mode)
+Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode)
 {
 	struct LatLon ll_a, ll_b;
 	vik_coord_to_latlon(&tp_a.coord, &ll_a);
@@ -1003,7 +1003,7 @@ double Track::get_max_speed()
 
 
 
-void Track::convert(VikCoordMode dest_mode)
+void Track::convert(CoordMode dest_mode)
 {
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 		vik_coord_convert(&(*iter)->coord, dest_mode);
@@ -2439,7 +2439,7 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 
 
 /* kamilFIXME: this assumes that there are any trackpoints on the list. */
-VikCoordMode Track::get_coord_mode()
+CoordMode Track::get_coord_mode()
 {
 	assert (this->trackpointsB && !this->trackpointsB->empty());
 

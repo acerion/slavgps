@@ -159,7 +159,7 @@ void expedia_snip(char const * file)
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
 static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert (src->mode == VIK_COORD_LATLON);
+	assert (src->mode == CoordMode::LATLON);
 
 	if (xzoom != yzoom) {
 		return false;
@@ -193,7 +193,7 @@ void expedia_xy_to_latlon_middle(int alti, int x, int y, struct LatLon * ll)
 
 static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest)
 {
-	dest->mode = VIK_COORD_LATLON;
+	dest->mode = CoordMode::LATLON;
 	dest->east_west = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
 	dest->north_south = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
 }

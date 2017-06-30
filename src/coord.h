@@ -29,9 +29,9 @@
 
 
 
-enum VikCoordMode {
-	VIK_COORD_UTM     = 0,
-	VIK_COORD_LATLON  = 1
+enum class CoordMode {
+	UTM     = 0,
+	LATLON  = 1
 };
 
 
@@ -41,7 +41,7 @@ typedef struct {
 	char utm_zone;
 	char utm_letter;
 
-	VikCoordMode mode;
+	CoordMode mode;
 } VikCoord;
 
 typedef VikCoord Coord;
@@ -59,12 +59,12 @@ typedef struct _Rect {
 /* Notice we can cast to either UTM or LatLon .*/
 /* Possible more modes to come? xy? We'll leave that as an option. */
 
-void vik_coord_convert(VikCoord * coord, VikCoordMode dest_mode);
-void vik_coord_copy_convert(const VikCoord * coord, VikCoordMode dest_mode, VikCoord * dest);
+void vik_coord_convert(VikCoord * coord, CoordMode dest_mode);
+void vik_coord_copy_convert(const VikCoord * coord, CoordMode dest_mode, VikCoord * dest);
 double vik_coord_diff(const VikCoord * c1, const VikCoord * c2);
 
-void vik_coord_load_from_latlon(VikCoord * coord, VikCoordMode mode, const struct LatLon * ll);
-void vik_coord_load_from_utm(VikCoord * coord, VikCoordMode mode, const struct UTM * utm);
+void vik_coord_load_from_latlon(VikCoord * coord, CoordMode mode, const struct LatLon * ll);
+void vik_coord_load_from_utm(VikCoord * coord, CoordMode mode, const struct UTM * utm);
 
 void vik_coord_to_latlon(const VikCoord * coord, struct LatLon * dest);
 void vik_coord_to_utm(const VikCoord * coord, struct UTM * dest);
