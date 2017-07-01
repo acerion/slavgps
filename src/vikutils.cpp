@@ -114,7 +114,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						speed = VikCoord::distance(tp->coord, tp_prev->coord) / ABS(tp->timestamp - tp_prev->timestamp);
+						speed = Coord::distance(tp->coord, tp_prev->coord) / ABS(tp->timestamp - tp_prev->timestamp);
 						speedtype = strdup("*"); // Interpolated
 					} else {
 						speedtype = strdup("**");
@@ -183,7 +183,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 
 		case 'P': {
 			if (tp_prev) {
-				int diff = (int) round(VikCoord::distance(tp->coord, tp_prev->coord));
+				int diff = (int) round(Coord::distance(tp->coord, tp_prev->coord));
 
 				char * dist_units_str = NULL;
 				DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -862,7 +862,7 @@ static char * time_string_tz(time_t * time, const char * format, GTimeZone * tz)
  * Use the k-d tree method (http://en.wikipedia.org/wiki/Kd-tree) to quickly retrieve
  * the nearest location to the given position.
  */
-char * SlavGPS::vu_get_tz_at_location(const VikCoord * vc)
+char * SlavGPS::vu_get_tz_at_location(const Coord * vc)
 {
 	char * tz = NULL;
 	if (!vc || !kd) {
@@ -909,7 +909,7 @@ char * SlavGPS::vu_get_tz_at_location(const VikCoord * vc)
  *
  * Returns: A string of the time according to the time display property.
  */
-char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const VikCoord * vc, const char * tz)
+char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * vc, const char * tz)
 {
 	if (!format) {
 		return NULL;
@@ -1068,7 +1068,7 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 	/* This method is not particularly fast - but should work well enough. */
 	struct LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
 
-	const VikCoord coord(average, mode);
+	const Coord coord(average, mode);
 	viewport->set_center_coord(&coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */

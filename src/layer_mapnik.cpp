@@ -617,12 +617,12 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_);
+	RenderInfo(LayerMapnik * layer, Coord * ul_, Coord * br_, Coord * mul_, const char * request_);
 	~RenderInfo();
 
 	LayerMapnik * lmk = NULL;
-	VikCoord * ul = NULL;
-	VikCoord * br = NULL;
+	Coord * ul = NULL;
+	Coord * br = NULL;
 	TileInfo * ulmc = NULL;
 	const char * request = NULL;
 };
@@ -631,19 +631,19 @@ public:
 
 static int render_info_background_fn(BackgroundJob * bg_job);
 
-RenderInfo::RenderInfo(LayerMapnik * layer, VikCoord * ul_, VikCoord * br_, VikCoord * mul_, const char * request_)
+RenderInfo::RenderInfo(LayerMapnik * layer, Coord * ul_, Coord * br_, Coord * mul_, const char * request_)
 {
 	this->thread_fn = render_info_background_fn;
 	this->n_items = 1;
 
 	this->lmk = layer;
 
-	this->ul = (VikCoord *) malloc(sizeof (VikCoord));
-	this->br = (VikCoord *) malloc(sizeof (VikCoord));
+	this->ul = (Coord *) malloc(sizeof (Coord));
+	this->br = (Coord *) malloc(sizeof (Coord));
 	this->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
 
-	memcpy(this->ul, ul_, sizeof(VikCoord));
-	memcpy(this->br, br_, sizeof(VikCoord));
+	memcpy(this->ul, ul_, sizeof(Coord));
+	memcpy(this->br, br_, sizeof(Coord));
 	memcpy(this->ulmc, mul_, sizeof(TileInfo));
 	this->request = request_;
 }
@@ -665,7 +665,7 @@ RenderInfo::~RenderInfo()
 /**
  * Common render function which can run in separate thread.
  */
-void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
+void LayerMapnik::render(Coord * ul, Coord * br, TileInfo * ulm)
 {
 	int64_t tt1 = g_get_real_time();
 	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->ll.lat, ul->ll.lon, br->ll.lat, br->ll.lon);
@@ -722,7 +722,7 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name_)
+void LayerMapnik::thread_add(TileInfo * mul, Coord * ul, Coord * br, int x, int y, int z, int zoom, char const * name_)
 {
 	/* Create request. */
 	unsigned int nn = name_ ? g_str_hash(name_) : 0;
@@ -797,7 +797,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
  */
 QPixmap * LayerMapnik::get_pixmap(TileInfo * ulm, TileInfo * brm)
 {
-	VikCoord ul; VikCoord br;
+	Coord ul; Coord br;
 
 	map_utils_iTMS_to_vikcoord(ulm, &ul);
 	map_utils_iTMS_to_vikcoord(brm, &br);
@@ -846,7 +846,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		}
 	}
 
-	VikCoord ul, br;
+	Coord ul, br;
 	ul.mode = CoordMode::LATLON;
 	br.mode = CoordMode::LATLON;
 	viewport->screen_to_coord(0, 0, &ul);
@@ -861,7 +861,7 @@ void LayerMapnik::draw(Viewport * viewport)
 	     map_utils_vikcoord_to_iTMS(&br, xzoom, yzoom, &brm)) {
 		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
 		QPixmap * pixmap;
-		VikCoord coord;
+		Coord coord;
 		int xx, yy;
 
 		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);

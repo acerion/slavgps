@@ -138,7 +138,7 @@ extern VikDataSourceInterface vik_datasource_geojson_interface;
 
 
 
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord);
+static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord * coord);
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 
@@ -577,7 +577,7 @@ void TRWMetadata::set_timestamp(char const * new_timestamp)
 /**
  * Find a track by date.
  */
-bool LayerTRW::find_track_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool select)
+bool LayerTRW::find_track_by_date(char const * date_str, Coord * position, Viewport * viewport, bool select)
 {
 	Track * trk = LayerTRWc::find_track_by_date(this->tracks, date_str);
 	if (trk && select) {
@@ -594,7 +594,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, VikCoord * position, Vi
 /**
  * Find a waypoint by date.
  */
-bool LayerTRW::find_waypoint_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool select)
+bool LayerTRW::find_waypoint_by_date(char const * date_str, Coord * position, Viewport * viewport, bool select)
 {
 	Waypoint * wp = LayerTRWc::find_waypoint_by_date(this->waypoints, date_str);
 	if (wp && select) {
@@ -2333,7 +2333,7 @@ void LayerTRW::find_maxmin(struct LatLon maxmin[2])
 
 
 
-bool LayerTRW::find_center(VikCoord * dest)
+bool LayerTRW::find_center(Coord * dest)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. like I don't have more important things to worry about... */
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
@@ -2342,7 +2342,7 @@ bool LayerTRW::find_center(VikCoord * dest)
 		return false;
 	} else {
 		struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
-		*dest = VikCoord(average, this->coord_mode);
+		*dest = Coord(average, this->coord_mode);
 		return true;
 	}
 }
@@ -2352,7 +2352,7 @@ bool LayerTRW::find_center(VikCoord * dest)
 
 void LayerTRW::centerize_cb(void)
 {
-	VikCoord coord;
+	Coord coord;
 	if (this->find_center(&coord)) {
 		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, &coord);
 	} else {
@@ -2541,7 +2541,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(Window * parent_window, const VikCoord * def_coord)
+bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 {
 	char * default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
@@ -3809,7 +3809,7 @@ void LayerTRW::update_treeview(Track * trk)
 
 
 
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord)
+static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord * coord)
 {
 	if (panel) {
 		panel->get_viewport()->set_center_coord(coord, true);
@@ -3849,7 +3849,7 @@ void LayerTRW::goto_track_center_cb(void)
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		VikCoord coord(average, this->coord_mode);
+		Coord coord(average, this->coord_mode);
 		goto_coord(panel, this, this->menu_data->viewport, &coord);
 	}
 }
@@ -6197,7 +6197,7 @@ void LayerTRW::my_tpwin_set_tp()
 	Track * trk = this->current_trk;
 	/* Notional center of a track is simply an average of the bounding box extremities. */
 	struct LatLon ll_center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-	VikCoord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
+	Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
 	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->sublayer_type == SublayerType::ROUTE);
 }
 
@@ -6274,7 +6274,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
  * Try to reposition a dialog if it's over the specified coord
  *  so to not obscure the item of interest
  */
-void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
+void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 {
 	Window * parent_window = this->get_window(); /* i.e. the main window. */
 
@@ -6855,7 +6855,7 @@ static int get_download_area_width(double zoom_level, struct LatLon *wh) /* kami
 
 
 
-static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dist, double gradient)
+static Coord *get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
 {
 	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
 	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
@@ -6863,7 +6863,7 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 		return NULL;
 	}
 
-	VikCoord *coord = (VikCoord *) malloc(sizeof (VikCoord));
+	Coord *coord = (Coord *) malloc(sizeof (Coord));
 	coord->mode = CoordMode::LATLON;
 
 	if (ABS(gradient) < 1) {
@@ -6888,12 +6888,12 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 
 
 
-static GList * add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatLon *dist)
+static GList * add_fillins(GList *list, Coord *from, Coord *to, struct LatLon *dist)
 {
 	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
 
-	VikCoord * next = from;
+	Coord * next = from;
 	while (true) {
 		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
 			break;
@@ -6945,9 +6945,9 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 	}
 
 	if (fillins) {
-		VikCoord tl, br;
+		Coord tl, br;
 		for (GList * fiter = fillins; fiter; fiter = fiter->next) {
-			VikCoord * cur_coord = (VikCoord *)(fiter->data);
+			Coord * cur_coord = (Coord *)(fiter->data);
 			cur_coord->set_area(&wh, &tl, &br);
 			Rect * rect = (Rect *) malloc(sizeof (Rect));
 			rect->tl = tl;

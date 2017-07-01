@@ -476,8 +476,8 @@ typedef struct zip_file zip_file_t;
 			ll_tl.lon = west;
 			ll_br.lat = south;
 			ll_br.lon = east;
-			const VikCoord coord_tl(ll_tl, viewport->get_coord_mode());
-			const VikCoord coord_br(ll_br, viewport->get_coord_mode());
+			const Coord coord_tl(ll_tl, viewport->get_coord_mode());
+			const Coord coord_br(ll_br, viewport->get_coord_mode());
 
 			Layer * grl = vik_georef_layer_create(viewport, name, pixmap, &coord_tl, &coord_br);
 			if (grl) {

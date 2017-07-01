@@ -355,7 +355,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			wp->has_timestamp = line_has_timestamp;
 			wp->timestamp = line_timestamp;
 
-			wp->coord = VikCoord(line_latlon, coord_mode);
+			wp->coord = Coord(line_latlon, coord_mode);
 
 			trw->filein_add_waypoint(wp, line_name);
 			free(line_name);
@@ -443,7 +443,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			have_read_something = true;
 
 			Trackpoint * tp = new Trackpoint();
-			tp->coord = VikCoord(line_latlon, coord_mode);
+			tp->coord = Coord(line_latlon, coord_mode);
 			tp->newsegment = line_newsegment;
 			tp->has_timestamp = line_has_timestamp;
 			tp->timestamp = line_timestamp;

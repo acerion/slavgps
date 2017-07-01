@@ -77,7 +77,7 @@ namespace SlavGPS {
 
 		/* Half-drawn update. */
 		//Layer * trigger = NULL;
-		//VikCoord trigger_center;
+		//Coord trigger_center;
 
 	}; /* class Window */
 

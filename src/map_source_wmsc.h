@@ -43,8 +43,8 @@ namespace SlavGPS {
 		~MapSourceWmsc();
 		MapSourceWmsc(MapTypeID map_type, char const * label, char const * hostname, char const * url);
 
-		bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
-		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
+		bool coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
+		void tile_to_center_coord(TileInfo * src, Coord * dest);
 
 		bool supports_download_only_new();
 

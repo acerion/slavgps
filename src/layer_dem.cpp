@@ -585,7 +585,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 #endif
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		Coord tmp; /* TODO: don't use VikCoord(ll, mode), especially if in latlon drawing mode. */
+		Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
 
@@ -663,7 +663,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c = counter;
 				box_c.lat += (nscale_deg * skip_factor)/2;
 				box_c.lon -= (escale_deg * skip_factor)/2;
-				tmp = VikCoord(box_c, viewport->get_coord_mode());
+				tmp = Coord(box_c, viewport->get_coord_mode());
 				viewport->coord_to_screen(&tmp, &box_x, &box_y);
 				/* Catch box at borders. */
 				if (box_x < 0) {
@@ -676,7 +676,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				box_c.lat -= nscale_deg * skip_factor;
 				box_c.lon += escale_deg * skip_factor;
-				tmp = VikCoord(box_c, viewport->get_coord_mode());
+				tmp = Coord(box_c, viewport->get_coord_mode());
 				viewport->coord_to_screen(&tmp, &box_width, &box_height);
 				box_width -= box_x;
 				box_height -= box_y;
@@ -752,7 +752,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		} /* for x= */
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 
-		Coord tmp; /* TODO: don't use VikCoord(ll, mode), especially if in latlon drawing mode. */
+		Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
 
@@ -837,7 +837,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				{
 					int a, b;
-					tmp = VikCoord(counter, viewport->get_coord_mode());
+					tmp = Coord(counter, viewport->get_coord_mode());
 					viewport->coord_to_screen(&tmp, &a, &b);
 
 					int idx = 0; /* Default index for colour of 'sea'. */

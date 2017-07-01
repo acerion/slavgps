@@ -55,7 +55,7 @@ namespace SlavGPS {
 		virtual const DownloadOptions * get_download_options(void) const;
 		virtual bool parse_file_for_latlon(char * filename, struct LatLon * ll) = 0;
 
-		int get_coord(Viewport * viewport, char * srch_str, VikCoord * coord);
+		int get_coord(Viewport * viewport, char * srch_str, Coord * coord);
 
 	protected:
 

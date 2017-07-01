@@ -32,7 +32,7 @@ using namespace SlavGPS;
 
 
 
-void VikCoord::change_mode(CoordMode new_mode)
+void Coord::change_mode(CoordMode new_mode)
 {
 	if (this->mode != new_mode) {
 		if (new_mode == CoordMode::LATLON) {
@@ -47,9 +47,9 @@ void VikCoord::change_mode(CoordMode new_mode)
 
 
 
-VikCoord VikCoord::copy_change_mode(CoordMode new_mode) const
+Coord Coord::copy_change_mode(CoordMode new_mode) const
 {
-	VikCoord dest;
+	Coord dest;
 
 	if (this->mode == new_mode) {
 		dest = *this; /* kamilFIXME: verify this assignment of objects. */
@@ -68,7 +68,7 @@ VikCoord VikCoord::copy_change_mode(CoordMode new_mode) const
 
 
 
-static double distance_safe(const VikCoord & coord1, const VikCoord & coord2)
+static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
 	struct LatLon a = coord1.get_latlon();
 	struct LatLon b = coord2.get_latlon();
@@ -78,7 +78,7 @@ static double distance_safe(const VikCoord & coord1, const VikCoord & coord2)
 
 
 
-double VikCoord::distance(const VikCoord & coord1, const VikCoord & coord2)
+double Coord::distance(const Coord & coord1, const Coord & coord2)
 {
 	if (coord1.mode == coord2.mode) {
 		return distance_safe(coord1, coord2);
@@ -94,7 +94,7 @@ double VikCoord::distance(const VikCoord & coord1, const VikCoord & coord2)
 
 
 
-VikCoord::VikCoord(const struct LatLon & ll_, CoordMode mode_)
+Coord::Coord(const struct LatLon & ll_, CoordMode mode_)
 {
 	if (mode_ == CoordMode::LATLON) {
 		this->ll = ll_;
@@ -107,7 +107,7 @@ VikCoord::VikCoord(const struct LatLon & ll_, CoordMode mode_)
 
 
 
-VikCoord::VikCoord(const struct UTM & utm_, CoordMode mode_)
+Coord::Coord(const struct UTM & utm_, CoordMode mode_)
 {
 	if (mode_ == CoordMode::UTM) {
 		this->utm = utm_;
@@ -120,7 +120,7 @@ VikCoord::VikCoord(const struct UTM & utm_, CoordMode mode_)
 
 
 
-struct LatLon VikCoord::get_latlon(void) const
+struct LatLon Coord::get_latlon(void) const
 {
 	struct LatLon dest = { 0, 0 };
 	if (this->mode == CoordMode::LATLON) {
@@ -148,7 +148,7 @@ struct UTM Coord::get_utm(void) const
 
 
 
-bool VikCoord::operator==(const VikCoord & coord) const
+bool Coord::operator==(const Coord & coord) const
 {
 	if (this->mode != coord.mode) {
 		return false;
@@ -164,7 +164,7 @@ bool VikCoord::operator==(const VikCoord & coord) const
 
 
 
-bool VikCoord::operator!=(const VikCoord & coord) const
+bool Coord::operator!=(const Coord & coord) const
 {
 	return !(*this == coord);
 }
@@ -206,7 +206,7 @@ static void get_south_east(struct LatLon * center, struct LatLon * dist, struct 
 
 
 
-void VikCoord::set_area(const struct LatLon * wh, VikCoord * coord_tl, VikCoord * coord_br) const
+void Coord::set_area(const struct LatLon * wh, Coord * coord_tl, Coord * coord_br) const
 {
 	struct LatLon ll_nw, ll_se;
 	struct LatLon dist;
@@ -228,7 +228,7 @@ void VikCoord::set_area(const struct LatLon * wh, VikCoord * coord_tl, VikCoord 
 
 
 
-bool VikCoord::is_inside(const VikCoord * tl, const VikCoord * br) const
+bool Coord::is_inside(const Coord * tl, const Coord * br) const
 {
 	struct LatLon ll_ = this->get_latlon();
 	struct LatLon tl_ll = tl->get_latlon();

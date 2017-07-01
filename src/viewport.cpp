@@ -579,7 +579,7 @@ void Viewport::draw_scale()
 		return;
 	}
 
-	VikCoord left, right;
+	Coord left, right;
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
@@ -591,15 +591,15 @@ void Viewport::draw_scale()
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		base_distance = VikCoord::distance(left, right); /* In meters. */
+		base_distance = Coord::distance(left, right); /* In meters. */
 		break;
 	case DistanceUnit::MILES:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
-		base_distance = VIK_METERS_TO_MILES (VikCoord::distance(left, right)) * 10.0;
+		base_distance = VIK_METERS_TO_MILES (Coord::distance(left, right)) * 10.0;
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
-		base_distance = VIK_METERS_TO_NAUTICAL_MILES (VikCoord::distance(left, right)) * 10.0;
+		base_distance = VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(left, right)) * 10.0;
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
@@ -985,7 +985,7 @@ void Viewport::set_ympp(double ympp_)
 
 
 
-const VikCoord * Viewport::get_center() const
+const Coord * Viewport::get_center() const
 {
 	return &center;
 }
@@ -1019,7 +1019,7 @@ void Viewport::utm_zone_check()
  */
 void Viewport::free_center(std::list<Coord *>::iterator iter)
 {
-	VikCoord * coord = *iter;
+	Coord * coord = *iter;
 	if (coord) {
 		free(coord);
 	}
@@ -1047,7 +1047,7 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
  */
 void Viewport::update_centers()
 {
-	VikCoord * new_center = (VikCoord *) malloc(sizeof (VikCoord));
+	Coord * new_center = (Coord *) malloc(sizeof (Coord));
 	*new_center = center; /* kamilFIXME: what does this assignment do? */
 
 	if (centers_iter == prev(centers->end())) {
@@ -1158,11 +1158,11 @@ void Viewport::print_centers(char * label)
 bool Viewport::go_back()
 {
 	/* See if the current position is different from the last saved center position within a certain radius. */
-	VikCoord * last_center = *centers_iter;
+	Coord * last_center = *centers_iter;
 	if (last_center) {
 		/* Consider an exclusion size (should it zoom level dependent, rather than a fixed value?).
 		   When still near to the last saved position we'll jump over it to the one before. */
-		if (VikCoord::distance(*last_center, this->center) > centers_radius) {
+		if (Coord::distance(*last_center, this->center) > centers_radius) {
 
 			if (centers_iter == prev(centers->end())) {
 				/* Only when we haven't already moved back in the list.
@@ -1181,7 +1181,7 @@ bool Viewport::go_back()
 		return false;
 	}
 
-	VikCoord * new_center = *centers_iter;
+	Coord * new_center = *centers_iter;
 	if (new_center) {
 		set_center_coord(new_center, false);
 		return true;
@@ -1205,7 +1205,7 @@ bool Viewport::go_forward()
 	}
 
 	centers_iter++;
-	VikCoord * new_center = *centers_iter;
+	Coord * new_center = *centers_iter;
 	if (new_center) {
 		set_center_coord(new_center, false);
 		return true;
@@ -1248,7 +1248,7 @@ bool Viewport::forward_available()
  */
 void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
 {
-	this->center = VikCoord(*ll, coord_mode);
+	this->center = Coord(*ll, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -1268,7 +1268,7 @@ void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
  */
 void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
 {
-	this->center = VikCoord(*utm, coord_mode);
+	this->center = Coord(*utm, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -1282,11 +1282,11 @@ void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
 
 
 /**
- * @coord:         The new center position in a VikCoord type
+ * @coord:         The new center position in a Coord type
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_coord(const VikCoord * coord, bool save_position)
+void Viewport::set_center_coord(const Coord * coord, bool save_position)
 {
 	center = *coord;
 	if (save_position) {
@@ -1300,7 +1300,7 @@ void Viewport::set_center_coord(const VikCoord * coord, bool save_position)
 
 
 
-void Viewport::corners_for_zonen(int zone, VikCoord * ul, VikCoord * br)
+void Viewport::corners_for_zonen(int zone, Coord * ul, Coord * br)
 {
 	if (coord_mode != CoordMode::UTM) {
 		return;
@@ -1335,7 +1335,7 @@ void Viewport::center_for_zonen(struct UTM * center_utm, int zone)
 char Viewport::leftmost_zone()
 {
 	if (coord_mode == CoordMode::UTM) {
-		VikCoord coord;
+		Coord coord;
 		this->screen_to_coord(0, 0, &coord);
 		return coord.utm.zone;
 	}
@@ -1348,7 +1348,7 @@ char Viewport::leftmost_zone()
 char Viewport::rightmost_zone()
 {
 	if (coord_mode == CoordMode::UTM) {
-		VikCoord coord;
+		Coord coord;
 		this->screen_to_coord(this->size_width, 0, &coord);
 		return coord.utm.zone;
 	}
@@ -1366,7 +1366,7 @@ void Viewport::set_center_screen(int x1, int y1)
 		center.utm.northing += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
-		VikCoord tmp;
+		Coord tmp;
 		this->screen_to_coord(x1, y1, &tmp);
 		set_center_coord(&tmp, false);
 	}
@@ -1391,7 +1391,7 @@ int Viewport::get_height()
 
 
 
-void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
+void Viewport::screen_to_coord(int pos_x, int pos_y, Coord * coord)
 {
 	if (coord_mode == CoordMode::UTM) {
 		int zone_delta;
@@ -1431,9 +1431,9 @@ void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
  * avoiding the need to do it here all the time.
  * For good measure the half width and height values are also pre calculated too.
  */
-void Viewport::coord_to_screen(const VikCoord * coord, int * pos_x, int * pos_y)
+void Viewport::coord_to_screen(const Coord * coord, int * pos_x, int * pos_y)
 {
-	static VikCoord tmp;
+	static Coord tmp;
 
 	if (coord->mode != this->coord_mode) {
 		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen()! This should never happen!";
@@ -1895,7 +1895,7 @@ const QString Viewport::get_drawmode_name(ViewportDrawMode mode)
 
 void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
 {
-	VikCoord tleft, tright, bleft, bright;
+	Coord tleft, tright, bleft, bright;
 
 	this->screen_to_coord(0,                0,                 &tleft);
 	this->screen_to_coord(this->size_width, 0,                 &tright);
@@ -1918,7 +1918,7 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 
 void Viewport::get_bbox(LatLonBBox * bbox)
 {
-	VikCoord tleft, tright, bleft, bright;
+	Coord tleft, tright, bleft, bright;
 
 	this->screen_to_coord(0,                0,                 &tleft);
 	this->screen_to_coord(this->size_width, 0,                 &tright);
@@ -2040,13 +2040,13 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		struct UTM u;
 		int tx, ty;
 
-		VikCoord test;
+		Coord test;
 		this->screen_to_coord(x1, y1, &test);
 		struct LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&u, &ll);
 
-		test = VikCoord(u, CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
+		test = Coord(u, CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);
@@ -2201,7 +2201,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		}
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
-		VikCoord coord;
+		Coord coord;
 		int pos_x, pos_y;
 		int center_x = w / 2;
 		int center_y = h / 2;
@@ -2237,7 +2237,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	//this->window->tb->move(ev); /* TODO: uncomment this. */
 
-	static VikCoord coord;
+	static Coord coord;
 	this->screen_to_coord(pos_x, pos_y, &coord);
 	static struct UTM utm = coord.get_utm();
 

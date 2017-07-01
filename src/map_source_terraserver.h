@@ -40,8 +40,8 @@ namespace SlavGPS {
 		MapSourceTerraserver(MapTypeID type_, const char * label_);
 
 
-		bool coord_to_tile(const VikCoord * src, double xmpp, double ympp, TileInfo * dest);
-		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
+		bool coord_to_tile(const Coord * src, double xmpp, double ympp, TileInfo * dest);
+		void tile_to_center_coord(TileInfo * src, Coord * dest);
 		bool is_direct_file_access(void);
 		bool is_mbtiles(void);
 

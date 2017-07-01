@@ -346,7 +346,7 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->click()";
 
-	VikCoord coord;
+	Coord coord;
 	char temp[128] = { 0 };
 
 	if (event->button() == Qt::LeftButton) {
@@ -359,13 +359,13 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
-				sprintf(temp, "%s %s DIFF %f meters", lat, lon, VikCoord::distance(coord, this->ruler->start_coord));
+				sprintf(temp, "%s %s DIFF %f meters", lat, lon, Coord::distance(coord, this->ruler->start_coord));
 				break;
 			case DistanceUnit::MILES:
-				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(VikCoord::distance(coord, this->ruler->start_coord)));
+				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(Coord::distance(coord, this->ruler->start_coord)));
 				break;
 			case DistanceUnit::NAUTICAL_MILES:
-				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(VikCoord::distance(coord, this->ruler->start_coord)));
+				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(Coord::distance(coord, this->ruler->start_coord)));
 				break;
 			default:
 				sprintf(temp, "Just to keep the compiler happy");
@@ -398,7 +398,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->move()";
 
-	VikCoord coord;
+	Coord coord;
 	char temp[128] = { 0 };
 
 	if (!this->ruler->has_start_coord) {
@@ -436,7 +436,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 
 	QPen pen("black");
 	pen.setWidth(1);
-	LayerToolRuler::draw(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), VikCoord::distance(coord, this->ruler->start_coord));
+	LayerToolRuler::draw(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), Coord::distance(coord, this->ruler->start_coord));
 
 	if (draw_buf_done) {
 #if 0
@@ -462,13 +462,13 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		sprintf(temp, "%s %s DIFF %f meters", lat, lon, VikCoord::distance(coord, this->ruler->start_coord));
+		sprintf(temp, "%s %s DIFF %f meters", lat, lon, Coord::distance(coord, this->ruler->start_coord));
 		break;
 	case DistanceUnit::MILES:
-		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (VikCoord::distance(coord, this->ruler->start_coord)));
+		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (Coord::distance(coord, this->ruler->start_coord)));
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (VikCoord::distance(coord, this->ruler->start_coord)));
+		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(coord, this->ruler->start_coord)));
 		break;
 	default:
 		sprintf(temp, "Just to keep the compiler happy");
@@ -602,7 +602,7 @@ LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 #if 0
 	this->window->modified = true;
 
-	VikCoord coord;
+	Coord coord;
 	int center_x = this->window->viewport->get_width() / 2;
 	int center_y = this->window->viewport->get_height() / 2;
 
@@ -724,7 +724,7 @@ LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 	    && (event->x() < this->zoom->start_x - 5 || event->x() > this->zoom->start_x + 5)
 	    && (event->y() < this->zoom->start_y - 5 || event->y() > this->zoom->start_y + 5)) {
 
-		VikCoord coord1, coord2;
+		Coord coord1, coord2;
 		this->window->viewport->screen_to_coord(this->zoom->start_x, this->zoom->start_y, &coord1);
 		this->window->viewport->screen_to_coord(event->x(), event->y(), &coord2);
 

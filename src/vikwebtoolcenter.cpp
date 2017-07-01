@@ -75,7 +75,7 @@ WebToolCenter::~WebToolCenter()
 
 
 
-char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
+char * WebToolCenter::get_url_at_position(Window * window, Coord * vc)
 {
 	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
 

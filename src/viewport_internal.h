@@ -88,7 +88,7 @@ namespace SlavGPS {
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
 		CoordMode get_coord_mode(); // const
-		const VikCoord * get_center() const;
+		const Coord * get_center() const;
 		void set_coord_mode(CoordMode mode_);
 
 
@@ -102,14 +102,14 @@ namespace SlavGPS {
 
 
 		/* Viewport position. */
-		void set_center_coord(const VikCoord * coord, bool save_position);
+		void set_center_coord(const Coord * coord, bool save_position);
 		void set_center_screen(int x, int y);
 		void center_for_zonen(struct UTM *center, int zone);
 		char leftmost_zone();
 		char rightmost_zone();
 		void set_center_utm(const struct UTM * utm, bool save_position);
 		void set_center_latlon(const struct LatLon * ll, bool save_position);
-		void corners_for_zonen(int zone, VikCoord * ul, VikCoord * br);
+		void corners_for_zonen(int zone, Coord * ul, Coord * br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 		void get_bbox(LatLonBBox * bbox);
 		void get_bbox_strings(LatLonBBoxStrings * bbox_strings);
@@ -118,8 +118,8 @@ namespace SlavGPS {
 		int get_height();
 
 		/* Coordinate transformations. */
-		void screen_to_coord(int x, int y, VikCoord * coord);
-		void coord_to_screen(const VikCoord * coord, int * x, int * y);
+		void screen_to_coord(int x, int y, Coord * coord);
+		void coord_to_screen(const Coord * coord, int * x, int * y);
 
 		/* Viewport scale. */
 		void set_ympp(double ympp);
@@ -230,7 +230,7 @@ namespace SlavGPS {
 
 
 		CoordMode coord_mode;
-		VikCoord center;
+		Coord center;
 
 		/* centers_iter++ means moving forward in history. Thus prev(centers->end()) is the newest item.
 		   centers_iter-- means moving backward in history. Thus centers->begin() is the oldest item (in the beginning of history). */

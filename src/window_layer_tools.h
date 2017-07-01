@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 	typedef struct {
 		bool has_start_coord = false;
-		VikCoord start_coord;
+		Coord start_coord;
 		bool invalidate_start_coord = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
 	} ruler_tool_state_t;
 

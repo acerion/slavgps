@@ -846,7 +846,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 #ifdef K
 	if (this->selected_tp.valid || this->current_wp) {
 		/* For the selected point. */
-		VikCoord *vc;
+		Coord *vc;
 		if (this->selected_tp.valid) {
 			vc = &(*this->selected_tp.iter)->coord;
 		} else {

@@ -195,8 +195,8 @@ namespace SlavGPS {
 		bool is_empty();
 
 
-		bool find_track_by_date(char const * date, VikCoord * position, Viewport * viewport, bool select);
-		bool find_waypoint_by_date(char const * date, VikCoord * position, Viewport * viewport, bool select);
+		bool find_track_by_date(char const * date, Coord * position, Viewport * viewport, bool select);
+		bool find_waypoint_by_date(char const * date, Coord * position, Viewport * viewport, bool select);
 
 		Track * get_track(const char * name);
 		Track * get_route(const char * name);
@@ -219,7 +219,7 @@ namespace SlavGPS {
 
 
 		void find_maxmin(struct LatLon maxmin[2]);
-		bool find_center(VikCoord * dest);
+		bool find_center(Coord * dest);
 
 		void set_statusbar_msg_info_trkpt(Trackpoint * tp);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
@@ -229,7 +229,7 @@ namespace SlavGPS {
 
 
 
-		bool new_waypoint(Window * parent, const VikCoord * def_coord);
+		bool new_waypoint(Window * parent, const Coord * def_coord);
 		void new_track_create_common(char * name);
 		void new_route_create_common(char * name);
 
@@ -347,7 +347,7 @@ namespace SlavGPS {
 		void my_tpwin_set_tp();
 
 
-		void dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical);
+		void dialog_shift(QDialog * dialog, Coord * coord, bool vertical);
 
 
 		uint32_t get_property_tracks_line_thickness();

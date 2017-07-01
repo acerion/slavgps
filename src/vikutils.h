@@ -54,9 +54,9 @@ namespace SlavGPS {
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename);
 
-	char * vu_get_time_string(time_t * time, const char * format, const VikCoord * vc, const char * gtz);
+	char * vu_get_time_string(time_t * time, const char * format, const Coord * vc, const char * gtz);
 
-	char * vu_get_tz_at_location(const VikCoord * vc);
+	char * vu_get_tz_at_location(const Coord * vc);
 
 	void vu_setup_lat_lon_tz_lookup();
 	void vu_finalize_lat_lon_tz_lookup();

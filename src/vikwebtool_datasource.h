@@ -50,7 +50,7 @@ namespace SlavGPS {
 
 		void open(Window * window);
 		char * get_url(Window * window);
-		char * get_url_at_position(Window * window, VikCoord * vc);
+		char * get_url_at_position(Window * window, Coord * vc);
 
 
 

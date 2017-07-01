@@ -314,7 +314,7 @@ namespace SlavGPS {
 		QMenu * submenu_file_acquire = NULL;
 
 		SlavGPS::Layer * trigger = NULL;
-		VikCoord trigger_center;
+		Coord trigger_center;
 
 		char * filename = NULL;
 

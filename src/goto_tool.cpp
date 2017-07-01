@@ -109,7 +109,7 @@ const DownloadOptions * GotoTool::get_download_options(void) const
  *  1  = search unavailable in the #GotoTool due to communication issue
  *
  */
-int GotoTool::get_coord(Viewport * viewport, char * srch_str, VikCoord * coord)
+int GotoTool::get_coord(Viewport * viewport, char * srch_str, Coord * coord)
 {
 	int ret = 0;  /* OK */
 
@@ -131,7 +131,7 @@ int GotoTool::get_coord(Viewport * viewport, char * srch_str, VikCoord * coord)
 		ret = -1;
 		goto done;
 	}
-	*coord = VikCoord(ll, viewport->get_coord_mode());
+	*coord = Coord(ll, viewport->get_coord_mode());
 
  done:
 	(void) util_remove(tmpname);

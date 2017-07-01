@@ -51,8 +51,8 @@ namespace SlavGPS {
 
 		bool supports_download_only_new();
 
-		bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
-		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
+		bool coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
+		void tile_to_center_coord(TileInfo * src, Coord * dest);
 
 		char * get_server_path(TileInfo * src);
 	};

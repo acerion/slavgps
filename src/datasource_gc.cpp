@@ -182,13 +182,13 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 		int x, y;
 		struct LatLon ll = { .lat = lat, .lon = lon };
 
-		VikCoord coord(ll, widgets->viewport->get_coord_mode(), );
+		Coord coord(ll, widgets->viewport->get_coord_mode(), );
 		widgets->viewport->coord_to_screen(&cord, &x, &y);
 		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (widgets->viewport->get_width() + 1000) &&
 		    y < (widgets->viewport->get_width() + 1000)) {
 
-			VikCoord c1, c2;
+			Coord c1, c2;
 			double pixels_per_meter;
 
 			widgets->circle_x = x;

@@ -117,7 +117,7 @@ bool MapSourceTms::supports_download_only_new()
 
 
 
-bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceTms::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	assert (src->mode == CoordMode::LATLON);
 
@@ -147,7 +147,7 @@ bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoo
 
 
 
-void MapSourceTms::tile_to_center_coord(TileInfo * src, VikCoord * dest)
+void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {

@@ -293,7 +293,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 				c_wp->visible = false;
 			}
 
-			c_wp->coord = VikCoord(c_ll, trw->get_coord_mode());
+			c_wp->coord = Coord(c_ll, trw->get_coord_mode());
 		}
 		break;
 
@@ -313,7 +313,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 	case tt_trk_trkseg_trkpt:
 		if (set_c_ll(attr)) {
 			c_tp = new Trackpoint();
-			c_tp->coord = VikCoord(c_ll, trw->get_coord_mode());
+			c_tp->coord = Coord(c_ll, trw->get_coord_mode());
 			if (f_tr_newseg) {
 				c_tp->newsegment = true;
 				f_tr_newseg = false;
@@ -354,7 +354,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 
 	case tt_waypoint_coord:
 		if (set_c_ll(attr)) {
-			c_wp->coord = VikCoord(c_ll, trw->get_coord_mode());
+			c_wp->coord = Coord(c_ll, trw->get_coord_mode());
 		}
 		break;
 

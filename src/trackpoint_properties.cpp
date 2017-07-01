@@ -78,10 +78,10 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 		struct LatLon ll;
 		ll.lat = this->lat->value();
 		ll.lon = this->lon->value();
-		VikCoord coord(ll, this->cur_tp->coord.mode);
+		Coord coord(ll, this->cur_tp->coord.mode);
 
 		/* Don't redraw unless we really have to. */
-		if (VikCoord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
+		if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
 			this->cur_tp->coord = coord;
 #ifdef K
 			gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
@@ -312,11 +312,11 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	if (this->cur_tp) {
 		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
-			snprintf(tmp_str, sizeof (tmp_str), "%.2f m", VikCoord::distance(tp->coord, this->cur_tp->coord));
+			snprintf(tmp_str, sizeof (tmp_str), "%.2f m", Coord::distance(tp->coord, this->cur_tp->coord));
 			break;
 		case DistanceUnit::MILES:
 		case DistanceUnit::NAUTICAL_MILES:
-			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", VikCoord::distance(tp->coord, this->cur_tp->coord) * 1.0936133);
+			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", Coord::distance(tp->coord, this->cur_tp->coord) * 1.0936133);
 			break;
 		default:
 			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
@@ -329,7 +329,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 			if (tp->timestamp == this->cur_tp->timestamp) {
 				this->diff_speed->setText(QString("--"));
 			} else {
-				double tmp_speed = VikCoord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
+				double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
 				get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tmp_speed);
 				this->diff_speed->setText(QString(tmp_str));
 			}

@@ -162,7 +162,7 @@ bool MapSourceSlippy::supports_download_only_new()
 
 
 
-bool MapSourceSlippy::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceSlippy::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	bool result = map_utils_vikcoord_to_iTMS(src, xzoom, yzoom, dest);
 	return result;
@@ -171,7 +171,7 @@ bool MapSourceSlippy::coord_to_tile(const VikCoord * src, double xzoom, double y
 
 
 
-void MapSourceSlippy::tile_to_center_coord(TileInfo *src, VikCoord *dest)
+void MapSourceSlippy::tile_to_center_coord(TileInfo *src, Coord *dest)
 {
 	map_utils_iTMS_to_center_vikcoord(src, dest);
 }

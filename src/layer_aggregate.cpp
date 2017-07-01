@@ -453,7 +453,7 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
  */
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-	VikCoord position;
+	Coord position;
 	char * date_str = a_dialog_get_date(this->get_window(), _("Search by Date"));
 	if (!date_str) {
 		return;

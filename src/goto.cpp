@@ -50,7 +50,7 @@ using namespace SlavGPS;
 
 static int last_goto_idx = -1;
 static char * last_location = NULL;
-static VikCoord * last_coord = NULL;
+static Coord * last_coord = NULL;
 static char * last_successful_location = NULL;
 
 std::vector<GotoTool *> goto_tools;
@@ -89,7 +89,7 @@ char * SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 		return NULL;
 	}
 
-	const VikCoord * cur_center = window->get_viewport()->get_center();
+	const Coord * cur_center = window->get_viewport()->get_center();
 	if (*cur_center == *last_coord) {
 		return(last_successful_location);
 	} else {
@@ -265,7 +265,7 @@ char * goto_location_dialog(Window * window)
  *
  * Returns: %true if a successful lookup
  */
-static bool vik_goto_location(Viewport * viewport, char* name, VikCoord *vcoord)
+static bool vik_goto_location(Viewport * viewport, char* name, Coord *vcoord)
 {
 	/* Ensure last_goto_idx is given a value. */
 	last_goto_idx = get_last_provider_index();
@@ -297,13 +297,13 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 		if (!location) {
 			more = false;
 		} else {
-			VikCoord location_coord;
+			Coord location_coord;
 			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location, &location_coord);
 			if (ans == 0) {
 				if (last_coord) {
 					free(last_coord);
 				}
-				last_coord = (VikCoord *) malloc(sizeof(VikCoord));
+				last_coord = (Coord *) malloc(sizeof(Coord));
 				*last_coord = location_coord;
 				if (last_successful_location) {
 					free(last_successful_location);
@@ -455,7 +455,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 		if (city) {
 			fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city);
 			if (strcmp(city, "(Unknown city)") != 0) {
-				VikCoord new_center;
+				Coord new_center;
 				if (vik_goto_location(viewport, city, &new_center)) {
 					/* Got something. */
 					*ll = new_center.get_latlon();
@@ -470,7 +470,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 		if (country) {
 			fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country);
 			if (strcmp(country, "(Unknown Country)") != 0) {
-				VikCoord new_center;
+				Coord new_center;
 				if (vik_goto_location(viewport, country, &new_center)) {
 					/* Finally got something. */
 					*ll = new_center.get_latlon();
@@ -492,13 +492,13 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 
 void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 {
-	VikCoord new_center;
+	Coord new_center;
 
 	struct LatLon ll;
 	struct LatLon llold = viewport->get_center()->get_latlon();
 
 	if (goto_latlon_dialog(window, &ll, &llold)) {
-		new_center = VikCoord(ll, viewport->get_coord_mode());
+		new_center = Coord(ll, viewport->get_coord_mode());
 	} else {
 		return;
 	}
@@ -574,13 +574,13 @@ bool goto_latlon_dialog(SlavGPS::Window * parent, struct LatLon * ll, const stru
 
 void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 {
-	VikCoord new_center;
+	Coord new_center;
 
 	struct UTM utm;
 	struct UTM utmold = viewport->get_center()->get_utm();
 
 	if (goto_utm_dialog(window, &utm, &utmold)) {
-		new_center = VikCoord(utm, viewport->get_coord_mode());
+		new_center = Coord(utm, viewport->get_coord_mode());
 	} else {
 		return;
 	}

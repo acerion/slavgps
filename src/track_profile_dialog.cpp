@@ -323,7 +323,7 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 	}
 
 	if (tp) {
-		VikCoord coord = tp->coord;
+		Coord coord = tp->coord;
 		if (panel) {
 			panel->get_viewport()->set_center_coord(&coord, true);
 			panel->emit_update_cb();
@@ -447,7 +447,7 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 
 	auto iter = std::next(trk->trackpointsB->begin());
 	for (; iter != trk->trackpointsB->end(); iter++) {
-		dist += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		/* Assuming trackpoint is not a copy. */
 		if (tp == *iter) {
 			break;
@@ -1230,7 +1230,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
 
-		dist += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		int x = (graph_width * dist) / total_length + margin;
 		if (do_dem) {
 			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
@@ -1546,7 +1546,7 @@ static void draw_speed_dist(Track * trk_,
 
 	double dist = 0;
 	for (auto iter = std::next(trk_->trackpointsB->begin()); iter != trk_->trackpointsB->end(); iter++) {
-		dist += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		int x = (graph_width * dist) / total_length + GRAPH_MARGIN_LEFT;
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
@@ -2105,7 +2105,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 
 			gps_speed = convert_speed_mps_to(speed_units, gps_speed);
 
-			dist_tp += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
+			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			int pos_x = graph_left + (graph_width * dist_tp / dist);
 			int pos_y = graph_bottom - graph_height * (gps_speed - mins)/(chunkss[this->cisd] * LINES);
 			viewport->fill_rectangle(gps_speed_pen.color(), pos_x - 2, pos_y - 2, 4, 4);

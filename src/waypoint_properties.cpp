@@ -302,7 +302,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 		gtk_widget_set_sensitive(consistentGeotagCB, false);
 		if (hasGeotag) {
 			struct LatLon ll = a_geotag_get_position(wp->image);
-			VikCoord coord(ll, coord_mode);
+			Coord coord(ll, coord_mode);
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), coord == wp->coord);
 		}
 #endif
@@ -355,7 +355,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 			/* Do It. */
 			ll.lat = convert_dms_to_dec(latentry->text());
 			ll.lon = convert_dms_to_dec(lonentry->text());
-			wp->coord = VikCoord(ll, coord_mode);
+			wp->coord = Coord(ll, coord_mode);
 			/* Always store in metres. */
 			switch (height_units) {
 			case HeightUnit::METRES:

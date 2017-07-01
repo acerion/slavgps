@@ -208,7 +208,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Vertical lines. */
 	{
-		VikCoord ul, ur, bl;
+		Coord ul, ur, bl;
 		viewport->screen_to_coord(0,                     0,                      &ul);
 		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);
@@ -252,7 +252,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Horizontal lines. */
 	{
-		VikCoord ul, ur, bl;
+		Coord ul, ur, bl;
 		viewport->screen_to_coord(0,                     0,                      &ul);
 		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);

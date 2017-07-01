@@ -99,7 +99,7 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-char * WebToolFormat::get_url_at_position(Window * window, VikCoord *vc)
+char * WebToolFormat::get_url_at_position(Window * window, Coord *vc)
 {
 	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
 

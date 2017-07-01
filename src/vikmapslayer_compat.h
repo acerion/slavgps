@@ -39,8 +39,8 @@ namespace SlavGPS {
 		uint16_t tilesize_x;
 		uint16_t tilesize_y;
 		unsigned int drawmode;
-		bool (*coord_to_tile) (const VikCoord * src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
-		void (*tile_to_center_coord) (TileInfo * src, VikCoord * dest);
+		bool (*coord_to_tile) (const Coord * src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
+		void (*tile_to_center_coord) (TileInfo * src, Coord * dest);
 		DownloadResult (*download) (TileInfo * src, char const * dest_fn, void * handle);
 		void *(*download_handle_init) ();
 		void (*download_handle_cleanup) (void * handle);

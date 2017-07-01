@@ -752,7 +752,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 void Window::draw_redraw()
 {
-	VikCoord old_center = this->trigger_center;
+	Coord old_center = this->trigger_center;
 	this->trigger_center = *(this->viewport->get_center());
 	SlavGPS::Layer * new_trigger = this->trigger;
 	this->trigger = NULL;

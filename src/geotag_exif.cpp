@@ -311,7 +311,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 			wp->visible = true;
 			/* Set info from exif values. */
 			/* Location. */
-			wp->coord = VikCoord(ll, vcmode);
+			wp->coord = Coord(ll, vcmode);
 			/* Altitude. */
 			wp->altitude = alt;
 
@@ -385,7 +385,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 	wp->visible = true;
 	/* Set info from exif values. */
 	/* Location. */
-	wp->coord = VikCoord(ll, vcmode);
+	wp->coord = Coord(ll, vcmode);
 	/* Altitude. */
 	wp->altitude = alt;
 
@@ -416,7 +416,7 @@ MyReturn:
  *
  * Here EXIF processing is used to get non position related information (i.e. just the comment).
  */
-Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, VikCoord coord, double alt, char **name, Waypoint *wp)
+Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord coord, double alt, char **name, Waypoint *wp)
 {
 	*name = NULL;
 	if (wp == NULL) {
@@ -785,7 +785,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
  *
  * Returns: A value indicating success: 0, or some other value for failure.
  */
-int SlavGPS::a_geotag_write_exif_gps(const char *filename, VikCoord coord, double alt, bool no_change_mtime)
+int SlavGPS::a_geotag_write_exif_gps(const char *filename, Coord coord, double alt, bool no_change_mtime)
 {
 	int result = 0; /* OK so far... */
 

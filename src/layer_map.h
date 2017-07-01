@@ -81,14 +81,14 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
-		void draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br);
+		void draw_section(Viewport * viewport, Coord *ul, Coord *br);
 		QString tooltip();
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
 		char * get_map_label();
-		int how_many_maps(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode);
+		int how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
 		void set_cache_dir(char const * dir);
 		void mkdir_if_default_dir();
@@ -99,10 +99,10 @@ namespace SlavGPS {
 		static MapTypeID get_default_map_type(void);
 
 		void download(Viewport * viewport, bool only_new);
-		void download_section(const VikCoord * ul, const VikCoord * br, double zoom);
-		void download_section_sub(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode);
+		void download_section(const Coord * ul, const Coord * br, double zoom);
+		void download_section_sub(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
-		void start_download_thread(Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
+		void start_download_thread(Viewport * viewport, const Coord *ul, const Coord *br, int redownload_mode);
 		void download_onscreen_maps(int redownload_mode);
 
 		static void weak_ref_cb(void * ptr, GObject * dead_vml);
@@ -122,7 +122,7 @@ namespace SlavGPS {
 		bool autodownload = false;
 		bool adl_only_missing = false;
 
-		VikCoord * last_center = NULL;
+		Coord * last_center = NULL;
 		double last_xmpp = 0.0;
 		double last_ympp = 0.0;
 
@@ -131,7 +131,7 @@ namespace SlavGPS {
 		int dl_tool_y = -1;
 
 		QMenu * dl_right_click_menu = NULL;
-		VikCoord redownload_ul, redownload_br; /* Right click menu only. */
+		Coord redownload_ul, redownload_br; /* Right click menu only. */
 		Viewport * redownload_viewport = NULL;
 		char * filename = NULL;
 

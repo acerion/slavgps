@@ -93,7 +93,7 @@ namespace SlavGPS {
 
 
 		char * name = NULL;
-		VikCoord coord;
+		Coord coord;
 		bool newsegment = false;
 		bool has_timestamp = false;
 		time_t timestamp = 0;
@@ -235,7 +235,7 @@ namespace SlavGPS {
 
 		void steal_and_append_trackpoints(Track * from);
 
-		VikCoord * cut_back_to_double_point();
+		Coord * cut_back_to_double_point();
 
 		static int compare_timestamp(const void * x, const void * y);
 

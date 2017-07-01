@@ -110,7 +110,7 @@ bool MapSourceWmsc::supports_download_only_new()
 
 
 
-bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceWmsc::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	assert (src->mode == CoordMode::LATLON);
 
@@ -139,7 +139,7 @@ bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzo
 
 
 
-void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
+void MapSourceWmsc::tile_to_center_coord(TileInfo *src, Coord *dest)
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {

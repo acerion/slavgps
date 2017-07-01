@@ -70,7 +70,7 @@ void WebTool::open(Window * window)
 
 
 
-void WebTool::open_at_position(Window * window, VikCoord * vc)
+void WebTool::open_at_position(Window * window, Coord * vc)
 {
 	char * url = this->get_url_at_position(window, vc);
 	if (url) {

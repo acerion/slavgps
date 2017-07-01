@@ -1541,7 +1541,7 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
 	struct LatLon ll;
-	VikCoord nw, se;
+	Coord nw, se;
 
 	viewport->screen_to_coord(-20, -20, &nw);
 	viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20, &se);
@@ -1555,7 +1555,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 		ll.lat = this->realtime_fix.fix.latitude;
 		ll.lon = this->realtime_fix.fix.longitude;
-		VikCoord gps(ll, viewport->get_coord_mode());
+		Coord gps(ll, viewport->get_coord_mode());
 
 		int x, y;
 		viewport->coord_to_screen(&gps, &x, &y);
@@ -1650,7 +1650,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 			ll.lat = this->realtime_fix.fix.latitude;
 			ll.lon = this->realtime_fix.fix.longitude;
-			tp_->coord = VikCoord(ll, this->trw_children[TRW_REALTIME]->get_coord_mode());
+			tp_->coord = Coord(ll, this->trw_children[TRW_REALTIME]->get_coord_mode());
 
 			this->realtime_track->add_trackpoint(tp_, true); /* Ensure bounds is recalculated. */
 			this->realtime_fix.dirty = false;
@@ -1714,7 +1714,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		ll.lat = layer->realtime_fix.fix.latitude;
 		ll.lon = layer->realtime_fix.fix.longitude;
 
-		VikCoord vehicle_coord(ll, layer->trw_children[TRW_REALTIME]->get_coord_mode());
+		Coord vehicle_coord(ll, layer->trw_children[TRW_REALTIME]->get_coord_mode());
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {

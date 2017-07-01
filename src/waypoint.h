@@ -72,7 +72,7 @@ namespace SlavGPS {
 		void convert(CoordMode dest_mode);
 
 
-		VikCoord coord;
+		Coord coord;
 		bool visible = true;
 		bool has_timestamp = false;
 		time_t timestamp = 0;

@@ -98,7 +98,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		dp->cn2 = dp->center->utm.northing + h2;
 
 	} else if (dp->coord_mode == CoordMode::LATLON) {
-		VikCoord upperleft, bottomright;
+		Coord upperleft, bottomright;
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 		viewport->screen_to_coord(-500, -500, &upperleft);
@@ -129,7 +129,7 @@ static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, dou
 	double rv = 0;
 	if (tp1->has_timestamp && tp2->has_timestamp) {
 		if (average_speed > 0) {
-			rv = (VikCoord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
+			rv = (Coord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
 			if (rv < low_speed) {
 				return VIK_TRW_LAYER_TRACK_GC_SLOW;
 			} else if (rv > high_speed) {
@@ -159,7 +159,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 
 
 
-static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, VikCoord * coord)
+static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, Coord * coord)
 {
 	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name);
 #ifdef K
@@ -269,7 +269,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			   but should be good enough over the small scale that I anticipate usage on. */
 			struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
 						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
-			VikCoord coord(ll_new, dp->trw->coord_mode);
+			Coord coord(ll_new, dp->trw->coord_mode);
 
 			char *fgcolour;
 			if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
@@ -328,7 +328,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		VikCoord coord(average, dp->trw->coord_mode);
+		Coord coord(average, dp->trw->coord_mode);
 
 		trw_layer_draw_track_label(ename, fgcolour, bgcolour, dp, &coord);
 	}
@@ -346,8 +346,8 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 	if (!tp_begin) {
 		return;
 	}
-	VikCoord begin_coord = tp_begin->coord;
-	VikCoord end_coord = tp_end->coord;
+	Coord begin_coord = tp_begin->coord;
+	Coord end_coord = tp_end->coord;
 
 	bool done_start_end = false;
 
@@ -365,7 +365,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 			int x1, x2, y1, y2;
 			dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
 			dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
-			VikCoord av_coord;
+			Coord av_coord;
 			dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord);
 
 			char *name = g_strdup_printf("%s: %s", ename, _("start/end"));

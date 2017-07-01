@@ -180,7 +180,7 @@ public:
 	time_t PhotoTime = 0;
 	/* Store answer from interpolation for an image. */
 	bool found_match = false;
-	VikCoord coord;
+	Coord coord;
 	double altitude = 0;
 	/* If anything has changed. */
 	bool redraw = false;
@@ -386,7 +386,7 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
-			options->coord = VikCoord(ll_result, CoordMode::LATLON);
+			options->coord = Coord(ll_result, CoordMode::LATLON);
 
 			/* Interpolate elevation. */
 			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);

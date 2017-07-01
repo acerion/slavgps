@@ -117,7 +117,7 @@ bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * to
 		return false;
 	}
 
-	VikCoord new_coord;
+	Coord new_coord;
 
 	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
@@ -169,7 +169,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		return false;
 	}
 
-	VikCoord new_coord;
+	Coord new_coord;
 	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint. */
@@ -555,7 +555,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent *
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	VikCoord new_coord;
+	Coord new_coord;
 	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 
@@ -596,7 +596,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEven
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		VikCoord new_coord;
+		Coord new_coord;
 		this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 		/* Snap to trackpoint. */
@@ -863,10 +863,10 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 		double distance = trw->current_trk->get_length();
 
 		/* Now add distance to where the pointer is. */
-		VikCoord coord;
+		Coord coord;
 		tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
 		struct LatLon ll = coord.get_latlon();
-		double last_step = VikCoord::distance(coord, last_tpt->coord);
+		double last_step = Coord::distance(coord, last_tpt->coord);
 		distance = distance + last_step;
 
 		/* Get elevation data. */
@@ -1244,7 +1244,7 @@ LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent *
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	VikCoord coord;
+	Coord coord;
 	if (trw->type != LayerType::TRW) {
 		return LayerToolFuncStatus::IGNORE;
 	}
@@ -1408,7 +1408,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	VikCoord new_coord;
+	Coord new_coord;
 	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint. */
@@ -1445,7 +1445,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEv
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	VikCoord new_coord;
+	Coord new_coord;
 	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
 
 	/* Snap to trackpoint */
@@ -1526,7 +1526,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::release_(Layer * layer, QMo
 
 void LayerTRW::tool_extended_route_finder_undo()
 {
-	VikCoord * new_end = this->current_trk->cut_back_to_double_point();
+	Coord * new_end = this->current_trk->cut_back_to_double_point();
 	if (!new_end) {
 		return;
 	}
@@ -1552,7 +1552,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	VikCoord tmp;
+	Coord tmp;
 
 	this->viewport->screen_to_coord(ev->x(), ev->y(), &tmp);
 	if (ev->button() == Qt::RightButton && trw->current_trk) {

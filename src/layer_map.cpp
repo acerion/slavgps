@@ -1290,7 +1290,7 @@ static QPixmap * get_pixmap_from_file(LayerMap * layer, const char * full_path)
 
 static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 {
-	const VikCoord *center = viewport->get_center();
+	const Coord *center = viewport->get_center();
 
 	if (viewport->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
@@ -1306,7 +1306,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 	}
 
 	if (layer->last_center == NULL) {
-		VikCoord *new_center = (VikCoord *) malloc(sizeof(VikCoord));
+		Coord *new_center = (Coord *) malloc(sizeof(Coord));
 		*new_center = *center; /* KamilFIXME: can we do it this way? */
 		layer->last_center = new_center;
 		layer->last_xmpp = viewport->get_xmpp();
@@ -1393,7 +1393,7 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 
 
 
-void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
+void LayerMap::draw_section(Viewport * viewport, Coord *ul, Coord *br)
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
@@ -1436,7 +1436,7 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 		MapTypeID map_type = map->map_type;
 		const char *mapname = map->get_name();
 
-		VikCoord coord;
+		Coord coord;
 		int xx, yy;
 		QPixmap *pixmap;
 
@@ -1594,7 +1594,7 @@ void LayerMap::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 void LayerMap::draw(Viewport * viewport)
 {
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
-		VikCoord ul, br;
+		Coord ul, br;
 
 		/* Copyright. */
 		double level = viewport->get_zoom();
@@ -1681,7 +1681,7 @@ void LayerMap::weak_ref_cb(void * ptr, GObject * dead_vml)
 
 static bool is_in_area(MapSource * map, TileInfo * mc)
 {
-	VikCoord coord;
+	Coord coord;
 	map->tile_to_center_coord(mc, &coord);
 
 	struct LatLon tl;
@@ -1691,8 +1691,8 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 	br.lat = map->get_lat_min();
 	br.lon = map->get_lon_max();
 
-	const VikCoord coord_tl(tl, CoordMode::LATLON);
-	const VikCoord coord_br(br, CoordMode::LATLON);
+	const Coord coord_tl(tl, CoordMode::LATLON);
+	const Coord coord_br(br, CoordMode::LATLON);
 
 	return coord.is_inside(&coord_tl, &coord_br);
 }
@@ -1847,7 +1847,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 
 
-void LayerMap::start_download_thread(Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
+void LayerMap::start_download_thread(Viewport * viewport, const Coord *ul, const Coord *br, int redownload_mode)
 {
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
@@ -1890,7 +1890,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const VikCoord *ul, co
 
 
 
-void LayerMap::download_section_sub(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode)
+void LayerMap::download_section_sub(const Coord * ul, const Coord * br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -1937,7 +1937,7 @@ void LayerMap::download_section_sub(const VikCoord * ul, const VikCoord * br, do
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMap::download_section(const VikCoord * ul, const VikCoord * br, double zoom)
+void LayerMap::download_section(const Coord * ul, const Coord * br, double zoom)
 {
 	this->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
 }
@@ -2092,7 +2092,7 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
-			VikCoord ul, br;
+			Coord ul, br;
 			this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)), &ul);
 			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)), &br);
 			layer->start_download_thread(this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
@@ -2203,7 +2203,7 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
 
-	VikCoord ul, br;
+	Coord ul, br;
 	TileInfo ulm, brm;
 
 	viewport->screen_to_coord(0, 0, &ul);
@@ -2269,7 +2269,7 @@ void LayerMap::about_cb(void)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMap::how_many_maps(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode)
+int LayerMap::how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -2461,8 +2461,8 @@ void LayerMap::download_all_cb(void)
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 	struct LatLon ll_ul = { max_lat, min_lon };
 	struct LatLon ll_br = { min_lat, max_lon };
-	const VikCoord coord_ul(ll_ul, viewport->get_coord_mode());
-	const VikCoord coord_br(ll_br, viewport->get_coord_mode());
+	const Coord coord_ul(ll_ul, viewport->get_coord_mode());
+	const Coord coord_br(ll_br, viewport->get_coord_mode());
 
 	/* Get Maps Count - call for each zoom level (in reverse).
 	   With REDOWNLOAD_NEW this is a possible maximum.
@@ -2723,6 +2723,6 @@ LayerMap::LayerMap()
 
 	this->set_initial_parameter_values();
 
-	memset(&redownload_ul, 0, sizeof (VikCoord));
-	memset(&redownload_br, 0, sizeof (VikCoord));
+	memset(&redownload_ul, 0, sizeof (Coord));
+	memset(&redownload_br, 0, sizeof (Coord));
 }

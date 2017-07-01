@@ -83,7 +83,7 @@ typedef struct {
 	uint16_t width, height;
 	double cc;      /* Cosine factor in track directions. */
 	double ss;      /* Sine factor in track directions. */
-	const SlavGPS::VikCoord * center;
+	const SlavGPS::Coord * center;
 	SlavGPS::CoordMode coord_mode; /* UTM or Lat/Lon. */
 	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
 	double ce1, ce2, cn1, cn2;

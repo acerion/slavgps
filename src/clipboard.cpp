@@ -271,7 +271,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
 {
 	Layer * selected = panel->get_selected_layer();
 
-	VikCoord coord(ll, CoordMode::LATLON);
+	Coord coord(ll, CoordMode::LATLON);
 
 	if (selected && selected->type == LayerType::TRW) {
 		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &coord);

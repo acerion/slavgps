@@ -43,25 +43,25 @@ namespace SlavGPS {
 
 
 
-	class VikCoord {
+	class Coord {
 	public:
-		VikCoord() {};
-		VikCoord(const struct LatLon & ll, CoordMode mode);
-		VikCoord(const struct UTM & utm, CoordMode mode);
+		Coord() {};
+		Coord(const struct LatLon & ll, CoordMode mode);
+		Coord(const struct UTM & utm, CoordMode mode);
 
 		struct LatLon get_latlon(void) const;
 		struct UTM get_utm(void) const;
 
-		void set_area(const struct LatLon * wh, VikCoord * coord_tl, VikCoord * coord_br) const;
-		bool is_inside(const VikCoord * coord_tl, const VikCoord * coord_br) const;
+		void set_area(const struct LatLon * wh, Coord * coord_tl, Coord * coord_br) const;
+		bool is_inside(const Coord * coord_tl, const Coord * coord_br) const;
 
 		void change_mode(CoordMode new_mode);
-		VikCoord copy_change_mode(CoordMode new_mode) const;
+		Coord copy_change_mode(CoordMode new_mode) const;
 
-		static double distance(const VikCoord & coord1, const VikCoord & coord2);
+		static double distance(const Coord & coord1, const Coord & coord2);
 
-		bool operator==(const VikCoord & coord) const;
-		bool operator!=(const VikCoord & coord) const;
+		bool operator==(const Coord & coord) const;
+		bool operator!=(const Coord & coord) const;
 
 
 		struct LatLon ll;
@@ -72,12 +72,10 @@ namespace SlavGPS {
 
 
 
-	typedef VikCoord Coord;
-
 	typedef struct _Rect {
-		VikCoord tl;
-		VikCoord br;
-		VikCoord center;
+		Coord tl;
+		Coord br;
+		Coord center;
 	} Rect;
 
 

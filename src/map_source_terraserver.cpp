@@ -79,7 +79,7 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const VikCoord * src, double xmpp, double ympp, TileInfo * dest)
+bool MapSourceTerraserver::coord_to_tile(const Coord * src, double xmpp, double ympp, TileInfo * dest)
 {
 	if (src->mode != CoordMode::UTM) {
 		return false;
@@ -119,7 +119,7 @@ bool MapSourceTerraserver::is_mbtiles(void)
 
 
 
-void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, VikCoord * dest)
+void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	/* FIXME: slowdown here! */
 	double mpp = scale_to_mpp (src->scale);

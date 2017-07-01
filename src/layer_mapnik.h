@@ -75,8 +75,8 @@ namespace SlavGPS {
 		void set_cache_dir(char const * name);
 		bool carto_load(void);
 		void possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm);
-		void render(VikCoord * ul, VikCoord * br, TileInfo * ulm);
-		void thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name);
+		void render(Coord * ul, Coord * br, TileInfo * ulm);
+		void thread_add(TileInfo * mul, Coord * ul, Coord * br, int x, int y, int z, int zoom, char const * name);
 		QPixmap * load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender);
 		QPixmap * get_pixmap(TileInfo * ulm, TileInfo * brm);
 		void rerender();
@@ -98,8 +98,8 @@ namespace SlavGPS {
 		bool use_file_cache = false;
 		char * file_cache_dir = NULL;
 
-		VikCoord rerender_ul;
-		VikCoord rerender_br;
+		Coord rerender_ul;
+		Coord rerender_br;
 		double rerender_zoom = 0;
 		GtkWidget * right_click_menu = NULL;
 	};

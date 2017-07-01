@@ -46,8 +46,8 @@
 
 
 
-static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
-static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest);
+static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
+static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest);
 static DownloadResult expedia_download(TileInfo * src, char const * dest_fn, void * handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
@@ -157,7 +157,7 @@ void expedia_snip(char const * file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
+static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	assert (src->mode == CoordMode::LATLON);
 
@@ -191,7 +191,7 @@ void expedia_xy_to_latlon_middle(int alti, int x, int y, struct LatLon * ll)
 
 
 
-static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest)
+static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	dest->mode = CoordMode::LATLON;
 	dest->east_west = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;

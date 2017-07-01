@@ -146,8 +146,8 @@ namespace SlavGPS {
 	LayerGeoref * vik_georef_layer_create(Viewport * viewport,
 					      const char *name,
 					      QPixmap * pixmap,
-					      const VikCoord * coord_tr,
-					      const VikCoord * coord_br);
+					      const Coord * coord_tr,
+					      const Coord * coord_br);
 
 
 

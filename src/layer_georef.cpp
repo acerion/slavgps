@@ -346,7 +346,7 @@ void LayerGeoref::draw(Viewport * viewport)
 		unsigned int width_ = viewport->get_width();
 		unsigned int height_ = viewport->get_height();
 		int x, y;
-		VikCoord corner_coord(this->corner, viewport->get_coord_mode());
+		Coord corner_coord(this->corner, viewport->get_coord_mode());
 		viewport->coord_to_screen(&corner_coord, &x, &y);
 
 		/* Mark to scale the pixmap if it doesn't match our dimensions. */
@@ -969,7 +969,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
 
-	VikCoord coord(this->corner, CoordMode::LATLON);
+	Coord coord(this->corner, CoordMode::LATLON);
 	cw.lat_tl_spin.setValue(coord.north_south);
 	cw.lon_tl_spin.setValue(coord.east_west);
 	cw.lat_br_spin.setValue(this->ll_br.lat);
@@ -1078,7 +1078,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	utm.easting = layer->corner.easting + (layer->width * layer->mpp_easting / 2); /* Only an approximation. */
 	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);
 
-	VikCoord coord(utm, viewport->get_coord_mode());
+	Coord coord(utm, viewport->get_coord_mode());
 	viewport->set_center_coord(&coord, true);
 
 	panel->emit_update_cb();
@@ -1261,7 +1261,7 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
 	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
-	VikCoord new_center(ll_center, viewport->get_coord_mode());
+	Coord new_center(ll_center, viewport->get_coord_mode());
 	viewport->set_center_coord(&new_center, true);
 }
 
@@ -1271,8 +1271,8 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 					       const char *name,
 					       QPixmap * pixmap,
-					       const VikCoord * coord_tl,
-					       const VikCoord * coord_br)
+					       const Coord * coord_tl,
+					       const Coord * coord_br)
 {
 
 	LayerGeoref * grl = new LayerGeoref();

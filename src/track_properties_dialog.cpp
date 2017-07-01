@@ -319,7 +319,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		struct LatLon center = { (this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2 };
-		const VikCoord coord(center, this->trw->get_coord_mode());
+		const Coord coord(center, this->trw->get_coord_mode());
 		this->tz = vu_get_tz_at_location(&coord);
 
 
