@@ -716,8 +716,8 @@ bool DEM::overlap(LatLonBBox * bbox)
 		dem_northeast_utm.zone = dem_southwest_utm.zone = this->utm_zone;
 		dem_northeast_utm.letter = dem_southwest_utm.letter = this->utm_letter;
 
-		a_coords_utm_to_latlon(&dem_northeast_utm, &dem_northeast);
-		a_coords_utm_to_latlon(&dem_southwest_utm, &dem_southwest);
+		a_coords_utm_to_latlon(&dem_northeast, &dem_northeast_utm);
+		a_coords_utm_to_latlon(&dem_southwest, &dem_southwest_utm);
 	} else {
 		// Unknown horiz_units - this shouldn't normally happen
 		// Thus can't work out positions to use

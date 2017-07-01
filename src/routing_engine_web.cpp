@@ -295,8 +295,7 @@ static void _append_stringified_coords(void * data, void * user_data)
 	struct _append_ctx *ctx = (struct _append_ctx*)user_data;
 
 	/* Stringify coordinate. */
-	struct LatLon position;
-	vik_coord_to_latlon(&(tp->coord), &position);
+	struct LatLon position = tp->coord.get_latlon();
 	char * string = substitute_latlon(ctx->engine->url_via_ll_fmt, position);
 
 	/* Append. */
@@ -333,17 +332,16 @@ char * RoutingEngineWeb::get_url_for_track(Track * trk)
 	}
 
 	/* Override first and last positions with associated formats. */
-	struct LatLon position;
 	free(urlParts[1]);
 
 	Trackpoint * tp = *trk->trackpointsB->begin();
-	vik_coord_to_latlon(&tp->coord, &position);
+	struct LatLon position = tp->coord.get_latlon();
 	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, position);
 
 	free(urlParts[len-2]);
 
 	tp = *std::prev(trk->trackpointsB->end());
-	vik_coord_to_latlon(&tp->coord, &position);
+	position = tp->coord.get_latlon();
 	urlParts[len-2] = substitute_latlon(this->url_stop_ll_fmt, position);
 
 	/* Concat. */

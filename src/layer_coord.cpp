@@ -213,8 +213,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);
 
-		const double min = ul.east_west;
-		const double max = ur.east_west;
+		const double min = ul.ll.lon;
+		const double max = ur.ll.lon;
 
 		if (60 * fabs(min - max) < 4) {
 			seconds = true;
@@ -228,23 +228,23 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
 			if (smod && seconds) {
 				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
-					ul.east_west = j / 3600.0;
-					bl.east_west = j / 3600.0;
+					ul.ll.lon = j / 3600.0;
+					bl.ll.lon = j / 3600.0;
 					if ((int) j % smod == 0) {
 						CLINE(sgc, &ul, &bl);
 					}
 				}
 			}
 			if (mmod && minutes) {
-				ul.east_west = i / 60.0;
-				bl.east_west = i / 60.0;
+				ul.ll.lon = i / 60.0;
+				bl.ll.lon = i / 60.0;
 				if ((int) i % mmod == 0) {
 					CLINE(mgc, &ul, &bl);
 				}
 			}
 			if ((int) i % 60 == 0) {
-				ul.east_west = i / 60.0;
-				bl.east_west = i / 60.0;
+				ul.ll.lon = i / 60.0;
+				bl.ll.lon = i / 60.0;
 				CLINE(dgc, &ul, &bl);
 			}
 		}
@@ -257,29 +257,29 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);
 
-		const double min = bl.north_south;
-		const double max = ul.north_south;
+		const double min = bl.ll.lat;
+		const double max = ul.ll.lat;
 
 		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
 			if (smod && seconds) {
 				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
-					ul.north_south = j / 3600.0;
-					ur.north_south = j / 3600.0;
+					ul.ll.lat = j / 3600.0;
+					ur.ll.lat = j / 3600.0;
 					if ((int) j % smod == 0) {
 						CLINE(sgc, &ul, &ur);
 					}
 				}
 			}
 			if (mmod && minutes) {
-				ul.north_south = i / 60.0;
-				ur.north_south = i / 60.0;
+				ul.ll.lat = i / 60.0;
+				ur.ll.lat = i / 60.0;
 				if ((int) i % mmod == 0) {
 					CLINE(mgc, &ul, &ur);
 				}
 			}
 			if ((int) i % 60 == 0) {
-				ul.north_south = i / 60.0;
-				ur.north_south = i / 60.0;
+				ul.ll.lat = i / 60.0;
+				ur.ll.lat = i / 60.0;
 				CLINE(dgc, &ul, &ur);
 			}
 		}
@@ -310,11 +310,11 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	struct UTM utm = *center;
 	utm.northing = center->northing - (ympp * height / 2);
 
-	a_coords_utm_to_latlon(&utm, &ll);
+	a_coords_utm_to_latlon(&ll, &utm);
 
 	utm.northing = center->northing + (ympp * height / 2);
 
-	a_coords_utm_to_latlon(&utm, &ll2);
+	a_coords_utm_to_latlon(&ll2, &utm);
 
 	{
 		/*
@@ -326,13 +326,13 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		temp_utm = *center;
 		temp_utm.easting -= (width/2)*xmpp;
 		temp_utm.northing += (height/2)*ympp;
-		a_coords_utm_to_latlon(&temp_utm, &topleft);
+		a_coords_utm_to_latlon(&topleft, &temp_utm);
 		temp_utm.easting += (width*xmpp);
-		a_coords_utm_to_latlon(&temp_utm, &topright);
+		a_coords_utm_to_latlon(&topright, &temp_utm);
 		temp_utm.northing -= (height*ympp);
-		a_coords_utm_to_latlon(&temp_utm, &bottomright);
+		a_coords_utm_to_latlon(&bottomright, &temp_utm);
 		temp_utm.easting -= (width*xmpp);
-		a_coords_utm_to_latlon(&temp_utm, &bottomleft);
+		a_coords_utm_to_latlon(&bottomleft, &temp_utm);
 		min.lon = (topleft.lon < bottomleft.lon) ? topleft.lon : bottomleft.lon;
 		max.lon = (topright.lon > bottomright.lon) ? topright.lon : bottomright.lon;
 		min.lat = (bottomleft.lat < bottomright.lat) ? bottomleft.lat : bottomright.lat;
@@ -361,9 +361,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	ll.lon = ll2.lon = lon;
 
 	for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
-		a_coords_latlon_to_utm(&ll, &utm);
+		a_coords_latlon_to_utm(&utm, &ll);
 		int x1 = ((utm.easting - center->easting) / xmpp) + (width / 2);
-		a_coords_latlon_to_utm(&ll2, &utm);
+		a_coords_latlon_to_utm(&utm, &ll2);
 		int x2 = ((utm.easting - center->easting) / xmpp) + (width / 2);
 		viewport->draw_line(pen, x1, height, x2, 0);
 	}
@@ -371,20 +371,20 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	utm = *center;
 	utm.easting = center->easting - (xmpp * width / 2);
 
-	a_coords_utm_to_latlon(&utm, &ll);
+	a_coords_utm_to_latlon(&ll, &utm);
 
 	utm.easting = center->easting + (xmpp * width / 2);
 
-	a_coords_utm_to_latlon(&utm, &ll2);
+	a_coords_utm_to_latlon(&ll2, &utm);
 
 	/* Really lat, just reusing a variable. */
 	lon = ((double) ((long) ((min.lat)/ this->deg_inc))) * this->deg_inc;
 	ll.lat = ll2.lat = lon;
 
 	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
-		a_coords_latlon_to_utm (&ll, &utm);
+		a_coords_latlon_to_utm(&utm, &ll);
 		int x1 = (height / 2) - ((utm.northing - center->northing) / ympp);
-		a_coords_latlon_to_utm (&ll2, &utm);
+		a_coords_latlon_to_utm(&utm, &ll2);
 		int x2 = (height / 2) - ((utm.northing - center->northing) / ympp);
 		viewport->draw_line(pen, width, x2, 0, x1);
 	}

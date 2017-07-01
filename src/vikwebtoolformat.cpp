@@ -106,9 +106,7 @@ char * WebToolFormat::get_url_at_position(Window * window, VikCoord *vc)
 	Viewport * viewport = window->get_viewport();
 
 	// Center values
-	const VikCoord *coord = viewport->get_center();
-	struct LatLon ll;
-	vik_coord_to_latlon(coord, &ll);
+	struct LatLon ll = viewport->get_center()->get_latlon();
 
 	char scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
@@ -119,7 +117,7 @@ char * WebToolFormat::get_url_at_position(Window * window, VikCoord *vc)
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
 	if (vc) {
-		vik_coord_to_latlon(vc, &ll);
+		ll = vc->get_latlon();
 	}
 	char spointlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char spointlon[G_ASCII_DTOSTR_BUF_SIZE];

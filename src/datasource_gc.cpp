@@ -178,13 +178,12 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 	/* Calculate widgets circle_x and circle_y. */
 	/* Split up lat,lon into lat and lon. */
 	if (2 == sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {
-		struct LatLon ll;
-		VikCoord c;
-		int x, y;
 
-		ll.lat = lat; ll.lon = lon;
-		vik_coord_load_from_latlon (&c, widgets->viewport->get_coord_mode(), &ll);
-		widgets->viewport->coord_to_screen(&c, &x, &y);
+		int x, y;
+		struct LatLon ll = { .lat = lat, .lon = lon };
+
+		VikCoord coord(ll, widgets->viewport->get_coord_mode(), );
+		widgets->viewport->coord_to_screen(&cord, &x, &y);
 		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (widgets->viewport->get_width() + 1000) &&
 		    y < (widgets->viewport->get_width() + 1000)) {
@@ -227,8 +226,6 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
 	datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *)user_data;
-	struct LatLon ll;
-	char *s_ll;
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"));
 	widgets->num_spin.setValue(20);
@@ -244,8 +241,8 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	widgets->miles_radius_spin.setMaximum(1000);
 	widgets->miles_radius_spin.setSingleStep(1);
 
-	vik_coord_to_latlon(viewport->get_center(), &ll);
-	s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon);
+	struct LatLon ll = viewport->get_center()->get_latlon();
+	char * s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon);
 	widgets->center_entry.setText(QString(s_ll));
 	free(s_ll);
 

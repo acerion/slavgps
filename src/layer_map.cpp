@@ -1315,7 +1315,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 	}
 
 	/* TODO: perhaps vik_coord_diff() */
-	if (vik_coord_equals(layer->last_center, center)
+	if ((*layer->last_center == *center)
 	    && (layer->last_xmpp == viewport->get_xmpp())
 	    && (layer->last_ympp == viewport->get_ympp())) {
 		return false;
@@ -1681,8 +1681,8 @@ void LayerMap::weak_ref_cb(void * ptr, GObject * dead_vml)
 
 static bool is_in_area(MapSource * map, TileInfo * mc)
 {
-	VikCoord vc;
-	map->tile_to_center_coord(mc, &vc);
+	VikCoord coord;
+	map->tile_to_center_coord(mc, &coord);
 
 	struct LatLon tl;
 	tl.lat = map->get_lat_max();
@@ -1690,12 +1690,11 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 	struct LatLon br;
 	br.lat = map->get_lat_min();
 	br.lon = map->get_lon_max();
-	VikCoord vctl;
-	vik_coord_load_from_latlon(&vctl, CoordMode::LATLON, &tl);
-	VikCoord vcbr;
-	vik_coord_load_from_latlon(&vcbr, CoordMode::LATLON, &br);
 
-	return vik_coord_inside(&vc, &vctl, &vcbr);
+	const VikCoord coord_tl(tl, CoordMode::LATLON);
+	const VikCoord coord_br(br, CoordMode::LATLON);
+
+	return coord.is_inside(&coord_tl, &coord_br);
 }
 
 
@@ -1891,7 +1890,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const VikCoord *ul, co
 
 
 
-void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
+void LayerMap::download_section_sub(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -1938,7 +1937,7 @@ void LayerMap::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMap::download_section(VikCoord * ul, VikCoord * br, double zoom)
+void LayerMap::download_section(const VikCoord * ul, const VikCoord * br, double zoom)
 {
 	this->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
 }
@@ -2270,7 +2269,7 @@ void LayerMap::about_cb(void)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMap::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
+int LayerMap::how_many_maps(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -2459,19 +2458,18 @@ void LayerMap::download_all_cb(void)
 
 	/* Find out new current positions. */
 	double min_lat, max_lat, min_lon, max_lon;
-	VikCoord vc_ul, vc_br;
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 	struct LatLon ll_ul = { max_lat, min_lon };
 	struct LatLon ll_br = { min_lat, max_lon };
-	vik_coord_load_from_latlon(&vc_ul, viewport->get_coord_mode(), &ll_ul);
-	vik_coord_load_from_latlon(&vc_br, viewport->get_coord_mode(), &ll_br);
+	const VikCoord coord_ul(ll_ul, viewport->get_coord_mode());
+	const VikCoord coord_br(ll_br, viewport->get_coord_mode());
 
 	/* Get Maps Count - call for each zoom level (in reverse).
 	   With REDOWNLOAD_NEW this is a possible maximum.
 	   With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		map_count = map_count + this->how_many_maps(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
+		map_count = map_count + this->how_many_maps(&coord_ul, &coord_br, zoom_vals[zz], selected_download_method);
 	}
 
 	fprintf(stderr, "DEBUG: Layer Map: download request map count %d for method %d", map_count, selected_download_method);
@@ -2496,7 +2494,7 @@ void LayerMap::download_all_cb(void)
 
 	/* Get Maps - call for each zoom level (in reverse). */
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		this->download_section_sub(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
+		this->download_section_sub(&coord_ul, &coord_br, zoom_vals[zz], selected_download_method);
 	}
 }
 

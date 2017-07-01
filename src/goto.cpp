@@ -90,7 +90,7 @@ char * SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 	}
 
 	const VikCoord * cur_center = window->get_viewport()->get_center();
-	if (vik_coord_equals(cur_center, last_coord)) {
+	if (*cur_center == *last_coord) {
 		return(last_successful_location);
 	} else {
 		return NULL;
@@ -458,7 +458,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 				VikCoord new_center;
 				if (vik_goto_location(viewport, city, &new_center)) {
 					/* Got something. */
-					vik_coord_to_latlon(&new_center, ll);
+					*ll = new_center.get_latlon();
 					result = 2;
 					*name = city;
 					goto tidy;
@@ -473,7 +473,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char 
 				VikCoord new_center;
 				if (vik_goto_location(viewport, country, &new_center)) {
 					/* Finally got something. */
-					vik_coord_to_latlon(&new_center, ll);
+					*ll = new_center.get_latlon();
 					result = 3;
 					*name = country;
 					goto tidy;
@@ -494,11 +494,11 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 {
 	VikCoord new_center;
 
-	struct LatLon ll, llold;
-	vik_coord_to_latlon(viewport->get_center(), &llold);
+	struct LatLon ll;
+	struct LatLon llold = viewport->get_center()->get_latlon();
 
 	if (goto_latlon_dialog(window, &ll, &llold)) {
-		vik_coord_load_from_latlon(&new_center, viewport->get_coord_mode(), &ll);
+		new_center = VikCoord(ll, viewport->get_coord_mode());
 	} else {
 		return;
 	}
@@ -576,11 +576,11 @@ void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 {
 	VikCoord new_center;
 
-	struct UTM utm, utmold;
-	vik_coord_to_utm(viewport->get_center(), &utmold);
+	struct UTM utm;
+	struct UTM utmold = viewport->get_center()->get_utm();
 
 	if (goto_utm_dialog(window, &utm, &utmold)) {
-		vik_coord_load_from_utm(&new_center, viewport->get_coord_mode(), &utm);
+		new_center = VikCoord(utm, viewport->get_coord_mode());
 	} else {
 		return;
 	}

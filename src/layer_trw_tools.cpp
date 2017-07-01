@@ -864,10 +864,9 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 
 		/* Now add distance to where the pointer is. */
 		VikCoord coord;
-		struct LatLon ll;
 		tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
-		vik_coord_to_latlon(&coord, &ll);
-		double last_step = vik_coord_diff(&coord, &last_tpt->coord);
+		struct LatLon ll = coord.get_latlon();
+		double last_step = VikCoord::distance(coord, last_tpt->coord);
 		distance = distance + last_step;
 
 		/* Get elevation data. */
@@ -1570,11 +1569,9 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 	} else if ((trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)
 		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
 
-		struct LatLon start, end;
-
 		Trackpoint * tp_start = trw->current_trk->get_tp_last();
-		vik_coord_to_latlon(&tp_start->coord, &start);
-		vik_coord_to_latlon(&tmp, &end);
+		struct LatLon start = tp_start->coord.get_latlon();
+		struct LatLon end = tmp.get_latlon();
 
 		trw->route_finder_started = true;
 		trw->route_finder_append = true;  /* Merge tracks. Keep started true. */

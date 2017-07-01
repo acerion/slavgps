@@ -346,8 +346,7 @@ void LayerGeoref::draw(Viewport * viewport)
 		unsigned int width_ = viewport->get_width();
 		unsigned int height_ = viewport->get_height();
 		int x, y;
-		VikCoord corner_coord;
-		vik_coord_load_from_utm(&corner_coord, viewport->get_coord_mode(), &(this->corner));
+		VikCoord corner_coord(this->corner, viewport->get_coord_mode());
 		viewport->coord_to_screen(&corner_coord, &x, &y);
 
 		/* Mark to scale the pixmap if it doesn't match our dimensions. */
@@ -686,7 +685,7 @@ void LayerGeoref::align_utm2ll()
 	struct LatLon ll_tl = this->get_ll_tl();
 
 	struct UTM utm;
-	a_coords_latlon_to_utm(&ll_tl, &utm);
+	a_coords_latlon_to_utm(&utm, &ll_tl);
 
 	this->cw.ce_spin->setValue(utm.easting);
 	this->cw.cn_spin->setValue(utm.northing);
@@ -718,7 +717,7 @@ void LayerGeoref::align_ll2utm()
 	corner.northing = this->cw.cn_spin->value();
 
 	struct LatLon ll;
-	a_coords_utm_to_latlon(&corner, &ll);
+	a_coords_utm_to_latlon(&ll, &corner);
 	this->cw.lat_tl_spin.setValue(ll.lat);
 	this->cw.lon_tl_spin.setValue(ll.lon);
 }
@@ -970,10 +969,9 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
 
-	VikCoord vc;
-	vik_coord_load_from_utm (&vc, CoordMode::LATLON, &(this->corner));
-	cw.lat_tl_spin.setValue(vc.north_south);
-	cw.lon_tl_spin.setValue(vc.east_west);
+	VikCoord coord(this->corner, CoordMode::LATLON);
+	cw.lat_tl_spin.setValue(coord.north_south);
+	cw.lon_tl_spin.setValue(coord.east_west);
 	cw.lat_br_spin.setValue(this->ll_br.lat);
 	cw.lon_br_spin.setValue(this->ll_br.lon);
 
@@ -1075,15 +1073,12 @@ static void georef_layer_goto_center(georef_data_t * data)
 	LayersPanel * panel = data->panel;
 	Viewport * viewport = panel->get_viewport();
 
-	struct UTM utm;
-	VikCoord coord;
-
-	vik_coord_to_utm(viewport->get_center(), &utm);
+	struct UTM utm = viewport->get_center()->get_utm();
 
 	utm.easting = layer->corner.easting + (layer->width * layer->mpp_easting / 2); /* Only an approximation. */
 	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);
 
-	vik_coord_load_from_utm(&coord, viewport->get_coord_mode(), &utm);
+	VikCoord coord(utm, viewport->get_coord_mode());
 	viewport->set_center_coord(&coord, true);
 
 	panel->emit_update_cb();
@@ -1262,14 +1257,12 @@ bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatLon ll_br)
 {
-	VikCoord vc_center;
 	struct LatLon ll_center;
-
 	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
 	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
-	vik_coord_load_from_latlon(&vc_center, viewport->get_coord_mode(), &ll_center);
-	viewport->set_center_coord(&vc_center, true);
+	VikCoord new_center(ll_center, viewport->get_coord_mode());
+	viewport->set_center_coord(&new_center, true);
 }
 
 
@@ -1278,8 +1271,8 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 					       const char *name,
 					       QPixmap * pixmap,
-					       VikCoord * coord_tl,
-					       VikCoord * coord_br)
+					       const VikCoord * coord_tl,
+					       const VikCoord * coord_br)
 {
 
 	LayerGeoref * grl = new LayerGeoref();
@@ -1287,8 +1280,8 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 	grl->rename(name);
 	grl->pixmap = pixmap;
 
-	vik_coord_to_utm(coord_tl, &(grl->corner));
-	vik_coord_to_latlon(coord_br, &(grl->ll_br));
+	grl->corner = coord_tl->get_utm();
+	grl->ll_br = coord_br->get_latlon();
 
 	if (grl->pixmap) {
 		grl->width = grl->pixmap->width();
@@ -1296,10 +1289,8 @@ LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 
 		if (grl->width > 0 && grl->height > 0) {
 
-			struct LatLon ll_tl;
-			vik_coord_to_latlon(coord_tl, &ll_tl);
-			struct LatLon ll_br;
-			vik_coord_to_latlon(coord_br, &ll_br);
+			struct LatLon ll_tl = coord_tl->get_latlon();
+			struct LatLon ll_br = coord_br->get_latlon();
 
 			CoordMode mode = viewport->get_coord_mode();
 
@@ -1348,5 +1339,5 @@ void LayerGeoref::configure_from_viewport(Viewport const * viewport)
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_ympp();
 	this->mpp_easting = viewport->get_xmpp();
-	vik_coord_to_utm(viewport->get_center(), &this->corner);
+	this->corner = viewport->get_center()->get_utm();
 }

@@ -29,51 +29,61 @@
 
 
 
-enum class CoordMode {
-	UTM     = 0,
-	LATLON  = 1
-};
-
-
-typedef struct {
-	double north_south; /* Northing or lat. */
-	double east_west;   /* Easting or lon. */
-	char utm_zone;
-	char utm_letter;
-
-	CoordMode mode;
-} VikCoord;
-
-typedef VikCoord Coord;
-
-typedef struct _Rect {
-	VikCoord tl;
-	VikCoord br;
-	VikCoord center;
-} Rect;
-#define GLRECT(iter) ((Rect *)((iter)->data))
+namespace SlavGPS {
 
 
 
 
-/* Notice we can cast to either UTM or LatLon .*/
-/* Possible more modes to come? xy? We'll leave that as an option. */
+	/* Possible more modes to come? xy? We'll leave that as an option. */
+	enum class CoordMode {
+		UTM     = 0,
+		LATLON  = 1
+	};
 
-void vik_coord_convert(VikCoord * coord, CoordMode dest_mode);
-void vik_coord_copy_convert(const VikCoord * coord, CoordMode dest_mode, VikCoord * dest);
-double vik_coord_diff(const VikCoord * c1, const VikCoord * c2);
 
-void vik_coord_load_from_latlon(VikCoord * coord, CoordMode mode, const struct LatLon * ll);
-void vik_coord_load_from_utm(VikCoord * coord, CoordMode mode, const struct UTM * utm);
 
-void vik_coord_to_latlon(const VikCoord * coord, struct LatLon * dest);
-void vik_coord_to_utm(const VikCoord * coord, struct UTM * dest);
 
-bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2);
+	class VikCoord {
+	public:
+		VikCoord() {};
+		VikCoord(const struct LatLon & ll, CoordMode mode);
+		VikCoord(const struct UTM & utm, CoordMode mode);
 
-void vik_coord_set_area(const VikCoord * coord, const struct LatLon * wh, VikCoord * tl, VikCoord * br);
-bool vik_coord_inside(const VikCoord * coord, const VikCoord * tl, const VikCoord * br);
-/* All coord operations MUST BE ABSTRACTED!!! */
+		struct LatLon get_latlon(void) const;
+		struct UTM get_utm(void) const;
+
+		void set_area(const struct LatLon * wh, VikCoord * coord_tl, VikCoord * coord_br) const;
+		bool is_inside(const VikCoord * coord_tl, const VikCoord * coord_br) const;
+
+		void change_mode(CoordMode new_mode);
+		VikCoord copy_change_mode(CoordMode new_mode) const;
+
+		static double distance(const VikCoord & coord1, const VikCoord & coord2);
+
+		bool operator==(const VikCoord & coord) const;
+		bool operator!=(const VikCoord & coord) const;
+
+
+		struct LatLon ll;
+		struct UTM utm;
+		CoordMode mode;
+	};
+
+
+
+
+	typedef VikCoord Coord;
+
+	typedef struct _Rect {
+		VikCoord tl;
+		VikCoord br;
+		VikCoord center;
+	} Rect;
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

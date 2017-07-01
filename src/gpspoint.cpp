@@ -355,7 +355,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			wp->has_timestamp = line_has_timestamp;
 			wp->timestamp = line_timestamp;
 
-			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &line_latlon);
+			wp->coord = VikCoord(line_latlon, coord_mode);
 
 			trw->filein_add_waypoint(wp, line_name);
 			free(line_name);
@@ -443,7 +443,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			have_read_something = true;
 
 			Trackpoint * tp = new Trackpoint();
-			vik_coord_load_from_latlon(&(tp->coord), coord_mode, &line_latlon);
+			tp->coord = VikCoord(line_latlon, coord_mode);
 			tp->newsegment = line_newsegment;
 			tp->has_timestamp = line_has_timestamp;
 			tp->timestamp = line_timestamp;
@@ -652,8 +652,7 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 			continue;
 		}
 
-		static struct LatLon ll;
-		vik_coord_to_latlon(&wp->coord, &ll);
+		static struct LatLon ll = wp->coord.get_latlon();
 		char * s_lat = a_coords_dtostr(ll.lat);
 		char * s_lon = a_coords_dtostr(ll.lon);
 		char * tmp_name = slashdup(wp->name);
@@ -734,8 +733,7 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info)
 {
-	static struct LatLon ll;
-	vik_coord_to_latlon(&(tp->coord), &ll);
+	static struct LatLon ll = tp->coord.get_latlon();
 
 	FILE * f = write_info->f;
 

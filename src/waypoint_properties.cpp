@@ -162,7 +162,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	GtkListStore *store;
 
 
-	vik_coord_to_latlon(&wp->coord, &ll);
+	struct LatLon ll = wp->coord.get_latlon();
 
 	char * alt = NULL
 	char * lat = g_strdup_printf("%f", ll.lat);
@@ -302,9 +302,8 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 		gtk_widget_set_sensitive(consistentGeotagCB, false);
 		if (hasGeotag) {
 			struct LatLon ll = a_geotag_get_position(wp->image);
-			VikCoord coord;
-			vik_coord_load_from_latlon(&coord, coord_mode, &ll);
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), vik_coord_equals(&coord, &wp->coord));
+			VikCoord coord(ll, coord_mode);
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), coord == wp->coord);
 		}
 #endif
 	}
@@ -356,7 +355,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 			/* Do It. */
 			ll.lat = convert_dms_to_dec(latentry->text());
 			ll.lon = convert_dms_to_dec(lonentry->text());
-			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &ll);
+			wp->coord = VikCoord(ll, coord_mode);
 			/* Always store in metres. */
 			switch (height_units) {
 			case HeightUnit::METRES:

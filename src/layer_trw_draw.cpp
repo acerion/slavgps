@@ -92,10 +92,10 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		int h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
-		dp->ce1 = dp->center->east_west - w2;
-		dp->ce2 = dp->center->east_west + w2;
-		dp->cn1 = dp->center->north_south - h2;
-		dp->cn2 = dp->center->north_south + h2;
+		dp->ce1 = dp->center->utm.easting - w2;
+		dp->ce2 = dp->center->utm.easting + w2;
+		dp->cn1 = dp->center->utm.northing - h2;
+		dp->cn2 = dp->center->utm.northing + h2;
 
 	} else if (dp->coord_mode == CoordMode::LATLON) {
 		VikCoord upperleft, bottomright;
@@ -103,10 +103,10 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 		viewport->screen_to_coord(-500, -500, &upperleft);
 		viewport->screen_to_coord(dp->width + 500, dp->height + 500, &bottomright);
-		dp->ce1 = upperleft.east_west;
-		dp->ce2 = bottomright.east_west;
-		dp->cn1 = bottomright.north_south;
-		dp->cn2 = upperleft.north_south;
+		dp->ce1 = upperleft.ll.lon;
+		dp->ce2 = bottomright.ll.lon;
+		dp->cn1 = bottomright.ll.lat;
+		dp->cn2 = upperleft.ll.lat;
 	} else {
 		;
 	}
@@ -129,7 +129,7 @@ static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, dou
 	double rv = 0;
 	if (tp1->has_timestamp && tp2->has_timestamp) {
 		if (average_speed > 0) {
-			rv = (vik_coord_diff(&(tp1->coord), &(tp2->coord)) / (tp1->timestamp - tp2->timestamp));
+			rv = (VikCoord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
 			if (rv < low_speed) {
 				return VIK_TRW_LAYER_TRACK_GC_SLOW;
 			} else if (rv > high_speed) {
@@ -261,17 +261,15 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			}
 
 
-			struct LatLon ll_current, ll_next;
-			vik_coord_to_latlon(&tp_current->coord, &ll_current);
-			vik_coord_to_latlon(&tp_next->coord, &ll_next);
+			struct LatLon ll_current = tp_current->coord.get_latlon();
+			struct LatLon ll_next = tp_next->coord.get_latlon();
 
 			/* Positional interpolation.
 			   Using a simple ratio - may not be perfectly correct due to lat/long projections
 			   but should be good enough over the small scale that I anticipate usage on. */
 			struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
 						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
-			VikCoord coord;
-			vik_coord_load_from_latlon(&coord, dp->trw->coord_mode, &ll_new);
+			VikCoord coord(ll_new, dp->trw->coord_mode);
 
 			char *fgcolour;
 			if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
@@ -330,8 +328,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		VikCoord coord;
-		vik_coord_load_from_latlon(&coord, dp->trw->coord_mode, &average);
+		VikCoord coord(average, dp->trw->coord_mode);
 
 		trw_layer_draw_track_label(ename, fgcolour, bgcolour, dp, &coord);
 	}
@@ -615,8 +612,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
 		if (dp->coord_mode == CoordMode::LATLON
-		    && ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
-			|| (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
+		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
+			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
 
 			use_prev_xy = false;
 			continue;
@@ -626,9 +623,9 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 		/* kamilTODO: compare this condition with condition in trw_layer_draw_waypoint(). */
 		bool first_condition = (dp->coord_mode == CoordMode::UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
-		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* Only check zones if UTM & one_utm_zone. */
-		bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* Both UTM and lat lon. */
-		bool second_condition_C = tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2;
+		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm.zone == dp->center->utm.zone);  /* Only check zones if UTM & one_utm_zone. */
+		bool second_condition_B = (tp->coord.ll.lon < dp->ce2 && tp->coord.ll.lon > dp->ce1) || (tp->coord.utm.easting < dp->ce2 && tp->coord.utm.easting > dp->ce1);
+		bool second_condition_C = (tp->coord.ll.lat > dp->cn1 && tp->coord.ll.lat < dp->cn2) || (tp->coord.utm.northing > dp->cn1 && tp->coord.utm.northing < dp->cn2);
 		bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
 
 #if 0
@@ -688,7 +685,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if ((!tp->newsegment) && (dp->trw->drawlines)) {
 
 				/* UTM only: zone check. */
-				if (drawpoints && dp->trw->coord_mode == CoordMode::UTM && tp->coord.utm_zone != dp->center->utm_zone) {
+				if (drawpoints && dp->trw->coord_mode == CoordMode::UTM && tp->coord.utm.zone != dp->center->utm.zone) {
 					draw_utm_skip_insignia(dp->viewport, main_pen, x, y);
 				}
 
@@ -723,7 +720,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		} else {
 
 			if (use_prev_xy && dp->trw->drawlines && (!tp->newsegment)) {
-				if (dp->trw->coord_mode != CoordMode::UTM || tp->coord.utm_zone == dp->center->utm_zone) {
+				if (dp->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == dp->center->utm.zone) {
 					dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
@@ -795,9 +792,9 @@ static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
 	}
 
 	bool cond = (dp->coord_mode == CoordMode::UTM && !dp->one_utm_zone)
-		|| ((dp->coord_mode == CoordMode::LATLON || wp->coord.utm_zone == dp->center->utm_zone) &&
-		    wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
-		    wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
+		|| ((dp->coord_mode == CoordMode::LATLON || wp->coord.utm.zone == dp->center->utm.zone) &&
+		    (wp->coord.ll.lon < dp->ce2 && wp->coord.ll.lon > dp->ce1 && wp->coord.ll.lat > dp->cn1 && wp->coord.ll.lat < dp->cn2)
+		    || (wp->coord.utm.easting < dp->ce2 && wp->coord.utm.easting > dp->ce1 && wp->coord.utm.northing > dp->cn1 && wp->coord.utm.northing < dp->cn2));
 
 
 	if (!cond) {

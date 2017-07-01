@@ -138,8 +138,8 @@ bool SlavGPS::map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, dou
 		return false;
 	}
 
-	dest->x = (src->east_west + 180) / 360 * VIK_GZ(17) / xzoom;
-	dest->y = (180 - MERCLAT(src->north_south)) / 360 * VIK_GZ(17) / xzoom;
+	dest->x = (src->ll.lon + 180) / 360 * VIK_GZ(17) / xzoom;
+	dest->y = (180 - MERCLAT(src->ll.lat)) / 360 * VIK_GZ(17) / xzoom;
 	dest->z = 0;
 
 	return true;
@@ -158,8 +158,8 @@ static void _to_vikcoord_with_offset(const TileInfo * src, VikCoord * dest, doub
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
 	dest->mode = CoordMode::LATLON;
-	dest->east_west = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
-	dest->north_south = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
+	dest->ll.lon = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
+	dest->ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
 }
 
 

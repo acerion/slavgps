@@ -760,7 +760,9 @@ void Window::draw_redraw()
 
 	if (!new_trigger) {
 		; /* Do nothing -- have to redraw everything. */
-	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (new_trigger->type == SlavGPS::LayerType::AGGREGATE)) {
+	} else if ((old_trigger != new_trigger)
+		   || (old_center != this->trigger_center)
+		   || (new_trigger->type == SlavGPS::LayerType::AGGREGATE)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		this->viewport->set_half_drawn(true);

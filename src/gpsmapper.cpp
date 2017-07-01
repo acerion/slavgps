@@ -113,7 +113,7 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		unsigned int len = print_rgn_stuff(i->second->comment, f);
 		if (len) {
-			vik_coord_to_latlon(&(i->second->coord), &ll);
+			ll = i->second->coord.get_latlon();
 			char * s_lat = a_coords_dtostr(ll.lat);
 			char * s_lon = a_coords_dtostr(ll.lon);
 			fprintf(f, "Data0=(%s,%s)\n", s_lat, s_lon);
@@ -129,11 +129,9 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 
 static void write_trackpoint(Trackpoint * tp, FILE * f)
 {
-	static struct LatLon ll;
-	char *s_lat, *s_lon;
-	vik_coord_to_latlon(&(tp->coord), &ll);
-	s_lat = a_coords_dtostr(ll.lat);
-	s_lon = a_coords_dtostr(ll.lon);
+	static struct LatLon ll = tp->coord.get_latlon();
+	char * s_lat = a_coords_dtostr(ll.lat);
+	char * s_lon = a_coords_dtostr(ll.lon);
 	fprintf(f, "(%s,%s),", s_lat, s_lon);
 	free(s_lat);
 	free(s_lon);

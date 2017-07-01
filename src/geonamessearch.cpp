@@ -489,9 +489,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		wiki_geoname = (found_geoname *)wp_runner->data;
 		wiki_wp = new Waypoint();
 		wiki_wp->visible = true;
-		vik_coord_load_from_latlon(&(wiki_wp->coord),
-					   trw->get_coord_mode(),
-					   &(wiki_geoname->ll));
+		wiki_wp->coord = VikCoord(wiki_geoname->ll, trw->get_coord_mode());
 		wiki_wp->altitude = wiki_geoname->elevation;
 		wiki_wp->set_comment(wiki_geoname->cmt);
 		wiki_wp->set_description(wiki_geoname->desc);

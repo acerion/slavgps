@@ -131,7 +131,7 @@ int GotoTool::get_coord(Viewport * viewport, char * srch_str, VikCoord * coord)
 		ret = -1;
 		goto done;
 	}
-	vik_coord_load_from_latlon(coord, viewport->get_coord_mode(), &ll);
+	*coord = VikCoord(ll, viewport->get_coord_mode());
 
  done:
 	(void) util_remove(tmpname);

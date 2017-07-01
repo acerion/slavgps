@@ -968,9 +968,7 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 {
 	char *lat = NULL, *lon = NULL;
 
-	const VikCoord * coord = window->viewport->get_center();
-	struct UTM utm;
-	vik_coord_to_utm(coord, &utm);
+	struct UTM utm = window->viewport->get_center()->get_utm();
 
 	bool full_format = false;
 	(void)a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
@@ -981,7 +979,7 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 	} else {
 		// Simple x.xx y.yy format
 		struct LatLon ll;
-		a_coords_utm_to_latlon(&utm, &ll);
+		a_coords_utm_to_latlon(&ll, &utm);
 		lat = g_strdup_printf("%.6f", ll.lat);
 		lon = g_strdup_printf("%.6f", ll.lon);
 	}
@@ -1055,8 +1053,7 @@ static void default_location_cb(GtkAction * a, Window * window)
 	};
 
 	/* Get current center */
-	struct LatLon ll;
-	vik_coord_to_latlon(window->viewport->get_center(), &ll);
+	struct LatLon ll = window->viewport->get_center()->get_latlon();
 
 	/* Apply to preferences */
 	ParameterValue vlp_data;

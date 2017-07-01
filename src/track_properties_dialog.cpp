@@ -317,20 +317,19 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		time_t t1 = (*this->trk->trackpointsB->begin())->timestamp;
 		time_t t2 = (*std::prev(this->trk->trackpointsB->end()))->timestamp;
 
-		VikCoord vc;
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		struct LatLon center = { (this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2 };
-		vik_coord_load_from_latlon(&vc, this->trw->get_coord_mode(), &center);
-		this->tz = vu_get_tz_at_location(&vc);
+		const VikCoord coord(center, this->trw->get_coord_mode());
+		this->tz = vu_get_tz_at_location(&coord);
 
 
-		char * msg = vu_get_time_string(&t1, "%c", &vc, this->tz);
+		char * msg = vu_get_time_string(&t1, "%c", &coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
 		free(msg);
 		this->statistics_form->addRow(QString("Start:"), this->w_time_start);
 
 
-		msg = vu_get_time_string(&t2, "%c", &vc, this->tz);
+		msg = vu_get_time_string(&t2, "%c", &coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
 		free(msg);
 		this->statistics_form->addRow(QString("End:"), this->w_time_end);

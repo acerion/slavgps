@@ -198,7 +198,7 @@ static void copy_selection(QStandardItemModel * model,
         gtk_tree_model_get(model, iter, WAYPOINT_POINTER_COLUMN, &wp, -1);
 	struct LatLon ll;
 	if (wp) {
-		vik_coord_to_latlon(&wp->coord, &ll);
+		ll = wp->coord.get_latlon();
 	}
 	char sep = '\t'; // Could make this configurable - but simply always make it a tab character for now
 	// NB Even if the columns have been reordered - this copies it out only in the original default order

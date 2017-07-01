@@ -311,7 +311,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 			wp->visible = true;
 			/* Set info from exif values. */
 			/* Location. */
-			vik_coord_load_from_latlon(&(wp->coord), vcmode, &ll);
+			wp->coord = VikCoord(ll, vcmode);
 			/* Altitude. */
 			wp->altitude = alt;
 
@@ -385,7 +385,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 	wp->visible = true;
 	/* Set info from exif values. */
 	/* Location. */
-	vik_coord_load_from_latlon(&wp->coord, vcmode, &ll);
+	wp->coord = VikCoord(ll, vcmode);
 	/* Altitude. */
 	wp->altitude = alt;
 
@@ -800,8 +800,7 @@ int SlavGPS::a_geotag_write_exif_gps(const char *filename, VikCoord coord, doubl
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
-		struct LatLon ll;
-		vik_coord_to_latlon(&coord, &ll);
+		struct LatLon ll = coord.get_latlon();
 		if (!gexiv2_metadata_set_gps_info(gemd, ll.lon, ll.lat, alt)) {
 			result = 1; /* Failed. */
 		} else {
@@ -857,8 +856,7 @@ int SlavGPS::a_geotag_write_exif_gps(const char *filename, VikCoord coord, doubl
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_MAP_DATUM, EXIF_IFD_GPS);
 	convert_to_entry("WGS-84", 0.0, ee, exif_data_get_byte_order(ed));
 
-	struct LatLon ll;
-	vik_coord_to_latlon(&coord, &ll);
+	struct LatLon ll = coord.get_latlon();
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LATITUDE_REF, EXIF_IFD_GPS);
 	/* N or S. */

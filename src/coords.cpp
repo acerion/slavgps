@@ -39,6 +39,10 @@ renaming functions and defining LatLon and UTM structs.
 #include "config.h"
 #endif
 
+#include <glib.h>
+#include <cstdint>
+#include <cstdio>
+
 #ifdef HAVE_STDLIB_H
 #include <cstdlib>
 #endif
@@ -49,7 +53,6 @@ renaming functions and defining LatLon and UTM structs.
 #include <cmath>
 #endif
 
-#include <cstdio>
 
 #include "coords.h"
 #ifdef HAVE_VIKING
@@ -105,8 +108,8 @@ double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
   if ( utm1->zone == utm2->zone ) {
     return sqrt ( pow ( utm1->easting - utm2->easting, 2 ) + pow ( utm1->northing - utm2->northing, 2 ) );
   } else {
-    a_coords_utm_to_latlon ( utm1, &tmp1 );
-    a_coords_utm_to_latlon ( utm2, &tmp2 );
+    a_coords_utm_to_latlon(&tmp1, utm1);
+    a_coords_utm_to_latlon(&tmp2, utm2);
     return a_coords_latlon_diff ( &tmp1, &tmp2 );
   }
 }
@@ -124,7 +127,7 @@ double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2
   return std::isnan(tmp3)?0:tmp3;
 }
 
-void a_coords_latlon_to_utm( const struct LatLon *latlon, struct UTM *utm )
+void a_coords_latlon_to_utm(struct UTM * utm, const struct LatLon * ll)
     {
     double latitude;
     double longitude;
@@ -135,8 +138,8 @@ void a_coords_latlon_to_utm( const struct LatLon *latlon, struct UTM *utm )
     int zone;
     double northing, easting;
 
-    longitude = latlon->lon;
-    latitude = latlon->lat;
+    latitude = ll->lat;
+    longitude = ll->lon;
 
     /* We want the longitude within -180..180. */
     if ( longitude < -180.0 )
@@ -214,7 +217,7 @@ static char coords_utm_letter( double latitude )
 
 
 
-void a_coords_utm_to_latlon( const struct UTM *utm, struct LatLon *latlon )
+void a_coords_utm_to_latlon(struct LatLon * latlon, const struct UTM * utm)
     {
     double northing, easting;
     int zone;

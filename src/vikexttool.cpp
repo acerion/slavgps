@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include <glib.h>
+
 #include "vikexttool.h"
 
 

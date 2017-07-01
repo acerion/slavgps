@@ -2089,8 +2089,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	   one can easily use the current pointer position to see this if needed. */
 	char * lat = NULL;
 	char * lon = NULL;
-	static struct LatLon ll;
-	vik_coord_to_latlon(&wp->coord, &ll);
+	static struct LatLon ll = wp->coord.get_latlon();
 	a_coords_latlon_to_string(&ll, &lat, &lon);
 
 	/* Combine parts to make overall message. */
@@ -2343,7 +2342,7 @@ bool LayerTRW::find_center(VikCoord * dest)
 		return false;
 	} else {
 		struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
-		vik_coord_load_from_latlon(dest, this->coord_mode, &average);
+		*dest = VikCoord(average, this->coord_mode);
 		return true;
 	}
 }
@@ -3242,7 +3241,7 @@ void LayerTRW::filein_add_track(Track * trk, char const * name_)
 		Trackpoint * cur_end = this->current_trk->get_tp_last();
 		Trackpoint * new_start = trk->get_tp_first();
 		if (cur_end && new_start) {
-			if (!vik_coord_equals(&cur_end->coord, &new_start->coord)) {
+			if (cur_end->coord != new_start->coord) {
 				this->current_trk->add_trackpoint(new Trackpoint(*cur_end), false);
 			}
 		}
@@ -3847,11 +3846,10 @@ void LayerTRW::goto_track_center_cb(void)
 
 	if (trk && !trk->empty()) {
 		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
-		VikCoord coord;
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		vik_coord_load_from_latlon(&coord, this->coord_mode, &average);
+		VikCoord coord(average, this->coord_mode);
 		goto_coord(panel, this, this->menu_data->viewport, &coord);
 	}
 }
@@ -5353,8 +5351,7 @@ void LayerTRW::astro_cb(void)
 			strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&(tp->timestamp)));
 			char time_buf[20];
 			strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&(tp->timestamp)));
-			struct LatLon ll;
-			vik_coord_to_latlon(&tp->coord, &ll);
+			struct LatLon ll = tp->coord.get_latlon();
 			char *lat_str = convert_to_dms(ll.lat);
 			char *lon_str = convert_to_dms(ll.lon);
 			char alt_buf[20];
@@ -5377,8 +5374,7 @@ void LayerTRW::astro_cb(void)
 			strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&(wp->timestamp)));
 			char time_buf[20];
 			strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&(wp->timestamp)));
-			struct LatLon ll;
-			vik_coord_to_latlon(&wp->coord, &ll);
+			struct LatLon ll = wp->coord.get_latlon();
 			char *lat_str = convert_to_dms(ll.lat);
 			char *lon_str = convert_to_dms(ll.lon);
 			char alt_buf[20];
@@ -6199,10 +6195,9 @@ void LayerTRW::cancel_current_tp(bool destroy)
 void LayerTRW::my_tpwin_set_tp()
 {
 	Track * trk = this->current_trk;
-	VikCoord vc;
 	/* Notional center of a track is simply an average of the bounding box extremities. */
-	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
+	struct LatLon ll_center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
+	VikCoord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
 	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->sublayer_type == SublayerType::ROUTE);
 }
 
@@ -6564,7 +6559,7 @@ void LayerTRW::calculate_bounds_waypoints()
 {
 	struct LatLon topleft = { 0.0, 0.0 };
 	struct LatLon bottomright = { 0.0, 0.0 };
-	struct LatLon ll;
+
 
 	auto i = this->waypoints.begin();
 	if (i == this->waypoints.end()) {
@@ -6574,8 +6569,8 @@ void LayerTRW::calculate_bounds_waypoints()
 	Waypoint * wp = i->second;
 	/* Set bounds to first point. */
 	if (wp) {
-		vik_coord_to_latlon(&wp->coord, &topleft);
-		vik_coord_to_latlon(&wp->coord, &bottomright);
+		topleft = wp->coord.get_latlon();
+		bottomright = wp->coord.get_latlon();
 	}
 
 	/* Ensure there is another point... */
@@ -6586,7 +6581,7 @@ void LayerTRW::calculate_bounds_waypoints()
 			wp = i->second;
 
 			/* See if this point increases the bounds. */
-			vik_coord_to_latlon(&wp->coord, &ll);
+			struct LatLon ll = wp->coord.get_latlon();
 
 			if (ll.lat > topleft.lat) {
 				topleft.lat = ll.lat;
@@ -6862,8 +6857,8 @@ static int get_download_area_width(double zoom_level, struct LatLon *wh) /* kami
 
 static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dist, double gradient)
 {
-	if ((dist->lon >= ABS(to->east_west - from->east_west))
-	    && (dist->lat >= ABS(to->north_south - from->north_south))) {
+	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
+	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
 
 		return NULL;
 	}
@@ -6872,19 +6867,19 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 	coord->mode = CoordMode::LATLON;
 
 	if (ABS(gradient) < 1) {
-		if (from->east_west > to->east_west) {
-			coord->east_west = from->east_west - dist->lon;
+		if (from->ll.lon > to->ll.lon) {
+			coord->ll.lon = from->ll.lon - dist->lon;
 		} else {
-			coord->east_west = from->east_west + dist->lon;
+			coord->ll.lon = from->ll.lon + dist->lon;
 		}
-		coord->north_south = gradient * (coord->east_west - from->east_west) + from->north_south;
+		coord->ll.lat = gradient * (coord->ll.lon - from->ll.lon) + from->ll.lat;
 	} else {
-		if (from->north_south > to->north_south) {
-			coord->north_south = from->north_south - dist->lat;
+		if (from->ll.lat > to->ll.lat) {
+			coord->ll.lat = from->ll.lat - dist->lat;
 		} else {
-			coord->north_south = from->north_south + dist->lat;
+			coord->ll.lat = from->ll.lat + dist->lat;
 		}
-		coord->east_west = (1/gradient) * (coord->north_south - from->north_south) + from->north_south;
+		coord->ll.lon = (1/gradient) * (coord->ll.lat - from->ll.lat) + from->ll.lat;
 	}
 
 	return coord;
@@ -6893,12 +6888,12 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 
 
 
-static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatLon *dist)
+static GList * add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatLon *dist)
 {
-	/* TODO: handle virtical track (to->east_west - from->east_west == 0). */
-	double gradient = (to->north_south - from->north_south)/(to->east_west - from->east_west);
+	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
+	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
 
-	VikCoord *next = from;
+	VikCoord * next = from;
 	while (true) {
 		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
 			break;
@@ -6953,7 +6948,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 		VikCoord tl, br;
 		for (GList * fiter = fillins; fiter; fiter = fiter->next) {
 			VikCoord * cur_coord = (VikCoord *)(fiter->data);
-			vik_coord_set_area(cur_coord, &wh, &tl, &br);
+			cur_coord->set_area(&wh, &tl, &br);
 			Rect * rect = (Rect *) malloc(sizeof (Rect));
 			rect->tl = tl;
 			rect->br = br;

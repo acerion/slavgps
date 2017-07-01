@@ -114,7 +114,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						speed = vik_coord_diff(&(tp->coord), &(tp_prev->coord)) / ABS(tp->timestamp - tp_prev->timestamp);
+						speed = VikCoord::distance(tp->coord, tp_prev->coord) / ABS(tp->timestamp - tp_prev->timestamp);
 						speedtype = strdup("*"); // Interpolated
 					} else {
 						speedtype = strdup("**");
@@ -183,7 +183,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 
 		case 'P': {
 			if (tp_prev) {
-				int diff = (int) round(vik_coord_diff(&(tp->coord), &(tp_prev->coord)));
+				int diff = (int) round(VikCoord::distance(tp->coord, tp_prev->coord));
 
 				char * dist_units_str = NULL;
 				DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -266,8 +266,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		case 'L': {
 			/* Location (Lat/Long). */
 			char * lat = NULL, * lon = NULL;
-			struct LatLon ll;
-			vik_coord_to_latlon(&(tp->coord), &ll);
+			struct LatLon ll = tp->coord.get_latlon();
 			a_coords_latlon_to_string(&ll, &lat, &lon);
 			values[i] = g_strdup_printf("%s%s %s", separator, lat, lon);
 			free(lat);
@@ -870,8 +869,7 @@ char * SlavGPS::vu_get_tz_at_location(const VikCoord * vc)
 		return tz;
 	}
 
-	struct LatLon ll;
-	vik_coord_to_latlon(vc, &ll);
+	struct LatLon ll = vc->get_latlon();
 	double pt[2] = { ll.lat, ll.lon };
 
 	double nearest;
@@ -933,8 +931,7 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Vik
 				} else {
 					/* No results (e.g. could be in the middle of a sea).
 					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-					struct LatLon ll;
-					vik_coord_to_latlon(vc, &ll);
+					struct LatLon ll = vc->get_latlon();
 					str = time_string_adjusted(time, round (ll.lon / 15.0) * 3600);
 				}
 			} else {
@@ -1071,8 +1068,7 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 	/* This method is not particularly fast - but should work well enough. */
 	struct LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
 
-	VikCoord coord;
-	vik_coord_load_from_latlon(&coord, mode, &average);
+	const VikCoord coord(average, mode);
 	viewport->set_center_coord(&coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */

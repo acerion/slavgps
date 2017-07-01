@@ -267,15 +267,14 @@ static bool clip_parse_latlon(const char * text, struct LatLon * coord)
 
 
 
-static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
+static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
 {
-	VikCoord vc;
 	Layer * selected = panel->get_selected_layer();
 
-	vik_coord_load_from_latlon(&vc, CoordMode::LATLON, coord);
+	VikCoord coord(ll, CoordMode::LATLON);
 
 	if (selected && selected->type == LayerType::TRW) {
-		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &vc);
+		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &coord);
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_changed();
 	} else {

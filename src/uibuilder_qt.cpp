@@ -455,8 +455,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	QWidget * widget = NULL;
 
 
-	struct LatLon ll;
-	vik_coord_to_latlon(&wp->coord, &ll);
+	struct LatLon ll = wp->coord.get_latlon();
 
 	/* FIXME: memory management. */
 	char * lat = g_strdup_printf("%f", ll.lat);

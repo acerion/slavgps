@@ -237,8 +237,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 	double lat, lon;
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		struct LatLon ll_tmp;
-		vik_coord_to_latlon(ce->coord, &ll_tmp);
+		struct LatLon ll_tmp = ce->coord->get_latlon();
 		lat = ll_tmp.lat * 3600;
 		lon = ll_tmp.lon * 3600;
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
@@ -246,7 +245,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 		if (utm_tmp.zone != dem->utm_zone) {
 			return false;
 		}
-		vik_coord_to_utm(ce->coord, &utm_tmp);
+		utm_tmp = ce->coord->get_utm();
 		lat = utm_tmp.northing;
 		lon = utm_tmp.easting;
 	} else {
@@ -339,7 +338,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 		dem = DEMCache::get(*iter);
 		if (dem) {
 			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-				vik_coord_to_latlon(coord, &ll_tmp);
+				ll_tmp = coord->get_latlon();
 				ll_tmp.lat *= 3600;
 				ll_tmp.lon *= 3600;
 				elev = dem->get_east_north(ll_tmp.lon, ll_tmp.lat);
@@ -347,7 +346,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 					return elev;
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-				vik_coord_to_utm(coord, &utm_tmp);
+				utm_tmp = coord->get_utm();
 				if (utm_tmp.zone == dem->utm_zone
 				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != DEM_INVALID_ELEVATION) {
 

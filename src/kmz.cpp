@@ -471,16 +471,15 @@ typedef struct zip_file zip_file_t;
 		if (pixmap) {
 			/* Some simple detection of broken position values ?? */
 			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
-			VikCoord vc_tl, vc_br;
 			struct LatLon ll_tl, ll_br;
 			ll_tl.lat = north;
 			ll_tl.lon = west;
 			ll_br.lat = south;
 			ll_br.lon = east;
-			vik_coord_load_from_latlon(&vc_tl, viewport->get_coord_mode(), &ll_tl);
-			vik_coord_load_from_latlon(&vc_br, viewport->get_coord_mode(), &ll_br);
+			const VikCoord coord_tl(ll_tl, viewport->get_coord_mode());
+			const VikCoord coord_br(ll_br, viewport->get_coord_mode());
 
-			Layer * grl = vik_georef_layer_create(viewport, name, pixmap, &vc_tl, &vc_br);
+			Layer * grl = vik_georef_layer_create(viewport, name, pixmap, &coord_tl, &coord_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
 				top->add_layer(grl, false);

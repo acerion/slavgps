@@ -1542,22 +1542,20 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
 	struct LatLon ll;
 	VikCoord nw, se;
-	struct LatLon lnw, lse;
+
 	viewport->screen_to_coord(-20, -20, &nw);
 	viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20, &se);
-	vik_coord_to_latlon(&nw, &lnw);
-	vik_coord_to_latlon(&se, &lse);
+	struct LatLon lnw = nw.get_latlon();
+	struct LatLon lse = se.get_latlon();
 	if (this->realtime_fix.fix.latitude > lse.lat &&
 	     this->realtime_fix.fix.latitude < lnw.lat &&
 	     this->realtime_fix.fix.longitude > lnw.lon &&
 	     this->realtime_fix.fix.longitude < lse.lon &&
 	     !std::isnan(this->realtime_fix.fix.track)) {
 
-		VikCoord gps;
-
 		ll.lat = this->realtime_fix.fix.latitude;
 		ll.lon = this->realtime_fix.fix.longitude;
-		vik_coord_load_from_latlon(&gps, viewport->get_coord_mode(), &ll);
+		VikCoord gps(ll, viewport->get_coord_mode());
 
 		int x, y;
 		viewport->coord_to_screen(&gps, &x, &y);
@@ -1652,8 +1650,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 			ll.lat = this->realtime_fix.fix.latitude;
 			ll.lon = this->realtime_fix.fix.longitude;
-			vik_coord_load_from_latlon(&tp_->coord,
-						   this->trw_children[TRW_REALTIME]->get_coord_mode(), &ll);
+			tp_->coord = VikCoord(ll, this->trw_children[TRW_REALTIME]->get_coord_mode());
 
 			this->realtime_track->add_trackpoint(tp_, true); /* Ensure bounds is recalculated. */
 			this->realtime_fix.dirty = false;
@@ -1714,12 +1711,10 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		layer->realtime_fix.dirty = true;
 
 		struct LatLon ll;
-		VikCoord vehicle_coord;
-
 		ll.lat = layer->realtime_fix.fix.latitude;
 		ll.lon = layer->realtime_fix.fix.longitude;
-		vik_coord_load_from_latlon(&vehicle_coord,
-					   layer->trw_children[TRW_REALTIME]->get_coord_mode(), &ll);
+
+		VikCoord vehicle_coord(ll, layer->trw_children[TRW_REALTIME]->get_coord_mode());
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {

@@ -293,9 +293,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 				c_wp->visible = false;
 			}
 
-			vik_coord_load_from_latlon(&(c_wp->coord),
-						   trw->get_coord_mode(),
-						   &c_ll);
+			c_wp->coord = VikCoord(c_ll, trw->get_coord_mode());
 		}
 		break;
 
@@ -315,7 +313,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 	case tt_trk_trkseg_trkpt:
 		if (set_c_ll(attr)) {
 			c_tp = new Trackpoint();
-			vik_coord_load_from_latlon(&(c_tp->coord), trw->get_coord_mode(), &c_ll);
+			c_tp->coord = VikCoord(c_ll, trw->get_coord_mode());
 			if (f_tr_newseg) {
 				c_tp->newsegment = true;
 				f_tr_newseg = false;
@@ -356,7 +354,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 
 	case tt_waypoint_coord:
 		if (set_c_ll(attr)) {
-			vik_coord_load_from_latlon(&(c_wp->coord), trw->get_coord_mode(), &c_ll);
+			c_wp->coord = VikCoord(c_ll, trw->get_coord_mode());
 		}
 		break;
 
@@ -865,12 +863,10 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	}
 
 	FILE *f = context->file;
-	static struct LatLon ll;
-	char *s_lat,*s_lon;
 	char *tmp;
-	vik_coord_to_latlon(&(wp->coord), &ll);
-	s_lat = a_coords_dtostr(ll.lat);
-	s_lon = a_coords_dtostr(ll.lon);
+	static struct LatLon ll = wp->coord.get_latlon();
+	char * s_lat = a_coords_dtostr(ll.lat);
+	char * s_lon = a_coords_dtostr(ll.lon);
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n",
@@ -958,18 +954,18 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 {
 	FILE * f = context->file;
-	static struct LatLon ll;
-	char *s_lat,*s_lon, *s_alt, *s_dop;
+
+	char *s_alt, *s_dop;
 	char *time_iso8601;
-	vik_coord_to_latlon(&(tp->coord), &ll);
+	static struct LatLon ll = tp->coord.get_latlon();
 
 	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {
 		fprintf(f, "  </trkseg>\n  <trkseg>\n");
 	}
 
-	s_lat = a_coords_dtostr(ll.lat);
-	s_lon = a_coords_dtostr(ll.lon);
+	char * s_lat = a_coords_dtostr(ll.lat);
+	char * s_lon = a_coords_dtostr(ll.lon);
 	fprintf(f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", s_lat, s_lon);
 	free(s_lat); s_lat = NULL;
 	free(s_lon); s_lon = NULL;

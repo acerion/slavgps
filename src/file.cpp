@@ -222,14 +222,12 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 {
 	LayerAggregate * aggregate = top;
-	struct LatLon ll;
-	ViewportDrawMode mode;
-	char *modestring = NULL;
+	char * modestring = NULL;
 
 	/* Crazhy CRAZHY. */
-	vik_coord_to_latlon(viewport->get_center(), &ll);
+	struct LatLon ll = viewport->get_center()->get_latlon();
 
-	mode = viewport->get_drawmode();
+	ViewportDrawMode mode = viewport->get_drawmode();
 	switch (mode) {
 	case ViewportDrawMode::UTM:
 		modestring = (char *) "utm";

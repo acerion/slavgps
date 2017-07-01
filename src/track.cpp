@@ -369,13 +369,12 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode)
 {
-	struct LatLon ll_a, ll_b;
-	vik_coord_to_latlon(&tp_a.coord, &ll_a);
-	vik_coord_to_latlon(&tp_b.coord, &ll_b);
+	struct LatLon ll_a = tp_a.coord.get_latlon();
+	struct LatLon ll_b = tp_b.coord.get_latlon();
 
 	/* Main positional interpolation. */
 	struct LatLon ll_new = { (ll_a.lat + ll_b.lat) / 2, (ll_a.lon + ll_b.lon) / 2 };
-	vik_coord_load_from_latlon(&this->coord, coord_mode, &ll_new);
+	this->coord = VikCoord(ll_new, coord_mode);
 
 	/* Now other properties that can be interpolated. */
 	this->altitude = (tp_a.altitude + tp_b.altitude) / 2;
@@ -444,9 +443,8 @@ void Track::recalculate_bounds_last_tp()
 
 	Trackpoint * tp = *std::prev(this->trackpointsB->end());
 	if (tp) {
-		struct LatLon ll;
 		/* See if this trackpoint increases the track bounds and update if so. */
-		vik_coord_to_latlon (&tp->coord, &ll);
+		struct LatLon ll = tp->coord.get_latlon();
 		if (ll.lat > bbox.north) {
 			bbox.north = ll.lat;
 		}
@@ -509,8 +507,7 @@ double Track::get_length_to_trackpoint(const Trackpoint * tp)
 	for (; iter != this->trackpointsB->end(); iter++) {
 		Trackpoint * tp1 = *iter;
 		if (!tp1->newsegment) {
-			len += vik_coord_diff(&tp1->coord,
-					      &(*std::prev(iter))->coord);
+			len += VikCoord::distance(tp1->coord, (*std::prev(iter))->coord);
 		}
 
 		/* Exit when we reach the desired point. */
@@ -534,8 +531,7 @@ double Track::get_length()
 	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
 		Trackpoint * tp1 = *iter;
 		if (!tp1->newsegment) {
-			len += vik_coord_diff(&tp1->coord,
-					      &(*std::prev(iter))->coord);
+			len += VikCoord::distance(tp1->coord, (*std::prev(iter))->coord);
 		}
 	}
 	return len;
@@ -552,8 +548,7 @@ double Track::get_length_including_gaps()
 	}
 
 	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
-		len += vik_coord_diff(&(*iter)->coord,
-				      &(*std::prev(iter))->coord);
+		len += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 	}
 	return len;
 }
@@ -580,8 +575,7 @@ unsigned long Track::get_dup_point_count()
 
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 		if (std::next(iter) != this->trackpointsB->end()
-		    && vik_coord_equals(&(*iter)->coord,
-					&(*std::next(iter))->coord)) {
+		    && (*iter)->coord == (*std::next(iter))->coord) {
 			num++;
 		}
 	}
@@ -603,8 +597,7 @@ unsigned long Track::remove_dup_points()
 	while (iter != this->trackpointsB->end()) {
 
 		if (std::next(iter) != this->trackpointsB->end()
-		    && vik_coord_equals(&(*iter)->coord,
-					&(*std::next(iter))->coord)) {
+		    && (*iter)->coord == (*std::next(iter))->coord) {
 
 			num++;
 			/* Maintain track segments. */
@@ -923,8 +916,7 @@ double Track::get_average_speed()
 		    && (*std::prev(iter))->has_timestamp
 		    && !(*iter)->newsegment) {
 
-			len += vik_coord_diff(&(*iter)->coord,
-					      &(*std::prev(iter))->coord);
+			len += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 		}
 	}
@@ -960,8 +952,7 @@ double Track::get_average_speed_moving(int stop_length_seconds)
 		    && !(*iter)->newsegment) {
 
 			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < stop_length_seconds) {
-				len += vik_coord_diff(&(*iter)->coord,
-						      &(*std::prev(iter))->coord);
+				len += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
 				time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 			}
@@ -988,7 +979,7 @@ double Track::get_max_speed()
 		    && (*std::prev(iter))->has_timestamp
 		    && (!(*iter)->newsegment)) {
 
-			speed = vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord)
+			speed = VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord)
 				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
@@ -1006,7 +997,7 @@ double Track::get_max_speed()
 void Track::convert(CoordMode dest_mode)
 {
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
-		vik_coord_convert(&(*iter)->coord, dest_mode);
+		(*iter)->coord.change_mode(dest_mode);
 	}
 }
 
@@ -1059,8 +1050,7 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 	uint16_t current_chunk = 0;
 
 	auto iter = this->trackpointsB->begin();
-	double current_seg_length = vik_coord_diff(&(*iter)->coord,
-						   &(*std::next(iter))->coord);
+	double current_seg_length = VikCoord::distance((*iter)->coord, (*std::next(iter))->coord);
 
 	double altitude1 = (*iter)->altitude;
 	double altitude2 = (*std::next(iter))->altitude;
@@ -1104,8 +1094,7 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 			while (iter != this->trackpointsB->end()
 			       && std::next(iter) != this->trackpointsB->end()) {
 
-				current_seg_length = vik_coord_diff(&(*iter)->coord,
-								    &(*std::next(iter))->coord);
+				current_seg_length = VikCoord::distance((*iter)->coord, (*std::next(iter))->coord);
 				altitude1 = (*iter)->altitude;
 				altitude2 = (*std::next(iter))->altitude;
 				ignore_it = (*std::next(iter))->newsegment;
@@ -1245,7 +1234,7 @@ double * Track::make_speed_map(const uint16_t num_chunks)
 	numpts++;
 	iter++;
 	while (iter != this->trackpointsB->end()) {
-		s[numpts] = s[numpts - 1] + vik_coord_diff(&(*std::prev(iter))->coord, &(*iter)->coord);
+		s[numpts] = s[numpts - 1] + VikCoord::distance((*std::prev(iter))->coord, (*iter)->coord);
 		t[numpts] = (*iter)->timestamp;
 		numpts++;
 		iter++;
@@ -1305,7 +1294,7 @@ double * Track::make_distance_map(const uint16_t num_chunks)
 	numpts++;
 	iter++;
 	while (iter != this->trackpointsB->end()) {
-		s[numpts] = s[numpts - 1] + vik_coord_diff(&(*std::prev(iter))->coord, &(*iter)->coord);
+		s[numpts] = s[numpts - 1] + VikCoord::distance((*std::prev(iter))->coord, (*iter)->coord);
 		t[numpts] = (*iter)->timestamp;
 		numpts++;
 		iter++;
@@ -1444,7 +1433,7 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 	numpts++;
 	iter++;
 	while (iter != this->trackpointsB->end()) {
-		s[numpts] = s[numpts - 1] + vik_coord_diff(&(*std::prev(iter))->coord, &(*iter)->coord);
+		s[numpts] = s[numpts - 1] + VikCoord::distance((*std::prev(iter))->coord, (*iter)->coord);
 		t[numpts] = (*iter)->timestamp;
 		numpts++;
 		iter++;
@@ -1501,8 +1490,7 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 	auto iter = std::next(this->trackpointsB->begin());
 	while (iter != this->trackpointsB->end()) {
-		current_inc = vik_coord_diff(&(*iter)->coord,
-					     &(*std::prev(iter))->coord);
+		current_inc = VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		current_dist += current_inc;
 		if (current_dist >= meters_from_start) {
 			break;
@@ -1549,8 +1537,7 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 
 	auto iter = std::next(this->trackpointsB->begin());
 	for (; iter != this->trackpointsB->end(); iter++) {
-		current_inc = vik_coord_diff(&(*iter)->coord,
-					     &(*std::prev(iter))->coord);
+		current_inc = VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		last_dist = current_dist;
 		current_dist += current_inc;
 		if (current_dist >= dist) {
@@ -1655,7 +1642,7 @@ Trackpoint * Track::get_tp_by_max_speed()
 		    && (*std::prev(iter))->has_timestamp
 		    && !(*iter)->newsegment) {
 
-			speed = vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord)
+			speed = VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord)
 				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
@@ -1903,20 +1890,20 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
  */
 void Track::calculate_bounds()
 {
-	struct LatLon topleft, bottomright, ll;
+	struct LatLon topleft, bottomright;
 
 	/* Set bounds to first point. */
 	auto iter = this->trackpointsB->begin();
 	if (iter != this->trackpointsB->end()) {
-		vik_coord_to_latlon(&(*iter)->coord, &topleft);
-		vik_coord_to_latlon(&(*iter)->coord, &bottomright);
+		topleft = (*iter)->coord.get_latlon();
+		bottomright = (*iter)->coord.get_latlon();
 	}
 
 	for (; iter != this->trackpointsB->end(); iter++) {
 
 		/* See if this trackpoint increases the track bounds. */
 
-		vik_coord_to_latlon(&(*iter)->coord, &ll);
+		struct LatLon ll = (*iter)->coord.get_latlon();
 
 		if (ll.lat > topleft.lat) {
 			topleft.lat = ll.lat;
@@ -2022,7 +2009,7 @@ void Track::interpolate_times()
 			       && std::next(std::next(iter)) != this->trackpointsB->end()) {
 
 				iter++;
-				cur_dist += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
+				cur_dist += VikCoord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
 				(*iter)->timestamp = (cur_dist / tr_dist) * tsdiff + tsfirst;
 				(*iter)->has_timestamp = true;
@@ -2210,7 +2197,7 @@ VikCoord * Track::cut_back_to_double_point()
 		VikCoord * cur_coord = &(*iter)->coord;
 		VikCoord * prev_coord = &(*std::prev(iter))->coord;
 
-		if (vik_coord_equals(cur_coord, prev_coord)) {
+		if (*cur_coord == *prev_coord) {
 
 			*rv = *cur_coord;
 
@@ -2408,7 +2395,7 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 	while (iter != this->trackpointsB->end()) {
 		VikCoord * cur_coord = &(*iter)->coord;
 		if (new_map) {
-			vik_coord_set_area(cur_coord, wh, &tl, &br);
+			cur_coord->set_area(wh, &tl, &br);
 			Rect * rect = (Rect *) malloc(sizeof (Rect));
 			rect->tl = tl;
 			rect->br = br;
@@ -2420,7 +2407,7 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 		}
 		bool found = false;
 		for (auto rect_iter = rectangles->begin(); rect_iter != rectangles->end(); rect_iter++) {
-			if (vik_coord_inside(cur_coord, &(*rect_iter)->tl, &(*rect_iter)->br)) {
+			if (cur_coord->is_inside(&(*rect_iter)->tl, &(*rect_iter)->br)) {
 				found = true;
 				break;
 			}

@@ -350,5 +350,5 @@ void Waypoint::delete_waypoint(Waypoint * wp)
 
 void Waypoint::convert(CoordMode dest_mode)
 {
-	vik_coord_convert(&this->coord, dest_mode);
+	this->coord.change_mode(dest_mode);
 }

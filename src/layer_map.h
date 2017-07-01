@@ -88,7 +88,7 @@ namespace SlavGPS {
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
 		char * get_map_label();
-		int how_many_maps(VikCoord * ul, VikCoord * br, double zoom, int redownload_mode);
+		int how_many_maps(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode);
 
 		void set_cache_dir(char const * dir);
 		void mkdir_if_default_dir();
@@ -99,8 +99,8 @@ namespace SlavGPS {
 		static MapTypeID get_default_map_type(void);
 
 		void download(Viewport * viewport, bool only_new);
-		void download_section(VikCoord * ul, VikCoord * br, double zoom);
-		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
+		void download_section(const VikCoord * ul, const VikCoord * br, double zoom);
+		void download_section_sub(const VikCoord * ul, const VikCoord * br, double zoom, int redownload_mode);
 
 		void start_download_thread(Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 		void download_onscreen_maps(int redownload_mode);

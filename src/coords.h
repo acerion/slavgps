@@ -35,8 +35,6 @@ renaming functions and defining LatLon and UTM structs.
 #ifndef _VIKING_COORDS_H
 #define _VIKING_COORDS_H
 
-#include <glib.h>
-#include <stdint.h>
 
 
 #ifdef __cplusplus
@@ -57,8 +55,10 @@ struct LatLon {
 };
 
 int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );
-void a_coords_latlon_to_utm ( const struct LatLon *latlon, struct UTM *utm );
-void a_coords_utm_to_latlon ( const struct UTM *utm, struct LatLon *latlon );
+
+void a_coords_latlon_to_utm(struct UTM * utm, const struct LatLon * ll);
+void a_coords_utm_to_latlon(struct LatLon * ll, const struct UTM * utm);
+
 double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 );
 double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2 );
 

@@ -375,10 +375,10 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
 			scale = ((double)options->PhotoTime - (double)tp->timestamp) / scale;
 
-			struct LatLon ll_result, ll1, ll2;
+			struct LatLon ll_result;
 
-			vik_coord_to_latlon (&(tp->coord), &ll1);
-			vik_coord_to_latlon (&(tp_next->coord), &ll2);
+			struct LatLon ll1 = tp->coord.get_latlon();
+			struct LatLon ll2 = tp_next->coord.get_latlon();
 
 			ll_result.lat = ll1.lat + ((ll2.lat - ll1.lat) * scale);
 
@@ -386,7 +386,7 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
-			vik_coord_load_from_latlon(&(options->coord), CoordMode::LATLON, &ll_result);
+			options->coord = VikCoord(ll_result, CoordMode::LATLON);
 
 			/* Interpolate elevation. */
 			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);

@@ -126,13 +126,13 @@ bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzo
 	/* Note: VIK_GZ(17) / xzoom / 2 = number of tile on Y axis. */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
 		xzoom, yzoom, VIK_GZ(17) / xzoom / 2);
-	dest->x = floor((src->east_west + 180) / 180 * VIK_GZ(17) / xzoom / 2);
+	dest->x = floor((src->ll.lon + 180) / 180 * VIK_GZ(17) / xzoom / 2);
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	dest->y = floor((180 - (src->north_south + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
+	dest->y = floor((180 - (src->ll.lat + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
 	dest->z = 0;
 	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
-		src->east_west, src->north_south, dest->x, dest->y);
+		src->ll.lon, src->ll.lat, dest->x, dest->y);
 	return true;
 }
 
@@ -148,12 +148,12 @@ void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
 	dest->mode = CoordMode::LATLON;
-	dest->east_west = (src->x+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	dest->ll.lon = (src->x+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	dest->north_south = -((src->y+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	dest->ll.lat = -((src->y+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
-		src->x, src->y, dest->east_west, dest->north_south);
+		src->x, src->y, dest->ll.lon, dest->ll.lat);
 }
 
 

@@ -668,7 +668,7 @@ RenderInfo::~RenderInfo()
 void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->north_south, ul->east_west, br->north_south, br->east_west);
+	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->ll.lat, ul->ll.lon, br->ll.lat, br->ll.lon);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);

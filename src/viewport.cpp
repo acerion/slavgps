@@ -119,13 +119,13 @@ double Viewport::calculate_utm_zone_width()
 		struct LatLon ll;
 
 		/* Get latitude of screen bottom. */
-		struct UTM utm = *((struct UTM *)(get_center()));
+		struct UTM utm = this->center.utm;
 		utm.northing -= this->size_height * ympp / 2;
-		a_coords_utm_to_latlon(&utm, &ll);
+		a_coords_utm_to_latlon(&ll, &utm);
 
 		/* Boundary. */
 		ll.lon = (utm.zone - 1) * 6 - 180 ;
-		a_coords_latlon_to_utm(&ll, &utm);
+		a_coords_latlon_to_utm(&utm, &ll);
 		return fabs(utm.easting - EASTING_OFFSET) * 2;
 	} else {
 		return 0.0;
@@ -180,7 +180,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 		}
 	}
 
-	a_coords_latlon_to_utm(&ll, &utm);
+	a_coords_latlon_to_utm(&utm, &ll);
 
 	xmpp = zoom_x;
 	ympp = zoom_y;
@@ -189,10 +189,10 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	coord_mode = CoordMode::LATLON;
 	drawmode = ViewportDrawMode::MERCATOR;
 	center.mode = CoordMode::LATLON;
-	center.north_south = ll.lat;
-	center.east_west = ll.lon;
-	center.utm_zone = (int) utm.zone;
-	center.utm_letter = utm.letter;
+	center.ll.lat = ll.lat;
+	center.ll.lon = ll.lon;
+	center.utm.zone = (int) utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
+	center.utm.letter = utm.letter;
 	utm_zone_width = 0.0;
 
 	centers = new std::list<Coord *>;
@@ -236,8 +236,7 @@ Viewport::~Viewport()
 {
 	qDebug() << "II: Viewport: ~Viewport called";
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
-		struct LatLon ll;
-		vik_coord_to_latlon(&(this->center), &ll);
+		struct LatLon ll = this->center.get_latlon();
 		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
 		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
 		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->xmpp);
@@ -592,15 +591,15 @@ void Viewport::draw_scale()
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		base_distance = vik_coord_diff(&left, &right); /* In meters. */
+		base_distance = VikCoord::distance(left, right); /* In meters. */
 		break;
 	case DistanceUnit::MILES:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
-		base_distance = VIK_METERS_TO_MILES(vik_coord_diff(&left, &right)) * 10.0;
+		base_distance = VIK_METERS_TO_MILES (VikCoord::distance(left, right)) * 10.0;
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
-		base_distance = VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&left, &right)) * 10.0;
+		base_distance = VIK_METERS_TO_NAUTICAL_MILES (VikCoord::distance(left, right)) * 10.0;
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
@@ -1000,10 +999,10 @@ void Viewport::utm_zone_check()
 	if (coord_mode == CoordMode::UTM) {
 		struct UTM utm;
 		struct LatLon ll;
-		a_coords_utm_to_latlon((struct UTM *) &(center), &ll);
-		a_coords_latlon_to_utm(&ll, &utm);
-		if (utm.zone != center.utm_zone) {
-			*((struct UTM *)(&center)) = utm;
+		a_coords_utm_to_latlon(&ll, &center.utm);
+		a_coords_latlon_to_utm(&utm, &ll);
+		if (utm.zone != center.utm.zone) {
+			this->center.utm = utm;
 		}
 
 		/* Misc. stuff so we don't have to check later. */
@@ -1089,8 +1088,7 @@ void Viewport::show_centers(Window * parent_window)
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
 		char * lat = NULL;
 		char * lon = NULL;
-		struct LatLon ll;
-		vik_coord_to_latlon(*iter, &ll);
+		struct LatLon ll = (*iter)->get_latlon();
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		QString extra;
 		/* Put the separating space in 'extra'. */
@@ -1128,8 +1126,7 @@ void Viewport::print_centers(char * label)
 {
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
 		char *lat = NULL, *lon = NULL;
-		struct LatLon ll;
-		vik_coord_to_latlon(*iter, &ll);
+		struct LatLon ll = (*iter)->get_latlon();
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		char * extra = NULL;
 		if (iter == prev(centers_iter)) {
@@ -1165,7 +1162,7 @@ bool Viewport::go_back()
 	if (last_center) {
 		/* Consider an exclusion size (should it zoom level dependent, rather than a fixed value?).
 		   When still near to the last saved position we'll jump over it to the one before. */
-		if (vik_coord_diff(last_center, &center) > centers_radius) {
+		if (VikCoord::distance(*last_center, this->center) > centers_radius) {
 
 			if (centers_iter == prev(centers->end())) {
 				/* Only when we haven't already moved back in the list.
@@ -1251,7 +1248,7 @@ bool Viewport::forward_available()
  */
 void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
 {
-	vik_coord_load_from_latlon(&(center), coord_mode, ll);
+	this->center = VikCoord(*ll, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -1271,7 +1268,7 @@ void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
  */
 void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
 {
-	vik_coord_load_from_utm (&(center), coord_mode, utm);
+	this->center = VikCoord(*utm, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -1310,25 +1307,25 @@ void Viewport::corners_for_zonen(int zone, VikCoord * ul, VikCoord * br)
 	}
 
 	/* Get center, then just offset. */
-	this->center_for_zonen((struct UTM *) (ul), zone);
+	this->center_for_zonen(&ul->utm, zone);
 	ul->mode = CoordMode::UTM;
 	*br = *ul;
 
-	ul->north_south += (ympp * this->size_height / 2);
-	ul->east_west -= (xmpp * this->size_width / 2);
-	br->north_south -= (ympp * this->size_height / 2);
-	br->east_west += (xmpp * this->size_width / 2);
+	ul->utm.northing += (ympp * this->size_height / 2);
+	ul->utm.easting -= (xmpp * this->size_width / 2);
+	br->utm.northing -= (ympp * this->size_height / 2);
+	br->utm.easting += (xmpp * this->size_width / 2);
 }
 
 
 
 
-void Viewport::center_for_zonen(struct UTM * center_, int zone)
+void Viewport::center_for_zonen(struct UTM * center_utm, int zone)
 {
 	if (coord_mode == CoordMode::UTM) {
-		*center_ = *((struct UTM *)(get_center()));
-		center_->easting -= (zone - center_->zone) * utm_zone_width;
-		center_->zone = zone;
+		*center_utm = this->center.utm;
+		center_utm->easting -= (zone - center_utm->zone) * utm_zone_width;
+		center_utm->zone = zone;
 	}
 }
 
@@ -1340,7 +1337,7 @@ char Viewport::leftmost_zone()
 	if (coord_mode == CoordMode::UTM) {
 		VikCoord coord;
 		this->screen_to_coord(0, 0, &coord);
-		return coord.utm_zone;
+		return coord.utm.zone;
 	}
 	return '\0';
 }
@@ -1353,7 +1350,7 @@ char Viewport::rightmost_zone()
 	if (coord_mode == CoordMode::UTM) {
 		VikCoord coord;
 		this->screen_to_coord(this->size_width, 0, &coord);
-		return coord.utm_zone;
+		return coord.utm.zone;
 	}
 	return '\0';
 }
@@ -1365,8 +1362,8 @@ void Viewport::set_center_screen(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
-		center.east_west += xmpp * (x1 - (this->size_width / 2));
-		center.north_south += ympp * ((this->size_height / 2) - y1);
+		center.utm.easting += xmpp * (x1 - (this->size_width / 2));
+		center.utm.northing += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
 		VikCoord tmp;
@@ -1398,27 +1395,27 @@ void Viewport::screen_to_coord(int pos_x, int pos_y, VikCoord * coord)
 {
 	if (coord_mode == CoordMode::UTM) {
 		int zone_delta;
-		struct UTM *utm = (struct UTM *) coord;
+		struct UTM * utm = &coord->utm;
 		coord->mode = CoordMode::UTM;
 
-		utm->zone = center.utm_zone;
-		utm->letter = center.utm_letter;
-		utm->easting = ((pos_x - (this->size_width_2)) * xmpp) + center.east_west;
+		utm->zone = center.utm.zone;
+		utm->letter = center.utm.letter;
+		utm->easting = ((pos_x - (this->size_width_2)) * xmpp) + center.utm.easting;
 		zone_delta = floor((utm->easting - EASTING_OFFSET) / utm_zone_width + 0.5);
 		utm->zone += zone_delta;
 		utm->easting -= zone_delta * utm_zone_width;
-		utm->northing = (((this->size_height_2) - pos_y) * ympp) + center.north_south;
+		utm->northing = (((this->size_height_2) - pos_y) * ympp) + center.utm.northing;
 	} else if (coord_mode == CoordMode::LATLON) {
 		coord->mode = CoordMode::LATLON;
 		if (drawmode == ViewportDrawMode::LATLON) {
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
-			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
+			coord->ll.lon = center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord->ll.lat = center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
 		} else if (drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy_rev(&(coord->east_west), &(coord->north_south), pos_x, pos_y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+			calcxy_rev(&coord->ll.lon, &coord->ll.lat, pos_x, pos_y, center.ll.lon, center.ll.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 		} else if (drawmode == ViewportDrawMode::MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize. */
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
-			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
+			coord->ll.lon = center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord->ll.lat = DEMERCLAT (MERCLAT(center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
 		} else {
 			;
 		}
@@ -1438,36 +1435,36 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * pos_x, int * pos_y)
 {
 	static VikCoord tmp;
 
-	if (coord->mode != this->coord_mode){
+	if (coord->mode != this->coord_mode) {
 		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen()! This should never happen!";
-		vik_coord_copy_convert (coord, this->coord_mode, &tmp);
+		tmp = coord->copy_change_mode(this->coord_mode); /* kamilTODO: what's going on here? Why this special case even exists? */
 		coord = &tmp;
 	}
 
 	if (this->coord_mode == CoordMode::UTM) {
-		struct UTM *a_center = (struct UTM *) &(this->center);
-		struct UTM *utm = (struct UTM *) coord;
-		if (a_center->zone != utm->zone && this->one_utm_zone){
+		const struct UTM * utm_center = &this->center.utm;
+		const struct UTM * utm = &coord->utm;
+		if (utm_center->zone != utm->zone && this->one_utm_zone){
 			*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 			return;
 		}
 
-		*pos_x = ((utm->easting - a_center->easting) / this->xmpp) + (this->size_width_2) -
-			(a_center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
-		*pos_y = (this->size_height_2) - ((utm->northing - a_center->northing) / this->ympp);
+		*pos_x = ((utm->easting - utm_center->easting) / this->xmpp) + (this->size_width_2) -
+			(utm_center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
+		*pos_y = (this->size_height_2) - ((utm->northing - utm_center->northing) / this->ympp);
 	} else if (this->coord_mode == CoordMode::LATLON) {
-		struct LatLon *a_center = (struct LatLon *) &(this->center);
-		struct LatLon *ll = (struct LatLon *) coord;
+		const struct LatLon * ll_center = &this->center.ll;
+		const struct LatLon * ll = &coord->ll;
 		double xx,yy;
 		if (this->drawmode == ViewportDrawMode::LATLON) {
-			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - a_center->lon));
-			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (a_center->lat - ll->lat));
+			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - ll_center->lon));
+			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (ll_center->lat - ll->lat));
 		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy (&xx, &yy, a_center->lon, a_center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+			calcxy (&xx, &yy, ll_center->lon, ll_center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 			*pos_x = xx; *pos_y = yy;
 		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
-			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - a_center->lon));
-			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(a_center->lat) - MERCLAT(ll->lat)));
+			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - ll_center->lon));
+			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(ll_center->lat) - MERCLAT(ll->lat)));
 		}
 	}
 }
@@ -1694,7 +1691,7 @@ CoordMode Viewport::get_coord_mode()
 void Viewport::set_coord_mode(CoordMode mode_)
 {
 	coord_mode = mode_;
-	vik_coord_convert(&(center), mode_);
+	this->center.change_mode(mode_);
 }
 
 
@@ -1905,15 +1902,15 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 	this->screen_to_coord(0,                this->size_height, &bleft);
 	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
-	vik_coord_convert(&tleft, CoordMode::LATLON);
-	vik_coord_convert(&tright, CoordMode::LATLON);
-	vik_coord_convert(&bleft, CoordMode::LATLON);
-	vik_coord_convert(&bright, CoordMode::LATLON);
+	tleft.change_mode(CoordMode::LATLON);
+	tright.change_mode(CoordMode::LATLON);
+	bleft.change_mode(CoordMode::LATLON);
+	bright.change_mode(CoordMode::LATLON);
 
-	*max_lat = MAX(tleft.north_south, tright.north_south);
-	*min_lat = MIN(bleft.north_south, bright.north_south);
-	*max_lon = MAX(tright.east_west, bright.east_west);
-	*min_lon = MIN(tleft.east_west, bleft.east_west);
+	*max_lat = MAX(tleft.ll.lat, tright.ll.lat);
+	*min_lat = MIN(bleft.ll.lat, bright.ll.lat);
+	*max_lon = MAX(tright.ll.lon, bright.ll.lon);
+	*min_lon = MIN(tleft.ll.lon, bleft.ll.lon);
 }
 
 
@@ -1928,15 +1925,15 @@ void Viewport::get_bbox(LatLonBBox * bbox)
 	this->screen_to_coord(0,                this->size_height, &bleft);
 	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
-	vik_coord_convert(&tleft, CoordMode::LATLON);
-	vik_coord_convert(&tright, CoordMode::LATLON);
-	vik_coord_convert(&bleft, CoordMode::LATLON);
-	vik_coord_convert(&bright, CoordMode::LATLON);
+	tleft.change_mode(CoordMode::LATLON);
+	tright.change_mode(CoordMode::LATLON);
+	bleft.change_mode(CoordMode::LATLON);
+	bright.change_mode(CoordMode::LATLON);
 
-	bbox->north = MAX(tleft.north_south, tright.north_south);
-	bbox->south = MIN(bleft.north_south, bright.north_south);
-	bbox->east  = MAX(tright.east_west, bright.east_west);
-	bbox->west  = MIN(tleft.east_west, bleft.east_west);
+	bbox->north = MAX(tleft.ll.lat, tright.ll.lat);
+	bbox->south = MIN(bleft.ll.lat, bright.ll.lat);
+	bbox->east  = MAX(tright.ll.lon, bright.ll.lon);
+	bbox->west  = MIN(tleft.ll.lon, bleft.ll.lon);
 }
 
 
@@ -2040,16 +2037,16 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 	*angle = atan2(dy, dx) + M_PI_2;
 
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
-		VikCoord test;
-		struct LatLon ll;
 		struct UTM u;
 		int tx, ty;
 
+		VikCoord test;
 		this->screen_to_coord(x1, y1, &test);
-		vik_coord_to_latlon(&test, &ll);
+		struct LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
-		a_coords_latlon_to_utm(&ll, &u);
-		vik_coord_load_from_utm(&test, CoordMode::UTM, &u); /* kamilFIXME: it was ViewportDrawMode::UTM. */
+		a_coords_latlon_to_utm(&u, &ll);
+
+		test = VikCoord(u, CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);
@@ -2241,9 +2238,8 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	//this->window->tb->move(ev); /* TODO: uncomment this. */
 
 	static VikCoord coord;
-	static struct UTM utm;
 	this->screen_to_coord(pos_x, pos_y, &coord);
-	vik_coord_to_utm(&coord, &utm);
+	static struct UTM utm = coord.get_utm();
 
 	char * lat = NULL;
 	char * lon = NULL;
@@ -2301,7 +2297,7 @@ void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
 		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
 	} else {
 		struct LatLon ll;
-		a_coords_utm_to_latlon(&utm, &ll);
+		a_coords_utm_to_latlon(&ll, &utm);
 		a_coords_latlon_to_string(&ll, lat, lon);
 	}
 }

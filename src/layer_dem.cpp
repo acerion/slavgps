@@ -572,7 +572,6 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		return;
 	}
 
-#if 0
 	/* Boxes to show where we have DEM instead of actually drawing the DEM.
 	 * useful if we want to see what areas we have coverage for (if we want
 	 * to get elevation data for a track) but don't want to cover the map.
@@ -581,11 +580,12 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	/* Draw a box if a DEM is loaded. in future I'd like to add an option for this
 	 * this is useful if we want to see what areas we have dem for but don't want to
 	 * cover the map (or maybe we just need translucent DEM?). */
+#if 0
 	draw_loaded_dem_box(viewport);
 #endif
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode. */
+		Coord tmp; /* TODO: don't use VikCoord(ll, mode), especially if in latlon drawing mode. */
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
 
@@ -663,7 +663,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c = counter;
 				box_c.lat += (nscale_deg * skip_factor)/2;
 				box_c.lon -= (escale_deg * skip_factor)/2;
-				vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+				tmp = VikCoord(box_c, viewport->get_coord_mode());
 				viewport->coord_to_screen(&tmp, &box_x, &box_y);
 				/* Catch box at borders. */
 				if (box_x < 0) {
@@ -676,7 +676,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				box_c.lat -= nscale_deg * skip_factor;
 				box_c.lon += escale_deg * skip_factor;
-				vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+				tmp = VikCoord(box_c, viewport->get_coord_mode());
 				viewport->coord_to_screen(&tmp, &box_width, &box_height);
 				box_width -= box_x;
 				box_height -= box_y;
@@ -752,7 +752,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		} /* for x= */
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 
-		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode. */
+		Coord tmp; /* TODO: don't use VikCoord(ll, mode), especially if in latlon drawing mode. */
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
 
@@ -763,31 +763,31 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bleft);
 		viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &bright);
 
-		vik_coord_convert(&tleft, CoordMode::UTM);
-		vik_coord_convert(&tright, CoordMode::UTM);
-		vik_coord_convert(&bleft, CoordMode::UTM);
-		vik_coord_convert(&bright, CoordMode::UTM);
+		tleft.change_mode(CoordMode::UTM);
+		tright.change_mode(CoordMode::UTM);
+		bleft.change_mode(CoordMode::UTM);
+		bright.change_mode(CoordMode::UTM);
 
-		double max_nor = MAX(tleft.north_south, tright.north_south);
-		double min_nor = MIN(bleft.north_south, bright.north_south);
-		double max_eas = MAX(bright.east_west, tright.east_west);
-		double min_eas = MIN(bleft.east_west, tleft.east_west);
+		double max_nor = MAX(tleft.utm.northing, tright.utm.northing);
+		double min_nor = MIN(bleft.utm.northing, bright.utm.northing);
+		double max_eas = MAX(bright.utm.easting, tright.utm.easting);
+		double min_eas = MIN(bleft.utm.easting, tleft.utm.easting);
 
 		double start_eas, end_eas;
 		double start_nor = MAX(min_nor, dem->min_north);
 		double end_nor   = MIN(max_nor, dem->max_north);
-		if (tleft.utm_zone == dem->utm_zone && bleft.utm_zone == dem->utm_zone
-		    && (tleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+		if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
+		    && (tleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')
+		    && (bleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 			start_eas = MAX(min_eas, dem->min_east);
 		} else {
 			start_eas = dem->min_east;
 		}
 
-		if (tright.utm_zone == dem->utm_zone && bright.utm_zone == dem->utm_zone
-		    && (tright.utm_letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bright.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+		if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
+		    && (tright.utm.letter >= 'N') == (dem->utm_letter >= 'N')
+		    && (bright.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 			end_eas = MIN(max_eas, dem->max_east);
 		} else {
@@ -837,7 +837,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				{
 					int a, b;
-					vik_coord_load_from_utm(&tmp, viewport->get_coord_mode(), &counter);
+					tmp = VikCoord(counter, viewport->get_coord_mode());
 					viewport->coord_to_screen(&tmp, &a, &b);
 
 					int idx = 0; /* Default index for colour of 'sea'. */
@@ -855,14 +855,13 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 
 
-#if 0
 void draw_loaded_dem_box(Viewport * viewport)
 {
+#if 0
 	/* For getting values of dem_northeast and dem_southwest see vik_dem_overlap(). */
-	Coord demne, demsw;
 	int x1, y1, x2, y2;
-	vik_coord_load_from_latlon(&demne, viewport->get_coord_mode(), &dem_northeast);
-	vik_coord_load_from_latlon(&demsw, viewport->get_coord_mode(), &dem_southwest);
+	const Coord demne(dem_northeast, viewport->get_coord_mode());
+	const Coord demsw(dem_southwest, viewport->get_coord_mode());
 
 	viewport->coord_to_screen(&demne, &x1, &y1);
 	viewport->coord_to_screen(&demsw, &x2, &y2);
@@ -883,12 +882,13 @@ void draw_loaded_dem_box(Viewport * viewport)
 		y1 = 0;
 	}
 
-	fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
-	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-				 x2, y1, x1-x2, y2-y1);
+	qDebug() << "II: Layer DEM: drawing loaded DEM box";
+#if 0
+	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc, x2, y1, x1-x2, y2-y1);
+#endif
+#endif
 	return;
 }
-#endif
 
 
 
@@ -1122,12 +1122,15 @@ static void srtm_draw_existence(Viewport * viewport)
 			if (0 == access(buf, F_OK)) {
 				Coord ne, sw;
 				int x1, y1, x2, y2;
-				sw.north_south = i;
-				sw.east_west = j;
+
+				sw.ll.lat = i;
+				sw.ll.lon = j;
 				sw.mode = CoordMode::LATLON;
-				ne.north_south = i+1;
-				ne.east_west = j+1;
+
+				ne.ll.lat = i+1;
+				ne.ll.lon = j+1;
 				ne.mode = CoordMode::LATLON;
+
 				viewport->coord_to_screen(&sw, &x1, &y1);
 				viewport->coord_to_screen(&ne, &x2, &y2);
 
@@ -1445,10 +1448,9 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	Coord coord;
-	static struct LatLon ll;
 
 	tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
-	vik_coord_to_latlon(&coord, &ll);
+	static struct LatLon ll = coord.get_latlon();
 
 	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
 

@@ -87,11 +87,9 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 	/* Coords.
 	   Use the provided position otherwise use center of the viewport. */
 	if (vc) {
-		vik_coord_to_latlon(vc, &ll);
+		ll = vc->get_latlon();
 	} else {
-		const VikCoord *coord = NULL;
-		coord = viewport->get_center();
-		vik_coord_to_latlon(coord, &ll);
+		ll = viewport->get_center()->get_latlon();
 	}
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */

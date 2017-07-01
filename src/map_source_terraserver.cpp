@@ -94,9 +94,9 @@ bool MapSourceTerraserver::coord_to_tile(const VikCoord * src, double xmpp, doub
 		return false;
 	}
 
-	dest->x = (int)(((int)(src->east_west))/(200*xmpp));
-	dest->y = (int)(((int)(src->north_south))/(200*xmpp));
-	dest->z = src->utm_zone;
+	dest->x = (int)(((int)(src->utm.easting))/(200*xmpp));
+	dest->y = (int)(((int)(src->utm.northing))/(200*xmpp));
+	dest->z = src->utm.zone;
 	return true;
 }
 
@@ -124,9 +124,9 @@ void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 	/* FIXME: slowdown here! */
 	double mpp = scale_to_mpp (src->scale);
 	dest->mode = CoordMode::UTM;
-	dest->utm_zone = src->z;
-	dest->east_west = ((src->x * 200) + 100) * mpp;
-	dest->north_south = ((src->y * 200) + 100) * mpp;
+	dest->utm.zone = src->z;
+	dest->utm.easting = ((src->x * 200) + 100) * mpp;
+	dest->utm.northing = ((src->y * 200) + 100) * mpp;
 }
 
 

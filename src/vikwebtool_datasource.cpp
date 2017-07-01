@@ -331,9 +331,7 @@ char * WebToolDatasource::get_url(Window * window)
 	Viewport * viewport = window->get_viewport();
 
 	/* Center values. */
-	const VikCoord *coord = viewport->get_center();
-	struct LatLon ll;
-	vik_coord_to_latlon(coord, &ll);
+	struct LatLon ll = viewport->get_center()->get_latlon();
 
 	char scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
