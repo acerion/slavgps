@@ -82,7 +82,7 @@ char * WebToolBounds::get_url(Window * window)
 
 
 
-char * WebToolBounds::get_url_at_position(Window * window, Coord * vc)
+char * WebToolBounds::get_url_at_position(Window * window, const Coord * coord)
 {
 	// TODO: could use zoom level to generate an offset from center lat/lon to get the bounds
 	// For now simply use the existing function to use bounds from the viewport

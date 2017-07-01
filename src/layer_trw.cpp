@@ -138,7 +138,7 @@ extern VikDataSourceInterface vik_datasource_geojson_interface;
 
 
 
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord * coord);
+static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord & coord);
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 
@@ -577,7 +577,7 @@ void TRWMetadata::set_timestamp(char const * new_timestamp)
 /**
  * Find a track by date.
  */
-bool LayerTRW::find_track_by_date(char const * date_str, Coord * position, Viewport * viewport, bool select)
+bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bool select)
 {
 	Track * trk = LayerTRWc::find_track_by_date(this->tracks, date_str);
 	if (trk && select) {
@@ -594,11 +594,11 @@ bool LayerTRW::find_track_by_date(char const * date_str, Coord * position, Viewp
 /**
  * Find a waypoint by date.
  */
-bool LayerTRW::find_waypoint_by_date(char const * date_str, Coord * position, Viewport * viewport, bool select)
+bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport, bool select)
 {
 	Waypoint * wp = LayerTRWc::find_waypoint_by_date(this->waypoints, date_str);
 	if (wp && select) {
-		viewport->set_center_coord(&wp->coord, true);
+		viewport->set_center_coord(wp->coord, true);
 		this->tree_view->select_and_expose(wp->index);
 		this->emit_changed();
 	}
@@ -2354,7 +2354,7 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, &coord);
+		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, coord);
 	} else {
 		dialog_info("This layer has no waypoints or trackpoints.", this->get_window());
 	}
@@ -2528,7 +2528,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			dialog_error(_("Waypoint not found in this layer."), this->get_window());
 		} else {
-			panel->get_viewport()->set_center_coord(&wp->coord, true);
+			panel->get_viewport()->set_center_coord(wp->coord, true);
 			panel->emit_update_cb();
 			this->tree_view->select_and_expose(wp->index);
 
@@ -2610,7 +2610,7 @@ void LayerTRW::geotagging_waypoint_mtime_keep_cb(void)
 	if (wp) {
 #ifdef K
 		/* Update directly - not changing the mtime. */
-		a_geotag_write_exif_gps(wp->image, wp->coord, wp->altitude, true);
+		SlavGPS::a_geotag_write_exif_gps(wp->image, wp->coord, wp->altitude, true);
 #endif
 	}
 }
@@ -3809,7 +3809,7 @@ void LayerTRW::update_treeview(Track * trk)
 
 
 
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord * coord)
+static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord & coord)
 {
 	if (panel) {
 		panel->get_viewport()->set_center_coord(coord, true);
@@ -3832,7 +3832,7 @@ void LayerTRW::goto_track_startpoint_cb(void)
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 
 	if (trk && !trk->empty()) {
-		goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_first()->coord);
+		goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_first()->coord);
 	}
 }
 
@@ -3850,7 +3850,7 @@ void LayerTRW::goto_track_center_cb(void)
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 		Coord coord(average, this->coord_mode);
-		goto_coord(panel, this, this->menu_data->viewport, &coord);
+		goto_coord(panel, this, this->menu_data->viewport, coord);
 	}
 }
 
@@ -3950,7 +3950,7 @@ void LayerTRW::extend_track_end_cb(void)
 	this->get_window()->activate_layer_tool(LayerType::TRW, trk->sublayer_type == SublayerType::ROUTE ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!trk->empty()) {
-		goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+		goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -3974,7 +3974,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		goto_coord(this->menu_data->layers_panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+		goto_coord(this->menu_data->layers_panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -4173,7 +4173,7 @@ void LayerTRW::goto_track_endpoint_cb(void)
 	if (trk->empty()) {
 		return;
 	}
-	goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+	goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
 }
 
 
@@ -4192,7 +4192,7 @@ void LayerTRW::goto_track_max_speed_cb()
 	if (!vtp) {
 		return;
 	}
-	goto_coord(panel, this, this->menu_data->viewport, &vtp->coord);
+	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
 }
 
 
@@ -4211,7 +4211,7 @@ void LayerTRW::goto_track_max_alt_cb(void)
 	if (!vtp) {
 		return;
 	}
-	goto_coord(panel, this, this->menu_data->viewport, &vtp->coord);
+	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
 }
 
 
@@ -4230,7 +4230,7 @@ void LayerTRW::goto_track_min_alt_cb(void)
 	if (!vtp) {
 		return;
 	}
-	goto_coord(panel, this, this->menu_data->viewport, &vtp->coord);
+	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
 }
 
 
@@ -4852,7 +4852,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
 
 			if (dialog_yes_or_no(QString("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), this->get_window()) {
-				goto_coord(panel, this, this->menu_data->viewport, &(*iter)->coord);
+				goto_coord(panel, this, this->menu_data->viewport, (*iter)->coord);
 			}
 			return;
 		}
@@ -5912,7 +5912,7 @@ void LayerTRW::go_to_selected_waypoint_cb(void)
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (wp) {
-		goto_coord(panel, this, this->menu_data->viewport, &wp->coord);
+		goto_coord(panel, this, this->menu_data->viewport, wp->coord);
 	}
 }
 
@@ -6855,7 +6855,7 @@ static int get_download_area_width(double zoom_level, struct LatLon *wh) /* kami
 
 
 
-static Coord *get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
+static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
 {
 	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
 	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
@@ -6863,7 +6863,7 @@ static Coord *get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double
 		return NULL;
 	}
 
-	Coord *coord = (Coord *) malloc(sizeof (Coord));
+	Coord * coord = new Coord();
 	coord->mode = CoordMode::LATLON;
 
 	if (ABS(gradient) < 1) {
@@ -6888,7 +6888,7 @@ static Coord *get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double
 
 
 
-static GList * add_fillins(GList *list, Coord *from, Coord *to, struct LatLon *dist)
+static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon *dist)
 {
 	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
@@ -6934,8 +6934,8 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
 		     cur_rect++) {
 
-			if ((wh.lon < ABS ((*cur_rect)->center.east_west - (*next_rect)->center.east_west))
-			    || (wh.lat < ABS ((*cur_rect)->center.north_south - (*next_rect)->center.north_south))) {
+			if ((wh.lon < ABS ((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
+			    || (wh.lat < ABS ((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
 
 				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
 			}

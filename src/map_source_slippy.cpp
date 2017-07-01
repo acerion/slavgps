@@ -171,7 +171,7 @@ bool MapSourceSlippy::coord_to_tile(const Coord * src, double xzoom, double yzoo
 
 
 
-void MapSourceSlippy::tile_to_center_coord(TileInfo *src, Coord *dest)
+void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	map_utils_iTMS_to_center_vikcoord(src, dest);
 }

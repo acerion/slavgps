@@ -139,7 +139,7 @@ bool MapSourceWmsc::coord_to_tile(const Coord * src, double xzoom, double yzoom,
 
 
 
-void MapSourceWmsc::tile_to_center_coord(TileInfo *src, Coord *dest)
+void MapSourceWmsc::tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {

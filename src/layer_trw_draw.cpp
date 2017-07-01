@@ -98,11 +98,11 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		dp->cn2 = dp->center->utm.northing + h2;
 
 	} else if (dp->coord_mode == CoordMode::LATLON) {
-		Coord upperleft, bottomright;
+
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
-		viewport->screen_to_coord(-500, -500, &upperleft);
-		viewport->screen_to_coord(dp->width + 500, dp->height + 500, &bottomright);
+		Coord upperleft = viewport->screen_to_coord(-500, -500);
+		Coord bottomright = viewport->screen_to_coord(dp->width + 500, dp->height + 500);
 		dp->ce1 = upperleft.ll.lon;
 		dp->ce2 = bottomright.ll.lon;
 		dp->cn1 = bottomright.ll.lat;
@@ -126,10 +126,9 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
  */
 static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, double average_speed, double low_speed, double high_speed)
 {
-	double rv = 0;
 	if (tp1->has_timestamp && tp2->has_timestamp) {
 		if (average_speed > 0) {
-			rv = (Coord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
+			double rv = (Coord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
 			if (rv < low_speed) {
 				return VIK_TRW_LAYER_TRACK_GC_SLOW;
 			} else if (rv > high_speed) {
@@ -360,13 +359,12 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 			distance_diff = 100.0; // Metres
 		}
 
-		if (vik_coord_diff(&begin_coord, &end_coord) < distance_diff) {
+		if (Coord::distance(begin_coord, end_coord) < distance_diff) {
 			/* Start and end 'close' together so only draw one label at an average location. */
 			int x1, x2, y1, y2;
 			dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
 			dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
-			Coord av_coord;
-			dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord);
+			Coord av_coord = dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
 
 			char *name = g_strdup_printf("%s: %s", ename, _("start/end"));
 			trw_layer_draw_track_label(name, fgcolour, bgcolour, dp, &av_coord);

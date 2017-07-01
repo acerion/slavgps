@@ -49,11 +49,11 @@ namespace SlavGPS {
 		~WebTool();
 
 		void open(Window * window);
-		void open_at_position(Window * window, Coord * vc);
+		void open_at_position(Window * window, const Coord * coord);
 
 		void set_url_format(char const * new_url_format);
 		virtual char * get_url(Window * window) = 0;
-		virtual char * get_url_at_position(Window * window, Coord * vc) = 0;
+		virtual char * get_url_at_position(Window * window, const Coord * coord) = 0;
 
 		uint8_t mpp_to_zoom_level(double mpp);
 

@@ -182,22 +182,19 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 		int x, y;
 		struct LatLon ll = { .lat = lat, .lon = lon };
 
-		Coord coord(ll, widgets->viewport->get_coord_mode(), );
+		const Coord coord(ll, widgets->viewport->get_coord_mode());
 		widgets->viewport->coord_to_screen(&cord, &x, &y);
 		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (widgets->viewport->get_width() + 1000) &&
 		    y < (widgets->viewport->get_width() + 1000)) {
 
-			Coord c1, c2;
-			double pixels_per_meter;
-
 			widgets->circle_x = x;
 			widgets->circle_y = y;
 
 			/* Determine miles per pixel. */
-			widgets->viewport->screen_to_coord(0, widgets->viewport->get_height()/2, &c1);
-			widgets->viewport->screen_to_coord(widgets->viewport->get_width(), widgets->viewport->get_height()/2, &c2);
-			pixels_per_meter = ((double)widgets->viewport->get_width()) / vik_coord_diff(&c1, &c2);
+			const Coord coord1 = widgets->viewport->screen_to_coord(0, widgets->viewport->get_height()/2);
+			const Coord coord2 = widgets->viewport->screen_to_coord(widgets->viewport->get_width(), widgets->viewport->get_height()/2);
+			double pixels_per_meter = ((double)widgets->viewport->get_width()) / Coord::distance(coord1, coord2);
 
 			/* This is approximate. */
 			widgets->circle_width = widgets->miles_radius_spin.value();

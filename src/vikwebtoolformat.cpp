@@ -99,7 +99,7 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-char * WebToolFormat::get_url_at_position(Window * window, Coord *vc)
+char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 {
 	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
 
@@ -116,8 +116,8 @@ char * WebToolFormat::get_url_at_position(Window * window, Coord *vc)
 	struct LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
-	if (vc) {
-		ll = vc->get_latlon();
+	if (coord) {
+		ll = coord->get_latlon();
 	}
 	char spointlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char spointlon[G_ASCII_DTOSTR_BUF_SIZE];

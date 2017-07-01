@@ -1290,7 +1290,7 @@ static QPixmap * get_pixmap_from_file(LayerMap * layer, const char * full_path)
 
 static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 {
-	const Coord *center = viewport->get_center();
+	const Coord * center = viewport->get_center();
 
 	if (viewport->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
@@ -1306,7 +1306,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 	}
 
 	if (layer->last_center == NULL) {
-		Coord *new_center = (Coord *) malloc(sizeof(Coord));
+		Coord * new_center = new Coord();
 		*new_center = *center; /* KamilFIXME: can we do it this way? */
 		layer->last_center = new_center;
 		layer->last_xmpp = viewport->get_xmpp();
@@ -1314,7 +1314,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 		return true;
 	}
 
-	/* TODO: perhaps vik_coord_diff() */
+	/* TODO: perhaps Coord::distance() */
 	if ((*layer->last_center == *center)
 	    && (layer->last_xmpp == viewport->get_xmpp())
 	    && (layer->last_ympp == viewport->get_ympp())) {
@@ -1393,7 +1393,7 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 
 
 
-void LayerMap::draw_section(Viewport * viewport, Coord *ul, Coord *br)
+void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
@@ -1594,7 +1594,6 @@ void LayerMap::draw_section(Viewport * viewport, Coord *ul, Coord *br)
 void LayerMap::draw(Viewport * viewport)
 {
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
-		Coord ul, br;
 
 		/* Copyright. */
 		double level = viewport->get_zoom();
@@ -1614,13 +1613,14 @@ void LayerMap::draw(Viewport * viewport)
 			/* UTM multi-zone stuff by Kit Transue. */
 			char leftmost_zone = viewport->leftmost_zone();
 			char rightmost_zone = viewport->rightmost_zone();
+			Coord ul, br;
 			for (char i = leftmost_zone; i <= rightmost_zone; ++i) {
 				viewport->corners_for_zonen(i, &ul, &br);
 				this->draw_section(viewport, &ul, &br);
 			}
 		} else {
-			viewport->screen_to_coord(0, 0, &ul);
-			viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
+			Coord ul = viewport->screen_to_coord(0, 0);
+			Coord br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
 			this->draw_section(viewport, &ul, &br);
 		}
@@ -1847,7 +1847,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 
 
-void LayerMap::start_download_thread(Viewport * viewport, const Coord *ul, const Coord *br, int redownload_mode)
+void LayerMap::start_download_thread(Viewport * viewport, const Coord * ul, const Coord * br, int redownload_mode)
 {
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
@@ -2092,15 +2092,14 @@ LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent 
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
-			Coord ul, br;
-			this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)), &ul);
-			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)), &br);
+			Coord ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
+			Coord br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 			layer->start_download_thread(this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return LayerToolFuncStatus::ACK;
 		} else {
-			this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)), &(layer->redownload_ul));
-			this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)), &(layer->redownload_br));
+			layer->redownload_ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
+			layer->redownload_br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 
 			layer->redownload_viewport = this->viewport;
 
@@ -2203,11 +2202,10 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
 
-	Coord ul, br;
 	TileInfo ulm, brm;
 
-	viewport->screen_to_coord(0, 0, &ul);
-	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
+	Coord ul = viewport->screen_to_coord(0, 0);
+	Coord br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
 	MapSource *map = map_sources[this->map_index];
 	if (map->get_drawmode() == vp_drawmode
@@ -2722,7 +2720,4 @@ LayerMap::LayerMap()
 	this->interface = &vik_map_layer_interface;
 
 	this->set_initial_parameter_values();
-
-	memset(&redownload_ul, 0, sizeof (Coord));
-	memset(&redownload_br, 0, sizeof (Coord));
 }

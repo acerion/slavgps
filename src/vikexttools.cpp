@@ -115,7 +115,7 @@ void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim
 
 
 
-static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * vc)
+static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * coord)
 {
 #ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
@@ -124,7 +124,7 @@ static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * vc)
 	void * wptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_WIN_KEY);
 	Window * window = (Window *) wptr;
 
-	ext_tool->open_at_position(window, vc);
+	ext_tool->open_at_position(window, coord);
 #endif
 }
 
@@ -136,7 +136,7 @@ static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * vc)
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, Coord * vc)
+void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		External * ext_tool = *iter;
@@ -149,8 +149,8 @@ void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu
 			// Store some data into the menu entry
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATA_KEY, ext_tool);
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_WIN_KEY, window);
-			if (vc) {
-				QObject::connect(action, SIGNAL (triggered(bool)), vc, SLOT (ext_tool_open_at_position_cb));
+			if (coord) {
+				QObject::connect(action, SIGNAL (triggered(bool)), coord, SLOT (ext_tool_open_at_position_cb));
 			} else {
 				QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_open_cb));
 			}

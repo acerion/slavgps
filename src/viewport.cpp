@@ -579,14 +579,13 @@ void Viewport::draw_scale()
 		return;
 	}
 
-	Coord left, right;
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
 	int MAXIMUM_WIDTH = this->size_width * RELATIVE_WIDTH;
 
-	this->screen_to_coord(0,                                 this->size_height / 2, &left);
-	this->screen_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2, &right);
+	Coord left = this->screen_to_coord(0,                                  this->size_height / 2);
+	Coord right = this->screen_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2);
 
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
@@ -1021,7 +1020,7 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
 {
 	Coord * coord = *iter;
 	if (coord) {
-		free(coord);
+		delete coord;
 	}
 
 	if (iter == centers_iter) {
@@ -1047,8 +1046,8 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
  */
 void Viewport::update_centers()
 {
-	Coord * new_center = (Coord *) malloc(sizeof (Coord));
-	*new_center = center; /* kamilFIXME: what does this assignment do? */
+	Coord * new_center = new Coord();
+	*new_center = center; /* kamilFIXME: review this assignment of object. */
 
 	if (centers_iter == prev(centers->end())) {
 		/* We are at most recent element of history. */
@@ -1158,7 +1157,7 @@ void Viewport::print_centers(char * label)
 bool Viewport::go_back()
 {
 	/* See if the current position is different from the last saved center position within a certain radius. */
-	Coord * last_center = *centers_iter;
+	Coord * last_center = *centers_iter; /* kamilTODO: add check of validity of iterator? */
 	if (last_center) {
 		/* Consider an exclusion size (should it zoom level dependent, rather than a fixed value?).
 		   When still near to the last saved position we'll jump over it to the one before. */
@@ -1181,9 +1180,9 @@ bool Viewport::go_back()
 		return false;
 	}
 
-	Coord * new_center = *centers_iter;
+	Coord * new_center = *centers_iter; /* kamilTODO: add check of validity of iterator. */
 	if (new_center) {
-		set_center_coord(new_center, false);
+		set_center_coord(*new_center, false);
 		return true;
 	}
 	return false;
@@ -1205,9 +1204,9 @@ bool Viewport::go_forward()
 	}
 
 	centers_iter++;
-	Coord * new_center = *centers_iter;
+	Coord * new_center = *centers_iter; /* kamilTODO: add check of validity of iterator. */
 	if (new_center) {
-		set_center_coord(new_center, false);
+		set_center_coord(*new_center, false);
 		return true;
 	} else {
 		centers_iter = prev(centers->end());
@@ -1286,13 +1285,13 @@ void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_coord(const Coord * coord, bool save_position)
+void Viewport::set_center_coord(const Coord & coord, bool save_position)
 {
-	center = *coord;
+	this->center = coord;
 	if (save_position) {
-		update_centers();
+		this->update_centers();
 	}
-	if (coord_mode == CoordMode::UTM) {
+	if (this->coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -1335,8 +1334,7 @@ void Viewport::center_for_zonen(struct UTM * center_utm, int zone)
 char Viewport::leftmost_zone()
 {
 	if (coord_mode == CoordMode::UTM) {
-		Coord coord;
-		this->screen_to_coord(0, 0, &coord);
+		Coord coord = this->screen_to_coord(0, 0);
 		return coord.utm.zone;
 	}
 	return '\0';
@@ -1348,8 +1346,7 @@ char Viewport::leftmost_zone()
 char Viewport::rightmost_zone()
 {
 	if (coord_mode == CoordMode::UTM) {
-		Coord coord;
-		this->screen_to_coord(this->size_width, 0, &coord);
+		Coord coord = this->screen_to_coord(this->size_width, 0);
 		return coord.utm.zone;
 	}
 	return '\0';
@@ -1366,9 +1363,8 @@ void Viewport::set_center_screen(int x1, int y1)
 		center.utm.northing += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
-		Coord tmp;
-		this->screen_to_coord(x1, y1, &tmp);
-		set_center_coord(&tmp, false);
+		Coord coord = this->screen_to_coord(x1, y1);
+		this->set_center_coord(coord, false);
 	}
 }
 
@@ -1391,35 +1387,43 @@ int Viewport::get_height()
 
 
 
-void Viewport::screen_to_coord(int pos_x, int pos_y, Coord * coord)
+Coord Viewport::screen_to_coord(int pos_x, int pos_y)
 {
-	if (coord_mode == CoordMode::UTM) {
-		int zone_delta;
-		struct UTM * utm = &coord->utm;
-		coord->mode = CoordMode::UTM;
+	Coord coord;
 
-		utm->zone = center.utm.zone;
-		utm->letter = center.utm.letter;
-		utm->easting = ((pos_x - (this->size_width_2)) * xmpp) + center.utm.easting;
-		zone_delta = floor((utm->easting - EASTING_OFFSET) / utm_zone_width + 0.5);
-		utm->zone += zone_delta;
-		utm->easting -= zone_delta * utm_zone_width;
-		utm->northing = (((this->size_height_2) - pos_y) * ympp) + center.utm.northing;
-	} else if (coord_mode == CoordMode::LATLON) {
-		coord->mode = CoordMode::LATLON;
-		if (drawmode == ViewportDrawMode::LATLON) {
-			coord->ll.lon = center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
-			coord->ll.lat = center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
-		} else if (drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy_rev(&coord->ll.lon, &coord->ll.lat, pos_x, pos_y, center.ll.lon, center.ll.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
-		} else if (drawmode == ViewportDrawMode::MERCATOR) {
+	if (this->coord_mode == CoordMode::UTM) {
+		coord.mode = CoordMode::UTM;
+
+		coord.utm.zone = this->center.utm.zone;
+		coord.utm.letter = this->center.utm.letter;
+		coord.utm.easting = ((pos_x - (this->size_width_2)) * xmpp) + this->center.utm.easting;
+
+		int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / utm_zone_width + 0.5);
+
+		coord.utm.zone += zone_delta;
+		coord.utm.easting -= zone_delta * utm_zone_width;
+		coord.utm.northing = (((this->size_height_2) - pos_y) * ympp) + this->center.utm.northing;
+
+	} else if (this->coord_mode == CoordMode::LATLON) {
+		coord.mode = CoordMode::LATLON;
+
+		if (this->drawmode == ViewportDrawMode::LATLON) {
+			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y));
+
+		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
+			calcxy_rev(&coord.ll.lon, &coord.ll.lat, pos_x, pos_y, center.ll.lon, this->center.ll.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+
+		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize. */
-			coord->ll.lon = center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
-			coord->ll.lat = DEMERCLAT (MERCLAT(center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
+			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
+			coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
 		} else {
 			;
 		}
 	}
+
+	return coord; /* Named Return Value Optimization. */
 }
 
 
@@ -1895,12 +1899,10 @@ const QString Viewport::get_drawmode_name(ViewportDrawMode mode)
 
 void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
 {
-	Coord tleft, tright, bleft, bright;
-
-	this->screen_to_coord(0,                0,                 &tleft);
-	this->screen_to_coord(this->size_width, 0,                 &tright);
-	this->screen_to_coord(0,                this->size_height, &bleft);
-	this->screen_to_coord(this->size_width, this->size_height, &bright);
+	Coord tleft = this->screen_to_coord(0,                 0);
+	Coord tright = this->screen_to_coord(this->size_width, 0);
+	Coord bleft = this->screen_to_coord(0,                 this->size_height);
+	Coord bright = this->screen_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
 	tright.change_mode(CoordMode::LATLON);
@@ -1918,12 +1920,10 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 
 void Viewport::get_bbox(LatLonBBox * bbox)
 {
-	Coord tleft, tright, bleft, bright;
-
-	this->screen_to_coord(0,                0,                 &tleft);
-	this->screen_to_coord(this->size_width, 0,                 &tright);
-	this->screen_to_coord(0,                this->size_height, &bleft);
-	this->screen_to_coord(this->size_width, this->size_height, &bright);
+	Coord tleft = this->screen_to_coord(0,                 0);
+	Coord tright = this->screen_to_coord(this->size_width, 0);
+	Coord bleft = this->screen_to_coord(0,                 this->size_height);
+	Coord bright = this->screen_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
 	tright.change_mode(CoordMode::LATLON);
@@ -2040,8 +2040,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		struct UTM u;
 		int tx, ty;
 
-		Coord test;
-		this->screen_to_coord(x1, y1, &test);
+		Coord test = this->screen_to_coord(x1, y1);
 		struct LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&u, &ll);
@@ -2201,11 +2200,10 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		}
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
-		Coord coord;
 		int pos_x, pos_y;
 		int center_x = w / 2;
 		int center_y = h / 2;
-		this->screen_to_coord(ev->x(), ev->y(), &coord);
+		Coord coord = this->screen_to_coord(ev->x(), ev->y());
 		if (scroll_up) {
 			this->zoom_in();
 		} else {
@@ -2237,8 +2235,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	//this->window->tb->move(ev); /* TODO: uncomment this. */
 
-	static Coord coord;
-	this->screen_to_coord(pos_x, pos_y, &coord);
+	static Coord coord = this->screen_to_coord(pos_x, pos_y);
 	static struct UTM utm = coord.get_utm();
 
 	char * lat = NULL;

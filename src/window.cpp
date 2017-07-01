@@ -2714,7 +2714,7 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 		qDebug() << "WW: Window: Save Viewport to Image: failed to create directory" << file_path;
 	}
 
-	struct UTM utm_orig = *((const struct UTM *) this->viewport->get_center());
+	struct UTM utm_orig = this->viewport->get_center()->utm;
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {

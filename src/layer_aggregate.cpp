@@ -453,7 +453,6 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
  */
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-	Coord position;
 	char * date_str = a_dialog_get_date(this->get_window(), _("Search by Date"));
 	if (!date_str) {
 		return;
@@ -469,7 +468,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	/* Search tracks first. */
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		/* Make it auto select the item if found. */
-		found = ((LayerTRW *) (*iter))->find_track_by_date(date_str, &position, viewport, true);
+		found = ((LayerTRW *) (*iter))->find_track_by_date(date_str, viewport, true);
 		if (found) {
 			break;
 		}
@@ -483,7 +482,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 			/* Make it auto select the item if found. */
-			found = ((LayerTRW *) (*iter))->find_waypoint_by_date(date_str, &position, viewport, true);
+			found = ((LayerTRW *) (*iter))->find_waypoint_by_date(date_str, viewport, true);
 			if (found) {
 				break;
 			}

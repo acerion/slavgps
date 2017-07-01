@@ -334,21 +334,13 @@ Track::~Track()
 
 
 
-Trackpoint::Trackpoint()
-{
-	memset(&coord, 0, sizeof (Coord));
-}
-
-
-
-
 Trackpoint::Trackpoint(const Trackpoint & tp)
 {
 	if (tp.name) {
 		this->name = g_strdup(tp.name);
 	}
 
-	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (Coord));
+	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (Coord)); /* kamilTODO: review this copy of coord */
 	this->newsegment = tp.newsegment;
 	this->has_timestamp = tp.has_timestamp;
 	this->timestamp = tp.timestamp;
@@ -2191,7 +2183,7 @@ Coord * Track::cut_back_to_double_point()
 
 	auto iter = std::prev(this->trackpointsB->end());
 
-	Coord * rv = (Coord *) malloc(sizeof (Coord));
+	Coord * rv = new Coord();
 
 	while (iter != this->trackpointsB->begin()) {
 		Coord * cur_coord = &(*iter)->coord;

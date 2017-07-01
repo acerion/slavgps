@@ -117,9 +117,7 @@ bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * to
 		return false;
 	}
 
-	Coord new_coord;
-
-	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
+	Coord new_coord = viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Here always allow snapping back to the original location.
 	   This is useful when one decides not to move the thing after all.
@@ -169,8 +167,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		return false;
 	}
 
-	Coord new_coord;
-	viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
+	Coord new_coord = viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
@@ -555,9 +552,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent *
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	Coord new_coord;
-	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
-
+	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 	if (ev->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
 		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
@@ -596,8 +591,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEven
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		Coord new_coord;
-		this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
+		Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 		/* Snap to trackpoint. */
 		if (ev->modifiers() & Qt::ControlModifier) {
@@ -863,8 +857,7 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 		double distance = trw->current_trk->get_length();
 
 		/* Now add distance to where the pointer is. */
-		Coord coord;
-		tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
+		Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
 		struct LatLon ll = coord.get_latlon();
 		double last_step = Coord::distance(coord, last_tpt->coord);
 		distance = distance + last_step;
@@ -1006,7 +999,7 @@ LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Vi
 	}
 
 	Trackpoint * tp = new Trackpoint();
-	viewport->screen_to_coord(ev->x(), ev->y(), &tp->coord);
+	tp->coord = viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Snap to other TP. */
 	if (ev->modifiers() & Qt::ControlModifier) {
@@ -1244,12 +1237,11 @@ LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent *
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	Coord coord;
 	if (trw->type != LayerType::TRW) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	this->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
+	Coord coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 	if (trw->new_waypoint(trw->get_window(), &coord)) {
 		trw->calculate_bounds_waypoints();
 		if (trw->visible) {
@@ -1408,8 +1400,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	Coord new_coord;
-	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
+	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
@@ -1445,8 +1436,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEv
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	Coord new_coord;
-	this->viewport->screen_to_coord(ev->x(), ev->y(), &new_coord);
+	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
@@ -1530,8 +1520,8 @@ void LayerTRW::tool_extended_route_finder_undo()
 	if (!new_end) {
 		return;
 	}
+	delete new_end;
 
-	free(new_end);
 	this->emit_changed();
 
 	/* Remove last ' to:...' */
@@ -1552,9 +1542,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	Coord tmp;
-
-	this->viewport->screen_to_coord(ev->x(), ev->y(), &tmp);
+	Coord tmp = this->viewport->screen_to_coord(ev->x(), ev->y());
 	if (ev->button() == Qt::RightButton && trw->current_trk) {
 		trw->tool_extended_route_finder_undo();
 

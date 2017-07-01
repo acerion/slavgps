@@ -75,7 +75,7 @@ WebToolCenter::~WebToolCenter()
 
 
 
-char * WebToolCenter::get_url_at_position(Window * window, Coord * vc)
+char * WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 {
 	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
 
@@ -86,8 +86,8 @@ char * WebToolCenter::get_url_at_position(Window * window, Coord * vc)
 	Viewport * viewport = window->get_viewport();
 	/* Coords.
 	   Use the provided position otherwise use center of the viewport. */
-	if (vc) {
-		ll = vc->get_latlon();
+	if (coord) {
+		ll = coord->get_latlon();
 	} else {
 		ll = viewport->get_center()->get_latlon();
 	}

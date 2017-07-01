@@ -85,9 +85,9 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 	}
 
 	if (coord1.mode == CoordMode::UTM) {
-		return a_coords_utm_diff((const struct UTM *) &coord1, (const struct UTM *) &coord2);
+		return a_coords_utm_diff(&coord1.utm, &coord2.utm);
 	} else {
-		return a_coords_latlon_diff((const struct LatLon *) &coord1, (const struct LatLon *) &coord2);
+		return a_coords_latlon_diff(&coord1.ll, &coord2.ll);
 	}
 }
 

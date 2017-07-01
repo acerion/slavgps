@@ -392,7 +392,7 @@ char * WebToolDatasource::get_url(Window * window)
 
 
 
-char * WebToolDatasource::get_url_at_position(Window * window, Coord * vc)
+char * WebToolDatasource::get_url_at_position(Window * window, const Coord * coord)
 {
 	return this->get_url(window);
 }

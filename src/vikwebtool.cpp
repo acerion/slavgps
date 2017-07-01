@@ -70,9 +70,9 @@ void WebTool::open(Window * window)
 
 
 
-void WebTool::open_at_position(Window * window, Coord * vc)
+void WebTool::open_at_position(Window * window, const Coord * coord)
 {
-	char * url = this->get_url_at_position(window, vc);
+	char * url = this->get_url_at_position(window, coord);
 	if (url) {
 		open_url(window, url);
 		free(url);

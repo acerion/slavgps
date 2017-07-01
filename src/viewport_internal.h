@@ -102,7 +102,7 @@ namespace SlavGPS {
 
 
 		/* Viewport position. */
-		void set_center_coord(const Coord * coord, bool save_position);
+		void set_center_coord(const Coord & coord, bool save_position);
 		void set_center_screen(int x, int y);
 		void center_for_zonen(struct UTM *center, int zone);
 		char leftmost_zone();
@@ -118,7 +118,7 @@ namespace SlavGPS {
 		int get_height();
 
 		/* Coordinate transformations. */
-		void screen_to_coord(int x, int y, Coord * coord);
+		Coord screen_to_coord(int x, int y);
 		void coord_to_screen(const Coord * coord, int * x, int * y);
 
 		/* Viewport scale. */

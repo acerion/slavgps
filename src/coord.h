@@ -64,9 +64,9 @@ namespace SlavGPS {
 		bool operator!=(const Coord & coord) const;
 
 
-		struct LatLon ll;
-		struct UTM utm;
-		CoordMode mode;
+		struct LatLon ll = { 0, 0 };
+		struct UTM utm = { 0, 0, 0, 0 };
+		CoordMode mode = CoordMode::UTM;
 	};
 
 

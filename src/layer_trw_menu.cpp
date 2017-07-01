@@ -846,13 +846,13 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 #ifdef K
 	if (this->selected_tp.valid || this->current_wp) {
 		/* For the selected point. */
-		Coord *vc;
+		Coord * coord = NULL;
 		if (this->selected_tp.valid) {
-			vc = &(*this->selected_tp.iter)->coord;
+			coord = &(*this->selected_tp.iter)->coord;
 		} else {
-			vc = &(this->current_wp->coord);
+			coord = &(this->current_wp->coord);
 		}
-		vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), vc);
+		vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), coord);
 	} else {
 		/* Otherwise for the selected sublayer.
 		   TODO: Should use selected items centre - rather than implicitly using the current viewport. */

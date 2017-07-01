@@ -164,7 +164,7 @@ void LayerTRWc::single_waypoint_jump(Waypoints & waypoints, Viewport * viewport)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		/* NB do not care if wp is visible or not. */
-		viewport->set_center_coord(&(i->second->coord), true);
+		viewport->set_center_coord(i->second->coord, true);
 	}
 }
 

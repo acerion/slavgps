@@ -496,7 +496,7 @@ bool MapSource::coord_to_tile(const Coord * src, double xzoom, double yzoom, Til
 
 
 
-void MapSource::tile_to_center_coord(TileInfo *src, Coord *dest)
+void MapSource::tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	fprintf(stderr, "MapSource::tile_to_center_coord\n");
 	return;

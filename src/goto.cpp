@@ -265,7 +265,7 @@ char * goto_location_dialog(Window * window)
  *
  * Returns: %true if a successful lookup
  */
-static bool vik_goto_location(Viewport * viewport, char* name, Coord *vcoord)
+static bool vik_goto_location(Viewport * viewport, char* name, Coord * coord)
 {
 	/* Ensure last_goto_idx is given a value. */
 	last_goto_idx = get_last_provider_index();
@@ -273,7 +273,7 @@ static bool vik_goto_location(Viewport * viewport, char* name, Coord *vcoord)
 	if (!goto_tools.empty() && last_goto_idx >= 0) {
 		GotoTool * goto_tool = goto_tools[last_goto_idx];
 		if (goto_tool) {
-			if (goto_tool->get_coord(viewport, name, vcoord) == 0) {
+			if (goto_tool->get_coord(viewport, name, coord) == 0) {
 				return true;
 			}
 		}
@@ -301,15 +301,15 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location, &location_coord);
 			if (ans == 0) {
 				if (last_coord) {
-					free(last_coord);
+					delete last_coord;
 				}
-				last_coord = (Coord *) malloc(sizeof(Coord));
-				*last_coord = location_coord;
+				last_coord = new Coord();
+				*last_coord = location_coord; /* kamilTODO: review this assignment. */
 				if (last_successful_location) {
 					free(last_successful_location);
 				}
 				last_successful_location = g_strdup(last_location);
-				viewport->set_center_coord(&location_coord, true);
+				viewport->set_center_coord(location_coord, true);
 				more = false;
 			} else if (ans == -1) {
 				if (!prompt_try_again(window, QObject::tr("I don't know that location. Do you want another goto?"))) {
@@ -503,7 +503,7 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 		return;
 	}
 
-	viewport->set_center_coord(&new_center, true);
+	viewport->set_center_coord(new_center, true);
 
 	return;
 }
@@ -585,7 +585,7 @@ void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 		return;
 	}
 
-	viewport->set_center_coord(&new_center, true);
+	viewport->set_center_coord(new_center, true);
 
 	return;
 }

@@ -81,7 +81,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
-		void draw_section(Viewport * viewport, Coord *ul, Coord *br);
+		void draw_section(Viewport * viewport, Coord * ul, Coord * br);
 		QString tooltip();
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
@@ -102,7 +102,7 @@ namespace SlavGPS {
 		void download_section(const Coord * ul, const Coord * br, double zoom);
 		void download_section_sub(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
-		void start_download_thread(Viewport * viewport, const Coord *ul, const Coord *br, int redownload_mode);
+		void start_download_thread(Viewport * viewport, const Coord * ul, const Coord * br, int redownload_mode);
 		void download_onscreen_maps(int redownload_mode);
 
 		static void weak_ref_cb(void * ptr, GObject * dead_vml);
@@ -131,7 +131,10 @@ namespace SlavGPS {
 		int dl_tool_y = -1;
 
 		QMenu * dl_right_click_menu = NULL;
-		Coord redownload_ul, redownload_br; /* Right click menu only. */
+
+		Coord redownload_ul; /* Right click menu only. */
+		Coord redownload_br;
+
 		Viewport * redownload_viewport = NULL;
 		char * filename = NULL;
 

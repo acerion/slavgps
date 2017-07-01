@@ -168,8 +168,8 @@ static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom,
 	int alti = expedia_zoom_to_alti(xzoom);
 	if (alti != -1) {
 		dest->scale = alti;
-		dest->x = (int) (((src->east_west+180) * expedia_altis_freq(alti))+0.5);
-		dest->y = (int) (((src->north_south+90) * expedia_altis_freq(alti))+0.5);
+		dest->x = (int) (((src->ll.lon + 180) * expedia_altis_freq(alti))+0.5);
+		dest->y = (int) (((src->ll.lat + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
 
 		/* Just to space out tiles on the filesystem. */
@@ -194,8 +194,8 @@ void expedia_xy_to_latlon_middle(int alti, int x, int y, struct LatLon * ll)
 static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
 {
 	dest->mode = CoordMode::LATLON;
-	dest->east_west = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
-	dest->north_south = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
+	dest->ll.lon = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
+	dest->ll.lat = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
 }
 
 

@@ -855,21 +855,21 @@ static char * time_string_tz(time_t * time, const char * format, GTimeZone * tz)
 
 
 /**
- * @vc:     Position for which the time zone is desired
+ * @coord:     Position for which the time zone is desired
  *
  * Returns: TimeZone string of the nearest known location. String may be NULL.
  *
  * Use the k-d tree method (http://en.wikipedia.org/wiki/Kd-tree) to quickly retrieve
  * the nearest location to the given position.
  */
-char * SlavGPS::vu_get_tz_at_location(const Coord * vc)
+char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 {
 	char * tz = NULL;
-	if (!vc || !kd) {
+	if (!coord || !kd) {
 		return tz;
 	}
 
-	struct LatLon ll = vc->get_latlon();
+	struct LatLon ll = coord->get_latlon();
 	double pt[2] = { ll.lat, ll.lon };
 
 	double nearest;
@@ -901,7 +901,7 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * vc)
 /**
  * @time_t: The time of which the string is wanted
  * @format  The format of the time string - such as "%c"
- * @vc:     Position of object for the time output - maybe NULL
+ * @coord:  Position of object for the time output - maybe NULL
  *          (only applicable for VIK_TIME_REF_WORLD)
  * @tz:     TimeZone string - maybe NULL.
  *          (only applicable for VIK_TIME_REF_WORLD)
@@ -909,7 +909,7 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * vc)
  *
  * Returns: A string of the time according to the time display property.
  */
-char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * vc, const char * tz)
+char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * tz)
 {
 	if (!format) {
 		return NULL;
@@ -921,9 +921,9 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coo
 			strftime(str, 64, format, gmtime(time)); /* Always 'GMT'. */
 			break;
 		case VIK_TIME_REF_WORLD:
-			if (vc && !tz) {
+			if (coord && !tz) {
 				/* No timezone specified so work it out. */
-				char * mytz = vu_get_tz_at_location(vc);
+				char * mytz = vu_get_tz_at_location(coord);
 				if (mytz) {
 					GTimeZone * gtz = g_time_zone_new(mytz);
 					str = time_string_tz(time, format, gtz);
@@ -931,7 +931,7 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coo
 				} else {
 					/* No results (e.g. could be in the middle of a sea).
 					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-					struct LatLon ll = vc->get_latlon();
+					struct LatLon ll = coord->get_latlon();
 					str = time_string_adjusted(time, round (ll.lon / 15.0) * 3600);
 				}
 			} else {
@@ -1069,7 +1069,7 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 	struct LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
 
 	const Coord coord(average, mode);
-	viewport->set_center_coord(&coord, save_position);
+	viewport->set_center_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
 	struct LatLon minmin;

@@ -756,12 +756,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
 
-		Coord tleft, tright, bleft, bright;
-
-		viewport->screen_to_coord(0,                     0,                      &tleft);
-		viewport->screen_to_coord(viewport->get_width(), 0,                      &tright);
-		viewport->screen_to_coord(0,                     viewport->get_height(), &bleft);
-		viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &bright);
+		Coord tleft = viewport->screen_to_coord(0,                      0);
+		Coord tright = viewport->screen_to_coord(viewport->get_width(), 0);
+		Coord bleft = viewport->screen_to_coord(0,                      viewport->get_height());
+		Coord bright = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
 		tleft.change_mode(CoordMode::UTM);
 		tright.change_mode(CoordMode::UTM);
@@ -1219,12 +1217,15 @@ static void dem24k_draw_existence(Viewport * viewport)
 			if (0 == access(buf, F_OK)) {
 				Coord ne, sw;
 				int x1, y1, x2, y2;
-				sw.north_south = i;
-				sw.east_west = j-0.125;
+
+				sw.ll.lat = i;
+				sw.ll.lon = j-0.125;
 				sw.mode = CoordMode::LATLON;
-				ne.north_south = i+0.125;
-				ne.east_west = j;
+
+				ne.ll.lat = i+0.125;
+				ne.ll.lon = j;
 				ne.mode = CoordMode::LATLON;
+
 				viewport->coord_to_screen(&sw, &x1, &y1);
 				viewport->coord_to_screen(&ne, &x2, &y2);
 
@@ -1447,9 +1448,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
-	Coord coord;
-
-	tool->viewport->screen_to_coord(ev->x(), ev->y(), &coord);
+	Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
 	static struct LatLon ll = coord.get_latlon();
 
 	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";

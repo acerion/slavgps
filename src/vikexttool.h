@@ -49,7 +49,7 @@ namespace SlavGPS {
 		int get_id();
 
 		virtual void open(Window * window) = 0;
-		virtual void open_at_position(Window * window, Coord * vc) = 0;
+		virtual void open_at_position(Window * window, Coord * coord) = 0;
 
 	protected:
 		int id;

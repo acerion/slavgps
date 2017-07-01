@@ -120,7 +120,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 
 void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 {
-	this->menu_data.viewport->set_center_coord(&this->menu_data.wp->coord, true);
+	this->menu_data.viewport->set_center_coord(this->menu_data.wp->coord, true);
 	this->waypoint_select(this->menu_data.trw);
 	this->menu_data.trw->emit_changed();
 }

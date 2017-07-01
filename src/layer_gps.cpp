@@ -1540,11 +1540,8 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
-	struct LatLon ll;
-	Coord nw, se;
-
-	viewport->screen_to_coord(-20, -20, &nw);
-	viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20, &se);
+	Coord nw = viewport->screen_to_coord(-20, -20);
+	Coord se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
 	struct LatLon lnw = nw.get_latlon();
 	struct LatLon lse = se.get_latlon();
 	if (this->realtime_fix.fix.latitude > lse.lat &&
@@ -1553,6 +1550,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 	     this->realtime_fix.fix.longitude < lse.lon &&
 	     !std::isnan(this->realtime_fix.fix.track)) {
 
+		struct LatLon ll;
 		ll.lat = this->realtime_fix.fix.latitude;
 		ll.lon = this->realtime_fix.fix.longitude;
 		Coord gps(ll, viewport->get_coord_mode());
@@ -1718,7 +1716,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {
-			viewport->set_center_coord(&vehicle_coord, false);
+			viewport->set_center_coord(vehicle_coord, false);
 			update_all = true;
 		} else if (layer->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
 			const int hdiv = 6;

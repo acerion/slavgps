@@ -208,10 +208,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Vertical lines. */
 	{
-		Coord ul, ur, bl;
-		viewport->screen_to_coord(0,                     0,                      &ul);
-		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
-		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);
+		Coord ul = viewport->screen_to_coord(0,                     0);
+		Coord ur = viewport->screen_to_coord(viewport->get_width(), 0);
+		Coord bl = viewport->screen_to_coord(0,                     viewport->get_height());
 
 		const double min = ul.ll.lon;
 		const double max = ur.ll.lon;
@@ -252,10 +251,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Horizontal lines. */
 	{
-		Coord ul, ur, bl;
-		viewport->screen_to_coord(0,                     0,                      &ul);
-		viewport->screen_to_coord(viewport->get_width(), 0,                      &ur);
-		viewport->screen_to_coord(0,                     viewport->get_height(), &bl);
+		Coord ul = viewport->screen_to_coord(0,                     0);
+		Coord ur = viewport->screen_to_coord(viewport->get_width(), 0);
+		Coord bl = viewport->screen_to_coord(0,                     viewport->get_height());
 
 		const double min = bl.ll.lat;
 		const double max = ul.ll.lat;
@@ -302,17 +300,17 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	QPen pen(this->color);
 	pen.setWidth(this->line_thickness);
 
-	const struct UTM * center = (const struct UTM *) viewport->get_center();
+	const struct UTM center = viewport->get_center()->get_utm();
 	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
 	uint16_t width = viewport->get_width(), height = viewport->get_height();
 	struct LatLon ll, ll2, min, max;
 
-	struct UTM utm = *center;
-	utm.northing = center->northing - (ympp * height / 2);
+	struct UTM utm = center;
+	utm.northing = center.northing - (ympp * height / 2);
 
 	a_coords_utm_to_latlon(&ll, &utm);
 
-	utm.northing = center->northing + (ympp * height / 2);
+	utm.northing = center.northing + (ympp * height / 2);
 
 	a_coords_utm_to_latlon(&ll2, &utm);
 
@@ -323,7 +321,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		*/
 		struct LatLon topleft, topright, bottomleft, bottomright;
 		struct UTM temp_utm;
-		temp_utm = *center;
+		temp_utm = center;
 		temp_utm.easting -= (width/2)*xmpp;
 		temp_utm.northing += (height/2)*ympp;
 		a_coords_utm_to_latlon(&topleft, &temp_utm);
@@ -362,18 +360,18 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 	for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
 		a_coords_latlon_to_utm(&utm, &ll);
-		int x1 = ((utm.easting - center->easting) / xmpp) + (width / 2);
+		int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 		a_coords_latlon_to_utm(&utm, &ll2);
-		int x2 = ((utm.easting - center->easting) / xmpp) + (width / 2);
+		int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 		viewport->draw_line(pen, x1, height, x2, 0);
 	}
 
-	utm = *center;
-	utm.easting = center->easting - (xmpp * width / 2);
+	utm = center;
+	utm.easting = center.easting - (xmpp * width / 2);
 
 	a_coords_utm_to_latlon(&ll, &utm);
 
-	utm.easting = center->easting + (xmpp * width / 2);
+	utm.easting = center.easting + (xmpp * width / 2);
 
 	a_coords_utm_to_latlon(&ll2, &utm);
 
@@ -383,9 +381,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
 		a_coords_latlon_to_utm(&utm, &ll);
-		int x1 = (height / 2) - ((utm.northing - center->northing) / ympp);
+		int x1 = (height / 2) - ((utm.northing - center.northing) / ympp);
 		a_coords_latlon_to_utm(&utm, &ll2);
-		int x2 = (height / 2) - ((utm.northing - center->northing) / ympp);
+		int x2 = (height / 2) - ((utm.northing - center.northing) / ympp);
 		viewport->draw_line(pen, width, x2, 0, x1);
 	}
 }

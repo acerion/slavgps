@@ -81,7 +81,7 @@ namespace SlavGPS {
 	class Trackpoint {
 	public:
 
-		Trackpoint();
+		Trackpoint() {};
 		Trackpoint(const Trackpoint& tp);
 		Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode);
 		~Trackpoint();

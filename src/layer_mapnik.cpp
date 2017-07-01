@@ -590,11 +590,11 @@ static char *get_filename(char *dir, unsigned int x, unsigned int y, unsigned in
 
 
 
-void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
+void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ti_ul)
 {
 	if (this->use_file_cache) {
 		if (this->file_cache_dir) {
-			char * filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
+			char * filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
 
 			char *dir = g_path_get_dirname(filename);
 			if (0 != access(filename, F_OK)) {
@@ -617,13 +617,14 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, Coord * ul_, Coord * br_, Coord * mul_, const char * request_);
-	~RenderInfo();
+	RenderInfo(LayerMapnik * layer, Coord * ul, Coord * br, TileInfo * ti_ul, const char * request);
 
 	LayerMapnik * lmk = NULL;
-	Coord * ul = NULL;
-	Coord * br = NULL;
-	TileInfo * ulmc = NULL;
+
+	Coord coord_ul;
+	Coord coord_br;
+	TileInfo ti_ul;
+
 	const char * request = NULL;
 };
 
@@ -631,32 +632,18 @@ public:
 
 static int render_info_background_fn(BackgroundJob * bg_job);
 
-RenderInfo::RenderInfo(LayerMapnik * layer, Coord * ul_, Coord * br_, Coord * mul_, const char * request_)
+RenderInfo::RenderInfo(LayerMapnik * layer, Coord * ul, Coord * br, TileInfo * ti_ul_, const char * request_)
 {
 	this->thread_fn = render_info_background_fn;
 	this->n_items = 1;
 
 	this->lmk = layer;
 
-	this->ul = (Coord *) malloc(sizeof (Coord));
-	this->br = (Coord *) malloc(sizeof (Coord));
-	this->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
+	this->coord_ul = *ul;
+	this->coord_br = *br;
+	this->ti_ul = *ti_ul_;
 
-	memcpy(this->ul, ul_, sizeof(Coord));
-	memcpy(this->br, br_, sizeof(Coord));
-	memcpy(this->ulmc, mul_, sizeof(TileInfo));
 	this->request = request_;
-}
-
-
-
-
-RenderInfo::~RenderInfo()
-{
-	free(this->ul);
-	free(this->br);
-	free(this->ulmc);
-	/* No need to free the request/key - as this is freed by the hash table destructor. */
 }
 
 
@@ -665,10 +652,10 @@ RenderInfo::~RenderInfo()
 /**
  * Common render function which can run in separate thread.
  */
-void LayerMapnik::render(Coord * ul, Coord * br, TileInfo * ulm)
+void LayerMapnik::render(Coord * coord_ul, Coord * coord_br, TileInfo * ti_ul)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap *pixmap = mapnik_interface_render(this->mi, ul->ll.lat, ul->ll.lon, br->ll.lat, br->ll.lon);
+	QPixmap *pixmap = mapnik_interface_render(this->mi, coord_ul->ll.lat, coord_ul->ll.lon, coord_br->ll.lat, coord_br->ll.lon);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
@@ -678,13 +665,13 @@ void LayerMapnik::render(Coord * ul, Coord * br, TileInfo * ulm)
 		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
 	}
-	this->possibly_save_pixmap(pixmap, ulm);
+	this->possibly_save_pixmap(pixmap, ti_ul);
 
 	/* NB Mapnik can apply alpha, but use our own function for now. */
 	if (this->alpha < 255) {
 		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
-	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 #ifdef K
 	g_object_unref(pixmap);
 #endif
@@ -699,7 +686,7 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 
 	int res = a_background_thread_progress(bg_job, 0);
 	if (res == 0) {
-		data->lmk->render(data->ul, data->br, data->ulmc);
+		data->lmk->render(&data->coord_ul, &data->coord_br, &data->ti_ul);
 	}
 
 	tp_mutex.lock();
@@ -709,6 +696,7 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 	if (res == 0) {
 		data->lmk->emit_changed(); /* NB update display from background. */
 	}
+	return res;
 }
 
 
@@ -722,7 +710,7 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(TileInfo * mul, Coord * ul, Coord * br, int x, int y, int z, int zoom, char const * name_)
+void LayerMapnik::thread_add(TileInfo * ti_ul, Coord * coord_ul, Coord * coord_br, int x, int y, int z, int zoom, char const * name_)
 {
 	/* Create request. */
 	unsigned int nn = name_ ? g_str_hash(name_) : 0;
@@ -735,9 +723,10 @@ void LayerMapnik::thread_add(TileInfo * mul, Coord * ul, Coord * br, int x, int 
 		tp_mutex.unlock();
 		return;
 	}
-#ifdef K
-	RenderInfo * ri = new RenderInfo(this, *ul, *br, mul, request);
 
+	RenderInfo * ri = new RenderInfo(this, coord_ul, coord_br, ti_ul, request);
+
+#ifdef K
 	g_hash_table_insert(requests, request, NULL);
 
 	tp_mutex.unlock();
@@ -756,11 +745,11 @@ void LayerMapnik::thread_add(TileInfo * mul, Coord * ul, Coord * br, int x, int 
  * If function returns QPixmap properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender_)
+QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rerender_)
 {
 	*rerender_ = false;
 	QPixmap *pixmap = NULL;
-	char *filename = get_filename(this->file_cache_dir, ulm->x, ulm->y, ulm->scale);
+	char *filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
 
 	struct stat stat_buf;
 	if (stat(filename, &stat_buf) == 0) {
@@ -775,7 +764,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
 			if (this->alpha < 255) {
 				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
-			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < stat_buf.st_mtime) {
@@ -795,14 +784,14 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerend
  * Caller has to decrease reference counter of returned QPixmap,
  * when buffer is no longer needed.
  */
-QPixmap * LayerMapnik::get_pixmap(TileInfo * ulm, TileInfo * brm)
+QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 {
 	Coord ul; Coord br;
 
-	map_utils_iTMS_to_vikcoord(ulm, &ul);
-	map_utils_iTMS_to_vikcoord(brm, &br);
+	map_utils_iTMS_to_vikcoord(ti_ul, &ul);
+	map_utils_iTMS_to_vikcoord(ti_br, &br);
 
-	QPixmap * pixmap = map_cache_get(ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	QPixmap * pixmap = map_cache_get(ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (pixmap) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
@@ -810,13 +799,13 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ulm, TileInfo * brm)
 
 		bool rerender_ = false;
 		if (this->use_file_cache && this->file_cache_dir)
-			pixmap = this->load_pixmap(ulm, brm, &rerender_);
+			pixmap = this->load_pixmap(ti_ul, ti_br, &rerender_);
 		if (! pixmap || rerender_) {
 			if (true) {
-				this->thread_add(ulm, &ul, &br, ulm->x, ulm->y, ulm->z, ulm->scale, this->filename_xml);
+				this->thread_add(ti_ul, &ul, &br, ti_ul->x, ti_ul->y, ti_ul->z, ti_ul->scale, this->filename_xml);
 			} else {
 				/* Run in the foreground. */
-				this->render(&ul, &br, ulm);
+				this->render(&ul, &br, ti_ul);
 				this->emit_changed();
 			}
 		}
@@ -846,40 +835,41 @@ void LayerMapnik::draw(Viewport * viewport)
 		}
 	}
 
-	Coord ul, br;
+#if 0 /* kamilTODO: this code would be overwritten in screen_to_coord() */
 	ul.mode = CoordMode::LATLON;
 	br.mode = CoordMode::LATLON;
-	viewport->screen_to_coord(0, 0, &ul);
-	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
+#endif
+	Coord ul = viewport->screen_to_coord(0, 0);
+	Coord br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
 
-	TileInfo ulm, brm;
+	TileInfo ti_ul, ti_br;
 
-	if (map_utils_vikcoord_to_iTMS(&ul, xzoom, yzoom, &ulm) &&
-	     map_utils_vikcoord_to_iTMS(&br, xzoom, yzoom, &brm)) {
+	if (map_utils_vikcoord_to_iTMS(&ul, xzoom, yzoom, &ti_ul) &&
+	     map_utils_vikcoord_to_iTMS(&br, xzoom, yzoom, &ti_br)) {
 		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
 		QPixmap * pixmap;
 		Coord coord;
 		int xx, yy;
 
-		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
-		int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
+		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
+		int ymin = MIN(ti_ul.y, ti_br.y), ymax = MAX(ti_ul.y, ti_br.y);
 
 		/* Split rendering into a grid for the current viewport
 		   thus each individual 'tile' can then be stored in the map cache. */
 		for (int x = xmin; x <= xmax; x++) {
 			for (int y = ymin; y <= ymax; y++) {
-				ulm.x = x;
-				ulm.y = y;
-				brm.x = x+1;
-				brm.y = y+1;
+				ti_ul.x = x;
+				ti_ul.y = y;
+				ti_br.x = x+1;
+				ti_br.y = y+1;
 
-				pixmap = this->get_pixmap(&ulm, &brm);
+				pixmap = this->get_pixmap(&ti_ul, &ti_br);
 
 				if (pixmap) {
-					map_utils_iTMS_to_vikcoord(&ulm, &coord);
+					map_utils_iTMS_to_vikcoord(&ti_ul, &coord);
 					viewport->coord_to_screen(&coord, &xx, &yy);
 					viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 #ifdef K
@@ -897,8 +887,8 @@ void LayerMapnik::draw(Viewport * viewport)
 			int width = viewport->get_width();
 			int height = viewport->get_height();
 			int xx, yy;
-			ulm.x = xmin; ulm.y = ymin;
-			map_utils_iTMS_to_center_vikcoord(&ulm, &coord);
+			ti_ul.x = xmin; ti_ul.y = ymin;
+			map_utils_iTMS_to_center_vikcoord(&ti_ul, &coord);
 			viewport->coord_to_screen(&coord, &xx, &yy);
 			xx = xx - (this->tile_size_x/2);
 			yy = yy - (this->tile_size_x/2); // Yes use X ATM
@@ -1083,17 +1073,17 @@ static void mapnik_layer_rerender_cb(LayerMapnik * lmk)
  */
 void LayerMapnik::rerender()
 {
-	TileInfo ulm;
+	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ulm);
+	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
 	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
-	map_utils_iTMS_to_vikcoord(&ulm, &this->rerender_ul);
+	map_utils_iTMS_to_vikcoord(&ti_ul, &this->rerender_ul);
 	/* Bottom right bound is simply +1 in TMS coords. */
-	TileInfo brm = ulm;
-	brm.x = brm.x+1;
-	brm.y = brm.y+1;
-	map_utils_iTMS_to_vikcoord(&brm, &this->rerender_br);
-	this->thread_add(&ulm, &this->rerender_ul, &this->rerender_br, ulm.x, ulm.y, ulm.z, ulm.scale, this->filename_xml);
+	TileInfo ti_br = ti_ul;
+	ti_br.x = ti_br.x+1;
+	ti_br.y = ti_br.y+1;
+	map_utils_iTMS_to_vikcoord(&ti_br, &this->rerender_br);
+	this->thread_add(&ti_ul, &this->rerender_ul, &this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml);
 }
 
 
@@ -1112,13 +1102,13 @@ static void mapnik_layer_tile_info_cb(LayerMapnik * lmk)
  */
 void LayerMapnik::tile_info()
 {
-	TileInfo ulm;
+	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ulm);
+	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
 
-	map_cache_extra_t extra = map_cache_get_extra(&ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 
-	char *filename = get_filename(this->file_cache_dir, ulm.x, ulm.y, ulm.scale);
+	char *filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 	char *filemsg = NULL;
 	char *timemsg = NULL;
 #ifdef K
@@ -1205,7 +1195,7 @@ LayerToolFuncStatus LayerToolMapnikFeature::release_(Layer * layer, QMouseEvent 
 bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
-		tool->viewport->screen_to_coord(MAX(0, ev->x()), MAX(0, ev->y()), &this->rerender_ul);
+		this->rerender_ul = tool->viewport->screen_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
 		this->rerender_zoom = tool->viewport->get_zoom();
 #ifdef K
 		if (!this->right_click_menu) {

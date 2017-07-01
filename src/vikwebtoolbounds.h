@@ -47,7 +47,7 @@ namespace SlavGPS {
 		~WebToolBounds();
 
 		char * get_url(Window * window);
-		char * get_url_at_position(Window * window, Coord * vc);
+		char * get_url_at_position(Window * window, const Coord * coord);
 
 	}; /* class WebToolBounds */
 

@@ -346,13 +346,12 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->click()";
 
-	Coord coord;
 	char temp[128] = { 0 };
 
 	if (event->button() == Qt::LeftButton) {
 		char * lat = NULL;
 		char * lon = NULL;
-		this->viewport->screen_to_coord(event->x(), event->y(), &coord);
+		Coord coord = this->viewport->screen_to_coord(event->x(), event->y());
 		struct LatLon ll = coord.get_latlon();
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (this->ruler->has_start_coord) {
@@ -398,7 +397,6 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Ruler: ->move()";
 
-	Coord coord;
 	char temp[128] = { 0 };
 
 	if (!this->ruler->has_start_coord) {
@@ -424,7 +422,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 	buf->fill(QColor("transparent"));
 	//buf->fill();
 
-	this->viewport->screen_to_coord(event->x(), event->y(), &coord);
+	Coord coord = this->viewport->screen_to_coord(event->x(), event->y());
 	struct LatLon ll = coord.get_latlon();
 
 	int start_x;
@@ -602,7 +600,6 @@ LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 #if 0
 	this->window->modified = true;
 
-	Coord coord;
 	int center_x = this->window->viewport->get_width() / 2;
 	int center_y = this->window->viewport->get_height() / 2;
 
@@ -636,7 +633,7 @@ LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 		}
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
-		this->window->viewport->screen_to_coord(event->x(), event->y(), &coord);
+		Coord coord = this->window->viewport->screen_to_coord(event->x(), event->y());
 		if (event->button() == Qt::LeftButton) {
 			this->window->viewport->zoom_in();
 		} else if (event->button() == Qt::RightButton) {
@@ -724,9 +721,8 @@ LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 	    && (event->x() < this->zoom->start_x - 5 || event->x() > this->zoom->start_x + 5)
 	    && (event->y() < this->zoom->start_y - 5 || event->y() > this->zoom->start_y + 5)) {
 
-		Coord coord1, coord2;
-		this->window->viewport->screen_to_coord(this->zoom->start_x, this->zoom->start_y, &coord1);
-		this->window->viewport->screen_to_coord(event->x(), event->y(), &coord2);
+		Coord coord1 = this->window->viewport->screen_to_coord(this->zoom->start_x, this->zoom->start_y);
+		Coord coord2 = this->window->viewport->screen_to_coord(event->x(), event->y());
 
 		/* From the extend of the bounds pick the best zoom level
 		   c.f. trw_layer_zoom_to_show_latlons().

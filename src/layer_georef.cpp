@@ -970,8 +970,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
 
 	Coord coord(this->corner, CoordMode::LATLON);
-	cw.lat_tl_spin.setValue(coord.north_south);
-	cw.lon_tl_spin.setValue(coord.east_west);
+	cw.lat_tl_spin.setValue(coord.ll.lat);
+	cw.lon_tl_spin.setValue(coord.ll.lon);
 	cw.lat_br_spin.setValue(this->ll_br.lat);
 	cw.lon_br_spin.setValue(this->ll_br.lon);
 
@@ -1079,7 +1079,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);
 
 	Coord coord(utm, viewport->get_coord_mode());
-	viewport->set_center_coord(&coord, true);
+	viewport->set_center_coord(coord, true);
 
 	panel->emit_update_cb();
 }
@@ -1262,7 +1262,7 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
 	Coord new_center(ll_center, viewport->get_coord_mode());
-	viewport->set_center_coord(&new_center, true);
+	viewport->set_center_coord(new_center, true);
 }
 
 
