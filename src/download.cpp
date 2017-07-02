@@ -435,7 +435,7 @@ static void set_etag(char const * fn, char const * fntmp, CurlOptions * curl_opt
 
 
 
-static DownloadResult download(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, bool ftp, void * handle)
+static DownloadResult download(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, bool ftp, void * handle)
 {
 	bool failure = false;
 	CurlOptions curl_options;
@@ -552,7 +552,7 @@ static DownloadResult download(char const * hostname, char const * uri, const st
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult Download::get_url_http(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_http(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
 {
 	return download(hostname, uri, fn, dl_options, false, handle);
 }
@@ -560,7 +560,7 @@ DownloadResult Download::get_url_http(char const * hostname, char const * uri, c
 
 
 
-DownloadResult Download::get_url_ftp(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_ftp(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
 {
 	return download(hostname, uri, fn, dl_options, true, handle);
 }
@@ -592,7 +592,7 @@ void Download::uninit_handle(void * handle)
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-char * Download::get_uri_to_tmp_file(char const * uri, const DownloadOptions * dl_options)
+char * Download::get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
 {
 	int tmp_fd;
 	char * tmpname;

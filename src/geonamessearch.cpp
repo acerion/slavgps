@@ -473,7 +473,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 	free(east);  east = NULL;
 	free(west);  west = NULL;
 
-	char * tmpname = Download::get_uri_to_tmp_file(uri, NULL);
+	char * tmpname = Download::get_uri_to_tmp_file(QString(uri), NULL);
 	if (!tmpname) {
 		none_found(window);
 		return;

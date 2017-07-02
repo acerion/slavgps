@@ -52,7 +52,7 @@ namespace SlavGPS {
 		bool is_mbtiles();
 		bool is_osm_meta_tiles();
 
-		char * get_server_path(TileInfo * src);
+		const QString get_server_path(TileInfo * src) const;
 	};
 
 

@@ -45,8 +45,8 @@ namespace SlavGPS {
 		bool is_direct_file_access(void);
 		bool is_mbtiles(void);
 
-		char * get_server_hostname(void);
-		char * get_server_path(TileInfo * src);
+		const QString get_server_hostname(void) const;
+		const QString get_server_path(TileInfo * src) const;
 
 		MapTypeID type = MAP_TYPE_ID_INITIAL;
 	};

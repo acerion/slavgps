@@ -50,7 +50,7 @@ namespace SlavGPS {
 
 		bool supports_download_only_new();
 
-		char * get_server_path(TileInfo * src);
+		const QString get_server_path(TileInfo * src) const;
 
 		DownloadResult download(TileInfo * src, const char * dest_fn, void * handle);
 

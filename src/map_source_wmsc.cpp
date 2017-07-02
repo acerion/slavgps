@@ -67,11 +67,11 @@ MapSourceWmsc::~MapSourceWmsc()
 
 
 
-MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
+MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, char const * label_, char const * hostname, char const * url_)
 {
 	map_type = map_type_;
 	label = g_strdup(label_);
-	server_hostname = g_strdup(hostname_);
+	this->server_hostname = QString(hostname);
 	server_path_format = g_strdup(url_);
 }
 
@@ -159,7 +159,7 @@ void MapSourceWmsc::tile_to_center_coord(TileInfo * src, Coord * dest)
 
 
 
-char * MapSourceWmsc::get_server_path(TileInfo *src)
+const QString MapSourceWmsc::get_server_path(TileInfo * src) const
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {
@@ -184,7 +184,7 @@ char * MapSourceWmsc::get_server_path(TileInfo *src)
 	g_ascii_dtostr(sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
 	g_ascii_dtostr(smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
 
-	char * uri = g_strdup_printf(server_path_format, sminx, sminy, smaxx, smaxy);
+	char * uri = g_strdup_printf(server_path_format, sminx, sminy, smaxx, smaxy); /* kamilFIXME: memory leak. */
 
-	return uri;
+	return QString(uri);
 }

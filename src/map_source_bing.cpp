@@ -102,7 +102,7 @@ MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const cha
 	map_type = map_type_;
 	label = g_strdup(label_);
 	name = strdup("Bing-Aerial");
-	server_hostname = strdup("ecn.t2.tiles.virtualearth.net");
+	this->server_hostname = QString("ecn.t2.tiles.virtualearth.net");
 	server_path_format = strdup("/tiles/a%s.jpeg?g=587");
 	bing_api_key = g_strdup(key_);
 	this->dl_options.check_file_server_time = true;
@@ -125,7 +125,7 @@ MapSourceBing::~MapSourceBing()
 
 
 
-char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
+char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 {
 	/* Picked from http://trac.openstreetmap.org/browser/applications/editors/josm/plugins/slippymap/src/org/openstreetmap/josm/plugins/slippymap/SlippyMapPreferences.java?rev=24486 */
 	char k[20];
@@ -147,12 +147,12 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 
 
 
-char * MapSourceBing::get_server_path(TileInfo * src)
+const QString MapSourceBing::get_server_path(TileInfo * src) const
 {
 	char * quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
-	char * path = g_strdup_printf(server_path_format, quadtree);
+	char * path = g_strdup_printf(server_path_format, quadtree); /* kamilFIXME: memory leak. */
 	free(quadtree);
-	return path;
+	return QString(path);
 }
 
 
@@ -342,7 +342,7 @@ int MapSourceBing::load_attributions()
 	this->loading_attributions = true;
 	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key);
 
-	char * tmpname = Download::get_uri_to_tmp_file(uri, this->get_download_options());
+	char * tmpname = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
 	if (!tmpname) {
 		ret = -1;
 		goto done;

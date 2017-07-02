@@ -2040,9 +2040,8 @@ void LayerMap::tile_info_cb(void)
 			     map->get_name(),
 			     &ulm, filename_, max_path_len,
 			     map->get_file_extension());
-		source = g_markup_printf_escaped("Source: http://%s%s",
-						   map->get_server_hostname(),
-						   map->get_server_path(&ulm));
+		const QString src = QString("Source: http://%1%2").arg(map->get_server_hostname()).arg(map->get_server_path(&ulm));
+		source = strdup(src.toUtf8().constData());
 	}
 
 	GArray *array = g_array_new(false, true, sizeof(char*));

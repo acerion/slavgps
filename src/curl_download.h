@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstdint>
 
+#include <QString>
+
 #include "download.h"
 
 
@@ -73,8 +75,8 @@ namespace SlavGPS {
 		static void * init_handle(void);
 		static void uninit_handle(void * handle);
 
-		static CurlDownloadStatus get_url(const char * hostname, const char * uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle);
-		static CurlDownloadStatus download_uri(const char * uri, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle);
+		static CurlDownloadStatus get_url(const QString & hostname, const QString & uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle);
+		static CurlDownloadStatus download_uri(const QString & full_url, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle);
 	};
 
 

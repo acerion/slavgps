@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <QDebug>
+
 #include "viewport.h"
 #include "coord.h"
 #include "mapcoord.h"
@@ -65,7 +67,6 @@ MapSource::MapSource()
 
 	this->dl_options.check_file = a_check_map_file;
 
-	server_hostname = NULL;
 	server_path_format = NULL;
 
 	zoom_min =  0;
@@ -101,7 +102,6 @@ MapSource::~MapSource()
 
 	free(this->dl_options.referer);
 
-	free(server_hostname);
 	free(server_path_format);
 }
 
@@ -129,7 +129,7 @@ MapSource & MapSource::operator=(MapSource map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = g_strdup(map.server_hostname);
+	this->server_hostname = map.server_hostname;
 	this->server_path_format = g_strdup(map.server_path_format);
 
 	this->zoom_min = map.zoom_min;
@@ -172,7 +172,7 @@ MapSource::MapSource(MapSource & map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = g_strdup(map.server_hostname);
+	this->server_hostname = map.server_hostname;
 	this->server_path_format = g_strdup(map.server_path_format);
 
 	this->zoom_min = map.zoom_min;
@@ -515,7 +515,7 @@ void MapSource::tile_to_center_coord(TileInfo * src, Coord * dest)
  */
 DownloadResult MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
 {
-	fprintf(stderr, "MapSource download\n");
+	qDebug() << "II: Map Source: download to" << dest_fn;
 	return Download::get_url_http(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
 }
 
@@ -538,17 +538,17 @@ void MapSource::download_handle_cleanup(void * handle)
 
 
 
-char * MapSource::get_server_hostname()
+const QString MapSource::get_server_hostname(void) const
 {
-	return g_strdup(server_hostname);
+	return this->server_hostname;
 }
 
 
 
 
-char * MapSource::get_server_path(TileInfo * src)
+const QString MapSource::get_server_path(TileInfo * src) const
 {
-	return NULL;
+	return "";
 }
 
 

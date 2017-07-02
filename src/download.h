@@ -29,6 +29,8 @@
 #include <cstdint>
 #include <string>
 
+#include <QString>
+
 
 
 
@@ -104,10 +106,10 @@ namespace SlavGPS {
 		static void * init_handle(void);
 		static void uninit_handle(void * handle);
 
-		static DownloadResult get_url_http(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
-		static DownloadResult get_url_ftp(char const * hostname, char const * uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
+		static DownloadResult get_url_http(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
+		static DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
 
-		static char * get_uri_to_tmp_file(char const * uri, const DownloadOptions * dl_options);
+		static char * get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options);
 	};
 
 

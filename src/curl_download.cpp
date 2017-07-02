@@ -123,11 +123,11 @@ void CurlDownload::uninit(void)
 
 
 
-CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
 {
 	struct curl_slist * curl_send_headers = NULL;
 
-	qDebug().nospace() << "DD: Curl Download: Download URI '" << uri << "'";
+	qDebug().nospace() << "DD: Curl Download: Download URL '" << full_url << "'";
 
 	CURL * curl = handle ? handle : curl_easy_init();
 	if (!curl) {
@@ -141,7 +141,8 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, const 
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 		curl_easy_setopt(curl, CURLOPT_USERPWD, dl_options->user_pass);
 	}
-	curl_easy_setopt(curl, CURLOPT_URL, uri);
+	const QByteArray url = full_url.toUtf8();
+	curl_easy_setopt(curl, CURLOPT_URL, url.constData());
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
@@ -198,7 +199,7 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, const 
 				status = CurlDownloadStatus::NO_ERROR;
 			}
 		} else {
-			qDebug().nospace() << "WW: Curl Download: Download URI: http response:" << response << "for URI '" << uri << "'";
+			qDebug().nospace() << "WW: Curl Download: Download URL: http response:" << response << "for URL '" << full_url << "'";
 			status = CurlDownloadStatus::ERROR;
 		}
 	} else {
@@ -218,28 +219,22 @@ CurlDownloadStatus CurlDownload::download_uri(const char * uri, FILE * f, const 
 
 
 
-CurlDownloadStatus CurlDownload::get_url(const char * hostname, const char * uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlDownload::get_url(const QString & hostname, const QString & uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
 {
-	char * full = NULL;
+	QString full_url;
 
-	if (strstr(hostname, "://") != NULL) {
+	if (hostname.contains("://")) {
 		/* Already full url. */
-		full = (char *) hostname;
-	} else if (strstr(uri, "://") != NULL) {
+		full_url = hostname;
+	} else if (uri.contains("://")) {
 		/* Already full url. */
-		full = (char *) uri;
+		full_url = uri;
 	} else {
 		/* Compose the full url. */
-		full = g_strdup_printf("%s://%s%s", (ftp?"ftp":"http"), hostname, uri);
+		full_url = QString("%1://%2%3").arg(ftp ? "ftp" : "http").arg(hostname).arg(uri);
 	}
-	CurlDownloadStatus ret = CurlDownload::download_uri(full, f, dl_options, curl_options, handle);
-	/* Free newly allocated memory, but do not free uri. */
-	if (hostname != full && uri != full) {
-		free(full);
-	}
-	full = NULL;
 
-	return ret;
+	return CurlDownload::download_uri(full_url, f, dl_options, curl_options, handle);
 }
 
 

@@ -132,18 +132,18 @@ void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord * dest)
 
 
 
-char * MapSourceTerraserver::get_server_path(TileInfo * src)
+const QString MapSourceTerraserver::get_server_path(TileInfo * src) const
 {
-	char * uri = g_strdup_printf("/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", (int) this->map_type, src->scale, src->x, src->y, src->z);
-	return uri;
+	char * uri = g_strdup_printf("/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", (int) this->map_type, src->scale, src->x, src->y, src->z); /* kamilFIXME: memory leak. */
+	return QString(uri);
 }
 
 
 
 
-char * MapSourceTerraserver::get_server_hostname(void)
+const QString MapSourceTerraserver::get_server_hostname(void) const
 {
-	return g_strdup(TERRASERVER_SITE);
+	return QString(TERRASERVER_SITE);
 }
 
 

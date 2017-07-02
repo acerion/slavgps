@@ -55,7 +55,7 @@ namespace SlavGPS {
 		~MapSourceBing();
 
 		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data);
-		char * get_server_path(TileInfo * src);
+		const QString get_server_path(TileInfo * src) const;
 
 
 		char * bing_api_key;
@@ -68,7 +68,7 @@ namespace SlavGPS {
 	private:
 		int load_attributions();
 		void async_load_attributions();
-		char * compute_quad_tree(int zoom, int tilex, int tiley);
+		char * compute_quad_tree(int zoom, int tilex, int tiley) const;
 		static void bstart_element(GMarkupParseContext * context,
 					   const char          * element_name,
 					   const char         ** attribute_names,

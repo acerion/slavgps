@@ -54,7 +54,7 @@ namespace SlavGPS {
 		bool coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
 		void tile_to_center_coord(TileInfo * src, Coord * dest);
 
-		char * get_server_path(TileInfo * src);
+		const QString get_server_path(TileInfo * src) const;
 	};
 
 

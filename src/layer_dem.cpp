@@ -1039,7 +1039,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
 	dl_options.check_file = a_check_map_file;
 
-	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, src_fn, dl_job->dest.toUtf8().constData(), &dl_options, NULL);
+	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, QString(src_fn), dl_job->dest.toUtf8().constData(), &dl_options, NULL);
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {

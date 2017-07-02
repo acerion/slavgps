@@ -53,8 +53,8 @@ namespace SlavGPS {
 		const char * get_license_url();
 		const QPixmap * get_logo();
 
-		char * get_server_hostname();
-		virtual char * get_server_path(TileInfo * src);
+		const QString get_server_hostname(void) const;
+		virtual const QString get_server_path(TileInfo * src) const;
 
 		const char * get_name();
 		MapTypeID get_map_type();
@@ -117,7 +117,7 @@ namespace SlavGPS {
 
 		DownloadOptions dl_options;
 
-		char * server_hostname = NULL;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
+		QString server_hostname = "";    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
 		char * server_path_format = NULL; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
 
 		// NB Probably best to keep the above fields in same order to be common across Slippy, TMS & WMS map definitions

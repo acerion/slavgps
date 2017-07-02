@@ -48,6 +48,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <QDebug>
+
 #include "map_source_slippy.h"
 #include "map_utils.h"
 
@@ -86,7 +88,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = g_strdup(map.server_hostname);
+	this->server_hostname = map.server_hostname;
 	this->server_path_format = g_strdup(map.server_path_format);
 
 	this->zoom_min = map.zoom_min;
@@ -102,20 +104,18 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 	this->switch_xy = map.switch_xy;
 
-	fprintf(stderr, "MapSourceSlippy &= hostname = %d, path_pattern = %s\n", server_hostname, server_path_format);
-
         return *this;
 }
 
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char const * hostname_, char const * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char const * hostname, char const * path_format_)
 {
 	map_type = map_type_;
 	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", map_type_, map_type);
 	label = g_strdup(label_);
-	server_hostname = g_strdup(hostname_);
+	this->server_hostname = QString(hostname);
 	server_path_format = g_strdup(path_format_);
 }
 
@@ -179,14 +179,16 @@ void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord * dest)
 
 
 
-char * MapSourceSlippy::get_server_path(TileInfo * src)
+const QString MapSourceSlippy::get_server_path(TileInfo * src) const
 {
 	if (switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		return g_strdup_printf(server_path_format, 17 - src->scale, src->y, src->x);
+		char * rv = g_strdup_printf(server_path_format, 17 - src->scale, src->y, src->x); /* kamilFIXME: memory leak. */
+		return QString(rv);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		return g_strdup_printf(server_path_format, 17 - src->scale, src->x, src->y);
+		char * rv = g_strdup_printf(server_path_format, 17 - src->scale, src->x, src->y); /* kamilFIXME: memory leak. */
+		return QString(rv);
 	}
 }
 
@@ -196,6 +198,6 @@ char * MapSourceSlippy::get_server_path(TileInfo * src)
 DownloadResult MapSourceSlippy::download(TileInfo * src, const char * dest_fn, void * handle)
 {
 	DownloadResult result = Download::get_url_http(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
-	//fprintf(stderr, "MapSourceSlippy::download(%s, %s) -> %d\n", get_server_hostname(), get_server_path(src), result);
+	qDebug() << "II: Map Source Slippy: download" << get_server_hostname() << get_server_path(src) << "->" << (int) result;
 	return result;
 }

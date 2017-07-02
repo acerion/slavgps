@@ -74,11 +74,11 @@ MapSourceTms::~MapSourceTms()
 
 
 
-MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
+MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const * hostname, char const * url_)
 {
 	map_type = map_type_;
 	label = g_strdup(label_);
-	server_hostname = g_strdup(hostname_);
+	this->server_hostname = QString(hostname);
 	server_path_format = g_strdup(url_);
 }
 
@@ -168,7 +168,7 @@ void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord * dest)
 
 
 
-char * MapSourceTms::get_server_path(TileInfo * src)
+const QString MapSourceTms::get_server_path(TileInfo * src) const
 {
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
@@ -177,7 +177,7 @@ char * MapSourceTms::get_server_path(TileInfo * src)
 	/* Note : nb tiles on Y axis */
 	int nb_tiles = VIK_GZ(17 - src->scale - 1);
 
-	char * uri = g_strdup_printf(server_path_format, 17 - src->scale - 1, src->x, nb_tiles - src->y - 1);
+	char * uri = g_strdup_printf(server_path_format, 17 - src->scale - 1, src->x, nb_tiles - src->y - 1); /* kamilFIXME: memory leak. */
 
-	return uri;
+	return QString(uri);
 }
