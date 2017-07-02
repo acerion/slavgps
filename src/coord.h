@@ -24,6 +24,8 @@
 
 
 
+#include <QString>
+
 #include "coords.h"
 
 
@@ -59,6 +61,8 @@ namespace SlavGPS {
 		Coord copy_change_mode(CoordMode new_mode) const;
 
 		static double distance(const Coord & coord1, const Coord & coord2);
+
+		void to_strings(QString & str1, QString & str2) const;
 
 		bool operator==(const Coord & coord) const;
 		bool operator!=(const Coord & coord) const;

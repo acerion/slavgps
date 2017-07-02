@@ -70,7 +70,6 @@ namespace SlavGPS {
 		void wheelEvent(QWheelEvent * event);
 
 		void draw_mouse_motion_cb(QMouseEvent * event);
-		void get_location_strings(struct UTM utm, char **lat, char **lon);
 
 
 

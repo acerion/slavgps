@@ -21,6 +21,8 @@
 
 
 
+#include <QDebug>
+
 #include "coords.h"
 #include "coord.h"
 
@@ -242,4 +244,40 @@ bool Coord::is_inside(const Coord * tl, const Coord * br) const
 		return false;
 	}
 	return true;
+}
+
+
+
+
+void Coord::to_strings(QString & str1, QString & str2) const
+{
+	if (this->mode == CoordMode::UTM) {
+		/* First string will contain "zone + N/S", second
+		   string will contain easting and northing of a UTM
+		   format:
+		   ZONE[N|S] EASTING NORTHING */
+
+		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.letter); /* Zone is stored in a char but is an actual number. */
+		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
+
+	} else if (this->mode == CoordMode::LATLON) {
+		char * first = NULL;
+		char * second = NULL;
+		a_coords_latlon_to_string(&this->ll, &first, &second);
+
+		str1 = QString(first);
+		str2 = QString(second);
+
+		if (first) {
+			free(first);
+		}
+		if (second) {
+			free(second);
+		}
+	} else {
+		qDebug() << "EE: Coord: to strings: unrecognized coord mode" << (int) this->mode;
+
+	}
+
+	return;
 }

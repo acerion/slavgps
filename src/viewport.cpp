@@ -1419,8 +1419,10 @@ Coord Viewport::screen_to_coord(int pos_x, int pos_y)
 			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->size_width_2));
 			coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - pos_y)));
 		} else {
-			;
+			qDebug() << "EE: Viewport: Screen to coord: unrecognized draw mode" << (int) this->drawmode;
 		}
+	} else {
+		qDebug() << "EE: Viewport: Screen to coord: unrecognized coord mode" << (int) this->coord_mode;
 	}
 
 	return coord; /* Named Return Value Optimization. */
@@ -2223,7 +2225,6 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 
 void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 {
-#define BUFFER_SIZE 50
 	QPoint position = this->mapFromGlobal(QCursor::pos());
 
 #if 0   /* Verbose debug. */
@@ -2235,12 +2236,16 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	//this->window->tb->move(ev); /* TODO: uncomment this. */
 
-	static Coord coord = this->screen_to_coord(pos_x, pos_y);
-	static struct UTM utm = coord.get_utm();
+	/* Get coordinates in viewport's coordinates mode. Get them as strings, just for presentation purposes. */
+	static Coord coord;
+	coord = this->screen_to_coord(pos_x, pos_y);
+	QString first;
+	QString second;
+	coord.to_strings(first, second);
 
-	char * lat = NULL;
-	char * lon = NULL;
-	this->get_location_strings(utm, &lat, &lon);
+#if 0   /* Verbose debug. */
+	qDebug() << "DD: Viewport: mouse motion: cursor pos:" << position << ", coordinates:" << first << second;
+#endif
 
 	/* Change interpolate method according to scale. */
 	double zoom = this->get_zoom();
@@ -2254,30 +2259,26 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	}
 
 	int16_t alt;
-	static char pointer_buf[BUFFER_SIZE] = { 0 };
+	QString message;
 	if ((alt = DEMCache::get_elev_by_coord(&coord, interpol_method)) != DEM_INVALID_ELEVATION) {
 		if (Preferences::get_unit_height() == HeightUnit::METRES) {
-			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dm", lat, lon, alt);
+			message = QString("%1 %2 %3m").arg(first).arg(second).arg(alt);
 		} else {
-			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dft", lat, lon, (int) VIK_METERS_TO_FEET(alt));
+			message = QString("%1 %2 %3ft").arg(first).arg(second).arg((int) VIK_METERS_TO_FEET(alt));
 		}
 	} else {
-		snprintf(pointer_buf, BUFFER_SIZE, "%s %s", lat, lon);
+		message = QString("%1 %2").arg(first).arg(second);
 	}
-	free(lat);
-	lat = NULL;
-	free(lon);
-	lon = NULL;
-	QString message(pointer_buf);
+
 	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);
 
 	//this->window->pan_move(ev); /* TODO: uncomment this. */
-#undef BUFFER_SIZE
 }
 
 
 
 
+#if 0 /* kamil: no longer used. */
 /**
  * Utility function to get positional strings for the given location
  * lat and lon strings will get allocated and so need to be freed after use
@@ -2298,6 +2299,7 @@ void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
 		a_coords_latlon_to_string(&ll, lat, lon);
 	}
 }
+#endif
 
 
 

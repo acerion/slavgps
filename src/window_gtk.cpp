@@ -966,31 +966,28 @@ static void map_cache_flush_cb(GtkAction * a, Window * window)
 
 static void menu_copy_centre_cb(GtkAction * a, Window * window)
 {
-	char *lat = NULL, *lon = NULL;
+	QString first;
+	QString second;
 
-	struct UTM utm = window->viewport->get_center()->get_utm();
+	const Coord coord = window->viewport->get_center();
 
 	bool full_format = false;
-	(void)a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
+	(void) a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
 
 	if (full_format) {
-		// Bells & Whistles - may include degrees, minutes and second symbols
-		get_location_strings(window, utm, &lat, &lon);
+		/* Bells & Whistles - may include degrees, minutes and second symbols. */
+		coord->to_strings(first, second);
 	} else {
-		// Simple x.xx y.yy format
+		/* Simple x.xx y.yy format. */
 		struct LatLon ll;
 		a_coords_utm_to_latlon(&ll, &utm);
-		lat = g_strdup_printf("%.6f", ll.lat);
-		lon = g_strdup_printf("%.6f", ll.lon);
+		first = g_strdup_printf("%.6f", ll.lat);
+		second = g_strdup_printf("%.6f", ll.lon);
 	}
 
-	char *msg = g_strdup_printf("%s %s", lat, lon);
-	free(lat);
-	free(lon);
+	const QString message = QString("%1 %2").arg(firsts).arg(second);
 
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, msg, NULL);
-
-	free(msg);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, message, NULL);
 }
 
 
