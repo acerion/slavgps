@@ -24,13 +24,18 @@
 
 
 
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
 
 
 	void * unzip_file(char * zip_file, unsigned long * unzip_size);
-	char * uncompress_bzip2(char * name);
+	char * uncompress_bzip2(const QString & file_path);
 
 
 

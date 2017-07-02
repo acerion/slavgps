@@ -80,7 +80,7 @@ namespace SlavGPS {
 		virtual bool coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
 		virtual void tile_to_center_coord(TileInfo * src, Coord * dest);
 
-		virtual DownloadResult download(TileInfo * src, const char * dest_fn, void * handle);
+		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, void * handle);
 		void * download_handle_init();
 		void download_handle_cleanup(void * handle);
 

@@ -76,10 +76,10 @@ public:
 
 class DEMDownloadJob : public BackgroundJob {
 public:
-	DEMDownloadJob(const QString & full_path, struct LatLon * ll, LayerDEM * layer);
+	DEMDownloadJob(const QString & dest_file_path, const struct LatLon & ll, LayerDEM * layer);
 	~DEMDownloadJob();
 
-	QString dest;
+	QString dest_file_path;
 	double lat, lon;
 
 	std::mutex mutex;
@@ -985,14 +985,14 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(const QString & full_path, struct LatLon * ll, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const struct LatLon & ll, LayerDEM * layer_dem)
 {
 	this->thread_fn = dem_download_thread;
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
 
-	this->dest = full_path;
-	this->lat = ll->lat;
-	this->lon = ll->lon;
+	this->dest_file_path = dest_file_path_;
+	this->lat = ll.lat;
+	this->lon = ll.lon;
 	this->layer = layer_dem;
 	this->source = layer_dem->source;
 	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
@@ -1039,7 +1039,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
 	dl_options.check_file = a_check_map_file;
 
-	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, QString(src_fn), dl_job->dest.toUtf8().constData(), &dl_options, NULL);
+	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, QString(src_fn), dl_job->dest_file_path, &dl_options, NULL);
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {
@@ -1047,7 +1047,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 		break;
 	}
 	case DownloadResult::FILE_WRITE_ERROR: {
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest.toUtf8().constData()));
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
 	}
 	case DownloadResult::SUCCESS:
@@ -1140,7 +1140,7 @@ static void srtm_draw_existence(Viewport * viewport)
 					y2 = 0;
 				}
 
-				fprintf(stderr, "DEM: %s:%d: drawing existence rectangle for %s\n", __FUNCTION__, __LINE__, buf);
+				//qDebug() << "II: Layer Dem: drawing existence rectangle for" << buf;
 				viewport->draw_rectangle(pen, x1, y2, x2-x1, y1-y2);
 			}
 		}
@@ -1275,11 +1275,14 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 		stat(dem_file_path.toUtf8().constData(), &sb);
 		if (sb.st_size) {
 			this->files.push_front(dem_file_path);
-			qDebug () << "II: Layer DEM: will now load file" << dem_file_path << "from cache";
+			qDebug () << "II: Layer DEM: Add file: will now load file" << dem_file_path << "from cache";
 			DEMCache::load_file_into_cache(dem_file_path);
+		} else {
+			qDebug() << "II: Layer DEM: Add file:" << dem_file_path << ": file size is zero";
 		}
 		return true;
 	} else {
+		qDebug() << "II: Layer DEM: Add file:" << dem_file_path << ": file does not exist";
 		return false;
 	}
 }
@@ -1290,6 +1293,8 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 static int dem_download_thread(BackgroundJob * bg_job)
 {
 	DEMDownloadJob * dl_job = (DEMDownloadJob *) bg_job;
+
+	qDebug() << "II: Layer DEM: download thread --------------------";
 
 	if (dl_job->source == DEM_SOURCE_SRTM) {
 		srtm_dem_download_thread(dl_job);
@@ -1307,7 +1312,7 @@ static int dem_download_thread(BackgroundJob * bg_job)
 	if (dl_job->layer) {
 		dl_job->layer->weak_unref(LayerDEM::weak_ref_cb, dl_job);
 
-		if (dl_job->layer->add_file(dl_job->dest)) {
+		if (dl_job->layer->add_file(dl_job->dest_file_path)) {
 			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' A";
 			dl_job->layer->emit_changed(); /* NB update from background thread. */
 		}
@@ -1448,8 +1453,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
-	Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
-	static struct LatLon ll = coord.get_latlon();
+	const Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
+	const struct LatLon ll = coord.get_latlon();
 
 	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
 
@@ -1476,7 +1481,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		if (!this->add_file(dem_full_path)) {
 			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
 			const QString job_description = QString(tr("Downloading DEM %1")).arg(dem_file);
-			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, &ll, this);
+			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
 		} else {
 			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting 'changed'";

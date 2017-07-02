@@ -140,8 +140,8 @@ bool a_check_kml_file(FILE * f)
 
 
 
-static std::list<std::string> file_list;
-static std::mutex file_list_mutex;
+static QList<QString> dem_files;
+static std::mutex dem_files_mutex;
 
 
 
@@ -188,18 +188,17 @@ void Download::init(void)
 
 
 
-static bool lock_file(const std::string & fn)
+static bool lock_file(const QString & file_path)
 {
 	bool locked = false;
 
-	file_list_mutex.lock();
-	auto found = std::find(file_list.begin(), file_list.end(), fn);
-	if (found == file_list.end()) {
-		/* The filename is not yet locked. */
-		file_list.push_back(fn);
+	dem_files_mutex.lock();
+	if (!dem_files.contains(file_path)) {
+		/* The file path is not yet locked. */
+		dem_files.push_back(file_path);
 		locked = true;
 	}
-	file_list_mutex.unlock();
+	dem_files_mutex.unlock();
 
 	return locked;
 }
@@ -207,11 +206,11 @@ static bool lock_file(const std::string & fn)
 
 
 
-static void unlock_file(const std::string & fn)
+static void unlock_file(const QString & file_path)
 {
-	file_list_mutex.lock();
-	std::remove(file_list.begin(), file_list.end(), fn);
-	file_list_mutex.unlock();
+	dem_files_mutex.lock();
+	dem_files.removeAll(file_path);
+	dem_files_mutex.unlock();
 }
 
 
@@ -220,13 +219,13 @@ static void unlock_file(const std::string & fn)
 /**
  * Unzip a file - replacing the file with the unzipped contents of the self.
  */
-static void uncompress_zip(char * name)
+static void uncompress_zip(const QString & file_path)
 {
 	GError * error = NULL;
 	GMappedFile * mf;
 
-	if ((mf = g_mapped_file_new(name, false, &error)) == NULL) {
-		qDebug() << "EE: Download: Couldn't map file" << name << ":" << error->message;
+	if ((mf = g_mapped_file_new(file_path.toUtf8().constData(), false, &error)) == NULL) {
+		qDebug() << "EE: Download: Couldn't map file" << file_path << ":" << error->message;
 		g_error_free(error);
 		return;
 	}
@@ -241,8 +240,8 @@ static void uncompress_zip(char * name)
 	}
 
 	/* This overwrites any previous file contents. */
-	if (!g_file_set_contents(name, (char const *) unzip_mem, ucsize, &error)) {
-		qDebug() << "EE: Download: Couldn't write file" << name << "because of" << error->message;
+	if (!g_file_set_contents(file_path.toUtf8().constData(), (char const *) unzip_mem, ucsize, &error)) {
+		qDebug() << "EE: Download: Couldn't write file" << file_path << "because of" << error->message;
 		g_error_free(error);
 	}
 }
@@ -250,11 +249,11 @@ static void uncompress_zip(char * name)
 
 
 /**
- * @name:  The potentially compressed filename
+ * @file_path:  The potentially compressed filename
  *
  * Perform magic to decide how which type of decompression to attempt.
  */
-void SlavGPS::a_try_decompress_file(char * name)
+void SlavGPS::a_try_decompress_file(const QString & file_path)
 {
 #ifdef HAVE_MAGIC_H
 #ifdef MAGIC_VERSION
@@ -275,7 +274,7 @@ void SlavGPS::a_try_decompress_file(char * name)
 		int ml = magic_load(myt, NULL);
 #endif
 		if (ml == 0) {
-			char const * magic = magic_file(myt, name);
+			char const * magic = magic_file(myt, file_path.toUtf8().constData());
 			qDebug() << "DD: Download: magic output:" << magic;
 
 			if (g_ascii_strncasecmp(magic, "application/zip", 15) == 0) {
@@ -297,15 +296,15 @@ void SlavGPS::a_try_decompress_file(char * name)
 	}
 
 	if (zip) {
-		uncompress_zip (name);
+		uncompress_zip(file_path.toUtf8().constData());
 	} else if (bzip2) {
-		char* bz2_name = uncompress_bzip2 (name);
+		char* bz2_name = uncompress_bzip2(file_path);
 		if (bz2_name) {
-			if (remove(name)) {
-				qDebug() << "EE: Download: remove file failed (" << name << ")";
+			if (remove(file_path.toUtf8().constData())) {
+				qDebug() << "EE: Download: remove file failed (" << file_path << ")";
 			}
-			if (g_rename (bz2_name, name)) {
-				qDebug() << "EE: Download: file rename failed [" << bz2_name << "] to [" << name << "]";
+			if (g_rename (bz2_name, file_path.toUtf8().constData())) {
+				qDebug() << "EE: Download: file rename failed [" << bz2_name << "] to [" << file_path << "]";
 			}
 		}
 	}
@@ -322,11 +321,11 @@ void SlavGPS::a_try_decompress_file(char * name)
 
 
 
-static bool get_etag_xattr(char const * fn, CurlOptions * curl_options)
+static bool get_etag_xattr(const QString & file_path, CurlOptions * curl_options)
 {
 	bool result = false;
 
-	GFile * file = g_file_new_for_path(fn);
+	GFile * file = g_file_new_for_path(file_path.toUtf8().constData());
 	GFileInfo * fileinfo = g_file_query_info(file, VIKING_ETAG_XATTR, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	if (fileinfo) {
 		char const * etag = g_file_info_get_attribute_string(fileinfo, VIKING_ETAG_XATTR);
@@ -339,7 +338,7 @@ static bool get_etag_xattr(char const * fn, CurlOptions * curl_options)
 	g_object_unref(file);
 
 	if (result) {
-		qDebug() << "DD: Download: Get etag (xattr) from" << fn << ":" << curl_options->etag;
+		qDebug() << "DD: Download: Get etag (xattr) from" << file_path << ":" << curl_options->etag;
 	}
 
 	return result;
@@ -348,18 +347,18 @@ static bool get_etag_xattr(char const * fn, CurlOptions * curl_options)
 
 
 
-static bool get_etag_file(char const * fn, CurlOptions * curl_options)
+static bool get_etag_file(const QString & file_path, CurlOptions * curl_options)
 {
 	bool result = false;
 
-	char * etag_filename = g_strdup_printf("%s.etag", fn);
+	char * etag_filename = g_strdup_printf("%s.etag", file_path.toUtf8().constData());
 	if (etag_filename) {
 		result = g_file_get_contents(etag_filename, &curl_options->etag, NULL, NULL);
 		free(etag_filename);
 	}
 
 	if (result) {
-		qDebug() << "DD: Download: Get etag (file) from" << fn << ":" << curl_options->etag;
+		qDebug() << "DD: Download: Get etag (file) from" << file_path << ":" << curl_options->etag;
 	}
 
 	return result;
@@ -368,11 +367,11 @@ static bool get_etag_file(char const * fn, CurlOptions * curl_options)
 
 
 
-static void get_etag(char const * fn, CurlOptions * curl_options)
+static void get_etag(const QString & file_path, CurlOptions * curl_options)
 {
 	/* First try to get etag from xattr, then fall back to plain file. */
-	if (!get_etag_xattr(fn, curl_options) && !get_etag_file(fn, curl_options)) {
-		qDebug() << "DD: Download: Failed to get etag from" << fn;
+	if (!get_etag_xattr(file_path, curl_options) && !get_etag_file(file_path, curl_options)) {
+		qDebug() << "DD: Download: Failed to get etag from" << file_path;
 		return;
 	}
 
@@ -388,14 +387,14 @@ static void get_etag(char const * fn, CurlOptions * curl_options)
 
 
 
-static bool set_etag_xattr(char const * fn, CurlOptions * curl_options)
+static bool set_etag_xattr(const QString & file_path, CurlOptions * curl_options)
 {
-	GFile * file = g_file_new_for_path(fn);
+	GFile * file = g_file_new_for_path(file_path.toUtf8().constData());
 	bool result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, curl_options->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	g_object_unref(file);
 
 	if (result) {
-		qDebug() << "DD: Download: Set etag (xattr) on" << fn << ":" << curl_options->new_etag;
+		qDebug() << "DD: Download: Set etag (xattr) on" << file_path << ":" << curl_options->new_etag;
 	}
 
 	return result;
@@ -404,44 +403,38 @@ static bool set_etag_xattr(char const * fn, CurlOptions * curl_options)
 
 
 
-static bool set_etag_file(char const * fn, CurlOptions * curl_options)
+static bool set_etag_file(const QString & file_path, CurlOptions * curl_options)
 {
-	bool result = false;
-
-	char * etag_filename = g_strdup_printf("%s.etag", fn);
-	if (etag_filename) {
-		result = g_file_set_contents(etag_filename, curl_options->new_etag, -1, NULL);
-		free(etag_filename);
+	const QString etag_filename = file_path + ".etag";
+	if (g_file_set_contents(etag_filename.toUtf8().constData(), curl_options->new_etag, -1, NULL)) {
+		qDebug() << "DD: Download: Set etag (file) on" << file_path << ":" << curl_options->new_etag;
+		return true;
+	} else {
+		return false;
 	}
-
-	if (result) {
-		qDebug() << "DD: Download: Set etag (file) on" << fn << ":" << curl_options->new_etag;
-	}
-
-	return result;
 }
 
 
 
 
-static void set_etag(char const * fn, char const * fntmp, CurlOptions * curl_options)
+static void set_etag(const QString & file_path, const QString & tmp_file_path, CurlOptions * curl_options)
 {
 	/* First try to store etag in extended attribute, then fall back to plain file. */
-	if (!set_etag_xattr(fntmp, curl_options) && !set_etag_file(fn, curl_options)) {
-		qDebug() << "DD: Download: Failed to set etag on" << fn;
+	if (!set_etag_xattr(tmp_file_path, curl_options) && !set_etag_file(file_path, curl_options)) {
+		qDebug() << "DD: Download: Failed to set etag on" << file_path;
 	}
 }
 
 
 
 
-static DownloadResult download(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, bool ftp, void * handle)
+static DownloadResult download(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, bool ftp, void * handle)
 {
 	bool failure = false;
 	CurlOptions curl_options;
 
 	/* Check file. */
-	if (0 == access(fn.c_str(), F_OK)) {
+	if (0 == access(dest_file_path.toUtf8().constData(), F_OK)) {
 		if (dl_options == NULL
 		    || (!dl_options->check_file_server_time
 			&& !dl_options->use_etag)) {
@@ -452,7 +445,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
 		/* Get the modified time of this file. */
 		struct stat buf;
-		(void) stat(fn.c_str(), &buf);
+		(void) stat(dest_file_path.toUtf8().constData(), &buf);
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
@@ -463,27 +456,27 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 			curl_options.time_condition = file_time;
 		}
 		if (dl_options != NULL && dl_options->use_etag) {
-			get_etag(fn.c_str(), &curl_options);
+			get_etag(dest_file_path, &curl_options);
 		}
 
 	} else {
-		char *dir = g_path_get_dirname(fn.c_str());
+		char *dir = g_path_get_dirname(dest_file_path.toUtf8().constData());
 		if (g_mkdir_with_parents(dir , 0777) != 0) {
 			qDebug() << "WW: Download: Failed to mkdir" << dir;
 		}
 		free(dir);
 	}
 
-	std::string tmpfilename = fn + ".tmp";
-	if (!lock_file(tmpfilename)) {
-		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmpfilename.c_str();
+	const QString tmp_file_path = dest_file_path + ".tmp";
+	if (!lock_file(tmp_file_path)) {
+		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmp_file_path;
 		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
-	FILE * f = fopen(tmpfilename.c_str(), "w+b");  /* Truncate file and open it. */
+	FILE * f = fopen(tmp_file_path.toUtf8().constData(), "w+b");  /* Truncate file and open it. */
 	int e = errno;
 	if (!f) {
-		qDebug() << "WW: Download: Couldn't open temporary file" << tmpfilename.c_str() << ":" << strerror(e);
+		qDebug() << "WW: Download: Couldn't open temporary file" << tmp_file_path << ":" << strerror(e);
 		return DownloadResult::FILE_WRITE_ERROR;
 	}
 
@@ -508,39 +501,39 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 	f = NULL;
 
 	if (failure) {
-		qDebug() << "WW: Download: Download error:" << fn.c_str();
-		if (remove(tmpfilename.c_str()) != 0) {
-			qDebug() << "WW: Download: Failed to remove" << tmpfilename.c_str();
+		qDebug() << "WW: Download: Download error for file:" << dest_file_path;
+		if (remove(tmp_file_path.toUtf8().constData()) != 0) {
+			qDebug() << "WW: Download: Failed to remove" << tmp_file_path;
 		}
-		unlock_file(tmpfilename);
+		unlock_file(tmp_file_path);
 		return result;
 	}
 
 	if (ret == CurlDownloadStatus::NO_NEWER_FILE)  {
-		(void) remove(tmpfilename.c_str());
+		(void) remove(tmp_file_path.toUtf8().constData());
 		/* Wpdate mtime of local copy.
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
 		   coverity[toctou] */
-		if (g_utime(fn.c_str(), NULL) != 0)
-			qDebug() << "WW: Download: couldn't set time on" << fn.c_str();
+		if (g_utime(dest_file_path.toUtf8().constData(), NULL) != 0)
+			qDebug() << "WW: Download: couldn't set time on" << dest_file_path;
 	} else {
 		if (dl_options != NULL && dl_options->convert_file) {
-			dl_options->convert_file((char *) tmpfilename.c_str());
+			dl_options->convert_file(tmp_file_path);
 		}
 
 		if (dl_options != NULL && dl_options->use_etag) {
 			if (curl_options.new_etag) {
 				/* Server returned an etag value. */
-				set_etag(fn.c_str(), tmpfilename.c_str(), &curl_options);
+				set_etag(dest_file_path, tmp_file_path, &curl_options);
 			}
 		}
 
 		/* Move completely-downloaded file to permanent location. */
-		if (g_rename(tmpfilename.c_str(), fn.c_str())) {
-			qDebug() << "WW: Download: file rename failed" << tmpfilename.c_str() << "to" << fn.c_str();
+		if (g_rename(tmp_file_path.toUtf8().constData(), dest_file_path.toUtf8().constData())) {
+			qDebug() << "WW: Download: file rename failed" << tmp_file_path << "to" << dest_file_path;
 		}
 	}
-	unlock_file(tmpfilename);
+	unlock_file(tmp_file_path);
 
 	return DownloadResult::SUCCESS;
 }
@@ -552,17 +545,17 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult Download::get_url_http(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle)
 {
-	return download(hostname, uri, fn, dl_options, false, handle);
+	return download(hostname, uri, dest_file_path, dl_options, false, handle);
 }
 
 
 
 
-DownloadResult Download::get_url_ftp(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle)
+DownloadResult Download::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle)
 {
-	return download(hostname, uri, fn, dl_options, true, handle);
+	return download(hostname, uri, dest_file_path, dl_options, true, handle);
 }
 
 

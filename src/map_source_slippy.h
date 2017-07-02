@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 		const QString get_server_path(TileInfo * src) const;
 
-		DownloadResult download(TileInfo * src, const char * dest_fn, void * handle);
+		DownloadResult download(TileInfo * src, const QString & dest_file_path, void * handle);
 
 
 		bool is_direct_file_access();

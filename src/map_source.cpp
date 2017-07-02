@@ -508,15 +508,15 @@ void MapSource::tile_to_center_coord(TileInfo * src, Coord * dest)
 /**
  * @self:    The MapSource of interest.
  * @src:     The map location to download
- * @dest_fn: The filename to save the result in
+ * @dest_file_path: The filename to save the result in
  * @handle:  Potential reusable Curl Handle (may be NULL)
  *
  * Returns: How successful the download was as per the type #DownloadResult
  */
-DownloadResult MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
+DownloadResult MapSource::download(TileInfo * src, const QString & dest_file_path, void *handle)
 {
-	qDebug() << "II: Map Source: download to" << dest_fn;
-	return Download::get_url_http(get_server_hostname(), get_server_path(src), dest_fn, &this->dl_options, handle);
+	qDebug() << "II: Map Source: download to" << dest_file_path;
+	return Download::get_url_http(get_server_hostname(), get_server_path(src), dest_file_path, &this->dl_options, handle);
 }
 
 

@@ -201,7 +201,7 @@ static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
 
 
 
-static DownloadResult expedia_download(TileInfo * src, const char * dest_fn, void * handle)
+static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, void * handle)
 {
 	struct LatLon ll;
 	expedia_xy_to_latlon_middle(src->scale, src->x, src->y, &ll);
@@ -215,9 +215,9 @@ static DownloadResult expedia_download(TileInfo * src, const char * dest_fn, voi
 	char uri = g_strdup_printf("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
 				   ll.lat, ll.lon, (ll.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
 
-	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, QString(uri), dest_fn, &expedia_options, NULL);
+	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, QString(uri), dest_file_path, &expedia_options, NULL);
 	if (res == DownloadResult::SUCCESS) {
-		expedia_snip (dest_fn);
+		expedia_snip(dest_file_path);
 	}
 	free(uri);
 	return(res);

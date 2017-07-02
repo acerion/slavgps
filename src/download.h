@@ -57,8 +57,8 @@ namespace SlavGPS {
 	bool a_check_kml_file(FILE *);
 
 	/* Convert. */
-	void a_try_decompress_file(char * name);
-	typedef void (* VikFileContentConvertFunc) (char *); /* filename (temporary). */
+	void a_try_decompress_file(const QString & file_path);
+	typedef void (* VikFileContentConvertFunc) (const QString &); /* Function's argument is path to (temporary) file. */
 
 
 
@@ -106,8 +106,8 @@ namespace SlavGPS {
 		static void * init_handle(void);
 		static void uninit_handle(void * handle);
 
-		static DownloadResult get_url_http(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
-		static DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const std::string & fn, const DownloadOptions * dl_options, void * handle);
+		static DownloadResult get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
+		static DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
 
 		static char * get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options);
 	};

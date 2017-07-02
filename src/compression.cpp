@@ -42,6 +42,7 @@
 #include <gio/gio.h>
 #include <glib/gstdio.h>
 
+#include <QDebug>
 
 
 
@@ -166,12 +167,12 @@ end:
  *
  * Also see: http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html
  */
-char * SlavGPS::uncompress_bzip2(char * name)
+char * SlavGPS::uncompress_bzip2(const QString & file_path)
 {
 #ifdef HAVE_BZLIB_H
 	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion());
 
-	FILE *ff = fopen(name, "rb");
+	FILE *ff = fopen(file_path.toUtf8().constData(), "rb");
 	if (!ff) {
 		return NULL;
 	}
@@ -181,7 +182,7 @@ char * SlavGPS::uncompress_bzip2(char * name)
 	if (bzerror != BZ_OK) {
 		BZ2_bzReadClose(&bzerror, bf);
 		/* Handle error. */
-		fprintf(stderr, "WARNING: %s: BZ ReadOpen error on %s\n", __FUNCTION__, name);
+		qDebug() << "WW: Compression: BZ ReadOpen error on" << file_path;
 		return NULL;
 	}
 
