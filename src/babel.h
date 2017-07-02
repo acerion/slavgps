@@ -27,11 +27,12 @@
 
 #include <cstdint>
 
-#include <glib.h>
+#include <QObject>
+#include <QProcess>
+#include <QStringList>
 
 #include "layer_trw.h"
 #include "download.h"
-
 
 
 
@@ -129,6 +130,36 @@ void a_babel_post_init();
 void a_babel_uninit();
 
 bool a_babel_available();
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	class BabelConverter : public QObject {
+		Q_OBJECT
+	public:
+		BabelConverter(const QString & program, const QStringList & args);
+		~BabelConverter();
+
+		bool run_conversion(BabelStatusFunc cb, void * cb_data);
+
+		QProcess * process = NULL;
+
+	public slots:
+		void started_cb(void);
+		void error_occurred_cb(QProcess::ProcessError error);
+		void finished_cb(int exit_code, QProcess::ExitStatus exitStatus);
+
+	};
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

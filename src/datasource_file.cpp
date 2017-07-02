@@ -296,7 +296,23 @@ static int datasource_file_internal_dialog(QWidget * parent)
 
 	data_source_file_dialog->file_entry->setFocus();
 
-	return data_source_file_dialog->exec();
+	int rv = data_source_file_dialog->exec();
+
+	if (rv == QDialog::Accepted) {
+		qDebug() << "II: Datasource File: dialog result: accepted";
+		qDebug() << "II: Datasource File: format type index:" << data_source_file_dialog->file_types_combo->currentIndex();
+		BabelFileType * file_type = a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types_combo);
+		qDebug().nospace() << "II: Datasource File: selected format type name: '" << file_type->name  << "'";
+		qDebug().nospace() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
+		qDebug().nospace() << "II: Datasource File: selected file path: '" << data_source_file_dialog->file_entry->get_filename() << "'";
+
+	} else if (rv == QDialog::Rejected) {
+		qDebug() << "II: Datasource File: dialog result: rejected";
+	} else {
+		qDebug() << "EE: Datasource File: dialog result: unknown:" << rv;
+	}
+
+	return rv;
 }
 
 

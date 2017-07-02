@@ -145,7 +145,7 @@ BabelFileType * SlavGPS::a_babel_ui_file_type_selector_get(QComboBox * combo)
 		return NULL;
 	} else {
 		BabelFileType * file_type = a_babel_file_types.at(i);
-		qDebug() << "II: Babel: selected file type:" << file_type->name << file_type->label;
+		qDebug().nospace() << "II: Babel: selected file type: '" << file_type->name << "', '" << file_type->label << "'";
 		return file_type;
 	}
 }
