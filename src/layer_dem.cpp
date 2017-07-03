@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -37,8 +37,7 @@
 
 #include <QMenu>
 #include <QDebug>
-
-#include <glib/gstdio.h>
+#include <QHash>
 
 #include "background.h"
 #include "layer_map.h"
@@ -96,26 +95,18 @@ public:
 #define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
 #else
 #define MAPS_CACHE_DIR "/home/kamil/.viking-maps/"
-#define MAPS_CACHE_DIR_2 QString("/home/kamil/.viking-maps/")
+#define MAPS_CACHE_DIR_2 QString(MAPS_CACHE_DIR)
 #endif
 
-#define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"
+
 #define SRTM_HTTP_SITE "dds.cr.usgs.gov"
-#define SRTM_HTTP_URI  "/srtm/version2_1/SRTM3/"
+#define SRTM_HTTP_URI_PREFIX  "/srtm/version2_1/SRTM3/"
 
 #ifdef VIK_CONFIG_DEM24K
 #define DEM24K_DOWNLOAD_SCRIPT "dem24k.pl"
 #endif
 
-#define UNUSED_LINE_THICKNESS 3
 
-static void srtm_draw_existence(Viewport * viewport);
-static int dem_load_list_thread(BackgroundJob * bg_job);
-static int dem_download_thread(BackgroundJob * bg_job);
-
-#ifdef VIK_CONFIG_DEM24K
-static void dem24k_draw_existence(Viewport * viewport);
-#endif
 
 
 /* Upped upper limit incase units are feet */
@@ -211,6 +202,12 @@ static Parameter dem_layer_params[] = {
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport);
 static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
+static void srtm_draw_existence(Viewport * viewport);
+static int dem_load_list_thread(BackgroundJob * bg_job);
+static int dem_download_thread(BackgroundJob * bg_job);
+#ifdef VIK_CONFIG_DEM24K
+static void dem24k_draw_existence(Viewport * viewport);
+#endif
 
 
 
@@ -890,35 +887,49 @@ void draw_loaded_dem_box(Viewport * viewport)
 
 
 
+/* Get name of hgt.zip file specified by lat/lon location. */
+const QString srtm_file_name(int lat, int lon)
+{
+	return QString("%1%2%3%4.hgt.zip")
+		.arg((lat >= 0) ? 'N' : 'S')
+		.arg(ABS (lat), 2, 10, QChar('0'))
+		.arg((lon >= 0) ? 'E' : 'W')
+		.arg(ABS (lon), 3, 10, QChar('0'));
+}
+
+
 
 /* Return the continent for the specified lat, lon. */
 /* TODO */
-static const char *srtm_continent_dir(int lat, int lon)
+static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 {
+	static QHash<QString, QString> continents; /* Coords -> continent. */
+
 	extern const char *_srtm_continent_data[];
-	static GHashTable *srtm_continent = NULL;
-	const char *continent;
-	char name[16];
 
-	if (!srtm_continent) {
-		const char **s;
+	if (continents.isEmpty()) {
 
-		srtm_continent = g_hash_table_new(g_str_hash, g_str_equal);
-		s = _srtm_continent_data;
+		const char ** s = _srtm_continent_data;
 		while (*s != (char *)-1) {
-			continent = *s++;
+			const char * continent = *s++;
 			while (*s) {
-				g_hash_table_insert(srtm_continent, (void *) *s, (void *) continent);
+				continents.insert(QString(*s), QString(continent));
 				s++;
 			}
 			s++;
 		}
 	}
-	snprintf(name, sizeof(name), "%c%02d%c%03d",
-		 (lat >= 0) ? 'N' : 'S', ABS(lat),
-		 (lon >= 0) ? 'E' : 'W', ABS(lon));
 
-	return ((const char *) g_hash_table_lookup(srtm_continent, name));
+	QString coords = srtm_file_name(lat, lon);
+	coords.remove(".hgt.zip");
+
+	auto iter = continents.find(coords);
+	if (iter == continents.end()) {
+		return false;
+	} else {
+		continent_dir = *iter;
+		return true;
+	}
 }
 
 
@@ -944,6 +955,39 @@ void LayerDEM::draw(Viewport * viewport)
 		} else {
 			qDebug() << "EE: Layer DEM: failed to get file" << dem_file_path << "from cache, not drawing";
 		}
+	}
+}
+
+
+
+
+LayerDEM::LayerDEM()
+{
+	qDebug() << "II: LayerDEM::LayerDEM()";
+
+	this->type = LayerType::DEM;
+	strcpy(this->debug_string, "LayerType::DEM");
+	this->interface = &vik_dem_layer_interface;
+
+	this->dem_type = 0;
+
+	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
+	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
+
+	/* Ensure the base color is available so the default colour can be applied. */
+	this->colors[0] = new QColor("#0000FF");
+
+	this->set_initial_parameter_values();
+
+	/* TODO: share ->colors[] between layers. */
+	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+		if (i > 0) {
+			this->colors[i] = new QColor(dem_height_colors[i]);
+		}
+	}
+
+	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		this->gradients[i] = new QColor(dem_gradient_colors[i]);
 	}
 }
 
@@ -1012,34 +1056,28 @@ DEMDownloadJob::~DEMDownloadJob()
  *  SOURCE: SRTM                                  *
  **************************************************/
 
+/* Function for downloading single SRTM data tile in background (in
+   background thread). */
 static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	int intlat, intlon;
-	const char *continent_dir;
+	int intlat = (int) floor(dl_job->lat);
+	int intlon = (int) floor(dl_job->lon);
 
-	intlat = (int)floor(dl_job->lat);
-	intlon = (int)floor(dl_job->lon);
-	continent_dir = srtm_continent_dir(intlat, intlon);
-
-	if (!continent_dir) {
+	QString continent_dir;
+	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
 		if (dl_job->layer) {
 			dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
 		}
 		return;
 	}
 
-	char *src_fn = g_strdup_printf("%s%s/%c%02d%c%03d.hgt.zip",
-				       SRTM_HTTP_URI,
-				       continent_dir,
-				       (intlat >= 0) ? 'N' : 'S',
-				       ABS(intlat),
-				       (intlon >= 0) ? 'E' : 'W',
-				       ABS(intlon));
+	/* This is a file path on server. */
+	const QString source_file = QString("%1%2/").arg(SRTM_HTTP_URI_PREFIX).arg(continent_dir) + srtm_file_name(intlat, intlon);
 
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
 	dl_options.check_file = a_check_map_file;
 
-	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, QString(src_fn), dl_job->dest_file_path, &dl_options, NULL);
+	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path, &dl_options, NULL);
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {
@@ -1057,34 +1095,26 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 		dl_job->progress = 100;
 		break;
 	}
-	free(src_fn);
 }
 
 
 
 
-static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
+static const QString srtm_lat_lon_to_cache_file_name(double lat, double lon)
 {
-	int intlat, intlon;
-	const char *continent_dir;
+	int intlat = (int) floor(lat);
+	int intlon = (int) floor(lon);
+	QString continent_dir;
 
-	intlat = (int)floor(lat);
-	intlon = (int)floor(lon);
-	continent_dir = srtm_continent_dir(intlat, intlon);
-
-	if (!continent_dir) {
+	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
 		qDebug() << "NN: Layer DEM: didn't hit any continent and coordinates" << lat << lon;
 		continent_dir = "nowhere";
 	}
 
-	return g_strdup_printf("srtm3-%s%s%c%02d%c%03d.hgt.zip",
-			       continent_dir,
-			       G_DIR_SEPARATOR_S,
-			       (intlat >= 0) ? 'N' : 'S',
-			       ABS(intlat),
-			       (intlon >= 0) ? 'E' : 'W',
-			       ABS(intlon));
+	/* This is file in local maps cache dir. */
+	const QString file = QString("srtm3-%1%2").arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(intlat, intlon);
 
+	return file;
 }
 
 
@@ -1093,56 +1123,51 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 /* TODO: generalize. */
 static void srtm_draw_existence(Viewport * viewport)
 {
-	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
+	QString cache_file_path;
 
 	LatLonBBox bbox;
 	viewport->get_bbox(&bbox);
 	QPen pen("black");
 
 
-	fprintf(stderr, "DEM: viewport bounding box: north:%d south:%d east:%d west:%d\n", (int) bbox.north, (int) bbox.south, (int) bbox.east, (int) bbox.west);
+	qDebug() << "DD: Layer DEM: Existence: viewport bounding box: north:" << (int) bbox.north << "south:" << (int) bbox.south << "east:" << (int) bbox.east << "west:" << (int) bbox.west;
 
-	for (int i = floor(bbox.south); i <= floor(bbox.north); i++) {
-		for (int j = floor(bbox.west); j <= floor(bbox.east); j++) {
-			const char *continent_dir;
-			if ((continent_dir = srtm_continent_dir(i, j)) == NULL) {
+	for (int lat = floor(bbox.south); lat <= floor(bbox.north); lat++) {
+		for (int lon = floor(bbox.west); lon <= floor(bbox.east); lon++) {
+			QString continent_dir;
+			if (!srtm_get_continent_dir(continent_dir, lat, lon)) {
 				continue;
 			}
 
-			snprintf(buf, sizeof(buf), SRTM_CACHE_TEMPLATE,
-				 MAPS_CACHE_DIR,
-				 continent_dir,
-				 G_DIR_SEPARATOR_S,
-				 (i >= 0) ? 'N' : 'S',
-				 ABS(i),
-				 (j >= 0) ? 'E' : 'W',
-				 ABS(j));
-			if (0 == access(buf, F_OK)) {
-				Coord ne, sw;
-				int x1, y1, x2, y2;
-
-				sw.ll.lat = i;
-				sw.ll.lon = j;
-				sw.mode = CoordMode::LATLON;
-
-				ne.ll.lat = i+1;
-				ne.ll.lon = j+1;
-				ne.mode = CoordMode::LATLON;
-
-				viewport->coord_to_screen(&sw, &x1, &y1);
-				viewport->coord_to_screen(&ne, &x2, &y2);
-
-				if (x1 < 0) {
-					x1 = 0;
-				}
-
-				if (y2 < 0) {
-					y2 = 0;
-				}
-
-				//qDebug() << "II: Layer Dem: drawing existence rectangle for" << buf;
-				viewport->draw_rectangle(pen, x1, y2, x2-x1, y1-y2);
+			cache_file_path = QString("%1srtm3-%2%3").arg(MAPS_CACHE_DIR).arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(lat, lon);
+			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
+				continue;
 			}
+
+			Coord ne, sw;
+			int x1, y1, x2, y2;
+
+			sw.ll.lat = lat;
+			sw.ll.lon = lon;
+			sw.mode = CoordMode::LATLON;
+
+			ne.ll.lat = lat + 1;
+			ne.ll.lon = lon + 1;
+			ne.mode = CoordMode::LATLON;
+
+			viewport->coord_to_screen(&sw, &x1, &y1);
+			viewport->coord_to_screen(&ne, &x2, &y2);
+
+			if (x1 < 0) {
+				x1 = 0;
+			}
+
+			if (y2 < 0) {
+				y2 = 0;
+			}
+
+			//qDebug() << "II: Layer DEM: drawing existence rectangle for" << buf;
+			viewport->draw_rectangle(pen, x1, y2, x2 - x1, y1 - y2);
 		}
 	}
 }
@@ -1171,7 +1196,7 @@ static void dem24k_dem_download_thread(DemDownloadJob * dl_job)
 
 
 
-static char *dem24k_lat_lon_to_dest_fn(double lat, double lon)
+static char * dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 {
 	return g_strdup_printf("dem24k/%d/%d/%.03f,%.03f.dem",
 			       (int) lat,
@@ -1237,9 +1262,8 @@ static void dem24k_draw_existence(Viewport * viewport)
 					y2 = 0;
 				}
 
-				fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
-				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-							 x1, y2, x2-x1, y1-y2);
+				qDebug() << "DD: Layer DEM: drawing rectangle";
+				viewport->draw_rectangle(viewport->black_gc, x1, y2, x2 - x1, y1 - y2);
 			}
 		}
 	}
@@ -1367,7 +1391,8 @@ LayerToolFuncStatus LayerToolDEMDownload::release_(Layer * layer, QMouseEvent * 
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	if (ev->button() != Qt::LeftButton) {
+	/* Left button: download. Right button: context menu. */
+	if (ev->button() != Qt::LeftButton && ev->button() != Qt::RightButton) {
 		return LayerToolFuncStatus::IGNORE;
 	}
 
@@ -1403,88 +1428,81 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 
 	int intlat = (int) floor(ll.lat);
 	int intlon = (int) floor(ll.lon);
-	const char * continent_dir = srtm_continent_dir(intlat, intlon);
 
-	char * src = NULL;
-	if (continent_dir) {
-		src = g_strdup_printf("http://%s%s%s/%c%02d%c%03d.hgt.zip",
-					   SRTM_HTTP_SITE,
-					   SRTM_HTTP_URI,
-					   continent_dir,
-					   (intlat >= 0) ? 'N' : 'S',
-					   ABS(intlat),
-					   (intlon >= 0) ? 'E' : 'W',
-					   ABS(intlon));
+	QString remote_location; /* Remote address where this file has been downloaded from. */
+	QString continent_dir;
+	if (srtm_get_continent_dir(continent_dir, intlat, intlon)) {
+		remote_location = QString("http://%1%2%3/").arg(SRTM_HTTP_SITE).arg(SRTM_HTTP_URI_PREFIX).arg(continent_dir);
+		remote_location += srtm_file_name(intlat, intlon);
 	} else {
 		/* Probably not over any land... */
-		src = strdup(_("No DEM File Available"));
+		remote_location = tr("No DEM File Available");
 	}
 
 #ifdef VIK_CONFIG_DEM24K
-	QString dem_file(dem24k_lat_lon_to_dest_fn(ll.lat, ll.lon));
+	QString cache_file_name(dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon));
 #else
-	QString dem_file(srtm_lat_lon_to_dest_fn(ll.lat, ll.lon));
+	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #endif
-	QString filename = QString(MAPS_CACHE_DIR) + dem_file;
+	QString cache_file_path = MAPS_CACHE_DIR_2 + cache_file_name;
 
 	QString message;
-	if (0 == access(filename.toUtf8().constData(), F_OK)) {
+	if (0 == access(cache_file_path.toUtf8().constData(), F_OK)) {
 		/* Get some timestamp information of the file. */
 		struct stat stat_buf;
-		if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
+		if (stat(cache_file_path.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(src).arg(filename).arg(time_buf);
+			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(time_buf);
 		} else {
-			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(filename);
+			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
 		}
 	} else {
-		message = QString("Source: %1\n\nNo DEM File!").arg(QString(src));
+		message = QString("Source: %1\n\nNo local DEM File!").arg(QString(remote_location));
 	}
 
 	/* Show the info. */
 	dialog_info(message, this->get_window());
-
-	free(src);
 }
 
 
 
 
+/* Mouse button released when "Download Tool" for DEM layer is active. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	const Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
 	const struct LatLon ll = coord.get_latlon();
 
-	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
+	qDebug() << "II: Layer DEM: Download Tool: Release: received event, processing (coord" << ll.lat << ll.lon << ")";
 
-	char * dem_file = NULL;
+	QString cache_file_name;
 	if (this->source == DEM_SOURCE_SRTM) {
-		qDebug() << "II: Layer DEM: SRTM";
-		dem_file = srtm_lat_lon_to_dest_fn(ll.lat, ll.lon);
+		cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
+		qDebug() << "II: Layer DEM: Download Tool: Release: cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
-		dem_file = dem24k_lat_lon_to_dest_fn(ll.lat, ll.lon);
+		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #endif
 	}
 
-	if (!dem_file) {
-		qDebug() << "NN: Layer DEM: received click event, but no dem file";
+	if (!cache_file_name.length()) {
+		qDebug() << "NN: Layer DEM: Download Tool: Release: received click, but no dem file";
 		return true;
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		const QString dem_full_path = MAPS_CACHE_DIR_2 + QString(dem_file);
-		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path;
+		const QString dem_full_path = MAPS_CACHE_DIR_2 + cache_file_name;
+		qDebug() << "II: Layer DEM: Download Tool: Release: released left button, path is" << dem_full_path;
 
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
-			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
-			const QString job_description = QString(tr("Downloading DEM %1")).arg(dem_file);
+			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, failed to add the file, downloading it";
+			const QString job_description = QString(tr("Downloading DEM  %1")).arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
 		} else {
-			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting 'changed'";
+			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, successfully added the file, emitting 'changed'";
 			this->emit_changed();
 		}
 
@@ -1510,8 +1528,6 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		;
 	}
 
-	free(dem_file);
-
 	return true;
 }
 
@@ -1525,37 +1541,4 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 	 * Download over area. */
 	qDebug() << "II: Layer DEM: received click event, ignoring";
 	return true;
-}
-
-
-
-
-LayerDEM::LayerDEM()
-{
-	qDebug() << "II: LayerDEM::LayerDEM()";
-
-	this->type = LayerType::DEM;
-	strcpy(this->debug_string, "LayerType::DEM");
-	this->interface = &vik_dem_layer_interface;
-
-	this->dem_type = 0;
-
-	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
-	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
-
-	/* Ensure the base color is available so the default colour can be applied. */
-	this->colors[0] = new QColor("#0000FF");
-
-	this->set_initial_parameter_values();
-
-	/* TODO: share ->colors[] between layers. */
-	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-		if (i > 0) {
-			this->colors[i] = new QColor(dem_height_colors[i]);
-		}
-	}
-
-	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		this->gradients[i] = new QColor(dem_gradient_colors[i]);
-	}
 }
