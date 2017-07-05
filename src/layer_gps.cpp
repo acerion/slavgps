@@ -338,7 +338,7 @@ LayerGPSInterface::LayerGPSInterface()
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 
@@ -2010,7 +2010,9 @@ LayerGPS::LayerGPS()
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW();
-		this->trw_children[i]->set_menu_selection(VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+		uint16_t new_value = ~((uint16_t) LayerMenuItem::CUT | (uint16_t) LayerMenuItem::DELETE);
+		new_value &= ((uint16_t) LayerMenuItem::ALL);
+		this->trw_children[i]->set_menu_selection((LayerMenuItem) new_value);
 	}
 }
 

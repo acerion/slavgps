@@ -155,7 +155,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, ParameterType 
 		if (data.sl) {
 			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
 				fprintf(f, "%s=", name);
-				fprintf(f, "%s\n", *iter);
+				fprintf(f, "%s\n", (*iter).toUtf8().constData());
 			}
 		}
 	} else {
@@ -1047,7 +1047,7 @@ char * SlavGPS::file_realpath_dup(char const * path)
    For example, if the current directory is C:\foo\bar and the filename C:\foo\whee\text.txt is given,
    GetRelativeFilename will return ..\whee\text.txt. */
 
-char const * SlavGPS::file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename)
+char const * SlavGPS::file_GetRelativeFilename(char * currentDirectory, const char * absoluteFilename)
 {
 	int cdLen = strlen(currentDirectory);
 	int afLen = strlen(absoluteFilename);

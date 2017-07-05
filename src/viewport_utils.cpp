@@ -209,9 +209,9 @@ void ViewportToImageDialog::build_ui(img_generation_t img_gen)
 		// Start with viewable area by default
 		this->get_size_from_viewport_cb();
 	} else {
-		std::list<QString> labels;
-		labels.push_back(tr("Save as PNG"));
-		labels.push_back(tr("Save as JPEG"));
+		QStringList labels;
+		labels << tr("Save as PNG");
+		labels << tr("Save as JPEG");
 		//labels.push_back(label);
 		QString title(tr("Output format"));
 		this->output_format_radios = new SGRadioGroup(title, labels, this);

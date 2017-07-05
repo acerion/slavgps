@@ -37,7 +37,7 @@ using namespace SlavGPS;
 
 
 
-SGFileList::SGFileList(char const * title, std::list<char *> * fl, QWidget * parent_widget) : QWidget(parent_widget)
+SGFileList::SGFileList(const QString & title, QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
 {
 
 #if 1
@@ -68,7 +68,7 @@ SGFileList::SGFileList(char const * title, std::list<char *> * fl, QWidget * par
 
 
 	this->file_list = fl;
-	for (auto iter = this->file_list->begin(); iter != this->file_list->end(); ++iter) {
+	for (auto iter = this->file_list.constBegin(); iter != this->file_list.constEnd(); ++iter) {
 		qDebug() << "SGFileList: adding to initial file list:" << (*iter);
 
 		QStandardItem * item = new QStandardItem(*iter);
@@ -100,7 +100,7 @@ SGFileList::SGFileList(char const * title, std::list<char *> * fl, QWidget * par
 
 SGFileList::~SGFileList()
 {
-	for (auto iter = this->file_list->begin(); iter != this->file_list->end(); iter++) {
+	for (auto iter = this->file_list.constBegin(); iter != this->file_list.constEnd(); iter++) {
 		qDebug() << "File on list: " << QString(*iter);
 	}
 }
@@ -108,16 +108,16 @@ SGFileList::~SGFileList()
 
 
 
-std::list<char *> * SGFileList::get_list(void)
+QStringList SGFileList::get_list(void)
 {
-	this->file_list->clear();
+	this->file_list.clear();
 
 	QStandardItem * root = this->model->invisibleRootItem();
 	for (int i = 0; i < root->rowCount(); i++) {
 		QStandardItem * item = root->child(i);
 		QByteArray array = item->text().toLocal8Bit();
 		char * buffer = array.data();
-		this->file_list->push_back(strdup(buffer));
+		this->file_list.push_back(strdup(buffer));
 	}
 
 	return this->file_list;

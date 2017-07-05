@@ -132,7 +132,7 @@ LayerGeorefInterface::LayerGeorefInterface()
 	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_MOVE, georef_layer_move_create }});
 	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 

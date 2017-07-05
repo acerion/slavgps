@@ -990,7 +990,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 		}
 
 		/* Don't add map layer if one already exists. */
-		std::list<Layer *> * maps = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
+		std::list<Layer const *> * maps = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
 		bool add_map = true;
 
 		for (auto iter = maps->begin(); iter != maps->end(); iter++) {

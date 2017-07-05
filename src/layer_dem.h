@@ -80,7 +80,7 @@ namespace SlavGPS {
 		QPen pen;
 		QColor ** colors = NULL;
 		QColor ** gradients = NULL;
-		std::list<QString> files;
+		QStringList files;
 		double min_elev = 0;
 		double max_elev = 0;
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */

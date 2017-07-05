@@ -297,7 +297,7 @@ LayerMapInterface::LayerMapInterface()
 
 	this->layer_tool_constructors.insert({{ 0, maps_layer_download_create }});
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 

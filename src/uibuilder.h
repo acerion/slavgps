@@ -28,8 +28,9 @@
 #include "config.h"
 #endif
 
-#include <list>
 #include <cstdint>
+
+#include <QString>
 
 #include "globals.h"
 
@@ -47,7 +48,7 @@ public:
 	ParameterValue(bool b_)         { b = b_; }
 	ParameterValue(const char * s_) { s = s_; }
 	ParameterValue(int r_, int g_, int b_, int a_) { c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
-	ParameterValue(std::list<char *> * sl_) { sl = sl_; }
+	ParameterValue(QStringList * sl_) { sl = sl_; }
 
 	double d;
 	uint32_t u;
@@ -55,7 +56,7 @@ public:
 	bool b;
 	const char * s;
 	struct { int r; int g; int b; int a; } c;
-	std::list<char *> * sl;
+	QStringList * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
 } ;
 

@@ -130,7 +130,7 @@ LayerMapnikInterface::LayerMapnikInterface()
 
 	this->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 

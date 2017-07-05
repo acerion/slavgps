@@ -79,7 +79,7 @@ namespace SlavGPS {
 	void file_write_layer_param(FILE * f, char const * name, ParameterType type, ParameterValue data);
 	char * file_realpath(char const * path, char * real);
 	char * file_realpath_dup(char const * path);
-	char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
+	char const * file_GetRelativeFilename(char * currentDirectory, const char * absoluteFilename);
 
 
 

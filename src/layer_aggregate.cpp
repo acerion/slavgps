@@ -60,7 +60,7 @@ LayerAggregateInterface::LayerAggregateInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 
@@ -415,7 +415,7 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
-	std::list<Layer *> * layers = new std::list<Layer *>;
+	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
@@ -461,7 +461,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	Viewport * viewport = this->get_window()->get_viewport();
 
 	bool found = false;
-	std::list<Layer *> * layers = new std::list<Layer *>;
+	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 
@@ -477,7 +477,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 	if (!found) {
 		/* Reset and try on Waypoints. */ /* kamilTODO: do we need to reset the list? Did it change? */
-		layers = new std::list<Layer *>;
+		layers = new std::list<Layer const *>;
 		layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
@@ -517,7 +517,7 @@ std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_l
 
 std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
-	std::list<Layer *> * layers = new std::list<Layer *>;
+	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the tracks and routes to build a list of all of them. */
@@ -744,7 +744,7 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 
 
 
-std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> * layers, LayerType layer_type, bool include_invisible)
+std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Layer const *> * layers, LayerType expected_layer_type, bool include_invisible)
 {
 	if (this->children->empty()) {
 		return layers;
@@ -760,31 +760,29 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
 				layers = aggregate->get_all_layers_of_type(layers, type, include_invisible);
 			}
-		} else if (layer->type == layer_type) {
+		} else if (expected_layer_type == layer->type) {
 			if (layer->visible || include_invisible) {
 				layers->push_back(layer); /* now in top down order */
 			}
-		} else if (layer_type == LayerType::TRW) {
-			/* GPS layers contain TRW layers. cf with usage in file.c */
-			if (layer->type == LayerType::GPS) {
-				if (layer->visible || include_invisible) {
-					if (!((LayerGPS *) layer)->is_empty()) {
-						/*
-						  can not use g_list_concat due to wrong copy method - crashes if used a couple times !!
-						  l = g_list_concat (l, (*child)->get_children();
-						*/
-						/* create own copy method instead :(*/
-						GList *gps_trw_layers = (GList *) ((LayerGPS *) layer)->get_children();
-						int n_layers = g_list_length(gps_trw_layers);
-						int lay = 0;
-						for (lay = 0; lay < n_layers; lay++) {
-							layers->push_front((Layer *) gps_trw_layers->data); /* kamilFIXME: gps_trw_layers->data is not Layer! */
-							gps_trw_layers = gps_trw_layers->next;
-						}
-						g_list_free(gps_trw_layers);
-					}
-				}
+		} else if (expected_layer_type == LayerType::TRW) {
+			if (layer->type != LayerType::GPS) {
+				continue;
 			}
+
+			/* GPS layers contain TRW layers. cf with usage in file.c */
+			if (!(layer->visible || include_invisible)) {
+				continue;
+			}
+
+			if (((LayerGPS *) layer)->is_empty()) {
+				continue;
+			}
+
+			std::list<Layer const * > * gps_trw_layers = ((LayerGPS *) layer)->get_children();
+			for (auto iter = gps_trw_layers->begin(); iter != gps_trw_layers->end(); iter++) {
+				layers->push_front(*iter);
+			}
+			delete gps_trw_layers;
 		}
 		child++;
 	}

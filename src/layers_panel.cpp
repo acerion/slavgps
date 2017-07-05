@@ -367,29 +367,31 @@ void LayersPanel::show_context_menu(TreeIndex const & index, Layer * layer)
 			} else {
 				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
 				qDebug() << "II: Layers Panel: will call get_menu_items_selection";
-				LayerMenuItem menu_selection = (LayerMenuItem) vik_layer_get_menu_items_selection(layer);
+				LayerMenuItem menu_selection = layer->get_menu_items_selection();
 
 				menu = new QMenu(this);
 
-				if (menu_selection & VIK_MENU_ITEM_PROPERTY) {
+				uint16_t selection = (uint16_t) menu_selection;
+
+				if (selection & (uint16_t) LayerMenuItem::PROPERTIES) {
 #if 0
 					menu->addAction(qa_layer_properties);
 #endif
 				}
 
-				if (menu_selection & VIK_MENU_ITEM_CUT) {
+				if (selection & (uint16_t) LayerMenuItem::CUT) {
 					menu->addAction(this->qa_layer_cut);
 				}
 
-				if (menu_selection & VIK_MENU_ITEM_COPY) {
+				if (selection & (uint16_t) LayerMenuItem::COPY) {
 					menu->addAction(this->qa_layer_copy);
 				}
 
-				if (menu_selection & VIK_MENU_ITEM_PASTE) {
+				if (selection & (uint16_t) LayerMenuItem::PASTE) {
 					menu->addAction(this->qa_layer_paste);
 				}
 
-				if (menu_selection & VIK_MENU_ITEM_DELETE) {
+				if (selection & (uint16_t) LayerMenuItem::DELETE) {
 					menu->addAction(this->qa_layer_remove);
 				}
 			}
@@ -784,9 +786,9 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 
 
-std::list<Layer *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
+std::list<Layer const *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
 {
-	std::list<Layer *> * layers = new std::list<Layer *>;
+	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	return this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
 }
 

@@ -359,7 +359,7 @@ LayerTRWInterface::LayerTRWInterface()
 	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, tool_edit_trackpoint_create       }});
 	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 
@@ -3985,7 +3985,7 @@ bool LayerTRW::dem_test(LayersPanel * panel)
 {
 	/* If have a panel then perform a basic test to see if any DEM info available... */
 	if (panel) {
-		std::list<Layer *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); /* Includes hidden DEM layer types. */
+		std::list<Layer const *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); /* Includes hidden DEM layer types. */
 		if (dems->empty()) {
 			dialog_error("No DEM layers available, thus no DEM values can be applied.", this->get_window());
 			return false;
@@ -6821,15 +6821,15 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 
 
-void LayerTRW::set_menu_selection(uint16_t selection)
+void LayerTRW::set_menu_selection(LayerMenuItem selection)
 {
-	this->menu_selection = (LayerMenuItem) selection; /* kamil: invalid cast? */
+	this->menu_selection = selection;
 }
 
 
 
 
-uint16_t LayerTRW::get_menu_selection()
+LayerMenuItem LayerTRW::get_menu_selection()
 {
 	return this->menu_selection;
 }
@@ -6997,7 +6997,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	Viewport * viewport = this->get_window()->get_viewport();
 
 #ifdef K
-	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
+	std::list<Layer const *> * vmls = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
 	int num_maps = vmls->size();
 	if (!num_maps) {
 		dialog_error("No map layer in use. Create one first", this->get_window());

@@ -24,7 +24,6 @@
 
 
 
-#include <list>
 #include <cstdint>
 
 #include <QString>
@@ -55,8 +54,8 @@ namespace SlavGPS {
 		static void uninit(void); /* For module deinitialization. */
 
 		static DEM * load_file_into_cache(const QString & file_path);
-		static int   load_files_into_cache(std::list<QString> & file_paths, BackgroundJob * bg_job);
-		static void  unload_from_cache(std::list<QString> & file_paths);
+		static int   load_files_into_cache(QStringList & file_paths, BackgroundJob * bg_job);
+		static void  unload_from_cache(QStringList & file_paths);
 
 		static DEM * get(const QString & file_path);
 

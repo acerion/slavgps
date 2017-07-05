@@ -69,18 +69,6 @@ enum class LayerToolFuncStatus {
 
 
 
-typedef enum {
-	VIK_MENU_ITEM_PROPERTY =    1,
-	VIK_MENU_ITEM_CUT      =    2,
-	VIK_MENU_ITEM_COPY     =    4,
-	VIK_MENU_ITEM_PASTE    =    8,
-	VIK_MENU_ITEM_DELETE   =   16,
-	VIK_MENU_ITEM_ALL      = 0xff
-} LayerMenuItem;
-
-
-
-
 namespace SlavGPS {
 
 
@@ -93,6 +81,24 @@ namespace SlavGPS {
 	class trw_menu_sublayer_t;
 	class LayersPanel;
 
+
+
+
+	/* Which items shall be present in context menu for a layer? */
+	enum class LayerMenuItem {
+		NONE       =   0,
+		PROPERTIES =   1,
+		CUT        =   2,
+		COPY       =   4,
+		PASTE      =   8,
+		DELETE     =   16,
+		ALL        = 0xff
+	};
+#if 0
+	LayerMenuItem operator&(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
+	LayerMenuItem operator|(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
+	LayerMenuItem operator~(const LayerMenuItem& arg);
+#endif
 
 
 
@@ -183,8 +189,8 @@ namespace SlavGPS {
 		virtual bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
-		virtual void set_menu_selection(uint16_t selection);
-		virtual uint16_t get_menu_selection();
+		virtual void set_menu_selection(LayerMenuItem selection);
+		virtual LayerMenuItem get_menu_selection();
 
 		virtual void cut_sublayer(Sublayer * sublayer);
 		virtual void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len);
@@ -252,6 +258,11 @@ namespace SlavGPS {
 
 		bool the_same_object(Layer const * layer);
 		void disconnect_layer_signal(Layer * layer);
+
+
+		/* GUI. */
+		QIcon get_icon(void);
+		LayerMenuItem get_menu_items_selection(void);
 
 
 
@@ -368,21 +379,12 @@ namespace SlavGPS {
 
 
 		/* Menu items to be created. */
-		LayerMenuItem menu_items_selection;
+		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
 
 		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
 		std::map<param_id_t, ParameterValue> * parameter_value_defaults = NULL;
 	};
 
-
-
-
-	/* GUI. */
-	uint16_t vik_layer_get_menu_items_selection(Layer * layer);
-
-
-	/* TODO: put in layerspanel. */
-	QPixmap * vik_layer_load_icon(LayerType layer_type);
 
 
 

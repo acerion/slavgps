@@ -24,7 +24,6 @@
 
 
 
-#include <list>
 #include <cstdint>
 
 #include <QObject>
@@ -45,7 +44,7 @@ namespace SlavGPS {
 	class SGRadioGroup : public QGroupBox {
 		Q_OBJECT
 	public:
-		SGRadioGroup(QString & title, std::list<QString> & labels, QWidget * parent);
+		SGRadioGroup(QString & title, QStringList & labels, QWidget * parent);
 		~SGRadioGroup();
 
 		uint32_t value(void);

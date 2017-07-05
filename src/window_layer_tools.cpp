@@ -908,7 +908,7 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 	} else {
 		/* Enable click to apply callback to potentially all track/waypoint layers. */
 		/* Useful as we can find things that aren't necessarily in the currently selected layer. */
-		std::list<Layer *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
+		std::list<Layer const *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
 
 		bool found = false;
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {

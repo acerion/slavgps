@@ -273,7 +273,7 @@ LayerDEMInterface::LayerDEMInterface()
 
 	this->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
 
-	this->menu_items_selection = VIK_MENU_ITEM_ALL;
+	this->menu_items_selection = LayerMenuItem::ALL;
 }
 
 
@@ -329,7 +329,7 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
 
-	std::list<QString> dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
+	QStringList dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
 
 	if (DEMCache::load_files_into_cache(dem_filenames, load_job)) {
 		/* Thread cancelled. */
@@ -365,16 +365,16 @@ void DemLoadJob::cleanup_on_cancel(void)
 /**
  * Process the list of DEM files and convert each one to a relative path.
  */
-static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<char *> * files)
+static QStringList * dem_layer_convert_to_relative_filenaming(QStringList * files)
 {
 	char *cwd = g_get_current_dir();
 	if (!cwd) {
 		return files;
 	}
 
-	std::list<char *> * relfiles = new std::list<char *>;
+	QStringList * relfiles = new QStringList;
 	for (auto iter = files->begin(); iter != files->end(); iter++) {
-		char * file = (char *) g_strdup(file_GetRelativeFilename(cwd, *iter));
+		QString file = file_GetRelativeFilename(cwd, (*iter).toUtf8().constData());
 		relfiles->push_front(file);
 	}
 
@@ -383,10 +383,7 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 	if (relfiles->empty()) {
 		return files;
 	} else {
-		/* Replacing current list, so delete old values first. */
-		for (auto iter = files->begin(); iter != files->end(); iter++) {
-			free(*iter);
-		}
+		/* Replacing current list, so delete old one. */
 		delete files;
 		return relfiles;
 	}
@@ -480,13 +477,13 @@ ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) 
 	switch (id) {
 
 	case PARAM_FILES:
-		rv.sl = new std::list<char *>;  /* kamilFIXME: memory leak. */
-		for (auto iter = this->files.begin(); iter != this->files.end(); iter++) {
+		rv.sl = new QStringList;  /* kamilFIXME: memory leak. */
+		for (auto iter = this->files.constBegin(); iter != this->files.constEnd(); iter++) {
 			rv.sl->push_back(strdup((*iter).toUtf8().constData())); /* kamilFIXME: another memory leak. */
 		}
 		qDebug() << "II: Layer DEM: get param value: string list:";
 		if (!this->files.empty()) {
-			for (auto iter = this->files.begin(); iter != this->files.end(); ++iter) {
+			for (auto iter = this->files.constBegin(); iter != this->files.constEnd(); ++iter) {
 				qDebug() << "II: Layer DEM: get param value: string list:" << *iter;
 			}
 		} else {

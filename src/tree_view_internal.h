@@ -118,7 +118,6 @@ namespace SlavGPS {
 
 		bool editing = false;
 		bool was_a_toggle = false;
-		QIcon * layer_type_icons[(int) LayerType::NUM_TYPES];
 
 		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
 		TreeModel * model = NULL;

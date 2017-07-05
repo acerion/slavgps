@@ -24,8 +24,6 @@
 
 
 
-#include <list>
-
 #include <QObject>
 #include <QWidget>
 #include <QDialogButtonBox>
@@ -46,10 +44,10 @@ namespace SlavGPS {
 	class SGFileList : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileList(char const * title, std::list<char *> * fl, QWidget * parent);
+		SGFileList(const QString & title, QStringList & fl, QWidget * parent);
 		~SGFileList();
 
-		std::list<char *> * get_list(void);
+		QStringList get_list(void);
 
 	signals:
 
@@ -59,7 +57,7 @@ namespace SlavGPS {
 
 
 	private:
-		std::list<char *> * file_list = NULL;
+		QStringList file_list;
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * add = NULL;
 		QPushButton * del = NULL;

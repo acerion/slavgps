@@ -24,6 +24,8 @@
 
 #include <cstdlib>
 
+#include <QStringList>
+
 #include "uibuilder.h"
 #include "globals.h"
 
@@ -77,10 +79,6 @@ ParameterValue uibuilder_run_getparam(ParameterValue * params_defaults, uint16_t
 static void a_uibuilder_free_paramdatas_sub(ParameterValue * paramdatas, int i)
 {
         /* Should make a util function out of this. */
-	std::list<char *> * a_list = paramdatas[i].sl;
-	for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
-		free(*iter);
-        }
         delete paramdatas[i].sl;
 	paramdatas[i].sl = NULL;
 }

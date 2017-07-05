@@ -671,10 +671,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 		break;
 #else
 		if (param->type == ParameterType::UINT && param->widget_data) {
-			std::list<QString> labels;
+			QStringList labels;
 			for (int i = 0; ((const char **)param->widget_data)[i]; i++) {
 				QString label (((const char **)param->widget_data)[i]);
-				labels.push_back(label);
+				labels << label;
 			}
 			QString title("");
 			SGRadioGroup * widget_ = new SGRadioGroup(title, labels, this);
@@ -763,7 +763,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 		break;
 	case WidgetType::FILELIST:
 		if (param->type == ParameterType::STRING_LIST) {
-			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, this);
+			SGFileList * widget_ = new SGFileList(param->title, *vlpd.sl, this);
 			widget = widget_;
 		}
 		break;
@@ -866,8 +866,8 @@ ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * para
 		break;
 
 	case WidgetType::FILELIST:
-		rv.sl = ((SGFileList *) widget)->get_list();
-		for (auto iter = rv.sl->begin(); iter != rv.sl->end(); iter++) {
+		rv.sl = new QStringList(((SGFileList *) widget)->get_list());
+		for (auto iter = rv.sl->constBegin(); iter != rv.sl->constEnd(); iter++) {
 			qDebug() << "File on retrieved list: " << QString(*iter);
 		}
 		break;

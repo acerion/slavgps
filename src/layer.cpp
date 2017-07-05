@@ -423,15 +423,16 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 				break;
 				/* Print out the string list in the array. */
 			case ParameterType::STRING_LIST: {
-				std::list<char *> * a_list = param_value.sl;
+				QStringList * a_list = param_value.sl;
 
 				/* Write length of list (# of strings). */
 				int listlen = a_list->size();
 				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 				/* Write each string. */
-				for (auto l = a_list->begin(); l != a_list->end(); l++) {
-					char * s = *l;
+				for (auto l = a_list->constBegin(); l != a_list->constEnd(); l++) {
+					QByteArray arr = (*l).toUtf8();
+					const char * s = arr.constData();
 					vlm_append(s, strlen(s));
 				}
 
@@ -490,7 +491,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 				break;
 			case ParameterType::STRING_LIST: {
 				int listlen = vlm_size;
-				std::list<char *> * list = new std::list<char *>;
+				QStringList* list = new QStringList;
 				b += sizeof(int); /* Skip listlen. */;
 
 				for (int j = 0; j < listlen; j++) {
@@ -555,12 +556,12 @@ bool Layer::layer_selected(TreeItemType item_type, Sublayer * sublayer)
 
 
 
-uint16_t SlavGPS::vik_layer_get_menu_items_selection(Layer * layer)
+LayerMenuItem Layer::get_menu_items_selection(void)
 {
-	uint16_t rv = layer->get_menu_selection();
-	if (rv == (uint16_t) -1) {
+	LayerMenuItem rv = this->get_menu_selection();
+	if (rv == LayerMenuItem::NONE) {
 		/* Perhaps this line could go to base class. */
-		return layer->get_interface()->menu_items_selection;
+		return this->get_interface()->menu_items_selection;
 	} else {
 		return rv;
 	}
@@ -569,15 +570,9 @@ uint16_t SlavGPS::vik_layer_get_menu_items_selection(Layer * layer)
 
 
 
-QPixmap * vik_layer_load_icon(LayerType layer_type)
+QIcon Layer::get_icon(void)
 {
-#ifndef SLAVGPS_QT
-	assert (layer_type < LayerType::NUM_TYPES);
-	if (vik_layer_interfaces[(int) layer_type]->icon) {
-		return gdk_pixbuf_from_pixdata(vik_layer_interfaces[(int) layer_type]->icon, false, NULL);
-	}
-#endif
-	return NULL;
+	return this->get_interface()->action_icon;
 }
 
 
@@ -867,7 +862,7 @@ bool Layer::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 
 
 
-void Layer::set_menu_selection(uint16_t selection)
+void Layer::set_menu_selection(LayerMenuItem selection)
 {
 	return;
 }
@@ -875,9 +870,9 @@ void Layer::set_menu_selection(uint16_t selection)
 
 
 
-uint16_t Layer::get_menu_selection()
+LayerMenuItem Layer::get_menu_selection()
 {
-	return (uint16_t) -1;
+	return LayerMenuItem::NONE;
 }
 
 
@@ -1292,4 +1287,27 @@ SublayerEdit::SublayerEdit()
 {
 	this->pen.setColor(QColor("black"));
 	this->pen.setWidth(2);
+}
+
+
+
+
+LayerMenuItem operator&(LayerMenuItem& arg1, LayerMenuItem& arg2)
+{
+	LayerMenuItem result = static_cast<LayerMenuItem>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));
+	return result;
+}
+
+
+LayerMenuItem operator|(LayerMenuItem& arg1, LayerMenuItem& arg2)
+{
+	LayerMenuItem result = static_cast<LayerMenuItem>(static_cast<uint16_t>(arg1) & static_cast<uint16_t>(arg2));
+	return result;
+}
+
+
+LayerMenuItem operator~(const LayerMenuItem& arg)
+{
+	LayerMenuItem result = static_cast<LayerMenuItem>(~(static_cast<uint16_t>(arg)));
+	return result;
 }

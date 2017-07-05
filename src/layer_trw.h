@@ -145,8 +145,8 @@ namespace SlavGPS {
 		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
-		void set_menu_selection(uint16_t selection);
-		uint16_t get_menu_selection();
+		void set_menu_selection(LayerMenuItem selection);
+		LayerMenuItem get_menu_selection();
 
 		void marshall(uint8_t ** data, int * len);
 

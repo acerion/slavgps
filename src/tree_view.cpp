@@ -939,10 +939,10 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	item->setCheckState(layer->visible ? Qt::Checked : Qt::Unchecked);
 	items << item;
 
-	/* LayersTreeColumn::ICON */ /* Old code: layer_type == LayerType::NUM_TYPES ? 0 : this->layer_type_icons[(int) layer_type], */
+	/* LayersTreeColumn::ICON */
 	item = new QStandardItem(QString(layer->debug_string));
 	item->setToolTip(tooltip);
-	item->setIcon(layer->get_interface()->action_icon);
+	item->setIcon(layer->get_icon());
 	item->setEditable(false); /* Don't allow editing layer type string. */
 	items << item;
 
@@ -1089,10 +1089,6 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	   Thus need to create special sort to operate on a subsection of treeview (i.e. from a specific child either a layer or sublayer).
 	   See vik_treeview_sort_children(). */
 
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		this->layer_type_icons[(int) i] = vik_layer_load_icon(i); /* If icon can't be loaded, it will be null and simply not be shown. */
-	}
-
 	gtk_tree_view_set_reorderable(this, true);
 	QObject::connect(gtk_tree_view_get_selection(this), SIGNAL("changed"), this, SLOT (select_cb));
 #endif
@@ -1103,9 +1099,6 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 
 TreeView::~TreeView()
 {
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		delete this->layer_type_icons[(int) i];
-	}
 }
 
 

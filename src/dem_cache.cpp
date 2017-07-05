@@ -183,7 +183,7 @@ DEM * DEMCache::get(const QString & file_path)
    \return -1 on errors
    \return 0 otherwise
 */
-int DEMCache::load_files_into_cache(std::list<QString> & file_paths, BackgroundJob * bg_job)
+int DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * bg_job)
 {
 	auto iter = file_paths.begin();
 	unsigned int dem_count = 0;
@@ -220,10 +220,10 @@ int DEMCache::load_files_into_cache(std::list<QString> & file_paths, BackgroundJ
 
    \param file_paths: list of DEMs (specified by paths to DEM data files) to be unloaded from cache
 */
-void DEMCache::unload_from_cache(std::list<QString> & file_paths)
+void DEMCache::unload_from_cache(QStringList & file_paths)
 {
-	for (auto iter = file_paths.begin(); iter != file_paths.end(); iter++) {
-		dem_cache_unref(*iter);
+	for (int i = 0; i < file_paths.size(); i++) {
+		dem_cache_unref(file_paths.at(i));
 		/* kamilTODO: "delete (*iter)" ? */
 	}
 }

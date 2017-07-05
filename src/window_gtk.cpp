@@ -864,7 +864,7 @@ bool Window::export_to(std::list<Layer *> * layers, VikFileType_t vft, char cons
 
 void Window::export_to_common(VikFileType_t vft, char const * extension)
 {
-	std::list<Layer *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
 		dialog_info("Nothing to Export!", this->get_window());
@@ -996,7 +996,7 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 static void preferences_change_update(Window * window)
 {
 	// Want to update all TrackWaypoint layers
-	std::list<Layer *> * layers = window->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+	std::list<Layer const *> * layers = window->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 	if (!layers || layers->empty()) {
 		return;
 	}
