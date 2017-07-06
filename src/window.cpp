@@ -2399,7 +2399,7 @@ void Window::finish_new(void)
 
 void Window::open_window(void)
 {
-	GSList *files;
+	GSList *files = NULL;
 
 	bool change_fn = (g_slist_length(files) == 1); /* Only change fn if one file. */
 	GSList *cur_file = files;

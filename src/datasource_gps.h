@@ -23,6 +23,8 @@
 
 #include <cstdint>
 
+#include <QString>
+
 #include "layer_gps.h"
 #include "slav_qt.h"
 
@@ -33,7 +35,7 @@ void * datasource_gps_setup(GtkWidget *dialog, SlavGPS::GPSTransferType xfer, bo
 void datasource_gps_clean_up(void * user_data);
 
 char* datasource_gps_get_protocol(void * user_data);
-char* datasource_gps_get_descriptor(void * user_data);
+QString datasource_gps_get_descriptor(void * user_data);
 
 bool datasource_gps_get_do_tracks(void * user_data);
 bool datasource_gps_get_do_routes(void * user_data);

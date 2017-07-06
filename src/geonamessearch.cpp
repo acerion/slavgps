@@ -282,42 +282,38 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 
 
 
-static GList *get_entries_from_file(char *file_name)
+static GList * get_entries_from_file(char * file_name)
 {
-#ifdef K
-	char *text, *pat;
-	GMappedFile *mf;
-	size_t len;
-	bool more = true;
-	char lat_buf[32], lon_buf[32], elev_buf[32];
-	char *s;
-	int fragment_len;
-	GList *found_places = NULL;
-	found_geoname *geoname = NULL;
-	char **found_entries;
-	char *entry;
-	int entry_runner;
-	char *wikipedia_url = NULL;
-	char *thumbnail_url = NULL;
+	GList * found_places = NULL;
 
-	lat_buf[0] = lon_buf[0] = elev_buf[0] = '\0';
+	char lat_buf[32] = { 0 };
+	char lon_buf[32] = { 0 };
+	char elev_buf[32] = { 0 };
+	char * wikipedia_url = NULL;
+	char * thumbnail_url = NULL;
 
+	GMappedFile * mf = NULL;
 	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
 		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
 		return NULL;
 	}
-	len = g_mapped_file_get_length(mf);
-	text = g_mapped_file_get_contents(mf);
+	size_t len = g_mapped_file_get_length(mf);
+	char * text = g_mapped_file_get_contents(mf);
 
+	bool more = true;
 	if (g_strstr_len(text, len, GEONAMES_SEARCH_NOT_FOUND) != NULL) {
 		more = false;
 	}
-	found_entries = g_strsplit(text, "},", 0);
-	entry_runner = 0;
-	entry = found_entries[entry_runner];
+
+	char ** found_entries = g_strsplit(text, "},", 0);
+	int entry_runner = 0;
+	char * entry = found_entries[entry_runner];
+	char * pat = NULL;
+	char * s = NULL;
+	int fragment_len;
 	while (entry) {
 		more = true;
-		geoname = new_found_geoname();
+		found_geoname * geoname = new_found_geoname();
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
 			pat += strlen(GEONAMES_FEATURE_PATTERN);
 			fragment_len = 0;
@@ -448,8 +444,8 @@ static GList *get_entries_from_file(char *file_name)
 	g_strfreev(found_entries);
 	found_places = g_list_reverse(found_places);
 	g_mapped_file_unref(mf);
+
 	return(found_places);
-#endif
 }
 
 

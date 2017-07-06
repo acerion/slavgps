@@ -242,7 +242,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		modestring = (char *) "latlon";
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", mode);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", (int) mode);
 	}
 
 	fprintf(f, "#VIKING GPS Data file " VIKING_URL "\n");
@@ -393,7 +393,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE)
 							&& (parent_type != LayerType::GPS))) {
 					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
+					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, (int) parent_type);
 					push(&stack); /* Inside INVALID layer. */
 					stack->data = NULL;
 					continue;
@@ -435,7 +435,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							/* TODO: anything else needs to be done here? */
 						} else {
 							successful_read = false;
-							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) stack->data)->type);
+							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, (int) ((Layer *) stack->data)->type);
 						}
 					}
 					pop(&stack);

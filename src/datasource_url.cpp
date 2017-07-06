@@ -46,10 +46,11 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
+class URLData {
+public:
 	QLineEdit url;
 	QComboBox * type = NULL;
-} datasource_url_widgets_t;
+};
 
 
 
@@ -64,7 +65,7 @@ static int last_type_id = -1;
 
 static void * datasource_url_init(acq_vik_t * avt);
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_url_get_process_options(datasource_url_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
+static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
 static void datasource_url_cleanup(void * data);
 
 
@@ -101,19 +102,8 @@ VikDataSourceInterface vik_datasource_url_interface = {
 
 static void * datasource_url_init(acq_vik_t * avt)
 {
-	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) malloc(sizeof (datasource_url_widgets_t));
+	URLData * widgets = new URLData;
 	return widgets;
-}
-
-
-
-
-static void fill_combo_box(void * data, void * user_data)
-{
-	char const * label = ((BabelFileType *) data)->label;
-#ifdef K
-	vik_combo_box_text_append (GTK_WIDGET(user_data), label);
-#endif
 }
 
 
@@ -143,7 +133,7 @@ static void find_type(BabelFileType * file_type, char const * type_name)
 
 static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) user_data;
+	URLData * widgets = (URLData *) user_data;
 	QLabel * label = new QLabel(QObject::tr("URL:"));
 #ifdef K
 
@@ -173,7 +163,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 	if (a_babel_available()) {
 		widgets->type = new QComboBox();
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-			fill_combo_box(iter->second, widgets->type);
+			widgets->type->addItem(iter->second->label);
 		}
 		widgets->type->setCurrentIndex(last_type_id);
 	} else {
@@ -195,7 +185,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 
 
 
-static ProcessOptions * datasource_url_get_process_options(datasource_url_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
+static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 #ifdef K
@@ -213,12 +203,14 @@ static ProcessOptions * datasource_url_get_process_options(datasource_url_widget
 
 	po->url = g_strdup(value);
 
+#endif
+
 	/* Support .zip + bzip2 files directly. */
 	dl_options->convert_file = a_try_decompress_file;
 	dl_options->follow_location = 5;
 
 	return po;
-#endif
+
 }
 
 
@@ -226,5 +218,5 @@ static ProcessOptions * datasource_url_get_process_options(datasource_url_widget
 
 static void datasource_url_cleanup(void * data)
 {
-	free(data);
+	delete ((URLData *) data);
 }

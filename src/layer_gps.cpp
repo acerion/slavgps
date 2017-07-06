@@ -387,6 +387,11 @@ QString LayerGPS::tooltip()
 
 
 
+#define alm_append(m_obj, m_sz) {					\
+		int m_len = (m_sz);					\
+		g_byte_array_append(b, (uint8_t *)&m_len, sizeof (m_len)); \
+		g_byte_array_append(b, (uint8_t *)(m_obj), m_len);	\
+	}
 
 /* "Copy". */
 void LayerGPS::marshall(uint8_t **data, int *datalen)
@@ -394,11 +399,6 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	uint8_t *ld;
 	int ll;
 	GByteArray* b = g_byte_array_new();
-
-#define alm_append(obj, sz) 	\
-	int len = (sz);						\
-	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
-	g_byte_array_append(b, (uint8_t *)(obj), len);
 
 	this->marshall_params(&ld, &ll);
 	alm_append(ld, ll);
@@ -414,9 +414,8 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	*data = b->data;
 	*datalen = b->len;
 	g_byte_array_free(b, false);
-#undef alm_append
 }
-
+#undef alm_append
 
 
 
@@ -987,10 +986,10 @@ static void set_gps_info(const char *info, GpsSession *sess)
  */
 static void process_line_for_gps_info(const char *line, GpsSession *sess)
 {
-	if (strstr(line, "PRDDAT")) {
+	if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in datasource_gps_progress() */
 		char **tokens = g_strsplit(line, " ", 0);
 		char info[128];
-		int ilen = 0;
+		size_t ilen = 0;
 		int n_tokens = 0;
 
 		while (tokens[n_tokens]) {
@@ -1877,20 +1876,14 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 
 bool LayerGPS::rt_ask_retry()
 {
-#ifdef K
-	GtkWidget * dialog = gtk_message_dialog_new(this->get_window(),
-						    GTK_DIALOG_DESTROY_WITH_PARENT,
-						    GTK_MESSAGE_QUESTION,
-						    GTK_BUTTONS_YES_NO,
-						    "Failed to connect to gpsd at %s (port %s)\n"
-						    "Should Viking keep trying (every %d seconds)?",
-						    this->gpsd_host, this->gpsd_port,
-						    this->gpsd_retry_interval);
+	const QString message = QString(tr("Failed to connect to gpsd at %1 (port %2)\n"
+					   "Should Viking keep trying (every %3 seconds)?"))
+		.arg(this->gpsd_host)
+		.arg(this->gpsd_port)
+		.arg(this->gpsd_retry_interval);
 
-	int res = gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-	return (res == GTK_RESPONSE_YES);
-#endif
+	const int reply = QMessageBox::question(this->get_window(), "title", message);
+	return (reply == QMessageBox::Yes);
 }
 
 

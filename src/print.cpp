@@ -566,6 +566,8 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	CustomWidgetInfo * info = (CustomWidgetInfo *) malloc(sizeof (CustomWidgetInfo));
 	memset(info, 0, sizeof (CustomWidgetInfo));
 
+	GtkWidget * layout = NULL;
+
 #ifdef K
 	QObject::connect(print_data->operation, _("done"), info, SLOT (custom_widgets_cleanup));
 
@@ -577,7 +579,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 		gtk_print_operation_set_default_page_setup(print_data->operation, setup);
 	}
 
-	GtkWidget * layout = gtk_vbox_new(false, 6);
+	layout = gtk_vbox_new(false, 6);
 	gtk_container_set_border_width(GTK_CONTAINER (layout), 12);
 
 	/*  main hbox  */
@@ -676,7 +678,6 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	info->preview->set_image_offsets_max(offset_x_max, offset_y_max);
 
 	set_scale_value(info);
-
-	return layout;
 #endif
+	return layout;
 }

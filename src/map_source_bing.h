@@ -22,6 +22,7 @@
 
 
 
+#include <list>
 #include <cstdint>
 
 #include "coord.h"
@@ -38,8 +39,8 @@ namespace SlavGPS {
 
 
 
-	struct _Attribution {
-		char * attribution;
+	struct Attribution {
+		char * attribution = NULL;
 		int minZoom;
 		int maxZoom;
 		LatLonBBox bounds;
@@ -58,12 +59,12 @@ namespace SlavGPS {
 		const QString get_server_path(TileInfo * src) const;
 
 
-		char * bing_api_key;
+		char * bing_api_key = NULL;
 
-		GList *attributions;
+		std::list<Attribution *> attributions;
 		/* Current attribution, when parsing. */
-		char *attribution;
-		bool loading_attributions;
+		char * attribution = NULL;
+		bool loading_attributions = false;
 
 	private:
 		int load_attributions();

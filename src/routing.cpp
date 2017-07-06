@@ -331,11 +331,11 @@ QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data)
  */
 RoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos)
 {
+	RoutingEngine * engine = NULL;
 #ifdef K
 	/* Retrieve engine. */
 	GList *engines = (GList*) g_object_get_data (G_OBJECT (combo) , "engines");
-	RoutingEngine *engine = (RoutingEngine *) g_list_nth_data(engines, pos);
-
-	return engine;
+	RoutingEngine * engine = (RoutingEngine *) g_list_nth_data(engines, pos);
 #endif
+	return engine;
 }

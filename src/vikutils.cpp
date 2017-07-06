@@ -374,7 +374,7 @@ char * SlavGPS::get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, 
 		break;
 	default:
 		snprintf(buf, size, "--");
-		fprintf(stderr, "CRITICAL: invalid speed unit: %d\n", speed_unit);
+		fprintf(stderr, "CRITICAL: invalid speed unit: %d\n", (int) speed_unit);
 	}
 
 	return buf;
@@ -396,7 +396,7 @@ bool SlavGPS::get_distance_unit_string(char * buf, size_t size, DistanceUnit dis
 		snprintf(buf, size, "%s", _("NM"));
 		return true;
 	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 		return false;
 	}
 }
@@ -417,7 +417,7 @@ char * SlavGPS::get_distance_string(char * buf, size_t size, DistanceUnit distan
 		snprintf(buf, size, _("%.2f NM"), VIK_METERS_TO_NAUTICAL_MILES (distance));
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 	}
 
 	return buf;
@@ -439,7 +439,7 @@ double SlavGPS::convert_distance_meters_to(DistanceUnit distance_unit, double di
 		return distance / 1000.0;
 
 	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 		return distance;
 	}
 }

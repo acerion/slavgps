@@ -472,7 +472,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 		break;
 	default:
 		alt = g_strdup_printf("%f", wp->altitude);
-		fprintf(stderr, "CRITICAL: invalid height unit %d\n", height_units);
+		fprintf(stderr, "CRITICAL: invalid height unit %d\n", (int) height_units);
 	}
 
 	param = &parameters[SG_WP_PARAM_NAME];

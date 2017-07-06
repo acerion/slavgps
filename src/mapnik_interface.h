@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+#include <QString>
+
 
 
 
@@ -50,7 +52,7 @@ namespace SlavGPS {
 
 	char * mapnik_interface_get_copyright(MapnikInterface * mi);
 
-	GArray * mapnik_interface_get_parameters(MapnikInterface * mi);
+	QStringList * mapnik_interface_get_parameters(MapnikInterface * mi);
 
 	char * mapnik_interface_about(void);
 

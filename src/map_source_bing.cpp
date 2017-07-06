@@ -33,6 +33,7 @@
 #include "config.h"
 #endif
 
+#include <list>
 #ifdef HAVE_MATH_H
 #include <cmath>
 #endif
@@ -40,6 +41,8 @@
 #ifdef HAVE_STDLIB_H
 #include <cstdlib>
 #endif
+
+#include <QDebug>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -68,11 +71,6 @@ using namespace SlavGPS;
 
 MapSourceBing::MapSourceBing()
 {
-	this->bing_api_key = NULL;
-	this->attributions = NULL;
-	this->attribution = NULL;
-	this->loading_attributions = false;
-
 #if 0
 	pspec = g_param_spec_string("api-key",
 				    "API key",
@@ -162,29 +160,29 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
-	int scale = map_utils_mpp_to_scale(zoom);
+	const int scale = map_utils_mpp_to_scale(zoom);
 
-	/* Loop over all known attributions. */
-	GList * attribution = this->attributions;
-	if (attribution == NULL && strcmp("<no-set>", this->bing_api_key)) {
-		if (! this->loading_attributions) {
+	/* Load attributions. */
+	if (0 == this->attributions.size() && strcmp("<no-set>", this->bing_api_key)) {
+		if (!this->loading_attributions) {
 			this->async_load_attributions();
 		} else {
 			/* Wait until attributions loaded before processing them. */
 			return;
 		}
 	}
-	while (attribution != NULL) {
-		struct _Attribution *current = (struct _Attribution*)attribution->data;
+
+	/* Loop over all known attributions. */
+	for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
+		const struct Attribution * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - scale) > current->minZoom &&
 		    (17 - scale) < current->maxZoom) {
 
 			(*fct)((Viewport *) data, current->attribution);
-			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);
+			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;
 		}
-		attribution = attribution->next;
 	}
 }
 
@@ -204,10 +202,10 @@ void MapSourceBing::bstart_element(GMarkupParseContext * context,
 	const char *element = g_markup_parse_context_get_element(context);
 	if (strcmp (element, "CoverageArea") == 0) {
 		/* New Attribution. */
-		struct _Attribution * attribution = (struct _Attribution *) malloc(sizeof (struct _Attribution));
-		memset(attribution, 0, sizeof (struct _Attribution));
+		struct Attribution * attribution = (struct Attribution *) malloc(sizeof (struct Attribution));
+		memset(attribution, 0, sizeof (struct Attribution));
 
-		self->attributions = g_list_append(self->attributions, attribution);
+		self->attributions.push_back(attribution);
 		attribution->attribution = g_strdup(self->attribution);
 	}
 }
@@ -225,8 +223,8 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 {
 	MapSourceBing * self = (MapSourceBing *) user_data;
 
-	struct _Attribution *attribution = (_Attribution *) (self->attributions == NULL ? NULL : g_list_last (self->attributions)->data);
-	const char *element = g_markup_parse_context_get_element(context);
+	struct Attribution * attr = self->attributions.size() == 0  ? NULL : self->attributions.back();
+	const char * element = g_markup_parse_context_get_element(context);
 	char *textl = g_strndup(text, text_len);
 	const GSList *stack = g_markup_parse_context_get_element_stack(context);
 	int len = g_slist_length((GSList *)stack);
@@ -236,22 +234,22 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 		free(self->attribution);
 		self->attribution = g_strdup(textl);
 	} else {
-		if (attribution) {
+		if (attr) {
 			if (parent != NULL && strcmp(parent, "CoverageArea") == 0) {
 				if (strcmp (element, "ZoomMin") == 0) {
-					attribution->minZoom = atoi(textl);
+					attr->minZoom = atoi(textl);
 				} else if (strcmp (element, "ZoomMax") == 0) {
-					attribution->maxZoom = atoi(textl);
+					attr->maxZoom = atoi(textl);
 				}
 			} else if (parent != NULL && strcmp(parent, "BoundingBox") == 0) {
 				if (strcmp(element, "SouthLatitude") == 0) {
-					attribution->bounds.south = g_ascii_strtod(textl, NULL);
+					attr->bounds.south = g_ascii_strtod(textl, NULL);
 				} else if (strcmp(element, "WestLongitude") == 0) {
-					attribution->bounds.west = g_ascii_strtod(textl, NULL);
+					attr->bounds.west = g_ascii_strtod(textl, NULL);
 				} else if (strcmp(element, "NorthLatitude") == 0) {
-					attribution->bounds.north = g_ascii_strtod(textl, NULL);
+					attr->bounds.north = g_ascii_strtod(textl, NULL);
 				} else if (strcmp(element, "EastLongitude") == 0) {
-					attribution->bounds.east = g_ascii_strtod(textl, NULL);
+					attr->bounds.east = g_ascii_strtod(textl, NULL);
 				}
 			}
 		}
@@ -289,7 +287,7 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	size_t offset = -1;
 	while (xml_context &&
 	       (nb = fread(buff, sizeof(char), BUFSIZ, file)) > 0) {
-		if (offset == -1) {
+		if (offset == (size_t) -1) {
 			/* First run. */
 			/* Avoid possible BOM at begining of the file. */
 			offset = buff[0] == '<' ? 0 : 3;
@@ -321,11 +319,9 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	fclose(file);
 
 	if (vik_debug) {
-		GList * attribution = this->attributions;
-		while (attribution != NULL) {
-			struct _Attribution *aa = (struct _Attribution*)attribution->data;
-			fprintf(stderr, "DEBUG: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
-			attribution = attribution->next;
+		for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
+			const struct Attribution * aa = *iter;
+			fprintf(stderr, "DD: Map Source Bing: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
 		}
 	}
 

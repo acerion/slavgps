@@ -151,15 +151,16 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	datasource_t *data = (datasource_t*) user_data;
 
 	WebToolDatasource * web_tool_datasource = (WebToolDatasource *) data->web_tool_datasource;
-#ifdef K
 
+#ifdef K
 	if (web_tool_datasource->webtool_needs_user_string()) {
-		web_tool_datasource->user_string = data->user_string->text();
+		web_tool_datasource->user_string = data->user_string.text();
 
 		if (web_tool_datasource->user_string[0] != '\0') {
 			set_last_user_string(data, web_tool_datasource->user_string);
 		}
 	}
+#endif
 
 	char *url = web_tool_datasource->get_url(data->window);
 	fprintf(stderr, "DEBUG: %s: %s\n", __PRETTY_FUNCTION__, url);
@@ -182,11 +183,12 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	}
 	g_strfreev(parts);
 
+
 	dl_options = NULL;
 	po->babel_filters = web_tool_datasource->babel_filter_args;
 
 	return po;
-#endif
+
 }
 
 

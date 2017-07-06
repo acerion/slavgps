@@ -819,11 +819,11 @@ void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_orde
 
 static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
+	bool retval = false;
 #ifdef K
 	QStandardItemModel *tree_model;
 	QStandardItemModel *src_model = NULL;
 	GtkTreePath *src_path = NULL, *dest_cp = NULL;
-	bool retval = false;
 	GtkTreeIter src_iter, root_iter, dest_parent;
 	Layer * layer = NULL;
 
@@ -887,9 +887,8 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 	if (src_path) {
 		gtk_tree_path_free(src_path);
 	}
-
-	return retval;
 #endif
+	return retval;
 }
 
 

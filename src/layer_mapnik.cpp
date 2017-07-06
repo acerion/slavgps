@@ -989,17 +989,13 @@ static void mapnik_layer_information(menu_array_values * values)
 	if (!lmk->mi) {
 		return;
 	}
-	GArray * array = mapnik_interface_get_parameters(lmk->mi);
-	if (array->len) {
+	QStringList * params = mapnik_interface_get_parameters(lmk->mi);
+	if (params->size()) {
 #ifdef K
-		a_dialog_list(lmk->get_window(), _("Mapnik Information"), array, 1);
-		/* Free the copied strings. */
-		for (unsigned int i = 0; i < array->len; i++) {
-			free(g_array_index(array, char*, i));
-		}
+		a_dialog_list(lmk->get_window(), _("Mapnik Information"), params, 1);
 #endif
 	}
-	g_array_free(array, false);
+	delete params;
 }
 
 

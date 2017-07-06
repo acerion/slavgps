@@ -127,16 +127,16 @@ void new_email(Window * parent, const char * address)
 */
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 {
+	GtkWidget * image = NULL;
+	GtkWidget * button = NULL;
 #ifdef K
-	GtkWidget *image, *button;
-
 	button = gtk_button_new_with_mnemonic(text);
 	gtk_widget_show(button);
 	image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON);
 	gtk_button_set_image(GTK_BUTTON(button), image);
 	/* Note: image is shown by gtk. */
-	return button;
 #endif
+	return button;
 }
 
 
@@ -161,56 +161,6 @@ int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 	} else {
 		return default_value;
 	}
-#endif
-}
-
-
-
-
-/**
-   Returns a widget from a name in a component, usually created by Glade.
-   Call it with the toplevel widget in the component (i.e. a window/dialog),
-   or alternatively any widget in the component, and the name of the widget
-   you want returned.
-   @param widget Widget with the @a widget_name property set.
-   @param widget_name Name to lookup.
-   @return The widget found.
-   @see ui_hookup_widget().
-*/
-GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
-{
-#ifdef K
-	GtkWidget *parent, *found_widget;
-
-	if (!widget) {
-		return NULL;
-	}
-	if (!widget_name) {
-		return NULL;
-	}
-
-	for (;;) {
-		if (GTK_IS_MENU(widget)) {
-			parent = gtk_menu_get_attach_widget(GTK_MENU(widget));
-		} else {
-			parent = gtk_widget_get_parent(widget);
-		}
-
-		if (parent == NULL) {
-			parent = (GtkWidget*) g_object_get_data(G_OBJECT(widget), "GladeParentKey");
-		}
-
-		if (parent == NULL) {
-			break;
-		}
-		widget = parent;
-	}
-
-	found_widget = (GtkWidget*) g_object_get_data(G_OBJECT(widget), widget_name);
-	if (G_UNLIKELY(found_widget == NULL)) {
-		fprintf(stderr, "WARNING: Widget not found: %s\n", widget_name);
-	}
-	return found_widget;
 #endif
 }
 

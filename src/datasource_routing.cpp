@@ -168,9 +168,8 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 
 	last_from_str = g_strdup(from);
 	last_to_str = g_strdup(to);
-
-	return po;
 #endif
+	return po;
 }
 
 

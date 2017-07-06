@@ -111,9 +111,11 @@ bool a_thumbnails_exists(const char * filename)
 
 QPixmap * a_thumbnails_get_default()
 {
+	QPixmap * pixmap = NULL;
 #ifdef K
-	return gdk_pixbuf_from_pixdata(&thumbnails_pixmap, false, NULL);
+	pixmap = return gdk_pixbuf_from_pixdata(&thumbnails_pixmap, false, NULL);
 #endif
+	return pixmap;
 }
 
 
@@ -156,6 +158,8 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 
 		return src->scaled(MAX(dest_w, 1), MAX(dest_h, 1), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
+#else
+	return NULL;
 #endif
 }
 
@@ -283,9 +287,8 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 	free(ssize);
 	free(smtime);
 	free(uri);
-
-	return thumb;
 #endif
+	return thumb;
 }
 
 
@@ -305,8 +308,9 @@ QPixmap * SlavGPS::a_thumbnails_get(const char * pathname)
 	const char * ssize;
 	const char * smtime;
 
-#ifdef K
+
 	QPixmap * thumb = new QPixmap();
+#ifdef K
 	if (!thumb->load(thumb_path)) {
 		goto err;
 	}
@@ -340,8 +344,9 @@ err:
 out:
 	free(path);
 	free(thumb_path);
-	return thumb;
 #endif
+	return thumb;
+
 }
 
 

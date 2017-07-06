@@ -649,9 +649,11 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 		/* Nothing to do. */
 		return false;
 	}
+	bool result = false;
 #ifndef SLAVGPS_QT
-	return a_clipboard_paste(this);
+	result = a_clipboard_paste(this);
 #endif
+	return result;
 }
 
 

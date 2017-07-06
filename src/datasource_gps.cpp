@@ -108,7 +108,8 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 /* Widgets in setup dialog specific to GPS. */
 /* Widgets in progress dialog specific to GPS. */
 /* Also counts needed for progress. */
-typedef struct {
+class GPSData {
+public:
 	/* Setup dialog. */
 	QLabel * proto_l = NULL;
 	QComboBox * proto_combo = NULL;
@@ -134,11 +135,11 @@ typedef struct {
 	GPSTransferType progress_type;
 
 	/* State. */
-	int total_count;
-	int count;
+	int total_count = 0;
+	int count = 0;
 	/* Know which way xfer is so xfer setting types are only stored for download. */
 	GPSDirection direction;
-} gps_user_data_t;
+} ;
 
 
 
@@ -155,7 +156,7 @@ typedef struct {
 
 static void * datasource_gps_init_func(acq_vik_t *avt)
 {
-	gps_user_data_t *gps_ud = (gps_user_data_t *) malloc(sizeof (gps_user_data_t));
+	GPSData * gps_ud = new GPSData;
 	gps_ud->direction = GPSDirection::DOWN;
 	return gps_ud;
 }
@@ -169,7 +170,7 @@ static void * datasource_gps_init_func(acq_vik_t *avt)
 char* datasource_gps_get_protocol(void * user_data)
 {
 	/* Uses the list of supported devices. */
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	GPSData *w = (GPSData *)user_data;
 
 	last_active = w->proto_combo->currentIndex();
 #ifdef K
@@ -192,14 +193,13 @@ char* datasource_gps_get_protocol(void * user_data)
  * "Everything is a file".
  * Could actually be normal file or a serial port.
  */
-char* datasource_gps_get_descriptor(void * user_data)
+QString datasource_gps_get_descriptor(void * user_data)
 {
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
-#ifdef K
-	char * descriptor = w->ser_combo->currentText();
-	a_settings_set_string(VIK_SETTINGS_GPS_PORT, descriptor);
+	GPSData * data = (GPSData *) user_data;
+
+	QString descriptor = data->ser_combo->currentText();
+	a_settings_set_string(VIK_SETTINGS_GPS_PORT, descriptor.toUtf8().constData());
 	return descriptor;
-#endif
 }
 
 
@@ -210,14 +210,13 @@ char* datasource_gps_get_descriptor(void * user_data)
  */
 bool datasource_gps_get_do_tracks(void * user_data)
 {
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
-#ifdef K
-	bool get_tracks = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_tracks_b));
-	if (w->direction == GPSDirection::DOWN) {
+	GPSData * data = (GPSData *) user_data;
+
+	bool get_tracks = data->get_tracks_b->isChecked();
+	if (data->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
 	}
 	return get_tracks;
-#endif
 }
 
 
@@ -228,14 +227,13 @@ bool datasource_gps_get_do_tracks(void * user_data)
  */
 bool datasource_gps_get_do_routes(void * user_data)
 {
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
-#ifdef K
-	bool get_routes = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_routes_b));
-	if (w->direction == GPSDirection::DOWN) {
+	GPSData * data = (GPSData *) user_data;
+
+	bool get_routes = data->get_routes_b->isChecked();
+	if (data->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
 	}
 	return get_routes;
-#endif
 }
 
 
@@ -246,14 +244,13 @@ bool datasource_gps_get_do_routes(void * user_data)
  */
 bool datasource_gps_get_do_waypoints(void * user_data)
 {
-#ifdef K
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
-	bool get_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b));
-	if (w->direction == GPSDirection::DOWN) {
+	GPSData * data = (GPSData *) user_data;
+
+	bool get_waypoints = data->get_waypoints_b->isChecked();
+	if (data->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
 	}
 	return get_waypoints;
-#endif
 }
 
 
@@ -301,7 +298,8 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 	routes = NULL;
 	waypoints = NULL;
 
-	po->filename = g_strdup(datasource_gps_get_descriptor(user_data));
+	QString tmp = datasource_gps_get_descriptor(user_data);
+	po->filename = g_strdup(tmp.toUtf8().constData());
 
 	fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
 
@@ -316,12 +314,11 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
  */
 bool datasource_gps_get_off(void * user_data)
 {
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
-#ifdef K
-	bool power_off = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->off_request_b));
+	GPSData * data = (GPSData *) user_data;
+
+	bool power_off = data->off_request_b->isChecked();
 	a_settings_set_boolean(VIK_SETTINGS_GPS_POWER_OFF, power_off);
 	return power_off;
-#endif
 }
 
 
@@ -331,7 +328,7 @@ static void datasource_gps_off(void * user_data, char **babelargs, char **file_d
 {
 	char *ser = NULL;
 	char *device = NULL;
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	GPSData *w = (GPSData *)user_data;
 
 	if (gps_acquire_in_progress) {
 		*babelargs = *file_descriptor = NULL;
@@ -372,7 +369,7 @@ static void datasource_gps_off(void * user_data, char **babelargs, char **file_d
 
 static void datasource_gps_cleanup(void * user_data)
 {
-	free(user_data);
+	delete ((GPSData *) user_data);
 	gps_acquire_in_progress = false;
 }
 
@@ -396,7 +393,7 @@ static void set_total_count(int cnt, AcquireProcess * acquiring)
 #ifdef K
 	gdk_threads_enter();
 	if (acquiring->running) {
-		gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
+		GPSData *gps_data = (GPSData *) acquiring->user_data;
 		const char *tmp_str;
 		switch (gps_data->progress_type) {
 		case GPSTransferType::WPT:
@@ -434,7 +431,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 	char *s = NULL;
 	gdk_threads_enter();
 	if (acquiring->running) {
-		gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
+		GPSData *gps_data = (GPSData *) acquiring->user_data;
 
 		if (cnt < gps_data->total_count) {
 			switch (gps_data->progress_type) {
@@ -479,7 +476,7 @@ static void set_gps_info(const char *info, AcquireProcess * acquiring)
 	gdk_threads_enter();
 	if (acquiring->running) {
 		s = g_strdup_printf(_("GPS Device: %s"), info);
-		((gps_user_data_t *) acquiring->user_data)->gps_label->setText(s);
+		((GPSData *) acquiring->user_data)->gps_label->setText(s);
 	}
 	free(s);
 	s = NULL;
@@ -498,7 +495,7 @@ static void set_gps_info(const char *info, AcquireProcess * acquiring)
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
 	char *line;
-	gps_user_data_t *gps_data = (gps_user_data_t *) acquiring->user_data;
+	GPSData *gps_data = (GPSData *) acquiring->user_data;
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
@@ -525,10 +522,10 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 			gps_data->progress_type = GPSTransferType::RTE;
 		}
 
-		if (strstr(line, "PRDDAT")) {
+		if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in process_line_for_gps_info() */
 			char **tokens = g_strsplit(line, " ", 0);
 			char info[128];
-			int ilen = 0;
+		        size_t ilen = 0;
 			int i;
 			int n_tokens = 0;
 
@@ -589,9 +586,9 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 void append_element(void * elem, void * user_data)
 {
-	const char *text = ((BabelDevice*)elem)->label;
+	const char * text = ((BabelDevice *) elem)->label;
 #ifdef K
-	vik_combo_box_text_append(GTK_WIDGET(user_data), text);
+	((QComboBox *) user_data))->addItem(text);
 #endif
 }
 
@@ -616,14 +613,15 @@ static void find_protocol(void * elem, void * user_data)
 
 static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
+	GPSData * data = (GPSData *) user_data;
 #ifdef K
-	gps_user_data_t *w = (gps_user_data_t *)user_data;
+
 	GtkTable *box, *data_type_box;
 
-	w->proto_l = new QLabel(QObject::tr("GPS Protocol:"));
-	w->proto_combo = new QComboBox();
+	data->proto_l = new QLabel(QObject::tr("GPS Protocol:"));
+	data->proto_combo = new QComboBox();
 	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-		append_element(*iter, w->proto_combo);
+		append_element(*iter, data->proto_combo);
 	}
 
 	if (last_active < 0) {
@@ -647,11 +645,11 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
-	w->proto_combo->setCurrentIndex(last_active);
-	g_object_ref(w->proto_combo);
+	data->proto_combo->setCurrentIndex(last_active);
+	g_object_ref(data->proto_combo);
 
-	w->ser_l = new QLabel(QObject::tr("Serial Port:"));
-	w->ser_combo = new QComboBox();
+	data->ser_l = new QLabel(QObject::tr("Serial Port:"));
+	data->ser_combo = new QComboBox();
 
 	/* Value from the settings is promoted to the top. */
 	char *gps_port = NULL;
@@ -659,104 +657,104 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		/* Use setting if available. */
 		if (gps_port) {
 #ifndef WINDOWS
-			if (!strncmp (gps_port, "/dev/tty", 6)) {
+			if (!strncmp(gps_port, "/dev/tty", 6)) {
 				if (access(gps_port, R_OK) == 0) {
-					vik_combo_box_text_append (w->ser_combo, gps_port);
+					data->ser_combo->addItem(gps_port);
 				}
 			} else
 #endif
-				vik_combo_box_text_append (w->ser_combo, gps_port);
+				data->ser_combo->addItem(gps_port);
 		}
 	}
 
 	/* Note avoid appending the port selected from the settings. */
 #ifdef WINDOWS
 	if (gps_port && strcmp(gps_port, "com1")) {
-		vik_combo_box_text_append(w->ser_combo, "com1");
+		data->ser_combo->addItem("com1");
 	}
 #else
 	/* Here just try to see if the device is available which gets passed onto gpsbabel.
 	   List USB devices first as these will generally only be present if autogenerated by udev or similar.
 	   User is still able to set their own free text entry. */
-	if (gps_port && strcmp (gps_port, "/dev/ttyUSB0")) {
+	if (gps_port && strcmp(gps_port, "/dev/ttyUSB0")) {
 		if (access("/dev/ttyUSB0", R_OK) == 0) {
-			vik_combo_box_text_append (w->ser_combo, "/dev/ttyUSB0");
+			data->ser_combo->addItem("/dev/ttyUSB0");
 		}
 	}
 
-	if (gps_port && strcmp (gps_port, "/dev/ttyUSB1")) {
+	if (gps_port && strcmp(gps_port, "/dev/ttyUSB1")) {
 		if (access("/dev/ttyUSB1", R_OK) == 0) {
-			vik_combo_box_text_append (w->ser_combo, "/dev/ttyUSB1");
+			data->ser_combo->addItem("/dev/ttyUSB1");
 		}
 	}
 
-	if (gps_port && strcmp (gps_port, "/dev/ttyS0")) {
+	if (gps_port && strcmp(gps_port, "/dev/ttyS0")) {
 		if (access("/dev/ttyS0", R_OK) == 0) {
-			vik_combo_box_text_append (w->ser_combo, "/dev/ttyS0");
+			data->ser_combo->addItem("/dev/ttyS0");
 		}
 	}
 
-	if (gps_port && strcmp (gps_port, "/dev/ttyS1")) {
+	if (gps_port && strcmp(gps_port, "/dev/ttyS1")) {
 		if (access("/dev/ttyS1", R_OK) == 0) {
-			vik_combo_box_text_append (w->ser_combo, "/dev/ttyS1");
+			data->ser_combo->addItem("/dev/ttyS1");
 		}
 	}
 #endif
-	if (gps_port && strcmp (gps_port, "usb:")) {
-		vik_combo_box_text_append (w->ser_combo, "usb:");
+	if (gps_port && strcmp(gps_port, "usb:")) {
+		data->ser_combo->addItem("usb:");
 	}
 
-	w->ser_combo->setCurrentIndex(0);
-	g_object_ref(w->ser_combo);
+	data->ser_combo->setCurrentIndex(0);
+	g_object_ref(data->ser_combo);
 
-	w->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
-	w->off_request_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	data->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
+	data->off_request_b = new QCheckBox();
 	bool power_off;
 	if (!a_settings_get_boolean(VIK_SETTINGS_GPS_POWER_OFF, &power_off)) {
 		power_off = false;
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->off_request_b), power_off);
+	->off_request_b->setChecked(power_off);
 
-	w->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
-	w->get_tracks_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	data->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
+	data->get_tracks_b = new QCheckBox();
 	bool get_tracks;
 	if (!a_settings_get_boolean(VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks)) {
 		get_tracks = true;
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_tracks_b), get_tracks);
+	data->get_tracks_b->setChecked(get_tracks);
 
-	w->get_routes_l = new QLabel(QObject::tr("Routes:"));
-	w->get_routes_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	data->get_routes_l = new QLabel(QObject::tr("Routes:"));
+	data->get_routes_b = new QCheckBox();
 	bool get_routes;
 	if (!a_settings_get_boolean(VIK_SETTINGS_GPS_GET_ROUTES, &get_routes)) {
 		get_routes = false;
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_routes_b), get_routes);
+	data->get_routes_b->setChecked(get_routes);
 
-	w->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
-	w->get_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	data->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
+	data->get_waypoints_b = new QCheckBox();
 	bool get_waypoints;
-	if (!a_settings_get_boolean (VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints)) {
+	if (!a_settings_get_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints)) {
 		get_waypoints = true;
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b), get_waypoints);
+	data->get_waypoints_b->setChecked(get_waypoints);
 
 	box = GTK_TABLE(gtk_table_new(2, 4, false));
 	data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
 
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_l), 0, 1, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_combo), 1, 2, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_l), 0, 1, 1, 2);
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_combo), 1, 2, 1, 2);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_l), 0, 1, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_b), 1, 2, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_l), 2, 3, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_b), 3, 4, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_l), 4, 5, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_b), 5, 6, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_l), 0, 1, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_combo), 1, 2, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->ser_l), 0, 1, 1, 2);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->ser_combo), 1, 2, 1, 2);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_tracks_l), 0, 1, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_tracks_b), 1, 2, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_routes_l), 2, 3, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_routes_b), 3, 4, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_waypoints_l), 4, 5, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_waypoints_b), 5, 6, 0, 1);
 	gtk_table_attach_defaults(box, GTK_WIDGET(data_type_box), 0, 2, 2, 3);
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_l), 0, 1, 3, 4);
-	gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_b), 1, 3, 3, 4);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->off_request_l), 0, 1, 3, 4);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data->off_request_b), 1, 3, 3, 4);
 	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5);
 
 	gtk_widget_show_all (dialog);
@@ -776,7 +774,7 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
  */
 void * datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_all)
 {
-	gps_user_data_t *w_gps = (gps_user_data_t *)datasource_gps_init_func(NULL);
+	GPSData *w_gps = (GPSData *)datasource_gps_init_func(NULL);
 	w_gps->direction = GPSDirection::UP;
 	datasource_gps_add_setup_widgets(dialog, NULL, w_gps);
 
@@ -800,15 +798,15 @@ void * datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_a
 	}
 #ifdef K
 	/* Apply. */
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_tracks_b), trk);
+	w_gps->get_tracks_b->setChecked(trk);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_l), trk);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_b), trk);
 
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_routes_b), rte);
+	w_gps->get_routes_b->setChecked(rte);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_l), rte);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_b), rte);
 
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_waypoints_b), way);
+	w_gps->get_waypoints_b->setChecked(way);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_l), way);
 	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_b), way);
 #endif
@@ -821,7 +819,7 @@ void * datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_a
 
 void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
 {
-	gps_user_data_t *w_gps = (gps_user_data_t *)user_data;
+	GPSData * w_gps = (GPSData *) user_data;
 
 	QLabel * gpslabel = new QLabel(QObject::tr("GPS device: N/A"));
 	QLabel * verlabel = new QLabel("");

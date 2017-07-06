@@ -1589,15 +1589,16 @@ void LayerTRW::new_track_pens(void)
  */
 QIcon * get_wp_sym_small(char *symbol)
 {
+	QIcon * wp_icon = NULL;
 #ifdef K
-	QPixmap * wp_icon = a_get_wp_sym(symbol);
+	wp_icon = a_get_wp_sym(symbol);
 	/* ATM a_get_wp_sym returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the treeview may need some resizing: */
 	if (wp_icon && wp_icon->width() != SMALL_ICON_SIZE) {
 		wp_icon = wp_icon->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
-	return wp_icon;
 #endif
+	return wp_icon;
 }
 
 
@@ -2868,7 +2869,7 @@ void LayerTRW::gps_upload_any_cb()
 
 	/* Get info from reused datasource dialog widgets. */
 	char* protocol = datasource_gps_get_protocol(dgs);
-	char* port = datasource_gps_get_descriptor(dgs);
+	QString port = datasource_gps_get_descriptor(dgs);
 	/* Don't free the above strings as they're references to values held elsewhere. */
 	bool do_tracks = datasource_gps_get_do_tracks(dgs);
 	bool do_routes = datasource_gps_get_do_routes(dgs);
@@ -2887,7 +2888,7 @@ void LayerTRW::gps_upload_any_cb()
 		     trk,
 		     GPSDirection::UP,
 		     protocol,
-		     port,
+		     port.toUtf8().constData(),
 		     false,
 		     panel->get_viewport(),
 		     panel,

@@ -391,6 +391,7 @@ static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * 
 
 double PrintPreview::get_scale(void)
 {
+	double scale = 0;
 #ifdef K
 	double scale_x = ((double) this->area->allocation.width /
 			  gtk_page_setup_get_paper_width(this->page, GTK_UNIT_POINTS));
@@ -398,8 +399,9 @@ double PrintPreview::get_scale(void)
 	double scale_y = ((double) this->area->allocation.height /
 			  gtk_page_setup_get_paper_height(this->page, GTK_UNIT_POINTS));
 
-	return MIN (scale_x, scale_y);
+	scale = MIN (scale_x, scale_y);
 #endif
+	return scale;
 }
 
 

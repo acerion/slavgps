@@ -272,10 +272,10 @@ static void get_from_anything(w_and_interface_t * wi)
 /* Depending on type of filter, often only trw or track will be given.
  * The other can be NULL.
  */
-void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function)
+void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * source_interface_, void * userdata, VikDataSourceCleanupFunc cleanup_function)
 {
 	/* For manual dialogs. */
-	GtkWidget * dialog = NULL;
+	GtkWidget * setup_dialog = NULL;
 	char * args_off = NULL;
 	char * fd_off = NULL;
 	DownloadOptions * dl_options = new DownloadOptions;
@@ -291,15 +291,15 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	ParameterValue *paramdatas = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
-	if (source_interface->init_func) {
-		this->user_data = source_interface->init_func(&avt);
+	if (source_interface_->init_func) {
+		this->user_data = source_interface_->init_func(&avt);
 	} else {
 		this->user_data = NULL;
 	}
 	pass_along_data = this->user_data;
 
-	if (source_interface->check_existence_func) {
-		char *error_str = source_interface->check_existence_func();
+	if (source_interface_->check_existence_func) {
+		char *error_str = source_interface_->check_existence_func();
 		if (error_str) {
 			dialog_error(error_str, this->window);
 			free(error_str);
@@ -310,11 +310,11 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
 
 
-	if (source_interface->internal_dialog) {
-		int rv = source_interface->internal_dialog(avt.window);
+	if (source_interface_->internal_dialog) {
+		int rv = source_interface_->internal_dialog(avt.window);
 		if (rv != QDialog::Accepted) {
-			if (source_interface->cleanup_func) {
-				source_interface->cleanup_func(this->user_data);
+			if (source_interface_->cleanup_func) {
+				source_interface_->cleanup_func(this->user_data);
 			}
 			return;
 		}
@@ -322,37 +322,37 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
-	if (source_interface->add_setup_widgets_func) {
+	if (source_interface_->add_setup_widgets_func) {
 #ifdef K
-		dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 
-		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+		gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
 		GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
-		response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+		response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
 #endif
 
-		source_interface->add_setup_widgets_func(dialog, this->viewport, this->user_data);
-		gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
+		source_interface_->add_setup_widgets_func(setup_dialog, this->viewport, this->user_data);
+		gtk_window_set_title(GTK_WINDOW(setup_dialog), _(source_interface_->window_title));
 
 		if (response_w) {
 			gtk_widget_grab_focus(response_w);
 		}
 
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-			source_interface->cleanup_func(this->user_data);
-			gtk_widget_destroy(dialog);
+		if (gtk_dialog_run(GTK_DIALOG(setup_dialog)) != GTK_RESPONSE_ACCEPT) {
+			source_interface_->cleanup_func(this->user_data);
+			gtk_widget_destroy(setup_dialog);
 			return;
 		}
 #endif
 	}
 	/* POSSIBILITY 2: UI BUILDER */
-	else if (source_interface->params) {
+	else if (source_interface_->params) {
 #ifdef K
-		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, this->window,
-						    source_interface->params, source_interface->params_count,
-						    source_interface->params_groups, source_interface->params_groups_count,
-						    source_interface->params_defaults);
+		paramdatas = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
+						    source_interface_->params, source_interface_->params_count,
+						    source_interface_->params_groups, source_interface_->params_groups_count,
+						    source_interface_->params_defaults);
 #endif
 		if (paramdatas) {
 			pass_along_data = paramdatas;
@@ -364,81 +364,81 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* CREATE INPUT DATA & GET OPTIONS */
 	ProcessOptions * po = NULL;
 
-	if (source_interface->inputtype == DatasourceInputtype::TRWLAYER) {
+	if (source_interface_->inputtype == DatasourceInputtype::TRWLAYER) {
 		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
 
-		po = source_interface->get_process_options(pass_along_data, NULL, name_src, NULL);
+		po = source_interface_->get_process_options(pass_along_data, NULL, name_src, NULL);
 
 		util_add_to_deletion_list(name_src);
 
 		free(name_src);
-	} else if (source_interface->inputtype == DatasourceInputtype::TRWLAYER_TRACK) {
+	} else if (source_interface_->inputtype == DatasourceInputtype::TRWLAYER_TRACK) {
 		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
 		char * name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
 
-		po = source_interface->get_process_options(pass_along_data, NULL, name_src, name_src_track);
+		po = source_interface_->get_process_options(pass_along_data, NULL, name_src, name_src_track);
 
 		util_add_to_deletion_list(name_src);
 		util_add_to_deletion_list(name_src_track);
 
 		free(name_src);
 		free(name_src_track);
-	} else if (source_interface->inputtype == DatasourceInputtype::TRACK) {
+	} else if (source_interface_->inputtype == DatasourceInputtype::TRACK) {
 		char *name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
 
-		po = source_interface->get_process_options(pass_along_data, NULL, NULL, name_src_track);
+		po = source_interface_->get_process_options(pass_along_data, NULL, NULL, name_src_track);
 
 		free(name_src_track);
-	} else if (source_interface->get_process_options) {
-		po = source_interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
+	} else if (source_interface_->get_process_options) {
+		po = source_interface_->get_process_options(pass_along_data, dl_options, NULL, NULL);
 	} else {
 		/* kamil: what now? */
 	}
 
 	/* Get data for Off command. */
-	if (source_interface->off_func) {
-		source_interface->off_func(pass_along_data, &args_off, &fd_off);
+	if (source_interface_->off_func) {
+		source_interface_->off_func(pass_along_data, &args_off, &fd_off);
 	}
 
 	/* Cleanup for option dialogs. */
-	if (source_interface->add_setup_widgets_func) {
+	if (source_interface_->add_setup_widgets_func) {
 #ifdef K
-		gtk_widget_destroy(dialog);
-		dialog = NULL;
+		gtk_widget_destroy(setup_dialog);
+		setup_dialog = NULL;
 #endif
-	} else if (source_interface->params) {
+	} else if (source_interface_->params) {
 #ifdef K
-		a_uibuilder_free_paramdatas(paramdatas, source_interface->params, source_interface->params_count);
+		a_uibuilder_free_paramdatas(paramdatas, source_interface_->params, source_interface_->params_count);
 #endif
 	}
 
 	w_and_interface_t * wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
 	wi->acquiring = this;
-	wi->acquiring->source_interface = source_interface;
+	wi->acquiring->source_interface = source_interface_;
 	wi->po = po;
 	wi->dl_options = dl_options;
 	wi->trw = this->trw;
 	wi->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 #ifdef K
-	dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
-	gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
+	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	gtk_dialog_set_response_sensitive(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT, false);
+	gtk_window_set_title(GTK_WINDOW(setup_dialog), _(source_interface_->window_title));
 
-	this->dialog = dialog;
+	this->dialog = setup_dialog;
 	this->running = true;
 	QLabel * status = new QLabel(QObject::tr("Working..."));
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), status, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(setup_dialog))), status, false, false, 5);
+	gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
 	/* May not want to see the dialog at all. */
-	if (source_interface->is_thread || source_interface->keep_dialog_open) {
-		gtk_widget_show_all(dialog);
+	if (source_interface_->is_thread || source_interface_->keep_dialog_open) {
+		gtk_widget_show_all(setup_dialog);
 	}
 	this->status = status;
 #endif
 
-	if (source_interface->add_progress_widgets_func) {
-		source_interface->add_progress_widgets_func(dialog, this->user_data);
+	if (source_interface_->add_progress_widgets_func) {
+		source_interface_->add_progress_widgets_func(setup_dialog, this->user_data);
 	}
 
 
@@ -461,18 +461,18 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(this->viewport->get_coord_mode());
-		wi->trw->rename(_(source_interface->layer_title));
+		wi->trw->rename(_(source_interface_->layer_title));
 	}
 
 #ifdef K
-	if (source_interface->is_thread) {
+	if (source_interface_->is_thread) {
 		if (po->babelargs || po->url || po->shell_command) {
 #if GLIB_CHECK_VERSION (2, 32, 0)
 			g_thread_try_new("get_from_anything", (GThreadFunc)get_from_anything, wi, NULL);
 #else
 			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
 #endif
-			gtk_dialog_run(GTK_DIALOG(dialog));
+			gtk_dialog_run(GTK_DIALOG(setup_dialog));
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */
 				this->running = false;
@@ -495,13 +495,13 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		} else {
 			/* This shouldn't happen... */
 			this->status.setText(QObject::tr("Unable to create command\nAcquire method failed."));
-			gtk_dialog_run(GTK_DIALOG (dialog));
+			gtk_dialog_run(GTK_DIALOG (setup_dialog));
 		}
 	} else {
 #endif
 		/* Bypass thread method malarkly - you'll just have to wait... */
-		if (source_interface->process_func) {
-			bool success = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, dl_options);
+		if (source_interface_->process_func) {
+			bool success = source_interface_->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, dl_options);
 			if (!success) {
 				dialog_error(QString(_("Error: acquisition failed.")), this->window);
 			}
@@ -512,8 +512,8 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		on_complete_process(wi);
 #ifdef K
 		/* Actually show it if necessary. */
-		if (wi->this->source_interface->keep_dialog_open) {
-			gtk_dialog_run(GTK_DIALOG(dialog));
+		if (wi->this->source_interface_->keep_dialog_open) {
+			gtk_dialog_run(GTK_DIALOG(setup_dialog));
 		}
 #endif
 
@@ -524,10 +524,10 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 #ifdef K
-	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(setup_dialog);
 
 	if (cleanup_function) {
-		cleanup_function(source_interface);
+		cleanup_function(source_interface_);
 	}
 #endif
 }

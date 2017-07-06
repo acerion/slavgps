@@ -1476,7 +1476,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 			break;
 		default:
 			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 		}
 
 		this->draw_horizontal_grid(viewport, s, i);
@@ -1737,7 +1737,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 			break;
 		default:
 			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
+			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", (int) speed_units);
 		}
 
 		this->draw_horizontal_grid(viewport, s, i);
@@ -1948,7 +1948,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 			break;
 		default:
 			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 		}
 
 		this->draw_horizontal_grid(viewport, s, i);
@@ -2082,7 +2082,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 			break;
 		default:
 			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
+			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", (int) speed_units);
 		}
 
 		this->draw_horizontal_grid(viewport, s, i);

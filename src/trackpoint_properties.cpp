@@ -299,7 +299,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		break;
 	default:
 		this->alt->setValue(tp->altitude);
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 	}
 
 	this->update_times(tp);
@@ -319,7 +319,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", Coord::distance(tp->coord, this->cur_tp->coord) * 1.0936133);
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 		}
 
 		this->diff_dist->setText(QString(tmp_str));
@@ -367,7 +367,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		this->pdop->setText(QString(tmp_str));
 		break;
 	default: /* kamilTODO: where NM are handled? */
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 	}
 
 	switch (height_units) {
@@ -379,7 +379,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		break;
 	default:
 		snprintf(tmp_str, sizeof (tmp_str), "--");
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 	}
 	this->vdop->setText(QString(tmp_str));
 

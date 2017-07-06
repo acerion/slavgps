@@ -397,6 +397,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 	if (ret != 0) {
 		fprintf(stderr, _("CRITICAL: failed to unlink temporary file: %s\n"), strerror(errno));
 	}
+	return ret;
 }
 
 

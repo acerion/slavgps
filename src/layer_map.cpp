@@ -1000,11 +1000,13 @@ static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double ysh
 {
 	int width = pixmap->width();
 	int height = pixmap->height();
+
+	QPixmap * tmp = NULL;
 #ifdef K
-	QPixmap * tmp = pixmap->scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	tmp = pixmap->scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	g_object_unref(G_OBJECT(pixmap));
-	return tmp;
 #endif
+	return tmp;
 }
 
 

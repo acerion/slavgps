@@ -307,7 +307,7 @@ bool a_settings_get_integer_list_contains(const char * name, int val)
 	/* Get current list. */
 	if (a_settings_get_integer_list(name, &vals, &length)) {
 		/* See if it's not already there. */
-		int ii = 0;
+		size_t ii = 0;
 		if (vals && length) {
 			while (ii < length) {
 				if (vals[ii] == val) {
@@ -336,7 +336,7 @@ void a_settings_set_integer_list_containing(const char * name, int val)
 	if (a_settings_get_integer_list(name, &vals, &length)) {
 		/* See if it's not already there. */
 		if (vals) {
-			int ii = 0;
+			size_t ii = 0;
 			while (ii < length) {
 				if (vals[ii] == val) {
 					need_to_add = false;
@@ -352,7 +352,7 @@ void a_settings_set_integer_list_containing(const char * name, int val)
 		unsigned int new_length = length + 1;
 		int new_vals[new_length];
 		/* Copy array. */
-		for (int ii = 0; ii < length; ii++) {
+		for (unsigned int ii = 0; ii < length; ii++) {
 			new_vals[ii] = vals[ii];
 		}
 		new_vals[length] = val; /* Set the new value. */

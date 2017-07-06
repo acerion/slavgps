@@ -191,13 +191,13 @@ static void set_copyright(MapnikInterface * mi)
  */
 char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char * filename, unsigned int width, unsigned int height)
 {
-#ifdef K
 	char * msg = NULL;
 	if (!mi) {
 		return strdup("Internal Error");
 	}
 
 	try {
+#ifdef K
 		mi->myMap->remove_all(); /* Support reloading. */
 		mapnik::load_map(*mi->myMap, filename);
 
@@ -216,7 +216,7 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 
 			mi->myMap->set_buffer_size(buffer_size);
 		}
-
+#endif
 		set_copyright(mi);
 
 		g_debug("%s layers: %d", __FUNCTION__, (unsigned int) mi->myMap->layer_count());
@@ -226,7 +226,6 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 		msg = strdup("unknown error");
 	}
 	return msg;
-#endif
 }
 
 
@@ -237,15 +236,13 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
  */
 QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
-#ifdef K
 	if (!mi) {
 		return NULL;
 	}
 
-	/* Copy main object to local map variable.
-	   This enables rendering to work when this function is called from different threads. */
-	mapnik::Map myMap(*mi->myMap);
+	QPixmap * pixmap = NULL;
 
+#ifdef K
 	/* Note prj & bbox want stuff in lon,lat order! */
 	double p0x = lon_tl;
 	double p0y = lat_tl;
@@ -256,7 +253,10 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 	prj.forward(p0x, p0y);
 	prj.forward(p1x, p1y);
 
-	QPixmap *pixmap = NULL;
+	/* Copy main object to local map variable.
+	   This enables rendering to work when this function is called from different threads. */
+	mapnik::Map myMap(*mi->myMap);
+
 	try {
 		unsigned width  = myMap.width();
 		unsigned height = myMap.height();
@@ -285,9 +285,8 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 	} catch (...) {
 		g_warning("An unknown error occurred while rendering");
 	}
-
-	return pixmap;
 #endif
+	return pixmap;
 }
 
 
@@ -314,11 +313,10 @@ char * SlavGPS::mapnik_interface_get_copyright(MapnikInterface * mi)
  *
  * Free every string element and the returned GArray itself after use.
  */
-GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
+QStringList * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 {
+	QStringList * parameters = new QStringList;
 #ifdef K
-	GArray * array = g_array_new(FALSE, TRUE, sizeof (char *));
-
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 	/* Simply want the strings of each parameter so we can display something... */
 #if MAPNIK_VERSION < 300000
@@ -331,12 +329,11 @@ GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 		ss << pmt.first << ": " << *(pmts.get<std::string>(pmt.first,"empty"));
 #endif
 		/* Copy - otherwise ss goes output scope and junk memory would be referenced. */
-		char * str2 = g_strdup((char *)ss.str().c_str());
-		g_array_append_val(array, str2);
+		QString param = QString(ss.str().c_str());
+		parameters.push_back(param);
 	}
-
-	return array;
 #endif
+	return parameters;
 }
 
 
@@ -349,6 +346,7 @@ GArray * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
  */
 char * SlavGPS::mapnik_interface_about(void)
 {
+	char * msg = NULL;
 #ifdef K
 	/* Normally about 10 plugins so list them all. */
 #if MAPNIK_VERSION >= 200200
@@ -363,11 +361,11 @@ char * SlavGPS::mapnik_interface_about(void)
 	str += '\n';
 	/* NB Can have a couple hundred fonts loaded when using system directories.
 	   So ATM don't list them all - otherwise need better GUI feedback display. */
-	char * msg = g_strdup_printf(_("%s %s\nPlugins=%sFonts loaded=%d"),
-				     _("Mapnik"),
-				     MAPNIK_VERSION_STRING,
-				     str.c_str(),
-				     (unsigned int) mapnik::freetype_engine::face_names().size());
-	return msg;
+	msg = g_strdup_printf(_("%s %s\nPlugins=%sFonts loaded=%d"),
+			      _("Mapnik"),
+			      MAPNIK_VERSION_STRING,
+			      str.c_str(),
+			      (unsigned int) mapnik::freetype_engine::face_names().size());
 #endif
+	return msg;
 }

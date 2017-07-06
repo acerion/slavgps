@@ -55,13 +55,7 @@ Parameter bfilter_simplify_params[] = {
 };
 
 ParameterValue bfilter_simplify_params_defaults[] = {
-	/* Annoyingly 'C' cannot initialize unions properly. */
-	/* It's dependent on the standard used or the compiler support... */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
-	{ .u = 100 },
-#else
-	{ 100 },
-#endif
+	ParameterValue((unsigned int) 100),
 };
 
 
@@ -148,13 +142,7 @@ Parameter bfilter_compress_params[] = {
 };
 
 ParameterValue bfilter_compress_params_defaults[] = {
-	/* Annoyingly 'C' cannot initialize unions properly. */
-	/* It's dependent on the standard used or the compiler support... */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
-	{ .d = 0.001 },
-#else
-	{ 0.001 },
-#endif
+	ParameterValue((double) 0.001),
 };
 
 
@@ -288,7 +276,7 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 
 
 ParameterValue bfilter_manual_params_defaults[] = {
-	{ .s = (char *) NULL },
+	ParameterValue((char *) NULL),
 };
 
 Parameter bfilter_manual_params[] = {

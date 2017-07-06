@@ -295,7 +295,7 @@ void a_coords_latlon_to_string ( const struct LatLon *latlon,
     *lon = g_strdup_printf ( "%.6f", latlon->lon );
     break;
   default:
-    fprintf(stderr, "CRITICAL: Houston, we've had a problem. format=%d\n", format);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. format=%d\n", (int) format);
   }
 #else
   *lat = convert_lat_dec_to_ddd ( latlon->lat );

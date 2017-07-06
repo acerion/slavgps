@@ -648,6 +648,8 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 
+	bool result = false;
+
 	char *user_pass = osm_get_login();
 
 	/* Support .zip + bzip2 files directly. */
@@ -790,7 +792,6 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		layer_last->emit_changed();
 	}
 
-	bool result = false;
 	/* ATM The user is only informed if all getting *all* of the traces failed. */
 	if (selected) {
 		result = got_something;
@@ -802,9 +803,8 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	if (!vik_datasource_osm_my_traces_interface.is_thread) {
 		acquiring->window->clear_busy_cursor();
 	}
-
-	return result;
 #endif
+	return result;
 }
 
 static void datasource_osm_my_traces_cleanup(void * data)

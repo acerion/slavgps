@@ -343,8 +343,8 @@ void LayerGeoref::draw(Viewport * viewport)
 		int layer_width = this->width;
 		int layer_height = this->height;
 
-		unsigned int width_ = viewport->get_width();
-		unsigned int height_ = viewport->get_height();
+		const int width_ = viewport->get_width();
+		const int height_ = viewport->get_height();
 		int x, y;
 		Coord corner_coord(this->corner, viewport->get_coord_mode());
 		viewport->coord_to_screen(&corner_coord, &x, &y);
@@ -455,7 +455,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 
 
-void LayerGeoref::set_image(char const * image)
+void LayerGeoref::set_image(char const * image_)
 {
 	if (this->image) {
 		free(this->image);
@@ -467,14 +467,14 @@ void LayerGeoref::set_image(char const * image)
 #endif
 		this->scaled = NULL;
 	}
-	if (image == NULL) {
+	if (image_ == NULL) {
 		this->image = NULL;
 	}
 
-	if (strcmp(image, "") != 0) {
-		this->image = vu_get_canonical_filename(this, image);
+	if (strcmp(image_, "") != 0) {
+		this->image = vu_get_canonical_filename(this, image_);
 	} else {
-		this->image = g_strdup(image);
+		this->image = g_strdup(image_);
 	}
 }
 
@@ -659,10 +659,10 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 
 struct LatLon LayerGeoref::get_ll_tl()
 {
-	struct LatLon ll_tl;
-	ll_tl.lat = this->cw.lat_tl_spin.value();
-	ll_tl.lon = this->cw.lon_tl_spin.value();
-	return ll_tl;
+	struct LatLon ll_result;
+	ll_result.lat = this->cw.lat_tl_spin.value();
+	ll_result.lon = this->cw.lon_tl_spin.value();
+	return ll_result;
 }
 
 
@@ -670,10 +670,10 @@ struct LatLon LayerGeoref::get_ll_tl()
 
 struct LatLon LayerGeoref::get_ll_br()
 {
-	struct LatLon ll_br;
-	ll_br.lat = this->cw.lat_br_spin.value();
-	ll_br.lon = this->cw.lon_br_spin.value();
-	return ll_br;
+	struct LatLon ll_result;
+	ll_result.lat = this->cw.lat_br_spin.value();
+	ll_result.lon = this->cw.lon_br_spin.value();
+	return ll_result;
 }
 
 
@@ -782,28 +782,25 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		return;
 	}
 
-	QPixmap * pixmap = new QPixmap();
-	if (!pixmap->load(filename)) {
-		delete pixmap;
-		pixmap = NULL;
+	QPixmap * img_pixmap = new QPixmap();
+	if (!img_pixmap->load(filename)) {
+		delete img_pixmap;
+		img_pixmap = NULL;
 
-		dialog_error(QString("Couldn't open image file %1").arg(QString(filename)), this->get_window());
+		dialog_error(QString("Couldn't open image file %1").arg(filename), this->get_window());
 		return;
 	}
 
-	int width = pixmap->width();
-	int height = pixmap->height();
+	const int img_width = img_pixmap->width();
+	const int img_height = img_pixmap->height();
 
-	if (width == 0 || height == 0) {
-		dialog_error(QString("Invalid image size: %1").arg(QString(filename)), this->get_window());
+	if (img_width == 0 || img_height == 0) {
+		dialog_error(QString("Invalid image size: %1").arg(filename), this->get_window());
 	} else {
 		this->align_coords();
 
-		struct LatLon ll_tl = this->get_ll_tl();
-		struct LatLon ll_br = this->get_ll_br();
-
 		double xmpp, ympp;
-		georef_layer_mpp_from_coords(CoordMode::LATLON, ll_tl, ll_br, width, height, &xmpp, &ympp);
+		georef_layer_mpp_from_coords(CoordMode::LATLON, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
 
 		this->cw.x_spin->setValue(xmpp);
 		this->cw.y_spin->setValue(ympp);
@@ -811,7 +808,7 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		this->check_br_is_good_or_msg_user();
 	}
 #ifdef K
-	g_object_unref(G_OBJECT(pixmap));
+	g_object_unref(G_OBJECT(img_pixmap));
 #endif
 }
 
@@ -1047,8 +1044,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 		return true;
 	}
 	gtk_widget_destroy (GTK_WIDGET(dialog));
-	return false;
 #endif
+	return false;
 }
 
 

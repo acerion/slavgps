@@ -156,7 +156,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		return false;
 	}
 
-	if (!ev->button() == Qt::LeftButton) {
+	if (ev->button() != Qt::LeftButton) {
 		return false;
 	}
 
