@@ -152,19 +152,6 @@ QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool 
 
 
 
-#if 0
-static void today_clicked(GtkWidget *cal)
-{
-	GDateTime *now = g_date_time_new_now_local();
-	gtk_calendar_select_month(GTK_CALENDAR(cal), g_date_time_get_month(now)-1, g_date_time_get_year(now));
-	gtk_calendar_select_day(GTK_CALENDAR(cal), g_date_time_get_day_of_month(now));
-	g_date_time_unref(now);
-}
-#endif
-
-
-
-
 /**
  * Returns: a date as a string - always in ISO8601 format (YYYY-MM-DD).
  * This string can be NULL (especially when the dialog is cancelled).
@@ -198,85 +185,103 @@ bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const &
 
 
 
-#ifdef K
-static void zoom_spin_changed(QSpinBox * spin, GtkWidget * pass_along[3])
-{
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pass_along[2])))
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pass_along[GTK_WIDGET(spin) == pass_along[0] ? 1 : 0]),
-					  spin.value());
-}
-#endif
-
-
-
 bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Zoom Factors..."),
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *table, *samecheck;
-	GtkWidget *pass_along[3];
-	QSpinBox * xspin = NULL;
-	QSpinBox * yxpin = NULL;
-
-	table = gtk_table_new(4, 2, false);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
-
-	QLabel * label = new QLabel(QObject::tr("Zoom factor (in meters per pixel):"));
-	QLabel * xlabel = new QLabel(QObject::tr("X (easting): "));
-	QLabel * ylabel = new QLabel(QObject::tr("Y (northing): "));
-
-	pass_along[0] = xspin = new QSpinBox();
-	xspin->setValue(*xmpp);
-	xspin->setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	xspin->setMaximum(VIK_VIEWPORT_MAX_ZOOM);
-	xspin->setSingleStep(1);
-
-	pass_along[1] = yspin = new QSpinBox();
-	yspin->setValue(*ympp);
-	yspin->setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	yspin->setMaximum(VIK_VIEWPORT_MAX_ZOOM);
-	yspin->setSingleStep(1);
-
-
-	pass_along[2] = samecheck = gtk_check_button_new_with_label(_("X and Y zoom factors must be equal"));
-	/* TODO -- same factor. */
-	/* samecheck = gtk_check_button_new_with_label ("Same x/y zoom factor"); */
-
-	if (*xmpp == *ympp) {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(samecheck), true);
-	}
-
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
-	gtk_table_attach_defaults(GTK_TABLE(table), xlabel, 0, 1, 1, 2);
-	gtk_table_attach_defaults(GTK_TABLE(table), xspin, 1, 2, 1, 2);
-	gtk_table_attach_defaults(GTK_TABLE(table), ylabel, 0, 1, 2, 3);
-	gtk_table_attach_defaults(GTK_TABLE(table), yspin, 1, 2, 2, 3);
-	gtk_table_attach_defaults(GTK_TABLE(table), samecheck, 0, 2, 3, 4);
-
-	gtk_widget_show_all(table);
-
-	QObject::connect(xspin, SIGNAL("value-changed"), pass_along, SLOT (zoom_spin_changed));
-	QObject::connect(yspin, SIGNAL("value-changed"), pass_along, SLOT (zoom_spin_changed));
-
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*xmpp = xspin.value();
-		*ympp = yspin.value();
-		gtk_widget_destroy(dialog);
+	ViewportZoomDialog dialog(xmpp, ympp, parent);
+	if (QMessageBox::Ok == dialog.exec()) {
+		dialog.save(xmpp, ympp);
 		return true;
+	} else {
+		return false;
 	}
-	gtk_widget_destroy(dialog);
-#endif
-	return false;
 }
+
+
+
+
+ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * parent)
+{
+	this->setWindowTitle(QObject::tr("Zoom Factors..."));
+
+
+	this->vbox = new QVBoxLayout();
+
+
+	this->main_label.setText(QObject::tr("Zoom factor (in meters per pixel):"));
+	this->xlabel.setText(QObject::tr("X (easting): "));
+	this->ylabel.setText(QObject::tr("Y (northing): "));
+
+
+	this->xspin.setValue(*xmpp);
+	this->xspin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
+	this->xspin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	this->xspin.setSingleStep(1);
+	this->xspin.setDecimals(8);
+
+
+	this->yspin.setValue(*ympp);
+	this->yspin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
+	this->yspin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	this->yspin.setSingleStep(1);
+	this->yspin.setDecimals(8);
+
+
+	this->grid = new QGridLayout();
+	this->grid->addWidget(&this->xlabel, 0, 0);
+	this->grid->addWidget(&this->xspin, 0, 1);
+	this->grid->addWidget(&this->ylabel, 1, 0);
+	this->grid->addWidget(&this->yspin, 1, 1);
+
+
+	this->checkbox.setText(QObject::tr("X and Y zoom factors must be equal"));
+	if (*xmpp == *ympp) {
+		this->checkbox.setChecked(true);
+	}
+
+
+	this->vbox->addWidget(&this->main_label);
+	this->vbox->addLayout(this->grid);
+	this->vbox->addWidget(&this->checkbox);
+	this->vbox->addWidget(&this->button_box);
+
+	QObject::connect(&this->xspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
+	QObject::connect(&this->yspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
+
+
+	this->button_box.addButton(QDialogButtonBox::Ok);
+	this->button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
+}
+
+
+
+
+void ViewportZoomDialog::save(double * xmpp, double * ympp)
+{
+	*xmpp = this->xspin.value();
+	*ympp = this->yspin.value();
+}
+
+
+
+
+void ViewportZoomDialog::spin_changed_cb(double new_value)
+{
+	if (this->checkbox.isChecked()) {
+		if (new_value == this->xspin.value()) {
+			this->yspin.setValue(new_value);
+		} else {
+			this->xspin.setValue(new_value);
+		}
+	}
+}
+
 
 
 

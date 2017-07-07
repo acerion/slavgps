@@ -31,6 +31,8 @@
 #include <QTableView>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
+#include <QGridLayout>
+#include <QCheckBox>
 
 #include "globals.h"
 #include "coords.h"
@@ -108,6 +110,37 @@ std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> co
 
 
 void a_dialog_license(const char * map, const char * license, const char * url, QWidget * parent);
+
+
+
+
+class ViewportZoomDialog : public QDialog {
+	Q_OBJECT
+public:
+	ViewportZoomDialog() {};
+	ViewportZoomDialog(double * xmpp, double * ympp, QWidget * a_parent = NULL);
+	~ViewportZoomDialog() {};
+
+	void save(double * xmpp, double * ympp);
+
+private slots:
+	void spin_changed_cb(double new_value);
+
+private:
+	QDialogButtonBox button_box;
+	QVBoxLayout * vbox = NULL;
+
+	QLabel main_label;
+	QLabel xlabel;
+	QLabel ylabel;
+
+	QDoubleSpinBox xspin;
+	QDoubleSpinBox yspin;
+
+	QGridLayout * grid = NULL;
+
+	QCheckBox checkbox;
+};
 
 
 
