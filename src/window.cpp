@@ -1697,13 +1697,12 @@ void Window::zoom_to_cb(void)
 {
 	double xmpp = this->viewport->get_xmpp();
 	double ympp = this->viewport->get_ympp();
-#ifdef K
-	if (a_dialog_custom_zoom(window, &xmpp, &ympp)) {
-		window->viewport->set_xmpp(xmpp);
-		window->viewport->set_ympp(ympp);
-		window->draw_update();
+
+	if (a_dialog_custom_zoom(&xmpp, &ympp, this)) {
+		this->viewport->set_xmpp(xmpp);
+		this->viewport->set_ympp(ympp);
+		this->draw_update();
 	}
-#endif
 }
 
 

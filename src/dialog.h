@@ -47,14 +47,7 @@ bool dialog_yes_or_no(QString const & message, QWidget * parent = NULL, QString 
 
 QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route);
 
-
-
-
-#if 0
-
-void a_dialog_list(SlavGPS::Window * parent, const char * title, GArray * array, int padding);
-
-#endif
+void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent = NULL);
 
 void a_dialog_about(SlavGPS::Window * parent);
 
@@ -62,11 +55,9 @@ void a_dialog_about(SlavGPS::Window * parent);
 
 /* Okay, everthing below here is an architechtural flaw. */
 
-char * a_dialog_get_date(SlavGPS::Window * parent, char const * title);
-#ifdef K
-bool a_dialog_custom_zoom(SlavGPS::Window * parent, double * xmpp, double * ympp);
-bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_text, unsigned int * thr);
-#endif
+char * a_dialog_get_date(const QString & title, QWidget * parent = NULL);
+bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent);
+bool a_dialog_time_threshold(const QString & title, const QString & label, unsigned int * thr, QWidget * parent);
 
 int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
@@ -116,7 +107,7 @@ std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> co
 
 
 
-void a_dialog_license(SlavGPS::Window * parent, const char * map, const char * license, const char * url);
+void a_dialog_license(const char * map, const char * license, const char * url, QWidget * parent);
 
 
 

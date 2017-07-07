@@ -62,7 +62,7 @@ WebTool::~WebTool()
 void WebTool::open(Window * window)
 {
 	char * url = this->get_url(window);
-	open_url(window, url);
+	open_url(url, window);
 	free(url);
 }
 
@@ -74,7 +74,7 @@ void WebTool::open_at_position(Window * window, const Coord * coord)
 {
 	char * url = this->get_url_at_position(window, coord);
 	if (url) {
-		open_url(window, url);
+		open_url(url, window);
 		free(url);
 	}
 }

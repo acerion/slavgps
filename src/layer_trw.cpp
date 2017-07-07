@@ -5928,7 +5928,7 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 		return;
 	}
 	char *webpage = g_strdup_printf("http://www.geocaching.com/seek/cache_details.aspx?wp=%s", wp->name);
-	open_url(this->get_window(), webpage);
+	open_url(webpage, this->get_window());
 	free(webpage);
 }
 
@@ -5943,11 +5943,11 @@ void LayerTRW::waypoint_webpage_cb(void)
 		return;
 	}
 	if (wp->url) {
-		open_url(this->get_window(), wp->url);
+		open_url(wp->url, this->get_window());
 	} else if (!strncmp(wp->comment, "http", 4)) {
-		open_url(this->get_window(), wp->comment);
+		open_url(wp->comment, this->get_window());
 	} else if (!strncmp(wp->description, "http", 4)) {
-		open_url(this->get_window(), wp->description);
+		open_url(wp->description, this->get_window());
 	}
 }
 
@@ -6110,7 +6110,7 @@ void LayerTRW::google_route_webpage_cb(void)
 	if (trk) {
 		char *escaped = uri_escape(trk->comment);
 		char *webpage = g_strdup_printf("http://maps.google.com/maps?f=q&hl=en&q=%s", escaped);
-		open_url(this->get_window(), webpage);
+		open_url(webpage, this->get_window());
 		free(escaped);
 		free(webpage);
 	}

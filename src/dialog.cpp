@@ -89,29 +89,6 @@ void dialog_error(QString const & message, QWidget * parent)
 
 
 
-#if 0
-
-
-
-
-static void get_selected_foreach_func(QStandardItemModel * model,
-                                      GtkTreePath *path,
-                                      GtkTreeIter *iter,
-                                      void * data)
-{
-	GList **list = (GList **) data;
-	char *name;
-	gtk_tree_model_get(model, iter, 0, &name, -1);
-	*list = g_list_prepend(*list, name);
-}
-
-
-
-
-#endif
-
-
-
 void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg)
 {
 	dialog.setWindowTitle(title);
@@ -174,10 +151,8 @@ QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool 
 
 
 
+
 #if 0
-
-
-
 static void today_clicked(GtkWidget *cal)
 {
 	GDateTime *now = g_date_time_new_now_local();
@@ -185,10 +160,9 @@ static void today_clicked(GtkWidget *cal)
 	gtk_calendar_select_day(GTK_CALENDAR(cal), g_date_time_get_day_of_month(now));
 	g_date_time_unref(now);
 }
-
-
-
 #endif
+
+
 
 
 /**
@@ -196,11 +170,9 @@ static void today_clicked(GtkWidget *cal)
  * This string can be NULL (especially when the dialog is cancelled).
  * Free the string after use.
  */
-char * a_dialog_get_date(Window * parent, char const * title)
+char * a_dialog_get_date(const QString & title, QWidget * parent)
 {
-	time_t mytime = date_dialog(parent,
-				    QString(title),
-				    time(NULL));
+	time_t mytime = date_dialog(parent, title, time(NULL));
 
 	if (!mytime) {
 		return NULL;
@@ -210,7 +182,7 @@ char * a_dialog_get_date(Window * parent, char const * title)
 	size_t size = strlen("YYYY-MM-DD") + 1;
 	char * date_str = (char *) malloc(size);
 	snprintf(date_str, size, "%04d-%02d-%02d", 1900 + out->tm_year, out->tm_mon + 1, out->tm_mday);
-	qDebug() << "II: Dialog:" << __FUNCTION__ << date_str;
+	qDebug() << "II: Dialog: get date:" << date_str;
 
 	return date_str;
 }
@@ -224,21 +196,22 @@ bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const &
 }
 
 
+
+
 #ifdef K
-
-
 static void zoom_spin_changed(QSpinBox * spin, GtkWidget * pass_along[3])
 {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pass_along[2])))
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pass_along[GTK_WIDGET(spin) == pass_along[0] ? 1 : 0]),
 					  spin.value());
 }
+#endif
 
 
 
-
-bool a_dialog_custom_zoom(Window * parent, double * xmpp, double * ympp)
+bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
 {
+#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Zoom Factors..."),
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -301,23 +274,26 @@ bool a_dialog_custom_zoom(Window * parent, double * xmpp, double * ympp)
 		return true;
 	}
 	gtk_widget_destroy(dialog);
+#endif
 	return false;
 }
 
 
 
-
+#ifdef K
 static void split_spin_focused(QSpinBox * spin, GtkWidget *pass_along[1])
 {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pass_along[0]), 1);
 }
+#endif
 
 
 
 
-bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_text, unsigned int * thr)
+bool a_dialog_time_threshold(const QString & title, const QString & label, unsigned int * thr, QWidget * parent)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title_text,
+#ifdef K
+	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							GTK_STOCK_CANCEL,
@@ -330,8 +306,6 @@ bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_te
 
 	table = gtk_table_new(4, 2, false);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
-
-	QLabel * label = new QLabel(label_text);
 
 	t1 = gtk_radio_button_new_with_label(NULL, _("1 min"));
 	t2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(t1), _("1 hour"));
@@ -374,11 +348,11 @@ bool a_dialog_time_threshold(Window * parent, char * title_text, char * label_te
 		return true;
 	}
 	gtk_widget_destroy(dialog);
+#endif
 	return false;
 }
 
 
-#endif
 
 
 /**
@@ -395,13 +369,10 @@ int a_dialog_get_positive_number(Window * parent, QString const & title, QString
 }
 
 
+
+
 #ifdef K
-
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24)
-static void about_url_hook(GtkAboutDialog *about,
-			   const char    *link,
-			   void *        data)
+static void about_url_hook(GtkAboutDialog * about, const char * link, void * data)
 {
 	open_url(GTK_WINDOW(about), link);
 }
@@ -409,9 +380,7 @@ static void about_url_hook(GtkAboutDialog *about,
 
 
 
-static void about_email_hook(GtkAboutDialog *about,
-			     const char    *email,
-			     void *        data)
+static void about_email_hook(GtkAboutDialog *about, const char * email,  void * data)
 {
 	new_email(GTK_WINDOW(about), email);
 }
@@ -421,34 +390,30 @@ static void about_email_hook(GtkAboutDialog *about,
 
 
 /**
- * Creates a dialog with list of text.
- * Mostly useful for longer messages that have several lines of information.
- */
-void a_dialog_list(Window * parent, const char * title, GArray * array, int padding)
+   Creates a dialog with list of text.
+   Mostly useful for longer messages that have several lines of information.
+*/
+void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CLOSE,
-							GTK_RESPONSE_CLOSE,
-							NULL);
+	QMessageBox box(parent);
+	//box.setTitle(title);
+	box.setIcon(QMessageBox::Information);
 
-	GtkBox *vbox = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	GtkWidget *label;
+	QVBoxLayout vbox;
+	QLayout * old = box.layout();
+	delete old;
+	box.setLayout(&vbox);
 
-	for (unsigned int i = 0; i < array->len; i++) {
-		label = ui_label_new_selectable(NULL);
-		gtk_label_set_markup(GTK_LABEL(label), g_array_index(array,char*,i));
-		gtk_box_pack_start(GTK_BOX(vbox), label, false, true, padding);
+	for (int i = 0; i < items.size(); i++) {
+		QLabel * label = ui_label_new_selectable(items.at(i), &box);
+		vbox.addWidget(label);
+		// gtk_box_pack_start(GTK_BOX(vbox), label, false, true, padding);
 	}
 
-	gtk_widget_show_all(dialog);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
+	box.exec();
 }
 
 
-#endif
 
 
 void a_dialog_about(SlavGPS::Window * parent)
@@ -528,10 +493,8 @@ void a_dialog_about(SlavGPS::Window * parent)
 	};
 	/* Newer versions of GTK 'just work', calling gtk_show_uri() on the URL or email and opens up the appropriate program.
 	   This is the old method: */
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24)
 	gtk_about_dialog_set_url_hook(about_url_hook, NULL, NULL);
 	gtk_about_dialog_set_email_hook(about_email_hook, NULL, NULL);
-#endif
 
 	gtk_show_about_dialog(parent,
 			      /* TODO do not set program-name and correctly set info for g_get_application_name. */
@@ -613,29 +576,28 @@ bool a_dialog_map_n_zoom(Window * parent, char * mapnames[], int default_map, ch
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void a_dialog_license(Window * parent, const char * map, const char * license, const char * url)
+void a_dialog_license(const char * map, const char * license, const char * url, QWidget * parent)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_message_dialog_new(parent,
-						   GTK_DIALOG_DESTROY_WITH_PARENT,
-						   GTK_MESSAGE_INFO,
-						   GTK_BUTTONS_OK,
-						   _("The map data is licensed: %s."),
-						   license);
-	gtk_message_dialog_format_secondary_markup(GTK_MESSAGE_DIALOG (dialog),
-						   _("The data provided by '<b>%s</b>' are licensed under the following license: <b>%s</b>."),
-						   map, license);
-#define RESPONSE_OPEN_LICENSE 600
+	const QString primary_text = QString(QObject::tr("The map data is licensed: %1.")).arg(license);
+	const QString secondary_text = QString(QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>."))
+		.arg(map)
+		.arg(license);
+
+	QMessageBox box;
+	box.setText(primary_text);
+	box.setInformativeText(secondary_text);
+	box.setStandardButtons(QMessageBox::Ok);
+
 	if (url != NULL) {
-		gtk_dialog_add_button(GTK_DIALOG (dialog), _("Open license"), RESPONSE_OPEN_LICENSE);
+		box.addButton(QObject::tr("Open license"), QMessageBox::HelpRole);
 	}
 	int response;
 	do {
-		response = gtk_dialog_run(GTK_DIALOG (dialog));
-		if (response == RESPONSE_OPEN_LICENSE) {
-			open_url(parent, url);
-		}
-	} while (response != GTK_RESPONSE_DELETE_EVENT && response != GTK_RESPONSE_OK);
-	gtk_widget_destroy(dialog);
+		response = box.exec();
+		if (response == QMessageBox::Help) {
+#ifdef K
+			open_url(url, parent);
 #endif
+		}
+	} while (response != QMessageBox::Cancel && response != QMessageBox::Ok);
 }

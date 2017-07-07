@@ -661,10 +661,7 @@ static unsigned int map_type_to_map_index(MapTypeID map_type)
  */
 static void maps_show_license(Window * parent, MapSource * map)
 {
-	a_dialog_license(parent,
-			 map->get_label(),
-			 map->get_license(),
-			 map->get_license_url());
+	a_dialog_license(map->get_label(), map->get_license(), map->get_license_url(), parent);
 }
 
 
@@ -1971,10 +1968,6 @@ void LayerMap::redownload_new_cb(void)
 
 
 
-#if !GLIB_CHECK_VERSION(2,26,0)
-typedef struct stat GStatBuf;
-#endif
-
 /**
  * Display a simple dialog with information about this particular map tile
  */
@@ -1990,12 +1983,12 @@ void LayerMap::tile_info_cb(void)
 		return;
 	}
 
-	char *filename_ = NULL;
+	char * tile_filename = NULL;
 	char *source = NULL;
 
 	if (map->is_direct_file_access()) {
 		if (map->is_mbtiles()) {
-			filename_ = g_strdup(this->filename);
+			tile_filename = g_strdup(this->filename);
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
 			char *exists = NULL;
@@ -2014,7 +2007,7 @@ void LayerMap::tile_info_cb(void)
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
 			/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
-			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename_, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
+			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", tile_filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
 			free(exists);
 #else
 			source = strdup(_("Source: Not available"));
@@ -2023,61 +2016,61 @@ void LayerMap::tile_info_cb(void)
 			char path[PATH_MAX];
 			xyz_to_meta(path, sizeof (path), this->cache_dir, ulm.x, ulm.y, 17-ulm.scale);
 			source = g_strdup(path);
-			filename_ = g_strdup(path);
+			tile_filename = g_strdup(path);
 		} else {
 			unsigned int max_path_len = strlen(this->cache_dir) + 40;
-			filename_ = (char *) malloc(max_path_len * sizeof(char));
+			tile_filename = (char *) malloc(max_path_len * sizeof(char));
 			get_cache_filename(this->cache_dir, MapsCacheLayout::OSM,
 				     map->map_type,
 				     NULL,
-				     &ulm, filename_, max_path_len,
+				     &ulm, tile_filename, max_path_len,
 				     map->get_file_extension());
-			source = g_strconcat("Source: file://", filename_, NULL);
+			source = g_strconcat("Source: file://", tile_filename, NULL);
 		}
 	} else {
 		unsigned int max_path_len = strlen(this->cache_dir) + 40;
-		filename_ = (char *) malloc(max_path_len * sizeof(char));
+		tile_filename = (char *) malloc(max_path_len * sizeof(char));
 		get_cache_filename(this->cache_dir, this->cache_layout,
 			     map->map_type,
 			     map->get_name(),
-			     &ulm, filename_, max_path_len,
+			     &ulm, tile_filename, max_path_len,
 			     map->get_file_extension());
 		const QString src = QString("Source: http://%1%2").arg(map->get_server_hostname()).arg(map->get_server_path(&ulm));
 		source = strdup(src.toUtf8().constData());
 	}
 
-	GArray *array = g_array_new(false, true, sizeof(char*));
-	g_array_append_val(array, source);
+	QStringList items;
+	items.push_back(QString(source));
 
-	char *filemsg = NULL;
-	char *timemsg = NULL;
+	/* kamilTODO: you have very similar code in LayerMapnik::tile_info. */
 
-	if (0 == access(filename_, F_OK)) {
-		filemsg = g_strconcat("Tile File: ", filename_, NULL);
+	QString file_message;
+	QString time_message;
+
+	if (0 == access(tile_filename, F_OK)) {
+		file_message = QString(tr("Tile File: %1")).arg(tile_filename);
 		/* Get some timestamp information of the tile. */
 		struct stat stat_buf;
-		if (stat(filename_, &stat_buf) == 0) {
+		if (stat(tile_filename, &stat_buf) == 0) {
 			char time_buf[64];
-			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
+			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
+			time_message = QString(tr("Tile File Timestamp: %1")).arg(time_buf);
 		} else {
-			timemsg = strdup(_("Tile File Timestamp: Not Available"));
+			time_message = QString(tr("Tile File Timestamp: Not Available"));
 		}
-		g_array_append_val(array, filemsg);
-		g_array_append_val(array, timemsg);
-	} else {
-		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename_);
-		g_array_append_val(array, filemsg);
-	}
-#ifdef K
-	a_dialog_list(this->get_window(), _("Tile Information"), array, 5);
-	g_array_free(array, false);
-#endif
 
-	free(timemsg);
-	free(filemsg);
+	} else {
+		file_message = QString(tr("Tile File: %1 [Not Available]")).arg(tile_filename);
+		time_message = QString("");
+	}
+
+	items.push_back(file_message);
+	items.push_back(time_message);
+
+	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
+
 	free(source);
-	free(filename_);
+	free(tile_filename);
 }
 
 

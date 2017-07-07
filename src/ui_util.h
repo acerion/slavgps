@@ -35,7 +35,7 @@
 
 
 
-void open_url(SlavGPS::Window * parent, const char * url);
+void open_url(const char * url, SlavGPS::Window * parent);
 void new_email(SlavGPS::Window * parent, const char * address);
 
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);

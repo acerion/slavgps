@@ -453,7 +453,7 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
  */
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-	char * date_str = a_dialog_get_date(this->get_window(), _("Search by Date"));
+	char * date_str = a_dialog_get_date(tr("Search by Date"), this->get_window());
 	if (!date_str) {
 		return;
 	}

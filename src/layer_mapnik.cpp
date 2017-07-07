@@ -991,9 +991,7 @@ static void mapnik_layer_information(menu_array_values * values)
 	}
 	QStringList * params = mapnik_interface_get_parameters(lmk->mi);
 	if (params->size()) {
-#ifdef K
-		a_dialog_list(lmk->get_window(), _("Mapnik Information"), params, 1);
-#endif
+		a_dialog_list(QObject::tr("Mapnik Information"), *params, 1, lmk->get_window());
 	}
 	delete params;
 }
@@ -1104,45 +1102,43 @@ void LayerMapnik::tile_info()
 
 	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 
-	char *filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
-	char *filemsg = NULL;
-	char *timemsg = NULL;
-#ifdef K
-	if (0 == access(filename, F_OK)) {
-		filemsg = g_strconcat("Tile File: ", filename, NULL);
+	char * tile_filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
+
+	QStringList items;
+
+	/* kamilTODO: you have very similar code in LayerMap::tile_info. */
+
+	QString file_message;
+	QString time_message;
+
+	if (0 == access(tile_filename, F_OK)) {
+		file_message = QString(tr("Tile File: %1")).arg(tile_filename);
 		/* Get some timestamp information of the tile. */
 		struct stat stat_buf;
-		if (stat(filename, &stat_buf) == 0) {
+		if (stat(tile_filename, &stat_buf) == 0) {
 			char time_buf[64];
-			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
+			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
+			time_message = QString(tr("Tile File Timestamp: %1")).arg(time_buf);
 		} else {
-			timemsg = strdup(_("Tile File Timestamp: Not Available"));
+			time_message = QString(tr("Tile File Timestamp: Not Available"));
 		}
 	} else {
-		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename);
-		timemsg = strdup("");
+		file_message = QString(tr("Tile File: %1 [Not Available]")).arg(tile_filename);
+		time_message = QString("");
 	}
 
-	GArray *array = g_array_new(false, true, sizeof(char*));
-	g_array_append_val(array, filemsg);
-	g_array_append_val(array, timemsg);
+	items.push_back(file_message);
+	items.push_back(time_message);
 
-	char *rendmsg = NULL;
 	/* Show the info. */
 	if (extra.duration > 0.0) {
-		rendmsg = g_strdup_printf(_("Rendering time %.2f seconds"), extra.duration);
-		g_array_append_val(array, rendmsg);
+		QString render_message = QString(tr("Rendering time %1 seconds")).arg(extra.duration); /* kamilTODO: ensure that this argument is formatted as "%.2f". */
+		items.push_back(render_message);
 	}
 
-	a_dialog_list(this->get_window(), _("Tile Information"), array, 5);
-	g_array_free(array, false);
+	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
 
-	free(rendmsg);
-	free(timemsg);
-	free(filemsg);
-	free(filename);
-#endif
+	free(tile_filename);
 }
 
 

@@ -73,7 +73,7 @@ static bool spawn_command_line_async(const char * cmd,
 /* Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
    (non working at least in our Windows build with GTK+2.24.10 on Windows 7). */
 
-void open_url(Window * parent, const char * url)
+void open_url(const char * url, SlavGPS::Window * parent)
 {
 #ifdef K
 #ifdef WINDOWS
