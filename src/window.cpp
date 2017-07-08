@@ -32,6 +32,7 @@
 #include "window_layer_tools.h"
 #include "window.h"
 #include "viewport.h"
+#include "viewport_zoom.h"
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
@@ -708,24 +709,26 @@ void Window::draw_sync()
 
 void Window::draw_status()
 {
-	static char zoom_level[22];
-	double xmpp = this->viewport->get_xmpp();
-	double ympp = this->viewport->get_ympp();
-	const char * const unit = this->viewport->get_coord_mode() == CoordMode::UTM ? "mpp" : "pixelfact";
+	QString zoom_level;
+	const double xmpp = this->viewport->get_xmpp();
+	const double ympp = this->viewport->get_ympp();
+	const QString unit = this->viewport->get_coord_mode() == CoordMode::UTM ? "mpp" : "pixelfact";
 	if (xmpp != ympp) {
-		snprintf(zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit);
+		zoom_level = QString(tr("%1/%2f %3"))
+			.arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
+			.arg(ympp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
+			.arg(unit);
 	} else {
 		if ((int)xmpp - xmpp < 0.0) {
-			snprintf(zoom_level, 22, "%.3f %s", xmpp, unit);
+			zoom_level = QString(tr("%1 %2")).arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
 		} else {
 			/* xmpp should be a whole number so don't show useless .000 bit. */
-			snprintf(zoom_level, 22, "%d %s", (int)xmpp, unit);
+			zoom_level = QString(tr("%1 %2")).arg((int) xmpp).arg(unit);
 		}
 	}
 
 	qDebug() << "II: Window: zoom level is" << zoom_level;
-	QString message(zoom_level);
-	this->status_bar->set_message(StatusBarField::ZOOM, message);
+	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
 	this->display_tool_name();
 }
 

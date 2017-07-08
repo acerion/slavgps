@@ -36,9 +36,6 @@
 
 
 
-#define VIK_VIEWPORT_MAX_ZOOM 32768.0
-#define VIK_VIEWPORT_MIN_ZOOM (1 / 32.0)
-
 /* Used for coord to screen etc, screen to coord. */
 #define VIK_VIEWPORT_UTM_WRONG_ZONE -9999999
 #define VIK_VIEWPORT_OFF_SCREEN_DOUBLE -9999999.9

@@ -47,6 +47,7 @@
 #include "globals.h"
 #include "layers_panel.h"
 #include "util.h"
+#include "viewport_zoom.h"
 
 
 
@@ -869,14 +870,14 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing) scale (mpp): "));
 
 	cw.x_spin.setValue(4);
-	cw.x_spin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	cw.x_spin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	cw.x_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.x_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	cw.x_spin.setSingleStep(1);
 	cw.x_spin.setToolTip(QObject::tr("the scale of the map in the X direction (meters per pixel)"));
 
 	cw.y_spin.setValue(4);
-	cw.y_spin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	cw.y_spin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	cw.y_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.y_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	cw.y_spin.setSingleStep(1);
 	cw.y_spin.setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
@@ -1211,12 +1212,12 @@ bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		if (this->mpp_easting < (VIK_VIEWPORT_MAX_ZOOM / 1.05) && this->mpp_northing < (VIK_VIEWPORT_MAX_ZOOM / 1.05)) {
+		if (this->mpp_easting < (SG_VIEWPORT_ZOOM_MAX / 1.05) && this->mpp_northing < (SG_VIEWPORT_ZOOM_MAX / 1.05)) {
 			this->mpp_easting *= 1.01;
 			this->mpp_northing *= 1.01;
 		}
 	} else {
-		if (this->mpp_easting > (VIK_VIEWPORT_MIN_ZOOM * 1.05) && this->mpp_northing > (VIK_VIEWPORT_MIN_ZOOM * 1.05)) {
+		if (this->mpp_easting > (SG_VIEWPORT_ZOOM_MIN * 1.05) && this->mpp_northing > (SG_VIEWPORT_ZOOM_MIN * 1.05)) {
 			this->mpp_easting /= 1.01;
 			this->mpp_northing /= 1.01;
 		}

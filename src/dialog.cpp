@@ -44,6 +44,7 @@
 #include "authors.h"
 #include "documenters.h"
 #include "globals.h"
+#include "viewport_zoom.h"
 
 
 
@@ -188,8 +189,11 @@ bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const &
 bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
 {
 	ViewportZoomDialog dialog(xmpp, ympp, parent);
-	if (QMessageBox::Ok == dialog.exec()) {
+	if (QDialog::Accepted == dialog.exec()) {
 		dialog.save(xmpp, ympp);
+		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
+		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
+		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << *xmpp << *ympp;
 		return true;
 	} else {
 		return false;
@@ -213,17 +217,17 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 
 
 	this->xspin.setValue(*xmpp);
-	this->xspin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	this->xspin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
-	this->xspin.setDecimals(8);
+	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
 
 
 	this->yspin.setValue(*ympp);
-	this->yspin.setMinimum(VIK_VIEWPORT_MIN_ZOOM);
-	this->yspin.setMaximum(VIK_VIEWPORT_MAX_ZOOM);
+	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
-	this->yspin.setDecimals(8);
+	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
 
 
 	this->grid = new QGridLayout();

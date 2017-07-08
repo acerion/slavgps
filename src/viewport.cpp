@@ -41,6 +41,7 @@
 #include "window_layer_tools.h"
 #include "viewport.h"
 #include "viewport_internal.h"
+#include "viewport_zoom.h"
 #include "window.h"
 #include "coords.h"
 #include "dem_cache.h"
@@ -880,15 +881,16 @@ void Viewport::pan_sync(int x_off, int y_off)
 
 
 
-void Viewport::set_zoom(double xympp_)
+void Viewport::set_zoom(double new_mpp)
 {
-	if (xympp_ >= VIK_VIEWPORT_MIN_ZOOM && xympp_ <= VIK_VIEWPORT_MAX_ZOOM) {
-		xmpp = ympp = xympp_;
+	if (new_mpp >= SG_VIEWPORT_ZOOM_MIN && new_mpp <= SG_VIEWPORT_ZOOM_MAX) {
+		this->xmpp = new_mpp;
+		this->ympp = new_mpp;
 		/* Since xmpp & ympp are the same it doesn't matter which one is used here. */
-		xmfactor = ymfactor = MERCATOR_FACTOR(xmpp);
+		this->xmfactor = this->ymfactor = MERCATOR_FACTOR(this->xmpp);
 	}
 
-	if (drawmode == ViewportDrawMode::UTM) {
+	if (this->drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -896,31 +898,14 @@ void Viewport::set_zoom(double xympp_)
 
 
 
-/* Or could do factor. */
-void Viewport::zoom_in()
+void Viewport::zoom_in(void)
 {
-	if (xmpp >= (VIK_VIEWPORT_MIN_ZOOM*2) && ympp >= (VIK_VIEWPORT_MIN_ZOOM*2)) {
-		xmpp /= 2;
-		ympp /= 2;
+	if (this->xmpp >= (SG_VIEWPORT_ZOOM_MIN * 2) && this->ympp >= (SG_VIEWPORT_ZOOM_MIN * 2)) {
+		this->xmpp /= 2;
+		this->ympp /= 2;
 
-		xmfactor = MERCATOR_FACTOR(xmpp);
-		ymfactor = MERCATOR_FACTOR(ympp);
-
-		this->utm_zone_check();
-	}
-}
-
-
-
-
-void Viewport::zoom_out()
-{
-	if (xmpp <= (VIK_VIEWPORT_MAX_ZOOM/2) && ympp <= (VIK_VIEWPORT_MAX_ZOOM/2)) {
-		xmpp *= 2;
-		ympp *= 2;
-
-		xmfactor = MERCATOR_FACTOR(xmpp);
-		ymfactor = MERCATOR_FACTOR(ympp);
+		this->xmfactor = MERCATOR_FACTOR(this->xmpp);
+		this->ymfactor = MERCATOR_FACTOR(this->ympp);
 
 		this->utm_zone_check();
 	}
@@ -929,39 +914,55 @@ void Viewport::zoom_out()
 
 
 
-double Viewport::get_zoom()
+void Viewport::zoom_out(void)
 {
-	if (xmpp == ympp) {
-		return xmpp;
+	if (this->xmpp <= (SG_VIEWPORT_ZOOM_MAX / 2) && this->ympp <= (SG_VIEWPORT_ZOOM_MAX / 2)) {
+		this->xmpp *= 2;
+		this->ympp *= 2;
+
+		xmfactor = MERCATOR_FACTOR(this->xmpp);
+		ymfactor = MERCATOR_FACTOR(this->ympp);
+
+		this->utm_zone_check();
 	}
-	return 0.0;
 }
 
 
 
 
-double Viewport::get_xmpp() const
+double Viewport::get_zoom(void) const
 {
-	return xmpp;
+	if (this->xmpp == this->ympp) {
+		return this->xmpp;
+	}
+	return 0.0; /* kamilTODO: why 0.0? */
 }
 
 
 
 
-double Viewport::get_ympp() const
+double Viewport::get_xmpp(void) const
 {
-	return ympp;
+	return this->xmpp;
 }
 
 
 
 
-void Viewport::set_xmpp(double xmpp_)
+double Viewport::get_ympp(void) const
 {
-	if (xmpp_ >= VIK_VIEWPORT_MIN_ZOOM && xmpp_ <= VIK_VIEWPORT_MAX_ZOOM) {
-		xmpp = xmpp_;
-		ymfactor = MERCATOR_FACTOR(ympp);
-		if (drawmode == ViewportDrawMode::UTM) {
+	return this->ympp;
+}
+
+
+
+
+void Viewport::set_xmpp(double new_xmpp)
+{
+	if (new_xmpp >= SG_VIEWPORT_ZOOM_MIN && new_xmpp <= SG_VIEWPORT_ZOOM_MAX) {
+		this->xmpp = new_xmpp;
+		this->ymfactor = MERCATOR_FACTOR(this->ympp);
+		if (this->drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
 	}
@@ -970,12 +971,12 @@ void Viewport::set_xmpp(double xmpp_)
 
 
 
-void Viewport::set_ympp(double ympp_)
+void Viewport::set_ympp(double new_ympp)
 {
-	if (ympp_ >= VIK_VIEWPORT_MIN_ZOOM && ympp_ <= VIK_VIEWPORT_MAX_ZOOM) {
-		ympp = ympp_;
-		ymfactor = MERCATOR_FACTOR(ympp);
-		if (drawmode == ViewportDrawMode::UTM) {
+	if (new_ympp >= SG_VIEWPORT_ZOOM_MIN && new_ympp <= SG_VIEWPORT_ZOOM_MAX) {
+		this->ympp = new_ympp;
+		this->ymfactor = MERCATOR_FACTOR(this->ympp);
+		if (this->drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
 	}

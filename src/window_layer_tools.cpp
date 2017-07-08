@@ -36,6 +36,7 @@
 #include "icons/icons.h"
 #include "preferences.h"
 #include "viewport_internal.h"
+#include "viewport_zoom.h"
 #include "layers_panel.h"
 
 
@@ -731,7 +732,7 @@ LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
 		maxmin[0] = coord1.get_latlon();
 		maxmin[1] = coord2.get_latlon();
 
-		vu_zoom_to_show_latlons_common(this->window->viewport->get_coord_mode(), this->window->viewport, maxmin, VIK_VIEWPORT_MIN_ZOOM, false);
+		vu_zoom_to_show_latlons_common(this->window->viewport->get_coord_mode(), this->window->viewport, maxmin, SG_VIEWPORT_ZOOM_MIN, false);
 	} else {
 		/* When pressing shift and clicking for zoom, then jump three levels. */
 		if (modifiers == Qt::ShiftModifier) {

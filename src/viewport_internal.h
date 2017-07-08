@@ -121,12 +121,12 @@ namespace SlavGPS {
 		void coord_to_screen(const Coord * coord, int * x, int * y);
 
 		/* Viewport scale. */
-		void set_ympp(double ympp);
-		void set_xmpp(double xmpp);
-		double get_ympp() const;
-		double get_xmpp() const;
-		void set_zoom(double mpp);
-		double get_zoom();
+		void set_xmpp(double new_xmpp);
+		void set_ympp(double new_ympp);
+		double get_xmpp(void) const;
+		double get_ympp(void) const;
+		void set_zoom(double new_mpp);
+		double get_zoom(void) const;
 		void zoom_in();
 		void zoom_out();
 

@@ -29,6 +29,7 @@
 #include <glib.h>
 
 #include "window.h"
+#include "viewport_zoom.h"
 #include "vikutils.h"
 #include "util.h"
 #include "settings.h"
@@ -1092,7 +1093,7 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 
 	double min_lat, max_lat, min_lon, max_lon;
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
-	while (zoom <= VIK_VIEWPORT_MAX_ZOOM) {
+	while (zoom <= SG_VIEWPORT_ZOOM_MAX) {
 		viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 		/* NB I think the logic used in this test to determine if the bounds is within view
 		   fails if track goes across 180 degrees longitude.
