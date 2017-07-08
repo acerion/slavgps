@@ -636,10 +636,10 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 
 	QSpinBox zone_spinbox;
 	QObject::connect(&zone_spinbox, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	zone_spinbox.setValue(old->zone);
 	zone_spinbox.setMinimum(1);
 	zone_spinbox.setMaximum(60);
 	zone_spinbox.setSingleStep(1);
+	zone_spinbox.setValue(old->zone);
 	vbox.addWidget(&zone_spinbox);
 
 

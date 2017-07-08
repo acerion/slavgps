@@ -163,11 +163,11 @@ void TrackPropertiesDialog::create_properties_page(void)
 
 
 	this->w_number_distlabels = new QSpinBox();
-	this->w_number_distlabels->setValue(this->trk->max_number_dist_labels);
 	this->w_number_distlabels->setMinimum(0);
 	this->w_number_distlabels->setMaximum(100);
 	this->w_number_distlabels->setSingleStep(1);
 	this->w_number_distlabels->setToolTip(tr("Maximum number of distance labels to be shown"));
+	this->w_number_distlabels->setValue(this->trk->max_number_dist_labels);
 	this->properties_form->addRow(QString("Distance Labels:"), this->w_number_distlabels);
 }
 

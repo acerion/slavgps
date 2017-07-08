@@ -225,18 +225,18 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *)user_data;
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"));
-	widgets->num_spin.setValue(20);
 	widgets->num_spin.setMinimum(1);
 	widgets->num_spin.setMaximum(1000);
 	widgets->num_spin.setSingleStep(10);
+	widgets->num_spin.setValue(20);
 
 
 	QLabel * center_label = new QLabel(QObject::tr("Centered around:"));
 	QLabel * miles_radius_label = new QLabel(QObject::tr("Miles Radius:"));
-	widgets->miles_radius_spin.setValue(5);
 	widgets->miles_radius_spin.setMinimum(1);
 	widgets->miles_radius_spin.setMaximum(1000);
 	widgets->miles_radius_spin.setSingleStep(1);
+	widgets->miles_radius_spin.setValue(5);
 
 	struct LatLon ll = viewport->get_center()->get_latlon();
 	char * s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon);

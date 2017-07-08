@@ -853,32 +853,32 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	gtk_box_pack_start (GTK_BOX(wfp_hbox), wfp_button, false, false, 3);
 
 	QLabel * ce_label = new QLabel(QObject::tr("Corner pixel easting:"));
-	cw.ce_spin.setValue(4);
 	cw.ce_spin.setMinimum(0.0);
 	cw.ce_spin.setMaximum(1500000.0);
 	cw.ce_spin.setSingleStep(1);
+	cw.ce_spin.setValue(4);
 	cw.ce_spin.setToolTip(QObject::tr("the UTM \"easting\" value of the upper-left corner pixel of the map"));
 
 	QLabel * cn_label = new QLabel(QObject::tr("Corner pixel northing:"));
-	cw.cn_spin.setValue(4);
 	cw.cn_spin.setMinimum(0.0);
 	cw.cn_spin.setMaximum(9000000.0);
 	cw.cn_spin.setSingleStep(1);
+	cw.cn_spin.setValue(4);
 	cw.cn_spin.setToolTip(QObject::tr("the UTM \"northing\" value of the upper-left corner pixel of the map"));
 
 	QLabel * xlabel = new QLabel(QObject::tr("X (easting) scale (mpp): "));
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing) scale (mpp): "));
 
-	cw.x_spin.setValue(4);
 	cw.x_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	cw.x_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	cw.x_spin.setSingleStep(1);
+	cw.x_spin.setValue(4);
 	cw.x_spin.setToolTip(QObject::tr("the scale of the map in the X direction (meters per pixel)"));
 
-	cw.y_spin.setValue(4);
 	cw.y_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	cw.y_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	cw.y_spin.setSingleStep(1);
+	cw.y_spin.setValue(4);
 	cw.y_spin.setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
@@ -909,10 +909,10 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	gtk_table_attach_defaults (GTK_TABLE(table_utm), cw.cn_spin, 1, 2, 1, 2);
 
 	GtkWidget *utm_hbox = gtk_hbox_new (false, 0);
-	cw.utm_zone_spin.setValue(this->corner.zone);
 	cw.utm_zone_spin.setMinimum(1);
 	cw.utm_zone_spin.setMaximum(60);
 	cw.utm_zone_spin.setSingleStep(1);
+	cw.utm_zone_spin.setValue(this->corner.zone);
 
 	gtk_box_pack_start (GTK_BOX(utm_hbox), new QLabel(QObject::tr("Zone:")), true, true, 0);
 	gtk_box_pack_start (GTK_BOX(utm_hbox), cw.utm_zone_spin, true, true, 0);
@@ -931,28 +931,28 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	GtkWidget *table_ll = gtk_table_new (5, 2, false);
 
 	QLabel * lat_tl_label = new QLabel(QObject::tr("Upper left latitude:"));
-	cw.lat_tl_spin.setValue(0.0);
 	cw.lat_tl_spin.setMinimum(-90.0);
 	cw.lat_tl_spin.setMaximum(90.0);
 	cw.lat_tl_spin.setSingleStep(0.05);
+	cw.lat_tl_spin.setValue(0.0);
 
 	QLabel * lon_tl_label = new QLabel(QObject::tr("Upper left longitude:"));
-	cw.lon_tl_spin.setValue(0.0);
 	cw.lon_tl_spin.setMinimum(-180.0);
 	cw.lon_tl_spin.setMaximum(180.0);
 	cw.lon_tl_spin.setSingleStep(0.05);
+	cw.lon_tl_spin.setValue(0.0);
 
 	QLabel * lat_br_label = new QLabel(QObject::tr("Lower right latitude:"));
-	cw.lat_br_spin.setValue(0.0);
 	cw.lat_br_spin.setMinimum(-90.0);
 	cw.lat_br_spin.setMaximum(90.0);
 	cw.lat_br_spin.setSingleStep(0.05);
+	cw.lat_br_spin.setValue(0.0);
 
 	QLabel * lon_br_label = new QLabel(QObject::tr("Lower right longitude:"));
-	cw.lon_br_spin.setValue(0.0);
 	cw.lon_br_spin.setMinimum(-180.0);
 	cw.lon_br_spin.setMaximum(180.0);
 	cw.lon_br_spin.setSingleStep(0.05);
+	cw.lon_br_spin.setValue(0.0);
 
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), lat_tl_label, 0, 1, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lat_tl_spin, 1, 2, 0, 1);
