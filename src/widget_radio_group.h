@@ -44,33 +44,15 @@ namespace SlavGPS {
 	class SGRadioGroup : public QGroupBox {
 		Q_OBJECT
 	public:
-		SGRadioGroup(QString & title, QStringList & labels, QWidget * parent);
+		SGRadioGroup(const QString & title, const QStringList & labels, QWidget * parent = NULL);
 		~SGRadioGroup();
 
-		uint32_t value(void);
-
-		//std::list<char *> * get_list(void);
-
-	signals:
-
-	private slots:
-		//void add_file();
-		//void del_file();
-
+		uint32_t get_selected(void);
+		void set_selected(uint32_t id);
 
 	private:
 		QVBoxLayout * vbox = NULL;
 		QButtonGroup * group = NULL;
-		//std::list<char *> * file_list = NULL;
-		//QDialogButtonBox * button_box = NULL;
-		//QPushButton * add = NULL;
-		//QPushButton * del = NULL;
-		//QVBoxLayout * vbox = NULL;
-
-		//QStandardItemModel * model = NULL;
-		//QTableView * view = NULL;
-
-		//QFileDialog * file_selector = NULL;
 	};
 
 

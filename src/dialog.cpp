@@ -190,7 +190,7 @@ bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
 {
 	ViewportZoomDialog dialog(xmpp, ympp, parent);
 	if (QDialog::Accepted == dialog.exec()) {
-		dialog.save(xmpp, ympp);
+		dialog.get_values(xmpp, ympp);
 		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
 		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
 		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << *xmpp << *ympp;
@@ -216,18 +216,20 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 	this->ylabel.setText(QObject::tr("Y (northing): "));
 
 
-	this->xspin.setValue(*xmpp);
+	/* TODO: add some kind of validation and indication for values out of range. */
 	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
 	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
+	this->xspin.setValue(*xmpp);
 
 
-	this->yspin.setValue(*ympp);
+	/* TODO: add some kind of validation and indication for values out of range. */
 	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
 	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
+	this->yspin.setValue(*ympp);
 
 
 	this->grid = new QGridLayout();
@@ -266,7 +268,7 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 
 
 
-void ViewportZoomDialog::save(double * xmpp, double * ympp)
+void ViewportZoomDialog::get_values(double * xmpp, double * ympp)
 {
 	*xmpp = this->xspin.value();
 	*ympp = this->yspin.value();
@@ -289,76 +291,98 @@ void ViewportZoomDialog::spin_changed_cb(double new_value)
 
 
 
-#ifdef K
-static void split_spin_focused(QSpinBox * spin, GtkWidget *pass_along[1])
+TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & label, uint32_t custom_threshold, QWidget * a_parent)
 {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pass_along[0]), 1);
+	this->setWindowTitle(title);
+
+
+	this->vbox = new QVBoxLayout();
+
+
+	QLabel main_label(label);
+
+
+	QStringList labels;
+	labels << QObject::tr("1 min");
+	labels << QObject::tr("1 hour");
+	labels << QObject::tr("1 day");
+	labels << QObject::tr("Custom (in minutes):");
+	this->radio_group = new SGRadioGroup(QString(""), labels, NULL); /* kamilTODO: delete this widget in destructor? */
+
+
+	/* TODO: add some kind of validation and indication for values out of range. */
+	this->custom_spin.setMinimum(1); /* [minutes] */
+	this->custom_spin.setMaximum(60 * 24 * 366); /* [minutes] */
+	this->custom_spin.setValue(custom_threshold);
+	this->custom_spin.setSingleStep(1);
+
+
+	this->vbox->addWidget(&main_label);
+	this->vbox->addWidget(this->radio_group);
+	this->vbox->addWidget(&this->custom_spin);
+	this->vbox->addWidget(&this->button_box);
+
+	QObject::connect(&this->custom_spin, SIGNAL (valueChanged(int)), this, SLOT (spin_changed_cb(int)));
+
+	this->button_box.addButton(QDialogButtonBox::Ok);
+	this->button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
 }
-#endif
 
 
 
-
-bool a_dialog_time_threshold(const QString & title, const QString & label, unsigned int * thr, QWidget * parent)
+void TimeThresholdDialog::get_value(uint32_t * custom_threshold)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *table, *t1, *t2, *t3, *t4;
-	GtkWidget *pass_along[1];
-
-	table = gtk_table_new(4, 2, false);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
-
-	t1 = gtk_radio_button_new_with_label(NULL, _("1 min"));
-	t2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(t1), _("1 hour"));
-	t3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(t2), _("1 day"));
-	t4 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(t3), _("Custom (in minutes):"));
-
-	pass_along[0] = t4;
-
-	QSpinBox * spin = new QSpinBox();
-	spin->setValue(*thr);
-	spin->setMinimum(0);
-	spin->setMaximum(65536); /* kamilTODO: is it 65535 or 65536? Won't it cause any overflow? */
-	spin->setSingleStep(1);
-
-
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
-	gtk_table_attach_defaults(GTK_TABLE(table), t1, 0, 1, 1, 2);
-	gtk_table_attach_defaults(GTK_TABLE(table), t2, 0, 1, 2, 3);
-	gtk_table_attach_defaults(GTK_TABLE(table), t3, 0, 1, 3, 4);
-	gtk_table_attach_defaults(GTK_TABLE(table), t4, 0, 1, 4, 5);
-	gtk_table_attach_defaults(GTK_TABLE(table), spin, 1, 2, 4, 5);
-
-	gtk_widget_show_all(table);
-
-	QObject::connect(spin, SIGNAL("grab-focus"), pass_along, SLOT (split_spin_focused));
-
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t1))) {
-			*thr = 1;
-		} else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t2))) {
-			*thr = 60;
-		} else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t3))) {
-			*thr = 60 * 24;
-		} else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(t4))) {
-			*thr = spin.value();
-		}
-		gtk_widget_destroy(dialog);
-		return true;
+	const uint32_t selection = this->radio_group->get_selected();
+	switch (selection) {
+	case 0:
+		*custom_threshold = 1;
+		break;
+	case 1:
+		*custom_threshold = 60;
+		break;
+	case 2:
+		*custom_threshold = 60 * 24;
+		break;
+	case 3:
+		*custom_threshold = (uint32_t) this->custom_spin.value();
+		break;
+	default:
+		qDebug() << "EE: Dialog: Time Threshold Dialog: invalid selection value" << selection;
+		break;
 	}
-	gtk_widget_destroy(dialog);
-#endif
-	return false;
+}
+
+
+
+void TimeThresholdDialog::spin_changed_cb(__attribute__((unused)) int new_value)
+{
+	/* Enable "custom value" checkbox. */
+	this->radio_group->set_selected(3);
+}
+
+
+
+
+bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent)
+{
+	TimeThresholdDialog dialog(title, label, *thr, parent);
+
+	if (QDialog::Accepted == dialog.exec()) {
+		dialog.get_value(thr);
+		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
+		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
+		qDebug() << "DD: Dialog: Time Threshold Dialog: Saving time threshold as" << *thr;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 

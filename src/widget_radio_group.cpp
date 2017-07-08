@@ -28,6 +28,7 @@
 #include <QHeaderView>
 #include <QRadioButton>
 #include <QVBoxLayout>
+#include <QButtonGroup>
 
 #include "widget_radio_group.h"
 
@@ -39,7 +40,7 @@ using namespace SlavGPS;
 
 
 
-SGRadioGroup::SGRadioGroup(QString & title_, QStringList & labels, QWidget * parent_widget) : QGroupBox(parent_widget)
+SGRadioGroup::SGRadioGroup(const QString & title_, const QStringList & labels, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;
@@ -68,7 +69,15 @@ SGRadioGroup::~SGRadioGroup()
 
 
 
-uint32_t SGRadioGroup::value(void)
+uint32_t SGRadioGroup::get_selected(void)
 {
 	return (uint32_t) this->group->checkedId();
+}
+
+
+
+
+void SGRadioGroup::set_selected(uint32_t id)
+{
+	this->group->button(id)->setChecked(true);
 }

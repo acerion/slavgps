@@ -4706,15 +4706,15 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 	g_list_free(tracks_with_timestamp);
-
-	static unsigned int threshold_in_minutes = 1;
-	if (!a_dialog_time_threshold(this->get_window(),
-				     _("Merge Threshold..."),
-				     _("Merge when time between tracks less than:"),
-				     &threshold_in_minutes)) {
+#endif
+	static uint32_t threshold_in_minutes = 1;
+	if (!a_dialog_time_threshold(tr("Merge Threshold..."),
+				     tr("Merge when time between tracks less than:"),
+				     &threshold_in_minutes,
+				     this->get_window())) {
 		return;
 	}
-
+#ifdef K
 	/* Keep attempting to merge all tracks until no merges within the time specified is possible. */
 	bool attempt_merge = true;
 	GList *nearby_tracks = NULL;
@@ -4823,19 +4823,18 @@ void LayerTRW::split_by_timestamp_cb(void)
 	sg_uid_t uid = this->menu_data->sublayer->uid;
 	Track * trk = this->tracks.at(uid);
 
-	static unsigned int thr = 1;
+	static uint32_t thr = 1;
 
 	if (trk->empty()) {
 		return;
 	}
-#ifdef K
-	if (!a_dialog_time_threshold(this->get_window(),
-				     _("Split Threshold..."),
-				     _("Split when time between trackpoints exceeds:"),
-				     &thr)) {
+
+	if (!a_dialog_time_threshold(tr("Split Threshold..."),
+				     tr("Split when time between trackpoints exceeds:"),
+				     &thr,
+				     this->get_window())) {
 		return;
 	}
-#endif
 
 	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
 	auto iter = trk->trackpointsB->begin();

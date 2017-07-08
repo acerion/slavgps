@@ -38,6 +38,7 @@
 #include "coords.h"
 #include "window.h"
 #include "ui_util.h"
+#include "widget_radio_group.h"
 
 
 
@@ -59,7 +60,7 @@ void a_dialog_about(SlavGPS::Window * parent);
 
 char * a_dialog_get_date(const QString & title, QWidget * parent = NULL);
 bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent);
-bool a_dialog_time_threshold(const QString & title, const QString & label, unsigned int * thr, QWidget * parent);
+bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent = NULL);
 
 int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
@@ -121,7 +122,7 @@ public:
 	ViewportZoomDialog(double * xmpp, double * ympp, QWidget * a_parent = NULL);
 	~ViewportZoomDialog() {};
 
-	void save(double * xmpp, double * ympp);
+	void get_values(double * xmpp, double * ympp);
 
 private slots:
 	void spin_changed_cb(double new_value);
@@ -140,6 +141,28 @@ private:
 	QGridLayout * grid = NULL;
 
 	QCheckBox checkbox;
+};
+
+
+
+
+class TimeThresholdDialog : public QDialog {
+	Q_OBJECT
+public:
+	TimeThresholdDialog() {};
+	TimeThresholdDialog(const QString & title, const QString & label, uint32_t custom_threshold, QWidget * parent = NULL);
+	~TimeThresholdDialog() {};
+
+	void get_value(uint32_t * custom_threshold);
+
+private slots:
+	void spin_changed_cb(int unused);
+
+private:
+	QDialogButtonBox button_box;
+	QSpinBox custom_spin;
+	QVBoxLayout * vbox = NULL;
+	SlavGPS::SGRadioGroup * radio_group = NULL;
 };
 
 
