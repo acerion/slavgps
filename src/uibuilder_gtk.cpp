@@ -160,10 +160,10 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = new QSpinBox();
-			rv->setValue(init_val);
 			rv->setMinimum(scale->min);
 			rv->setMaximum(scale->max);
 			rv->setSingleStep(scale->step);
+			rv->setValue(init_val);
 		}
 		break;
 	case WidgetType::ENTRY:
