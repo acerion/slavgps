@@ -690,10 +690,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 			int init_val = param->type == ParameterType::UINT ? vlpd.u : vlpd.i;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QSpinBox * widget_ = new QSpinBox();
-			widget_->setValue(init_val);
 			widget_->setMinimum(scale->min);
 			widget_->setMaximum(scale->max);
 			widget_->setSingleStep(scale->step);
+			widget_->setValue(init_val);
 			//scale->digits
 
 			widget = widget_;
@@ -836,7 +836,7 @@ ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * para
 
 	case WidgetType::RADIOGROUP:
 	case WidgetType::RADIOGROUP_STATIC:
-		rv.u = ((SGRadioGroup *) widget)->value();
+		rv.u = ((SGRadioGroup *) widget)->get_selected();
 		if (param->extra_widget_data) {
 			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, rv.u));
 		}
