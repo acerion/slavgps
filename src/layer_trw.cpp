@@ -99,6 +99,8 @@
 
 #include "gpspoint.h"
 
+#include "widget_list_selection.h"
+
 
 
 #define POINTS 1

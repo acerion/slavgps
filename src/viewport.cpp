@@ -48,6 +48,7 @@
 #include "mapcoord.h"
 #include "layer_toolbox.h"
 #include "preferences.h"
+#include "widget_list_selection.h"
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"
