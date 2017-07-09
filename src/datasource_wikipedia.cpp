@@ -21,6 +21,8 @@
 
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "viewport_internal.h"
 #include "acquire.h"
 #include "geonamessearch.h"
@@ -74,15 +76,17 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
  */
 static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring)
 {
+	if (!trw) {
+		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";
+		return false;
+	}
+
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function:. */
 	acquiring->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
-	if (trw) {
-		a_geonames_wikipedia_box(acquiring->window, trw, maxmin);
-		return true;
-	} else {
-		return false;
-	}
+	a_geonames_wikipedia_box(acquiring->window, trw, maxmin);
+
+	return true;
 }

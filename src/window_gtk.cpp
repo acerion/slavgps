@@ -1222,9 +1222,6 @@ static GtkActionEntry entries[] = {
 	{ "AcquireGeotag",       NULL,                     N_("From Geotagged _Images..."),          NULL,               N_("Create waypoints from geotagged images"),             (GCallback) acquire_from_geotag       },
 #endif
 	{ "AcquireURL",          NULL,                     N_("From _URL..."),                       NULL,               N_("Get a file from a URL"),                              (GCallback) acquire_from_url          },
-#ifdef VIK_CONFIG_GEONAMES
-	{ "AcquireWikipedia",    NULL,                     N_("From _Wikipedia Waypoints"),          NULL,               N_("Create waypoints from Wikipedia items in the current view"), (GCallback) acquire_from_wikipedia },
-#endif
 	{ "Save",                GTK_STOCK_SAVE,           N_("_Save"),                              "<control>S",       N_("Save the file"),                                      (GCallback) save_file                 },
 	{ "SaveAs",              GTK_STOCK_SAVE_AS,        N_("Save _As..."),                        NULL,               N_("Save the file under different name"),                 (GCallback) save_file_as              },
 	{ "FileProperties",      NULL,                     N_("Properties..."),                      NULL,               N_("File Properties"),                                    (GCallback) file_properties_cb        },

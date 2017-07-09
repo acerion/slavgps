@@ -49,6 +49,7 @@
 #include "datasources.h"
 #include "goto.h"
 #include "print.h"
+#include "kmz.h"
 
 
 
@@ -106,7 +107,7 @@ Window::Window()
 
 	strcpy(this->type_string, "SG QT WINDOW");
 
-	QIcon::setThemeName("Tango");
+	QIcon::setThemeName("default");
 	this->create_layout();
 	this->create_actions();
 
@@ -372,9 +373,18 @@ void Window::create_actions(void)
 
 
 		this->submenu_file_acquire = this->menu_file->addMenu(QIcon::fromTheme("TODO"), QString("A&cquire"));
-		qa = this->submenu_file_acquire->addAction(_("Import File With GPS&Babel..."));
-		qa->setToolTip("Import File With GPS&Babel...");
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
+
+		{
+			qa = this->submenu_file_acquire->addAction(tr("Import File With GPS&Babel..."));
+			qa->setToolTip(tr("Import File With GPS&Babel..."));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
+
+#ifdef VIK_CONFIG_GEONAMES
+			qa = this->submenu_file_acquire->addAction(tr("From &Wikipedia Waypoints"));
+			qa->setToolTip(tr("Create waypoints from Wikipedia items in the current view"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_cb(void)));
+#endif
+		}
 
 
 		this->menu_file->addSeparator();
@@ -2597,9 +2607,10 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	double old_xmpp;
 	double old_ympp;
 
-#ifdef K
 	/* more efficient way: stuff draws directly to pixbuf (fork viewport) */
 	QPixmap *pixmap_to_save;
+
+#ifdef K
 
 	GtkWidget * msgbox = gtk_message_dialog_new(this,
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),

@@ -74,20 +74,26 @@ using namespace SlavGPS;
 #define GEONAMES_THUMBNAILIMG_PATTERN "\"thumbnailImg\": \""
 #define GEONAMES_SEARCH_NOT_FOUND "not understand the location"
 
-/* found_geoname: Type to contain data returned from GeoNames.org */
-
-typedef struct {
-	char * name;
-	char * feature;
-	struct LatLon ll;
-	double elevation;
-	char * cmt;
-	char * desc;
-} found_geoname;
 
 
 
+/* Type to contain data returned from GeoNames.org */
+class Geoname {
+public:
+	Geoname() {};
+	~Geoname();
 
+	char * name = NULL;
+	char * feature = NULL;
+	struct LatLon ll = { 0.0, 0.0 };
+	double elevation = VIK_DEFAULT_ALTITUDE;
+	char * cmt = NULL;
+	char * desc = NULL;
+};
+
+
+
+#if 0
 static found_geoname * new_found_geoname()
 {
 	found_geoname * ret = (found_geoname *)malloc(sizeof(found_geoname));
@@ -100,13 +106,25 @@ static found_geoname * new_found_geoname()
 	ret->elevation = VIK_DEFAULT_ALTITUDE;
 	return ret;
 }
+#endif
 
 
 
 
-static found_geoname * copy_found_geoname(found_geoname * src)
+Geoname::~Geoname()
 {
-	found_geoname * dest = new_found_geoname();
+	free(this->name);
+	free(this->feature);
+	free(this->cmt);
+	free(this->desc);
+}
+
+
+
+
+static Geoname * copy_geoname(Geoname * src)
+{
+	Geoname * dest = new Geoname();
 	dest->name = g_strdup(src->name);
 	dest->feature = g_strdup(src->feature);
 	dest->ll.lat = src->ll.lat;
@@ -114,27 +132,17 @@ static found_geoname * copy_found_geoname(found_geoname * src)
 	dest->elevation = src->elevation;
 	dest->cmt = g_strdup(src->cmt);
 	dest->desc = g_strdup(src->desc);
-	return(dest);
+	return dest;
 }
 
 
 
 
-static void free_list_geonames(found_geoname * geoname, void * userdata)
+static void free_geoname_list(std::list<Geoname *> & found_places)
 {
-	free(geoname->name);
-	free(geoname->feature);
-	free(geoname->cmt);
-	free(geoname->desc);
-}
-
-
-
-
-static void free_geoname_list(GList * found_places)
-{
-	g_list_foreach(found_places, (GFunc)free_list_geonames, NULL);
-	g_list_free(found_places);
+	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
+		delete *iter;
+	}
 }
 
 
@@ -160,13 +168,14 @@ static void none_found(Window * window)
 
 
 
-static GList * a_select_geoname_from_list(Window * parent, GList * geonames, bool multiple_selection_allowed, const char * title, const char * msg)
+std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QString & msg, std::list<Geoname *> & geonames, bool multiple_selection_allowed, Window * parent)
 {
+	std::list<Geoname *> selected_geonames;
 #ifdef K
 	GtkTreeIter iter;
 	GtkCellRenderer * renderer;
 	GtkWidget *view;
-	found_geoname * geoname;
+	Geoname * geoname;
 	char * latlon_string;
 	int column_runner;
 
@@ -191,7 +200,7 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 
 	GList *geoname_runner = geonames;
 	while (geoname_runner) {
-		geoname = (found_geoname *)geoname_runner->data;
+		geoname = (Geoname *) geoname_runner->data;
 		latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
 		gtk_tree_store_set(store, &iter, 0, geoname->name, 1, geoname->feature, 2, latlon_string, -1);
@@ -242,7 +251,7 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 
 	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-		GList *selected_geonames = NULL;
+		selected_geonames.erase(); /* TODO: Erase? Clear? Something else? */
 
 		/* Possibily not the fastest method but we don't have thousands of entries to process... */
 		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
@@ -255,9 +264,9 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 					/* I believe the name of these items to be always unique. */
 					geoname_runner = geonames;
 					while (geoname_runner) {
-						if (!strcmp (((found_geoname*)geoname_runner->data)->name, name)) {
-							found_geoname *copied = copy_found_geoname((found_geoname *) geoname_runner->data);
-							selected_geonames = g_list_prepend(selected_geonames, copied);
+						if (!strcmp(((Geoname *) geoname_runner->data)->name, name)) {
+							Geoname * copied = copy_geoname((Geoname *) geoname_runner->data);
+							selected_geonames.push_front(copied);
 							break;
 						}
 						geoname_runner = g_list_next(geoname_runner);
@@ -268,23 +277,23 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 			while (gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter));
 		}
 
-		if (selected_geonames) {
+		if (selected_geonames.size()) {
 			gtk_widget_destroy(dialog);
-			return selected_geonames;
+			return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
 		}
 		Dialog::error(tr("Nothing was selected"), parent);
 	}
 	gtk_widget_destroy(dialog);
 #endif
-	return NULL;
+	return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
 }
 
 
 
 
-static GList * get_entries_from_file(char * file_name)
+static std::list<Geoname *> get_entries_from_file(char * file_name)
 {
-	GList * found_places = NULL;
+	std::list<Geoname *> found_places;
 
 	char lat_buf[32] = { 0 };
 	char lon_buf[32] = { 0 };
@@ -295,7 +304,7 @@ static GList * get_entries_from_file(char * file_name)
 	GMappedFile * mf = NULL;
 	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
 		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
-		return NULL;
+		return found_places;
 	}
 	size_t len = g_mapped_file_get_length(mf);
 	char * text = g_mapped_file_get_contents(mf);
@@ -313,7 +322,7 @@ static GList * get_entries_from_file(char * file_name)
 	int fragment_len;
 	while (entry) {
 		more = true;
-		found_geoname * geoname = new_found_geoname();
+		Geoname * geoname = new Geoname();
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
 			pat += strlen(GEONAMES_FEATURE_PATTERN);
 			fragment_len = 0;
@@ -436,16 +445,16 @@ static GList * get_entries_from_file(char * file_name)
 				free(thumbnail_url);
 				thumbnail_url = NULL;
 			}
-			found_places = g_list_prepend(found_places, geoname);
+			found_places.push_front(geoname);
 		}
 		entry_runner++;
 		entry = found_entries[entry_runner];
 	}
 	g_strfreev(found_entries);
-	found_places = g_list_reverse(found_places);
+	found_places.reverse();
 	g_mapped_file_unref(mf);
 
-	return(found_places);
+	return found_places; /* Hopefully Named Return Value Optimization will work here. */
 }
 
 
@@ -453,16 +462,11 @@ static GList * get_entries_from_file(char * file_name)
 
 void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
 {
-	Waypoint * wiki_wp;
-	found_geoname *wiki_geoname;
-	GList * wp_runner;
-	GList * selected;
-
 	/* Encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
-	char *north = a_coords_dtostr(maxmin[0].lat);
-	char *south = a_coords_dtostr(maxmin[1].lat);
-	char *east = a_coords_dtostr(maxmin[0].lon);
-	char *west = a_coords_dtostr(maxmin[1].lon);
+	char * north = a_coords_dtostr(maxmin[0].lat);
+	char * south = a_coords_dtostr(maxmin[1].lat);
+	char * east = a_coords_dtostr(maxmin[0].lon);
+	char * west = a_coords_dtostr(maxmin[1].lon);
 	char * uri = g_strdup_printf(GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES);
 	free(north); north = NULL;
 	free(south); south = NULL;
@@ -474,16 +478,17 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		none_found(window);
 		return;
 	}
-	GList * wiki_places = get_entries_from_file(tmpname);
-	if (g_list_length(wiki_places) == 0) {
+	std::list<Geoname *> selected;
+	std::list<Geoname *> wiki_places = get_entries_from_file(tmpname);
+	if (wiki_places.size() == 0) {
 		none_found(window);
 		goto done;
 	}
-	selected = a_select_geoname_from_list(window, wiki_places, true, "Select articles", "Select the articles you want to add.");
-	wp_runner = selected;
-	while (wp_runner) {
-		wiki_geoname = (found_geoname *)wp_runner->data;
-		wiki_wp = new Waypoint();
+	selected = a_select_geoname_from_list(QObject::tr("Select articles"), QObject::tr("Select the articles you want to add."), wiki_places, true, window);
+
+	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
+		const Geoname * wiki_geoname = *iter;
+		Waypoint * wiki_wp = new Waypoint();
 		wiki_wp->visible = true;
 		wiki_wp->coord = Coord(wiki_geoname->ll, trw->get_coord_mode());
 		wiki_wp->altitude = wiki_geoname->elevation;
@@ -513,7 +518,6 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 			}
 		}
 		trw->filein_add_waypoint(wiki_wp, wiki_geoname->name);
-		wp_runner = g_list_next(wp_runner);
 	}
 	free_geoname_list(wiki_places);
 	free_geoname_list(selected);

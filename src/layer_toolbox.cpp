@@ -68,7 +68,7 @@ QAction * LayerToolbox::add_tool(LayerTool * layer_tool)
 	QAction * qa = new QAction(layer_tool->action_label, this->window);
 
 	qa->setObjectName(layer_tool->id_string);
-	qDebug() << "DD: Layer Tools: Created qaction with name" << qa->objectName() << qa;
+	qDebug() << "DD: Layer Tools: Created qaction with name" << qa->objectName();
 	qa->setIcon(QIcon(layer_tool->action_icon_path));
 	qa->setCheckable(true);
 
