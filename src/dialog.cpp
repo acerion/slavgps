@@ -548,61 +548,68 @@ void a_dialog_about(SlavGPS::Window * parent)
 }
 
 
-#ifdef K
 
 
-bool a_dialog_map_n_zoom(Window * parent, char * mapnames[], int default_map, char * zoom_list[], int default_zoom, int * selected_map, int * selected_zoom)
+bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent)
 {
-	char **s;
+	QDialog dialog(parent);
+	dialog.setWindowTitle(QObject::tr("Download along track"));
 
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Download along track"), parent, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+
+	QLabel map_label(QObject::tr("Map type:"));
+	QComboBox map_combo;
+	for (int i = 0; i < map_labels.size(); i++) {
+		map_combo.addItem(map_labels.at(i));
+	}
+	map_combo.setCurrentIndex(default_map_idx);
+
+	QLabel zoom_label(QObject::tr("Zoom level:"));
+	QComboBox zoom_combo;
+	for (int i = 0; i < zoom_labels.size(); i++) {
+		zoom_combo.addItem(zoom_labels.at(i));
+	}
+	zoom_combo.setCurrentIndex(default_zoom_idx);
+
+
+	QGridLayout * grid = new QGridLayout();
+	grid->addWidget(&map_label, 0, 0);
+	grid->addWidget(&map_combo, 0, 1);
+	grid->addWidget(&zoom_label, 1, 0);
+	grid->addWidget(&zoom_combo, 1, 1);
+
+
+	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+#if 0
+	this->button_box.addButton(QDialogButtonBox::Ok);
+	this->button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 #endif
 
-	QLabel * map_label = new QLabel(QObject::tr("Map type:"));
-	QComboBox * map_combo = new QComboBox();
-	for (s = mapnames; *s; s++) {
-		vik_combo_box_text_append(map_combo, *s);
-	}
-	map_combo->setCurrentIndex(default_map);
 
-	QLabel * zoom_label = new QLabel(QObject::tr("Zoom level:"));
-	QComboBox * zoom_combo = new QComboBox();
-	for (s = zoom_list; *s; s++) {
-		vik_combo_box_text_append(zoom_combo, *s);
-	}
-	zoom_combo->setCurrentIndex(default_zoom);
+	QVBoxLayout * vbox = new QVBoxLayout();
+	vbox->addLayout(grid);
+	vbox->addWidget(&button_box);
 
-	GtkTable *box = GTK_TABLE(gtk_table_new(2, 2, false));
-	gtk_table_attach_defaults(box, map_label, 0, 1, 0, 1);
-	gtk_table_attach_defaults(box, map_combo, 1, 2, 0, 1);
-	gtk_table_attach_defaults(box, zoom_label, 0, 1, 1, 2);
-	gtk_table_attach_defaults(box, zoom_combo, 1, 2, 1, 2);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5);
+	QLayout * old = dialog.layout();
+	delete old;
+	dialog.setLayout(vbox); /* setLayout takes ownership of vbox. */
 
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
 
-	gtk_widget_show_all(dialog);
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
+	if (QDialog::Accepted == dialog.exec()) {
+		*selected_map_idx = map_combo.currentIndex();
+		*selected_zoom_idx = zoom_combo.currentIndex();
+		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
+		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
+		qDebug() << "DD: Dialog: Map and Zoom: map index:" << *selected_map_idx << "zoom index:" << *selected_zoom_idx;
+		return true;
+	} else {
 		return false;
 	}
-
-	*selected_map = map_combo->currentIndex();
-	*selected_zoom = zoom_combo->currentIndex();
-
-	gtk_widget_destroy(dialog);
-	return true;
 }
 
 
-#endif
 
 
 /**

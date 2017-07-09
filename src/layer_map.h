@@ -87,7 +87,7 @@ namespace SlavGPS {
 		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
-		char * get_map_label();
+		QString get_map_label(void) const;
 		int how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
 		void set_cache_dir(char const * dir);

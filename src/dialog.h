@@ -64,9 +64,7 @@ bool a_dialog_time_threshold(const QString & title, const QString & label, uint3
 
 int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
-#ifdef K
-bool a_dialog_map_n_zoom(SlavGPS::kWindow * parent, char * mapnames[], int default_map, char * zoom_list[], int default_zoom, int * selected_map, int * selected_zoom);
-#endif
+bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
 
 void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg);
 

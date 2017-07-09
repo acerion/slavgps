@@ -6907,7 +6907,7 @@ static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon 
 
 
 
-void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
+void vik_track_download_map(Track *tr, LayerMap * layer_map, double zoom_level)
 {
 	struct LatLon wh;
 	if (get_download_area_width(zoom_level, &wh)) {
@@ -6958,7 +6958,7 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		((LayerMap *) vml)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
+		layer_map->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
 	}
 
 	if (fillins) {
@@ -6981,68 +6981,60 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 
 void LayerTRW::download_map_along_track_cb(void)
 {
-	Layer *vml;
-	int selected_map;
-	char *zoomlist[] = {(char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
-	double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-	int selected_zoom, default_zoom;
+	const QStringList zoom_labels = { "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024" };
+	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
 	LayersPanel * panel = this->menu_data->layers_panel;
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 
+	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 	if (!trk) {
 		return;
 	}
 
-	Viewport * viewport = this->get_window()->get_viewport();
+	const Viewport * viewport = this->get_window()->get_viewport();
 
-#ifdef K
-	std::list<Layer const *> * vmls = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
-	int num_maps = vmls->size();
+	std::list<Layer const *> * layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
+	int num_maps = layers->size();
 	if (!num_maps) {
 		dialog_error("No map layer in use. Create one first", this->get_window());
 		return;
 	}
 
-	/* Convert from list of vmls to list of names. Allowing the user to select one of them. */
-	char **map_names = (char **) g_malloc_n(1 + num_maps, sizeof (char *));
-	Layer ** map_layers = (Layer **) g_malloc_n(1 + num_maps, sizeof(Layer *));
+	/* Convert from list of layers to list of names. Allowing the user to select one of them. */
 
-	char **np = map_names;
-	Layer **lp = map_layers;
-	for (auto i = vmls->begin(); i != vmls->end(); i++) {
-		vml = (Layer *) *i;
-		*lp++ = vml;
-		LayerMap * lm = (LayerMap *) vml;
-		*np++ = lm->get_map_label();
+	std::list<LayerMap *> map_layers;
+	QStringList map_labels; /* List of names of map layers that are currently used. */
+
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		map_layers.push_back((LayerMap *) *iter); /* kamilFIXME: casting const pointer to non-const. */
+		map_labels << ((LayerMap *) *iter)->get_map_label();
 	}
-	/* Mark end of the array lists. */
-	*lp = NULL;
-	*np = NULL;
 
 	double cur_zoom = viewport->get_zoom();
-	for (default_zoom = 0; default_zoom < G_N_ELEMENTS(zoom_vals); default_zoom++) {
-		if (cur_zoom == zoom_vals[default_zoom]) {
+	unsigned int default_zoom_idx;
+	for (default_zoom_idx = 0; default_zoom_idx < zoom_values.size(); default_zoom_idx++) {
+		if (cur_zoom == zoom_values[default_zoom_idx]) {
 			break;
 		}
 	}
-	default_zoom = (default_zoom == G_N_ELEMENTS(zoom_vals)) ? G_N_ELEMENTS(zoom_vals) - 1 : default_zoom;
+	default_zoom_idx = default_zoom_idx == zoom_values.size() ? (zoom_values.size() - 1) : default_zoom_idx;
 
-	if (!a_dialog_map_n_zoom(this->get_window(), map_names, 0, zoomlist, default_zoom, &selected_map, &selected_zoom)) {
-		goto done;
+	unsigned int selected_map_idx = 0;
+	unsigned int selected_zoom_idx = 0;
+	if (!a_dialog_map_and_zoom(map_labels, 0, zoom_labels, default_zoom_idx, &selected_map_idx, &selected_zoom_idx, this->get_window())) {
+		delete layers;
+		return;
 	}
 
-	vik_track_download_map(trk, map_layers[selected_map], zoom_vals[selected_zoom]);
-
- done:
-	for (int i = 0; i < num_maps; i++) {
-		free(map_names[i]);
+	auto iter = map_layers.begin();
+	for (unsigned int i = 0; i < selected_map_idx; i++) {
+		iter++;
 	}
-	free(map_names);
-	free(map_layers);
 
-	delete vmls;
-#endif
+	vik_track_download_map(trk, *iter, zoom_values[selected_zoom_idx]);
+
+	delete layers;
+	return;
 }
 
 

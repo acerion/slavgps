@@ -487,9 +487,9 @@ MapTypeID LayerMap::get_default_map_type()
 
 
 
-char * LayerMap::get_map_label()
+QString LayerMap::get_map_label(void) const
 {
-	return strdup(LAYER_MAP_NTH_LABEL(this->map_index));
+	return QString(LAYER_MAP_NTH_LABEL(this->map_index));
 }
 
 
@@ -967,7 +967,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString LayerMap::tooltip()
+QString LayerMap::tooltip(void)
 {
 	return this->get_map_label();
 }
