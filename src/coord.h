@@ -76,6 +76,14 @@ namespace SlavGPS {
 
 
 
+	class CoordUtils {
+	public:
+		static QString dtostr(double d);
+	};
+
+
+
+
 	typedef struct _Rect {
 		Coord tl;
 		Coord br;

@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include <QDebug>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -57,12 +59,13 @@ using namespace SlavGPS;
  * See http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox
  */
 /* Translators may wish to change this setting as appropriate to get Wikipedia articles in that language. */
-#define GEONAMES_LANG N_("en")
+#define GEONAMES_LANG QObject::tr("en")
 /* TODO - offer configuration of this value somewhere.
    ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
-#define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%s&south=%s&east=%s&west=%s&lang=%s&maxRows=%d&username=viking"
+//#define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%s&south=%s&east=%s&west=%s&lang=%s&maxRows=%d&username=viking"
+#define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%1&south=%2&east=%3&west=%4&lang=%5&maxRows=%6&username=viking"
 
 #define GEONAMES_FEATURE_PATTERN "\"feature\": \""
 #define GEONAMES_LONGITUDE_PATTERN "\"lng\": "
@@ -143,26 +146,6 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
 		delete *iter;
 	}
-}
-
-
-
-
-static void none_found(Window * window)
-{
-	GtkWidget *dialog = NULL;
-#ifdef K
-	dialog = gtk_dialog_new_with_buttons("", window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
-	gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
-
-	QLabel * search_label = new QLabel(QObject::tr("No entries found!"));
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	gtk_widget_show_all(dialog);
-
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-#endif
 }
 
 
@@ -371,7 +354,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 				fragment_len++;
 				pat++;
 			}
-			geoname -> name = g_strndup(s, fragment_len);
+			geoname->name = g_strndup(s, fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_TITLE_PATTERN))) {
 			pat += strlen(GEONAMES_TITLE_PATTERN);
@@ -381,7 +364,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 				fragment_len++;
 				pat++;
 			}
-			geoname -> name = g_strndup(s, fragment_len);
+			geoname->name = g_strndup(s, fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_WIKIPEDIAURL_PATTERN))) {
 			pat += strlen(GEONAMES_WIKIPEDIAURL_PATTERN);
@@ -432,9 +415,9 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 				/* Really we should support the GPX URL tag and then put that in there... */
 				geoname->cmt = g_strdup_printf("http://%s", wikipedia_url);
 				if (thumbnail_url) {
-					geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
+					geoname->desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
 				} else {
-					geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\">%s</a>", wikipedia_url, geoname->name);
+					geoname->desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\">%s</a>", wikipedia_url, geoname->name);
 				}
 			}
 			if (wikipedia_url) {
@@ -463,37 +446,41 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
 {
 	/* Encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
-	char * north = a_coords_dtostr(maxmin[0].lat);
-	char * south = a_coords_dtostr(maxmin[1].lat);
-	char * east = a_coords_dtostr(maxmin[0].lon);
-	char * west = a_coords_dtostr(maxmin[1].lon);
-	char * uri = g_strdup_printf(GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES);
-	free(north); north = NULL;
-	free(south); south = NULL;
-	free(east);  east = NULL;
-	free(west);  west = NULL;
+	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT)
+		.arg(CoordUtils::dtostr(maxmin[0].lat)) // north
+		.arg(CoordUtils::dtostr(maxmin[1].lat)) // south
+		.arg(CoordUtils::dtostr(maxmin[0].lon)) // east
+		.arg(CoordUtils::dtostr(maxmin[1].lon)) // west
+		.arg(GEONAMES_LANG)
+		.arg(GEONAMES_MAX_ENTRIES);
 
-	char * tmpname = Download::get_uri_to_tmp_file(QString(uri), NULL);
+	char * tmpname = Download::get_uri_to_tmp_file(uri, NULL);
 	if (!tmpname) {
-		none_found(window);
+		Dialog::info(QObject::tr("No entries found!"), window);
 		return;
 	}
-	std::list<Geoname *> selected;
+
 	std::list<Geoname *> wiki_places = get_entries_from_file(tmpname);
+	(void) util_remove(tmpname);
+	free(tmpname);
+
 	if (wiki_places.size() == 0) {
-		none_found(window);
-		goto done;
+		Dialog::info(QObject::tr("No entries found!"), window);
+		return;
 	}
-	selected = a_select_geoname_from_list(QObject::tr("Select articles"), QObject::tr("Select the articles you want to add."), wiki_places, true, window);
+
+	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), QObject::tr("Select the articles you want to add."), wiki_places, true, window);
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 		const Geoname * wiki_geoname = *iter;
+
 		Waypoint * wiki_wp = new Waypoint();
 		wiki_wp->visible = true;
 		wiki_wp->coord = Coord(wiki_geoname->ll, trw->get_coord_mode());
 		wiki_wp->altitude = wiki_geoname->elevation;
 		wiki_wp->set_comment(wiki_geoname->cmt);
 		wiki_wp->set_description(wiki_geoname->desc);
+
 		/* Use the featue type to generate a suitable waypoint icon
 		   http://www.geonames.org/wikipedia/wikipedia_features.html
 		   Only a few values supported as only a few symbols make sense. */
@@ -519,10 +506,9 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		}
 		trw->filein_add_waypoint(wiki_wp, wiki_geoname->name);
 	}
+
 	free_geoname_list(wiki_places);
 	free_geoname_list(selected);
-	free(uri);
- done:
-	(void)util_remove(tmpname);
-	free(tmpname);
+
+	return;
 }

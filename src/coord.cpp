@@ -22,6 +22,7 @@
 
 
 #include <QDebug>
+#include <QLocale>
 
 #include "coords.h"
 #include "coord.h"
@@ -280,4 +281,27 @@ void Coord::to_strings(QString & str1, QString & str2) const
 	}
 
 	return;
+}
+
+
+
+
+
+
+
+/**
+   \brief Convert a double to a string WITHOUT LOCALE.
+
+   Following GPX specifications, decimal values are xsd:decimal
+   So, they must use the period separator, not the localized one.
+
+   This function re-implements glib-based a_coords_dtostr() function
+   from coords.cpp.
+*/
+QString CoordUtils::dtostr(double d)
+{
+	static QLocale c_locale = QLocale::c();
+
+	/* TODO: adjust parameters of toString() to do the conversion without loss of precision. */
+	return c_locale.toString(d);
 }
