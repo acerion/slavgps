@@ -26,6 +26,7 @@
 
 #include <cstdint>
 
+#include <QObject>
 #include <QString>
 #include <QMessageBox>
 #include <QTableView>
@@ -43,33 +44,47 @@
 
 
 
-void dialog_info(QString const & message, QWidget * parent);
-void dialog_warning(QString const & message, QWidget * parent);
-void dialog_error(QString const & message, QWidget * parent);
-bool dialog_yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = SG_APPLICATION_NAME);
 
-QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route);
+namespace SlavGPS {
+
+
+
+
+	class Dialog {
+	public:
+		static void info(QString const & message, QWidget * parent);
+		static void warning(QString const & message, QWidget * parent);
+		static void error(QString const & message, QWidget * parent);
+		static bool yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = SG_APPLICATION_NAME);
+		static void about(QWidget * parent);
+		static void license(const char * map, const char * license, const char * url, QWidget * parent);
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
 
 void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent = NULL);
-
-void a_dialog_about(SlavGPS::Window * parent);
-
-
 
 /* Okay, everthing below here is an architechtural flaw. */
 
 char * a_dialog_get_date(const QString & title, QWidget * parent = NULL);
 bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent);
-bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent = NULL);
 
-int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
-bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
+int a_dialog_get_positive_number(const QString & title, const QString & label, int default_num, int min, int max, int step, QWidget * parent);
+
+
 
 void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg);
 
 template <typename T>
-std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> const & elements, bool multiple_selection_allowed, QString const & title, QString const & msg)
+std::list<T> a_dialog_select_from_list(std::list<T> const & elements, bool multiple_selection_allowed, QString const & title, QString const & msg, QWidget * parent)
 {
 	QDialog dialog(parent);
 	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -108,60 +123,7 @@ std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> co
 
 
 
-void a_dialog_license(const char * map, const char * license, const char * url, QWidget * parent);
 
-
-
-
-class ViewportZoomDialog : public QDialog {
-	Q_OBJECT
-public:
-	ViewportZoomDialog() {};
-	ViewportZoomDialog(double * xmpp, double * ympp, QWidget * a_parent = NULL);
-	~ViewportZoomDialog() {};
-
-	void get_values(double * xmpp, double * ympp);
-
-private slots:
-	void spin_changed_cb(double new_value);
-
-private:
-	QDialogButtonBox button_box;
-	QVBoxLayout * vbox = NULL;
-
-	QLabel main_label;
-	QLabel xlabel;
-	QLabel ylabel;
-
-	QDoubleSpinBox xspin;
-	QDoubleSpinBox yspin;
-
-	QGridLayout * grid = NULL;
-
-	QCheckBox checkbox;
-};
-
-
-
-
-class TimeThresholdDialog : public QDialog {
-	Q_OBJECT
-public:
-	TimeThresholdDialog() {};
-	TimeThresholdDialog(const QString & title, const QString & label, uint32_t custom_threshold, QWidget * parent = NULL);
-	~TimeThresholdDialog() {};
-
-	void get_value(uint32_t * custom_threshold);
-
-private slots:
-	void spin_changed_cb(int unused);
-
-private:
-	QDialogButtonBox button_box;
-	QSpinBox custom_spin;
-	QVBoxLayout * vbox = NULL;
-	SlavGPS::SGRadioGroup * radio_group = NULL;
-};
 
 
 

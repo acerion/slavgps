@@ -582,7 +582,7 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 			gtk_widget_destroy(dialog);
 			return selected;
 		}
-		dialog_error("Nothing was selected", parent);
+		Dialog::error(tr("Nothing was selected"), parent);
 	}
 	gtk_widget_destroy (dialog);
 #endif

@@ -347,7 +347,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 
 	while (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		if (nameentry->text().length() == 0) {  /* TODO: other checks (isalpha or whatever). */
-			dialog_info("Please enter a name for the waypoint.", parent);
+			Dialog::info(tr("Please enter a name for the waypoint."), parent);
 		} else {
 			/* NB: No check for unique names - this allows generation of same named entries. */
 			char *entered_name = nameentry->text();

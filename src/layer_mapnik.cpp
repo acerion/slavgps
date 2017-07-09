@@ -478,7 +478,7 @@ bool LayerMapnik::carto_load(void)
 #endif
 		if (mystderr)
 			if (strlen(mystderr) > 1) {
-				dialog_error(QString("Error running carto command:\n%1").arg(QString(mystderr)), this->get_window());
+				Dialog::error(tr("Error running carto command:\n%1").arg(QString(mystderr)), this->get_window());
 				answer = false;
 			}
 		if (mystdout) {
@@ -563,7 +563,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 	char * ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (ans) {
-		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
+		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
 		free(ans);
 	} else {
 		this->loaded = true;
@@ -969,7 +969,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	}
 	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
 	if (ans) {
-		dialog_error(QString("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
 		free(ans);
 	} else {
 		lmk->draw(viewport);
@@ -1003,7 +1003,7 @@ static void mapnik_layer_about(menu_array_values * values)
 {
 	LayerMapnik * lmk = values->lmk;
 	char * msg = mapnik_interface_about();
-	dialog_info(msg, lmk->get_window());
+	Dialog::info(msg, lmk->get_window());
 	free(msg);
 }
 

@@ -439,7 +439,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		delete pixmap;
 		pixmap = NULL;
 		if (!from_file) {
-			dialog_error(QString("Couldn't open image file %1").arg(QString(this->image)), this->get_window());
+			Dialog::error(tr("Couldn't open image file %1").arg(QString(this->image)), this->get_window());
 		}
 	} else {
 		this->width = this->pixmap->width();
@@ -571,9 +571,9 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 		double values[4];
 		int answer = world_file_read_file(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), values);
 		if (answer == 1) {
-			dialog_error("The World file you requested could not be opened for reading.", this->get_window());
+			Dialog::error(tr("The World file you requested could not be opened for reading."), this->get_window());
 		} else if (answer == 2) {
-			dialog_error("Unexpected end of file reading World file.", this->get_window());
+			Dialog::error(tr("Unexpected end of file reading World file."), this->get_window());
 		} else {
 			/* NB answer should == 0 for success. */
 			set_widget_values(cw, values);
@@ -602,7 +602,7 @@ static void georef_layer_export_params(georef_data_t * data)
 
 		gtk_widget_destroy(file_selector);
 		if (!f) {
-			dialog_error("The file you requested could not be opened for writing."), layer->get_window());
+			Dialog::error(tr("The file you requested could not be opened for writing."), layer->get_window());
 			return;
 		} else {
 			fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
@@ -769,7 +769,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 	struct LatLon ll_tl = this->get_ll_tl();
 	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
-		dialog_warning("Lower right corner values may not be consistent with upper right values", this->get_window());
+		Dialog::warning(tr("Lower right corner values may not be consistent with upper right values"), this->get_window());
 	}
 }
 
@@ -788,7 +788,7 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		delete img_pixmap;
 		img_pixmap = NULL;
 
-		dialog_error(QString("Couldn't open image file %1").arg(filename), this->get_window());
+		Dialog::error(tr("Couldn't open image file %1").arg(filename), this->get_window());
 		return;
 	}
 
@@ -796,7 +796,7 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 	const int img_height = img_pixmap->height();
 
 	if (img_width == 0 || img_height == 0) {
-		dialog_error(QString("Invalid image size: %1").arg(filename), this->get_window());
+		Dialog::error(tr("Invalid image size: %1").arg(filename), this->get_window());
 	} else {
 		this->align_coords();
 

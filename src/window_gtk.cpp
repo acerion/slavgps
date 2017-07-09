@@ -602,7 +602,7 @@ static void menu_paste_layer_cb(GtkAction * a, Window * window)
 static void menu_properties_cb(GtkAction * a, Window * window)
 {
 	if (!window->layers_panel->properties()) {
-		dialog_info("You must select a layer to show its properties.", window);
+		Dialog::info(tr("You must select a layer to show its properties."), window);
 	}
 }
 
@@ -644,7 +644,7 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
 	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, map_cache_get_count());
-	dialog_info(msg, window);
+	Dialog::info(msg, window);
 	free(msg_sz);
 	free(msg);
 }
@@ -658,7 +658,7 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window)
 		window->layers_panel->delete_selected();
 		window->modified = true;
 	} else {
-		dialog_info("You must select a layer to delete.", window);
+		Dialog::info(tr("You must select a layer to delete."), window);
 	}
 }
 
@@ -745,7 +745,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (0 != access(fn, F_OK) || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
+		if (0 != access(fn, F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
 			window->set_filename(fn);
 			rv = window->window_save();
 			if (rv) {
@@ -772,7 +772,7 @@ bool Window::window_save()
 	if (a_file_save(this->layers_panel->get_top_layer(), this->viewport, this->filename)) {
 		this->update_recently_used_document(this->filename);
 	} else {
-		dialog_error("The filename you requested could not be opened for writing.", this->get_window());
+		Dialog::error(tr("The filename you requested could not be opened for writing."), this->get_window());
 		success = false;
 	}
 	this->clear_busy_cursor();
@@ -867,12 +867,12 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
-		dialog_info("Nothing to Export!", this->get_window());
+		Dialog::info(tr("Nothing to Export!"), this->get_window());
 		/* kamilFIXME: delete layers? */
 		return;
 	}
 
-	GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Export to directory"),
+	GtkWidget *dialog = gtk_file_chooser_dialog_new(tr("Export to directory"),
 							this,
 							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 							GTK_STOCK_CANCEL,
@@ -891,7 +891,7 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 		gtk_widget_destroy(dialog);
 		if (dir) {
 			if (!this->export_to(layers, vft, dir, extension)) {
-				dialog_error("Could not convert all files", this->get_window());
+				Dialog::error(tr("Could not convert all files"), this->get_window());
 			}
 			free(dir);
 		}
@@ -949,7 +949,7 @@ static void file_properties_cb(GtkAction * a, Window * window)
 	}
 
 	/* Show the info. */
-	dialog_info(message, window);
+	Dialog::info(message, window);
 	free(message);
 }
 
@@ -1072,7 +1072,7 @@ static void clear_cb(GtkAction * a, Window * window)
 {
 	// Do nothing if empty
 	if (!window->layers_panel->get_top_layer()->is_empty()) {
-		if (dialog_yes_or_no("Are you sure you wish to delete all layers?", window)) {
+		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), window)) {
 			window->layers_panel->clear();
 			window->set_filename(NULL);
 			window->draw_update();
@@ -1101,7 +1101,7 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
 {
 	if (window->viewport->get_coord_mode() == CoordMode::UTM) {
-		dialog_error("This feature is not available in UTM mode");
+		Dialog::error(tr("This feature is not available in UTM mode"));
 		return;
 	}
 	// NB ATM This only generates a KMZ file with the current viewport image - intended mostly for map images [but will include any lines/icons from track & waypoints that are drawn]
@@ -1140,7 +1140,7 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 		// TODO convert ans value into readable explaination of failure...
 		int ans = kmz_open_file(fn, window->viewport, window->layers_panel);
 		if (ans) {
-			dialog_error(QString("Unable to import %1.").arg(QString(fn)), window);
+			Dialog::error(tr("Unable to import %1.").arg(QString(fn)), window);
 		}
 
 		window->draw_update();

@@ -42,6 +42,7 @@
 #include "layer_trw.h"
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
+#include "layer_trw_dialogs.h"
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
 #include "dialog.h"
@@ -1054,7 +1055,7 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 		char *name = trw->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		QString new_name(name);
 		if (Preferences::get_ask_for_create_track_name()) {
-			new_name = a_dialog_new_track(trw->get_window(), QString(name), false);
+			new_name = a_dialog_new_track(QString(name), false, trw->get_window());
 			if (new_name.isEmpty()) {
 				return LayerToolFuncStatus::IGNORE;
 			}
@@ -1165,7 +1166,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 		char * name = trw->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
 		QString new_name(name);
 		if (Preferences::get_ask_for_create_track_name()) {
-			new_name = a_dialog_new_track(trw->get_window(), new_name, true);
+			new_name = a_dialog_new_track(new_name, true, trw->get_window());
 			if (new_name.isEmpty()) {
 				return LayerToolFuncStatus::IGNORE;
 			}
@@ -1676,7 +1677,7 @@ void LayerTRW::show_picture_cb(void) /* Slot. */
 	char *cmd = g_strdup_printf("%s %s", Preferences::get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-		dialog_error(QString("Could not launch %1 to open file.").arg(Preferences::get_image_viewer()), data->layer->get_window());
+		Dialog::error(tr("Could not launch %1 to open file.").arg(Preferences::get_image_viewer()), data->layer->get_window());
 		g_error_free(err);
 	}
 	free(cmd);

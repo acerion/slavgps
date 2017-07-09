@@ -287,7 +287,7 @@ static bool vik_goto_location(Viewport * viewport, char* name, Coord * coord)
 void SlavGPS::goto_location(Window * window, Viewport * viewport)
 {
 	if (goto_tools.empty()) {
-		dialog_warning(QObject::tr("No goto tool available."), window);
+		Dialog::warning(QObject::tr("No goto tool available."), window);
 		return;
 	}
 

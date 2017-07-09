@@ -458,7 +458,7 @@ static bool new_version_available_message(new_version_thread_data * nvtd)
 {
 	/* Only a simple goto website option is offered.
 	   Trying to do an installation update is platform specific. */
-	if (dialog_yes_or_no(QString("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(QString(nvtd->version)), nvtd->window)) {
+	if (Dialog::yes_or_no(tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(QString(nvtd->version)), nvtd->window)) {
 
 		/* NB 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
 		open_url("http://sourceforge.net/projects/viking/", nvtd->window);
@@ -608,7 +608,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 #ifdef K
 		GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-		if (dialog_yes_or_no("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences.", GTK_WINDOW(win))) {
+		if (Dialog::yes_or_no(tr("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), GTK_WINDOW(win))) {
 
 			auto_features = true;
 		}

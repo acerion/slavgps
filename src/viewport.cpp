@@ -1108,11 +1108,11 @@ void Viewport::show_centers(Window * parent_window)
 	/* No i18n as this is just for debug.
 	   Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
-	std::list<QString> result = a_dialog_select_from_list(parent_window,
-							      texts,
+	std::list<QString> result = a_dialog_select_from_list(texts,
 							      false,
-							      QString("Back/Forward Locations"),
-							      QString("Back/Forward Locations"));
+							      tr("Back/Forward Locations"),
+							      tr("Back/Forward Locations"),
+							      parent_window);
 
 	for (auto iter = result.begin(); iter != result.end(); iter++) {
 		qDebug() << "DD: Viewport: history center item:" << *iter;

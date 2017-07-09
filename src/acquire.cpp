@@ -301,7 +301,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	if (source_interface_->check_existence_func) {
 		char *error_str = source_interface_->check_existence_func();
 		if (error_str) {
-			dialog_error(error_str, this->window);
+			Dialog::error(error_str, this->window);
 			free(error_str);
 			return;
 		}
@@ -503,7 +503,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		if (source_interface_->process_func) {
 			bool success = source_interface_->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, dl_options);
 			if (!success) {
-				dialog_error(QString(_("Error: acquisition failed.")), this->window);
+				Dialog::error(tr("Error: acquisition failed."), this->window);
 			}
 		}
 		delete po;

@@ -44,7 +44,6 @@
 #include "authors.h"
 #include "documenters.h"
 #include "globals.h"
-#include "viewport_zoom.h"
 
 
 
@@ -54,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-void dialog_info(QString const & message, QWidget * parent)
+void Dialog::info(QString const & message, QWidget * parent)
 {
 	QMessageBox box(parent);
 	box.setText(message);
@@ -66,7 +65,7 @@ void dialog_info(QString const & message, QWidget * parent)
 
 
 
-void dialog_warning(QString const & message, QWidget * parent)
+void Dialog::warning(QString const & message, QWidget * parent)
 {
 	QMessageBox box(parent);
 	box.setText(message);
@@ -78,7 +77,7 @@ void dialog_warning(QString const & message, QWidget * parent)
 
 
 
-void dialog_error(QString const & message, QWidget * parent)
+void Dialog::error(QString const & message, QWidget * parent)
 {
 	QMessageBox box(parent);
 	box.setText(message);
@@ -128,31 +127,6 @@ void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & mo
 
 
 
-QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route)
-{
-	QString text;
-	bool ok;
-	do {
-		text = QInputDialog::getText(parent,
-					     is_route ? QString("Add Route") : QString("Add Track"),
-					     is_route ? QString("Route Name:") : QString("Track Name:"),
-					     QLineEdit::Normal,
-					     QString(default_name), &ok);
-
-		if (ok && text.isEmpty()) {
-			QMessageBox::information(parent,
-						 is_route ? QString("Route Name") : QString("Track Name"),
-						 is_route ? QString("Please enter a name for the route.") : QString("Please enter a name for the track."));
-		}
-
-	} while (ok && text.isEmpty());
-
-	return text;
-}
-
-
-
-
 /**
  * Returns: a date as a string - always in ISO8601 format (YYYY-MM-DD).
  * This string can be NULL (especially when the dialog is cancelled).
@@ -178,211 +152,9 @@ char * a_dialog_get_date(const QString & title, QWidget * parent)
 
 
 
-bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const & title)
+bool Dialog::yes_or_no(QString const & message, QWidget * parent, QString const & title)
 {
 	return QMessageBox::Yes == QMessageBox::question(parent, title, message);
-}
-
-
-
-
-bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
-{
-	ViewportZoomDialog dialog(xmpp, ympp, parent);
-	if (QDialog::Accepted == dialog.exec()) {
-		dialog.get_values(xmpp, ympp);
-		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
-		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << *xmpp << *ympp;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-
-
-
-ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * parent)
-{
-	this->setWindowTitle(QObject::tr("Zoom Factors..."));
-
-
-	this->vbox = new QVBoxLayout();
-
-
-	this->main_label.setText(QObject::tr("Zoom factor (in meters per pixel):"));
-	this->xlabel.setText(QObject::tr("X (easting): "));
-	this->ylabel.setText(QObject::tr("Y (northing): "));
-
-
-	/* TODO: add some kind of validation and indication for values out of range. */
-	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	this->xspin.setSingleStep(1);
-	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->xspin.setValue(*xmpp);
-
-
-	/* TODO: add some kind of validation and indication for values out of range. */
-	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	this->yspin.setSingleStep(1);
-	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->yspin.setValue(*ympp);
-
-
-	this->grid = new QGridLayout();
-	this->grid->addWidget(&this->xlabel, 0, 0);
-	this->grid->addWidget(&this->xspin, 0, 1);
-	this->grid->addWidget(&this->ylabel, 1, 0);
-	this->grid->addWidget(&this->yspin, 1, 1);
-
-
-	this->checkbox.setText(QObject::tr("X and Y zoom factors must be equal"));
-	if (*xmpp == *ympp) {
-		this->checkbox.setChecked(true);
-	}
-
-
-	this->vbox->addWidget(&this->main_label);
-	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(&this->checkbox);
-	this->vbox->addWidget(&this->button_box);
-
-	QObject::connect(&this->xspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
-	QObject::connect(&this->yspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
-
-
-	this->button_box.addButton(QDialogButtonBox::Ok);
-	this->button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
-}
-
-
-
-
-void ViewportZoomDialog::get_values(double * xmpp, double * ympp)
-{
-	*xmpp = this->xspin.value();
-	*ympp = this->yspin.value();
-}
-
-
-
-
-void ViewportZoomDialog::spin_changed_cb(double new_value)
-{
-	if (this->checkbox.isChecked()) {
-		if (new_value == this->xspin.value()) {
-			this->yspin.setValue(new_value);
-		} else {
-			this->xspin.setValue(new_value);
-		}
-	}
-}
-
-
-
-
-TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & label, uint32_t custom_threshold, QWidget * a_parent)
-{
-	this->setWindowTitle(title);
-
-
-	this->vbox = new QVBoxLayout();
-
-
-	QLabel main_label(label);
-
-
-	QStringList labels;
-	labels << QObject::tr("1 min");
-	labels << QObject::tr("1 hour");
-	labels << QObject::tr("1 day");
-	labels << QObject::tr("Custom (in minutes):");
-	this->radio_group = new SGRadioGroup(QString(""), labels, NULL); /* kamilTODO: delete this widget in destructor? */
-
-
-	/* TODO: add some kind of validation and indication for values out of range. */
-	this->custom_spin.setMinimum(1); /* [minutes] */
-	this->custom_spin.setMaximum(60 * 24 * 366); /* [minutes] */
-	this->custom_spin.setValue(custom_threshold);
-	this->custom_spin.setSingleStep(1);
-
-
-	this->vbox->addWidget(&main_label);
-	this->vbox->addWidget(this->radio_group);
-	this->vbox->addWidget(&this->custom_spin);
-	this->vbox->addWidget(&this->button_box);
-
-	QObject::connect(&this->custom_spin, SIGNAL (valueChanged(int)), this, SLOT (spin_changed_cb(int)));
-
-	this->button_box.addButton(QDialogButtonBox::Ok);
-	this->button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
-}
-
-
-
-void TimeThresholdDialog::get_value(uint32_t * custom_threshold)
-{
-	const uint32_t selection = this->radio_group->get_selected();
-	switch (selection) {
-	case 0:
-		*custom_threshold = 1;
-		break;
-	case 1:
-		*custom_threshold = 60;
-		break;
-	case 2:
-		*custom_threshold = 60 * 24;
-		break;
-	case 3:
-		*custom_threshold = (uint32_t) this->custom_spin.value();
-		break;
-	default:
-		qDebug() << "EE: Dialog: Time Threshold Dialog: invalid selection value" << selection;
-		break;
-	}
-}
-
-
-
-void TimeThresholdDialog::spin_changed_cb(__attribute__((unused)) int new_value)
-{
-	/* Enable "custom value" checkbox. */
-	this->radio_group->set_selected(3);
-}
-
-
-
-
-bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent)
-{
-	TimeThresholdDialog dialog(title, label, *thr, parent);
-
-	if (QDialog::Accepted == dialog.exec()) {
-		dialog.get_value(thr);
-		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
-		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << "DD: Dialog: Time Threshold Dialog: Saving time threshold as" << *thr;
-		return true;
-	} else {
-		return false;
-	}
 }
 
 
@@ -393,10 +165,9 @@ bool a_dialog_time_threshold(const QString & title, const QString & label, uint3
  *
  * Returns: A value of zero indicates the dialog was cancelled.
  */
-int a_dialog_get_positive_number(Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step)
+int a_dialog_get_positive_number(const QString & title, const QString & label, int default_num, int min, int max, int step, QWidget * parent)
 {
-	int result = QInputDialog::getInt(parent, title, label,
-					  default_num, min, max, step);
+	int result = QInputDialog::getInt(parent, title, label, default_num, min, max, step);
 
 	return result;
 }
@@ -449,7 +220,7 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
 
 
 
-void a_dialog_about(SlavGPS::Window * parent)
+void Dialog::about(QWidget * parent)
 {
 #ifdef K
 	const char *program_name = PACKAGE_NAME;
@@ -550,73 +321,11 @@ void a_dialog_about(SlavGPS::Window * parent)
 
 
 
-bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent)
-{
-	QDialog dialog(parent);
-	dialog.setWindowTitle(QObject::tr("Download along track"));
-
-
-	QLabel map_label(QObject::tr("Map type:"));
-	QComboBox map_combo;
-	for (int i = 0; i < map_labels.size(); i++) {
-		map_combo.addItem(map_labels.at(i));
-	}
-	map_combo.setCurrentIndex(default_map_idx);
-
-	QLabel zoom_label(QObject::tr("Zoom level:"));
-	QComboBox zoom_combo;
-	for (int i = 0; i < zoom_labels.size(); i++) {
-		zoom_combo.addItem(zoom_labels.at(i));
-	}
-	zoom_combo.setCurrentIndex(default_zoom_idx);
-
-
-	QGridLayout * grid = new QGridLayout();
-	grid->addWidget(&map_label, 0, 0);
-	grid->addWidget(&map_combo, 0, 1);
-	grid->addWidget(&zoom_label, 1, 0);
-	grid->addWidget(&zoom_combo, 1, 1);
-
-
-	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-#if 0
-	this->button_box.addButton(QDialogButtonBox::Ok);
-	this->button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-#endif
-
-
-	QVBoxLayout * vbox = new QVBoxLayout();
-	vbox->addLayout(grid);
-	vbox->addWidget(&button_box);
-
-
-	QLayout * old = dialog.layout();
-	delete old;
-	dialog.setLayout(vbox); /* setLayout takes ownership of vbox. */
-
-
-	if (QDialog::Accepted == dialog.exec()) {
-		*selected_map_idx = map_combo.currentIndex();
-		*selected_zoom_idx = zoom_combo.currentIndex();
-		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
-		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << "DD: Dialog: Map and Zoom: map index:" << *selected_map_idx << "zoom index:" << *selected_zoom_idx;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-
-
-
 /**
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void a_dialog_license(const char * map, const char * license, const char * url, QWidget * parent)
+void Dialog::license(const char * map, const char * license, const char * url, QWidget * parent)
 {
 	const QString primary_text = QString(QObject::tr("The map data is licensed: %1.")).arg(license);
 	const QString secondary_text = QString(QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>."))

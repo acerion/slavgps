@@ -1362,7 +1362,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 #endif
 	} else {
 		if (!turn_off) {
-			dialog_info("No GPS items selected for transfer.", layer->get_window());
+			Dialog::info(QObject::tr("No GPS items selected for transfer."), layer->get_window());
 		}
 	}
 
@@ -1378,7 +1378,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
-				dialog_error("Could not turn off device.", layer->get_window());
+				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}
 			free(device_off);
 		}
@@ -1462,7 +1462,7 @@ static void gps_empty_upload_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!dialog_yes_or_no("Are you sure you want to delete GPS Upload data?", panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Upload data?"), panel->get_window())) {
 		return;
 	}
 
@@ -1480,7 +1480,7 @@ static void gps_empty_download_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!dialog_yes_or_no("Are you sure you want to delete GPS Download data?", panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Download data?"), panel->get_window())) {
 		return;
 	}
 
@@ -1499,7 +1499,7 @@ static void gps_empty_realtime_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!dialog_yes_or_no("Are you sure you want to delete GPS Realtime data?", panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), panel->get_window())) {
 		return;
 	}
 
@@ -1517,7 +1517,7 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!dialog_yes_or_no("Are you sure you want to delete All GPS data?", panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete All GPS data?"), panel->get_window())) {
 		return;
 	}
 

@@ -1459,7 +1459,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	}
 
 	/* Show the info. */
-	dialog_info(message, this->get_window());
+	Dialog::info(message, this->get_window());
 }
 
 

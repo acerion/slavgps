@@ -2583,7 +2583,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			iter++;
 		}
 		if (iter == this->trk->end()) {
-			dialog_error(QString(_("Failed to split track. Track unchanged")), this->trw->get_window());
+			Dialog::error(tr("Failed to split track. Track unchanged"), this->trw->get_window());
 			keep_dialog = true;
 			break;
 		}

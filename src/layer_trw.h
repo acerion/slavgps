@@ -42,6 +42,7 @@
 #include "track.h"
 #include "trackpoint_properties.h"
 #include "layer_trw_containers.h"
+#include "layer_trw_dialogs.h"
 #include "slav_qt.h"
 
 

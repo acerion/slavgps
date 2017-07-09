@@ -137,8 +137,10 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 		if (selected && selected->type == vc->layer_type) {
 			selected->paste_sublayer(vc->sublayer, vc->data, vc->len);
 		} else {
-			dialog_error(QString("The clipboard contains sublayer data for %1 layers. "
-					     "You must select a layer of this type to paste the clipboard data.").arg(Layer::get_interface(vc->layer_type)->name), panel->get_window());
+			Dialog::error(tr("The clipboard contains sublayer data for %1 layers. "
+					 "You must select a layer of this type to paste the clipboard data.")
+				      .arg(Layer::get_interface(vc->layer_type)->name),
+				      panel->get_window());
 		}
 	}
 }
@@ -278,7 +280,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_changed();
 	} else {
-		dialog_error("In order to paste a waypoint, please select an appropriate layer to paste into.", panel->get_window());
+		Dialog::error(tr("In order to paste a waypoint, please select an appropriate layer to paste into."), panel->get_window());
 	}
 }
 

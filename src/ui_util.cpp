@@ -82,7 +82,7 @@ void open_url(const char * url, SlavGPS::Window * parent)
 	GError * error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), url, GDK_CURRENT_TIME, &error);
 	if (error) {
-		dialog_error(QString("Could not launch web browser. %1").arg(QString(error->message)), parent);
+		Dialog::error(tr("Could not launch web browser. %1").arg(QString(error->message)), parent);
 		g_error_free(error);
 	}
 #endif
@@ -99,7 +99,7 @@ void new_email(Window * parent, const char * address)
 	GError *error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
 	if (error) {
-		dialog_error(QString("Could not create new email. %1").arg(QString(error->message)), parent);
+		Dialog::error(tr("Could not create new email. %1").arg(QString(error->message)), parent);
 		g_error_free(error);
 	}
 	/*
@@ -107,7 +107,7 @@ void new_email(Window * parent, const char * address)
 	  ShellExecute(NULL, NULL, (char *) uri, NULL, ".\\", 0);
 	  #else
 	  if (!spawn_command_line_async("xdg-email", uri))
-	  dialog_error("Could not create new email.", parent);
+	  Dialog::error(tr("Could not create new email."), parent);
 	  #endif
 	*/
 	free(uri);

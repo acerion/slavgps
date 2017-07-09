@@ -1903,7 +1903,7 @@ void Window::show_layer_defaults_cb(void)
 	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
 
 	if (Layer::get_interface(layer_type)->params_count == 0) {
-		dialog_info(tr("This layer type has no configurable properties."), this);
+		Dialog::info(tr("This layer type has no configurable properties."), this);
 	} else {
 		layer_defaults_show_window(layer_type, this);
 	}
@@ -2039,16 +2039,16 @@ void Window::open_file(char const * new_filename, bool change_filename)
 	this->loaded_type = a_file_load(agg, this->viewport, new_filename);
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
-		dialog_error("The file you requested could not be opened.", this);
+		Dialog::error(tr("The file you requested could not be opened."), this);
 		break;
 	case LOAD_TYPE_GPSBABEL_FAILURE:
-		dialog_error("GPSBabel is required to load files of this type or GPSBabel encountered problems.", this);
+		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		dialog_error(QString("Unable to load malformed GPX file %1").arg(QString(new_filename)), this);
+		Dialog::error(tr("Unable to load malformed GPX file %1").arg(QString(new_filename)), this);
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		dialog_error(QString("Unsupported file type for %1").arg(QString(new_filename)), this);
+		Dialog::error(tr("Unsupported file type for %1").arg(QString(new_filename)), this);
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
@@ -2446,10 +2446,10 @@ void Window::help_help_cb(void)
 	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
 	if (!show && !error)
 		/* No error to show, so unlikely this will get called. */
-		dialog_error("The help system is not available.", window);
+		Dialog::error(tr("The help system is not available."), window);
 	else if (error) {
 		/* Main error path. */
-		dialog_error(QString("Help is not available because: %1.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp).").arg(QString(error->message)), window);
+		Dialog::error(tr("Help is not available because: %1.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp).").arg(QString(error->message)), window);
 		g_error_free(error);
 	}
 	free(uri);
@@ -2462,7 +2462,7 @@ void Window::help_help_cb(void)
 
 void Window::help_about_cb(void) /* Slot. */
 {
-	a_dialog_about(this);
+	Dialog::about(this);
 }
 
 
@@ -2641,7 +2641,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", w, h);
 
 		this->status_bar->set_message(StatusBarField::INFO, QString(""));
-		dialog_error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
+		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
 
 		this->viewport->set_xmpp(old_xmpp);
 		this->viewport->set_ympp(old_ympp);
@@ -2681,7 +2681,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	/* Cleanup. */
 
 	this->status_bar->set_message(StatusBarField::INFO, QString(""));
-	dialog_info(message, this);
+	Dialog::info(message, this);
 
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
@@ -2774,7 +2774,7 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 		/* A directory.
 		   For some reason this method is only written to work in UTM... */
 		if (this->viewport->get_coord_mode() != CoordMode::UTM) {
-			dialog_error("You must be in UTM mode to use this feature", this);
+			Dialog::error(tr("You must be in UTM mode to use this feature"), this);
 			return result;
 		}
 
@@ -2828,7 +2828,7 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 			qDebug() << "II: Viewport: Save to Image: target file:" << result;
 
 			if (0 == access(result.toUtf8().constData(), F_OK)) {
-				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result.toUtf8().constData()))), this, "")) {
+				if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result.toUtf8().constData()))), this, "")) {
 					result.resize(0);
 				}
 			}

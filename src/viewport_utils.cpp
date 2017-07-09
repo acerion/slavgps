@@ -61,7 +61,7 @@ void ViewportToImageDialog::get_size_from_viewport_cb(void) /* Slot */
 	int height_size = this->viewport->get_height() * this->viewport->get_xmpp() / zoom;
 
 	if (width_size > width_max || width_size < width_min || height_size > height_max || height_size < height_min) {
-		dialog_info("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.", NULL);
+		Dialog::info(tr("Viewable region outside allowable pixel size bounds for image. Clipping width/height values."), NULL);
 	}
 
 	qDebug() << "DD: Viewport: Save: current viewport size:" << this->viewport->get_width() << "/" << this->viewport->get_height() << ", zoom:" << zoom << ", xmpp:" << this->viewport->get_xmpp();

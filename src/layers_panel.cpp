@@ -285,7 +285,7 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 	}
 
 	if (new_text[0] == '\0') {
-		dialog_error(_("New name can not be blank."), this->window);
+		Dialog::error(tr("New name can not be blank."), this->window);
 		return;
 	}
 #ifdef K
@@ -557,7 +557,7 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 		LayerType layer_type = this->tree_view->get_layer(index)->type;
 		if (Layer::get_interface(layer_type)->params_count == 0) {
-			dialog_info(tr("This layer type has no configurable properties."), this->window);
+			Dialog::info(tr("This layer type has no configurable properties."), this->window);
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
@@ -615,7 +615,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			}
 #endif
 		} else {
-			dialog_info("You cannot cut the Top Layer.", this->window);
+			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
@@ -673,7 +673,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 
 		/* Get confirmation from the user. */
-		if (!dialog_yes_or_no(QString("Are you sure you want to delete %1?").arg(QString(layer->get_name())), this->window)) {
+		if (!Dialog::yes_or_no(tr("Are you sure you want to delete %1?").arg(QString(layer->get_name())), this->window)) {
 			return;
 		}
 
@@ -695,7 +695,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			}
 #endif
 		} else {
-			dialog_info("You cannot delete the Top Layer.", this->window);
+			Dialog::info(tr("You cannot delete the Top Layer."), this->window);
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();

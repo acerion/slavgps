@@ -661,7 +661,7 @@ static unsigned int map_type_to_map_index(MapTypeID map_type)
  */
 static void maps_show_license(Window * parent, MapSource * map)
 {
-	a_dialog_license(map->get_label(), map->get_license(), map->get_license_url(), parent);
+	Dialog::license(map->get_label(), map->get_license(), map->get_license_url(), parent);
 }
 
 
@@ -933,7 +933,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 		if (map->get_drawmode() != vp_drawmode) {
 			const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
-			dialog_warning(msg, viewport->get_window());
+			Dialog::warning(msg, viewport->get_window());
 		}
 	}
 
@@ -949,7 +949,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			dialog_error(QString("Failed to open MBTiles file: %1").arg(QString(this->filename)), viewport->get_window());
+			Dialog::error(tr("Failed to open MBTiles file: %1").arg(QString(this->filename)), viewport->get_window());
 			this->mbtiles = NULL;
 		}
 	}
@@ -2211,9 +2211,9 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 	} else if (map->get_drawmode() != vp_drawmode) {
 		const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 		const QString err = QString(QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.")).arg(drawmode_name);
-		dialog_error(err, this->get_window());
+		Dialog::error(err, this->get_window());
 	} else {
-		dialog_error(QObject::tr("Wrong zoom level for this map."), this->get_window());
+		Dialog::error(QObject::tr("Wrong zoom level for this map."), this->get_window());
 	}
 
 }
@@ -2251,7 +2251,7 @@ void LayerMap::about_cb(void)
 	if (map->get_license()) {
 		maps_show_license(this->get_window(), map);
 	} else {
-		dialog_info(map->get_label(), this->get_window());
+		Dialog::info(map->get_label(), this->get_window());
 	}
 }
 
@@ -2469,7 +2469,7 @@ void LayerMap::download_all_cb(void)
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
-		dialog_error(str, this->get_window());
+		Dialog::error(str, this->get_window());
 		free(str);
 		return;
 	}
@@ -2477,7 +2477,7 @@ void LayerMap::download_all_cb(void)
 	/* Confirm really want to do this. */
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
-		bool ans = dialog_yes_or_no(str, this->get_window());
+		bool ans = Dialog::yes_or_no(str, this->get_window());
 		free(str);
 		if (!ans) {
 			return;

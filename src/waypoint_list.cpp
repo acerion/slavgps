@@ -142,7 +142,7 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 	char * cmd = g_strdup_printf("%s %s", Preferences::get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (! g_spawn_command_line_async(cmd, &err)) {
-		dialog_error(QString("Could not launch %1 to open file.").arg(Preferences::get_image_viewer(), trw->get_window());
+		Dialog::error(tr("Could not launch %1 to open file.").arg(Preferences::get_image_viewer(), trw->get_window());
 		g_error_free(err);
 	}
 	free(cmd);

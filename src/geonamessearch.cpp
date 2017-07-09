@@ -272,7 +272,7 @@ static GList * a_select_geoname_from_list(Window * parent, GList * geonames, boo
 			gtk_widget_destroy(dialog);
 			return selected_geonames;
 		}
-		dialog_error("Nothing was selected"), parent);
+		Dialog::error(tr("Nothing was selected"), parent);
 	}
 	gtk_widget_destroy(dialog);
 #endif

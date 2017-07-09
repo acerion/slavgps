@@ -73,7 +73,7 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_selector));
 		if (0 != access(fn, F_OK)
-		    || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
+		    || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
 
 			free(last_folder_uri);
 			last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(file_selector));
@@ -88,7 +88,7 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 	}
 	gtk_widget_destroy(file_selector);
 	if (failed) {
-		dialog_error("The filename you requested could not be opened for writing.", layer->get_window());
+		Dialog::error(tr("The filename you requested could not be opened for writing."), layer->get_window());
 	}
 #endif
 }
@@ -111,14 +111,14 @@ void SlavGPS::vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * ext
 		char *cmd = g_strdup_printf("%s %s", external_program, quoted_file);
 		free(quoted_file);
 		if (! g_spawn_command_line_async(cmd, &err)) {
-			dialog_error(QString("Could not launch %1.").arg(QString(external_program)), trw->get_window());
+			Dialog::error(QObject::tr("Could not launch %1.").arg(QString(external_program)), trw->get_window());
 			g_error_free(err);
 		}
 		free(cmd);
 		util_add_to_deletion_list(name_used);
 		free(name_used);
 	} else {
-		dialog_error("Could not create temporary file for export.", trw->get_window());
+		Dialog::error(QObject::tr("Could not create temporary file for export."), trw->get_window());
 	}
 }
 
@@ -190,11 +190,11 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
 		if (0 != access(fn, F_OK)
-		    || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
+		    || Dialog::yes_or_no(QObject::tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
 
 			BabelFileType * active = a_babel_ui_file_type_selector_get(babel_selector);
 			if (active == NULL) {
-				dialog_error("You did not select a valid file format.", trw->get_window());
+				Dialog::error(QObject::tr("You did not select a valid file format."), trw->get_window());
 			} else {
 				gtk_widget_hide(file_selector);
 				trw->get_window()->set_busy_cursor();
@@ -209,7 +209,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	//babel_ui_selector_destroy(babel_selector);
 	gtk_widget_destroy(file_selector);
 	if (failed) {
-		dialog_error("The filename you requested could not be opened for writing.", trw->get_window());
+		Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), trw->get_window());
 	}
 #endif
 }

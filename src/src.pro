@@ -6,6 +6,7 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    layer_trw_dialogs.cpp \
     routing.cpp \
     routing_engine.cpp \
     routing_engine_web.cpp \
@@ -73,6 +74,7 @@ SOURCES += main.cpp \
     window_layer_tools.cpp \
     viewport.cpp \
     viewport_utils.cpp \
+    viewport_zoom.cpp \
     coord.cpp \
     coords.cpp \
     degrees_converters.cpp \
@@ -182,6 +184,7 @@ HEADERS += window.h \
     viewport.h \
     viewport_internal.h \
     viewport_utils.h \
+    viewport_zoom.h \
     coord.h \
     coords.h \
     globals.h \
@@ -196,6 +199,7 @@ HEADERS += window.h \
     layer_trw_draw.h \
     layer_trw_tools.h \
     layer_trw_containers.h \
+    layer_trw_dialogs.h \
     layers_panel.h \
     layer_toolbox.h \
     track.h \
@@ -260,4 +264,4 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik 
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik
