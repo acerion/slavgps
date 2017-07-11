@@ -297,6 +297,15 @@ SGItem::SGItem(QString const & text_) : QStandardItem(text_)
 
 
 
+SGItem::SGItem(Geoname * geoname) : QStandardItem()
+{
+	this->setText(QString(geoname->name));
+	this->setData(QVariant::fromValue(geoname), RoleLayerData);
+}
+
+
+
+
 SGItem::SGItem(Track * trk) : QStandardItem()
 {
 	this->setText(QString(trk->name));

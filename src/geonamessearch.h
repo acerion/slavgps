@@ -38,6 +38,27 @@ namespace SlavGPS {
 
 
 
+	/* Type to contain data returned from GeoNames.org */
+	class Geoname : public QObject {
+		Q_OBJECT
+	public:
+		Geoname() {};
+		~Geoname();
+
+		char * name = NULL;
+		char * feature = NULL;
+		struct LatLon ll = { 0.0, 0.0 };
+		double elevation = VIK_DEFAULT_ALTITUDE;
+		char * cmt = NULL;
+		char * desc = NULL;
+	};
+
+
+
+
+
+
+
 
 	/* Finding Wikipedia entries within a certain box. */
 	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2]);
@@ -46,6 +67,11 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
+
+
+
+
+Q_DECLARE_METATYPE(SlavGPS::Geoname*)
 
 
 

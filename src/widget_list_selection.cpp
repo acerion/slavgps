@@ -35,37 +35,43 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg)
+SGListSelection::SGListSelection(bool multiple_selection, QWidget * a_parent) : QTableView(a_parent)
 {
-	dialog.setWindowTitle(title);
-	dialog.setMinimumHeight(400);
-
-	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-	model.setHorizontalHeaderItem(0, new QStandardItem(msg));
-	model.setItemPrototype(new SGItem());
-
-	view.horizontalHeader()->setStretchLastSection(true);
-	view.verticalHeader()->setVisible(false);
-	view.setWordWrap(false);
-	view.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-	view.setTextElideMode(Qt::ElideRight);
-	if (multiple_selection_allowed) {
-		view.setSelectionMode(QAbstractItemView::ExtendedSelection);
+	if (multiple_selection) {
+		this->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	} else {
-		view.setSelectionMode(QAbstractItemView::SingleSelection);
+		this->setSelectionMode(QAbstractItemView::SingleSelection);
 	}
-	view.setShowGrid(false);
-	view.setModel(&model);
 
-	view.horizontalHeader()->setSectionHidden(0, false);
-	view.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
 
-	vbox.addWidget(&view);
-	vbox.addWidget(&button_box);
+	this->horizontalHeader()->setStretchLastSection(true);
+	this->verticalHeader()->setVisible(false);
+	this->setWordWrap(false);
+	this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	this->setTextElideMode(Qt::ElideRight);
 
-	QLayout * old = dialog.layout();
-	delete old;
-	dialog.setLayout(&vbox);
+	this->setShowGrid(false);
+	this->setModel(&this->model);
+
+	this->selection_model.setModel(&this->model);
+	this->setSelectionModel(&this->selection_model);
+}
+
+
+
+
+void SGListSelection::set_headers(const QStringList & header_labels)
+{
+	this->model.setItemPrototype(new SGItem());
+
+	for (int i = 0; i < header_labels.size(); i++) {
+		QStandardItem * header_item = new QStandardItem(header_labels.at(i));
+		this->model.setHorizontalHeaderItem(i, header_item);
+	}
+
+	this->horizontalHeader()->setSectionHidden(0, false);
+	/* Call this only after headers have been created in the loop above. */
+	this->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+
+	return;
 }

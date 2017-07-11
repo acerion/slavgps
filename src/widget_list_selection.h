@@ -43,25 +43,45 @@ namespace SlavGPS {
 
 
 
-	void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg);
+	class SGListSelection : public QTableView {
+		Q_OBJECT
+	public:
+		SGListSelection() {};
+		SGListSelection(bool multiple_selection, QWidget * a_parent = NULL);
+
+		void set_headers(const QStringList & header_labels);
+
+		QStandardItemModel model;
+		QItemSelectionModel selection_model;
+	};
+
 
 	template <typename T>
-	std::list<T> a_dialog_select_from_list(std::list<T> const & elements, bool multiple_selection_allowed, QString const & title, QString const & msg, QWidget * parent)
+	std::list<T> a_dialog_select_from_list(std::list<T> const & elements, bool multiple_selection, const QString & title, const QStringList & header_labels, QWidget * parent)
 	{
 		QDialog dialog(parent);
+		SGListSelection view(multiple_selection, &dialog);
+		view.set_headers(header_labels);
 		QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		QStandardItemModel model;
-		QTableView view;
 		QVBoxLayout vbox;
-		QItemSelectionModel selection_model(&model);
 
-		a_dialog_select_from_list_prepare(dialog, model, view, vbox, button_box, multiple_selection_allowed, title, msg);
-		view.setSelectionModel(&selection_model);
+		dialog.setWindowTitle(title);
+		dialog.setMinimumHeight(400);
+
+		QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+		QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+		vbox.addWidget(&view);
+		vbox.addWidget(&button_box);
+
+		QLayout * old = dialog.layout();
+		delete old;
+		dialog.setLayout(&vbox);
 
 		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
 			SlavGPS::SGItem * item = new SlavGPS::SGItem(*iter);
 			item->setEditable(false);
-			model.invisibleRootItem()->appendRow(item);
+			view.model.invisibleRootItem()->appendRow(item);
 		}
 		view.setVisible(false);
 		view.resizeRowsToContents();
@@ -72,9 +92,9 @@ namespace SlavGPS {
 
 		std::list<T> result;
 		if (dialog.exec() == QDialog::Accepted) {
-			QModelIndexList selected = selection_model.selectedIndexes();
+			QModelIndexList selected = view.selection_model.selectedIndexes();
 			for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-				QVariant variant = model.itemFromIndex(*iter)->data();
+				QVariant variant = view.model.itemFromIndex(*iter)->data();
 				result.push_back(variant.value<T>());
 			}
 		}

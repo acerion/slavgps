@@ -39,6 +39,7 @@
 #include "util.h"
 #include "globals.h"
 #include "util.h"
+#include "widget_list_selection.h"
 
 
 
@@ -77,22 +78,6 @@ using namespace SlavGPS;
 #define GEONAMES_THUMBNAILIMG_PATTERN "\"thumbnailImg\": \""
 #define GEONAMES_SEARCH_NOT_FOUND "not understand the location"
 
-
-
-
-/* Type to contain data returned from GeoNames.org */
-class Geoname {
-public:
-	Geoname() {};
-	~Geoname();
-
-	char * name = NULL;
-	char * feature = NULL;
-	struct LatLon ll = { 0.0, 0.0 };
-	double elevation = VIK_DEFAULT_ALTITUDE;
-	char * cmt = NULL;
-	char * desc = NULL;
-};
 
 
 
@@ -144,16 +129,23 @@ static Geoname * copy_geoname(Geoname * src)
 static void free_geoname_list(std::list<Geoname *> & found_places)
 {
 	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
-		delete *iter;
+		qDebug() << "DD: geoname" << (unsigned long) *iter;
+#ifdef K
+		//delete *iter;
+#endif
 	}
+	qDebug() << "";
 }
 
 
 
 
-std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QString & msg, std::list<Geoname *> & geonames, bool multiple_selection_allowed, Window * parent)
+std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, bool multiple_selection, Window * parent)
 {
-	std::list<Geoname *> selected_geonames;
+	QStringList headers2;
+	headers2 << QObject::tr("Name") << QObject::tr("Feature") << QObject::tr("Lat/Lon");
+
+	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames, multiple_selection, title, headers2, parent);
 #ifdef K
 	GtkTreeIter iter;
 	GtkCellRenderer * renderer;
@@ -469,7 +461,8 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		return;
 	}
 
-	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), QObject::tr("Select the articles you want to add."), wiki_places, true, window);
+	const QStringList headers = { QObject::tr("Select the articles you want to add.") };
+	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), headers, wiki_places, true, window);
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 		const Geoname * wiki_geoname = *iter;

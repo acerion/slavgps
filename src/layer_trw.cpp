@@ -4458,12 +4458,11 @@ void LayerTRW::merge_with_other_cb(void)
 	/* Sort alphabetically for user presentation. */
 	other_tracks_names.sort();
 
+	const QStringList headers = { trk->sublayer_type == SublayerType::ROUTE ? tr("Select route to merge with") : tr("Select track to merge with") };
 	std::list<QString> merge_list = a_dialog_select_from_list(other_tracks_names,
 								  true,
 								  tr("Merge with..."),
-								  trk->sublayer_type == SublayerType::ROUTE
-								  ? tr("Select route to merge with")
-								  : tr("Select track to merge with"),
+								  headers,
 								  this->get_window());
 	delete other_tracks;
 
@@ -4527,16 +4526,14 @@ void LayerTRW::append_track_cb(void)
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
+	const QStringList headers = { trk->sublayer_type == SublayerType::ROUTE ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track") };
 	std::list<QString> append_list = a_dialog_select_from_list(other_tracks_names,
 								   false,
 
 								   trk->sublayer_type == SublayerType::ROUTE
 								   ? tr("Append Route")
 								   : tr("Append Track"),
-
-								   trk->sublayer_type == SublayerType::ROUTE
-								   ? tr("Select the route to append after the current route")
-								   : tr("Select the track to append after the current track"),
+								   headers,
 								   this->get_window());
 
 	/* It's a list, but shouldn't contain more than one other track! */
@@ -4604,6 +4601,7 @@ void LayerTRW::append_other_cb(void)
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
+	const QStringList headers = { trk->sublayer_type == SublayerType::ROUTE ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track") };
 	std::list<QString> append_list = a_dialog_select_from_list(other_tracks_names,
 								   false,
 
@@ -4611,9 +4609,7 @@ void LayerTRW::append_other_cb(void)
 								   ? tr("Append Track")
 								   : tr("Append Route"),
 
-								   trk->sublayer_type == SublayerType::ROUTE
-								   ? tr("Select the track to append after the current route")
-								   : tr("Select the route to append after the current track"),
+								   headers,
 								   this->get_window());
 
 	if (append_list.empty()) {
@@ -5539,10 +5535,11 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Get list of items to delete from the user. */
+	const QStringList headers = { tr("Select tracks to delete") };
 	std::list<QString> delete_list = a_dialog_select_from_list(all,
 								   true,
 								   tr("Delete Selection"),
-								   tr("Select tracks to delete"),
+								   headers,
 								   this->get_window());
 
 	if (delete_list.empty()) {
@@ -5589,10 +5586,11 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	/* Get list of items to delete from the user. */
+	const QStringList headers = { tr("Select routes to delete") };
 	std::list<QString> delete_list = a_dialog_select_from_list(all,
 								   true,
 								   tr("Delete Selection"),
-								   tr("Select routes to delete"),
+								   headers,
 								   this->get_window());
 
 	/* Delete requested routes.
@@ -5681,10 +5679,11 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	}
 
 	/* Get list of items to delete from the user. */
+	const QStringList headers = { tr("Select waypoints to delete") };
 	std::list<QString> delete_list = a_dialog_select_from_list(all,
 								   true,
 								   tr("Delete Selection"),
-								   tr("Select waypoints to delete"),
+								   headers,
 								   this->get_window());
 
 	if (delete_list.empty()) {

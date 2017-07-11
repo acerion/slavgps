@@ -31,6 +31,7 @@
 #include <glib.h>
 #include "slav_qt.h"
 #include "track.h"
+#include "geonamessearch.h"
 
 
 
@@ -58,6 +59,7 @@ namespace SlavGPS {
 	public:
 		SGItem();
 		SGItem(Track * trk);
+		SGItem(Geoname * geoname);
 		SGItem(QString const & text);
 		~SGItem() {};
 
