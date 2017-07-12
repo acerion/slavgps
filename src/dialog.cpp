@@ -122,13 +122,13 @@ bool Dialog::yes_or_no(QString const & message, QWidget * parent, QString const 
 
 
 /**
- * Dialog to return a positive number via a spinbox within the supplied limits.
+ * Dialog to return an integer via a spinbox within the supplied limits.
  *
- * Returns: A value of zero indicates the dialog was cancelled.
+ * Use \param ok to recognize when a dialog was cancelled.
  */
-int a_dialog_get_positive_number(const QString & title, const QString & label, int default_num, int min, int max, int step, QWidget * parent)
+int Dialog::get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent)
 {
-	int result = QInputDialog::getInt(parent, title, label, default_num, min, max, step);
+	int result = QInputDialog::getInt(parent, title, label, default_num, min, max, step, ok);
 
 	return result;
 }

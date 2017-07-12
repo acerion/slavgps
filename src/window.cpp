@@ -379,6 +379,17 @@ void Window::create_actions(void)
 			qa->setToolTip(tr("Import File With GPS&Babel..."));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
 
+#ifdef VIK_CONFIG_OPENSTREETMAP
+			qa = this->submenu_file_acquire->addAction(tr("&OSM Traces..."));
+			qa->setToolTip(tr("Get traces from OpenStreetMap"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_cb(void)));
+
+
+			qa = this->submenu_file_acquire->addAction(tr("&My OSM Traces..."));
+			qa->setToolTip(tr("Get Your Own Traces from OpenStreetMap"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_my_osm_cb(void)));
+#endif
+
 #ifdef VIK_CONFIG_GEONAMES
 			qa = this->submenu_file_acquire->addAction(tr("From &Wikipedia Waypoints"));
 			qa->setToolTip(tr("Create waypoints from Wikipedia items in the current view"));

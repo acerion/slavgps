@@ -39,13 +39,14 @@
 
 #include "geonames.h"
 #include "layer_map.h"
+#include "osm.h"
+#include "osm-traces.h"
 #ifdef K
 #include "bing.h"
 #include "google.h"
 #include "terraserver.h"
 #include "expedia.h"
-#include "osm.h"
-#include "osm-traces.h"
+
 #include "bluemarble.h"
 #include "dir.h"
 #include "datasources.h"
@@ -271,12 +272,13 @@ static void register_loadable_types(void)
  */
 void SlavGPS::modules_init()
 {
-#ifdef K
 	/* OSM done first so this will be the default service for searching/routing/etc... */
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_init();
 	osm_traces_init();
 #endif
+
+#ifdef K
 #ifdef VIK_CONFIG_BING
 	bing_init();
 #endif
@@ -346,10 +348,11 @@ void SlavGPS::modules_post_init()
 
 void SlavGPS::modules_uninit()
 {
-#ifdef K
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_traces_uninit();
 #endif
+
+#ifdef K
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_uninit();
 #endif

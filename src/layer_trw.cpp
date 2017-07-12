@@ -4896,13 +4896,14 @@ void LayerTRW::split_by_n_points_cb(void)
 		return;
 	}
 
-	int n_points = a_dialog_get_positive_number(tr("Split Every Nth Point"),
-						    tr("Split on every Nth point:"),
-						    250,   /* Default value as per typical limited track capacity of various GPS devices. */
-						    2,     /* Min */
-						    65536, /* Max */
-						    5,     /* Step */
-						    this->get_window());
+	int n_points = Dialog::get_int(tr("Split Every Nth Point"),
+				       tr("Split on every Nth point:"),
+				       250,   /* Default value as per typical limited track capacity of various GPS devices. */
+				       2,     /* Min */
+				       65536, /* Max */
+				       5,     /* Step */
+				       NULL,  /* ok */
+				       this->get_window());
 	/* Was a valid number returned? */
 	if (!n_points) {
 		return;

@@ -52,7 +52,7 @@ using namespace SlavGPS;
 
 
 /* initialisation */
-void osm_init (void)
+void SlavGPS::osm_init(void)
 {
 	MapSource * mapnik_type = new MapSourceSlippy(MAP_ID_OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%d/%d/%d.png");
 	mapnik_type->set_name((char *) "OSM-Mapnik");

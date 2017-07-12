@@ -154,7 +154,7 @@ static void on_complete_process(w_and_interface_t * wi)
 				Layer * layer = wi->trw;
 				wi->acquiring->panel->get_top_layer()->add_layer(layer, true);
 			} else {
-				wi->acquiring->status.setText(QObject::tr("No data."));
+				wi->acquiring->status.setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
 			}
 		}
 		if (wi->acquiring->source_interface->keep_dialog_open) {
@@ -311,6 +311,22 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 	if (source_interface_->internal_dialog) {
+
+		/*
+		  Data interfaces that "use" this branch of code:
+		  vik_datasource_osm_interface;
+		  vik_datasource_wikipedia_interface;
+
+
+		  Data interfaces that don't "use" this branch of code (yet?):
+		  vik_datasource_gps_interface;
+		  vik_datasource_geojson_interface;
+		  vik_datasource_routing_interface;
+		  vik_datasource_osm_my_traces_interface;
+		  vik_datasource_geotag_interface;
+		  vik_datasource_url_interface;
+		*/
+
 		int rv = source_interface_->internal_dialog(avt.window);
 		if (rv != QDialog::Accepted) {
 			if (source_interface_->cleanup_func) {

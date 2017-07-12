@@ -1211,10 +1211,7 @@ static GtkActionEntry entries[] = {
 	{ "AcquireGPS",          NULL,                     N_("From _GPS..."),                       NULL,               N_("Transfer data from a GPS device"),                    (GCallback) acquire_from_gps          },
 	{ "AcquireGPSBabel",     NULL,                     N_("Import File With GPS_Babel..."),      NULL,               N_("Import file via GPSBabel converter"),                 (GCallback) acquire_from_file         },
 	{ "AcquireRouting",      NULL,                     N_("_Directions..."),                     NULL,               N_("Get driving directions"),                             (GCallback) acquire_from_routing      },
-#ifdef VIK_CONFIG_OPENSTREETMAP
-	{ "AcquireOSM",          NULL,                     N_("_OSM Traces..."),                     NULL,               N_("Get traces from OpenStreetMap"),                      (GCallback) acquire_from_osm          },
-	{ "AcquireMyOSM",        NULL,                     N_("_My OSM Traces..."),      	     NULL,               N_("Get Your Own Traces from OpenStreetMap"),             (GCallback) acquire_from_my_osm       },
-#endif
+
 #ifdef VIK_CONFIG_GEOCACHES
 	{ "AcquireGC",           NULL,                     N_("Geo_caches..."),    	             NULL,               N_("Get Geocaches from geocaching.com"),                  (GCallback) acquire_from_gc           },
 #endif
