@@ -139,7 +139,12 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 
-
+/*
+  TODO: this function builds a table with three columns, but only one
+  of them (Name) is filled with details from geonames.  Extend/improve
+  list selection widget so that it can display properties of items in
+  N columns.
+*/
 std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, bool multiple_selection, Window * parent)
 {
 	QStringList headers2;
@@ -501,6 +506,10 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 	}
 
 	free_geoname_list(wiki_places);
+	/* TODO: 'selected' contains pointer to geonames that were
+	   present on 'wiki_places'.  Freeing 'wiki_places' freed also
+	   pointers stored in 'selected', so there is no need to call
+	   free_geoname_list(selected). */
 	free_geoname_list(selected);
 
 	return;
