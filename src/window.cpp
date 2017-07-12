@@ -50,6 +50,7 @@
 #include "goto.h"
 #include "print.h"
 #include "kmz.h"
+#include "vikexttool_datasources.h"
 
 
 
@@ -178,7 +179,7 @@ Window::Window()
 		}
 	}
 
-	vik_ext_tool_datasources_add_menu_items(this, this->uim);
+
 
 	QObject::connect(this, SIGNAL("delete_event"), NULL, SLOT (delete_event));
 
@@ -395,6 +396,8 @@ void Window::create_actions(void)
 			qa->setToolTip(tr("Create waypoints from Wikipedia items in the current view"));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_cb(void)));
 #endif
+
+			vik_ext_tool_datasources_add_menu_items(this->submenu_file_acquire, this);
 		}
 
 

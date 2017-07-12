@@ -99,12 +99,8 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
+char * WebToolFormat::get_url_at_position(Viewport * viewport, const Coord * coord)
 {
-	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
-
-	Viewport * viewport = window->get_viewport();
-
 	// Center values
 	struct LatLon ll = viewport->get_center()->get_latlon();
 
@@ -180,7 +176,7 @@ char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 
 
 
-char * WebToolFormat::get_url(Window * window)
+char * WebToolFormat::get_url(Viewport * viewport)
 {
-	return this->get_url_at_position(window, NULL);
+	return this->get_url_at_position(viewport, NULL);
 }

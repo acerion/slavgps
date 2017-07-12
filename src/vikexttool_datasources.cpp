@@ -65,54 +65,19 @@ void vik_ext_tool_datasources_unregister_all()
 
 
 
-static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
-{
-#ifdef K
-	void * ptr = g_object_get_data(G_OBJECT (widget), VIK_TOOL_DATASOURCE_KEY);
-	External * ext_tool = (External *) ptr;
-	ext_tool->open(window);
-#endif
-}
-
-
-
-
 /**
  * Add to any menu.
  * Mostly for allowing to assign for TrackWaypoint layer menus.
  */
-void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, QMenu * menu)
+void SlavGPS::vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * window)
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
 		External * ext_tool = *iter;
-		char * label = ext_tool->get_label();
-		if (label) {
-#ifdef K
-			QAction * action = QAction(QObject::tr(label), this);
-			free(label);
-			label = NULL;
-			/* Store tool's ref into the menu entry. */
-			g_object_set_data(action, VIK_TOOL_DATASOURCE_KEY, ext_tool);
-			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tool_datasources_open_cb));
-			menu->addAction(action);
-			gtk_widget_show(item);
-#endif
-		}
+		QAction * qa = new QAction(ext_tool->get_label(), NULL);
+
+		qa->setData((qulonglong) window);
+
+		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (datasource_open_cb(void)));
+		menu->addAction(qa);
 	}
-}
-
-
-
-
-/**
- * Adds to the File->Acquire menu only.
- */
-void SlavGPS::vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
-{
-#ifdef K
-	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
-	QMenu * menu = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget));
-	SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
-	gtk_widget_show(widget);
-#endif
 }

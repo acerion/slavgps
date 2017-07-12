@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 	class WebTool : public External {
-
+		Q_OBJECT
 	public:
 		WebTool();
 		~WebTool();

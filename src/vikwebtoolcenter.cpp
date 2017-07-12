@@ -25,6 +25,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QDebug>
+
 #include <glib.h>
 
 #include "window.h"
@@ -64,7 +66,7 @@ WebToolCenter::WebToolCenter(char const * new_label, char const * new_url_format
 
 WebToolCenter::~WebToolCenter()
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+	qDebug() << "II: Web Tool Center: delete tool with" << this->label;
 
 	if (this->url_format) {
 		free(this->url_format);

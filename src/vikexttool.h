@@ -22,6 +22,11 @@
 #define _SG_EXTERNAL_H
 
 
+
+
+#include <QObject>
+#include <QString>
+
 #include "coord.h"
 
 
@@ -37,13 +42,14 @@ namespace SlavGPS {
 
 
 
-	class External {
+	class External : public QObject {
+		Q_OBJECT
 	public:
 		External();
 		~External();
 
-		char * get_label();
-		void set_label(char const * new_label);
+		const QString & get_label(void);
+		void set_label(const QString & new_label);
 
 		void set_id(int new_id);
 		int get_id();
@@ -53,7 +59,10 @@ namespace SlavGPS {
 
 	protected:
 		int id;
-		char * label;
+		QString label;
+
+	public slots:
+		virtual void datasource_open_cb(void) {};
 	};
 
 

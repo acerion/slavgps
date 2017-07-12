@@ -21,8 +21,10 @@
 #ifndef _SG_EXTERNAL_DATASOURCES_H
 #define _SG_EXTERNAL_DATASOURCES_H
 
+
+
+
 #include "vikexttool.h"
-#include "slav_qt.h"
 
 
 
@@ -32,15 +34,9 @@ namespace SlavGPS {
 
 
 
-	class Window;
-
-
-
-
 	void vik_ext_tool_datasources_register(External * ext_tool);
 	void vik_ext_tool_datasources_unregister_all();
-	void vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, QMenu * menu);
-	void vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim);
+	void vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * window);
 
 
 

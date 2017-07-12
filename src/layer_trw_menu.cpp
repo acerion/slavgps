@@ -41,6 +41,7 @@
 #include "preferences.h"
 #include "acquire.h"
 #include "vikexttools.h"
+#include "vikexttool_datasources.h"
 
 
 
@@ -223,9 +224,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = acquire_submenu->addAction(tr("From &File..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
 		qa->setToolTip(tr("Import File With GPS_Babel..."));
-#ifdef K
-		vik_ext_tool_datasources_add_menu_items_to_menu(this->get_window(), GTK_MENU (acquire_submenu));
-#endif
+
+		vik_ext_tool_datasources_add_menu_items(acquire_submenu, this->get_window());
 	}
 
 

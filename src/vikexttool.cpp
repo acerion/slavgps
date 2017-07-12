@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include <QDebug>
+
 #include <glib.h>
 
 #include "vikexttool.h"
@@ -40,10 +42,10 @@ using namespace SlavGPS;
 
 External::External()
 {
-	this->label = strdup("<no-set>");
+	this->label = QString("<no-set>");
 	this->id = 0;
 
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+	qDebug() << "II: External Tool: new external tool with label" << this->label;
 }
 
 
@@ -52,31 +54,25 @@ External::External()
 
 External::~External()
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
-
-	free(this->label);
-	this->label = NULL;
+	qDebug() << "II: External Toll: delete external tool with label" << this->label;
 }
 
 
 
 
 
-char * External::get_label()
+const QString & External::get_label(void)
 {
-	return g_strdup(this->label);
+	return this->label;
 }
 
 
 
 
 
-void External::set_label(char const * new_label)
+void External::set_label(const QString & new_label)
 {
-	if (new_label) {
-		free(this->label);
-		this->label = strdup(new_label);
-	}
+	this->label = new_label;
 	return;
 }
 

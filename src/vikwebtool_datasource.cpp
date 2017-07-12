@@ -27,6 +27,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QDebug>
+
 #include <glib.h>
 
 #include "viewport_internal.h"
@@ -81,9 +83,8 @@ static void ensure_last_user_strings_hash()
 static char * get_last_user_string(const datasource_t *source)
 {
 	ensure_last_user_strings_hash();
-	char * label = source->web_tool_datasource->get_label();
-	char *last_str = (char *) g_hash_table_lookup(last_user_strings, label);
-	free(label);
+	QString label = source->web_tool_datasource->get_label();
+	char *last_str = (char *) g_hash_table_lookup(last_user_strings, label.toUtf8().constData());
 	return last_str;
 }
 
@@ -92,9 +93,10 @@ static char * get_last_user_string(const datasource_t *source)
 
 static void set_last_user_string(const datasource_t *source, const char *s)
 {
+	QString label = source->web_tool_datasource->get_label();
 	ensure_last_user_strings_hash();
 	g_hash_table_insert(last_user_strings,
-			    source->web_tool_datasource->get_label(),
+			    label.toUtf8().data(),
 			    g_strdup(s));
 }
 
@@ -213,8 +215,8 @@ void WebToolDatasource::open(Window * window)
 
 	/* An 'easy' way of assigning values. */
 	VikDataSourceInterface data = {
-		this->get_label(),
-		this->get_label(),
+		strdup(this->get_label().toUtf8().constData()), /* FIXME: memory leak. */
+		strdup(this->get_label().toUtf8().constData()), /* FIXME: memory leak. */
 		DatasourceMode::ADDTOLAYER,
 		DatasourceInputtype::NONE,
 		false, /* Maintain current view - rather than setting it to the acquired points. */
@@ -293,7 +295,7 @@ WebToolDatasource::WebToolDatasource(const char * new_label,
 
 WebToolDatasource::~WebToolDatasource()
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+	qDebug() << "II: Web Tool Datasource: delete tool with label" << this->label;
 
 	if (this->url_format_code) {
 		free(this->url_format_code);
@@ -440,4 +442,14 @@ bool WebToolDatasource::webtool_needs_user_string()
 #else
 	return (strcasestr2(this->url_format_code, "S") != NULL);
 #endif
+}
+
+
+
+
+void WebToolDatasource::datasource_open_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	Window * window = (Window *) qa->data().toULongLong();
+	this->open(window);
 }

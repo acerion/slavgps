@@ -22,6 +22,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "window.h"
 #include "viewport_internal.h"
 #include "vikwebtoolbounds.h"
@@ -60,7 +62,7 @@ WebToolBounds::WebToolBounds(const char * new_label, const char * new_url_format
 
 WebToolBounds::~WebToolBounds()
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+	qDebug() << "II: Web Tool Bounds: delete tool with label" << this->label;
 }
 
 
