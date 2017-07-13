@@ -461,7 +461,7 @@ static bool new_version_available_message(new_version_thread_data * nvtd)
 	if (Dialog::yes_or_no(tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(QString(nvtd->version)), nvtd->window)) {
 
 		/* NB 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
-		open_url("http://sourceforge.net/projects/viking/", nvtd->window);
+		open_url("http://sourceforge.net/projects/viking/");
 	}
 
 	free(nvtd->version);

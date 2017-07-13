@@ -36,7 +36,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class Window;
 
 
 
@@ -49,8 +49,10 @@ namespace SlavGPS {
 		~WebToolFormat();
 
 		uint8_t mpp_to_zoom_level(double mpp);
-		char * get_url(Viewport * viewport);
-		char * get_url_at_position(Viewport * viewport, const Coord * coord);
+		char * get_url(Window * window);
+		char * get_url_at_position(Window * window, const Coord * coord);
+
+		void open_at_position(Window * window, Coord * coord) {}
 
 
 	private:

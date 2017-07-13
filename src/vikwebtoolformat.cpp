@@ -23,6 +23,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "window.h"
 #include "viewport_internal.h"
 #include "vikwebtoolformat.h"
@@ -78,7 +80,7 @@ WebToolFormat::WebToolFormat(const char * new_label, const char * new_url_format
 
 WebToolFormat::~WebToolFormat()
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+	qDebug() << "II: Web Tool Format: delete tool with label" << this->label;
 
 	if (this->url_format_code) {
 		free(this->url_format_code);
@@ -99,8 +101,10 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-char * WebToolFormat::get_url_at_position(Viewport * viewport, const Coord * coord)
+char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 {
+	Viewport * viewport = window->get_viewport();
+
 	// Center values
 	struct LatLon ll = viewport->get_center()->get_latlon();
 
@@ -176,7 +180,7 @@ char * WebToolFormat::get_url_at_position(Viewport * viewport, const Coord * coo
 
 
 
-char * WebToolFormat::get_url(Viewport * viewport)
+char * WebToolFormat::get_url(Window * window)
 {
-	return this->get_url_at_position(viewport, NULL);
+	return this->get_url_at_position(window, NULL);
 }

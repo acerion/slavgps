@@ -57,8 +57,13 @@ namespace SlavGPS {
 
 		uint8_t mpp_to_zoom_level(double mpp);
 
+
+
 	protected:
 		char * url_format;
+
+	public slots:
+		void datasource_open_cb(void);
 
 	}; /* class WebTool */
 

@@ -27,6 +27,10 @@
 
 #include <cstdlib>
 
+#include <QDesktopServices>
+#include <QUrl>
+#include <QDebug>
+
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
@@ -70,23 +74,10 @@ static bool spawn_command_line_async(const char * cmd,
 
 
 
-/* Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
-   (non working at least in our Windows build with GTK+2.24.10 on Windows 7). */
-
-void open_url(const char * url, SlavGPS::Window * parent)
+void open_url(const char * url)
 {
-#ifdef K
-#ifdef WINDOWS
-	ShellExecute(NULL, NULL, (char *) url, NULL, ".\\", 0);
-#else
-	GError * error = NULL;
-	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), url, GDK_CURRENT_TIME, &error);
-	if (error) {
-		Dialog::error(tr("Could not launch web browser. %1").arg(QString(error->message)), parent);
-		g_error_free(error);
-	}
-#endif
-#endif
+	qDebug() << "II: Open URL" << QString(url);
+	QDesktopServices::openUrl(QUrl(QString(url)));
 }
 
 

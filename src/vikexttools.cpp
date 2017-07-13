@@ -85,25 +85,24 @@ static void ext_tools_open_cb(GtkWidget * widget, Window * window)
 
 
 
-void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid)
+void SlavGPS::vik_ext_tools_add_action_items(QActionGroup * action_group, Window * window)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
-		External * ext_tool = *iter;
-		const QString label = ext_tool->get_label();
+
 #ifdef K
 		gtk_ui_manager_add_ui(uim, mid, "/ui/MainMenu/Tools/Exttools",
 				      _(label),
 				      label,
 				      GTK_UI_MANAGER_MENUITEM, false);
-
-		QAction * action = new QActionw(QString(label), this);
-		g_object_set_data(action, VIK_TOOL_DATA_KEY, ext_tool);
-		QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_open_cb));
-
-		gtk_action_group_add_action(action_group, action);
-
-		g_object_unref(action);
 #endif
+
+		External * ext_tool = *iter;
+		QAction * qa = new QAction(ext_tool->get_label(), NULL);
+
+		qa->setData((qulonglong) window);
+
+		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (datasource_open_cb(void))); /* TODO: rename the slot. */
+		action_group->addAction(qa);
 	}
 }
 

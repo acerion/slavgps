@@ -137,9 +137,9 @@ int Dialog::get_int(const QString & title, const QString & label, int default_nu
 
 
 #ifdef K
-static void about_url_hook(GtkAboutDialog * about, const char * link, void * data)
+static void about_url_hook(const char * url, void * data)
 {
-	open_url(GTK_WINDOW(about), link);
+	open_url(url);
 }
 
 
@@ -305,9 +305,7 @@ void Dialog::license(const char * map, const char * license, const char * url, Q
 	do {
 		response = box.exec();
 		if (response == QMessageBox::Help) {
-#ifdef K
-			open_url(url, parent);
-#endif
+			open_url(url);
 		}
 	} while (response != QMessageBox::Cancel && response != QMessageBox::Ok);
 }

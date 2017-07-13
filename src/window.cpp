@@ -50,6 +50,7 @@
 #include "goto.h"
 #include "print.h"
 #include "kmz.h"
+#include "vikexttools.h"
 #include "vikexttool_datasources.h"
 
 
@@ -962,6 +963,16 @@ void Window::create_ui(void)
 	window->uim = uim;
 #endif
 
+	/* Menu Tools -> Webtools. */
+	{
+		QActionGroup * group = new QActionGroup(this);
+		group->setObjectName("webtools");
+		vik_ext_tools_add_action_items(group, this);
+
+		QMenu * submenu_webtools = this->menu_tools->addMenu(tr("&Webtools"));
+		submenu_webtools->addActions(group->actions());
+	}
+
 	{
 		QActionGroup * group = new QActionGroup(this);
 		group->setObjectName("generic");
@@ -1187,8 +1198,7 @@ void Window::create_ui(void)
 		}
 	}
 
-	// This is done last so we don't need to track the value of mid anymore
-	vik_ext_tools_add_action_items(window, window->uim, action_group, mid);
+
 
 	window->action_group = action_group;
 

@@ -135,7 +135,7 @@ void SlavGPS::osm_init(void)
 	maps_layer_register_map_source(direct_type);
 	maps_layer_register_map_source(mbtiles_type);
 	maps_layer_register_map_source(metatiles_type);
-#ifdef K
+
 	// Webtools
 	WebToolCenter * web_tool = new WebToolCenter(_("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d");
 	vik_ext_tools_register(web_tool);
@@ -164,7 +164,8 @@ void SlavGPS::osm_init(void)
 	vik_ext_tools_register(web_tool_format);
 	//g_object_unref ( vwtf );
 
-#endif
+
+
 	// Datasource
 	WebToolDatasource * web_tool_datasource = new WebToolDatasource(_("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL);
 	vik_ext_tool_datasources_register(web_tool_datasource);

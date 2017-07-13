@@ -49,6 +49,8 @@ namespace SlavGPS {
 		char * get_url(Window * window);
 		char * get_url_at_position(Window * window, const Coord * coord);
 
+		void open_at_position(Window * window, Coord * coord) {};
+
 	}; /* class WebToolCenter */
 
 
