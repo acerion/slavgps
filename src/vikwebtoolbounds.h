@@ -43,13 +43,13 @@ namespace SlavGPS {
 
 	public:
 		WebToolBounds();
-		WebToolBounds(const char * label, const char * url_format);
+		WebToolBounds(const QString & label, const char * url_format);
 		~WebToolBounds();
 
-		char * get_url(Window * window);
-		char * get_url_at_position(Window * window, const Coord * coord);
+		QString get_url_at_current_position(Window * window);
+		QString get_url_at_position(Window * window, const Coord * coord);
 
-		void open_at_position(Window * window, Coord * coord) {};
+		void run_at_position(Window * window, Coord * coord) {};
 
 	}; /* class WebToolBounds */
 

@@ -42,7 +42,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		WebToolDatasource();
-		WebToolDatasource(const char * label,
+		WebToolDatasource(const QString & label,
 				  const char * url,
 				  const char * url_format_code,
 				  const char * file_type,
@@ -50,11 +50,11 @@ namespace SlavGPS {
 				  const char * input_label);
 		~WebToolDatasource();
 
-		void open(Window * window);
-		void open_at_position(Window * window, Coord * coord) {};
+		void run_at_current_position(Window * window);
+		void run_at_position(Window * window, Coord * coord) {};
 
-		char * get_url(Window * window);
-		char * get_url_at_position(Window * window, const Coord * coord);
+		QString get_url_at_current_position(Window * window);
+		QString get_url_at_position(Window * window, const Coord * coord);
 
 
 

@@ -45,18 +45,19 @@ namespace SlavGPS {
 	public:
 
 		WebToolFormat();
-		WebToolFormat(const char * label, const char * url_format, const char * url_format_code);
+		WebToolFormat(const QString & label, const char * url_format, const char * url_format_code);
 		~WebToolFormat();
 
 		uint8_t mpp_to_zoom_level(double mpp);
-		char * get_url(Window * window);
-		char * get_url_at_position(Window * window, const Coord * coord);
 
-		void open_at_position(Window * window, Coord * coord) {}
+		QString get_url_at_current_position(Window * window);
+		QString get_url_at_position(Window * window, const Coord * coord);
+
+		void run_at_position(Window * window, Coord * coord) {}
 
 
 	private:
-		char * url_format_code;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */
+		char * url_format_code = NULL;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */
 
 	}; /* class WebToolFormat */
 

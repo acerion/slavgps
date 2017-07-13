@@ -45,19 +45,17 @@ using namespace SlavGPS;
 
 WebToolCenter::WebToolCenter()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
-
-	this->url_format = NULL;
+	qDebug() << "II: Web Tool Center created";
 }
 
 
 
 
-WebToolCenter::WebToolCenter(char const * new_label, char const * new_url_format)
+WebToolCenter::WebToolCenter(const QString & new_label, char const * new_url_format)
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
+	qDebug() << "II: Web Tool Center created with label" << new_label;
 
-	this->label = strdup(new_label);
+	this->label = new_label;
 	this->url_format = strdup(new_url_format);
 }
 
@@ -77,10 +75,8 @@ WebToolCenter::~WebToolCenter()
 
 
 
-char * WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 {
-	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
-
 	uint8_t zoom_level = 17;
 	struct LatLon ll;
 	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
@@ -104,13 +100,19 @@ char * WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 	g_ascii_dtostr(strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	return g_strdup_printf(this->url_format, strlat, strlon, zoom_level);
+	char * url = g_strdup_printf(this->url_format, strlat, strlon, zoom_level);
+	QString result(url);
+	free(url);
+
+	qDebug() << "II: Web Tool Center: url at position is" << result;
+
+	return result;
 }
 
 
 
 
-char * WebToolCenter::get_url(Window * window)
+QString WebToolCenter::get_url_at_current_position(Window * window)
 {
 	return this->get_url_at_position(window, NULL);
 }

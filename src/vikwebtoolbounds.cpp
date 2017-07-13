@@ -32,30 +32,26 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
 
 WebToolBounds::WebToolBounds()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	qDebug() << "II: Web Tool Bounds created";
 }
 
 
 
 
-
-WebToolBounds::WebToolBounds(const char * new_label, const char * new_url_format)
+WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_format)
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
+	qDebug() << "II: Web Tool Bounds created with label" << new_label;
 
-	this->label = strdup(new_label);
+	this->label = new_label;
 	this->url_format = strdup(new_url_format);
 }
-
 
 
 
@@ -68,25 +64,28 @@ WebToolBounds::~WebToolBounds()
 
 
 
-
-char * WebToolBounds::get_url(Window * window)
+QString WebToolBounds::get_url_at_current_position(Window * window)
 {
-	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
-
 	Viewport * viewport = window->get_viewport();
 	LatLonBBoxStrings bbox_strings;
 	viewport->get_bbox_strings(&bbox_strings);
 
-	return g_strdup_printf(this->url_format, bbox_strings.sminlon, bbox_strings.smaxlon, bbox_strings.sminlat, bbox_strings.smaxlat);
+	char * url = g_strdup_printf(this->url_format, bbox_strings.sminlon, bbox_strings.smaxlon, bbox_strings.sminlat, bbox_strings.smaxlat);
+
+	QString result(url);
+	free(url);
+
+	qDebug() << "II: Web Tool Bounds: url at current position is" << result;
+
+	return result;
 }
 
 
 
 
-
-char * WebToolBounds::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolBounds::get_url_at_position(Window * window, const Coord * coord)
 {
-	// TODO: could use zoom level to generate an offset from center lat/lon to get the bounds
-	// For now simply use the existing function to use bounds from the viewport
-	return this->get_url(window);
+	/* TODO: could use zoom level to generate an offset from center lat/lon to get the bounds.
+	   For now simply use the existing function to use bounds from the viewport. */
+	return this->get_url_at_current_position(window);
 }

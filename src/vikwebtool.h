@@ -26,8 +26,9 @@
 
 #include <cstdint>
 
-#include "vikexttool.h"
+#include <QString>
 
+#include "vikexttool.h"
 
 
 
@@ -48,19 +49,20 @@ namespace SlavGPS {
 		WebTool();
 		~WebTool();
 
-		void open(Window * window);
-		void open_at_position(Window * window, const Coord * coord);
+		void run_at_current_position(Window * window);
+		void run_at_position(Window * window, const Coord * coord);
 
 		void set_url_format(char const * new_url_format);
-		virtual char * get_url(Window * window) = 0;
-		virtual char * get_url_at_position(Window * window, const Coord * coord) = 0;
+
+		virtual QString get_url_at_current_position(Window * window) = 0;
+		virtual QString get_url_at_position(Window * window, const Coord * coord) = 0;
 
 		uint8_t mpp_to_zoom_level(double mpp);
 
 
 
 	protected:
-		char * url_format;
+		char * url_format = NULL;
 
 	public slots:
 		void datasource_open_cb(void);
@@ -70,9 +72,7 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
-
 
 
 

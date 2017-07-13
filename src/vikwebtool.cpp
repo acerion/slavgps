@@ -22,6 +22,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "ui_util.h"
 #include "vikwebtool.h"
 #include "map_utils.h"
@@ -35,20 +37,17 @@ using namespace SlavGPS;
 
 
 
-
 WebTool::WebTool()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
-	this->url_format = NULL;
+	qDebug() << "II: Web Tool created";
 }
-
 
 
 
 
 WebTool::~WebTool()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	qDebug() << "II: Web Tool deleted with label" << this->label;
 	if (this->url_format) {
 		free(this->url_format);
 		this->url_format = NULL;
@@ -58,27 +57,22 @@ WebTool::~WebTool()
 
 
 
-
-void WebTool::open(Window * window)
+void WebTool::run_at_current_position(Window * window)
 {
-	char * url = this->get_url(window);
-	open_url(url);
-	free(url);
+	const QString url = this->get_url_at_current_position(window);
+	open_url(url.toUtf8().constData());
 }
 
 
 
 
-
-void WebTool::open_at_position(Window * window, const Coord * coord)
+void WebTool::run_at_position(Window * window, const Coord * coord)
 {
-	char * url = this->get_url_at_position(window, coord);
-	if (url) {
-		open_url(url);
-		free(url);
+	QString url = this->get_url_at_position(window, coord);
+	if (url.size()) {
+		open_url(url.toUtf8().constData());
 	}
 }
-
 
 
 
@@ -95,7 +89,6 @@ void WebTool::set_url_format(char const * new_url_format)
 
 
 
-
 uint8_t WebTool::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
@@ -108,5 +101,5 @@ void WebTool::datasource_open_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	Window * window = (Window *) qa->data().toULongLong();
-	this->open(window);
+	this->run_at_current_position(window);
 }

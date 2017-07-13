@@ -35,9 +35,7 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -47,10 +45,9 @@ using namespace SlavGPS;
 
 
 
-
 WebToolFormat::WebToolFormat()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	qDebug() << "II: Web Tool Format tool created";
 
 	this->url_format_code = NULL;
 }
@@ -58,14 +55,12 @@ WebToolFormat::WebToolFormat()
 
 
 
-
-WebToolFormat::WebToolFormat(const char * new_label, const char * new_url_format, const char * new_url_format_code)
+WebToolFormat::WebToolFormat(const QString & new_label, const char * new_url_format, const char * new_url_format_code)
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
+	qDebug() << "II: Web Tool Format tool created with label" << new_label;
 
-	if (new_label) {
-		this->label = strdup(new_label);
-	}
+	this->label = new_label;
+
 	if (new_url_format) {
 		this->url_format = strdup(new_url_format);
 	}
@@ -73,7 +68,6 @@ WebToolFormat::WebToolFormat(const char * new_label, const char * new_url_format
 		this->url_format_code = strdup(new_url_format_code);
 	}
 }
-
 
 
 
@@ -91,7 +85,6 @@ WebToolFormat::~WebToolFormat()
 
 
 
-
 uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
@@ -100,8 +93,7 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-
-char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 {
 	Viewport * viewport = window->get_viewport();
 
@@ -172,15 +164,17 @@ char * WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 		}
 	}
 
-	fprintf(stderr, "DEBUG: %s %s\n", __PRETTY_FUNCTION__, url);
-	return url;
+	QString result(url);
+	free(url);
+
+	qDebug() << "DD: Web Tool Format: url at position is" << result;
+	return result;
 }
 
 
 
 
-
-char * WebToolFormat::get_url(Window * window)
+QString WebToolFormat::get_url_at_current_position(Window * window)
 {
 	return this->get_url_at_position(window, NULL);
 }

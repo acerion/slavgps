@@ -164,10 +164,10 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	}
 #endif
 
-	char *url = web_tool_datasource->get_url(data->window);
-	fprintf(stderr, "DEBUG: %s: %s\n", __PRETTY_FUNCTION__, url);
+	const QString url = web_tool_datasource->get_url_at_current_position(data->window);
+	qDebug() << "DD: Web Tool Datasource: url =" << url;
 
-	po->url = g_strdup(url);
+	po->url = g_strdup(url.toUtf8().constData());
 
 	/* Only use first section of the file_type string.
 	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
@@ -204,7 +204,7 @@ static void cleanup(void * data)
 
 
 
-void WebToolDatasource::open(Window * window)
+void WebToolDatasource::run_at_current_position(Window * window)
 {
 	bool search = this->webtool_needs_user_string();
 
@@ -249,7 +249,7 @@ void WebToolDatasource::open(Window * window)
 
 WebToolDatasource::WebToolDatasource()
 {
-	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	qDebug() << "II: Web Tool Datasource created";
 
 	this->url_format_code = strdup("LRBT");
 	this->file_type = NULL;
@@ -261,18 +261,16 @@ WebToolDatasource::WebToolDatasource()
 
 
 
-WebToolDatasource::WebToolDatasource(const char * new_label,
+WebToolDatasource::WebToolDatasource(const QString & new_label,
 				     const char * new_url_format,
 				     const char * new_url_format_code,
 				     const char * new_file_type,
 				     const char * new_babel_filter_args,
 				     const char * new_input_label)
 {
-	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
+	qDebug() << "II: Web Tool Datasource created with label" << new_label;
 
-	if (new_label) {
-		this->label = strdup(new_label);
-	}
+	this->label = new_label;
 	if (new_url_format) {
 		this->url_format = strdup(new_url_format);
 	}
@@ -330,7 +328,7 @@ WebToolDatasource::~WebToolDatasource()
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values.
  * Then only values specified by the URL format are used in parameterizing the URL.
  */
-char * WebToolDatasource::get_url(Window * window)
+QString WebToolDatasource::get_url_at_current_position(Window * window)
 {
 	Viewport * viewport = window->get_viewport();
 
@@ -390,15 +388,20 @@ char * WebToolDatasource::get_url(Window * window)
 		}
 	}
 
-	return url;
+	QString result(url);
+	free(url);
+
+	qDebug() << "II: Web Tool Datasource: url at current position is" << result;
+
+	return result;
 }
 
 
 
 
-char * WebToolDatasource::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolDatasource::get_url_at_position(Window * window, const Coord * coord)
 {
-	return this->get_url(window);
+	return this->get_url_at_current_position(window);
 }
 
 
@@ -451,5 +454,5 @@ void WebToolDatasource::datasource_open_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	Window * window = (Window *) qa->data().toULongLong();
-	this->open(window);
+	this->run_at_current_position(window);
 }

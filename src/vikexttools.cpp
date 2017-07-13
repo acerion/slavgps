@@ -72,12 +72,12 @@ void vik_ext_tools_unregister_all()
 
 
 
-static void ext_tools_open_cb(GtkWidget * widget, Window * window)
+static void ext_tools_run_at_current_position_cb(GtkWidget * widget, Window * window)
 {
 #ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
 	External * ext_tool = (External *) ptr;
-	ext_tool->open(window);
+	ext_tool->run_at_current_position(window);
 #endif
 }
 
@@ -110,7 +110,7 @@ void SlavGPS::vik_ext_tools_add_action_items(QActionGroup * action_group, Window
 
 
 
-static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * coord)
+static void ext_tool_run_at_position_cb(GtkWidget * widget, Coord * coord)
 {
 #ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
@@ -119,7 +119,7 @@ static void ext_tool_open_at_position_cb(GtkWidget * widget, Coord * coord)
 	void * wptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_WIN_KEY);
 	Window * window = (Window *) wptr;
 
-	ext_tool->open_at_position(window, coord);
+	ext_tool->run_at_position(window, coord);
 #endif
 }
 
@@ -142,9 +142,9 @@ void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu
 		g_object_set_data(G_OBJECT(item), VIK_TOOL_DATA_KEY, ext_tool);
 		g_object_set_data(G_OBJECT(item), VIK_TOOL_WIN_KEY, window);
 		if (coord) {
-			QObject::connect(action, SIGNAL (triggered(bool)), coord, SLOT (ext_tool_open_at_position_cb));
+			QObject::connect(action, SIGNAL (triggered(bool)), coord, SLOT (ext_tool_run_at_position_cb));
 		} else {
-			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_open_cb));
+			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_run_at_current_position_cb));
 		}
 		menu->addAction(action);
 		gtk_widget_show(item);

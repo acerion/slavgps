@@ -54,8 +54,8 @@ namespace SlavGPS {
 		void set_id(int new_id);
 		int get_id();
 
-		virtual void open(Window * window) = 0;
-		virtual void open_at_position(Window * window, Coord * coord) = 0;
+		virtual void run_at_current_position(Window * window) = 0;
+		virtual void run_at_position(Window * window, Coord * coord) = 0;
 
 	protected:
 		int id;
@@ -68,9 +68,7 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
-
 
 
 
