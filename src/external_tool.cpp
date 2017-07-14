@@ -28,7 +28,7 @@
 
 #include <glib.h>
 
-#include "vikexttool.h"
+#include "external_tool.h"
 
 
 

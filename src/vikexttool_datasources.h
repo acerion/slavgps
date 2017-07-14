@@ -24,7 +24,7 @@
 
 
 
-#include "vikexttool.h"
+#include "external_tool.h"
 
 
 

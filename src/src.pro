@@ -16,7 +16,7 @@ SOURCES += main.cpp \
     vikwebtool_datasource.cpp \
     vikwebtoolformat.cpp \
     bluemarble.cpp \
-    vikexttool.cpp \
+    external_tool.cpp \
     vikexttool_datasources.cpp \
     vikexttools.cpp \
     bing.cpp \
@@ -140,7 +140,7 @@ HEADERS += window.h \
     vikwebtool_datasource.h \
     vikwebtoolformat.h \
     bluemarble.h \
-    vikexttool.h \
+    external_tool.h \
     vikexttool_datasources.h \
     vikexttools.h \
     bing.h \

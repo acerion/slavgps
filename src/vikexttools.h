@@ -28,7 +28,7 @@
 
 #include <QMenu>
 
-#include "vikexttool.h"
+#include "external_tool.h"
 #include "slav_qt.h"
 
 
