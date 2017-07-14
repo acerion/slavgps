@@ -45,17 +45,7 @@ using namespace SlavGPS;
 
 
 
-WebToolFormat::WebToolFormat()
-{
-	qDebug() << "II: Web Tool Format tool created";
-
-	this->url_format_code = NULL;
-}
-
-
-
-
-WebToolFormat::WebToolFormat(const QString & new_label, const char * new_url_format, const char * new_url_format_code)
+WebToolFormat::WebToolFormat(const QString & new_label, const char * new_url_format, const char * new_url_format_code) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Format tool created with label" << new_label;
 

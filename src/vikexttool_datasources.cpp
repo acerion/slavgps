@@ -40,13 +40,13 @@ using namespace SlavGPS;
 
 #define VIK_TOOL_DATASOURCE_KEY "vik-datasource-tool"
 
-static std::list<External *> ext_tool_datasources;
+static std::list<ExternalTool *> ext_tool_datasources;
 
 
 
 
 
-void SlavGPS::vik_ext_tool_datasources_register(External * ext_tool)
+void SlavGPS::vik_ext_tool_datasources_register(ExternalTool * ext_tool)
 {
 	ext_tool_datasources.push_back(ext_tool);
 }
@@ -72,12 +72,12 @@ void vik_ext_tool_datasources_unregister_all()
 void SlavGPS::vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * window)
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
-		External * ext_tool = *iter;
+		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
 		qa->setData((qulonglong) window);
 
-		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (datasource_open_cb(void)));
+		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		menu->addAction(qa);
 	}
 }

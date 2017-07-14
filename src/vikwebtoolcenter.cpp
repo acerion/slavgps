@@ -43,15 +43,7 @@ using namespace SlavGPS;
 
 
 
-WebToolCenter::WebToolCenter()
-{
-	qDebug() << "II: Web Tool Center created";
-}
-
-
-
-
-WebToolCenter::WebToolCenter(const QString & new_label, char const * new_url_format)
+WebToolCenter::WebToolCenter(const QString & new_label, char const * new_url_format) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Center created with label" << new_label;
 

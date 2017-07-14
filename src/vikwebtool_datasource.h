@@ -41,7 +41,6 @@ namespace SlavGPS {
 	class WebToolDatasource : public WebTool {
 		Q_OBJECT
 	public:
-		WebToolDatasource();
 		WebToolDatasource(const QString & label,
 				  const char * url,
 				  const char * url_format_code,
@@ -70,7 +69,7 @@ namespace SlavGPS {
 		char * user_string = NULL;
 
 	public slots:
-		void datasource_open_cb(void);
+		void run_at_current_position_cb(void);
 
 
 	}; /* class WebToolDatasource */

@@ -37,15 +37,7 @@ using namespace SlavGPS;
 
 
 
-WebToolBounds::WebToolBounds()
-{
-	qDebug() << "II: Web Tool Bounds created";
-}
-
-
-
-
-WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_format)
+WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_format) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Bounds created with label" << new_label;
 

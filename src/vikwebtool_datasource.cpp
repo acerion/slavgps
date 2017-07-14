@@ -246,18 +246,15 @@ void WebToolDatasource::run_at_current_position(Window * window)
 
 
 
-
+#if 0
 WebToolDatasource::WebToolDatasource()
 {
 	qDebug() << "II: Web Tool Datasource created";
 
 	this->url_format_code = strdup("LRBT");
-	this->file_type = NULL;
-	this->babel_filter_args = NULL;
 	this->input_label = strdup(_("Search Term"));
-	this->user_string = NULL;
 }
-
+#endif
 
 
 
@@ -266,7 +263,7 @@ WebToolDatasource::WebToolDatasource(const QString & new_label,
 				     const char * new_url_format_code,
 				     const char * new_file_type,
 				     const char * new_babel_filter_args,
-				     const char * new_input_label)
+				     const char * new_input_label) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Datasource created with label" << new_label;
 
@@ -450,7 +447,7 @@ bool WebToolDatasource::webtool_needs_user_string()
 
 
 
-void WebToolDatasource::datasource_open_cb(void)
+void WebToolDatasource::run_at_current_position_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	Window * window = (Window *) qa->data().toULongLong();

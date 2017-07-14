@@ -42,27 +42,22 @@ namespace SlavGPS {
 
 
 
-	class External : public QObject {
+	class ExternalTool : public QObject {
 		Q_OBJECT
 	public:
-		External();
-		~External();
+		ExternalTool(const QString & new_label);
+		~ExternalTool();
 
 		const QString & get_label(void);
-		void set_label(const QString & new_label);
-
-		void set_id(int new_id);
-		int get_id();
 
 		virtual void run_at_current_position(Window * window) = 0;
 		virtual void run_at_position(Window * window, Coord * coord) = 0;
 
 	protected:
-		int id;
 		QString label;
 
 	public slots:
-		virtual void datasource_open_cb(void) {};
+		virtual void run_at_current_position_cb(void) {};
 	};
 
 

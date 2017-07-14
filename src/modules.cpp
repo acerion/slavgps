@@ -109,7 +109,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, GObject * object
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	External * ext_tool = (External *) object;
+	ExternalTool * ext_tool = (ExternalTool *) object;
 	vik_ext_tools_register(ext_tool);
 }
 
@@ -120,7 +120,7 @@ static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, GObj
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	External * ext_tool = (External *) object;
+	ExternalTool * ext_tool = (ExternalTool *) object;
 	vik_ext_tool_datasources_register(ext_tool);
 }
 

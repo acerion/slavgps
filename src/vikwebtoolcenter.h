@@ -40,10 +40,9 @@ namespace SlavGPS {
 
 
 	class WebToolCenter : public WebTool {
-
+		Q_OBJECT
 	public:
-		WebToolCenter();
-		WebToolCenter(const QString & label, char const * url_formt);
+		WebToolCenter(const QString & label, char const * url_format);
 		~WebToolCenter();
 
 		QString get_url_at_current_position(Window * window);

@@ -36,12 +36,12 @@ using namespace SlavGPS;
 
 
 
-
+#if 0
 WebTool::WebTool()
 {
 	qDebug() << "II: Web Tool created";
 }
-
+#endif
 
 
 
@@ -97,7 +97,7 @@ uint8_t WebTool::mpp_to_zoom_level(double mpp)
 
 
 
-void WebTool::datasource_open_cb(void)
+void WebTool::run_at_current_position_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	Window * window = (Window *) qa->data().toULongLong();

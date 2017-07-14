@@ -40,57 +40,27 @@ using namespace SlavGPS;
 
 
 
-External::External()
-{
-	this->label = QString("<no-set>");
-	this->id = 0;
-
-	qDebug() << "II: External Tool: new external tool with label" << this->label;
-}
-
-
-
-
-
-External::~External()
-{
-	qDebug() << "II: External Toll: delete external tool with label" << this->label;
-}
-
-
-
-
-
-const QString & External::get_label(void)
-{
-	return this->label;
-}
-
-
-
-
-
-void External::set_label(const QString & new_label)
+ExternalTool::ExternalTool(const QString & new_label)
 {
 	this->label = new_label;
-	return;
+
+	qDebug() << "II: External Tool: new external tool" << this->label;
 }
 
 
 
 
 
-void External::set_id(int new_id)
+ExternalTool::~ExternalTool()
 {
-	this->id = new_id;
-	return;
+	qDebug() << "II: External Toll: delete external tool" << this->label;
 }
 
 
 
 
 
-int External::get_id()
+const QString & ExternalTool::get_label(void)
 {
-	return this->id;
+	return this->label;
 }

@@ -43,10 +43,10 @@ namespace SlavGPS {
 
 
 
-	class WebTool : public External {
+	class WebTool : public ExternalTool {
 		Q_OBJECT
 	public:
-		WebTool();
+		WebTool(const QString & new_label) : ExternalTool(new_label) {};
 		~WebTool();
 
 		void run_at_current_position(Window * window);
@@ -65,7 +65,7 @@ namespace SlavGPS {
 		char * url_format = NULL;
 
 	public slots:
-		void datasource_open_cb(void);
+		void run_at_current_position_cb(void);
 
 	}; /* class WebTool */
 

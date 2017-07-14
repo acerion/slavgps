@@ -44,13 +44,13 @@ using namespace SlavGPS;
 #define VIK_TOOL_DATA_KEY "vik-tool-data"
 #define VIK_TOOL_WIN_KEY "vik-tool-win"
 
-static std::list<External *> ext_tools;
+static std::list<ExternalTool *> ext_tools;
 
 
 
 
 
-void SlavGPS::vik_ext_tools_register(External * ext_tool)
+void SlavGPS::vik_ext_tools_register(ExternalTool * ext_tool)
 {
 	ext_tools.push_back(ext_tool);
 
@@ -76,7 +76,7 @@ static void ext_tools_run_at_current_position_cb(GtkWidget * widget, Window * wi
 {
 #ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	External * ext_tool = (External *) ptr;
+	ExternalTool * ext_tool = (ExternalTool *) ptr;
 	ext_tool->run_at_current_position(window);
 #endif
 }
@@ -96,12 +96,12 @@ void SlavGPS::vik_ext_tools_add_action_items(QActionGroup * action_group, Window
 				      GTK_UI_MANAGER_MENUITEM, false);
 #endif
 
-		External * ext_tool = *iter;
+		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
 		qa->setData((qulonglong) window);
 
-		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (datasource_open_cb(void))); /* TODO: rename the slot. */
+		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		action_group->addAction(qa);
 	}
 }
@@ -114,7 +114,7 @@ static void ext_tool_run_at_position_cb(GtkWidget * widget, Coord * coord)
 {
 #ifdef K
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	External * ext_tool = (External *) ptr;
+	ExternalTool * ext_tool = (ExternalTool *) ptr;
 
 	void * wptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_WIN_KEY);
 	Window * window = (Window *) wptr;
@@ -134,7 +134,7 @@ static void ext_tool_run_at_position_cb(GtkWidget * widget, Coord * coord)
 void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
-		External * ext_tool = *iter;
+		ExternalTool * ext_tool = *iter;
 		const QString label = ext_tool->get_label();
 #ifdef K
 		QAction * action = QAction(QObject::tr(label), this);

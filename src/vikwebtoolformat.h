@@ -43,8 +43,6 @@ namespace SlavGPS {
 
 	class WebToolFormat : public WebTool {
 	public:
-
-		WebToolFormat();
 		WebToolFormat(const QString & label, const char * url_format, const char * url_format_code);
 		~WebToolFormat();
 
