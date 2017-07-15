@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_EXTERNAL_H
-#define _SG_EXTERNAL_H
+#ifndef _SG_EXTERNAL_TOOL_H
+#define _SG_EXTERNAL_TOOL_H
 
 
 
@@ -48,16 +48,22 @@ namespace SlavGPS {
 		ExternalTool(const QString & new_label);
 		~ExternalTool();
 
+		void set_window(Window * a_window);
+		void set_coord(const Coord * a_coord);
+
 		const QString & get_label(void);
 
-		virtual void run_at_current_position(Window * window) = 0;
-		virtual void run_at_position(Window * window, Coord * coord) = 0;
+		virtual void run_at_current_position(Window * a_window) = 0;
+		virtual void run_at_position(Window * a_window, const Coord * a_coord) = 0;
 
 	protected:
 		QString label;
+		Window * window = NULL; /* Just a reference. */
+		Coord coord;
 
 	public slots:
-		virtual void run_at_current_position_cb(void) {};
+		void run_at_current_position_cb(void);
+		void run_at_position_cb(void);
 	};
 
 
@@ -68,4 +74,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_EXTERNAL_H */
+#endif /* #ifndef _SG_EXTERNAL_TOOL_H */

@@ -16,26 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
-
 #include <QDebug>
-
-#include <glib.h>
 
 #include "external_tool.h"
 
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -50,7 +40,6 @@ ExternalTool::ExternalTool(const QString & new_label)
 
 
 
-
 ExternalTool::~ExternalTool()
 {
 	qDebug() << "II: External Toll: delete external tool" << this->label;
@@ -59,8 +48,39 @@ ExternalTool::~ExternalTool()
 
 
 
-
 const QString & ExternalTool::get_label(void)
 {
 	return this->label;
+}
+
+
+
+
+void ExternalTool::run_at_current_position_cb(void)
+{
+	this->run_at_current_position(this->window);
+}
+
+
+
+
+void ExternalTool::run_at_position_cb(void)
+{
+	this->run_at_position(this->window, &this->coord);
+}
+
+
+
+
+void ExternalTool::set_window(Window * a_window)
+{
+	this->window = a_window;
+}
+
+
+
+
+void ExternalTool::set_coord(const Coord * a_coord)
+{
+	this->coord = *a_coord;
 }

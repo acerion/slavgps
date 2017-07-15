@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -204,7 +206,7 @@ static void cleanup(void * data)
 
 
 
-void WebToolDatasource::run_at_current_position(Window * window)
+void WebToolDatasource::run_at_current_position(Window * a_window)
 {
 	bool search = this->webtool_needs_user_string();
 
@@ -241,7 +243,7 @@ void WebToolDatasource::run_at_current_position(Window * window)
 	};
 	memcpy(vik_datasource_interface, &data, sizeof(VikDataSourceInterface));
 
-	a_acquire(window, window->get_layers_panel(), window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
+	a_acquire(a_window, a_window->get_layers_panel(), a_window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
 }
 
 
@@ -325,9 +327,9 @@ WebToolDatasource::~WebToolDatasource()
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values.
  * Then only values specified by the URL format are used in parameterizing the URL.
  */
-QString WebToolDatasource::get_url_at_current_position(Window * window)
+QString WebToolDatasource::get_url_at_current_position(Window * a_window)
 {
-	Viewport * viewport = window->get_viewport();
+	Viewport * viewport = a_window->get_viewport();
 
 	/* Center values. */
 	struct LatLon ll = viewport->get_center()->get_latlon();
@@ -395,9 +397,9 @@ QString WebToolDatasource::get_url_at_current_position(Window * window)
 
 
 
-QString WebToolDatasource::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolDatasource::get_url_at_position(Window * a_window, const Coord * a_coord)
 {
-	return this->get_url_at_current_position(window);
+	return this->get_url_at_current_position(a_window);
 }
 
 
@@ -441,14 +443,4 @@ bool WebToolDatasource::webtool_needs_user_string()
 #else
 	return (strcasestr2(this->url_format_code, "S") != NULL);
 #endif
-}
-
-
-
-
-void WebToolDatasource::run_at_current_position_cb(void)
-{
-	QAction * qa = (QAction *) QObject::sender();
-	Window * window = (Window *) qa->data().toULongLong();
-	this->run_at_current_position(window);
 }

@@ -48,13 +48,8 @@ using namespace SlavGPS;
 /* Initialization. */
 void SlavGPS::bing_init()
 {
-	MapSource * bing_aerial = new MapSourceBing(MAP_ID_BING_AERIAL, _("Bing Aerial"), API_KEY);
-	maps_layer_register_map_source(bing_aerial);
+	maps_layer_register_map_source(new MapSourceBing(MAP_ID_BING_AERIAL, QObject::tr("Bing Aerial"), API_KEY));
 
-#ifdef K
 	/* Allow opening web location. */
-	WebToolCenter * web_tool = WebToolCenter(_("Bing"), "http://www.bing.com/maps/?v=2&cp=%s~%s&lvl=%d");
-	vik_ext_tools_register(web_tool);
-	// g_object_unref(webtool);
-#endif
+	external_tools_register(new WebToolCenter(QObject::tr("Bing"), "http://www.bing.com/maps/?v=2&cp=%s~%s&lvl=%d"));
 }

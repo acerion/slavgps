@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 
@@ -24,6 +23,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdint>
 
 #include <QDebug>
 
@@ -67,17 +67,17 @@ WebToolCenter::~WebToolCenter()
 
 
 
-QString WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolCenter::get_url_at_position(Window * a_window, const Coord * a_coord)
 {
 	uint8_t zoom_level = 17;
 	struct LatLon ll;
 
 
-	Viewport * viewport = window->get_viewport();
+	Viewport * viewport = a_window->get_viewport();
 	/* Coords.
 	   Use the provided position otherwise use center of the viewport. */
-	if (coord) {
-		ll = coord->get_latlon();
+	if (a_coord) {
+		ll = a_coord->get_latlon();
 	} else {
 		ll = viewport->get_center()->get_latlon();
 	}
@@ -103,7 +103,7 @@ QString WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 
 
 
-QString WebToolCenter::get_url_at_current_position(Window * window)
+QString WebToolCenter::get_url_at_current_position(Window * a_window)
 {
-	return this->get_url_at_position(window, NULL);
+	return this->get_url_at_position(a_window, NULL);
 }

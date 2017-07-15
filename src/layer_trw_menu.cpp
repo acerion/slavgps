@@ -293,7 +293,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	vik_ext_tools_add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
+	external_tools_add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
 }
 
 
@@ -843,22 +843,21 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 	}
 
-#ifdef K
+
 	if (this->selected_tp.valid || this->current_wp) {
 		/* For the selected point. */
 		Coord * coord = NULL;
 		if (this->selected_tp.valid) {
 			coord = &(*this->selected_tp.iter)->coord;
 		} else {
-			coord = &(this->current_wp->coord);
+			coord = &this->current_wp->coord;
 		}
-		vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), coord);
+		external_tools_add_menu_items_to_menu(this->get_window(), external_submenu, coord);
 	} else {
 		/* Otherwise for the selected sublayer.
 		   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
-		vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), NULL);
+		external_tools_add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
 	}
-#endif
 
 
 #ifdef VIK_CONFIG_GOOGLE

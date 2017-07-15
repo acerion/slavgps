@@ -95,10 +95,10 @@ MapSourceBing::MapSourceBing()
  *
  * Returns: a newly allocated MapSourceBing object.
  */
-MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_)
+MapSourceBing::MapSourceBing(MapTypeID map_type_, const QString & a_label, const char * key_)
 {
 	map_type = map_type_;
-	label = g_strdup(label_);
+	this->label = g_strdup(a_label.toUtf8().constData());
 	name = strdup("Bing-Aerial");
 	this->server_hostname = QString("ecn.t2.tiles.virtualearth.net");
 	server_path_format = strdup("/tiles/a%s.jpeg?g=587");

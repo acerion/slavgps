@@ -24,8 +24,6 @@
 
 
 
-#include <cstdint>
-
 #include <QString>
 
 #include "external_tool.h"
@@ -49,13 +47,13 @@ namespace SlavGPS {
 		WebTool(const QString & new_label) : ExternalTool(new_label) {};
 		~WebTool();
 
-		void run_at_current_position(Window * window);
-		void run_at_position(Window * window, const Coord * coord);
+		void run_at_current_position(Window * a_window);
+		void run_at_position(Window * a_window, const Coord * a_coord);
 
 		void set_url_format(char const * new_url_format);
 
-		virtual QString get_url_at_current_position(Window * window) = 0;
-		virtual QString get_url_at_position(Window * window, const Coord * coord) = 0;
+		virtual QString get_url_at_current_position(Window * a_window) = 0;
+		virtual QString get_url_at_position(Window * a_window, const Coord * a_coord) = 0;
 
 		uint8_t mpp_to_zoom_level(double mpp);
 
@@ -63,9 +61,6 @@ namespace SlavGPS {
 
 	protected:
 		char * url_format = NULL;
-
-	public slots:
-		void run_at_current_position_cb(void);
 
 	}; /* class WebTool */
 

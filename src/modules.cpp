@@ -110,7 +110,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, GObject * object
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	ExternalTool * ext_tool = (ExternalTool *) object;
-	vik_ext_tools_register(ext_tool);
+	external_tools_register(ext_tool);
 }
 
 

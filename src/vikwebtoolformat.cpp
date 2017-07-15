@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU Format Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
 
 
 #include <cstring>
@@ -83,9 +84,9 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolFormat::get_url_at_position(Window * a_window, const Coord * a_coord)
 {
-	Viewport * viewport = window->get_viewport();
+	Viewport * viewport = a_window->get_viewport();
 
 	// Center values
 	struct LatLon ll = viewport->get_center()->get_latlon();
@@ -97,8 +98,8 @@ QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 	struct LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
-	if (coord) {
-		ll = coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
+	if (a_coord) {
+		ll = a_coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
 	}
 	QString point_lat;
 	QString point_lon;
@@ -162,7 +163,7 @@ QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 
 
 
-QString WebToolFormat::get_url_at_current_position(Window * window)
+QString WebToolFormat::get_url_at_current_position(Window * a_window)
 {
-	return this->get_url_at_position(window, NULL);
+	return this->get_url_at_position(a_window, NULL);
 }

@@ -52,7 +52,7 @@ namespace SlavGPS {
 	class MapSourceBing : public MapSourceSlippy {
 	public:
 		MapSourceBing();
-		MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_);
+		MapSourceBing(MapTypeID map_type_, const QString & a_label, const char * key_);
 		~MapSourceBing();
 
 		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data);

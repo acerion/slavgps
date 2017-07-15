@@ -24,8 +24,6 @@
 
 
 
-#include <cstdint>
-
 #include "vikwebtool.h"
 
 
@@ -48,11 +46,8 @@ namespace SlavGPS {
 
 		uint8_t mpp_to_zoom_level(double mpp);
 
-		QString get_url_at_current_position(Window * window);
-		QString get_url_at_position(Window * window, const Coord * coord);
-
-		void run_at_position(Window * window, Coord * coord) {}
-
+		QString get_url_at_current_position(Window * a_window);
+		QString get_url_at_position(Window * a_window, const Coord * a_coord);
 
 	private:
 		char * url_format_code = NULL;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */

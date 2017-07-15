@@ -24,8 +24,6 @@
 
 
 
-#include <cstdint>
-
 #include <QObject>
 
 #include "vikwebtool.h"
@@ -49,11 +47,10 @@ namespace SlavGPS {
 				  const char * input_label);
 		~WebToolDatasource();
 
-		void run_at_current_position(Window * window);
-		void run_at_position(Window * window, Coord * coord) {};
+		void run_at_current_position(Window * a_window);
 
-		QString get_url_at_current_position(Window * window);
-		QString get_url_at_position(Window * window, const Coord * coord);
+		QString get_url_at_current_position(Window * a_window);
+		QString get_url_at_position(Window * a_window, const Coord * a_coord);
 
 
 
@@ -67,10 +64,6 @@ namespace SlavGPS {
 		char * babel_filter_args = NULL; /* Command line filter options for gpsbabel. */
 		char * input_label = NULL;       /* Label to be shown next to the user input box if an input term is required. */
 		char * user_string = NULL;
-
-	public slots:
-		void run_at_current_position_cb(void);
-
 
 	}; /* class WebToolDatasource */
 

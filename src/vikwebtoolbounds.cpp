@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #include <cstring>
 #include <cstdlib>
@@ -56,9 +58,9 @@ WebToolBounds::~WebToolBounds()
 
 
 
-QString WebToolBounds::get_url_at_current_position(Window * window)
+QString WebToolBounds::get_url_at_current_position(Window * a_window)
 {
-	Viewport * viewport = window->get_viewport();
+	Viewport * viewport = a_window->get_viewport();
 	LatLonBBoxStrings bbox_strings;
 	viewport->get_bbox_strings(bbox_strings);
 
@@ -75,9 +77,9 @@ QString WebToolBounds::get_url_at_current_position(Window * window)
 
 
 
-QString WebToolBounds::get_url_at_position(Window * window, const Coord * coord)
+QString WebToolBounds::get_url_at_position(Window * a_window, const Coord * a_coord)
 {
 	/* TODO: could use zoom level to generate an offset from center lat/lon to get the bounds.
 	   For now simply use the existing function to use bounds from the viewport. */
-	return this->get_url_at_current_position(window);
+	return this->get_url_at_current_position(a_window);
 }

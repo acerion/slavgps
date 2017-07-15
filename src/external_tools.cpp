@@ -30,7 +30,7 @@
 #include <cstdlib>
 
 #include "external_tools.h"
-
+#include "slav_qt.h"
 
 
 
@@ -40,66 +40,37 @@ using namespace SlavGPS;
 
 
 
-
-#define VIK_TOOL_DATA_KEY "vik-tool-data"
-#define VIK_TOOL_WIN_KEY "vik-tool-win"
-
 static std::list<ExternalTool *> ext_tools;
 
 
 
 
-
-void SlavGPS::vik_ext_tools_register(ExternalTool * ext_tool)
+void SlavGPS::external_tools_register(ExternalTool * ext_tool)
 {
 	ext_tools.push_back(ext_tool);
-
 }
 
 
 
 
-
-void vik_ext_tools_unregister_all()
+void external_tools_unregister_all()
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
-		/* kamilFIXME: do something here. */
-		//g_object_unref(*iter);
+		delete *iter;
 	}
 }
 
 
 
 
-
-static void ext_tools_run_at_current_position_cb(GtkWidget * widget, Window * window)
-{
-#ifdef K
-	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	ExternalTool * ext_tool = (ExternalTool *) ptr;
-	ext_tool->run_at_current_position(window);
-#endif
-}
-
-
-
-
-
-void SlavGPS::vik_ext_tools_add_action_items(QActionGroup * action_group, Window * window)
+void SlavGPS::external_tools_add_action_items(QActionGroup * action_group, Window * window)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
-
-#ifdef K
-		gtk_ui_manager_add_ui(uim, mid, "/ui/MainMenu/Tools/Exttools",
-				      _(label),
-				      label,
-				      GTK_UI_MANAGER_MENUITEM, false);
-#endif
 
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		qa->setData((qulonglong) window);
+		ext_tool->set_window(window);
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		action_group->addAction(qa);
@@ -109,45 +80,24 @@ void SlavGPS::vik_ext_tools_add_action_items(QActionGroup * action_group, Window
 
 
 
-
-static void ext_tool_run_at_position_cb(GtkWidget * widget, Coord * coord)
-{
-#ifdef K
-	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	ExternalTool * ext_tool = (ExternalTool *) ptr;
-
-	void * wptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_WIN_KEY);
-	Window * window = (Window *) wptr;
-
-	ext_tool->run_at_position(window, coord);
-#endif
-}
-
-
-
-
-
 /**
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, Coord * coord)
+void SlavGPS::external_tools_add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		ExternalTool * ext_tool = *iter;
-		const QString label = ext_tool->get_label();
-#ifdef K
-		QAction * action = QAction(QObject::tr(label), this);
-		// Store some data into the menu entry
-		g_object_set_data(G_OBJECT(item), VIK_TOOL_DATA_KEY, ext_tool);
-		g_object_set_data(G_OBJECT(item), VIK_TOOL_WIN_KEY, window);
+		QAction * qa = new QAction(ext_tool->get_label(), NULL);
+
+		ext_tool->set_window(window);
 		if (coord) {
-			QObject::connect(action, SIGNAL (triggered(bool)), coord, SLOT (ext_tool_run_at_position_cb));
+			ext_tool->set_coord(coord);
+			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_position_cb(void)));
 		} else {
-			QObject::connect(action, SIGNAL (triggered(bool)), window, SLOT (ext_tools_run_at_current_position_cb));
+			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		}
-		menu->addAction(action);
-		gtk_widget_show(item);
-#endif
+
+		menu->addAction(qa);
 	}
 }

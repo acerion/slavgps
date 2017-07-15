@@ -24,12 +24,9 @@
 
 
 
-#include <cstdint>
-
 #include <QMenu>
 
 #include "external_tool.h"
-#include "slav_qt.h"
 
 
 
@@ -44,10 +41,10 @@ namespace SlavGPS {
 
 
 
-	void vik_ext_tools_register(ExternalTool * ext_tool);
-	void vik_ext_tools_unregister_all();
-	void vik_ext_tools_add_action_items(QActionGroup * action_group, Window * window);
-	void vik_ext_tools_add_menu_items_to_menu(Window * window, QMenu * menu, Coord * coord);
+	void external_tools_register(ExternalTool * ext_tool);
+	void external_tools_unregister_all();
+	void external_tools_add_action_items(QActionGroup * action_group, Window * window);
+	void external_tools_add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord);
 
 
 

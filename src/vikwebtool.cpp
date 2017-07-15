@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #include <cstring>
 #include <cstdlib>
@@ -57,18 +59,18 @@ WebTool::~WebTool()
 
 
 
-void WebTool::run_at_current_position(Window * window)
+void WebTool::run_at_current_position(Window * a_window)
 {
-	const QString url = this->get_url_at_current_position(window);
+	const QString url = this->get_url_at_current_position(a_window);
 	open_url(url.toUtf8().constData());
 }
 
 
 
 
-void WebTool::run_at_position(Window * window, const Coord * coord)
+void WebTool::run_at_position(Window * a_window, const Coord * a_coord)
 {
-	QString url = this->get_url_at_position(window, coord);
+	QString url = this->get_url_at_position(a_window, a_coord);
 	if (url.size()) {
 		open_url(url.toUtf8().constData());
 	}
@@ -92,14 +94,4 @@ void WebTool::set_url_format(char const * new_url_format)
 uint8_t WebTool::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
-}
-
-
-
-
-void WebTool::run_at_current_position_cb(void)
-{
-	QAction * qa = (QAction *) QObject::sender();
-	Window * window = (Window *) qa->data().toULongLong();
-	this->run_at_current_position(window);
 }

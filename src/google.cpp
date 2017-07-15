@@ -44,12 +44,9 @@ using namespace SlavGPS;
 
 void SlavGPS::google_init()
 {
-#ifdef K
-	// Webtools
-	WebToolCenter * web_tool = new WebToolCenter(_("Google"), "http://maps.google.com/maps/@%s,%s,%dz");
-	vik_ext_tools_register(web_tool);
-	//g_object_unref(web_tool);
+	external_tools_register(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%s,%s,%dz"));
 
+#ifdef K
 	// Goto
 #if 0   /* Google no longer supports the API we used. */
 

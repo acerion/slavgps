@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <list>
-#include <cstring>
 #include <cstdlib>
 
 #include "external_tools.h"
@@ -45,7 +46,6 @@ static std::list<ExternalTool *> ext_tool_datasources;
 
 
 
-
 void SlavGPS::vik_ext_tool_datasources_register(ExternalTool * ext_tool)
 {
 	ext_tool_datasources.push_back(ext_tool);
@@ -57,8 +57,7 @@ void SlavGPS::vik_ext_tool_datasources_register(ExternalTool * ext_tool)
 void vik_ext_tool_datasources_unregister_all()
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
-		/* kamilFIXME: do something here. */
-		// g_object_unref(*iter);
+		delete *iter;
 	}
 }
 
@@ -75,7 +74,7 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * win
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		qa->setData((qulonglong) window);
+		ext_tool->set_window(window);
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		menu->addAction(qa);
