@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_LAYER_TRW_DRAW_H_
-#define _SG_LAYER_TRW_DRAW_H_
+#ifndef _SG_LAYER_TRW_PAINTER_H_
+#define _SG_LAYER_TRW_PAINTER_H_
 
 
 
@@ -75,35 +75,6 @@ enum {
 
 
 
-typedef struct {
-	SlavGPS::Viewport * viewport;
-	SlavGPS::LayerTRW * trw;
-	SlavGPS::Window * window;
-	double xmpp, ympp;
-	uint16_t width, height;
-	double cc;      /* Cosine factor in track directions. */
-	double ss;      /* Sine factor in track directions. */
-	const SlavGPS::Coord * center;
-	SlavGPS::CoordMode coord_mode; /* UTM or Lat/Lon. */
-	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
-	double ce1, ce2, cn1, cn2;
-	LatLonBBox bbox;
-	bool highlight;
-} DrawingParams;
-
-
-
-
-void init_drawing_params(DrawingParams * dp, SlavGPS::LayerTRW * trw, SlavGPS::Viewport * viewport, bool highlight);
-void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, SlavGPS::Waypoint *> * waypoints, DrawingParams * dp);
-void trw_layer_draw_waypoint_cb(SlavGPS::Waypoint * wp, DrawingParams * dp);
-void trw_layer_draw_track_cb(const void * id, SlavGPS::Track * trk, DrawingParams * dp);
-void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, SlavGPS::Track *> & tracks, DrawingParams * dp);
-
-
-
-
-
 /* A cached waypoint image. */
 /* This data structure probably should be put somewhere else. */
 typedef struct {
@@ -118,4 +89,63 @@ int cached_pixmap_cmp(CachedPixmap * cp, const char * name);
 
 
 
-#endif /* #ifndef _SG_LAYER_TRW_DRAW_H_ */
+namespace SlavGPS {
+
+
+
+
+	class TRWPainter {
+	public:
+		TRWPainter(LayerTRW * trw, Viewport * viewport, bool highlight);
+
+		static void draw_waypoint_cb(TRWPainter * painter, Waypoint * wp);
+		static void draw_waypoints_cb(TRWPainter * painter, std::unordered_map<sg_uid_t, Waypoint *> * waypoints);
+		static void draw_track_cb(TRWPainter * painter, const void * id, Track * trk);
+		static void draw_tracks_cb(TRWPainter * painter, std::unordered_map<sg_uid_t, Track *> & tracks);
+
+		static void draw_track_label(TRWPainter * painter, char * name, char * fgcolour, char * bgcolour, Coord * coord);
+		static void draw_dist_labels(TRWPainter * painter, Track * trk, bool drawing_highlight);
+		static void draw_point_names(TRWPainter * painter, Track * trk, bool drawing_highlight);
+		static void draw_track_name_labels(TRWPainter * painter, Track * trk, bool drawing_highlight);
+		static void draw_track(TRWPainter * painter, Track * trk, bool draw_track_outline);
+		static void draw_track_draw_something(TRWPainter * painter, int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
+		static void draw_track_draw_midarrow(TRWPainter * painter, int x, int y, int oldx, int oldy, QPen & main_pen);
+		static void draw_waypoint(TRWPainter * painter, Waypoint * wp);
+		static int draw_image(TRWPainter * painter, Waypoint * wp, int x, int y);
+		static void draw_symbol(TRWPainter * painter, Waypoint * wp, int x, int y);
+		static void draw_label(TRWPainter * painter, Waypoint * wp, int x, int y);
+
+		Viewport * viewport = NULL;
+		LayerTRW * trw = NULL;
+		Window * window = NULL;
+
+		double xmpp = 0;
+		double ympp = 0;
+		uint16_t width = 0;
+		uint16_t height = 0;
+		double cc = 0;      /* Cosine factor in track directions. */
+		double ss = 0;      /* Sine factor in track directions. */
+		const Coord * center = NULL;
+		CoordMode coord_mode; /* UTM or Lat/Lon. */
+		bool one_utm_zone = false;       /* Viewport shows only one UTM zone. */
+
+		double ce1 = 0;
+		double ce2 = 0;
+		double cn1 = 0;
+		double cn2 = 0;
+
+		LatLonBBox bbox;
+		bool highlight = false;
+
+
+	}; /* class TRWPainter */
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_PAINTER_H_ */

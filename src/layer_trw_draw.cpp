@@ -62,56 +62,49 @@ using namespace SlavGPS;
 
 
 
-static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp);
-static void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp);
-static void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp);
-static int  trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp);
-
-
-
-
-void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport, bool highlight)
+TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport, bool a_highlight)
 {
-	dp->trw = trw;
-	dp->viewport = viewport;
-	dp->highlight = highlight;
-	dp->window = dp->trw->get_window();
-	dp->xmpp = viewport->get_xmpp();
-	dp->ympp = viewport->get_ympp();
-	dp->width = viewport->get_width();
-	dp->height = viewport->get_height();
-	dp->cc = trw->drawdirections_size * cos(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
-	dp->ss = trw->drawdirections_size * sin(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
+	this->trw = a_trw;
+	this->viewport = a_viewport;
+	this->highlight = a_highlight;
+	this->window = this->trw->get_window();
 
-	dp->center = viewport->get_center();
-	dp->coord_mode = viewport->get_coord_mode();
-	dp->one_utm_zone = viewport->is_one_zone(); /* False if some other projection besides UTM. */
+	this->xmpp = viewport->get_xmpp();
+	this->ympp = viewport->get_ympp();
+	this->width = viewport->get_width();
+	this->height = viewport->get_height();
+	this->cc = this->trw->drawdirections_size * cos(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
+	this->ss = this->trw->drawdirections_size * sin(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
 
-	if (dp->coord_mode == CoordMode::UTM && dp->one_utm_zone) {
-		int w2 = dp->xmpp * (dp->width / 2) + 1600 / dp->xmpp;
-		int h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
+	this->center = this->viewport->get_center();
+	this->coord_mode = this->viewport->get_coord_mode();
+	this->one_utm_zone = this->viewport->is_one_zone(); /* False if some other projection besides UTM. */
+
+	if (this->coord_mode == CoordMode::UTM && this->one_utm_zone) {
+		int w2 = this->xmpp * (this->width / 2) + 1600 / this->xmpp;
+		int h2 = this->ympp * (this->height / 2) + 1600 / this->ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
-		dp->ce1 = dp->center->utm.easting - w2;
-		dp->ce2 = dp->center->utm.easting + w2;
-		dp->cn1 = dp->center->utm.northing - h2;
-		dp->cn2 = dp->center->utm.northing + h2;
+		this->ce1 = this->center->utm.easting - w2;
+		this->ce2 = this->center->utm.easting + w2;
+		this->cn1 = this->center->utm.northing - h2;
+		this->cn2 = this->center->utm.northing + h2;
 
-	} else if (dp->coord_mode == CoordMode::LATLON) {
+	} else if (this->coord_mode == CoordMode::LATLON) {
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
-		Coord upperleft = viewport->screen_to_coord(-500, -500);
-		Coord bottomright = viewport->screen_to_coord(dp->width + 500, dp->height + 500);
-		dp->ce1 = upperleft.ll.lon;
-		dp->ce2 = bottomright.ll.lon;
-		dp->cn1 = bottomright.ll.lat;
-		dp->cn2 = upperleft.ll.lat;
+		Coord upperleft = this->viewport->screen_to_coord(-500, -500);
+		Coord bottomright = this->viewport->screen_to_coord(this->width + 500, this->height + 500);
+		this->ce1 = upperleft.ll.lon;
+		this->ce2 = bottomright.ll.lon;
+		this->cn1 = bottomright.ll.lat;
+		this->cn2 = upperleft.ll.lat;
 	} else {
 		;
 	}
 
-	viewport->get_bbox(&dp->bbox);
+	this->viewport->get_bbox(&this->bbox);
 }
 
 
@@ -158,7 +151,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 
 
 
-static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, Coord * coord)
+void TRWPainter::draw_track_label(TRWPainter * dp, char * name, char * fgcolour, char * bgcolour, Coord * coord)
 {
 	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name);
 #ifdef K
@@ -187,7 +180,7 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
  * Draw a few labels along a track at nicely seperated distances.
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
+void TRWPainter::draw_dist_labels(TRWPainter * dp, Track * trk, bool drawing_highlight)
 {
 #ifdef K
 	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
@@ -285,7 +278,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 				bgcolour = gdk_color_to_string(&(dp->trw->track_bg_color));
 			}
 
-			trw_layer_draw_track_label(name, fgcolour, bgcolour, dp, &coord);
+			TRWPainter::draw_track_label(dp, name, fgcolour, bgcolour, &coord);
 
 			free(fgcolour);
 			free(bgcolour);
@@ -301,7 +294,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 /**
  * Draw a label (or labels) for the track name somewhere depending on the track's properties.
  */
-static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
+void TRWPainter::draw_track_name_labels(TRWPainter * dp, Track * trk, bool drawing_highlight)
 {
 #ifdef K
 	char *fgcolour;
@@ -329,7 +322,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 		Coord coord(average, dp->trw->coord_mode);
 
-		trw_layer_draw_track_label(ename, fgcolour, bgcolour, dp, &coord);
+		TRWPainter::draw_track_label(dp, ename, fgcolour, bgcolour, &coord);
 	}
 
 	if (trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
@@ -367,7 +360,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 			Coord av_coord = dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
 
 			char *name = g_strdup_printf("%s: %s", ename, _("start/end"));
-			trw_layer_draw_track_label(name, fgcolour, bgcolour, dp, &av_coord);
+			TRWPainter::draw_track_label(dp, fgcolour, bgcolour, &av_coord);
 			free(name);
 
 			done_start_end = true;
@@ -380,7 +373,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 		    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
 
 			char *name_start = g_strdup_printf("%s: %s", ename, _("start"));
-			trw_layer_draw_track_label(name_start, fgcolour, bgcolour, dp, &begin_coord);
+			TRWPainter::draw_track_label(dp, name_start, fgcolour, bgcolour, &begin_coord);
 			free(name_start);
 		}
 		/* Don't draw end label if this is the one being created. */
@@ -390,7 +383,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
 
 				char *name_end = g_strdup_printf("%s: %s", ename, _("end"));
-				trw_layer_draw_track_label(name_end, fgcolour, bgcolour, dp, &end_coord);
+				TRWPainter::draw_track_label(dp, name_end, fgcolour, bgcolour, &end_coord);
 				free(name_end);
 			}
 		}
@@ -409,7 +402,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
  * Draw a point labels along a track.
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool drawing_highlight)
+void TRWPainter::draw_point_names(TRWPainter * dp, Track * trk, bool drawing_highlight)
 {
 	if (trk->empty()) {
 		return;
@@ -430,7 +423,7 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 
 	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 		if ((*iter)->name) {
-			trw_layer_draw_track_label((*iter)->name, fgcolour, bgcolour, dp, &(*iter)->coord);
+			TRWPainter::draw_track_label(dp, (*iter)->name, fgcolour, bgcolour, &(*iter)->coord);
 		}
 	}
 
@@ -442,7 +435,7 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 
 
 
-void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int oldx, int oldy, QPen & main_pen)
+void TRWPainter::draw_track_draw_midarrow(TRWPainter * dp, int x, int y, int oldx, int oldy, QPen & main_pen)
 {
 	int midx = (oldx + x) / 2;
 	int midy = (oldy + y) / 2;
@@ -460,7 +453,7 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 
 
 
-void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
+void TRWPainter::draw_track_draw_something(TRWPainter * dp, int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
 {
 #define FIXALTITUDE(what) \
 	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * dp->trw->elevation_factor / dp->xmpp)
@@ -492,7 +485,7 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 
 
 
-static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_track_outline)
+void TRWPainter::draw_track(TRWPainter * dp, Track * trk, bool draw_track_outline)
 {
 	if (!trk->visible) {
 		return;
@@ -511,7 +504,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 	/* Admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
 	if (dp->trw->bg_line_thickness && !draw_track_outline) {
-		trw_layer_draw_track(trk, dp, true);
+		TRWPainter::draw_track(dp, trk, true);
 	}
 
 	bool drawpoints;
@@ -619,7 +612,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
 
-		/* kamilTODO: compare this condition with condition in trw_layer_draw_waypoint(). */
+		/* kamilTODO: compare this condition with condition in TRWPainter::draw_waypoint(). */
 		bool first_condition = (dp->coord_mode == CoordMode::UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm.zone == dp->center->utm.zone);  /* Only check zones if UTM & one_utm_zone. */
 		bool second_condition_B = (tp->coord.ll.lon < dp->ce2 && tp->coord.ll.lon > dp->ce1) || (tp->coord.utm.easting < dp->ce2 && tp->coord.utm.easting > dp->ce1);
@@ -700,7 +693,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 					    && std::next(iter) != trk->trackpointsB->end()
 					    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
-						trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
+						TRWPainter::draw_track_draw_something(dp, x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
 					}
 				}
 			}
@@ -708,7 +701,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if ((!tp->newsegment) && dp->trw->drawdirections) {
 				/* Draw an arrow at the mid point to show the direction of the track.
 				   Code is a rework from vikwindow::draw_ruler(). */
-				trw_layer_draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_pen);
+				TRWPainter::draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_pen);
 			}
 
 		skip:
@@ -748,12 +741,12 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	/* Labels drawn after the trackpoints, so the labels are on top. */
 	if (dp->trw->track_draw_labels) {
 		if (trk->max_number_dist_labels > 0) {
-			trw_layer_draw_dist_labels(dp, trk, drawing_highlight);
+			TRWPainter::draw_dist_labels(dp, trk, drawing_highlight);
 		}
-		trw_layer_draw_point_names(dp, trk, drawing_highlight);
+		TRWPainter::draw_point_names(dp, trk, drawing_highlight);
 
 		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
-			trw_layer_draw_track_name_labels(dp, trk, drawing_highlight);
+			TRWPainter::draw_track_name_labels(dp, trk, drawing_highlight);
 		}
 	}
 }
@@ -761,21 +754,21 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 
 
-void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp)
+void TRWPainter::draw_track_cb(TRWPainter * painter, const void * id, Track * trk)
 {
-	if (BBOX_INTERSECT (trk->bbox, dp->bbox)) {
-		trw_layer_draw_track(trk, dp, false);
+	if (BBOX_INTERSECT (trk->bbox, painter->bbox)) {
+		TRWPainter::draw_track(painter, trk, false);
 	}
 }
 
 
 
 
-void trw_layer_draw_track_cb(Tracks & tracks, DrawingParams * dp)
+void TRWPainter::draw_tracks_cb(TRWPainter * painter, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		if (BBOX_INTERSECT (i->second->bbox, dp->bbox)) {
-			trw_layer_draw_track(i->second, dp, false);
+		if (BBOX_INTERSECT (i->second->bbox, painter->bbox)) {
+			TRWPainter::draw_track(painter, i->second, false);
 		}
 	}
 }
@@ -783,7 +776,7 @@ void trw_layer_draw_track_cb(Tracks & tracks, DrawingParams * dp)
 
 
 
-static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
+void TRWPainter::draw_waypoint(TRWPainter * dp, Waypoint * wp)
 {
 	if (!wp->visible) {
 		return;
@@ -804,23 +797,23 @@ static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
 
 	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
 	if (wp->image && dp->trw->drawimages)	{
-		if (0 == trw_layer_draw_image(wp, x, y, dp)) {
+		if (0 == TRWPainter::draw_image(dp, wp, x, y)) {
 			return;
 		}
 	}
 
 	/* Draw appropriate symbol - either symbol image or simple types. */
-	trw_layer_draw_symbol(wp, x, y, dp);
+	TRWPainter::draw_symbol(dp, wp, x, y);
 
 	if (dp->trw->drawlabels) {
-		trw_layer_draw_label(wp, x, y, dp);
+		TRWPainter::draw_label(dp, wp, x, y);
 	}
 }
 
 
 
 
-int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
+int TRWPainter::draw_image(TRWPainter * dp, Waypoint * wp, int x, int y)
 {
 	if (dp->trw->image_alpha == 0) {
 		return 0;
@@ -895,7 +888,7 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 
 
-void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
+void TRWPainter::draw_symbol(TRWPainter * dp, Waypoint * wp, int x, int y)
 {
 #ifndef K
 	dp->trw->waypoint_pen.setColor(QColor("orange"));
@@ -949,7 +942,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 
 
-void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
+void TRWPainter::draw_label(TRWPainter * dp, Waypoint * wp, int x, int y)
 {
 #ifdef K
 	/* Thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation. */
@@ -999,21 +992,21 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 
 
-void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp)
+void TRWPainter::draw_waypoint_cb(TRWPainter * painter, Waypoint * wp)
 {
-	if (BBOX_INTERSECT (dp->trw->waypoints_bbox, dp->bbox)) {
-		trw_layer_draw_waypoint(wp, dp);
+	if (BBOX_INTERSECT (painter->trw->waypoints_bbox, painter->bbox)) {
+		TRWPainter::draw_waypoint(painter, wp);
 	}
 }
 
 
 
 
-void trw_layer_draw_waypoints_cb(Waypoints * waypoints, DrawingParams * dp)
+void TRWPainter::draw_waypoints_cb(TRWPainter * painter, Waypoints * waypoints)
 {
-	if (BBOX_INTERSECT (dp->trw->waypoints_bbox, dp->bbox)) {
+	if (BBOX_INTERSECT (painter->trw->waypoints_bbox, painter->bbox)) {
 		for (auto i = waypoints->begin(); i != waypoints->end(); i++) {
-			trw_layer_draw_waypoint(i->second, dp);
+			TRWPainter::draw_waypoint(painter, i->second);
 		}
 	}
 }

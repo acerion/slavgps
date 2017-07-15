@@ -1411,22 +1411,21 @@ LayerTRW::~LayerTRW()
 
 void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
 {
-	static DrawingParams dp;
-	init_drawing_params(&dp, this, viewport, highlight);
+	static TRWPainter painter(this, viewport, highlight);
 
 	if (true /* this->tracks_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw tracks";
-		trw_layer_draw_track_cb(tracks, &dp);
+		TRWPainter::draw_tracks_cb(&painter, tracks);
 	}
 
 	if (true /* this->routes_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw routes";
-		trw_layer_draw_track_cb(routes, &dp);
+		TRWPainter::draw_tracks_cb(&painter, routes);
 	}
 
 	if (true /* this->waypoints_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw waypoints";
-		trw_layer_draw_waypoints_cb(&waypoints, &dp);
+		TRWPainter::draw_waypoints_cb(&painter, &waypoints);
 	}
 }
 
@@ -1484,19 +1483,18 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
 	}
 #endif
 
-	static DrawingParams dp;
-	init_drawing_params(&dp, this, viewport, true);
+	static TRWPainter painter(this, viewport, true);
 
 	if (trk) {
 		bool do_draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible)
 			|| (trk->sublayer_type == SublayerType::TRACK && this->tracks_visible);
 
 		if (do_draw) {
-			trw_layer_draw_track_cb(NULL, trk, &dp);
+			TRWPainter::draw_track_cb(&painter, NULL, trk);
 		}
 	}
 	if (this->waypoints_visible && wp) {
-		trw_layer_draw_waypoint_cb(wp, &dp);
+		TRWPainter::draw_waypoint_cb(&painter, wp);
 	}
 }
 
@@ -1520,19 +1518,18 @@ void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypo
 	}
 #endif
 
-	static DrawingParams dp;
-	init_drawing_params(&dp, this, viewport, true);
+	static TRWPainter painter(this, viewport, true);
 
 	if (tracks_) {
 		bool is_routes = (tracks_ == &routes);
 		bool do_draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
 		if (do_draw) {
-			trw_layer_draw_track_cb(*tracks_, &dp);
+			TRWPainter::draw_tracks_cb(&painter, *tracks_);
 		}
 	}
 
 	if (this->waypoints_visible && selected_waypoints) {
-		trw_layer_draw_waypoints_cb(selected_waypoints, &dp);
+		TRWPainter::draw_waypoints_cb(&painter, selected_waypoints);
 	}
 }
 
