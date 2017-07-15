@@ -40,8 +40,8 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		WebToolDatasource(const QString & label,
-				  const char * url,
-				  const char * url_format_code,
+				  const QString & url_format,
+				  const QString & url_format_code,
 				  const char * file_type,
 				  const char * babel_filter_args,
 				  const char * input_label);
@@ -49,8 +49,8 @@ namespace SlavGPS {
 
 		void run_at_current_position(Window * a_window);
 
-		QString get_url_at_current_position(Window * a_window);
-		QString get_url_at_position(Window * a_window, const Coord * a_coord);
+		QString get_url_at_current_position(Viewport * a_viewport);
+		QString get_url_at_position(Viewport * a_viewport, const Coord * a_coord);
 
 
 
@@ -59,7 +59,9 @@ namespace SlavGPS {
 
 		bool webtool_needs_user_string();
 
-		char * url_format_code = NULL;
+		QString q_url_format;
+		QString url_format_code;
+
 		char * file_type = NULL;         /* Default value NULL equates to internal GPX reading. */
 		char * babel_filter_args = NULL; /* Command line filter options for gpsbabel. */
 		char * input_label = NULL;       /* Label to be shown next to the user input box if an input term is required. */

@@ -148,12 +148,12 @@ void SlavGPS::osm_init(void)
 	   JOSM or merkaartor must already be running with remote interface enabled. */
 	external_tools_register(new WebToolBounds(QObject::tr("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%s&right=%s&bottom=%s&top=%s"));
 
-	external_tools_register(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%s/%s/%s", "ZAO"));
+	external_tools_register(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
 
 
 
 	/* Datasource. */
-	vik_ext_tool_datasources_register(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL));
+	vik_ext_tool_datasources_register(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", NULL, NULL, NULL));
 
 
 

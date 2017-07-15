@@ -37,6 +37,7 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Viewport;
 
 
 
@@ -52,8 +53,8 @@ namespace SlavGPS {
 
 		void set_url_format(char const * new_url_format);
 
-		virtual QString get_url_at_current_position(Window * a_window) = 0;
-		virtual QString get_url_at_position(Window * a_window, const Coord * a_coord) = 0;
+		virtual QString get_url_at_current_position(Viewport * a_viewport) = 0;
+		virtual QString get_url_at_position(Viewport * a_viewport, const Coord * a_coord) = 0;
 
 		uint8_t mpp_to_zoom_level(double mpp);
 

@@ -67,24 +67,22 @@ WebToolCenter::~WebToolCenter()
 
 
 
-QString WebToolCenter::get_url_at_position(Window * a_window, const Coord * a_coord)
+QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	uint8_t zoom_level = 17;
 	struct LatLon ll;
 
-
-	Viewport * viewport = a_window->get_viewport();
 	/* Coords.
 	   Use the provided position otherwise use center of the viewport. */
 	if (a_coord) {
 		ll = a_coord->get_latlon();
 	} else {
-		ll = viewport->get_center()->get_latlon();
+		ll = a_viewport->get_center()->get_latlon();
 	}
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	if (viewport->get_xmpp() == viewport->get_ympp()) {
-		zoom_level = this->mpp_to_zoom_level(viewport->get_zoom());
+	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
+		zoom_level = this->mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 
 	QString string_lat;
@@ -103,7 +101,7 @@ QString WebToolCenter::get_url_at_position(Window * a_window, const Coord * a_co
 
 
 
-QString WebToolCenter::get_url_at_current_position(Window * a_window)
+QString WebToolCenter::get_url_at_current_position(Viewport * a_viewport)
 {
-	return this->get_url_at_position(a_window, NULL);
+	return this->get_url_at_position(a_viewport, NULL);
 }

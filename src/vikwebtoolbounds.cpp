@@ -58,11 +58,10 @@ WebToolBounds::~WebToolBounds()
 
 
 
-QString WebToolBounds::get_url_at_current_position(Window * a_window)
+QString WebToolBounds::get_url_at_current_position(Viewport * a_viewport)
 {
-	Viewport * viewport = a_window->get_viewport();
 	LatLonBBoxStrings bbox_strings;
-	viewport->get_bbox_strings(bbox_strings);
+	a_viewport->get_bbox_strings(bbox_strings);
 
 	char * url = g_strdup_printf(this->url_format, bbox_strings.min_lon.toUtf8().constData(), bbox_strings.max_lon.toUtf8().constData(), bbox_strings.min_lat.toUtf8().constData(), bbox_strings.max_lat.toUtf8().constData());
 
@@ -77,9 +76,9 @@ QString WebToolBounds::get_url_at_current_position(Window * a_window)
 
 
 
-QString WebToolBounds::get_url_at_position(Window * a_window, const Coord * a_coord)
+QString WebToolBounds::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* TODO: could use zoom level to generate an offset from center lat/lon to get the bounds.
 	   For now simply use the existing function to use bounds from the viewport. */
-	return this->get_url_at_current_position(a_window);
+	return this->get_url_at_current_position(a_viewport);
 }

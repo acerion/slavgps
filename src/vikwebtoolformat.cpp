@@ -23,6 +23,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <vector>
 
 #include <QDebug>
 
@@ -46,18 +47,13 @@ using namespace SlavGPS;
 
 
 
-WebToolFormat::WebToolFormat(const QString & new_label, const char * new_url_format, const char * new_url_format_code) : WebTool(new_label)
+WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_format, const QString & new_url_format_code) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Format tool created with label" << new_label;
 
 	this->label = new_label;
-
-	if (new_url_format) {
-		this->url_format = strdup(new_url_format);
-	}
-	if (new_url_format_code) {
-		this->url_format_code = strdup(new_url_format_code);
-	}
+	this->q_url_format = new_url_format;
+	this->url_format_code = new_url_format_code;
 }
 
 
@@ -66,11 +62,6 @@ WebToolFormat::WebToolFormat(const QString & new_label, const char * new_url_for
 WebToolFormat::~WebToolFormat()
 {
 	qDebug() << "II: Web Tool Format: delete tool with label" << this->label;
-
-	if (this->url_format_code) {
-		free(this->url_format_code);
-		this->url_format_code = NULL;
-	}
 }
 
 
@@ -84,12 +75,10 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
-QString WebToolFormat::get_url_at_position(Window * a_window, const Coord * a_coord)
+QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	Viewport * viewport = a_window->get_viewport();
-
-	// Center values
-	struct LatLon ll = viewport->get_center()->get_latlon();
+	/* Center values. */
+	struct LatLon ll = a_viewport->get_center()->get_latlon();
 
 	QString center_lat;
 	QString center_lon;
@@ -107,63 +96,58 @@ QString WebToolFormat::get_url_at_position(Window * a_window, const Coord * a_co
 
 	uint8_t zoom_level = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if (viewport->get_xmpp() == viewport->get_ympp()) {
-		zoom_level = map_utils_mpp_to_zoom_level(viewport->get_zoom());
+	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
+		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 
-	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
-	snprintf(szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom_level);
+	QString zoom((int) zoom_level);
 
-	int len = 0;
-	if (this->url_format_code) {
-		len = strlen (this->url_format_code);
-	}
-	if (len > MAX_NUMBER_CODES) {
+	int len = this->url_format_code.size();
+	if (len == 0) {
+		qDebug() << "EE: Web Tool Format: url format code is empty";
+		return QString("");
+	} else if (len > MAX_NUMBER_CODES) {
+		qDebug() << "WW: Web Tool Format: url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
 		len = MAX_NUMBER_CODES;
+	} else {
+		;
 	}
 
-	char * values[MAX_NUMBER_CODES];
-	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
-		values[i] = '\0';
-	}
+	std::vector<QString> values;
 
 	LatLonBBoxStrings bbox_strings;
-	viewport->get_bbox_strings(bbox_strings);
+	a_viewport->get_bbox_strings(bbox_strings);
 
 	for (int i = 0; i < len; i++) {
-		switch (g_ascii_toupper(this->url_format_code[i])) {
-		case 'L': values[i] = g_strdup(bbox_strings.min_lon.toUtf8().constData()); break;
-		case 'R': values[i] = g_strdup(bbox_strings.max_lon.toUtf8().constData()); break;
-		case 'B': values[i] = g_strdup(bbox_strings.min_lat.toUtf8().constData()); break;
-		case 'T': values[i] = g_strdup(bbox_strings.max_lat.toUtf8().constData()); break;
-		case 'A': values[i] = g_strdup(center_lat.toUtf8().constData()); break;
-		case 'O': values[i] = g_strdup(center_lon.toUtf8().constData()); break;
-		case 'Z': values[i] = g_strdup(szoom); break;
-		case 'P': values[i] = g_strdup(point_lat.toUtf8().constData()); break;
-		case 'N': values[i] = g_strdup(point_lon.toUtf8().constData()); break;
-		default: break;
+		switch (this->url_format_code[i].toUpper().toLatin1()) {
+		case 'L': values[i] = bbox_strings.min_lon; break;
+		case 'R': values[i] = bbox_strings.max_lon; break;
+		case 'B': values[i] = bbox_strings.min_lat; break;
+		case 'T': values[i] = bbox_strings.max_lat; break;
+		case 'A': values[i] = center_lat; break;
+		case 'O': values[i] = center_lon; break;
+		case 'Z': values[i] = zoom; break;
+		case 'P': values[i] = point_lat; break;
+		case 'N': values[i] = point_lon; break;
+		default:
+			qDebug() << "EE: Web Tool Format: invalid URL format code" << this->url_format_code[i];
+			return QString("");
 		}
 	}
 
-	char * url = g_strdup_printf(this->url_format, values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]);
+	QString url = QString(this->q_url_format)
+		.arg(values[0]).arg(values[1]).arg(values[2])
+		.arg(values[3]).arg(values[4]).arg(values[5])
+		.arg(values[6]).arg(values[7]).arg(values[8]);
 
-	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
-		if (values[i] != '\0') {
-			free(values[i]);
-		}
-	}
-
-	QString result(url);
-	free(url);
-
-	qDebug() << "DD: Web Tool Format: url at position is" << result;
-	return result;
+	qDebug() << "DD: Web Tool Format: url at position is" << url;
+	return url;
 }
 
 
 
 
-QString WebToolFormat::get_url_at_current_position(Window * a_window)
+QString WebToolFormat::get_url_at_current_position(Viewport * a_viewport)
 {
-	return this->get_url_at_position(a_window, NULL);
+	return this->get_url_at_position(a_viewport, NULL);
 }
