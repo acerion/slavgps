@@ -40,7 +40,7 @@
 #include <QPainter>
 
 #include "layer_trw.h"
-#include "layer_trw_draw.h"
+#include "layer_trw_painter.h"
 #include "layer_trw_tools.h"
 #include "layer_trw_dialogs.h"
 #include "tree_view_internal.h"

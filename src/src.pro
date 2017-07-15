@@ -85,7 +85,7 @@ SOURCES += main.cpp \
     layer_aggregate.cpp \
     layer_dem.cpp \
     layer_trw.cpp \
-    layer_trw_draw.cpp \
+    layer_trw_painter.cpp \
     layer_trw_tools.cpp \
     layer_trw_containers.cpp \
     layer_trw_menu.cpp \
@@ -197,7 +197,7 @@ HEADERS += window.h \
     layer_aggregate.h \
     layer_dem.h \
     layer_trw.h \
-    layer_trw_draw.h \
+    layer_trw_painter.h \
     layer_trw_tools.h \
     layer_trw_containers.h \
     layer_trw_dialogs.h \

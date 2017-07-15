@@ -39,7 +39,7 @@
 #include <glib/gi18n.h>
 
 #include "layer_trw.h"
-#include "layer_trw_draw.h"
+#include "layer_trw_painter.h"
 #include "layer_trw_tools.h"
 #include "layer_trw_dialogs.h"
 #include "layer_map.h"
