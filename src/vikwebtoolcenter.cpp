@@ -71,7 +71,7 @@ QString WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 {
 	uint8_t zoom_level = 17;
 	struct LatLon ll;
-	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
+
 
 	Viewport * viewport = window->get_viewport();
 	/* Coords.
@@ -87,12 +87,11 @@ QString WebToolCenter::get_url_at_position(Window * window, const Coord * coord)
 		zoom_level = this->mpp_to_zoom_level(viewport->get_zoom());
 	}
 
-	/* Cannot simply use g_strdup_printf and double due to locale.
-	   As we compute an URL, we have to think in C locale. */
-	g_ascii_dtostr(strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
-	g_ascii_dtostr(strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
+	QString string_lat;
+	QString string_lon;
+	CoordUtils::to_strings(string_lat, string_lon, ll);
 
-	char * url = g_strdup_printf(this->url_format, strlat, strlon, zoom_level);
+	char * url = g_strdup_printf(this->url_format, string_lat.toUtf8().constData(), string_lon.toUtf8().constData(), zoom_level);
 	QString result(url);
 	free(url);
 

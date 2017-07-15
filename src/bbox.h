@@ -25,11 +25,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 typedef struct {
 	double north; /* max_lat */
 	double south; /* min_lat */
@@ -42,10 +37,10 @@ typedef struct {
 
 
 typedef struct {
-	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
+	QString min_lon;
+	QString max_lon;
+	QString min_lat;
+	QString max_lat;
 } LatLonBBoxStrings;
 
 

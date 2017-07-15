@@ -193,10 +193,11 @@ const DownloadOptions * RoutingEngineWeb::get_download_options(void) const
 
 static char * substitute_latlon(const char * fmt, struct LatLon ll)
 {
-	char lat[G_ASCII_DTOSTR_BUF_SIZE], lon[G_ASCII_DTOSTR_BUF_SIZE];
-	char * substituted = g_strdup_printf(fmt,
-					     g_ascii_dtostr(lat, G_ASCII_DTOSTR_BUF_SIZE, (double) ll.lat),
-					     g_ascii_dtostr(lon, G_ASCII_DTOSTR_BUF_SIZE, (double) ll.lon));
+	QString string_lat;
+	QString string_lon;
+	CoordUtils::to_strings(string_lat, string_lon, ll);
+
+	char * substituted = g_strdup_printf(fmt, string_lat.toUtf8().constData(), string_lon.toUtf8().constData());
 	return substituted;
 }
 

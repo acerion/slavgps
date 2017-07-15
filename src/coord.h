@@ -27,6 +27,7 @@
 #include <QString>
 
 #include "coords.h"
+#include "bbox.h"
 
 
 
@@ -78,7 +79,9 @@ namespace SlavGPS {
 
 	class CoordUtils {
 	public:
-		static QString dtostr(double d);
+		static void to_string(QString & result, double d);
+		static void to_strings(QString & lat, QString & lon, const struct LatLon & ll);
+		static void to_strings(LatLonBBoxStrings & bbox_strings, const LatLonBBox & bbox);
 	};
 
 

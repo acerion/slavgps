@@ -1944,18 +1944,13 @@ void Viewport::get_bbox(LatLonBBox * bbox)
 
 
 
-void Viewport::get_bbox_strings(LatLonBBoxStrings * bbox_strings)
+void Viewport::get_bbox_strings(LatLonBBoxStrings & bbox_strings)
 {
 	LatLonBBox bbox;
 	/* Get Viewport bounding box. */
 	this->get_bbox(&bbox);
 
-	/* Cannot simply use g_strdup_printf and double due to locale.
-	   As we compute an URL, we have to work in C locale. */
-	g_ascii_dtostr(bbox_strings->sminlon, G_ASCII_DTOSTR_BUF_SIZE, bbox.west);
-	g_ascii_dtostr(bbox_strings->smaxlon, G_ASCII_DTOSTR_BUF_SIZE, bbox.east);
-	g_ascii_dtostr(bbox_strings->sminlat, G_ASCII_DTOSTR_BUF_SIZE, bbox.south);
-	g_ascii_dtostr(bbox_strings->smaxlat, G_ASCII_DTOSTR_BUF_SIZE, bbox.north);
+	CoordUtils::to_strings(bbox_strings, bbox);
 
 	return;
 }

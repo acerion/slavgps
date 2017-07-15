@@ -442,14 +442,17 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 
 void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
 {
+	QString north;
+	QString south;
+	QString east;
+	QString west;
+	CoordUtils::to_string(north, maxmin[0].lat);
+	CoordUtils::to_string(south, maxmin[1].lat);
+	CoordUtils::to_string(east, maxmin[0].lon);
+	CoordUtils::to_string(west, maxmin[1].lon);
+
 	/* Encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
-	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT)
-		.arg(CoordUtils::dtostr(maxmin[0].lat)) // north
-		.arg(CoordUtils::dtostr(maxmin[1].lat)) // south
-		.arg(CoordUtils::dtostr(maxmin[0].lon)) // east
-		.arg(CoordUtils::dtostr(maxmin[1].lon)) // west
-		.arg(GEONAMES_LANG)
-		.arg(GEONAMES_MAX_ENTRIES);
+	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
 	char * tmpname = Download::get_uri_to_tmp_file(uri, NULL);
 	if (!tmpname) {

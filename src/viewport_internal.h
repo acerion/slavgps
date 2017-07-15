@@ -111,7 +111,7 @@ namespace SlavGPS {
 		void corners_for_zonen(int zone, Coord * ul, Coord * br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 		void get_bbox(LatLonBBox * bbox);
-		void get_bbox_strings(LatLonBBoxStrings * bbox_strings);
+		void get_bbox_strings(LatLonBBoxStrings & bbox_strings);
 
 		int get_width();
 		int get_height();

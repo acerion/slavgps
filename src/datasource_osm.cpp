@@ -118,14 +118,14 @@ static ProcessOptions * datasource_osm_get_process_options(datasource_osm_t * da
 	int page = 0;
 
 	LatLonBBoxStrings bbox_strings;
-	datasource->viewport->get_bbox_strings(&bbox_strings);
+	datasource->viewport->get_bbox_strings(bbox_strings);
 
 	/* Retrieve the specified page number. */
 	//last_page_number = datasource->last_page_number;
 	page = datasource->last_page_number;
 
 	/* NB Download is of GPX type. */
-	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.sminlon, bbox_strings.sminlat, bbox_strings.smaxlon, bbox_strings.smaxlat, page);
+	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.min_lon.toUtf8().constData(), bbox_strings.min_lat.toUtf8().constData(), bbox_strings.max_lon.toUtf8().constData(), bbox_strings.max_lat.toUtf8().constData(), page);
 	dl_options = NULL; /* i.e. use the default download settings. */
 
 	qDebug() << "DD: Datasource OSM: URL =" << po->url;

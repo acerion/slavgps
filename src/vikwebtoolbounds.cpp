@@ -60,9 +60,9 @@ QString WebToolBounds::get_url_at_current_position(Window * window)
 {
 	Viewport * viewport = window->get_viewport();
 	LatLonBBoxStrings bbox_strings;
-	viewport->get_bbox_strings(&bbox_strings);
+	viewport->get_bbox_strings(bbox_strings);
 
-	char * url = g_strdup_printf(this->url_format, bbox_strings.sminlon, bbox_strings.smaxlon, bbox_strings.sminlat, bbox_strings.smaxlat);
+	char * url = g_strdup_printf(this->url_format, bbox_strings.min_lon.toUtf8().constData(), bbox_strings.max_lon.toUtf8().constData(), bbox_strings.min_lat.toUtf8().constData(), bbox_strings.max_lat.toUtf8().constData());
 
 	QString result(url);
 	free(url);

@@ -290,7 +290,7 @@ void Coord::to_strings(QString & str1, QString & str2) const
 
 
 /**
-   \brief Convert a double to a string WITHOUT LOCALE.
+   \brief Convert a double to a string in C locale
 
    Following GPX specifications, decimal values are xsd:decimal
    So, they must use the period separator, not the localized one.
@@ -298,10 +298,53 @@ void Coord::to_strings(QString & str1, QString & str2) const
    This function re-implements glib-based a_coords_dtostr() function
    from coords.cpp.
 */
-QString CoordUtils::dtostr(double d)
+void CoordUtils::to_string(QString & result, double d)
 {
 	static QLocale c_locale = QLocale::c();
 
 	/* TODO: adjust parameters of toString() to do the conversion without loss of precision. */
-	return c_locale.toString(d);
+	result = c_locale.toString(d);
+
+	return;
+}
+
+
+
+
+/*
+  \brief Convert values from LatLon struct to a pair of strings in C locale
+
+  Strings will have a non-localized, regular dot as a separator
+  between integer part and fractional part.
+*/
+void CoordUtils::to_strings(QString & lat, QString & lon, const struct LatLon & ll)
+{
+	static QLocale c_locale = QLocale::c();
+
+	/* TODO: adjust parameters of toString() to do the conversion without loss of precision. */
+	lat = c_locale.toString(ll.lat);
+	lon = c_locale.toString(ll.lon);
+
+	return;
+}
+
+
+
+
+/*
+  \brief Convert values from LatLon struct to strings stored in LatLongBBoxStrings struct, in C locale
+
+  Strings will have a non-localized, regular dot as a separator
+  between integer part and fractional part.
+*/
+void CoordUtils::to_strings(LatLonBBoxStrings & bbox_strings, const LatLonBBox & bbox)
+{
+	static QLocale c_locale = QLocale::c();
+
+	bbox_strings.min_lon = c_locale.toString(bbox.west);
+	bbox_strings.max_lon = c_locale.toString(bbox.east);
+	bbox_strings.min_lat = c_locale.toString(bbox.south);
+	bbox_strings.max_lat = c_locale.toString(bbox.north);
+
+	return;
 }

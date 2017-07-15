@@ -90,21 +90,19 @@ QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 	// Center values
 	struct LatLon ll = viewport->get_center()->get_latlon();
 
-	char scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
-	g_ascii_dtostr(scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
-	g_ascii_dtostr(scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
+	QString center_lat;
+	QString center_lon;
+	CoordUtils::to_strings(center_lat, center_lon, ll);
 
 	struct LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
 	if (coord) {
-		ll = coord->get_latlon();
+		ll = coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
 	}
-	char spointlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char spointlon[G_ASCII_DTOSTR_BUF_SIZE];
-	g_ascii_dtostr(spointlat, G_ASCII_DTOSTR_BUF_SIZE, llpt.lat);
-	g_ascii_dtostr(spointlon, G_ASCII_DTOSTR_BUF_SIZE, llpt.lon);
+	QString point_lat;
+	QString point_lon;
+	CoordUtils::to_strings(point_lat, point_lon, llpt);
 
 	uint8_t zoom_level = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
@@ -129,19 +127,19 @@ QString WebToolFormat::get_url_at_position(Window * window, const Coord * coord)
 	}
 
 	LatLonBBoxStrings bbox_strings;
-	viewport->get_bbox_strings(&bbox_strings);
+	viewport->get_bbox_strings(bbox_strings);
 
 	for (int i = 0; i < len; i++) {
 		switch (g_ascii_toupper(this->url_format_code[i])) {
-		case 'L': values[i] = g_strdup(bbox_strings.sminlon); break;
-		case 'R': values[i] = g_strdup(bbox_strings.smaxlon); break;
-		case 'B': values[i] = g_strdup(bbox_strings.sminlat); break;
-		case 'T': values[i] = g_strdup(bbox_strings.smaxlat); break;
-		case 'A': values[i] = g_strdup(scenterlat); break;
-		case 'O': values[i] = g_strdup(scenterlon); break;
+		case 'L': values[i] = g_strdup(bbox_strings.min_lon.toUtf8().constData()); break;
+		case 'R': values[i] = g_strdup(bbox_strings.max_lon.toUtf8().constData()); break;
+		case 'B': values[i] = g_strdup(bbox_strings.min_lat.toUtf8().constData()); break;
+		case 'T': values[i] = g_strdup(bbox_strings.max_lat.toUtf8().constData()); break;
+		case 'A': values[i] = g_strdup(center_lat.toUtf8().constData()); break;
+		case 'O': values[i] = g_strdup(center_lon.toUtf8().constData()); break;
 		case 'Z': values[i] = g_strdup(szoom); break;
-		case 'P': values[i] = g_strdup(spointlat); break;
-		case 'N': values[i] = g_strdup(spointlon); break;
+		case 'P': values[i] = g_strdup(point_lat.toUtf8().constData()); break;
+		case 'N': values[i] = g_strdup(point_lon.toUtf8().constData()); break;
 		default: break;
 		}
 	}
