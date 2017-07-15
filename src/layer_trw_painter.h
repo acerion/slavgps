@@ -96,24 +96,26 @@ namespace SlavGPS {
 
 	class TRWPainter {
 	public:
-		TRWPainter(LayerTRW * trw, Viewport * viewport, bool highlight);
+		TRWPainter(LayerTRW * trw, Viewport * viewport);
 
-		static void draw_waypoint_cb(TRWPainter * painter, Waypoint * wp);
-		static void draw_waypoints_cb(TRWPainter * painter, std::unordered_map<sg_uid_t, Waypoint *> * waypoints);
-		static void draw_track_cb(TRWPainter * painter, const void * id, Track * trk);
-		static void draw_tracks_cb(TRWPainter * painter, std::unordered_map<sg_uid_t, Track *> & tracks);
+		void set_highlight(bool highlight);
 
-		static void draw_track_label(TRWPainter * painter, char * name, char * fgcolour, char * bgcolour, Coord * coord);
-		static void draw_dist_labels(TRWPainter * painter, Track * trk, bool drawing_highlight);
-		static void draw_point_names(TRWPainter * painter, Track * trk, bool drawing_highlight);
-		static void draw_track_name_labels(TRWPainter * painter, Track * trk, bool drawing_highlight);
-		static void draw_track(TRWPainter * painter, Track * trk, bool draw_track_outline);
-		static void draw_track_draw_something(TRWPainter * painter, int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
-		static void draw_track_draw_midarrow(TRWPainter * painter, int x, int y, int oldx, int oldy, QPen & main_pen);
-		static void draw_waypoint(TRWPainter * painter, Waypoint * wp);
-		static int draw_image(TRWPainter * painter, Waypoint * wp, int x, int y);
-		static void draw_symbol(TRWPainter * painter, Waypoint * wp, int x, int y);
-		static void draw_label(TRWPainter * painter, Waypoint * wp, int x, int y);
+		void draw_waypoint_cb(Waypoint * wp);
+		void draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints);
+		void draw_track_cb(const void * id, Track * trk);
+		void draw_tracks_cb(std::unordered_map<sg_uid_t, Track *> & tracks);
+
+		void draw_track_label(char * name, char * fgcolour, char * bgcolour, Coord * coord);
+		void draw_dist_labels(Track * trk, bool drawing_highlight);
+		void draw_point_names(Track * trk, bool drawing_highlight);
+		void draw_track_name_labels(Track * trk, bool drawing_highlight);
+		void draw_track(Track * trk, bool draw_track_outline);
+		void draw_track_draw_something(int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
+		void draw_track_draw_midarrow(int x, int y, int oldx, int oldy, QPen & main_pen);
+		void draw_waypoint(Waypoint * wp);
+		int draw_image(Waypoint * wp, int x, int y);
+		void draw_symbol(Waypoint * wp, int x, int y);
+		void draw_label(Waypoint * wp, int x, int y);
 
 		Viewport * viewport = NULL;
 		LayerTRW * trw = NULL;
