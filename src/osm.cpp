@@ -35,7 +35,7 @@
 #include "vikwebtoolbounds.h"
 #include "vikwebtoolformat.h"
 #include "vikwebtool_datasource.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "goto_tool_xml.h"
 #include "goto.h"

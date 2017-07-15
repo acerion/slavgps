@@ -40,7 +40,7 @@
 #include "layer_trw.h"
 #include "preferences.h"
 #include "acquire.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikexttool_datasources.h"
 
 

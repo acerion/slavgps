@@ -50,7 +50,7 @@
 #include "goto.h"
 #include "print.h"
 #include "kmz.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikexttool_datasources.h"
 
 

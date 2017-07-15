@@ -50,7 +50,7 @@
 #include "bluemarble.h"
 #include "dir.h"
 #include "datasources.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "goto.h"
 #include "routing.h"

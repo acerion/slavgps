@@ -89,7 +89,7 @@
 #include "acquire.h"
 #include "datasources.h"
 #include "datasource_gps.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
 #include "clipboard.h"

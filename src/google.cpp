@@ -26,7 +26,7 @@
 
 #include "globals.h"
 #include "google.h"
-#include "vikexttools.h"
+#include "external_tools.h"
 #include "vikwebtoolcenter.h"
 #include "goto.h"
 #include "googlesearch.h"
