@@ -131,6 +131,8 @@ LayerMapnikInterface::LayerMapnikInterface()
 	this->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New Mapnik Rendering Layer");
 }
 
 

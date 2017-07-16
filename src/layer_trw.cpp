@@ -152,7 +152,7 @@ static char * font_size_to_string(int font_size);
 
 /****** PARAMETERS ******/
 
-static char *params_groups[] = { (char *) N_("Waypoints"), (char *) N_("Tracks"), (char *) N_("Waypoint Images"), (char *) N_("Tracks Advanced"), (char *) N_("Metadata") };
+static const char * g_params_groups[] = { "Waypoints", "Tracks", "Waypoint Images", "Tracks Advanced", "Metadata" };
 enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_METADATA };
 
 static char *params_drawmodes[] = { (char *) N_("Draw by Track"), (char *) N_("Draw by Speed"), (char *) N_("All Tracks Same Color"), NULL };
@@ -208,7 +208,7 @@ static ParameterValue trkpointsize_default(void)      { return ParameterValue((u
 static ParameterValue trkdirectionsize_default(void)  { return ParameterValue((uint32_t) 5); }
 static ParameterValue bg_line_thickness_default(void) { return ParameterValue((uint32_t) 0); }
 static ParameterValue trackbgcolor_default(void)      { return ParameterValue(255, 255, 255, 100); }  /* White. */
-static ParameterValue elevation_factor_default(void)  { return ParameterValue((uint32_t) 30); }
+static ParameterValue elevation_factor_default(void)  { qDebug() << "Draw Elevation height" << (uint32_t) 30; return ParameterValue((uint32_t) 30); }
 static ParameterValue stop_length_default(void)       { return ParameterValue((uint32_t) 60); }
 static ParameterValue speed_factor_default(void)      { return ParameterValue(30.0); }
 static ParameterValue tnfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }
@@ -345,7 +345,7 @@ LayerTRWInterface::LayerTRWInterface()
 {
 	this->params = trw_layer_params;        /* Parameters. */
 	this->params_count = NUM_PARAMS;
-	this->params_groups = params_groups;    /* Parameter groups. */
+	this->params_groups = g_params_groups;    /* Parameter groups. */
 
 	strncpy(this->layer_type_string, "TrackWaypoint", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
@@ -363,6 +363,8 @@ LayerTRWInterface::LayerTRWInterface()
 	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New Track/Route/Waypoint Layer");
 }
 
 

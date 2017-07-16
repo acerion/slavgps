@@ -61,6 +61,8 @@ LayerAggregateInterface::LayerAggregateInterface()
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New Aggregate Layer");
 }
 
 

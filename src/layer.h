@@ -366,7 +366,7 @@ namespace SlavGPS {
 		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
 		Parameter * params = NULL;
 		uint16_t    params_count = 0;
-		char     ** params_groups = NULL;
+		const char  ** params_groups = NULL;
 
 		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. */
 		QString layer_name;            /* Translate-able name used for display purposes. */
@@ -383,6 +383,10 @@ namespace SlavGPS {
 
 		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
 		std::map<param_id_t, ParameterValue> * parameter_value_defaults = NULL;
+
+		struct {
+			QString new_layer; /* Menu "Layers" -> "New type-X Layer". */
+		} ui_labels;
 	};
 
 

@@ -274,6 +274,8 @@ LayerDEMInterface::LayerDEMInterface()
 	this->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
 }
 
 

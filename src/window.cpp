@@ -299,7 +299,7 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->viewport = new SlavGPS::Viewport(this);
+	this->viewport = new Viewport(this);
 	struct LatLon ll = { 53.25916, 15.54663 };
 	this->viewport->set_center_latlon(&ll, false);
 
@@ -311,7 +311,7 @@ void Window::create_layout()
 
 	this->panel_dock = new QDockWidget(tr("Layers"), this);
 	this->panel_dock->setAllowedAreas(Qt::TopDockWidgetArea);
-	this->layers_panel = new SlavGPS::LayersPanel(this->panel_dock, this);
+	this->layers_panel = new LayersPanel(this->panel_dock, this);
 	this->panel_dock->setWidget(this->layers_panel);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
 
@@ -763,7 +763,7 @@ void Window::draw_status()
 void Window::menu_layer_new_cb(void) /* Slot. */
 {
 	QAction * qa = (QAction *) QObject::sender();
-	SlavGPS::LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
+	LayerType layer_type = (LayerType) qa->data().toInt();
 
 	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
 
@@ -782,15 +782,15 @@ void Window::draw_redraw()
 {
 	Coord old_center = this->trigger_center;
 	this->trigger_center = *(this->viewport->get_center());
-	SlavGPS::Layer * new_trigger = this->trigger;
+	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
-	SlavGPS::Layer * old_trigger = this->viewport->get_trigger();
+	Layer * old_trigger = this->viewport->get_trigger();
 
 	if (!new_trigger) {
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
-		   || (new_trigger->type == SlavGPS::LayerType::AGGREGATE)) {
+		   || (new_trigger->type == LayerType::AGGREGATE)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		this->viewport->set_half_drawn(true);
@@ -939,12 +939,14 @@ QMenu * Window::get_layer_menu(QMenu * menu)
 
 QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 {
-	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+
+		const LayerInterface * iface = Layer::get_interface(i);
 
 		QVariant variant((int) i);
-		QAction * qa = new QAction("new layer", this);
+		QAction * qa = new QAction(iface->ui_labels.new_layer, this);
 		qa->setData(variant);
-		qa->setIcon(Layer::get_interface(i)->action_icon);
+		qa->setIcon(iface->action_icon);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(menu_layer_new_cb(void)));
 
 		menu->addAction(qa);
@@ -1932,7 +1934,7 @@ void Window::set_redraw_trigger(Layer * layer)
 void Window::show_layer_defaults_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
+	LayerType layer_type = (LayerType) qa->data().toInt();
 
 	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
 

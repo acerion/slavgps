@@ -134,6 +134,8 @@ LayerGeorefInterface::LayerGeorefInterface()
 	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
 }
 
 

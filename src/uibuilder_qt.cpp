@@ -35,6 +35,7 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QComboBox>
+#include <QSlider>
 
 #include "layer.h"
 #include "uibuilder_qt.h"
@@ -43,6 +44,7 @@
 #include "widget_file_list.h"
 #include "widget_file_entry.h"
 #include "widget_radio_group.h"
+#include "widget_slider.h"
 #include "uibuilder.h"
 #include "waypoint_properties.h"
 #include "date_time_dialog.h"
@@ -375,13 +377,13 @@ void PropertiesDialog::fill(Layer * layer)
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
 		param_id_t group_id = iter->second->group;
 		if (group_id == VIK_LAYER_NOT_IN_PROPERTIES) {
-			iter++;
 			continue;
 		}
 
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
+			/* Add new tab. */
 			QString page_label = layer->get_interface()->params_groups
 				? layer->get_interface()->params_groups[group_id]
 				: tr("Properties");
@@ -604,6 +606,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 
 	case WidgetType::CHECKBUTTON:
 		if (param->type == ParameterType::BOOLEAN) {
+			qDebug() << "----- checkbox with label" << param->title;
 			QCheckBox * widget_ = new QCheckBox;
 			if (vlpd.b) {
 				widget_->setCheckState(Qt::Checked);
@@ -735,7 +738,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 			if (vlpd.s) {
 				widget_->setText(QString(vlpd.s));
 			}
-			widget_->setToolTip(QObject::tr("Take care that this password will be stored clearly in a plain file."));
+			widget_->setToolTip(QObject::tr("Notice that this password will be stored clearly in a plain file."));
 		}
 		break;
 	case WidgetType::FILEENTRY:
@@ -767,12 +770,23 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 			widget = widget_;
 		}
 		break;
-#if 0
 	case WidgetType::HSCALE:
-		if ((param->type == ParameterType::DOUBLE || param->type == ParameterType::UINT
-		     || param->type == ParameterType::INT)  && param->widget_data) {
+		if ((param->type == ParameterType::UINT || param->type == ParameterType::INT)
+		    && param->widget_data) {
 
-			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
+			int init_value = (param->type == ParameterType::UINT ? ((int) vlpd.u) : vlpd.i);
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
+
+			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
+			widget_->set_value(init_value);
+			widget = widget_;
+		}
+		break;
+#ifdef K
+	case WidgetType::HSCALE:
+		if (param->type == ParameterType::DOUBLE && param->widget_data) {
+
+			double init_val = vlpd.d;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
@@ -871,17 +885,17 @@ ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * para
 			qDebug() << "File on retrieved list: " << QString(*iter);
 		}
 		break;
-#if 0
 	case WidgetType::HSCALE:
 		if (param->type == ParameterType::UINT) {
-			rv.u = (uint32_t) gtk_range_get_value(GTK_RANGE(widget));
+			rv.u = (uint32_t) ((SGSlider *) widget)->get_value();
 		} else if (param->type == ParameterType::INT) {
-			rv.i = (int32_t) gtk_range_get_value(GTK_RANGE(widget));
+			rv.i = (int32_t) ((SGSlider *) widget)->get_value();
 		} else {
+#ifdef K
 			rv.d = gtk_range_get_value(GTK_RANGE(widget));
+#endif
 		}
 		break;
-#endif
 	case WidgetType::DATETIME:
 		rv.u = ((SGDateTime *) widget)->value();
 		qDebug() << "II: UI Builder: saving value of time stamp:" << rv.u;

@@ -173,20 +173,14 @@ typedef struct {
 } GpsSession;
 static void gps_session_delete(GpsSession *sess);
 
-static char *params_groups[] = {
-	(char *) N_("Data Mode"),
+static const char * g_params_groups[] = {
+	"Data Mode",
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	(char *) N_("Realtime Tracking Mode"),
+	"Realtime Tracking Mode",
 #endif
 };
 
-
-
-
-enum {
-	GROUP_DATA_MODE,
-	GROUP_REALTIME_MODE
-};
+enum { GROUP_DATA_MODE, GROUP_REALTIME_MODE };
 
 
 
@@ -329,7 +323,7 @@ LayerGPSInterface::LayerGPSInterface()
 {
 	this->params = gps_layer_params;       /* Parameters. */
 	this->params_count = NUM_PARAMS;
-	this->params_groups = params_groups;   /* Parameter groups. */
+	this->params_groups = g_params_groups; /* Parameter groups. */
 
 	strncpy(this->layer_type_string, "GPS", sizeof (this->layer_type_string)); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
@@ -339,6 +333,8 @@ LayerGPSInterface::LayerGPSInterface()
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->menu_items_selection = LayerMenuItem::ALL;
+
+	this->ui_labels.new_layer = QObject::tr("New GPS Layer");
 }
 
 
