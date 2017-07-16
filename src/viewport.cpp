@@ -285,9 +285,9 @@ void Viewport::set_background_color(QColor * color)
 
 
 
-QColor * Viewport::get_highlight_qcolor()
+const QColor & Viewport::get_highlight_color(void) const
 {
-	return new QColor(this->highlight_color);
+	return this->highlight_color;
 }
 
 

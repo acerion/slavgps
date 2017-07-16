@@ -105,7 +105,7 @@ namespace SlavGPS {
 		void draw_track_cb(const void * id, Track * trk);
 		void draw_tracks_cb(std::unordered_map<sg_uid_t, Track *> & tracks);
 
-		void draw_track_label(char * name, char * fgcolour, char * bgcolour, Coord * coord);
+		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord);
 		void draw_dist_labels(Track * trk, bool drawing_highlight);
 		void draw_point_names(Track * trk, bool drawing_highlight);
 		void draw_track_name_labels(Track * trk, bool drawing_highlight);
@@ -116,6 +116,7 @@ namespace SlavGPS {
 		int draw_image(Waypoint * wp, int x, int y);
 		void draw_symbol(Waypoint * wp, int x, int y);
 		void draw_label(Waypoint * wp, int x, int y);
+
 
 		Viewport * viewport = NULL;
 		LayerTRW * trw = NULL;
@@ -138,6 +139,11 @@ namespace SlavGPS {
 
 		LatLonBBox bbox;
 		bool highlight = false;
+
+	private:
+		QColor get_fg_color(const Track * trk) const;
+		QColor get_bg_color(bool drawing_highlight) const;
+
 
 
 	}; /* class TRWPainter */

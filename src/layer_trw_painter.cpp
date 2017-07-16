@@ -158,26 +158,29 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 
 
 
-void TRWPainter::draw_track_label(char * name, char * fgcolour, char * bgcolour, Coord * coord)
+void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord)
 {
-	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, this->trw->track_fsize_str, name);
 #ifdef K
+	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fg_color, bg_color, this->trw->track_fsize_str, text);
 	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(this->trw->tracklabellayout, label_markup, -1);
 	} else {
 		/* Fallback if parse failure. */
-		pango_layout_set_text(this->trw->tracklabellayout, name, -1);
+		pango_layout_set_text(this->trw->tracklabellayout, text, -1);
 	}
 
 	free(label_markup);
-
+#endif
 	int label_x, label_y;
-	int width, height;
-	pango_layout_get_pixel_size(this->trw->tracklabellayout, &width, &height);
+	//int width, height;
+	//pango_layout_get_pixel_size(this->trw->tracklabellayout, &width, &height);
 
 	this->viewport->coord_to_screen(coord, &label_x, &label_y);
-	this->viewport->draw_layout(this->trw->track_bg_gc, label_x-width/2, label_y-height/2, this->trw->tracklabellayout);
-#endif
+	//this->viewport->draw_layout(this->trw->track_bg_gc, label_x-width/2, label_y-height/2, this->trw->tracklabellayout);
+
+	QPen pen;
+	pen.setColor(fg_color);
+	this->viewport->draw_text(QFont("Helvetica", 10), pen, label_x, label_y, text);
 }
 
 
@@ -189,7 +192,7 @@ void TRWPainter::draw_track_label(char * name, char * fgcolour, char * bgcolour,
  */
 void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 {
-#ifdef K
+
 	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
 					 25.0, 40.0, 50.0, 75.0, 100.0,
 					 150.0, 200.0, 250.0, 500.0, 1000.0};
@@ -201,14 +204,13 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 	dist = convert_distance_meters_to(distance_unit, dist);
 
 	int index = 0;
-	for (int i = 0; i < G_N_ELEMENTS(chunksd); i++) {
+	for (size_t i = 0; i < (sizeof chunksd) / (sizeof chunksd[0]); i++) {
 		if (chunksd[i] > dist) {
 			index = i;
 			dist = chunksd[index];
 			break;
 		}
 	}
-
 
 	for (int i = 1; i < trk->max_number_dist_labels+1; i++) {
 		double dist_i = dist * i;
@@ -270,29 +272,44 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
 			Coord coord(ll_new, this->trw->coord_mode);
 
-			char *fgcolour;
-			if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
-				fgcolour = gdk_color_to_string(&(trk->color));
-			} else {
-				fgcolour = gdk_color_to_string(&(this->trw->track_color));
-			}
+			const QColor fg_color = this->get_fg_color(trk);
+			const QColor bg_color = this->get_bg_color(drawing_highlight);
 
-			/* If highlight mode on, then colour the background in the highlight colour. */
-			char *bgcolour;
-			if (drawing_highlight) {
-				bgcolour = g_strdup(this->viewport->get_highlight_color());
-			} else {
-				bgcolour = gdk_color_to_string(&(this->trw->track_bg_color));
-			}
+			this->draw_track_label(name, fg_color, bg_color, &coord);
 
-			this->draw_track_label(name, fgcolour, bgcolour, &coord);
-
-			free(fgcolour);
-			free(bgcolour);
 			free(name);
 		}
 	}
-#endif
+}
+
+
+
+
+QColor TRWPainter::get_fg_color(const Track * trk) const
+{
+	QColor fg_color;
+	if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
+		fg_color = trk->color;
+	} else {
+		fg_color = this->trw->track_color;
+	}
+	return fg_color;
+}
+
+
+
+
+/* If highlight mode is on, then color of the background should be the
+   same as the highlight colour. */
+QColor TRWPainter::get_bg_color(bool drawing_highlight) const
+{
+	QColor bg_color;
+	if (drawing_highlight) {
+		bg_color = this->viewport->get_highlight_color();
+	} else {
+		bg_color = this->trw->track_bg_color;
+	}
+	return bg_color;
 }
 
 
@@ -303,36 +320,23 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
  */
 void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
 {
-#ifdef K
-	char *fgcolour;
-	if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
-		fgcolour = gdk_color_to_string(&(trk->color));
-	} else {
-		fgcolour = gdk_color_to_string(&(this->trw->track_color));
-	}
-
-	/* If highlight mode on, then colour the background in the highlight colour. */
-	char *bgcolour;
-	if (drawing_highlight) {
-		bgcolour = g_strdup(this->viewport->get_highlight_color());
-	} else {
-		bgcolour = gdk_color_to_string(&(this->trw->track_bg_color));
-	}
+	const QColor fg_color = this->get_fg_color(trk);
+	const QColor bg_color = this->get_bg_color(drawing_highlight);
 
 	char *ename = g_markup_escape_text(trk->name, -1);
 
-	if (trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ||
-	    trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
+	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
 		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 		Coord coord(average, this->trw->coord_mode);
 
-		this->draw_track_label(ename, fgcolour, bgcolour, &coord);
+		this->draw_track_label(ename, fg_color, bg_color, &coord);
 	}
 
-	if (trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
 		/* No other labels to draw. */
 		return;
 	}
@@ -350,13 +354,13 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
 
 	bool done_start_end = false;
 
-	if (trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-	    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::START_END ||
+	    trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
 
 		/* This number can be configured via the settings if you really want to change it. */
 		double distance_diff;
-		if (! a_settings_get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
-			distance_diff = 100.0; // Metres
+		if (!a_settings_get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
+			distance_diff = 100.0; /* Metres. */
 		}
 
 		if (Coord::distance(begin_coord, end_coord) < distance_diff) {
@@ -366,40 +370,34 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
 			this->viewport->coord_to_screen(&end_coord, &x2, &y2);
 			Coord av_coord = this->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
 
-			char *name = g_strdup_printf("%s: %s", ename, _("start/end"));
-			this->draw_track_label(fgcolour, bgcolour, &av_coord);
-			free(name);
+			QString name = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start/end"));
+			this->draw_track_label(name, fg_color, bg_color, &av_coord);
 
 			done_start_end = true;
 		}
 	}
 
-	if (! done_start_end) {
-		if (trk->draw_name_mode == TRACK_DRAWNAME_START
-		    || trk->draw_name_mode == TRACK_DRAWNAME_START_END
-		    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+	if (!done_start_end) {
+		if (trk->draw_name_mode == TrackDrawNameMode::START
+		    || trk->draw_name_mode == TrackDrawNameMode::START_END
+		    || trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
 
-			char *name_start = g_strdup_printf("%s: %s", ename, _("start"));
-			this->draw_track_label(name_start, fgcolour, bgcolour, &begin_coord);
-			free(name_start);
+			const QString name_start = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start"));
+			this->draw_track_label(name_start, fg_color, bg_color, &begin_coord);
 		}
 		/* Don't draw end label if this is the one being created. */
 		if (trk != this->trw->current_trk) {
-			if (trk->draw_name_mode == TRACK_DRAWNAME_END
-			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END
-			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+			if (trk->draw_name_mode == TrackDrawNameMode::END
+			    || trk->draw_name_mode == TrackDrawNameMode::START_END
+			    || trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
 
-				char *name_end = g_strdup_printf("%s: %s", ename, _("end"));
-				this->draw_track_label(name_end, fgcolour, bgcolour, &end_coord);
-				free(name_end);
+				const QString name_end = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("end"));
+				this->draw_track_label(name_end, fg_color, bg_color, &end_coord);
 			}
 		}
 	}
 
-	free(fgcolour);
-	free(bgcolour);
 	free(ename);
-#endif
 }
 
 
@@ -414,29 +412,15 @@ void TRWPainter::draw_point_names(Track * trk, bool drawing_highlight)
 	if (trk->empty()) {
 		return;
 	}
-#ifdef K
-	char *fgcolour;
-	if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
-		fgcolour = gdk_color_to_string(&(trk->color));
-	} else {
-		fgcolour = gdk_color_to_string(&(this->trw->track_color));
-	}
-	char *bgcolour;
-	if (drawing_highlight) {
-		bgcolour = g_strdup(this->viewport->get_highlight_color());
-	} else {
-		bgcolour = gdk_color_to_string(&(this->trw->track_bg_color));
-	}
+
+	const QColor fg_color = this->get_fg_color(trk);
+	const QColor bg_color = this->get_bg_color(drawing_highlight);
 
 	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 		if ((*iter)->name) {
-			this->draw_track_label((*iter)->name, fgcolour, bgcolour, &(*iter)->coord);
+			this->draw_track_label((*iter)->name, fg_color, bg_color, &(*iter)->coord);
 		}
 	}
-
-	free(fgcolour);
-	free(bgcolour);
-#endif
 }
 
 
@@ -522,6 +506,12 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 		drawpoints = this->trw->drawpoints;
 		drawstops = this->trw->drawstops;
 	}
+
+#if 1   /* Temporary test code. */
+	this->draw_track_label("some label", QColor("green"), QColor("black"), this->viewport->get_center());
+#endif
+
+
 #if 1
 	drawstops = true;
 	this->trw->stop_length = 1;

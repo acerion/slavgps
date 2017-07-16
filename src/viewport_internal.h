@@ -140,7 +140,7 @@ namespace SlavGPS {
 
 		void set_highlight_color(char const * color);
 		char const * get_highlight_color();
-		QColor * get_highlight_qcolor();
+		const QColor & get_highlight_color(void) const;
 		void set_highlight_qcolor(QColor * color);
 		QPen get_highlight_pen();
 		void set_highlight_thickness(int thickness);
