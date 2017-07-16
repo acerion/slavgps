@@ -77,7 +77,7 @@ char ** routing_engine_ids = NULL;
 /**
  * Initialize the preferences of the routing feature.
  */
-void vik_routing_prefs_init()
+void SlavGPS::routing_prefs_init()
 {
 	a_preferences_register_group(VIKING_ROUTING_PARAMS_GROUP_KEY, _("Routing"));
 
@@ -127,7 +127,7 @@ RoutingEngine * vik_routing_find_engine(const char * id)
  *
  * Returns: the default engine.
  */
-RoutingEngine * vik_routing_default_engine(void)
+RoutingEngine * SlavGPS::routing_default_engine(void)
 {
 	const char * id = a_preferences_get(VIKING_ROUTING_PARAMS_NAMESPACE "default")->s;
 	RoutingEngine * engine = vik_routing_find_engine(id);
@@ -147,10 +147,10 @@ RoutingEngine * vik_routing_default_engine(void)
  *
  * Return indicates success or not.
  */
-bool vik_routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon end)
+bool SlavGPS::routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon end)
 {
 	/* The engine. */
-	RoutingEngine * engine = vik_routing_default_engine();
+	RoutingEngine * engine = routing_default_engine();
 	/* The route computation. */
 	return engine->find(trw, start, end);
 }
@@ -163,7 +163,7 @@ bool vik_routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon
  *
  * Register a new routing engine.
  */
-void vik_routing_register(RoutingEngine * engine)
+void SlavGPS::routing_register(RoutingEngine * engine)
 {
 	char * label = engine->get_label();
 	char * id = engine->get_id();
@@ -228,7 +228,7 @@ void vik_routing_register(RoutingEngine * engine)
 /**
  * Unregister all registered routing engines.
  */
-void vik_routing_unregister_all()
+void SlavGPS::routing_unregister_all()
 {
 #ifdef K
 	g_list_foreach(routing_engine_list, (GFunc) g_object_unref, NULL);
@@ -246,7 +246,7 @@ void vik_routing_unregister_all()
  *
  * Loop over all registered routing engines.
  */
-void vik_routing_foreach_engine(GFunc func, QComboBox * combo)
+void SlavGPS::routing_foreach_engine(GFunc func, QComboBox * combo)
 {
 #ifdef K
 	g_list_foreach(routing_engine_list, func, user_data);
@@ -302,7 +302,7 @@ static void fill_engine_box(void * data, QComboBox * user_data)
  *
  * Returns: the combo box
  */
-QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data)
+QComboBox * SlavGPS::routing_ui_selector_new(Predicate func, void * user_data)
 {
 	/* Create the combo */
 	QComboBox * combo = new QComboBox();
@@ -312,7 +312,7 @@ QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data)
 	g_object_set_data(G_OBJECT (combo), "user_data", user_data);
 
 	/* Filter all engines with given user function. */
-	vik_routing_foreach_engine(fill_engine_box, combo);
+	routing_foreach_engine(fill_engine_box, combo);
 #endif
 	return combo;
 }
@@ -329,7 +329,7 @@ QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data)
  *
  * Returns: the RoutingEngine object associated to @pos.
  */
-RoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos)
+RoutingEngine * SlavGPS::routing_ui_selector_get_nth(QComboBox * combo, int pos)
 {
 	RoutingEngine * engine = NULL;
 #ifdef K

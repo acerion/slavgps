@@ -198,7 +198,7 @@ int main(int argc, char ** argv)
 	a_background_init();
 
 	a_toolbar_init();
-	vik_routing_prefs_init();
+	routing_prefs_init();
 
 	/*
 	  Second stage initialization.

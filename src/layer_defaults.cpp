@@ -302,7 +302,7 @@ static bool layer_defaults_save_to_file(void)
  *
  * Returns: %true if the window is displayed (because there are parameters to view).
  */
-bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
+bool SlavGPS::layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -346,7 +346,7 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value)
+void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value)
 {
 #if 0
 	/* Copy value. */
@@ -365,7 +365,7 @@ void a_layer_defaults_register(const char * layer_name, Parameter * layer_param,
 /**
  * Call this function at startup.
  */
-void a_layer_defaults_init()
+void SlavGPS::a_layer_defaults_init()
 {
 	/* kamilFIXME: improve this section. Make sure that the file exists. */
 	QString path(QString(get_viking_dir()) + "/" + VIKING_LAYER_DEFAULTS_INI_FILE);
@@ -387,7 +387,7 @@ void a_layer_defaults_init()
 /**
  * Call this function on program exit.
  */
-void a_layer_defaults_uninit()
+void SlavGPS::a_layer_defaults_uninit()
 {
 	delete keyfile;
 #if 0
@@ -406,7 +406,7 @@ void a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested.
  */
-ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type)
+ParameterValue SlavGPS::a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -426,7 +426,7 @@ ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_
 
    \return: true if saving was successful
 */
-bool a_layer_defaults_save()
+bool SlavGPS::a_layer_defaults_save()
 {
 	/*
 	  Default values of layer parameters may be edited only through

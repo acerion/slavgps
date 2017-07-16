@@ -113,7 +113,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 #ifdef K
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(QObject::tr("Engine:"));
-	widgets->engines_combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
+	widgets->engines_combo = routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
 	widgets->engines_combo->setCurrentIndex(last_engine);
 
 	/* From and To entries. */
@@ -153,7 +153,7 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 	/* Retrieve engine. */
 	last_engine = widgets->engines_combo->currentIndex();
 #ifdef K
-	RoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
+	RoutingEngine * engine = routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}

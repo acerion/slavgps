@@ -36,22 +36,32 @@
 
 
 
-/* Default. */
-bool vik_routing_default_find(SlavGPS::LayerTRW * trw, struct LatLon start, struct LatLon end);
+namespace SlavGPS {
 
-/* Routing engines management. */
-void vik_routing_prefs_init();
-void vik_routing_register(SlavGPS::RoutingEngine * engine);
-void vik_routing_unregister_all();
-void vik_routing_foreach_engine(GFunc func, QComboBox * combo);
 
-/* UI. */
-typedef bool (* Predicate)(void * data, void * user_data);
-QComboBox * vik_routing_ui_selector_new(Predicate func, void * user_data);
-SlavGPS::RoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos);
 
-/* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c. */
-SlavGPS::RoutingEngine * vik_routing_default_engine(void);
+
+	/* Default. */
+	bool routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon end);
+
+	/* Routing engines management. */
+	void routing_prefs_init();
+	void routing_register(RoutingEngine * engine);
+	void routing_unregister_all();
+	void routing_foreach_engine(GFunc func, QComboBox * combo);
+
+	/* UI. */
+	typedef bool (* Predicate)(void * data, void * user_data);
+	QComboBox * routing_ui_selector_new(Predicate func, void * user_data);
+	RoutingEngine * routing_ui_selector_get_nth(QComboBox * combo, int pos);
+
+	/* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c. */
+	RoutingEngine * routing_default_engine(void);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

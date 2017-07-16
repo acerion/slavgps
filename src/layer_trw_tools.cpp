@@ -1569,7 +1569,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 
 		/* Update UI to let user know what's going on. */
 		StatusBar * sb = trw->get_window()->get_statusbar();
-		RoutingEngine * engine = vik_routing_default_engine();
+		RoutingEngine * engine = routing_default_engine();
 		if (!engine) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return LayerToolFuncStatus::ACK;
@@ -1587,7 +1587,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 			gtk_main_iteration();
 		}
 
-		bool find_status = vik_routing_default_find(trw, start, end);
+		bool find_status = routing_default_find(trw, start, end);
 
 		/* Update UI to say we're done. */
 		trw->get_window()->clear_busy_cursor();

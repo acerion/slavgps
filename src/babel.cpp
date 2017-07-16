@@ -499,7 +499,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options)
+bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options)
 {
 	if (!process_options) {
 		qDebug() << "EE: Babel: convert from: no process options";
@@ -557,7 +557,7 @@ static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFun
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data)
+bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data)
 {
 	int i,j;
 	int fd_src;
@@ -744,7 +744,7 @@ static Parameter prefs[] = {
 /**
  * Just setup preferences first.
  */
-void a_babel_init()
+void SlavGPS::a_babel_init()
 {
 	/* Set the defaults. */
 	ParameterValue vlpd;
@@ -769,7 +769,7 @@ void a_babel_init()
  * Initialises babel module.
  * Mainly check existence of gpsbabel progam and load all features available in that version.
  */
-void a_babel_post_init()
+void SlavGPS::a_babel_post_init()
 {
 	/* Read the current preference. */
 	const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
@@ -801,7 +801,7 @@ void a_babel_post_init()
 /**
  * Free resources acquired by a_babel_init.
  */
-void a_babel_uninit()
+void SlavGPS::a_babel_uninit()
 {
 	free(gpsbabel_loc);
 	free(unbuffer_loc);
@@ -845,7 +845,7 @@ void a_babel_uninit()
  *
  * Returns: true if babel available.
  */
-bool a_babel_available()
+bool SlavGPS::a_babel_available()
 {
 	return true;
 #ifdef K

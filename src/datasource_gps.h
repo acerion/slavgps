@@ -31,17 +31,27 @@
 
 
 
-void * datasource_gps_setup(GtkWidget *dialog, SlavGPS::GPSTransferType xfer, bool xfer_all);
-void datasource_gps_clean_up(void * user_data);
+namespace SlavGPS {
 
-char* datasource_gps_get_protocol(void * user_data);
-QString datasource_gps_get_descriptor(void * user_data);
 
-bool datasource_gps_get_do_tracks(void * user_data);
-bool datasource_gps_get_do_routes(void * user_data);
-bool datasource_gps_get_do_waypoints(void * user_data);
 
-bool datasource_gps_get_off(void * user_data);
+
+	void * datasource_gps_setup(GtkWidget * dialog, GPSTransferType xfer, bool xfer_all);
+	void datasource_gps_clean_up(void * user_data);
+
+	char * datasource_gps_get_protocol(void * user_data);
+	QString datasource_gps_get_descriptor(void * user_data);
+
+	bool datasource_gps_get_do_tracks(void * user_data);
+	bool datasource_gps_get_do_routes(void * user_data);
+	bool datasource_gps_get_do_waypoints(void * user_data);
+
+	bool datasource_gps_get_off(void * user_data);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

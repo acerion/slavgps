@@ -88,7 +88,7 @@ void SlavGPS::google_post_init()
 							   "url-stop-dir", "+to:%s",
 							   "referer", "http://maps.google.com/",
 							   NULL);
-		 vik_routing_register(VIK_ROUTING_ENGINE (routing));
+		 routing_register(VIK_ROUTING_ENGINE (routing));
 		 g_object_unref(routing);
 	 }
 #endif

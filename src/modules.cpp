@@ -141,7 +141,7 @@ static void modules_register_routing_engine(VikGobjectBuilder * self, GObject * 
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	RoutingEngine *engine = VIK_ROUTING_ENGINE (object);
-	vik_routing_register(engine);
+	routing_register(engine);
 }
 
 

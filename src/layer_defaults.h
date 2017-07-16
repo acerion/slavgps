@@ -35,16 +35,26 @@
 
 
 
-void a_layer_defaults_init();
-void a_layer_defaults_uninit();
+namespace SlavGPS {
 
-void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value);
 
-bool layer_defaults_show_window(SlavGPS::LayerType layer_type, QWidget * parent);
 
-ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type);
 
-bool a_layer_defaults_save();
+	void a_layer_defaults_init();
+	void a_layer_defaults_uninit();
+
+	void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value);
+
+	bool layer_defaults_show_window(LayerType layer_type, QWidget * parent);
+
+	ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type);
+
+	bool a_layer_defaults_save();
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

@@ -120,21 +120,25 @@ typedef struct {
 	char *label;
 } BabelFileType;
 
-/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
-bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, SlavGPS::DownloadOptions * dl_options);
-
-bool a_babel_convert_to(SlavGPS::LayerTRW * trw, SlavGPS::Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data);
-
-void a_babel_init();
-void a_babel_post_init();
-void a_babel_uninit();
-
-bool a_babel_available();
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	void a_babel_init();
+	void a_babel_post_init();
+	void a_babel_uninit();
+
+	/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
+	bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadOptions * dl_options);
+
+	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data);
+
+	bool a_babel_available();
 
 
 

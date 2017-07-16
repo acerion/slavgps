@@ -74,7 +74,7 @@ static bool spawn_command_line_async(const char * cmd,
 
 
 
-void open_url(const char * url)
+void SlavGPS::open_url(const char * url)
 {
 	qDebug() << "II: Open URL" << QString(url);
 	QDesktopServices::openUrl(QUrl(QString(url)));
@@ -83,7 +83,7 @@ void open_url(const char * url)
 
 
 
-void new_email(Window * parent, const char * address)
+void SlavGPS::new_email(Window * parent, const char * address)
 {
 #ifdef K
 	char * uri = g_strdup_printf("mailto:%s", address);
@@ -116,7 +116,7 @@ void new_email(Window * parent, const char * address)
    @param text Button label text, can include mnemonics.
    @return The new @c GtkButton.
 */
-GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
+GtkWidget * SlavGPS::ui_button_new_with_image(const char * stock_id, const char * text)
 {
 	GtkWidget * image = NULL;
 	GtkWidget * button = NULL;
@@ -140,7 +140,7 @@ GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
    @param default_value The default value in case the value could not be read.
    @return The value for the property if it exists, otherwise the @a default_value.
 */
-int ui_get_gtk_settings_integer(const char * property_name, int default_value)
+int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
 #ifdef K
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
@@ -163,7 +163,7 @@ int ui_get_gtk_settings_integer(const char * property_name, int default_value)
  * @param text String to display - maybe NULL
  * @return The label widget
  */
-QLabel * ui_label_new_selectable(QString const & text, QWidget * parent)
+QLabel * SlavGPS::ui_label_new_selectable(QString const & text, QWidget * parent)
 {
 	QLabel * label = new QLabel(text, parent);
 	label->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -176,7 +176,7 @@ QLabel * ui_label_new_selectable(QString const & text, QWidget * parent)
 /**
  * Apply the alpha value to the specified pixbuf.
  */
-QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
+QPixmap * SlavGPS::ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
@@ -215,7 +215,7 @@ QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
+QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 {
 #ifdef K
 	unsigned char *pixels;
@@ -251,7 +251,7 @@ QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 
 
 
-void ui_add_recent_file(const char * filename)
+void SlavGPS::ui_add_recent_file(const char * filename)
 {
 #ifdef K
 	if (filename) {

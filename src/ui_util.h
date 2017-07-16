@@ -35,26 +35,26 @@
 
 
 
-void open_url(const char * url);
-void new_email(SlavGPS::Window * parent, const char * address);
-
-GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
-int ui_get_gtk_settings_integer(const char *property_name, int default_value);
-QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
-
-QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha);
-QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha);
-void ui_add_recent_file(const char * filename);
-
-
-
-
 namespace SlavGPS {
 
 
 
 
 	class Track;
+
+
+
+	void open_url(const char * url);
+	void new_email(Window * parent, const char * address);
+
+	GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
+	int ui_get_gtk_settings_integer(const char *property_name, int default_value);
+	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
+
+	QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha);
+	QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha);
+	void ui_add_recent_file(const char * filename);
+
 
 
 

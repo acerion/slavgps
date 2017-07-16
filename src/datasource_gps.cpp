@@ -167,7 +167,7 @@ static void * datasource_gps_init_func(acq_vik_t *avt)
 /**
  * Method to get the communication protocol of the GPS device from the widget structure.
  */
-char* datasource_gps_get_protocol(void * user_data)
+char* SlavGPS::datasource_gps_get_protocol(void * user_data)
 {
 	/* Uses the list of supported devices. */
 	GPSData *w = (GPSData *)user_data;
@@ -193,7 +193,7 @@ char* datasource_gps_get_protocol(void * user_data)
  * "Everything is a file".
  * Could actually be normal file or a serial port.
  */
-QString datasource_gps_get_descriptor(void * user_data)
+QString SlavGPS::datasource_gps_get_descriptor(void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
 
@@ -208,7 +208,7 @@ QString datasource_gps_get_descriptor(void * user_data)
 /**
  * Method to get the track handling behaviour from the widget structure.
  */
-bool datasource_gps_get_do_tracks(void * user_data)
+bool SlavGPS::datasource_gps_get_do_tracks(void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
 
@@ -225,7 +225,7 @@ bool datasource_gps_get_do_tracks(void * user_data)
 /**
  * Method to get the route handling behaviour from the widget structure.
  */
-bool datasource_gps_get_do_routes(void * user_data)
+bool SlavGPS::datasource_gps_get_do_routes(void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
 
@@ -242,7 +242,7 @@ bool datasource_gps_get_do_routes(void * user_data)
 /**
  * Method to get the waypoint handling behaviour from the widget structure.
  */
-bool datasource_gps_get_do_waypoints(void * user_data)
+bool SlavGPS::datasource_gps_get_do_waypoints(void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
 
@@ -312,7 +312,7 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 /**
  * Method to get the off behaviour from the widget structure.
  */
-bool datasource_gps_get_off(void * user_data)
+bool SlavGPS::datasource_gps_get_off(void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
 
@@ -379,7 +379,7 @@ static void datasource_gps_cleanup(void * user_data)
 /**
  * External method to tidy up.
  */
-void datasource_gps_clean_up(void * user_data)
+void SlavGPS::datasource_gps_clean_up(void * user_data)
 {
 	datasource_gps_cleanup(user_data);
 }
@@ -772,7 +772,7 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
  * Returns: A void * to the private structure for GPS progress/information widgets.
  *          Pass this pointer back into the other exposed datasource_gps_X functions.
  */
-void * datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_all)
+void * SlavGPS::datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_all)
 {
 	GPSData *w_gps = (GPSData *)datasource_gps_init_func(NULL);
 	w_gps->direction = GPSDirection::UP;
