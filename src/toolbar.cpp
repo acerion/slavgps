@@ -124,8 +124,21 @@ VikToolbar *vik_toolbar_new()
 #define TOOLBAR_PARAMS_GROUP_KEY "toolbar"
 #define TOOLBAR_PARAMS_NAMESPACE "toolbar."
 
-static char *params_icon_size[] = { (char *) N_("System Default"), (char *) N_("Small"), (char *) N_("Medium"), (char *) N_("Large"), NULL };
-static char *params_icon_style[] = { (char *) N_("System Default"), (char *) N_("Icons Only"), (char *) N_("Text Only"), (char *) N_("Icons and Text"), NULL };
+static label_id_t  params_icon_size[] = {
+	{ "System Default", 0 },
+	{ "Small",          1 },
+	{ "Medium",         2 },
+	{ "Large",          3 },
+	{ NULL,             4 }
+};
+
+static label_id_t params_icon_style[] = {
+	{ "System Default", 0 },
+	{ "Icons Only",     1 },
+	{ "Text Only",      2 },
+	{ "Icons and Text", 3 },
+	{ NULL,             4 },
+};
 
 typedef struct {
 	VikToolbar *vtb;

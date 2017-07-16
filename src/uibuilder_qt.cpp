@@ -341,6 +341,8 @@ PropertiesDialog::~PropertiesDialog()
 
 void PropertiesDialog::fill(Preferences * preferences)
 {
+	qDebug() << "\nII: UI Builder: creating Properties Dialog from preferences";
+
 	for (auto iter = preferences->begin(); iter != preferences->end(); iter++) {
 		param_id_t group_id = iter->second->group;
 
@@ -373,6 +375,8 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 void PropertiesDialog::fill(Layer * layer)
 {
+	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer" << layer->get_name();
+
 	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
@@ -411,6 +415,8 @@ void PropertiesDialog::fill(Layer * layer)
 
 void PropertiesDialog::fill(LayerInterface * interface)
 {
+	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer interface";
+
 	std::map<param_id_t, Parameter *> * params = interface->layer_parameters;
 	std::map<param_id_t, ParameterValue> * values = interface->parameter_value_defaults;
 
@@ -450,6 +456,8 @@ void PropertiesDialog::fill(LayerInterface * interface)
 
 void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 {
+	qDebug() << "\nII: UI Builder: creating Properties Dialog from waypoint";
+
 	int i = 0;
 	QFormLayout * form = this->insert_tab(tr("Properties"));
 	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group, form));
@@ -607,7 +615,6 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 
 	case WidgetType::CHECKBUTTON:
 		if (param->type == ParameterType::BOOLEAN) {
-			qDebug() << "----- checkbox with label" << param->title;
 			QCheckBox * widget_ = new QCheckBox;
 			if (vlpd.b) {
 				widget_->setCheckState(Qt::Checked);
@@ -617,21 +624,35 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 		break;
 
 	case WidgetType::COMBOBOX: {
-		assert (param->type == ParameterType::UINT);
 		assert (param->widget_data);
 
 		QComboBox * widget_ = new QComboBox(this);
 
 		label_id_t * values = (label_id_t *) param->widget_data;
 		int i = 0;
+		int selected_idx = 0;
 		while (values[i].label) {
 			QString label(values[i].label);
-			widget_->addItem(label, values[i].id);
+			if (param->type == ParameterType::UINT) {
+				widget_->addItem(label, QVariant((uint32_t) values[i].id));
+				if (param_value.u == (uint32_t) values[i].id) {
+					selected_idx = i;
+				}
+			} else if (param->type == ParameterType::INT) {
+				widget_->addItem(label, QVariant((int32_t) values[i].id));
+				if (param_value.i == (int32_t) values[i].id) {
+					selected_idx = i;
+				}
+			} else if (param->type == ParameterType::STRING) {
+				/* TODO: implement. */
+			} else {
+				qDebug() << "EE: UI Builder: set: unsupported parameter type for combobox:" << (int) param->type;
+			}
+
 			i++;
 		}
 
-		/* TODO: add code to set arbitrary item on the list as default one. */
-		/* if (param_value.u == values[i]->id) ... */
+		widget_->setCurrentIndex(selected_idx);
 
 		widget = widget_;
 	}
@@ -824,11 +845,16 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_v
 
 ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 {
-	qDebug() << "vvvvvvvvvvv there are " << this->widgets.size() << "widgets";
+	qDebug() << "DD: UI Builder: getting value of widget" << (int) id << "/" << (int) this->widgets.size();
 
 	ParameterValue rv = { 0 };
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
+		if (param->group == VIK_LAYER_NOT_IN_PROPERTIES) {
+			qDebug() << "DD: UI Builder: widget is 'not in properties'";
+		} else {
+			qDebug() << "EE: UI Builder: widget not found";
+		}
 		return rv;
 	}
 
@@ -846,7 +872,16 @@ ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * para
 		break;
 
 	case WidgetType::COMBOBOX:
-		rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
+		if (param->type == ParameterType::UINT) {
+			rv.u = (uint32_t) ((QComboBox *) widget)->currentData().toUInt();
+		} else if (param->type == ParameterType::INT) {
+			rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
+		} else if (param->type == ParameterType::STRING) {
+			/* TODO: implement */
+		} else {
+			qDebug() << "EE: UI Builder: get: unsupported parameter type for combobox:" << (int) param->type;
+		}
+
 		break;
 
 	case WidgetType::RADIOGROUP:

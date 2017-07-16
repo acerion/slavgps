@@ -520,7 +520,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 #if 1
 	drawstops = true;
 	this->trw->stop_length = 1;
-	this->trw->drawmode = DRAWMODE_BY_SPEED;
+	//this->trw->drawmode = DRAWMODE_BY_SPEED;
 #endif
 
 	QPen main_pen = QPen(QColor("black"));

@@ -156,8 +156,21 @@ static char * font_size_to_string(int font_size);
 static const char * g_params_groups[] = { "Waypoints", "Tracks", "Waypoint Images", "Tracks Advanced", "Metadata" };
 enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_METADATA };
 
-static char *params_drawmodes[] = { (char *) N_("Draw by Track"), (char *) N_("Draw by Speed"), (char *) N_("All Tracks Same Color"), NULL };
-static char *params_wpsymbols[] = { (char *) N_("Filled Square"), (char *) N_("Square"), (char *) N_("Circle"), (char *) N_("X"), 0 };
+
+static label_id_t params_drawmodes[] = {
+	{ "Draw by Track",                  DRAWMODE_BY_TRACK },
+	{ "Draw by Speed",                  DRAWMODE_BY_SPEED },
+	{ "All Tracks Have The Same Color", DRAWMODE_ALL_SAME_COLOR },
+	{ NULL,                             0 }
+};
+
+static label_id_t params_wpsymbols[] = {
+	{ "Filled Square", 0 },
+	{ "Square",        1 },
+	{ "Circle",        2 },
+	{ "X",             4 },
+	{ NULL,            5 }
+};
 
 #define MIN_POINT_SIZE 2
 #define MAX_POINT_SIZE 10
@@ -182,24 +195,26 @@ static ParameterScale params_scales[] = {
 	{   MIN_ARROW_SIZE,  MAX_ARROW_SIZE,  1,   0 }, // 11: direction arrow size
 };
 
-static char* params_font_sizes[] = {
-	(char *) N_("Extra Extra Small"),
-	(char *) N_("Extra Small"),
-	(char *) N_("Small"),
-	(char *) N_("Medium"),
-	(char *) N_("Large"),
-	(char *) N_("Extra Large"),
-	(char *) N_("Extra Extra Large"),
-	NULL };
+static label_id_t params_font_sizes[] = {
+	{ "Extra Extra Small",   FS_XX_SMALL  },
+	{ "Extra Small",         FS_X_SMALL   },
+	{ "Small",               FS_SMALL     },
+	{ "Medium",              FS_MEDIUM    },
+	{ "Large",               FS_LARGE     },
+	{ "Extra Large",         FS_X_LARGE   },
+ 	{ "Extra Extra Large",   FS_XX_LARGE  },
+	{ NULL,                  FS_NUM_SIZES },
+};
 
-/* Needs to align with vik_layer_sort_order_t. */
-static char* params_sort_order[] = {
-	(char *) N_("None"),
-	(char *) N_("Name Ascending"),
-	(char *) N_("Name Descending"),
-	(char *) N_("Date Ascending"),
-	(char *) N_("Date Descending"),
-	NULL
+
+
+static label_id_t params_sort_order[] = {
+	{ "None",            VL_SO_NONE                    },
+	{ "Name Ascending",  VL_SO_ALPHABETICAL_ASCENDING  },
+	{ "Name Descending", VL_SO_ALPHABETICAL_DESCENDING },
+	{ "Date Ascending",  VL_SO_DATE_ASCENDING          },
+	{ "Date Descending", VL_SO_DATE_DESCENDING         },
+	{ NULL,              VL_SO_LAST                    },
 };
 
 static ParameterValue black_color_default(void)       { return ParameterValue(0, 0, 0, 100); } /* Black. */
@@ -209,7 +224,7 @@ static ParameterValue trkpointsize_default(void)      { return ParameterValue((u
 static ParameterValue trkdirectionsize_default(void)  { return ParameterValue((uint32_t) 5); }
 static ParameterValue bg_line_thickness_default(void) { return ParameterValue((uint32_t) 0); }
 static ParameterValue trackbgcolor_default(void)      { return ParameterValue(255, 255, 255, 100); }  /* White. */
-static ParameterValue elevation_factor_default(void)  { qDebug() << "Draw Elevation height" << (uint32_t) 30; return ParameterValue((uint32_t) 30); }
+static ParameterValue elevation_factor_default(void)  { return ParameterValue((uint32_t) 30); }
 static ParameterValue stop_length_default(void)       { return ParameterValue((uint32_t) 60); }
 static ParameterValue speed_factor_default(void)      { return ParameterValue(30.0); }
 static ParameterValue tnfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }

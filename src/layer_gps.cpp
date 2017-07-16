@@ -98,19 +98,19 @@ typedef enum {
 	OLD_NUM_PROTOCOLS
 } vik_gps_proto;
 
-static char * protocols_args[] = {
-	(char *) "garmin",
-	(char *) "magellan",
-	(char *) "delbin",
-	(char *) "navilink",
-	NULL
+static label_id_t protocols_args[] = {
+	{ "garmin",   0 },
+	{ "magellan", 1 },
+	{ "delbin",   2 },
+	{ "navilink", 3 },
+	{ NULL,       4 }
 };
 
 #ifdef WINDOWS
-static char * params_ports[] = {
-	(char *) "com1",
-	(char *) "usb:",
-	NULL
+static label_id_t params_ports[] = {
+	{ "com1", 0 },
+	{ "usb:", 1 },
+	{ NULL,   2 }
 };
 #else
 static char * params_ports[] = {
@@ -465,7 +465,7 @@ bool LayerGPS::set_param_value(uint16_t id, ParameterValue data, bool is_file_op
 			    index_ < OLD_NUM_PROTOCOLS) {
 
 				/* It is a single digit: activate compatibility. */
-				this->protocol = g_strdup(protocols_args[index_]);
+				this->protocol = g_strdup(protocols_args[index_].label);
 			} else {
 				this->protocol = g_strdup(data.s);
 			}
