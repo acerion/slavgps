@@ -34,13 +34,21 @@
 #include <QTableView>
 #include <QContextMenuEvent>
 
-#include "layer.h"
-#include "layer_trw.h"
+#include "globals.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Layer;
+	class LayerTRW;
+	class waypoint_layer_t;
+	class Waypoint;
+	class Viewport;
 
 
 

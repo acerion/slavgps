@@ -36,6 +36,7 @@
 #include "track_profile_dialog.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"
+#include "layer_trw.h"
 #include "dem_cache.h"
 #include "vikutils.h"
 #include "util.h"
@@ -44,6 +45,7 @@
 #include "settings.h"
 #include "globals.h"
 #include "preferences.h"
+#include "track.h"
 
 
 

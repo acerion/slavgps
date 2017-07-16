@@ -50,6 +50,8 @@
 #include "layers_panel.h"
 #include "window.h"
 #include "layer_gps.h"
+#include "layer_trw.h"
+#include "track.h"
 #include "settings.h"
 #include "globals.h"
 #include "icons/icons.h"

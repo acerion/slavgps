@@ -30,7 +30,6 @@
 
 #include <glib.h>
 #include "slav_qt.h"
-#include "track.h"
 #include "geonamessearch.h"
 
 
@@ -52,6 +51,10 @@ void ui_add_recent_file(const char * filename);
 
 namespace SlavGPS {
 
+
+
+
+	class Track;
 
 
 

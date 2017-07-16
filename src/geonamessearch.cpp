@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "util.h"
 #include "widget_list_selection.h"
+#include "layer_trw.h"
 
 
 

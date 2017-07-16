@@ -31,6 +31,7 @@
 
 #include "babel.h"
 #include "babel_ui.h"
+#include "layer_trw.h"
 #include "layer_trw_export.h"
 #include "gpx.h"
 #include "fileutils.h"

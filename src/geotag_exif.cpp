@@ -41,6 +41,7 @@
 #include "config.h"
 #include "globals.h"
 #include "file.h"
+#include "waypoint.h"
 
 #include <sys/stat.h>
 #ifdef HAVE_UTIME_H

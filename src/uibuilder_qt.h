@@ -43,8 +43,6 @@
 
 #include "globals.h"
 #include "uibuilder.h"
-#include "layer.h"
-#include "waypoint.h"
 #include "preferences.h"
 
 
@@ -56,6 +54,8 @@ namespace SlavGPS {
 
 
 	class Layer;
+	class LayerInterface;
+	class Waypoint;
 
 
 

@@ -25,6 +25,7 @@
 #include <cstdlib>
 
 #include "gpsmapper.h"
+#include "layer_trw.h"
 
 
 

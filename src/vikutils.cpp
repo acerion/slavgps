@@ -36,6 +36,7 @@
 #include "misc/kdtree.h"
 #include "dir.h"
 #include "layer_map.h"
+#include "layer_aggregate.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
 #ifdef K

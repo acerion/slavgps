@@ -31,6 +31,7 @@
 #include <glib.h>
 
 #include "routing_engine.h"
+#include "slav_qt.h"
 
 
 

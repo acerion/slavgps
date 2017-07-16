@@ -27,8 +27,7 @@
 #include <cstdio>
 #include <cstdint>
 
-#include "layer_aggregate.h"
-#include "layer_trw.h"
+#include "uibuilder.h"
 
 
 
@@ -39,6 +38,9 @@ namespace SlavGPS {
 
 
 	class Viewport;
+	class LayerAggregate;
+	class LayerTRW;
+	class Track;
 
 
 

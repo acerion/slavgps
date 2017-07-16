@@ -26,12 +26,15 @@
 
 #include <cstdio>
 
-#include "layer_trw.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
 
 
 

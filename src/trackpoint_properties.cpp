@@ -35,10 +35,10 @@
 #include "vikutils.h"
 #include "date_time_dialog.h"
 #include "util.h"
+#include "track.h"
 #if 0
 #include "coords.h"
 #include "coord.h"
-#include "track.h"
 #include "waypoint.h"
 #include "dialog.h"
 #include "globals.h"

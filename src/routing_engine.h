@@ -26,7 +26,6 @@
 
 #include <cstdint>
 
-#include "layer_trw.h"
 #include "coords.h"
 #include "download.h"
 
@@ -34,6 +33,15 @@
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Track;
+
+
+
 
 	class RoutingEngine {
 	public:
@@ -43,7 +51,7 @@ namespace SlavGPS {
 		virtual bool find(LayerTRW * trw, struct LatLon start, struct LatLon end);
 		virtual char * get_url_from_directions(const char * start, const char * end);
 		virtual bool supports_direction(void);
-		virtual bool refine(LayerTRW * trw, SlavGPS::Track * trk);
+		virtual bool refine(LayerTRW * trw, Track * trk);
 		virtual bool supports_refine(void);
 
 		char * get_id(void) { return this->id; }

@@ -24,13 +24,18 @@
 
 
 
-#include "layer_trw.h"
 #include "file.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Track;
 
 
 

@@ -39,6 +39,9 @@
 #include "util.h"
 #include "preferences.h"
 #include "tree_view_internal.h"
+#include "layer.h"
+#include "layer_trw.h"
+#include "layer_aggregate.h"
 
 
 

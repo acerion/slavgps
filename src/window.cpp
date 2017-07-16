@@ -37,6 +37,7 @@
 #include "layer_defaults.h"
 #include "layers_panel.h"
 #include "layer_toolbox.h"
+#include "layer_aggregate.h"
 #include "layer_map.h"
 #include "globals.h"
 #include "uibuilder_qt.h"

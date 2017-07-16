@@ -37,6 +37,7 @@
 #include "acquire.h"
 #include "widget_file_entry.h"
 #include "viewport_utils.h"
+#include "track.h"
 
 
 

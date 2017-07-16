@@ -32,7 +32,6 @@
 #include <QGridLayout>
 #include <QCheckBox>
 
-#include "layer_trw.h"
 #include "track_statistics.h"
 
 
@@ -44,6 +43,8 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Layer;
+	class track_layer_t;
 
 
 

@@ -39,6 +39,8 @@
 #include <glib/gstdio.h>
 
 #include "viewport_internal.h"
+#include "layer_aggregate.h"
+#include "layer_trw.h"
 #include "layer_gps.h"
 #include "jpg.h"
 #include "gpspoint.h"

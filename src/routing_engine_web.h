@@ -36,6 +36,11 @@ namespace SlavGPS {
 
 
 
+	class Track;
+
+
+
+
 	class RoutingEngineWeb : public RoutingEngine {
 
 	public:

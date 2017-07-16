@@ -29,8 +29,6 @@
 #include <cstdint>
 
 #include "layer.h"
-#include "track.h"
-#include "layer_trw.h"
 
 
 
@@ -42,7 +40,10 @@ namespace SlavGPS {
 
 	class Viewport;
 	class LayerGPS;
+	class LayerTRW;
 	class Window;
+	class Track;
+	class Trackpoint;
 
 
 

@@ -39,7 +39,6 @@
 #include "layer.h"
 #include "viewport.h"
 #include "waypoint.h"
-#include "track.h"
 #include "trackpoint_properties.h"
 #include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
@@ -55,6 +54,10 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class LayersPanel;
+	class Track;
+
+
+
 
 	struct _VikDataSourceInterface;
 	typedef struct _VikDataSourceInterface VikDataSourceInterface;
@@ -98,19 +101,19 @@ namespace SlavGPS {
 
 	/* For creating a list of tracks with the corresponding layer it is in
 	   (thus a selection of tracks may be from differing layers). */
-	struct track_layer_t {
-		Track * trk;
-		LayerTRW * trw;
+	class track_layer_t {
+	public:
+		Track * trk = NULL;
+		LayerTRW * trw = NULL;
 	};
-	typedef struct track_layer_t track_layer_t;
 
 	/* For creating a list of waypoints with the corresponding layer it is in
 	   (thus a selection of waypoints may be from differing layers). */
-	struct waypoint_layer_t {
-		Waypoint * wp;
-		LayerTRW * trw;
+	class waypoint_layer_t {
+	public:
+		Waypoint * wp = NULL;
+		LayerTRW * trw = NULL;
 	};
-	typedef struct waypoint_layer_t waypoint_layer_t;
 
 
 

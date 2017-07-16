@@ -35,8 +35,6 @@
 #include <QComboBox>
 #include <QFormLayout>
 
-#include "layer_trw.h"
-#include "track.h"
 #include "widget_color_button.h"
 
 
@@ -48,6 +46,8 @@ namespace SlavGPS {
 
 
 	class Window;
+	class LayerTRW;
+	class Track;
 
 
 

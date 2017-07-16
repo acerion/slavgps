@@ -26,13 +26,17 @@
 
 #include <cstdint>
 
-#include "waypoint.h"
 #include "coord.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Waypoint;
 
 
 

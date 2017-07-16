@@ -43,6 +43,7 @@
 #include <glib/gstdio.h>
 #include "thumbnails.h"
 #include "file.h"
+#include "slav_qt.h"
 #include "icons/icons.h"
 #include "globals.h"
 

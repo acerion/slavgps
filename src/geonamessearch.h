@@ -24,8 +24,10 @@
 
 
 
-#include "layer_trw.h"
+#include <QObject>
+
 #include "coords.h"
+#include "globals.h"
 
 
 
@@ -34,7 +36,10 @@ namespace SlavGPS {
 
 
 
+
 	class Window;
+	class LayerTRW;
+
 
 
 
@@ -52,10 +57,6 @@ namespace SlavGPS {
 		char * cmt = NULL;
 		char * desc = NULL;
 	};
-
-
-
-
 
 
 

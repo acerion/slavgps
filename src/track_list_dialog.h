@@ -36,13 +36,21 @@
 #include <QTableView>
 #include <QContextMenuEvent>
 
-#include "layer.h"
-#include "layer_trw.h"
+#include "globals.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Layer;
+	class LayerTRW;
+	class Track;
+	class Viewport;
+	class track_layer_t;
 
 
 

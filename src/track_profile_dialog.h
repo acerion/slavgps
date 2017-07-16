@@ -34,9 +34,11 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QMouseEvent>
+#include <QPen>
+#include <QSignalMapper>
+#include <QDialogButtonBox>
 
-#include "layer_trw.h"
-#include "track.h"
+#include "globals.h"
 
 
 
@@ -49,6 +51,9 @@ namespace SlavGPS {
 	class Window;
 	class Viewport;
 	class LayersPanel;
+	class LayerTRW;
+	class Track;
+	class Trackpoint;
 
 
 

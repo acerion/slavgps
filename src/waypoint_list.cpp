@@ -28,6 +28,8 @@
 #include <QDebug>
 #include <QHeaderView>
 
+#include "layer.h"
+#include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "window.h"
 #include "viewport_internal.h"

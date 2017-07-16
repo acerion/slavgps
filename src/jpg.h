@@ -24,13 +24,13 @@
 
 
 
-#include "layer_aggregate.h"
-
-
-
-
 namespace SlavGPS {
 
+
+
+
+	class LayerAggregate;
+	class Viewport;
 
 
 

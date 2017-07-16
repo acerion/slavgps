@@ -48,6 +48,7 @@
 #include "uibuilder.h"
 #include "waypoint_properties.h"
 #include "date_time_dialog.h"
+#include "waypoint.h"
 
 
 

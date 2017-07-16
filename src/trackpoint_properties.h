@@ -40,12 +40,17 @@
 #include <QSignalMapper>
 #include <QDateTimeEdit>
 
-#include "track.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Track;
+	class Trackpoint;
+
 
 
 

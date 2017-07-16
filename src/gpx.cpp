@@ -50,6 +50,7 @@
 #include "gpx.h"
 #include "globals.h"
 #include "preferences.h"
+#include "layer_trw.h"
 #include <expat.h>
 
 #include "util.h"

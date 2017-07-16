@@ -28,12 +28,16 @@
 
 #include <QLineEdit>
 
-#include "layer_trw.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Track;
 
 
 

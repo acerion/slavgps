@@ -44,6 +44,8 @@ namespace SlavGPS {
 	class LayersPanel;
 	class Viewport;
 	class Window;
+	class LayerTRW;
+	class Track;
 
 
 

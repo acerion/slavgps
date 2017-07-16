@@ -53,6 +53,11 @@
 #include "settings.h"
 #include "globals.h"
 #include "vikutils.h"
+#include "viewport.h"
+#include "waypoint.h"
+#include "track.h"
+#include "layer_trw.h"
+#include "window.h"
 
 
 

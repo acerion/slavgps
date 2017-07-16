@@ -26,12 +26,16 @@
 
 #include <cstdint>
 
-#include "layer_trw.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Track;
 
 
 

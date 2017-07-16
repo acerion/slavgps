@@ -31,15 +31,6 @@
 #include <cstdint>
 #include <unordered_map>
 
-#include "viewport.h"
-#include "waypoint.h"
-#include "track.h"
-#include "layer_trw.h"
-#include "window.h"
-
-
-
-
 #define VIK_TRW_LAYER_TRACK_GC 6
 #define TRW_LAYER_TRACK_COLORS_MAX 10
 #define VIK_TRW_LAYER_TRACK_GC_BLACK 0
@@ -90,6 +81,16 @@ int cached_pixmap_cmp(CachedPixmap * cp, const char * name);
 
 
 namespace SlavGPS {
+
+
+
+
+	class Track;
+	class Trackpoint;
+	class LayerTRW;
+	class Viewport;
+	class Waypoint;
+	class Window;
 
 
 

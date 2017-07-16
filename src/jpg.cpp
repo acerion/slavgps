@@ -28,6 +28,7 @@
 #include "fileutils.h"
 #include "layer_trw.h"
 #include "window.h"
+#include "layer_aggregate.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"
 #include "globals.h"

@@ -35,6 +35,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "layer_trw.h"
 #include "babel.h"
 #include "routing_engine.h"
 

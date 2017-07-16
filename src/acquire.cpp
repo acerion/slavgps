@@ -37,6 +37,7 @@
 #include "acquire.h"
 #include "dialog.h"
 #include "util.h"
+#include "layer_aggregate.h"
 
 
 

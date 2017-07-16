@@ -25,13 +25,18 @@
 
 #include <QWidget>
 
-#include "layer_trw.h"
-#include "waypoint.h"
+#include "coord.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Waypoint;
 
 
 
