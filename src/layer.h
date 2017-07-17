@@ -222,11 +222,11 @@ namespace SlavGPS {
 		virtual void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
+		virtual SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
+		virtual bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
 
 
 		static LayerType type_from_string(char const * str);
@@ -382,7 +382,7 @@ namespace SlavGPS {
 		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
 
 		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
-		std::map<param_id_t, ParameterValue> * parameter_value_defaults = NULL;
+		std::map<param_id_t, SGVariant> * parameter_value_defaults = NULL;
 
 		struct {
 			QString new_layer; /* Menu "Layers" -> "New type-X Layer". */
@@ -393,14 +393,14 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		ParameterValue data;
-		ParameterType type;
+		SGVariant data;
+		SGVariantType type;
 	} ParameterValueTyped;
 
 
 	void vik_layer_typed_param_data_free(void * gp);
-	ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val);
-	ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str);
+	ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(SGVariantType type, SGVariant val);
+	ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(SGVariantType type, const char * str);
 
 
 

@@ -45,17 +45,17 @@ static ParameterScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1,    15,   1,     0 },
 };
-static ParameterValue color_default(void)
+static SGVariant color_default(void)
 {
-	return ParameterValue(255, 0, 0, 100);
+	return SGVariant(255, 0, 0, 100);
 }
-static ParameterValue min_inc_default(void)
+static SGVariant min_inc_default(void)
 {
-	return ParameterValue(1.0);
+	return SGVariant(1.0);
 }
-static ParameterValue line_thickness_default(void)
+static SGVariant line_thickness_default(void)
 {
-	return ParameterValue((uint32_t) 3);
+	return SGVariant((uint32_t) 3);
 }
 
 
@@ -70,11 +70,11 @@ enum {
 
 
 static Parameter coord_layer_params[] = {
-	{ PARAM_COLOR,          "color",          ParameterType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          WidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ PARAM_MIN_INC,        "min_inc",        ParameterType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ PARAM_LINE_THICKNESS, "line_thickness", ParameterType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), WidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          WidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), WidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 
-	{ PARAM_MAX,            NULL,             ParameterType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  WidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  WidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -116,7 +116,7 @@ Layer * LayerCoordInterface::unmarshall(uint8_t * data, int len, Viewport * view
 
 
 /* Viewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
+bool LayerCoord::set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -144,9 +144,9 @@ bool LayerCoord::set_param_value(uint16_t id, ParameterValue param_value, bool i
 
 
 
-ParameterValue LayerCoord::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	ParameterValue rv;
+	SGVariant rv;
 	switch (id) {
 	case PARAM_COLOR:
 		rv.c.r = this->color.red();

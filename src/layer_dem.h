@@ -72,8 +72,8 @@ namespace SlavGPS {
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);
 		void draw_dem(Viewport * viewport, DEM * dem);
-		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
-		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 

@@ -62,7 +62,7 @@ static GList * routing_engine_list = NULL;
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -81,7 +81,7 @@ void SlavGPS::routing_prefs_init()
 {
 	a_preferences_register_group(VIKING_ROUTING_PARAMS_GROUP_KEY, _("Routing"));
 
-	ParameterValue tmp((char *) NULL);
+	SGVariant tmp((char *) NULL);
 	a_preferences_register(prefs, tmp, VIKING_ROUTING_PARAMS_GROUP_KEY);
 }
 

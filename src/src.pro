@@ -128,7 +128,8 @@ SOURCES += main.cpp \
     preferences.cpp \
     settings.cpp \
     statusbar.cpp \
-    modules.cpp
+    modules.cpp \
+    variant.cpp
 
 
 HEADERS += window.h \
@@ -245,7 +246,8 @@ HEADERS += window.h \
     acquire.h \
     datasource_file.h \
     babel.h \
-    babel_ui.h
+    babel_ui.h \
+    variant.h
 
 
 # clipboard.cpp

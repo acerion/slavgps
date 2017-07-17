@@ -38,10 +38,10 @@ using namespace SlavGPS;
 
 
 
-GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
+GtkWidget *a_uibuilder_new_widget(LayerParam *param, SGVariant data)
 {
 	/* Perform pre conversion if necessary. */
-	ParameterValue vlpd = data;
+	SGVariant vlpd = data;
 	if (param->convert_to_display) {
 		vlpd = param->convert_to_display(data);
 	}
@@ -49,12 +49,12 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 	GtkWidget *rv = NULL;
 	switch (param->widget_type) {
 	case WidgetType::COLOR:
-		if (param->type == ParameterType::COLOR) {
+		if (param->type == SGVariantType::COLOR) {
 			rv = gtk_color_button_new_with_color(&(vlpd.c));
 		}
 		break;
 	case WidgetType::CHECKBUTTON:
-	    if (param->type == ParameterType::BOOLEAN) {
+	    if (param->type == SGVariantType::BOOLEAN) {
 		    //rv = gtk_check_button_new_with_label (//param->title);
 		    rv = gtk_check_button_new();
 		    if (vlpd.b) {
@@ -63,7 +63,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 	    }
 	    break;
 	case WidgetType::COMBOBOX:
-		if (param->type == ParameterType::UINT && param->widget_data) {
+		if (param->type == SGVariantType::UINT && param->widget_data) {
 			/* Build a simple combobox. */
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
@@ -83,7 +83,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			} else {
 				rv->setCurrentIndex(vlpd.u);
 			}
-		} else if (param->type == ParameterType::STRING && param->widget_data && !param->extra_widget_data) {
+		} else if (param->type == SGVariantType::STRING && param->widget_data && !param->extra_widget_data) {
 			/* Build a combobox with editable text. */
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
@@ -98,7 +98,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 			if (vlpd.s) {
 				rv->setCurrentIndex(0);
 			}
-		} else if (param->type == ParameterType::STRING && param->widget_data && param->extra_widget_data) {
+		} else if (param->type == SGVariantType::STRING && param->widget_data && param->extra_widget_data) {
 			/* Build a combobox with fixed selections without editable text. */
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
@@ -123,7 +123,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		break;
 	case WidgetType::RADIOGROUP:
 		/* widget_data and extra_widget_data are GList. */
-		if (param->type == ParameterType::UINT && param->widget_data) {
+		if (param->type == SGVariantType::UINT && param->widget_data) {
 			rv = vik_radio_group_new((GList *) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				int i;
@@ -139,7 +139,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::RADIOGROUP_STATIC:
-		if (param->type == ParameterType::UINT && param->widget_data) {
+		if (param->type == SGVariantType::UINT && param->widget_data) {
 			rv = vik_radio_group_new_static((const char **) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				int i;
@@ -154,10 +154,10 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::SPINBUTTON:
-		if ((param->type == ParameterType::DOUBLE || param->type == ParameterType::UINT
-		     || param->type == ParameterType::INT)  && param->widget_data) {
+		if ((param->type == SGVariantType::DOUBLE || param->type == SGVariantType::UINT
+		     || param->type == SGVariantType::INT)  && param->widget_data) {
 
-			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
+			double init_val = (param->type == SGVariantType::DOUBLE) ? vlpd.d : (param->type == SGVariantType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = new QSpinBox();
 			rv->setMinimum(scale->min);
@@ -167,7 +167,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::ENTRY:
-		if (param->type == ParameterType::STRING) {
+		if (param->type == SGVariantType::STRING) {
 			rv = new QLineEdit();
 			if (vlpd.s) {
 				rv->setText(QString(vlpd.s));
@@ -175,7 +175,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::PASSWORD:
-		if (param->type == ParameterType::STRING) {
+		if (param->type == SGVariantType::STRING) {
 			rv = new QLineEdit();
 			rv->setEchoMode(QLineEdit::Password);
 			if (vlpd.s) {
@@ -185,7 +185,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::FILEENTRY:
-		if (param->type == ParameterType::STRING) {
+		if (param->type == SGVariantType::STRING) {
 			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, (vf_filter_type) KPOINTER_TO_INT(param->widget_data), NULL, NULL);
 			if (vlpd.s) {
 				rv->set_filename(vlpd.s);
@@ -193,7 +193,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		}
 		break;
 	case WidgetType::FOLDERENTRY:
-		if (param->type == ParameterType::STRING) {
+		if (param->type == SGVariantType::STRING) {
 			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, VF_FILTER_NONE, NULL, NULL);
 			if (vlpd.s) {
 				rv->set_filename(vlpd.s);
@@ -202,16 +202,16 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		break;
 
 	case WidgetType::FILELIST:
-		if (param->type == ParameterType::STRING_LIST) {
+		if (param->type == SGVariantType::STRING_LIST) {
 			rv = vik_file_list_new(_(param->title), NULL);
 			vik_file_list_set_files(VIK_FILE_LIST(rv), vlpd.sl);
 		}
 		break;
 	case WidgetType::HSCALE:
-		if ((param->type == ParameterType::DOUBLE || param->type == ParameterType::UINT
-		     || param->type == ParameterType::INT)  && param->widget_data) {
+		if ((param->type == SGVariantType::DOUBLE || param->type == SGVariantType::UINT
+		     || param->type == SGVariantType::INT)  && param->widget_data) {
 
-			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
+			double init_val = (param->type == SGVariantType::DOUBLE) ? vlpd.d : (param->type == SGVariantType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
@@ -220,7 +220,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 		break;
 
 	case WidgetType::BUTTON:
-		if (param->type == ParameterType::PTR && param->widget_data) {
+		if (param->type == SGVariantType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
 			QObject::connect(rv, SIGNAL("clicked"), param->extra_widget_data, SLOT (vlpd.ptr));
 		}
@@ -239,9 +239,9 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 
 
 
-ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param)
+SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param)
 {
-	ParameterValue rv;
+	SGVariant rv;
 	switch (param->widget_type) {
 	case WidgetType::COLOR:
 		gtk_color_button_get_color(GTK_COLOR_BUTTON(widget), &(rv.c));
@@ -250,7 +250,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		rv.b = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 		break;
 	case WidgetType::COMBOBOX:
-		if (param->type == ParameterType::UINT) {
+		if (param->type == SGVariantType::UINT) {
 			rv.i = widget->currentIndex();
 			if (rv.i == -1) {
 				rv.i = 0;
@@ -261,7 +261,7 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 				rv.u = ((unsigned int *)param->extra_widget_data)[rv.u];
 			}
 		}
-		if (param->type == ParameterType::STRING) {
+		if (param->type == SGVariantType::STRING) {
 			if (param->extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
 				int pos = widget->currentIndex();
@@ -285,9 +285,9 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		}
 		break;
 	case WidgetType::SPINBUTTON:
-		if (param->type == ParameterType::UINT) {
+		if (param->type == SGVariantType::UINT) {
 			rv.u = widget.value();
-		} else if (param->type == ParameterType::INT) {
+		} else if (param->type == SGVariantType::INT) {
 			rv.i = widget.value();
 		} else {
 			rv.d = widget.value();
@@ -305,9 +305,9 @@ ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 		rv.sl = vik_file_list_get_files(VIK_FILE_LIST(widget));
 		break;
 	case WidgetType::HSCALE:
-		if (param->type == ParameterType::UINT) {
+		if (param->type == SGVariantType::UINT) {
 			rv.u = (uint32_t) gtk_range_get_value(GTK_RANGE(widget));
-		} else if (param->type == ParameterType::INT) {
+		} else if (param->type == SGVariantType::INT) {
 			rv.i = (int32_t) gtk_range_get_value(GTK_RANGE(widget));
 		} else {
 			rv.d = gtk_range_get_value(GTK_RANGE(widget));
@@ -335,10 +335,10 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,ParameterValue,void *,bool),
+				   bool (*setparam) (void *,uint16_t,SGVariant,void *,bool),
 				   void * pass_along1,
 				   void * pass_along2,
-				   ParameterValue (*getparam) (void *,uint16_t,bool),
+				   SGVariant (*getparam) (void *,uint16_t,bool),
 				   void * pass_along_getparam,
 				   void (*changeparam) (GtkWidget*, ui_change_values *))
 /* pass_along1 and pass_along2 are for set_param first and last params */
@@ -508,21 +508,21 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 
 
 
-ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
+SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
-				       ParameterValue *params_defaults)
+				       SGVariant *params_defaults)
 {
-	ParameterValue * paramdatas = (ParameterValue *) malloc(params_count * sizeof (ParameterValue));
+	SGVariant * paramdatas = (SGVariant *) malloc(params_count * sizeof (SGVariant));
 	if (a_uibuilder_properties_factory(dialog_name,
 					   parent,
 					   params,
 					   params_count,
 					   groups,
 					   groups_count,
-					   (bool (*)(void*, uint16_t, ParameterValue, void*, bool)) uibuilder_run_setparam,
+					   (bool (*)(void*, uint16_t, SGVariant, void*, bool)) uibuilder_run_setparam,
 					   paramdatas,
 					   params,
-					   (ParameterValue (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
+					   (SGVariant (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
 					   params_defaults,
 					   NULL) > 0) {
 

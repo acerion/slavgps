@@ -132,41 +132,41 @@ static char *params_type[] = {
 
 
 
-static ParameterValue color_default(void)
+static SGVariant color_default(void)
 {
-	return ParameterValue(0, 0, 255, 255);
+	return SGVariant(0, 0, 255, 255);
 }
 
 
 
 
-static ParameterValue source_default(void)
+static SGVariant source_default(void)
 {
-	return ParameterValue((uint32_t) DEM_SOURCE_SRTM);
+	return SGVariant((uint32_t) DEM_SOURCE_SRTM);
 }
 
 
 
 
-static ParameterValue type_default(void)
+static SGVariant type_default(void)
 {
-	return ParameterValue((uint32_t) DEM_TYPE_HEIGHT);
+	return SGVariant((uint32_t) DEM_TYPE_HEIGHT);
 }
 
 
 
 
-static ParameterValue min_elev_default(void)
+static SGVariant min_elev_default(void)
 {
-	return ParameterValue(0.0);
+	return SGVariant(0.0);
 }
 
 
 
 
-static ParameterValue max_elev_default(void)
+static SGVariant max_elev_default(void)
 {
-	return ParameterValue(1000.0);
+	return SGVariant(1000.0);
 }
 
 
@@ -186,14 +186,14 @@ enum {
 
 
 static Parameter dem_layer_params[] = {
-	{ PARAM_FILES,      "files",    ParameterType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       WidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     "source",   ParameterType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), WidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
-	{ PARAM_COLOR,      "color",    ParameterType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  WidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
-	{ PARAM_TYPE,       "type",     ParameterType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            WidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", ParameterType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", ParameterType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
+	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       WidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
+	{ PARAM_SOURCE,     "source",   SGVariantType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), WidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
+	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  WidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
+	{ PARAM_TYPE,       "type",     SGVariantType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            WidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,       ParameterType::PTR,         VIK_LAYER_GROUP_NONE, NULL,                   WidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         VIK_LAYER_GROUP_NONE, NULL,                   WidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,             NULL, NULL }, /* Guard. */
 };
 
 
@@ -394,7 +394,7 @@ static QStringList * dem_layer_convert_to_relative_filenaming(QStringList * file
 
 
 
-bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
+bool LayerDEM::set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -472,9 +472,9 @@ bool LayerDEM::set_param_value(uint16_t id, ParameterValue param_value, bool is_
 
 
 
-ParameterValue LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	ParameterValue rv;
+	SGVariant rv;
 
 	switch (id) {
 

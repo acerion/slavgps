@@ -146,14 +146,14 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 
 
-void SlavGPS::file_write_layer_param(FILE * f, char const * name, ParameterType type, ParameterValue data)
+void SlavGPS::file_write_layer_param(FILE * f, char const * name, SGVariantType type, SGVariant data)
 {
 	/* String lists are handled differently. We get a std::list<char *> (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
 	 * anything at all (otherwise we'd read in a list with an empty string,
 	 * not an empty string list.
 	 */
-	if (type == ParameterType::STRING_LIST) {
+	if (type == SGVariantType::STRING_LIST) {
 		if (data.sl) {
 			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
 				fprintf(f, "%s=", name);
@@ -163,25 +163,25 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, ParameterType 
 	} else {
 		fprintf(f, "%s=", name);
 		switch (type)	{
-		case ParameterType::DOUBLE: {
+		case SGVariantType::DOUBLE: {
 			// char buf[15]; /* Locale independent. */
 			// fprintf(f, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
 			fprintf(f, "%f\n", data.d);
 			break;
 		}
-		case ParameterType::UINT:
+		case SGVariantType::UINT:
 			fprintf(f, "%d\n", data.u);
 			break;
-		case ParameterType::INT:
+		case SGVariantType::INT:
 			fprintf(f, "%d\n", data.i);
 			break;
-		case ParameterType::BOOLEAN:
+		case SGVariantType::BOOLEAN:
 			fprintf(f, "%c\n", data.b ? 't' : 'f');
 			break;
-		case ParameterType::STRING:
+		case SGVariantType::STRING:
 			fprintf(f, "%s\n", data.s ? data.s : "");
 			break;
-		case ParameterType::COLOR:
+		case SGVariantType::COLOR:
 			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
 			break;
 		default: break;
@@ -202,7 +202,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 	}
 
 	if (params) {
-		ParameterValue param_value;
+		SGVariant param_value;
 		uint16_t params_count = ((Layer *) layer)->get_interface()->params_count; /* kamilTODO: remove cast. */
 		for (uint16_t i = 0; i < params_count; i++) {
 			param_value = layer->get_param_value(i, true);
@@ -324,7 +324,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 static void string_list_set_param(int i, std::list<char *> * list, Layer * layer)
 {
-	ParameterValue param_value(list);
+	SGVariant param_value(list);
 	layer->set_param_value(i, param_value, true);
 }
 
@@ -565,9 +565,9 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 				for (i = 0; i < params_count; i++) {
 					if (strlen(params[i].name) == eq_pos && strncasecmp(line, params[i].name, eq_pos) == 0) {
-						ParameterValue x;
+						SGVariant x;
 						line += eq_pos+1;
-						if (params[i].type == ParameterType::STRING_LIST) {
+						if (params[i].type == SGVariantType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -575,23 +575,23 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							switch (params[i].type) {
-							case ParameterType::DOUBLE:
+							case SGVariantType::DOUBLE:
 #ifdef K
 								x.d = strtod_i8n(line, NULL);
 #else
 								x.d = strtod(line, NULL);
 #endif
 								break;
-							case ParameterType::UINT:
+							case SGVariantType::UINT:
 								x.u = strtoul(line, NULL, 10);
 								break;
-							case ParameterType::INT:
+							case SGVariantType::INT:
 								x.i = strtol(line, NULL, 10);
 								break;
-							case ParameterType::BOOLEAN:
+							case SGVariantType::BOOLEAN:
 								x.b = TEST_BOOLEAN(line);
 								break;
-							case ParameterType::COLOR:
+							case SGVariantType::COLOR:
 #ifdef K
 								memset(&(x.c), 0, sizeof(x.c)); /* default: black */
 								gdk_color_parse(line, &(x.c));

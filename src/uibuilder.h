@@ -33,34 +33,12 @@
 #include <QString>
 
 #include "globals.h"
+#include "variant.h"
 
 
 
 
 /* Parameters (for I/O and Properties) */
-
-union ParameterValue {
-public:
-	ParameterValue() {};
-	ParameterValue(double d_)       { d = d_; }
-	ParameterValue(uint32_t u_)     { u = u_; }
-	ParameterValue(int32_t i_)      { i = i_; }
-	ParameterValue(bool b_)         { b = b_; }
-	ParameterValue(const char * s_) { s = s_; }
-	ParameterValue(int r_, int g_, int b_, int a_) { c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
-	ParameterValue(QStringList * sl_) { sl = sl_; }
-
-	double d;
-	uint32_t u;
-	int32_t i;
-	bool b;
-	const char * s;
-	struct { int r; int g; int b; int a; } c;
-	QStringList * sl;
-	void * ptr; // For internal usage - don't save this value in a file!
-} ;
-
-
 typedef int16_t param_id_t;
 
 
@@ -86,44 +64,21 @@ enum class WidgetType {
 };
 
 
-/* id is index. */
-enum class ParameterType {
-	DOUBLE = 1,
-	UINT,
-	INT,
-
-	/* In my_layer_set_param, if you want to use the string, you should dup it.
-	 * In my_layer_get_param, the string returned will NOT be free'd, you are responsible for managing it (I think). */
-	STRING,
-	BOOLEAN,
-	COLOR,
-
-	/* NOTE: string list works uniquely: data.sl should NOT be free'd when
-	 * the internals call get_param -- i.e. it should be managed w/in the layer.
-	 * The value passed by the internals into set_param should also be managed
-	 * by the layer -- i.e. free'd by the layer.
-	 */
-
-	STRING_LIST,
-	PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
-};
-
-
 /* Default value has to be returned via a function
    because certain types value are can not be statically allocated
    (i.e. a string value that is dependent on other functions).
    Also easier for colours to be set via a function call rather than a static assignment. */
-typedef ParameterValue (* LayerDefaultFunc) (void);
+typedef SlavGPS::SGVariant (* LayerDefaultFunc) (void);
 
 /* Convert between the value held internally and the value used for display
    e.g. keep the internal value in seconds yet use days in the display. */
-typedef ParameterValue (* LayerConvertFunc) (ParameterValue);
+typedef SlavGPS::SGVariant (* LayerConvertFunc) (SlavGPS::SGVariant);
 
 typedef struct {
 	//SlavGPS::LayerType layer_type;
 	param_id_t id;
 	const char *name;
-	ParameterType type;
+	SlavGPS::SGVariantType type;
 	int16_t group;
 	const char *title;
 	WidgetType widget_type;
@@ -161,12 +116,10 @@ typedef enum {
 
 
 
-ParameterValue vik_lpd_true_default(void);
-ParameterValue vik_lpd_false_default(void);
-void uibuilder_run_setparam(ParameterValue * paramdatas, uint16_t i, ParameterValue data, Parameter * params);
-ParameterValue uibuilder_run_getparam(ParameterValue * params_defaults, uint16_t i);
+void uibuilder_run_setparam(SlavGPS::SGVariant * paramdatas, uint16_t i, SlavGPS::SGVariant data, Parameter * params);
+SlavGPS::SGVariant uibuilder_run_getparam(SlavGPS::SGVariant * params_defaults, uint16_t i);
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(ParameterValue * paramdatas, Parameter * params, uint16_t params_count);
+void a_uibuilder_free_paramdatas(SlavGPS::SGVariant * paramdatas, Parameter * params, uint16_t params_count);
 
 
 
@@ -193,25 +146,25 @@ typedef struct {
 
 
 
-GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data);
-ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
+GtkWidget *a_uibuilder_new_widget(LayerParam *param, SlavGPS::SGVariant data);
+SlavGPS::SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
 int a_uibuilder_properties_factory(const char *dialog_name,
 				   Window * parent,
 				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,ParameterValue,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
+				   bool (*setparam) (void *,uint16_t,SlavGPS::SGVariant,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
 				   void * pass_along1,
 				   void * pass_along2,
-				   ParameterValue (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
+				   SlavGPS::SGVariant (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
 				   void * pass_along_getparam,
 				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
 	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
-ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
+SlavGPS::SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
-				       ParameterValue *params_defaults);
+				       SlavGPS::SGVariant *params_defaults);
 
 
 

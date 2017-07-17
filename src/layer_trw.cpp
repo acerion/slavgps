@@ -217,27 +217,27 @@ static label_id_t params_sort_order[] = {
 	{ NULL,              VL_SO_LAST                    },
 };
 
-static ParameterValue black_color_default(void)       { return ParameterValue(0, 0, 0, 100); } /* Black. */
-static ParameterValue drawmode_default(void)          { return ParameterValue((uint32_t) DRAWMODE_BY_TRACK); }
-static ParameterValue line_thickness_default(void)    { return ParameterValue((uint32_t) 1); }
-static ParameterValue trkpointsize_default(void)      { return ParameterValue((uint32_t) MIN_POINT_SIZE); }
-static ParameterValue trkdirectionsize_default(void)  { return ParameterValue((uint32_t) 5); }
-static ParameterValue bg_line_thickness_default(void) { return ParameterValue((uint32_t) 0); }
-static ParameterValue trackbgcolor_default(void)      { return ParameterValue(255, 255, 255, 100); }  /* White. */
-static ParameterValue elevation_factor_default(void)  { return ParameterValue((uint32_t) 30); }
-static ParameterValue stop_length_default(void)       { return ParameterValue((uint32_t) 60); }
-static ParameterValue speed_factor_default(void)      { return ParameterValue(30.0); }
-static ParameterValue tnfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }
-static ParameterValue wpfontsize_default(void)        { return ParameterValue((uint32_t) FS_MEDIUM); }
-static ParameterValue wptextcolor_default(void)       { return ParameterValue(255, 255, 255, 100); } /* White. */
-static ParameterValue wpbgcolor_default(void)         { return ParameterValue(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
-static ParameterValue wpsize_default(void)            { return ParameterValue((uint32_t) 4); }
-static ParameterValue wpsymbol_default(void)          { return ParameterValue((uint32_t) WP_SYMBOL_FILLED_SQUARE); }
-static ParameterValue image_size_default(void)        { return ParameterValue((uint32_t) 64); }
-static ParameterValue image_alpha_default(void)       { return ParameterValue((uint32_t) 255); }
-static ParameterValue image_cache_size_default(void)  { return ParameterValue((uint32_t) 300); }
-static ParameterValue sort_order_default(void)        { return ParameterValue((uint32_t) 0); }
-static ParameterValue string_default(void)            { return ParameterValue(""); }
+static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
+static SGVariant drawmode_default(void)          { return SGVariant((uint32_t) DRAWMODE_BY_TRACK); }
+static SGVariant line_thickness_default(void)    { return SGVariant((uint32_t) 1); }
+static SGVariant trkpointsize_default(void)      { return SGVariant((uint32_t) MIN_POINT_SIZE); }
+static SGVariant trkdirectionsize_default(void)  { return SGVariant((uint32_t) 5); }
+static SGVariant bg_line_thickness_default(void) { return SGVariant((uint32_t) 0); }
+static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
+static SGVariant elevation_factor_default(void)  { return SGVariant((uint32_t) 30); }
+static SGVariant stop_length_default(void)       { return SGVariant((uint32_t) 60); }
+static SGVariant speed_factor_default(void)      { return SGVariant(30.0); }
+static SGVariant tnfontsize_default(void)        { return SGVariant((uint32_t) FS_MEDIUM); }
+static SGVariant wpfontsize_default(void)        { return SGVariant((uint32_t) FS_MEDIUM); }
+static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
+static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
+static SGVariant wpsize_default(void)            { return SGVariant((uint32_t) 4); }
+static SGVariant wpsymbol_default(void)          { return SGVariant((uint32_t) WP_SYMBOL_FILLED_SQUARE); }
+static SGVariant image_size_default(void)        { return SGVariant((uint32_t) 64); }
+static SGVariant image_alpha_default(void)       { return SGVariant((uint32_t) 255); }
+static SGVariant image_cache_size_default(void)  { return SGVariant((uint32_t) 300); }
+static SGVariant sort_order_default(void)        { return SGVariant((uint32_t) 0); }
+static SGVariant string_default(void)            { return SGVariant(""); }
 
 
 
@@ -293,52 +293,52 @@ enum {
 
 
 Parameter trw_layer_params[] = {
-	{ PARAM_TV,         "tracks_visible",    ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_WV,         "waypoints_visible", ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_RV,         "routes_visible",    ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_TV,         "tracks_visible",    SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WV,         "waypoints_visible", SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_RV,         "routes_visible",    SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 
-	{ PARAM_TDL,        "trackdrawlabels",   ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), vik_lpd_true_default, NULL, NULL },
-	{ PARAM_TLFONTSIZE, "trackfontsize",     ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
-	{ PARAM_DM,         "drawmode",          ParameterType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
-	{ PARAM_TC,         "trackcolor",        ParameterType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
-	{ PARAM_DL,         "drawlines",         ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_LT,         "line_thickness",    ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, line_thickness_default,     NULL, NULL },
-	{ PARAM_DD,         "drawdirections",    ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ PARAM_DDS,        "trkdirectionsize",  ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             WidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
-	{ PARAM_DP,         "drawpoints",        ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_DPS,        "trkpointsize",      ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            WidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
-	{ PARAM_DE,         "drawelevation",     ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Elevation"),              WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ PARAM_EF,         "elevation_factor",  ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Draw Elevation Height %:"),    WidgetType::HSCALE,       &params_scales[9],  NULL, NULL, elevation_factor_default,   NULL, NULL },
-	{ PARAM_DS,         "drawstops",         ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), vik_lpd_false_default, NULL, NULL },
-	{ PARAM_SL,         "stop_length",       ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  WidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
+	{ PARAM_TDL,        "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
+	{ PARAM_TLFONTSIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
+	{ PARAM_DM,         "drawmode",          SGVariantType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
+	{ PARAM_TC,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
+	{ PARAM_DL,         "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_LT,         "line_thickness",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, line_thickness_default,     NULL, NULL },
+	{ PARAM_DD,         "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
+	{ PARAM_DDS,        "trkdirectionsize",  SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             WidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
+	{ PARAM_DP,         "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_DPS,        "trkpointsize",      SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            WidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
+	{ PARAM_DE,         "drawelevation",     SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Elevation"),              WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
+	{ PARAM_EF,         "elevation_factor",  SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Draw Elevation Height %:"),    WidgetType::HSCALE,       &params_scales[9],  NULL, NULL, elevation_factor_default,   NULL, NULL },
+	{ PARAM_DS,         "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), sg_variant_false, NULL, NULL },
+	{ PARAM_SL,         "stop_length",       SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  WidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
 
-	{ PARAM_BLT,        "bg_line_thickness", ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track BG Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, bg_line_thickness_default,  NULL, NULL },
-	{ PARAM_TBGC,       "trackbgcolor",      ParameterType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      WidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
-	{ PARAM_TDSF,       "speed_factor",      ParameterType::DOUBLE,  GROUP_TRACKS_ADV,            N_("Draw by Speed Factor (%):"),   WidgetType::HSCALE,       &params_scales[1],  NULL, N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
-	{ PARAM_TSO,        "tracksortorder",    ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Sort Order:"),           WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
+	{ PARAM_BLT,        "bg_line_thickness", SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track BG Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, bg_line_thickness_default,  NULL, NULL },
+	{ PARAM_TBGC,       "trackbgcolor",      SGVariantType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      WidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
+	{ PARAM_TDSF,       "speed_factor",      SGVariantType::DOUBLE,  GROUP_TRACKS_ADV,            N_("Draw by Speed Factor (%):"),   WidgetType::HSCALE,       &params_scales[1],  NULL, N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
+	{ PARAM_TSO,        "tracksortorder",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Sort Order:"),           WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
-	{ PARAM_DLA,        "drawlabels",        ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_WPFONTSIZE, "wpfontsize",        ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Font Size:"),         WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
-	{ PARAM_WPC,        "wpcolor",           ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Color:"),             WidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
-	{ PARAM_WPTC,       "wptextcolor",       ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Text:"),              WidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
-	{ PARAM_WPBC,       "wpbgcolor",         ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Background:"),                 WidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
-	{ PARAM_WPBA,       "wpbgand",           ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Fake BG Color Translucency:"), WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ PARAM_WPSYM,      "wpsymbol",          ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint marker:"),            WidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
-	{ PARAM_WPSIZE,     "wpsize",            ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint size:"),              WidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
-	{ PARAM_WPSYMS,     "wpsyms",            ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Waypoint Symbols:"),      WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_WPSO,       "wpsortorder",       ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Sort Order:"),        WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
+	{ PARAM_DLA,        "drawlabels",        SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WPFONTSIZE, "wpfontsize",        SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Font Size:"),         WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
+	{ PARAM_WPC,        "wpcolor",           SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Color:"),             WidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
+	{ PARAM_WPTC,       "wptextcolor",       SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Text:"),              WidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
+	{ PARAM_WPBC,       "wpbgcolor",         SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Background:"),                 WidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
+	{ PARAM_WPBA,       "wpbgand",           SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Fake BG Color Translucency:"), WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
+	{ PARAM_WPSYM,      "wpsymbol",          SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint marker:"),            WidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
+	{ PARAM_WPSIZE,     "wpsize",            SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint size:"),              WidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
+	{ PARAM_WPSYMS,     "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Waypoint Symbols:"),      WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WPSO,       "wpsortorder",       SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Sort Order:"),        WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
-	{ PARAM_DI,         "drawimages",        ParameterType::BOOLEAN, GROUP_IMAGES,                N_("Draw Waypoint Images"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ PARAM_IS,         "image_size",        ParameterType::UINT,    GROUP_IMAGES,                N_("Image Size (pixels):"),        WidgetType::HSCALE,       &params_scales[3],  NULL, NULL, image_size_default,         NULL, NULL },
-	{ PARAM_IA,         "image_alpha",       ParameterType::UINT,    GROUP_IMAGES,                N_("Image Alpha:"),                WidgetType::HSCALE,       &params_scales[4],  NULL, NULL, image_alpha_default,        NULL, NULL },
-	{ PARAM_ICS,        "image_cache_size",  ParameterType::UINT,    GROUP_IMAGES,                N_("Image Memory Cache Size:"),    WidgetType::HSCALE,       &params_scales[5],  NULL, NULL, image_cache_size_default,   NULL, NULL },
+	{ PARAM_DI,         "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,                N_("Draw Waypoint Images"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_IS,         "image_size",        SGVariantType::UINT,    GROUP_IMAGES,                N_("Image Size (pixels):"),        WidgetType::HSCALE,       &params_scales[3],  NULL, NULL, image_size_default,         NULL, NULL },
+	{ PARAM_IA,         "image_alpha",       SGVariantType::UINT,    GROUP_IMAGES,                N_("Image Alpha:"),                WidgetType::HSCALE,       &params_scales[4],  NULL, NULL, image_alpha_default,        NULL, NULL },
+	{ PARAM_ICS,        "image_cache_size",  SGVariantType::UINT,    GROUP_IMAGES,                N_("Image Memory Cache Size:"),    WidgetType::HSCALE,       &params_scales[5],  NULL, NULL, image_cache_size_default,   NULL, NULL },
 
-	{ PARAM_MDDESC,     "metadatadesc",      ParameterType::STRING,  GROUP_METADATA,              N_("Description"),                 WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ PARAM_MDAUTH,     "metadataauthor",    ParameterType::STRING,  GROUP_METADATA,              N_("Author"),                      WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ PARAM_MDTIME,     "metadatatime",      ParameterType::STRING,  GROUP_METADATA,              N_("Creation Time"),               WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ PARAM_MDKEYS,     "metadatakeywords",  ParameterType::STRING,  GROUP_METADATA,              N_("Keywords"),                    WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDDESC,     "metadatadesc",      SGVariantType::STRING,  GROUP_METADATA,              N_("Description"),                 WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDAUTH,     "metadataauthor",    SGVariantType::STRING,  GROUP_METADATA,              N_("Author"),                      WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDTIME,     "metadatatime",      SGVariantType::STRING,  GROUP_METADATA,              N_("Creation Time"),               WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDKEYS,     "metadatakeywords",  SGVariantType::STRING,  GROUP_METADATA,              N_("Keywords"),                    WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,                ParameterType::PTR,     VIK_LAYER_GROUP_NONE,        NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,                SGVariantType::PTR,     VIK_LAYER_GROUP_NONE,        NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
 };
 
 
@@ -399,7 +399,7 @@ char *astro_program = NULL;
 
 
 
-void color_to_param(ParameterValue & value, QColor const & color)
+void color_to_param(SGVariant & value, QColor const & color)
 {
 	value.c.r = color.red();
 	value.c.g = color.green();
@@ -409,7 +409,7 @@ void color_to_param(ParameterValue & value, QColor const & color)
 
 
 
-void param_to_color(QColor & color, ParameterValue const & value)
+void param_to_color(QColor & color, SGVariant const & value)
 {
 	color = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
 }
@@ -893,7 +893,7 @@ char * font_size_to_string(int font_size)
 
 
 
-bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, bool is_file_operation)
+bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_TV:
@@ -1087,9 +1087,9 @@ bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, bool is_file_op
 
 
 
-ParameterValue LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	ParameterValue rv;
+	SGVariant rv;
 	switch (id) {
 	case PARAM_TV: rv.b = this->tracks_visible; break;
 	case PARAM_WV: rv.b = this->waypoints_visible; break;
@@ -1164,7 +1164,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DI: {
 		// Get new value
-		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_IS];
@@ -1184,7 +1184,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
 	case PARAM_DLA: {
 		// Get new value
-		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WPTC];
@@ -1208,7 +1208,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of all track colours according to the draw track mode.
 	case PARAM_DM: {
 		// Get new value
-		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		bool sensitive = (vlpd.u == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;

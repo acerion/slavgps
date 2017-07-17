@@ -82,15 +82,15 @@ static label_id_t params_time_ref_frame[] = {
 	{ NULL,     3 } };
 
 static Parameter general_prefs[] = {
-	{ 0, VIKING_PREFERENCES_NAMESPACE "degree_format",            ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            WidgetType::COMBOBOX,        params_degree_formats, NULL, NULL, NULL, NULL, NULL },
-	{ 1, VIKING_PREFERENCES_NAMESPACE "units_distance",           ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           WidgetType::COMBOBOX,        params_units_distance, NULL, NULL, NULL, NULL, NULL },
-	{ 2, VIKING_PREFERENCES_NAMESPACE "units_speed",              ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              WidgetType::COMBOBOX,        params_units_speed,    NULL, NULL, NULL, NULL, NULL },
-	{ 3, VIKING_PREFERENCES_NAMESPACE "units_height",             ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Height units:"),             WidgetType::COMBOBOX,        params_units_height,   NULL, NULL, NULL, NULL, NULL },
-	{ 4, VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                  NULL, NULL, NULL, NULL, NULL },
-	{ 5, VIKING_PREFERENCES_NAMESPACE "default_latitude",         ParameterType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  params_scales_lat,     NULL, NULL, NULL, NULL, NULL },
-	{ 6, VIKING_PREFERENCES_NAMESPACE "default_longitude",        ParameterType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  params_scales_long,    NULL, NULL, NULL, NULL, NULL },
-	{ 7, VIKING_PREFERENCES_NAMESPACE "time_reference_frame",     ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
-	{ 8, NULL,                                                    ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_NAMESPACE "degree_format",            SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            WidgetType::COMBOBOX,        params_degree_formats, NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_NAMESPACE "units_distance",           SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           WidgetType::COMBOBOX,        params_units_distance, NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_NAMESPACE "units_speed",              SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              WidgetType::COMBOBOX,        params_units_speed,    NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_NAMESPACE "units_height",             SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Height units:"),             WidgetType::COMBOBOX,        params_units_height,   NULL, NULL, NULL, NULL, NULL },
+	{ 4, VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                  NULL, NULL, NULL, NULL, NULL },
+	{ 5, VIKING_PREFERENCES_NAMESPACE "default_latitude",         SGVariantType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  params_scales_lat,     NULL, NULL, NULL, NULL, NULL },
+	{ 6, VIKING_PREFERENCES_NAMESPACE "default_longitude",        SGVariantType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  params_scales_long,    NULL, NULL, NULL, NULL, NULL },
+	{ 7, VIKING_PREFERENCES_NAMESPACE "time_reference_frame",     SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
+	{ 8, NULL,                                                    SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             WidgetType::COMBOBOX,        params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
 };
 
 /* External/Export Options */
@@ -113,23 +113,23 @@ static label_id_t params_gpx_export_wpt_symbols[] = {
 	{ NULL,         2 } };
 
 static Parameter io_prefs[] = {
-	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), WidgetType::COMBOBOX, params_kml_export_units,       NULL, NULL, NULL, NULL, NULL },
-	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"),       WidgetType::COMBOBOX, params_gpx_export_trk_sort,    NULL, NULL, NULL, NULL, NULL },
-	{ 2, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
-	{ 3, NULL,                                                       ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), WidgetType::COMBOBOX, params_kml_export_units,       NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"),       WidgetType::COMBOBOX, params_gpx_export_trk_sort,    NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
+	{ 3, NULL,                                                       SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
 };
 
 #ifndef WINDOWS
 static Parameter io_prefs_non_windows[] = {
-	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 1, NULL,                                           ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, NULL,                                           SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 #endif
 
 static Parameter io_prefs_external_gpx[] = {
-	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                                             ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 2, NULL,                                             SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static label_id_t params_vik_fileref[] = {
@@ -140,11 +140,11 @@ static label_id_t params_vik_fileref[] = {
 static ParameterScale params_recent_files[] = { {-1, 25, 1, 0} };
 
 static Parameter prefs_advanced[] = {
-	{ 0, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
-	{ 1, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
-	{ 2, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
-	{ 3, VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files",       ParameterType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
-	{ 4, NULL,                                                              ParameterType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
+	{ 1, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ 2, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files",       SGVariantType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
+	{ 4, NULL,                                                              SGVariantType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
 };
 
 static label_id_t params_startup_methods[] = {
@@ -155,12 +155,12 @@ static label_id_t params_startup_methods[] = {
 	{ NULL,             4 } };
 
 static Parameter startup_prefs[] = {
-	{ 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
-	{ 1, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
-	{ 2, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          WidgetType::COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },
-	{ 3, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file",          ParameterType::STRING,  VIK_LAYER_GROUP_NONE, N_("Startup File:"),            WidgetType::FILEENTRY,   NULL,                   NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'"), NULL, NULL, NULL },
-	{ 4, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version",         ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
-	{ 5, NULL,                                                         ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
+	{ 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
+	{ 1, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
+	{ 2, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          WidgetType::COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },
+	{ 3, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file",          SGVariantType::STRING,  VIK_LAYER_GROUP_NONE, N_("Startup File:"),            WidgetType::FILEENTRY,   NULL,                   NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'"), NULL, NULL, NULL },
+	{ 4, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version",         SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
+	{ 5, NULL,                                                         SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
 };
 /* End of Options static stuff. */
 
@@ -290,7 +290,7 @@ static bool preferences_load_from_file()
 
 				/* Otherwise change it (you know the type!).
 				   If it's a string list do some funky stuff ... yuck... not yet. */
-				if (oldval->second->type == ParameterType::STRING_LIST) {
+				if (oldval->second->type == SGVariantType::STRING_LIST) {
 					fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 				}
 
@@ -312,20 +312,20 @@ static bool preferences_load_from_file()
 
 
 
-void Preferences::set_param_value(param_id_t id, ParameterValue value)
+void Preferences::set_param_value(param_id_t id, SGVariant value)
 {
 	/* Don't change stored pointer values. */
-	if (registered_parameters[id]->type == ParameterType::PTR) {
+	if (registered_parameters[id]->type == SGVariantType::PTR) {
 		return;
 	}
-	if (registered_parameters[id]->type == ParameterType::STRING_LIST) {
+	if (registered_parameters[id]->type == SGVariantType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
 
 	ParameterValueTyped * new_value = vik_layer_typed_param_data_copy_from_data(registered_parameters[id]->type, value); /* New value to save under an existing name. */
 	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_value;
 
-	if (registered_parameters[id]->type == ParameterType::DOUBLE) {
+	if (registered_parameters[id]->type == SGVariantType::DOUBLE) {
 		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_value->data.d;
 	}
 }
@@ -334,7 +334,7 @@ void Preferences::set_param_value(param_id_t id, ParameterValue value)
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(ParameterValue value, Parameter * parameters)
+void a_preferences_run_setparam(SGVariant value, Parameter * parameters)
 {
 	//preferences.set_param_value(0, value, parameters);
 }
@@ -342,12 +342,12 @@ void a_preferences_run_setparam(ParameterValue value, Parameter * parameters)
 
 
 
-ParameterValue Preferences::get_param_value(param_id_t id)
+SGVariant Preferences::get_param_value(param_id_t id)
 {
 	auto val = registered_parameter_values.find(std::string(registered_parameters[id]->name));
 	assert (val != registered_parameter_values.end());
 
-	if (val->second->type == ParameterType::STRING_LIST) {
+	if (val->second->type == SGVariantType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
 	}
 	return val->second->data;
@@ -375,8 +375,8 @@ bool a_preferences_save_to_file()
 			Parameter * param = registered_parameters[i];
 			auto val = registered_parameter_values.find(std::string(param->name));
 			if (val != registered_parameter_values.end()) {
-				if (val->second->type != ParameterType::PTR) {
-					if (val->second->type == ParameterType::DOUBLE) {
+				if (val->second->type != SGVariantType::PTR) {
+					if (val->second->type == SGVariantType::DOUBLE) {
 						qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
 					}
 					file_write_layer_param(f, param->name, val->second->type, val->second->data);
@@ -405,8 +405,8 @@ void preferences_show_window(QWidget * parent)
 
 	if (dialog_code == QDialog::Accepted) {
 		for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
-			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
-			if (iter->second->type == ParameterType::DOUBLE) {
+			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
+			if (iter->second->type == SGVariantType::DOUBLE) {
 				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
 			}
 			preferences.set_param_value(iter->first, param_value);
@@ -422,7 +422,7 @@ void preferences_show_window(QWidget * parent)
 					   params_count,
 					   (char **) groups_names->pdata,
 					   groups_names->len, // groups, groups_count, // groups? what groups?!
-					   (bool (*) (void *, uint16_t, ParameterValue,void *, bool)) preferences_run_setparam,
+					   (bool (*) (void *, uint16_t, SGVariant,void *, bool)) preferences_run_setparam,
 					   NULL /* Not used. */,
 					   contiguous_params,
 					   preferences_run_getparam,
@@ -437,7 +437,7 @@ void preferences_show_window(QWidget * parent)
 
 
 
-void a_preferences_register(Parameter * parameter, ParameterValue default_value, const char * group_key)
+void a_preferences_register(Parameter * parameter, SGVariant default_value, const char * group_key)
 {
 	static param_id_t id = 0;
 	/* All preferences should be registered before loading. */
@@ -487,7 +487,7 @@ void Preferences::uninit()
 
 
 
-ParameterValue * a_preferences_get(const char * key)
+SGVariant * a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);
@@ -538,7 +538,7 @@ void Preferences::register_default_values()
 	/* Defaults for the options are setup here. */
 	a_preferences_register_group(VIKING_PREFERENCES_GROUP_KEY, _("General"));
 
-	ParameterValue tmp;
+	SGVariant tmp;
 	tmp.u = (uint32_t) DegreeFormat::DMS;
 	a_preferences_register(&general_prefs[0], tmp, VIKING_PREFERENCES_GROUP_KEY);
 

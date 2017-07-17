@@ -154,26 +154,26 @@ static ParameterScale params_scales[] = {
 
 
 
-static ParameterValue convert_to_display(ParameterValue value)
+static SGVariant convert_to_display(SGVariant value)
 {
 	/* From seconds into days. */
-	return ParameterValue((uint32_t) (value.u / 86400));
+	return SGVariant((uint32_t) (value.u / 86400));
 }
 
 
 
 
-static ParameterValue convert_to_internal(ParameterValue value)
+static SGVariant convert_to_internal(SGVariant value)
 {
 	/* From days into seconds. */
-	return ParameterValue((uint32_t) (86400 * value.u));
+	return SGVariant((uint32_t) (86400 * value.u));
 }
 
 
 
 
 static Parameter prefs[] = {
-	{ 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 
 
@@ -181,7 +181,7 @@ static Parameter prefs[] = {
 
 void Download::init(void)
 {
-	ParameterValue tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
+	SGVariant tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 }
 

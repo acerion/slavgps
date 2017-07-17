@@ -128,8 +128,8 @@ namespace SlavGPS {
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
 		void connect_to_tree(TreeView * tree_view, GtkTreeIter * layer_iter);
-		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
-		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 
 		std::list<Layer const * > * get_children();

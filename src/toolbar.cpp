@@ -152,12 +152,12 @@ typedef struct {
 static config_t extra_widget_data;
 
 static Parameter prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      ParameterType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
 
-	{ 4, NULL,                                      ParameterType::PTR,     VIK_LAYER_GROUP_NONE, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                                      SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -193,7 +193,7 @@ void a_toolbar_init(void)
 	a_preferences_register_group(TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar"));
 
 	unsigned int i = 0;
-	ParameterValue tmp;
+	SGVariant tmp;
 	tmp.b = false;
 	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.u = 0;

@@ -70,13 +70,13 @@ namespace SlavGPS {
 		void fill(LayerInterface * interface);
 		void fill(Waypoint * wp, Parameter * parameters);
 
-		ParameterValue get_param_value(param_id_t id, Parameter * param);
+		SGVariant get_param_value(param_id_t id, Parameter * param);
 
 
 
 
 	private:
-		QWidget * new_widget(Parameter * param, ParameterValue param_value);
+		QWidget * new_widget(Parameter * param, SGVariant param_value);
 
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, Parameter *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, Parameter *>::iterator & iter, std::map<param_id_t, Parameter *>::iterator & end);

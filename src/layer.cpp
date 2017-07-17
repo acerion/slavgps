@@ -204,7 +204,7 @@ void Layer::preconfigure_interfaces(void)
 		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
-		interface->parameter_value_defaults = new std::map<param_id_t, ParameterValue>;
+		interface->parameter_value_defaults = new std::map<param_id_t, SGVariant>;
 
 		if (!interface->params) {
 			continue;
@@ -218,7 +218,7 @@ void Layer::preconfigure_interfaces(void)
 			/* Read and store default values of layer's parameters.
 			   First try to get program's internal/hardwired value.
 			   Then try to get value from settings file. */
-			ParameterValue param_value;
+			SGVariant param_value;
 			if (interface->params[j].hardwired_default_value) {
 				/* This will be overwritten below by value from settings file. */
 				param_value = interface->params[j].hardwired_default_value();
@@ -257,7 +257,7 @@ static bool layer_defaults_register(LayerType layer_type)
 	for (uint16_t i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			if (params[i].hardwired_default_value) {
-				ParameterValue value = params[i].hardwired_default_value();
+				SGVariant value = params[i].hardwired_default_value();
 				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
 				answer = true;
 			}
@@ -406,13 +406,13 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	/* Now the actual parameters. */
 	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 	if (parameters) {
-		ParameterValue param_value;
+		SGVariant param_value;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
 
 			param_value = this->get_param_value(iter->first, false);
 			switch (iter->second->type) {
-			case ParameterType::STRING:
+			case SGVariantType::STRING:
 				/* Remember need braces as these are macro calls, not single statement functions! */
 				if (param_value.s) {
 					vlm_append(param_value.s, strlen(param_value.s));
@@ -422,7 +422,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 				}
 				break;
 				/* Print out the string list in the array. */
-			case ParameterType::STRING_LIST: {
+			case SGVariantType::STRING_LIST: {
 				QStringList * a_list = param_value.sl;
 
 				/* Write length of list (# of strings). */
@@ -475,13 +475,13 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 
 	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 	if (parameters) {
-		ParameterValue param_value;
+		SGVariant param_value;
 
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
 
 			switch (iter->second->type) {
-			case ParameterType::STRING:
+			case SGVariantType::STRING:
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
@@ -489,7 +489,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 				this->set_param_value(iter->first, param_value, false);
 				free(s);
 				break;
-			case ParameterType::STRING_LIST: {
+			case SGVariantType::STRING_LIST: {
 				int listlen = vlm_size;
 				QStringList* list = new QStringList;
 				b += sizeof(int); /* Skip listlen. */;
@@ -593,7 +593,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 		std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
+			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
 				must_redraw = true;
@@ -614,10 +614,10 @@ bool Layer::properties_dialog(Viewport * viewport)
 						  layer->get_interface()->params_count,
 						  layer->get_interface()->params_groups,
 						  layer->get_interface()->params_groups_count,
-						  (bool (*)(void*, uint16_t, ParameterValue, void*, bool)) layer->set_param,
+						  (bool (*)(void*, uint16_t, SGVariant, void*, bool)) layer->set_param,
 						  layer,
 						  viewport,
-						  (ParameterValue (*)(void*, uint16_t, bool)) layer->get_param,
+						  (SGVariant (*)(void*, uint16_t, bool)) layer->get_param,
 						  layer,
 						  layer->get_interface()->change_param)
 
@@ -655,7 +655,7 @@ void vik_layer_typed_param_data_free(void * gp)
 {
 	ParameterValueTyped * val = (ParameterValueTyped *) gp;
 	switch (val->type) {
-	case ParameterType::STRING:
+	case SGVariantType::STRING:
 		if (val->data.s) {
 			free((void *) val->data.s);
 		}
@@ -665,7 +665,7 @@ void vik_layer_typed_param_data_free(void * gp)
 		 * The value passed by the internals into set_param should also be managed
 		 * by the layer -- i.e. free'd by the layer.
 		 */
-	case ParameterType::STRING_LIST:
+	case SGVariantType::STRING_LIST:
 		fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
 		break;
 	default:
@@ -677,13 +677,13 @@ void vik_layer_typed_param_data_free(void * gp)
 
 
 
-ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val)
+ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(SGVariantType type, SGVariant val)
 {
 	ParameterValueTyped * newval = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	newval->data = val;
 	newval->type = type;
 	switch (newval->type) {
-	case ParameterType::STRING: {
+	case SGVariantType::STRING: {
 		char * s = g_strdup(newval->data.s);
 		newval->data.s = s;
 		break;
@@ -693,7 +693,7 @@ ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(Paramet
 		 * The value passed by the internals into set_param should also be managed
 		 * by the layer -- i.e. free'd by the layer.
 		 */
-	case ParameterType::STRING_LIST:
+	case SGVariantType::STRING_LIST:
 		fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
 		break;
 	default:
@@ -707,24 +707,24 @@ ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(Paramet
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
-ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str)
+ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(SGVariantType type, const char * str)
 {
 	ParameterValueTyped * rv = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	rv->type = type;
 	switch (type) {
-	case ParameterType::DOUBLE:
+	case SGVariantType::DOUBLE:
 		rv->data.d = strtod(str, NULL);
 		break;
-	case ParameterType::UINT:
+	case SGVariantType::UINT:
 		rv->data.u = strtoul(str, NULL, 10);
 		break;
-	case ParameterType::INT:
+	case SGVariantType::INT:
 		rv->data.i = strtol(str, NULL, 10);
 		break;
-	case ParameterType::BOOLEAN:
+	case SGVariantType::BOOLEAN:
 		rv->data.b = TEST_BOOLEAN(str);
 		break;
-	case ParameterType::COLOR:
+	case SGVariantType::COLOR:
 		{
 			QColor color(str);
 			rv->data.c.r = color.red();
@@ -754,17 +754,17 @@ ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(Param
 void Layer::set_initial_parameter_values(void)
 {
 	char const * layer_name = this->get_interface()->layer_type_string;
-	ParameterValue param_value;
+	SGVariant param_value;
 
 	std::map<param_id_t, Parameter *> * parameters = this->interface->layer_parameters;
-	std::map<param_id_t, ParameterValue> * defaults = this->interface->parameter_value_defaults;
+	std::map<param_id_t, SGVariant> * defaults = this->interface->parameter_value_defaults;
 
 	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
 		if (iter->second->group > VIK_LAYER_NOT_IN_PROPERTIES) {
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
-			if (iter->second->type != ParameterType::STRING_LIST) {
+			if (iter->second->type != SGVariantType::STRING_LIST) {
 				param_value = defaults->at(iter->first);
 				this->set_param_value(iter->first, param_value, true); /* Possibly comes from a file. */
 			}
@@ -996,16 +996,16 @@ void Layer::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index
 
 
 
-ParameterValue Layer::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	ParameterValue param_value;
+	SGVariant param_value;
 	return param_value;
 }
 
 
 
 
-bool Layer::set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation)
+bool Layer::set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation)
 {
 	return false;
 }

@@ -78,7 +78,7 @@ namespace SlavGPS {
 	bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
 				 bool tracks, bool routes, bool waypoints);
 
-	void file_write_layer_param(FILE * f, char const * name, ParameterType type, ParameterValue data);
+	void file_write_layer_param(FILE * f, char const * name, SGVariantType type, SGVariant data);
 	char * file_realpath(char const * path, char * real);
 	char * file_realpath_dup(char const * path);
 	char const * file_GetRelativeFilename(char * currentDirectory, const char * absoluteFilename);

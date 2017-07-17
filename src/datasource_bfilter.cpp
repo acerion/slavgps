@@ -51,17 +51,17 @@ ParameterScale simplify_params_scales[] = {
 };
 
 Parameter bfilter_simplify_params[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, "numberofpoints", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), WidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "numberofpoints", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), WidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
-ParameterValue bfilter_simplify_params_defaults[] = {
-	ParameterValue((unsigned int) 100),
+SGVariant bfilter_simplify_params_defaults[] = {
+	SGVariant((unsigned int) 100),
 };
 
 
 
 
-static ProcessOptions * datasource_bfilter_simplify_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_simplify_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -137,12 +137,12 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 static ParameterScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
 
 Parameter bfilter_compress_params[] = {
-	//{ LayerType::NUM_TYPES, "compressmethod", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), WidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
-	{ (param_id_t) LayerType::NUM_TYPES, "compressfactor", ParameterType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), WidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
+	//{ LayerType::NUM_TYPES, "compressmethod", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), WidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "compressfactor", SGVariantType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), WidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
 };
 
-ParameterValue bfilter_compress_params_defaults[] = {
-	ParameterValue((double) 0.001),
+SGVariant bfilter_compress_params_defaults[] = {
+	SGVariant((double) 0.001),
 };
 
 
@@ -151,7 +151,7 @@ ParameterValue bfilter_compress_params_defaults[] = {
 /**
  * http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
  */
-static ProcessOptions * datasource_bfilter_compress_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_compress_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -234,7 +234,7 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 
 
 
-static ProcessOptions * datasource_bfilter_dup_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_dup_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -275,18 +275,18 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 
 
 
-ParameterValue bfilter_manual_params_defaults[] = {
-	ParameterValue((char *) NULL),
+SGVariant bfilter_manual_params_defaults[] = {
+	SGVariant((char *) NULL),
 };
 
 Parameter bfilter_manual_params[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, "manual", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "manual", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 
 
 
 
-static ProcessOptions * datasource_bfilter_manual_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
+static ProcessOptions * datasource_bfilter_manual_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -332,7 +332,7 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 
 
 /* TODO: shell_escape stuff. */
-static ProcessOptions * datasource_bfilter_polygon_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
+static ProcessOptions * datasource_bfilter_polygon_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -376,7 +376,7 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 
 
 /* TODO: shell_escape stuff */
-static ProcessOptions * datasource_bfilter_exclude_polygon_get_process_options(ParameterValue *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
+static ProcessOptions * datasource_bfilter_exclude_polygon_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *input_track_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,exclude,file=- -o gpx -F -", input_track_filename, input_filename);

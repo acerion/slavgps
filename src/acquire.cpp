@@ -289,7 +289,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/* For UI builder. */
 	void * pass_along_data;
-	ParameterValue *paramdatas = NULL;
+	SGVariant *paramdatas = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
 	if (source_interface_->init_func) {

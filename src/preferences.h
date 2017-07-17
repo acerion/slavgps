@@ -45,8 +45,8 @@ namespace SlavGPS {
 		static void uninit();
 		static void register_default_values();
 
-		void set_param_value(param_id_t id, ParameterValue value);
-		ParameterValue get_param_value(param_id_t id);
+		void set_param_value(param_id_t id, SGVariant value);
+		SGVariant get_param_value(param_id_t id);
 
 		std::map<param_id_t, Parameter *>::iterator begin();
 		std::map<param_id_t, Parameter *>::iterator end();
@@ -107,14 +107,14 @@ void a_preferences_register_group(const char * key, const char * name);
 /* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
    so pref key is not copied. default param data IS copied. */
 /* Group field (integer) will be overwritten. */
-void a_preferences_register(Parameter * parameter, ParameterValue default_value, const char * group_key);
+void a_preferences_register(Parameter * parameter, SlavGPS::SGVariant default_value, const char * group_key);
 
 void preferences_show_window(QWidget * parent = NULL);
 
-ParameterValue * a_preferences_get(const char * key);
+SlavGPS::SGVariant * a_preferences_get(const char * key);
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(ParameterValue value, ParameterScale * parameters);
+void a_preferences_run_setparam(SlavGPS::SGVariant value, ParameterScale * parameters);
 
 bool a_preferences_save_to_file();
 

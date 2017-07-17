@@ -84,8 +84,8 @@ namespace SlavGPS {
 		void draw_section(Viewport * viewport, Coord * ul, Coord * br);
 		QString tooltip();
 		void add_menu_items(QMenu & menu);
-		bool set_param_value(uint16_t id, ParameterValue param_value, bool is_file_operation);
-		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		QString get_map_label(void) const;
 		int how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode);

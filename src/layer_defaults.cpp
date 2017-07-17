@@ -42,13 +42,13 @@ using namespace SlavGPS;
 
 
 
-static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype, bool * success);
-static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype);
-static void write_parameter_value(ParameterValue value, const char * group, const char * name, ParameterType ptype);
+static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success);
+static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype);
+static void write_parameter_value(SGVariant value, const char * group, const char * name, SGVariantType ptype);
 
 #if 0
-static void defaults_run_setparam(void * index_ptr, param_id_t id, ParameterValue value, Parameter * params);
-static ParameterValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
+static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant value, Parameter * params);
+static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 #endif
 
@@ -75,9 +75,9 @@ static bool loaded;
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype, bool * success)
+static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success)
 {
-	ParameterValue value((bool) false);
+	SGVariant value((bool) false);
 
 	QString key(QString(group) + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
@@ -90,35 +90,35 @@ static ParameterValue read_parameter_value(const char * group, const char * name
 	*success = true;
 
 	switch (ptype) {
-	case ParameterType::DOUBLE: {
+	case SGVariantType::DOUBLE: {
 		value.d = variant.toDouble();
 		break;
 	}
-	case ParameterType::UINT: {
+	case SGVariantType::UINT: {
 		value.u = (uint32_t) variant.toULongLong();
 		break;
 	}
-	case ParameterType::INT: {
+	case SGVariantType::INT: {
 		value.i = (int32_t) variant.toLongLong();
 		break;
 	}
-	case ParameterType::BOOLEAN: {
+	case SGVariantType::BOOLEAN: {
 		value.b = variant.toBool();
 		break;
 	}
-	case ParameterType::STRING: {
+	case SGVariantType::STRING: {
 		value.s = strdup(variant.toString().toUtf8().constData());
 		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
 #if 0
-	case ParameterType::STRING_LIST: {
+	case SGVariantType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value.sl = str_to_glist(str); /* TODO convert. */
 		break;
 	}
 #endif
-	case ParameterType::COLOR: {
+	case SGVariantType::COLOR: {
 		QColor color = variant.value<QColor>();
 		value.c.r = color.red();
 		value.c.g = color.green();
@@ -142,7 +142,7 @@ static ParameterValue read_parameter_value(const char * group, const char * name
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype)
+static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype)
 {
 	bool success = true;
 	/* This should always succeed - don't worry about 'success'. */
@@ -155,27 +155,27 @@ static ParameterValue read_parameter_value(const char * group, const char * name
 /* "write" is supposed to indicate that this is a low-level function,
    writing directly to file, even though the writing is made to QT
    abstraction of settings file. */
-static void write_parameter_value(ParameterValue value, const char * group, const char * name, ParameterType ptype)
+static void write_parameter_value(SGVariant value, const char * group, const char * name, SGVariantType ptype)
 {
 	QVariant variant;
 
 	switch (ptype) {
-	case ParameterType::DOUBLE:
+	case SGVariantType::DOUBLE:
 		variant = QVariant((double) value.d);
 		break;
-	case ParameterType::UINT:
+	case SGVariantType::UINT:
 		variant = QVariant((qulonglong) value.u);
 		break;
-	case ParameterType::INT:
+	case SGVariantType::INT:
 		variant = QVariant((qlonglong) value.i);
 		break;
-	case ParameterType::BOOLEAN:
+	case SGVariantType::BOOLEAN:
 		variant = QVariant((bool) value.b);
 		break;
-	case ParameterType::STRING:
+	case SGVariantType::STRING:
 		variant = QString(value.s);
 		break;
-	case ParameterType::COLOR: {
+	case SGVariantType::COLOR: {
 		variant = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
 		break;
 	}
@@ -193,7 +193,7 @@ static void write_parameter_value(ParameterValue value, const char * group, cons
 #if 0
 
 
-static void defaults_run_setparam(void * index_ptr, param_id_t id, ParameterValue value, Parameter * params)
+static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant value, Parameter * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
@@ -205,7 +205,7 @@ static void defaults_run_setparam(void * index_ptr, param_id_t id, ParameterValu
 
 
 
-static ParameterValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
+static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
@@ -236,7 +236,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 		read_parameter_value(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
 		if (!success) {
 			if (params[i].hardwired_default_value) {
-				ParameterValue value = params[i].hardwired_default_value();
+				SGVariant value = params[i].hardwired_default_value();
 				write_parameter_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 			}
 		}
@@ -320,10 +320,10 @@ bool SlavGPS::layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 	if (dialog_code == QDialog::Accepted) {
 
 		std::map<param_id_t, Parameter *> * parameters = interface->layer_parameters;
-		std::map<param_id_t, ParameterValue> * values = interface->parameter_value_defaults;
+		std::map<param_id_t, SGVariant> * values = interface->parameter_value_defaults;
 
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
+			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
 			write_parameter_value(param_value, interface->layer_type_string, iter->second->name, iter->second->type);
 		}
@@ -346,7 +346,7 @@ bool SlavGPS::layer_defaults_show_window(LayerType layer_type, QWidget * parent)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value)
+void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * layer_param, SGVariant default_value)
 {
 #if 0
 	/* Copy value. */
@@ -406,7 +406,7 @@ void SlavGPS::a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested.
  */
-ParameterValue SlavGPS::a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type)
+SGVariant SlavGPS::a_layer_defaults_get(const char * layer_name, const char * param_name, SGVariantType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
