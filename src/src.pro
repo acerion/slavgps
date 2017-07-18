@@ -100,7 +100,6 @@ SOURCES += main.cpp \
     waypoint_properties.cpp \
     waypoint_list.cpp \
     tree_view.cpp \
-    uibuilder.cpp \
     uibuilder_qt.cpp \
     widget_color_button.cpp \
     widget_file_list.cpp \
