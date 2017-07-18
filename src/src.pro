@@ -215,7 +215,6 @@ HEADERS += window.h \
     waypoint_list.h \
     tree_view.h \
     tree_view_internal.h \
-    uibuilder.h \
     uibuilder_qt.h \
     widget_color_button.h \
     widget_file_list.h \

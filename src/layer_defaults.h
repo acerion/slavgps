@@ -28,7 +28,7 @@
 
 #include <QWidget>
 
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "layer.h"
 #include "slav_qt.h"
 

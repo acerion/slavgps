@@ -54,7 +54,7 @@
 #include "compression.h"
 #include "download.h"
 #include "curl_download.h"
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "preferences.h"
 #include "globals.h"
 #include "util.h"

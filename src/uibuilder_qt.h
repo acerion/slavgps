@@ -22,11 +22,12 @@
 #define _SG_UIBUILDER_QT_H_
 
 
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <list>
 #include <map>
 #include <cstdint>
 
@@ -36,14 +37,13 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QToolButton>
-
+#include <QString>
 #include <QTabWidget>
-
 #include <QVector>
 
 #include "globals.h"
-#include "uibuilder.h"
-#include "preferences.h"
+#include "variant.h"
+//#include "preferences.h"
 
 
 
@@ -56,6 +56,100 @@ namespace SlavGPS {
 	class Layer;
 	class LayerInterface;
 	class Waypoint;
+	class Preferences;
+
+
+
+
+	typedef int16_t param_id_t;
+
+
+
+
+	enum class WidgetType {
+		CHECKBUTTON = 0,
+		RADIOGROUP,
+		RADIOGROUP_STATIC,
+		SPINBOX_DOUBLE,
+		SPINBUTTON,
+		ENTRY,
+		PASSWORD,
+		FILEENTRY,
+		FOLDERENTRY,
+		HSCALE,
+		COLOR,
+		COMBOBOX,
+		FILELIST,
+		BUTTON,
+		DATETIME,
+		NONE
+	};
+
+
+	/* Default value has to be returned via a function
+	   because certain types value are can not be statically allocated
+	   (i.e. a string value that is dependent on other functions).
+	   Also easier for colours to be set via a function call rather than a static assignment. */
+	typedef SGVariant (* LayerDefaultFunc) (void);
+
+	/* Convert between the value held internally and the value used for display
+	   e.g. keep the internal value in seconds yet use days in the display. */
+	typedef SGVariant (* LayerConvertFunc) (SGVariant);
+
+	typedef struct {
+		// LayerType layer_type;
+		param_id_t id;
+		const char *name;
+		SGVariantType type;
+		int16_t group;
+		const char *title;
+		WidgetType widget_type;
+		void * widget_data;
+		void * extra_widget_data;
+		const char *tooltip;
+		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
+		LayerConvertFunc convert_to_display;
+		LayerConvertFunc convert_to_internal;
+	} Parameter;
+
+	enum {
+		VIK_LAYER_NOT_IN_PROPERTIES=-2,
+		VIK_LAYER_GROUP_NONE=-1,
+		PARAMETER_GROUP_NONE=-1
+	};
+
+	typedef struct {
+		double min;
+		double max;
+		double step;
+		uint8_t digits;
+	} ParameterScale;
+
+
+	typedef enum {
+		VL_SO_NONE = 0,
+		VL_SO_ALPHABETICAL_ASCENDING,
+		VL_SO_ALPHABETICAL_DESCENDING,
+		VL_SO_DATE_ASCENDING,
+		VL_SO_DATE_DESCENDING,
+		VL_SO_LAST
+	} vik_layer_sort_order_t;
+
+
+
+
+	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, Parameter * params);
+	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
+	/* Frees data from last (if necessary). */
+	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, Parameter * params, uint16_t params_count);
+
+
+
+
+	typedef struct {
+		char const * label;
+		int32_t id;
+	} label_id_t;
 
 
 
@@ -71,9 +165,6 @@ namespace SlavGPS {
 		void fill(Waypoint * wp, Parameter * parameters);
 
 		SGVariant get_param_value(param_id_t id, Parameter * param);
-
-
-
 
 	private:
 		QWidget * new_widget(Parameter * param, SGVariant param_value);
@@ -91,6 +182,42 @@ namespace SlavGPS {
 
 		QTabWidget * tabs = NULL;
 	};
+
+
+
+
+#ifdef K
+	typedef struct {
+		void * layer;
+		Parameter * param;
+		int param_id;
+		GtkWidget ** widgets;
+		GtkWidget ** labels;
+	} ui_change_values;
+
+
+
+
+	GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data);
+	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, Parameter *param);
+	int a_uibuilder_properties_factory(const char *dialog_name,
+					   Window * parent,
+					   Parameter *params,
+					   uint16_t params_count,
+					   char **groups,
+					   uint8_t groups_count,
+					   bool (*setparam) (void *,uint16_t, SGVariant,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
+					   void * pass_along1,
+					   void * pass_along2,
+					   SGVariant (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
+					   void * pass_along_getparam,
+					   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
+	/* pass_along1 and pass_along2 are for set_param first and last params. */
+
+	SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, Parameter *params,
+					  uint16_t params_count, char **groups, uint8_t groups_count,
+					  SGVariant *params_defaults);
+#endif
 
 
 

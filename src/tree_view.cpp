@@ -35,7 +35,7 @@
 #include "tree_view_internal.h"
 #include "layers_panel.h"
 #include "globals.h"
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"
 

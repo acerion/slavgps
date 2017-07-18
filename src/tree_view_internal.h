@@ -33,7 +33,7 @@
 
 #include "tree_view.h"
 #include "config.h"
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "globals.h"
 
 

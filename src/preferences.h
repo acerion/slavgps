@@ -29,7 +29,7 @@
 
 #include <QWidget>
 
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 
 
 
@@ -82,43 +82,40 @@ namespace SlavGPS {
 		static vik_startup_method_t get_startup_method();
 		static char const * get_startup_file();
 		static bool get_check_version();
-
 	};
 
 
 
 
-}
+	/* TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!! */
+
+
+	/* Pref should be persistent thruout the life of the preference. */
+
+
+	/* Must call FIRST. */
+	void a_preferences_register_group(const char * key, const char * name);
+
+	/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
+	   so pref key is not copied. default param data IS copied. */
+	/* Group field (integer) will be overwritten. */
+	void a_preferences_register(Parameter * parameter, SGVariant default_value, const char * group_key);
+
+	void preferences_show_window(QWidget * parent = NULL);
+
+	SGVariant * a_preferences_get(const char * key);
+
+	/* Allow preferences to be manipulated externally. */
+	void a_preferences_run_setparam(SGVariant value, Parameter * parameters);
+
+	bool a_preferences_save_to_file();
 
 
 
 
-/* TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!! */
+} /* namespace SlavGPS */
 
 
 
 
-/* Pref should be persistent thruout the life of the preference. */
-
-
-/* Must call FIRST. */
-void a_preferences_register_group(const char * key, const char * name);
-
-/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
-   so pref key is not copied. default param data IS copied. */
-/* Group field (integer) will be overwritten. */
-void a_preferences_register(Parameter * parameter, SlavGPS::SGVariant default_value, const char * group_key);
-
-void preferences_show_window(QWidget * parent = NULL);
-
-SlavGPS::SGVariant * a_preferences_get(const char * key);
-
-/* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(SlavGPS::SGVariant value, ParameterScale * parameters);
-
-bool a_preferences_save_to_file();
-
-
-
-
-#endif
+#endif /* #ifndef _SG_PREFERENCES_H_ */

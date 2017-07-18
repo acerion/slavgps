@@ -230,7 +230,7 @@ static void preferences_groups_uninit()
 
 
 
-void a_preferences_register_group(const char * key, const char *name)
+void SlavGPS::a_preferences_register_group(const char * key, const char *name)
 {
 	if (g_hash_table_lookup(groups_keys_to_indices, key)) {
 		fprintf(stderr, "CRITICAL: Duplicate preferences group keys\n");
@@ -334,7 +334,7 @@ void Preferences::set_param_value(param_id_t id, SGVariant value)
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(SGVariant value, Parameter * parameters)
+void SlavGPS::a_preferences_run_setparam(SGVariant value, Parameter * parameters)
 {
 	//preferences.set_param_value(0, value, parameters);
 }
@@ -359,7 +359,7 @@ SGVariant Preferences::get_param_value(param_id_t id)
 /**
  * Returns: true on success.
  */
-bool a_preferences_save_to_file()
+bool SlavGPS::a_preferences_save_to_file()
 {
 	char * fn = g_build_filename(get_viking_dir(), VIKING_PREFS_FILE, NULL);
 
@@ -394,7 +394,7 @@ bool a_preferences_save_to_file()
 
 
 
-void preferences_show_window(QWidget * parent)
+void SlavGPS::preferences_show_window(QWidget * parent)
 {
 	//loaded = true;
 	//preferences_load_from_file();
@@ -437,7 +437,7 @@ void preferences_show_window(QWidget * parent)
 
 
 
-void a_preferences_register(Parameter * parameter, SGVariant default_value, const char * group_key)
+void SlavGPS::a_preferences_register(Parameter * parameter, SGVariant default_value, const char * group_key)
 {
 	static param_id_t id = 0;
 	/* All preferences should be registered before loading. */
@@ -487,7 +487,7 @@ void Preferences::uninit()
 
 
 
-SGVariant * a_preferences_get(const char * key)
+SGVariant * SlavGPS::a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);

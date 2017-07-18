@@ -26,7 +26,7 @@
 
 #include <QStringList>
 
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "globals.h"
 
 

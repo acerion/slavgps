@@ -40,7 +40,7 @@
 #include <QPixmap>
 #include <QPen>
 
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "tree_view.h"
 #include "slav_qt.h"
 #include "viewport.h"

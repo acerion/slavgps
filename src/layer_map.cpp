@@ -61,7 +61,7 @@
 #include "file.h"
 #include "settings.h"
 #include "globals.h"
-#include "uibuilder.h"
+#include "uibuilder_qt.h"
 #include "util.h"
 
 
