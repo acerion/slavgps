@@ -49,6 +49,10 @@ namespace SlavGPS {
 
 
 
+	typedef int GtkWidget; /* TODO: remove sooner or later. */
+
+
+
 
 	typedef struct _VikDataSourceInterface VikDataSourceInterface;
 

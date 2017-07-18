@@ -78,7 +78,6 @@ SOURCES += main.cpp \
     coord.cpp \
     coords.cpp \
     degrees_converters.cpp \
-    slav_qt.cpp \
     layer_defaults.cpp \
     layer.cpp \
     layer_coord.cpp \
@@ -191,7 +190,6 @@ HEADERS += window.h \
     coords.h \
     globals.h \
     degrees_converters.h \
-    slav_qt.h \
     layer_defaults.h \
     layer.h \
     layer_coord.h \

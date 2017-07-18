@@ -44,6 +44,7 @@
 #include "layer_dem.h"
 #include "dem.h"
 #include "dem_cache.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "file.h"
 #include "dialog.h"
@@ -1279,7 +1280,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 
 
-void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
+void LayerDEM::weak_ref_cb(void * ptr, void * dead_vdl)
 {
 	DEMDownloadJob * p = (DEMDownloadJob *) ptr;
 	p->mutex.lock();

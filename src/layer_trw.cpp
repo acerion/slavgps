@@ -3359,7 +3359,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 
 
 
-void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
+void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path)
 {
 #ifdef K
 	LayerTRW * trw_dest = this;

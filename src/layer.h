@@ -42,7 +42,6 @@
 
 #include "ui_builder.h"
 #include "tree_view.h"
-#include "slav_qt.h"
 #include "viewport.h"
 #include "globals.h"
 
@@ -80,6 +79,11 @@ namespace SlavGPS {
 	class LayerInterface;
 	class trw_menu_sublayer_t;
 	class LayersPanel;
+
+
+
+
+	typedef int GtkWidget; /* TODO: remove sooner or later. */
 
 
 
@@ -123,7 +127,7 @@ namespace SlavGPS {
 
 
 
-	typedef void (* LayerRefCB) (void * ptr, GObject * dead_vml);
+	typedef void (* LayerRefCB) (void * ptr, void * dead_vml);
 
 
 
@@ -205,7 +209,7 @@ namespace SlavGPS {
 		   destination layer. it is given a source and
 		   destination layer, and the source and destination
 		   iters in the treeview. */
-		virtual void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
+		virtual void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);
 
 		virtual int read_file(FILE * f, char const * dirpath);
 		virtual void write_file(FILE * f) const;

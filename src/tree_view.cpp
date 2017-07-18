@@ -46,6 +46,15 @@ using namespace SlavGPS;
 
 
 
+typedef int GtkTreeDragSource;
+typedef int GtkTreeDragDest;
+typedef int GtkCellRenderer;
+typedef int GtkCellRendererToggle;
+typedef int GtkCellRendererText;
+typedef int GtkCellEditable;
+typedef int GtkSelectionData;
+typedef int GtkTreeSelection;
+typedef int GtkTreePath;
 
 static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
 static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path);

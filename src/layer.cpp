@@ -926,7 +926,7 @@ time_t Layer::get_timestamp()
 
 
 
-void Layer::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
+void Layer::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path)
 {
 	return;
 }

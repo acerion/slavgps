@@ -41,9 +41,9 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "thumbnails.h"
 #include "file.h"
-#include "slav_qt.h"
 #include "icons/icons.h"
 #include "globals.h"
 

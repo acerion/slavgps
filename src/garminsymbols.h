@@ -26,8 +26,6 @@
 #include <QPixmap>
 #include <glib.h>
 
-#include "slav_qt.h"
-
 
 
 

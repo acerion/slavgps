@@ -75,7 +75,7 @@ namespace SlavGPS {
 		bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
-		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
+		static void weak_ref_cb(void * ptr, void * dead_vdl);
 
 		QPen pen;
 		QColor ** colors = NULL;

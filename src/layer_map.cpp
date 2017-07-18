@@ -1669,7 +1669,7 @@ static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map,
 
 
 
-void LayerMap::weak_ref_cb(void * ptr, GObject * dead_vml)
+void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 {
 	MapDownloadJob * mdj = (MapDownloadJob *) ptr;
 	mdj->mutex.lock();

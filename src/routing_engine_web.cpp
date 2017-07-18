@@ -49,7 +49,7 @@ using namespace SlavGPS;
 
 
 #ifdef K
-static void vik_routing_web_engine_set_property(GObject * object,
+static void vik_routing_web_engine_set_property(void * object,
 						unsigned int property_id,
 						const GValue * value,
 						GParamSpec   * pspec)
@@ -106,7 +106,7 @@ static void vik_routing_web_engine_set_property(GObject * object,
 
 
 
-static void vik_routing_web_engine_get_property(GObject    * object,
+static void vik_routing_web_engine_get_property(void    * object,
 						unsigned int property_id,
 						GValue     * value,
 						GParamSpec * pspec)

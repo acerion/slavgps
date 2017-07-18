@@ -26,7 +26,6 @@
 #include <QString>
 
 #include "layer_gps.h"
-#include "slav_qt.h"
 
 
 

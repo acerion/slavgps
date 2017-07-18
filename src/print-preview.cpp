@@ -22,7 +22,14 @@
 
 
 #include "print-preview.h"
-#include "slav_qt.h"
+
+
+
+
+/* TODO: remove sooner or later. */
+typedef int GtkWidget;
+typedef int GdkEventExpose;
+typedef int GtkAllocation;
 
 
 

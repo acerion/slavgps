@@ -29,7 +29,6 @@
 #include <QPixmap>
 
 #include <glib.h>
-#include "slav_qt.h"
 #include "geonamessearch.h"
 
 
@@ -41,6 +40,12 @@ namespace SlavGPS {
 
 
 	class Track;
+
+
+
+
+	typedef int GtkWidget; /* TODO: remove sooner or later. */
+
 
 
 

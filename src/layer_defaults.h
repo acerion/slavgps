@@ -30,7 +30,6 @@
 
 #include "ui_builder.h"
 #include "layer.h"
-#include "slav_qt.h"
 
 
 

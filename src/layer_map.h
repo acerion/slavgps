@@ -105,7 +105,7 @@ namespace SlavGPS {
 		void start_download_thread(Viewport * viewport, const Coord * ul, const Coord * br, int redownload_mode);
 		void download_onscreen_maps(int redownload_mode);
 
-		static void weak_ref_cb(void * ptr, GObject * dead_vml);
+		static void weak_ref_cb(void * ptr, void * dead_vml);
 
 
 

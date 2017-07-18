@@ -35,6 +35,7 @@
 #include "layer_gps.h"
 #include "layer_trw_stats.h"
 #include "dialog.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "globals.h"
 
@@ -232,7 +233,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 
-void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
+void LayerAggregate::move_layer(TreeIndex *child_iter, bool up)
 {
 #ifdef K
 	auto theone = this->children->end();
@@ -838,7 +839,7 @@ bool LayerAggregate::is_empty()
 
 
 
-void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
+void LayerAggregate::drag_drop_request(Layer * src, TreeIndex *src_item_iter, void *GtkTreePath_dest_path)
 {
 #ifdef K
 	Layer * layer = src->tree_view->get_layer(src_item_iter);

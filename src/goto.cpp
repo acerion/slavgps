@@ -148,6 +148,7 @@ static int get_last_provider_index(void)
 
 
 
+typedef int GParamSpec;
 static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * button)
 {
 	bool has_text = entry->text().length() > 0;

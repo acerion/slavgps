@@ -42,7 +42,6 @@
 #include "trackpoint_properties.h"
 #include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
-#include "slav_qt.h"
 
 
 
@@ -62,6 +61,10 @@ namespace SlavGPS {
 	struct _VikDataSourceInterface;
 	typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
+
+	/* To be removed. */
+	typedef int GdkFunction;
+	typedef int PangoLayout;
 
 
 	class TRWMetadata {
@@ -163,7 +166,7 @@ namespace SlavGPS {
 
 		time_t get_timestamp();
 
-		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
+		void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);
 
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;

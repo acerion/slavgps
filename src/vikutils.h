@@ -42,6 +42,11 @@ namespace SlavGPS {
 
 
 
+	typedef int GtkWidget; /* TODO: remove sooner or later. */
+
+
+
+
 	char * get_speed_unit_string(SpeedUnit speed_unit);
 	double convert_speed_mps_to(SpeedUnit speed_units, double speed);
 	char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed);

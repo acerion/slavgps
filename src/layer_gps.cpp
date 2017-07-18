@@ -54,6 +54,7 @@
 #include "track.h"
 #include "settings.h"
 #include "globals.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
@@ -757,7 +758,7 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::connect_to_tree(TreeView * tree_view_, GtkTreeIter *layer_iter)
+void LayerGPS::connect_to_tree(TreeView * tree_view_, TreeIndex *layer_iter)
 {
 #ifdef K
 	GtkTreeIter iter;

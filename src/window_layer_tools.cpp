@@ -33,6 +33,7 @@
 #include "coords.h"
 #include "tree_view_internal.h"
 //#include "vikutils.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "preferences.h"
 #include "viewport_internal.h"

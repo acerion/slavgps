@@ -30,7 +30,6 @@
 #include <cstdlib>
 
 #include "external_tools.h"
-#include "slav_qt.h"
 
 
 

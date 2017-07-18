@@ -52,7 +52,7 @@
 #include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
-#include "slav_qt.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 
 

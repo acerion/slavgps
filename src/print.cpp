@@ -40,7 +40,6 @@
 #include "viewport_internal.h"
 #include "print.h"
 #include "print-preview.h"
-#include "slav_qt.h"
 #include "util.h"
 
 

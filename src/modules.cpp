@@ -105,7 +105,7 @@ static void modules_register_map_source(VikGobjectBuilder * self, MapSource * ma
 
 
 
-static void modules_register_exttools(VikGobjectBuilder * self, GObject * object)
+static void modules_register_exttools(VikGobjectBuilder * self, void * object)
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
@@ -116,7 +116,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, GObject * object
 
 
 
-static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, GObject * object)
+static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, void * object)
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
@@ -127,7 +127,7 @@ static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, GObj
 
 
 
-static void modules_register_gototools(VikGobjectBuilder * self, GObject * object)
+static void modules_register_gototools(VikGobjectBuilder * self, void * object)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	GotoTool * goto_tool = (GotoTool *) object;
@@ -137,7 +137,7 @@ static void modules_register_gototools(VikGobjectBuilder * self, GObject * objec
 
 
 
-static void modules_register_routing_engine(VikGobjectBuilder * self, GObject * object)
+static void modules_register_routing_engine(VikGobjectBuilder * self, void * object)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	RoutingEngine *engine = VIK_ROUTING_ENGINE (object);
@@ -233,7 +233,7 @@ static void modules_load_config(void)
 
 
 
-
+typedef int GType;
 static void register_loadable_types(void)
 {
 	/* Force registering of loadable types. */

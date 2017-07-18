@@ -61,6 +61,8 @@ namespace SlavGPS {
 
 
 
+	typedef int GtkWidget; /* TODO: remove sooner or later. */
+
 	typedef int16_t param_id_t;
 
 
@@ -186,7 +188,6 @@ namespace SlavGPS {
 
 
 
-#ifdef K
 	typedef struct {
 		void * layer;
 		Parameter * param;
@@ -198,6 +199,7 @@ namespace SlavGPS {
 
 
 
+#ifdef K
 	GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data);
 	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, Parameter *param);
 	int a_uibuilder_properties_factory(const char *dialog_name,

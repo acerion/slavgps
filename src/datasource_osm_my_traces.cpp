@@ -452,12 +452,12 @@ static bool read_gpx_files_metadata_xml(char *tmpname, xml_data *xd)
 
 static GList * select_from_list(Window * parent, GList *list, const char *title, const char *msg)
 {
+#ifdef K
 	GtkTreeIter iter;
 	GtkCellRenderer *renderer;
 	GtkWidget *view;
 	char *latlon_string;
 	int column_runner;
-#ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
 							parent,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),

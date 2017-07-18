@@ -37,6 +37,7 @@
 #include "vikutils.h"
 #include "ui_util.h"
 #include "preferences.h"
+typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "layer_map.h"
 #include "layer_georef.h"

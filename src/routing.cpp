@@ -260,7 +260,7 @@ void SlavGPS::routing_foreach_engine(GFunc func, QComboBox * combo)
  * This function is called for all routing engine registered.
  * Following result of the predicate function, the current engine
  * is added to the combobox. In order to retrieve the RoutingEngine
- * object, we store a list of added engine in a GObject's data "engines".
+ * object, we store a list of added engine in a void's data "engines".
  *
  * @see g_list_foreach()
  */
@@ -297,7 +297,7 @@ static void fill_engine_box(void * data, QComboBox * user_data)
  *
  * Creates a combo box to allow selection of a routing engine.
  *
- * We use GObject data hastable to store and retrieve the RoutingEngine
+ * We use void data hastable to store and retrieve the RoutingEngine
  * associated to the selection.
  *
  * Returns: the combo box
