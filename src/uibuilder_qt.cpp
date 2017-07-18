@@ -29,7 +29,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QPushButton>
-
+#include <QStringList>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSpinBox>
@@ -744,6 +744,95 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	}
 
 	return rv;
+}
+
+
+
+
+void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, Parameter * params)
+{
+	/* Could have to copy it if it's a string! */
+	switch (params[i].type) {
+	case SGVariantType::STRING:
+		paramdatas[i].s = g_strdup(data.s);
+		break;
+	default:
+		paramdatas[i] = data; /* Dtring list will have to be freed by layer. anything else not freed. */
+	}
+}
+
+
+
+
+SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
+{
+	return params_defaults[i];
+}
+
+
+
+
+static void a_uibuilder_free_paramdatas_sub(SGVariant * paramdatas, int i)
+{
+        /* Should make a util function out of this. */
+        delete paramdatas[i].sl;
+	paramdatas[i].sl = NULL;
+}
+
+
+
+
+/* Frees data from last (if necessary). */
+void a_uibuilder_free_paramdatas(SGVariant *paramdatas, Parameter *params, uint16_t params_count)
+{
+	int i;
+	/* May have to free strings, etc. */
+	for (i = 0; i < params_count; i++) {
+		switch (params[i].type) {
+		case SGVariantType::STRING:
+			free((char *) paramdatas[i].s);
+			break;
+		case SGVariantType::STRING_LIST: {
+			a_uibuilder_free_paramdatas_sub(paramdatas, i);
+			break;
+			default:
+				break;
+		}
+		}
+	}
+	free(paramdatas);
+}
+
+
+
+
+bool SlavGPS::operator==(unsigned int event_button, MouseButton button)
+{
+	return event_button == static_cast<unsigned int>(button);
+}
+
+
+
+
+bool SlavGPS::operator!=(unsigned int event_button, MouseButton button)
+{
+	return event_button != static_cast<unsigned int>(button);
+}
+
+
+
+
+bool SlavGPS::operator==(MouseButton button, unsigned int event_button)
+{
+	return event_button == static_cast<unsigned int>(button);
+}
+
+
+
+
+bool SlavGPS::operator!=(MouseButton button, unsigned int event_button)
+{
+	return event_button != static_cast<unsigned int>(button);
 }
 
 
