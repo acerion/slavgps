@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_UIBUILDER_QT_H_
-#define _SG_UIBUILDER_QT_H_
+#ifndef _SG_UI_BUILDER_H_
+#define _SG_UI_BUILDER_H_
 
 
 
@@ -227,4 +227,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_UIBUILDER_QT_H_ */
+#endif /* #ifndef _SG_UI_BUILDER_H_ */

@@ -28,7 +28,7 @@
 #include <QSettings>
 #include <QDebug>
 
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "layer_defaults.h"
 #include "dir.h"
 #include "file.h"

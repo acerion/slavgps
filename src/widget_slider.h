@@ -31,7 +31,7 @@
 #include <QLabel>
 
 
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 
 
 

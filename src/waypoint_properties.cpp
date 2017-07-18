@@ -40,7 +40,7 @@
 #include "dialog.h"
 #include "globals.h"
 #include "slav_qt.h"
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "date_time_dialog.h"
 #include "layer_trw.h"
 #include "waypoint.h"

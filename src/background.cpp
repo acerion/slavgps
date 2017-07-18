@@ -36,7 +36,7 @@
 #include "settings.h"
 #include "util.h"
 
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "globals.h"
 #if 0
 #include "preferences.h"

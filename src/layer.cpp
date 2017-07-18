@@ -46,7 +46,7 @@
 #include "layer_mapnik.h"
 #include "globals.h"
 #include "tree_view_internal.h"
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 
 
 

@@ -40,7 +40,7 @@
 #include "layer_aggregate.h"
 #include "layer_map.h"
 #include "globals.h"
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "settings.h"
 #include "background.h"
 #include "dialog.h"

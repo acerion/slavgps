@@ -30,7 +30,7 @@
 
 #include <QDebug>
 
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "trackpoint_properties.h"
 #include "vikutils.h"
 #include "date_time_dialog.h"

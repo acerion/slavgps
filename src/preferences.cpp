@@ -36,7 +36,7 @@
 #include "file.h"
 #include "util.h"
 #include "globals.h"
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "vikutils.h"
 
 

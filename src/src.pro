@@ -100,7 +100,7 @@ SOURCES += main.cpp \
     waypoint_properties.cpp \
     waypoint_list.cpp \
     tree_view.cpp \
-    uibuilder_qt.cpp \
+    ui_builder.cpp \
     widget_color_button.cpp \
     widget_file_list.cpp \
     widget_file_entry.cpp \
@@ -214,7 +214,7 @@ HEADERS += window.h \
     waypoint_list.h \
     tree_view.h \
     tree_view_internal.h \
-    uibuilder_qt.h \
+    ui_builder.h \
     widget_color_button.h \
     widget_file_list.h \
     widget_file_entry.h \

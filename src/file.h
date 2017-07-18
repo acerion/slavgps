@@ -27,7 +27,7 @@
 #include <cstdio>
 #include <cstdint>
 
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 
 
 

@@ -59,7 +59,7 @@
 #include "util.h"
 #include "settings.h"
 #include "globals.h"
-#include "uibuilder_qt.h"
+#include "ui_builder.h"
 #include "layers_panel.h"
 #include "preferences.h"
 #include "util.h"
