@@ -31,6 +31,7 @@
 #include <QMouseEvent>
 #include <QCursor>
 #include <QCloseEvent>
+#include <QUrl>
 
 #include "statusbar.h"
 #include "file.h"
@@ -158,8 +159,8 @@ namespace SlavGPS {
 
 		void finish_new(void);
 
-		char * draw_image_filename(img_generation_t img_gen);
-		void draw_viewport_to_image_file(img_generation_t img_gen);
+		QString draw_viewport_full_path(ViewportToImageMode img_gen);
+		void draw_viewport_to_image_file(ViewportToImageMode img_gen);
 		void save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
 		void save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
@@ -260,6 +261,9 @@ namespace SlavGPS {
 
 		void draw_viewport_to_image_file_cb(void);
 		void draw_viewport_to_image_dir_cb(void);
+#ifdef HAVE_ZIP_H
+		void draw_viewport_to_kmz_file_cb(void);
+#endif
 		void print_cb(void);
 
 
@@ -364,6 +368,9 @@ namespace SlavGPS {
 
 
 		std::list<QString> recent_files;
+
+		/* The last used directory for saving viewport to image(s). */
+		QUrl last_folder_images_url;
 	};
 
 

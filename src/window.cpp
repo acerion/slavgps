@@ -62,6 +62,23 @@ using namespace SlavGPS;
 
 
 
+
+/* This seems rather arbitary, quite large and pointless.
+   I mean, if you have a thousand windows open;
+   why not be allowed to open a thousand more... */
+#define MAX_WINDOWS 1024
+static unsigned int window_count = 0;
+static std::list<Window *> window_list;
+
+#define VIKING_WINDOW_WIDTH      1000
+#define VIKING_WINDOW_HEIGHT     800
+#define DRAW_IMAGE_DEFAULT_WIDTH 1280
+#define DRAW_IMAGE_DEFAULT_HEIGHT 1024
+#define DRAW_IMAGE_DEFAULT_SAVE_AS_PNG true
+
+
+
+
 extern VikDataSourceInterface vik_datasource_gps_interface;
 extern VikDataSourceInterface vik_datasource_file_interface;
 extern VikDataSourceInterface vik_datasource_routing_interface;
@@ -127,63 +144,33 @@ Window::Window()
 
 
 #if 0
-	this->viewport = new Viewport();
-	this->layers_panel = new LayersPanel();
-	this->layers_panel->set_viewport(this->viewport);
-	this->viking_vs = vik_statusbar_new();
-
-	this->viking_vtb = vik_toolbar_new();
-
-	this->layer_toolbox = new LayerToolbox(this);
-
-	window_create_ui(this);
 	this->set_filename(NULL);
 
 	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
+#endif
 
-
-	int draw_image_width;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width)) {
-		this->draw_image_width = draw_image_width;
+	int draw_image_width_;
+	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width_)) {
+		this->draw_image_width = draw_image_width_;
 	} else {
 		this->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
 	}
-	int draw_image_height;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height)) {
-		this->draw_image_height = draw_image_height;
+	int draw_image_height_;
+	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height_)) {
+		this->draw_image_height = draw_image_height_;
 	} else {
 		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
 	}
-	bool draw_image_save_as_png;
-	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &draw_image_save_as_png)) {
-		this->draw_image_save_as_png = draw_image_save_as_png;
+	bool draw_image_save_as_png_;
+	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &draw_image_save_as_png_)) {
+		this->draw_image_save_as_png = draw_image_save_as_png_;
 	} else {
 		this->draw_image_save_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
 	}
 
-	this->main_vbox = gtk_vbox_new(false, 1);
-	gtk_container_add(GTK_CONTAINER (this->gtk_window_), this->main_vbox);
-	this->menu_hbox = gtk_hbox_new(false, 1);
-	GtkWidget *menu_bar = gtk_ui_manager_get_widget(this->uim, "/MainMenu");
-	this->menu_hbox->addWidget(menu_bar);
-	this->main_vbox->addWidget(this->menu_hbox);
-
-	toolbar_init(this->viking_vtb,
-		     this->gtk_window_,
-		     this->main_vbox,
-		     this->menu_hbox,
-		     toolbar_tool_cb,
-		     toolbar_reload_cb,
-		     (void *) this); // This auto packs toolbar into the vbox
-	// Must be performed post toolbar init
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		for (int j = 0; j < Layer::get_interface(i)->layer_tools.size(); j++) {
-			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(i)->layer_tools[j]->id_string, false);
-		}
-	}
 
 
-
+#ifdef K
 	QObject::connect(this, SIGNAL("delete_event"), NULL, SLOT (delete_event));
 
 
@@ -217,6 +204,7 @@ Window::Window()
 	a_background_add_window(this);
 
 	window_list.push_front(this);
+#endif
 
 	int height = VIKING_WINDOW_HEIGHT;
 	int width = VIKING_WINDOW_WIDTH;
@@ -245,19 +233,23 @@ Window::Window()
 		bool maxed;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
 			if (maxed) {
+#ifdef K
 				gtk_window_maximize(this);
+#endif
 			}
 		}
 
 		bool full;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
+#ifdef K
 				this->show_full_screen = true;
 				gtk_window_fullscreen(this);
 				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
 				if (check_box) {
 					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
 				}
+#endif
 			}
 		}
 
@@ -265,9 +257,12 @@ Window::Window()
 		if (!a_settings_get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
 			position = -1;
 		}
+#ifdef K
 		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
+#endif
 	}
 
+#ifdef K
 	gtk_window_set_default_size(this, width, height);
 
 	// Only accept Drag and Drop of files onto the viewport
@@ -414,6 +409,12 @@ void Window::create_actions(void)
 		qa = this->menu_file->addAction(tr("Generate &Directory of Images..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_image_dir_cb()));
 		qa->setToolTip("Generate &Directory of Images");
+
+#ifdef HAVE_ZIP_H
+		qa = this->menu_file->addAction(tr("Generate &KMZ Map File..."));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_kmz_file_cb()));
+		qa->setToolTip("Generate a KMZ file with an overlay of the current view");
+#endif
 
 		qa = this->menu_file->addAction(tr("&Print..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (print_cb()));
@@ -962,11 +963,6 @@ QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 
 void Window::create_ui(void)
 {
-#if 0
-	GtkUIManager * uim = gtk_ui_manager_new();
-	window->uim = uim;
-#endif
-
 	/* Menu Tools -> Webtools. */
 	{
 		QActionGroup * group = new QActionGroup(this);
@@ -1145,27 +1141,6 @@ void Window::create_ui(void)
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", Layer::get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
 		}
 
-#if 0 // Added to QT.
-		// Further tool copying for to apply to the UI, also apply menu UI setup
-		for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
-
-			LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](window, window->viewport);
-			window->layer_toolbox->add_tool(layer_tool);
-			assert (layer_tool->layer_type == i);
-
-			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
-					      layer_tool->radioActionEntry.label,
-					      layer_tool->id_string,
-					      GTK_UI_MANAGER_MENUITEM, false);
-
-
-			radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
-			radio_actions[n_radio_actions] = layer_tool->radioActionEntry;
-			/* Overwrite with actual number to use. */
-			++n_radio_actions;
-			radio_actions[n_radio_actions].value = n_radio_actions;
-		}
-#endif
 
 		GtkActionEntry action_dl;
 		char *layername = g_strdup_printf("Layer%s", Layer::get_interface(i)->fixed_layer_name);
@@ -2608,7 +2583,7 @@ void Window::acquire_from_url_cb(void)
 
 void Window::draw_viewport_to_image_file_cb(void)
 {
-	this->draw_viewport_to_image_file(VW_GEN_SINGLE_IMAGE);
+	this->draw_viewport_to_image_file(ViewportToImageMode::SINGLE_IMAGE);
 }
 
 
@@ -2616,8 +2591,28 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
-	this->draw_viewport_to_image_file(VW_GEN_DIRECTORY_OF_IMAGES);
+	this->draw_viewport_to_image_file(ViewportToImageMode::DIRECTORY_OF_IMAGES);
 }
+
+
+
+
+#ifdef HAVE_ZIP_H
+void Window::draw_viewport_to_kmz_file_cb(void)
+{
+	if (this->viewport->get_coord_mode() == CoordMode::UTM) {
+		Dialog::error(tr("This feature is not available in UTM mode"));
+		return;
+	}
+
+	/* ATM This only generates a KMZ file with the current
+	   viewport image - intended mostly for map images [but will
+	   include any lines/icons from track & waypoints that are
+	   drawn] (it does *not* include a full KML dump of every
+	   track, waypoint etc...). */
+	this->draw_viewport_to_image_file(ViewportToImageMode::KMZ_FILE);
+}
+#endif
 
 
 
@@ -2693,9 +2688,9 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	bool success = true;
 
 	if (save_kmz) {
-#ifdef K
 		double north, east, south, west;
 		this->viewport->get_min_max_lat_lon(&south, &north, &west, &east);
+#ifdef K
 		ans = kmz_save_file(pixmap_to_save, file_path, north, east, south, west);
 #endif
 	} else {
@@ -2804,12 +2799,11 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 /*
  * Get an allocated filename (or directory as specified)
  */
-char * Window::draw_image_filename(img_generation_t img_gen)
+QString Window::draw_viewport_full_path(ViewportToImageMode mode)
 {
 	QString result;
-	if (img_gen == VW_GEN_DIRECTORY_OF_IMAGES) {
+	if (mode == ViewportToImageMode::DIRECTORY_OF_IMAGES) {
 
-#ifdef K
 		/* A directory.
 		   For some reason this method is only written to work in UTM... */
 		if (this->viewport->get_coord_mode() != CoordMode::UTM) {
@@ -2817,20 +2811,22 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 			return result;
 		}
 
-		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Choose a directory to hold images"),
-								 this,
-								 GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-								 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-								 GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
-								 NULL);
-		gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
-		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
+		QFileDialog dialog(this, tr("Choose a directory to hold images"));
+		dialog.setFileMode(QFileDialog::Directory);
+		dialog.setOption(QFileDialog::ShowDirsOnly);
+		dialog.setAcceptMode(QFileDialog::AcceptSave);
 
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			result = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		if (last_folder_images_url.toString().size()) {
+			dialog.setDirectoryUrl(last_folder_images_url);
 		}
-		gtk_widget_destroy(dialog);
-#endif
+
+		if (QDialog::Accepted == dialog.exec()) {
+			last_folder_images_url = dialog.directoryUrl();
+			qDebug() << "II: Viewport: Save to Directory of Images: last directory saved as:" << last_folder_images_url;
+
+			result = dialog.selectedFiles().at(0);
+			qDebug() << "II: Viewport: Save to Directory of Images: target directory:" << result;
+		}
 	} else {
 		QFileDialog dialog(this, tr("Save Image"));
 		dialog.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
@@ -2838,7 +2834,7 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 
 		QStringList mime;
 		mime << "application/octet-stream"; /* "All files (*)" */
-		if (img_gen == VW_GEN_KMZ_FILE) {
+		if (mode == ViewportToImageMode::KMZ_FILE) {
 			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
 		} else {
 			if (!this->draw_image_save_as_png) {
@@ -2850,18 +2846,14 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 		}
 		dialog.setMimeTypeFilters(mime);
 
-#ifdef K
-		if (last_folder_images_uri) {
-			gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_images_uri);
+		if (last_folder_images_url.toString().size()) {
+			dialog.setDirectoryUrl(last_folder_images_url);
 		}
-#endif
 
 
 		if (QDialog::Accepted == dialog.exec()) {
-#ifdef K
-			free(last_folder_images_uri);
-			last_folder_images_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
-#endif
+			last_folder_images_url = dialog.directoryUrl();
+			qDebug() << "II: Viewport: Save to Image: last directory saved as:" << last_folder_images_url;
 
 			result = dialog.selectedFiles().at(0);
 			qDebug() << "II: Viewport: Save to Image: target file:" << result;
@@ -2885,16 +2877,16 @@ char * Window::draw_image_filename(img_generation_t img_gen)
 
 
 
-void Window::draw_viewport_to_image_file(img_generation_t img_gen)
+void Window::draw_viewport_to_image_file(ViewportToImageMode mode)
 {
 	ViewportToImageDialog dialog(tr("Save to Image File"), this->get_viewport(), NULL);
-	dialog.build_ui(img_gen);
+	dialog.build_ui(mode);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
 
-	char * file_path = this->draw_image_filename(img_gen);
-	if (!file_path) {
+	QString full_path = this->draw_viewport_full_path(mode);
+	if (!full_path.size()) {
 		return;
 	}
 
@@ -2902,14 +2894,14 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 	double zoom = pow(2, active_z - 2);
 	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
 
-	if (img_gen == VW_GEN_SINGLE_IMAGE) {
-		this->save_image_file(QString(file_path),
+	if (mode == ViewportToImageMode::SINGLE_IMAGE) {
+		this->save_image_file(full_path,
 				      this->draw_image_width = dialog.width_spin->value(),
 				      this->draw_image_height = dialog.height_spin->value(),
 				      zoom,
 				      this->draw_image_save_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
 				      false);
-	} else if (img_gen == VW_GEN_KMZ_FILE) {
+	} else if (mode == ViewportToImageMode::KMZ_FILE) {
 
 		/* Remove some viewport overlays as these aren't useful in KMZ file. */
 		bool restore_xhair = this->viewport->get_draw_centermark();
@@ -2921,7 +2913,7 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 			this->viewport->set_draw_scale(false);
 		}
 
-		this->save_image_file(QString(file_path),
+		this->save_image_file(full_path,
 				      dialog.width_spin->value(),
 				      dialog.height_spin->value(),
 				      zoom,
@@ -2941,7 +2933,7 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 		}
 	} else {
 		/* UTM mode ATM. */
-		this->save_image_dir(QString(file_path),
+		this->save_image_dir(full_path,
 				     this->draw_image_width = dialog.width_spin->value(),
 				     this->draw_image_height = dialog.height_spin->value(),
 				     zoom,
@@ -2949,8 +2941,6 @@ void Window::draw_viewport_to_image_file(img_generation_t img_gen)
 				     dialog.tiles_width_spin->value(),
 				     dialog.tiles_height_spin->value());
 	}
-
-	free(file_path);
 }
 
 

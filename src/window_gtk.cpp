@@ -29,22 +29,6 @@ using namespace SlavGPS;
 
 
 
-/* This seems rather arbitary, quite large and pointless.
-   I mean, if you have a thousand windows open;
-   why not be allowed to open a thousand more... */
-#define MAX_WINDOWS 1024
-static unsigned int window_count = 0;
-static std::list<Window *> window_list;
-
-#define VIKING_WINDOW_WIDTH      1000
-#define VIKING_WINDOW_HEIGHT     800
-#define DRAW_IMAGE_DEFAULT_WIDTH 1280
-#define DRAW_IMAGE_DEFAULT_HEIGHT 1024
-#define DRAW_IMAGE_DEFAULT_SAVE_AS_PNG true
-
-
-
-
 /**
  * Returns the 'project' filename.
  */
@@ -332,80 +316,6 @@ static bool key_press_event_cb(Window * window, QKeyEvent * event, void * data)
 	}
 
 	return false; /* don't handle the keypress */
-}
-
-
-
-
-static bool delete_event(Window * gtk_window)
-{
-#if 0 /* Moved to QT app. */
-
-	Window * window = (Window *) g_object_get_data((GObject *) window, "window");
-
-#ifdef VIKING_PROMPT_IF_MODIFIED
-	if (window->modified)
-#else
-	if (0)
-#endif
-	{
-		QDialog * dia = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-						       _("Do you want to save the changes you made to the document \"%s\"?\n"
-							 "\n"
-							 "Your changes will be lost if you don't save them."),
-						       window->get_filename());
-		gtk_dialog_add_buttons(dia, _("Don't Save"), GTK_RESPONSE_NO, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_YES, NULL);
-		switch (gtk_dialog_run(dia)) {
-		case GTK_RESPONSE_NO:
-			gtk_widget_destroy(GTK_WIDGET(dia));
-			return false;
-		case GTK_RESPONSE_CANCEL:
-			gtk_widget_destroy(GTK_WIDGET(dia));
-			return true;
-		default:
-			gtk_widget_destroy(GTK_WIDGET(dia));
-			return !save_file(NULL, window);
-		}
-	}
-
-	if (window_count == 1) {
-		// On the final window close - save latest state - if it's wanted...
-		if (a_vik_get_restore_window_state()) {
-			int state = gdk_window_get_state(GTK_WIDGET (window)->window);
-			bool state_max = state & GDK_WINDOW_STATE_MAXIMIZED;
-			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
-
-			bool state_fullscreen = state & GDK_WINDOW_STATE_FULLSCREEN;
-			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
-
-			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, window->layers_panel->get_visible());
-
-			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->viking_vs)));
-
-			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, GTK_WIDGET_VISIBLE (toolbar_get_widget(window->viking_vtb)));
-
-			// If supersized - no need to save the enlarged width+height values
-			if (! (state_fullscreen || state_max)) {
-				int width, height;
-				gtk_window_get_size(window, &width, &height);
-				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, width);
-				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, height);
-			}
-
-			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(window->hpaned)));
-		}
-
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, window->draw_image_width);
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
-		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->draw_image_save_as_png);
-
-		char *accel_file_name = g_build_filename(get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
-		gtk_accel_map_save(accel_file_name);
-		free(accel_file_name);
-	}
-
-	return false;
-#endif
 }
 
 
@@ -1096,22 +1006,6 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 
 
 
-
-
-static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
-{
-	if (window->viewport->get_coord_mode() == CoordMode::UTM) {
-		Dialog::error(tr("This feature is not available in UTM mode"));
-		return;
-	}
-	// NB ATM This only generates a KMZ file with the current viewport image - intended mostly for map images [but will include any lines/icons from track & waypoints that are drawn]
-	// (it does *not* include a full KML dump of every track, waypoint etc...)
-	window->draw_to_image_file(VW_GEN_KMZ_FILE);
-}
-
-
-
-
 static void import_kmz_file_cb(GtkAction * a, Window * window)
 {
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Open File"),
@@ -1223,7 +1117,6 @@ static GtkActionEntry entries[] = {
 	{ "FileProperties",      NULL,                     N_("Properties..."),                      NULL,               N_("File Properties"),                                    (GCallback) file_properties_cb        },
 #ifdef HAVE_ZIP_H
 	{ "ImportKMZ",           GTK_STOCK_CONVERT,        N_("Import KMZ _Map File..."),            NULL,               N_("Import a KMZ file"), (GCallback)import_kmz_file_cb },
-	{ "GenKMZ",              GTK_STOCK_DND,            N_("Generate _KMZ Map File..."),          NULL,               N_("Generate a KMZ file with an overlay of the current view"), (GCallback) draw_to_kmz_file_cb  },
 #endif
 
 

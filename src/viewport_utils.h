@@ -21,11 +21,11 @@ namespace SlavGPS {
 
 
 
-	typedef enum {
-		VW_GEN_SINGLE_IMAGE,
-		VW_GEN_DIRECTORY_OF_IMAGES,
-		VW_GEN_KMZ_FILE,
-	} img_generation_t;
+	enum class ViewportToImageMode {
+		SINGLE_IMAGE,
+		DIRECTORY_OF_IMAGES,
+		KMZ_FILE,
+	};
 
 
 
@@ -41,7 +41,7 @@ namespace SlavGPS {
 		ViewportToImageDialog(QString const & title, Viewport * viewport, QWidget * parent = NULL);
 		~ViewportToImageDialog();
 
-		void build_ui(img_generation_t img_gen);
+		void build_ui(ViewportToImageMode img_gen);
 
 	private slots:
 		void accept_cb(void);
@@ -57,7 +57,7 @@ namespace SlavGPS {
 		QSpinBox * width_spin = NULL;
 		QSpinBox * height_spin = NULL;
 
-		/* Only used for VW_GEN_DIRECTORY_OF_IMAGES */
+		/* Only used for ViewportToImageMode::DIRECTORY_OF_IMAGES */
 		QSpinBox * tiles_width_spin = NULL;
 		QSpinBox * tiles_height_spin = NULL;
 

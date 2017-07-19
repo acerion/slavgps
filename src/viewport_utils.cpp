@@ -40,12 +40,6 @@ using namespace SlavGPS;
 
 
 
-/* The last used directories. */
-static char * last_folder_images_uri = NULL; /* kamilFIXME: this should be freed somewhere. */
-
-
-
-
 void ViewportToImageDialog::get_size_from_viewport_cb(void) /* Slot */
 {
 	int active = this->zoom_combo->currentIndex();
@@ -137,7 +131,7 @@ void ViewportToImageDialog::accept_cb(void) /* Slot. */
 
 
 
-void ViewportToImageDialog::build_ui(img_generation_t img_gen)
+void ViewportToImageDialog::build_ui(ViewportToImageMode mode)
 {
 	qDebug() << "II: Viewport To Image Dialog: building dialog UI";
 
@@ -204,7 +198,7 @@ void ViewportToImageDialog::build_ui(img_generation_t img_gen)
 
 
 
-	if (img_gen == VW_GEN_KMZ_FILE) {
+	if (mode == ViewportToImageMode::KMZ_FILE) {
 		// Don't show image type selection if creating a KMZ (always JPG internally)
 		// Start with viewable area by default
 		this->get_size_from_viewport_cb();
@@ -224,7 +218,7 @@ void ViewportToImageDialog::build_ui(img_generation_t img_gen)
 #endif
 	}
 
-	if (img_gen == VW_GEN_DIRECTORY_OF_IMAGES) {
+	if (mode == ViewportToImageMode::DIRECTORY_OF_IMAGES) {
 
 		label = new QLabel(tr("East-west image tiles:"));
 		this->vbox->addWidget(label);
