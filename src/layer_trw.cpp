@@ -1919,7 +1919,7 @@ QString LayerTRW::tooltip()
 			/* Setup info dependent on distance units. */
 			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
-			double len_in_units = convert_distance_meters_to(distance_unit, tt.length);
+			double len_in_units = convert_distance_meters_to(tt.length, distance_unit);
 
 			/* Timing information if available. */
 			tbuf1[0] = '\0';
@@ -1941,7 +1941,7 @@ QString LayerTRW::tooltip()
 			/* Setup info dependent on distance units. */
 			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
-			double len_in_units = convert_distance_meters_to(distance_unit, rlength);
+			double len_in_units = convert_distance_meters_to(rlength, distance_unit);
 			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
 		}
 
@@ -2079,9 +2079,8 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
 		tp_prev = this->current_trk->get_tp_prev(tp);
 	}
-	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_trk, NAN);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_trk, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
-	free(msg);
 
 	if (need2free) {
 		free(statusbar_format_code);

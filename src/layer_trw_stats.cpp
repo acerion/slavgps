@@ -103,6 +103,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	int cnt = 0;
 	char tmp_buf[64];
+	QString tmp_string;
 
 
 	/* 0: Number of Tracks */
@@ -149,32 +150,32 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* 2: Total Length */
-	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), stats.length);
-	((QLabel *) grid->itemAtPosition(2, col)->widget())->setText(QString(tmp_buf));
+	tmp_string = get_distance_string(stats.length, Preferences::get_unit_distance());
+	((QLabel *) grid->itemAtPosition(2, col)->widget())->setText(tmp_string);
 
 
 	/* 3: Average Length */
-	get_distance_string(tmp_buf, sizeof (tmp_buf), Preferences::get_unit_distance(), stats.length / stats.count);
-	((QLabel *) grid->itemAtPosition(3, col)->widget())->setText(QString(tmp_buf));
+	tmp_string = get_distance_string(stats.length / stats.count, Preferences::get_unit_distance());
+	((QLabel *) grid->itemAtPosition(3, col)->widget())->setText(tmp_string);
 
 
 	/* 4: Max Speed */
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	if (stats.max_speed > 0) {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, stats.max_speed);
+		tmp_string = get_speed_string(stats.max_speed, speed_unit);
 	} else {
-		snprintf(tmp_buf, sizeof (tmp_buf), "--");
+		tmp_string = "--";
 	}
-	((QLabel *) grid->itemAtPosition(4, col)->widget())->setText(QString(tmp_buf));
+	((QLabel *) grid->itemAtPosition(4, col)->widget())->setText(tmp_string);
 
 
 	/* 5: Avg. Speed */
 	if (stats.duration > 0) {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, stats.length / stats.duration);
+		tmp_string = get_speed_string(stats.length / stats.duration, speed_unit);
 	} else {
-		snprintf(tmp_buf, sizeof (tmp_buf), "--");
+		tmp_string = "--";
 	}
-	((QLabel *) grid->itemAtPosition(5, col)->widget())->setText(QString(tmp_buf));
+	((QLabel *) grid->itemAtPosition(5, col)->widget())->setText(tmp_string);
 
 
 	switch (Preferences::get_unit_height()) {

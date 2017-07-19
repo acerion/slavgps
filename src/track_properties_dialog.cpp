@@ -178,6 +178,8 @@ void TrackPropertiesDialog::create_properties_page(void)
 
 void TrackPropertiesDialog::create_statistics_page(void)
 {
+	QString tmp_string;
+
 	/* NB This value not shown yet - but is used by internal calculations. */
 	this->track_length = this->trk->get_length();
 	this->track_length_inc_gaps = this->trk->get_length_including_gaps();
@@ -186,8 +188,8 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	static char tmp_buf[50];
 
 	double tr_len = this->track_length;
-	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, tr_len);
-	this->w_track_length = ui_label_new_selectable(tmp_buf, this);
+	tmp_string = get_distance_string(tr_len, distance_unit);
+	this->w_track_length = ui_label_new_selectable(tmp_string, this);
 	this->statistics_form->addRow(QString("Track Length:"), this->w_track_length);
 
 
@@ -211,21 +213,21 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	SpeedUnit speed_units = Preferences::get_unit_speed();
 	double tmp_speed = this->trk->get_max_speed();
 	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		tmp_string = QObject::tr("No Data");
 	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
+		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
-	this->w_max_speed = ui_label_new_selectable(tmp_buf, this);
+	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
 	this->statistics_form->addRow(QString("Max Speed:"), this->w_max_speed);
 
 
 	tmp_speed = this->trk->get_average_speed();
 	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		tmp_string = QObject::tr("No Data");
 	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
+		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
-	this->w_avg_speed = ui_label_new_selectable(tmp_buf, this);
+	this->w_avg_speed = ui_label_new_selectable(tmp_string, this);
 	this->statistics_form->addRow(QString("Avg. Speed:"), this->w_avg_speed);
 
 
@@ -235,11 +237,11 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	   so ATM just put in the number. */
 	tmp_speed = this->trk->get_average_speed_moving(60);
 	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		tmp_string = QObject::tr("No Data");
 	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
+		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
-	this->w_mvg_speed = ui_label_new_selectable(tmp_buf, this);
+	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
 	this->statistics_form->addRow(QString("Moving Avg. Speed:"), this->w_mvg_speed);
 
 

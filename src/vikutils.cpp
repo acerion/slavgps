@@ -74,10 +74,11 @@ static struct kdtree * kd = NULL;
  * thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control.
  */
-char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
+QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
 {
+	QString msg = "";
 	if (!tp) {
-		return NULL;
+		return msg;
 	}
 
 	int len = 0;
@@ -89,23 +90,20 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		len = FMT_MAX_NUMBER_CODES;
 	}
 
-	char * values[FMT_MAX_NUMBER_CODES];
-	for (int i = 0; i < FMT_MAX_NUMBER_CODES; i++) {
-		values[i] = '\0';
-	}
+	std::vector<QString> values;
 
 	SpeedUnit speed_units = Preferences::get_unit_speed();
-	char * speed_units_str = get_speed_unit_string(speed_units);
+	const QString speed_units_str = get_speed_unit_string(speed_units);
 
-	char * separator = strdup(" | ");
+	const QString separator = " | ";
 
 	for (int i = 0; i < len; i++) {
 		switch (g_ascii_toupper(format_code[i])) {
 		case 'G': /* GPS Preamble. */
-			values[i] = strdup(_("GPSD"));
+			values[i] = QObject::tr("GPSD");
 			break;
 		case 'K': /* Trkpt Preamble. */
-			values[i] = strdup(_("Trkpt"));
+			values[i] = QObject::tr("Trkpt");
 			break;
 
 		case 'S': {
@@ -128,9 +126,9 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				speed = tp->speed;
 				speedtype = strdup("");
 			}
-			speed = convert_speed_mps_to(speed_units, speed);
+			speed = convert_speed_mps_to(speed, speed_units);
 
-			values[i] = g_strdup_printf(_("%sSpeed%s %.1f%s"), separator, speedtype, speed, speed_units_str);
+			values[i] = QObject::tr("%1Speed%2 %3%4").arg(separator).arg(speedtype).arg(speed, 0, 'f', 1).arg(speed_units_str);
 			free(speedtype);
 			break;
 		}
@@ -155,10 +153,10 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				speed = climb;
 				speedtype = strdup("");
 			}
-			speed = convert_speed_mps_to(speed_units, speed);
+			speed = convert_speed_mps_to(speed, speed_units);
 
 			/* Go for 2dp as expect low values for vertical speeds. */
-			values[i] = g_strdup_printf(_("%sClimb%s %.2f%s"), separator, speedtype, speed, speed_units_str);
+			values[i] = QObject::tr("%1Climb%2 %3%4").arg(separator).arg(speedtype).arg(speed, 0, 'f', 2).arg(speed_units_str);
 			free(speedtype);
 			break;
 		}
@@ -167,11 +165,11 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 			HeightUnit height_units = Preferences::get_unit_height();
 			switch (height_units) {
 			case HeightUnit::FEET:
-				values[i] = g_strdup_printf(_("%sAlt %dfeet"), separator, (int)round(VIK_METERS_TO_FEET(tp->altitude)));
+				values[i] = QObject::tr("%1Alt %2feet").arg(separator).arg((int)round(VIK_METERS_TO_FEET(tp->altitude)));
 				break;
 			default:
 				/* HeightUnit::METRES: */
-				values[i] = g_strdup_printf(_("%sAlt %dm"), separator, (int)round(tp->altitude));
+				values[i] = QObject::tr("%1Alt %2m").arg(separator).arg((int)round(tp->altitude));
 				break;
 			}
 			break;
@@ -179,7 +177,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 
 		case 'C': {
 			int heading = std::isnan(tp->course) ? 0 : (int)round(tp->course);
-			values[i] = g_strdup_printf(_("%sCourse %03d\302\260"), separator, heading);
+			values[i] = QObject::tr("%1Course %2\302\260").arg(separator).arg(heading, 3, 10, (QChar) '0'); /* TODO: what does \302\260 mean? */
 			break;
 		}
 
@@ -187,37 +185,35 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 			if (tp_prev) {
 				int diff = (int) round(Coord::distance(tp->coord, tp_prev->coord));
 
-				char * dist_units_str = NULL;
+				QString dist_units_str;
 				DistanceUnit distance_unit = Preferences::get_unit_distance();
 				/* Expect the difference between track points to be small hence use metres or yards. */
 				switch (distance_unit) {
 				case DistanceUnit::MILES:
 				case DistanceUnit::NAUTICAL_MILES:
-					dist_units_str = strdup(_("yards"));
+					dist_units_str = QObject::tr("yards");
 					break;
 				default:
 					/* DistanceUnit::KILOMETRES: */
-					dist_units_str = strdup(_("m"));
+					dist_units_str = QObject::tr("m");
 					break;
 				}
 
-				values[i] = g_strdup_printf(_("%sDistance diff %d%s"), separator, diff, dist_units_str);
-
-				free(dist_units_str);
+				values[i] = QObject::tr("%1Distance diff %2%3").arg(separator).arg(diff).arg(dist_units_str);
 			}
 			break;
 		}
 
 		case 'T': {
-			char *msg;
+			char * time_string;
 			if (tp->has_timestamp) {
 				/* Compact date time format. */
-				msg = vu_get_time_string(&(tp->timestamp), "%x %X", &(tp->coord), NULL);
+				time_string = vu_get_time_string(&tp->timestamp, "%x %X", &tp->coord, NULL);
 			} else {
-				msg = strdup("--");
+				time_string = strdup("--");
 			}
-			values[i] = g_strdup_printf(_("%sTime %s"), separator, msg);
-			free(msg);
+			values[i] = QObject::tr("%1Time %2").arg(separator).arg(time_string);
+			free(time_string);
 			break;
 		}
 
@@ -225,14 +221,14 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 			if (tp_prev) {
 				if (tp->has_timestamp && tp_prev->has_timestamp) {
 					time_t t_diff = tp->timestamp - tp_prev->timestamp;
-					values[i] = g_strdup_printf(_("%sTime diff %lds"), separator, t_diff);
+					values[i] = QObject::tr("%1Time diff %2s").arg(separator).arg((long) t_diff);
 				}
 			}
 			break;
 		}
 
 		case 'X':
-			values[i] = g_strdup_printf(_("%sNo. of Sats %d"), separator, tp->nsats);
+			values[i] = QObject::tr("%1No. of Sats %2").arg(separator).arg(tp->nsats);
 			break;
 
 		case 'F': {
@@ -241,12 +237,11 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 				double distd = trk->get_length_to_trackpoint(tp);
 				double diste = trk->get_length_including_gaps();
 				double dist = diste - distd;
-				char dist_unit_str[16] = { 0 };
 
 				DistanceUnit distance_unit = Preferences::get_unit_distance();
-				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
-				dist = convert_distance_meters_to(distance_unit, dist);
-				values[i] = g_strdup_printf(_("%sTo End %.2f%s"), separator, dist, dist_unit_str);
+				const QString dist_unit_str = get_distance_unit_string(distance_unit);
+				dist = convert_distance_meters_to(dist, distance_unit);
+				values[i] = QObject::tr("%1To End %2%3").arg(separator).arg(dist, 0, 'f', 2).arg(dist_unit_str);
 			}
 			break;
 		}
@@ -255,12 +250,11 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 			if (trk) {
 				/* Distance from start (along the track). */
 				double distd = trk->get_length_to_trackpoint(tp);
-				char dist_unit_str[16] = { 0 };
 
 				DistanceUnit distance_unit = Preferences::get_unit_distance();
-				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
-				distd = convert_distance_meters_to(distance_unit, distd);
-				values[i] = g_strdup_printf(_("%sDistance along %.2f%s"), separator, distd, dist_unit_str);
+				QString dist_unit_str = get_distance_unit_string(distance_unit);
+				distd = convert_distance_meters_to(distd, distance_unit);
+				values[i] = QObject::tr("%1Distance along %2%3").arg(separator).arg(distd, 0, 'f', 2).arg(dist_unit_str);
 			}
 			break;
 		}
@@ -270,7 +264,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 			char * lat = NULL, * lon = NULL;
 			struct LatLon ll = tp->coord.get_latlon();
 			a_coords_latlon_to_string(&ll, &lat, &lon);
-			values[i] = g_strdup_printf("%s%s %s", separator, lat, lon);
+			values[i] = QObject::tr("%1%2 %3").arg(separator).arg(lat).arg(lon);
 			free(lat);
 			free(lon);
 			break;
@@ -278,15 +272,15 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 
 		case 'N': /* Name of track. */
 			if (trk) {
-				values[i] = g_strdup_printf(_("%sTrack: %s"), separator, trk->name);
+				values[i] = QObject::tr("%1Track: %2").arg(separator).arg(trk->name);
 			}
 			break;
 
 		case 'E': /* Name of trackpoint if available. */
 			if (tp->name) {
-				values[i] = g_strdup_printf("%s%s", separator, tp->name);
+				values[i] = QObject::tr("%1%2").arg(separator).arg(tp->name);
 			} else {
-				values[i] = strdup("");
+				values[i] = "";
 			}
 			break;
 
@@ -295,22 +289,13 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 		}
 	}
 
-	free(separator);
-	free(speed_units_str);
-
-	char * msg = g_strconcat(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], NULL);
-
-	for (int i = 0; i < FMT_MAX_NUMBER_CODES; i++) {
-		if (values[i] != '\0')
-			free(values[i]);
-	}
-
+	msg = values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8];
 	return msg;
 }
 
 
 
-double SlavGPS::convert_speed_mps_to(SpeedUnit speed_units, double speed)
+double SlavGPS::convert_speed_mps_to(double speed, SpeedUnit speed_units)
 {
 	switch (speed_units) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
@@ -334,52 +319,56 @@ double SlavGPS::convert_speed_mps_to(SpeedUnit speed_units, double speed)
 
 
 
-char * SlavGPS::get_speed_unit_string(SpeedUnit speed_unit)
+QString SlavGPS::get_speed_unit_string(SpeedUnit speed_unit)
 {
-	char * speed_unit_str = NULL;
+	QString result;
+
 	switch (speed_unit) {
 	case SpeedUnit::MILES_PER_HOUR:
-		speed_unit_str = strdup(_("mph"));
+		result = QObject::tr("mph");
 		break;
 	case SpeedUnit::METRES_PER_SECOND:
-		speed_unit_str = strdup(_("m/s"));
+		result = QObject::tr("m/s");
 		break;
 	case SpeedUnit::KNOTS:
-		speed_unit_str = strdup(_("knots"));
+		result = QObject::tr("knots");
 		break;
 	default:
 		/* SpeedUnit::KILOMETRES_PER_HOUR */
-		speed_unit_str = strdup(_("km/h"));
+		result = QObject::tr("km/h");
 		break;
 	}
 
-	return speed_unit_str;
+	return result;
 }
 
 
 
 
-char * SlavGPS::get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed)
+QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
 {
+	QString result;
+	const int fract = 2; /* Number of digits after decimal point. */
+
 	switch (speed_unit) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
-		snprintf(buf, size, _("%.2f km/h"), VIK_MPS_TO_KPH (speed));
+		result = QObject::tr("%.2f km/h").arg(VIK_MPS_TO_KPH (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::MILES_PER_HOUR:
-		snprintf(buf, size, _("%.2f mph"), VIK_MPS_TO_MPH (speed));
+		result = QObject::tr("%.2f mph").arg(VIK_MPS_TO_MPH (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::KNOTS:
-		snprintf(buf, size, _("%.2f knots"), VIK_MPS_TO_KNOTS (speed));
+		result = QObject::tr("%.2f knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::METRES_PER_SECOND:
-		snprintf(buf, size, _("%.2f m/s"), speed);
+		result = QObject::tr("%.2f m/s").arg(speed, 0, 'f', fract);
 		break;
 	default:
-		snprintf(buf, size, "--");
-		fprintf(stderr, "CRITICAL: invalid speed unit: %d\n", (int) speed_unit);
+		result = "--";
+		qDebug() << "EE: Utils: get speed string: invalid speed unit" << (int) speed_unit;
 	}
 
-	return buf;
+	return result;
 }
 
 
@@ -406,29 +395,53 @@ bool SlavGPS::get_distance_unit_string(char * buf, size_t size, DistanceUnit dis
 
 
 
-char * SlavGPS::get_distance_string(char * buf, size_t size, DistanceUnit distance_unit, double distance)
+QString SlavGPS::get_distance_unit_string(DistanceUnit distance_unit)
 {
+	QString result;
+
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		snprintf(buf, size, _("%.2f km"), distance / 1000.0);
-		break;
+		result = QObject::tr("km");
 	case DistanceUnit::MILES:
-		snprintf(buf, size, _("%.2f miles"), VIK_METERS_TO_MILES (distance));
-		break;
+		result = QObject::tr("miles");
 	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(buf, size, _("%.2f NM"), VIK_METERS_TO_NAUTICAL_MILES (distance));
-		break;
+		result = QObject::tr("NM");
 	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
+		qDebug() << "EE: Utils: get distance unit string: invalid distance unit" << (int) distance_unit;
+		result = "";
 	}
-
-	return buf;
+	return result;
 }
 
 
 
 
-double SlavGPS::convert_distance_meters_to(DistanceUnit distance_unit, double distance)
+QString SlavGPS::get_distance_string(double distance, DistanceUnit distance_unit)
+{
+	QString result;
+	const int fract = 2; /* Number of digits after decimal point. */
+
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		result = QObject::tr("%1 km").arg(distance / 1000.0, 0, 'f', fract);
+		break;
+	case DistanceUnit::MILES:
+		result = QObject::tr("1 miles").arg(VIK_METERS_TO_MILES (distance), 0, 'f', fract);
+		break;
+	case DistanceUnit::NAUTICAL_MILES:
+		result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES (distance), 0, 'f', fract);
+		break;
+	default:
+		qDebug() << "EE: Utils: get distance string: invalid distance unit" << (int) distance_unit;
+	}
+
+	return result;
+}
+
+
+
+
+double SlavGPS::convert_distance_meters_to(double distance, DistanceUnit distance_unit)
 {
 	switch (distance_unit) {
 	case DistanceUnit::MILES:

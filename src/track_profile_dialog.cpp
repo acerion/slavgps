@@ -1151,10 +1151,8 @@ int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * ev)
 
 void distance_label_update(QLabel * label, double meters_from_start)
 {
-	static char tmp_buf[20];
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
-	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, meters_from_start);
-	label->setText(QString(tmp_buf));
+	const QString tmp_string = get_distance_string(meters_from_start, Preferences::get_unit_distance());
+	label->setText(tmp_string);
 
 	return;
 }
@@ -1362,20 +1360,18 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
 
-	char distance_unit_string[16] = { 0 };
-	get_distance_unit_string(distance_unit_string, sizeof (distance_unit_string), distance_unit);
+	const QString distance_unit_string = get_distance_unit_string(distance_unit);
 
-	char buf[64] = { 0 };
+	QString text;
 	if (index > 4) {
-		sprintf(buf, "%d %s", (unsigned int) distance_value, distance_unit_string);
+		text = QObject::tr("%1 %2").arg((unsigned int) distance_value).arg(distance_unit_string);
 	} else {
-		sprintf(buf, "%.1f %s", distance_value, distance_unit_string);
+		text = QObject::tr("%1 %2").arg(distance_value, 0, 'f', 1).arg(distance_unit_string);
 	}
 
 
 	float delta_x = 1.0 * graph_width / LINES; /* TODO: this needs to be fixed. */
 
-	QString text(buf);
 	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
 	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
@@ -1393,7 +1389,7 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
 {
 	/* Set to display units from length in metres. */
 	double length = this->track_length_inc_gaps;
-	length = convert_distance_meters_to(distance_unit, length);
+	length = convert_distance_meters_to(length, distance_unit);
 
 	unsigned int index = get_distance_chunk_index(length);
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
@@ -1693,7 +1689,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 	/* Convert into appropriate units. */
 	SpeedUnit speed_units = Preferences::get_unit_speed();
 	for (unsigned int i = 0; i < graph_width; i++) {
-		this->speeds[i] = convert_speed_mps_to(speed_units, this->speeds[i]);
+		this->speeds[i] = convert_speed_mps_to(this->speeds[i], speed_units);
 	}
 
 	minmax_array(this->speeds, &this->min_speed, &this->max_speed, false, graph_width);
@@ -1760,7 +1756,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(speed_units, gps_speed);
+			gps_speed = convert_speed_mps_to(gps_speed, speed_units);
 
 			int pos_x = graph_left + graph_width * ((*iter)->timestamp - beg_time) / dur;
 			int pos_y = graph_bottom - graph_height * (gps_speed - mins) / (chunkss[this->cis] * LINES);
@@ -1804,7 +1800,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 	/* Convert into appropriate units. */
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	for (unsigned int i = 0; i < graph_width; i++) {
-		this->distances[i] = convert_distance_meters_to(distance_unit, this->distances[i]);
+		this->distances[i] = convert_distance_meters_to(this->distances[i], distance_unit);
 	}
 
 	this->duration = this->trk->get_duration(true);
@@ -1816,7 +1812,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 	/* Easy to work out min / max of distance!
 	   Assign locally.
 	   mind = 0.0; - Thus not used. */
-	double maxd = convert_distance_meters_to(distance_unit, trk->get_length_including_gaps());
+	double maxd = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);
 
 	/* Find suitable chunk index. */
 	double dummy = 0.0; /* Expect this to remain the same! (not that it's used). */
@@ -2037,7 +2033,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 	/* Convert into appropriate units. */
 	SpeedUnit speed_units = Preferences::get_unit_speed();
 	for (unsigned int i = 0; i < graph_width; i++) {
-		this->speeds_dist[i] = convert_speed_mps_to(speed_units, this->speeds_dist[i]);
+		this->speeds_dist[i] = convert_speed_mps_to(this->speeds_dist[i], speed_units);
 	}
 
 	/* OK to reuse min_speed here. */
@@ -2105,7 +2101,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(speed_units, gps_speed);
+			gps_speed = convert_speed_mps_to(gps_speed, speed_units);
 
 			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			int pos_x = graph_left + (graph_width * dist_tp / dist);

@@ -47,15 +47,16 @@ namespace SlavGPS {
 
 
 
-	char * get_speed_unit_string(SpeedUnit speed_unit);
-	double convert_speed_mps_to(SpeedUnit speed_units, double speed);
-	char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed);
+	QString get_speed_unit_string(SpeedUnit speed_unit);
+	double convert_speed_mps_to(double speed, SpeedUnit speed_units);
+	QString get_speed_string(double speed, SpeedUnit speed_unit);
 
 	bool get_distance_unit_string(char * buf, size_t size, DistanceUnit distance_unit);
-	char * get_distance_string(char * buf, size_t size, DistanceUnit distance_unit, double distance);
-	double convert_distance_meters_to(DistanceUnit distance_unit, double distance);
+	QString get_distance_unit_string(DistanceUnit distance_unit);
+	QString get_distance_string(double distance, DistanceUnit distance_unit);
+	double convert_distance_meters_to(double distance, DistanceUnit distance_unit);
 
-	char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
+	QString vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename);
 

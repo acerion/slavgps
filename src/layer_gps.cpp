@@ -1673,9 +1673,8 @@ void LayerGPS::update_statusbar(Window * window)
 		need2free = true;
 	}
 
-	char *msg = vu_trackpoint_formatted_message(statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
 	window->get_statusbar()->set_message(StatusBarField::INFO, msg);
-	free(msg);
 
 	if (need2free) {
 		free(statusbar_format_code);

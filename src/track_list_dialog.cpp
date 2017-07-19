@@ -375,7 +375,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
-	trk_dist = convert_distance_meters_to(distance_unit, trk_dist);
+	trk_dist = convert_distance_meters_to(trk_dist, distance_unit);
 
 	/* Get start date. */
 	char time_buf[32];
@@ -410,10 +410,10 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	}
 
 	double av_speed = trk->get_average_speed();
-	av_speed = convert_speed_mps_to(speed_units, av_speed);
+	av_speed = convert_speed_mps_to(av_speed, speed_units);
 
 	double max_speed = trk->get_max_speed();
-	max_speed = convert_speed_mps_to(speed_units, max_speed);
+	max_speed = convert_speed_mps_to(max_speed, speed_units);
 
 	double max_alt = 0.0;
 	/* TODO - make this a function to get min / max values? */
@@ -565,10 +565,9 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
 
-	char * speed_units_string = get_speed_unit_string(speed_units);
+	const QString speed_units_string = get_speed_unit_string(speed_units);
 	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(QString("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
 	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(QString("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
-	free(speed_units_string);
 
 	if (height_units == HeightUnit::FEET) {
 		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));

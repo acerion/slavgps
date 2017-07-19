@@ -243,6 +243,7 @@ void PropertiesDialogTP::set_empty()
 void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
 {
 	static char tmp_str[64];
+	static QString tmp_string;
 	static struct LatLon ll;
 
 	Trackpoint * tp = **iter;
@@ -330,8 +331,8 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 				this->diff_speed->setText(QString("--"));
 			} else {
 				double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
-				get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tmp_speed);
-				this->diff_speed->setText(QString(tmp_str));
+				tmp_string = get_speed_string(tmp_speed, speed_units);
+				this->diff_speed->setText(tmp_string);
 			}
 		} else {
 			this->diff_time->setText(QString(""));
@@ -347,11 +348,11 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	this->course->setText(QString(tmp_str));
 
 	if (std::isnan(tp->speed)) {
-		snprintf(tmp_str, sizeof (tmp_str), "--");
+		tmp_string = "--";
 	} else {
-		get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tp->speed);
+		tmp_string = get_speed_string(tp->speed, speed_units);
 	}
-	this->speed->setText(QString(tmp_str));
+	this->speed->setText(tmp_string);
 
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:

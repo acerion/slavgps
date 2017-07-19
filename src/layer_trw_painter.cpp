@@ -206,7 +206,7 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 
 	/* Convert to specified unit to find the friendly breakdown value. */
-	dist = convert_distance_meters_to(distance_unit, dist);
+	dist = convert_distance_meters_to(dist, distance_unit);
 
 	int index = 0;
 	for (size_t i = 0; i < (sizeof chunksd) / (sizeof chunksd[0]); i++) {
@@ -249,21 +249,19 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 		if (tp_current && tp_next) {
 			/* Construct the name based on the distance value. */
 
-
-			char *name;
-			char unit_string[16];
-			get_distance_unit_string(unit_string, sizeof (unit_string), distance_unit);
+			QString name;
+			const QString unit_string = get_distance_unit_string(distance_unit);
 
 			/* Convert for display. */
-			dist_i = convert_distance_meters_to(distance_unit, dist_i);
+			dist_i = convert_distance_meters_to(dist_i, distance_unit);
 
-			/* Make the precision of the output related to the unit size. */
+			/* Make the precision of the output related to the unit size. TODO: don't we have utility function for that? */
 			if (index == 0) {
-				name = g_strdup_printf("%.2f %s", dist_i, unit_string);
+				name = QObject::tr("%.2f %2").arg(dist_i, 0, 'f', 2).arg(unit_string);
 			} else if (index == 1) {
-				name = g_strdup_printf("%.1f %s", dist_i, unit_string);
+				name = QObject::tr("%.1f %2").arg(dist_i, 0, 'f', 1).arg(unit_string);
 			} else {
-				name = g_strdup_printf("%d %s", (int) round(dist_i), unit_string); /* TODO single vs plurals. */
+				name = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(unit_string); /* TODO single vs plurals. */
 			}
 
 
@@ -281,8 +279,6 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 			const QColor bg_color = this->get_bg_color(drawing_highlight);
 
 			this->draw_track_label(name, fg_color, bg_color, &coord);
-
-			free(name);
 		}
 	}
 }
