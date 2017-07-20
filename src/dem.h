@@ -107,7 +107,7 @@ namespace SlavGPS {
 
 
 	private:
-		bool read_srtm_hgt(char const * file_name, char const * basename, bool zip);
+		bool read_srtm_hgt(const QString & full_file_path, char const * basename, bool zip);
 		bool read_other(char const * file_name);
 		bool parse_header(char * buffer);
 		void parse_block(char * buffer, int * cur_column, int * cur_row);

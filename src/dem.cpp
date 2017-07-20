@@ -42,6 +42,8 @@
 #endif
 
 #include <QDebug>
+#include <QFile>
+#include <QString>
 
 #include "compression.h"
 #include "dem.h"
@@ -319,6 +321,102 @@ void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 
 
 
+#if 1
+bool DEM::read_srtm_hgt(const QString & full_file_path, char const * basename, bool zip)
+{
+	const int num_rows_3sec = 1201;
+	const int num_rows_1sec = 3601;
+
+	this->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
+	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
+
+	/* TODO */
+	this->min_north = atoi(basename + 1) * 3600;
+	this->min_east = atoi(basename + 4) * 3600;
+	if (basename[0] == 'S') {
+		this->min_north = -this->min_north;
+	}
+
+	if (basename[3] == 'W') {
+		this->min_east = -this->min_east;
+	}
+
+	this->max_north = 3600 + this->min_north;
+	this->max_east = 3600 + this->min_east;
+
+	this->n_columns = 0;
+
+
+	QFile file(full_file_path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't open file" << full_file_path << file.error();
+		return false;
+	}
+
+	off_t file_size = file.size();
+	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+
+	int16_t * dem_contents = NULL;
+	unsigned long dem_size = 0;
+	if (zip) {
+		void * uncompressed_contents = NULL;
+		unsigned long uncompressed_size;
+
+		if ((uncompressed_contents = unzip_file((char *) file_contents, &uncompressed_size)) == NULL) {
+			file.unmap(file_contents);
+			file.close();
+			return false;
+		}
+
+		dem_contents = (int16_t *) uncompressed_contents;
+		dem_size = uncompressed_size;
+	} else {
+		dem_contents = (int16_t *) file_contents;
+		dem_size = file_size;
+	}
+
+	int arcsec;
+	if (dem_size == (num_rows_3sec * num_rows_3sec * sizeof (int16_t))) {
+		arcsec = 3;
+	} else if (dem_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
+		arcsec = 1;
+	} else {
+		qDebug() << "WW: DEM: Read SRTM HGT: file" << basename << "does not have right size";
+		file.unmap(file_contents);
+		file.close();
+		return false;
+	}
+
+	int num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
+	this->east_scale = this->north_scale = arcsec;
+
+	for (int i = 0; i < num_rows; i++) {
+		this->n_columns++;
+		DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
+		this->columns.push_back(new_column);
+		this->columns[i]->east_west = this->min_east + arcsec * i;
+		this->columns[i]->south = this->min_north;
+		this->columns[i]->n_points = num_rows;
+		this->columns[i]->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
+	}
+
+	int ent = 0;
+	for (int i = (num_rows - 1); i >= 0; i--) {
+		for (int j = 0; j < num_rows; j++) {
+			this->columns[j]->points[i] = GINT16_FROM_BE(dem_contents[ent]);
+			ent++;
+		}
+	}
+
+	if (zip) {
+		free(dem_contents);
+	}
+	file.unmap(file_contents);
+	file.close();
+	return true;
+}
+
+#else
 
 
 bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
@@ -409,7 +507,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 	g_mapped_file_unref(mf);
 	return true;
 }
-
+#endif
 
 
 
@@ -441,19 +539,18 @@ static bool is_zip_file(char const * basename)
 
 
 
-bool DEM::read(const QString & file_path)
+bool DEM::read(const QString & full_file_path)
 {
-	const char * path = file_path.toUtf8().constData();
-	if (access(path, R_OK) != 0) {
+	if (access(full_file_path.toUtf8().constData(), R_OK) != 0) {
 		return false;
 	}
 
-	const char * basename = file_basename(path);
+	const char * basename = file_basename(full_file_path.toUtf8().constData());
 
 	if (is_strm_hgt(basename)) {
-		return this->read_srtm_hgt(path, basename, is_zip_file(basename));
+		return this->read_srtm_hgt(full_file_path, basename, is_zip_file(basename));
 	} else {
-		return this->read_other(path);
+		return this->read_other(full_file_path.toUtf8().constData());
 	}
 }
 
