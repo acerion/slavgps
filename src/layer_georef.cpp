@@ -1269,11 +1269,7 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 
 
 
-LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
-					       const char *name,
-					       QPixmap * pixmap,
-					       const Coord * coord_tl,
-					       const Coord * coord_br)
+LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord * coord_tl, const Coord * coord_br)
 {
 
 	LayerGeoref * grl = new LayerGeoref();

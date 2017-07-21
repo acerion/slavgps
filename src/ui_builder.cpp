@@ -260,7 +260,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	}
 
 	param = &parameters[SG_WP_PARAM_NAME];
-	param_value.s = wp->name;
+	param_value.s = strdup(wp->name.toUtf8().constData()); /* FIXME: memory leak */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;

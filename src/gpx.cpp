@@ -391,7 +391,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_gpx_name:
-		trw->rename(c_cdata->str);
+		trw->rename(QString(c_cdata->str));
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -876,10 +876,10 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	free(s_lon);
 
 	/* Sanity clause. */
-	if (wp->name) {
-		tmp = entitize(wp->name);
-	} else {
+	if (wp->name.isEmpty()) {
 		tmp = strdup("waypoint");
+	} else {
+		tmp = entitize(wp->name.toUtf8().constData());
 	}
 
 	fprintf(f, "  <name>%s</name>\n", tmp);
@@ -971,8 +971,8 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 	free(s_lat); s_lat = NULL;
 	free(s_lon); s_lon = NULL;
 
-	if (tp->name) {
-		char *s_name = entitize(tp->name);
+	if (!tp->name.isEmpty()) {
+		char *s_name = entitize(tp->name.toUtf8().constData());
 		fprintf(f, "    <name>%s</name>\n", s_name);
 		free(s_name);
 	}
@@ -1076,10 +1076,10 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	char * tmp;
 
 	/* Sanity clause. */
-	if (trk->name) {
-		tmp = entitize(trk->name);
-	} else {
+	if (trk->name.isEmpty()) {
 		tmp = strdup("track");
+	} else {
+		tmp = entitize(trk->name.toUtf8().constData());
 	}
 
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
@@ -1167,7 +1167,7 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 {
 	Waypoint * a = (Waypoint *) x;
 	Waypoint * b = (Waypoint *) y;
-	return strcmp(a->name,b->name);
+	return strcmp(a->name.toUtf8().constData(), b->name.toUtf8().constData());
 }
 
 
@@ -1177,7 +1177,7 @@ static int gpx_track_compare_name(const void * x, const void * y)
 {
 	Track * a = (Track *) x;
 	Track * b = (Track *) y;
-	return strcmp(a->name,b->name);
+	return strcmp(a->name.toUtf8().constData(), b->name.toUtf8().constData());
 }
 
 
@@ -1190,7 +1190,7 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 	gpx_write_header(f);
 
 	char *tmp;
-	const char *name = trw->get_name();
+	const char *name = trw->get_name().toUtf8().constData();
 	if (name) {
 		tmp = entitize(name);
 		fprintf(f, "  <name>%s</name>\n", tmp);

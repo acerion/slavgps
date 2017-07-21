@@ -631,7 +631,7 @@ void TreeView::unselect(TreeIndex const & index)
   TODO: improve handling of 'editable' argument.
   Non-editable items have e.g limited number of fields in context menu.
 */
-TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
+TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -644,7 +644,7 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 
 
 	/* LayersTreeColumn::NAME */
-	item = new QStandardItem(QString(name));
+	item = new QStandardItem(name);
 	item->setToolTip(tooltip);
 	item->setEditable(editable);
 	first_item = item;
@@ -933,7 +933,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 
 
 	/* LayersTreeColumn::NAME */
-	item = new QStandardItem(QString(layer->name));
+	item = new QStandardItem(layer->name);
 	item->setToolTip(tooltip);
 	first_item = item;
 
@@ -1151,7 +1151,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		if (this->get_layer(*index)) {
 			QStandardItem * item = this->model->itemFromIndex(*index);
 			qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
-			this->get_layer(*index)->rename((char *) item->text().data());
+			this->get_layer(*index)->rename(item->text());
 		} else {
 			/* No layer probably means that we want to edit a sublayer. */
 		}

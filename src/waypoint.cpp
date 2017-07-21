@@ -49,7 +49,7 @@ static std::mutex wp_uid_mutex;
 
 Waypoint::Waypoint()
 {
-	this->name = strdup(_("Waypoint"));
+	this->name = tr("Waypoint");
 	wp_uid_mutex.lock();
 	this->uid = ++global_wp_uid;
 	wp_uid_mutex.unlock();
@@ -88,7 +88,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 
 Waypoint::~Waypoint()
 {
-	free_string(&name);  /* kamilFIXME: I had to add free()ing of name. */
+	/* kamilFIXME: in C code I had to add free()ing of Waypoint::name. */
 	free_string(&comment);
 	free_string(&description);
 	free_string(&source);
@@ -102,15 +102,9 @@ Waypoint::~Waypoint()
 
 
 /* Hmmm tempted to put in new constructor. */
-void Waypoint::set_name(char const * name_)
+void Waypoint::set_name(const QString & new_name)
 {
-	free_string(&name);
-
-	if (name_) {
-		name = strdup(name_);
-	}
-
-	return;
+	this->name = new_name;
 }
 
 
@@ -274,7 +268,7 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
 	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
-	vwm_append(name);
+	vwm_append(name.toUtf8().constData());
 	vwm_append(comment);
 	vwm_append(description);
 	vwm_append(source);
@@ -314,9 +308,10 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 		(s) = NULL;			\
 	}					\
 	data += len;
-
-	vwu_get(wp->name);
-	fprintf(stderr, "---- name = '%s'\n", wp->name);
+#ifdef K
+	vwu_get(wp->name_.toUtf8().constData());
+	fprintf(stderr, "---- name = '%s'\n", wp->name_.toUtf8().constData());
+#endif
 	vwu_get(wp->comment);
 	fprintf(stderr, "---- comment = '%s'\n", wp->comment);
 	vwu_get(wp->description);

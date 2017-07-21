@@ -94,7 +94,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	LayerTRW * trw = this->menu_data.trw;
 	Waypoint * wp = this->menu_data.wp;
 
-	if (!wp || !wp->name) {
+	if (!wp || wp->name.isEmpty()) {
 		return;
 	}
 
@@ -103,8 +103,8 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	this->accept();
 
 	bool updated = false;
-	char * new_name = waypoint_properties_dialog(trw->get_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
-	if (new_name) {
+	const QString new_name = waypoint_properties_dialog(trw->get_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
+	if (new_name.size()) {
 		trw->waypoint_rename(wp, new_name);
 	}
 
@@ -415,13 +415,13 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 
 
 	/* LAYER_NAME_COLUMN */
-	item = new QStandardItem(QString(trw->name));
+	item = new QStandardItem(trw->name);
 	item->setToolTip(tooltip);
 	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
 	/* WAYPOINT_NAME_COLUMN */
-	item = new QStandardItem(QString(wp->name));
+	item = new QStandardItem(wp->name);
 	item->setToolTip(tooltip);
 	items << item;
 

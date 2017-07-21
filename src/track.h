@@ -84,15 +84,15 @@ namespace SlavGPS {
 		Trackpoint() {};
 		Trackpoint(const Trackpoint& tp);
 		Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode);
-		~Trackpoint();
+		~Trackpoint() {};
 
 
-		void set_name(char const * name);
+		void set_name(const QString & new_name);
 		static bool compare_timestamps(const Trackpoint * a, const Trackpoint * b); /* compare_trackpoints_t */
 
 
 
-		char * name = NULL;
+		QString name;
 		Coord coord;
 		bool newsegment = false;
 		bool has_timestamp = false;
@@ -159,7 +159,7 @@ namespace SlavGPS {
 
 
 		void set_defaults();
-		void set_name(const char *name);
+		void set_name(const QString & new_name);
 		void set_comment(const char *comment);
 		void set_description(const char *description);
 		void set_source(const char *source);
@@ -268,7 +268,7 @@ namespace SlavGPS {
 		char * source = NULL;
 		char * type = NULL;
 		uint8_t ref_count = 0;
-		char * name = NULL;
+		QString name;
 		QDialog * property_dialog = NULL;
 		bool has_color = false;
 		QColor color;

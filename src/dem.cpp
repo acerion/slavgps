@@ -50,6 +50,7 @@
 #include "coords.h"
 #include "fileutils.h"
 #include "util.h"
+#include "vikutils.h"
 
 
 
@@ -322,7 +323,7 @@ void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 
 
 #if 1
-bool DEM::read_srtm_hgt(const QString & full_file_path, char const * basename, bool zip)
+bool DEM::read_srtm_hgt(const QString & full_file_path, const QString & file_name, bool zip)
 {
 	const int num_rows_3sec = 1201;
 	const int num_rows_1sec = 3601;
@@ -331,13 +332,13 @@ bool DEM::read_srtm_hgt(const QString & full_file_path, char const * basename, b
 	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
 
 	/* TODO */
-	this->min_north = atoi(basename + 1) * 3600;
-	this->min_east = atoi(basename + 4) * 3600;
-	if (basename[0] == 'S') {
+	this->min_north = atoi(file_name.toUtf8().constData() + 1) * 3600;
+	this->min_east = atoi(file_name.toUtf8().constData() + 4) * 3600;
+	if (file_name[0] == 'S') {
 		this->min_north = -this->min_north;
 	}
 
-	if (basename[3] == 'W') {
+	if (file_name[3] == 'W') {
 		this->min_east = -this->min_east;
 	}
 
@@ -381,7 +382,7 @@ bool DEM::read_srtm_hgt(const QString & full_file_path, char const * basename, b
 	} else if (dem_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
-		qDebug() << "WW: DEM: Read SRTM HGT: file" << basename << "does not have right size";
+		qDebug() << "WW: DEM: Read SRTM HGT: file" << file_name << "does not have right size";
 		file.unmap(file_contents);
 		file.close();
 		return false;
@@ -518,21 +519,22 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 
 
-static bool is_strm_hgt(char const * basename)
+static bool is_strm_hgt(const QString & file_name)
 {
-	return (strlen(basename) == 11 || ((strlen(basename) == 15) && (basename[11] == '.' && basename[12] == 'z' && basename[13] == 'i' && basename[14] == 'p')))
-		&& basename[7] == '.' && basename[8] == 'h' && basename[9] == 'g' && basename[10] == 't'
-		&& (basename[0] == 'N' || basename[0] == 'S') && (basename[3] == 'E' || basename[3] == 'W');
+	size_t len = file_name.size();
+	return (len == 11 || ((len == 15) && (file_name[11] == '.' && file_name[12] == 'z' && file_name[13] == 'i' && file_name[14] == 'p')))
+		&& file_name[7] == '.' && file_name[8] == 'h' && file_name[9] == 'g' && file_name[10] == 't'
+		&& (file_name[0] == 'N' || file_name[0] == 'S') && (file_name[3] == 'E' || file_name[3] == 'W');
 }
 
 
 
 
 
-static bool is_zip_file(char const * basename)
+static bool is_zip_file(const QString & file_name)
 {
-	size_t len = strlen(basename);
-	return len == 15 && basename[len - 3] == 'z' && basename[len - 2] == 'i' && basename[len - 1] == 'p';
+	int len = file_name.size();
+	return len == 15 && file_name[len - 3] == 'z' && file_name[len - 2] == 'i' && file_name[len - 1] == 'p';
 }
 
 
@@ -545,10 +547,10 @@ bool DEM::read(const QString & full_file_path)
 		return false;
 	}
 
-	const char * basename = file_basename(full_file_path.toUtf8().constData());
+	const QString & file_name = file_base_name(full_file_path);
 
-	if (is_strm_hgt(basename)) {
-		return this->read_srtm_hgt(full_file_path, basename, is_zip_file(basename));
+	if (is_strm_hgt(file_name)) {
+		return this->read_srtm_hgt(full_file_path, file_name, is_zip_file(file_name));
 	} else {
 		return this->read_other(full_file_path.toUtf8().constData());
 	}
@@ -558,10 +560,10 @@ bool DEM::read(const QString & full_file_path)
 
 
 
-bool DEM::read_other(char const * file_name)
+bool DEM::read_other(const QString & full_path)
 {
 	/* Header */
-	FILE * f = fopen(file_name, "r");
+	FILE * f = fopen(full_path.toUtf8().constData(), "r");
 	if (!f) {
 		return false;
 	}

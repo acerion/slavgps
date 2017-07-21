@@ -78,7 +78,7 @@ namespace SlavGPS {
 
 		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp);
 		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index);
-		TreeIndex const & add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
+		TreeIndex const & add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp);
 
 		TreeItemType get_item_type(TreeIndex const & index);
 

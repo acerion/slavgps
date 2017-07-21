@@ -419,14 +419,16 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 
 /* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
    The name to use is returned.
+
+   TODO: why default_name is unused?
 */
-char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
+QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
-	PropertiesDialog dialog(QString(wp->name), parent);
+	PropertiesDialog dialog(wp->name, parent);
 	dialog.fill(wp, wp_params);
 	int dialog_code = dialog.exec();
 
-	char * entered_name = NULL;
+	QString entered_name;
 
 	if (dialog_code == QDialog::Accepted) {
 
@@ -458,9 +460,7 @@ char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_params[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol(param_value.s);
-
-		return entered_name;
-	} else {
-		return NULL;
 	}
+
+	return entered_name;
 }

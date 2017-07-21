@@ -196,7 +196,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
 	Parameter * params = ((Layer *) layer)->get_interface()->params; /* kamilTODO: remove cast. */
 
-	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
+	fprintf(f, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
 	if (!layer->visible) {
 		fprintf(f, "visible=f\n");
 	}
@@ -546,7 +546,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				viewport->set_draw_highlight(TEST_BOOLEAN(line+14));
 
 			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
-				layer->rename(line+5);
+				layer->rename(QString(line+5));
 
 			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
 				layer->visible = TEST_BOOLEAN(line+8);

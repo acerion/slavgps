@@ -784,9 +784,8 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	if (sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		char * uniq_name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
 		wp->set_name(uniq_name);
-		std::free(uniq_name);
 
 		this->add_waypoint(wp);
 
@@ -803,9 +802,8 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 		Track * trk = Track::unmarshall(item, len);
 
 		/* When copying - we'll create a new name based on the original. */
-		char * uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 		trk->set_name(uniq_name);
-		std::free(uniq_name);
 
 		this->add_track(trk);
 
@@ -820,9 +818,8 @@ bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 	if (sublayer->sublayer_type == SublayerType::ROUTE) {
 		Track * trk = Track::unmarshall(item, len);
 		/* When copying - we'll create a new name based on the original. */
-		char * uniq_name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
 		trk->set_name(uniq_name);
-		free(uniq_name);
 
 		this->add_route(trk);
 		trk->convert(this->coord_mode);
@@ -1680,7 +1677,7 @@ void LayerTRW::add_tracks_node(void)
 	assert(this->connected_to_tree);
 
 	this->tracks_node = new Sublayer(SublayerType::TRACKS);
-	this->tree_view->add_sublayer(this->tracks_node, this, this->index, _("Tracks"), NULL, false, 0);
+	this->tree_view->add_sublayer(this->tracks_node, this, this->index, tr("Tracks"), NULL, false, 0);
 }
 
 
@@ -1691,7 +1688,7 @@ void LayerTRW::add_waypoints_node(void)
 	assert(this->connected_to_tree);
 
 	this->waypoints_node = new Sublayer(SublayerType::WAYPOINTS);
-	this->tree_view->add_sublayer(this->waypoints_node, this, this->index, _("Waypoints"), NULL, false, 0);
+	this->tree_view->add_sublayer(this->waypoints_node, this, this->index, tr("Waypoints"), NULL, false, 0);
 }
 
 
@@ -1702,7 +1699,7 @@ void LayerTRW::add_routes_node(void)
 	assert(this->connected_to_tree);
 
 	this->routes_node = new Sublayer(SublayerType::ROUTES);
-	this->tree_view->add_sublayer(this->routes_node, this, this->index, _("Routes"), NULL, false, 0);
+	this->tree_view->add_sublayer(this->routes_node, this, this->index, tr("Routes"), NULL, false, 0);
 }
 
 
@@ -2281,7 +2278,7 @@ bool LayerTRW::get_waypoints_visibility()
  * Get waypoint by name - not guaranteed to be unique
  * Finds the first one
  */
-Waypoint * LayerTRW::get_waypoint(const char * wp_name)
+Waypoint * LayerTRW::get_waypoint(const QString & wp_name)
 {
 	return LayerTRWc::find_waypoint_by_name(waypoints, wp_name);
 }
@@ -2293,9 +2290,9 @@ Waypoint * LayerTRW::get_waypoint(const char * wp_name)
  * Get track by name - not guaranteed to be unique
  * Finds the first one
  */
-Track * LayerTRW::get_track(const char * name_)
+Track * LayerTRW::get_track(const QString & trk_name)
 {
-	return LayerTRWc::find_track_by_name(tracks, name_);
+	return LayerTRWc::find_track_by_name(tracks, trk_name);
 }
 
 
@@ -2305,9 +2302,9 @@ Track * LayerTRW::get_track(const char * name_)
  * Get route by name - not guaranteed to be unique
  * Finds the first one
  */
-Track * LayerTRW::get_route(const char * name_)
+Track * LayerTRW::get_route(const QString & route_name)
 {
-	return LayerTRWc::find_track_by_name(routes, name_);
+	return LayerTRWc::find_track_by_name(routes, route_name);
 }
 
 
@@ -2482,7 +2479,7 @@ void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 
 void LayerTRW::export_via_babel_cb(void) /* Slot. */
 {
-	vik_trw_layer_export_gpsbabel(this, _("Export Layer"), this->get_name());
+	vik_trw_layer_export_gpsbabel(this, tr("Export Layer"), this->get_name());
 }
 
 
@@ -2508,12 +2505,12 @@ void LayerTRW::export_gpx_track_cb(void)
 {
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 
-	if (!trk || !trk->name) {
+	if (!trk || trk->name.isEmpty()) { /* TODO: will track's name be ever empty? */
 		return;
 	}
 #ifdef K
 
-	char * auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
+	char * auto_save_name = append_file_ext(trk->name_.toUtf8().constData(), FILE_TYPE_GPX);
 
 	char * label = NULL;
 	if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
@@ -2564,7 +2561,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 {
-	char * default_name = this->highest_wp_number_get();
+	const QString default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
 	bool updated;
 	wp->coord = *def_coord;
@@ -2572,17 +2569,14 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	char * returned_name = waypoint_properties_dialog(parent_window, default_name, this, wp, this->coord_mode, true, &updated);
+	const QString returned_name = waypoint_properties_dialog(parent_window, default_name, this, wp, this->coord_mode, true, &updated);
 
-	if (returned_name) {
+	if (returned_name.size()) {
 		wp->visible = true;
 		wp->set_name(returned_name);
 		this->add_waypoint(wp);
-		free(default_name);
-		free(returned_name);
 		return true;
 	} else {
-		free(default_name);
 		delete wp;
 		return false;
 	}
@@ -2938,9 +2932,9 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 
 
 
-void LayerTRW::new_track_create_common(char * name_)
+void LayerTRW::new_track_create_common(const QString & new_name)
 {
-	qDebug() << "II: Layer TRW: new track create common, track name" << name_;
+	qDebug() << "II: Layer TRW: new track create common, track name" << new_name;
 
 	this->current_trk = new Track(false);
 	this->current_trk->set_defaults();
@@ -2954,7 +2948,7 @@ void LayerTRW::new_track_create_common(char * name_)
 	}
 
 	this->current_trk->has_color = true;
-	this->current_trk->set_name(name_);
+	this->current_trk->set_name(new_name);
 	this->add_track(this->current_trk);
 }
 
@@ -2964,9 +2958,8 @@ void LayerTRW::new_track_create_common(char * name_)
 void LayerTRW::new_track_cb() /* Slot. */
 {
 	if (!this->current_trk) {
-		char * name_ = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
-		this->new_track_create_common(name_);
-		free(name_);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, tr("Track")) ;
+		this->new_track_create_common(uniq_name);
 
 		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_TRACK);
 	}
@@ -2975,7 +2968,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 
 
-void LayerTRW::new_route_create_common(char * name_)
+void LayerTRW::new_route_create_common(const QString & new_name)
 {
 	this->current_trk = new Track(true);
 	this->current_trk->set_defaults();
@@ -2983,7 +2976,7 @@ void LayerTRW::new_route_create_common(char * name_)
 	/* By default make all routes red. */
 	this->current_trk->has_color = true;
 	this->current_trk->color = QColor("red");
-	this->current_trk->set_name(name_);
+	this->current_trk->set_name(new_name);
 
 	this->add_route(this->current_trk);
 }
@@ -2994,9 +2987,8 @@ void LayerTRW::new_route_create_common(char * name_)
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
 	if (!this->current_trk) {
-		char * name_ = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
-		this->new_route_create_common(name_);
-		free(name_);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::ROUTE, tr("Route")) ;
+		this->new_route_create_common(uniq_name);
 
 		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_ROUTE);
 	}
@@ -3208,52 +3200,50 @@ void LayerTRW::reset_waypoints()
 /**
  * Allocates a unique new name.
  */
-char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char * name_)
+QString LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const QString & old_name)
 {
 	int i = 2; /* kamilTODO: static? */
-	char * newname = g_strdup(name_);
+	QString new_name = old_name;
 
 	void * id = NULL;
 	do {
 		id = NULL;
 		switch (sublayer_type) {
 		case SublayerType::TRACK:
-			id = (void *) this->get_track((const char *) newname);
+			id = (void *) this->get_track(new_name.toUtf8().constData());
 			break;
 		case SublayerType::WAYPOINT:
-			id = (void *) this->get_waypoint((const char *) newname);
+			id = (void *) this->get_waypoint(new_name.toUtf8().constData());
 			break;
 		default:
-			id = (void *) this->get_route((const char *) newname);
+			id = (void *) this->get_route(new_name.toUtf8().constData());
 			break;
 		}
 		/* If found a name already in use try adding 1 to it and we try again. */
 		if (id) {
-			char * new_newname = g_strdup_printf("%s#%d", name_, i);
-			free(newname);
-			newname = new_newname;
+			new_name = QString("1#%2").arg(old_name).arg(i);
 			i++;
 		}
 	} while (id != NULL);
 
-	return newname;
+	return new_name;
 }
 
 
 
 
-void LayerTRW::filein_add_waypoint(Waypoint * wp, char const * name_)
+void LayerTRW::filein_add_waypoint(Waypoint * wp, const QString & wp_name)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
-	wp->set_name(name_);
+	wp->set_name(wp_name);
 	this->add_waypoint(wp);
 }
 
 
 
 
-void LayerTRW::filein_add_track(Track * trk, char const * name_)
+void LayerTRW::filein_add_track(Track * trk, const QString & trk_name)
 {
 	if (this->route_finder_append && this->current_trk) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
@@ -3271,7 +3261,7 @@ void LayerTRW::filein_add_track(Track * trk, char const * name_)
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
-		trk->set_name(name_);
+		trk->set_name(trk_name);
 		/* No more uniqueness of name forced when loading from a file. */
 		if (trk->sublayer_type == SublayerType::ROUTE) {
 			this->add_route(trk);
@@ -3308,9 +3298,9 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 		Track * trk = this->tracks.at(sublayer_uid);
 		Track * trk2 = new Track(*trk);
 
-		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
-		trk2->set_name(newname);
-		free(newname);
+		const QString uniq_name = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name_);
+		trk2->set_name(uniq_name);
+		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		trw_dest->add_track(trk2);
 
@@ -3324,9 +3314,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 		Track * trk = this->routes.at(sublayer_uid);
 		Track * trk2 = new Track(*trk);
 
-		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
-		trk2->set_name(newname);
-		free(newname);
+		const QString uniq_name = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name_);
+		trk2->set_name(uniq_name);
 
 		trw_dest->add_route(trk2);
 
@@ -3337,9 +3326,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, SublayerTyp
 		Waypoint * wp = this->waypoints.at(sublayer_uid);
 		Waypoint * wp2 = new Waypoint(*wp);
 
-		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, wp->name);
-		wp2->set_name(newname);
-		free(newname);
+		const QString uniq_name = trw_dest->new_unique_sublayer_name(sublayer_type, wp->name_);
+		wp2->set_name(uniq_name);
 
 		trw_dest->add_waypoint(wp2);
 
@@ -3405,8 +3393,8 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 
 bool LayerTRW::delete_track(Track * trk)
 {
-	/* kamilTODO: why check for trk->name here? */
-	if (!trk || !trk->name) {
+	/* TODO: why check for trk->name here? */
+	if (!trk || trk->name.isEmpty()) {
 		return false;
 	}
 
@@ -3445,7 +3433,7 @@ bool LayerTRW::delete_track(Track * trk)
 bool LayerTRW::delete_route(Track * trk)
 {
 	/* kamilTODO: why check for trk->name here? */
-	if (!trk || !trk->name) {
+	if (!trk || trk->name.isEmpty()) {
 		return false;
 	}
 
@@ -3482,8 +3470,8 @@ bool LayerTRW::delete_route(Track * trk)
 
 bool LayerTRW::delete_waypoint(Waypoint * wp)
 {
-	/* kamilTODO: why check for wp->name here? */
-	if (!wp || !wp->name) {
+	/* TODO: why check for wp->name here? */
+	if (!wp || wp->name.isEmpty()) {
 		return false;
 	}
 
@@ -3519,10 +3507,10 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
  * NOTE: ATM this will delete the first encountered Waypoint with the specified name
  *   as there be multiple waypoints with the same name
  */
-bool LayerTRW::delete_waypoint_by_name(char const * name_)
+bool LayerTRW::delete_waypoint_by_name(const QString & wp_name)
 {
 	/* Currently only the name is used in this waypoint find function. */
-	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, name_);
+	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, wp_name);
 	if (wp) {
 		return delete_waypoint(wp);
 	} else {
@@ -3538,15 +3526,15 @@ bool LayerTRW::delete_waypoint_by_name(char const * name_)
  * NOTE: ATM this will delete the first encountered Track with the specified name
  *   as there may be multiple tracks with the same name within the specified hash table
  */
-bool LayerTRW::delete_track_by_name(const char * name_, bool is_route)
+bool LayerTRW::delete_track_by_name(const QString & trk_name, bool is_route)
 {
 	if (is_route) {
-		Track * trk = LayerTRWc::find_track_by_name(routes, name_);
+		Track * trk = LayerTRWc::find_track_by_name(routes, trk_name);
 		if (trk) {
 			return delete_route(trk);
 		}
 	} else {
-		Track * trk = LayerTRWc::find_track_by_name(tracks, name_);
+		Track * trk = LayerTRWc::find_track_by_name(tracks, trk_name);
 		if (trk) {
 			return delete_track(trk);
 		}
@@ -3665,11 +3653,11 @@ void LayerTRW::delete_sublayer_cb(void)
 
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(uid);
-		if (wp && wp->name) {
+		if (wp && !wp->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
 				/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(QString(wp->name))), this->get_window()) {
+				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->name)), this->get_window()) {
 					return;
 				}
 			}
@@ -3681,10 +3669,10 @@ void LayerTRW::delete_sublayer_cb(void)
 		}
 	} else if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 		Track * trk = this->tracks.at(uid);
-		if (trk && trk->name) {
+		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(QString(trk->name))), this->get_window()) {
+				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(trk->name)), this->get_window()) {
 					return;
 				}
 			}
@@ -3695,10 +3683,10 @@ void LayerTRW::delete_sublayer_cb(void)
 		}
 	} else {
 		Track * trk = this->routes.at(uid);
-		if (trk && trk->name) {
+		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(QString(trk->name))), this->get_window()) {
+				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(trk->name)), this->get_window()) {
 					return;
 				}
 			}
@@ -3716,7 +3704,7 @@ void LayerTRW::delete_sublayer_cb(void)
 /**
  *  Rename waypoint and maintain corresponding name of waypoint in the treeview.
  */
-void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
+void LayerTRW::waypoint_rename(Waypoint * wp, const QString & new_name)
 {
 	wp->set_name(new_name);
 
@@ -3754,11 +3742,11 @@ void LayerTRW::properties_item_cb(void)
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 		Waypoint * wp = this->waypoints.at(wp_uid);
 
-		if (wp && wp->name) {
+		if (wp && !wp->name.isEmpty()) {
 			bool updated = false;
 
-			char * new_name = waypoint_properties_dialog(this->get_window(), wp->name, this, wp, this->coord_mode, false, &updated);
-			if (new_name) { /* TODO: memory management. */
+			const QString new_name = waypoint_properties_dialog(this->get_window(), wp->name, this, wp, this->coord_mode, false, &updated);
+			if (new_name.size()) {
 				this->waypoint_rename(wp, new_name);
 			}
 
@@ -3772,7 +3760,7 @@ void LayerTRW::properties_item_cb(void)
 		}
 	} else {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer);
-		if (trk && trk->name) {
+		if (trk && !trk->name.isEmpty()) {
 			track_properties_dialog(this->get_window(), this, trk);
 		}
 	}
@@ -3785,7 +3773,7 @@ void LayerTRW::profile_item_cb(void)
 {
 	if (this->menu_data->sublayer->sublayer_type != SublayerType::WAYPOINT) {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer);
-		if (trk && trk->name) {
+		if (trk && !trk->name.isEmpty()) {
 			track_profile_dialog(this->get_window(),
 					     this,
 					     trk,
@@ -3806,7 +3794,7 @@ void LayerTRW::profile_item_cb(void)
 void LayerTRW::track_statistics_cb(void)
 {
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-	if (trk && trk->name) {
+	if (trk && !trk->name.isEmpty()) {
 		track_properties_dialog(this->get_window(), this, trk, true);
 	}
 }
@@ -3903,13 +3891,13 @@ void LayerTRW::convert_track_route_cb(void)
 	/* Convert. */
 	trk_copy->sublayer_type = trk_copy->sublayer_type == SublayerType::ROUTE ? SublayerType::TRACK : SublayerType::ROUTE;
 
-	/* ATM can't set name to self - so must create temporary copy. */
-	char * name_ = g_strdup(trk_copy->name);
+	/* ATM can't set name to self - so must create temporary copy. TODO: verify this comment. */
+	const QString copy_name = trk_copy->name;
 
 	/* Delete old one and then add new one. */
 	if (trk->sublayer_type == SublayerType::ROUTE) {
 		this->delete_route(trk);
-		trk_copy->set_name(name_);
+		trk_copy->set_name(copy_name);
 		this->add_track(trk_copy);
 	} else {
 		/* Extra route conversion bits... */
@@ -3917,10 +3905,9 @@ void LayerTRW::convert_track_route_cb(void)
 		trk_copy->to_routepoints();
 
 		this->delete_track(trk);
-		trk_copy->set_name(name_);
+		trk_copy->set_name(copy_name);
 		this->add_route(trk_copy);
 	}
-	free(name_);
 
 	/* Update in case color of track / route changes when moving between sublayers. */
 	this->emit_changed();
@@ -4796,8 +4783,8 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 		return;
 	}
 
-	char * name_ = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
-	if (!name_) {
+	const QString uniq_name = this->new_unique_sublayer_name(sublayer_type, this->current_trk->name);
+	if (!uniq_name.size()) {
 		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->current_trk->name;
 		return;
 	}
@@ -4820,8 +4807,7 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 
 	this->current_trk = new_track;
 
-	new_track->set_name(name_);
-	free(name_);
+	new_track->set_name(uniq_name);
 
 	this->add_track(new_track);
 
@@ -4970,11 +4956,11 @@ void LayerTRW::split_by_n_points_cb(void)
 */
 bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points)
 {
+	QString new_tr_name;
 	for (auto iter = points->begin(); iter != points->end(); iter++) {
 
 		Track * copy = new Track(*orig, (*iter)->begin(), (*iter)->end());
 
-		char * new_tr_name = NULL;
 		if (orig->sublayer_type == SublayerType::ROUTE) {
 			new_tr_name = this->new_unique_sublayer_name(SublayerType::ROUTE, orig->name);
 			copy->set_name(new_tr_name);
@@ -4984,7 +4970,6 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 			copy->set_name(new_tr_name);
 			this->add_track(copy);
 		}
-		free(new_tr_name);
 		copy->calculate_bounds();
 	}
 
@@ -5026,12 +5011,12 @@ void LayerTRW::split_segments_cb(void)
 		return;
 	}
 
+	QString new_tr_name;
 	std::list<Track *> * tracks_ = trk->split_into_segments();
 	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
 		if (*iter) {
-			char * new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
+			new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 			(*iter)->set_name(new_tr_name);
-			free(new_tr_name);
 
 			this->add_track(*iter);
 		}
@@ -5447,20 +5432,18 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 		}
 
 		/* Rename it. */
-		char * newname = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
-		trk->set_name(newname);
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
+		trk->set_name(uniq_name);
 
 		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
 		if (trk->index.isValid()) {
-			this->tree_view->set_name(trk->index, newname);
+			this->tree_view->set_name(trk->index, uniq_name);
 			if (ontrack) {
 				this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 			} else {
 				this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 			}
 		}
-		free(newname);
-		newname = NULL;
 
 		/* Try to find duplicate names again in the updated set of tracks. */
 		QString duplicate_name_ = LayerTRWc::has_duplicate_track_names(tracks_table); /* kamilTODO: there is a variable in this class with this name. */
@@ -5569,7 +5552,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first trk it finds of that name (but uniqueness is enforced above). */
-		this->delete_track_by_name(iter->toUtf8().data(), false);
+		this->delete_track_by_name(*iter, false);
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
@@ -5619,7 +5602,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first route it finds of that name (but uniqueness is enforced above). */
-		this->delete_track_by_name(iter->toUtf8().data(), true);
+		this->delete_track_by_name(*iter, true);
 	}
 
 	this->emit_changed();
@@ -5661,10 +5644,9 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		}
 
 		/* Rename it. */
-		char * newname = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
-		this->waypoint_rename(wp, newname);
-		free(newname);
-		newname = NULL;
+		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
+		this->waypoint_rename(wp, uniq_name);
+		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
 		duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
@@ -5712,7 +5694,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
-		this->delete_waypoint_by_name(iter->toUtf8().data());
+		this->delete_waypoint_by_name(*iter);
 	}
 
 	this->calculate_bounds_waypoints();
@@ -5911,7 +5893,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(SublayerTyp
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::TRACKS);
+	layer_trw_show_stats(this->get_window(), this->name, this, SublayerType::TRACKS);
 }
 
 
@@ -5919,7 +5901,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::ROUTES);
+	layer_trw_show_stats(this->get_window(), this->name, this, SublayerType::ROUTES);
 }
 
 
@@ -5945,9 +5927,8 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 	if (!wp) {
 		return;
 	}
-	char *webpage = g_strdup_printf("http://www.geocaching.com/seek/cache_details.aspx?wp=%s", wp->name);
-	open_url(webpage);
-	free(webpage);
+	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(wp->name);
+	open_url(webpage.toUtf8().constData());
 }
 
 
@@ -5972,123 +5953,125 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-char const * LayerTRW::sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel)
+QString LayerTRW::sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel)
 {
+	QString empty_string("");
+
 	if (sublayer->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
-		if (wp->name) {
-			if (strcmp(newname, wp->name) == 0) {
-				return NULL;
+		if (!wp->name.isEmpty()) {
+			if (new_name == wp->name) {
+				return empty_string;
 			}
 		}
 
-		Waypoint * wpf = this->get_waypoint(newname);
+		Waypoint * wpf = this->get_waypoint(new_name);
 
 		if (wpf) {
 			/* An existing waypoint has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
-				return NULL;
+			if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
+				return empty_string;
 			}
 		}
 
 		/* Update WP name and refresh the treeview. */
-		wp->set_name(newname);
+		wp->set_name(new_name);
 
-		this->tree_view->set_name(sublayer->index, newname);
+		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 
 		panel->emit_update_cb();
 
-		return newname;
+		return new_name;
 	}
 
 	if (sublayer->sublayer_type == SublayerType::TRACK) {
 		Track * trk = this->tracks.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
-		if (trk->name) {
-			if (strcmp(newname, trk->name) == 0) {
-				return NULL;
+		if (trk->name.size()) {
+			if (new_name == trk->name) {
+				return empty_string;
 			}
 		}
 
-		Track *trkf = this->get_track((const char *) newname);
+		Track *trkf = this->get_track(new_name);
 
 		if (trkf) {
 			/* An existing track has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
-				return NULL;
+			if (!Dialog::yes_or_no(tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
+				return empty_string;
 			}
 		}
 		/* Update track name and refresh GUI parts. */
-		trk->set_name(newname);
+		trk->set_name(new_name);
 
 		/* Update any subwindows that could be displaying this track which has changed name.
 		   Only one Track Edit Window. */
 		if (this->current_trk == trk && this->tpwin) {
-			this->tpwin->set_track_name(newname);
+			this->tpwin->set_track_name(new_name);
 		}
 
 		/* Update the dialog windows if any of them is visible. */
 		trk->update_properties_dialog();
 		trk->update_profile_dialog();
 
-		this->tree_view->set_name(sublayer->index, newname);
+		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
-		return newname;
+		return new_name;
 	}
 
 	if (sublayer->sublayer_type == SublayerType::ROUTE) {
 		Track * trk = this->routes.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
-		if (trk->name) {
-			if (strcmp(newname, trk->name) == 0) {
-				return NULL;
+		if (trk->name.size()) {
+			if (new_name == trk->name) {
+				return empty_string;
 			}
 		}
 
-		Track * trkf = this->get_route((const char *) newname);
+		Track * trkf = this->get_route(new_name);
 
 		if (trkf) {
 			/* An existing track has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
-				return NULL;
+			if (!Dialog::yes_or_no(tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
+				return empty_string;
 			}
 		}
 		/* Update track name and refresh GUI parts. */
-		trk->set_name(newname);
+		trk->set_name(new_name);
 
 		/* Update any subwindows that could be displaying this track which has changed name.
 		   Only one Track Edit Window. */
 		if (this->current_trk == trk && this->tpwin) {
-			this->tpwin->set_track_name(newname);
+			this->tpwin->set_track_name(new_name);
 		}
 
 		/* Update the dialog windows if any of them is visible. */
 		trk->update_properties_dialog();
 		trk->update_profile_dialog();
 
-		this->tree_view->set_name(sublayer->index, newname);
+		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
-		return newname;
+		return new_name;
 	}
 
-	return NULL;
+	return empty_string;
 }
 
 
 
 
-bool is_valid_geocache_name(char *str)
+bool is_valid_geocache_name(const char *str)
 {
 	int len = strlen(str);
 	return len >= 3 && len <= 7 && str[0] == 'G' && str[1] == 'C' && isalnum(str[2]) && (len < 4 || isalnum(str[3])) && (len < 5 || isalnum(str[4])) && (len < 6 || isalnum(str[5])) && (len < 7 || isalnum(str[6]));
@@ -7060,10 +7043,10 @@ void LayerTRW::download_map_along_track_cb(void)
 
 
 /* Lowest waypoint number calculation. */
-static int highest_wp_number_name_to_number(const char *name)
+static int highest_wp_number_name_to_number(const QString & name)
 {
-	if (strlen(name) == 3) {
-		int n = atoi(name);
+	if (name.size() == 3) {
+		int n = atoi(name.toUtf8().constData()); /* TODO: Use QString method. */
 		if (n < 100 && name[0] != '0') {
 			return -1;
 		}
@@ -7087,7 +7070,7 @@ void LayerTRW::highest_wp_number_reset()
 
 
 
-void LayerTRW::highest_wp_number_add_wp(const char * new_wp_name)
+void LayerTRW::highest_wp_number_add_wp(const QString & new_wp_name)
 {
 	/* If is bigger that top, add it. */
 	int new_wp_num = highest_wp_number_name_to_number(new_wp_name);
@@ -7099,7 +7082,7 @@ void LayerTRW::highest_wp_number_add_wp(const char * new_wp_name)
 
 
 
-void LayerTRW::highest_wp_number_remove_wp(char const * old_wp_name)
+void LayerTRW::highest_wp_number_remove_wp(const QString & old_wp_name)
 {
 	/* If wasn't top, do nothing. if was top, count backwards until we find one used. */
 	int old_wp_num = highest_wp_number_name_to_number(old_wp_name);
@@ -7166,9 +7149,9 @@ void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 {
 	QString title;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACKS) {
-		title = QString(_("%1: Track List")).arg(this->name);
+		title = tr("%1: Track List").arg(this->name);
 	} else {
-		title = QString(_("%1: Route List")).arg(this->name);
+		title = tr("%1: Route List").arg(this->name);
 	}
 	track_list_dialog(title, this, this->menu_data->sublayer->sublayer_type, false);
 }
@@ -7178,7 +7161,7 @@ void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 
 void LayerTRW::track_list_dialog_cb(void)
 {
-	QString title = QString(_("%1: Track and Route List")).arg(this->name);
+	QString title = tr("%1: Track and Route List").arg(this->name);
 	track_list_dialog(title, this, SublayerType::NONE, false);
 }
 
@@ -7187,7 +7170,7 @@ void LayerTRW::track_list_dialog_cb(void)
 
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
+	QString title = tr("%1: Waypoint List").arg(this->name);
 	waypoint_list_dialog(title, this, false);
 }
 
@@ -7247,7 +7230,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
 
-	this->rename(vik_trw_layer_interface.layer_name.toUtf8().constData());
+	this->rename(vik_trw_layer_interface.layer_name);
 
 
 #ifdef K

@@ -72,7 +72,7 @@ void SlavGPS::track_properties_dialog(Window * parent,
 
 TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
 {
-	this->setWindowTitle(QString(tr("%1 - Track Properties")).arg(a_trk->name));
+	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->name));
 
 	this->trw = a_layer;
 	this->trk = a_trk;

@@ -143,7 +143,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	this->toplayer = new LayerAggregate();
-	this->toplayer->rename(_("Top Layer"));
+	this->toplayer->rename(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0);
 	this->toplayer->connect_to_tree(this->tree_view, this->toplayer_item);
@@ -295,14 +295,14 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		/* Get index and layer. */
 		Layer * layer = this->tree_view->get_layer(index);
 
-		if (strcmp(layer->name, new_text) != 0) {
+		if (layer->name != new_text) {
 			layer->rename(new_text);
 			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
 		Layer * parent_layer = this->tree_view->get_parent_layer(index);
-		const char *name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
-		if (name) {
+		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
+		if (!name.isEmpty()) {
 			this->tree_view->set_name(index, name);
 		}
 	}
@@ -444,8 +444,9 @@ bool LayersPanel::new_layer(LayerType layer_type)
 			return false;
 		}
 
-		/* We translate the name here in order to avoid translating name set by user. */
-		layer->rename(_(interface->layer_name.toUtf8().constData()));
+		/* We translate the name here in order to avoid translating name set by user.
+		   TODO: translate the string. */
+		layer->rename(interface->layer_name);
 	}
 
 	this->add_layer(layer);

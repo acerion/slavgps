@@ -32,6 +32,7 @@
 #include "viewport_internal.h"
 #include "layers_panel.h"
 #include "globals.h"
+#include "vikutils.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif
@@ -141,7 +142,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		trw->filein_add_waypoint(wp, (char *) file_basename(filename));
+		trw->filein_add_waypoint(wp, file_base_name(filename));
 		wp->set_image(filename);
 		/* Simply set position to the current center. */
 		wp->coord = *(viewport->get_center());

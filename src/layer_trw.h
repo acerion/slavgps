@@ -174,7 +174,7 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		char const * sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel);
+		QString sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel);
 		bool sublayer_toggle_visible(Sublayer * sublayer);
 
 		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
@@ -205,10 +205,10 @@ namespace SlavGPS {
 		bool find_track_by_date(char const * date, Viewport * viewport, bool select);
 		bool find_waypoint_by_date(char const * date, Viewport * viewport, bool select);
 
-		Track * get_track(const char * name);
-		Track * get_route(const char * name);
+		Track * get_track(const QString & trk_name);
+		Track * get_route(const QString & route_name);
 
-		Waypoint * get_waypoint(const char * name);
+		Waypoint * get_waypoint(const QString & wp_name);
 
 		void draw_with_highlight(Viewport * viewport, bool highlight);
 		void draw_highlight(Viewport * viewport);
@@ -237,8 +237,8 @@ namespace SlavGPS {
 
 
 		bool new_waypoint(Window * parent, const Coord * def_coord);
-		void new_track_create_common(char * name);
-		void new_route_create_common(char * name);
+		void new_track_create_common(const QString & new_name);
+		void new_route_create_common(const QString & new_name);
 
 
 
@@ -247,13 +247,13 @@ namespace SlavGPS {
 
 		void reset_waypoints();
 
-		char * new_unique_sublayer_name(SublayerType sublayer_type, const char * name);
+		QString new_unique_sublayer_name(SublayerType sublayer_type, const QString& old_name);
 
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
 		 * These copy the name, so you should free it if necessary. */
-		void filein_add_waypoint(Waypoint * wp, char const * name);
-		void filein_add_track(Track * trk, char const * name);
+		void filein_add_waypoint(Waypoint * wp, const QString & wp_name);
+		void filein_add_track(Track * trk, const QString & trk_name);
 
 
 
@@ -263,10 +263,10 @@ namespace SlavGPS {
 
 
 		bool delete_track(Track * trk);
-		bool delete_track_by_name(char const * name, bool is_route);
+		bool delete_track_by_name(const QString & trk_name, bool is_route);
 		bool delete_route(Track * trk);
 		bool delete_waypoint(Waypoint * wp);
-		bool delete_waypoint_by_name(char const * name);
+		bool delete_waypoint_by_name(const QString & wp_name);
 
 
 		void delete_all_routes();
@@ -274,7 +274,7 @@ namespace SlavGPS {
 		void delete_all_waypoints();
 
 
-		void waypoint_rename(Waypoint * wp, char const * new_name);
+		void waypoint_rename(Waypoint * wp, const QString & new_name);
 		void waypoint_reset_icon(Waypoint * wp);
 		void update_treeview(Track * trk);
 
@@ -340,8 +340,8 @@ namespace SlavGPS {
 
 
 		void highest_wp_number_reset();
-		void highest_wp_number_add_wp(char const * new_wp_name);
-		void highest_wp_number_remove_wp(char const * old_wp_name);
+		void highest_wp_number_add_wp(const QString & new_wp_name);
+		void highest_wp_number_remove_wp(const QString & old_wp_name);
 		char * highest_wp_number_get();
 
 
@@ -699,7 +699,7 @@ QIcon * get_wp_sym_small(char * symbol);
 
 int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data);
 int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata);
-bool is_valid_geocache_name(char *str);
+bool is_valid_geocache_name(const char *str);
 
 
 

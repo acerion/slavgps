@@ -479,7 +479,7 @@ typedef struct zip_file zip_file_t;
 			const Coord coord_tl(ll_tl, viewport->get_coord_mode());
 			const Coord coord_br(ll_br, viewport->get_coord_mode());
 
-			Layer * grl = vik_georef_layer_create(viewport, name, pixmap, &coord_tl, &coord_br);
+			Layer * grl = georef_layer_create(viewport, QString(name), pixmap, &coord_tl, &coord_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
 				top->add_layer(grl, false);

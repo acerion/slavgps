@@ -78,6 +78,9 @@ namespace SlavGPS {
 	int viking_version_to_number(char const * version);
 
 
+	QString file_base_name(const QString & full_path);
+
+
 
 	class SGUtils {
 	public:

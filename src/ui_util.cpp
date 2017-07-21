@@ -299,7 +299,7 @@ SGItem::SGItem(Geoname * geoname) : QStandardItem()
 
 SGItem::SGItem(Track * trk) : QStandardItem()
 {
-	this->setText(QString(trk->name));
+	this->setText(trk->name);
 	this->setData(QVariant::fromValue(trk), RoleLayerData);
 }
 

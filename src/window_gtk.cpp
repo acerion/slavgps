@@ -655,7 +655,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (0 != access(fn, F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
+		if (0 != access(fn, F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(fn)), GTK_WINDOW(dialog))) {
 			window->set_filename(fn);
 			rv = window->window_save();
 			if (rv) {

@@ -191,16 +191,15 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 	GSList * cur_file = user_data->filelist;
 	while (cur_file) {
 		char *filename = (char *) cur_file->data;
-		char *name;
+		const QString name;
 #ifdef K
 		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), &name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
-			if (!name) {
-				name = strdup(file_basename(filename));
+			if (!name.size()) {
+				name = file_base_name(filename);
 			}
 			trw->filein_add_waypoint(wp, name);
-			free(name);
 		} else {
 			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
 		}

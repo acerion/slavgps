@@ -377,8 +377,8 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 			Waypoint * wp = this->waypoints.at(this->menu_data->sublayer->uid);
 
-			if (wp && wp->name) {
-				if (is_valid_geocache_name(wp->name)) {
+			if (wp && !wp->name.isEmpty()) {
+				if (is_valid_geocache_name(wp->name.toUtf8().constData())) {
 					qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Visit Geocache Webpage"));
 					connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_geocache_webpage_cb()));
 				}

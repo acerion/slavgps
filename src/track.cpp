@@ -30,6 +30,8 @@
 #include <cstring>
 #include <cmath>
 
+#include <QDebug>
+
 #include <glib.h>
 #include <time.h>
 
@@ -96,13 +98,9 @@ void Track::set_comment_no_copy(char * comment_)
 
 
 
-void Track::set_name(const char * name_)
+void Track::set_name(const QString & new_name)
 {
-	free_string(&name);
-
-	if (name_) {
-		name = g_strdup(name_);
-	}
+	this->name = new_name;
 }
 
 
@@ -191,8 +189,8 @@ void Track::update_properties_dialog(void)
 	}
 
 	/* Update title with current name. */
-	if (this->name) {
-		this->properties_dialog->setWindowTitle(QString(tr("%1 - Track Properties")).arg(this->name));
+	if (!this->name.isEmpty()) {
+		this->properties_dialog->setWindowTitle(tr("%1 - Track Properties").arg(this->name));
 	}
 }
 
@@ -226,8 +224,8 @@ void Track::update_profile_dialog(void)
 	}
 
 	/* Update title with current name. */
-	if (this->name) {
-		this->profile_dialog->setWindowTitle(QString(tr("%1 - Track Profile")).arg(this->name));
+	if (!this->name.isEmpty()) {
+		this->profile_dialog->setWindowTitle(tr("%1 - Track Profile").arg(this->name));
 	}
 }
 
@@ -328,7 +326,6 @@ Track::~Track()
 	free_string(&description);
 	free_string(&source);
 	free_string(&type);
-	free_string(&name);
 }
 
 
@@ -336,9 +333,7 @@ Track::~Track()
 
 Trackpoint::Trackpoint(const Trackpoint & tp)
 {
-	if (tp.name) {
-		this->name = g_strdup(tp.name);
-	}
+	this->name = tp.name;
 
 	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (Coord)); /* kamilTODO: review this copy of coord */
 	this->newsegment = tp.newsegment;
@@ -397,26 +392,9 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 
 
 
-Trackpoint::~Trackpoint()
+void Trackpoint::set_name(const QString & new_name)
 {
-	free_string(&name);
-}
-
-
-
-
-void Trackpoint::set_name(char const * name_)
-{
-	free_string(&name);
-
-	/* If the name is blank then completely remove it. */
-	if (name_ && name_[0] == '\0') {
-		name = NULL;
-	} else if (name_) {
-		name = g_strdup(name_);
-	} else {
-		name = NULL;
-	}
+	this->name = new_name;
 }
 
 
@@ -1805,13 +1783,13 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	unsigned int ntp = 0;
 	while (iter != this->trackpointsB->end()) {
 		g_byte_array_append(b, (uint8_t *) *iter, sizeof (Trackpoint));
-		vtm_append((*iter)->name);
+		vtm_append((*iter)->name.toUtf8().constData());
 		iter++;
 		ntp++;
 	}
 	*(unsigned int *)(b->data + intp) = ntp;
 
-	vtm_append(this->name);
+	vtm_append(this->name.toUtf8().constData());
 	vtm_append(this->comment);
 	vtm_append(this->description);
 	vtm_append(this->source);
@@ -1855,16 +1833,17 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 	}					\
 	data += len;
 
+#ifdef K
 	Trackpoint * new_tp;
 	for (unsigned int i = 0; i < ntp; i++) {
 		new_tp = new Trackpoint();
 		memcpy(new_tp, data, sizeof(*new_tp));
 		data += sizeof(*new_tp);
-		vtu_get(new_tp->name);
+		vtu_get(new_tp->name_.toUtf8().constData());
 		new_trk->trackpointsB->push_back(new_tp);
 	}
-
-	vtu_get(new_trk->name);
+	vtu_get(new_trk->name_.toUtf8().constData());
+#endif
 	vtu_get(new_trk->comment);
 	vtu_get(new_trk->description);
 	vtu_get(new_trk->source);
@@ -1914,7 +1893,7 @@ void Track::calculate_bounds()
 		}
 	}
 
-	fprintf(stderr, "DEBUG: Bounds of track: '%s' is: %f,%f to: %f,%f\n", name, topleft.lat, topleft.lon, bottomright.lat, bottomright.lon);
+	qDebug() << QString("DD: Track: Bounds of track: '%1' is: %2,%3 to: %4,%5").arg(this->name).arg(topleft.lat).arg(topleft.lon).arg(bottomright.lat).arg(bottomright.lon);
 
 	bbox.north = topleft.lat;
 	bbox.east = bottomright.lon;

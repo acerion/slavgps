@@ -2548,9 +2548,8 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		std::list<Track *> * tracks = this->trk->split_into_segments();
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				char * new_tr_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
+				const QString new_tr_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
 				(*iter)->set_name(new_tr_name);
-				free(new_tr_name);
 
 				if (this->trk->sublayer_type == SublayerType::ROUTE) {
 					this->trw->add_route(*iter);
@@ -2586,7 +2585,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			break;
 		}
 
-		char *r_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
+		const QString r_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
 
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
@@ -2601,7 +2600,6 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		trk_right->visible = this->trk->visible;
 		trk_right->sublayer_type = this->trk->sublayer_type;
 		trk_right->set_name(r_name);
-		free(r_name);
 
 		if (this->trk->sublayer_type == SublayerType::ROUTE) {
 			this->trw->add_route(trk_right);
@@ -2716,7 +2714,7 @@ void SlavGPS::track_profile_dialog(Window * parent, LayerTRW * layer, Track * tr
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
 {
-	this->setWindowTitle(QString(_("%1 - Track Profile")).arg(a_trk->name));
+	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
 	this->trw = a_layer;
 	this->trk = a_trk;

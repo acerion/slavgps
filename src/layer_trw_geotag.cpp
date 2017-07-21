@@ -460,35 +460,33 @@ static void trw_layer_geotag_process(GeotagJob * options)
 		if (!options->ov.overwrite_gps_exif && has_gps_exif) {
 			if (options->ov.create_waypoints) {
 				/* Create waypoint with file information. */
-				char *name = NULL;
+				QString file_name;
 				Waypoint * wp = a_geotag_create_waypoint_from_file(options->image,
 										   options->trw->get_coord_mode(),
-										   &name);
+										   file_name);
 				if (!wp) {
 					/* Couldn't create Waypoint. */
 					free(datetime);
 					return;
 				}
-				if (!name) {
-					name = strdup(file_basename(options->image));
+				if (!file_name.size()) {
+					file_name = file_base_name(options->image);
 				}
 
 				bool updated_waypoint = false;
 
 				if (options->ov.overwrite_waypoints) {
-					Waypoint * current_wp = options->trw->get_waypoint(name);
+					Waypoint * current_wp = options->trw->get_waypoint(file_name);
 					if (current_wp) {
 						/* Existing wp found, so set new position, comment and image. */
-						(void)a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, &name, current_wp);
+						(void)a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
 						updated_waypoint = true;
 					}
 				}
 
 				if (!updated_waypoint) {
-					options->trw->filein_add_waypoint(wp, name);
+					options->trw->filein_add_waypoint(wp, file_name);
 				}
-
-				free(name);
 
 				/* Mark for redraw. */
 				options->redraw = true;
@@ -527,25 +525,23 @@ static void trw_layer_geotag_process(GeotagJob * options)
 
 					/* Update existing WP. */
 					/* Find a WP with current name. */
-					char * name = strdup(file_basename(options->image));
-					Waypoint * wp = options->trw->get_waypoint(name);
+					QString file_name = file_base_name(options->image);
+					Waypoint * wp = options->trw->get_waypoint(file_name);
 					if (wp) {
 						/* Found, so set new position, comment and image. */
-						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, &name, wp);
+						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
 						updated_waypoint = true;
 					}
-					free(name);
 				}
 
 				if (!updated_waypoint) {
 					/* Create waypoint with found position. */
-					char *name = NULL;
-					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, &name, NULL);
-					if (!name) {
-						name = strdup(file_basename(options->image));
+					QString file_name;
+					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, NULL);
+					if (!file_name.size()) {
+						file_name = file_base_name(options->image);
 					}
-					options->trw->filein_add_waypoint(wp, name);
-					free(name);
+					options->trw->filein_add_waypoint(wp, file_name);
 				}
 
 				/* Mark for redraw. */

@@ -216,7 +216,7 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 		virtual bool sublayer_add_menu_items(QMenu & menu);
-		virtual char const * sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel);
+		virtual QString sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel);
 		virtual bool sublayer_toggle_visible(Sublayer * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);
@@ -246,9 +246,8 @@ namespace SlavGPS {
 
 
 
-		char const * get_name();
-		void rename(char const * new_name);
-		void rename_no_copy(char * new_name);
+		const QString & get_name();
+		void rename(const QString & new_name);
 		void draw_visible(Viewport * viewport);
 
 		void set_initial_parameter_values(void);
@@ -270,7 +269,7 @@ namespace SlavGPS {
 
 
 
-		char * name = NULL;
+		QString name;
 		bool visible = true;
 		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
 

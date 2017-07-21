@@ -478,7 +478,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(this->viewport->get_coord_mode());
-		wi->trw->rename(_(source_interface_->layer_title));
+		wi->trw->rename(QObject::tr(source_interface_->layer_title));
 	}
 
 #ifdef K
@@ -648,7 +648,7 @@ QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * pa
 		g_acquiring->trw = trw;
 		g_acquiring->trk = filter_track;
 
-		const QString submenu_label = QString(QObject::tr("Filter with %1")).arg(filter_track->name);
+		const QString submenu_label = QObject::tr("Filter with %1").arg(filter_track->name);
 		return g_acquiring->build_menu(submenu_label, DatasourceInputtype::TRWLAYER_TRACK);
 	}
 }

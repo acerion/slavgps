@@ -45,6 +45,7 @@
 #include "background.h"
 #include "dialog.h"
 #include "util.h"
+#include "vikutils.h"
 #include "file.h"
 #include "fileutils.h"
 #include "datasources.h"
@@ -2067,7 +2068,7 @@ void Window::open_file(char const * new_filename, bool change_filename)
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_basename(new_filename)));
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_filename)));
 		}
 		/* No break, carry on to show any data. */
 	case LOAD_TYPE_VIK_SUCCESS:
@@ -2391,7 +2392,7 @@ void Window::finish_new(void)
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 		LayerMap * layer = new LayerMap();
-		layer->rename(_("Default Map"));
+		layer->rename(QObject::tr("Default Map"));
 
 		this->layers_panel->get_top_layer()->add_layer(layer, true);
 
@@ -2859,7 +2860,7 @@ QString Window::draw_viewport_full_path(ViewportToImageMode mode)
 			qDebug() << "II: Viewport: Save to Image: target file:" << result;
 
 			if (0 == access(result.toUtf8().constData(), F_OK)) {
-				if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(result.toUtf8().constData()))), this, "")) {
+				if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this, "")) {
 					result.resize(0);
 				}
 			}

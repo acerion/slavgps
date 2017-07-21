@@ -444,7 +444,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
+	QString title = tr("%1: Waypoint List").arg(this->name);
 	waypoint_list_dialog(title, this, true);
 }
 
@@ -547,7 +547,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
-	QString title = QString(_("%1: Track and Route List")).arg(QString(this->name));
+	QString title = tr("%1: Track and Route List").arg(this->name);
 	track_list_dialog(title, this, SublayerType::NONE, true);
 }
 
@@ -556,7 +556,7 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->get_window(), QString(this->name), this, SublayerType::NONE);
+	layer_trw_show_stats(this->get_window(), this->name, this, SublayerType::NONE);
 }
 
 
@@ -891,6 +891,6 @@ LayerAggregate::LayerAggregate()
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
 	this->interface = &vik_aggregate_layer_interface;
 
-	this->rename(vik_aggregate_layer_interface.layer_name.toUtf8().constData());
+	this->rename(vik_aggregate_layer_interface.layer_name);
 	this->children = new std::list<Layer *>;
 }

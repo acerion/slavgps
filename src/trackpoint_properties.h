@@ -76,8 +76,8 @@ namespace SlavGPS {
 		PropertiesDialogTP(QWidget * parent);
 		~PropertiesDialogTP();
 
-		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, char const * track_name, bool is_route);
-		void set_track_name(char const * track_name);
+		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, const QString & track_name, bool is_route);
+		void set_track_name(const QString & track_name);
 		void set_empty();
 
 		QSignalMapper * signalMapper = NULL;

@@ -56,7 +56,7 @@ namespace SlavGPS {
 
 
 
-	char * waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated);
+	QString waypoint_properties_dialog(QWidget * parent, const QString & default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated);
 
 
 

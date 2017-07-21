@@ -51,7 +51,7 @@ namespace SlavGPS {
 		~Waypoint();
 
 
-		void set_name(char const * name);
+		void set_name(const QString & new_name);
 		void set_comment(char const * comment);
 		void set_description(char const * description);
 		void set_source(char const * source);
@@ -77,7 +77,7 @@ namespace SlavGPS {
 		bool has_timestamp = false;
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;
-		char * name = NULL;
+		QString name;
 		char * comment = NULL;
 		char * description = NULL;
 		char * source = NULL;

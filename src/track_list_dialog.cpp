@@ -126,7 +126,7 @@ void TrackListDialog::track_stats_cb(void)
 	Track * trk = this->menu_data.trk;
 	Viewport * viewport = this->menu_data.viewport;
 
-	if (trk && trk->name) {
+	if (trk && !trk->name.isEmpty()) {
 
 		/* Kill off this dialog to allow interaction with properties window.
 		   Since the properties also allows track manipulations it won't cause conflicts here. */
@@ -456,13 +456,13 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 
 	/* LAYER_NAME_COLUMN */
-	item = new QStandardItem(QString(trw->name));
+	item = new QStandardItem(trw->name);
 	item->setToolTip(tooltip);
 	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
 	/* TRACK_NAME_COLUMN */
-	item = new QStandardItem(QString(trk->name));
+	item = new QStandardItem(trk->name);
 	item->setToolTip(tooltip);
 	items << item;
 

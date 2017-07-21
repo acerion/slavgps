@@ -1995,9 +1995,7 @@ LayerGPS::LayerGPS()
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
 	this->set_initial_parameter_values();
-#ifdef K
 	this->rename(vik_gps_layer_interface.layer_name);
-#endif
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW();

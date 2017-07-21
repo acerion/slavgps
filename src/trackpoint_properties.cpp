@@ -240,7 +240,7 @@ void PropertiesDialogTP::set_empty()
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  */
-void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
+void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const QString & track_name, bool is_route)
 {
 	static char tmp_str[64];
 	static QString tmp_string;
@@ -249,10 +249,10 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	Trackpoint * tp = **iter;
 
 	this->trkpt_name->setEnabled(true);
-	if (tp->name) {
-		this->trkpt_name->insert(QString(tp->name));
-	} else {
+	if (tp->name.isEmpty()) { /* TODO: do we need these two branches at all? */
 		this->trkpt_name->insert(QString(""));
+	} else {
+		this->trkpt_name->insert(tp->name);
 	}
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
@@ -395,11 +395,11 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 
 
 
-void PropertiesDialogTP::set_track_name(char const * track_name)
+void PropertiesDialogTP::set_track_name(const QString & track_name)
 {
-	QString new_name = QString("%1: %2").arg(QString(track_name)).arg(QString("Trackpoint"));
+	QString new_name = QString("%1: %2").arg(track_name).arg(QString("Trackpoint"));
 	this->setWindowTitle(new_name);
-	//this->track_name->setText(QString(track_name));
+	//this->track_name->setText(track_name);
 }
 
 

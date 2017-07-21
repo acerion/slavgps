@@ -74,7 +74,7 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_selector));
 		if (0 != access(fn, F_OK)
-		    || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
+		    || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(fn)), GTK_WINDOW(file_selector))) {
 
 			free(last_folder_uri);
 			last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(file_selector));
@@ -126,7 +126,7 @@ void SlavGPS::vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * ext
 
 
 
-void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const * default_name)
+void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, const QString & title, const QString & default_name)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (trw->get_routes().size()) {
@@ -191,7 +191,7 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
 		if (0 != access(fn, F_OK)
-		    || Dialog::yes_or_no(QObject::tr("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(file_selector))) {
+		    || Dialog::yes_or_no(QObject::tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(fn)), GTK_WINDOW(file_selector))) {
 
 			BabelFileType * active = a_babel_ui_file_type_selector_get(babel_selector);
 			if (active == NULL) {

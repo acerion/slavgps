@@ -272,27 +272,15 @@ static bool layer_defaults_register(LayerType layer_type)
 
 
 /* Frees old name. */
-void Layer::rename(char const * new_name)
+void Layer::rename(const QString & new_name)
 {
-	assert (new_name);
-	free(this->name);
-	this->name = strdup(new_name);
-}
-
-
-
-
-void Layer::rename_no_copy(char * new_name)
-{
-	assert (new_name);
-	free(this->name);
 	this->name = new_name;
 }
 
 
 
 
-char const * Layer::get_name()
+const QString & Layer::get_name()
 {
 	return this->name;
 }
@@ -401,7 +389,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 	/* Store the internal properties first. */
 	vlm_append(&this->visible, sizeof (this->visible));
-	vlm_append(this->name, strlen(this->name));
+	vlm_append(this->name.toUtf8().constData(), this->name.size());
 
 	/* Now the actual parameters. */
 	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
@@ -470,7 +458,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
-	this->rename(s);
+	this->rename(QString(s));
 	free(s);
 
 	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
@@ -530,10 +518,6 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 
 Layer::~Layer()
 {
-	if (this->name) {
-		free(this->name);
-	}
-
 	delete right_click_menu;
 
 	delete this->menu_data;
@@ -967,9 +951,9 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-char const * Layer::sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel)
+QString Layer::sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel)
 {
-	return NULL;
+	return QString("");
 }
 
 
@@ -1157,7 +1141,8 @@ bool Layer::compare_timestamp_ascending(Layer * first, Layer * second)
 
 bool Layer::compare_name_descending(Layer * first, Layer * second)
 {
-	return 0 > g_strcmp0(first->name, second->name);
+	/* TODO: is it '>' or '<'? */
+	return (first->name > second->name);
 }
 
 
@@ -1259,7 +1244,7 @@ void Layer::visibility_toggled_cb(QStandardItem * item) /* Slot. */
 		QVariant layer_variant = item->data(RoleLayerData);
 		Layer * layer = layer_variant.value<Layer *>();
 		if (layer == this) {
-			fprintf(stderr, "Layer %s/%s: slot 'changed' called, visibility = %d\n", this->debug_string, this->name, (int) item->checkState());
+			qDebug() << "[II] Layer" << this->debug_string << this->name << "slot 'changed' called, visibility =" << item->checkState();
 		}
 	}
 }

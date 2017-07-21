@@ -412,7 +412,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 #endif
 
 	if (this->current_trk && this->current_trk->visible) { /* Track or Route. */
-		if (this->current_trk->name) {
+		if (!this->current_trk->name.isEmpty()) {
 			this->menu_data->sublayer = this->current_trk;
 			this->menu_data->viewport = viewport;
 
@@ -423,7 +423,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 			return true;
 		}
 	} else if (this->current_wp && this->current_wp->visible) {
-		if (this->current_wp->name) {
+		if (!this->current_wp->name.isEmpty()) {
 			this->menu_data->sublayer = this->current_wp;
 			this->menu_data->viewport = viewport;
 
@@ -1052,16 +1052,14 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 	if (!trw->current_trk
 	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)) {
 
-		char *name = trw->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
-		QString new_name(name);
+		QString new_name = trw->new_unique_sublayer_name(SublayerType::TRACK, QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
-			new_name = a_dialog_new_track(QString(name), false, trw->get_window());
+			new_name = a_dialog_new_track(new_name, false, trw->get_window());
 			if (new_name.isEmpty()) {
 				return LayerToolFuncStatus::IGNORE;
 			}
 		}
-		trw->new_track_create_common(new_name.toUtf8().data());
-		free(name);
+		trw->new_track_create_common(new_name);
 	}
 
 	return trw->tool_new_track_or_route_click(ev, this->viewport);
@@ -1163,8 +1161,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 	if (!trw->current_trk
 	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::TRACK)) {
 
-		char * name = trw->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
-		QString new_name(name);
+		QString new_name = trw->new_unique_sublayer_name(SublayerType::ROUTE, QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
 			if (new_name.isEmpty()) {
@@ -1172,8 +1169,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 			}
 		}
 
-		trw->new_route_create_common(new_name.toUtf8().data());
-		free(name);
+		trw->new_route_create_common(new_name);
 	}
 	return trw->tool_new_track_or_route_click(ev, this->viewport);
 }

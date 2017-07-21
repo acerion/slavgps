@@ -324,7 +324,7 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
 	const QColor fg_color = this->get_fg_color(trk);
 	const QColor bg_color = this->get_bg_color(drawing_highlight);
 
-	char *ename = g_markup_escape_text(trk->name, -1);
+	char *ename = g_markup_escape_text(trk->name.toUtf8().constData(), -1);
 
 	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
 	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
@@ -418,7 +418,7 @@ void TRWPainter::draw_point_names(Track * trk, bool drawing_highlight)
 	const QColor bg_color = this->get_bg_color(drawing_highlight);
 
 	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
-		if ((*iter)->name) {
+		if (!(*iter)->name.isEmpty()) {
 			this->draw_track_label((*iter)->name, fg_color, bg_color, &(*iter)->coord);
 		}
 	}
@@ -982,7 +982,7 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 		this->viewport->fill_rectangle(this->trw->waypoint_bg_pen.color(), label_x - 1, label_y-1,width+2,height+2);
 	}
 	/* TODO: use correct font size: this->trw->wp_fsize_str. */
-	this->viewport->draw_text(QFont("Arial", 10), this->trw->waypoint_text_pen, label_x, label_y, QString(wp->name));
+	this->viewport->draw_text(QFont("Arial", 10), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
 
 	return;
 }

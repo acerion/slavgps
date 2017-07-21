@@ -112,8 +112,8 @@ namespace SlavGPS {
 
 	class LayerTRWc {
 	public:
-		static Track * find_track_by_name(Tracks & input, char const * name);
-		static Waypoint * find_waypoint_by_name(Waypoints & waypoints, const char * name);
+		static Track * find_track_by_name(Tracks & input, const QString & trk_name);
+		static Waypoint * find_waypoint_by_name(Waypoints & waypoints, const QString & wp_name);
 		static Track * find_track_by_date(Tracks & tracks, char const * date_str);
 		static Waypoint * find_waypoint_by_date(Waypoints & waypoints, char const * date_str);
 

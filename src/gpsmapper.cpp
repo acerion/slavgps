@@ -164,7 +164,7 @@ void SlavGPS::gpsmapper_write_file(FILE * f, LayerTRW * trw)
 	auto waypoints = trw->get_waypoints();
 
 	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
-		trw->name, trw->name);
+		trw->name.toUtf8().constData(), trw->name.toUtf8().constData());
 
 	write_waypoints(f, waypoints);
 	write_track(f, tracks);

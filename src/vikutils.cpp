@@ -277,7 +277,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint 
 			break;
 
 		case 'E': /* Name of trackpoint if available. */
-			if (tp->name) {
+			if (!tp->name.isEmpty()) {
 				values[i] = QObject::tr("%1%2").arg(separator).arg(tp->name);
 			} else {
 				values[i] = "";
@@ -1021,7 +1021,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 			LayerMap * layer = new LayerMap();
 
 			layer->set_map_type(the_type_id);
-			layer->rename(_("Map"));
+			layer->rename(QObject::tr("Map"));
 
 			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_changed();
@@ -1190,4 +1190,16 @@ bool SGUtils::is_very_first_run(void)
 	vik_very_first_run_known = true;
 
 	return vik_very_first_run;
+}
+
+
+
+
+/**
+   \brief Get name of a file, without directories, but with full extension/suffix
+*/
+QString SlavGPS::file_base_name(const QString & full_path)
+{
+	QFileInfo info = QFileInfo(full_path);
+	return info.fileName();
 }

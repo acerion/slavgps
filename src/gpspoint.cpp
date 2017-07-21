@@ -648,14 +648,14 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 			continue;
 		}
 
-		if (!(wp->name)) {
+		if (wp->name.isEmpty()) { /* TODO: will this condition ever be true? */
 			continue;
 		}
 
 		static struct LatLon ll = wp->coord.get_latlon();
 		char * s_lat = a_coords_dtostr(ll.lat);
 		char * s_lon = a_coords_dtostr(ll.lon);
-		char * tmp_name = slashdup(wp->name);
+		char * tmp_name = slashdup(wp->name.toUtf8().constData());
 		fprintf(f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name);
 		free(tmp_name);
 		free(s_lat);
@@ -745,8 +745,8 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 	free(s_lat);
 	free(s_lon);
 
-	if (tp->name) {
-		char * name = slashdup(tp->name);
+	if (!tp->name.isEmpty()) {
+		char * name = slashdup(tp->name.toUtf8().constData());
 		fprintf(f, " name=\"%s\"", name);
 		free(name);
 	}
@@ -817,11 +817,11 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 			continue;
 		}
 
-		if (!(trk->name)) {
+		if (trk->name.isEmpty()) { /* TODO: will this condition ever be true? */
 			continue;
 		}
 
-		char * tmp_name = slashdup(trk->name);
+		char * tmp_name = slashdup(trk->name.toUtf8().constData());
 		fprintf(f, "type=\"%s\" name=\"%s\"", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track", tmp_name);
 		free(tmp_name);
 

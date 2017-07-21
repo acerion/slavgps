@@ -116,11 +116,11 @@ Waypoint * LayerTRWc::find_waypoint_by_date(Waypoints & waypoints, char const * 
  * ATM use a case sensitive find.
  * Finds the first one.
  */
-Waypoint * LayerTRWc::find_waypoint_by_name(Waypoints & waypoints, const char * name)
+Waypoint * LayerTRWc::find_waypoint_by_name(Waypoints & waypoints, const QString & wp_name)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		if (i->second && i->second->name) {
-			if (0 == strcmp(i->second->name, name)) {
+		if (i->second && !i->second->name.isEmpty()) {
+			if (i->second->name == wp_name) {
 				return i->second;
 			}
 		}
@@ -135,12 +135,12 @@ Waypoint * LayerTRWc::find_waypoint_by_name(Waypoints & waypoints, const char * 
  * ATM use a case sensitive find.
  * Finds the first one.
  */
-Track * LayerTRWc::find_track_by_name(Tracks & tracks, char const * name)
+Track * LayerTRWc::find_track_by_name(Tracks & tracks, const QString & trk_name)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
-		if (trk && trk->name) {
-			if (0 == strcmp(trk->name, name)) {
+		if (trk && !trk->name.isEmpty()) {
+			if (trk->name == trk_name) {
 				return trk;
 			}
 		}
@@ -312,7 +312,7 @@ std::list<QString> LayerTRWc::get_sorted_track_name_list_exclude_self(Tracks * t
 		if (i->second == self) {
 			continue;
 		}
-		result.push_back(QString(i->second->name));
+		result.push_back(i->second->name);
 	}
 
 	result.sort();
@@ -340,7 +340,7 @@ std::list<QString> LayerTRWc::get_sorted_wp_name_list(Waypoints & waypoints)
 {
 	std::list<QString> result;
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		result.push_back(QString(i->second->name));
+		result.push_back(i->second->name);
 	}
 	result.sort();
 
@@ -354,7 +354,7 @@ std::list<QString> LayerTRWc::get_sorted_track_name_list(Tracks & tracks)
 {
 	std::list<QString> result;
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		result.push_back(QString(i->second->name));
+		result.push_back(i->second->name);
 	}
 
 	/* Sort list of names alphabetically. */
