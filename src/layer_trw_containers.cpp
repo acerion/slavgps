@@ -597,16 +597,16 @@ char * LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int e
 
 
 
-GSList * LayerTRWc::image_wp_make_list(Waypoints & waypoints)
+QStringList * LayerTRWc::image_wp_make_list(Waypoints & waypoints)
 {
-	GSList * pics = NULL;
+	QStringList * pics = new QStringList;
 
 	Waypoint * wp = NULL;
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		wp = i->second;
 #ifdef K
-		if (wp->image && (!a_thumbnails_exists(wp->image))) {
-			pics = g_slist_append(pics, (void *) g_strdup(wp->image));
+		if (!wp->image.isEmpty() && (!a_thumbnails_exists(wp->image))) {
+			pics->push_back(wp->image);
 		}
 #endif
 	}

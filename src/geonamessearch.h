@@ -48,14 +48,14 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		Geoname() {};
-		~Geoname();
+		~Geoname() {};
 
-		char * name = NULL;
-		char * feature = NULL;
+		QString name;
+		QString feature;
 		struct LatLon ll = { 0.0, 0.0 };
 		double elevation = VIK_DEFAULT_ALTITUDE;
-		char * cmt = NULL;
-		char * desc = NULL;
+		QString comment;
+		QString desc;
 	};
 
 

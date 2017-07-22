@@ -112,7 +112,7 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 	static struct LatLon ll;
 
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		unsigned int len = print_rgn_stuff(i->second->comment, f);
+		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
 		if (len) {
 			ll = i->second->coord.get_latlon();
 			char * s_lat = a_coords_dtostr(ll.lat);
@@ -120,7 +120,7 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 			fprintf(f, "Data0=(%s,%s)\n", s_lat, s_lon);
 			free(s_lat);
 			free(s_lon);
-			fprintf(f, "[END-%.5s]\n\n", i->second->comment+len+1);
+			fprintf(f, "[END-%.5s]\n\n", i->second->comment.toUtf8().constData() + len + 1);
 		}
 	}
 }
@@ -144,13 +144,13 @@ static void write_trackpoint(Trackpoint * tp, FILE * f)
 static void write_track(FILE * f, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		unsigned int len = print_rgn_stuff(i->second->comment, f);
+		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
 		if (len) {
 			fprintf(f, "Data0=");
 			for (auto iter = i->second->trackpointsB->begin(); iter != i->second->trackpointsB->end(); iter++) {
 				write_trackpoint(*iter, f);
 			}
-			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment + len + 1);
+			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment.toUtf8().constData() + len + 1);
 		}
 	}
 }

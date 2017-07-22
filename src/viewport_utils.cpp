@@ -73,7 +73,7 @@ void ViewportToImageDialog::calculate_total_area_cb(void)
 	int active = this->zoom_combo->currentIndex();
 	double zoom = pow(2, active - 2);
 
-	char * label_text = NULL;
+	QString label_text;
 	double w = this->width_spin->value() * zoom;
 	double h = this->height_spin->value() * zoom;
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
@@ -83,21 +83,19 @@ void ViewportToImageDialog::calculate_total_area_cb(void)
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (long) w, (long) h, (w * h / 1000000));
+		label_text = tr("Total area: %1m x %2m (%3 sq. km)").arg((long) w).arg((long) h).arg((w * h / 1000000), 0, 'f', 3); /* "%.3f" */
 		break;
 	case DistanceUnit::MILES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. miles)"), (long) w, (long) h, (w * h / 2589988.11));
+		label_text = tr("Total area: %1m x %2m (%3 sq. miles)").arg((long) w).arg((long) h).arg((w * h / 2589988.11), 0, 'f', 3); /* "%.3f" */
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. NM)"), (long) w, (long) h, (w * h / (1852.0 * 1852.0)));
+		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) w).arg((long) h).arg((w * h / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
 		break;
 	default:
-		label_text = g_strdup_printf("Just to keep the compiler happy");
 		qDebug() << "EE: Viewport: Save: wrong distance unit:" << (int) distance_unit;
 	}
 
-	this->total_area_label.setText(QString(label_text));
-	free(label_text);
+	this->total_area_label.setText(label_text);
 }
 
 

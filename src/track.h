@@ -160,10 +160,10 @@ namespace SlavGPS {
 
 		void set_defaults();
 		void set_name(const QString & new_name);
-		void set_comment(const char *comment);
-		void set_description(const char *description);
-		void set_source(const char *source);
-		void set_type(const char *type);
+		void set_comment(const QString & new_comment);
+		void set_description(const QString & new_description);
+		void set_source(const QString & new_source);
+		void set_type(const QString & new_type);
 		void ref();
 		void free();
 
@@ -177,8 +177,6 @@ namespace SlavGPS {
 
 
 		void sort(compare_trackpoints_t compare_function);
-
-		void set_comment_no_copy(char * comment);
 
 		void add_trackpoint(Trackpoint * tp, bool recalculate);
 		double get_length_to_trackpoint(const Trackpoint * tp); // const
@@ -256,19 +254,18 @@ namespace SlavGPS {
 		std::list<Rect *> * get_rectangles(LatLon * wh);
 		CoordMode get_coord_mode();
 
-
-
+		QString name;
+		QString comment;
+		QString description;
+		QString source;
+		QString type;
 
 		TrackPoints * trackpointsB = NULL;
 		bool visible = false;
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
 		uint8_t max_number_dist_labels = 0;
-		char * comment = NULL;
-		char * description = NULL;
-		char * source = NULL;
-		char * type = NULL;
+
 		uint8_t ref_count = 0;
-		QString name;
 		QDialog * property_dialog = NULL;
 		bool has_color = false;
 		QColor color;

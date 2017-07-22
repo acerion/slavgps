@@ -412,7 +412,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 			if (wp)	{
 				if (wp->url
-				    || (wp->comment && !strncmp(wp->comment, "http", 4))
+				    || (!wp->comment.isEmpty() && !strncmp(wp->comment.toUtf8().constData(), "http", 4))
 				    || (wp->description && !strncmp(wp->description, "http", 4))) {
 
 					qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage"));

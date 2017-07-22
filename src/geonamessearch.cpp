@@ -86,10 +86,6 @@ using namespace SlavGPS;
 static found_geoname * new_found_geoname()
 {
 	found_geoname * ret = (found_geoname *)malloc(sizeof(found_geoname));
-	ret->name = NULL;
-	ret->feature = NULL;
-	ret->cmt = NULL;
-	ret->desc = NULL;
 	ret->ll.lat = 0.0;
 	ret->ll.lon = 0.0;
 	ret->elevation = VIK_DEFAULT_ALTITUDE;
@@ -100,27 +96,16 @@ static found_geoname * new_found_geoname()
 
 
 
-Geoname::~Geoname()
-{
-	free(this->name);
-	free(this->feature);
-	free(this->cmt);
-	free(this->desc);
-}
-
-
-
-
 static Geoname * copy_geoname(Geoname * src)
 {
 	Geoname * dest = new Geoname();
-	dest->name = g_strdup(src->name);
-	dest->feature = g_strdup(src->feature);
+	dest->name = src->name;
+	dest->feature = src->feature;
 	dest->ll.lat = src->ll.lat;
 	dest->ll.lon = src->ll.lon;
 	dest->elevation = src->elevation;
-	dest->cmt = g_strdup(src->cmt);
-	dest->desc = g_strdup(src->desc);
+	dest->comment = src->comment;
+	dest->desc = src->desc;
 	return dest;
 }
 
@@ -411,11 +396,11 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 		} else {
 			if (wikipedia_url) {
 				/* Really we should support the GPX URL tag and then put that in there... */
-				geoname->cmt = g_strdup_printf("http://%s", wikipedia_url);
+				geoname->comment = QString("http://%1").arg(wikipedia_url);
 				if (thumbnail_url) {
-					geoname->desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
+					geoname->desc = QString("<a href=\"http://%1\" target=\"_blank\"><img src=\"%2\" border=\"0\"/></a>").arg(wikipedia_url).arg(thumbnail_url);
 				} else {
-					geoname->desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\">%s</a>", wikipedia_url, geoname->name);
+					geoname->desc = QString("<a href=\"http://%1\" target=\"_blank\">%2</a>").arg(wikipedia_url).arg(geoname->name);
 				}
 			}
 			if (wikipedia_url) {
@@ -480,29 +465,30 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		wiki_wp->visible = true;
 		wiki_wp->coord = Coord(wiki_geoname->ll, trw->get_coord_mode());
 		wiki_wp->altitude = wiki_geoname->elevation;
-		wiki_wp->set_comment(wiki_geoname->cmt);
-		wiki_wp->set_description(wiki_geoname->desc);
+		wiki_wp->set_comment(wiki_geoname->comment);
+		wiki_wp->set_description(wiki_geoname->desc.toUtf8().constData());
 
 		/* Use the featue type to generate a suitable waypoint icon
 		   http://www.geonames.org/wikipedia/wikipedia_features.html
 		   Only a few values supported as only a few symbols make sense. */
-		if (wiki_geoname->feature) {
-			if (!strcmp(wiki_geoname->feature, "city")) {
+		if (!wiki_geoname->feature.isEmpty()) {
+			if (wiki_geoname->feature == "city") {
 				wiki_wp->set_symbol("city (medium)");
 			}
 
-			if (!strcmp(wiki_geoname->feature, "edu")) {
+			if (wiki_geoname->feature == "edu") {
 				wiki_wp->set_symbol("school");
 			}
 
-			if (!strcmp(wiki_geoname->feature, "airport")) {
+			if (wiki_geoname->feature == "airport") {
 				wiki_wp->set_symbol("airport");
 			}
 
-			if (!strcmp(wiki_geoname->feature, "mountain")) {
+			if (wiki_geoname->feature == "mountain") {
 				wiki_wp->set_symbol("summit");
 			}
-			if (!strcmp(wiki_geoname->feature, "forest")) {
+
+			if (wiki_geoname->feature == "forest") {
 				wiki_wp->set_symbol("forest");
 			}
 		}

@@ -559,13 +559,13 @@ char * maps_layer_default_dir()
 
 
 
-std::string& maps_layer_default_dir_2()
+const QString & maps_layer_default_dir_2()
 {
 	static char * defaultdir = NULL;
-	static std::string default_dir;
+	static QString default_dir;
 	if (!defaultdir) {
 		defaultdir = maps_layer_default_dir();
-		default_dir = std::string(defaultdir);
+		default_dir = QString(defaultdir);
 	}
 
 	return default_dir;

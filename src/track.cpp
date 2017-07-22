@@ -88,16 +88,6 @@ void Track::set_defaults()
 
 
 
-void Track::set_comment_no_copy(char * comment_)
-{
-	free_string(&comment);
-
-	comment = comment_;
-}
-
-
-
-
 void Track::set_name(const QString & new_name)
 {
 	this->name = new_name;
@@ -106,49 +96,33 @@ void Track::set_name(const QString & new_name)
 
 
 
-void Track::set_comment(const char * comment_)
+void Track::set_comment(const QString & new_comment)
 {
-	free_string(&comment);
-
-	if (comment_ && comment_[0] != '\0') {
-		comment = g_strdup(comment_);
-	}
+	this->comment = new_comment;
 }
 
 
 
 
-void Track::set_description(const char * description_)
+void Track::set_description(const QString & new_description)
 {
-	free_string(&description);
-
-	if (description_ && description_[0] != '\0') {
-		description = g_strdup(description_);
-	}
+	this->description = new_description;
 }
 
 
 
 
-void Track::set_source(const char * source_)
+void Track::set_source(const QString & new_source)
 {
-	free_string(&source);
-
-	if (source_ && source_[0] != '\0') {
-		source = g_strdup(source_);
-	}
+	this->source = new_source;
 }
 
 
 
 
-void Track::set_type(const char * type_)
+void Track::set_type(const QString & new_type)
 {
-	free_string(&type);
-
-	if (type_ && type_[0] != '\0') {
-		type = g_strdup(type_);
-	}
+	this->type = new_type;
 }
 
 
@@ -292,11 +266,11 @@ Track::Track(const Track & from) : Track(from.sublayer_type == SublayerType::ROU
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;
 
+	this->set_name(from.name);
 	this->set_comment(from.comment);
 	this->set_description(from.description);
 	this->set_source(from.source);
 	/* kamilFIXME: where is ->type? */
-	this->set_name(from.name);
 
 	this->has_color = from.has_color;
 	this->color = from.color;
@@ -321,11 +295,6 @@ Track::~Track()
 		delete *iter;
 	}
 	this->trackpointsB->clear();
-
-	free_string(&comment);
-	free_string(&description);
-	free_string(&source);
-	free_string(&type);
 }
 
 
@@ -1790,9 +1759,10 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	*(unsigned int *)(b->data + intp) = ntp;
 
 	vtm_append(this->name.toUtf8().constData());
-	vtm_append(this->comment);
-	vtm_append(this->description);
-	vtm_append(this->source);
+	vtm_append(this->comment.toUtf8().constData());
+	vtm_append(this->description.toUtf8().constData());
+	vtm_append(this->source.toUtf8().constData());
+	/* kamilTODO: where is ->type? */
 
 	*data = b->data;
 	*datalen = b->len;
@@ -1842,11 +1812,12 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 		vtu_get(new_tp->name_.toUtf8().constData());
 		new_trk->trackpointsB->push_back(new_tp);
 	}
-	vtu_get(new_trk->name_.toUtf8().constData());
-#endif
-	vtu_get(new_trk->comment);
+	vtu_get(new_trk->name.toUtf8().constData());
+	vtu_get(new_trk->comment.toUtf8().constData());
 	vtu_get(new_trk->description);
 	vtu_get(new_trk->source);
+	/* kamilTODO: where is ->type? */
+#endif
 
 	return new_trk;
 }

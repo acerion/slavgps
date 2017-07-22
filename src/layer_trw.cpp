@@ -2038,8 +2038,8 @@ QString LayerTRW::sublayer_tooltip(Sublayer * sublayer)
 			Waypoint * wp = this->waypoints.at(sublayer->uid);
 			/* It's OK to return NULL. */
 			if (wp) {
-				if (wp->comment) {
-					return QString(wp->comment);
+				if (!wp->comment.isEmpty()) {
+					return wp->comment;
 				} else {
 					return QString(wp->description);
 				}
@@ -2112,11 +2112,11 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 	/* Combine parts to make overall message. */
 	QString msg;
-	if (wp->comment) {
+	if (!wp->comment.isEmpty()) {
 		/* Add comment if available. */
-		msg = QString(_("%1 | %2 %3 | Comment: %4")).arg(tmp_buf1).arg(lat).arg(lon).arg(wp->comment);
+		msg = tr("%1 | %2 %3 | Comment: %4").arg(tmp_buf1).arg(lat).arg(lon).arg(wp->comment);
 	} else {
-		msg = QString(_("%1 | %2 %3")).arg(tmp_buf1).arg(lat).arg(lon);
+		msg = tr("%1 | %2 %3").arg(tmp_buf1).arg(lat).arg(lon);
 	}
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 	free(lat);
@@ -5943,8 +5943,8 @@ void LayerTRW::waypoint_webpage_cb(void)
 	}
 	if (wp->url) {
 		open_url(wp->url);
-	} else if (!strncmp(wp->comment, "http", 4)) {
-		open_url(wp->comment);
+	} else if (!strncmp(wp->comment.toUtf8().constData(), "http", 4)) {
+		open_url(wp->comment.toUtf8().constData());
 	} else if (!strncmp(wp->description, "http", 4)) {
 		open_url(wp->description);
 	}
@@ -6098,7 +6098,7 @@ void LayerTRW::track_use_with_filter_cb(void)
 bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 {
 	Track * trk = this->routes.at(track_uid);
-	return (trk && trk->comment && strlen(trk->comment) > 7 && !strncmp(trk->comment, "from:", 5));
+	return (trk && trk->comment.size() > 7 && !strncmp(trk->comment.toUtf8().constData(), "from:", 5));
 }
 
 
@@ -6109,11 +6109,10 @@ void LayerTRW::google_route_webpage_cb(void)
 	sg_uid_t uid = this->menu_data->sublayer->uid;
 	Track * trk = this->routes.at(uid);
 	if (trk) {
-		char *escaped = uri_escape(trk->comment);
-		char *webpage = g_strdup_printf("http://maps.google.com/maps?f=q&hl=en&q=%s", escaped);
-		open_url(webpage);
+		char *escaped = uri_escape(trk->comment.toUtf8().data());
+		QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
+		open_url(webpage.toUtf8().constData());
 		free(escaped);
-		free(webpage);
 	}
 }
 
@@ -6400,20 +6399,20 @@ static int create_thumbnails_thread(BackgroundJob * bg_job);
 /* Structure for thumbnail creating data used in the background thread. */
 class ThumbnailCreator : public BackgroundJob {
 public:
-	ThumbnailCreator(LayerTRW * layer, GSList * pics_);
+	ThumbnailCreator(LayerTRW * layer, QStringList * pics_);
 	~ThumbnailCreator();
 
 	LayerTRW * layer = NULL;  /* Layer needed for redrawing. */
-	GSList * pics = NULL;     /* Image list. */
+	QStringList * pics = NULL;     /* Image list. */
 };
 
 
 
 
-ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, GSList * pics_)
+ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, QStringList * pics_)
 {
 	this->thread_fn = create_thumbnails_thread;
-	this->n_items = g_slist_length(pics_);
+	this->n_items = pics_->size();
 
 	layer = layer_;
 	pics = pics_;
@@ -6426,7 +6425,8 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 {
 	ThumbnailCreator * creator = (ThumbnailCreator *) bg_job;
 
-	unsigned int total = g_slist_length(creator->pics), done = 0;
+	unsigned int total = creator->pics->size();
+	unsigned int done = 0;
 	while (creator->pics) {
 #ifdef K
 		a_thumbnails_create((char *) creator->pics->data);
@@ -6452,10 +6452,7 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 
 ThumbnailCreator::~ThumbnailCreator()
 {
-	while (this->pics) {
-		free(this->pics->data);
-		this->pics = g_slist_delete_link(this->pics, this->pics);
-	}
+	delete this->pics;
 }
 
 
@@ -6467,12 +6464,13 @@ void LayerTRW::verify_thumbnails(void)
 		return;
 	}
 
-	GSList * pics = LayerTRWc::image_wp_make_list(this->waypoints);
-	if (!pics) {
+	QStringList * pics = LayerTRWc::image_wp_make_list(this->waypoints);
+	int len = pics->size();
+	if (!len) {
+		delete pics;
 		return;
 	}
 
-	int len = g_slist_length(pics);
 	const QString job_description = QString(tr("Creating %1 Image Thumbnails...")).arg(len);
 	ThumbnailCreator * creator = new ThumbnailCreator(this, pics);
 	a_background_thread(creator, ThreadPoolType::LOCAL, job_description);
@@ -7104,14 +7102,14 @@ void LayerTRW::highest_wp_number_remove_wp(const QString & old_wp_name)
 
 
 /* Get lowest unused number. */
-char * LayerTRW::highest_wp_number_get()
+QString LayerTRW::highest_wp_number_get()
 {
-	char buf[4];
-	if (this->highest_wp_number < 0 || this->highest_wp_number >= 999) {
-		return NULL;
+	QString result;
+	if (this->highest_wp_number < 0 || this->highest_wp_number >= 999) { /* TODO: that's rather limiting, isn't it? */
+		return result;
 	}
-	snprintf(buf, 4, "%03d", this->highest_wp_number +1);
-	return g_strdup(buf);
+	result = QString("%1").arg((int) (this->highest_wp_number + 1), 3, 10, (QChar) '0');
+	return result;
 }
 
 

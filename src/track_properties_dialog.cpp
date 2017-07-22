@@ -119,49 +119,49 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a
 void TrackPropertiesDialog::create_properties_page(void)
 {
 	this->w_comment = new QLineEdit(this);
-	if (this->trk->comment) {
+	if (!this->trk->comment.isEmpty()) {
 		this->w_comment->insert(this->trk->comment);
 	}
-	this->properties_form->addRow(QString("Comment:"), this->w_comment);
+	this->properties_form->addRow(tr("Comment:"), this->w_comment);
 
 
 	this->w_description = new QLineEdit(this);
-	if (this->trk->description) {
+	if (!this->trk->description.isEmpty()) {
 		this->w_description->insert(this->trk->description);
 	}
-	this->properties_form->addRow(QString("Description:"), this->w_description);
+	this->properties_form->addRow(tr("Description:"), this->w_description);
 
 
 	this->w_source = new QLineEdit(this);
-	if (this->trk->source) {
+	if (!this->trk->source.isEmpty()) {
 		this->w_source->insert(this->trk->source);
 	}
-	this->properties_form->addRow(QString("Source:"), this->w_source);
+	this->properties_form->addRow(tr("Source:"), this->w_source);
 
 
 	this->w_type = new QLineEdit(this);
-	if (this->trk->type) {
+	if (!this->trk->type.isEmpty()) {
 		this->w_type->insert(this->trk->type);
 	}
-	this->properties_form->addRow(QString("Type:"), this->w_type);
+	this->properties_form->addRow(tr("Type:"), this->w_type);
 
 
 	/* TODO: use this->trk->color. */
        	this->w_color = new SGColorButton(this->trk->color, NULL);
-	this->properties_form->addRow(QString("Color:"), this->w_color);
+	this->properties_form->addRow(tr("Color:"), this->w_color);
 
 
 	QStringList options;
-	options << _("No")
-		<< _("Centre")
-		<< _("Start only")
-		<< _("End only")
-		<< _("Start and End")
-		<< _("Centre, Start and End");
+	options << tr("No")
+		<< tr("Centre")
+		<< tr("Start only")
+		<< tr("End only")
+		<< tr("Start and End")
+		<< tr("Centre, Start and End");
 	this->w_namelabel = new QComboBox(NULL);
 	this->w_namelabel->insertItems(0, options);
 	this->w_namelabel->setCurrentIndex((int) this->trk->draw_name_mode);
-	this->properties_form->addRow(QString("Draw Name:"), this->w_namelabel);
+	this->properties_form->addRow(tr("Draw Name:"), this->w_namelabel);
 
 
 	this->w_number_distlabels = new QSpinBox();
@@ -170,7 +170,7 @@ void TrackPropertiesDialog::create_properties_page(void)
 	this->w_number_distlabels->setSingleStep(1);
 	this->w_number_distlabels->setToolTip(tr("Maximum number of distance labels to be shown"));
 	this->w_number_distlabels->setValue(this->trk->max_number_dist_labels);
-	this->properties_form->addRow(QString("Distance Labels:"), this->w_number_distlabels);
+	this->properties_form->addRow(tr("Distance Labels:"), this->w_number_distlabels);
 }
 
 
@@ -190,24 +190,24 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	double tr_len = this->track_length;
 	tmp_string = get_distance_string(tr_len, distance_unit);
 	this->w_track_length = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(QString("Track Length:"), this->w_track_length);
+	this->statistics_form->addRow(tr("Track Length:"), this->w_track_length);
 
 
 	unsigned long tp_count = this->trk->get_tp_count();
 	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count);
 	this->w_tp_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Trackpoints:"), this->w_tp_count);
+	this->statistics_form->addRow(tr("Trackpoints:"), this->w_tp_count);
 
 
 	unsigned int seg_count = this->trk->get_segment_count() ;
 	snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count);
 	this->w_segment_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Segments:"), this->w_segment_count);
+	this->statistics_form->addRow(tr("Segments:"), this->w_segment_count);
 
 
 	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", this->trk->get_dup_point_count());
 	this->w_duptp_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Duplicate Points:"), this->w_duptp_count);
+	this->statistics_form->addRow(tr("Duplicate Points:"), this->w_duptp_count);
 
 
 	SpeedUnit speed_units = Preferences::get_unit_speed();

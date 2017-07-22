@@ -342,7 +342,7 @@ namespace SlavGPS {
 		void highest_wp_number_reset();
 		void highest_wp_number_add_wp(const QString & new_wp_name);
 		void highest_wp_number_remove_wp(const QString & old_wp_name);
-		char * highest_wp_number_get();
+		QString highest_wp_number_get();
 
 
 #ifdef VIK_CONFIG_GOOGLE

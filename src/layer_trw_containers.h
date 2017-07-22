@@ -142,7 +142,7 @@ namespace SlavGPS {
 		static void track_search_closest_tp(Tracks & tracks, TrackpointSearch * search);
 
 		static char * tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport);
-		static GSList * image_wp_make_list(Waypoints & waypoints);
+		static QStringList * image_wp_make_list(Waypoints & waypoints);
 
 
 		static void waypoints_convert(Waypoints & waypoints, CoordMode dest_mode);

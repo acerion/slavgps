@@ -49,9 +49,9 @@ using namespace SlavGPS;
 
 
 static int last_goto_idx = -1;
-static char * last_location = NULL;
+static QString last_location;
 static Coord * last_coord = NULL;
-static char * last_successful_location = NULL;
+static QString last_successful_location;
 
 std::vector<GotoTool *> goto_tools;
 
@@ -61,7 +61,7 @@ std::vector<GotoTool *> goto_tools;
 
 static bool goto_latlon_dialog(Window * parent, struct LatLon * ll, const struct LatLon * old);
 static bool goto_utm_dialog(Window * parent, struct UTM * utm, const struct UTM * old);
-static char * goto_location_dialog(Window * window);
+static QString goto_location_dialog(Window * window);
 
 
 
@@ -83,17 +83,18 @@ void SlavGPS::vik_goto_unregister_all()
 
 
 
-char * SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
+QString SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 {
+	QString empty_string("");
 	if (!last_coord) {
-		return NULL;
+		return empty_string;
 	}
 
 	const Coord * cur_center = window->get_viewport()->get_center();
 	if (*cur_center == *last_coord) {
-		return(last_successful_location);
+		return last_successful_location;
 	} else {
-		return NULL;
+		return empty_string;
 	}
 }
 
@@ -170,8 +171,10 @@ static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * b
    @return NULL if empty string has been entered
    @return non-NULL string with location entered in dialog on success
 */
-char * goto_location_dialog(Window * window)
+QString goto_location_dialog(Window * window)
 {
+	QString empty_string("");
+
 	QDialog dialog(window);
 	dialog.setWindowTitle(QObject::tr("goto"));
 
@@ -204,7 +207,7 @@ char * goto_location_dialog(Window * window)
 
 	QLineEdit input_field;
 	QObject::connect(&input_field, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	if (last_location) {
+	if (!last_location.isEmpty()) {
 		/* Notice that this may be not a *successful* location. */
 		input_field.setText(last_location);
 	}
@@ -231,7 +234,7 @@ char * goto_location_dialog(Window * window)
 
 
 	if (dialog.exec() != QDialog::Accepted) {
-		return NULL;
+		return empty_string;
 	}
 
 
@@ -239,21 +242,13 @@ char * goto_location_dialog(Window * window)
 	last_goto_idx = providers_combo.currentIndex();
 	char * provider = goto_tools[last_goto_idx]->get_label();
 	a_settings_set_string(VIK_SETTINGS_GOTO_PROVIDER, provider);
-	char * location = strdup(input_field.text().toUtf8().constData());
-	if (!location) {
-		qDebug() << "EE: goto: can't strdup string" << input_field.text();
-		return NULL;
+	const QString location = input_field.text();
+	if (location.isEmpty()) {
+		qDebug() << "EE: goto: can't get string" << input_field.text();
+		return empty_string;
 	}
 
-	if (location[0] == '\0') {
-		free(location);
-		location = NULL;
-	} else {
-		if (last_location) {
-			free(last_location);
-		}
-		last_location = strdup(location);
-	}
+	last_location = location;
 
 	return location;
 }
@@ -294,22 +289,19 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 
 	bool more = true;
 	do {
-		char * location = goto_location_dialog(window);
-		if (!location) {
+		const QString location = goto_location_dialog(window);
+		if (location.isEmpty()) {
 			more = false;
 		} else {
 			Coord location_coord;
-			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location, &location_coord);
+			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
 			if (ans == 0) {
 				if (last_coord) {
 					delete last_coord;
 				}
 				last_coord = new Coord();
 				*last_coord = location_coord; /* kamilTODO: review this assignment. */
-				if (last_successful_location) {
-					free(last_successful_location);
-				}
-				last_successful_location = g_strdup(last_location);
+				last_successful_location = last_location;
 				viewport->set_center_coord(location_coord, true);
 				more = false;
 			} else if (ans == -1) {
@@ -319,7 +311,6 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 			} else if (!prompt_try_again(window, QObject::tr("Service request failure. Do you want another goto?"))) {
 				more = false;
 			}
-			free(location);
 		}
 	} while (more);
 }

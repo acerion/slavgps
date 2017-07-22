@@ -2594,7 +2594,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		Track * trk_right = new Track(*this->trk, iter, this->trk->end());
 		this->trk->erase(iter, this->trk->end());
 
-		if (this->trk->comment) {
+		if (!this->trk->comment.isEmpty()) {
 			trk_right->set_comment(this->trk->comment);
 		}
 		trk_right->visible = this->trk->visible;

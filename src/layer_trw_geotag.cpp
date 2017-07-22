@@ -785,9 +785,9 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	tz_hbox->addWidget(&widgets->time_zone_b);
 	widgets->time_zone_b.setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
 
-	char *track_string = NULL;
+	QString track_string;
 	if (widgets->wp) {
-		track_string = g_strdup_printf(_("Using waypoint: %s"), wp->name);
+		track_string = tr("Using waypoint: %1").arg(wp->name);
 		/* Control sensitivities. */
 		gtk_widget_set_sensitive(GTK_WIDGET(widgets->create_waypoints_b), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(create_waypoints_l), false);
@@ -800,9 +800,9 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 		gtk_widget_set_sensitive(GTK_WIDGET(widgets->time_zone_b), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(time_zone_l), false);
 	} else if (widgets->trk) {
-		track_string = g_strdup_printf(_("Using track: %s"), trk->name);
+		track_string = tr("Using track: %1").arg(trk->name);
 	} else {
-		track_string = g_strdup_printf(_("Using all tracks in: %s"), trw->name);
+		track_string = tr("Using all tracks in: %1").arg(trw->name);
 	}
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), new QLabel(track_string), false, false, 5);
@@ -823,7 +823,5 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	gtk_dialog_set_default_response(GTK_DIALOG(widgets->dialog), GTK_RESPONSE_REJECT);
 
 	gtk_widget_show_all(widgets->dialog);
-
-	free(track_string);
 #endif
 }

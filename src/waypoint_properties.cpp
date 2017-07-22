@@ -165,20 +165,20 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 
 	struct LatLon ll = wp->coord.get_latlon();
 
-	char * alt = NULL
-	char * lat = g_strdup_printf("%f", ll.lat);
-	char * lon = g_strdup_printf("%f", ll.lon);
+	QString alt;
+	const Qstring lat = QObject::tr("%1").arg(ll.lat);
+	const QString lon = QObject::tr("%1").arg(ll.lon);
 	vik_units_height_t height_units = a_vik_get_units_height();
 	switch (height_units) {
 	case VIK_UNITS_HEIGHT_METRES:
-		alt = g_strdup_printf("%f", wp->altitude);
+		alt = QObject::tr("%1").arg(wp->altitude);
 		break;
 	case VIK_UNITS_HEIGHT_FEET:
-		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
+		alt = QObject::tr("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
 		break;
 	default:
-		alt = g_strdup_printf("%f", wp->altitude);
-		g_critical("Houston, we've had a problem. height=%d", height_units);
+		alt = QObject::tr("%1").arg(wp->altitude);
+		qDebug() << "EE: Waypoint Properties: dialog: invalid height units:" << (int) height_units;
 	}
 
 	*updated = false;
@@ -196,16 +196,13 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 
 
 	QLabel * latlabel = new QLabel(QObject::tr("Latitude:"));
-	QLineEdit * latentry = new QLineEdit(QString(lat));
-	free(lat);
+	QLineEdit * latentry = new QLineEdit(lat);
 
 	QLabel * lonlabel = new QLabel(QObject::tr("Longitude:"));
-	QLineEdit * lonentry = new QLineEdit(QString(lon));
-	free(lon);
+	QLineEdit * lonentry = new QLineEdit(lon);
 
 	QLabel * altlabel = new QLabel(QObject::tr("Altitude:"));
-	QLineEdit * altentry = new QLineEdit(QString(alt));
-	free(alt);
+	QLineEdit * altentry = new QLineEdit(alt);
 
 
 
@@ -217,10 +214,10 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 		commentlabel = new QLabel(QObject::tr("Comment:"));
 	}
 	QLineEdit * commententry = new QLineEdit();
-	char *cmt =  NULL;
+
 	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
-	cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
-	if (cmt) {
+	const QString cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
+	if (!cmt.isEmpty()) {
 		commententry->setText(cmt);
 	}
 

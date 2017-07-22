@@ -362,7 +362,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			line_name = NULL;
 
 			if (line_comment) {
-				wp->set_comment(line_comment);
+				wp->set_comment(QString(line_comment));
 			}
 
 			if (line_description) {
@@ -408,7 +408,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			trk->visible = line_visible;
 
 			if (line_comment) {
-				trk->set_comment(line_comment);
+				trk->set_comment(QString(line_comment));
 			}
 
 			if (line_description) {
@@ -670,8 +670,8 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 			fprintf(f, " unixtime=\"%ld\"", wp->timestamp);
 		}
 
-		if (wp->comment) {
-			char * tmp_comment = slashdup(wp->comment);
+		if (!wp->comment.isEmpty()) {
+			char * tmp_comment = slashdup(wp->comment.toUtf8().constData());
 			fprintf(f, " comment=\"%s\"", tmp_comment);
 			free(tmp_comment);
 		}
@@ -825,26 +825,26 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		fprintf(f, "type=\"%s\" name=\"%s\"", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track", tmp_name);
 		free(tmp_name);
 
-		if (trk->comment) {
-			char * tmp = slashdup(trk->comment);
+		if (!trk->comment.isEmpty()) {
+			char * tmp = slashdup(trk->comment.toUtf8().constData());
 			fprintf(f, " comment=\"%s\"", tmp);
 			free(tmp);
 		}
 
-		if (trk->description) {
-			char * tmp = slashdup(trk->description);
+		if (!trk->description.isEmpty()) {
+			char * tmp = slashdup(trk->description.toUtf8().constData());
 			fprintf(f, " description=\"%s\"", tmp);
 			free(tmp);
 		}
 
-		if (trk->source) {
-			char * tmp = slashdup(trk->source);
+		if (!trk->source.isEmpty()) {
+			char * tmp = slashdup(trk->source.toUtf8().constData());
 			fprintf(f, " source=\"%s\"", tmp);
 			free(tmp);
 		}
 
-		if (trk->type) {
-			char * tmp = slashdup(trk->type);
+		if (!trk->type.isEmpty()) {
+			char * tmp = slashdup(trk->type.toUtf8().constData());
 			fprintf(f, " xtype=\"%s\"", tmp);
 			free(tmp);
 		}

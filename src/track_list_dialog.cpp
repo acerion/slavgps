@@ -444,10 +444,10 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	QVariant variant;
 
 	QString tooltip("");
-	if (trk->comment) {
-		tooltip = QString(trk->comment);
-	} else if (trk->description) {
-		tooltip = QString(trk->description);
+	if (!trk->comment.isEmpty()) {
+		tooltip = trk->comment;
+	} else if (!trk->description.isEmpty()) {
+		tooltip = trk->description;
 	} else {
 		;
 	}
@@ -479,7 +479,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	items << item;
 
 	/* COMMENT_COLUMN */
-	item = new QStandardItem(QString(trk->comment));
+	item = new QStandardItem(trk->comment);
 	item->setToolTip(tooltip);
 	items << item;
 
@@ -741,7 +741,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 
 	/* Here we save in track objects changes made in the dialog. */
 
-	trk->set_comment(this->w_comment->text().toUtf8().data());
+	trk->set_comment(this->w_comment->text());
 
 	this->trw->update_treeview(this->trk);
 	this->trw->emit_changed();

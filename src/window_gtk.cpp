@@ -553,10 +553,9 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 #else
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
-	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, map_cache_get_count());
+	const QString msg = QObject::tr("Map Cache size is %1 with %2 items").arg(msg_sz).arg(map_cache_get_count());
 	Dialog::info(msg, window);
 	free(msg_sz);
-	free(msg);
 }
 
 
@@ -833,7 +832,7 @@ static void export_to_kml_cb(GtkAction * a, Window * window)
 
 static void file_properties_cb(GtkAction * a, Window * window)
 {
-	char *message = NULL;
+	QString message;
 	if (window->filename) {
 		if (0 == access(window->filename, F_OK)) {
 			// Get some timestamp information of the file
@@ -848,19 +847,18 @@ static void file_properties_cb(GtkAction * a, Window * window)
 #else
 				size = g_format_size_for_display(byte_size);
 #endif
-				message = g_strdup_printf("%s\n\n%s\n\n%s", window->filename, time_buf, size);
+				message = QObject::tr("%1\n\n%2\n\n%3").arg(window->filename).arg(time_buf).arg(size);
 				free(size);
 			}
 		} else {
-			message = strdup(_("File not accessible"));
+			message = QObject::tr("File not accessible");
 		}
 	} else {
-		message = strdup(_("No Viking File"));
+		message = QObject::tr("No Viking File");
 	}
 
 	/* Show the info. */
 	Dialog::info(message, window);
-	free(message);
 }
 
 
@@ -891,11 +889,11 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 		/* Simple x.xx y.yy format. */
 		struct LatLon ll;
 		a_coords_utm_to_latlon(&ll, &utm);
-		first = g_strdup_printf("%.6f", ll.lat);
-		second = g_strdup_printf("%.6f", ll.lon);
+		first = QString("%1").arg(ll.lat, 0, 'f', 6); /* "%.6f" */
+		second = QString("%1").arg(ll.lon, 0, 'f', 6);
 	}
 
-	const QString message = QString("%1 %2").arg(firsts).arg(second);
+	const QString message = QString("%1 %2").arg(first).arg(second);
 
 	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, message, NULL);
 }

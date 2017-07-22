@@ -188,7 +188,7 @@ void maps_layer_register_map_source(SlavGPS::MapSource * map);
 
 
 char * maps_layer_default_dir();
-std::string& maps_layer_default_dir_2();
+const QString & maps_layer_default_dir_2();
 
 
 

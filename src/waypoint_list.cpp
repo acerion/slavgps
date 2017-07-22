@@ -438,7 +438,7 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 	items << item;
 
 	/* COMMENT_COLUMN */
-	item = new QStandardItem(QString(wp->comment));
+	item = new QStandardItem(wp->comment);
 	item->setToolTip(tooltip);
 	items << item;
 

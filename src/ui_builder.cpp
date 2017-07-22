@@ -295,7 +295,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_COMMENT];
-	param_value.s = wp->comment;
+	param_value.s = (wp->comment.toUtf8().constData()); /* FIXME: memoryleak. */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;

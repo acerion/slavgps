@@ -474,7 +474,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_cmt:
-		c_wp->set_comment(c_cdata->str);
+		c_wp->set_comment(QString(c_cdata->str));
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -520,7 +520,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_trk_cmt:
-		c_tr->set_comment(c_cdata->str);
+		c_tr->set_comment(QString(c_cdata->str));
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -903,8 +903,8 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 		free(time_iso8601);
 	}
 
-	if (wp->comment) {
-		tmp = entitize(wp->comment);
+	if (!wp->comment.isEmpty()) {
+		tmp = entitize(wp->comment.toUtf8().constData());
 		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
 		free(tmp);
 	}
@@ -1090,26 +1090,26 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 		tmp);
 	free(tmp);
 
-	if (trk->comment) {
-		tmp = entitize(trk->comment);
+	if (!trk->comment.isEmpty()) {
+		tmp = entitize(trk->comment.toUtf8().constData());
 		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
 		free(tmp);
 	}
 
-	if (trk->description) {
-		tmp = entitize(trk->description);
+	if (!trk->description.isEmpty()) {
+		tmp = entitize(trk->description.toUtf8().constData());
 		fprintf(f, "  <desc>%s</desc>\n", tmp);
 		free(tmp);
 	}
 
-	if (trk->source) {
-		tmp = entitize(trk->source);
+	if (!trk->source.isEmpty()) {
+		tmp = entitize(trk->source.toUtf8().constData());
 		fprintf(f, "  <src>%s</src>\n", tmp);
 		free(tmp);
 	}
 
-	if (trk->type) {
-		tmp = entitize(trk->type);
+	if (!trk->type.isEmpty()) {
+		tmp = entitize(trk->type.toUtf8().constData());
 		fprintf(f, "  <type>%s</type>\n", tmp);
 		free(tmp);
 	}

@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 
 		void set_name(const QString & new_name);
-		void set_comment(char const * comment);
+		void set_comment(const QString & new_comment);
 		void set_description(char const * description);
 		void set_source(char const * source);
 		void set_type(char const * type);
@@ -60,8 +60,7 @@ namespace SlavGPS {
 		void set_image(char const * image);
 		void set_symbol(char const * symname);
 
-		void set_comment_no_copy(char * comment);
-		bool apply_dem_data( bool skip_existing );
+		bool apply_dem_data(bool skip_existing);
 
 
 		void marshall(uint8_t ** data, size_t * len);
@@ -78,7 +77,7 @@ namespace SlavGPS {
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;
 		QString name;
-		char * comment = NULL;
+		QString comment;
 		char * description = NULL;
 		char * source = NULL;
 		char * type = NULL;

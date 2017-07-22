@@ -701,8 +701,9 @@ static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
 
 
 
-static char* distance_string(double distance)
+static QString distance_string(double distance)
 {
+	QString result;
 	char str[128];
 
 	/* Draw label with distance. */
@@ -710,34 +711,34 @@ static char* distance_string(double distance)
 	switch (distance_unit) {
 	case DistanceUnit::MILES:
 		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-			g_sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));
+			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
 		} else if (distance < 1609.4) {
-			g_sprintf(str, "%d yards", (int)(distance*1.0936133));
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
 		} else {
-			g_sprintf(str, "%d miles", (int)VIK_METERS_TO_MILES(distance));
+			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
 		}
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
 		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-			g_sprintf(str, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
+			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
 		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-			g_sprintf(str, "%d yards", (int)(distance*1.0936133));
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
 		} else {
-			g_sprintf(str, "%d NM", (int)VIK_METERS_TO_NAUTICAL_MILES(distance));
+			result = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
 		}
 		break;
 	default:
 		/* DistanceUnit::KILOMETRES */
 		if (distance >= 1000 && distance < 100000) {
-			g_sprintf(str, "%3.2f km", distance/1000.0);
+			result = QObject::tr("1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
 		} else if (distance < 1000) {
-			g_sprintf(str, "%d m", (int)distance);
+			result = QObject::tr("%1 m").arg((int) distance);
 		} else {
-			g_sprintf(str, "%d km", (int)distance/1000);
+			result = QObject::tr("%1 km").arg((int) distance/1000);
 		}
 		break;
 	}
-	return g_strdup(str);
+	return result;
 }
 
 
@@ -749,31 +750,26 @@ static char* distance_string(double distance)
 static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, LayerTRW * layer)
 {
 	/* Only show elevation data when track has some elevation properties. */
-	char str_gain_loss[64];
-	str_gain_loss[0] = '\0';
-	char str_last_step[64];
-	str_last_step[0] = '\0';
-	char *str_total = distance_string(distance);
+	QString str_gain_loss;
+	QString str_last_step;
+	const QString str_total = distance_string(distance);
 
 	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
 		if (Preferences::get_unit_height() == HeightUnit::METRES) {
-			g_sprintf(str_gain_loss, _(" - Gain %dm:Loss %dm"), (int)elev_gain, (int)elev_loss);
+			str_gain_loss = QObject::tr(" - Gain %1m:Loss %2m").arg((int) elev_gain).arg((int) elev_loss);
 		} else {
-			g_sprintf(str_gain_loss, _(" - Gain %dft:Loss %dft"), (int)VIK_METERS_TO_FEET(elev_gain), (int)VIK_METERS_TO_FEET(elev_loss));
+			str_gain_loss = QObject::tr(" - Gain %1ft:Loss %2ft").arg((int) VIK_METERS_TO_FEET(elev_gain)).arg((int)VIK_METERS_TO_FEET(elev_loss));
 		}
 	}
 
 	if (last_step > 0) {
-		char *tmp = distance_string(last_step);
-		g_sprintf(str_last_step, _(" - Bearing %3.1f° - Step %s"), RAD2DEG(angle), tmp);
-		free(tmp);
+		const QString dist = distance_string(last_step);
+		str_last_step = QObject::tr(" - Bearing %1° - Step %2").arg(RAD2DEG(angle), 4, 'f', 1).arg(dist); /* "%3.1f" */
 	}
 
 	/* Write with full gain/loss information. */
-	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
+	const QString msg = QObject::tr("Total %1%2%3").arg(str_total).arg(str_last_step).arg(str_gain_loss);
 	layer->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
-	free(msg);
-	free(str_total);
 }
 
 
@@ -884,9 +880,8 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 
 		/* Display of the distance 'tooltip' during track creation is controlled by a preference. */
 		if (Preferences::get_create_track_tooltip()) {
+			QString str = distance_string(distance);
 #ifdef K
-			char *str = distance_string(distance);
-
 			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport), NULL);
 			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport)->font_desc);
 			pango_layout_set_text(pl, str, -1);
@@ -905,7 +900,6 @@ static LayerToolFuncStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw,
 
 			g_object_unref(G_OBJECT (pl));
 			g_object_unref(G_OBJECT (background_block_pen));
-			free(str);
 #endif
 		}
 
@@ -1520,16 +1514,17 @@ void LayerTRW::tool_extended_route_finder_undo()
 	delete new_end;
 
 	this->emit_changed();
-
+#ifdef K
 	/* Remove last ' to:...' */
-	if (this->current_trk->comment) {
-		char *last_to = strrchr(this->current_trk->comment, 't');
-		if (last_to && (last_to - this->current_trk->comment > 1)) {
-			char *new_comment = g_strndup(this->current_trk->comment,
-						      last_to - this->current_trk->comment - 1);
-			this->current_trk->set_comment_no_copy(new_comment);
+	if (!this->current_trk->comment_.isEmpty()) {
+		char *last_to = strrchr(this->current_trk->comment_, 't');
+		if (last_to && (last_to - this->current_trk->comment_ > 1)) {
+			char *new_comment = g_strndup(this->current_trk->comment_,
+						      last_to - this->current_trk->comment_ - 1); /* FIXME: memory leak. */
+			this->current_trk->set_comment(QString(new_comment));
 		}
 	}
+#endif
 }
 
 
@@ -1570,11 +1565,13 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return LayerToolFuncStatus::ACK;
 		}
-		char *msg = g_strdup_printf(_("Querying %s for route between (%.3f, %.3f) and (%.3f, %.3f)."),
-					    engine->get_label(),
-					    start.lat, start.lon, end.lat, end.lon);
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
-		free(msg);
+		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
+			.arg(engine->get_label())
+			.arg(start.lat, 0, 'f', 3) /* ".3f" */
+			.arg(start.lon, 0, 'f', 3)
+			.arg(end.lat, 0, 'f', 3)
+			.arg(end.lon, 0, 'f', 3);
+		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg1);
 		trw->get_window()->set_busy_cursor();
 
  #ifdef K
@@ -1582,18 +1579,17 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		while (gtk_events_pending()) {
 			gtk_main_iteration();
 		}
-
+#endif
 		bool find_status = routing_default_find(trw, start, end);
 
 		/* Update UI to say we're done. */
 		trw->get_window()->clear_busy_cursor();
-		msg = (find_status)
-			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), engine->get_label(), start.lat, start.lon, end.lat, end.lon)
-			: g_strdup_printf(_("Error getting route from %s."), engine->get_label());
+		const QString msg2 = (find_status)
+			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine->get_label()).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
+			: QObject::tr("Error getting route from %1.").arg(engine->get_label());
 
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
-		free(msg);
-#endif
+		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg2);
+
 
 		trw->emit_changed();
 	} else {

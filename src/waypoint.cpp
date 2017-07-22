@@ -89,7 +89,6 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 Waypoint::~Waypoint()
 {
 	/* kamilFIXME: in C code I had to add free()ing of Waypoint::name. */
-	free_string(&comment);
 	free_string(&description);
 	free_string(&source);
 	free_string(&type);
@@ -110,27 +109,9 @@ void Waypoint::set_name(const QString & new_name)
 
 
 
-void Waypoint::set_comment_no_copy(char * comment_)
+void Waypoint::set_comment(const QString & new_comment)
 {
-	free_string(&comment); /* kamilTODO: should we free() string in _no_copy? */
-
-	if (comment_) {
-		comment = comment_;
-	}
-}
-
-
-
-
-void Waypoint::set_comment(char const * comment_)
-{
-	free_string(&comment);
-
-	if (comment_ && comment_[0] != '\0') {
-		comment = strdup(comment_);
-	}
-
-	return;
+	this->comment = new_comment;
 }
 
 
@@ -269,7 +250,7 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
 	vwm_append(name.toUtf8().constData());
-	vwm_append(comment);
+	vwm_append(comment.toUtf8().constData());
 	vwm_append(description);
 	vwm_append(source);
 	vwm_append(type);
@@ -311,9 +292,9 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 #ifdef K
 	vwu_get(wp->name_.toUtf8().constData());
 	fprintf(stderr, "---- name = '%s'\n", wp->name_.toUtf8().constData());
-#endif
 	vwu_get(wp->comment);
 	fprintf(stderr, "---- comment = '%s'\n", wp->comment);
+#endif
 	vwu_get(wp->description);
 	fprintf(stderr, "---- description = '%s'\n", wp->description);
 	vwu_get(wp->source);
