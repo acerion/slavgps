@@ -382,17 +382,17 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	char time_buf[32];
 	time_buf[0] = '\0';
 	if (!trk->empty()
-	    && (*trk->trackpointsB->begin())->has_timestamp) {
+	    && (*trk->trackpoints.begin())->has_timestamp) {
 #ifdef K
 #if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpointsB->begin())->timestamp);
+		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpoints.begin())->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
 		g_strlcpy(time_buf, time, sizeof(time_buf));
 		free(time);
 		g_date_time_unref(gdt);
 #else
 		GDate * gdate_start = g_date_new();
-		g_date_set_time_t(gdate_start, (*trk->trackpointsB->begin())->timestamp);
+		g_date_set_time_t(gdate_start, (*trk->trackpoints.begin())->timestamp);
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
 		g_date_free(gdate_start);
 #endif
@@ -405,8 +405,8 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 	unsigned int trk_duration = 0; /* In minutes. */
 	if (!trk->empty()) {
-		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
+		time_t t1 = (*trk->trackpoints.begin())->timestamp;
+		time_t t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
 		trk_duration = (int) round(labs(t2 - t1) / 60.0);
 	}
 

@@ -148,7 +148,7 @@ static void write_track(FILE * f, Tracks & tracks)
 		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
 		if (len) {
 			fprintf(f, "Data0=");
-			for (auto iter = i->second->trackpointsB->begin(); iter != i->second->trackpointsB->end(); iter++) {
+			for (auto iter = i->second->trackpoints.begin(); iter != i->second->trackpoints.end(); iter++) {
 				write_trackpoint(*iter, f);
 			}
 			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment.toUtf8().constData() + len + 1);

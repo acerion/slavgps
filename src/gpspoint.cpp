@@ -461,7 +461,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 				tp->pdop = line_pdop;
 			}
 
-			current_track->trackpointsB->push_back(tp);
+			current_track->trackpoints.push_back(tp);
 		}
 
 		reset_line();
@@ -868,7 +868,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		fprintf(f, "\n");
 
 		TP_write_info_type tp_write_info = { f, trk->sublayer_type == SublayerType::ROUTE };
-		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 			a_gpspoint_write_trackpoint(*iter, &tp_write_info);
 		}
 		fprintf(f, "type=\"%send\"\n", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track");

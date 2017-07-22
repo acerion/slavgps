@@ -1622,7 +1622,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 			auto last_tp = std::prev(this->realtime_track->end());
 			delete *last_tp;
-			this->realtime_track->trackpointsB->erase(last_tp);
+			this->realtime_track->trackpoints.erase(last_tp);
 			replace = true;
 		}
 

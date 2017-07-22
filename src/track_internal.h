@@ -150,49 +150,50 @@ namespace SlavGPS {
 		void sort(compare_trackpoints_t compare_function);
 
 		void add_trackpoint(Trackpoint * tp, bool recalculate);
-		double get_length_to_trackpoint(const Trackpoint * tp); // const
-		double get_length();  // const
-		double get_length_including_gaps();  // const
-		unsigned long get_tp_count();  // const
-		unsigned int get_segment_count();  // const
+		double get_length_to_trackpoint(const Trackpoint * tp) const;
+		double get_length() const;
+		double get_length_including_gaps() const;
+		unsigned long get_tp_count() const;
+		unsigned int get_segment_count() const;
 		std::list<Track *> * split_into_segments();
 
 		unsigned int merge_segments(void);
 		void reverse(void);
-		time_t get_duration(bool include_segments); // const
-		double get_duration(); /* private. */
+		time_t get_duration(bool include_segments) const;
+		double get_duration() const; /* private. */
 
-		unsigned long get_dup_point_count();  // const
+		unsigned long get_dup_point_count() const;
 		unsigned long remove_dup_points();
-		unsigned long get_same_time_point_count(); // const
+		unsigned long get_same_time_point_count() const;
 		unsigned long remove_same_time_points();
 
 		void to_routepoints();
 
-		double get_max_speed();  // const
-		double get_average_speed();  // const
-		double get_average_speed_moving(int stop_length_seconds);  // const
+		double get_max_speed() const;
+		double get_average_speed() const;
+		double get_average_speed_moving(int stop_length_seconds) const;
 
 		void convert(CoordMode dest_mode);
-		double * make_elevation_map(uint16_t num_chunks);  // const
-		bool get_total_elevation_gain(double *up, double *down);  // const
+		double * make_elevation_map(uint16_t num_chunks) const;
+		bool get_total_elevation_gain(double * up, double * down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
 		Trackpoint * get_closest_tp_by_percentage_time(double reldist, time_t *seconds_from_start);
-		Trackpoint * get_tp_by_max_speed();  // const
-		Trackpoint * get_tp_by_max_alt();  // const
-		Trackpoint * get_tp_by_min_alt();  // const
-		Trackpoint * get_tp_first();  // const
-		Trackpoint * get_tp_last();  // const
-		Trackpoint * get_tp_prev(Trackpoint * tp);  // const
-		double * make_gradient_map(uint16_t num_chunks);  // const
-		double * make_speed_map(uint16_t num_chunks);  // const
-		double * make_distance_map(uint16_t num_chunks);  // const
-		double * make_elevation_time_map(uint16_t num_chunks);  // const
-		double * make_speed_dist_map(uint16_t num_chunks);  // const
-		bool get_minmax_alt(double *min_alt, double *max_alt);  // const
-		void marshall(uint8_t **data, size_t * len);
-		static Track * unmarshall(uint8_t *data, size_t datalen);
+		Trackpoint * get_tp_by_max_speed() const;
+		Trackpoint * get_tp_by_max_alt() const;
+		Trackpoint * get_tp_by_min_alt() const;
+		Trackpoint * get_tp_first() const;
+		Trackpoint * get_tp_last() const;
+		Trackpoint * get_tp_prev(Trackpoint * tp) const;
+		double * make_gradient_map(uint16_t num_chunks) const;
+		double * make_speed_map(uint16_t num_chunks) const;
+		double * make_distance_map(uint16_t num_chunks) const;
+		double * make_elevation_time_map(uint16_t num_chunks) const;
+		double * make_speed_dist_map(uint16_t num_chunks) const;
+		bool get_minmax_alt(double * min_alt, double * max_alt) const;
+
+		void marshall(uint8_t ** data, size_t * len);
+		static Track * unmarshall(uint8_t * data, size_t datalen);
 
 		void calculate_bounds();
 
@@ -231,13 +232,12 @@ namespace SlavGPS {
 		QString source;
 		QString type;
 
-		TrackPoints * trackpointsB = NULL;
+		TrackPoints trackpoints;
 		bool visible = false;
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
 		uint8_t max_number_dist_labels = 0;
 
 		uint8_t ref_count = 0;
-		QDialog * property_dialog = NULL;
 		bool has_color = false;
 		QColor color;
 		LatLonBBox bbox;

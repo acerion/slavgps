@@ -316,10 +316,10 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 
 	if (!this->trk->empty()
-	    && (*this->trk->trackpointsB->begin())->timestamp) {
+	    && (*this->trk->trackpoints.begin())->timestamp) {
 
-		time_t t1 = (*this->trk->trackpointsB->begin())->timestamp;
-		time_t t2 = (*std::prev(this->trk->trackpointsB->end()))->timestamp;
+		time_t t1 = (*this->trk->trackpoints.begin())->timestamp;
+		time_t t2 = (*std::prev(this->trk->trackpoints.end()))->timestamp;
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		struct LatLon center = { (this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2 };

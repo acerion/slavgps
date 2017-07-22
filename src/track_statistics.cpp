@@ -71,10 +71,10 @@ void TrackStatistics::add_track(Track * trk)
 	}
 
 	if (!trk->empty()
-	    && (*trk->trackpointsB->begin())->timestamp) {
+	    && (*trk->trackpoints.begin())->timestamp) {
 
-		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
+		time_t t1 = (*trk->trackpoints.begin())->timestamp;
+		time_t t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
 
 		/* Assume never actually have a track with a time of 0 (1st Jan 1970). */
 		if (this->start_time == 0) {

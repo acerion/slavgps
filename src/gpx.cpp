@@ -320,7 +320,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 				c_tp->newsegment = true;
 				f_tr_newseg = false;
 			}
-			c_tr->trackpointsB->push_back(c_tp);
+			c_tr->trackpoints.push_back(c_tp);
 		}
 		break;
 
@@ -1122,11 +1122,11 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 
 	if (!trk->empty()) {
 
-		auto first = trk->trackpointsB->begin();
+		auto first = trk->trackpoints.begin();
 		bool first_tp_is_newsegment = (*first)->newsegment;
 		(*first)->newsegment = false; /* So we won't write </trkseg><trkseg> already. */
 
-		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 			gpx_write_trackpoint(*iter, context);
 		}
 

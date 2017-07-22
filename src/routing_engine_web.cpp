@@ -318,7 +318,7 @@ char * RoutingEngineWeb::get_url_for_track(Track * trk)
 	}
 
 	/* Init temporary storage. */
-	size_t len = 1 + trk->trackpointsB->size() + 1; /* Base + trackpoints + NULL. */
+	size_t len = 1 + trk->trackpoints.size() + 1; /* Base + trackpoints + NULL. */
 	urlParts = (char **) malloc(sizeof(char*)*len);
 	urlParts[0] = g_strdup(this->url_base);
 	urlParts[len-1] = NULL;
@@ -329,20 +329,20 @@ char * RoutingEngineWeb::get_url_for_track(Track * trk)
 	ctx.nb = 1; /* First cell available, previous used for base URL. */
 
 	/* Append all trackpoints to URL. */
-	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 		_append_stringified_coords(*iter, &ctx);
 	}
 
 	/* Override first and last positions with associated formats. */
 	free(urlParts[1]);
 
-	Trackpoint * tp = *trk->trackpointsB->begin();
+	Trackpoint * tp = *trk->trackpoints.begin();
 	struct LatLon position = tp->coord.get_latlon();
 	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, position);
 
 	free(urlParts[len-2]);
 
-	tp = *std::prev(trk->trackpointsB->end());
+	tp = *std::prev(trk->trackpoints.end());
 	position = tp->coord.get_latlon();
 	urlParts[len-2] = substitute_latlon(this->url_stop_ll_fmt, position);
 

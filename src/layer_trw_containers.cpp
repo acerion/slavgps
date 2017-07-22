@@ -73,9 +73,9 @@ Track * LayerTRWc::find_track_by_date(Tracks & tracks, char const * date)
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
 		if (!trk->empty()
-		    && (*trk->trackpointsB->begin())->has_timestamp) {
+		    && (*trk->trackpoints.begin())->has_timestamp) {
 
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
+			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
 
 			if (!g_strcmp0(date, date_buf)) {
 				return trk;
@@ -544,7 +544,7 @@ void LayerTRWc::track_search_closest_tp(Tracks & tracks, TrackpointSearch * sear
 		}
 
 
-		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
 			int x, y;
 			search->viewport->coord_to_screen(&(*iter)->coord, &x, &y);

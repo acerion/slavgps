@@ -426,8 +426,8 @@ static double tp_percentage_by_time(Track * trk, Trackpoint * tp)
 	if (tp == NULL) {
 		return pc;
 	}
-	time_t t_start = (*trk->trackpointsB->begin())->timestamp;
-	time_t t_end = (*std::prev(trk->trackpointsB->end()))->timestamp;
+	time_t t_start = (*trk->trackpoints.begin())->timestamp;
+	time_t t_end = (*std::prev(trk->trackpoints.end()))->timestamp;
 	time_t t_total = t_end - t_start;
 	pc = (double) (tp->timestamp - t_start) / t_total;
 	return pc;
@@ -447,15 +447,15 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 	}
 	double dist = 0.0;
 
-	auto iter = std::next(trk->trackpointsB->begin());
-	for (; iter != trk->trackpointsB->end(); iter++) {
+	auto iter = std::next(trk->trackpoints.begin());
+	for (; iter != trk->trackpoints.end(); iter++) {
 		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		/* Assuming trackpoint is not a copy. */
 		if (tp == *iter) {
 			break;
 		}
 	}
-	if (iter != trk->trackpointsB->end()) {
+	if (iter != trk->trackpoints.end()) {
 		pc = dist / track_length;
 	}
 	return pc;
@@ -1228,7 +1228,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	double dist = 0;
 	int achunk = chunksa[cia] * LINES;
 
-	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
 		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		int x = (graph_width * dist) / total_length + margin;
@@ -1543,7 +1543,7 @@ static void draw_speed_dist(Track * trk_,
 	}
 
 	double dist = 0;
-	for (auto iter = std::next(trk_->trackpointsB->begin()); iter != trk_->trackpointsB->end(); iter++) {
+	for (auto iter = std::next(trk_->trackpoints.begin()); iter != trk_->trackpoints.end(); iter++) {
 		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		int x = (graph_width * dist) / total_length + GRAPH_MARGIN_LEFT;
 		if (do_speed) {
@@ -1747,10 +1747,10 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 
 		QPen gps_speed_pen(QColor("red"));
 
-		time_t beg_time = (*trk_->trackpointsB->begin())->timestamp;
-		time_t dur = (*std::prev(trk_->trackpointsB->end()))->timestamp - beg_time;
+		time_t beg_time = (*trk_->trackpoints.begin())->timestamp;
+		time_t dur = (*std::prev(trk_->trackpoints.end()))->timestamp - beg_time;
 
-		for (auto iter = trk_->trackpointsB->begin(); iter != trk_->trackpointsB->end(); iter++) {
+		for (auto iter = trk_->trackpoints.begin(); iter != trk_->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
 			if (std::isnan(gps_speed)) {
 				continue;
@@ -2095,7 +2095,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 		double dist = trk_->get_length_including_gaps();
 		double dist_tp = 0.0;
 
-		for (auto iter = std::next(trk_->trackpointsB->begin()); iter != trk_->trackpointsB->end(); iter++) {
+		for (auto iter = std::next(trk_->trackpoints.begin()); iter != trk_->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
 			if (std::isnan(gps_speed)) {
 				continue;

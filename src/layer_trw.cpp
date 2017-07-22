@@ -4838,13 +4838,13 @@ void LayerTRW::split_by_timestamp_cb(void)
 	}
 
 	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
-	auto iter = trk->trackpointsB->begin();
+	auto iter = trk->trackpoints.begin();
 	time_t prev_ts = (*iter)->timestamp;
 
 	TrackPoints * newtps = new TrackPoints;
 	std::list<TrackPoints *> points;
 
-	for (; iter != trk->trackpointsB->end(); iter++) {
+	for (; iter != trk->trackpoints.end(); iter++) {
 		time_t ts = (*iter)->timestamp;
 
 		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
@@ -4918,7 +4918,7 @@ void LayerTRW::split_by_n_points_cb(void)
 
 	int count = 0;
 
-	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 		/* Accumulate trackpoint copies in newtps, in reverse order */
 		newtps->push_back(new Trackpoint(**iter));
 		count++;
@@ -5227,8 +5227,8 @@ void LayerTRW::diary_cb(void)
 
 		char date_buf[20];
 		date_buf[0] = '\0';
-		if (!trk->empty() && (*trk->trackpointsB->begin())->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
+		if (!trk->empty() && (*trk->trackpoints.begin())->has_timestamp) {
+			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
 			this->diary_open(date_buf);
 		} else {
 			Dialog::info(tr("This track has no date information."), this->get_window());

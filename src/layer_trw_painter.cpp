@@ -417,7 +417,7 @@ void TRWPainter::draw_point_names(Track * trk, bool drawing_highlight)
 	const QColor fg_color = this->get_fg_color(trk);
 	const QColor bg_color = this->get_bg_color(drawing_highlight);
 
-	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 		if (!(*iter)->name.isEmpty()) {
 			this->draw_track_label((*iter)->name, fg_color, bg_color, &(*iter)->coord);
 		}
@@ -559,7 +559,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 	const uint8_t tp_size_reg = this->trw->drawpoints_size;
 	const uint8_t tp_size_cur = this->trw->drawpoints_size * 2;
 
-	auto iter = trk->trackpointsB->begin();
+	auto iter = trk->trackpoints.begin();
 
 	uint8_t tp_size = (this->trw->selected_tp.valid && *iter == *this->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
@@ -591,7 +591,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 	iter++; /* Because first Trackpoint has been drawn above. */
 
-	for (; iter != trk->trackpointsB->end(); iter++) {
+	for (; iter != trk->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
 
 		tp_size = (this->trw->selected_tp.valid && tp == *this->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
@@ -640,7 +640,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 			if (drawstops
 			    && drawpoints
 			    && ! draw_track_outline
-			    && std::next(iter) != trk->trackpointsB->end()
+			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->trw->stop_length) {
 
 				this->viewport->draw_arc(this->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
@@ -662,7 +662,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 			if (drawpoints && !draw_track_outline) {
 
-				if (std::next(iter) != trk->trackpointsB->end()) {
+				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
 					this->viewport->fill_rectangle(main_pen.color(), x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
@@ -688,7 +688,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 					this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 
 					if (this->trw->drawelevation
-					    && std::next(iter) != trk->trackpointsB->end()
+					    && std::next(iter) != trk->trackpoints.end()
 					    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
 						this->draw_track_draw_something(x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);

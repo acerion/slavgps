@@ -317,14 +317,14 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_item_cb()));
 
 		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
-			Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
-			if (trk && trk->property_dialog) {
+			const Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
+			if (trk && trk->properties_dialog) {
 				qa->setEnabled(false);
 			}
 		}
 		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
-			Track * trk = this->routes.at(this->menu_data->sublayer->uid);
-			if (trk && trk->property_dialog) {
+			const Track * trk = this->routes.at(this->menu_data->sublayer->uid);
+			if (trk && trk->properties_dialog) {
 				qa->setEnabled(false);
 			}
 		}
@@ -337,14 +337,14 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_item_cb()));
 
 		if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
-			Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
-			if (trk && trk->property_dialog) {
+			const Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
+			if (trk && trk->profile_dialog) {
 				qa->setEnabled(false);
 			}
 		}
 		if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
-			Track * trk = this->routes.at(this->menu_data->sublayer->uid);
-			if (trk && trk->property_dialog) {
+			const Track * trk = this->routes.at(this->menu_data->sublayer->uid);
+			if (trk && trk->profile_dialog) {
 				qa->setEnabled(false);
 			}
 		}
