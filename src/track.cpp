@@ -37,7 +37,7 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "track.h"
+#include "track_internal.h"
 #include "dem_cache.h"
 #include "settings.h"
 #include "util.h"
@@ -639,7 +639,7 @@ void Track::to_routepoints(void)
 		(*iter)->vdop = VIK_DEFAULT_DOP;
 		(*iter)->pdop = VIK_DEFAULT_DOP;
 		(*iter)->nsats = 0;
-		(*iter)->fix_mode = VIK_GPS_MODE_NOT_SEEN;
+		(*iter)->fix_mode = GPSFixMode::NOT_SEEN;
 	}
 
 }

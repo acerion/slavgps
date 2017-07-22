@@ -42,6 +42,7 @@
 #include "acquire.h"
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
+#include "track_internal.h"
 
 
 

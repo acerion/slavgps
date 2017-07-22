@@ -45,6 +45,7 @@
 #include "layer_trw_dialogs.h"
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
+#include "track_internal.h"
 #include "dialog.h"
 #include "dem_cache.h"
 #include "util.h"

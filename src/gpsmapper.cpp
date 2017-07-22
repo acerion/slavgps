@@ -26,6 +26,7 @@
 
 #include "gpsmapper.h"
 #include "layer_trw.h"
+#include "track_internal.h"
 
 
 

@@ -20,7 +20,7 @@
 
 #include <cstdio>
 
-#include "track.h"
+#include "track_internal.h"
 #include "track_statistics.h"
 
 

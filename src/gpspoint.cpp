@@ -36,7 +36,7 @@
 #endif
 
 #include "gpspoint.h"
-#include "track.h"
+#include "track_internal.h"
 #include "waypoint.h"
 #include "layer_trw.h"
 #include "file.h"
@@ -455,7 +455,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 				tp->speed = line_speed;
 				tp->course = line_course;
 				tp->nsats = line_sat;
-				tp->fix_mode = (FixMode) line_fix_mode;
+				tp->fix_mode = (GPSFixMode) line_fix_mode;
 				tp->hdop = line_hdop;
 				tp->vdop = line_vdop;
 				tp->pdop = line_pdop;
@@ -780,8 +780,8 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 			fprintf(f, " sat=\"%d\"", tp->nsats);
 		}
 
-		if (tp->fix_mode > 0) {
-			fprintf(f, " fix=\"%d\"", tp->fix_mode);
+		if (((int) tp->fix_mode) > 0) {
+			fprintf(f, " fix=\"%d\"", (int) tp->fix_mode);
 		}
 
 		if (tp->hdop != VIK_DEFAULT_DOP) {

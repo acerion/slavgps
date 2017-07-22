@@ -47,12 +47,13 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include <expat.h>
+
 #include "gpx.h"
 #include "globals.h"
 #include "preferences.h"
 #include "layer_trw.h"
-#include <expat.h>
-
+#include "track_internal.h"
 #include "util.h"
 
 
@@ -557,15 +558,15 @@ static void gpx_end(LayerTRW * trw, char const * el)
 
 	case tt_trk_trkseg_trkpt_fix:
 		if (!strcmp("2d", c_cdata->str)) {
-			c_tp->fix_mode = VIK_GPS_MODE_2D;
+			c_tp->fix_mode = GPSFixMode::FIX_2D;
 		} else if (!strcmp("3d", c_cdata->str)) {
-			c_tp->fix_mode = VIK_GPS_MODE_3D;
+			c_tp->fix_mode = GPSFixMode::FIX_3D;
 		} else if (!strcmp("dgps", c_cdata->str)) {
-			c_tp->fix_mode = VIK_GPS_MODE_DGPS;
+			c_tp->fix_mode = GPSFixMode::DGPS;
 		} else if (!strcmp("pps", c_cdata->str)) {
-			c_tp->fix_mode = VIK_GPS_MODE_PPS;
+			c_tp->fix_mode = GPSFixMode::PPS;
 		} else {
-			c_tp->fix_mode = VIK_GPS_MODE_NOT_SEEN;
+			c_tp->fix_mode = GPSFixMode::NOT_SEEN;
 		}
 		g_string_erase(c_cdata, 0, -1);
 		break;
@@ -1017,16 +1018,16 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 		fprintf(f, "    <speed>%s</speed>\n", s_speed);
 		free(s_speed);
 	}
-	if (tp->fix_mode == VIK_GPS_MODE_2D) {
+	if (tp->fix_mode == GPSFixMode::FIX_2D) {
 		fprintf(f, "    <fix>2d</fix>\n");
 	}
-	if (tp->fix_mode == VIK_GPS_MODE_3D) {
+	if (tp->fix_mode == GPSFixMode::FIX_3D) {
 		fprintf(f, "    <fix>3d</fix>\n");
 	}
-	if (tp->fix_mode == VIK_GPS_MODE_DGPS) {
+	if (tp->fix_mode == GPSFixMode::DGPS) {
 		fprintf(f, "    <fix>dgps</fix>\n");
 	}
-	if (tp->fix_mode == VIK_GPS_MODE_PPS) {
+	if (tp->fix_mode == GPSFixMode::PPS) {
 		fprintf(f, "    <fix>pps</fix>\n");
 	}
 	if (tp->nsats > 0) {

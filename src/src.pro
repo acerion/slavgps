@@ -203,6 +203,7 @@ HEADERS += window.h \
     layers_panel.h \
     layer_toolbox.h \
     track.h \
+    track_internal.h \
     track_properties_dialog.h \
     track_profile_dialog.h \
     track_list_dialog.h \

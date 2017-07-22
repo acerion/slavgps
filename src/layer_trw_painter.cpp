@@ -55,7 +55,7 @@
 #include "vikutils.h"
 #include "viewport.h"
 #include "waypoint.h"
-#include "track.h"
+#include "track_internal.h"
 #include "layer_trw.h"
 #include "window.h"
 

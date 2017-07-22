@@ -30,6 +30,7 @@
 #include <cassert>
 
 #include "track_list_dialog.h"
+#include "track_internal.h"
 #include "track_properties_dialog.h"
 #include "clipboard.h"
 #include "settings.h"

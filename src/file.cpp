@@ -58,6 +58,7 @@
 #include "preferences.h"
 #include "babel.h"
 #include "tree_view_internal.h"
+#include "track_internal.h"
 #include "util.h"
 
 

@@ -44,7 +44,7 @@
 #include "settings.h"
 #include "globals.h"
 #include "preferences.h"
-#include "track.h"
+#include "track_internal.h"
 
 
 

@@ -48,7 +48,7 @@
 #include "track_properties_dialog.h"
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
-#include "track.h"
+#include "track_internal.h"
 #include "track_profile_dialog.h"
 #include "track_list_dialog.h"
 #include "file.h"

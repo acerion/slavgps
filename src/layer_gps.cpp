@@ -51,7 +51,7 @@
 #include "window.h"
 #include "layer_gps.h"
 #include "layer_trw.h"
-#include "track.h"
+#include "track_internal.h"
 #include "settings.h"
 #include "globals.h"
 typedef int GdkPixdata; /* TODO: remove sooner or later. */
@@ -1642,7 +1642,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			tp_->speed = this->realtime_fix.fix.speed;
 			tp_->course = this->realtime_fix.fix.track;
 			tp_->nsats = this->realtime_fix.satellites_used;
-			tp_->fix_mode = (FixMode) this->realtime_fix.fix.mode;
+			tp_->fix_mode = (GPSFixMode) this->realtime_fix.fix.mode;
 
 			ll.lat = this->realtime_fix.fix.latitude;
 			ll.lon = this->realtime_fix.fix.longitude;
@@ -1955,7 +1955,7 @@ static void gps_start_stop_tracking_cb(gps_layer_data_t * data)
 	layer->realtime_tracking = (layer->realtime_tracking == false);
 
 	/* Make sure we are still in the boat with libgps. */
-	assert ((VIK_GPS_MODE_2D == MODE_2D) && (VIK_GPS_MODE_3D == MODE_3D));
+	assert ((((int) GPSFixMode::FIX_2D) == MODE_2D) && (((int) GPSFixMode::FIX_3D) == MODE_3D));
 
 	if (layer->realtime_tracking) {
 		layer->first_realtime_trackpoint = true;

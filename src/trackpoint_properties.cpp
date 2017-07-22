@@ -35,7 +35,7 @@
 #include "vikutils.h"
 #include "date_time_dialog.h"
 #include "util.h"
-#include "track.h"
+#include "track_internal.h"
 #if 0
 #include "coords.h"
 #include "coord.h"
