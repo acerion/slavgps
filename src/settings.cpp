@@ -36,6 +36,8 @@
 
 #include <glib.h>
 
+#include <QDebug>
+
 #include "dir.h"
 #include "settings.h"
 
@@ -60,16 +62,13 @@ static bool settings_load_from_file()
 
 	GError * error = NULL;
 
-	char * fn = g_build_filename(get_viking_dir(), VIKING_INI_FILE, NULL);
+	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_INI_FILE;
 
-	if (!g_key_file_load_from_file(keyfile, fn, flags, &error)) {
-		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
-		free(fn);
-		g_error_free (error);
+	if (!g_key_file_load_from_file(keyfile, full_path.toUtf8().constData(), flags, &error)) {
+		qDebug() << "WW: Settings: failed to open Viking ini file" << full_path << ":" << error->message;
+		g_error_free(error);
 		return false;
 	}
-
-	free(fn);
 
 	return true;
 }
@@ -93,7 +92,7 @@ void a_settings_init()
 void a_settings_uninit()
 {
 	GError * error = NULL;
-	char * fn = g_build_filename(get_viking_dir(), VIKING_INI_FILE, NULL);
+	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_INI_FILE;
 	size_t size;
 
 	char * keyfilestr = g_key_file_to_data(keyfile, &size, &error);
@@ -104,16 +103,15 @@ void a_settings_uninit()
 		goto tidy;
 	}
 
-	g_file_set_contents(fn, keyfilestr, size, &error);
+	g_file_set_contents(full_path.toUtf8().constData(), keyfilestr, size, &error);
 	if (error) {
-		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
+		qDebug() << "WW: Settings: failed to access Viking ini file" << full_path << "during uninitalization:" << error->message;
 		g_error_free(error);
 	}
 
 	g_key_file_free(keyfile);
  tidy:
 	free(keyfilestr);
-	free(fn);
 }
 
 

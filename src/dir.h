@@ -25,15 +25,33 @@
 
 
 
+#include <QString>
+#include <QDir>
+
+
+
+
 namespace SlavGPS {
 
 
 
 
-	char const * get_viking_dir();
+	/**
+	   \brief Get path to user's Viking directory
+
+	   The path is without trailing separator. The path is with native (platform-dependent) separators.
+	*/
+	QString get_viking_dir(void);
+
 	char * get_viking_dir_no_create();
 	char ** get_viking_data_path();
-	char * get_viking_data_home();
+
+	/**
+	   \brief Get XDG compliant user's data directory
+
+	   \return String with path (the string can be empty)
+	*/
+	QString get_viking_data_home();
 
 
 

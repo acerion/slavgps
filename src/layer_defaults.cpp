@@ -368,7 +368,7 @@ void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * lay
 void SlavGPS::a_layer_defaults_init()
 {
 	/* kamilFIXME: improve this section. Make sure that the file exists. */
-	QString path(QString(get_viking_dir()) + "/" + VIKING_LAYER_DEFAULTS_INI_FILE);
+	const QString path = get_viking_dir() + QDir::separator() + VIKING_LAYER_DEFAULTS_INI_FILE;
 	keyfile = new QSettings(path, QSettings::IniFormat);
 
 	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << path;

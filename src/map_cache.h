@@ -27,6 +27,7 @@
 #include <cstdint>
 
 #include <QPixmap>
+#include <QString>
 
 #include "mapcoord.h"
 #include "map_ids.h"
@@ -59,6 +60,9 @@ namespace SlavGPS {
 
 	size_t map_cache_get_size();
 	int map_cache_get_count();
+
+
+	const QString & map_cache_dir();
 
 
 

@@ -67,7 +67,7 @@ using namespace SlavGPS;
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
 static SGVariant alpha_default(void)     { return SGVariant((uint32_t) 255); }
-static SGVariant cache_dir_default(void) { return SGVariant(g_strconcat(maps_layer_default_dir(), "MapnikRendering", NULL)); }
+static SGVariant cache_dir_default(void) { return SGVariant(g_strconcat(maps_layer_default_dir().toUtf8().constData(), "MapnikRendering", NULL)); }
 
 
 static ParameterScale scales[] = {
@@ -250,15 +250,14 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	g_date_time_unref(then);
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
-	char *import_time_file = g_strconcat(get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL);
+	const QString import_time_full_path = get_viking_dir() + QDir::separator() + "planet-import-complete";
 	struct stat stat_buf;
-	if (stat(import_time_file, &stat_buf) == 0) {
+	if (stat(import_time_full_path.toUtf8().constData(), &stat_buf) == 0) {
 		/* Only update if newer. */
 		if (planet_import_time > stat_buf.st_mtime) {
 			planet_import_time = stat_buf.st_mtime;
 		}
 	}
-	free(import_time_file);
 }
 
 

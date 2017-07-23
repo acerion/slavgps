@@ -234,14 +234,12 @@ bool LayerGeoref::set_param_value(uint16_t id, SGVariant data, bool is_file_oper
 void LayerGeoref::create_image_file()
 {
 	/* Create in .viking-maps. */
-	char * filename = g_strconcat(maps_layer_default_dir(), this->get_name(), ".jpg", NULL);
-	if (!this->pixmap->save(filename, "jpeg")) {
-		qDebug() << "WW: Layer Georef: failed to save pixmap to" << filename;
+	const QString path = maps_layer_default_dir() + this->get_name() + ".jpg"; /* maps_layer_default_dir() should return string with trailing separator. */
+	if (!this->pixmap->save(path, "jpeg")) {
+		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
 	} else {
-		this->image = g_strdup(filename);
+		this->image = strdup(path.toUtf8().constData()); /* FIXME: memoryleak. */
 	}
-
-	free(filename);
 }
 
 

@@ -147,58 +147,53 @@ static void modules_register_routing_engine(VikGobjectBuilder * self, void * obj
 
 
 
-static void modules_load_config_dir(const char * dir)
+static void modules_load_config_dir(const QString & dir)
 {
-	fprintf(stderr, "DEBUG: Loading configurations from directory %s\n", dir);
+	qDebug() << "DD: Modules: Loading configurations from directory" << dir;
 
 	/* Maps sources. */
-	char * maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
-	if (access(maps, R_OK) == 0) {
+	const QString maps = dir + QDir::separator() + VIKING_MAPS_FILE;
+	if (access(maps.toUtf8().constData(), R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_map_source));
 		vik_gobject_builder_parse(builder, maps);
 		g_object_unref(builder);
 	}
-	free(maps);
 
 	/* External tools. */
-	char * tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
-	if (access(tools, R_OK) == 0) {
+	const QString tools = dir + QDir::separator() + VIKING_EXTTOOLS_FILE;
+	if (access(tools.toUtf8().constData(), R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_exttools));
 		vik_gobject_builder_parse(builder, tools);
 		g_object_unref(builder);
 	}
-	free(tools);
 
-	char * datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
-	if (access(datasources, R_OK) == 0) {
+	const QString datasources = dir + QDir::separator() + VIKING_DATASOURCES_FILE;
+	if (access(datasources.toUtf8().constData(), R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_datasources));
 		vik_gobject_builder_parse(builder, datasources);
 		g_object_unref(builder);
 	}
-	free(datasources);
 
 	/* Go-to search engines. */
-	char * go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
-	if (access(go_to, R_OK) == 0) {
+	const QString go_to = dir + QDir::separator() + VIKING_GOTOTOOLS_FILE;
+	if (access(go_to.toUtf8().constData(), R_OK) == 0) {
 		VikGobjectBuilder * builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_gototools));
 		vik_gobject_builder_parse(builder, go_to);
 		g_object_unref(builder);
 	}
-	free(go_to);
 
 	/* Routing engines. */
-	char * routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
-	if (access(routing, R_OK) == 0) {
+	const QString routing = dir + QDir::separator() + VIKING_ROUTING_FILE;
+	if (access(routing.toUtf8().constData(), R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_routing_engine));
 		vik_gobject_builder_parse(builder, routing);
 		g_object_unref(builder);
 	}
-	free(routing);
 }
 
 
@@ -215,15 +210,15 @@ static void modules_load_config(void)
 	   So, we have to process directories in reverse order. */
 	int nb_data_dirs = g_strv_length(data_dirs);
 	for (; nb_data_dirs > 0 ; nb_data_dirs--) {
-		modules_load_config_dir(data_dirs[nb_data_dirs-1]);
+		modules_load_config_dir(QString(data_dirs[nb_data_dirs-1]));
 	}
 	g_strfreev(data_dirs);
 
 	/* Check if system config is set. */
 	modules_load_config_dir(VIKING_SYSCONFDIR);
 
-	const char * data_home = get_viking_data_home();
-	if (data_home) {
+	QString data_home = get_viking_data_home();
+	if (!data_home.isEmpty()) {
 		modules_load_config_dir(data_home);
 	}
 

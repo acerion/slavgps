@@ -44,6 +44,7 @@
 #include "layer_dem.h"
 #include "dem.h"
 #include "dem_cache.h"
+#include "map_cache.h"
 typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"
 #include "file.h"
@@ -89,15 +90,6 @@ public:
 };
 
 
-
-
-#if 0
-#define MAPS_CACHE_DIR maps_layer_default_dir()
-#define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
-#else
-#define MAPS_CACHE_DIR "/home/kamil/.viking-maps/"
-#define MAPS_CACHE_DIR_2 QString(MAPS_CACHE_DIR)
-#endif
 
 
 #define SRTM_HTTP_SITE "dds.cr.usgs.gov"
@@ -1139,7 +1131,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				continue;
 			}
 
-			cache_file_path = QString("%1srtm3-%2%3").arg(MAPS_CACHE_DIR).arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(lat, lon);
+			cache_file_path = QString("%1srtm3-%2%3").arg(map_cache_dir()).arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(lat, lon);
 			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 				continue;
 			}
@@ -1212,34 +1204,34 @@ static char * dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 static void dem24k_draw_existence(Viewport * viewport)
 {
 	double max_lat, max_lon, min_lat, min_lon;
-	char buf[strlen(MAPS_CACHE_DIR)+40];
+	QString buf;
 	double i, j;
 
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
 		/* Check lat dir first -- faster. */
-		snprintf(buf, sizeof(buf), "%sdem24k/%d/", MAPS_CACHE_DIR, (int) i);
+		buf = QString("%1dem24k/%2/").arg(map_cache_dir()).arg((int) i);
 
-		if (0 != access(buf, F_OK)) {
+		if (0 != access(buf.toUtf8().constData(), F_OK)) {
 			continue;
 		}
 
 		for (j = floor(min_lon*8)/8; j <= floor(max_lon*8)/8; j+=0.125) {
 			/* Check lon dir first -- faster. */
-			snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/", MAPS_CACHE_DIR, (int) i, (int) j);
-			if (0 != access(buf, F_OK)) {
+			buf = QString("%1dem24k/%2/%3/").arg(map_cache_dir()).arg((int) i).arg((int) j);
+			if (0 != access(buf.toUtf8().constData(), F_OK)) {
 				continue;
 			}
 
-			snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/%.03f,%.03f.dem",
-				 MAPS_CACHE_DIR,
-				 (int) i,
-				 (int) j,
-				 floor(i*8)/8,
-				 floor(j*8)/8);
+			buf = QString("%1dem24k/%2/%3/%4,%5.dem")
+				.arg(map_cache_dir())
+				.arg((int) i)
+				.arg((int) j)
+				.arg(floor(i*8)/8, 0, 'f', 3, '0')  /* "%.03f" */
+				.arg(floor(j*8)/8, 0, 'f', 3, '0'); /* "%.03f" */
 
-			if (0 == access(buf, F_OK)) {
+			if (0 == access(buf.toUtf8().constData(), F_OK)) {
 				Coord ne, sw;
 				int x1, y1, x2, y2;
 
@@ -1444,7 +1436,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 #else
 	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #endif
-	QString cache_file_path = MAPS_CACHE_DIR_2 + cache_file_name;
+	QString cache_file_path = map_cache_dir() + cache_file_name;
 
 	QString message;
 	if (0 == access(cache_file_path.toUtf8().constData(), F_OK)) {
@@ -1492,7 +1484,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		const QString dem_full_path = MAPS_CACHE_DIR_2 + cache_file_name;
+		const QString dem_full_path = map_cache_dir() + cache_file_name;
 		qDebug() << "II: Layer DEM: Download Tool: Release: released left button, path is" << dem_full_path;
 
 		/* TODO: check if already in filelist. */

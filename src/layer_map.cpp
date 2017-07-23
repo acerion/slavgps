@@ -324,7 +324,7 @@ static Parameter prefs[] = {
 void layer_map_init(void)
 {
 	SGVariant tmp;
-	tmp.s = maps_layer_default_dir();
+	tmp.s = strdup(maps_layer_default_dir().toUtf8().constData());
 	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	int max_tiles = MAX_TILES;
@@ -504,7 +504,6 @@ QString LayerMap::get_map_label(void) const
 #define DIRECTDIRACCESS "%s%d" G_DIR_SEPARATOR_S "%d" G_DIR_SEPARATOR_S "%d%s"
 #define DIRECTDIRACCESS_WITH_NAME "%s%s" G_DIR_SEPARATOR_S "%d" G_DIR_SEPARATOR_S "%d" G_DIR_SEPARATOR_S "%d%s"
 #define DIRSTRUCTURE "%st%ds%dz%d" G_DIR_SEPARATOR_S "%d" G_DIR_SEPARATOR_S "%d"
-#define MAPS_CACHE_DIR maps_layer_default_dir()
 
 #ifdef WINDOWS
 #include <io.h>
@@ -523,51 +522,31 @@ QString LayerMap::get_map_label(void) const
 
 
 
-char * maps_layer_default_dir()
+const QString & maps_layer_default_dir(void)
 {
-	static char * defaultdir = NULL;
-	if (!defaultdir) {
+	static QString default_dir;
+	if (default_dir.isEmpty()) {
+
 		/* Thanks to Mike Davison for the $VIKING_MAPS usage. */
 		const char * mapdir = g_getenv("VIKING_MAPS");
 		if (mapdir) {
-			defaultdir = g_strdup(mapdir);
-		} else if (access(GLOBAL_MAPS_DIR, W_OK) == 0) {
-			defaultdir = g_strdup(GLOBAL_MAPS_DIR);
+			default_dir = QString(mapdir);
+		} else if (0 == access(GLOBAL_MAPS_DIR, W_OK)) {
+			default_dir = QString(GLOBAL_MAPS_DIR);
 		} else {
-			const char *home = g_get_home_dir();
-			if (!home || access(home, W_OK)) {
-				home = g_get_home_dir();
-			}
-
-			if (home) {
-				defaultdir = g_build_filename(home, LOCAL_MAPS_DIR, NULL);
+			const QString home_full_path = QDir::homePath();
+			if (!home_full_path.isEmpty() && 0 == access(home_full_path.toUtf8().constData(), W_OK)) {
+				default_dir = home_full_path + QDir::separator() + LOCAL_MAPS_DIR;
 			} else {
-				defaultdir = g_strdup(LOCAL_MAPS_DIR);
+				default_dir = QString(LOCAL_MAPS_DIR);
 			}
 		}
-		if (defaultdir && (defaultdir[strlen(defaultdir)-1] != G_DIR_SEPARATOR)) {
+		if (!default_dir.isEmpty() && !default_dir.endsWith(QDir::separator())) {
 			/* Add the separator at the end. */
-			char *tmp = defaultdir;
-			defaultdir = g_strconcat(tmp, G_DIR_SEPARATOR_S, NULL);
-			free(tmp);
+			default_dir += QDir::separator();
 		}
-		fprintf(stderr, "DEBUG: %s: defaultdir=%s\n", __FUNCTION__, defaultdir);
+		qDebug() << "DD: Layer Map: get default dir: dir is" << default_dir;
 	}
-	return defaultdir;
-}
-
-
-
-
-const QString & maps_layer_default_dir_2()
-{
-	static char * defaultdir = NULL;
-	static QString default_dir;
-	if (!defaultdir) {
-		defaultdir = maps_layer_default_dir();
-		default_dir = QString(defaultdir);
-	}
-
 	return default_dir;
 }
 
@@ -576,7 +555,10 @@ const QString & maps_layer_default_dir_2()
 
 void LayerMap::mkdir_if_default_dir()
 {
-	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && 0 != access(this->cache_dir, F_OK)) {
+	if (this->cache_dir
+	    && this->cache_dir == map_cache_dir()
+	    && 0 != access(this->cache_dir, F_OK)) {
+
 		if (g_mkdir(this->cache_dir, 0777) != 0) {
 			fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, this->cache_dir);
 		}
@@ -744,7 +726,10 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		/* Only save a blank when the map cache location equals the default.
 		   On reading in, when it is blank then the default is reconstructed.
 		   Since the default changes dependent on the user and OS, it means the resultant file is more portable. */
-		if (is_file_operation && this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0) {
+		if (is_file_operation
+		    && this->cache_dir
+		    && this->cache_dir == map_cache_dir()) {
+
 			rv.s = "";
 			set = true;
 		} else if (is_file_operation && this->cache_dir) {
@@ -1201,7 +1186,7 @@ static void get_cache_filename(const char *cache_dir,
 	switch (cl) {
 	case MapsCacheLayout::OSM:
 		if (name) {
-			if (g_strcmp0(cache_dir, MAPS_CACHE_DIR)) {
+			if (cache_dir != map_cache_dir()) {
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
 			} else {

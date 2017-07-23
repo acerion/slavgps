@@ -551,12 +551,10 @@ static void toolbar_reload(VikToolbar *vtb,
 	{
 		vtb->merge_id = gtk_ui_manager_add_ui_from_string(vtb->uim, markup, -1, &error);
 	} else {
-		char *filename = NULL;
 		/* Load the toolbar UI XML file from disk.
 		   Consider using a_get_viking_data_path() first. */
-		filename = g_build_filename(get_viking_dir(), "ui_toolbar.xml", NULL);
-		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, filename, &error);
-		free(filename);
+		const QString full_path = get_viking_dir() + QDir::separator() + "ui_toolbar.xml";
+		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, full_path.toUtf8().constData(), &error);
 	}
 	if (error != NULL) {
 		fprintf(stderr, "DEBUG: UI creation failed, using internal fallback definition. Error message: %s\n", error->message);
@@ -1121,13 +1119,12 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 	               tbw->config.user_data);
 
 	/* ATM always save the toolbar when changed. */
-	char *filename = g_build_filename(get_viking_dir(), "ui_toolbar.xml", NULL);
+	const QString full_path = get_viking_dir() + QDir::separator() + "ui_toolbar.xml";
 	GError *error = NULL;
-	if (! g_file_set_contents(filename, str->str, -1, &error)) {
-		fprintf(stderr, "WARNING: %s: could not write to file %s (%s)\n", __FUNCTION__, filename, error->message);
+	if (! g_file_set_contents(full_path.toUtf8().constData(), str->str, -1, &error)) {
+		fprintf(stderr, "WARNING: %s: could not write to file %s (%s)\n", __FUNCTION__, full_path.toUtf8().constData(), error->message);
 		g_error_free(error);
 	}
-	free(filename);
 
 	g_string_free(str, true);
 }

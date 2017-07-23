@@ -26,10 +26,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
+#include <sys/stat.h> /* chmod() */
 
 #include <QDebug>
-
-#include <glib/gstdio.h>
 
 #include "preferences.h"
 #include "dir.h"
@@ -246,9 +245,8 @@ static param_id_t preferences_group_key_to_group_id(const QString & key)
 
 static bool preferences_load_from_file()
 {
-	char * fn = g_build_filename(get_viking_dir(), VIKING_PREFERENCES_FILE, NULL);
-	FILE * file = fopen(fn, "r");
-	free(fn);
+	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
+	FILE * file = fopen(full_path.toUtf8().constData(), "r");
 
 	if (!file) {
 		return false;
@@ -347,34 +345,34 @@ SGVariant Preferences::get_param_value(param_id_t id)
  */
 bool SlavGPS::a_preferences_save_to_file()
 {
-	char * fn = g_build_filename(get_viking_dir(), VIKING_PREFERENCES_FILE, NULL);
+	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
 
-	FILE * f = fopen(fn, "w");
+	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
-	if (chmod(fn, 0600) != 0) {
-		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn);
+	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
+		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO: shouldn't we abort saving to file? */
 	}
-	free(fn);
 
-	if (f) {
-		for (unsigned int i = 0; i < registered_parameters.size(); i++) {
-			Parameter * param = registered_parameters[i];
-			auto val = registered_parameter_values.find(std::string(param->name));
-			if (val != registered_parameter_values.end()) {
-				if (val->second->type != SGVariantType::PTR) {
-					if (val->second->type == SGVariantType::DOUBLE) {
-						qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
-					}
-					file_write_layer_param(f, param->name, val->second->type, val->second->data);
+	if (!file) {
+		return false;
+	}
+
+	for (unsigned int i = 0; i < registered_parameters.size(); i++) {
+		Parameter * param = registered_parameters[i];
+		auto val = registered_parameter_values.find(std::string(param->name));
+		if (val != registered_parameter_values.end()) {
+			if (val->second->type != SGVariantType::PTR) {
+				if (val->second->type == SGVariantType::DOUBLE) {
+					qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
 				}
+				file_write_layer_param(file, param->name, val->second->type, val->second->data);
 			}
 		}
-		fclose(f);
-		f = NULL;
-		return true;
 	}
+	fclose(file);
+	file = NULL;
 
-	return false;
+	return true;
 }
 
 

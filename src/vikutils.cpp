@@ -730,38 +730,41 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 static int load_ll_tz_dir(const char * dir)
 {
 	int inserted = 0;
-	char *lltz = g_build_filename(dir, "latlontz.txt", NULL);
-	if (access(lltz, R_OK) == 0) {
-		char buffer[4096];
-		long line_num = 0;
-		FILE *ff = fopen(lltz, "r");
-		if (ff) {
-			while (fgets(buffer, 4096, ff)) {
-				line_num++;
-				char **components = g_strsplit(buffer, " ", 3);
-				unsigned int nn = g_strv_length(components);
-				if (nn == 3) {
-					double pt[2] = { g_ascii_strtod(components[0], NULL), g_ascii_strtod(components[1], NULL) };
-					char *timezone = g_strchomp(components[2]);
-					if (kd_insert(kd, pt, timezone)) {
-						fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", timezone, line_num);
-					} else {
-						inserted++;
-					}
-					/* NB Don't free timezone as it's part of the kdtree data now. */
-					free(components[0]);
-					free(components[1]);
-				} else {
-					fprintf(stderr, "WARNING: Line %ld of latlontz.txt does not have 3 parts\n", line_num);
-				}
-				free(components);
-			}
-			fclose(ff);
-		} else {
-			fprintf(stderr, "WARNING: %s: Could not open %s\n", __FUNCTION__, lltz);
-		}
+	const QString path = dir + QDir::separator() + "latlontz.txt";
+	if (0 != access(path.toUtf8().constData(), R_OK) == 0) {
+		return inserted;
 	}
-	free(lltz);
+
+	char buffer[4096];
+	long line_num = 0;
+	FILE * file = fopen(path.toUtf8().constData(), "r");
+	if (!file) {
+		qDebug() << "WW: LL/TZ: Could not open file" << path;
+		return inserted;
+	}
+
+	while (fgets(buffer, 4096, file)) {
+		line_num++;
+		char **components = g_strsplit(buffer, " ", 3);
+		unsigned int nn = g_strv_length(components);
+		if (nn == 3) {
+			double pt[2] = { g_ascii_strtod(components[0], NULL), g_ascii_strtod(components[1], NULL) };
+			char *timezone = g_strchomp(components[2]);
+			if (kd_insert(kd, pt, timezone)) {
+				fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", timezone, line_num);
+			} else {
+				inserted++;
+			}
+			/* NB Don't free timezone as it's part of the kdtree data now. */
+			free(components[0]);
+			free(components[1]);
+		} else {
+			fprintf(stderr, "WARNING: Line %ld of latlontz.txt does not have 3 parts\n", line_num);
+		}
+		free(components);
+	}
+
+	fclose(file);
 
 	return inserted;
 }

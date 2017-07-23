@@ -28,6 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -81,7 +82,7 @@ char * SlavGPS::get_viking_dir_no_create()
 
 
 
-char const * SlavGPS::get_viking_dir(void)
+QString SlavGPS::get_viking_dir(void)
 {
 	if (!viking_dir) {
 		viking_dir = get_viking_dir_no_create();
@@ -91,27 +92,19 @@ char const * SlavGPS::get_viking_dir(void)
 			}
 		}
 	}
-	return viking_dir;
+	return QDir::toNativeSeparators(QString(viking_dir));
 }
 
 
 
 
-
-/**
- * a_get_viking_data_home:
- *
- * Retrieves the XDG compliant user's data directory.
- *
- * Retuns: the directory(can be NULL). Should be freed with g_free.
- */
-char * SlavGPS::get_viking_data_home()
+QString SlavGPS::get_viking_data_home()
 {
 	char const * xdg_data_home = g_getenv("XDG_DATA_HOME");
 	if (xdg_data_home) {
-		return g_build_filename(xdg_data_home, PACKAGE, NULL);
+		return QDir::toNativeSeparators(QString(xdg_data_home)) + QDir::separator() + PACKAGE;
 	} else {
-		return NULL;
+		return QString("");
 	}
 }
 

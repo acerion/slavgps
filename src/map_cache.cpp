@@ -375,3 +375,16 @@ int SlavGPS::map_cache_get_count()
 {
 	return maps_cache.size();
 }
+
+
+
+
+const QString & SlavGPS::map_cache_dir()
+{
+#if 0
+	return maps_layer_default_dir();
+#else
+	static QString a_dir("/home/kamil/.viking-maps/");
+	return a_dir;
+#endif
+}
