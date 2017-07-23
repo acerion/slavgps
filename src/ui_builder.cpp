@@ -140,7 +140,6 @@ void PropertiesDialog::fill(Preferences * preferences)
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
@@ -180,7 +179,6 @@ void PropertiesDialog::fill(Layer * layer)
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
@@ -221,7 +219,6 @@ void PropertiesDialog::fill(LayerInterface * interface)
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
@@ -265,63 +262,54 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	param_value.s = strdup(wp->name.toUtf8().constData()); /* FIXME: memory leak */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LAT];
 	param_value.s = lat;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LON];
 	param_value.s = lon;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_TIME];
 	param_value.u = wp->timestamp;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_ALT];
 	param_value.s = alt;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_COMMENT];
 	param_value.s = (wp->comment.toUtf8().constData()); /* FIXME: memoryleak. */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_DESC];
 	param_value.s = wp->description;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_IMAGE];
 	param_value.s = wp->image;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_SYMBOL];
 	param_value.s = wp->symbol;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
-	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 }
 
@@ -351,7 +339,6 @@ std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab
 		QWidget * widget = this->new_widget(iter->second, param_value);
 
 		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget" << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 
 		last_group_id = iter->second->group_id;
@@ -386,6 +373,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			//widget_->setStyleSheet("* { border: none; background-color: rgb(255,125,100) }");
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget Color, label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::CHECKBUTTON:
@@ -396,6 +384,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			}
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget CheckButton, label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::COMBOBOX: {
@@ -431,6 +420,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 		widget = widget_;
 	}
+		qDebug() << "II: UI Builder: adding widget ComboBox, label:" << param->title << "success:" << (bool) widget;
 		break;
 
 #if 0
@@ -449,7 +439,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			} else if (vlpd.u) { /* Zero is already default. */
 				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
 			}
+
+			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget RadioGroup, label:" << param->title << "success:" << (bool) widget;
 		break;
 #endif
 
@@ -467,6 +460,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			} else if (vlpd.u) { /* Zero is already default. */
 				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
 			}
+
+			widget = widget_;
 		}
 		break;
 #else
@@ -481,6 +476,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget RadioGroup Static, label:" << param->title << "success:" << (bool) widget;
 		break;
 #endif
 	case WidgetType::SPINBUTTON:
@@ -498,6 +494,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget SpinBox (u/i), label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::SPINBOX_DOUBLE:
@@ -517,6 +514,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget SpinBox (d), label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::ENTRY:
@@ -525,8 +523,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			if (vlpd.s) {
 				widget_->insert(QString(vlpd.s));
 			}
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget Entry, label:" << param->title << "success:" << (bool) widget;
 		break;
 	case WidgetType::PASSWORD:
 		if (param->type == SGVariantType::STRING) {
@@ -536,7 +536,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 				widget_->setText(QString(vlpd.s));
 			}
 			widget_->setToolTip(QObject::tr("Notice that this password will be stored clearly in a plain file."));
+
+			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget Password, label:" << param->title << "success:" << (bool) widget;
 		break;
 	case WidgetType::FILEENTRY:
 		if (param->type == SGVariantType::STRING) {
@@ -546,8 +549,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 				QString filename(vlpd.s);
 				widget_->set_filename(filename);
 			}
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget FileEntry, label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::FOLDERENTRY:
@@ -558,14 +563,18 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 				QString filename(vlpd.s);
 				widget_->set_filename(filename);
 			}
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget FolderEntry, label:" << param->title << "success:" << (bool) widget;
 		break;
 	case WidgetType::FILELIST:
 		if (param->type == SGVariantType::STRING_LIST) {
 			SGFileList * widget_ = new SGFileList(param->title, *vlpd.sl, this);
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget FileList, label:" << param->title << "success:" << (bool) widget;
 		break;
 	case WidgetType::HSCALE:
 		if ((param->type == SGVariantType::UINT || param->type == SGVariantType::INT)
@@ -576,8 +585,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 			widget_->set_value(init_value);
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget HScale (u/i), label:" << param->title << "success:" << (bool) widget;
 		break;
 #ifdef K
 	case WidgetType::HSCALE:
@@ -588,30 +599,38 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
 			gtk_range_set_value(GTK_RANGE(rv), init_val);
+
+			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget HScale (d), label:" << param->title << "success:" << (bool) widget;
 		break;
 	case WidgetType::BUTTON:
 		if (param->type == SGVariantType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
 			QObject::connect(rv, SIGNAL("clicked"), param->extra_widget_data, SLOT (vlpd.ptr));
+
+			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget Button, label:" << param->title << "success:" << (bool) widget;
 		break;
 #endif
 	case WidgetType::DATETIME: {
 			SGDateTime * widget_ = new SGDateTime(param_value.u, this);
+
 			widget = widget_;
 		}
+		qDebug() << "II: UI Builder: adding widget DateTime, label:" << param->title << "success:" << (bool) widget;
 		break;
 	default:
 		break;
 	}
-#if 0
-	if (rv && !gtk_widget_get_tooltip_text(rv)) {
+
+	if (widget && widget->toolTip().isEmpty()) {
 		if (param->tooltip) {
-			rv->setToolTip(QObject::tr(param->tooltip);
+			widget->setToolTip(QObject::tr(param->tooltip));
 		}
 	}
-#endif
+
 	return widget;
 }
 
