@@ -448,7 +448,7 @@ namespace SlavGPS {
 		char * track_fsize_str = NULL;
 
 		uint8_t wp_symbol;
-		uint8_t wp_size;
+		int wp_size; /* In Variant data type this field is stored as uint8_t. */
 		bool wp_draw_symbols;
 		font_size_t wp_font_size;
 		char * wp_fsize_str = NULL;

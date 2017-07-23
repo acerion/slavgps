@@ -46,6 +46,8 @@
 
 #include <glib.h>
 
+#include <QDebug>
+
 //#include "thumbnails.h"
 #include "viewport_internal.h"
 #include "ui_util.h"
@@ -664,6 +666,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
+					qDebug() << __FUNCTION__ << __LINE__;
 					this->viewport->fill_rectangle(main_pen.color(), x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
@@ -892,31 +895,30 @@ void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
 	this->trw->waypoint_pen.setColor(QColor("orange"));
 #endif
 
-#ifdef K
 	if (this->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixmap) {
-		this->viewport->draw_pixmap(wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
-	} else
-#endif
-		if (wp == this->trw->current_wp) {
+		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
+	} else if (wp == this->trw->current_wp) {
 		switch (this->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			this->viewport->fill_rectangle(this->trw->waypoint_pen.color(), x - (this->trw->wp_size), y - (this->trw->wp_size), this->trw->wp_size*2, this->trw->wp_size*2);
+			qDebug() << __FUNCTION__ << __LINE__;
+			this->viewport->fill_rectangle(this->trw->waypoint_pen.color(), x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size * 2, this->trw->wp_size * 2);
 			break;
 		case WP_SYMBOL_SQUARE:
-			this->viewport->draw_rectangle(this->trw->waypoint_pen, x - (this->trw->wp_size), y - (this->trw->wp_size), this->trw->wp_size*2, this->trw->wp_size*2);
+			this->viewport->draw_rectangle(this->trw->waypoint_pen, x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size * 2, this->trw->wp_size * 2);
 			break;
 		case WP_SYMBOL_CIRCLE:
 			this->viewport->draw_arc(this->trw->waypoint_pen, x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size, this->trw->wp_size, 0, 360, true);
 			break;
 		case WP_SYMBOL_X:
-			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size*2, y - this->trw->wp_size*2, x + this->trw->wp_size*2, y + this->trw->wp_size*2);
-			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size*2, y + this->trw->wp_size*2, x + this->trw->wp_size*2, y - this->trw->wp_size*2);
+			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size * 2, y - this->trw->wp_size * 2, x + this->trw->wp_size * 2, y + this->trw->wp_size * 2);
+			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size * 2, y + this->trw->wp_size * 2, x + this->trw->wp_size * 2, y - this->trw->wp_size * 2);
 		default:
 			break;
 		}
 	} else {
 		switch (this->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
+			qDebug() << __FUNCTION__ << __LINE__;
 			this->viewport->fill_rectangle(this->trw->waypoint_pen.color(), x - this->trw->wp_size/2, y - this->trw->wp_size/2, this->trw->wp_size, this->trw->wp_size);
 			break;
 		case WP_SYMBOL_SQUARE:
@@ -926,8 +928,8 @@ void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
 			this->viewport->draw_arc(this->trw->waypoint_pen, x-this->trw->wp_size/2, y-this->trw->wp_size/2, this->trw->wp_size, this->trw->wp_size, 0, 360, true);
 			break;
 		case WP_SYMBOL_X:
-			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y-this->trw->wp_size, x+this->trw->wp_size, y+this->trw->wp_size);
-			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y+this->trw->wp_size, x+this->trw->wp_size, y-this->trw->wp_size);
+			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y - this->trw->wp_size, x + this->trw->wp_size, y + this->trw->wp_size);
+			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y + this->trw->wp_size, x + this->trw->wp_size, y - this->trw->wp_size);
 			break;
 		default:
 			break;
@@ -960,29 +962,35 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 
 #ifdef K
 	int label_x, label_y;
-	int width, height;
-	pango_layout_get_pixel_size(this->trw->wplabellayout, &width, &height);
-	label_x = x - width/2;
+	int label_width, label_height;
+	pango_layout_get_pixel_size(this->trw->wplabellayout, &label_width, &label_height);
+	label_x = x - label_width/2;
 	if (wp->symbol_pixmap) {
-		label_y = y - height - 2 - wp->symbol_pixmap->height()/2;
+		label_y = y - label_height - 2 - wp->symbol_pixmap->height()/2;
 	} else {
-		label_y = y - this->trw->wp_size - height - 2;
+		label_y = y - this->trw->wp_size - label_height - 2;
 	}
 #else
 	int label_x = x;
 	int label_y = y;
-	//int width = 0;
-	//int height = 0;
+	int label_width = 100;
+	int label_height = 50;
 	this->trw->waypoint_text_pen = QPen(Qt::blue);
 #endif
 
-	if (this->highlight) {
-		this->viewport->fill_rectangle(this->viewport->get_highlight_pen().color(), label_x - 1, label_y-1,width+2,height+2);
-	} else {
-		this->viewport->fill_rectangle(this->trw->waypoint_bg_pen.color(), label_x - 1, label_y-1,width+2,height+2);
+
+
+	if (true /* this->highlight */) {
+#ifdef K
+		this->viewport->fill_rectangle(this->viewport->get_highlight_pen().color(), label_x - 1, label_y - 1, - label_width + 2, -label_height + 2);
+#else
+		this->viewport->fill_rectangle(QColor("pink"), label_x - 1, label_y - 1, label_width + 2, -label_height + 2);
+#endif
+
 	}
+
 	/* TODO: use correct font size: this->trw->wp_fsize_str. */
-	this->viewport->draw_text(QFont("Arial", 10), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
+	this->viewport->draw_text(QFont("Arial", 12), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
 
 	return;
 }

@@ -1037,7 +1037,7 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		break;
 	case PARAM_WPSIZE:
 		if (data.u > 0 && data.u <= 64) {
-			this->wp_size = data.u;
+			this->wp_size = (int) data.u;
 		}
 		break;
 	case PARAM_WPSYMS:
@@ -1119,7 +1119,7 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_WPBC: color_to_param(rv, this->waypoint_bg_color); break;
 	case PARAM_WPBA: rv.b = this->wpbgand; break;
 	case PARAM_WPSYM: rv.u = this->wp_symbol; break;
-	case PARAM_WPSIZE: rv.u = this->wp_size; break;
+	case PARAM_WPSIZE: rv.u = (uint8_t) this->wp_size; break;
 	case PARAM_WPSYMS: rv.b = this->wp_draw_symbols; break;
 	case PARAM_WPFONTSIZE: rv.u = this->wp_font_size; break;
 	case PARAM_WPSO: rv.u = this->wp_sort_order; break;
