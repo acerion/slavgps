@@ -255,7 +255,7 @@ static bool layer_defaults_register(LayerType layer_type)
 
 	/* Process each parameter. */
 	for (uint16_t i = 0; i < params_count; i++) {
-		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 			if (params[i].hardwired_default_value) {
 				SGVariant value = params[i].hardwired_default_value();
 				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
@@ -745,7 +745,7 @@ void Layer::set_initial_parameter_values(void)
 
 	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
-		if (iter->second->group > VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
 			if (iter->second->type != SGVariantType::STRING_LIST) {

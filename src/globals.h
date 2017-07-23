@@ -257,22 +257,22 @@ typedef enum {
 
 
 /* Group for global preferences */
-#define VIKING_PREFERENCES_GROUP_KEY "viking.globals"
-#define VIKING_PREFERENCES_NAMESPACE "viking.globals."
+#define PREFERENCES_GROUP_KEY_GENERAL "viking.globals"
+#define PREFERENCES_NAMESPACE_GENERAL "viking.globals."
 
 /* Another group of global preferences,
   but in a separate section to try to keep things organized */
 /* AKA Export/External Prefs */
-#define VIKING_PREFERENCES_IO_GROUP_KEY "viking.io"
-#define VIKING_PREFERENCES_IO_NAMESPACE "viking.io."
+#define PREFERENCES_GROUP_KEY_IO "viking.io"
+#define PREFERENCES_NAMESPACE_IO "viking.io."
 
 /* Group for global preferences - but 'advanced'
    User changeable but only for those that need it */
-#define VIKING_PREFERENCES_ADVANCED_GROUP_KEY "viking.advanced"
-#define VIKING_PREFERENCES_ADVANCED_NAMESPACE "viking.advanced."
+#define PREFERENCES_GROUP_KEY_ADVANCED "viking.advanced"
+#define PREFERENCES_NAMESPACE_ADVANCED "viking.advanced."
 
-#define VIKING_PREFERENCES_STARTUP_GROUP_KEY "viking.startup"
-#define VIKING_PREFERENCES_STARTUP_NAMESPACE "viking.startup."
+#define PREFERENCES_GROUP_KEY_STARTUP "viking.startup"
+#define PREFERENCES_NAMESPACE_STARTUP "viking.startup."
 
 
 

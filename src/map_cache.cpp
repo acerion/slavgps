@@ -72,7 +72,7 @@ static ParameterScale params_scales[] = {
 };
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -100,7 +100,7 @@ static void cache_item_free(cache_item_t * ci)
 void SlavGPS::map_cache_init()
 {
 	SGVariant val((uint32_t) VIK_CONFIG_MAPCACHE_SIZE);
-	a_preferences_register(prefs, val, VIKING_PREFERENCES_GROUP_KEY);
+	Preferences::register_parameter(prefs, val, PREFERENCES_GROUP_KEY_GENERAL);
 }
 
 
@@ -191,7 +191,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 	cache_add(key, pixmap, extra);
 
 	/* TODO: that should be done on preference change only... */
-	max_cache_size = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "mapcache_size")->u * 1024 * 1024;
+	max_cache_size = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "mapcache_size")->u * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();

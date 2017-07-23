@@ -298,9 +298,6 @@ void Window::create_layout()
 
 
 	this->viewport = new Viewport(this);
-	struct LatLon ll = { 53.25916, 15.54663 };
-	this->viewport->set_center_latlon(&ll, false);
-
 	qDebug() << "II: Window: created Viewport with size:" << this->viewport->height() << this->viewport->width();
 
 

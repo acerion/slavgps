@@ -164,7 +164,6 @@ int main(int argc, char ** argv)
 	SGUtils::is_very_first_run();
 
 	a_settings_init();
-	Preferences::init();
 
 	/*
 	  First stage initialization.

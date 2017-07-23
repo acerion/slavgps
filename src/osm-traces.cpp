@@ -56,8 +56,8 @@ using namespace SlavGPS;
 
 /* Params will be osm_traces.username, osm_traces.password */
 /* We have to make sure these don't collide. */
-#define VIKING_OSM_TRACES_PARAMS_GROUP_KEY "osm_traces"
-#define VIKING_OSM_TRACES_PARAMS_NAMESPACE "osm_traces."
+#define PREFERENCES_GROUP_KEY_OSM_TRACES "osm_traces"
+#define PREFERENCES_NAMESPACE_OSM_TRACES "osm_traces."
 
 #define VIK_SETTINGS_OSM_TRACE_VIS "osm_trace_visibility"
 static int last_active = -1;
@@ -122,10 +122,10 @@ public:
 
 
 static Parameter prefs[] = {
-	{ 0, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL, NULL, NULL },
-	{ 1, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
 
-	{ 2, NULL,                                          SGVariantType::STRING, VIK_LAYER_GROUP_NONE, "",                  WidgetType::NONE,     NULL, NULL, NULL, NULL, NULL, NULL } /* Guard. */
+	{ 2, NULL,                                          SGVariantType::STRING, PARAMETER_GROUP_GENERIC, "",                  WidgetType::NONE,     NULL, NULL, NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 
@@ -209,13 +209,13 @@ char * SlavGPS::osm_get_login()
 void SlavGPS::osm_traces_init()
 {
 	/* Preferences. */
-	a_preferences_register_group(VIKING_OSM_TRACES_PARAMS_GROUP_KEY, _("OpenStreetMap Traces"));
+	Preferences::register_group(PREFERENCES_GROUP_KEY_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
 
 	SGVariant tmp;
 	tmp.s = "";
-	a_preferences_register(prefs, tmp, VIKING_OSM_TRACES_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_OSM_TRACES);
 	tmp.s = "";
-	a_preferences_register(prefs+1, tmp, VIKING_OSM_TRACES_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(prefs+1, tmp, PREFERENCES_GROUP_KEY_OSM_TRACES);
 }
 
 
@@ -407,8 +407,8 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
-	const char *pref_user = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "username")->s;
-	const char *pref_password = a_preferences_get(VIKING_OSM_TRACES_PARAMS_NAMESPACE "password")->s;
+	const char *pref_user = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "username")->s;
+	const char *pref_password = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "password")->s;
 
 
 	if (osm_user != NULL && osm_user[0] != '\0') {

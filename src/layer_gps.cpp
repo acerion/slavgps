@@ -311,7 +311,7 @@ static Parameter gps_layer_params[] = {
 	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_retry_interval_default, NULL, NULL },
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-	{ NUM_PARAMS,                       NULL,                        SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, NULL,                                   WidgetType::NONE,              NULL,                    NULL, NULL, NULL,                        NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                       NULL,                        SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                   WidgetType::NONE,              NULL,                    NULL, NULL, NULL,                        NULL, NULL }, /* Guard. */
 };
 
 

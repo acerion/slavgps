@@ -152,12 +152,12 @@ typedef struct {
 static config_t extra_widget_data;
 
 static Parameter prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
 
-	{ 4, NULL,                                      SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -190,22 +190,22 @@ void toolbar_configure_cb(void)
 void a_toolbar_init(void)
 {
 	/* Preferences. */
-	a_preferences_register_group(TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar"));
+	Preferences::register_group(TOOLBAR_PARAMS_GROUP_KEY, QObject::tr("Toolbar"));
 
 	unsigned int i = 0;
 	SGVariant tmp;
 	tmp.b = false;
-	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.u = 0;
-	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 #ifdef WINDOWS
 	tmp.u = 1; /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
 #else
 	tmp.u = 0;
 #endif
-	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.ptr = (void *) toolbar_configure_cb;
-	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 	/* Signal data hash. */
 	signal_data = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);

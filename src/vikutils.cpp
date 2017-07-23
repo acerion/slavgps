@@ -645,8 +645,8 @@ void SGUtils::set_auto_features_on_first_run(void)
 		   Only the name & type are important for setting a preference via this 'external' way. */
 
 		/* Enable auto add map + Enable IP lookup. */
-		Parameter pref_add_map[] = { { 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
-		Parameter pref_startup_method[] = { { 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, NULL, WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
+		Parameter pref_add_map[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
+		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method", SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
 
 		SGVariant vlp_data;
 		vlp_data.b = true;
@@ -658,7 +658,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
-		Parameter pref_startup_version_check[] = { { 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
+		Parameter pref_startup_version_check[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "check_version", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
 #endif

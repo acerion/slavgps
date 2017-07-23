@@ -92,16 +92,16 @@ enum {
 
 
 Parameter georef_layer_params[] = {
-	{ PARAM_IMAGE, "image",                SGVariantType::STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_ME,    "mpp_easting",          SGVariantType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_MN,    "mpp_northing",         SGVariantType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CZ,    "corner_zone",          SGVariantType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_ME,    "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_MN,    "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CZ,    "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,  NULL,                   SGVariantType::PTR,    VIK_LAYER_GROUP_NONE,        NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,  NULL,                   SGVariantType::PTR,    PARAMETER_GROUP_GENERIC,        NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -143,7 +143,7 @@ LayerGeorefInterface::LayerGeorefInterface()
 
 
 static Parameter io_prefs[] = {
-	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
+	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
 };
 
 typedef struct {
@@ -158,7 +158,7 @@ void SlavGPS::vik_georef_layer_init(void)
 {
 	SGVariant((bool) true);
 #ifdef K
-	a_preferences_register(&io_prefs[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
+	Preferences::register_parameter(&io_prefs[0], tmp, PREFERENCES_GROUP_KEY_IO);
 #endif
 }
 
@@ -629,7 +629,7 @@ static void georef_layer_export_params(georef_data_t * data)
 static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 {
 #if 0
-	if (a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file")->b) {
+	if (a_preferences_get(PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file")->b) {
 		const QString filename = file_entry->get_filename();
 		double values[4];
 		if (filename && user_data) {

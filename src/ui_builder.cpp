@@ -117,17 +117,19 @@ void PropertiesDialog::fill(Preferences * preferences)
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from preferences";
 
 	for (auto iter = preferences->begin(); iter != preferences->end(); iter++) {
-		param_id_t group_id = iter->second->group;
+		param_id_t group_id = iter->second->group_id;
 
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			QString page_label = tr("Properties");
-			form = this->insert_tab(page_label);
+			/* Create new tab in UI dialog. */
+
+			const QString tab_label = preferences->group_names[group_id];
+			form = this->insert_tab(tab_label);
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Preferences Builder: created tab" << page_label;
+			qDebug() << "II: Preferences Builder: created tab" << tab_label;
 		} else {
 			form = form_iter->second;
 		}
@@ -153,8 +155,8 @@ void PropertiesDialog::fill(Layer * layer)
 	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
-		param_id_t group_id = iter->second->group;
-		if (group_id == VIK_LAYER_NOT_IN_PROPERTIES) {
+		param_id_t group_id = iter->second->group_id;
+		if (group_id == PARAMETER_GROUP_HIDDEN) {
 			continue;
 		}
 
@@ -194,8 +196,8 @@ void PropertiesDialog::fill(LayerInterface * interface)
 	std::map<param_id_t, SGVariant> * values = interface->parameter_value_defaults;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
-		param_id_t group_id = iter->second->group;
-		if (group_id == VIK_LAYER_NOT_IN_PROPERTIES) {
+		param_id_t group_id = iter->second->group_id;
+		if (group_id == PARAMETER_GROUP_HIDDEN) {
 			iter++;
 			continue;
 		}
@@ -233,7 +235,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 
 	int i = 0;
 	QFormLayout * form = this->insert_tab(tr("Properties"));
-	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group, form));
+	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group_id, form));
 	SGVariant param_value; // = layer->get_param_value(i, false);
 	Parameter * param = NULL;
 	QWidget * widget = NULL;
@@ -328,17 +330,17 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, Parameter *>::iterator & iter, std::map<param_id_t, Parameter *>::iterator & end)
 {
 	param_id_t i = 0;
-	int last_group = iter->second->group;
+	param_id_t last_group_id = iter->second->group_id;
 
-	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets to group" << last_group << ":";
+	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets to group" << last_group_id << ":";
 
-	while (iter != end && iter->second->group == last_group) {
+	while (iter != end && iter->second->group_id == last_group_id) {
 
 		if (!iter->second->title) {
 			iter++;
 			continue;
 		}
-		if (iter->second->group == VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (iter->second->group_id == PARAMETER_GROUP_HIDDEN) {
 			iter++;
 			continue;
 		}
@@ -352,7 +354,7 @@ std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab
 		qDebug() << "II: UI Builder: adding widget" << widget;
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 
-		last_group = iter->second->group;
+		last_group_id = iter->second->group_id;
 		i++;
 		iter++;
 	}
@@ -621,7 +623,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	SGVariant rv = { 0 };
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
-		if (param->group == VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (param->group_id == PARAMETER_GROUP_HIDDEN) {
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "widget is 'not in properties'";
 		} else {
 			qDebug() << "EE: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "widget not found";
@@ -876,7 +878,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 	}
 
 	for (i = 0; i < params_count; i++) {
-		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 			widget_count++;
 		}
 	}
@@ -934,9 +936,9 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		}
 
 		for (i = 0, j = 0; i < params_count; i++) {
-			if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+			if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 				if (tables) {
-					table = tables[MAX(0, params[i].group)]; /* Round up NOT_IN_GROUP, that's not reasonable here. */
+					table = tables[MAX(0, params[i].group_id)]; /* Round up NOT_IN_GROUP, that's not reasonable here. */
 				}
 
 				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam(pass_along_getparam, i, false));
@@ -974,7 +976,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		   This primarily so the widget sensitivities get set up. */
 		if (changeparam) {
 			for (i = 0, j = 0; i < params_count; i++) {
-				if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+				if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 					if (widgets[j]) {
 						changeparam(widgets[j], &change_values[j]);
 					}
@@ -992,7 +994,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		resp = gtk_dialog_run(GTK_DIALOG (dialog));
 		if (resp == GTK_RESPONSE_ACCEPT){
 			for (i = 0, j = 0; i < params_count; i++) {
-				if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+				if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 					if (setparam(pass_along1,
 						     i,
 						     a_uibuilder_widget_get_value(widgets[j], &(params[i])),

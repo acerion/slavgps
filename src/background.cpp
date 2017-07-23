@@ -256,9 +256,9 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 
 #ifdef HAVE_LIBMAPNIK
 ParameterScale params_threads[] = { {1, 64, 1, 0} }; /* 64 threads should be enough for anyone... */
-/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
+/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
 static Parameter prefs_mapnik[] = {
-	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Threads:"), WidgetType::SPINBUTTON, params_threads, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
+	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBUTTON, params_threads, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
 };
 #endif
 
@@ -273,8 +273,8 @@ void a_background_init()
 #if 0
 #ifdef HAVE_LIBMAPNIK
 	SGVariant tmp((uint32_t) 1); /* Default to 1 thread due to potential crashing issues. */
-	/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
-	a_preferences_register(&prefs_mapnik[0], tmp, "mapnik");
+	/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
+	Preferences::register_parameter(&prefs_mapnik[0], tmp, "mapnik");
 #endif
 #endif
 }
@@ -306,7 +306,7 @@ void SlavGPS::a_background_post_init()
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
+	/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
 	unsigned int mapnik_threads = a_preferences_get("mapnik.background_max_threads_local_mapnik")->u;
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif

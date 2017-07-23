@@ -51,7 +51,7 @@ ParameterScale simplify_params_scales[] = {
 };
 
 Parameter bfilter_simplify_params[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, "numberofpoints", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), WidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "numberofpoints", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Max number of points:"), WidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
 SGVariant bfilter_simplify_params_defaults[] = {
@@ -137,8 +137,8 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 static ParameterScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
 
 Parameter bfilter_compress_params[] = {
-	//{ LayerType::NUM_TYPES, "compressmethod", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), WidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
-	{ (param_id_t) LayerType::NUM_TYPES, "compressfactor", SGVariantType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), WidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
+	//{ LayerType::NUM_TYPES, "compressmethod", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Simplify Method:"), WidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "compressfactor", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Error Factor:"), WidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
 };
 
 SGVariant bfilter_compress_params_defaults[] = {
@@ -280,7 +280,7 @@ SGVariant bfilter_manual_params_defaults[] = {
 };
 
 Parameter bfilter_manual_params[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, "manual", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, "manual", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 
 

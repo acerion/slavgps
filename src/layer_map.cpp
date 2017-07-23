@@ -171,7 +171,7 @@ static SGVariant id_default(void)
 
 static SGVariant directory_default(void)
 {
-	SGVariant * pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
+	SGVariant * pref = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir");
 	if (pref) {
 		return SGVariant(g_strdup(pref->s));
 	} else {
@@ -237,20 +237,20 @@ enum {
 
 Parameter maps_layer_params[] = {
 	// NB mode => map source type id - But can't break file format just to rename something better
-	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
+	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
 #ifdef K
-	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  VIK_LAYER_GROUP_NONE, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
 #else
-	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  VIK_LAYER_GROUP_NONE, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(0),                 NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(0),                 NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
 #endif
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
-	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,                               NULL, NULL, sg_variant_true, NULL, NULL },
-	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), sg_variant_false, NULL, NULL },
-	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    VIK_LAYER_GROUP_NONE, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
+	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,                               NULL, NULL, sg_variant_true, NULL, NULL },
+	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), sg_variant_false, NULL, NULL },
+	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
 
-	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     VIK_LAYER_GROUP_NONE, NULL,                                       WidgetType::NONE,        NULL,                               NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,                               NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -315,7 +315,7 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
 };
 
 
@@ -325,7 +325,7 @@ void layer_map_init(void)
 {
 	SGVariant tmp;
 	tmp.s = maps_layer_default_dir();
-	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
+	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	int max_tiles = MAX_TILES;
 	if (a_settings_get_integer(VIK_SETTINGS_MAP_MAX_TILES, &max_tiles)) {
@@ -593,8 +593,8 @@ void LayerMap::set_cache_dir(char const * dir)
 
 	char const * mydir = dir;
 	if (dir == NULL || dir[0] == '\0') {
-		if (a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir")) {
-			mydir = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir")->s;
+		if (a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir")) {
+			mydir = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir")->s;
 		}
 	}
 

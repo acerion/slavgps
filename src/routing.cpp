@@ -52,8 +52,8 @@ using namespace SlavGPS;
 
 /* Params will be routing.default */
 /* We have to make sure these don't collide. */
-#define VIKING_ROUTING_PARAMS_GROUP_KEY "routing"
-#define VIKING_ROUTING_PARAMS_NAMESPACE "routing."
+#define PREFERENCES_GROUP_KEY_ROUTING "routing"
+#define PREFERENCES_NAMESPACE_ROUTING "routing."
 
 /* List to register all routing engines. */
 static GList * routing_engine_list = NULL;
@@ -62,7 +62,7 @@ static GList * routing_engine_list = NULL;
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -79,10 +79,10 @@ char ** routing_engine_ids = NULL;
  */
 void SlavGPS::routing_prefs_init()
 {
-	a_preferences_register_group(VIKING_ROUTING_PARAMS_GROUP_KEY, _("Routing"));
+	Preferences::register_group(PREFERENCES_GROUP_KEY_ROUTING, QObject::tr("Routing"));
 
 	SGVariant tmp((char *) NULL);
-	a_preferences_register(prefs, tmp, VIKING_ROUTING_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_ROUTING);
 }
 
 
@@ -129,7 +129,7 @@ RoutingEngine * vik_routing_find_engine(const char * id)
  */
 RoutingEngine * SlavGPS::routing_default_engine(void)
 {
-	const char * id = a_preferences_get(VIKING_ROUTING_PARAMS_NAMESPACE "default")->s;
+	const char * id = a_preferences_get(PREFERENCES_NAMESPACE_ROUTING "default")->s;
 	RoutingEngine * engine = vik_routing_find_engine(id);
 	if (engine == NULL && routing_engine_list != NULL && g_list_first(routing_engine_list) != NULL) {
 		/* Fallback to first element */

@@ -227,7 +227,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 	uint16_t params_count = Layer::get_interface(layer_type)->params_count;
 	/* Process each parameter. */
 	for (uint16_t i = 0; i < params_count; i++) {
-		if (params[i].group == VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (params[i].group_id == PARAMETER_GROUP_HIDDEN) {
 			continue;
 		}
 

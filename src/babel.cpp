@@ -735,7 +735,7 @@ static bool load_feature()
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", SGVariantType::STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_IO "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 
 
@@ -759,7 +759,7 @@ void SlavGPS::a_babel_init()
 #else
 	vlpd.s = "gpsbabel";
 #endif
-	a_preferences_register(&prefs[0], vlpd, VIKING_PREFERENCES_IO_GROUP_KEY);
+	Preferences::register_parameter(&prefs[0], vlpd, PREFERENCES_GROUP_KEY_IO);
 }
 
 
@@ -772,7 +772,7 @@ void SlavGPS::a_babel_init()
 void SlavGPS::a_babel_post_init()
 {
 	/* Read the current preference. */
-	const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
+	const char *gpsbabel = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
 	/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */
 	if (strcmp(gpsbabel, "gpsbabel") == 0) {
 		gpsbabel_loc = g_find_program_in_path("gpsbabel");

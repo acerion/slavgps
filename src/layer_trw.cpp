@@ -293,9 +293,9 @@ enum {
 
 
 Parameter trw_layer_params[] = {
-	{ PARAM_TV,         "tracks_visible",    SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_WV,         "waypoints_visible", SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_RV,         "routes_visible",    SGVariantType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_TV,         "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WV,         "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_RV,         "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 
 	{ PARAM_TDL,        "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
 	{ PARAM_TLFONTSIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
@@ -338,7 +338,7 @@ Parameter trw_layer_params[] = {
 	{ PARAM_MDTIME,     "metadatatime",      SGVariantType::STRING,  GROUP_METADATA,              N_("Creation Time"),               WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 	{ PARAM_MDKEYS,     "metadatakeywords",  SGVariantType::STRING,  GROUP_METADATA,              N_("Keywords"),                    WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,                SGVariantType::PTR,     VIK_LAYER_GROUP_NONE,        NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,                SGVariantType::PTR,     PARAMETER_GROUP_GENERIC,        NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
 };
 
 

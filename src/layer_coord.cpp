@@ -70,11 +70,11 @@ enum {
 
 
 static Parameter coord_layer_params[] = {
-	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          WidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), WidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, N_("Color:"),          WidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::UINT,   PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 
-	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  WidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 

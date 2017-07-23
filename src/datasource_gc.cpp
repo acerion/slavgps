@@ -49,8 +49,8 @@
 
 /* Params will be geocaching.username, geocaching.password
    We have to make sure these don't collide. */
-#define VIKING_GC_PARAMS_GROUP_KEY "geocaching"
-#define VIKING_GC_PARAMS_NAMESPACE "geocaching."
+#define PREFERENCES_GROUP_KEY_GC "geocaching"
+#define PREFERENCES_NAMESPACE_GC "geocaching."
 
 
 
@@ -108,8 +108,8 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_GC_PARAMS_NAMESPACE "username", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("geocaching.com username:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_GC_PARAMS_NAMESPACE "password", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("geocaching.com password:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GC "username", VIK_LAYER_PARAM_STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com username:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GC "password", VIK_LAYER_PARAM_STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com password:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -117,13 +117,13 @@ static Parameter prefs[] = {
 
 void a_datasource_gc_init()
 {
-	a_preferences_register_group (VIKING_GC_PARAMS_GROUP_KEY, "Geocaching");
+	Preferences::register_group(PREFERENCES_GROUP_KEY_GC, QObject::tr("Geocaching"));
 
 	SGVariant tmp;
 	tmp.s = "username";
-	a_preferences_register(prefs, tmp, VIKING_GC_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GC);
 	tmp.s = "password";
-	a_preferences_register(prefs+1, tmp, VIKING_GC_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(prefs+1, tmp, PREFERENCES_GROUP_KEY_GC);
 }
 
 
@@ -272,8 +272,8 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 	ProcessOptions * po = new ProcessOptions();
 
 	//char *safe_string = g_shell_quote (widgets->center_entry.text());
-	char *safe_user = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "username")->s);
-	char *safe_pass = g_shell_quote(a_preferences_get(VIKING_GC_PARAMS_NAMESPACE "password")->s);
+	char *safe_user = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "username")->s);
+	char *safe_pass = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "password")->s);
 	char *slat, *slon;
 	double lat, lon;
 	if (2 != sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {

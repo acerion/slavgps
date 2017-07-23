@@ -173,7 +173,7 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 static Parameter prefs[] = {
-	{ 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", SGVariantType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 
 
@@ -182,7 +182,7 @@ static Parameter prefs[] = {
 void Download::init(void)
 {
 	SGVariant tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
-	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
+	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
 }
 
 
@@ -442,7 +442,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 			return DownloadResult::NOT_REQUIRED;
 		}
 
-		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
+		time_t tile_age = 365; //a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "download_tile_age")->u;
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);

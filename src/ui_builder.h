@@ -63,7 +63,7 @@ namespace SlavGPS {
 
 	typedef int GtkWidget; /* TODO: remove sooner or later. */
 
-	typedef int16_t param_id_t;
+	typedef int16_t param_id_t; /* This shall be a signed type. */
 
 
 
@@ -103,7 +103,7 @@ namespace SlavGPS {
 		param_id_t id;
 		const char *name;
 		SGVariantType type;
-		int16_t group;
+		param_id_t group_id; /* Every parameter belongs to a group of related parameters. Related parameters are put into the same tab in UI dialog. */
 		const char *title;
 		WidgetType widget_type;
 		void * widget_data;
@@ -115,9 +115,8 @@ namespace SlavGPS {
 	} Parameter;
 
 	enum {
-		VIK_LAYER_NOT_IN_PROPERTIES=-2,
-		VIK_LAYER_GROUP_NONE=-1,
-		PARAMETER_GROUP_NONE=-1
+		PARAMETER_GROUP_HIDDEN  = -2,  /* This parameter won't be displayed in UI. */
+		PARAMETER_GROUP_GENERIC = -1   /* All parameters in given module are in one category, so there is no point in creating more than one distinct group. There is only one group. */
 	};
 
 	typedef struct {

@@ -928,9 +928,9 @@ static void default_location_cb(GtkAction * a, Window * window)
 	   Only the name & type are important for setting the preference via this 'external' way */
 	Parameter pref_lat[] = {
 		{ LayerType::NUM_TYPES,
-		  VIKING_PREFERENCES_NAMESPACE "default_latitude",
+		  PREFERENCES_NAMESPACE_GENERAL "default_latitude",
 		  SGVariantType::DOUBLE,
-		  VIK_LAYER_GROUP_NONE,
+		  PARAMETER_GROUP_GENERIC,
 		  NULL,
 		  WidgetType::SPINBUTTON,
 		  NULL,
@@ -943,9 +943,9 @@ static void default_location_cb(GtkAction * a, Window * window)
 	};
 	Parameter pref_lon[] = {
 		{ LayerType::NUM_TYPES,
-		  VIKING_PREFERENCES_NAMESPACE "default_longitude",
+		  PREFERENCES_NAMESPACE_GENERAL "default_longitude",
 		  SGVariantType::DOUBLE,
-		  VIK_LAYER_GROUP_NONE,
+		  PARAMETER_GROUP_GENERIC,
 		  NULL,
 		  WidgetType::SPINBUTTON,
 		  NULL,

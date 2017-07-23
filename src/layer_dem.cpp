@@ -187,14 +187,14 @@ enum {
 
 
 static Parameter dem_layer_params[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       WidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     "source",   SGVariantType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), WidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
-	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  WidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
-	{ PARAM_TYPE,       "type",     SGVariantType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            WidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
+	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, PARAMETER_GROUP_GENERIC, N_("DEM Files:"),       WidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
+	{ PARAM_SOURCE,     "source",   SGVariantType::UINT,        PARAMETER_GROUP_GENERIC, N_("Download Source:"), WidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
+	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, N_("Min Elev Color:"),  WidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
+	{ PARAM_TYPE,       "type",     SGVariantType::UINT,        PARAMETER_GROUP_GENERIC, N_("Type:"),            WidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         VIK_LAYER_GROUP_NONE, NULL,                   WidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,             NULL, NULL }, /* Guard. */
 };
 
 

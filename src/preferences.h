@@ -28,6 +28,7 @@
 #include <map>
 
 #include <QWidget>
+#include <QHash>
 
 #include "ui_builder.h"
 
@@ -41,9 +42,23 @@ namespace SlavGPS {
 
 	class Preferences {
 	public:
-		static void init();
+		Preferences() {};
 		static void uninit();
 		static void register_default_values();
+
+		/*
+		  Must be called first, before calling Preferences::register_parameter().
+
+		  \param group_key is key string in preferences file
+		  \param group_name is a pretty name for presentation in UI
+		*/
+		static void register_group(const QString & group_key, const QString & group_name);
+
+		/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
+		   so pref key is not copied. default param data IS copied. */
+		/* Group field (integer) will be overwritten. */
+		/* \param parameter should be persistent through the life of the preference. */
+		static void register_parameter(Parameter * parameter, SGVariant default_value, const char * group_key);
 
 		void set_param_value(param_id_t id, SGVariant value);
 		SGVariant get_param_value(param_id_t id);
@@ -82,24 +97,16 @@ namespace SlavGPS {
 		static vik_startup_method_t get_startup_method();
 		static char const * get_startup_file();
 		static bool get_check_version();
+
+		bool loaded = false; /* Have the preferences been loaded from file? */
+		QHash<param_id_t, QString> group_names; /* Group id -> group UI label. */
 	};
 
 
 
 
-	/* TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!! */
 
 
-	/* Pref should be persistent thruout the life of the preference. */
-
-
-	/* Must call FIRST. */
-	void a_preferences_register_group(const char * key, const char * name);
-
-	/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
-	   so pref key is not copied. default param data IS copied. */
-	/* Group field (integer) will be overwritten. */
-	void a_preferences_register(Parameter * parameter, SGVariant default_value, const char * group_key);
 
 	void preferences_show_window(QWidget * parent = NULL);
 
