@@ -797,7 +797,7 @@ void TRWPainter::draw_waypoint(Waypoint * wp)
 	this->viewport->coord_to_screen(&(wp->coord), &x, &y);
 
 	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
-	if (wp->image && this->trw->drawimages)	{
+	if (!wp->image.isEmpty() && this->trw->drawimages) {
 		if (0 == this->draw_image(wp, x, y)) {
 			return;
 		}
@@ -895,7 +895,7 @@ void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
 	this->trw->waypoint_pen.setColor(QColor("orange"));
 #endif
 
-	if (this->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixmap) {
+	if (this->trw->wp_draw_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
 	} else if (wp == this->trw->current_wp) {
 		switch (this->trw->wp_symbol) {

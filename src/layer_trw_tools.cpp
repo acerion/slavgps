@@ -267,7 +267,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			/* Too easy to move it so must be holding shift to start immediately moving it
 			   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 			if (ev->modifiers() & Qt::ShiftModifier
-			    || (this->current_wp == wp_search.closest_wp && !this->current_wp->image)) {
+			    || (this->current_wp == wp_search.closest_wp && this->current_wp->image.isEmpty())) {
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->sublayer_edit->trw = this;
@@ -284,7 +284,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 					trw_menu_sublayer_t data;
 					memset(&data, 0, sizeof (trw_menu_sublayer_t));
 					data.layer = this;
-					data.misc = this->current_wp->image;
+					data.string = this->current_wp->image;
 					this->show_picture_cb(&data);
 				}
 			}
@@ -1663,10 +1663,10 @@ void LayerTRW::show_picture_cb(void) /* Slot. */
 #ifdef K
 	/* Thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async. */
 #ifdef WINDOWS
-	ShellExecute(NULL, "open", (char *) data->misc, NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, "open", (char *) data->string, NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
 	GError *err = NULL;
-	char *quoted_file = g_shell_quote((char *) data->misc);
+	char *quoted_file = g_shell_quote((char *) data->string);
 	char *cmd = g_strdup_printf("%s %s", Preferences::get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (!g_spawn_command_line_async(cmd, &err)) {
@@ -1689,13 +1689,13 @@ LayerToolFuncStatus LayerToolTRWShowPicture::click_(Layer * layer, QMouseEvent *
 		return LayerToolFuncStatus::IGNORE;
 	}
 
-	char * found = LayerTRWc::tool_show_picture_wp(trw->waypoints, ev->x(), ev->y(), this->viewport);
-	if (found) {
+	QString found_image = LayerTRWc::tool_show_picture_wp(trw->waypoints, ev->x(), ev->y(), this->viewport);
+	if (!found_image.isEmpty()) {
 #ifdef K
 		trw_menu_sublayer_t data;
 		memset(&data, 0, sizeof (trw_menu_sublayer_t));
 		data.layer = trw;
-		data.misc = found;
+		data.string = found_image;
 		trw->show_picture_cb(&data);
 #endif
 		return LayerToolFuncStatus::ACK; /* Found a match. */

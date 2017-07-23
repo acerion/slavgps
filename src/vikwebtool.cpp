@@ -62,7 +62,7 @@ WebTool::~WebTool()
 void WebTool::run_at_current_position(Window * a_window)
 {
 	const QString url = this->get_url_at_current_position(a_window->get_viewport());
-	open_url(url.toUtf8().constData());
+	open_url(url);
 }
 
 
@@ -72,7 +72,7 @@ void WebTool::run_at_position(Window * a_window, const Coord * a_coord)
 {
 	QString url = this->get_url_at_position(a_window->get_viewport(), a_coord);
 	if (url.size()) {
-		open_url(url.toUtf8().constData());
+		open_url(url);
 	}
 }
 

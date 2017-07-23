@@ -416,6 +416,7 @@ namespace SlavGPS {
 
 		bool confirm = false;
 		void * misc = NULL;
+		QString string;
 	};
 
 

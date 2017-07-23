@@ -500,7 +500,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_sym: {
-		c_wp->set_symbol(c_cdata->str);
+		c_wp->set_symbol_name(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 	}
@@ -764,8 +764,10 @@ dodefault:
 
 
 
-static char * entitize(char const * str)
+static char * entitize(const QString & input)
 {
+	char * str = strdup(input.toUtf8().constData());
+
         char const * cp;
         char * p, * xstr;
 
@@ -880,7 +882,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	if (wp->name.isEmpty()) {
 		tmp = strdup("waypoint");
 	} else {
-		tmp = entitize(wp->name.toUtf8().constData());
+		tmp = entitize(wp->name);
 	}
 
 	fprintf(f, "  <name>%s</name>\n", tmp);
@@ -905,37 +907,37 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	}
 
 	if (!wp->comment.isEmpty()) {
-		tmp = entitize(wp->comment.toUtf8().constData());
+		tmp = entitize(wp->comment);
 		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
 		free(tmp);
 	}
-	if (wp->description) {
+	if (!wp->description.isEmpty()) {
 		tmp = entitize(wp->description);
 		fprintf(f, "  <desc>%s</desc>\n", tmp);
 		free(tmp);
 	}
-	if (wp->source) {
+	if (wp->source.isEmpty()) {
 		tmp = entitize(wp->source);
 		fprintf(f, "  <src>%s</src>\n", tmp);
 		free(tmp);
 	}
-	if (wp->type) {
+	if (wp->type.isEmpty()) {
 		tmp = entitize(wp->type);
 		fprintf(f, "  <type>%s</type>\n", tmp);
 		free(tmp);
 	}
-	if (wp->url) {
+	if (wp->url.isEmpty()) {
 		tmp = entitize(wp->url);
 		fprintf(f, "  <url>%s</url>\n", tmp);
 		free(tmp);
 	}
-	if (wp->image) {
+	if (wp->image.isEmpty()) {
 		tmp = entitize(wp->image);
 		fprintf(f, "  <link>%s</link>\n", tmp);
 		free(tmp);
 	}
-	if (wp->symbol) {
-		tmp = entitize(wp->symbol);
+	if (!wp->symbol_name.isEmpty()) {
+		tmp = entitize(wp->symbol_name);
 		if (Preferences::get_gpx_export_wpt_sym_name()) {
 			/* Lowercase the symbol name. */
 			char * tmp2 = g_utf8_strdown(tmp, -1);
@@ -973,7 +975,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 	free(s_lon); s_lon = NULL;
 
 	if (!tp->name.isEmpty()) {
-		char *s_name = entitize(tp->name.toUtf8().constData());
+		char *s_name = entitize(tp->name);
 		fprintf(f, "    <name>%s</name>\n", s_name);
 		free(s_name);
 	}
@@ -1080,7 +1082,7 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	if (trk->name.isEmpty()) {
 		tmp = strdup("track");
 	} else {
-		tmp = entitize(trk->name.toUtf8().constData());
+		tmp = entitize(trk->name);
 	}
 
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
@@ -1092,25 +1094,25 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	free(tmp);
 
 	if (!trk->comment.isEmpty()) {
-		tmp = entitize(trk->comment.toUtf8().constData());
+		tmp = entitize(trk->comment);
 		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
 		free(tmp);
 	}
 
 	if (!trk->description.isEmpty()) {
-		tmp = entitize(trk->description.toUtf8().constData());
+		tmp = entitize(trk->description);
 		fprintf(f, "  <desc>%s</desc>\n", tmp);
 		free(tmp);
 	}
 
 	if (!trk->source.isEmpty()) {
-		tmp = entitize(trk->source.toUtf8().constData());
+		tmp = entitize(trk->source);
 		fprintf(f, "  <src>%s</src>\n", tmp);
 		free(tmp);
 	}
 
 	if (!trk->type.isEmpty()) {
-		tmp = entitize(trk->type.toUtf8().constData());
+		tmp = entitize(trk->type);
 		fprintf(f, "  <type>%s</type>\n", tmp);
 		free(tmp);
 	}

@@ -53,12 +53,12 @@ namespace SlavGPS {
 
 		void set_name(const QString & new_name);
 		void set_comment(const QString & new_comment);
-		void set_description(char const * description);
-		void set_source(char const * source);
-		void set_type(char const * type);
-		void set_url(char const * url);
-		void set_image(char const * image);
-		void set_symbol(char const * symname);
+		void set_description(const QString & new_description);
+		void set_source(const QString & new_source);
+		void set_type(const QString & new_type);
+		void set_url(const QString & new_url);
+		void set_image(const QString & new_image);
+		void set_symbol_name(const QString & new_symbol_name);
 
 		bool apply_dem_data(bool skip_existing);
 
@@ -70,26 +70,34 @@ namespace SlavGPS {
 
 		void convert(CoordMode dest_mode);
 
+		/* Does ::url, ::comment or ::description field contain an url? */
+		bool has_any_url(void) const;
+		/* Get url from first of these fields that does contain url, starting with ::url. */
+		QString get_any_url(void) const;
+
 
 		Coord coord;
 		bool visible = true;
 		bool has_timestamp = false;
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;
+
 		QString name;
 		QString comment;
-		char * description = NULL;
-		char * source = NULL;
-		char * type = NULL;
-		char * url = NULL;
-		char * image = NULL;
+		QString description;
+		QString source;
+		QString type;
+		QString url;
+		QString image;
+		QString symbol_name;
+
 		/* A rather misleading, ugly hack needed for trwlayer's click image.
 		   These are the height at which the thumbnail is being drawn, not the
 		   dimensions of the original image. */
 		uint8_t image_width;
 		uint8_t image_height;
 
-		char * symbol = NULL;
+
 		/* Only for GUI display. */
 		QPixmap * symbol_pixmap = NULL;
 	};

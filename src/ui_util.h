@@ -49,7 +49,7 @@ namespace SlavGPS {
 
 
 
-	void open_url(const char * url);
+	void open_url(const QString & url);
 	void new_email(Window * parent, const char * address);
 
 	GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);

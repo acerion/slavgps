@@ -456,7 +456,7 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 		wp->set_image(param_value.s);
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_params[SG_WP_PARAM_SYMBOL]);
-		wp->set_symbol(param_value.s);
+		wp->set_symbol_name(param_value.s);
 	}
 
 	return entered_name;

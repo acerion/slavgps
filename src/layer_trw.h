@@ -692,7 +692,7 @@ namespace SlavGPS {
 
 
 
-QIcon * get_wp_sym_small(char * symbol);
+QIcon * get_wp_sym_small(const QString & symbol_name);
 
 
 

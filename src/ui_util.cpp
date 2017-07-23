@@ -74,10 +74,10 @@ static bool spawn_command_line_async(const char * cmd,
 
 
 
-void SlavGPS::open_url(const char * url)
+void SlavGPS::open_url(const QString & url)
 {
-	qDebug() << "II: Open URL" << QString(url);
-	QDesktopServices::openUrl(QUrl(QString(url)));
+	qDebug() << "II: Open URL" << url;
+	QDesktopServices::openUrl(QUrl(url));
 }
 
 

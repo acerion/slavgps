@@ -391,9 +391,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			}
 
 
-			if (wp && wp->image) {
+			if (wp && !wp->image.isEmpty()) {
 				/* Set up image parameter. */
-				this->menu_data->misc = wp->image;
+				this->menu_data->string = wp->image;
 
 				qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture...")); /* TODO: icon. */
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_cb()));
@@ -411,14 +411,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 #endif
 			}
 
-			if (wp)	{
-				if (wp->url
-				    || (!wp->comment.isEmpty() && !strncmp(wp->comment.toUtf8().constData(), "http", 4))
-				    || (wp->description && !strncmp(wp->description, "http", 4))) {
-
-					qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage"));
-					connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_webpage_cb()));
-				}
+			if (wp && wp->has_any_url()) {
+				qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage"));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_webpage_cb()));
 			}
 		}
 	}

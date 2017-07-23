@@ -295,19 +295,19 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_DESC];
-	param_value.s = wp->description;
+	param_value.s = strdup(wp->description.toUtf8().constData()); /* FIXME: memoryleak. */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_IMAGE];
-	param_value.s = wp->image;
+	param_value.s = strdup(wp->image.toUtf8().constData()); /* FIXME: memoryleak. */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_SYMBOL];
-	param_value.s = wp->symbol;
+	param_value.s = strdup(wp->symbol_name.toUtf8().constData()); /* FIXME: memoryleak. */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));

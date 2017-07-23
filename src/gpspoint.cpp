@@ -132,8 +132,10 @@ static void gpspoint_process_key_and_value(const char *key, unsigned int key_len
 
 
 
-static char * slashdup(char const * str)
+static char * slashdup(const QString input)
 {
+	char * str = strdup(input.toUtf8().constData());
+
 	size_t len = strlen(str);
 	size_t need_bs_count = 0;
 	for (size_t i = 0; i < len; i++) {
@@ -156,6 +158,9 @@ static char * slashdup(char const * str)
 		}
 	}
 	rv[j] = '\0';
+
+	free(str);
+
 	return rv;
 }
 
@@ -392,7 +397,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			}
 
 			if (line_symbol) {
-				wp->set_symbol(line_symbol);
+				wp->set_symbol_name(line_symbol);
 			}
 		} else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name) {
 			have_read_something = true;
@@ -655,7 +660,7 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 		static struct LatLon ll = wp->coord.get_latlon();
 		char * s_lat = a_coords_dtostr(ll.lat);
 		char * s_lon = a_coords_dtostr(ll.lon);
-		char * tmp_name = slashdup(wp->name.toUtf8().constData());
+		char * tmp_name = slashdup(wp->name);
 		fprintf(f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name);
 		free(tmp_name);
 		free(s_lat);
@@ -671,32 +676,32 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 		}
 
 		if (!wp->comment.isEmpty()) {
-			char * tmp_comment = slashdup(wp->comment.toUtf8().constData());
+			char * tmp_comment = slashdup(wp->comment);
 			fprintf(f, " comment=\"%s\"", tmp_comment);
 			free(tmp_comment);
 		}
-		if (wp->description) {
+		if (!wp->description.isEmpty()) {
 			char * tmp_description = slashdup(wp->description);
 			fprintf(f, " description=\"%s\"", tmp_description);
 			free(tmp_description);
 		}
-		if (wp->source) {
+		if (!wp->source.isEmpty()) {
 			char * tmp_source = slashdup(wp->source);
 			fprintf(f, " source=\"%s\"", tmp_source);
 			free(tmp_source);
 		}
-		if (wp->type) {
+		if (!wp->type.isEmpty()) {
 			char * tmp_type = slashdup(wp->type);
 			fprintf(f, " xtype=\"%s\"", tmp_type);
 			free(tmp_type);
 		}
-		if (wp->image) {
+		if (!wp->image.isEmpty()) {
 			char * tmp_image = NULL;
 			char * cwd = NULL;
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				cwd = g_get_current_dir();
 				if (cwd) {
-					tmp_image = g_strdup(file_GetRelativeFilename(cwd, wp->image));
+					tmp_image = g_strdup(file_GetRelativeFilename(cwd, wp->image.toUtf8().constData()));
 				}
 			}
 
@@ -713,11 +718,11 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 			free(cwd);
 			free(tmp_image);
 		}
-		if (wp->symbol) {
+		if (!wp->symbol_name.isEmpty()) {
 			/* Due to changes in garminsymbols - the symbol name is now in Title Case.
 			   However to keep newly generated .vik files better compatible with older Viking versions.
 			   The symbol names will always be lowercase. */
-			char * tmp_symbol = g_utf8_strdown(wp->symbol, -1);
+			char * tmp_symbol = g_utf8_strdown(wp->symbol_name.toUtf8().constData(), -1);
 			fprintf(f, " symbol=\"%s\"", tmp_symbol);
 			free(tmp_symbol);
 		}
@@ -746,7 +751,7 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 	free(s_lon);
 
 	if (!tp->name.isEmpty()) {
-		char * name = slashdup(tp->name.toUtf8().constData());
+		char * name = slashdup(tp->name);
 		fprintf(f, " name=\"%s\"", name);
 		free(name);
 	}
@@ -821,30 +826,30 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 			continue;
 		}
 
-		char * tmp_name = slashdup(trk->name.toUtf8().constData());
+		char * tmp_name = slashdup(trk->name);
 		fprintf(f, "type=\"%s\" name=\"%s\"", trk->sublayer_type == SublayerType::ROUTE ? "route" : "track", tmp_name);
 		free(tmp_name);
 
 		if (!trk->comment.isEmpty()) {
-			char * tmp = slashdup(trk->comment.toUtf8().constData());
+			char * tmp = slashdup(trk->comment);
 			fprintf(f, " comment=\"%s\"", tmp);
 			free(tmp);
 		}
 
 		if (!trk->description.isEmpty()) {
-			char * tmp = slashdup(trk->description.toUtf8().constData());
+			char * tmp = slashdup(trk->description);
 			fprintf(f, " description=\"%s\"", tmp);
 			free(tmp);
 		}
 
 		if (!trk->source.isEmpty()) {
-			char * tmp = slashdup(trk->source.toUtf8().constData());
+			char * tmp = slashdup(trk->source);
 			fprintf(f, " source=\"%s\"", tmp);
 			free(tmp);
 		}
 
 		if (!trk->type.isEmpty()) {
-			char * tmp = slashdup(trk->type.toUtf8().constData());
+			char * tmp = slashdup(trk->type);
 			fprintf(f, " xtype=\"%s\"", tmp);
 			free(tmp);
 		}

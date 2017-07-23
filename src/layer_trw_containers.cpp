@@ -502,7 +502,7 @@ void LayerTRWc::waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch
 		search->viewport->coord_to_screen(&wp->coord, &x, &y);
 
 		/* If waypoint has an image then use the image size to select. */
-		if (search->draw_images && wp->image) {
+		if (search->draw_images && !wp->image.isEmpty()) {
 
 			int slackx = wp->image_width / 2;
 			int slacky = wp->image_height / 2;
@@ -568,14 +568,14 @@ void LayerTRWc::track_search_closest_tp(Tracks & tracks, TrackpointSearch * sear
 
 
 /* Params are: viewport, event, last match found or NULL. */
-char * LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport)
+QString LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport)
 {
-	char * found = NULL;
+	QString found;
 
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 
 		Waypoint * wp = i->second;
-		if (wp->image && wp->visible) {
+		if (!wp->image.isEmpty() && wp->visible) {
 			int x, y;
 			viewport->coord_to_screen(&wp->coord, &x, &y);
 			int slackx = wp->image_width / 2;
@@ -583,7 +583,7 @@ char * LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int e
 			if (x <= event_x + slackx && x >= event_x - slackx
 			    && y <= event_y + slacky && y >= event_y - slacky) {
 
-				found = wp->image; /* We've found a match. however continue searching
+				found = wp->image; /* We've found a match. However continue searching
 						      since we want to find the last match -- that
 						      is, the match that was drawn last. */
 			}

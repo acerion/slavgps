@@ -1605,7 +1605,7 @@ void LayerTRW::new_track_pens(void)
 /*
  * Can accept a null symbol, and may return null value
  */
-QIcon * get_wp_sym_small(char *symbol)
+QIcon * get_wp_sym_small(const QString & symbol_name)
 {
 	QIcon * wp_icon = NULL;
 #ifdef K
@@ -2041,7 +2041,7 @@ QString LayerTRW::sublayer_tooltip(Sublayer * sublayer)
 				if (!wp->comment.isEmpty()) {
 					return wp->comment;
 				} else {
-					return QString(wp->description);
+					return wp->description;
 				}
 			}
 		}
@@ -3185,11 +3185,10 @@ void LayerTRW::reset_waypoints()
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		Waypoint * wp = i->second;
-		if (wp->symbol) {
-			/* Reapply symbol setting to update the pixbuf. */
-			char * tmp_symbol = g_strdup(wp->symbol);
-			wp->set_symbol(tmp_symbol);
-			free(tmp_symbol);
+		if (!wp->symbol_name.isEmpty()) {
+			/* Reapply symbol setting to update the pixbuf. TODO: what's does it really do? */
+			const QString tmp_symbol_name = wp->symbol_name;
+			wp->set_symbol_name(tmp_symbol_name);
 		}
 	}
 }
@@ -3727,7 +3726,7 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 {
 	/* Update the treeview. */
 	if (wp->index.isValid()) {
-		this->tree_view->set_icon(wp->index, get_wp_sym_small(wp->symbol));
+		this->tree_view->set_icon(wp->index, get_wp_sym_small(wp->symbol_name));
 	} else {
 		qDebug() << "EE: Layer TRW: trying to reset icon of waypoint with invalid index";
 	}
@@ -3751,7 +3750,7 @@ void LayerTRW::properties_item_cb(void)
 			}
 
 			if (updated && this->menu_data->sublayer->index.isValid()) {
-				this->tree_view->set_icon(this->menu_data->sublayer->index, get_wp_sym_small(wp->symbol));
+				this->tree_view->set_icon(this->menu_data->sublayer->index, get_wp_sym_small(wp->symbol_name));
 			}
 
 			if (updated && this->visible) {
@@ -5928,7 +5927,7 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 		return;
 	}
 	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(wp->name);
-	open_url(webpage.toUtf8().constData());
+	open_url(webpage);
 }
 
 
@@ -5938,16 +5937,11 @@ void LayerTRW::waypoint_webpage_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
-	if (!wp) {
+	if (!wp || !wp->has_any_url()) {
 		return;
 	}
-	if (wp->url) {
-		open_url(wp->url);
-	} else if (!strncmp(wp->comment.toUtf8().constData(), "http", 4)) {
-		open_url(wp->comment.toUtf8().constData());
-	} else if (!strncmp(wp->description, "http", 4)) {
-		open_url(wp->description);
-	}
+
+	open_url(wp->get_any_url());
 }
 
 
@@ -6111,7 +6105,7 @@ void LayerTRW::google_route_webpage_cb(void)
 	if (trk) {
 		char *escaped = uri_escape(trk->comment.toUtf8().data());
 		QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
-		open_url(webpage.toUtf8().constData());
+		open_url(webpage);
 		free(escaped);
 	}
 }

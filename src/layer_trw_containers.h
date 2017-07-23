@@ -141,7 +141,7 @@ namespace SlavGPS {
 		static void waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch * search);
 		static void track_search_closest_tp(Tracks & tracks, TrackpointSearch * search);
 
-		static char * tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport);
+		static QString tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport);
 		static QStringList * image_wp_make_list(Waypoints & waypoints);
 
 

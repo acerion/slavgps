@@ -78,7 +78,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_type(wp.type);
 	this->set_url(wp.url);
 	this->set_image(wp.image);
-	this->set_symbol(wp.symbol);
+	this->set_symbol_name(wp.symbol_name);
 
 	/* kamilTODO: what about image_width / image_height? */
 }
@@ -89,12 +89,6 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 Waypoint::~Waypoint()
 {
 	/* kamilFIXME: in C code I had to add free()ing of Waypoint::name. */
-	free_string(&description);
-	free_string(&source);
-	free_string(&type);
-	free_string(&url);
-	free_string(&image);
-	free_string(&symbol);
 }
 
 
@@ -117,90 +111,63 @@ void Waypoint::set_comment(const QString & new_comment)
 
 
 
-void Waypoint::set_description(char const * description_)
+void Waypoint::set_description(const QString & new_description)
 {
-	free_string(&description);
-
-	if (description_ && description_[0] != '\0') {
-		description = strdup(description_);
-	}
-
+	this->description = new_description;
 }
 
 
 
 
-void Waypoint::set_source(char const * source_)
+void Waypoint::set_source(const QString & new_source)
 {
-	free_string(&source);
-
-	if (source_ && source_[0] != '\0') {
-		source = strdup(source_);
-	}
-
+	this->source = new_source;
 }
 
 
 
 
-void Waypoint::set_type(char const * type_)
+void Waypoint::set_type(const QString & new_type)
 {
-	free_string(&type);
-
-	if (type_ && type_[0] != '\0') {
-		type = strdup(type_);
-	}
-
+	this->type = new_type;
 }
 
 
 
 
-void Waypoint::set_url(char const * url_)
+void Waypoint::set_url(const QString & new_url)
 {
-	free_string(&url);
-
-	if (url_ && url_[0] != '\0') {
-		url = strdup(url_);
-	}
-
+	this->url = new_url;
 }
 
 
 
 
-void Waypoint::set_image(char const * image_)
+void Waypoint::set_image(const QString & new_image)
 {
-	free_string(&image);
-
-	if (image_ && image_[0] != '\0') {
-		image = strdup(image_);
-	}
-
+	this->image = new_image;
 	/* NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn. */
 }
 
 
 
 
-void Waypoint::set_symbol(char const * symname_)
+void Waypoint::set_symbol_name(const QString & new_symbol_name)
 {
-	free_string(&symbol);
+	/* this->symbol_pixmap is just a reference, so no need to free it. */
 
-	/* NB symbol_pixmap is just a reference, so no need to free it */
-
-	if (symname_ && symname_[0] != '\0') {
+	if (new_symbol_name.isEmpty()) {
+		this->symbol_name = "";
+		this->symbol_pixmap = NULL;
+	} else {
 #ifdef K
-		char const * hashed_symname = a_get_hashed_sym(symname_);
+		char const * hashed_symname = a_get_hashed_sym(new_symbol_name);
 		if (hashed_symname) {
-			symname_ = hashed_symname;
+			new_symbol_name = hashed_symname;
 		}
-		symbol = strdup(symname_);
+		this->symbol_name = new_symbol_name;
 		this->symbol_pixmap = a_get_wp_sym(symbol);
 #endif
-	} else {
-		symbol = NULL;
-		this->symbol_pixmap = NULL;
 	}
 }
 
@@ -251,12 +218,12 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 
 	vwm_append(name.toUtf8().constData());
 	vwm_append(comment.toUtf8().constData());
-	vwm_append(description);
-	vwm_append(source);
-	vwm_append(type);
-	vwm_append(url);
-	vwm_append(image);
-	vwm_append(symbol);
+	vwm_append(description.toUtf8().constData());
+	vwm_append(source.toUtf8().constData());
+	vwm_append(type.toUtf8().constData());
+	vwm_append(url.toUtf8().constData());
+	vwm_append(image.toUtf8().constData());
+	vwm_append(symbol_name.toUtf8().constData());
 
 	*data = b->data;
 	*datalen = b->len;
@@ -290,23 +257,15 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 	}					\
 	data += len;
 #ifdef K
-	vwu_get(wp->name_.toUtf8().constData());
-	fprintf(stderr, "---- name = '%s'\n", wp->name_.toUtf8().constData());
+	vwu_get(wp->name);
 	vwu_get(wp->comment);
-	fprintf(stderr, "---- comment = '%s'\n", wp->comment);
-#endif
 	vwu_get(wp->description);
-	fprintf(stderr, "---- description = '%s'\n", wp->description);
 	vwu_get(wp->source);
-	fprintf(stderr, "---- source = '%s'\n", wp->source);
 	vwu_get(wp->type);
-	fprintf(stderr, "---- type = '%s'\n", wp->type);
 	vwu_get(wp->url);
-	fprintf(stderr, "---- url = '%s'\n", wp->url);
 	vwu_get(wp->image);
-	fprintf(stderr, "---- image = '%s'\n", wp->image);
-	vwu_get(wp->symbol);
-	fprintf(stderr, "---- symbol = '%s'\n", wp->symbol);
+	vwu_get(wp->symbol_name);
+#endif
 
 	return wp;
 #undef vwu_get
@@ -327,4 +286,30 @@ void Waypoint::delete_waypoint(Waypoint * wp)
 void Waypoint::convert(CoordMode dest_mode)
 {
 	this->coord.change_mode(dest_mode);
+}
+
+
+
+
+bool Waypoint::has_any_url(void) const
+{
+	return !this->url.isEmpty()
+		|| (!this->comment.isEmpty() && this->comment.left(4) == "http")
+		|| (!this->description.isEmpty() && this->description.left(4) == "http");
+}
+
+
+
+
+QString Waypoint::get_any_url(void) const
+{
+	if (!this->url.isEmpty()) {
+		return this->url;
+	} else if (this->comment.left(4) == "http") {
+		return this->comment;
+	} else if (this->description.left(4) == "http") {
+		return this->description;
+	} else {
+		return QString("");
+	}
 }

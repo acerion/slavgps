@@ -296,7 +296,7 @@ void WaypointListDialog::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_waypoint_cb()));
-	qa->setEnabled(this->menu_data.wp->image);
+	qa->setEnabled(!this->menu_data.wp->image.isEmpty());
 
 	return;
 }
@@ -409,7 +409,7 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
 	QVariant variant;
-	QString tooltip(wp->description ? wp->description : "");
+	QString tooltip(wp->description);
 
 	/* TODO: add sorting by columns. Add reordering of columns. */
 
@@ -452,7 +452,7 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 	/* SYMBOL_COLUMN */
 	/* TODO: table should be sortable by this column. */
 #ifdef K
-	get_wp_sym_small(wp->symbol);
+	get_wp_sym_small(wp->symbol_);
 #endif
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
