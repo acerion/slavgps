@@ -714,14 +714,12 @@ bool SlavGPS::check_file_magic_vik(char const * filename)
 
 
 /**
- * Append a file extension, if not already present.
- *
- * Returns: a newly allocated string.
- */
-char * SlavGPS::append_file_ext(char const * filename, VikFileType_t type)
+   \brief Append a file extension, if not already present.
+   Returns: file name with extension.
+*/
+QString SlavGPS::append_file_ext(const QString & file_name, VikFileType_t type)
 {
-	char * new_name = NULL;
-	const char *ext = NULL;
+	const char * ext = NULL;
 
 	/* Select an extension. */
 	switch (type) {
@@ -742,11 +740,12 @@ char * SlavGPS::append_file_ext(char const * filename, VikFileType_t type)
 	}
 
 	/* Do. */
-	if (ext != NULL && ! a_file_check_ext(filename, ext)) {
-		new_name = g_strconcat(filename, ext, NULL);
+	QString new_name;
+	if (ext != NULL && !a_file_check_ext(file_name.toUtf8().constData(), ext)) {
+		new_name = file_name + ext;
 	} else {
 		/* Simply duplicate. */
-		new_name = g_strdup(filename);
+		new_name = file_name;
 	}
 
 	return new_name;

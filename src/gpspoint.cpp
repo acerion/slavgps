@@ -417,7 +417,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 			}
 
 			if (line_description) {
-				trk->set_description(line_description);
+				trk->set_description(QString(line_description));
 			}
 
 			if (line_source) {

@@ -68,13 +68,13 @@ enum {
 
 /* A cached waypoint image. */
 /* This data structure probably should be put somewhere else. */
-typedef struct {
-	QPixmap * pixmap;
-	char * image; /* Filename. */
-} CachedPixmap;
-
-/* These two functions probably should be put somewhere else. */
-void cached_pixmap_free(CachedPixmap * cp);
+class CachedPixmap {
+ public:
+	CachedPixmap() {};
+	~CachedPixmap();
+	QPixmap * pixmap = NULL;
+	QString image_file_name; /* Filename. */
+};
 int cached_pixmap_cmp(CachedPixmap * cp, const char * name);
 
 

@@ -70,16 +70,17 @@ namespace SlavGPS {
 	class TRWMetadata {
 
 	public:
-		void set_author(char const * new_author);
-		void set_description(char const * new_description);
-		void set_keywords(char const * new_keywords);
-		void set_timestamp(char const * timestamp);
+		void set_author(const QString & new_author);
+		void set_description(const QString & new_description);
+		void set_keywords(const QString & new_keywords);
+		void set_timestamp(const QString & new_timestamp);
 
-		char * description = NULL;
-		char * author = NULL;
-		//bool has_time;
-		char * timestamp = NULL; /* TODO: Consider storing as proper time_t. */
-		char * keywords = NULL;  /* TODO: handling/storing a GList of individual tags? */
+		QString description;
+		QString author;
+		QString keywords;  /* TODO: handling/storing a GList of individual tags? */
+		/* TODO: verify how the timestamp should work: when and how it should be set. */
+		bool has_timestamp;
+		QString timestamp; /* TODO: Consider storing as proper time_t. */
 	};
 
 

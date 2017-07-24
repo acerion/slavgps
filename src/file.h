@@ -70,7 +70,7 @@ namespace SlavGPS {
 	/* Function to determine if a filename is a 'viking' type file. */
 	bool check_file_magic_vik(char const * filename);
 
-	char * append_file_ext(char const * filename, VikFileType_t type);
+	QString append_file_ext(const QString & file_name, VikFileType_t type);
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
 	/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK. */

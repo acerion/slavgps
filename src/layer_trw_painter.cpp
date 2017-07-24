@@ -1020,11 +1020,10 @@ void TRWPainter::draw_waypoints_cb(Waypoints * waypoints)
 
 
 
-void cached_pixmap_free(CachedPixmap * cp)
+CachedPixmap::~CachedPixmap()
 {
 #ifdef K
 	g_object_unref(G_OBJECT(cp->pixmap));
-	free(cp->image);
 #endif
 }
 
@@ -1033,5 +1032,5 @@ void cached_pixmap_free(CachedPixmap * cp)
 
 int cached_pixmap_cmp(CachedPixmap * cp, const char * name)
 {
-	return strcmp(cp->image, name);
+	return strcmp(cp->image_file_name.toUtf8().constData(), name);
 }

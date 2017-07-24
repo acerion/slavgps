@@ -535,61 +535,34 @@ void LayerTRW::set_metadata(TRWMetadata * meta_data)
 
 
 
-void TRWMetadata::set_author(char const * new_author)
+void TRWMetadata::set_author(const QString & new_author)
 {
-	if (this->author) {
-		free(this->author);
-		this->author = NULL;
-	}
-	if (new_author) {
-		this->author = strdup(new_author);
-	}
-	return;
+	this->author = new_author;
 }
 
 
 
 
-void TRWMetadata::set_description(char const * new_description)
+void TRWMetadata::set_description(const QString & new_description)
 {
-	if (this->description) {
-		free(this->description);
-		this->description = NULL;
-	}
-	if (new_description) {
-		this->description = strdup(new_description);
-	}
-	return;
+	this->description = new_description;
 }
 
 
 
 
-void TRWMetadata::set_keywords(char const * new_keywords)
+void TRWMetadata::set_keywords(const QString & new_keywords)
 {
-	if (this->keywords) {
-		free(this->keywords);
-		this->keywords = NULL;
-	}
-	if (new_keywords) {
-		this->keywords = strdup(new_keywords);
-	}
-	return;
+	this->keywords = new_keywords;
 }
 
 
 
 
-void TRWMetadata::set_timestamp(char const * new_timestamp)
+void TRWMetadata::set_timestamp(const QString & new_timestamp)
 {
-	if (this->timestamp) {
-		free(this->timestamp);
-		this->timestamp = NULL;
-	}
-	if (new_timestamp) {
-		this->timestamp = strdup(new_timestamp);
-	}
-	return;
+	this->timestamp = new_timestamp;
+	this->has_timestamp = true;
 }
 
 
@@ -850,8 +823,10 @@ void trw_layer_free_copied_item(int subtype, void * item)
 
 void LayerTRW::image_cache_free()
 {
+#ifdef K
 	g_list_foreach(this->image_cache->head, (GFunc) cached_pixmap_free, NULL);
 	g_queue_free(this->image_cache);
+#endif
 }
 
 
@@ -1003,7 +978,8 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 	case PARAM_ICS:
 		this->image_cache_size = data.u;
 		while (this->image_cache->length > this->image_cache_size) {/* if shrinking cache_size, free pixbuf ASAP */
-			cached_pixmap_free((CachedPixmap *) g_queue_pop_tail(this->image_cache));
+			CachedPixmap * pixmap = (CachedPixmap *) g_queue_pop_tail(this->image_cache);
+			delete pixmap;
 		}
 		break;
 
@@ -1126,22 +1102,22 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 		// Metadata
 	case PARAM_MDDESC:
 		if (this->metadata) {
-			rv.s = this->metadata->description;
+			rv.s = strdup(this->metadata->description.toUtf8().constData()); /* FIXME: memoryleak */
 		}
 		break;
 	case PARAM_MDAUTH:
 		if (this->metadata) {
-			rv.s = this->metadata->author;
+			rv.s = strdup(this->metadata->author.toUtf8().constData()); /* FIXME: memoryleak */
 		}
 		break;
 	case PARAM_MDTIME:
 		if (this->metadata) {
-			rv.s = this->metadata->timestamp;
+			rv.s = strdup(this->metadata->timestamp.toUtf8().constData()); /* FIXME: memoryleak */
 		}
 		break;
 	case PARAM_MDKEYS:
 		if (this->metadata) {
-			rv.s = this->metadata->keywords;
+			rv.s = strdup(this->metadata->keywords.toUtf8().constData()); /* FIXME: memoryleak */
 		}
 		break;
 	default: break;
@@ -2419,11 +2395,8 @@ void LayerTRW::full_view_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 {
-#ifdef K
-	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSPOINT);
-	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
-	free(auto_save_name);
-#endif
+	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSPOINT);
+	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
 }
 
 
@@ -2431,11 +2404,8 @@ void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 {
-#ifdef K
-	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSMAPPER);
-	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
-	free(auto_save_name);
-#endif
+	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSMAPPER);
+	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
 }
 
 
@@ -2443,11 +2413,8 @@ void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpx_cb(void) /* Slot. */
 {
-#ifdef K
-	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPX);
-	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
-	free(auto_save_name);
-#endif
+	const QString & auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPX);
+	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
 }
 
 
@@ -2455,11 +2422,8 @@ void LayerTRW::export_as_gpx_cb(void) /* Slot. */
 
 void LayerTRW::export_as_kml_cb(void) /* Slot. */
 {
-#ifdef K
-	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_KML);
-	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
-	free(auto_save_name);
-#endif
+	const QString & auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_KML);
+	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
 }
 
 
@@ -2467,11 +2431,8 @@ void LayerTRW::export_as_kml_cb(void) /* Slot. */
 
 void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 {
-#ifdef K
-	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GEOJSON);
-	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
-	free(auto_save_name);
-#endif
+	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GEOJSON);
+	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
 }
 
 
@@ -2508,20 +2469,16 @@ void LayerTRW::export_gpx_track_cb(void)
 	if (!trk || trk->name.isEmpty()) { /* TODO: will track's name be ever empty? */
 		return;
 	}
-#ifdef K
 
-	char * auto_save_name = append_file_ext(trk->name_.toUtf8().constData(), FILE_TYPE_GPX);
+	const QString auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
 
-	char * label = NULL;
-	if (this->menu_data->sublayer->type == SublayerType::ROUTE) {
-		label = _("Export Route as GPX");
+	QString title;
+	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
+		title = tr("Export Route as GPX");
 	} else {
-		label = _("Export Track as GPX");
+		title = tr("Export Track as GPX");
 	}
-	vik_trw_layer_export(this, label, auto_save_name, trk, FILE_TYPE_GPX);
-
-	free(auto_save_name);
-#endif
+	vik_trw_layer_export(this, title, auto_save_name, trk, FILE_TYPE_GPX);
 }
 
 
@@ -6709,7 +6666,10 @@ time_t LayerTRW::get_timestamp()
 	if (!timestamp_tracks && !timestamp_waypoints) {
 		/* Fallback to get time from the metadata when no other timestamps available. */
 		GTimeVal gtv;
-		if (this->metadata && this->metadata->timestamp && g_time_val_from_iso8601(this->metadata->timestamp, &gtv)) {
+		if (this->metadata
+		    && this->metadata->has_timestamp
+		    && !this->metadata->timestamp.isEmpty()
+		    && g_time_val_from_iso8601(this->metadata->timestamp.toUtf8().constData(), &gtv)) {
 			return gtv.tv_sec;
 		}
 	}
@@ -6750,9 +6710,9 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	if (this->metadata) {
 
 		bool need_to_set_time = true;
-		if (this->metadata->timestamp) {
+		if (this->metadata->has_timestamp) {
 			need_to_set_time = false;
-			if (!strcmp(this->metadata->timestamp, "")) {
+			if (!this->metadata->timestamp.isEmpty()) {
 				need_to_set_time = true;
 			}
 		}
@@ -6767,7 +6727,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 				g_get_current_time(&timestamp);
 			}
 
-			this->metadata->timestamp = g_time_val_to_iso8601(&timestamp);
+			this->metadata->timestamp = QString(g_time_val_to_iso8601(&timestamp));
 		}
 	}
 }

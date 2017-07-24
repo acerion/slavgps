@@ -1202,22 +1202,22 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 
 	TRWMetadata * md = trw->get_metadata();
 	if (md) {
-		if (md->author) {
+		if (!md->author.isEmpty()) {
 			tmp = entitize(md->author);
 			fprintf(f, "  <author>%s</author>\n", tmp);
 			free(tmp);
 		}
-		if (md->description) {
+		if (!md->description.isEmpty()) {
 			tmp = entitize(md->description);
 			fprintf(f, "  <desc>%s</desc>\n", tmp);
 			free(tmp);
 		}
-		if (md->timestamp) {
+		if (!md->timestamp.isEmpty()) {
 			tmp = entitize(md->timestamp);
 			fprintf(f, "  <time>%s</time>\n", tmp);
 			free(tmp);
 		}
-		if (md->keywords) {
+		if (!md->keywords.isEmpty()) {
 			tmp = entitize(md->keywords);
 			fprintf(f, "  <keywords>%s</keywords>\n", tmp);
 			free(tmp);

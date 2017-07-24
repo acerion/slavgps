@@ -53,7 +53,7 @@ static char * last_folder_uri = NULL;
 
 
 
-void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)
+void SlavGPS::vik_trw_layer_export(LayerTRW * layer, const QString & title, const QString & default_name, Track * trk, VikFileType_t file_type)
 {
 #ifdef K
 	GtkWidget * file_selector;
