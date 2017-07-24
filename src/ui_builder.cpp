@@ -226,7 +226,7 @@ void PropertiesDialog::fill(LayerInterface * interface)
 
 
 
-void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
+void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString & default_name)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from waypoint";
 
@@ -259,7 +259,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	}
 
 	param = &parameters[SG_WP_PARAM_NAME];
-	param_value.s = strdup(wp->name.toUtf8().constData()); /* FIXME: memory leak */
+	param_value.s = strdup(default_name.toUtf8().constData()); /* FIXME: memory leak */
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));

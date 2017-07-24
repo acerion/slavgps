@@ -414,15 +414,19 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 }
 
 
-/* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
-   The name to use is returned.
+/**
+   Dialog displays \p default_name as name of waypoint.
+   For existing waypoints you should pass wp->name as value of this argument.
+   For new waypoints you should pass some auto-generated name as value of this argument.
 
-   TODO: why default_name is unused?
+   Final name of the waypoint (accepted in the dialog) is returned. If
+   user rejected the dialog (e.g by pressing Cancel button), the
+   returned string is empty.
 */
 QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
-	PropertiesDialog dialog(wp->name, parent);
-	dialog.fill(wp, wp_params);
+	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
+	dialog.fill(wp, wp_params, default_name);
 	int dialog_code = dialog.exec();
 
 	QString entered_name;
@@ -432,8 +436,9 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 		SGVariant param_value;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_params[SG_WP_PARAM_NAME]);
-		wp->set_name(param_value.s);
-		entered_name = strdup(param_value.s);
+		entered_name = QString(param_value.s);
+		wp->set_name(entered_name);
+
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_params[SG_WP_PARAM_LAT]);
 

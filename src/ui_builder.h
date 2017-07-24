@@ -163,7 +163,7 @@ namespace SlavGPS {
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, Parameter * parameters);
+		void fill(Waypoint * wp, Parameter * parameters, const QString & default_name);
 
 		SGVariant get_param_value(param_id_t id, Parameter * param);
 
