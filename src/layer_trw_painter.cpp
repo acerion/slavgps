@@ -979,18 +979,23 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 #endif
 
 
-
+	/* TODO: use correct font size: this->trw->wp_fsize_str. */
 	if (true /* this->highlight */) {
-#ifdef K
-		this->viewport->fill_rectangle(this->viewport->get_highlight_pen().color(), label_x - 1, label_y - 1, - label_width + 2, -label_height + 2);
-#else
-		this->viewport->fill_rectangle(QColor("pink"), label_x - 1, label_y - 1, label_width + 2, -label_height + 2);
-#endif
-
+		/* +3/-3: we don't want the background of text overlap too much with symbol of waypoint. */
+		QRectF bounding_rect(label_x + 3, label_y - 3, 300, -30);
+		this->viewport->draw_text(QFont("Arial", 12),
+					  this->trw->waypoint_text_pen,
+					  QColor("pink"), /* this->viewport->get_highlight_pen().color() */
+					  bounding_rect,
+					  Qt::AlignBottom | Qt::AlignLeft,
+					  wp->name,
+					  0);
+	} else {
+		this->viewport->draw_text(QFont("Arial", 12), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
 	}
 
-	/* TODO: use correct font size: this->trw->wp_fsize_str. */
-	this->viewport->draw_text(QFont("Arial", 12), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
+
+
 
 	return;
 }

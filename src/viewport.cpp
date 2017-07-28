@@ -623,15 +623,13 @@ void Viewport::draw_scale()
 	this->draw_scale_helper_scale(pen_bg, len, HEIGHT); /* Bright background. */
 	this->draw_scale_helper_scale(pen_fg, len, HEIGHT); /* Darker scale on the bright background. */
 
-	char s[128];
-	this->draw_scale_helper_value(s, distance_unit, scale_unit);
+	const QString scale_value = this->draw_scale_helper_value(distance_unit, scale_unit);
 
 
-	QString text(s);
 	QPointF scale_start(PAD, this->size_height - PAD); /* Bottom-left corner of scale. */
 	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
 	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
-	this->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, text, 0);
+	this->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
 	/* TODO: we need to draw background of the text in some color,
 	   so that it's more visible on a map that will be present in the background. */
 
@@ -668,39 +666,43 @@ void Viewport::draw_scale_helper_scale(const QPen & pen, int scale_len, int h)
 
 
 
-void Viewport::draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit)
+QString Viewport::draw_scale_helper_value(DistanceUnit distance_unit, double scale_unit)
 {
+	QString scale_value;
+
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		if (scale_unit >= 1000) {
-			sprintf(s, "y%d km", (int) scale_unit / 1000);
+			scale_value = tr("y%1 km").arg((int) scale_unit / 1000);
 		} else {
-			sprintf(s, "y%d m", (int) scale_unit);
+			scale_value = tr("y%1 m").arg((int) scale_unit);
 		}
 		break;
 	case DistanceUnit::MILES:
 		/* Handle units in 0.1 miles. */
 		if (scale_unit < 10.0) {
-			sprintf(s, "%0.1f miles", scale_unit / 10.0);
+			scale_value = tr("%1 miles").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
 		} else if ((int) scale_unit == 10.0) {
-			sprintf(s, "1 mile");
+			scale_value = tr("1 mile");
 		} else {
-			sprintf(s, "%d miles", (int) (scale_unit / 10.0));
+			scale_value = tr("%1 miles").arg((int) (scale_unit / 10.0));
 		}
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
 		/* Handle units in 0.1 NM. */
 		if (scale_unit < 10.0) {
-			sprintf(s, "%0.1f NM", scale_unit / 10.0);
+			scale_value = tr("%1 NM").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
 		} else if ((int) scale_unit == 10.0) {
-			sprintf(s, "1 NM");
+			scale_value = tr("1 NM");
 		} else {
-			sprintf(s, "%d NMs", (int) (scale_unit / 10.0));
+			scale_value = tr("%1 NMs").arg((int) (scale_unit / 10.0));
 		}
 		break;
 	default:
 		qDebug() << "EE: Viewport: failed to get correct units of distance, got" << (int) distance_unit;
 	}
+
+	return scale_value;
 }
 
 
@@ -1642,6 +1644,51 @@ void Viewport::draw_text(QFont const & text_font, QPen const & pen, QRectF & bou
 	painter.setPen(QColor("red"));
 	painter.drawRect(text_rect);
 #endif
+
+	painter.setPen(pen);
+	painter.drawText(text_rect, flags, text, NULL);
+	painter.end();
+}
+
+
+
+
+void Viewport::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+{
+	QPainter painter(this->scr_buffer);
+	painter.setFont(text_font);
+
+	/* "Normalize" bounding rectangles that have negative width or height.
+	   Otherwise the text will be outside of the bounding rectangle. */
+	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+
+	QRectF text_rect = painter.boundingRect(final_bounding_rect, flags, text);
+	if (text_offset & SG_TEXT_OFFSET_UP) {
+		/* Move boxes a bit up, so that text is right against grid line, not below it. */
+		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		final_bounding_rect.moveTop(new_top);
+		text_rect.moveTop(new_top);
+	}
+
+	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
+		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		final_bounding_rect.moveLeft(new_left);
+		text_rect.moveLeft(new_left);
+	}
+
+
+#if 1
+	/* Debug. */
+	painter.setPen(QColor("red"));
+	painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+
+	painter.setPen(QColor("darkgreen"));
+	painter.drawRect(bounding_rect);
+#endif
+
+	/* A highlight of drawn text, must be executed before .drawText(). */
+	painter.fillRect(text_rect, bg_color);
 
 	painter.setPen(pen);
 	painter.drawText(text_rect, flags, text, NULL);

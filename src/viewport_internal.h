@@ -79,6 +79,7 @@ namespace SlavGPS {
 		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
@@ -291,7 +292,7 @@ namespace SlavGPS {
 		void init_drawing_area(void);
 
 		void draw_scale_helper_scale(const QPen & pen, int scale_len, int h);
-		void draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit);
+		QString draw_scale_helper_value(DistanceUnit distance_unit, double scale_unit);
 
 		Window * window = NULL;
 

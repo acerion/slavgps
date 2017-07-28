@@ -3177,7 +3177,7 @@ QString LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const QSt
 		}
 		/* If found a name already in use try adding 1 to it and we try again. */
 		if (id) {
-			new_name = QString("1#%2").arg(old_name).arg(i);
+			new_name = QString("%1#%2").arg(old_name).arg(i);
 			i++;
 		}
 	} while (id != NULL);
