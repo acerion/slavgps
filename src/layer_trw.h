@@ -358,7 +358,7 @@ namespace SlavGPS {
 		void dialog_shift(QDialog * dialog, Coord * coord, bool vertical);
 
 
-		uint32_t get_property_tracks_line_thickness();
+		uint32_t get_property_trk_thickness();
 
 		static TRWMetadata * metadata_new();
 		static void metadata_free(TRWMetadata * metadata);
@@ -438,28 +438,25 @@ namespace SlavGPS {
 		uint8_t drawlines;
 		uint8_t drawdirections;
 		uint8_t drawdirections_size;
-		uint32_t line_thickness;
-		uint32_t bg_line_thickness;
+		uint32_t trk_thickness;
+		uint32_t trk_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
 		vik_layer_sort_order_t track_sort_order;
 
 		TRWMetadata * metadata = NULL;
 
-		PangoLayout * tracklabellayout = NULL;
-		font_size_t track_font_size;
-		char * track_fsize_str = NULL;
+		font_size_t trk_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
 
-		uint8_t wp_symbol;
-		int wp_size; /* In Variant data type this field is stored as uint8_t. */
+		uint8_t wp_marker_type;
+		int wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
 		bool wp_draw_symbols;
-		font_size_t wp_font_size;
-		char * wp_fsize_str = NULL;
+		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
 		vik_layer_sort_order_t wp_sort_order;
 
 
 		double track_draw_speed_factor;
 		std::vector<QPen> track_pens;
 		QPen track_1color_pen;
-		QColor track_color;
+		QColor trk_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
 		QPen current_trk_pen;
 		/* Separate pen for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
@@ -468,14 +465,14 @@ namespace SlavGPS {
 		QPen track_bg_pen;
 		QColor track_bg_color;
 
-		QPen  waypoint_pen;
-		QColor waypoint_color;
+		QPen wp_marker_pen;
+		QColor wp_marker_color;
 
-		QPen waypoint_text_pen;
-		QColor waypoint_text_color;
+		QPen wp_label_fg_pen;
+		QColor wp_label_fg_color;
 
-		QPen waypoint_bg_pen;
-		QColor waypoint_bg_color;
+		QPen wp_label_bg_pen;
+		QColor wp_label_bg_color;
 
 		GdkFunction wpbgand;
 
@@ -505,11 +502,6 @@ namespace SlavGPS {
 		uint8_t image_size;
 		uint16_t image_cache_size;
 
-
-
-
-		/* For waypoint text. */
-		PangoLayout * wplabellayout = NULL;
 
 		bool has_verified_thumbnails;
 

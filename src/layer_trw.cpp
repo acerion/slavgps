@@ -146,7 +146,7 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 
-static char * font_size_to_string(int font_size);
+
 
 
 
@@ -180,7 +180,7 @@ static label_id_t params_wpsymbols[] = {
 
 static ParameterScale params_scales[] = {
 	/* min  max    step digits */
-	{  1,   10,    1,   0 }, /* line_thickness */
+	{  1,   10,    1,   0 }, /* trk_thickness */
 	{  0,   100,   1,   0 }, /* track draw speed factor */
 	{  1.0, 100.0, 1.0, 2 }, /* UNUSED */
 	/* 5 * step == how much to turn */
@@ -219,10 +219,10 @@ static label_id_t params_sort_order[] = {
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
 static SGVariant drawmode_default(void)          { return SGVariant((uint32_t) DRAWMODE_BY_TRACK); }
-static SGVariant line_thickness_default(void)    { return SGVariant((uint32_t) 1); }
+static SGVariant trk_thickness_default(void)    { return SGVariant((uint32_t) 1); }
 static SGVariant trkpointsize_default(void)      { return SGVariant((uint32_t) MIN_POINT_SIZE); }
 static SGVariant trkdirectionsize_default(void)  { return SGVariant((uint32_t) 5); }
-static SGVariant bg_line_thickness_default(void) { return SGVariant((uint32_t) 0); }
+static SGVariant trk_bg_thickness_default(void) { return SGVariant((uint32_t) 0); }
 static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
 static SGVariant elevation_factor_default(void)  { return SGVariant((uint32_t) 30); }
 static SGVariant stop_length_default(void)       { return SGVariant((uint32_t) 60); }
@@ -250,11 +250,11 @@ enum {
 	PARAM_RV,
 	// Tracks
 	PARAM_TDL,
-	PARAM_TLFONTSIZE,
+	PARAM_TRK_LABEL_FONT_SIZE,
 	PARAM_DM,
-	PARAM_TC,
+	PARAM_TRK_COLOR_COMMON,
 	PARAM_DL,
-	PARAM_LT,
+	PARAM_TRK_THICKNESS,
 	PARAM_DD,
 	PARAM_DDS,
 	PARAM_DP,
@@ -263,19 +263,19 @@ enum {
 	PARAM_EF,
 	PARAM_DS,
 	PARAM_SL,
-	PARAM_BLT,
-	PARAM_TBGC,
+	PARAM_TRK_BG_THICKNESS,
+	PARAM_TRK_BG_COLOR,
 	PARAM_TDSF,
 	PARAM_TSO,
 	// Waypoints
 	PARAM_DLA,
-	PARAM_WPFONTSIZE,
-	PARAM_WPC,
-	PARAM_WPTC,
-	PARAM_WPBC,
+	PARAM_WP_LABEL_FONT_SIZE,
+	PARAM_WP_MARKER_COLOR,
+	PARAM_WP_LABEL_FG_COLOR,
+	PARAM_WP_LABEL_BG_COLOR,
 	PARAM_WPBA,
-	PARAM_WPSYM,
-	PARAM_WPSIZE,
+	PARAM_WP_MARKER_TYPE,
+	PARAM_WP_MARKER_SIZE,
 	PARAM_WPSYMS,
 	PARAM_WPSO,
 	// WP images
@@ -298,11 +298,11 @@ Parameter trw_layer_params[] = {
 	{ PARAM_RV,         "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 
 	{ PARAM_TDL,        "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
-	{ PARAM_TLFONTSIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
+	{ PARAM_TRK_LABEL_FONT_SIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Size of Track Label's Font:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
 	{ PARAM_DM,         "drawmode",          SGVariantType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
-	{ PARAM_TC,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
+	{ PARAM_TRK_COLOR_COMMON,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
 	{ PARAM_DL,         "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_LT,         "line_thickness",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, line_thickness_default,     NULL, NULL },
+	{ PARAM_TRK_THICKNESS,         "line_thickness",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, trk_thickness_default,     NULL, NULL },
 	{ PARAM_DD,         "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
 	{ PARAM_DDS,        "trkdirectionsize",  SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             WidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
 	{ PARAM_DP,         "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
@@ -312,19 +312,19 @@ Parameter trw_layer_params[] = {
 	{ PARAM_DS,         "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), sg_variant_false, NULL, NULL },
 	{ PARAM_SL,         "stop_length",       SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  WidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
 
-	{ PARAM_BLT,        "bg_line_thickness", SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track BG Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, bg_line_thickness_default,  NULL, NULL },
-	{ PARAM_TBGC,       "trackbgcolor",      SGVariantType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      WidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
+	{ PARAM_TRK_BG_THICKNESS,        "bg_line_thickness", SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Background Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, trk_bg_thickness_default,  NULL, NULL },
+	{ PARAM_TRK_BG_COLOR,       "trackbgcolor",      SGVariantType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      WidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
 	{ PARAM_TDSF,       "speed_factor",      SGVariantType::DOUBLE,  GROUP_TRACKS_ADV,            N_("Draw by Speed Factor (%):"),   WidgetType::HSCALE,       &params_scales[1],  NULL, N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
 	{ PARAM_TSO,        "tracksortorder",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Sort Order:"),           WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
 	{ PARAM_DLA,        "drawlabels",        SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_WPFONTSIZE, "wpfontsize",        SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Font Size:"),         WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
-	{ PARAM_WPC,        "wpcolor",           SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Color:"),             WidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
-	{ PARAM_WPTC,       "wptextcolor",       SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Text:"),              WidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
-	{ PARAM_WPBC,       "wpbgcolor",         SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Background:"),                 WidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
+	{ PARAM_WP_LABEL_FONT_SIZE, "wpfontsize",        SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Font Size of Waypoint's Label:"),         WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
+	{ PARAM_WP_MARKER_COLOR,    "wpcolor",           SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Color of Waypoint's Marker:"),             WidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
+	{ PARAM_WP_LABEL_FG_COLOR,  "wptextcolor",       SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Color of Waypoint's Label:"),  WidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
+	{ PARAM_WP_LABEL_BG_COLOR,  "wpbgcolor",         SGVariantType::COLOR,   GROUP_WAYPOINTS,             N_("Background of Waypoint's Label:"),     WidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
 	{ PARAM_WPBA,       "wpbgand",           SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Fake BG Color Translucency:"), WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
-	{ PARAM_WPSYM,      "wpsymbol",          SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint marker:"),            WidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
-	{ PARAM_WPSIZE,     "wpsize",            SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint size:"),              WidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
+	{ PARAM_WP_MARKER_TYPE,      "wpsymbol",          SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Type of Waypoint's Marker:"),            WidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
+	{ PARAM_WP_MARKER_SIZE,     "wpsize",            SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Size of Waypoint's Marker:"),              WidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
 	{ PARAM_WPSYMS,     "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Waypoint Symbols:"),      WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 	{ PARAM_WPSO,       "wpsortorder",       SGVariantType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Sort Order:"),        WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
@@ -832,39 +832,6 @@ void LayerTRW::image_cache_free()
 
 
 
-char * font_size_to_string(int font_size)
-{
-	char * result = NULL;
-	switch (font_size) {
-	case FS_XX_SMALL:
-		result = strdup("xx-small");
-		break;
-	case FS_X_SMALL:
-		result = strdup("x-small");
-		break;
-	case FS_SMALL:
-		result = strdup("small");
-		break;
-	case FS_LARGE:
-		result = strdup("large");
-		break;
-	case FS_X_LARGE:
-		result = strdup("x-large");
-		break;
-	case FS_XX_LARGE:
-		result = strdup("xx-large");
-		break;
-	default:
-		result = strdup("medium");
-		break;
-	}
-
-	return result;
-}
-
-
-
-
 bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
 {
 	switch (id) {
@@ -880,18 +847,16 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 	case PARAM_TDL:
 		this->track_draw_labels = data.b;
 		break;
-	case PARAM_TLFONTSIZE:
+	case PARAM_TRK_LABEL_FONT_SIZE:
 		if (data.u < FS_NUM_SIZES) {
-			this->track_font_size = (font_size_t) data.u;
-			free(this->track_fsize_str);
-			this->track_fsize_str = font_size_to_string(this->track_font_size);
+			this->trk_label_font_size = (font_size_t) data.u;
 		}
 		break;
 	case PARAM_DM:
 		this->drawmode = data.u;
 		break;
-	case PARAM_TC:
-		this->track_color = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
+	case PARAM_TRK_COLOR_COMMON:
+		this->trk_color_common = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
 		this->new_track_pens();
 		break;
 	case PARAM_DP:
@@ -929,20 +894,20 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 			this->elevation_factor = data.u;
 		}
 		break;
-	case PARAM_LT:
-		if (data.u > 0 && data.u < 15 && data.u != this->line_thickness) {
-			this->line_thickness = data.u;
+	case PARAM_TRK_THICKNESS:
+		if (data.u > 0 && data.u < 15 && data.u != this->trk_thickness) {
+			this->trk_thickness = data.u;
 			this->new_track_pens();
 		}
 		break;
-	case PARAM_BLT:
-		if (data.u <= 8 && data.u != this->bg_line_thickness) {
-			this->bg_line_thickness = data.u;
+	case PARAM_TRK_BG_THICKNESS:
+		if (data.u <= 8 && data.u != this->trk_bg_thickness) {
+			this->trk_bg_thickness = data.u;
 			this->new_track_pens();
 		}
 		break;
 
-	case PARAM_TBGC:
+	case PARAM_TRK_BG_COLOR:
 		param_to_color(this->track_bg_color, data);
 		this->track_bg_pen.setColor(this->track_bg_color);
 		break;
@@ -983,19 +948,19 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		}
 		break;
 
-	case PARAM_WPC:
-		param_to_color(this->waypoint_color, data);
-		this->waypoint_pen.setColor(this->waypoint_color);
+	case PARAM_WP_MARKER_COLOR:
+		param_to_color(this->wp_marker_color, data);
+		this->wp_marker_pen.setColor(this->wp_marker_color);
 		break;
 
-	case PARAM_WPTC:
-		param_to_color(this->waypoint_text_color, data);
-		this->waypoint_pen.setColor(this->waypoint_text_color);
+	case PARAM_WP_LABEL_FG_COLOR:
+		param_to_color(this->wp_label_fg_color, data);
+		this->wp_label_fg_pen.setColor(this->wp_label_fg_color);
 		break;
 
-	case PARAM_WPBC:
-		param_to_color(this->waypoint_bg_color, data);
-		this->waypoint_bg_pen.setColor(this->waypoint_bg_color);
+	case PARAM_WP_LABEL_BG_COLOR:
+		param_to_color(this->wp_label_bg_color, data);
+		this->wp_label_bg_pen.setColor(this->wp_label_bg_color);
 		break;
 
 	case PARAM_WPBA:
@@ -1006,24 +971,22 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		}
 #endif
 		break;
-	case PARAM_WPSYM:
+	case PARAM_WP_MARKER_TYPE:
 		if (data.u < WP_NUM_SYMBOLS) {
-			this->wp_symbol = data.u;
+			this->wp_marker_type = data.u;
 		}
 		break;
-	case PARAM_WPSIZE:
+	case PARAM_WP_MARKER_SIZE:
 		if (data.u > 0 && data.u <= 64) {
-			this->wp_size = (int) data.u;
+			this->wp_marker_size = (int) data.u;
 		}
 		break;
 	case PARAM_WPSYMS:
 		this->wp_draw_symbols = data.b;
 		break;
-	case PARAM_WPFONTSIZE:
+	case PARAM_WP_LABEL_FONT_SIZE:
 		if (data.u < FS_NUM_SIZES) {
-			this->wp_font_size = (font_size_t) data.u;
-			free(this->wp_fsize_str);
-			this->wp_fsize_str = font_size_to_string(this->wp_font_size);
+			this->wp_label_font_size = (font_size_t) data.u;
 		}
 		break;
 	case PARAM_WPSO:
@@ -1068,9 +1031,9 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_WV: rv.b = this->waypoints_visible; break;
 	case PARAM_RV: rv.b = this->routes_visible; break;
 	case PARAM_TDL: rv.b = this->track_draw_labels; break;
-	case PARAM_TLFONTSIZE: rv.u = this->track_font_size; break;
+	case PARAM_TRK_LABEL_FONT_SIZE: rv.u = this->trk_label_font_size; break;
 	case PARAM_DM: rv.u = this->drawmode; break;
-	case PARAM_TC: color_to_param(rv, this->track_color); break;
+	case PARAM_TRK_COLOR_COMMON: color_to_param(rv, this->trk_color_common); break;
 	case PARAM_DP: rv.b = this->drawpoints; break;
 	case PARAM_DPS: rv.u = this->drawpoints_size; break;
 	case PARAM_DE: rv.b = this->drawelevation; break;
@@ -1080,24 +1043,24 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_DL: rv.b = this->drawlines; break;
 	case PARAM_DD: rv.b = this->drawdirections; break;
 	case PARAM_DDS: rv.u = this->drawdirections_size; break;
-	case PARAM_LT: rv.u = this->line_thickness; break;
-	case PARAM_BLT: rv.u = this->bg_line_thickness; break;
+	case PARAM_TRK_THICKNESS: rv.u = this->trk_thickness; break;
+	case PARAM_TRK_BG_THICKNESS: rv.u = this->trk_bg_thickness; break;
 	case PARAM_DLA: rv.b = this->drawlabels; break;
 	case PARAM_DI: rv.b = this->drawimages; break;
-	case PARAM_TBGC: color_to_param(rv, this->track_bg_color); break;
+	case PARAM_TRK_BG_COLOR: color_to_param(rv, this->track_bg_color); break;
 	case PARAM_TDSF: rv.d = this->track_draw_speed_factor; break;
 	case PARAM_TSO: rv.u = this->track_sort_order; break;
 	case PARAM_IS: rv.u = this->image_size; break;
 	case PARAM_IA: rv.u = this->image_alpha; break;
 	case PARAM_ICS: rv.u = this->image_cache_size; break;
-	case PARAM_WPC:	color_to_param(rv, this->waypoint_color); break;
-	case PARAM_WPTC: color_to_param(rv, this->waypoint_text_color); break;
-	case PARAM_WPBC: color_to_param(rv, this->waypoint_bg_color); break;
+	case PARAM_WP_MARKER_COLOR:   color_to_param(rv, this->wp_marker_color); break;
+	case PARAM_WP_LABEL_FG_COLOR: color_to_param(rv, this->wp_label_fg_color); break;
+	case PARAM_WP_LABEL_BG_COLOR: color_to_param(rv, this->wp_label_bg_color); break;
 	case PARAM_WPBA: rv.b = this->wpbgand; break;
-	case PARAM_WPSYM: rv.u = this->wp_symbol; break;
-	case PARAM_WPSIZE: rv.u = (uint8_t) this->wp_size; break;
+	case PARAM_WP_MARKER_TYPE: rv.u = this->wp_marker_type; break;
+	case PARAM_WP_MARKER_SIZE: rv.u = (uint8_t) this->wp_marker_size; break;
 	case PARAM_WPSYMS: rv.b = this->wp_draw_symbols; break;
-	case PARAM_WPFONTSIZE: rv.u = this->wp_font_size; break;
+	case PARAM_WP_LABEL_FONT_SIZE: rv.u = this->wp_label_font_size; break;
 	case PARAM_WPSO: rv.u = this->wp_sort_order; break;
 		// Metadata
 	case PARAM_MDDESC:
@@ -1160,14 +1123,14 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[OFFSET + PARAM_WPTC];
-		GtkWidget *w2 = ww2[OFFSET + PARAM_WPTC];
-		GtkWidget *w3 = ww1[OFFSET + PARAM_WPBC];
-		GtkWidget *w4 = ww2[OFFSET + PARAM_WPBC];
+		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_LABEL_FG_COLOR];
+		GtkWidget *w2 = ww2[OFFSET + PARAM_WP_LABEL_FG_COLOR];
+		GtkWidget *w3 = ww1[OFFSET + PARAM_WP_LABEL_BG_COLOR];
+		GtkWidget *w4 = ww2[OFFSET + PARAM_WP_LABEL_BG_COLOR];
 		GtkWidget *w5 = ww1[OFFSET + PARAM_WPBA];
 		GtkWidget *w6 = ww2[OFFSET + PARAM_WPBA];
-		GtkWidget *w7 = ww1[OFFSET + PARAM_WPFONTSIZE];
-		GtkWidget *w8 = ww2[OFFSET + PARAM_WPFONTSIZE];
+		GtkWidget *w7 = ww1[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
+		GtkWidget *w8 = ww2[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
 		if (w1) gtk_widget_set_sensitive(w1, vlpd.b);
 		if (w2) gtk_widget_set_sensitive(w2, vlpd.b);
 		if (w3) gtk_widget_set_sensitive(w3, vlpd.b);
@@ -1185,8 +1148,8 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		bool sensitive = (vlpd.u == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[OFFSET + PARAM_TC];
-		GtkWidget *w2 = ww2[OFFSET + PARAM_TC];
+		GtkWidget *w1 = ww1[OFFSET + PARAM_TRK_COLOR_COMMON];
+		GtkWidget *w2 = ww2[OFFSET + PARAM_TRK_COLOR_COMMON];
 		if (w1) gtk_widget_set_sensitive(w1, sensitive);
 		if (w2) gtk_widget_set_sensitive(w2, sensitive);
 		break;
@@ -1377,20 +1340,6 @@ LayerTRW::~LayerTRW()
 	this->tracks.clear();
 	this->routes.clear();
 
-#ifdef K
-	if (this->tracklabellayout != NULL) {
-		g_object_unref(G_OBJECT (this->tracklabellayout));
-	}
-
-	if (this->wplabellayout != NULL) {
-		g_object_unref(G_OBJECT (this->wplabellayout));
-	}
-
-
-	free(this->wp_fsize_str);
-	free(this->track_fsize_str);
-
-#endif
 
 	this->image_cache_free();
 
@@ -1532,16 +1481,16 @@ void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypo
 
 void LayerTRW::new_track_pens(void)
 {
-	uint32_t width = this->line_thickness;
+	uint32_t width = this->trk_thickness;
 
 
 	this->track_bg_pen = QPen(this->track_bg_color);
-	this->track_bg_pen.setWidth(width + this->bg_line_thickness);
+	this->track_bg_pen.setWidth(width + this->trk_bg_thickness);
 
 
 	/* Ensure new track drawing heeds line thickness setting,
 	   however always have a minium of 2, as 1 pixel is really narrow. */
-	int new_track_width = (this->line_thickness < 2) ? 2 : this->line_thickness;
+	int new_track_width = (this->trk_thickness < 2) ? 2 : this->trk_thickness;
 	this->current_trk_pen = QPen(QColor("#FF0000"));
 	this->current_trk_pen.setWidth(new_track_width);
 	//gdk_gc_set_line_attributes(this->current_trk_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
@@ -1570,7 +1519,7 @@ void LayerTRW::new_track_pens(void)
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->track_color));
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->trk_color_common));
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE].setWidth(width);
 }
 
@@ -1765,9 +1714,9 @@ bool LayerTRW::sublayer_toggle_visible(Sublayer * sublayer)
 /*
  * Return a property about tracks for this layer.
  */
-uint32_t LayerTRW::get_property_tracks_line_thickness()
+uint32_t LayerTRW::get_property_trk_thickness()
 {
-	return this->line_thickness;
+	return this->trk_thickness;
 }
 
 
@@ -2899,7 +2848,7 @@ void LayerTRW::new_track_create_common(const QString & new_name)
 
 	if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
 		/* Create track with the preferred colour from the layer properties. */
-		this->current_trk->color = this->track_color;
+		this->current_trk->color = this->trk_color_common;
 	} else {
 		this->current_trk->color = QColor("#aa22dd"); //QColor("#000000");
 	}
@@ -6462,7 +6411,7 @@ void LayerTRW::track_alloc_colors()
 		/* Tracks get a random spread of colours if not already assigned. */
 		if (!trk->has_color) {
 			if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
-				trk->color = this->track_color;
+				trk->color = this->trk_color_common;
 			} else {
 				trk->color.setNamedColor(QString(my_track_colors(ii)));
 			}
@@ -7186,23 +7135,20 @@ LayerTRW::LayerTRW() : Layer()
 
 
 #ifdef K
-	this->wplabellayout = gtk_widget_create_pango_layout(viewport, NULL);
 	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
-
-	this->tracklabellayout = gtk_widget_create_pango_layout(viewport, NULL);
 	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
 #endif
 
 	this->new_track_pens();
 
-	this->waypoint_pen = QPen(this->waypoint_color);
-	this->waypoint_pen.setWidth(2);
+	this->wp_marker_pen = QPen(this->wp_marker_color);
+	this->wp_marker_pen.setWidth(2);
 
-	this->waypoint_text_pen = QPen(this->waypoint_text_color);
-	this->waypoint_text_pen.setWidth(1);
+	this->wp_label_fg_pen = QPen(this->wp_label_fg_color);
+	this->wp_label_fg_pen.setWidth(1);
 
-	this->waypoint_bg_pen = QPen(this->waypoint_bg_color);
-	this->waypoint_bg_pen.setWidth(1);
+	this->wp_label_bg_pen = QPen(this->wp_label_bg_color);
+	this->wp_label_bg_pen.setWidth(1);
 #ifdef K
 	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif

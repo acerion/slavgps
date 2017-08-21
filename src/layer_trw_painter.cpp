@@ -69,6 +69,11 @@ using namespace SlavGPS;
 
 
 
+static int pango_font_size_to_point_font_size(font_size_t font_size);
+
+
+
+
 TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 {
 	this->trw = a_trw;
@@ -168,7 +173,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord)
 {
 #ifdef K
-	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fg_color, bg_color, this->trw->track_fsize_str, text);
+	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fg_color, bg_color, this->trw->trk_label_font_size_str, text);
 	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(this->trw->tracklabellayout, label_markup, -1);
 	} else {
@@ -187,7 +192,11 @@ void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color,
 
 	QPen pen;
 	pen.setColor(fg_color);
-	this->viewport->draw_text(QFont("Helvetica", 10), pen, label_x, label_y, text);
+	this->viewport->draw_text(QFont("Helvetica", pango_font_size_to_point_font_size(this->trw->trk_label_font_size)),
+				  pen,
+				  label_x,
+				  label_y,
+				  text);
 }
 
 
@@ -294,7 +303,7 @@ QColor TRWPainter::get_fg_color(const Track * trk) const
 	if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
 		fg_color = trk->color;
 	} else {
-		fg_color = this->trw->track_color;
+		fg_color = this->trw->trk_color_common;
 	}
 	return fg_color;
 }
@@ -497,7 +506,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 	}
 
 	/* Admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
-	if (this->trw->bg_line_thickness && !draw_track_outline) {
+	if (this->trw->trk_bg_thickness && !draw_track_outline) {
 		this->draw_track(trk, true);
 	}
 
@@ -541,7 +550,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 			switch (this->trw->drawmode) {
 			case DRAWMODE_BY_TRACK:
 				this->trw->track_1color_pen.setColor(trk->color);
-				this->trw->track_1color_pen.setWidth(this->trw->line_thickness);
+				this->trw->track_1color_pen.setWidth(this->trw->trk_thickness);
 				main_pen = this->trw->track_1color_pen;
 				break;
 			default:
@@ -892,44 +901,44 @@ int TRWPainter::draw_image(Waypoint * wp, int x, int y)
 void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
 {
 #ifndef K
-	this->trw->waypoint_pen.setColor(QColor("orange"));
+	this->trw->wp_marker_pen.setColor(QColor("orange"));
 #endif
 
 	if (this->trw->wp_draw_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
 	} else if (wp == this->trw->current_wp) {
-		switch (this->trw->wp_symbol) {
+		switch (this->trw->wp_marker_type) {
 		case WP_SYMBOL_FILLED_SQUARE:
 			qDebug() << __FUNCTION__ << __LINE__;
-			this->viewport->fill_rectangle(this->trw->waypoint_pen.color(), x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size * 2, this->trw->wp_size * 2);
+			this->viewport->fill_rectangle(this->trw->wp_marker_pen.color(), x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size * 2, this->trw->wp_marker_size * 2);
 			break;
 		case WP_SYMBOL_SQUARE:
-			this->viewport->draw_rectangle(this->trw->waypoint_pen, x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size * 2, this->trw->wp_size * 2);
+			this->viewport->draw_rectangle(this->trw->wp_marker_pen, x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size * 2, this->trw->wp_marker_size * 2);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			this->viewport->draw_arc(this->trw->waypoint_pen, x - this->trw->wp_size, y - this->trw->wp_size, this->trw->wp_size, this->trw->wp_size, 0, 360, true);
+			this->viewport->draw_arc(this->trw->wp_marker_pen, x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size, this->trw->wp_marker_size, 0, 360, true);
 			break;
 		case WP_SYMBOL_X:
-			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size * 2, y - this->trw->wp_size * 2, x + this->trw->wp_size * 2, y + this->trw->wp_size * 2);
-			this->viewport->draw_line(this->trw->waypoint_pen, x - this->trw->wp_size * 2, y + this->trw->wp_size * 2, x + this->trw->wp_size * 2, y - this->trw->wp_size * 2);
+			this->viewport->draw_line(this->trw->wp_marker_pen, x - this->trw->wp_marker_size * 2, y - this->trw->wp_marker_size * 2, x + this->trw->wp_marker_size * 2, y + this->trw->wp_marker_size * 2);
+			this->viewport->draw_line(this->trw->wp_marker_pen, x - this->trw->wp_marker_size * 2, y + this->trw->wp_marker_size * 2, x + this->trw->wp_marker_size * 2, y - this->trw->wp_marker_size * 2);
 		default:
 			break;
 		}
 	} else {
-		switch (this->trw->wp_symbol) {
+		switch (this->trw->wp_marker_type) {
 		case WP_SYMBOL_FILLED_SQUARE:
 			qDebug() << __FUNCTION__ << __LINE__;
-			this->viewport->fill_rectangle(this->trw->waypoint_pen.color(), x - this->trw->wp_size/2, y - this->trw->wp_size/2, this->trw->wp_size, this->trw->wp_size);
+			this->viewport->fill_rectangle(this->trw->wp_marker_pen.color(), x - this->trw->wp_marker_size/2, y - this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size);
 			break;
 		case WP_SYMBOL_SQUARE:
-			this->viewport->draw_rectangle(this->trw->waypoint_pen, x - this->trw->wp_size/2, y - this->trw->wp_size/2, this->trw->wp_size, this->trw->wp_size);
+			this->viewport->draw_rectangle(this->trw->wp_marker_pen, x - this->trw->wp_marker_size/2, y - this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			this->viewport->draw_arc(this->trw->waypoint_pen, x-this->trw->wp_size/2, y-this->trw->wp_size/2, this->trw->wp_size, this->trw->wp_size, 0, 360, true);
+			this->viewport->draw_arc(this->trw->wp_marker_pen, x-this->trw->wp_marker_size/2, y-this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size, 0, 360, true);
 			break;
 		case WP_SYMBOL_X:
-			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y - this->trw->wp_size, x + this->trw->wp_size, y + this->trw->wp_size);
-			this->viewport->draw_line(this->trw->waypoint_pen, x-this->trw->wp_size, y + this->trw->wp_size, x + this->trw->wp_size, y - this->trw->wp_size);
+			this->viewport->draw_line(this->trw->wp_marker_pen, x-this->trw->wp_marker_size, y - this->trw->wp_marker_size, x + this->trw->wp_marker_size, y + this->trw->wp_marker_size);
+			this->viewport->draw_line(this->trw->wp_marker_pen, x-this->trw->wp_marker_size, y + this->trw->wp_marker_size, x + this->trw->wp_marker_size, y - this->trw->wp_marker_size);
 			break;
 		default:
 			break;
@@ -950,7 +959,7 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 	/* Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text()). */
 
 	/* Could this stored in the waypoint rather than recreating each pass? */
-	char * wp_label_markup = g_strdup_printf("<span size=\"%s\">%s</span>", this->trw->wp_fsize_str, wp->name);
+	char * wp_label_markup = g_strdup_printf("<span size=\"%s\">%s</span>", this->trw->wp_label_font_size_str, wp->name);
 	if (pango_parse_markup(wp_label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(this->trw->wplabellayout, wp_label_markup, -1);
 	} else {
@@ -968,30 +977,37 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 	if (wp->symbol_pixmap) {
 		label_y = y - label_height - 2 - wp->symbol_pixmap->height()/2;
 	} else {
-		label_y = y - this->trw->wp_size - label_height - 2;
+		label_y = y - this->trw->wp_marker_size - label_height - 2;
 	}
 #else
 	int label_x = x;
 	int label_y = y;
 	int label_width = 100;
 	int label_height = 50;
-	this->trw->waypoint_text_pen = QPen(Qt::blue);
+	this->trw->wp_label_fg_pen = QPen(this->trw->wp_label_fg_color);
 #endif
 
 
-	/* TODO: use correct font size: this->trw->wp_fsize_str. */
 	if (true /* this->highlight */) {
+
+		/* Draw waypoint's label with highlight background color. */
+
 		/* +3/-3: we don't want the background of text overlap too much with symbol of waypoint. */
 		QRectF bounding_rect(label_x + 3, label_y - 3, 300, -30);
-		this->viewport->draw_text(QFont("Arial", 12),
-					  this->trw->waypoint_text_pen,
+		this->viewport->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->trw->wp_label_font_size)),
+					  this->trw->wp_label_fg_pen,
 					  QColor("pink"), /* this->viewport->get_highlight_pen().color() */
 					  bounding_rect,
 					  Qt::AlignBottom | Qt::AlignLeft,
 					  wp->name,
 					  0);
 	} else {
-		this->viewport->draw_text(QFont("Arial", 12), this->trw->waypoint_text_pen, label_x, label_y, wp->name);
+		/* Draw waypoint's label with regular background color. */
+		this->viewport->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->trw->wp_label_font_size)),
+					  this->trw->wp_label_fg_pen,
+					  label_x,
+					  label_y,
+					  wp->name);
 	}
 
 
@@ -1038,4 +1054,38 @@ CachedPixmap::~CachedPixmap()
 int cached_pixmap_cmp(CachedPixmap * cp, const char * name)
 {
 	return strcmp(cp->image_file_name.toUtf8().constData(), name);
+}
+
+
+
+
+int pango_font_size_to_point_font_size(font_size_t font_size)
+{
+	int result;
+
+	switch (font_size) {
+	case FS_XX_SMALL:
+		result = 5;
+		break;
+	case FS_X_SMALL:
+		result = 6;
+		break;
+	case FS_SMALL:
+		result = 8;
+		break;
+	case FS_LARGE:
+		result = 12;
+		break;
+	case FS_X_LARGE:
+		result = 14;
+		break;
+	case FS_XX_LARGE:
+		result = 16;
+		break;
+	default:
+		result = 10;
+		break;
+	}
+
+	return result;
 }

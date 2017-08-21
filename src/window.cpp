@@ -1755,7 +1755,7 @@ void Window::set_selected_trw_layer(LayerTRW * trw)
 	this->selected_waypoint  = NULL;
 	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_trk_thickness());
 }
 
 
@@ -1779,7 +1779,7 @@ void Window::set_selected_tracks(Tracks * tracks, LayerTRW * trw)
 	this->selected_waypoint  = NULL;
 	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_trk_thickness());
 }
 
 
@@ -1803,7 +1803,7 @@ void Window::set_selected_track(Track * track, LayerTRW * trw)
 	this->selected_waypoint  = NULL;
 	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_trk_thickness());
 }
 
 
