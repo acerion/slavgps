@@ -794,6 +794,8 @@ void Window::draw_redraw()
 		this->viewport->set_half_drawn(true);
 	}
 
+	qDebug() << "II: Window:    selection: draw redraw";
+
 	/* Actually draw. */
 	this->viewport->clear();
 	/* Main layer drawing. */
@@ -801,6 +803,7 @@ void Window::draw_redraw()
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 
 	if (this->viewport->get_draw_with_highlight()) {
+		qDebug() << "II: Window:    selection: do draw with highlight";
 		if (this->containing_trw) {
 			if (this->selected_tracks) {
 				this->containing_trw->draw_with_highlight(this->viewport, this->selected_tracks, true);
@@ -809,6 +812,7 @@ void Window::draw_redraw()
 			} else if (this->selected_track) {
 				this->containing_trw->draw_with_highlight(this->viewport, this->selected_track, true);
 			} else if (this->selected_waypoint) {
+				qDebug() << "II: Window:    selection: draw waypoint" << this->selected_waypoint->name << "with highlight";
 				this->containing_trw->draw_with_highlight(this->viewport, this->selected_waypoint, true);
 			} else {
 				;
@@ -818,6 +822,8 @@ void Window::draw_redraw()
 		} else {
 			;
 		}
+	} else {
+		qDebug() << "II: Window:    selection: don't draw with highlight";
 	}
 
 	/* Other viewport decoration items on top if they are enabled/in use. */

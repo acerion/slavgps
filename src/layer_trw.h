@@ -144,7 +144,7 @@ namespace SlavGPS {
 		QString tooltip();
 		QString sublayer_tooltip(Sublayer * sublayer);
 
-		bool selected(TreeItemType type, Sublayer * sublayer);
+		bool kamil_selected(TreeItemType type, Sublayer * sublayer);
 
 		/* Methods for generic "Select" tool. */
 		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
@@ -395,15 +395,15 @@ namespace SlavGPS {
 
 		Tracks tracks;
 		Sublayer * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
-		bool tracks_visible;
+		bool tracks_visible = true;
 
 		Tracks routes;
 		Sublayer * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
-		bool routes_visible;
+		bool routes_visible = true;
 
 		Waypoints waypoints;
 		Sublayer * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
-		bool waypoints_visible;
+		bool waypoints_visible = true;
 
 
 		/* Waypoint editing tool. */

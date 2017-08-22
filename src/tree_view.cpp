@@ -303,23 +303,23 @@ void TreeView::add_columns()
 
 void TreeView::select_cb(void) /* Slot. */
 {
-	TreeIndex const & index = this->get_selected_item();
-	if (!index.isValid()) {
+	TreeIndex const & item_index = this->get_selected_item();
+	if (!item_index.isValid()) {
 		return;
 	}
 
-	TreeIndex const layer_index = this->go_up_to_layer(index);
+	TreeIndex const layer_index = this->go_up_to_layer(item_index);
 	if (!layer_index.isValid()) {
 		return;
 	}
 
 	Layer * layer = this->get_layer(layer_index);
 	Window * main_window = this->layers_panel->get_window();
-	TreeItemType tree_item_type = this->get_item_type(index);
+	TreeItemType tree_item_type = this->get_item_type(item_index);
 
 	Sublayer * sublayer = NULL;
 	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
-		sublayer = this->get_sublayer(index);
+		sublayer = this->get_sublayer(item_index);
 	}
 
 	main_window->selected_layer(layer);

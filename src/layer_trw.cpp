@@ -245,9 +245,9 @@ static SGVariant string_default(void)            { return SGVariant(""); }
 /* ENUMERATION MUST BE IN THE SAME ORDER AS THE NAMED PARAMS ABOVE. */
 enum {
 	// Sublayer visibilities
-	PARAM_TV,
-	PARAM_WV,
-	PARAM_RV,
+	PARAM_TRACKS_VISIBLE,
+	PARAM_WAYPOINTS_VISIBLE,
+	PARAM_ROUTES_VISIBLE,
 	// Tracks
 	PARAM_TDL,
 	PARAM_TRK_LABEL_FONT_SIZE,
@@ -293,9 +293,9 @@ enum {
 
 
 Parameter trw_layer_params[] = {
-	{ PARAM_TV,         "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_WV,         "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_RV,         "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_TRACKS_VISIBLE,         "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WAYPOINTS_VISIBLE,         "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_ROUTES_VISIBLE,         "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 
 	{ PARAM_TDL,        "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
 	{ PARAM_TRK_LABEL_FONT_SIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Size of Track Label's Font:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
@@ -835,13 +835,13 @@ void LayerTRW::image_cache_free()
 bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
 {
 	switch (id) {
-	case PARAM_TV:
+	case PARAM_TRACKS_VISIBLE:
 		this->tracks_visible = data.b;
 		break;
-	case PARAM_WV:
+	case PARAM_WAYPOINTS_VISIBLE:
 		this->waypoints_visible = data.b;
 		break;
-	case PARAM_RV:
+	case PARAM_ROUTES_VISIBLE:
 		this->routes_visible = data.b;
 		break;
 	case PARAM_TDL:
@@ -1027,9 +1027,9 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_TV: rv.b = this->tracks_visible; break;
-	case PARAM_WV: rv.b = this->waypoints_visible; break;
-	case PARAM_RV: rv.b = this->routes_visible; break;
+	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks_visible; break;
+	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints_visible; break;
+	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_visible; break;
 	case PARAM_TDL: rv.b = this->track_draw_labels; break;
 	case PARAM_TRK_LABEL_FONT_SIZE: rv.u = this->trk_label_font_size; break;
 	case PARAM_DM: rv.u = this->drawmode; break;
@@ -2100,7 +2100,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action.
  */
-bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
+bool LayerTRW::kamil_selected(TreeItemType item_type, Sublayer * sublayer)
 {
 	/* Reset. */
 	this->current_wp = NULL;
@@ -2109,9 +2109,12 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 	/* Clear statusbar. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
 
+	qDebug() << "II: LayerTRW:   selection: set selected: top";
+
 	switch (item_type) {
 	case TreeItemType::LAYER:
 		{
+			qDebug() << "II: LayerTRW:   selection: set selected: layer" << this->name;
 			this->get_window()->set_selected_trw_layer(this);
 			/* Mark for redraw. */
 			return true;
@@ -2123,6 +2126,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 			switch (sublayer->sublayer_type) {
 			case SublayerType::TRACKS:
 				{
+					qDebug() << "II: LayerTRW:   selection: set selected: tracks";
 					this->get_window()->set_selected_tracks(&this->tracks, this);
 					/* Mark for redraw. */
 					return true;
@@ -2131,6 +2135,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 			case SublayerType::TRACK:
 				{
 					Track * trk = this->tracks.at(sublayer->uid);
+					qDebug() << "II: LayerTRW:   selection: set selected: track" << trk->name;
 					this->get_window()->set_selected_track(trk, this);
 					/* Mark for redraw. */
 					return true;
@@ -2138,6 +2143,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 				break;
 			case SublayerType::ROUTES:
 				{
+					qDebug() << "II: LayerTRW:   selection: set selected: routes";
 					this->get_window()->set_selected_tracks(&this->routes, this);
 					/* Mark for redraw. */
 					return true;
@@ -2146,6 +2152,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 			case SublayerType::ROUTE:
 				{
 					Track * trk = this->routes.at(sublayer->uid);
+					qDebug() << "II: LayerTRW:   selection: set selected: route" << trk->name;
 					this->get_window()->set_selected_track(trk, this);
 					/* Mark for redraw. */
 					return true;
@@ -2153,6 +2160,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 				break;
 			case SublayerType::WAYPOINTS:
 				{
+					qDebug() << "II: LayerTRW:   selection: set selected: waypoints";
 					this->get_window()->set_selected_waypoints(&this->waypoints, this);
 					/* Mark for redraw. */
 					return true;
@@ -2161,6 +2169,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 			case SublayerType::WAYPOINT:
 				{
 					Waypoint * wp = this->waypoints.at(sublayer->uid);
+					qDebug() << "II: LayerTRW:   selection: set selected: waypoint" << wp->name;
 					if (wp) {
 						this->get_window()->set_selected_waypoint(wp, this);
 						/* Show some waypoint info. */
@@ -2172,6 +2181,7 @@ bool LayerTRW::selected(TreeItemType item_type, Sublayer * sublayer)
 				break;
 			default:
 				{
+					qDebug() << "II: LayerTRW:   selection: set selected: clear highlight";
 					return this->get_window()->clear_highlight();
 				}
 				break;

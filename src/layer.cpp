@@ -528,7 +528,7 @@ Layer::~Layer()
 
 bool Layer::layer_selected(TreeItemType item_type, Sublayer * sublayer)
 {
-	bool result = this->selected(item_type, sublayer);
+	bool result = this->kamil_selected(item_type, sublayer);
 	if (result) {
 		return result;
 	} else {
@@ -829,7 +829,7 @@ QString Layer::sublayer_tooltip(Sublayer * sublayer)
 
 
 
-bool Layer::selected(TreeItemType item_type, Sublayer * sublayer)
+bool Layer::kamil_selected(TreeItemType item_type, Sublayer * sublayer)
 {
 	return false;
 }

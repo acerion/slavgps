@@ -183,7 +183,7 @@ namespace SlavGPS {
 		virtual QString tooltip();
 		virtual QString sublayer_tooltip(Sublayer * sublayer);
 
-		virtual bool selected(TreeItemType type, Sublayer * sublayer);
+		virtual bool kamil_selected(TreeItemType type, Sublayer * sublayer);
 		bool layer_selected(TreeItemType type, Sublayer * sublayer);
 
 		/* Methods for generic "Select" tool. */

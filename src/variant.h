@@ -61,7 +61,7 @@ namespace SlavGPS {
 
 
 
-	union SGVariant {
+	class SGVariant {
 	public:
 		SGVariant() {};
 		SGVariant(double d_)       { type_id = SGVariantType::DOUBLE; d = d_; }
@@ -74,14 +74,14 @@ namespace SlavGPS {
 
 		SGVariantType type_id;
 
-		double d;
-		uint32_t u;
-		int32_t i;
-		bool b;
-		const char * s;
+		double d = 0.0;
+		uint32_t u = 0;
+		int32_t i = 0;
+		bool b = false;
+		const char * s = NULL;
 		struct { int r; int g; int b; int a; } c;
-		QStringList * sl;
-		void * ptr; /* For internal usage - don't save this value in a file! */
+		QStringList * sl = NULL;
+		void * ptr = NULL; /* For internal usage - don't save this value in a file! */
 	};
 
 
