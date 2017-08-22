@@ -121,14 +121,6 @@ TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 
 
 
-void TRWPainter::set_highlight(bool a_highlight)
-{
-	this->highlight = a_highlight;
-}
-
-
-
-
 /*
  * Determine the colour of the trackpoint (and/or trackline) relative to the average speed.
  * Here a simple traffic like light colour system is used:
@@ -172,22 +164,11 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 
 void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord)
 {
-#ifdef K
-	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fg_color, bg_color, this->trw->trk_label_font_size_str, text);
-	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
-		pango_layout_set_markup(this->trw->tracklabellayout, label_markup, -1);
-	} else {
-		/* Fallback if parse failure. */
-		pango_layout_set_text(this->trw->tracklabellayout, text, -1);
-	}
-
-	free(label_markup);
-#endif
 	int label_x, label_y;
+	this->viewport->coord_to_screen(coord, &label_x, &label_y);
+
 	//int width, height;
 	//pango_layout_get_pixel_size(this->trw->tracklabellayout, &width, &height);
-
-	this->viewport->coord_to_screen(coord, &label_x, &label_y);
 	//this->viewport->draw_layout(this->trw->track_bg_gc, label_x-width/2, label_y-height/2, this->trw->tracklabellayout);
 
 	QPen pen;
@@ -206,7 +187,7 @@ void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color,
  * Draw a few labels along a track at nicely seperated distances.
  * This might slow things down if there's many tracks being displayed with this on.
  */
-void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
+void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
 
 	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
@@ -287,7 +268,7 @@ void TRWPainter::draw_dist_labels(Track * trk, bool drawing_highlight)
 			Coord coord(ll_new, this->trw->coord_mode);
 
 			const QColor fg_color = this->get_fg_color(trk);
-			const QColor bg_color = this->get_bg_color(drawing_highlight);
+			const QColor bg_color = this->get_bg_color(do_highlight);
 
 			this->draw_track_label(name, fg_color, bg_color, &coord);
 		}
@@ -313,10 +294,10 @@ QColor TRWPainter::get_fg_color(const Track * trk) const
 
 /* If highlight mode is on, then color of the background should be the
    same as the highlight colour. */
-QColor TRWPainter::get_bg_color(bool drawing_highlight) const
+QColor TRWPainter::get_bg_color(bool do_highlight) const
 {
 	QColor bg_color;
-	if (drawing_highlight) {
+	if (do_highlight) {
 		bg_color = this->viewport->get_highlight_color();
 	} else {
 		bg_color = this->trw->track_bg_color;
@@ -330,10 +311,10 @@ QColor TRWPainter::get_bg_color(bool drawing_highlight) const
 /**
  * Draw a label (or labels) for the track name somewhere depending on the track's properties.
  */
-void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
+void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 {
 	const QColor fg_color = this->get_fg_color(trk);
-	const QColor bg_color = this->get_bg_color(drawing_highlight);
+	const QColor bg_color = this->get_bg_color(do_highlight);
 
 	char *ename = g_markup_escape_text(trk->name.toUtf8().constData(), -1);
 
@@ -419,14 +400,14 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool drawing_highlight)
  * Draw a point labels along a track.
  * This might slow things down if there's many tracks being displayed with this on.
  */
-void TRWPainter::draw_point_names(Track * trk, bool drawing_highlight)
+void TRWPainter::draw_track_point_names(Track * trk, bool do_highlight)
 {
 	if (trk->empty()) {
 		return;
 	}
 
 	const QColor fg_color = this->get_fg_color(trk);
-	const QColor bg_color = this->get_bg_color(drawing_highlight);
+	const QColor bg_color = this->get_bg_color(do_highlight);
 
 	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 		if (!(*iter)->name.isEmpty()) {
@@ -488,7 +469,7 @@ void TRWPainter::draw_track_draw_something(int x, int y, int oldx, int oldy, QPe
 
 
 
-void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
+void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 {
 	if (!trk->visible) {
 		return;
@@ -506,13 +487,13 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 	}
 
 	/* Admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
-	if (this->trw->trk_bg_thickness && !draw_track_outline) {
-		this->draw_track(trk, true);
+	if (this->trw->trk_bg_thickness && !do_highlight) {
+		this->draw_track_sub(trk, true);
 	}
 
 	bool drawpoints;
 	bool drawstops;
-	if (draw_track_outline) {
+	if (do_highlight) {
 		drawpoints = drawstops = false;
 	} else {
 		drawpoints = this->trw->drawpoints;
@@ -538,7 +519,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 	if (trk == this->trw->current_trk) {
 		main_pen = this->trw->current_trk_pen;
 	} else {
-		if (this->highlight) {
+		if (do_highlight) {
 			/* Draw all tracks of the layer in special colour.
 			   NB this supercedes the drawmode. */
 			main_pen = this->viewport->get_highlight_pen();
@@ -621,7 +602,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
 
-		/* kamilTODO: compare this condition with condition in TRWPainter::draw_waypoint(). */
+		/* kamilTODO: compare this condition with condition in TRWPainter::draw_waypoint_sub(). */
 		bool first_condition = (this->coord_mode == CoordMode::UTM && !this->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 		bool second_condition_A = ((!this->one_utm_zone) || tp->coord.utm.zone == this->center->utm.zone);  /* Only check zones if UTM & one_utm_zone. */
 		bool second_condition_B = (tp->coord.ll.lon < this->ce2 && tp->coord.ll.lon > this->ce1) || (tp->coord.utm.easting < this->ce2 && tp->coord.utm.easting > this->ce1);
@@ -650,7 +631,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 			   first so the trackpoint will be drawn on top. */
 			if (drawstops
 			    && drawpoints
-			    && ! draw_track_outline
+			    && !do_highlight
 			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->trw->stop_length) {
 
@@ -671,7 +652,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 				}
 			}
 
-			if (drawpoints && !draw_track_outline) {
+			if (drawpoints && !do_highlight) {
 
 				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
@@ -694,7 +675,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 					this->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
 				}
 
-				if (draw_track_outline) {
+				if (do_highlight) {
 					this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
 				} else {
 					this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
@@ -730,7 +711,7 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x || y != prev_y) {
-						if (draw_track_outline) {
+						if (do_highlight) {
 							this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
 						} else {
 							this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
@@ -751,9 +732,9 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 	/* Labels drawn after the trackpoints, so the labels are on top. */
 	if (this->trw->track_draw_labels) {
 		if (trk->max_number_dist_labels > 0) {
-			this->draw_dist_labels(trk, drawing_highlight);
+			this->draw_track_dist_labels(trk, drawing_highlight);
 		}
-		this->draw_point_names(trk, drawing_highlight);
+		this->draw_track_point_names(trk, drawing_highlight);
 
 		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
 			this->draw_track_name_labels(trk, drawing_highlight);
@@ -764,21 +745,21 @@ void TRWPainter::draw_track(Track * trk, bool draw_track_outline)
 
 
 
-void TRWPainter::draw_track_cb(const void * id, Track * trk)
+void TRWPainter::draw_track(Track * trk, bool do_highlight)
 {
 	if (BBOX_INTERSECT (trk->bbox, this->bbox)) {
-		this->draw_track(trk, false);
+		this->draw_track_sub(trk, do_highlight);
 	}
 }
 
 
 
 
-void TRWPainter::draw_tracks_cb(Tracks & tracks)
+void TRWPainter::draw_tracks(Tracks & tracks, bool do_highlight)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		if (BBOX_INTERSECT (i->second->bbox, this->bbox)) {
-			this->draw_track(i->second, false);
+			this->draw_track_sub(i->second, do_highlight);
 		}
 	}
 }
@@ -786,7 +767,7 @@ void TRWPainter::draw_tracks_cb(Tracks & tracks)
 
 
 
-void TRWPainter::draw_waypoint(Waypoint * wp)
+void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	if (!wp->visible) {
 		return;
@@ -803,27 +784,27 @@ void TRWPainter::draw_waypoint(Waypoint * wp)
 	}
 
 	int x, y;
-	this->viewport->coord_to_screen(&(wp->coord), &x, &y);
+	this->viewport->coord_to_screen(&wp->coord, &x, &y);
 
 	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
 	if (!wp->image.isEmpty() && this->trw->drawimages) {
-		if (0 == this->draw_image(wp, x, y)) {
+		if (0 == this->draw_waypoint_image(wp, x, y)) {
 			return;
 		}
 	}
 
 	/* Draw appropriate symbol - either symbol image or simple types. */
-	this->draw_symbol(wp, x, y);
+	this->draw_waypoint_symbol(wp, x, y);
 
 	if (this->trw->drawlabels) {
-		this->draw_label(wp, x, y);
+		this->draw_waypoint_label(wp, x, y, do_highlight);
 	}
 }
 
 
 
 
-int TRWPainter::draw_image(Waypoint * wp, int x, int y)
+int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y)
 {
 	if (this->trw->image_alpha == 0) {
 		return 0;
@@ -898,11 +879,8 @@ int TRWPainter::draw_image(Waypoint * wp, int x, int y)
 
 
 
-void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
+void TRWPainter::draw_waypoint_symbol(Waypoint * wp, int x, int y)
 {
-#ifndef K
-	this->trw->wp_marker_pen.setColor(QColor("orange"));
-#endif
 
 	if (this->trw->wp_draw_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
@@ -951,23 +929,9 @@ void TRWPainter::draw_symbol(Waypoint * wp, int x, int y)
 
 
 
-void TRWPainter::draw_label(Waypoint * wp, int x, int y)
+void TRWPainter::draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight)
 {
-#ifdef K
-	/* Thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation. */
-
-	/* Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text()). */
-
-	/* Could this stored in the waypoint rather than recreating each pass? */
-	char * wp_label_markup = g_strdup_printf("<span size=\"%s\">%s</span>", this->trw->wp_label_font_size_str, wp->name);
-	if (pango_parse_markup(wp_label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
-		pango_layout_set_markup(this->trw->wplabellayout, wp_label_markup, -1);
-	} else {
-		/* Fallback if parse failure. */
-		pango_layout_set_text(this->trw->wplabellayout, wp->name, -1);
-	}
-	free(wp_label_markup);
-#endif
+	/* Could this be stored in the waypoint rather than recreating each pass? */
 
 #ifdef K
 	int label_x, label_y;
@@ -988,7 +952,7 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 #endif
 
 
-	if (true /* this->highlight */) {
+	if (/* this->highlight */ do_highlight) {
 
 		/* Draw waypoint's label with highlight background color. */
 
@@ -1019,21 +983,21 @@ void TRWPainter::draw_label(Waypoint * wp, int x, int y)
 
 
 
-void TRWPainter::draw_waypoint_cb(Waypoint * wp)
+void TRWPainter::draw_waypoint(Waypoint * wp, bool do_highlight)
 {
 	if (BBOX_INTERSECT (this->trw->waypoints_bbox, this->bbox)) {
-		this->draw_waypoint(wp);
+		this->draw_waypoint_sub(wp, do_highlight);
 	}
 }
 
 
 
 
-void TRWPainter::draw_waypoints_cb(Waypoints * waypoints)
+void TRWPainter::draw_waypoints(Waypoints & waypoints, bool do_highlight)
 {
 	if (BBOX_INTERSECT (this->trw->waypoints_bbox, this->bbox)) {
-		for (auto i = waypoints->begin(); i != waypoints->end(); i++) {
-			this->draw_waypoint(i->second);
+		for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+			this->draw_waypoint_sub(i->second, do_highlight);
 		}
 	}
 }

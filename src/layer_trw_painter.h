@@ -99,24 +99,24 @@ namespace SlavGPS {
 	public:
 		TRWPainter(LayerTRW * trw, Viewport * viewport);
 
-		void set_highlight(bool highlight);
 
-		void draw_waypoint_cb(Waypoint * wp);
-		void draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints);
-		void draw_track_cb(const void * id, Track * trk);
-		void draw_tracks_cb(std::unordered_map<sg_uid_t, Track *> & tracks);
+		void draw_waypoint(Waypoint * wp, bool do_highlight);
+		void draw_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool do_highlight);
+
+		void draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight);
+		int  draw_waypoint_image(Waypoint * wp, int x, int y);
+		void draw_waypoint_symbol(Waypoint * wp, int x, int y);
+
+
+		void draw_track(Track * trk, bool do_highlight);
+		void draw_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, bool do_highlight);
 
 		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord);
-		void draw_dist_labels(Track * trk, bool drawing_highlight);
-		void draw_point_names(Track * trk, bool drawing_highlight);
-		void draw_track_name_labels(Track * trk, bool drawing_highlight);
-		void draw_track(Track * trk, bool draw_track_outline);
+		void draw_track_dist_labels(Track * trk, bool do_highlight);
+		void draw_track_point_names(Track * trk, bool do_highlight);
+		void draw_track_name_labels(Track * trk, bool do_highlight);
 		void draw_track_draw_something(int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
 		void draw_track_draw_midarrow(int x, int y, int oldx, int oldy, QPen & main_pen);
-		void draw_waypoint(Waypoint * wp);
-		int draw_image(Waypoint * wp, int x, int y);
-		void draw_symbol(Waypoint * wp, int x, int y);
-		void draw_label(Waypoint * wp, int x, int y);
 
 
 		Viewport * viewport = NULL;
@@ -139,12 +139,13 @@ namespace SlavGPS {
 		double cn2 = 0;
 
 		LatLonBBox bbox;
-		bool highlight = false;
 
 	private:
 		QColor get_fg_color(const Track * trk) const;
-		QColor get_bg_color(bool drawing_highlight) const;
+		QColor get_bg_color(bool do_highlight) const;
 
+		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
+		void draw_track_sub(Track * trk, bool draw_track_outline);
 
 
 	}; /* class TRWPainter */

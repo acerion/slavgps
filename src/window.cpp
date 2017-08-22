@@ -563,12 +563,12 @@ void Window::create_actions(void)
 		this->qa_view_show_draw_centermark->setToolTip("Show Center Mark");
 		connect(this->qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
 
-		this->qa_view_show_draw_highlight = new QAction("Show &Highlight", this);
-		this->qa_view_show_draw_highlight->setShortcut(Qt::Key_F7);
-		this->qa_view_show_draw_highlight->setCheckable(true);
-		this->qa_view_show_draw_highlight->setChecked(this->draw_highlight);
-		this->qa_view_show_draw_highlight->setToolTip("Show Highlight");
-		connect(this->qa_view_show_draw_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_highlight_cb(bool)));
+		this->qa_view_show_draw_with_highlight = new QAction("Use &Highlighting", this);
+		this->qa_view_show_draw_with_highlight->setShortcut(Qt::Key_F7);
+		this->qa_view_show_draw_with_highlight->setCheckable(true);
+		this->qa_view_show_draw_with_highlight->setChecked(this->draw_with_highlight);
+		this->qa_view_show_draw_with_highlight->setToolTip("Use highlighting when drawing selected items");
+		connect(this->qa_view_show_draw_with_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_with_highlight_cb(bool)));
 		/* TODO: icon: GTK_STOCK_UNDERLINE */
 
 		this->qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
@@ -605,7 +605,7 @@ void Window::create_actions(void)
 
 		show_submenu->addAction(this->qa_view_show_draw_scale);
 		show_submenu->addAction(this->qa_view_show_draw_centermark);
-		show_submenu->addAction(this->qa_view_show_draw_highlight);
+		show_submenu->addAction(this->qa_view_show_draw_with_highlight);
 		show_submenu->addAction(this->qa_view_show_side_panel);
 		show_submenu->addAction(this->qa_view_show_statusbar);
 		show_submenu->addAction(this->qa_view_show_toolbar);
@@ -800,15 +800,23 @@ void Window::draw_redraw()
 	this->layers_panel->draw_all();
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 
-	if (this->viewport->get_draw_highlight()) {
-		if (this->containing_trw && (this->selected_tracks || this->selected_waypoints)) {
-			this->containing_trw->draw_highlight_items(this->selected_tracks, this->selected_waypoints, this->viewport);
-
-		} else if (this->containing_trw && (this->selected_track || this->selected_waypoint)) {
-			this->containing_trw->draw_highlight_item((Track *) this->selected_track, this->selected_waypoint, this->viewport);
-
+	if (this->viewport->get_draw_with_highlight()) {
+		if (this->containing_trw) {
+			if (this->selected_tracks) {
+				this->containing_trw->draw_with_highlight(this->viewport, this->selected_tracks, true);
+			} else if (this->selected_waypoints) {
+				this->containing_trw->draw_with_highlight(this->viewport, this->selected_waypoints, true);
+			} else if (this->selected_track) {
+				this->containing_trw->draw_with_highlight(this->viewport, this->selected_track, true);
+			} else if (this->selected_waypoint) {
+				this->containing_trw->draw_with_highlight(this->viewport, this->selected_waypoint, true);
+			} else {
+				;
+			}
 		} else if (this->selected_trw) {
-			this->selected_trw->draw_highlight(this->viewport);
+			this->selected_trw->draw_with_highlight(this->viewport);
+		} else {
+			;
 		}
 	}
 
@@ -1532,13 +1540,13 @@ void Window::draw_centermark_cb(bool new_state)
 
 
 
-void Window::draw_highlight_cb(bool new_state)
+void Window::draw_with_highlight_cb(bool new_state)
 {
-	assert (new_state != this->draw_highlight);
-	if (new_state != this->draw_highlight) {
-		this->viewport->set_draw_highlight(new_state);
+	assert (new_state != this->draw_with_highlight);
+	if (new_state != this->draw_with_highlight) {
+		this->viewport->set_draw_with_highlight(new_state);
 		this->draw_update();
-		this->draw_highlight = !this->draw_highlight;
+		this->draw_with_highlight = !this->draw_with_highlight;
 	}
 }
 
@@ -2093,11 +2101,11 @@ void Window::open_file(char const * new_filename, bool change_filename)
 				this->viewport->set_draw_centermark(!vp_state_centermark);
 				this->draw_centermark_cb(!vp_state_centermark);
 			}
-			bool vp_state_highlight = this->viewport->get_draw_highlight();
-			bool ui_state_highlight = this->qa_view_show_draw_highlight->isChecked();
+			bool vp_state_highlight = this->viewport->get_draw_with_highlight();
+			bool ui_state_highlight = this->qa_view_show_draw_with_highlight->isChecked();
 			if (vp_state_highlight != ui_state_highlight) {
-				this->viewport->set_draw_highlight(!vp_state_highlight);
-				this->draw_highlight_cb(!vp_state_highlight);
+				this->viewport->set_draw_with_highlight(!vp_state_highlight);
+				this->draw_with_highlight_cb(!vp_state_highlight);
 			}
 		}
 		/* No break, carry on to redraw. */

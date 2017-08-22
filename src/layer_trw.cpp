@@ -1349,24 +1349,23 @@ LayerTRW::~LayerTRW()
 
 
 
-void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
+void LayerTRW::draw_with_highlight_sub(Viewport * viewport, bool do_highlight)
 {
 	static TRWPainter painter(this, viewport);
-	painter.set_highlight(highlight);
 
 	if (true /* this->tracks_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw tracks";
-		painter.draw_tracks_cb(tracks);
+		painter.draw_tracks(tracks, do_highlight);
 	}
 
 	if (true /* this->routes_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw routes";
-		painter.draw_tracks_cb(routes);
+		painter.draw_tracks(routes, do_highlight);
 	}
 
 	if (true /* this->waypoints_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw waypoints";
-		painter.draw_waypoints_cb(&waypoints);
+		painter.draw_waypoints(waypoints, do_highlight);
 	}
 }
 
@@ -1379,21 +1378,20 @@ void LayerTRW::draw(Viewport * viewport)
 	   This may seem slightly inefficient to test each time for every layer
 	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
 #ifdef K
-	if (viewport->get_draw_highlight()
+	if (viewport->get_draw_with_highlight()
 	    && this->get_window()->get_selected_trw_layer() == this) {
 
 		return;
 	}
 #endif
 
-	qDebug() << "II: Layer TRW: calling draw_with_highlight()";
-	this->draw_with_highlight(viewport, false);
+	this->draw_with_highlight_sub(viewport, false);
 }
 
 
 
 
-void LayerTRW::draw_highlight(Viewport * viewport)
+void LayerTRW::draw_with_highlight(Viewport * viewport)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1402,19 +1400,17 @@ void LayerTRW::draw_highlight(Viewport * viewport)
 		return;
 	}
 #endif
-	this->draw_with_highlight(viewport, true);
+	this->draw_with_highlight_sub(viewport, true);
 }
 
 
 
 
 /**
- * vik_trw_layer_draw_highlight_item:
- *
- * Only handles a single track or waypoint ATM
- * It assumes the track or waypoint belongs to the TRW Layer (it doesn't check this is the case)
+ * Only handles a single track
+ * It assumes the track belongs to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport)
+void LayerTRW::draw_with_highlight(Viewport * viewport, Track * trk, bool do_highlight)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1423,34 +1419,56 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
 		return;
 	}
 #endif
+
+	if (!trk) {
+		return;
+	}
+
+	bool do_draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible) || (trk->sublayer_type == SublayerType::TRACK && this->tracks_visible);
+	if (!do_draw) {
+		return;
+	}
 
 	static TRWPainter painter(this, viewport);
-	painter.set_highlight(true);
+	painter.draw_track(trk, do_highlight);
+}
 
-	if (trk) {
-		bool do_draw = (trk->sublayer_type == SublayerType::ROUTE && this->routes_visible)
-			|| (trk->sublayer_type == SublayerType::TRACK && this->tracks_visible);
 
-		if (do_draw) {
-			painter.draw_track_cb(NULL, trk);
-		}
+/**
+ * Only handles a single waypoint
+ * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
+ */
+void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight)
+{
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
+	/* Check the layer for visibility (including all the parents visibilities). */
+	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
+		return;
 	}
-	if (this->waypoints_visible && wp) {
-		painter.draw_waypoint_cb(wp);
+#endif
+
+	if (!this->waypoints_visible) {
+		return;
 	}
+
+	if (!wp) {
+		return;
+	}
+
+	static TRWPainter painter(this, viewport);
+	painter.draw_waypoint(wp, do_highlight);
 }
 
 
 
 
 /**
- * vik_trw_layer_draw_highlight_item:
- *
  * Generally for drawing all tracks or routes or waypoints
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypoints, Viewport * viewport)
+void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks * tracks_, bool do_highlight)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1460,20 +1478,48 @@ void LayerTRW::draw_highlight_items(Tracks * tracks_, Waypoints * selected_waypo
 	}
 #endif
 
+	if (!tracks_) {
+		return;
+	}
+
+	bool is_routes = (tracks_ == &routes);
+	bool do_draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
+	if (!do_draw) {
+		return;
+	}
+
 	static TRWPainter painter(this, viewport);
-	painter.set_highlight(true);
+	painter.draw_tracks(*tracks_, do_highlight);
+}
 
-	if (tracks_) {
-		bool is_routes = (tracks_ == &routes);
-		bool do_draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
-		if (do_draw) {
-			painter.draw_tracks_cb(*tracks_);
-		}
+
+
+
+/**
+ * Generally for drawing all tracks or routes or waypoints
+ * tracks may be actually routes
+ * It assumes they belong to the TRW Layer (it doesn't check this is the case)
+ */
+void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints * selected_waypoints, bool do_highlight)
+{
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
+	/* Check the layer for visibility (including all the parents visibilities). */
+	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
+		return;
+	}
+#endif
+
+	if (!this->waypoints_visible) {
+		return;
 	}
 
-	if (this->waypoints_visible && selected_waypoints) {
-		painter.draw_waypoints_cb(selected_waypoints);
+	if (!selected_waypoints) {
+		return;
 	}
+
+	static TRWPainter painter(this, viewport);
+	painter.draw_waypoints(*selected_waypoints, do_highlight);
 }
 
 

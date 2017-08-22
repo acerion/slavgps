@@ -168,8 +168,8 @@ namespace SlavGPS {
 		void set_draw_centermark(bool draw_centermark);
 		bool get_draw_centermark();
 		void draw_logo();
-		void set_draw_highlight(bool draw_highlight);
-		bool get_draw_highlight();
+		void set_draw_with_highlight(bool draw_with_highlight);
+		bool get_draw_with_highlight();
 
 
 		void clear();
@@ -219,7 +219,7 @@ namespace SlavGPS {
 		/* Whether or not to display OSD info. */
 		bool do_draw_scale = true;
 		bool do_draw_centermark = true;
-		bool do_draw_highlight = true;
+		bool do_draw_with_highlight = true;
 
 		QStringList copyrights;
 		std::list<QPixmap const *> logos;

@@ -827,17 +827,17 @@ void Viewport::draw_logo()
 
 
 
-void Viewport::set_draw_highlight(bool draw_highlight_)
+void Viewport::set_draw_with_highlight(bool draw_with_highlight_)
 {
-	do_draw_highlight = draw_highlight_;
+	this->do_draw_with_highlight = draw_with_highlight_;
 }
 
 
 
 
-bool Viewport::get_draw_highlight()
+bool Viewport::get_draw_with_highlight()
 {
-	return do_draw_highlight;
+	return do_draw_with_highlight;
 }
 
 

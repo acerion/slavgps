@@ -140,7 +140,6 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void draw(Viewport * viewport);
 		void post_read(Viewport * viewport, bool from_file);
 		QString tooltip();
 		QString sublayer_tooltip(Sublayer * sublayer);
@@ -211,11 +210,17 @@ namespace SlavGPS {
 
 		Waypoint * get_waypoint(const QString & wp_name);
 
-		void draw_with_highlight(Viewport * viewport, bool highlight);
-		void draw_highlight(Viewport * viewport);
 
-		void draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport);
-		void draw_highlight_items(Tracks * tracks, Waypoints * waypoints, Viewport * viewport);
+		/* Draw all items of the layer, without highlight. */
+		void draw(Viewport * viewport);
+
+		/* Draw all items of the layer, with highlight. */
+		void draw_with_highlight(Viewport * viewport);
+
+		void draw_with_highlight(Viewport * viewport, Track * trk, bool do_highlight);
+		void draw_with_highlight(Viewport * viewport, Tracks * tracks, bool do_highlight);
+		void draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight);
+		void draw_with_highlight(Viewport * viewport, Waypoints * waypoints, bool do_highlight);
 
 
 		void realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
@@ -670,6 +675,8 @@ namespace SlavGPS {
 		void add_tracks_node(void);
 		void add_waypoints_node(void);
 		void add_routes_node(void);
+
+		void draw_with_highlight_sub(Viewport * viewport, bool do_highlight);
 	};
 
 

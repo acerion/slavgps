@@ -218,7 +218,7 @@ namespace SlavGPS {
 		void view_statusbar_cb(bool new_state);
 		void view_main_menu_cb(bool new_state);
 
-		void draw_highlight_cb(bool new_state);
+		void draw_with_highlight_cb(bool new_state);
 		void draw_scale_cb(bool new_state);
 		void draw_centermark_cb(bool new_state);
 
@@ -342,7 +342,7 @@ namespace SlavGPS {
 
 		bool draw_scale = true;
 		bool draw_centermark = true;
-		bool draw_highlight = true;
+		bool draw_with_highlight = true;
 
 		bool view_side_panel = true;
 		bool view_statusbar = true;
@@ -355,7 +355,7 @@ namespace SlavGPS {
 
 		QAction * qa_view_show_draw_scale = NULL;
 		QAction * qa_view_show_draw_centermark = NULL;
-		QAction * qa_view_show_draw_highlight = NULL;
+		QAction * qa_view_show_draw_with_highlight = NULL;
 		QAction * qa_view_show_side_panel = NULL;
 		QAction * qa_view_show_statusbar = NULL;
 		QAction * qa_view_show_toolbar = NULL;
