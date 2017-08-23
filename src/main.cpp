@@ -179,7 +179,7 @@ int main(int argc, char ** argv)
 	Preferences::register_default_values();
 
 
-	a_layer_defaults_init();
+	LayerDefaults::init();
 
 	Download::init();
 	CurlDownload::init();
@@ -281,7 +281,7 @@ int main(int argc, char ** argv)
 #endif
 	map_cache_uninit();
 	DEMCache::uninit();
-	a_layer_defaults_uninit();
+	LayerDefaults::uninit();
 	Preferences::uninit();
 	a_settings_uninit();
 #if 0

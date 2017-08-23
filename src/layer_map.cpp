@@ -479,7 +479,7 @@ void LayerMap::set_map_type(MapTypeID map_type)
 MapTypeID LayerMap::get_default_map_type()
 {
 	LayerInterface * iface = Layer::get_interface(LayerType::MAP);
-	SGVariant vlpd = a_layer_defaults_get(iface->layer_type_string, "mode", SGVariantType::UINT); /* kamilTODO: get the default value from LayerInterface. */
+	SGVariant vlpd = LayerDefaults::get(iface->layer_type_string, "mode", SGVariantType::UINT); /* kamilTODO: get the default value from LayerInterface. */
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}

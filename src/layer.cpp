@@ -224,8 +224,8 @@ void Layer::preconfigure_interfaces(void)
 				param_value = interface->params[j].hardwired_default_value();
 			}
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
-			/* kamilTODO: if invalid, call a_layer_defaults_register() to save the value? */
-			param_value = a_layer_defaults_get(interface->layer_type_string, interface->params[j].name, interface->params[j].type);
+			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
+			param_value = LayerDefaults::get(interface->layer_type_string, interface->params[j].name, interface->params[j].type);
 			(*interface->parameter_value_defaults)[interface->params[j].id] = param_value;
 
 			j++;
@@ -258,7 +258,7 @@ static bool layer_defaults_register(LayerType layer_type)
 		if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 			if (params[i].hardwired_default_value) {
 				SGVariant value = params[i].hardwired_default_value();
-				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
+				LayerDefaults::set(layer_interface->fixed_layer_name, &params[i], value);
 				answer = true;
 			}
 		}
@@ -745,7 +745,7 @@ void Layer::set_initial_parameter_values(void)
 
 	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
-		if (iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
+		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
 			if (iter->second->type != SGVariantType::STRING_LIST) {

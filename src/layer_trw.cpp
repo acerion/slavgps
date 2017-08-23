@@ -249,8 +249,8 @@ enum {
 	PARAM_WAYPOINTS_VISIBLE,
 	PARAM_ROUTES_VISIBLE,
 	// Tracks
-	PARAM_TDL,
-	PARAM_TRK_LABEL_FONT_SIZE,
+	PARAM_DRAW_TRACK_LABELS,
+	PARAM_TRACK_LABEL_FONT_SIZE,
 	PARAM_DM,
 	PARAM_TRK_COLOR_COMMON,
 	PARAM_DL,
@@ -293,12 +293,12 @@ enum {
 
 
 Parameter trw_layer_params[] = {
-	{ PARAM_TRACKS_VISIBLE,         "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_WAYPOINTS_VISIBLE,         "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_ROUTES_VISIBLE,         "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_TRACKS_VISIBLE,        "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, "Tracks are visible",                WidgetType::CHECKBUTTON,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_WAYPOINTS_VISIBLE,     "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, "Waypoints are visible",             WidgetType::CHECKBUTTON,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_ROUTES_VISIBLE,        "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN, "Routes are visible",                WidgetType::CHECKBUTTON,         NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 
-	{ PARAM_TDL,        "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
-	{ PARAM_TRK_LABEL_FONT_SIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Size of Track Label's Font:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
+	{ PARAM_DRAW_TRACK_LABELS,     "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,           N_("Draw Labels"),                   WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
+	{ PARAM_TRACK_LABEL_FONT_SIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,       N_("Size of Track Label's Font:"),   WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
 	{ PARAM_DM,         "drawmode",          SGVariantType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
 	{ PARAM_TRK_COLOR_COMMON,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
 	{ PARAM_DL,         "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
@@ -844,10 +844,10 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 	case PARAM_ROUTES_VISIBLE:
 		this->routes_visible = data.b;
 		break;
-	case PARAM_TDL:
+	case PARAM_DRAW_TRACK_LABELS:
 		this->track_draw_labels = data.b;
 		break;
-	case PARAM_TRK_LABEL_FONT_SIZE:
+	case PARAM_TRACK_LABEL_FONT_SIZE:
 		if (data.u < FS_NUM_SIZES) {
 			this->trk_label_font_size = (font_size_t) data.u;
 		}
@@ -1030,8 +1030,8 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks_visible; break;
 	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints_visible; break;
 	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_visible; break;
-	case PARAM_TDL: rv.b = this->track_draw_labels; break;
-	case PARAM_TRK_LABEL_FONT_SIZE: rv.u = this->trk_label_font_size; break;
+	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
+	case PARAM_TRACK_LABEL_FONT_SIZE: rv.u = this->trk_label_font_size; break;
 	case PARAM_DM: rv.u = this->drawmode; break;
 	case PARAM_TRK_COLOR_COMMON: color_to_param(rv, this->trk_color_common); break;
 	case PARAM_DP: rv.b = this->drawpoints; break;

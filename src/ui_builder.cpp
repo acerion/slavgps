@@ -155,14 +155,13 @@ void PropertiesDialog::fill(Layer * layer)
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
 		param_id_t group_id = iter->second->group_id;
-		if (group_id == PARAMETER_GROUP_HIDDEN) {
-			continue;
-		}
 
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
-		if (form_iter == this->forms.end()) {
-			/* Add new tab. */
+		if (form_iter == this->forms.end() && group_id != PARAMETER_GROUP_HIDDEN) {
+
+			/* Add new tab, but only for non-hidden parameters */
+
 			QString page_label = layer->get_interface()->params_groups
 				? layer->get_interface()->params_groups[group_id]
 				: tr("Properties");
@@ -178,7 +177,15 @@ void PropertiesDialog::fill(Layer * layer)
 		SGVariant param_value = layer->get_param_value(iter->first, false);
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
-		form->addRow(label, widget);
+
+		/* We create widgets for hidden parameters, but don't put them in form.
+		   We create them so that PropertiesDialog::get_param_value() works
+		   correctly and consistently for both hidden and visible parameters. */
+
+		if (group_id != PARAMETER_GROUP_HIDDEN) {
+			form->addRow(label, widget);
+		}
+
 		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
@@ -643,9 +650,9 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
 		if (param->group_id == PARAMETER_GROUP_HIDDEN) {
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "widget is 'not in properties'";
+			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << param->name << "widget is 'not in properties'";
 		} else {
-			qDebug() << "EE: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "widget not found";
+			qDebug() << "EE: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << param->name << "widget not found";
 		}
 		return rv;
 	}

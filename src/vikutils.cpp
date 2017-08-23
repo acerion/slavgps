@@ -670,7 +670,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 
 	/* Ensure defaults are saved if changed. */
 	if (set_defaults) {
-		a_layer_defaults_save();
+		LayerDefaults::save();
 	}
 }
 

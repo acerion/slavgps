@@ -1925,7 +1925,7 @@ void Window::show_layer_defaults_cb(void)
 	if (Layer::get_interface(layer_type)->params_count == 0) {
 		Dialog::info(tr("This layer type has no configurable properties."), this);
 	} else {
-		layer_defaults_show_window(layer_type, this);
+		LayerDefaults::show_window(layer_type, this);
 	}
 
 	/* No update needed. */

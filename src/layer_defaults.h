@@ -39,16 +39,19 @@ namespace SlavGPS {
 
 
 
-	void a_layer_defaults_init();
-	void a_layer_defaults_uninit();
+	class LayerDefaults {
 
-	void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, SGVariant default_value);
+	public:
+		static void init(void);
+		static void uninit(void);
 
-	bool layer_defaults_show_window(LayerType layer_type, QWidget * parent);
+		static void set(const char * layer_name, Parameter * layer_param, SGVariant default_value);
+		static SGVariant get(const char * layer_name, const char * param_name, SGVariantType param_type);
 
-	SGVariant a_layer_defaults_get(const char * layer_name, const char * param_name, SGVariantType param_type);
+		static bool show_window(LayerType layer_type, QWidget * parent);
 
-	bool a_layer_defaults_save();
+		static bool save(void);
+	};
 
 
 

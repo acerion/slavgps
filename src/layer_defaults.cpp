@@ -22,8 +22,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <vector>
 
-#include <glib/gstdio.h>
+//#include <glib/gstdio.h>
 
 #include <QSettings>
 #include <QDebug>
@@ -61,11 +62,8 @@ static bool layer_defaults_save_to_file(void);
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 
 
-
-#if 0
 /* A list of the parameter types in use. */
-static GPtrArray * paramsVD;
-#endif
+std::vector<Parameter *> default_parameters;
 
 static QSettings * keyfile = NULL;
 static bool loaded;
@@ -197,7 +195,7 @@ static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant val
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + id);
+	Parameter * layer_param = default_parameters.at(index + id);
 
 	write_parameter_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
@@ -209,7 +207,7 @@ static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool not
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + id);
+	Parameter * layer_param = default_parameters.at(index + id);
 
 	return read_parameter_value(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
@@ -302,7 +300,7 @@ static bool layer_defaults_save_to_file(void)
  *
  * Returns: %true if the window is displayed (because there are parameters to view).
  */
-bool SlavGPS::layer_defaults_show_window(LayerType layer_type, QWidget * parent)
+bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -346,15 +344,12 @@ bool SlavGPS::layer_defaults_show_window(LayerType layer_type, QWidget * parent)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * layer_param, SGVariant default_value)
+void LayerDefaults::set(const char * layer_name, Parameter * layer_param, SGVariant default_value)
 {
-#if 0
 	/* Copy value. */
-	Parameter * new_layer_param = (Parameter *) malloc(1 * sizeof (Parameter));
-	*new_layer_param = *layer_param;
-
-	g_ptr_array_add(paramsVD, new_layer_param);
-#endif
+	Parameter * new_param = new Parameter;
+	*new_param = *layer_param;
+	default_parameters.push_back(new_param);
 
 	write_parameter_value(default_value, layer_name, layer_param->name, layer_param->type);
 }
@@ -365,18 +360,13 @@ void SlavGPS::a_layer_defaults_register(const char * layer_name, Parameter * lay
 /**
  * Call this function at startup.
  */
-void SlavGPS::a_layer_defaults_init()
+void LayerDefaults::init(void)
 {
 	/* kamilFIXME: improve this section. Make sure that the file exists. */
 	const QString path = get_viking_dir() + QDir::separator() + VIKING_LAYER_DEFAULTS_INI_FILE;
 	keyfile = new QSettings(path, QSettings::IniFormat);
 
 	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << path;
-
-#if 0
-	/* Not copied. */
-	paramsVD = g_ptr_array_new();
-#endif
 
 	loaded = false;
 }
@@ -387,13 +377,10 @@ void SlavGPS::a_layer_defaults_init()
 /**
  * Call this function on program exit.
  */
-void SlavGPS::a_layer_defaults_uninit()
+void LayerDefaults::uninit(void)
 {
 	delete keyfile;
-#if 0
-	g_ptr_array_foreach(paramsVD, (GFunc)g_free, NULL);
-	g_ptr_array_free(paramsVD, true);
-#endif
+	default_parameters.clear();
 }
 
 
@@ -406,7 +393,7 @@ void SlavGPS::a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested.
  */
-SGVariant SlavGPS::a_layer_defaults_get(const char * layer_name, const char * param_name, SGVariantType param_type)
+SGVariant LayerDefaults::get(const char * layer_name, const char * param_name, SGVariantType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -426,7 +413,7 @@ SGVariant SlavGPS::a_layer_defaults_get(const char * layer_name, const char * pa
 
    \return: true if saving was successful
 */
-bool SlavGPS::a_layer_defaults_save()
+bool LayerDefaults::save(void)
 {
 	/*
 	  Default values of layer parameters may be edited only through
