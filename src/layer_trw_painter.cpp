@@ -281,10 +281,10 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 QColor TRWPainter::get_fg_color(const Track * trk) const
 {
 	QColor fg_color;
-	if (this->trw->drawmode == DRAWMODE_BY_TRACK) {
+	if (this->trw->track_drawing_mode == DRAWMODE_BY_TRACK) {
 		fg_color = trk->color;
 	} else {
-		fg_color = this->trw->trk_color_common;
+		fg_color = this->trw->track_color_common;
 	}
 	return fg_color;
 }
@@ -469,35 +469,21 @@ void TRWPainter::draw_track_draw_something(int x, int y, int oldx, int oldy, QPe
 
 
 
-void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
+void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 {
-	if (!trk->visible) {
-		return;
-	}
-
-	/* TODO: this function is a mess, get rid of any redundancy. */
-
 	double min_alt, max_alt, alt_diff = 0;
 	if (this->trw->drawelevation) {
-
 		/* Assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption. */
 		if (trk->get_minmax_alt(&min_alt, &max_alt)) {
 			alt_diff = max_alt - min_alt;
 		}
 	}
 
-	/* Admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
-	if (this->trw->trk_bg_thickness && !do_highlight) {
-		this->draw_track_sub(trk, true);
-	}
-
-	bool drawpoints;
-	bool drawstops;
-	if (do_highlight) {
-		drawpoints = drawstops = false;
-	} else {
-		drawpoints = this->trw->drawpoints;
-		drawstops = this->trw->drawstops;
+	bool draw_trackpoints = false;
+	bool draw_track_stops = false;
+	if (!do_highlight) {
+		draw_trackpoints = this->trw->draw_trackpoints;
+		draw_track_stops = this->trw->draw_track_stops;
 	}
 
 #if 1   /* Temporary test code. */
@@ -506,50 +492,39 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 
 
 #if 1
-	drawstops = true;
+	draw_track_stops = true;
 	this->trw->stop_length = 1;
-	//this->trw->drawmode = DRAWMODE_BY_SPEED;
+	//this->trw->track_drawing_mode = DRAWMODE_BY_SPEED;
 #endif
 
-	QPen main_pen = QPen(QColor("black"));
-	main_pen.setWidth(1);
-
-	bool drawing_highlight = false;
-	/* Current track - used for creation. */
+	QPen main_pen;
 	if (trk == this->trw->current_trk) {
+		/* The track is being created by user, it gets a special pen. */
 		main_pen = this->trw->current_trk_pen;
+	} else if (do_highlight) {
+		/* Draw all tracks of the layer in 'highlight' colour.
+		   This supersedes the trw->track_drawing_mode. */
+		main_pen = this->viewport->get_highlight_pen();
 	} else {
-		if (do_highlight) {
-			/* Draw all tracks of the layer in special colour.
-			   NB this supercedes the drawmode. */
-			main_pen = this->viewport->get_highlight_pen();
-			drawing_highlight = true;
-		}
-
-		if (!drawing_highlight) {
-			/* Still need to figure out the pen according to the drawing mode: */
-			switch (this->trw->drawmode) {
-			case DRAWMODE_BY_TRACK:
-				this->trw->track_1color_pen.setColor(trk->color);
-				this->trw->track_1color_pen.setWidth(this->trw->trk_thickness);
-				main_pen = this->trw->track_1color_pen;
-				break;
-			default:
-				/* Mostly for DRAWMODE_ALL_SAME_COLOR
-				   but includes DRAWMODE_BY_SPEED, main_pen is set later on as necessary. */
-				main_pen = this->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE];
-				break;
-			}
+		/* Figure out the pen according to the drawing mode. */
+		switch (this->trw->track_drawing_mode) {
+		case DRAWMODE_BY_TRACK:
+			main_pen.setColor(trk->color);
+			main_pen.setWidth(this->trw->trk_thickness);
+			break;
+		default:
+			/* Mostly for DRAWMODE_ALL_SAME_COLOR
+			   but includes DRAWMODE_BY_SPEED, main_pen is set later on as necessary. */
+			main_pen = this->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE];
+			break;
 		}
 	}
+	/* If track_drawing_mode == DRAWMODE_BY_SPEED, main_pen may be overwritten below. */
 
 
-	if (trk->empty()) {
-		return;
-	}
 
-	const uint8_t tp_size_reg = this->trw->drawpoints_size;
-	const uint8_t tp_size_cur = this->trw->drawpoints_size * 2;
+	const uint8_t tp_size_reg = this->trw->trackpoint_size;
+	const uint8_t tp_size_cur = this->trw->trackpoint_size * 2;
 
 	auto iter = trk->trackpoints.begin();
 
@@ -561,16 +536,17 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 	/* Draw the first point as something a bit different from the normal points.
 	   ATM it's slightly bigger and a triangle. */
 
-	if (drawpoints) {
+	if (draw_trackpoints) {
 		QPoint trian[3] = { QPoint(x, y-(3*tp_size)), QPoint(x-(2*tp_size), y+(2*tp_size)), QPoint(x+(2*tp_size), y+(2*tp_size)) };
 		this->viewport->draw_polygon(main_pen, trian, 3, true);
 	}
+
 
 	double average_speed = 0.0;
 	double low_speed = 0.0;
 	double high_speed = 0.0;
 	/* If necessary calculate these values - which is done only once per track redraw. */
-	if (this->trw->drawmode == DRAWMODE_BY_SPEED) {
+	if (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED) {
 		/* The percentage factor away from the average speed determines transistions between the levels. */
 		average_speed = trk->get_average_speed_moving(this->trw->stop_length);
 		low_speed = average_speed - (average_speed*(this->trw->track_draw_speed_factor/100.0));
@@ -589,6 +565,7 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 		tp_size = (this->trw->selected_tp.valid && tp == *this->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
+
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
@@ -608,13 +585,11 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 		bool second_condition_B = (tp->coord.ll.lon < this->ce2 && tp->coord.ll.lon > this->ce1) || (tp->coord.utm.easting < this->ce2 && tp->coord.utm.easting > this->ce1);
 		bool second_condition_C = (tp->coord.ll.lat > this->cn1 && tp->coord.ll.lat < this->cn2) || (tp->coord.utm.northing > this->cn1 && tp->coord.utm.northing < this->cn2);
 		bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
-
 #if 0
 		if ((!this->one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
 		    || (((!this->one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
 			&& tp->coord.east_west < this->ce2 && tp->coord.east_west > this->ce1 /* Both UTM and lat lon. */
 			&& tp->coord.north_south > this->cn1 && tp->coord.north_south < this->cn2))
-
 #endif
 
 		//fprintf(stderr, "%d || (%d && %d && %d)\n", first_condition, second_condition_A, second_condition_B, second_condition_C);
@@ -629,8 +604,8 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 			   timestamp far into the future, we draw a circle of 6x trackpoint
 			   size, instead of a rectangle of 2x trackpoint size. Stop is drawn
 			   first so the trackpoint will be drawn on top. */
-			if (drawstops
-			    && drawpoints
+			if (draw_track_stops
+			    && draw_trackpoints
 			    && !do_highlight
 			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->trw->stop_length) {
@@ -645,18 +620,16 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 				goto skip;
 			}
 
-			if (drawpoints || this->trw->drawlines) {
+			if (draw_trackpoints || this->trw->draw_track_lines) {
 				/* Setup main_pen for both point and line drawing. */
-				if (!drawing_highlight && (this->trw->drawmode == DRAWMODE_BY_SPEED)) {
+				if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
 					main_pen = this->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 				}
 			}
 
-			if (drawpoints && !do_highlight) {
-
+			if (draw_trackpoints) {
 				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
-					qDebug() << __FUNCTION__ << __LINE__;
 					this->viewport->fill_rectangle(main_pen.color(), x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
@@ -664,10 +637,10 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 				}
 			}
 
-			if ((!tp->newsegment) && (this->trw->drawlines)) {
+			if (!tp->newsegment && this->trw->draw_track_lines) {
 
 				/* UTM only: zone check. */
-				if (drawpoints && this->trw->coord_mode == CoordMode::UTM && tp->coord.utm.zone != this->center->utm.zone) {
+				if (draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && tp->coord.utm.zone != this->center->utm.zone) {
 					draw_utm_skip_insignia(this->viewport, main_pen, x, y);
 				}
 
@@ -675,21 +648,17 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 					this->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
 				}
 
-				if (do_highlight) {
-					this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
-				} else {
-					this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+				this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 
-					if (this->trw->drawelevation
-					    && std::next(iter) != trk->trackpoints.end()
-					    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
+				if (this->trw->drawelevation
+				    && std::next(iter) != trk->trackpoints.end()
+				    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
-						this->draw_track_draw_something(x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
-					}
+					this->draw_track_draw_something(x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
 				}
 			}
 
-			if ((!tp->newsegment) && this->trw->drawdirections) {
+			if (!tp->newsegment && this->trw->drawdirections) {
 				/* Draw an arrow at the mid point to show the direction of the track.
 				   Code is a rework from vikwindow::draw_ruler(). */
 				this->draw_track_draw_midarrow(x, y, prev_x, prev_y, main_pen);
@@ -699,23 +668,20 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 			prev_x = x;
 			prev_y = y;
 			use_prev_xy = true;
+
 		} else {
 
-			if (use_prev_xy && this->trw->drawlines && (!tp->newsegment)) {
+			if (use_prev_xy && this->trw->draw_track_lines && (!tp->newsegment)) {
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
 					this->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
-					if (!drawing_highlight && (this->trw->drawmode == DRAWMODE_BY_SPEED)) {
+					if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
 						main_pen = this->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x || y != prev_y) {
-						if (do_highlight) {
-							this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
-						} else {
-							this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
-						}
+						this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -728,16 +694,110 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 			use_prev_xy = false;
 		}
 	}
+}
 
-	/* Labels drawn after the trackpoints, so the labels are on top. */
-	if (this->trw->track_draw_labels) {
-		if (trk->max_number_dist_labels > 0) {
-			this->draw_track_dist_labels(trk, drawing_highlight);
+
+
+
+
+void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
+{
+	QPen main_pen = this->trw->track_bg_pen;
+
+	if (do_highlight) {
+		/* Let's keep constant color of background, but indicate
+		   selection of track by making the background thicker. */
+
+		int w = main_pen.width();
+		if (w < 3) {
+			main_pen.setWidth(w * 2);
+		} else if (w < 6) {
+			main_pen.setWidth(w * 1.5);
+		} else {
+			main_pen.setWidth(w * 1.2);
 		}
-		this->draw_track_point_names(trk, drawing_highlight);
+	}
 
-		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
-			this->draw_track_name_labels(trk, drawing_highlight);
+	auto iter = trk->trackpoints.begin();
+	int x, y;
+	this->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
+
+	int prev_x = x;
+	int prev_y = y;
+	bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
+
+	iter++; /* Because first Trackpoint has been drawn above. */
+
+	for (; iter != trk->trackpoints.end(); iter++) {
+		Trackpoint * tp = *iter;
+		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
+
+		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
+		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
+		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
+		if (this->coord_mode == CoordMode::LATLON
+		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
+			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
+
+			use_prev_xy = false;
+			continue;
+		}
+
+		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
+
+		/* kamilTODO: compare this condition with condition in TRWPainter::draw_waypoint_sub(). */
+		bool first_condition = (this->coord_mode == CoordMode::UTM && !this->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
+		bool second_condition_A = ((!this->one_utm_zone) || tp->coord.utm.zone == this->center->utm.zone);  /* Only check zones if UTM & one_utm_zone. */
+		bool second_condition_B = (tp->coord.ll.lon < this->ce2 && tp->coord.ll.lon > this->ce1) || (tp->coord.utm.easting < this->ce2 && tp->coord.utm.easting > this->ce1);
+		bool second_condition_C = (tp->coord.ll.lat > this->cn1 && tp->coord.ll.lat < this->cn2) || (tp->coord.utm.northing > this->cn1 && tp->coord.utm.northing < this->cn2);
+		bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
+#if 0
+		if ((!this->one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
+		    || (((!this->one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
+			&& tp->coord.east_west < this->ce2 && tp->coord.east_west > this->ce1 /* Both UTM and lat lon. */
+			&& tp->coord.north_south > this->cn1 && tp->coord.north_south < this->cn2))
+#endif
+
+		if (first_condition || second_condition) {
+
+			this->viewport->coord_to_screen(&(tp->coord), &x, &y);
+
+			if (use_prev_xy && x == prev_x && y == prev_y) {
+				/* Points are the same in display coordinates, don't
+				   draw, skip drawing part. Notice that we do
+				   this after drawing stops. */
+				goto skip;
+			}
+
+			if (!tp->newsegment && this->trw->draw_track_lines) {
+				if (!use_prev_xy) {
+					this->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
+				}
+				this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
+			}
+		skip:
+			prev_x = x;
+			prev_y = y;
+			use_prev_xy = true;
+
+		} else {
+			if (use_prev_xy && this->trw->draw_track_lines && !tp->newsegment) {
+				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
+					this->viewport->coord_to_screen(&tp->coord, &x, &y);
+
+					/* Draw only if current point has different coordinates than the previous one. */
+					if (x != prev_x || y != prev_y) {
+						this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+					}
+				} else {
+					/* Draw only if current point has different coordinates than the previous one. */
+					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
+						this->viewport->coord_to_screen(&prev_tp->coord, &x, &y);
+						draw_utm_skip_insignia(this->viewport, main_pen, x, y);
+					}
+				}
+			}
+			use_prev_xy = false;
 		}
 	}
 }
@@ -747,8 +807,33 @@ void TRWPainter::draw_track_sub(Track * trk, bool do_highlight)
 
 void TRWPainter::draw_track(Track * trk, bool do_highlight)
 {
-	if (BBOX_INTERSECT (trk->bbox, this->bbox)) {
-		this->draw_track_sub(trk, do_highlight);
+	if (!BBOX_INTERSECT (trk->bbox, this->bbox)) {
+		return;
+	}
+
+	if (!trk->visible) {
+		return;
+	}
+
+	if (trk->empty()) {
+		return;
+	}
+
+	if (trk != this->trw->current_trk) { /* Don't draw background of a track that is currently being created. */
+		this->draw_track_bg_sub(trk, do_highlight);
+	}
+	this->draw_track_fg_sub(trk, do_highlight);
+
+	/* Labels drawn at the end, so the labels are on top. */
+	if (this->trw->track_draw_labels) {
+		if (trk->max_number_dist_labels > 0) {
+			this->draw_track_dist_labels(trk, do_highlight);
+		}
+		this->draw_track_point_names(trk, do_highlight);
+
+		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
+			this->draw_track_name_labels(trk, do_highlight);
+		}
 	}
 }
 
@@ -758,9 +843,7 @@ void TRWPainter::draw_track(Track * trk, bool do_highlight)
 void TRWPainter::draw_tracks(Tracks & tracks, bool do_highlight)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		if (BBOX_INTERSECT (i->second->bbox, this->bbox)) {
-			this->draw_track_sub(i->second, do_highlight);
-		}
+		this->draw_track(i->second, do_highlight);
 	}
 }
 

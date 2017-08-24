@@ -433,14 +433,14 @@ namespace SlavGPS {
 		LatLonBBox waypoints_bbox;
 		bool track_draw_labels;
 
-		uint8_t drawmode;
-		uint8_t drawpoints;
-		uint8_t drawpoints_size;
+		uint8_t track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
+	        bool draw_trackpoints;
+		uint8_t trackpoint_size;
 		uint8_t drawelevation;
 		uint8_t elevation_factor;
-		uint8_t drawstops;
+		bool draw_track_stops;
 		uint32_t stop_length;
-		uint8_t drawlines;
+		bool draw_track_lines;
 		uint8_t drawdirections;
 		uint8_t drawdirections_size;
 		uint32_t trk_thickness;
@@ -460,8 +460,7 @@ namespace SlavGPS {
 
 		double track_draw_speed_factor;
 		std::vector<QPen> track_pens;
-		QPen track_1color_pen;
-		QColor trk_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
+		QColor track_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
 		QPen current_trk_pen;
 		/* Separate pen for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */

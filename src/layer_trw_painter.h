@@ -145,7 +145,8 @@ namespace SlavGPS {
 		QColor get_bg_color(bool do_highlight) const;
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
-		void draw_track_sub(Track * trk, bool draw_track_outline);
+		void draw_track_fg_sub(Track * trk, bool do_highlight);
+		void draw_track_bg_sub(Track * trk, bool do_highlight);
 
 
 	}; /* class TRWPainter */

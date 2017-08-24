@@ -157,7 +157,7 @@ static const char * g_params_groups[] = { "Waypoints", "Tracks", "Waypoint Image
 enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_METADATA };
 
 
-static label_id_t params_drawmodes[] = {
+static label_id_t params_track_drawing_modes[] = {
 	{ "Draw by Track",                  DRAWMODE_BY_TRACK },
 	{ "Draw by Speed",                  DRAWMODE_BY_SPEED },
 	{ "All Tracks Have The Same Color", DRAWMODE_ALL_SAME_COLOR },
@@ -218,7 +218,7 @@ static label_id_t params_sort_order[] = {
 };
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
-static SGVariant drawmode_default(void)          { return SGVariant((uint32_t) DRAWMODE_BY_TRACK); }
+static SGVariant track_drawing_mode_default(void)          { return SGVariant((uint32_t) DRAWMODE_BY_TRACK); }
 static SGVariant trk_thickness_default(void)    { return SGVariant((uint32_t) 1); }
 static SGVariant trkpointsize_default(void)      { return SGVariant((uint32_t) MIN_POINT_SIZE); }
 static SGVariant trkdirectionsize_default(void)  { return SGVariant((uint32_t) 5); }
@@ -251,17 +251,17 @@ enum {
 	// Tracks
 	PARAM_DRAW_TRACK_LABELS,
 	PARAM_TRACK_LABEL_FONT_SIZE,
-	PARAM_DM,
-	PARAM_TRK_COLOR_COMMON,
-	PARAM_DL,
+	PARAM_TRACK_DRAWING_MODE,
+	PARAM_TRACK_COLOR_COMMON,
+	PARAM_DRAW_TRACK_LINES,
 	PARAM_TRK_THICKNESS,
 	PARAM_DD,
 	PARAM_DDS,
-	PARAM_DP,
-	PARAM_DPS,
+	PARAM_DRAW_TRACKPOINTS,
+	PARAM_TRACKPOINT_SIZE,
 	PARAM_DE,
 	PARAM_EF,
-	PARAM_DS,
+	PARAM_DRAW_TRACK_STOPS,
 	PARAM_SL,
 	PARAM_TRK_BG_THICKNESS,
 	PARAM_TRK_BG_COLOR,
@@ -299,17 +299,17 @@ Parameter trw_layer_params[] = {
 
 	{ PARAM_DRAW_TRACK_LABELS,     "trackdrawlabels",   SGVariantType::BOOLEAN, GROUP_TRACKS,           N_("Draw Labels"),                   WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), sg_variant_true, NULL, NULL },
 	{ PARAM_TRACK_LABEL_FONT_SIZE, "trackfontsize",     SGVariantType::UINT,    GROUP_TRACKS_ADV,       N_("Size of Track Label's Font:"),   WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
-	{ PARAM_DM,         "drawmode",          SGVariantType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
-	{ PARAM_TRK_COLOR_COMMON,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
-	{ PARAM_DL,         "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_TRACK_DRAWING_MODE,         "drawmode",          SGVariantType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_track_drawing_modes,   NULL, NULL, track_drawing_mode_default,           NULL, NULL },
+	{ PARAM_TRACK_COLOR_COMMON,         "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
+	{ PARAM_DRAW_TRACK_LINES,         "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
 	{ PARAM_TRK_THICKNESS,         "line_thickness",    SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, trk_thickness_default,     NULL, NULL },
 	{ PARAM_DD,         "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
 	{ PARAM_DDS,        "trkdirectionsize",  SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             WidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
-	{ PARAM_DP,         "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
-	{ PARAM_DPS,        "trkpointsize",      SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            WidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
+	{ PARAM_DRAW_TRACKPOINTS,         "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints:"),           WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_true,            NULL, NULL },
+	{ PARAM_TRACKPOINT_SIZE,        "trkpointsize",      SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            WidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
 	{ PARAM_DE,         "drawelevation",     SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Elevation"),              WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, sg_variant_false,           NULL, NULL },
 	{ PARAM_EF,         "elevation_factor",  SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Draw Elevation Height %:"),    WidgetType::HSCALE,       &params_scales[9],  NULL, NULL, elevation_factor_default,   NULL, NULL },
-	{ PARAM_DS,         "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), sg_variant_false, NULL, NULL },
+	{ PARAM_DRAW_TRACK_STOPS,         "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Stops:"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), sg_variant_false, NULL, NULL },
 	{ PARAM_SL,         "stop_length",       SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  WidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
 
 	{ PARAM_TRK_BG_THICKNESS,        "bg_line_thickness", SGVariantType::UINT,    GROUP_TRACKS_ADV,            N_("Track Background Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, trk_bg_thickness_default,  NULL, NULL },
@@ -852,29 +852,29 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 			this->trk_label_font_size = (font_size_t) data.u;
 		}
 		break;
-	case PARAM_DM:
-		this->drawmode = data.u;
+	case PARAM_TRACK_DRAWING_MODE:
+		this->track_drawing_mode = data.u;
 		break;
-	case PARAM_TRK_COLOR_COMMON:
-		this->trk_color_common = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
+	case PARAM_TRACK_COLOR_COMMON:
+		this->track_color_common = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
 		this->new_track_pens();
 		break;
-	case PARAM_DP:
-		this->drawpoints = data.b;
+	case PARAM_DRAW_TRACKPOINTS:
+		this->draw_trackpoints = data.b;
 		break;
-	case PARAM_DPS:
+	case PARAM_TRACKPOINT_SIZE:
 		if (data.u >= MIN_POINT_SIZE && data.u <= MAX_POINT_SIZE) {
-			this->drawpoints_size = data.u;
+			this->trackpoint_size = data.u;
 		}
 		break;
 	case PARAM_DE:
 		this->drawelevation = data.b;
 		break;
-	case PARAM_DS:
-		this->drawstops = data.b;
+	case PARAM_DRAW_TRACK_STOPS:
+		this->draw_track_stops = data.b;
 		break;
-	case PARAM_DL:
-		this->drawlines = data.b;
+	case PARAM_DRAW_TRACK_LINES:
+		this->draw_track_lines = data.b;
 		break;
 	case PARAM_DD:
 		this->drawdirections = data.b;
@@ -1032,15 +1032,15 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_visible; break;
 	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
 	case PARAM_TRACK_LABEL_FONT_SIZE: rv.u = this->trk_label_font_size; break;
-	case PARAM_DM: rv.u = this->drawmode; break;
-	case PARAM_TRK_COLOR_COMMON: color_to_param(rv, this->trk_color_common); break;
-	case PARAM_DP: rv.b = this->drawpoints; break;
-	case PARAM_DPS: rv.u = this->drawpoints_size; break;
+	case PARAM_TRACK_DRAWING_MODE: rv.u = this->track_drawing_mode; break;
+	case PARAM_TRACK_COLOR_COMMON: color_to_param(rv, this->track_color_common); break;
+	case PARAM_DRAW_TRACKPOINTS: rv.b = this->draw_trackpoints; break;
+	case PARAM_TRACKPOINT_SIZE: rv.u = this->trackpoint_size; break;
 	case PARAM_DE: rv.b = this->drawelevation; break;
 	case PARAM_EF: rv.u = this->elevation_factor; break;
-	case PARAM_DS: rv.b = this->drawstops; break;
+	case PARAM_DRAW_TRACK_STOPS: rv.b = this->draw_track_stops; break;
 	case PARAM_SL: rv.u = this->stop_length; break;
-	case PARAM_DL: rv.b = this->drawlines; break;
+	case PARAM_DRAW_TRACK_LINES: rv.b = this->draw_track_lines; break;
 	case PARAM_DD: rv.b = this->drawdirections; break;
 	case PARAM_DDS: rv.u = this->drawdirections_size; break;
 	case PARAM_TRK_THICKNESS: rv.u = this->trk_thickness; break;
@@ -1142,14 +1142,14 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		break;
 	}
 		// Alter sensitivity of all track colours according to the draw track mode.
-	case PARAM_DM: {
+	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
 		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		bool sensitive = (vlpd.u == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[OFFSET + PARAM_TRK_COLOR_COMMON];
-		GtkWidget *w2 = ww2[OFFSET + PARAM_TRK_COLOR_COMMON];
+		GtkWidget *w1 = ww1[OFFSET + PARAM_TRACK_COLOR_COMMON];
+		GtkWidget *w2 = ww2[OFFSET + PARAM_TRACK_COLOR_COMMON];
 		if (w1) gtk_widget_set_sensitive(w1, sensitive);
 		if (w2) gtk_widget_set_sensitive(w2, sensitive);
 		break;
@@ -1267,7 +1267,7 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 			SublayerType sublayer_type = (SublayerType) pl;
 
-			// Also remember to (attempt to) convert each coordinate in case this is pasted into a different drawmode
+			// Also remember to (attempt to) convert each coordinate in case this is pasted into a different track_drawing_mode
 			if (sublayer_type == SublayerType::TRACK) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
@@ -1565,7 +1565,7 @@ void LayerTRW::new_track_pens(void)
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->trk_color_common));
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->track_color_common));
 	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE].setWidth(width);
 }
 
@@ -2902,9 +2902,9 @@ void LayerTRW::new_track_create_common(const QString & new_name)
 	this->current_trk->set_defaults();
 	this->current_trk->visible = true;
 
-	if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
+	if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
 		/* Create track with the preferred colour from the layer properties. */
-		this->current_trk->color = this->trk_color_common;
+		this->current_trk->color = this->track_color_common;
 	} else {
 		this->current_trk->color = QColor("#aa22dd"); //QColor("#000000");
 	}
@@ -6466,8 +6466,8 @@ void LayerTRW::track_alloc_colors()
 
 		/* Tracks get a random spread of colours if not already assigned. */
 		if (!trk->has_color) {
-			if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
-				trk->color = this->trk_color_common;
+			if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
+				trk->color = this->track_color_common;
 			} else {
 				trk->color.setNamedColor(QString(my_track_colors(ii)));
 			}
