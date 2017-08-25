@@ -27,6 +27,8 @@
 #include <cstdint>
 
 #include <QPixmap>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
 
 #include "layer.h"
 #include "widget_file_entry.h"

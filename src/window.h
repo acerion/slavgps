@@ -39,6 +39,7 @@
 #include "widget_file_entry.h"
 #include "viewport_utils.h"
 #include "track.h"
+#include "layer_trw_containers.h"
 
 
 

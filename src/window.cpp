@@ -37,6 +37,7 @@
 #include "layer_defaults.h"
 #include "layers_panel.h"
 #include "layer_toolbox.h"
+#include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layer_map.h"
 #include "globals.h"
@@ -806,9 +807,9 @@ void Window::draw_redraw()
 		qDebug() << "II: Window:    selection: do draw with highlight";
 		if (this->containing_trw) {
 			if (this->selected_tracks) {
-				this->containing_trw->draw_with_highlight(this->viewport, this->selected_tracks, true);
+				this->containing_trw->draw_with_highlight(this->viewport, *this->selected_tracks, true);
 			} else if (this->selected_waypoints) {
-				this->containing_trw->draw_with_highlight(this->viewport, this->selected_waypoints, true);
+				this->containing_trw->draw_with_highlight(this->viewport, *this->selected_waypoints, true);
 			} else if (this->selected_track) {
 				this->containing_trw->draw_with_highlight(this->viewport, this->selected_track, true);
 			} else if (this->selected_waypoint) {

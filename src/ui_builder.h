@@ -91,7 +91,7 @@ namespace SlavGPS {
 	/* Default value has to be returned via a function
 	   because certain types value are can not be statically allocated
 	   (i.e. a string value that is dependent on other functions).
-	   Also easier for colours to be set via a function call rather than a static assignment. */
+	   Also easier for colors to be set via a function call rather than a static assignment. */
 	typedef SGVariant (* LayerDefaultFunc) (void);
 
 	/* Convert between the value held internally and the value used for display

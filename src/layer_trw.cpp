@@ -1141,7 +1141,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		if (w8) gtk_widget_set_sensitive(w8, vlpd.b);
 		break;
 	}
-		// Alter sensitivity of all track colours according to the draw track mode.
+		// Alter sensitivity of all track colors according to the draw track mode.
 	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
 		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
@@ -1355,17 +1355,17 @@ void LayerTRW::draw_with_highlight_sub(Viewport * viewport, bool do_highlight)
 
 	if (true /* this->tracks_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw tracks";
-		painter.draw_tracks(tracks, do_highlight);
+		painter.draw_tracks(this->tracks, do_highlight);
 	}
 
 	if (true /* this->routes_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw routes";
-		painter.draw_tracks(routes, do_highlight);
+		painter.draw_tracks(this->routes, do_highlight);
 	}
 
 	if (true /* this->waypoints_visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw waypoints";
-		painter.draw_waypoints(waypoints, do_highlight);
+		painter.draw_waypoints(this->waypoints, do_highlight);
 	}
 }
 
@@ -1468,7 +1468,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_h
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks * tracks_, bool do_highlight)
+void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks & tracks_, bool do_highlight)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1478,18 +1478,18 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks * tracks_, bool d
 	}
 #endif
 
-	if (!tracks_) {
+	if (tracks_.empty()) {
 		return;
 	}
 
-	bool is_routes = (tracks_ == &routes);
-	bool do_draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
-	if (!do_draw) {
+	bool is_routes = (*tracks_.begin()).second->sublayer_type == SublayerType::ROUTE;
+	bool is_visible = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
+	if (!is_visible) {
 		return;
 	}
 
 	static TRWPainter painter(this, viewport);
-	painter.draw_tracks(*tracks_, do_highlight);
+	painter.draw_tracks(tracks_, do_highlight);
 }
 
 
@@ -1500,7 +1500,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks * tracks_, bool d
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints * selected_waypoints, bool do_highlight)
+void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints & waypoints_, bool do_highlight)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -1514,12 +1514,12 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints * selected_way
 		return;
 	}
 
-	if (!selected_waypoints) {
+	if (waypoints_.empty()) {
 		return;
 	}
 
 	static TRWPainter painter(this, viewport);
-	painter.draw_waypoints(*selected_waypoints, do_highlight);
+	painter.draw_waypoints(waypoints_, do_highlight);
 }
 
 
@@ -2903,7 +2903,7 @@ void LayerTRW::new_track_create_common(const QString & new_name)
 	this->current_trk->visible = true;
 
 	if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
-		/* Create track with the preferred colour from the layer properties. */
+		/* Create track with the preferred color from the layer properties. */
 		this->current_trk->color = this->track_color_common;
 	} else {
 		this->current_trk->color = QColor("#aa22dd"); //QColor("#000000");
@@ -4380,7 +4380,7 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
 void LayerTRW::merge_with_other_cb(void)
 {
 	sg_uid_t uid = this->menu_data->sublayer->uid;
-	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
+	Tracks * ght_tracks = NULL;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 		ght_tracks = &this->routes;
 	} else {
@@ -4468,8 +4468,8 @@ void LayerTRW::merge_with_other_cb(void)
  */
 void LayerTRW::append_track_cb(void)
 {
-	Track *trk;
-	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
+	Track * trk = NULL;
+	Tracks * ght_tracks = NULL;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 		ght_tracks = &this->routes;
 	} else {
@@ -4542,8 +4542,8 @@ void LayerTRW::append_other_cb(void)
 {
 	sg_uid_t uid = this->menu_data->sublayer->uid;
 
-	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_mykind;
-	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_others;
+	Tracks * ght_mykind;
+	Tracks * ght_others;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 		ght_mykind = &this->routes;
 		ght_others = &this->tracks;
@@ -6449,7 +6449,7 @@ static const char * my_track_colors(int ii)
 		"#5A171A",
 		"#96059f"
 	};
-	/* Fast and reliable way of returning a colour. */
+	/* Fast and reliable way of returning a color. */
 	return colors[(ii % TRW_LAYER_TRACK_COLORS_MAX)];
 }
 
@@ -6464,7 +6464,7 @@ void LayerTRW::track_alloc_colors()
 
 		Track * trk = i->second;
 
-		/* Tracks get a random spread of colours if not already assigned. */
+		/* Tracks get a random spread of colors if not already assigned. */
 		if (!trk->has_color) {
 			if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
 				trk->color = this->track_color_common;

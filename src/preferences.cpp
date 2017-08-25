@@ -30,6 +30,7 @@
 
 #include <QDebug>
 
+#include "layer.h"
 #include "preferences.h"
 #include "dir.h"
 #include "file.h"

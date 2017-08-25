@@ -31,7 +31,6 @@
 #include <QProcess>
 #include <QStringList>
 
-#include "layer_trw.h"
 #include "download.h"
 
 
@@ -125,6 +124,12 @@ typedef struct {
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
+	class Track;
 
 
 

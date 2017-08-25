@@ -29,6 +29,7 @@
 
 
 #include <list>
+#include <unordered_map>
 
 #include "waypoint.h"
 #include "layer.h"

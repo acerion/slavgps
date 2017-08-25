@@ -26,14 +26,15 @@
 #include <cassert>
 
 #include "layer_aggregate.h"
+#include "layer_trw.h"
+#include "layer_trw_stats.h"
+#include "layer_gps.h"
 #include "layers_panel.h"
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
 #include "waypoint_list.h"
 #include "track_list_dialog.h"
 #include "util.h"
-#include "layer_gps.h"
-#include "layer_trw_stats.h"
 #include "dialog.h"
 typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"

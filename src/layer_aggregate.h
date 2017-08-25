@@ -30,7 +30,6 @@
 #include <QDialog>
 
 #include "layer.h"
-#include "layer_trw.h"
 
 
 

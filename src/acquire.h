@@ -30,8 +30,10 @@
 #include <QObject>
 #include <QMenu>
 #include <QDialog>
+#include <QLabel>
 
 #include "babel.h"
+#include "ui_builder.h"
 
 
 

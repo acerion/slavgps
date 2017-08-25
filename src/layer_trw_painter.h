@@ -29,7 +29,11 @@
 
 
 #include <cstdint>
-#include <unordered_map>
+
+#include "layer_trw_containers.h"
+
+
+
 
 #define VIK_TRW_LAYER_TRACK_GC 6
 #define TRW_LAYER_TRACK_COLORS_MAX 10
@@ -44,7 +48,7 @@
 #define DRAWMODE_BY_SPEED 1
 #define DRAWMODE_ALL_SAME_COLOR 2
 /* Note using DRAWMODE_BY_SPEED may be slow especially for vast numbers of trackpoints
-   as we are (re)calculating the colour for every point. */
+   as we are (re)calculating the color for every point. */
 
 
 
@@ -101,15 +105,15 @@ namespace SlavGPS {
 
 
 		void draw_waypoint(Waypoint * wp, bool do_highlight);
-		void draw_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool do_highlight);
+		void draw_waypoints(Waypoints & waypoints, bool do_highlight);
 
 		void draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight);
-		int  draw_waypoint_image(Waypoint * wp, int x, int y);
+		int  draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight);
 		void draw_waypoint_symbol(Waypoint * wp, int x, int y);
 
 
 		void draw_track(Track * trk, bool do_highlight);
-		void draw_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, bool do_highlight);
+		void draw_tracks(Tracks & tracks, bool do_highlight);
 
 		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord);
 		void draw_track_dist_labels(Track * trk, bool do_highlight);

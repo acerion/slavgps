@@ -206,9 +206,9 @@ static void dem24k_draw_existence(Viewport * viewport);
 
 
 /* Height colors.
-   The first entry is blue for a default 'sea' colour,
+   The first entry is blue for a default 'sea' color,
    however the value used by the corresponding gc can be configured as part of the DEM layer properties.
-   The other colours, shaded from brown to white are used to give an indication of height.
+   The other colors, shaded from brown to white are used to give an indication of height.
 */
 static char const * dem_height_colors[] = {
 	"#0000FF",
@@ -728,7 +728,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 					viewport->fill_rectangle(*this->gradients[idx], box_x, box_y, box_width, box_height);
 
 				} else if (this->dem_type == DEM_TYPE_HEIGHT) {
-					int idx = 0; /* Default index for colour of 'sea' or for places below the defined mininum. */
+					int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 					if (elev > 0 && !below_minimum) {
 						idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
@@ -827,7 +827,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 					tmp = Coord(counter, viewport->get_coord_mode());
 					viewport->coord_to_screen(&tmp, &a, &b);
 
-					int idx = 0; /* Default index for colour of 'sea'. */
+					int idx = 0; /* Default index for color of 'sea'. */
 					if (elev > 0) {
 						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
@@ -966,7 +966,7 @@ LayerDEM::LayerDEM()
 	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
 	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
 
-	/* Ensure the base color is available so the default colour can be applied. */
+	/* Ensure the base color is available so the default color can be applied. */
 	this->colors[0] = new QColor("#0000FF");
 
 	this->set_initial_parameter_values();

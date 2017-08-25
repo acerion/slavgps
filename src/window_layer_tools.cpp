@@ -30,6 +30,7 @@
 
 #include "window.h"
 #include "window_layer_tools.h"
+#include "layer_trw.h"
 #include "coords.h"
 #include "tree_view_internal.h"
 //#include "vikutils.h"

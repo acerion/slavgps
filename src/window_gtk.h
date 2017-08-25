@@ -35,8 +35,6 @@
 #include "vikstatus.h"
 #include "track.h"
 #include "layer.h"
-#include "layer_trw.h"
-#include "layer_trw_containers.h"
 #include "file.h"
 #include "toolbar.h"
 #include "window_layer_tools.h"

@@ -38,6 +38,7 @@
 #include "dialog.h"
 #include "util.h"
 #include "layer_aggregate.h"
+#include "layer_trw.h"
 #include "track_internal.h"
 
 

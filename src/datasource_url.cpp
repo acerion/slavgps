@@ -23,6 +23,7 @@
 #include <cstdlib>
 
 #include <QComboBox>
+#include <QLineEdit>
 
 #include "acquire.h"
 #include "babel.h"

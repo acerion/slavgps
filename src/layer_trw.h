@@ -218,9 +218,9 @@ namespace SlavGPS {
 		void draw_with_highlight(Viewport * viewport);
 
 		void draw_with_highlight(Viewport * viewport, Track * trk, bool do_highlight);
-		void draw_with_highlight(Viewport * viewport, Tracks * tracks, bool do_highlight);
+		void draw_with_highlight(Viewport * viewport, Tracks & tracks, bool do_highlight);
 		void draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight);
-		void draw_with_highlight(Viewport * viewport, Waypoints * waypoints, bool do_highlight);
+		void draw_with_highlight(Viewport * viewport, Waypoints & waypoints, bool do_highlight);
 
 
 		void realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);

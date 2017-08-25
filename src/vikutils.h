@@ -25,9 +25,11 @@
 
 #include <cstdint>
 
-#include "layer_trw.h"
+#include <QString>
+
 #include "map_ids.h"
 #include "preferences.h"
+#include "coord.h"
 
 
 
@@ -38,6 +40,11 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Viewport;
+	class Layer;
+	class LayerTRW;
+	class Track;
+	class Trackpoint;
 
 
 

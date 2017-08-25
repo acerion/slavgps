@@ -122,13 +122,13 @@ TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 
 
 /*
- * Determine the colour of the trackpoint (and/or trackline) relative to the average speed.
- * Here a simple traffic like light colour system is used:
+ * Determine the color of the trackpoint (and/or trackline) relative to the average speed.
+ * Here a simple traffic like light color system is used:
  *  . slow points are red
  *  . average is yellow
  *  . fast points are green
  */
-static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, double average_speed, double low_speed, double high_speed)
+static int track_section_color_by_speed(Trackpoint * tp1, Trackpoint * tp2, double average_speed, double low_speed, double high_speed)
 {
 	if (tp1->has_timestamp && tp2->has_timestamp) {
 		if (average_speed > 0) {
@@ -241,7 +241,7 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		if (tp_current && tp_next) {
 			/* Construct the name based on the distance value. */
 
-			QString name;
+			QString dist_label;
 			const QString unit_string = get_distance_unit_string(distance_unit);
 
 			/* Convert for display. */
@@ -249,11 +249,11 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 
 			/* Make the precision of the output related to the unit size. TODO: don't we have utility function for that? */
 			if (index == 0) {
-				name = QObject::tr("%.2f %2").arg(dist_i, 0, 'f', 2).arg(unit_string);
+				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(unit_string);
 			} else if (index == 1) {
-				name = QObject::tr("%.1f %2").arg(dist_i, 0, 'f', 1).arg(unit_string);
+				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 1).arg(unit_string);
 			} else {
-				name = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(unit_string); /* TODO single vs plurals. */
+				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(unit_string); /* TODO single vs plurals. */
 			}
 
 
@@ -270,7 +270,7 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			const QColor fg_color = this->get_fg_color(trk);
 			const QColor bg_color = this->get_bg_color(do_highlight);
 
-			this->draw_track_label(name, fg_color, bg_color, &coord);
+			this->draw_track_label(dist_label, fg_color, bg_color, &coord);
 		}
 	}
 }
@@ -293,7 +293,7 @@ QColor TRWPainter::get_fg_color(const Track * trk) const
 
 
 /* If highlight mode is on, then color of the background should be the
-   same as the highlight colour. */
+   same as the highlight color. */
 QColor TRWPainter::get_bg_color(bool do_highlight) const
 {
 	QColor bg_color;
@@ -502,7 +502,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		/* The track is being created by user, it gets a special pen. */
 		main_pen = this->trw->current_trk_pen;
 	} else if (do_highlight) {
-		/* Draw all tracks of the layer in 'highlight' colour.
+		/* Draw all tracks of the layer in 'highlight' color.
 		   This supersedes the trw->track_drawing_mode. */
 		main_pen = this->viewport->get_highlight_pen();
 	} else {
@@ -623,7 +623,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (draw_trackpoints || this->trw->draw_track_lines) {
 				/* Setup main_pen for both point and line drawing. */
 				if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
-					main_pen = this->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
+					main_pen = this->trw->track_pens[track_section_color_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 				}
 			}
 
@@ -676,7 +676,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 					this->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
-						main_pen = this->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
+						main_pen = this->trw->track_pens[track_section_color_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -871,7 +871,7 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
 	if (!wp->image.isEmpty() && this->trw->drawimages) {
-		if (0 == this->draw_waypoint_image(wp, x, y)) {
+		if (0 == this->draw_waypoint_image(wp, x, y, do_highlight)) {
 			return;
 		}
 	}
@@ -887,15 +887,14 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 
 
-int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y)
+int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight)
 {
 	if (this->trw->image_alpha == 0) {
 		return 0;
 	}
 
-#ifdef K
-
 	QPixmap * pixmap = NULL;
+#ifdef K
 	GList * l = g_list_find_custom(this->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixmap_cmp);
 	if (l) {
 		pixmap = ((CachedPixmap *) l->data)->pixmap;
@@ -937,24 +936,25 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y)
 			pixmap = a_thumbnails_get_default(); /* thumbnail not yet loaded */
 		}
 	}
+#endif
 	if (pixmap) {
 		int w = pixmap->width();
 		int h = pixmap->height();
 
 		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < this->width && y - (h / 2) < this->height) { /* always draw within boundaries */
-			if (this->highlight) {
+			if (do_highlight) {
 				/* Highlighted - so draw a little border around the chosen one
 				   single line seems a little weak so draw 2 of them. */
 				this->viewport->draw_rectangle(this->viewport->get_highlight_pen(),
-							    x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
+							       x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
 				this->viewport->draw_rectangle(this->viewport->get_highlight_pen(),
-							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
+							       x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
-			this->viewport->draw_pixmap(pixmap, 0, 0, x - (w / 2), y - (h / 2), w, h);
+			this->viewport->draw_pixmap(*pixmap, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
 		return 0;
 	}
-#endif
+
 	/* If failed to draw picture, default to drawing regular waypoint. */
 	return 1;
 }
