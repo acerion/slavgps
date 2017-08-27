@@ -233,7 +233,7 @@ static void get_from_anything(w_and_interface_t * wi)
 	VikDataSourceInterface * source_interface = wi->acquiring->source_interface;
 
 	if (source_interface->process_func) {
-		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->acquiring, wi->dl_options);
+		result = source_interface->process_func(wi->trw, wi->po, (BabelCallback) progress_func, wi->acquiring, wi->dl_options);
 	}
 	delete wi->po;
 	delete wi->dl_options;
@@ -520,7 +520,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #endif
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		if (source_interface_->process_func) {
-			bool success = source_interface_->process_func(wi->trw, po, (BabelStatusFunc) progress_func, this, dl_options);
+			bool success = source_interface_->process_func(wi->trw, po, (BabelCallback) progress_func, this, dl_options);
 			if (!success) {
 				Dialog::error(tr("Error: acquisition failed."), this->window);
 			}

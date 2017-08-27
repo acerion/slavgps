@@ -1207,3 +1207,19 @@ QString SlavGPS::file_base_name(const QString & full_path)
 	QFileInfo info = QFileInfo(full_path);
 	return info.fileName();
 }
+
+
+
+
+bool SGUtils::create_temporary_file(QTemporaryFile & file, const QString & name_pattern)
+{
+	file.setFileTemplate(name_pattern);
+	if (!file.open()) {
+		qDebug().nospace() << "EE: Utils: create temporary file: failed to create temporary file" << name_pattern << file.error();
+		return false;
+	}
+	qDebug()<< "II: Utils: Utils: create temporary file: file path:" << file.fileName();
+	file.close(); /* We have to close it here, otherwise client won't be able to write to it. */
+
+	return true;
+}

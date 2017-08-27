@@ -65,7 +65,7 @@ typedef struct {
 static void * datasource_osm_my_traces_init(acq_vik_t *avt);
 static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 static void datasource_osm_my_traces_cleanup(void * data);
 
 
@@ -644,7 +644,7 @@ static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList
 
 
 
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 

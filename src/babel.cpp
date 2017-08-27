@@ -54,6 +54,7 @@
 #include "babel.h"
 #include "file.h"
 #include "util.h"
+#include "vikutils.h"
 #include "preferences.h"
 #include "globals.h"
 
@@ -68,15 +69,12 @@ using namespace SlavGPS;
 /* TODO in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
-/**
- * Path to unbuffer.
- */
-static char *unbuffer_loc = NULL;
 
 /**
    Collection of file types supported by gpsbabel.
 */
 std::map<int, BabelFileType *> a_babel_file_types;
+static int file_type_id = 0;
 
 /**
  * List of device supported by gpsbabel.
@@ -107,9 +105,27 @@ Babel::Babel()
 
 Babel::~Babel()
 {
-	if (this->babel_path_c) {
-		free(this->babel_path_c);
-		this->babel_path_c = NULL;
+}
+
+
+
+
+/* Path set here may be overwritten by path from preferences. */
+void Babel::get_gpsbabel_path_from_system(void)
+{
+	SGVariant var;
+
+	/* The path may be empty string. */
+	this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
+
+	var.s = strdup(this->gpsbabel_path.toUtf8().constData());
+	Preferences::register_parameter(&prefs[0], var, PREFERENCES_GROUP_KEY_IO);
+	free((void *) var.s);
+
+	if (this->gpsbabel_path.isEmpty()) {
+		qDebug() << "WW: Babel: gpsbabel not found in PATH";
+	} else {
+		qDebug() << "II: Babel: path to gpsbabel initialized as" << this->gpsbabel_path;
 	}
 }
 
@@ -117,54 +133,56 @@ Babel::~Babel()
 
 
 /* Path set here may be overwritten by path from preferences. */
-void Babel::get_path_from_system(void)
+void Babel::get_unbuffer_path_from_system(void)
 {
-	SGVariant var;
+	this->unbuffer_path = QStandardPaths::findExecutable("unbuffer");
 
-	/* The path may be empty string. */
-	this->babel_path = QStandardPaths::findExecutable("gpsbabel");
-	var.s = strdup(this->babel_path.toUtf8().constData());
-
-	Preferences::register_parameter(&prefs[0], var, PREFERENCES_GROUP_KEY_IO);
-
-	qDebug() << "II: Babel: path to gpsbabel initialized as" << this->babel_path;
-	free((void *) var.s);
+	if (this->unbuffer_path.isEmpty()) {
+		qDebug() << "WW: Babel: unbuffer not found in PATH";
+	} else {
+		qDebug() << "II: Babel: path to unbuffer initialized as" << this->unbuffer_path;
+	}
 }
 
 
 
 
-void Babel::get_path_from_preferences(void)
+void Babel::get_gpsbabel_path_from_preferences(void)
 {
-	const char * babel_path_prefs = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
-	if (babel_path_prefs && 0 != strlen(babel_path_prefs)) {
+	const char * gpsbabel_path_prefs = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
+	if (gpsbabel_path_prefs && 0 != strlen(gpsbabel_path_prefs)) {
 
 		/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */
-		if (0 == strcmp(babel_path_prefs, "gpsbabel")) {
-			this->babel_path = QStandardPaths::findExecutable("gpsbabel");
+		if (0 == strcmp(gpsbabel_path_prefs, "gpsbabel")) {
+			this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 		} else {
-			this->babel_path = QString(babel_path_prefs);
+			this->gpsbabel_path = QString(gpsbabel_path_prefs);
 		}
+		qDebug() << "II: Babel: path to gpsbabel set from preferences as" << this->gpsbabel_path;
 	}
 
-	this->babel_path_c = strdup(babel_path_prefs); /* This still may be an empty string. */
-
-	qDebug() << "II: Babel: path to gpsbabel set from preferences as" << this->babel_path;
-
-	if (!this->babel_path.isEmpty()) {
+	if (!this->gpsbabel_path.isEmpty()) {
 		this->is_detected = true;
+		qDebug() << "II: Babel: gpsbabel detected as" << this->gpsbabel_path;
+	} else {
+		qDebug() << "WW: Babel: gpsbabel not detected";
 	}
 }
 
 
 
+
+/*
+  Call the function when you need to decide if the main program should
+  be 'unbuffer' or 'gpsbabel'.
+*/
 bool Babel::set_program_name(QString & program, QStringList & args)
 {
-	if (unbuffer_loc) {
-		program = QString(unbuffer_loc);
-		args << this->babel_path;
+	if (!this->unbuffer_path.isEmpty()) {
+		program = QString(this->unbuffer_path);
+		args << this->gpsbabel_path;
 	} else {
-		program = this->babel_path;
+		program = this->gpsbabel_path;
 	}
 
 	return true;
@@ -187,7 +205,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb, void * cb_data, void * unused)
+bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelCallback cb, void * cb_data, void * unused)
 {
 	bool ret = false;
 	char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
@@ -218,7 +236,7 @@ static void babel_watch(GPid pid, int status, void * cb_data)
 
 
 
-bool Babel::general_convert(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data)
+bool Babel::general_convert(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data)
 {
 	bool ret = false;
 
@@ -261,7 +279,7 @@ bool Babel::general_convert(const QString & program, const QStringList & args, B
    \return true on success
    \return false otherwise
 */
-bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path)
+bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path)
 {
 	qDebug().nospace() << "II: Babel: convert through intermediate file: will write to intermediate file '" << intermediate_file_path << "'";
 
@@ -311,21 +329,19 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QString & input_file_path, const char *babelfilters, BabelStatusFunc cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QString & input_file_path, const char *babelfilters, BabelCallback cb, void * cb_data, void * not_used)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
 		return false;
 	}
 
-	QTemporaryFile intermediate_file("tmp-viking.XXXXXX");
-	if (!intermediate_file.open()) {
-		qDebug().nospace() << "EE: Babel: from filter: failed to open intermediate file";
+	QTemporaryFile intermediate_file;
+	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
 		return false;
 	}
 	const QString intermediate_file_path = intermediate_file.fileName();
-	qDebug().nospace() << "II: Babel: from filter: intermediate file: '" << intermediate_file.fileName() << "'";
-	intermediate_file.close(); /* We have to close it here, otherwise gpsbabel won't be able to write to it. */
+	qDebug() << "DD: Babel: Convert from filter: temporary file:" << intermediate_file_path;
 
 
 	QString program;
@@ -389,36 +405,28 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QS
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelCallback cb, void * cb_data, void * not_used)
 {
-	int fd_dst;
-	char * intermediate_file_fullpath = NULL;
-	bool ret = false;
-
-	if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &intermediate_file_fullpath, NULL)) >= 0) {
-		qDebug() << "DD: Babel: Convert from shell command: intermediate file" << intermediate_file_fullpath;
-		QString shell_command;
-		if (input_file_type) {
-			shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4")
-				.arg(input_cmd).arg(babel.babel_path).arg(input_file_type).arg(intermediate_file_fullpath);
-		} else {
-			shell_command = QString("%s > %s").arg(input_cmd).arg(intermediate_file_fullpath);
-		}
-
-		qDebug() << "DD: Babel: Convert from shell command: shell command" << shell_command;
-		close(fd_dst);
-
-		const QString program(BASH_LOCATION);
-		QStringList args;
-		args << "-c";
-		args << shell_command;
-
-		ret = babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, QString(intermediate_file_fullpath));
-		(void) remove(intermediate_file_fullpath);
-		free(intermediate_file_fullpath);
+	QTemporaryFile intermediate_file;
+	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
+		return false;
 	}
+	const QString intermediate_file_fullpath = intermediate_file.fileName();
+	qDebug() << "DD: Babel: Convert from shell command: intermediate file" << intermediate_file_fullpath;
 
-	return ret;
+
+	QString shell_command;
+	if (input_file_type) {
+		shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(input_cmd).arg(babel.gpsbabel_path).arg(input_file_type).arg(intermediate_file_fullpath);
+	} else {
+		shell_command = QString("%s > %s").arg(input_cmd).arg(intermediate_file_fullpath);
+	}
+	qDebug() << "DD: Babel: Convert from shell command: shell command" << shell_command;
+
+
+	const QString program(BASH_LOCATION);
+	const QStringList args(QStringList() << "-c" << shell_command);
+	return babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_fullpath);
 }
 
 
@@ -438,46 +446,46 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * cb_data, DownloadOptions * dl_options)
+bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
 	if (dl_options) {
 		babel_dl_options = *dl_options;
 	}
-	int fd_src;
-	DownloadResult fetch_ret;
+
 	bool ret = false;
-	char *name_src = NULL;
-	char *babelargs = NULL;
 
 	qDebug() << "DD: Babel: input_type =" << input_type << ", url =" << url;
 
-	if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-		qDebug() << "DD: Babel: temporary file:" << name_src;
-		close(fd_src);
-		(void) remove(name_src);
 
-		fetch_ret = Download::get_url_http(url, "", name_src, &babel_dl_options, NULL);
-		if (fetch_ret == DownloadResult::SUCCESS) {
-			if (input_type != NULL || babelfilters != NULL) {
-				babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
-				ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL);
-			} else {
-				/* Process directly the retrieved file. */
-				qDebug() << "DD: Babel: directly read GPX file" << name_src;
-				FILE *f = fopen(name_src, "r");
-				if (f) {
-					ret = a_gpx_read_file(trw, f);
-					fclose(f);
-					f = NULL;
-				}
+	QTemporaryFile tmp_file;
+	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
+		return false;
+	}
+	const QString name_src = tmp_file.fileName();
+	qDebug() << "DD: Babel: Convert from url filter: temporary file:" << name_src;
+	tmp_file.remove(); /* Because we only needed to confirm that a path to temporary file is "available"? */
+
+
+	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src.toUtf8().constData(), &babel_dl_options, NULL)) {
+		if (input_type != NULL || babelfilters != NULL) {
+			char * babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
+			ret = a_babel_convert_from_filter(trw, babelargs, name_src.toUtf8().constData(), babelfilters, NULL, NULL, NULL);
+			free(babelargs);
+		} else {
+			/* Process directly the retrieved file. */
+			qDebug() << "DD: Babel: directly read GPX file" << name_src;
+			FILE *f = fopen(name_src.toUtf8().constData(), "r");
+			if (f) {
+				ret = a_gpx_read_file(trw, f);
+				fclose(f);
+				f = NULL;
 			}
 		}
-		(void)util_remove(name_src);
-		free(babelargs);
-		free(name_src);
 	}
+	(void) util_remove(name_src.toUtf8().constData());
+
 
 	return ret;
 }
@@ -485,7 +493,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 
 
 /**
- * @vt:               The TRW layer to place data into. Duplicate items will be overwritten.
+ * @trw:               The TRW layer to place data into. Duplicate items will be overwritten.
  * @process_options:  The options to control the appropriate processing function. See #ProcessOptions for more detail
  * @cb:               Optional callback function. Same usage as in a_babel_convert().
  * @cb_data:        passed along to cb
@@ -497,7 +505,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  *
  * Returns: %true on success.
  */
-bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * cb_data, DownloadOptions * dl_options)
+bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
 {
 	if (!process_options) {
 		qDebug() << "EE: Babel: convert from: no process options";
@@ -526,7 +534,7 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 
 
 
-static bool babel_general_convert_to(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data, LayerTRW * trw, Track * trk, const QString & name_src)
+static bool babel_general_convert_to(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, Track * trk, const QString & name_src)
 {
 	/* Now strips out invisible tracks and waypoints. */
 	if (!a_file_export(trw, name_src.toUtf8().constData(), FILE_TYPE_GPX, trk, false)) {
@@ -541,7 +549,7 @@ static bool babel_general_convert_to(const QString & program, const QStringList 
 
 
 /**
- * @vt:             The TRW layer from which data is taken.
+ * @trw:             The TRW layer from which data is taken.
  * @track:          Operate on the individual track if specified. Use NULL when operating on a TRW layer
  * @babelargs:      A string containing gpsbabel command line options.  In addition to any filters, this string
  *                 must include the input file type (-i) option.
@@ -555,55 +563,50 @@ static bool babel_general_convert_to(const QString & program, const QStringList 
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char * babelargs, const char * to, BabelStatusFunc cb, void * cb_data)
+bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char * babelargs, const char * to, BabelCallback cb, void * cb_data)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
 		return false;
 	}
 
-	int fd_src;
-	char * name_src = NULL;
-	bool ret = false;
 
-	if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-		qDebug() << "DD: Babel: temporary file" << name_src;
-		close(fd_src);
-
-
-		QString program;
-		QStringList args;
-		babel.set_program_name(program, args);
-
-		char **sub_args = g_strsplit(babelargs, " ", 0);
-
-		args << "-i";
-		args << "gpx";
-		for (int i = 0; sub_args[i]; i++) {
-			/* Some version of gpsbabel can not take extra blank arg. */
-			if (sub_args[i][0] != '\0') {
-				args << sub_args[i];
-			}
-		}
-		args << "-f";
-		args << name_src;
-		args << "-F";
-		args << to;
-
-		ret = babel_general_convert_to(program, args, cb, cb_data, trw, trk, QString(name_src));
-
-		g_strfreev(sub_args);
+	QTemporaryFile tmp_file;
+	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
+		return false;
 	}
-	(void) remove(name_src);
-	free(name_src);
+	const QString name_src = tmp_file.fileName();
+	qDebug() << "DD: Babel: Convert to: temporary file:" << name_src;
 
-	return ret;
+
+	QString program;
+	QStringList args;
+	babel.set_program_name(program, args);
+
+	args << "-i";
+	args << "gpx";
+
+	char **sub_args = g_strsplit(babelargs, " ", 0);
+	for (int i = 0; sub_args[i]; i++) {
+		/* Some version of gpsbabel can not take extra blank arg. */
+		if (sub_args[i][0] != '\0') {
+			args << sub_args[i];
+		}
+	}
+	g_strfreev(sub_args);
+
+	args << "-f";
+	args << name_src;
+	args << "-F";
+	args << to;
+
+	return babel_general_convert_to(program, args, cb, cb_data, trw, trk, name_src);
 }
 
 
 
 
-static void set_mode(BabelMode *mode, char *smode)
+static void set_mode(BabelMode * mode, const char * smode)
 {
 	mode->waypoints_read  = smode[0] == 'r';
 	mode->waypoints_write = smode[1] == 'w';
@@ -644,24 +647,10 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 		    && tokens[3] != NULL
 		    && tokens[4] != NULL) {
 
-			BabelDevice * device = (BabelDevice *) malloc(sizeof (BabelDevice));
-			set_mode (&(device->mode), tokens[1]);
-			device->name = g_strdup(tokens[2]);
-			device->label = g_strndup (tokens[4], 50); /* Limit really long label text. */
-#ifdef K
+			BabelDevice * device = new BabelDevice(tokens[1], tokens[2], tokens[4]);
 			a_babel_device_list.push_back(device);
-#endif
-#if 0
-			qDebug() << "DD: Babel: new gpsbabel device:"
-				 << device->name
-				 << device->mode.waypoints_read
-				 << device->mode.waypoints_write
-				 << device->mode.tracks_read
-				 << device->mode.tracks_write
-				 << device->mode.routes_read
-				 << device->mode.routes_write
-				 << tokens[1];
-#endif
+
+
 		} else {
 			qDebug() << "WW: Babel: Unexpected gpsbabel feature string" << line;
 		}
@@ -671,30 +660,10 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 		    && tokens[3] != NULL
 		    && tokens[4] != NULL) {
 
-			static int type_id = 0;
+			BabelFileType * file_type = new BabelFileType(tokens[1], tokens[2], tokens[3], tokens[4]);
+			a_babel_file_types.insert({{ file_type_id, file_type }});
 
-			BabelFileType * file_type = (BabelFileType *) malloc(sizeof (BabelFileType));
-			set_mode (&(file_type->mode), tokens[1]);
-			file_type->name = g_strdup(tokens[2]);
-			file_type->ext = g_strdup(tokens[3]);
-			file_type->label = g_strdup(tokens[4]);
-			a_babel_file_types.insert({{ type_id, file_type }});
-#if 1
-			qDebug() << "II: Babel: gpsbabel file type #"
-				 << type_id
-				 << ": "
-				 << file_type->name
-				 << " "
-				 << file_type->mode.waypoints_read
-				 << file_type->mode.waypoints_write
-				 << file_type->mode.tracks_read
-				 << file_type->mode.tracks_write
-				 << file_type->mode.routes_read
-				 << file_type->mode.routes_write
-				 << " "
-				 << tokens[1];
-#endif
-			type_id++;
+			file_type_id++;
 		} else {
 			qDebug() << "WW: Babel: Unexpected gpsbabel format string" << line;
 		}
@@ -731,9 +700,16 @@ static bool load_feature()
 /**
  * Just setup preferences first.
  */
-void SlavGPS::a_babel_init()
+void Babel::init()
 {
-	babel.get_path_from_system();
+	babel.get_gpsbabel_path_from_system();
+
+	/* Unlikely to package unbuffer on Windows so ATM don't even bother trying.
+	   Highly unlikely unbuffer is available on a Windows system otherwise. */
+#ifndef WINDOWS
+	babel.get_unbuffer_path_from_system();
+#endif
+
 }
 
 
@@ -743,18 +719,9 @@ void SlavGPS::a_babel_init()
  * Initialises babel module.
  * Mainly check existence of gpsbabel progam and load all features available in that version.
  */
-void SlavGPS::a_babel_post_init()
+void Babel::post_init()
 {
-	babel.get_path_from_preferences();
-
-	/* Unlikely to package unbuffer on Windows so ATM don't even bother trying.
-	   Highly unlikely unbuffer is available on a Windows system otherwise. */
-#ifndef WINDOWS
-	unbuffer_loc = g_find_program_in_path("unbuffer");
-	if (!unbuffer_loc) {
-		qDebug() << "WW: Babel: unbuffer not found in PATH";
-	}
-#endif
+	babel.get_gpsbabel_path_from_preferences();
 
 	load_feature();
 }
@@ -763,41 +730,25 @@ void SlavGPS::a_babel_post_init()
 
 
 /**
- * Free resources acquired by a_babel_init.
- */
-void SlavGPS::a_babel_uninit()
+   \brief Free resources acquired by Babel::init()
+*/
+void Babel::uninit()
 {
-	free(unbuffer_loc);
-
 	if (a_babel_file_types.size()) {
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-			BabelFileType * file_type = iter->second;
-			// qDebug() << "DD: Babel: freeing file" << file_type->name << "/" << file_type->label;
-			free(file_type->name);
-			free(file_type->ext);
-			free(file_type->label);
-
 			/* kamilFIXME: how should we do this? How to destroy BabelFileType? */
-			// free(*iter);
-			// a_babel_file_types.erase(iter);
+			// delete (*iter);
+			a_babel_file_types.erase(iter);
 		}
 	}
 
-#ifdef K
 	if (a_babel_device_list.size()) {
 		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-			BabelDevice * device = *iter;
-			qDebug() << "DD: Babel: freeing device" << device->name << "/" << device->label;
-			free(device->name);
-			free(device->label);
-
 			/* kamilFIXME: how should we do this? How to destroy BabelDevice? */
-			// free(*iter);
-			// a_babel_device_list.erase(iter);
+			// delete (*iter);
+			a_babel_device_list.erase(iter);
 		}
 	}
-#endif
-
 }
 
 
@@ -819,7 +770,7 @@ bool SlavGPS::a_babel_available()
 
 
 
-BabelConverter::BabelConverter(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data)
+BabelConverter::BabelConverter(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data)
 {
 	this->process = new QProcess(this);
 
@@ -945,4 +896,74 @@ void BabelConverter::read_stdout_cb()
 			this->conversion_cb(BABEL_DIAG_OUTPUT, buffer, this->conversion_data);
 		}
 	}
+}
+
+
+
+
+BabelFileType::BabelFileType(const char * mode_, const char * name_, const char * ext_, const char * label_)
+{
+	set_mode(&this->mode, mode_);
+	this->name = strdup(name_);
+	this->ext = strdup(ext_);
+	this->label = strdup(label_);
+
+#if 1
+	qDebug() << "II: Babel: gpsbabel file type #"
+		 << file_type_id
+		 << ": "
+		 << this->name
+		 << " "
+		 << this->mode.waypoints_read
+		 << this->mode.waypoints_write
+		 << this->mode.tracks_read
+		 << this->mode.tracks_write
+		 << this->mode.routes_read
+		 << this->mode.routes_write
+		 << " "
+		 << this->label;
+#endif
+}
+
+
+
+
+BabelFileType::~BabelFileType()
+{
+	qDebug() << "DD: Babel: delete BabelFileType" << this->name << "/" << this->label;
+	free(this->name);
+	free(this->ext);
+	free(this->label);
+}
+
+
+
+
+BabelDevice::BabelDevice(const char * mode_, const char * name_, const char * label_)
+{
+	set_mode(&this->mode, mode_);
+	this->name = strdup(name_);
+	this->label = strndup(label_, 50); /* Limit really long label text. */
+
+#if 1
+	qDebug() << "DD: Babel: new gpsbabel device:"
+		 << this->name
+		 << this->mode.waypoints_read
+		 << this->mode.waypoints_write
+		 << this->mode.tracks_read
+		 << this->mode.tracks_write
+		 << this->mode.routes_read
+		 << this->mode.routes_write
+		 << this->label;
+#endif
+}
+
+
+
+
+BabelDevice::~BabelDevice()
+{
+	qDebug() << "DD: Babel: freeing device" << this->name << "/" << this->label;
+	free(this->name);
+	free(this->label);
 }

@@ -36,7 +36,7 @@ using namespace SlavGPS;
 
 
 
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring);
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring);
 
 
 
@@ -74,7 +74,7 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, AcquireProcess * acquiring)
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring)
 {
 	if (!trw) {
 		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";

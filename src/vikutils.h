@@ -26,6 +26,7 @@
 #include <cstdint>
 
 #include <QString>
+#include <QTemporaryFile>
 
 #include "map_ids.h"
 #include "preferences.h"
@@ -95,8 +96,10 @@ namespace SlavGPS {
 		static void set_auto_features_on_first_run(void);
 		static void command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
 		static void check_latest_version(Window * window);
-
+		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
 	};
+
+
 
 
 }

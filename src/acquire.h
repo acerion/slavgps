@@ -162,9 +162,9 @@ namespace SlavGPS {
 	 *
 	 * The actual function to do stuff - must report success/failure.
 	 */
-	typedef bool (* VikDataSourceProcessFunc) (void * trw, ProcessOptions * process_options, BabelStatusFunc, AcquireProcess * acquiring, void * download_options);
+	typedef bool (* VikDataSourceProcessFunc) (void * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, void * download_options);
 
-	/* NB Same as BabelStatusFunc. */
+	/* Same as BabelCallback. */
 	typedef void  (* VikDataSourceProgressFunc) (BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 	/**

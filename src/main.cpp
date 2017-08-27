@@ -184,7 +184,7 @@ int main(int argc, char ** argv)
 	Download::init();
 	CurlDownload::init();
 
-	a_babel_init();
+	Babel::init();
 
 	/* Init modules/plugins. */
 	modules_init();
@@ -206,7 +206,7 @@ int main(int argc, char ** argv)
 	*/
 #endif
 	a_background_post_init();
-	a_babel_post_init();
+	Babel::post_init();
 #if 0
 
 	modules_post_init();
@@ -274,7 +274,7 @@ int main(int argc, char ** argv)
 
 	int rv = app.exec();
 
-	a_babel_uninit();
+	Babel::uninit();
 #if 0
 	a_toolbar_uninit();
 	a_background_uninit();

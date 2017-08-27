@@ -1189,10 +1189,10 @@ static void gps_comm_thread(GpsSession *sess)
 
 	if (sess->direction == GPSDirection::DOWN) {
 		ProcessOptions po(sess->babelargs, sess->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
-		result = a_babel_convert_from(sess->trw, &po, (BabelStatusFunc) gps_download_progress_func, sess, NULL);
+		result = a_babel_convert_from(sess->trw, &po, (BabelCallback) gps_download_progress_func, sess, NULL);
 	} else {
 		result = a_babel_convert_to(sess->trw, sess->trk, sess->babelargs, sess->port,
-					    (BabelStatusFunc) gps_upload_progress_func, sess);
+					    (BabelCallback) gps_upload_progress_func, sess);
 	}
 #ifdef K
 	if (!result) {
