@@ -147,14 +147,35 @@ namespace SlavGPS {
 
 
 
+	class Babel {
+	public:
+		Babel();
+		~Babel();
+
+		void get_path_from_system(void);
+		void get_path_from_preferences(void);
+
+		bool general_convert(const QString & program, const QStringList & args, BabelStatusFunc cb, void * user_data);
+		bool set_program_name(QString & program, QStringList & args);
+		bool convert_through_intermediate_file(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path);
+
+		/* Path to gpsbabel. */
+		QString babel_path;
+		char * babel_path_c = NULL;
+
+		bool is_detected = false; /* Has gpsbabel been detected in the system and is available for operation? */
+	};
+
+
+
 
 	class BabelConverter : public QObject {
 		Q_OBJECT
 	public:
-		BabelConverter(const QString & program, const QStringList & args);
+		BabelConverter(const QString & program, const QStringList & args, BabelStatusFunc cb, void * cb_data);
 		~BabelConverter();
 
-		bool run_conversion(BabelStatusFunc cb, void * cb_data);
+		bool run_conversion(void);
 
 		QProcess * process = NULL;
 
@@ -162,7 +183,11 @@ namespace SlavGPS {
 		void started_cb(void);
 		void error_occurred_cb(QProcess::ProcessError error);
 		void finished_cb(int exit_code, QProcess::ExitStatus exitStatus);
+		void read_stdout_cb(void);
 
+	private:
+		BabelStatusFunc conversion_cb = NULL;
+		void * conversion_data = NULL;
 	};
 
 
