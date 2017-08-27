@@ -193,7 +193,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
 
 /**
  * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
- * @babelargs: A string containing gpsbabel command line filter options. No file types or names should
+ * @babel_args: A string containing gpsbabel command line filter options. No file types or names should
  *             be specified.
  * @cb:        A callback function.
  * @cb_data: passed along to cb
@@ -205,10 +205,10 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelCallback cb, void * cb_data, void * unused)
+bool a_babel_convert(LayerTRW * trw, const char * babel_args, BabelCallback cb, void * cb_data, void * unused)
 {
 	bool ret = false;
-	char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
+	char *bargs = g_strconcat(babel_args, " -i gpx", NULL);
 	char *name_src = a_gpx_write_tmp_file(trw, NULL);
 
 	if (name_src) {
@@ -315,10 +315,10 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
 
 /**
  * @trw:           The TRW layer to place data into. Duplicate items will be overwritten.
- * @babelargs:    A string containing gpsbabel command line options. This string
+ * @babel_args:    A string containing gpsbabel command line options. This string
  *                must include the input file type (-i) option.
  * @input_file_path:  the file name to convert from
- * @babelfilters: A string containing gpsbabel filter command line options
+ * @babel_filters: A string containing gpsbabel filter command line options
  * @cb:	          Optional callback function. Same usage as in a_babel_convert().
  * @cb_data:    passed along to cb
  * @not_used:     Must use NULL
@@ -329,7 +329,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QString & input_file_path, const char *babelfilters, BabelCallback cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, const QString & input_file_path, const QString & babel_filters, BabelCallback cb, void * cb_data, void * not_used)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -348,7 +348,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QS
 	QStringList args; /* Args list won't contain main application's name. */
 	babel.set_program_name(program, args);
 
-	char **sub_args = g_strsplit(babelargs, " ", 0);
+	char **sub_args = g_strsplit(babel_args.toUtf8().constData(), " ", 0);
 	char **sub_filters = NULL;
 	for (int j = 0; sub_args[j]; j++) {
 		/* Some version of gpsbabel can not take extra blank arg. */
@@ -360,8 +360,8 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QS
 	args << QString("-f");
 	args << QString(input_file_path);
 
-	if (babelfilters) {
-		sub_filters = g_strsplit(babelfilters, " ", 0);
+	if (!babel_filters.isEmpty()) {
+		sub_filters = g_strsplit(babel_filters.toUtf8().constData(), " ", 0);
 		for (int j = 0; sub_filters[j]; j++) {
 			/* Some version of gpsbabel can not take extra blank arg. */
 			if (sub_filters[j][0] != '\0') {
@@ -393,7 +393,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QS
 
 /**
  * @trw: The #LayerTRW where to insert the collected data
- * @input_cmd: the command to run
+ * @shell_command: the command to run
  * @input_file_type:
  * @cb:	       Optional callback function. Same usage as in a_babel_convert().
  * @cb_data: passed along to cb
@@ -405,7 +405,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const QS
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelCallback cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_command, const QString & input_file_type, BabelCallback cb, void * cb_data, void * not_used)
 {
 	QTemporaryFile intermediate_file;
 	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
@@ -415,17 +415,17 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 	qDebug() << "DD: Babel: Convert from shell command: intermediate file" << intermediate_file_fullpath;
 
 
-	QString shell_command;
-	if (input_file_type) {
-		shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(input_cmd).arg(babel.gpsbabel_path).arg(input_file_type).arg(intermediate_file_fullpath);
+	QString full_shell_command;
+	if (!input_file_type.isEmpty()) {
+		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(shell_command).arg(babel.gpsbabel_path).arg(input_file_type).arg(intermediate_file_fullpath);
 	} else {
-		shell_command = QString("%s > %s").arg(input_cmd).arg(intermediate_file_fullpath);
+		full_shell_command = QString("%s > %s").arg(shell_command).arg(intermediate_file_fullpath);
 	}
-	qDebug() << "DD: Babel: Convert from shell command: shell command" << shell_command;
+	qDebug() << "DD: Babel: Convert from shell command: shell command" << full_shell_command;
 
 
 	const QString program(BASH_LOCATION);
-	const QStringList args(QStringList() << "-c" << shell_command);
+	const QStringList args(QStringList() << "-c" << full_shell_command);
 	return babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_fullpath);
 }
 
@@ -435,18 +435,18 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 /**
  * @trw: The #LayerTRW where to insert the collected data
  * @url: the URL to fetch
- * @input_type:   If input_type is %NULL, input must be GPX.
- * @babelfilters: The filter arguments to pass to gpsbabel
+ * @input_file_type:   If input_file_type is empty, input must be GPX.
+ * @babel_filters: The filter arguments to pass to gpsbabel
  * @cb:	          Optional callback function. Same usage as in a_babel_convert().
  * @cb_data:    Passed along to cb
  * @options:      Download options. If %NULL then default download options will be used.
  *
  * Download the file pointed by the URL and optionally uses GPSBabel to convert from input_type.
- * If input_type and babelfilters are %NULL, gpsbabel is not used.
+ * If input_file_type and babel_filters are empty, gpsbabel is not used.
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
+bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const QString & input_file_type, const QString & babel_filters, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -456,7 +456,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 
 	bool ret = false;
 
-	qDebug() << "DD: Babel: input_type =" << input_type << ", url =" << url;
+	qDebug() << "DD: Babel: input_file_type =" << input_file_type << ", url =" << url;
 
 
 	QTemporaryFile tmp_file;
@@ -469,10 +469,9 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 
 
 	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src.toUtf8().constData(), &babel_dl_options, NULL)) {
-		if (input_type != NULL || babelfilters != NULL) {
-			char * babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
-			ret = a_babel_convert_from_filter(trw, babelargs, name_src.toUtf8().constData(), babelfilters, NULL, NULL, NULL);
-			free(babelargs);
+		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
+			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
+			ret = a_babel_convert_from_filter(trw, babel_args, name_src.toUtf8().constData(), babel_filters, NULL, NULL, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
@@ -512,19 +511,19 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 		return false;
 	}
 
-	if (process_options->url) {
+	if (!process_options->url.isEmpty()) {
 		qDebug() << "II: Babel: convert from: url";
 		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, cb_data, dl_options);
 	}
 
-	if (process_options->babelargs) {
+	if (!process_options->babel_args.isEmpty()) {
 		qDebug() << "II: Babel: convert from: babel args";
-		return a_babel_convert_from_filter(trw, process_options->babelargs, QString(process_options->filename), process_options->babel_filters, cb, cb_data, dl_options);
+		return a_babel_convert_from_filter(trw, process_options->babel_args, process_options->input_file_name, process_options->babel_filters, cb, cb_data, dl_options);
 	}
 
-	if (process_options->shell_command) {
+	if (!process_options->shell_command.isEmpty()) {
 		qDebug() << "II: Babel: convert from: shell command";
-		return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, cb_data, dl_options);
+		return a_babel_convert_from_shell_command(trw, process_options->shell_command, process_options->input_file_type, cb, cb_data, dl_options);
 	}
 
 	qDebug() << "II: Babel: convert from: no process option found";
@@ -551,9 +550,9 @@ static bool babel_general_convert_to(const QString & program, const QStringList 
 /**
  * @trw:             The TRW layer from which data is taken.
  * @track:          Operate on the individual track if specified. Use NULL when operating on a TRW layer
- * @babelargs:      A string containing gpsbabel command line options.  In addition to any filters, this string
+ * @babel_args:      A string containing gpsbabel command line options.  In addition to any filters, this string
  *                 must include the input file type (-i) option.
- * @to:             Filename or device the data is written to.
+ * @target_file_path:             Filename or device the data is written to.
  * @cb:		   Optional callback function. Same usage as in a_babel_convert.
  * @cb_data: passed along to cb
  *
@@ -563,7 +562,7 @@ static bool babel_general_convert_to(const QString & program, const QStringList 
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char * babelargs, const char * to, BabelCallback cb, void * cb_data)
+bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_path, BabelCallback cb, void * cb_data)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -586,7 +585,7 @@ bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char * babel
 	args << "-i";
 	args << "gpx";
 
-	char **sub_args = g_strsplit(babelargs, " ", 0);
+	char **sub_args = g_strsplit(babel_args.toUtf8().constData(), " ", 0);
 	for (int i = 0; sub_args[i]; i++) {
 		/* Some version of gpsbabel can not take extra blank arg. */
 		if (sub_args[i][0] != '\0') {
@@ -598,7 +597,7 @@ bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const char * babel
 	args << "-f";
 	args << name_src;
 	args << "-F";
-	args << to;
+	args << target_file_path;
 
 	return babel_general_convert_to(program, args, cb, cb_data, trw, trk, name_src);
 }

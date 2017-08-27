@@ -340,10 +340,10 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types_combo))->name;
 
 	/* Generate the process options. */
-	po->babelargs = g_strdup_printf("-i %s", selected);
-	po->filename = strdup(data_source_file_dialog->file_entry->get_filename().toUtf8().data());
+	po->babel_args = QString("-i %1").arg(selected);
+	po->input_file_name = data_source_file_dialog->file_entry->get_filename();
 
-	qDebug() << "II: Datasource File: using Babel args" << po->babelargs << "and file" << po->filename;
+	qDebug() << "II: Datasource File: using Babel args" << po->babel_args << "and input file" << po->input_file_name;
 
 	return po;
 }

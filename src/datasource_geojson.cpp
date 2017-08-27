@@ -160,7 +160,7 @@ ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(userdata->files));
 #endif
 	/* Return some value so *thread* processing will continue. */
-	po->babelargs = strdup("fake command"); /* Not really used, thus no translations. */
+	po->babel_args = "fake command"; /* Not really used, thus no translations. */
 
 	return po;
 }

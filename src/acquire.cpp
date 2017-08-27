@@ -195,31 +195,25 @@ ProcessOptions::ProcessOptions()
 }
 
 
-ProcessOptions::ProcessOptions(const char * args, const char * file_name, const char * file_type, const char * input_url)
+ProcessOptions::ProcessOptions(const QString & babel_args_, const QString & input_file_name_, const QString & input_file_type_, const QString & url_)
 {
-	if (args) {
-		this->babelargs = strdup(args);
+	if (!babel_args_.isEmpty()) {
+		this->babel_args = babel_args_;
 	}
-	if (filename) {
-		this->filename = strdup(file_name);
+	if (!input_file_name_.isEmpty()) {
+		this->input_file_name = input_file_name_;
 	}
-	if (file_type) {
-		this->input_file_type = strdup(file_type);
+	if (!input_file_type_.isEmpty()) {
+		this->input_file_type = input_file_type_;
 	}
-	if (input_url) {
-		this->url = strdup(input_url);
+	if (!url_.isEmpty()) {
+		this->url = url_;
 	}
 }
 
 
 ProcessOptions::~ProcessOptions()
 {
-	free(this->babelargs);
-	free(this->filename);
-	free(this->input_file_type);
-	free(this->babel_filters);
-	free(this->url);
-	free(this->shell_command);
 }
 
 
@@ -279,8 +273,8 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 {
 	/* For manual dialogs. */
 	GtkWidget * setup_dialog = NULL;
-	char * args_off = NULL;
-	char * fd_off = NULL;
+	QString babel_args_off;
+	QString file_path_off;
 	DownloadOptions * dl_options = new DownloadOptions;
 
 	acq_vik_t avt;
@@ -416,7 +410,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/* Get data for Off command. */
 	if (source_interface_->off_func) {
-		source_interface_->off_func(pass_along_data, &args_off, &fd_off);
+		source_interface_->off_func(pass_along_data, babel_args_off, file_path_off);
 	}
 
 	/* Cleanup for option dialogs. */
@@ -485,7 +479,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 #ifdef K
 	if (source_interface_->is_thread) {
-		if (po->babelargs || po->url || po->shell_command) {
+		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
 #if GLIB_CHECK_VERSION (2, 32, 0)
 			g_thread_try_new("get_from_anything", (GThreadFunc)get_from_anything, wi, NULL);
 #else
@@ -497,14 +491,10 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 				this->running = false;
 				/* NB Thread will free memory. */
 			} else {
-				if (args_off) {
+				if (!babel_args_off.isEmpty()) {
 					/* Turn off. */
-					ProcessOptions off_po(args_off, fd_off, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+					ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
 					a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
-					free(args_off);
-				}
-				if (fd_off) {
-					free(fd_off);
 				}
 
 				/* Thread finished by normal completion - free memory. */

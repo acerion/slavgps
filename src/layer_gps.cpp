@@ -157,7 +157,7 @@ typedef struct {
 	int count;
 	LayerTRW * trw = NULL;
 	Track * trk = NULL;
-	char * babelargs = NULL;
+	QString babel_args;
 	char * window_title = NULL;
 	GtkWidget * dialog = NULL;
 	QLabel * status_label = NULL;
@@ -829,7 +829,6 @@ bool LayerGPS::is_empty()
 
 static void gps_session_delete(GpsSession *sess)
 {
-	free(sess->babelargs);
 	free(sess);
 }
 
@@ -1188,10 +1187,10 @@ static void gps_comm_thread(GpsSession *sess)
 	bool result;
 
 	if (sess->direction == GPSDirection::DOWN) {
-		ProcessOptions po(sess->babelargs, sess->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+		ProcessOptions po(sess->babel_args, sess->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 		result = a_babel_convert_from(sess->trw, &po, (BabelCallback) gps_download_progress_func, sess, NULL);
 	} else {
-		result = a_babel_convert_to(sess->trw, sess->trk, sess->babelargs, sess->port,
+		result = a_babel_convert_to(sess->trw, sess->trk, sess->babel_args, sess->port,
 					    (BabelCallback) gps_upload_progress_func, sess);
 	}
 #ifdef K
@@ -1313,8 +1312,12 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		waypoints = (char *) "";
 	}
 
-	sess->babelargs = g_strdup_printf("-D 9 %s %s %s -%c %s",
-					  tracks, routes, waypoints, (dir == GPSDirection::DOWN) ? 'i' : 'o', protocol);
+	sess->babel_args = QString("-D 9 %s %s %s -%c %s")
+		.arg(tracks)
+		.arg(routes)
+		.arg(waypoints)
+		.arg((dir == GPSDirection::DOWN) ? 'i' : 'o')
+		.arg(protocol);
 	tracks = NULL;
 	waypoints = NULL;
 

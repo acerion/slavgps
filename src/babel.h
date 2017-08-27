@@ -67,21 +67,20 @@ namespace SlavGPS {
 
 	/**
 	   All values are set to NULL by default.
-	   Need to specify at least one of babelargs, URL or shell_command.
+	   Need to specify at least one of babel_args, URL or shell_command.
 	*/
 	struct ProcessOptions {
 	public:
 		ProcessOptions();
-		ProcessOptions(const char * args, const char * filename, const char * input_file_type, const char * url);
-
+		ProcessOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
 		~ProcessOptions();
 
-		char * babelargs = NULL;       /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
-		char * filename = NULL;        /* Input filename (or device port e.g. /dev/ttyS0). */
-		char * input_file_type = NULL; /* If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
-		char * url = NULL;             /* URL input rather than a filename. */
-		char * babel_filters = NULL;   /* Optional filter arguments to gpsbabel. */
-		char * shell_command = NULL;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
+		QString babel_args;      /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
+		QString input_file_name; /* Input filename (or device port e.g. /dev/ttyS0). */
+		QString input_file_type; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
+		QString url;             /* URL input rather than a filename. */
+		QString babel_filters;   /* Optional filter arguments to gpsbabel. */
+		QString shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
 	};
 
 
@@ -138,7 +137,7 @@ namespace SlavGPS {
 	/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 	bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * user_data, DownloadOptions * dl_options);
 
-	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *file, BabelCallback cb, void * user_data);
+	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_path, BabelCallback cb, void * user_data);
 
 	bool a_babel_available();
 

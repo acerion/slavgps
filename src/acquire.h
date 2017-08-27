@@ -176,7 +176,7 @@ namespace SlavGPS {
 
 
 
-	typedef void (* VikDataSourceOffFunc) (void * user_data, char ** babelargs, char ** file_descriptor);
+	typedef void (* VikDataSourceOffFunc) (void * user_data, QString & babel_args, QString & file_path);
 
 	/**
 	 * VikDataSourceInterface:

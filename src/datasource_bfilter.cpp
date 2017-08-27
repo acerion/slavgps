@@ -65,9 +65,9 @@ static ProcessOptions * datasource_bfilter_simplify_get_process_options(SGVarian
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	po->babelargs = strdup("-i gpx");
-	po->filename = g_strdup(input_filename);
-	po->babel_filters = g_strdup_printf("-x simplify,count=%d", paramdatas[0].u);
+	po->babel_args = "-i gpx";
+	po->input_file_name = QString(input_filename);
+	po->babel_filters = QString("-x simplify,count=%1").arg(paramdatas[0].u);
 
 	/* Store for subsequent default use. */
 	bfilter_simplify_params_defaults[0].u = paramdatas[0].u;
@@ -162,9 +162,9 @@ static ProcessOptions * datasource_bfilter_compress_get_process_options(SGVarian
 	   - also using relative method fails when track doesn't have HDOP info - error reported to stderr - which we don't capture ATM.
 	   - options make this more complicated to use - is even that useful to be allowed to change the error value?
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
-	po->babelargs = strdup("-i gpx");
-	po->filename = g_strdup(input_filename);
-	po->babel_filters = g_strdup_printf ("-x simplify,crosstrack,error=%-.5f%c", paramdatas[0].d, units);
+	po->babel_args = "-i gpx";
+	po->input_file_name = QString(input_filename);
+	po->babel_filters = QString(g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", paramdatas[0].d, units));
 
 	/* Store for subsequent default use. */
 	bfilter_compress_params_defaults[0].d = paramdatas[0].d;
@@ -238,9 +238,9 @@ static ProcessOptions * datasource_bfilter_dup_get_process_options(SGVariant *pa
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	po->babelargs = strdup("-i gpx");
-	po->filename = g_strdup(input_filename);
-	po->babel_filters = strdup("-x duplicate,location");
+	po->babel_args = "-i gpx";
+	po->input_file_name = QString(input_filename);
+	po->babel_filters = QString("-x duplicate,location");
 
 	return po;
 }
@@ -290,9 +290,9 @@ static ProcessOptions * datasource_bfilter_manual_get_process_options(SGVariant 
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	po->babelargs = strdup("-i gpx");
-	po->filename = g_strdup(input_filename);
-	po->babel_filters = g_strconcat("-x ", paramdatas[0].s, NULL);
+	po->babel_args = "-i gpx";
+	po->input_file_name = QString(input_filename);
+	po->babel_filters = QString("-x %1").arg(paramdatas[0].s);
 
 	return po;
 }

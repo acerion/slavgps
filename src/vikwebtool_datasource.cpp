@@ -182,9 +182,9 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	}
 
 	if (parts) {
-		po->input_file_type = g_strdup(parts[0]);
+		po->input_file_type = QString(parts[0]);
 	} else {
-		po->input_file_type = NULL;
+		po->input_file_type = "";
 	}
 	g_strfreev(parts);
 

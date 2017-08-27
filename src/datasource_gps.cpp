@@ -34,6 +34,7 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDebug>
 
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -66,7 +67,7 @@ static void datasource_gps_cleanup(void * user_data);
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
 static void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data);
-static void datasource_gps_off(void * add_widgets_data_not_used, char **babelargs, char **input_file);
+static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel_args, QString & file_path);
 
 
 
@@ -266,7 +267,8 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 	char *waypoints = NULL;
 
 	if (gps_acquire_in_progress) {
-		po->babelargs = po->filename = NULL;
+		po->babel_args = "";
+		po->input_file_name = "";
 	}
 
 	gps_acquire_in_progress = true;
@@ -291,17 +293,16 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 		waypoints = (char *) "";
 	}
 
-	po->babelargs = g_strdup_printf("-D 9 %s %s %s -i %s", tracks, routes, waypoints, device);
+	po->babel_args = QString("-D 9 %1 %2 %3 -i %4").arg(tracks).arg(routes).arg(waypoints).arg(device);
 	/* Device points to static content => no free. */
 	device = NULL;
 	tracks = NULL;
 	routes = NULL;
 	waypoints = NULL;
 
-	QString tmp = datasource_gps_get_descriptor(user_data);
-	po->filename = g_strdup(tmp.toUtf8().constData());
+	po->input_file_name = datasource_gps_get_descriptor(user_data);
 
-	fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
+	qDebug() << "DD: Datasource GPS: Get process options: using Babel args" << po->babel_args << "and input file" << po->input_file_name;
 
 	return po;
 }
@@ -324,14 +325,15 @@ bool SlavGPS::datasource_gps_get_off(void * user_data)
 
 
 
-static void datasource_gps_off(void * user_data, char **babelargs, char **file_descriptor)
+static void datasource_gps_off(void * user_data, QString & babel_args, QString & file_path)
 {
 	char *ser = NULL;
 	char *device = NULL;
 	GPSData *w = (GPSData *)user_data;
 
 	if (gps_acquire_in_progress) {
-		*babelargs = *file_descriptor = NULL;
+		babel_args = "";
+		file_path = "";
 	}
 
 	/* See if we should turn off the device. */
@@ -355,13 +357,13 @@ static void datasource_gps_off(void * user_data, char **babelargs, char **file_d
 		return;
 	}
 
-	*babelargs = g_strdup_printf("-i %s", device);
+	babel_args = QString("-i %1").arg(device);
 	/* Device points to static content => no free. */
 	device = NULL;
 #ifdef K
 	ser = w->ser_combo->currentText();
 #endif
-	*file_descriptor = g_strdup(ser);
+	file_path = QString(ser);
 }
 
 

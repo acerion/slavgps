@@ -978,16 +978,15 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 
 
 
-bool SlavGPS::a_file_export_babel(LayerTRW * trw, char const * filename, char const * format, bool tracks, bool routes, bool waypoints)
+bool SlavGPS::a_file_export_babel(LayerTRW * trw, const QString & output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
 {
-	char * args = g_strdup_printf("%s %s %s -o %s",
-				      tracks ? "-t" : "",
-				      routes ? "-r" : "",
-				      waypoints ? "-w" : "",
-				      format);
-	bool result = a_babel_convert_to(trw, NULL, args, filename, NULL, NULL);
-	free(args);
-	return result;
+	const QString babel_args = QString("%1 %2 %3 -o %4")
+		.arg(tracks ? "-t" : "")
+		.arg(routes ? "-r" : "")
+		.arg(waypoints ? "-w" : "")
+		.arg(output_file_type);
+
+	return a_babel_convert_to(trw, NULL, babel_args, output_file_path, NULL, NULL);
 }
 
 

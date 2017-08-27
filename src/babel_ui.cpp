@@ -162,7 +162,7 @@ BabelFileType * SlavGPS::a_babel_ui_file_type_selector_get(QComboBox * combo)
 
    \return a layout widget packing all checkboxes
 */
-QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
+QHBoxLayout * SlavGPS::a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
 {
 	QHBoxLayout * hbox = new QHBoxLayout();
 	QCheckBox * checkbox = NULL;
@@ -193,7 +193,7 @@ QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
    \param routes: return value
    \param waypoints: return value
 */
-void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints)
+void SlavGPS::a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints)
 {
 	QWidget * widget = NULL;
 	QCheckBox * checkbox = NULL;
