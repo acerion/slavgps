@@ -30,6 +30,8 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include <QDebug>
+
 #include "babel.h"
 #include "babel_ui.h"
 #include "layer_trw.h"
@@ -111,7 +113,7 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 
 
 
-void LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_name)
+int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_name)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (this->get_routes().size()) {
@@ -124,81 +126,57 @@ void LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString &
 		mode.waypoints_write = 1;
 	}
 	bool failed = false;
+
+	BabelDialog * dialog = new BabelDialog(title);
+	dialog->set_write_mode(mode);
+	dialog->build_ui();
+
 #ifdef K
-	GtkWidget * file_selector;
-	file_selector = gtk_file_chooser_dialog_new(title,
-						    NULL,
-						    GTK_FILE_CHOOSER_ACTION_SAVE,
-						    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-						    GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-						    NULL);
 	char *cwd = g_get_current_dir();
 	if (cwd) {
-		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_selector), cwd);
+		gtk_file_chooser_set_current_folder(dialog, cwd);
 		free(cwd);
 	}
-
-	/* Build the extra part of the widget. */
 #endif
-	QComboBox * babel_selector = a_babel_ui_file_type_selector_new(mode);
-#ifdef K
-	QLabel * label = new QLabel(QObject::tr("File format:"));
-	GtkWidget * hbox = gtk_hbox_new(false, 0);
-	hbox->addWidget(label);
-	hbox->addWidget(babel_selector);
-	gtk_widget_show(babel_selector);
-	gtk_widget_show(label);
-	gtk_widget_show_all(hbox);
-
-	babel_selector->setToolTip(QObject::tr("Select the file format."));
-#endif
-	QHBoxLayout * babel_modes = a_babel_ui_modes_new(mode.tracks_write, mode.routes_write, mode.waypoints_write);
-#ifdef K
-	babel_modes->setToolTip(QObject::tr("Select the information to process.\n"
-					    "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
-					    "Please, refer to GPSbabel if unsure."));
-
-	GtkWidget * vbox = gtk_vbox_new(false, 0);
-	vbox->addWidget(hbox);
-	vbox->addWidget(babel_modes);
-	gtk_widget_show_all(vbox);
-
-	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(file_selector), vbox);
-
-	/* Add some dynamic: only allow dialog's validation when format selection is done. */
-	QObject::connect(babel_selector, SIGNAL("changed"), file_selector, SLOT (a_babel_ui_type_selector_dialog_sensitivity_cb));
-	/* Manually call the callback to fix the state. */
-	a_babel_ui_type_selector_dialog_sensitivity_cb(babel_selector, file_selector);
 
 	/* Set possible name of the file. */
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_selector), default_name);
+	dialog->file_entry->file_selector->selectFile(default_file_name);
 
-	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
-#endif
-		char * output_file_path = NULL;
-		// output_file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
-		if (0 != access(output_file_path, F_OK)
-		    || Dialog::yes_or_no(QObject::tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(output_file_path)), this->get_window())) {
+	int rv = dialog->exec();
+	if (rv == QDialog::Accepted) {
+		const BabelFileType * file_type = dialog->get_file_type_selection();
+		const QString output_file_path = dialog->file_entry->get_filename();
 
-			const BabelFileType * active_type = a_babel_ui_file_type_selector_get(babel_selector);
-			if (active_type == NULL) {
-				Dialog::error(QObject::tr("You did not select a valid file format."), this->get_window());
-			} else {
-				//gtk_widget_hide(file_selector);
-				this->get_window()->set_busy_cursor();
-				bool do_tracks, do_routes, do_waypoints;
-				a_babel_ui_modes_get(babel_modes, &do_tracks, &do_routes, &do_waypoints);
-				failed = !a_file_export_babel(this, QString(output_file_path), active_type->name, do_tracks, do_routes, do_waypoints);
-				this->get_window()->clear_busy_cursor();
-				//break;
-			}
-		}
+		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
+		qDebug() << "II: Layer TRW Export via gpsbabel: format type index:" << dialog->file_types_combo->currentIndex();
+		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type name:" << file_type->name;
+		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type label:" << file_type->label;
+		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_path;
+
+
+		this->get_window()->set_busy_cursor();
+		dialog->get_write_mode(mode); /* We overwrite the old values of the struct, but that's ok. */
 #ifdef K
-	}
-	//babel_ui_selector_destroy(babel_selector);
-	gtk_widget_destroy(file_selector);
+		if (file_type == NULL) {
+			Dialog::error(QObject::tr("You did not select a valid file format."), this->get_window());
+		} else {
+			;
+		}
 #endif
+
+		failed = !a_file_export_babel(this, QString(output_file_path), file_type->name, mode.tracks_write, mode.routes_write, mode.waypoints_write);
+
+		this->get_window()->clear_busy_cursor();
+
+	} else if (rv == QDialog::Rejected) {
+		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: rejected";
+	} else {
+		qDebug() << "EE: Layer TRW Export via gpsbabel: dialog result: unknown:" << rv;
+	}
+
 	if (failed) {
 		Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), this->get_window());
 	}
+
+	return rv;
 }

@@ -391,7 +391,7 @@ namespace SlavGPS {
 		/* Export. */
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
 		void open_layer_with_external_program(const QString & external_program);
-		void export_layer_with_gpsbabel(const QString & title, const QString & default_name);
+		int export_layer_with_gpsbabel(const QString & title, const QString & default_name);
 
 
 

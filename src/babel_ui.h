@@ -18,18 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_BABEL_UI_H_
-#define _SG_BABEL_UI_H_
+#ifndef _SG_BABEL_DIALOG_H_
+#define _SG_BABEL_DIALOG_H_
 
 
 
 
-#include <cstdint>
-
-#include <QComboBox>
+#include <QString>
+#include <QWidget>
+#include <QDialog>
+#include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QDialogButtonBox>
+#include <QComboBox>
 
 #include "babel.h"
+#include "widget_file_entry.h"
 
 
 
@@ -39,12 +43,31 @@ namespace SlavGPS {
 
 
 
-	QComboBox * a_babel_ui_file_type_selector_new(BabelMode mode);
-	BabelFileType * a_babel_ui_file_type_selector_get(QComboBox * combo);
-	void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data);
+	class BabelDialog : public QDialog {
+		Q_OBJECT
+	public:
+		BabelDialog(QString const & title, QWidget * parent = NULL);
+		~BabelDialog();
 
-	QHBoxLayout * a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints);
-	void a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints);
+		void set_write_mode(const BabelMode & mode);
+		void get_write_mode(BabelMode & mode);
+		void build_ui(void);
+		QHBoxLayout * build_mode_selector(const BabelMode & mode);
+		QComboBox * build_file_type_selector(const BabelMode & mode);
+		BabelFileType * get_file_type_selection(void);
+
+	private slots:
+		void file_type_changed_cb(int index);
+
+	public:
+		QDialogButtonBox * button_box = NULL;
+		QVBoxLayout * vbox = NULL;
+		QComboBox * file_types_combo = NULL;
+
+		SlavGPS::SGFileEntry * file_entry = NULL;
+
+		void add_file_type_filter(BabelFileType * babel_file_type);
+	};
 
 
 
@@ -54,4 +77,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_BABEL_UI_H_ */
+#endif /* #ifndef _SG_BABEL_DIALOG_H_ */

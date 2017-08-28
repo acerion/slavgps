@@ -56,8 +56,6 @@ static char * last_folder_uri = NULL;
    differents. */
 static BabelFileType * last_file_type = NULL;
 
-/* The last file format selected. */
-static int last_type = 0;
 
 
 
@@ -98,190 +96,7 @@ VikDataSourceInterface vik_datasource_file_interface = {
 
 
 
-DataSourceFileDialog::DataSourceFileDialog(QString const & title, QWidget * parent_) : QDialog(parent_)
-{
-	this->setWindowTitle(title);
-}
-
-
-
-
-DataSourceFileDialog::~DataSourceFileDialog()
-{
-	delete this->file_types_combo;
-}
-
-
-
-
-void DataSourceFileDialog::build_ui(void)
-{
-	qDebug() << "II: Data Source File: building dialog UI";
-
-	this->vbox = new QVBoxLayout;
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-
-
-	QLabel * label = new QLabel("File");
-	this->vbox->addWidget(label);
-
-
-	QString a_title = "File to Import";
-	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, a_title, NULL);
-	/*
-	if (filename) {
-		QString filename(filename);
-		this->file_entry->set_filename(filename);
-	}
-
-	if (last_folder_uri) {
-		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(widgets->file), last_folder_uri);
-	}
-
-	*/
-	/* Add filters. */
-
-
-	QStringList filter;
-	filter << _("All files (*)");
-
-	this->file_entry->file_selector->setNameFilters(filter);
-
-	for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-
-		QString a = QString((iter->second)->label) + "(" + QString((iter->second)->ext) + ")";
-		//qDebug() << "II: Data Source File: adding file filter " << a;
-		filter << a;
-
-		char const * ext = (iter->second)->ext;
-		if (ext == NULL || ext[0] == '\0') {
-			/* No file extension => no filter. */
-			continue;
-		}
-		//char * pattern = g_strdup_printf("*.%s", ext);
-
-#ifdef K
-		GtkFileFilter * filter = gtk_file_filter_new();
-		gtk_file_filter_add_pattern(filter, pattern);
-		if (strstr(label, pattern+1)) {
-			gtk_file_filter_set_name(filter, label);
-		} else {
-			/* Ensure displayed label contains file pattern. */
-			/* NB: we skip the '*' in the pattern. */
-			char * name = g_strdup_printf("%s (%s)", label, pattern+1);
-			gtk_file_filter_set_name(filter, name);
-			free(name);
-#endif
-	}
-
-#ifdef K
-	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
-	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_type == file_type) {
-		/* Previous selection used this filter. */
-		gtk_file_chooser_set_filter(this->file_entry, filter);
-	}
-
-	free(pattern);
-#endif
-	this->vbox->addWidget(this->file_entry);
-
-
-
-	label = new QLabel("File type:");
-	this->vbox->addWidget(label);
-
-
-
-#ifdef K
-	GtkFileFilter *all_filter = gtk_file_filter_new();
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	if (last_file_type == NULL) {
-		/* No previously selected filter or 'All files' selected. */
-		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	}
-#endif
-	/* The file format selector. */
-	/* Propose any readable file. */
-	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
-	this->file_types_combo = a_babel_ui_file_type_selector_new(mode);
-	this->vbox->addWidget(this->file_types_combo);
-
-	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
-	this->file_types_combo->setCurrentIndex(last_type);
-
-
-	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton(QDialogButtonBox::Ok);
-	this->button_box->addButton(QDialogButtonBox::Cancel);
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-	this->vbox->addWidget(this->button_box);
-
-
-	/* Manually call the callback to set state of OK button. */
-	this->file_type_changed_cb(last_type);
-
-
-	/* Blinky cursor in input field will be visible and will bring
-	   user's eyes to widget that has a focus. */
-	this->file_entry->setFocus();
-}
-
-
-
-
-void DataSourceFileDialog::file_type_changed_cb(int index)
-{
-	qDebug() << "SLOT: Datasource File: current index changed to" << index;
-	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);
-	button->setEnabled(index != 0); /* Index is zero. User Data is -1. */
-}
-
-
-
-
-DataSourceFileDialog * data_source_file_dialog = NULL;
-
-
-
-
-void DataSourceFileDialog::add_file_type_filter(BabelFileType * file_type)
-{
-	char const * label = file_type->label;
-	char const * ext = file_type->ext;
-	if (ext == NULL || ext[0] == '\0') {
-		/* No file extension => no filter. */
-		return;
-	}
-	char * pattern = g_strdup_printf("*.%s", ext);
-
-#ifdef K
-	GtkFileFilter * filter = gtk_file_filter_new();
-	gtk_file_filter_add_pattern(filter, pattern);
-	if (strstr(label, pattern+1)) {
-		gtk_file_filter_set_name(filter, label);
-	} else {
-		/* Ensure displayed label contains file pattern. */
-		/* NB: we skip the '*' in the pattern. */
-		char * name = g_strdup_printf("%s (%s)", label, pattern+1);
-		gtk_file_filter_set_name(filter, name);
-		free(name);
-	}
-
-	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
-	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_type == file_type) {
-		/* Previous selection used this filter. */
-		gtk_file_chooser_set_filter(this->file_entry, filter);
-	}
-
-	free(pattern);
-#endif
-}
+BabelDialog * data_source_file_dialog = NULL;
 
 
 
@@ -290,7 +105,7 @@ void DataSourceFileDialog::add_file_type_filter(BabelFileType * file_type)
 static int datasource_file_internal_dialog(QWidget * parent)
 {
 	if (!data_source_file_dialog) {
-		data_source_file_dialog = new DataSourceFileDialog(QObject::tr(vik_datasource_file_interface.window_title), parent);
+		data_source_file_dialog = new BabelDialog(QObject::tr(vik_datasource_file_interface.window_title), parent);
 		data_source_file_dialog->build_ui();
 	}
 
@@ -299,12 +114,13 @@ static int datasource_file_internal_dialog(QWidget * parent)
 	int rv = data_source_file_dialog->exec();
 
 	if (rv == QDialog::Accepted) {
+		const BabelFileType * file_type = data_source_file_dialog->get_file_type_selection();
+
 		qDebug() << "II: Datasource File: dialog result: accepted";
 		qDebug() << "II: Datasource File: format type index:" << data_source_file_dialog->file_types_combo->currentIndex();
-		BabelFileType * file_type = a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types_combo);
-		qDebug().nospace() << "II: Datasource File: selected format type name: '" << file_type->name  << "'";
-		qDebug().nospace() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
-		qDebug().nospace() << "II: Datasource File: selected file path: '" << data_source_file_dialog->file_entry->get_filename() << "'";
+		qDebug() << "II: Datasource File: selected format type name: '" << file_type->name  << "'";
+		qDebug() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
+		qDebug() << "II: Datasource File: selected file path: '" << data_source_file_dialog->file_entry->get_filename() << "'";
 
 	} else if (rv == QDialog::Rejected) {
 		qDebug() << "II: Datasource File: dialog result: rejected";
@@ -324,7 +140,6 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 	ProcessOptions * po = new ProcessOptions();
 
 
-
 #ifdef K
 	/* Memorize the directory for later use. */
 	free(last_folder_uri);
@@ -333,11 +148,12 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 	/* Memorize the file filter for later use. */
 	GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry));
 	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
-#endif
+
 	/* Retrieve and memorize file format selected. */
 	last_type = data_source_file_dialog->file_types_combo->currentIndex();
+#endif
 
-	const char * selected = (a_babel_ui_file_type_selector_get(data_source_file_dialog->file_types_combo))->name;
+	const char * selected = (data_source_file_dialog->get_file_type_selection())->name;
 
 	/* Generate the process options. */
 	po->babel_args = QString("-i %1").arg(selected);

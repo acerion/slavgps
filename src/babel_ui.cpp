@@ -22,8 +22,8 @@
 #include <cstdlib>
 
 #include <QCheckBox>
-#include <QTranslator>
 #include <QDebug>
+#include <QLabel>
 
 #include "babel.h"
 #include "babel_ui.h"
@@ -41,23 +41,8 @@ extern std::map<int, BabelFileType *> a_babel_file_types;
 
 
 
-void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * user_data)
-{
-	/* Retrieve selected file type. */
-	BabelFileType * file_type = a_babel_ui_file_type_selector_get(combo);
-
-#ifdef K
-	/* user_data is the GtkDialog */
-	QDialog * dialog = (QDialog *) user_data;
-	if (file_type) {
-		/* Not NULL => valid selection */
-		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, true);
-	} else {
-		/* NULL => invalid selection */
-		gtk_dialog_set_response_sensitive(dialog, GTK_RESPONSE_ACCEPT, false);
-	}
-#endif
-}
+/* The last file format selected. */
+static int last_type = 0;
 
 
 
@@ -69,7 +54,7 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb(QComboBox * combo, void * us
 
    \return list of file types
 */
-QComboBox * SlavGPS::a_babel_ui_file_type_selector_new(BabelMode mode)
+QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 {
 	QComboBox * combo = new QComboBox();
 
@@ -134,12 +119,12 @@ QComboBox * SlavGPS::a_babel_ui_file_type_selector_new(BabelMode mode)
 
    \return the selected BabelFileType or NULL
 */
-BabelFileType * SlavGPS::a_babel_ui_file_type_selector_get(QComboBox * combo)
+BabelFileType * BabelDialog::get_file_type_selection(void)
 {
 	/* ID that was used in combo->addItem(<file type>, id);
 	   A special item has been added with id == -1.
 	   All other items have been added with id >= 0. */
-	int i = combo->currentData().toInt();
+	int i = this->file_types_combo->currentData().toInt();
 	if (i == -1) {
 		qDebug() << "II: Babel: selected file type: NONE";
 		return NULL;
@@ -162,8 +147,10 @@ BabelFileType * SlavGPS::a_babel_ui_file_type_selector_get(QComboBox * combo)
 
    \return a layout widget packing all checkboxes
 */
-QHBoxLayout * SlavGPS::a_babel_ui_modes_new(bool tracks, bool routes, bool waypoints)
+QHBoxLayout * BabelDialog::build_mode_selector(const BabelMode & mode)
 {
+#if 0
+	bool tracks, bool routes, bool waypoints
 	QHBoxLayout * hbox = new QHBoxLayout();
 	QCheckBox * checkbox = NULL;
 
@@ -179,9 +166,21 @@ QHBoxLayout * SlavGPS::a_babel_ui_modes_new(bool tracks, bool routes, bool waypo
 	checkbox->setChecked(waypoints);
 	hbox->addWidget(checkbox);
 
+	hbox->setToolTip(QObject::tr("Select the information to process.\n"
+				     "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
+				     "Please, refer to GPSbabel if unsure."));
+
 	return hbox;
+#endif
 }
 
+
+
+void BabelDialog::set_write_mode(const BabelMode & mode)
+{
+
+
+}
 
 
 
@@ -193,8 +192,11 @@ QHBoxLayout * SlavGPS::a_babel_ui_modes_new(bool tracks, bool routes, bool waypo
    \param routes: return value
    \param waypoints: return value
 */
-void SlavGPS::a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * routes, bool * waypoints)
+void BabelDialog::get_write_mode(BabelMode & mode)
 {
+#ifdef K
+	bool * tracks, bool * routes, bool * waypoints
+
 	QWidget * widget = NULL;
 	QCheckBox * checkbox = NULL;
 
@@ -218,6 +220,192 @@ void SlavGPS::a_babel_ui_modes_get(QHBoxLayout * hbox, bool * tracks, bool * rou
 		return;
 	}
 	*waypoints = ((QCheckBox *) widget)->isChecked();
-
+#endif
 	return;
+}
+
+
+
+
+
+BabelDialog::BabelDialog(QString const & title, QWidget * parent_) : QDialog(parent_)
+{
+	this->setWindowTitle(title);
+}
+
+
+
+
+BabelDialog::~BabelDialog()
+{
+	delete this->file_types_combo;
+}
+
+
+
+
+void BabelDialog::build_ui(void)
+{
+	qDebug() << "II: Babel Dialog: building dialog UI";
+
+	this->vbox = new QVBoxLayout;
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+
+	QLabel * label = new QLabel("File");
+	this->vbox->addWidget(label);
+
+
+	QString a_title = "File to Import";
+	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, a_title, NULL);
+	/*
+	if (filename) {
+		QString filename(filename);
+		this->file_entry->set_filename(filename);
+	}
+
+	if (last_folder_uri) {
+		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(widgets->file), last_folder_uri);
+	}
+
+	*/
+	/* Add filters. */
+
+
+	QStringList filter;
+	filter << tr("All files (*)");
+
+	this->file_entry->file_selector->setNameFilters(filter);
+
+	for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+
+		QString a = QString((iter->second)->label) + "(" + QString((iter->second)->ext) + ")";
+		//qDebug() << "II: Babel Dialog: adding file filter " << a;
+		filter << a;
+
+		char const * ext = (iter->second)->ext;
+		if (ext == NULL || ext[0] == '\0') {
+			/* No file extension => no filter. */
+			continue;
+		}
+		//char * pattern = g_strdup_printf("*.%s", ext);
+
+#ifdef K
+		GtkFileFilter * filter = gtk_file_filter_new();
+		gtk_file_filter_add_pattern(filter, pattern);
+		if (strstr(label, pattern+1)) {
+			gtk_file_filter_set_name(filter, label);
+		} else {
+			/* Ensure displayed label contains file pattern. */
+			/* NB: we skip the '*' in the pattern. */
+			char * name = g_strdup_printf("%s (%s)", label, pattern+1);
+			gtk_file_filter_set_name(filter, name);
+			free(name);
+#endif
+	}
+
+#ifdef K
+	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
+	gtk_file_chooser_add_filter(this->file_entry, filter);
+	if (last_file_type == file_type) {
+		/* Previous selection used this filter. */
+		gtk_file_chooser_set_filter(this->file_entry, filter);
+	}
+
+	free(pattern);
+#endif
+	this->vbox->addWidget(this->file_entry);
+
+
+
+	label = new QLabel("File type:");
+	this->vbox->addWidget(label);
+
+
+
+#ifdef K
+	GtkFileFilter *all_filter = gtk_file_filter_new();
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
+	if (last_file_type == NULL) {
+		/* No previously selected filter or 'All files' selected. */
+		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
+	}
+#endif
+	/* The file format selector. */
+	/* Propose any readable file. */
+	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
+	this->file_types_combo = build_file_type_selector(mode);
+	this->vbox->addWidget(this->file_types_combo);
+
+	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
+	this->file_types_combo->setCurrentIndex(last_type);
+
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	this->button_box->addButton(QDialogButtonBox::Cancel);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	this->vbox->addWidget(this->button_box);
+
+
+	/* Manually call the callback to set state of OK button. */
+	this->file_type_changed_cb(last_type);
+
+
+	/* Blinky cursor in input field will be visible and will bring
+	   user's eyes to widget that has a focus. */
+	this->file_entry->setFocus();
+}
+
+
+
+
+void BabelDialog::file_type_changed_cb(int index)
+{
+	qDebug() << "SLOT: Datasource File: current index changed to" << index;
+
+	/* Only allow dialog's validation when format selection is done. */
+	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);
+	button->setEnabled(index != 0); /* Index is zero. User Data is -1. */
+}
+
+
+
+
+void BabelDialog::add_file_type_filter(BabelFileType * file_type)
+{
+	char const * label = file_type->label;
+	char const * ext = file_type->ext;
+	if (ext == NULL || ext[0] == '\0') {
+		/* No file extension => no filter. */
+		return;
+	}
+	const QString pattern = QString("*.%1").arg(ext);
+
+#ifdef K
+	GtkFileFilter * filter = gtk_file_filter_new();
+	gtk_file_filter_add_pattern(filter, pattern);
+	if (strstr(label, pattern+1)) {
+		gtk_file_filter_set_name(filter, label);
+	} else {
+		/* Ensure displayed label contains file pattern. */
+		/* NB: we skip the '*' in the pattern. */
+		char * name = g_strdup_printf("%s (%s)", label, pattern+1);
+		gtk_file_filter_set_name(filter, name);
+		free(name);
+	}
+
+	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
+	gtk_file_chooser_add_filter(this->file_entry, filter);
+	if (last_file_type == file_type) {
+		/* Previous selection used this filter. */
+		gtk_file_chooser_set_filter(this->file_entry, filter);
+	}
+
+	free(pattern);
+#endif
 }
