@@ -42,6 +42,7 @@
 #include "trackpoint_properties.h"
 #include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
+#include "file.h"
 
 
 
@@ -385,6 +386,12 @@ namespace SlavGPS {
 		void tool_extended_route_finder_undo();
 		LayerToolFuncStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 		void undo_trackpoint_add();
+
+
+		/* Export. */
+		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
+		void open_layer_with_external_program(const QString & external_program);
+		void export_layer_with_gpsbabel(const QString & title, const QString & default_name);
 
 
 

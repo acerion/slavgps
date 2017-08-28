@@ -717,23 +717,23 @@ bool SlavGPS::check_file_magic_vik(char const * filename)
    \brief Append a file extension, if not already present.
    Returns: file name with extension.
 */
-QString SlavGPS::append_file_ext(const QString & file_name, VikFileType_t type)
+QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type)
 {
 	const char * ext = NULL;
 
 	/* Select an extension. */
-	switch (type) {
-	case FILE_TYPE_GPX:
+	switch (file_type) {
+	case SGFileType::GPX:
 		ext = ".gpx";
 		break;
-	case FILE_TYPE_KML:
+	case SGFileType::KML:
 		ext = ".kml";
 		break;
-	case FILE_TYPE_GEOJSON:
+	case SGFileType::GEOJSON:
 		ext = ".geojson";
 		break;
-	case FILE_TYPE_GPSMAPPER:
-	case FILE_TYPE_GPSPOINT:
+	case SGFileType::GPSMAPPER:
+	case SGFileType::GPSPOINT:
 	default:
 		/* Do nothing, ext already set to NULL. */
 		break;
@@ -919,7 +919,7 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden)
+bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, SGFileType file_type, Track * trk, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
 	FILE * f = fopen(filename, "w");
@@ -928,7 +928,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 
 		if (trk) {
 			switch (file_type) {
-			case FILE_TYPE_GPX:
+			case SGFileType::GPX:
 				/* trk defined so can set the option. */
 				options.is_route = trk->sublayer_type == SublayerType::ROUTE;
 				a_gpx_write_track_file(trk, f, &options);
@@ -938,19 +938,19 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 			}
 		} else {
 			switch (file_type) {
-			case FILE_TYPE_GPSMAPPER:
+			case SGFileType::GPSMAPPER:
 				gpsmapper_write_file(f, trw);
 				break;
-			case FILE_TYPE_GPX:
+			case SGFileType::GPX:
 				a_gpx_write_file(trw, f, &options);
 				break;
-			case FILE_TYPE_GPSPOINT:
+			case SGFileType::GPSPOINT:
 				a_gpspoint_write_file(trw, f);
 				break;
-			case FILE_TYPE_GEOJSON:
+			case SGFileType::GEOJSON:
 				result = geojson_write_file(trw, f);
 				break;
-			case FILE_TYPE_KML:
+			case SGFileType::KML:
 				fclose(f);
 				switch (Preferences::get_kml_export_units()) {
 				case VIK_KML_EXPORT_UNITS_STATUTE:

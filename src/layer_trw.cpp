@@ -66,7 +66,6 @@
 
 
 #include "layer_gps.h"
-#include "layer_trw_export.h"
 #include "layer_trw_stats.h"
 #include "geonamessearch.h"
 #ifdef VIK_CONFIG_GEOTAG
@@ -2400,8 +2399,8 @@ void LayerTRW::full_view_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSPOINT);
-	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSPOINT);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSPOINT);
 }
 
 
@@ -2409,8 +2408,8 @@ void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSMAPPER);
-	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSMAPPER);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSMAPPER);
 }
 
 
@@ -2418,8 +2417,8 @@ void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpx_cb(void) /* Slot. */
 {
-	const QString & auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPX);
-	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
+	const QString & auto_save_name = append_file_ext(this->get_name(), SGFileType::GPX);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPX);
 }
 
 
@@ -2427,8 +2426,8 @@ void LayerTRW::export_as_gpx_cb(void) /* Slot. */
 
 void LayerTRW::export_as_kml_cb(void) /* Slot. */
 {
-	const QString & auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_KML);
-	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
+	const QString & auto_save_name = append_file_ext(this->get_name(), SGFileType::KML);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::KML);
 }
 
 
@@ -2436,8 +2435,8 @@ void LayerTRW::export_as_kml_cb(void) /* Slot. */
 
 void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GEOJSON);
-	vik_trw_layer_export(this, tr("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GEOJSON);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GEOJSON);
 }
 
 
@@ -2445,7 +2444,7 @@ void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 
 void LayerTRW::export_via_babel_cb(void) /* Slot. */
 {
-	vik_trw_layer_export_gpsbabel(this, tr("Export Layer"), this->get_name());
+	this->export_layer_with_gpsbabel(tr("Export Layer"), this->get_name());
 }
 
 
@@ -2453,7 +2452,7 @@ void LayerTRW::export_via_babel_cb(void) /* Slot. */
 
 void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 {
-	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_1());
+	this->open_layer_with_external_program(Preferences::get_external_gpx_program_1());
 }
 
 
@@ -2461,7 +2460,7 @@ void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 
 void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 {
-	vik_trw_layer_export_external_gpx(this, Preferences::get_external_gpx_program_2());
+	this->open_layer_with_external_program(Preferences::get_external_gpx_program_2());
 }
 
 
@@ -2475,7 +2474,7 @@ void LayerTRW::export_gpx_track_cb(void)
 		return;
 	}
 
-	const QString auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
+	const QString auto_save_name = append_file_ext(trk->name, SGFileType::GPX);
 
 	QString title;
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
@@ -2483,7 +2482,7 @@ void LayerTRW::export_gpx_track_cb(void)
 	} else {
 		title = tr("Export Track as GPX");
 	}
-	vik_trw_layer_export(this, title, auto_save_name, trk, FILE_TYPE_GPX);
+	this->export_layer(title, auto_save_name, trk, SGFileType::GPX);
 }
 
 

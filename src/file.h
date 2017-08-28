@@ -45,13 +45,13 @@ namespace SlavGPS {
 
 
 
-	typedef enum {
-		FILE_TYPE_GPSPOINT  = 1,
-		FILE_TYPE_GPSMAPPER = 2,
-		FILE_TYPE_GPX       = 3,
-		FILE_TYPE_KML       = 4,
-		FILE_TYPE_GEOJSON   = 5
-	} VikFileType_t;
+	enum class SGFileType {
+		GPSPOINT  = 1,
+		GPSMAPPER = 2,
+		GPX       = 3,
+		KML       = 4,
+		GEOJSON   = 5
+	};
 
 	typedef enum {
 		LOAD_TYPE_READ_FAILURE,
@@ -70,11 +70,11 @@ namespace SlavGPS {
 	/* Function to determine if a filename is a 'viking' type file. */
 	bool check_file_magic_vik(char const * filename);
 
-	QString append_file_ext(const QString & file_name, VikFileType_t type);
+	QString append_file_ext(const QString & file_name, SGFileType file_type);
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
-	/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK. */
-	bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
+	/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
+	bool a_file_export(LayerTRW * trw, char const * filename, SGFileType file_type, Track * trk, bool write_hidden);
 	bool a_file_export_babel(LayerTRW * trw, const QString & output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints);
 
 	void file_write_layer_param(FILE * f, char const * name, SGVariantType type, SGVariant data);

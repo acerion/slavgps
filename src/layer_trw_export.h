@@ -42,13 +42,6 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_export(LayerTRW * layer, const QString & title, const QString & default_name, Track * trk, VikFileType_t file_type);
-	void vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_program);
-	void vik_trw_layer_export_gpsbabel(LayerTRW * trw, const QString & title, const QString & default_name);
-
-
-
-
 } /* namespace SlavGPS */
 
 

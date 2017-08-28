@@ -536,7 +536,7 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 static bool babel_general_convert_to(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, Track * trk, const QString & name_src)
 {
 	/* Now strips out invisible tracks and waypoints. */
-	if (!a_file_export(trw, name_src.toUtf8().constData(), FILE_TYPE_GPX, trk, false)) {
+	if (!a_file_export(trw, name_src.toUtf8().constData(), SGFileType::GPX, trk, false)) {
 		qDebug() << "EE: Babel: Convert to: Error exporting to" << name_src;
 		return false;
 	}

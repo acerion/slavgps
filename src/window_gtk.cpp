@@ -816,7 +816,7 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 
 static void export_to_gpx_cb(GtkAction * a, Window * window)
 {
-	window->export_to_common(FILE_TYPE_GPX, ".gpx");
+	window->export_to_common(SGFileType::GPX, ".gpx");
 }
 
 
@@ -824,7 +824,7 @@ static void export_to_gpx_cb(GtkAction * a, Window * window)
 
 static void export_to_kml_cb(GtkAction * a, Window * window)
 {
-	window->export_to_common(FILE_TYPE_KML, ".kml");
+	window->export_to_common(SGFileType::KML, ".kml");
 }
 
 
