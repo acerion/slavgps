@@ -34,7 +34,7 @@
 #include "datasource_file.h"
 #include "babel.h"
 #include "gpx.h"
-#include "babel_ui.h"
+#include "babel_dialog.h"
 #include "acquire.h"
 #include "util.h"
 

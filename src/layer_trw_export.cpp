@@ -33,7 +33,7 @@
 #include <QDebug>
 
 #include "babel.h"
-#include "babel_ui.h"
+#include "babel_dialog.h"
 #include "layer_trw.h"
 #include "gpx.h"
 #include "fileutils.h"

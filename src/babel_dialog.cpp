@@ -26,7 +26,7 @@
 #include <QLabel>
 
 #include "babel.h"
-#include "babel_ui.h"
+#include "babel_dialog.h"
 
 
 

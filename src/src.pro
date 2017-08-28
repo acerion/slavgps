@@ -70,7 +70,7 @@ SOURCES += main.cpp \
     acquire.cpp \
     datasource_file.cpp \
     babel.cpp \
-    babel_ui.cpp \
+    babel_dialog.cpp \
     window_layer_tools.cpp \
     viewport.cpp \
     viewport_utils.cpp \
@@ -242,7 +242,7 @@ HEADERS += window.h \
     acquire.h \
     datasource_file.h \
     babel.h \
-    babel_ui.h \
+    babel_dialog.h \
     variant.h
 
 
