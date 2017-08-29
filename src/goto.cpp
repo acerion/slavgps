@@ -31,6 +31,7 @@
 #include <glib.h>
 
 #include <QDebug>
+#include <QLineEdit>
 
 #include "goto_tool.h"
 #include "goto.h"

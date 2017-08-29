@@ -29,9 +29,9 @@
 #include <QPixmap>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <QLineEdit>
 
 #include "layer.h"
-#include "widget_file_entry.h"
 
 
 
@@ -42,6 +42,7 @@ namespace SlavGPS {
 
 
 	class Viewport;
+	class SGFileEntry;
 
 
 

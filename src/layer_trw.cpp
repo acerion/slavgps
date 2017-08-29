@@ -2444,7 +2444,7 @@ void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 
 void LayerTRW::export_via_babel_cb(void) /* Slot. */
 {
-	this->export_layer_with_gpsbabel(tr("Export Layer"), this->get_name());
+	this->export_layer_with_gpsbabel(tr("Export Layer with GPSBabel"), this->get_name());
 }
 
 

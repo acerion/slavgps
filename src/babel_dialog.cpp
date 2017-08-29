@@ -16,18 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-
-#include <cstdlib>
 
 #include <QCheckBox>
 #include <QDebug>
 #include <QLabel>
 
-#include "babel.h"
 #include "babel_dialog.h"
-
+#include "widget_file_entry.h"
 
 
 
@@ -126,11 +122,11 @@ BabelFileType * BabelDialog::get_file_type_selection(void)
 	   All other items have been added with id >= 0. */
 	int i = this->file_types_combo->currentData().toInt();
 	if (i == -1) {
-		qDebug() << "II: Babel: selected file type: NONE";
+		qDebug() << "II: Babel Dialog: selected file type: NONE";
 		return NULL;
 	} else {
 		BabelFileType * file_type = a_babel_file_types.at(i);
-		qDebug().nospace() << "II: Babel: selected file type: '" << file_type->name << "', '" << file_type->label << "'";
+		qDebug().nospace() << "II: Babel Dialog: selected file type: '" << file_type->name << "', '" << file_type->label << "'";
 		return file_type;
 	}
 }
@@ -147,40 +143,33 @@ BabelFileType * BabelDialog::get_file_type_selection(void)
 
    \return a layout widget packing all checkboxes
 */
-QHBoxLayout * BabelDialog::build_mode_selector(const BabelMode & mode)
+QHBoxLayout * BabelDialog::build_mode_selector(bool tracks, bool routes, bool waypoints)
 {
-#if 0
-	bool tracks, bool routes, bool waypoints
 	QHBoxLayout * hbox = new QHBoxLayout();
 	QCheckBox * checkbox = NULL;
 
+	const QString tooltip = tr("Select the information to process.\n"
+				   "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
+				   "Please, refer to GPSBabel documentation if unsure.");
+
 	checkbox = new QCheckBox(QObject::tr("Tracks"));
 	checkbox->setChecked(tracks);
+	checkbox->setToolTip(tooltip);
 	hbox->addWidget(checkbox);
 
 	checkbox = new QCheckBox(QObject::tr("Routes"));
 	checkbox->setChecked(routes);
+	checkbox->setToolTip(tooltip);
 	hbox->addWidget(checkbox);
 
 	checkbox = new QCheckBox(QObject::tr("Waypoints"));
 	checkbox->setChecked(waypoints);
+	checkbox->setToolTip(tooltip);
 	hbox->addWidget(checkbox);
 
-	hbox->setToolTip(QObject::tr("Select the information to process.\n"
-				     "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
-				     "Please, refer to GPSbabel if unsure."));
-
 	return hbox;
-#endif
 }
 
-
-
-void BabelDialog::set_write_mode(const BabelMode & mode)
-{
-
-
-}
 
 
 
@@ -194,33 +183,35 @@ void BabelDialog::set_write_mode(const BabelMode & mode)
 */
 void BabelDialog::get_write_mode(BabelMode & mode)
 {
-#ifdef K
-	bool * tracks, bool * routes, bool * waypoints
+	if (!this->mode_box) {
+		qDebug() << "EE: Babel Dialog: calling get write mode for object with NULL mode box";
+		return;
+	}
 
 	QWidget * widget = NULL;
 	QCheckBox * checkbox = NULL;
 
-	widget = hbox->itemAt(0)->widget();
+	widget = this->mode_box->itemAt(0)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel UI: failed to get widget 0";
+		qDebug() << "EE: Babel Dialog: failed to get checkbox 0";
 		return;
 	}
-	*tracks = ((QCheckBox *) widget)->isChecked();
+	mode.tracks_write = ((QCheckBox *) widget)->isChecked();
 
-	widget = hbox->itemAt(1)->widget();
+	widget = this->mode_box->itemAt(1)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel UI: failed to get widget 1";
+		qDebug() << "EE: Babel Dialog: failed to get checkbox 1";
 		return;
 	}
-	*routes = ((QCheckBox *) widget)->isChecked();
+	mode.routes_write = ((QCheckBox *) widget)->isChecked();
 
-	widget = hbox->itemAt(2)->widget();
+	widget = this->mode_box->itemAt(2)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel UI: failed to get widget 2";
+		qDebug() << "EE: Babel Dialog: failed to get checkbox 2";
 		return;
 	}
-	*waypoints = ((QCheckBox *) widget)->isChecked();
-#endif
+	mode.waypoints_write = ((QCheckBox *) widget)->isChecked();
+
 	return;
 }
 
@@ -239,12 +230,13 @@ BabelDialog::BabelDialog(QString const & title, QWidget * parent_) : QDialog(par
 BabelDialog::~BabelDialog()
 {
 	delete this->file_types_combo;
+	delete this->mode_box;
 }
 
 
 
 
-void BabelDialog::build_ui(void)
+void BabelDialog::build_ui(const BabelMode * mode)
 {
 	qDebug() << "II: Babel Dialog: building dialog UI";
 
@@ -254,13 +246,18 @@ void BabelDialog::build_ui(void)
 	this->setLayout(this->vbox);
 
 
-
 	QLabel * label = new QLabel("File");
 	this->vbox->addWidget(label);
 
 
-	QString a_title = "File to Import";
-	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, a_title, NULL);
+	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
+		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select Target File File for Export"), NULL);
+		this->file_entry->file_selector->setAcceptMode(QFileDialog::AcceptSave);
+	} else {
+		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select File to Import"), NULL);
+	}
+
+
 	/*
 	if (filename) {
 		QString filename(filename);
@@ -272,9 +269,9 @@ void BabelDialog::build_ui(void)
 	}
 
 	*/
+
+
 	/* Add filters. */
-
-
 	QStringList filter;
 	filter << tr("All files (*)");
 
@@ -320,10 +317,8 @@ void BabelDialog::build_ui(void)
 	this->vbox->addWidget(this->file_entry);
 
 
-
 	label = new QLabel("File type:");
 	this->vbox->addWidget(label);
-
 
 
 #ifdef K
@@ -335,13 +330,34 @@ void BabelDialog::build_ui(void)
 	}
 #endif
 	/* The file format selector. */
-	/* Propose any readable file. */
-	BabelMode mode = { 1, 0, 1, 0, 1, 0 };
-	this->file_types_combo = build_file_type_selector(mode);
+	if (mode) {
+		this->file_types_combo = build_file_type_selector(*mode);
+	} else {
+		/* The dialog is in "import" mode. Propose any readable file. */
+		const BabelMode read_mode = { 1, 0, 1, 0, 1, 0 };
+		this->file_types_combo = build_file_type_selector(read_mode);
+	}
 	this->vbox->addWidget(this->file_types_combo);
 
 	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
 	this->file_types_combo->setCurrentIndex(last_type);
+
+
+	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
+
+		/* These checkboxes are only for "export" mode (at least for now). */
+
+		QFrame * line = new QFrame();
+		line->setFrameShape(QFrame::HLine);
+		line->setFrameShadow(QFrame::Sunken);
+		this->vbox->addWidget(line);
+
+		label = new QLabel(tr("Export these items:"));
+		this->vbox->addWidget(label);
+
+		this->mode_box = this->build_mode_selector(mode->tracks_write, mode->routes_write, mode->waypoints_write);
+		this->vbox->addLayout(this->mode_box);
+	}
 
 
 	this->button_box = new QDialogButtonBox();
@@ -366,7 +382,7 @@ void BabelDialog::build_ui(void)
 
 void BabelDialog::file_type_changed_cb(int index)
 {
-	qDebug() << "SLOT: Datasource File: current index changed to" << index;
+	qDebug() << "SLOT: Babel Dialog: current index changed to" << index;
 
 	/* Only allow dialog's validation when format selection is done. */
 	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);

@@ -36,13 +36,12 @@ using namespace SlavGPS;
 
 
 
-SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
-	this->selector_title = title;
-
 	this->file_selector = new QFileDialog();
 	this->file_selector->setFileMode(mode);
 	this->file_selector->setOptions(options);
+	this->file_selector->setWindowTitle(title);
 
 
 	this->line = new QLineEdit(this);

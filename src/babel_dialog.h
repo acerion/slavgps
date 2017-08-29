@@ -33,12 +33,16 @@
 #include <QComboBox>
 
 #include "babel.h"
-#include "widget_file_entry.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class SGFileEntry;
 
 
 
@@ -49,24 +53,30 @@ namespace SlavGPS {
 		BabelDialog(QString const & title, QWidget * parent = NULL);
 		~BabelDialog();
 
-		void set_write_mode(const BabelMode & mode);
+		void build_ui(const BabelMode * mode = NULL);
+
 		void get_write_mode(BabelMode & mode);
-		void build_ui(void);
-		QHBoxLayout * build_mode_selector(const BabelMode & mode);
+
 		QComboBox * build_file_type_selector(const BabelMode & mode);
 		BabelFileType * get_file_type_selection(void);
+
+		void add_file_type_filter(BabelFileType * babel_file_type);
 
 	private slots:
 		void file_type_changed_cb(int index);
 
 	public:
-		QDialogButtonBox * button_box = NULL;
-		QVBoxLayout * vbox = NULL;
-		QComboBox * file_types_combo = NULL;
-
 		SlavGPS::SGFileEntry * file_entry = NULL;
 
-		void add_file_type_filter(BabelFileType * babel_file_type);
+	private:
+		QHBoxLayout * build_mode_selector(bool tracks, bool routes, bool waypoints);
+
+		QComboBox * file_types_combo = NULL;
+		QVBoxLayout * vbox = NULL;
+		QHBoxLayout * mode_box = NULL;
+		QDialogButtonBox * button_box = NULL;
+
+		bool do_import = true; /* The dialog may be used to perform export of TRW data, or import of TRW data. */
 	};
 
 

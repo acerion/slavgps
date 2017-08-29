@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <QDebug>
+#include <QLineEdit>
 
 #include <glib.h>
 

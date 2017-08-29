@@ -36,7 +36,6 @@
 #include "statusbar.h"
 #include "file.h"
 #include "acquire.h"
-#include "widget_file_entry.h"
 #include "viewport_utils.h"
 #include "track.h"
 #include "layer_trw_containers.h"
@@ -71,6 +70,7 @@ namespace SlavGPS {
 	class LayerToolbox;
 	class Viewport;
 	class LayersPanel;
+	class SGFileEntry;
 
 
 

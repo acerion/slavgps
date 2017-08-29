@@ -42,7 +42,7 @@ namespace SlavGPS {
 	class SGFileEntry : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent);
+		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
 		~SGFileEntry();
 
 		void set_filename(QString & filename);
@@ -63,8 +63,6 @@ namespace SlavGPS {
 		QHBoxLayout * hbox = NULL;
 
 
-
-		QString selector_title;
 		QString selector_filename;
 	};
 

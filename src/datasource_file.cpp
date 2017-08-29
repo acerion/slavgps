@@ -31,12 +31,12 @@
 
 #include <QDebug>
 
-#include "datasource_file.h"
 #include "babel.h"
 #include "gpx.h"
 #include "babel_dialog.h"
 #include "acquire.h"
 #include "util.h"
+#include "widget_file_entry.h"
 
 
 
@@ -117,7 +117,6 @@ static int datasource_file_internal_dialog(QWidget * parent)
 		const BabelFileType * file_type = data_source_file_dialog->get_file_type_selection();
 
 		qDebug() << "II: Datasource File: dialog result: accepted";
-		qDebug() << "II: Datasource File: format type index:" << data_source_file_dialog->file_types_combo->currentIndex();
 		qDebug() << "II: Datasource File: selected format type name: '" << file_type->name  << "'";
 		qDebug() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
 		qDebug() << "II: Datasource File: selected file path: '" << data_source_file_dialog->file_entry->get_filename() << "'";

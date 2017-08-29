@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,6 +31,7 @@
 #include <glib/gstdio.h>
 
 #include <QDebug>
+#include <QFileDialog>
 
 #include "babel.h"
 #include "babel_dialog.h"
@@ -42,6 +43,7 @@
 #include "globals.h"
 #include "window.h"
 #include "vikutils.h"
+#include "widget_file_entry.h"
 
 
 
@@ -128,8 +130,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 	bool failed = false;
 
 	BabelDialog * dialog = new BabelDialog(title);
-	dialog->set_write_mode(mode);
-	dialog->build_ui();
+	dialog->build_ui(&mode);
 
 #ifdef K
 	char *cwd = g_get_current_dir();
@@ -148,7 +149,6 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		const QString output_file_path = dialog->file_entry->get_filename();
 
 		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
-		qDebug() << "II: Layer TRW Export via gpsbabel: format type index:" << dialog->file_types_combo->currentIndex();
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type name:" << file_type->name;
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type label:" << file_type->label;
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_path;
