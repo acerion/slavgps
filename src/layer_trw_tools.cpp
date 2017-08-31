@@ -471,7 +471,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * 
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -542,7 +542,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::click_(Layer * layer, QMouseEvent 
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -580,7 +580,7 @@ LayerToolFuncStatus LayerToolTRWEditWaypoint::move_(Layer * layer, QMouseEvent *
 
 
 
-LayerToolFuncStatus LayerToolTRWEditWaypoint::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -794,7 +794,7 @@ void LayerTRW::update_statusbar()
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::move_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
@@ -1029,7 +1029,7 @@ LayerToolFuncStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Vi
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1063,7 +1063,7 @@ LayerToolFuncStatus LayerToolTRWNewTrack::click_(Layer * layer, QMouseEvent * ev
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::double_click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->type != LayerType::TRW) {
@@ -1088,7 +1088,7 @@ LayerToolFuncStatus LayerToolTRWNewTrack::double_click_(Layer * layer, QMouseEve
 
 
 
-LayerToolFuncStatus LayerToolTRWNewTrack::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewTrack::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
@@ -1139,7 +1139,7 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1172,7 +1172,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::click_(Layer * layer, QMouseEvent * ev
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::move_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewRoute::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
@@ -1180,7 +1180,7 @@ LayerToolFuncStatus LayerToolTRWNewRoute::move_(Layer * layer, QMouseEvent * ev)
 
 
 
-LayerToolFuncStatus LayerToolTRWNewRoute::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewRoute::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
@@ -1225,7 +1225,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * vi
 
 
 
-LayerToolFuncStatus LayerToolTRWNewWaypoint::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1285,7 +1285,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewpor
  * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1380,7 +1380,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::click_(Layer * layer, QMouseEven
 
 
 
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1412,7 +1412,7 @@ LayerToolFuncStatus LayerToolTRWEditTrackpoint::move_(Layer * layer, QMouseEvent
 
 
 
-LayerToolFuncStatus LayerToolTRWEditTrackpoint::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1491,7 +1491,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::move_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_move(this, (LayerTRW *) layer, ev);
 }
@@ -1499,7 +1499,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::move_(Layer * layer, QMouse
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	return tool_new_track_release(this, (LayerTRW *) layer, ev);
 }
@@ -1531,7 +1531,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 
 
 
-LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1597,7 +1597,7 @@ LayerToolFuncStatus LayerToolTRWExtendedRouteFinder::click_(Layer * layer, QMous
 		trw->current_trk = NULL;
 
 		/* Create a new route where we will add the planned route to. */
-		LayerToolFuncStatus ret = this->click_(trw, ev);
+		LayerToolFuncStatus ret = this->handle_mouse_click(trw, ev);
 
 		trw->route_finder_started = true;
 
@@ -1681,7 +1681,7 @@ void LayerTRW::show_picture_cb(void) /* Slot. */
 
 
 
-LayerToolFuncStatus LayerToolTRWShowPicture::click_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 

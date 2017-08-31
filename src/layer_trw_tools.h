@@ -65,25 +65,25 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWNewWaypoint(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 	class LayerToolTRWEditTrackpoint : public LayerTool {
 	public:
 		LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 	class LayerToolTRWExtendedRouteFinder : public LayerTool {
 	public:
 		LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
@@ -91,26 +91,26 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWShowPicture(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 	class LayerToolTRWEditWaypoint : public LayerTool {
 	public:
 		LayerToolTRWEditWaypoint(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 	class LayerToolTRWNewTrack : public LayerTool {
 	public:
 		LayerToolTRWNewTrack(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus double_click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 
@@ -118,9 +118,9 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWNewRoute(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		bool key_press_(Layer * layer, QKeyEvent * event);
 	};
 

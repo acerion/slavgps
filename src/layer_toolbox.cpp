@@ -392,9 +392,9 @@ void LayerToolbox::click(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
+	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "tool received click, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
-	this->active_tool->click_(layer, event);
+	this->active_tool->handle_mouse_click(layer, event);
 
 	return;
 }
@@ -427,9 +427,9 @@ void LayerToolbox::double_click(QMouseEvent * event)
 	}
 
 
-	qDebug() << "II: Layer Tools: double click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
+	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "received double click, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
-	this->active_tool->double_click_(layer, event);
+	this->active_tool->handle_mouse_double_click(layer, event);
 
 	return;
 }
@@ -464,7 +464,7 @@ void LayerToolbox::move(QMouseEvent * event)
 
 	qDebug() << "II: Layer Tools: move received, passing to tool" << this->active_tool->get_description();
 
-	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->move_(layer, event)) {
+	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
 #if 0
 		gtk_widget_grab_focus(this->window->viewport);
 #endif
@@ -501,9 +501,9 @@ void LayerToolbox::release(QMouseEvent * event)
 	}
 
 
-	qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
+	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "received release, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO: move this into release() method. */
-	this->active_tool->release_(layer, event);
+	this->active_tool->handle_mouse_release(layer, event);
 
 	return;
 }

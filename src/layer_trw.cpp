@@ -63,6 +63,7 @@
 #include "layers_panel.h"
 #include "preferences.h"
 #include "util.h"
+#include "window_layer_tools.h"
 
 
 #include "layer_gps.h"
@@ -7210,7 +7211,6 @@ LayerTRW::LayerTRW() : Layer()
 
 
 	this->menu_selection = this->interface->menu_items_selection;
-
 
 #if 0
 	rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);

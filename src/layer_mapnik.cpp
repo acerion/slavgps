@@ -1174,7 +1174,7 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * view
 
 
 
-LayerToolFuncStatus LayerToolMapnikFeature::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (!layer) {
 		return (LayerToolFuncStatus) false; /* kamilFIXME: check this cast of returned value. */

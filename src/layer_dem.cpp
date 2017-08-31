@@ -1377,7 +1377,7 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 
 
 
-LayerToolFuncStatus LayerToolDEMDownload::release_(Layer * layer, QMouseEvent * ev)
+LayerToolFuncStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::DEM) {
 		return LayerToolFuncStatus::IGNORE;

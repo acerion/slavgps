@@ -796,6 +796,81 @@ std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Laye
 
 
 
+bool LayerAggregate::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * layer_tool)
+{
+	if (this->children->empty()) {
+		return false;
+	}
+
+	if (!this->visible) {
+		/* In practice this condition will be checked for
+		   top-level aggregate layer only. For child aggregate
+		   layers the visibility condition in a loop below
+		   will be tested first, before a call to the child's
+		   select_click().  */
+		return false;
+	}
+
+	bool has_been_handled = false;
+
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		if (!(*iter)->visible) {
+			continue;
+		}
+
+		has_been_handled = (*iter)->select_click(event, viewport, layer_tool);
+		if (has_been_handled) {
+			/* iter/layer has handled the event. */
+			break;
+		}
+	}
+
+	return has_been_handled;
+
+#if 0   /* Leaving the code here for future reference, to see how GPS layer has been handled. */
+	auto child = this->children->begin();
+	/* Where appropriate *don't* include non-visible layers. */
+	while (child != this->children->end()) {
+
+		if (layer->type == LayerType::AGGREGATE) {
+
+				LayerAggregate * aggregate = (LayerAggregate *) layer;
+
+			}
+		} else if (expected_layer_type == layer->type) {
+			if (layer->visible) {
+				layers->push_back(layer); /* now in top down order */
+			}
+		} else if (expected_layer_type == LayerType::TRW) {
+			if (layer->type != LayerType::GPS) {
+				continue;
+			}
+
+			/* GPS layers contain TRW layers. cf with usage in file.c */
+			if (!(layer->visible)) {
+				continue;
+			}
+
+			if (((LayerGPS *) layer)->is_empty()) {
+				continue;
+			}
+
+			std::list<Layer const * > * gps_trw_layers = ((LayerGPS *) layer)->get_children();
+			for (auto iter = gps_trw_layers->begin(); iter != gps_trw_layers->end(); iter++) {
+				layers->push_front(*iter);
+			}
+			delete gps_trw_layers;
+		}
+		child++;
+	}
+#endif
+
+
+}
+
+
+
+
 void LayerAggregate::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;

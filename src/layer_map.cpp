@@ -2063,7 +2063,7 @@ void LayerMap::tile_info_cb(void)
 
 
 
-LayerToolFuncStatus LayerToolMapsDownload::release_(Layer * _layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
 	if (!_layer || _layer->type != LayerType::MAP) {
 		return LayerToolFuncStatus::IGNORE;
@@ -2149,7 +2149,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 
 
 
-LayerToolFuncStatus LayerToolMapsDownload::click_(Layer * _layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
 	if (!_layer || _layer->type != LayerType::MAP) {

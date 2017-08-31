@@ -116,7 +116,7 @@ namespace SlavGPS {
 	public:
 		LayerToolMapnikFeature(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 

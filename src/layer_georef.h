@@ -155,15 +155,15 @@ namespace SlavGPS {
 	public:
 		LayerToolGeorefMove(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 	class LayerToolGeorefZoom : public LayerTool {
 	public:
 		LayerToolGeorefZoom(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 

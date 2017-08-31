@@ -31,6 +31,7 @@
 #include "window.h"
 #include "window_layer_tools.h"
 #include "layer_trw.h"
+#include "layer_aggregate.h"
 #include "coords.h"
 #include "tree_view_internal.h"
 //#include "vikutils.h"
@@ -345,9 +346,9 @@ LayerToolRuler::~LayerToolRuler()
 
 
 
-LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Ruler: ->click()";
+	qDebug() << "DD: Layer Tools: Ruler: ->handle_mouse_click() called";
 
 	char temp[128] = { 0 };
 
@@ -396,9 +397,9 @@ LayerToolFuncStatus LayerToolRuler::click_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Ruler: ->move()";
+	qDebug() << "DD: Layer Tools: Ruler: ->handle_mouse_move()";
 
 	char temp[128] = { 0 };
 
@@ -487,7 +488,7 @@ LayerToolFuncStatus LayerToolRuler::move_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolRuler::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "II: Layer Tools: Ruler: ->release()";
 	if (this->ruler->invalidate_start_coord) {
@@ -595,9 +596,9 @@ LayerToolZoom::~LayerToolZoom()
 
 
 
-LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Zoom: ->click() called";
+	qDebug() << "DD: Layer Tools: Zoom: ->handle_mouse_click() called";
 
 	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 #if 0
@@ -660,7 +661,7 @@ LayerToolFuncStatus LayerToolZoom::click_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 #if 0
@@ -713,7 +714,7 @@ LayerToolFuncStatus LayerToolZoom::move_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolZoom::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 
@@ -797,9 +798,9 @@ LayerToolPan::~LayerToolPan()
 
 
 /* NB Double clicking means this gets called THREE times!!! */
-LayerToolFuncStatus LayerToolPan::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Pan: ->click() called";
+	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_click() called";
 	this->window->modified = true;
 #if 0
 	if (event->type == GDK_2BUTTON_PRESS) {
@@ -835,7 +836,7 @@ LayerToolFuncStatus LayerToolPan::click_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolPan::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
 	this->window->pan_move(event);
@@ -846,7 +847,7 @@ LayerToolFuncStatus LayerToolPan::move_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolPan::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton) {
 		this->window->pan_release(event);
@@ -894,9 +895,9 @@ LayerToolSelect::~LayerToolSelect()
 
 
 
-LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools:" << this->id_string << "->click() called";
+	qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_click() called";
 
 	this->window->select_move = false;
 
@@ -909,23 +910,33 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 	if (event->modifiers() & SG_MOVE_MODIFIER) {
 		this->window->pan_click(event);
 	} else {
+		/* TODO: the code in this branch visits (in one way or
+		   the other) whole tree of layers, starting with top
+		   level aggregate layer.  Should we really visit all
+		   layers? Shouldn't we visit only selected items and
+		   its children? */
+
+		bool handled = this->window->layers_panel->get_top_layer()->select_click(event, this->window->viewport, this);
+
+#if 0
 		/* Enable click to apply callback to potentially all track/waypoint layers. */
 		/* Useful as we can find things that aren't necessarily in the currently selected layer. */
 		std::list<Layer const *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
 
-		bool found = false;
+		bool handled = false;
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 			/* Stop on first layer that reports "we clicked on some object in this layer". */
 			if (layer->visible) {
 				if (layer->select_click(event, this->window->viewport, this)) {
-					found = true;
+					handled = true;
 					break;
 				}
 			}
 		}
 		delete layers;
+#endif
 
-		if (!found) {
+		if (!handled) {
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 
 			TreeView * tree_view = this->window->layers_panel->get_treeview();
@@ -944,7 +955,7 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 				}
 			}
 		} else {
-			/* Something found - so enable movement. */
+			/* Some layer has handled the click - so enable movement. */
 			this->window->select_move = true;
 		}
 	}
@@ -955,7 +966,7 @@ LayerToolFuncStatus LayerToolSelect::click_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (this->window->select_move) {
 		/* Don't care about trw here. */
@@ -974,7 +985,7 @@ LayerToolFuncStatus LayerToolSelect::move_(Layer * layer, QMouseEvent * event)
 
 
 
-LayerToolFuncStatus LayerToolSelect::release_(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (this->window->select_move) {
 		/* Don't care about trw here. */

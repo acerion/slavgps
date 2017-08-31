@@ -91,7 +91,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint 
 		len = FMT_MAX_NUMBER_CODES;
 	}
 
-	std::vector<QString> values;
+	std::vector<QString> values(FMT_MAX_NUMBER_CODES);
 
 	SpeedUnit speed_units = Preferences::get_unit_speed();
 	const QString speed_units_str = get_speed_unit_string(speed_units);

@@ -40,7 +40,6 @@ namespace SlavGPS {
 
 
 
-
 	LayerTool * ruler_create(Window * window, Viewport * viewport);
 	LayerTool * zoomtool_create(Window * window, Viewport * viewport);
 	LayerTool * pantool_create(Window * window, Viewport * viewport);
@@ -61,9 +60,9 @@ namespace SlavGPS {
 		LayerToolZoom(Window * window, Viewport * viewport);
 		~LayerToolZoom();
 
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 
 	private:
 		void resize_pixmap(void);
@@ -82,9 +81,9 @@ namespace SlavGPS {
 		LayerToolRuler(Window * window, Viewport * viewport);
 		~LayerToolRuler();
 
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 		void deactivate_(Layer * layer);
 		bool key_press_(Layer * layer, QKeyEvent * event);
 
@@ -99,9 +98,9 @@ namespace SlavGPS {
 		LayerToolPan(Window * window, Viewport * viewport);
 		~LayerToolPan();
 
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 
@@ -110,9 +109,9 @@ namespace SlavGPS {
 		LayerToolSelect(Window * window, Viewport * viewport);
 		~LayerToolSelect();
 
-		LayerToolFuncStatus release_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus move_(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus click_(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 
