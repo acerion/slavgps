@@ -614,7 +614,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 	case WidgetType::BUTTON:
 		if (param->type == SGVariantType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
-			QObject::connect(rv, SIGNAL("clicked"), param->extra_widget_data, SLOT (vlpd.ptr));
+			QObject::connect(rv, SIGNAL (triggered(bool)), param->extra_widget_data, SLOT (vlpd.ptr));
 
 			widget = widget_;
 		}

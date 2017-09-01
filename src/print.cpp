@@ -599,7 +599,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	GtkWidget * button = gtk_button_new_with_mnemonic(_("_Adjust Page Size "
 						"and Orientation"));
 	main_vbox->addWidget(button);
-	QObject::connect(button, SIGNAL("clicked"), info, SLOT (page_setup_cb));
+	QObject::connect(button, SIGNAL (triggered(bool)), info, SLOT (page_setup_cb));
 	gtk_widget_show(button);
 
 	/* Center */

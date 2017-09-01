@@ -990,9 +990,9 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	this->cw = cw;
 
 	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab));
-	QObject::connect(calc_mpp_button, SIGNAL("clicked"), this, SLOT (calculate_mpp_from_coords_cb));
+	QObject::connect(calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
 
-	QObject::connect(wfp_button, SIGNAL("clicked"), &cw, SLOT (georef_layer_dialog_load));
+	QObject::connect(wfp_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
 
 	if (response_w) {
 		gtk_widget_grab_focus (response_w);

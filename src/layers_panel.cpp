@@ -50,18 +50,8 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	LayersPanel * panel;
-	LayerType layer_type;
-} new_layer_data_t;
-
-
-
-
 static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text);
 static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev);
-static void layers_move_item_up_cb(LayersPanel * panel);
-static void layers_move_item_down_cb(LayersPanel * panel);
 
 
 
@@ -96,7 +86,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 		this->qa_layer_add = new QAction("Add", this);
 		this->qa_layer_add->setToolTip("Add new layer");
 		this->qa_layer_add->setIcon(QIcon::fromTheme("list-add"));
-		// QObject::connect(addbutton, SIGNAL("clicked"), this, SLOT (layers_popup_cb));
+		connect(this->qa_layer_add, SIGNAL (triggered(bool)), this, SLOT (add_layer_cb()));
 
 		this->qa_layer_remove = new QAction("Remove", this);
 		this->qa_layer_remove->setToolTip("Remove selected layer");
@@ -106,12 +96,12 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 		this->qa_layer_move_up = new QAction("Up", this);
 		this->qa_layer_move_up->setToolTip("Move selected layer up");
 		this->qa_layer_move_up->setIcon(QIcon::fromTheme("go-up"));
-		// connect(this->qa_layer_move_up, SIGNAL (triggered(bool)), this, SLOT (layers_move_item_up_cb()));
+		connect(this->qa_layer_move_up, SIGNAL (triggered(bool)), this, SLOT (move_item_up_cb()));
 
 		this->qa_layer_move_down = new QAction("Down", this);
 		this->qa_layer_move_down->setToolTip("Move selected layer down");
 		this->qa_layer_move_down->setIcon(QIcon::fromTheme("go-down"));
-		// connect(this->qa_layer_move_down, SIGNAL (triggered(bool)), this, SLOT (layers_move_item_down_cb()));
+		connect(this->qa_layer_move_down, SIGNAL (triggered(bool)), this, SLOT (move_item_down_cb()));
 
 		this->qa_layer_cut = new QAction("Cut", this);
 		this->qa_layer_cut->setToolTip("Cut selected layer");
@@ -151,7 +141,9 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_cb(void)));
-	//connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
+#ifdef K
+	connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
+#endif
 
 
 #ifndef SLAVGPS_QT
@@ -193,37 +185,6 @@ void LayersPanel::set_viewport(Viewport * vp)
 Viewport * LayersPanel::get_viewport()
 {
 	return this->viewport;
-}
-
-
-
-
-static bool layers_panel_new_layer(void * data)
-{
-	new_layer_data_t * layer_data = (new_layer_data_t *) data;
-
-	return layer_data->panel->new_layer(layer_data->layer_type);
-}
-
-
-
-
-QMenu * LayersPanel::create_context_menu(bool full)
-{
-	QMenu * menu = new QMenu(this);
-	if (full) {
-		menu->addAction(this->qa_layer_cut);
-		menu->addAction(this->qa_layer_copy);
-		menu->addAction(this->qa_layer_paste);
-		menu->addAction(this->qa_layer_remove);
-	}
-
-	QMenu * layers_submenu = new QMenu("New Layer");
-	menu->addMenu(layers_submenu);
-	this->window->new_layers_submenu_add_actions(layers_submenu);
-
-	return menu;
-
 }
 
 
@@ -355,58 +316,139 @@ bool LayersPanel::key_press(QKeyEvent * ev)
 
 
 
+/**
+   Create basic part of context menu for a click occurring anywhere in
+   tree view (both on an item and outside of item).
+
+   Number and type of menu items is controlled by \param layer_menu_items.
+   Returned pointer is owned by caller.
+
+   \param layer_menu_items - bit sum of LayerMenuItem values
+
+   \return freshly created menu with specified items
+*/
+QMenu * LayersPanel::create_context_menu(uint16_t layer_menu_items)
+{
+	QMenu * menu = new QMenu(this);
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::PROPERTIES) {
+#if 0
+		menu->addAction(qa_layer_properties);
+#endif
+	}
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::CUT) {
+		menu->addAction(this->qa_layer_cut);
+	}
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::COPY) {
+		menu->addAction(this->qa_layer_copy);
+	}
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::PASTE) {
+		menu->addAction(this->qa_layer_paste);
+	}
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::DELETE) {
+		menu->addAction(this->qa_layer_remove);
+	}
+
+	if (layer_menu_items & (uint16_t) LayerMenuItem::NEW) {
+		this->add_submenu_new_layer(menu);
+	}
+
+	return menu;
+
+}
+
+
+
+QMenu * LayersPanel::add_submenu_new_layer(QMenu * menu)
+{
+	QMenu * layers_submenu = new QMenu("New Layer");
+	menu->addMenu(layers_submenu);
+	this->window->new_layers_submenu_add_actions(layers_submenu);
+
+	return menu;
+}
+
+
+
 
 void LayersPanel::show_context_menu(TreeIndex const & index, Layer * layer)
 {
+	if (index.isValid()) {
+		/* We have clicked on some valid item in tree view. */
+		this->show_context_menu_layer_specific(index, layer);
+	} else {
+		/* We have clicked on empty space, not on tree item.  */
+		this->show_context_menu_new_layer();
+	}
+
+	return;
+}
+
+
+
+
+void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Layer * layer)
+{
+	if (!index.isValid()) {
+		qDebug() << "EE: Layers Panel: layer-specific context menu: index is invalid";
+		return;
+	}
+
 	QMenu * menu = NULL;
 
-	if (index.isValid()) {
-		if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
-			if (layer->type == LayerType::AGGREGATE) {
-				menu = this->create_context_menu(true);
-			} else {
-				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
-				qDebug() << "II: Layers Panel: will call get_menu_items_selection";
-				LayerMenuItem menu_selection = layer->get_menu_items_selection();
+	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 
-				menu = new QMenu(this);
+		uint16_t layer_menu_items;
 
-				uint16_t selection = (uint16_t) menu_selection;
-
-				if (selection & (uint16_t) LayerMenuItem::PROPERTIES) {
-#if 0
-					menu->addAction(qa_layer_properties);
-#endif
-				}
-
-				if (selection & (uint16_t) LayerMenuItem::CUT) {
-					menu->addAction(this->qa_layer_cut);
-				}
-
-				if (selection & (uint16_t) LayerMenuItem::COPY) {
-					menu->addAction(this->qa_layer_copy);
-				}
-
-				if (selection & (uint16_t) LayerMenuItem::PASTE) {
-					menu->addAction(this->qa_layer_paste);
-				}
-
-				if (selection & (uint16_t) LayerMenuItem::DELETE) {
-					menu->addAction(this->qa_layer_remove);
-				}
-			}
-			layer->add_menu_items(*menu);
+		if (layer->type == LayerType::AGGREGATE) {
+			layer_menu_items = (uint16_t) LayerMenuItem::PROPERTIES
+				| (uint16_t) LayerMenuItem::CUT
+				| (uint16_t) LayerMenuItem::COPY
+				| (uint16_t) LayerMenuItem::PASTE
+				| (uint16_t) LayerMenuItem::DELETE;
 		} else {
-			menu = new QMenu(this);
-			if (!layer->sublayer_add_menu_items(*menu)) { /* Here 'layer' is a parent layer. */
-				delete menu;
-				return;
-			}
-			/* TODO: specific things for different types. */
+			/* kamilFIXME: this doesn't work for Map in treeview. Why? */
+			qDebug() << "II: Layers Panel: will call get_menu_items_selection";
+			layer_menu_items = (uint16_t) layer->get_menu_items_selection();
 		}
+
+		/* "New layer -> layer types" submenu. */
+		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
+
+		menu = this->create_context_menu(layer_menu_items);
+
+		/* Layer-type-specific menu items. */
+		layer->add_menu_items(*menu);
 	} else {
-		menu = this->create_context_menu(false);
+		menu = new QMenu(this);
+		if (!layer->sublayer_add_menu_items(*menu)) { /* Here 'layer' is a parent layer. */
+			delete menu;
+			return;
+		}
+		/* TODO: specific things for different types. */
 	}
+
+	if (menu) {
+		menu->exec(QCursor::pos());
+		delete menu;
+	} else {
+		qDebug() << "EE: Layers Panel: show context menu: null menu";
+	}
+
+	return;
+
+}
+
+
+
+
+void LayersPanel::show_context_menu_new_layer(void)
+{
+	QMenu * menu = this->create_context_menu((uint16_t) LayerMenuItem::NEW);
 	menu->exec(QCursor::pos());
 	delete menu;
 }
@@ -660,6 +702,14 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 
 
 
+void LayersPanel::add_layer_cb(void)
+{
+	this->show_context_menu_new_layer();
+}
+
+
+
+
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
 	TreeIndex const & index = this->tree_view->get_selected_item();
@@ -739,30 +789,31 @@ Layer * LayersPanel::get_selected_layer()
 
 
 
-static void layers_move_item_up_cb(LayersPanel * panel)
+void LayersPanel::move_item_up_cb(void)
 {
-	panel->move_item(true);
+	this->move_item(true);
 }
 
 
 
 
-static void layers_move_item_down_cb(LayersPanel * panel)
+void LayersPanel::move_item_down_cb(void)
 {
-	panel->move_item(false);
+	this->move_item(false);
 }
+
 
 
 
 #if 0
-bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
+bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
 {
-	Layer * layer = panel->get_selected_layer();
+	Layer * layer = this->get_selected_layer();
 	if (layer && layer->type == layer_type) {
 		tool_func(layer, ev, viewport);
 		return true;
-	} else if (panel->toplayer->visible &&
-		   panel->toplayer->layer_tool(layer_type, tool_func, ev, viewport) != 1) { /* either accepted or rejected, but a layer was found */
+	} else if (this->toplayer->visible &&
+		   this->toplayer->layer_tool(layer_type, tool_func, ev, viewport) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
 	return false;

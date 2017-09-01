@@ -90,13 +90,14 @@ namespace SlavGPS {
 
 	/* Which items shall be present in context menu for a layer? */
 	enum class LayerMenuItem {
-		NONE       =   0,
-		PROPERTIES =   1,
-		CUT        =   2,
-		COPY       =   4,
-		PASTE      =   8,
-		DELETE     =   16,
-		ALL        = 0xff
+		NONE       = 0x0000,
+		PROPERTIES = 0x0001,
+		CUT        = 0x0002,
+		COPY       = 0x0004,
+		PASTE      = 0x0008,
+		DELETE     = 0x0010,
+		NEW        = 0x0020,
+		ALL        = 0xffff,
 	};
 #if 0
 	LayerMenuItem operator&(const LayerMenuItem& arg1, const LayerMenuItem& arg2);

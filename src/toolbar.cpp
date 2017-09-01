@@ -1240,8 +1240,8 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent,
 
 	button_add = ui_button_new_with_image(GTK_STOCK_GO_FORWARD, NULL);
 	button_remove = ui_button_new_with_image(GTK_STOCK_GO_BACK, NULL);
-	QObject::connect(button_add, SIGNAL("clicked"), tbw, SLOT (tb_editor_btn_add_clicked_cb));
-	QObject::connect(button_remove, SIGNAL("clicked"), tbw, SLOT (tb_editor_btn_remove_clicked_cb));
+	QObject::connect(button_add, SIGNAL (triggered(bool)), tbw, SLOT (tb_editor_btn_add_clicked_cb));
+	QObject::connect(button_remove, SIGNAL (triggered(bool)), tbw, SLOT (tb_editor_btn_remove_clicked_cb));
 
 	vbox_buttons = gtk_vbox_new(false, 6);
 	/* FIXME this is a little hack'ish, any better ideas? */

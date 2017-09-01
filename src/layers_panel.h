@@ -24,8 +24,6 @@
 
 
 
-#include <cstdint>
-
 #include <QtWidgets>
 #include <QWidget>
 #include <QVBoxLayout>
@@ -49,7 +47,6 @@ namespace SlavGPS {
 
 	class LayersPanel : public QWidget {
 		Q_OBJECT
-
 	public:
 
 		LayersPanel(QWidget * parent, Window * window_);
@@ -89,7 +86,10 @@ namespace SlavGPS {
 
 	private:
 		void show_context_menu(TreeIndex const & index, Layer * layer);
-		QMenu * create_context_menu(bool full);
+		void show_context_menu_layer_specific(TreeIndex const & index, Layer * layer);
+		void show_context_menu_new_layer();
+		QMenu * create_context_menu(uint16_t layer_menu_items);
+		QMenu * add_submenu_new_layer(QMenu * menu);
 
 		LayerAggregate * toplayer = NULL;
 		TreeIndex toplayer_item;
@@ -110,12 +110,16 @@ namespace SlavGPS {
 		QToolBar * tool_bar = NULL;
 
 	public slots:
+		void add_layer_cb();
 		bool properties_cb(void);
 		void cut_selected_cb(void);
 		void copy_selected_cb(void);
 		bool paste_selected_cb(void);
 		void delete_selected_cb(void);
 		void emit_update_cb();
+
+		void move_item_up_cb(void);
+		void move_item_down_cb(void);
 
 	signals:
 		void update(void);
