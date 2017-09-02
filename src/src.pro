@@ -240,7 +240,6 @@ HEADERS += window.h \
     statusbar.h \
     modules.h \
     acquire.h \
-    datasource_file.h \
     babel.h \
     babel_dialog.h \
     variant.h

@@ -229,6 +229,12 @@ namespace SlavGPS {
 		void zoom_level_selected_cb(QAction * qa);
 
 
+		void menu_view_refresh_cb(void);
+		void menu_view_set_highlight_color_cb(void);
+		void menu_view_set_bg_color_cb(void);
+		void menu_view_pan_cb(void);
+
+
 		void show_background_jobs_window_cb(void);
 
 		void show_layer_defaults_cb(void);
@@ -276,6 +282,17 @@ namespace SlavGPS {
 	private slots:
 		void center_changed_cb(void);
 		void layer_tool_cb(QAction * a);
+
+
+
+		void menu_edit_cut_cb(void);
+		void menu_edit_copy_cb(void);
+		void menu_edit_paste_cb(void);
+		void menu_edit_delete_cb(void);
+		void menu_edit_delete_all_cb(void);
+		void menu_copy_centre_cb(void);
+		void map_cache_flush_cb(void);
+		void set_default_location_cb(void);
 		void preferences_cb(void);
 		void open_file_cb(void);
 

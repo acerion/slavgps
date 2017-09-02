@@ -255,7 +255,7 @@ static bool key_press_event_cb(Window * window, QKeyEvent * event, void * data)
 	GdkModifierType modifiers = (GdkModifierType) gtk_accelerator_get_default_mod_mask();
 
 	// Standard 'Refresh' keys: F5 or Ctrl+r
-	// Note 'F5' is actually handled via draw_refresh_cb() later on
+	// Note 'F5' is actually handled via menu_view_refresh_cb() later on
 	//  (not 'R' it's 'r' notice the case difference!!)
 	if (ev->keyval == GDK_r && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		map_download = true;
@@ -421,30 +421,6 @@ static void draw_scroll_cb(Window * window, GdkEventScroll * event)
 
 
 
-static void draw_pan_cb(GtkAction * a, Window * window)
-{
-	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
-	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	Layer * sel = window->layers_panel->get_selected_layer();
-	if (sel && sel->tree_view->get_editing()) {
-		return;
-	}
-
-	if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
-		window->viewport->set_center_screen(window->viewport->get_width()/2, 0);
-	} else if (!strcmp(gtk_action_get_name(a), "PanEast")) {
-		window->viewport->set_center_screen(window->viewport->get_width(), window->viewport->get_height()/2);
-	} else if (!strcmp(gtk_action_get_name(a), "PanSouth")) {
-		window->viewport->set_center_screen(window->viewport->get_width()/2, window->viewport->get_height());
-	} else if (!strcmp(gtk_action_get_name(a), "PanWest")) {
-		window->viewport->set_center_screen(0, window->viewport->get_height()/2);
-	}
-	window->draw_update();
-}
-
-
-
-
 /**
  * center_changed_cb:
  */
@@ -465,45 +441,6 @@ static void center_changed_cb(Window * window)
 	}
 
 	toolbar_action_set_sensitive(window->viking_vtb, "GoForward", window->viewport->forward_available());
-}
-
-
-
-
-/**
- * Refresh maps displayed.
- */
-static void draw_refresh_cb(GtkAction * a, Window * window)
-{
-	// Only get 'new' maps
-	window->simple_map_update(true);
-}
-
-
-
-
-static void menu_copy_layer_cb(GtkAction * a, Window * window)
-{
-	a_clipboard_copy_selected(window->layers_panel);
-}
-
-
-
-
-static void menu_cut_layer_cb(GtkAction * a, Window * window)
-{
-	window->layers_panel->cut_selected();
-	window->modified = true;
-}
-
-
-
-
-static void menu_paste_layer_cb(GtkAction * a, Window * window)
-{
-	if (window->layers_panel->paste_selected()) {
-		window->modified = true;
-	}
 }
 
 
@@ -556,19 +493,6 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 	const QString msg = QObject::tr("Map Cache size is %1 with %2 items").arg(msg_sz).arg(map_cache_get_count());
 	Dialog::info(msg, window);
 	free(msg_sz);
-}
-
-
-
-
-static void menu_delete_layer_cb(GtkAction * a, Window * window)
-{
-	if (window->layers_panel->get_selected_layer()) {
-		window->layers_panel->delete_selected();
-		window->modified = true;
-	} else {
-		Dialog::info(tr("You must select a layer to delete."), window);
-	}
 }
 
 
@@ -864,43 +788,6 @@ static void file_properties_cb(GtkAction * a, Window * window)
 
 
 
-static void map_cache_flush_cb(GtkAction * a, Window * window)
-{
-	map_cache_flush();
-}
-
-
-
-
-static void menu_copy_centre_cb(GtkAction * a, Window * window)
-{
-	QString first;
-	QString second;
-
-	const Coord coord = window->viewport->get_center();
-
-	bool full_format = false;
-	(void) a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
-
-	if (full_format) {
-		/* Bells & Whistles - may include degrees, minutes and second symbols. */
-		coord->to_strings(first, second);
-	} else {
-		/* Simple x.xx y.yy format. */
-		struct LatLon ll;
-		a_coords_utm_to_latlon(&ll, &utm);
-		first = QString("%1").arg(ll.lat, 0, 'f', 6); /* "%.6f" */
-		second = QString("%1").arg(ll.lon, 0, 'f', 6);
-	}
-
-	const QString message = QString("%1 %2").arg(first).arg(second);
-
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, message, NULL);
-}
-
-
-
-
 static void preferences_change_update(Window * window)
 {
 	// Want to update all TrackWaypoint layers
@@ -918,74 +805,6 @@ static void preferences_change_update(Window * window)
 	delete layers;
 
 	window->draw_update();
-}
-
-
-
-static void default_location_cb(GtkAction * a, Window * window)
-{
-	/* Simplistic repeat of preference setting
-	   Only the name & type are important for setting the preference via this 'external' way */
-	Parameter pref_lat[] = {
-		{ LayerType::NUM_TYPES,
-		  PREFERENCES_NAMESPACE_GENERAL "default_latitude",
-		  SGVariantType::DOUBLE,
-		  PARAMETER_GROUP_GENERIC,
-		  NULL,
-		  WidgetType::SPINBUTTON,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		},
-	};
-	Parameter pref_lon[] = {
-		{ LayerType::NUM_TYPES,
-		  PREFERENCES_NAMESPACE_GENERAL "default_longitude",
-		  SGVariantType::DOUBLE,
-		  PARAMETER_GROUP_GENERIC,
-		  NULL,
-		  WidgetType::SPINBUTTON,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		  NULL,
-		},
-	};
-
-	/* Get current center */
-	struct LatLon ll = window->viewport->get_center()->get_latlon();
-
-	/* Apply to preferences */
-	SGVariant vlp_data;
-	vlp_data.d = ll.lat;
-	a_preferences_run_setparam(vlp_data, pref_lat);
-	vlp_data.d = ll.lon;
-	a_preferences_run_setparam(vlp_data, pref_lon);
-	/* Remember to save */
-	a_preferences_save_to_file();
-}
-
-
-
-
-/**
- * Delete All
- */
-static void clear_cb(GtkAction * a, Window * window)
-{
-	// Do nothing if empty
-	if (!window->layers_panel->get_top_layer()->is_empty()) {
-		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), window)) {
-			window->layers_panel->clear();
-			window->set_filename(NULL);
-			window->draw_update();
-		}
-	}
 }
 
 
@@ -1043,42 +862,6 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 
 
 
-
-static void set_bg_color(GtkAction * a, Window * window)
-{
-	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a background color"));
-	QColor * color = window->viewport->get_background_qcolor();
-	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
-		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_background_qcolor(color);
-		window->draw_update();
-	}
-	free(color);
-	gtk_widget_destroy(colorsd);
-}
-
-
-
-
-static void set_highlight_color(GtkAction * a, Window * window)
-{
-	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a track highlight color"));
-	const QColor color = window->viewport->get_highlight_color();
-	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
-		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_highlight_qcolor(color);
-		window->draw_update();
-	}
-	gtk_widget_destroy(colorsd);
-}
-
-
-
-
 /***********************************************************************************************
  ** GUI Creation
  ***********************************************************************************************/
@@ -1121,28 +904,9 @@ static GtkActionEntry entries[] = {
 	{ "Exit",                GTK_STOCK_QUIT,           N_("E_xit"),                              "<control>W",       N_("Exit the program"),                                   (GCallback) window_close              },
 	{ "SaveExit",            GTK_STOCK_QUIT,           N_("Save and Exit"),                      NULL,               N_("Save and Exit the program"),                          (GCallback) save_file_and_exit        },
 
-	{ "Refresh",             GTK_STOCK_REFRESH,        N_("_Refresh"),                           "F5",               N_("Refresh any maps displayed"),                         (GCallback) draw_refresh_cb           },
-	{ "SetHLColor",          GTK_STOCK_SELECT_COLOR,   N_("Set _Highlight Color..."),            NULL,               N_("Set Highlight Color"),                                (GCallback) set_highlight_color       },
-	{ "SetBGColor",          GTK_STOCK_SELECT_COLOR,   N_("Set Bac_kground Color..."),           NULL,               N_("Set Background Color"),                               (GCallback) set_bg_color              },
-	{ "ZoomIn",              GTK_STOCK_ZOOM_IN,        N_("Zoom _In"),                           "<control>plus",    N_("Zoom In"),                                            (GCallback) draw_zoom_cb              },
-	{ "ZoomOut",             GTK_STOCK_ZOOM_OUT,       N_("Zoom _Out"),                          "<control>minus",   N_("Zoom Out"),                                           (GCallback) draw_zoom_cb              },
-	{ "ZoomTo",              GTK_STOCK_ZOOM_FIT,       N_("Zoom _To..."),                        "<control>Z",       N_("Zoom To"),                                            (GCallback) zoom_to_cb                },
-	{ "PanNorth",            NULL,                     N_("Pan _North"),                         "<control>Up",      NULL,                                                     (GCallback) draw_pan_cb               },
-	{ "PanEast",             NULL,                     N_("Pan _East"),                          "<control>Right",   NULL,                                                     (GCallback) draw_pan_cb               },
-	{ "PanSouth",            NULL,                     N_("Pan _South"),                         "<control>Down",    NULL,                                                     (GCallback) draw_pan_cb               },
-	{ "PanWest",             NULL,                     N_("Pan _West"),                          "<control>Left",    NULL,                                                     (GCallback) draw_pan_cb               },
-	{ "BGJobs",              GTK_STOCK_EXECUTE,        N_("Background _Jobs"),                   NULL,               N_("Background Jobs"),                                    (GCallback) a_background_show_window  },
 
-	{ "Cut",                 GTK_STOCK_CUT,            N_("Cu_t"),                               NULL,               N_("Cut selected layer"),                                 (GCallback) menu_cut_layer_cb         },
-	{ "Copy",                GTK_STOCK_COPY,           N_("_Copy"),                              NULL,               N_("Copy selected layer"),                                (GCallback) menu_copy_layer_cb        },
-	{ "Paste",               GTK_STOCK_PASTE,          N_("_Paste"),                             NULL,               N_("Paste layer into selected container layer or otherwise above selected layer"), (GCallback) menu_paste_layer_cb },
-	{ "Delete",              GTK_STOCK_DELETE,         N_("_Delete"),                            NULL,               N_("Remove selected layer"),                              (GCallback) menu_delete_layer_cb      },
-	{ "DeleteAll",           NULL,                     N_("Delete All"),                         NULL,               NULL,                                                     (GCallback) clear_cb                  },
-	{ "CopyCentre",          NULL,                     N_("Copy Centre _Location"),              "<control>h",       NULL,                                                     (GCallback) menu_copy_centre_cb       },
-	{ "MapCacheFlush",       NULL,                     N_("_Flush Map Cache"),                   NULL,               NULL,                                                     (GCallback) map_cache_flush_cb         },
-	{ "SetDefaultLocation",  GTK_STOCK_GO_FORWARD,     N_("_Set the Default Location"),          NULL,               N_("Set the Default Location to the current position"),   (GCallback) default_location_cb       },
-	{ "Preferences",         GTK_STOCK_PREFERENCES,    N_("_Preferences"),                       NULL,               N_("Program Preferences"),                                (GCallback) preferences_cb            },
-	{ "LayerDefaults",       GTK_STOCK_PROPERTIES,     N_("_Layer Defaults"),                    NULL,               NULL,                                                     NULL                                  },
+
+	{ "BGJobs",              GTK_STOCK_EXECUTE,        N_("Background _Jobs"),                   NULL,               N_("Background Jobs"),                                    (GCallback) a_background_show_window  },
 	{ "Properties",          GTK_STOCK_PROPERTIES,     N_("_Properties"),                        NULL,               N_("Layer Properties"),                                   (GCallback) menu_properties_cb        },
 };
 

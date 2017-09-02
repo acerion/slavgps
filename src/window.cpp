@@ -56,6 +56,8 @@
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "preferences.h"
+#include "clipboard.h"
+#include "map_cache.h"
 
 
 
@@ -428,8 +430,57 @@ void Window::create_actions(void)
 
 	/* "Edit" menu. */
 	{
+		qa = new QAction(tr("Cu&t"), this);
+		qa->setIcon(QIcon::fromTheme("edit-cut"));
+		qa->setToolTip(tr("Cut selected layer"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_edit_cut_cb(void)));
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction(tr("&Copy"), this);
+		qa->setIcon(QIcon::fromTheme("edit-copy"));
+		qa->setToolTip(tr("Copy selected layer"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_edit_copy_cb(void)));
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction(tr("&Paste"), this);
+		qa->setIcon(QIcon::fromTheme("edit-paste"));
+		qa->setToolTip(tr("Paste layer into selected container layer or otherwise above selected layer"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_edit_paste_cb(void)));
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction(tr("&Delete"), this);
+		qa->setIcon(QIcon::fromTheme("edit-delete"));
+		qa->setToolTip(tr("Remove selected layer"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_edit_delete_cb(void)));
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction(tr("Delete All"), this);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_edit_delete_all_cb(void)));
+		this->menu_edit->addAction(qa);
+
+
+		this->menu_edit->addSeparator();
+
+
+		qa = new QAction("Copy Centre &Location", this);
+		qa->setIcon(QIcon::fromTheme(""));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_copy_centre_cb(void)));
+		qa->setShortcut(Qt::CTRL + Qt::Key_H);
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction("&Flush Map Cache", this);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (map_cache_flush_cb(void)));
+		this->menu_edit->addAction(qa);
+
+		qa = new QAction("&Set the Default Location", this);
+		qa->setIcon(QIcon::fromTheme("go-next"));
+		qa->setToolTip(tr("Set the Default Location to the current position"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_default_location_cb(void)));
+		this->menu_edit->addAction(qa);
+
 		qa = new QAction("&Preferences", this);
 		qa->setIcon(QIcon::fromTheme("preferences-other"));
+		qa->setToolTip(tr("Program Preferences"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
 		this->menu_edit->addAction(qa);
 
@@ -536,6 +587,29 @@ void Window::create_actions(void)
 		this->menu_view->addSeparator();
 
 
+		qa = new QAction(tr("&Refresh"), this);
+		qa->setShortcut(Qt::Key_F5);
+		qa->setToolTip("Refresh any maps displayed");
+		qa->setIcon(QIcon::fromTheme("view-refresh"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_refresh_cb(void)));
+		this->menu_view->addAction(qa);
+
+
+		this->menu_view->addSeparator();
+
+
+		qa = new QAction(tr("Set &Highlight Color..."), this);
+		qa->setToolTip("Set Highlight Color");
+		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_highlight_color_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction(tr("Set Bac&kground Color..."), this);
+		qa->setToolTip("Set Background Color");
+		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
+		this->menu_view->addAction(qa);
+
 		this->qa_view_full_screen = new QAction("&Full Screen", this);
 		this->qa_view_full_screen->setShortcut(Qt::Key_F11);
 		this->qa_view_full_screen->setCheckable(true);
@@ -543,6 +617,7 @@ void Window::create_actions(void)
 		this->qa_view_full_screen->setToolTip("Activate full screen mode");
 		connect(this->qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
 		/* TODO: icon: GTK_STOCK_FULLSCREEN */
+
 
 		this->menu_view->addAction(this->qa_view_full_screen);
 
@@ -637,9 +712,41 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_zoom(), "Zoom", this->menu_view);
+		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_zoom(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
-		connect(zoom_submenu, SIGNAL(triggered(QAction *)), this, SLOT(zoom_level_selected_cb(QAction *)));
+		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
+
+
+		/* "Pan" submenu. */
+		{
+			QMenu * pan_submenu = this->menu_view->addMenu(QString("&Pan"));
+
+			qa = new QAction(tr("Pan &North"), this);
+			qa->setData(0);
+			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Up);
+			pan_submenu->addAction(qa);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
+
+			qa = new QAction(tr("Pan &East"), this);
+			qa->setData(1);
+			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Right);
+			pan_submenu->addAction(qa);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
+
+			qa = new QAction(tr("Pan &South"), this);
+			qa->setData(2);
+			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Down);
+			pan_submenu->addAction(qa);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
+
+			qa = new QAction(tr("Pan &West"), this);
+			qa->setData(3);
+			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Left);
+			pan_submenu->addAction(qa);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
+
+			this->menu_view->addMenu(pan_submenu);
+		}
 
 
 		this->menu_view->addSeparator();
@@ -650,9 +757,11 @@ void Window::create_actions(void)
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_background_jobs_window_cb(void)));
 		this->menu_view->addAction(qa);
 
+#if 1           /* This is only for debugging purposes (or is it not?). */
 		qa = new QAction("Show Centers", this);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_centers_cb(void)));
 		this->menu_view->addAction(qa);
+#endif
 	}
 
 
@@ -1320,15 +1429,138 @@ void Window::pan_off(void)
 
 
 /**
- * Retrieves window's pan_move_flag.
- *
- * Should be removed as soon as possible.
- *
- * Returns: window's pan_move
- **/
+   \brief Retrieve window's pan_move_flag
+
+   Should be removed as soon as possible.
+
+   \return window's pan_move
+*/
 bool Window::get_pan_move(void)
 {
 	return this->pan_move_flag;
+}
+
+
+
+
+void Window::menu_edit_cut_cb(void)
+{
+	this->layers_panel->cut_selected_cb();
+	this->modified = true;
+}
+
+
+
+
+void Window::menu_edit_copy_cb(void)
+{
+#ifdef K
+	a_clipboard_copy_selected(this->layers_panel);
+#endif
+}
+
+
+
+
+void Window::menu_edit_paste_cb(void)
+{
+	if (this->layers_panel->paste_selected_cb()) {
+		this->modified = true;
+	}
+}
+
+
+
+
+void Window::menu_edit_delete_cb(void)
+{
+	if (this->layers_panel->get_selected_layer()) {
+		this->layers_panel->delete_selected_cb();
+		this->modified = true;
+	} else {
+		Dialog::info(tr("You must select a layer to delete."), this);
+	}
+}
+
+
+
+
+void Window::menu_edit_delete_all_cb(void)
+{
+	/* Do nothing if empty. */
+	if (!this->layers_panel->get_top_layer()->is_empty()) {
+		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), this)) {
+			this->layers_panel->clear();
+			this->set_filename(NULL);
+			this->draw_update();
+		}
+	}
+}
+
+
+
+
+void Window::menu_copy_centre_cb(void)
+{
+	QString first;
+	QString second;
+
+	const Coord * coord = this->viewport->get_center();
+
+	bool full_format = false;
+	(void) a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
+
+	if (full_format) {
+		/* Bells & Whistles - may include degrees, minutes and second symbols. */
+		coord->to_strings(first, second);
+	} else {
+		/* Simple x.xx y.yy format. */
+		struct LatLon ll;
+		struct UTM utm;
+		a_coords_utm_to_latlon(&ll, &utm);
+		first = QString("%1").arg(ll.lat, 0, 'f', 6); /* "%.6f" */
+		second = QString("%1").arg(ll.lon, 0, 'f', 6);
+	}
+
+	const QString message = QString("%1 %2").arg(first).arg(second);
+#ifdef K
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, message, NULL);
+#endif
+}
+
+
+
+
+void Window::map_cache_flush_cb(void)
+{
+	map_cache_flush();
+}
+
+
+
+
+void Window::set_default_location_cb(void)
+{
+	/* Simplistic repeat of preference setting
+	   Only the name & type are important for setting the preference via this 'external' way */
+	Parameter pref_lat[] = {
+		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_latitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBUTTON, NULL, NULL, NULL, NULL, NULL, NULL },
+	};
+	Parameter pref_lon[] = {
+		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBUTTON, NULL, NULL, NULL, NULL, NULL, NULL },
+	};
+
+	/* Get current center */
+	struct LatLon ll = this->viewport->get_center()->get_latlon();
+
+	/* Apply to preferences */
+	SGVariant vlp_data;
+	vlp_data.d = ll.lat;
+	a_preferences_run_setparam(vlp_data, pref_lat);
+	vlp_data.d = ll.lon;
+	a_preferences_run_setparam(vlp_data, pref_lon);
+	/* Remember to save */
+	a_preferences_save_to_file();
 }
 
 
@@ -1341,9 +1573,9 @@ void Window::preferences_cb(void) /* Slot. */
 #endif
 	preferences_show_window(this);
 #if 0
-	// Has the waypoint size setting changed?
+	/* Has the waypoint size setting changed? */
 	if (wp_icon_size != Preferences::get_use_large_waypoint_icons()) {
-		// Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed
+		/* Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed. */
 		clear_garmin_icon_syms();
 
 		// Update all windows
@@ -1353,7 +1585,7 @@ void Window::preferences_cb(void) /* Slot. */
 	}
 
 
-	// Ensure TZ Lookup initialized
+	/* Ensure TZ Lookup initialized. */
 	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
 		vu_setup_lat_lon_tz_lookup();
 	}
@@ -3135,4 +3367,88 @@ void Window::change_coord_mode_cb(QAction * qa)
 		}
 		this->draw_update();
 	}
+}
+
+
+
+
+/**
+   Refresh maps displayed.
+*/
+void Window::menu_view_refresh_cb(void)
+{
+#if 0
+	/* Only get 'new' maps. */
+	this->simple_map_update(true);
+#endif
+}
+
+
+
+
+void Window::menu_view_set_highlight_color_cb(void)
+{
+#ifdef K
+	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a track highlight color"));
+	const QColor color = window->viewport->get_highlight_color();
+	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
+		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+		window->viewport->set_highlight_qcolor(color);
+		window->draw_update();
+	}
+	gtk_widget_destroy(colorsd);
+#endif
+}
+
+
+
+
+void Window::menu_view_set_bg_color_cb(void)
+{
+#ifdef K
+	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a background color"));
+	QColor * color = window->viewport->get_background_qcolor();
+	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
+		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
+		window->viewport->set_background_qcolor(color);
+		window->draw_update();
+	}
+	free(color);
+	gtk_widget_destroy(colorsd);
+#endif
+}
+
+
+
+
+void Window::menu_view_pan_cb(void)
+{
+	const QAction * qa = (QAction *) QObject::sender();
+	const int direction = qa->data().toInt();
+	qDebug() << "SLOT: Window: 'Menu View Pan'" << qa->text() << direction;
+
+#if 0
+	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
+	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
+	Layer * sel = window->layers_panel->get_selected_layer();
+	if (sel && sel->tree_view->get_editing()) {
+		return;
+	}
+
+	if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
+		window->viewport->set_center_screen(window->viewport->get_width()/2, 0);
+	} else if (!strcmp(gtk_action_get_name(a), "PanEast")) {
+		window->viewport->set_center_screen(window->viewport->get_width(), window->viewport->get_height()/2);
+	} else if (!strcmp(gtk_action_get_name(a), "PanSouth")) {
+		window->viewport->set_center_screen(window->viewport->get_width()/2, window->viewport->get_height());
+	} else if (!strcmp(gtk_action_get_name(a), "PanWest")) {
+		window->viewport->set_center_screen(0, window->viewport->get_height()/2);
+	}
+
+	window->draw_update();
+#endif
 }
