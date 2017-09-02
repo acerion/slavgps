@@ -53,15 +53,15 @@ using namespace SlavGPS;
 
 
 Parameter wp_params[] = {
-	{ SG_WP_PARAM_NAME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_COMMENT,  "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_DESC,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_IMAGE,    "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_SYMBOL,   "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 };
 
 

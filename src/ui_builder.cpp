@@ -364,8 +364,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 {
 	/* Perform pre conversion if necessary. */
 	SGVariant vlpd = param_value;
-	if (param->convert_to_display) {
-		vlpd = param->convert_to_display(param_value);
+	if (param->extra && param->extra->convert_to_display) {
+		vlpd = param->extra->convert_to_display(param_value);
 	}
 
 	QWidget * widget = NULL;
@@ -715,8 +715,8 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	case WidgetType::RADIOGROUP:
 	case WidgetType::RADIOGROUP_STATIC:
 		rv.u = ((SGRadioGroup *) widget)->get_selected();
-		if (param->extra_widget_data) {
-			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, rv.u));
+		if (param->extra && param->extra->extra_widget_data) {
+			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra->extra_widget_data, rv.u));
 		}
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: RadioGroup" << "label:" << param->title << "value:" << rv.u;
 		break;
@@ -777,8 +777,8 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	}
 
 	/* Perform conversion if necessary. */
-	if (param->convert_to_internal) {
-		rv = param->convert_to_internal(rv);
+	if (param->extra && param->extra->convert_to_internal) {
+		rv = param->extra->convert_to_internal(rv);
 	}
 
 	return rv;

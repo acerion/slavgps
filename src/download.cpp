@@ -171,9 +171,9 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 
-
+static ParameterExtra prefs_extra = { convert_to_display, convert_to_internal };
 static Parameter prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, &prefs_extra, NULL },
 };
 
 

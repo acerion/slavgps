@@ -152,12 +152,12 @@ typedef struct {
 static config_t extra_widget_data;
 
 static Parameter prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
 
-	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */

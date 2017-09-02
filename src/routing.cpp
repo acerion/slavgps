@@ -62,7 +62,7 @@ static GList * routing_engine_list = NULL;
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL },
 };
 
 

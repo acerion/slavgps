@@ -90,17 +90,17 @@ enum {
 Parameter mapnik_layer_params[] = {
 
 #ifdef K
-	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
-	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
+	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), file_default,         NULL, N_("CartoCSS configuration file") },
+	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   file_default,         NULL, N_("Mapnik XML configuration file") },
 #else
-	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   0,                                NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
-	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   0,                                NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
+	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   0,                                file_default,         NULL, N_("CartoCSS configuration file") },
+	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   0,                                file_default,         NULL, N_("Mapnik XML configuration file") },
 #endif
-	{ PARAM_ALPHA,          "alpha",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
-	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,                             NULL, NULL,                                sg_variant_true,      NULL, NULL },
-	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,                             NULL, NULL,                                cache_dir_default,    NULL, NULL },
+	{ PARAM_ALPHA,          "alpha",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],                       alpha_default,        NULL, NULL },
+	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,                             sg_variant_true,      NULL, NULL },
+	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,                             cache_dir_default,    NULL, NULL },
 
-	{ NUM_PARAMS,           NULL,              SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,                             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,           NULL,              SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,                             NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -187,14 +187,14 @@ static SGVariant fonts_default(void)
 
 static Parameter prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Recurse Fonts Directory:"),  WidgetType::CHECKBUTTON, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), sg_variant_true, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::UINT, PARAMETER_GROUP_GENERIC,    N_("Rerender Timeout (hours):"), WidgetType::SPINBUTTON,  &scales[2], NULL, N_("You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,       plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,       fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 2, PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Recurse Fonts Directory:"),  WidgetType::CHECKBUTTON, NULL,       sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::UINT, PARAMETER_GROUP_GENERIC,    N_("Rerender Timeout (hours):"), WidgetType::SPINBUTTON,  &scales[2], NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
 	/* Changeable any time. */
-	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,       NULL, N_("The program to convert CartoCSS files into Mapnik XML"), NULL, NULL, NULL },
+	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,       NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
 
-	{ 5, NULL,                                            SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,       NULL, "", NULL, NULL, NULL } /* Guard. */
+	{ 5, NULL,                                                  SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,       NULL,            NULL, "" } /* Guard. */
 };
 
 

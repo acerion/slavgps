@@ -98,6 +98,13 @@ namespace SlavGPS {
 	   e.g. keep the internal value in seconds yet use days in the display. */
 	typedef SGVariant (* LayerConvertFunc) (SGVariant);
 
+
+	typedef struct ParameterExtra_e {
+		LayerConvertFunc convert_to_display;
+		LayerConvertFunc convert_to_internal;
+		void * extra_widget_data; /* Even more widget data, in addition to Parameter::widget_data. */
+	} ParameterExtra;
+
 	typedef struct {
 		// LayerType layer_type;
 		param_id_t id;
@@ -107,11 +114,10 @@ namespace SlavGPS {
 		const char *title;
 		WidgetType widget_type;
 		void * widget_data;
-		void * extra_widget_data;
-		const char *tooltip;
+
 		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
-		LayerConvertFunc convert_to_display;
-		LayerConvertFunc convert_to_internal;
+		ParameterExtra * extra;
+		const char *tooltip;
 	} Parameter;
 
 	enum {

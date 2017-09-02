@@ -92,16 +92,16 @@ enum {
 
 
 Parameter georef_layer_params[] = {
-	{ PARAM_IMAGE, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_ME,    "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_MN,    "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CZ,    "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
-	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_ME,    "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_MN,    "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_CZ,    "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
+	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,  NULL,                   SGVariantType::PTR,    PARAMETER_GROUP_GENERIC,        NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,  NULL,                   SGVariantType::PTR,    PARAMETER_GROUP_GENERIC,NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -143,7 +143,7 @@ LayerGeorefInterface::LayerGeorefInterface()
 
 
 static Parameter io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
+	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 
 typedef struct {

@@ -112,6 +112,8 @@ static char ** map_type_labels = NULL;
 /* Corresponding IDs. (Cf. field map_type in MapSource class). */
 static MapTypeID * map_type_ids = NULL;
 
+static ParameterExtra map_type_extra;
+
 /******** MAPZOOMS *********/
 
 static const char * params_mapzooms[] = { N_("Use Viking Zoom Level"),
@@ -237,20 +239,20 @@ enum {
 
 Parameter maps_layer_params[] = {
 	// NB mode => map source type id - But can't break file format just to rename something better
-	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
+	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,                               id_default,           &map_type_extra, NULL },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,                               directory_default,    NULL,            NULL },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,                        cache_layout_default, NULL,            N_("This determines the tile storage layout on disk") },
 #ifdef K
-	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), file_default,         NULL,            N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
 #else
-	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(0),                 NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   KINT_TO_POINTER(0),                 file_default,         NULL,            N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
 #endif
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
-	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,                               NULL, NULL, sg_variant_true, NULL, NULL },
-	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), sg_variant_false, NULL, NULL },
-	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,                      alpha_default,        NULL,            N_("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,                               sg_variant_true,      NULL,            NULL },
+	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,                               sg_variant_false,     NULL,            N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    params_mapzooms,                    mapzoom_default,      NULL,            N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,                               NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,                               NULL,                 NULL,            NULL }, /* Guard. */
 };
 
 
@@ -315,7 +317,7 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
 };
 
 
@@ -397,7 +399,7 @@ void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 	  memcpy(&maps_layer_params[0].extra_widget_data, &map_type_ids, sizeof(void *));
 	*/
 	maps_layer_params[0].widget_data = map_type_labels;
-	maps_layer_params[0].extra_widget_data = map_type_ids;
+	maps_layer_params[0].extra->extra_widget_data = map_type_ids;
 }
 
 
