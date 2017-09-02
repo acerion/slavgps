@@ -49,34 +49,6 @@ namespace SlavGPS {
 
 	class Window {
 	public:
-
-		Window();
-		~Window();
-
-		/* To call from main to start things off: */
-		static Window * new_window();
-		void finish_new();
-		void draw_scroll(GdkEventScroll * event);
-		void open_file(char const * filename, bool change_filename);
-		char const * get_filename();
-		void set_filename(char const * filename);
-		bool window_save();
-		bool export_to(std::list<Layer *> * layers, VikFileType_t vft, char const * dir, char const * extension);
-		void export_to_common(VikFileType_t vft, char const * extension);
-		char const * get_filename_2();
-		void selected_layer(Layer * layer);
-		QAction * get_drawmode_action(ViewportDrawMode mode);
-		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
-
-
-		//char * filename = NULL;
-		//bool modified = false;
-		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
-
-		/* Half-drawn update. */
-		//Layer * trigger = NULL;
-		//Coord trigger_center;
-
 	}; /* class Window */
 
 

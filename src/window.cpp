@@ -18,12 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #include <vector>
 
 #include <cassert>
+#include <unistd.h>
+
+/* stat() */
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <QtWidgets>
@@ -182,9 +186,14 @@ Window::Window()
 	QObject::connect(this->viewport, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
 	QObject::connect(this->viewport, SIGNAL("configure_event"), this, SLOT (window_configure_event));
 	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
+
+#ifdef K
+	/* This signal appears to be already handled by Viewport::wheelEvent(). */
 	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
-	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb));
-	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb));
+#endif
+
+	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
+	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *));
 
 
 
@@ -193,8 +202,8 @@ Window::Window()
 	// Allow key presses to be processed anywhere
 	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
 
-	// Set initial button sensitivity
-	center_changed_cb(this);
+	/* Set initial button sensitivity. */
+	this->center_changed_cb();
 
 	this->hpaned = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_panel, false, true);
@@ -291,6 +300,27 @@ Window::Window()
 
 
 
+Window::~Window()
+{
+#ifdef K
+	a_background_remove_window(this);
+
+	window_list.remove(this);
+
+	gdk_cursor_unref(this->busy_cursor);
+
+	delete this->tb;
+
+	vik_toolbar_finalize(this->viking_vtb);
+
+	delete this->viewport;
+	delete this->layers_panel;
+#endif
+}
+
+
+
+
 void Window::create_layout()
 {
 	this->toolbar = new QToolBar("Main Toolbar");
@@ -354,6 +384,7 @@ void Window::create_actions(void)
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
 		qa_file_new->setToolTip("Open a file");
+		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (new_window_cb()));
 
 		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), _("&Open..."));
 		qa_file_open->setShortcut(Qt::CTRL + Qt::Key_O);
@@ -365,16 +396,46 @@ void Window::create_actions(void)
 
 		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), _("Append &File..."));
 		qa->setData(QVariant((int) 21)); /* kamilFIXME: magic number. */
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 		qa->setToolTip("Append data from a different file");
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
+
+		qa = this->menu_file->addAction(tr("&Save"));
+		qa->setIcon(QIcon::fromTheme("document-save"));
+		qa->setToolTip("Save the file");
+		qa->setShortcut(Qt::CTRL + Qt::Key_S);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_cb()));
+
+		qa = this->menu_file->addAction(tr("Save &As..."));
+		qa->setIcon(QIcon::fromTheme("document-save-as"));
+		qa->setToolTip("Save the file under different name");
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_as_cb()));
+
+		qa = this->menu_file->addAction(tr("Properties..."));
+		qa->setToolTip("File Properties");
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (file_properties_cb()));
+
+
+		this->menu_file->addSeparator();
 
 
 		this->submenu_file_acquire = this->menu_file->addMenu(QIcon::fromTheme("TODO"), QString("A&cquire"));
 
 		{
+			qa = this->submenu_file_acquire->addAction(tr("From &GPS..."));
+			qa->setToolTip(tr("Transfer data from a GPS device"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gps_cb(void)));
+
 			qa = this->submenu_file_acquire->addAction(tr("Import File With GPS&Babel..."));
 			qa->setToolTip(tr("Import File With GPS&Babel..."));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
+
+			qa = this->submenu_file_acquire->addAction(tr("&Directions..."));
+			qa->setToolTip(tr("Get driving directions"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_routing_cb(void)));
+
+			qa = this->submenu_file_acquire->addAction(tr("Import Geo&JSON File..."));
+			qa->setToolTip(tr("Import GeoJSON file"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geojson_cb(void)));
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
 			qa = this->submenu_file_acquire->addAction(tr("&OSM Traces..."));
@@ -393,7 +454,44 @@ void Window::create_actions(void)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_cb(void)));
 #endif
 
+
+#ifdef VIK_CONFIG_GEOCACHES
+			qa = this->submenu_file_acquire->addAction(tr("Geo&caches..."));
+			qa->setToolTip(tr("Get Geocaches from geocaching.com"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gc_cb(void)));
+#endif
+
+#ifdef VIK_CONFIG_GEOTAG
+			qa = this->submenu_file_acquire->addAction(tr("From Geotagged &Images..."));
+			qa->setToolTip(tr("Create waypoints from geotagged images"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geotag_cb(void)));
+#endif
+
+			qa = this->submenu_file_acquire->addAction(tr("From &URL..."));
+			qa->setToolTip(tr("Get a file from URL"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_url_cb(void)));
+
+#ifdef HAVE_ZIP_H
+			qa = this->submenu_file_acquire->addAction(QIcon::fromTheme("TODO-GTK_STOCK_CONVERT"), tr("Import KMZ &Map File..."));
+			qa->setToolTip(tr("Import a KMZ file"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
+#endif
+
 			vik_ext_tool_datasources_add_menu_items(this->submenu_file_acquire, this);
+		}
+
+
+		QMenu * submenu_file_export = this->menu_file->addMenu(QIcon::fromTheme("TODO GTK_STOCK_CONVERT"), tr("&Export All"));
+		submenu_file_export->setToolTip(tr("Export All TrackWaypoint Layers"));
+
+		{
+			qa = submenu_file_export->addAction(tr("&GPX..."));
+			qa->setToolTip(tr("Export as GPX"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_to_gpx_cb(void)));
+
+			qa = submenu_file_export->addAction(tr("&KML..."));
+			qa->setToolTip(tr("Export as KML"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_to_kml_cb(void)));
 		}
 
 
@@ -406,7 +504,7 @@ void Window::create_actions(void)
 
 		qa = this->menu_file->addAction(tr("Generate &Directory of Images..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_image_dir_cb()));
-		qa->setToolTip("Generate &Directory of Images");
+		qa->setToolTip("Generate Directory of Images");
 
 #ifdef HAVE_ZIP_H
 		qa = this->menu_file->addAction(tr("Generate &KMZ Map File..."));
@@ -422,8 +520,14 @@ void Window::create_actions(void)
 		this->menu_file->addSeparator();
 
 
+		qa = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("Save and Exit"));
+		qa->setShortcut(Qt::CTRL + Qt::Key_Q);
+		qa->setToolTip("Save and Exit the program");
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_and_exit_cb(void)));
+
 		qa_file_exit = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("E&xit"));
-		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_X);
+		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_W);
+		qa_file_exit->setToolTip("Exit the program");
 		connect(qa_file_exit, SIGNAL (triggered(bool)), this, SLOT (close(void)));
 	}
 
@@ -759,7 +863,11 @@ void Window::create_actions(void)
 
 #if 1           /* This is only for debugging purposes (or is it not?). */
 		qa = new QAction("Show Centers", this);
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_centers_cb(void)));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_centers_cb(void)));
+		this->menu_view->addAction(qa);
+
+		qa = new QAction("&Map Cache Info", this);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (help_cache_info_cb(void)));
 		this->menu_view->addAction(qa);
 #endif
 	}
@@ -770,7 +878,7 @@ void Window::create_actions(void)
 	{
 		this->qa_layer_properties = new QAction("Properties...", this);
 		this->menu_layers->addAction(this->qa_layer_properties);
-		connect (this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties_cb(void)));
+		connect(this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties_cb(void)));
 
 		this->new_layers_submenu_add_actions(this->menu_layers);
 	}
@@ -1580,7 +1688,7 @@ void Window::preferences_cb(void) /* Slot. */
 
 		// Update all windows
 		for (auto i = window_list.begin(); i != window_list.end(); i++) {
-			preferences_change_update(*i);
+			(*)->preferences_change_update();
 		}
 	}
 
@@ -1615,7 +1723,7 @@ void Window::closeEvent(QCloseEvent * ev)
 		if (reply == QMessageBox::No) {
 			ev->accept();
 		} else if (reply == QMessageBox::Yes) {
-			//save_file(NULL, window);
+			//this->menu_file_save_cb();
 			ev->accept();
 		} else {
 			ev->ignore();
@@ -2255,7 +2363,7 @@ void Window::open_file_cb(void)
 					} else {
 #ifdef K
 						/* Load each subsequent .vik file in a separate window. */
-						Window * new_window = Window::new_window();
+						Window * new_window = Window::new_window_cb();
 						if (new_window) {
 							new_window->open_file(file_name.toUtf8().data(), true);
 						}
@@ -2368,6 +2476,82 @@ void Window::open_file(char const * new_filename, bool change_filename)
 	this->clear_busy_cursor();
 }
 
+
+
+
+bool Window::menu_file_save_cb(void)
+{
+	if (!this->filename) {
+		return this->menu_file_save_as_cb();
+	} else {
+		this->modified = false;
+		return this->window_save();
+	}
+}
+
+
+
+
+bool Window::menu_file_save_as_cb(void)
+{
+	bool rv = false;
+	char const * fn;
+
+#ifdef K
+
+	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save as Viking File."),
+							 this,
+							 GTK_FILE_CHOOSER_ACTION_SAVE,
+							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+							 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+							 NULL);
+	if (last_folder_files_uri) {
+		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_files_uri);
+	}
+
+	GtkFileFilter * filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Viking"));
+	gtk_file_filter_add_pattern(filter, "*.vik");
+	gtk_file_filter_add_pattern(filter, "*.viking");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	// Default to a Viking file
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
+
+
+	// Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File
+	char * auto_save_name = g_strdup(this->get_filename());
+	if (!a_file_check_ext(auto_save_name, ".vik")) {
+		auto_save_name = g_strconcat(auto_save_name, ".vik", NULL);
+	}
+
+	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), auto_save_name);
+
+	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		if (0 != access(fn, F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(fn)), GTK_WINDOW(dialog))) {
+			this->set_filename(fn);
+			rv = this->window_save();
+			if (rv) {
+				this->modified = false;
+				free(last_folder_files_uri);
+				last_folder_files_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
+			}
+			break;
+		}
+	}
+	free(auto_save_name);
+	gtk_widget_destroy(dialog);
+#endif
+	return rv;
+}
 
 
 
@@ -2499,6 +2683,15 @@ char const * Window::get_filename()
 
 
 
+/**
+   Returns the 'project' filename.
+ */
+const char * Window::get_filename_2()
+{
+	return this->filename;
+}
+
+
 
 
 QAction * Window::get_drawmode_action(ViewportDrawMode mode)
@@ -2604,9 +2797,6 @@ int determine_location_thread(BackgroundJob * bg_job)
 
 	return 0;
 }
-
-
-
 
 
 
@@ -3377,10 +3567,8 @@ void Window::change_coord_mode_cb(QAction * qa)
 */
 void Window::menu_view_refresh_cb(void)
 {
-#if 0
 	/* Only get 'new' maps. */
 	this->simple_map_update(true);
-#endif
 }
 
 
@@ -3452,3 +3640,692 @@ void Window::menu_view_pan_cb(void)
 	window->draw_update();
 #endif
 }
+
+
+
+
+/**
+   Update the displayed map
+   Only update the top most visible map layer
+   ATM this assumes (as per defaults) the top most map has full alpha setting
+   such that other other maps even though they may be active will not be seen
+   It's more complicated to work out which maps are actually visible due to alpha settings
+   and overkill for this simple refresh method.
+*/
+void Window::simple_map_update(bool only_new)
+{
+	// Find the most relevent single map layer to operate on
+	Layer * layer = this->layers_panel->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAP);
+	if (layer) {
+		((LayerMap *) layer)->download(this->viewport, only_new);
+	}
+}
+
+
+
+
+
+void Window::configure_event_cb()
+{
+	static int first = 1;
+	this->draw_redraw();
+	if (first) {
+		/* This is a hack to set the cursor corresponding to the first tool.
+		   FIXME find the correct way to initialize both tool and its cursor. */
+		first = 0;
+#ifdef K
+		this->viewport_cursor = (QCursor *) window->tb->get_cursor("Pan");
+		/* We set cursor, even if it is NULL: it resets to default. */
+		gdk_window_set_cursor(gtk_widget_get_window(this->viewport), this->viewport_cursor);
+#endif
+	}
+}
+
+
+
+
+/* Mouse event handlers ************************************************************************/
+
+
+void Window::draw_click_cb(QMouseEvent * ev)
+{
+#ifdef K
+	gtk_widget_grab_focus(window->viewport);
+
+	/* middle button pressed.  we reserve all middle button and scroll events
+	 * for panning and zooming; tools only get left/right/movement
+	 */
+	if (event->button() == Qt::MiddleButton) {
+		if (window->tb->active_tool->pan_handler) {
+			// Tool still may need to do something (such as disable something)
+			window->tb->click(event);
+		}
+		window->pan_click(event);
+	} else {
+		window->tb->click(event);
+	}
+#endif
+}
+
+
+
+
+/**
+ * Action the single click after a small timeout.
+ * If a double click has occurred then this will do nothing.
+ */
+static bool window_pan_timeout(Window * window)
+{
+#ifdef K
+	if (!window->single_click_pending) {
+		/* Double click happened, so don't do anything. */
+		return false;
+	}
+
+	/* Set panning origin. */
+	window->pan_move_flag = false;
+	window->single_click_pending = false;
+	window->viewport->set_center_screen(window->delayed_pan_x, window->delayed_pan_y);
+	window->draw_update();
+
+	/* Really turn off the pan moving!! */
+	window->pan_x = window->pan_y = -1;
+#endif
+	return false;
+}
+
+
+
+
+void Window::draw_release_cb(QMouseEvent * ev)
+{
+#ifdef K
+	gtk_widget_grab_focus(window->viewport);
+
+	if (event->button() == Qt::MiddleButton) {  /* move / pan */
+		if (window->tb->active_tool->pan_handler) {
+			// Tool still may need to do something (such as reenable something)
+			window->tb->release(event);
+		}
+		window->pan_release(event);
+	} else {
+		window->tb->release(event);
+	}
+#endif
+}
+
+
+
+
+void Window::export_to_gpx_cb(void)
+{
+	this->export_to_common(SGFileType::GPX, ".gpx");
+}
+
+
+
+
+void Window::export_to_kml_cb(void)
+{
+	this->export_to_common(SGFileType::KML, ".kml");
+}
+
+
+
+
+/**
+   Export all TRW Layers in the list to individual files in the specified directory
+
+   Returns: %true on success
+*/
+bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *dir, char const *extension)
+{
+	bool success = true;
+
+	int export_count = 0;
+
+	this->set_busy_cursor();
+
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		Layer * l = *iter;
+		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, l->name, extension, NULL);
+
+		/* Some protection in attempting to write too many same named files.
+		   As this will get horribly slow... */
+		bool safe = false;
+		int ii = 2;
+		while (ii < 5000) {
+			if (0 == access(fn, F_OK)) {
+				/* Try rename. */
+				free(fn);
+#ifdef K
+				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, l->name, ii, extension);
+#endif
+			} else {
+				safe = true;
+				break;
+			}
+			ii++;
+		}
+		if (ii == 5000) {
+			success = false;
+		}
+
+		/* We allow exporting empty layers. */
+		if (safe) {
+			bool this_success = a_file_export((LayerTRW *) (*iter), fn, vft, NULL, true);
+
+			/* Show some progress. */
+			if (this_success) {
+				export_count++;
+				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(fn));
+#ifdef K
+				while (gtk_events_pending()) {
+					gtk_main_iteration();
+				}
+#endif
+			}
+
+			success = success && this_success;
+		}
+
+		free(fn);
+	}
+
+	this->clear_busy_cursor();
+
+	/* Confirm what happened. */
+	this->status_bar->set_message(StatusBarField::INFO, QString("Exported files: %1").arg(export_count));
+
+	return success;
+}
+
+
+
+
+void Window::export_to_common(SGFileType vft, char const * extension)
+{
+	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+
+	if (!layers || layers->empty()) {
+		Dialog::info(tr("Nothing to Export!"), this);
+		/* kamilFIXME: delete layers? */
+		return;
+	}
+#ifdef K
+	GtkWidget *dialog = gtk_file_chooser_dialog_new(tr("Export to directory"),
+							this,
+							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+							GTK_STOCK_CANCEL,
+							GTK_RESPONSE_REJECT,
+							GTK_STOCK_OK,
+							GTK_RESPONSE_ACCEPT,
+							NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
+	gtk_window_set_modal(GTK_WINDOW(dialog), true);
+
+	gtk_widget_show_all(dialog);
+
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *dir = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		gtk_widget_destroy(dialog);
+		if (dir) {
+			if (!this->export_to(layers, vft, dir, extension)) {
+				Dialog::error(tr("Could not convert all files"), this->get_window());
+			}
+			free(dir);
+		}
+	} else {
+		gtk_widget_destroy(dialog);
+	}
+#endif
+	delete layers;
+}
+
+
+
+
+void Window::file_properties_cb(void)
+{
+	QString message;
+	if (this->filename) {
+		if (0 == access(this->filename, F_OK)) {
+			// Get some timestamp information of the file
+			struct stat stat_buf;
+			if (stat(this->filename, &stat_buf) == 0) {
+				char time_buf[64];
+				strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
+				char *size = NULL;
+				int byte_size = stat_buf.st_size;
+#if GLIB_CHECK_VERSION(2,30,0)
+				size = g_format_size_full(byte_size, G_FORMAT_SIZE_DEFAULT);
+#else
+				size = g_format_size_for_display(byte_size);
+#endif
+				message = QObject::tr("%1\n\n%2\n\n%3").arg(this->filename).arg(time_buf).arg(size);
+				free(size);
+			}
+		} else {
+			message = QObject::tr("File not accessible");
+		}
+	} else {
+		message = QObject::tr("No Viking File");
+	}
+
+	/* Show the info. */
+	Dialog::info(message, this);
+}
+
+
+
+
+bool Window::menu_file_save_and_exit_cb(void)
+{
+	if (this->menu_file_save_cb()) {
+		this->close();
+		return(true);
+	} else {
+		return(false);
+	}
+}
+
+
+
+
+bool Window::window_save()
+{
+	this->set_busy_cursor();
+	bool success = true;
+
+	if (a_file_save(this->layers_panel->get_top_layer(), this->viewport, this->filename)) {
+		this->update_recently_used_document(this->filename);
+	} else {
+		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
+		success = false;
+	}
+	this->clear_busy_cursor();
+	return success;
+}
+
+
+
+
+void Window::import_kmz_file_cb(void)
+{
+#ifdef K
+	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Open File"),
+							 window,
+							 GTK_FILE_CHOOSER_ACTION_OPEN,
+							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+							 NULL);
+
+	GtkFileFilter * filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("KMZ"));
+	gtk_file_filter_add_mime_type(filter, "vnd.google-earth.kmz");
+	gtk_file_filter_add_pattern(filter, "*.kmz");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	// Default to any file - same as before open filters were added
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)  {
+		char *fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		// TODO convert ans value into readable explaination of failure...
+		int ans = kmz_open_file(fn, window->viewport, window->layers_panel);
+		if (ans) {
+			Dialog::error(tr("Unable to import %1.").arg(QString(fn)), window);
+		}
+
+		window->draw_update();
+	}
+	gtk_widget_destroy(dialog);
+#endif
+}
+
+
+
+
+
+Window * Window::new_window_cb(void)
+{
+	/* FIXME: this is not right... */
+	return new Window();
+}
+
+
+
+
+Window * Window::new_window()
+{
+#ifdef K
+	if (window_count < MAX_WINDOWS) {
+		Window * window = new Window();
+
+		QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window_cb));
+		QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (new_window_cb));
+		QObject::connect(window, SIGNAL("openwindow"), NULL, SLOT (open_window));
+
+		gtk_widget_show_all(window);
+
+		if (a_vik_get_restore_window_state()) {
+			// These settings are applied after the show all as these options hide widgets
+			bool sidepanel;
+			if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &sidepanel)) {
+				if (! sidepanel) {
+					window->layers_panel->set_visible(false);
+					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewSidePanel");
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
+				}
+			}
+
+			bool statusbar;
+			if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &statusbar)) {
+				if (! statusbar) {
+					gtk_widget_hide(GTK_WIDGET(window->viking_vs));
+					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewStatusBar");
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
+				}
+			}
+
+			bool toolbar;
+			if (a_settings_get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &toolbar)) {
+				if (! toolbar) {
+					gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
+					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewToolBar");
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
+				}
+			}
+
+			bool menubar;
+			if (a_settings_get_boolean(VIK_SETTINGS_WIN_MENUBAR, &menubar)) {
+				if (! menubar) {
+					gtk_widget_hide(gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu"));
+					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewMainMenu");
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
+				}
+			}
+		}
+		window_count++;
+
+		return window;
+	}
+#endif
+	return NULL;
+}
+
+
+
+
+void Window::help_cache_info_cb(void)
+{
+	/* No i18n as this is just for debug. */
+
+	int byte_size = map_cache_get_size();
+	char *msg_sz = NULL;
+#if GLIB_CHECK_VERSION(2,30,0)
+	msg_sz = g_format_size_full(byte_size, G_FORMAT_SIZE_LONG_FORMAT);
+#else
+	msg_sz = g_format_size_for_display(byte_size);
+#endif
+	const QString msg = QString("Map Cache size is %1 with %2 items").arg(msg_sz).arg(map_cache_get_count());
+	Dialog::info(msg, this);
+	free(msg_sz);
+}
+
+
+
+
+
+void Window::preferences_change_update(void)
+{
+	// Want to update all TrackWaypoint layers
+	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+	if (!layers || layers->empty()) {
+		return;
+	}
+
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		// Reset the individual waypoints themselves due to the preferences change
+		LayerTRW * trw = (LayerTRW *) *iter;
+		trw->reset_waypoints();
+	}
+
+	delete layers;
+
+	this->draw_update();
+}
+
+
+
+
+void Window::destroy_window_cb(void)
+{
+#ifdef K
+	if (!--window_count) {
+		free(last_folder_files_uri);
+		gtk_main_quit();
+	}
+#endif
+}
+
+
+
+
+
+#define VIKING_ACCELERATOR_KEY_FILE "keys.rc"
+/**
+ * Used to handle keys pressed in main UI, e.g. as hotkeys.
+ *
+ * This is the global key press handler
+ *  Global shortcuts are available at any time and hence are not restricted to when a certain tool is enabled
+ */
+bool Window::key_press_event_cb(QKeyEvent * event)
+{
+#ifdef K
+	// The keys handled here are not in the menuing system for a couple of reasons:
+	//  . Keeps the menu size compact (alebit at expense of discoverably)
+	//  . Allows differing key bindings to perform the same actions
+
+	// First decide if key events are related to the maps layer
+	bool map_download = false;
+	bool map_download_only_new = true; // Only new or reload
+
+	GdkModifierType modifiers = (GdkModifierType) gtk_accelerator_get_default_mod_mask();
+
+	// Standard 'Refresh' keys: F5 or Ctrl+r
+	// Note 'F5' is actually handled via menu_view_refresh_cb() later on
+	//  (not 'R' it's 'r' notice the case difference!!)
+	if (ev->keyval == GDK_r && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+		map_download = true;
+		map_download_only_new = true;
+	}
+	// Full cache reload with Ctrl+F5 or Ctrl+Shift+r [This is not in the menu system]
+	// Note the use of uppercase R here since shift key has been pressed
+	else if ((ev->keyval == GDK_F5 && (ev->state & modifiers) == GDK_CONTROL_MASK) ||
+		 (ev->keyval == GDK_R && (ev->state & modifiers) == (GDK_CONTROL_MASK + GDK_SHIFT_MASK))) {
+		map_download = true;
+		map_download_only_new = false;
+	}
+	// Standard Ctrl+KP+ / Ctrl+KP- to zoom in/out respectively
+	else if (ev->keyval == GDK_KEY_KP_Add && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+		this->viewport->zoom_in();
+		this->draw_update();
+		return true; // handled keypress
+	}
+	else if (ev->keyval == GDK_KEY_KP_Subtract && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+		this->viewport->zoom_out();
+		this->draw_update();
+		return true; // handled keypress
+	}
+
+	if (map_download) {
+		this->simple_map_update(map_download_only_new);
+		return true; // handled keypress
+	}
+
+	Layer * layer = this->layers_panel->get_selected_layer();
+	if (layer && this->tb->active_tool && this->tb->active_tool->key_press) {
+		LayerType ltype = this->tb->active_tool->layer_type;
+		if (layer && ltype == layer->type) {
+			return this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
+		}
+	}
+
+	// Ensure called only on window tools (i.e. not on any of the Layer tools since the layer is NULL)
+	if (this->current_tool < TOOL_LAYER) {
+		// No layer - but enable window tool keypress processing - these should be able to handle a NULL layer
+		if (this->tb->active_tool->key_press) {
+			return this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
+		}
+	}
+
+	/* Restore Main Menu via Escape key if the user has hidden it */
+	/* This key is more likely to be used as they may not remember the function key */
+	if (ev->keyval == GDK_Escape) {
+		GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/SetShow/ViewMainMenu");
+		if (check_box) {
+			bool state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
+			if (!state) {
+				gtk_widget_show(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
+				gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
+				return true; /* handled keypress */
+			}
+		}
+	}
+#endif
+	return false; /* don't handle the keypress */
+}
+
+
+
+
+
+enum {
+	TARGET_URIS,
+};
+void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time)
+{
+	bool success = false;
+#ifdef K
+	if ((selection_data != NULL) && (gtk_selection_data_get_length(selection_data) > 0)) {
+		switch (target_type) {
+		case TARGET_URIS: {
+			char * str = (char *) gtk_selection_data_get_data(selection_data);
+			fprintf(stderr, "DEBUG: drag received string:%s \n", str);
+
+			// Convert string into GSList of individual entries for use with our open signal
+			char ** entries = g_strsplit(str, "\r\n", 0);
+			GSList * filenames = NULL;
+			int entry_runner = 0;
+			char * entry = entries[entry_runner];
+			while (entry) {
+				if (strcmp(entry, "")) {
+					// Drag+Drop gives URIs. And so in particular, %20 in place of spaces in filenames
+					//  thus need to convert the text into a plain string
+					char *filename = g_filename_from_uri(entry, NULL, NULL);
+					if (filename) {
+						filenames = g_slist_append(filenames, filename);
+					}
+				}
+				entry_runner++;
+				entry = entries[entry_runner];
+			}
+
+			if (filenames) {
+				g_signal_emit(G_OBJECT (toolkit_window_from_widget(widget)), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
+				/* NB: GSList & contents are freed by main.open_window. */
+			}
+
+			success = true;
+			break;
+		}
+		default: break;
+		}
+	}
+
+	gtk_drag_finish(context, success, false, time);
+#endif
+}
+
+
+
+
+#if 0   /* Remnants of window_gtk.cpp */
+
+
+
+
+static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
+{
+	char * filename = gtk_recent_chooser_get_current_uri(chooser);
+	if (filename != NULL) {
+		GFile * file = g_file_new_for_uri(filename);
+		char * path = g_file_get_path(file);
+		g_object_unref(file);
+		if (window->filename) {
+			GSList *filenames = NULL;
+			filenames = g_slist_append(filenames, path);
+			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
+			/* GSList & contents are freed by main.open_window. */
+		} else {
+			window->open_file(path, true);
+			free(path);
+		}
+	}
+
+	free(filename);
+}
+
+
+
+
+/* TODO - add method to add tool icons defined from outside this file,
+   and remove the reverse dependency on icon definition from this file. */
+static struct {
+	const GdkPixdata *data;
+	char *stock_id;
+} stock_icons[] = {
+	{ &mover_22_pixbuf,		(char *) "vik-icon-pan"              },
+	{ &zoom_18_pixbuf,		(char *) "vik-icon-zoom"             },
+	{ &ruler_18_pixbuf,		(char *) "vik-icon-ruler"            },
+	{ &select_18_pixbuf,		(char *) "vik-icon-select"           },
+	{ &vik_new_route_18_pixbuf,     (char *) "vik-icon-Create Route"     },
+	{ &route_finder_18_pixbuf,	(char *) "vik-icon-Route Finder"     },
+	{ &demdl_18_pixbuf,		(char *) "vik-icon-DEM Download"     },
+	{ &showpic_18_pixbuf,		(char *) "vik-icon-Show Picture"     },
+	{ &addtr_18_pixbuf,		(char *) "vik-icon-Create Track"     },
+	{ &edtr_18_pixbuf,		(char *) "vik-icon-Edit Trackpoint"  },
+	{ &addwp_18_pixbuf,		(char *) "vik-icon-Create Waypoint"  },
+	{ &edwp_18_pixbuf,		(char *) "vik-icon-Edit Waypoint"    },
+	{ &geozoom_18_pixbuf,		(char *) "vik-icon-Georef Zoom Tool" },
+	{ &geomove_18_pixbuf,		(char *) "vik-icon-Georef Move Map"  },
+	{ &mapdl_18_pixbuf,		(char *) "vik-icon-Maps Download"    },
+};
+
+static int n_stock_icons = G_N_ELEMENTS (stock_icons);
+
+
+
+
+static void register_vik_icons(GtkIconFactory *icon_factory)
+{
+	GtkIconSet *icon_set;
+
+	for (int i = 0; i < n_stock_icons; i++) {
+		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(stock_icons[i].data, false, NULL));
+		gtk_icon_factory_add(icon_factory, stock_icons[i].stock_id, icon_set);
+		gtk_icon_set_unref(icon_set);
+	}
+}
+
+
+
+
+#endif

@@ -694,8 +694,8 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 	if (g_path_is_absolute(filename)) {
 		canonical = g_strdup(filename);
 	} else {
+		const char * vw_filename = layer->get_window()->get_filename_2();
 #ifdef K
-		const char * vw_filename = layer->viewport->get_window()->get_filename_2();
 		char * dirpath = NULL;
 		if (vw_filename) {
 			dirpath = g_path_get_dirname(vw_filename);

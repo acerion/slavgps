@@ -55,6 +55,14 @@
 
 
 
+
+typedef int GtkWidget;
+typedef int GdkDragContext;
+typedef int GtkSelectionData;
+
+
+
+
 namespace SlavGPS {
 
 
@@ -87,6 +95,7 @@ namespace SlavGPS {
 
 	public:
 		Window();
+		~Window();
 
 		void draw_sync();
 		void draw_status();
@@ -95,7 +104,7 @@ namespace SlavGPS {
 
 		void selected_layer(Layer * layer);
 
-
+		Window * new_window();
 
 		Viewport * get_viewport(void);
 		LayersPanel * get_layers_panel(void);
@@ -131,9 +140,14 @@ namespace SlavGPS {
 		void show_side_panel(bool visible);
 		void toggle_statusbar();
 		void toggle_main_menu();
-		//void simple_map_update(bool only_new);
+		void simple_map_update(bool only_new);
 
+		bool export_to(std::list<Layer *> * layers, SGFileType vft, char const *dir, char const *extension);
+		void export_to_common(SGFileType vft, char const * extension);
 
+		void import_kmz_file_cb(void);
+
+		void file_properties_cb(void);
 
 
 
@@ -176,6 +190,11 @@ namespace SlavGPS {
 		void clear_busy_cursor(void);
 
 
+		bool window_save();
+		const char * get_filename_2();
+		void preferences_change_update(void);
+
+
 		/* Display controls. */
 		bool select_move = false;
 
@@ -200,6 +219,8 @@ namespace SlavGPS {
 		bool draw_image_save_as_png = false;
 
 	public slots:
+		Window * new_window_cb(void);
+
 		void menu_layer_new_cb(void);
 		void draw_layer_cb(sg_uid_t uid);
 		void draw_update_cb(void);
@@ -276,6 +297,23 @@ namespace SlavGPS {
 
 		void change_coord_mode_cb(QAction * qa);
 
+		void configure_event_cb(void);
+
+
+		void draw_click_cb(QMouseEvent * ev);
+		void draw_release_cb(QMouseEvent * ev);
+
+
+		void export_to_gpx_cb(void);
+		void export_to_kml_cb(void);
+
+
+		void help_cache_info_cb(void);
+
+		bool key_press_event_cb(QKeyEvent * event);
+		void drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time);
+
+
 
 	protected:
 
@@ -283,6 +321,7 @@ namespace SlavGPS {
 		void center_changed_cb(void);
 		void layer_tool_cb(QAction * a);
 
+		void destroy_window_cb(void);
 
 
 		void menu_edit_cut_cb(void);
@@ -295,6 +334,10 @@ namespace SlavGPS {
 		void set_default_location_cb(void);
 		void preferences_cb(void);
 		void open_file_cb(void);
+
+		bool menu_file_save_cb(void);
+		bool menu_file_save_as_cb(void);
+		bool menu_file_save_and_exit_cb(void);
 
 		void help_help_cb(void);
 		void help_about_cb(void);
@@ -336,6 +379,7 @@ namespace SlavGPS {
 		QMenu * submenu_recent_files = NULL;
 		QMenu * submenu_file_acquire = NULL;
 
+		/* Half-drawn update. */
 		SlavGPS::Layer * trigger = NULL;
 		Coord trigger_center;
 

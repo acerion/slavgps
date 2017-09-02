@@ -609,6 +609,7 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 		}
 		return true;
 	} else {
+		Dialog::info(tr("You must select a layer to show its properties."), this->window);
 		return false;
 	}
 }
