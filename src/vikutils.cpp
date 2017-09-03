@@ -645,8 +645,8 @@ void SGUtils::set_auto_features_on_first_run(void)
 		   Only the name & type are important for setting a preference via this 'external' way. */
 
 		/* Enable auto add map + Enable IP lookup. */
-		Parameter pref_add_map[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
-		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method", SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
+		Parameter pref_add_map[] =        { { 0, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL }, };
+		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL }, };
 
 		SGVariant vlp_data;
 		vlp_data.b = true;

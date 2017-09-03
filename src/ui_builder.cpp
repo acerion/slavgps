@@ -399,19 +399,19 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 		QComboBox * widget_ = new QComboBox(this);
 
-		label_id_t * values = (label_id_t *) param->widget_data;
+		const std::vector<SGLabelID> * items = (std::vector<SGLabelID> *) param->widget_data;
 		int i = 0;
 		int selected_idx = 0;
-		while (values[i].label) {
-			QString label(values[i].label);
+
+		for (auto iter = items->begin(); iter != items->end(); iter++) {
 			if (param->type == SGVariantType::UINT) {
-				widget_->addItem(label, QVariant((uint32_t) values[i].id));
-				if (param_value.u == (uint32_t) values[i].id) {
+				widget_->addItem((*iter).label, QVariant((uint32_t) (*iter).id));
+				if (param_value.u == (uint32_t) (*iter).id) {
 					selected_idx = i;
 				}
 			} else if (param->type == SGVariantType::INT) {
-				widget_->addItem(label, QVariant((int32_t) values[i].id));
-				if (param_value.i == (int32_t) values[i].id) {
+				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
+				if (param_value.i == (int32_t) (*iter).id) {
 					selected_idx = i;
 				}
 			} else if (param->type == SGVariantType::STRING) {
@@ -795,38 +795,6 @@ void a_uibuilder_free_paramdatas(SGVariant *paramdatas, Parameter *params, uint1
 		}
 	}
 	free(paramdatas);
-}
-
-
-
-
-bool SlavGPS::operator==(unsigned int event_button, MouseButton button)
-{
-	return event_button == static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator!=(unsigned int event_button, MouseButton button)
-{
-	return event_button != static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator==(MouseButton button, unsigned int event_button)
-{
-	return event_button == static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator!=(MouseButton button, unsigned int event_button)
-{
-	return event_button != static_cast<unsigned int>(button);
 }
 
 

@@ -33,20 +33,12 @@
 #include <QVBoxLayout>
 #include <QButtonGroup>
 
+#include "ui_builder.h"
+
 
 
 
 namespace SlavGPS {
-
-
-
-
-	class SGLabelID {
-	public:
-		SGLabelID(const QString & label_, int id_) { label = label_; id = id_; }
-		QString label;
-		int id;
-	};
 
 
 

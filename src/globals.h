@@ -119,21 +119,6 @@ namespace SlavGPS {
 
 
 
-	enum class MouseButton : unsigned int {
-		OTHER  = 0, /* GTK2 documentation: "If the menu popup was initiated by something other than a mouse button press, such as a mouse button release or a keypress, button should be 0.". */
-		LEFT   = 1,
-		MIDDLE = 2,
-		RIGHT  = 3
-	};
-
-	bool operator==(unsigned int event_button, MouseButton button);
-	bool operator!=(unsigned int event_button, MouseButton button);
-	bool operator==(MouseButton button, unsigned int event_button);
-	bool operator!=(MouseButton button, unsigned int event_button);
-
-
-
-
 } /* namespace SlavGPS */
 
 
@@ -280,7 +265,6 @@ typedef enum {
 /* Stuff added during migrantion from glib to something else. */
 #define KINT_TO_POINTER(i) ((void *) (long) (i))
 #define KPOINTER_TO_INT(p) ((int) (long) (p))
-#define KPOINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
 
 
 

@@ -110,8 +110,18 @@ static ParameterScale param_scales[] = {
 
 
 
-static std::vector<SGLabelID> params_source;
-static std::vector<SGLabelID> params_type;
+static std::vector<SGLabelID> params_source = {
+	SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), 0),
+#ifdef VIK_CONFIG_DEM24K
+	SGLabelID(QObject::tr("USA 10m (USGS 24k)"), 1),
+#endif
+};
+
+
+static std::vector<SGLabelID> params_type = {
+	SGLabelID(QObject::tr("Absolute height"), 0),
+	SGLabelID(QObject::tr("Height gradient"), 1),
+};
 
 
 
@@ -259,15 +269,6 @@ LayerDEMInterface::LayerDEMInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
-
-
-	params_source.push_back(SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), 0));
-#ifdef VIK_CONFIG_DEM24K
-	params_source.push_back(SGLabelID(QObject::tr("USA 10m (USGS 24k)"), 1));
-#endif
-
-	params_type.push_back(SGLabelID(QObject::tr("Absolute height"), 0));
-	params_type.push_back(SGLabelID(QObject::tr("Height gradient"), 1));
 }
 
 

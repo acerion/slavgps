@@ -20,7 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -106,42 +105,37 @@ static bool SCALE_SMALLER_ZOOM_FIRST = true;
 static std::deque<MapSource *> map_sources;
 
 
-/* List of label for each map type. */
-static char ** map_type_labels = NULL;
+/* List of labels (string) and IDs (MapTypeID) for each map type. */
+static std::vector<SGLabelID> map_types;
 
-/* Corresponding IDs. (Cf. field map_type in MapSource class). */
-static MapTypeID * map_type_ids = NULL;
 
-static ParameterExtra map_type_extra;
+static std::vector<SGLabelID> params_mapzooms = {
+	SGLabelID(N_("Use Viking Zoom Level"), 0),
+	SGLabelID("0.25", 1),
+	SGLabelID("0.5", 2),
+	SGLabelID("1", 3),
+	SGLabelID("2", 4),
+	SGLabelID("4", 5),
+	SGLabelID("8", 6),
+	SGLabelID("16", 7),
+	SGLabelID("32", 8),
+	SGLabelID("64", 9),
+	SGLabelID("128", 10),
+	SGLabelID("256", 11),
+	SGLabelID("512", 12),
+	SGLabelID("1024", 13),
+	SGLabelID("USGS 10k", 14),
+	SGLabelID("USGS 24k", 15),
+	SGLabelID("USGS 25k", 16),
+	SGLabelID("USGS 50k", 17),
+	SGLabelID("USGS 100k", 18),
+	SGLabelID("USGS 200k", 19),
+	SGLabelID("USGS 250k", 20),
+};
 
-/******** MAPZOOMS *********/
-
-static const char * params_mapzooms[] = { N_("Use Viking Zoom Level"),
-					  "0.25",
-					  "0.5",
-					  "1",
-					  "2",
-					  "4",
-					  "8",
-					  "16",
-					  "32",
-					  "64"
-					  "128",
-					  "256",
-					  "512",
-					  "1024",
-					  "USGS 10k",
-					  "USGS 24k",
-					  "USGS 25k",
-					  "USGS 50k",
-					  "USGS 100k",
-					  "USGS 200k",
-					  "USGS 250k",
-					  NULL };
 static double __mapzooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
 static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
 
-#define NUM_MAPZOOMS (sizeof(params_mapzooms)/sizeof(params_mapzooms[0]) - 1)
 
 /**************************/
 
@@ -208,7 +202,11 @@ static SGVariant mapzoom_default(void)
 
 
 
-static char * cache_types[] = { (char *) "Viking", (char *) N_("OSM"), NULL };
+static std::vector<SGLabelID> cache_types = {
+	SGLabelID("Viking", (int) MapsCacheLayout::VIKING),
+	SGLabelID("OSM",    (int) MapsCacheLayout::OSM),
+};
+
 static MapsCacheLayout cache_layout_default_value = MapsCacheLayout::VIKING;
 
 
@@ -238,17 +236,17 @@ enum {
 SGFileTypeFilter map_file_type[1] = { SGFileTypeFilter::MBTILES };
 
 Parameter maps_layer_params[] = {
-	// NB mode => map source type id - But can't break file format just to rename something better
-	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    NULL,            id_default,           &map_type_extra, NULL },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,            directory_default,    NULL,            NULL },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    cache_types,     cache_layout_default, NULL,            N_("This determines the tile storage layout on disk") },
-	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   map_file_type,   file_default,         NULL,            N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,   alpha_default,        NULL,            N_("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,            sg_variant_true,      NULL,            NULL },
-	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,            sg_variant_false,     NULL,            N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    params_mapzooms, mapzoom_default,      NULL,            N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
+	{ PARAM_MAPTYPE,       "mode",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    &map_types,       id_default,           NULL, NULL },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,             directory_default,    NULL, NULL },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,    alpha_default,        NULL, N_("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,             sg_variant_true,      NULL, NULL },
+	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,            NULL,                 NULL,            NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -368,34 +366,15 @@ void layer_map_init(void)
 
 void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 {
-	size_t len = 0;
-	if (map_type_labels) {
-		len = g_strv_length(map_type_labels);
-	}
-	/* Add the label. */
-	map_type_labels = (char **) g_realloc(map_type_labels, (len + 2) * sizeof (char *));
-	map_type_labels[len] = g_strdup(label);
-	map_type_labels[len+1] = NULL;
-
-	/* Add the id. */
-	map_type_ids = (MapTypeID *) g_realloc(map_type_ids, (len + 2) * sizeof (MapTypeID));
-	map_type_ids[len] = map_type;
-	map_type_ids[len+1] = (MapTypeID) 0; /* Guard. */
+	/* Add the label and ID of map source. */
+	map_types.push_back(SGLabelID(label, map_type));
 
 	/* We have to clone. */
 	MapSource clone = *map; /* FIXME: to clone or not to clone? */
 	/* Register the clone in the list */
 	map_sources.push_back(map);
 
-	/* Hack.
-	   We have to ensure the mode Parameter references the up-to-date GLists.
-	*/
-	/*
-	  memcpy(&maps_layer_params[0].widget_data, &map_type_labels, sizeof(void *));
-	  memcpy(&maps_layer_params[0].extra_widget_data, &map_type_ids, sizeof(void *));
-	*/
-	maps_layer_params[0].widget_data = map_type_labels;
-	maps_layer_params[0].extra->extra_widget_data = map_type_ids;
+	/* TODO: verify in application that properties dialog sees updated list of map types. */
 }
 
 
@@ -413,10 +392,10 @@ void _update_map_source(MapSource *map, const char *label, unsigned int index)
 		// delete map_source; /* kamilFIXME: free this pointer. */
 	}
 
-
 	/* Change previous data. */
-	free(map_type_labels[index]);
-	map_type_labels[index] = g_strdup(label);
+	map_types[index].label = QString(label);
+	/* TODO: why we don't update ID of the map type? */
+	/* TODO: verify in application that properties dialog sees updated entry. */
 }
 
 
@@ -447,8 +426,8 @@ void maps_layer_register_map_source(MapSource * map)
 
 
 
-#define LAYER_MAP_NTH_LABEL(n) (map_type_labels[n])
-#define LAYER_MAP_NTH_ID(n) (map_type_ids[n])
+#define LAYER_MAP_NTH_LABEL(n) (map_types[n].label)
+#define LAYER_MAP_NTH_ID(n) ((MapTypeID) map_types[n].id)
 
 /**
  * Returns the actual map id (rather than the internal type index value).
@@ -489,7 +468,7 @@ MapTypeID LayerMap::get_default_map_type()
 
 QString LayerMap::get_map_label(void) const
 {
-	return QString(LAYER_MAP_NTH_LABEL(this->map_index));
+	return LAYER_MAP_NTH_LABEL(this->map_index);
 }
 
 
@@ -698,7 +677,7 @@ bool LayerMap::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		this->adl_only_missing = data.b;
 		break;
 	case PARAM_MAPZOOM:
-		if (data.u < NUM_MAPZOOMS) {
+		if (data.u < params_mapzooms.size()) {
 			this->mapzoom_id = data.u;
 			this->xmapzoom = __mapzooms_x[data.u];
 			this->ymapzoom = __mapzooms_y[data.u];
@@ -1645,7 +1624,7 @@ public:
 	std::mutex mutex;
 };
 
-static char * redownload_mode_message(int redownload_mode, int mapstoget, char * label);
+static char * redownload_mode_message(int redownload_mode, int mapstoget, const QString & label);
 static void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
 static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
 
@@ -2670,7 +2649,7 @@ MapDownloadJob::~MapDownloadJob()
 
 
 
-char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
+char * redownload_mode_message(int redownload_mode, int mapstoget, const QString & label)
 {
 	char * format = NULL;
 	if (redownload_mode) {
@@ -2683,7 +2662,7 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 		format = ngettext("Downloading %d %s map...", "Downloading %d %s maps...", mapstoget);
 	}
 
-	char * result = g_strdup_printf(format, mapstoget, label);
+	char * result = g_strdup_printf(format, mapstoget, label.toUtf8().constData());
 	return result;
 }
 

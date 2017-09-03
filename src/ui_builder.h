@@ -152,10 +152,12 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		char const * label;
-		int32_t id;
-	} label_id_t;
+	class SGLabelID {
+	public:
+		SGLabelID(const QString & label_, int id_) { label = label_; id = id_; }
+		QString label;
+		int id;
+	};
 
 
 

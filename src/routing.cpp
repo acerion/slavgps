@@ -31,6 +31,9 @@
 #endif
 
 #include <cstdlib>
+#include <list>
+
+#include <QDebug>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -41,6 +44,7 @@
 #include "routing.h"
 #include "routing_engine.h"
 #include "util.h"
+#include "ui_builder.h"
 
 
 
@@ -55,21 +59,18 @@ using namespace SlavGPS;
 #define PREFERENCES_GROUP_KEY_ROUTING "routing"
 #define PREFERENCES_NAMESPACE_ROUTING "routing."
 
-/* List to register all routing engines. */
-static GList * routing_engine_list = NULL;
 
+
+
+static std::vector<RoutingEngine *> routing_engines;   /* List to register all routing engines. */
+static std::vector<SGLabelID> routing_engine_combo_items;
+static std::vector<QString> routing_engine_ids; /* These are string IDs. */
 
 
 
 static Parameter prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, &routing_engine_combo_items, NULL, NULL, NULL },
 };
-
-
-
-
-char ** routing_engine_labels = NULL;
-char ** routing_engine_ids = NULL;
 
 
 
@@ -88,17 +89,15 @@ void SlavGPS::routing_prefs_init()
 
 
 
-/* @see g_list_find_custom */
-static int search_by_id(gconstpointer a, gconstpointer b)
+static RoutingEngine * search_by_string_id(std::vector<RoutingEngine *> & engines, const QString & string_id)
 {
-	const char * id = (const char *) b;
-	RoutingEngine *engine = (RoutingEngine *)a;
-	char * engineId = engine->get_id();
-	if (id && engine) {
-		return strcmp(id, engineId);
-	} else {
-		return -1;
+	for (auto iter = engines.begin(); iter != engines.end(); iter++) {
+		RoutingEngine * engine = *iter;
+		if (QString(engine->get_id()) == string_id) {
+			return engine;
+		}
 	}
+	return NULL;
 }
 
 
@@ -111,12 +110,7 @@ static int search_by_id(gconstpointer a, gconstpointer b)
  */
 RoutingEngine * vik_routing_find_engine(const char * id)
 {
-	RoutingEngine * engine = NULL;
-	GList * elem = g_list_find_custom(routing_engine_list, id, search_by_id);
-	if (elem) {
-		engine = (RoutingEngine *) elem->data;
-	}
-	return engine;
+	return search_by_string_id(routing_engines, QString(id));
 }
 
 
@@ -131,9 +125,9 @@ RoutingEngine * SlavGPS::routing_default_engine(void)
 {
 	const char * id = a_preferences_get(PREFERENCES_NAMESPACE_ROUTING "default")->s;
 	RoutingEngine * engine = vik_routing_find_engine(id);
-	if (engine == NULL && routing_engine_list != NULL && g_list_first(routing_engine_list) != NULL) {
+	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */
-		engine = (RoutingEngine *) g_list_first(routing_engine_list)->data;
+		engine = routing_engines[0];
 	}
 
 	return engine;
@@ -165,58 +159,49 @@ bool SlavGPS::routing_default_find(LayerTRW * trw, struct LatLon start, struct L
  */
 void SlavGPS::routing_register(RoutingEngine * engine)
 {
-	char * label = engine->get_label();
-	char * id = engine->get_id();
-	size_t len = 0;
+	const QString label = QString(engine->get_label());
+	const QString string_id = QString(engine->get_id());
 
-	/* Check if id already exists in list. */
-	GList * elem = g_list_find_custom(routing_engine_list, id, search_by_id);
-	if (elem != NULL) {
-		fprintf(stderr, "DEBUG: %s: %s already exists: update\n", __FUNCTION__, id);
+	/* Check if string_id already exists in list. */
+	RoutingEngine * found_engine = search_by_string_id(routing_engines, string_id);
+	if (found_engine) {
+		qDebug() << "DD: Routing: register:" << string_id << "already exists: update";
 #ifdef K
 		/* Update main list. */
-		g_object_unref(elem->data);
-		elem->data = g_object_ref(engine);
+		g_object_unref(found_engine);
+		found_engine = g_object_ref(engine);
+#endif
 
 		/* Update GUI arrays. */
-		len = g_strv_length(routing_engine_labels);
+		size_t len = routing_engine_combo_items.size();
 		for (; len > 0 ; len--) {
-			if (strcmp(routing_engine_ids[len-1], id) == 0) {
+			if (routing_engine_ids[len - 1] == string_id) {
 				break;
 			}
 		}
-		/* Update the label (possibly different). */
-		free(routing_engine_labels[len-1]);
-		routing_engine_labels[len-1] = g_strdup(label);
-#endif
-	} else {
-		fprintf(stderr, "DEBUG: %s: %s is new: append\n", __FUNCTION__, id);
-#ifdef K
-		routing_engine_list = g_list_append(routing_engine_list, g_object_ref(engine));
 
-		if (routing_engine_labels) {
-			len = g_strv_length(routing_engine_labels);
-		}
+		/* Update the label (possibly different). */
+		routing_engine_combo_items[len - 1].label = label;
+
+		/* TODO: verify that updated list of routers is displayed correctly a combo list in dialog. */
+	} else {
+		qDebug() << "DD: Routing: register:" << string_id << "is new: append";
+		routing_engines.push_back(engine);
+
+		const size_t len = routing_engine_combo_items.size();
 
 		/* Add the label. */
-		routing_engine_labels = (char **) g_realloc(routing_engine_labels, (len+2)*sizeof(char*));
-		routing_engine_labels[len] = g_strdup(label);
-		routing_engine_labels[len+1] = NULL;
+		routing_engine_combo_items.push_back(SGLabelID(label, (int) len)); /* We use old length of vector as numeric ID. */
 
-		/* Add the id. */
-		routing_engine_ids = (char **) g_realloc(routing_engine_ids, (len+2)*sizeof(char*));
-		routing_engine_ids[len] = g_strdup(id);
-		routing_engine_ids[len+1] = NULL;
+		/* Add the string id. */
+		routing_engine_ids.push_back(string_id);
 
-		/* Hack
-		   We have to ensure the mode Parameter references the up-to-date
-		   GLists.
-		*/
-		/*
-		  memcpy(&maps_layer_params[0].widget_data, &params_maptypes, sizeof(void *));
-		  memcpy(&maps_layer_params[0].extra_widget_data, &params_maptypes_ids, sizeof(void *));
-		*/
-		prefs[0].widget_data = routing_engine_labels;
+		/* TODO: verify that constructed list of routers is visible as a combo list in dialog. */
+
+#ifdef K
+		/* TODO: previously the string IDs of routing engines
+		   were passed to UI builder like below. Verify
+		   whether this is still necessary. */
 		prefs[0].extra_widget_data = routing_engine_ids;
 #endif
 	}
@@ -231,9 +216,7 @@ void SlavGPS::routing_register(RoutingEngine * engine)
 void SlavGPS::routing_unregister_all()
 {
 #ifdef K
-	g_list_foreach(routing_engine_list, (GFunc) g_object_unref, NULL);
-	g_strfreev(routing_engine_labels);
-	g_strfreev(routing_engine_ids);
+	g_list_foreach(routing_engines, (GFunc) g_object_unref, NULL);
 #endif
 }
 
@@ -249,7 +232,7 @@ void SlavGPS::routing_unregister_all()
 void SlavGPS::routing_foreach_engine(GFunc func, QComboBox * combo)
 {
 #ifdef K
-	g_list_foreach(routing_engine_list, func, user_data);
+	g_list_foreach(routing_engines, func, user_data);
 #endif
 }
 

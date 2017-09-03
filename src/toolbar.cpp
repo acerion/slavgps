@@ -124,20 +124,18 @@ VikToolbar *vik_toolbar_new()
 #define TOOLBAR_PARAMS_GROUP_KEY "toolbar"
 #define TOOLBAR_PARAMS_NAMESPACE "toolbar."
 
-static label_id_t  params_icon_size[] = {
-	{ "System Default", 0 },
-	{ "Small",          1 },
-	{ "Medium",         2 },
-	{ "Large",          3 },
-	{ NULL,             4 }
+static std::vector<SGLabelID>  params_icon_size = {
+	SGLabelID("System Default", 0),
+	SGLabelID("Small",          1),
+	SGLabelID("Medium",         2),
+	SGLabelID("Large",          3),
 };
 
-static label_id_t params_icon_style[] = {
-	{ "System Default", 0 },
-	{ "Icons Only",     1 },
-	{ "Text Only",      2 },
-	{ "Icons and Text", 3 },
-	{ NULL,             4 },
+static std::vector<SGLabelID> params_icon_style = {
+	SGLabelID("System Default", 0),
+	SGLabelID("Icons Only",     1),
+	SGLabelID("Text Only",      2),
+	SGLabelID("Icons and Text", 3),
 };
 
 typedef struct {
@@ -152,12 +150,12 @@ typedef struct {
 static config_t extra_widget_data;
 
 static Parameter prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
 	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
 
-	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */

@@ -99,28 +99,25 @@ typedef enum {
 	OLD_NUM_PROTOCOLS
 } vik_gps_proto;
 
-static label_id_t protocols_args[] = {
-	{ "garmin",   0 },
-	{ "magellan", 1 },
-	{ "delbin",   2 },
-	{ "navilink", 3 },
-	{ NULL,       4 }
+static std::vector<SGLabelID> protocols_args = {
+	SGLabelID("garmin",   0),
+	SGLabelID("magellan", 1),
+	SGLabelID("delbin",   2),
+	SGLabelID("navilink", 3)
 };
 
 #ifdef WINDOWS
-static label_id_t params_ports[] = {
-	{ "com1", 0 },
-	{ "usb:", 1 },
-	{ NULL,   2 }
+static std::vector<SGLabelID> params_ports = {
+	SGLabelID("com1", 0),
+	SGLabelID("usb:", 1),
 };
 #else
-static char * params_ports[] = {
-	(char *) "/dev/ttyS0",
-	(char *) "/dev/ttyS1",
-	(char *) "/dev/ttyUSB0",
-	(char *) "/dev/ttyUSB1",
-	(char *) "usb:",
-	NULL
+static std::vector<SGLabelID> params_ports = {
+	SGLabelID("/dev/ttyS0",   1),
+	SGLabelID("/dev/ttyS1",   2),
+	SGLabelID("/dev/ttyUSB0", 3),
+	SGLabelID("/dev/ttyUSB1", 4),
+	SGLabelID("usb:",         5),
 };
 #endif
 
@@ -128,22 +125,19 @@ static char * params_ports[] = {
 /* #define NUM_PORTS (sizeof(params_ports)/sizeof(params_ports[0]) - 1) */
 /* Compatibility with previous versions. */
 #ifdef WINDOWS
-static char * old_params_ports[] = {
-	(char *) "com1",
-	(char *) "usb:",
-	NULL
+static std::vector<SGLabelID> old_params_ports = {
+	SGLabelID("com1", 0),
+	SGLabelID("usb:", 1)
 };
 #else
-static char * old_params_ports[] = {
-	(char *) "/dev/ttyS0",
-	(char *) "/dev/ttyS1",
-	(char *) "/dev/ttyUSB0",
-	(char *) "/dev/ttyUSB1",
-	(char *) "usb:",
-	NULL
+static std::vector<SGLabelID> old_params_ports = {
+	SGLabelID("/dev/ttyS0",   0),
+	SGLabelID("/dev/ttyS1",   1),
+	SGLabelID("/dev/ttyUSB0", 2),
+	SGLabelID("/dev/ttyUSB1", 3),
+	SGLabelID("usb:",         4)
 };
 #endif
-#define OLD_NUM_PORTS (sizeof(old_params_ports)/sizeof(old_params_ports[0]) - 1)
 
 
 
@@ -275,8 +269,8 @@ static Parameter gps_layer_params[] = {
 	/* NB gps_layer_inst_init() is performed after parameter registeration
 	   thus to give the protocols some potential values use the old static list. */
 	/* TODO: find another way to use gps_layer_inst_init()? */
-	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     WidgetType::COMBOBOX,      protocols_args,          gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
-	{ PARAM_PORT,                       "gps_port",                  SGVariantType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      WidgetType::COMBOBOX,      params_ports,            gps_port_default,            NULL, NULL },
+	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     WidgetType::COMBOBOX,      &protocols_args,         gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
+	{ PARAM_PORT,                       "gps_port",                  SGVariantType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      WidgetType::COMBOBOX,      &params_ports,           gps_port_default,            NULL, NULL },
 	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Tracks:"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Tracks:"),                    WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_DOWNLOAD_ROUTES,            "gps_download_routes",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Routes:"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
@@ -448,7 +442,7 @@ bool LayerGPS::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 			    index_ < OLD_NUM_PROTOCOLS) {
 
 				/* It is a single digit: activate compatibility. */
-				this->protocol = g_strdup(protocols_args[index_].label);
+				this->protocol = g_strdup(protocols_args[index_].label.toUtf8().constData()); /* FIXME: memory leak. */
 			} else {
 				this->protocol = g_strdup(data.s);
 			}
@@ -465,10 +459,10 @@ bool LayerGPS::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 			if (data.s[0] != '\0' &&
 			    g_ascii_isdigit(data.s[0]) &&
 			    data.s[1] == '\0' &&
-			    index_ < OLD_NUM_PORTS) {
+			    index_ < old_params_ports.size()) {
 
 				/* It is a single digit: activate compatibility. */
-				this->serial_port = g_strdup(old_params_ports[index_]);
+				this->serial_port = g_strdup(old_params_ports[index_].label.toUtf8().constData());
 
 			} else {
 				this->serial_port = g_strdup(data.s);
