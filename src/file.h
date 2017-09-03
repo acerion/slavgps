@@ -44,6 +44,16 @@ namespace SlavGPS {
 
 
 
+	enum class SGFileTypeFilter {
+		ANY = 0,
+		IMAGE,   // JPG+PNG+TIFF
+		MBTILES,
+		XML,
+		CARTO,   // MML + MSS
+		LAST
+	};
+
+
 
 	enum class SGFileType {
 		GPSPOINT  = 1,

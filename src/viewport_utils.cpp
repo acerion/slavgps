@@ -199,23 +199,19 @@ void ViewportToImageDialog::build_ui(ViewportToImageMode mode)
 
 
 	if (mode == ViewportToImageMode::KMZ_FILE) {
-		// Don't show image type selection if creating a KMZ (always JPG internally)
-		// Start with viewable area by default
+		/* Don't show image type selection if creating a KMZ (always JPG internally).
+		   Start with viewable area by default. */
 		this->get_size_from_viewport_cb();
 	} else {
-		QStringList labels;
-		labels << tr("Save as PNG");
-		labels << tr("Save as JPEG");
-		//labels.push_back(label);
-		QString title(tr("Output format"));
-		this->output_format_radios = new SGRadioGroup(title, labels, this);
+		std::vector<SGLabelID> items;
+		items.push_back(SGLabelID(tr("Save as PNG"), 0));
+		items.push_back(SGLabelID(tr("Save as JPEG"), 1));
+		this->output_format_radios = new SGRadioGroup(tr("Output format"), &items, this);
 		this->vbox->addWidget(this->output_format_radios);
 
-#ifdef K
-		if (!this->draw_image_save_as_png) {
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jpeg_radio), true);
+		if (!this->viewport->get_window()->draw_image_save_as_png) {
+			this->output_format_radios->set_id_of_selected(1); /* '1' corresponds to '1' in code preparing items above. */
 		}
-#endif
 	}
 
 	if (mode == ViewportToImageMode::DIRECTORY_OF_IMAGES) {

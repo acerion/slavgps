@@ -174,7 +174,7 @@ namespace SlavGPS {
 		int gpsd_retry_interval;
 		bool realtime_record;
 		bool realtime_jump_to_start;
-		unsigned int vehicle_position;
+		int vehicle_position; /* Signed int because this is a generic enum ID. */
 		bool realtime_update_statusbar;
 		Trackpoint * tp = NULL;
 		Trackpoint * tp_prev = NULL;

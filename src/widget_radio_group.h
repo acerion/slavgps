@@ -24,7 +24,7 @@
 
 
 
-#include <cstdint>
+#include <vector>
 
 #include <QObject>
 #include <QString>
@@ -41,14 +41,24 @@ namespace SlavGPS {
 
 
 
+	class SGLabelID {
+	public:
+		SGLabelID(const QString & label_, int id_) { label = label_; id = id_; }
+		QString label;
+		int id;
+	};
+
+
+
+
 	class SGRadioGroup : public QGroupBox {
 		Q_OBJECT
 	public:
-		SGRadioGroup(const QString & title, const QStringList & labels, QWidget * parent = NULL);
+		SGRadioGroup(const QString & title, const std::vector<SGLabelID> * items, QWidget * parent = NULL);
 		~SGRadioGroup();
 
-		uint32_t get_selected(void);
-		void set_selected(uint32_t id);
+		int get_id_of_selected(void);
+		void set_id_of_selected(int id);
 
 	private:
 		QVBoxLayout * vbox = NULL;

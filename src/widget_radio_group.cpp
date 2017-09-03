@@ -40,17 +40,20 @@ using namespace SlavGPS;
 
 
 
-SGRadioGroup::SGRadioGroup(const QString & title_, const QStringList & labels, QWidget * parent_widget) : QGroupBox(parent_widget)
+SGRadioGroup::SGRadioGroup(const QString & title_, const std::vector<SGLabelID> * items, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;
 
-	for (int i = 0; i < labels.size(); i++) {
-		QRadioButton * radio = new QRadioButton(labels.at(i));
-		this->group->addButton(radio, i);
+	bool first_checked = false;
+
+	for (auto iter = items->begin(); iter != items->end(); iter++) {
+		QRadioButton * radio = new QRadioButton((*iter).label);
+		this->group->addButton(radio, (*iter).id);
 		this->vbox->addWidget(radio);
-		if (i == 0) {
+		if (!first_checked) {
 			radio->setChecked(true);
+			first_checked = true;
 		}
 	}
 
@@ -69,15 +72,15 @@ SGRadioGroup::~SGRadioGroup()
 
 
 
-uint32_t SGRadioGroup::get_selected(void)
+int SGRadioGroup::get_id_of_selected(void)
 {
-	return (uint32_t) this->group->checkedId();
+	return this->group->checkedId();
 }
 
 
 
 
-void SGRadioGroup::set_selected(uint32_t id)
+void SGRadioGroup::set_id_of_selected(int id)
 {
 	this->group->button(id)->setChecked(true);
 }

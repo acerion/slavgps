@@ -237,28 +237,10 @@ enum {
 
 
 
-static SGVariant moving_map_method_default(void) { return SGVariant((uint32_t) VEHICLE_POSITION_ON_SCREEN); }
-
-static SGVariant gpsd_host_default(void)
-{
-	return SGVariant(strdup("localhost"));
-}
-
-
-
-
-static SGVariant gpsd_port_default(void)
-{
-	return SGVariant(strdup(DEFAULT_GPSD_PORT));
-}
-
-
-
-
-static SGVariant gpsd_retry_interval_default(void)
-{
-	return SGVariant(strdup("10"));
-}
+static SGVariant moving_map_method_default(void)   { return SGVariant((int32_t) VEHICLE_POSITION_ON_SCREEN); }
+static SGVariant gpsd_host_default(void)           { return SGVariant(strdup("localhost")); }
+static SGVariant gpsd_port_default(void)           { return SGVariant(strdup(DEFAULT_GPSD_PORT)); }
+static SGVariant gpsd_retry_interval_default(void) { return SGVariant(strdup("10")); }
 
 #endif
 
@@ -293,25 +275,25 @@ static Parameter gps_layer_params[] = {
 	/* NB gps_layer_inst_init() is performed after parameter registeration
 	   thus to give the protocols some potential values use the old static list. */
 	/* TODO: find another way to use gps_layer_inst_init()? */
-	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     WidgetType::COMBOBOX,          protocols_args,          gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
-	{ PARAM_PORT,                       "gps_port",                  SGVariantType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      WidgetType::COMBOBOX,          params_ports,            gps_port_default,            NULL, NULL },
-	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Tracks:"),                  WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Tracks:"),                    WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_DOWNLOAD_ROUTES,            "gps_download_routes",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Routes:"),                  WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_UPLOAD_ROUTES,              "gps_upload_routes",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Routes:"),                    WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_DOWNLOAD_WAYPOINTS,         "gps_download_waypoints",    SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Waypoints:"),               WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_UPLOAD_WAYPOINTS,           "gps_upload_waypoints",      SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Waypoints:"),                 WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     WidgetType::COMBOBOX,      protocols_args,          gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
+	{ PARAM_PORT,                       "gps_port",                  SGVariantType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      WidgetType::COMBOBOX,      params_ports,            gps_port_default,            NULL, NULL },
+	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Tracks:"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Tracks:"),                    WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_DOWNLOAD_ROUTES,            "gps_download_routes",       SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Routes:"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_UPLOAD_ROUTES,              "gps_upload_routes",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Routes:"),                    WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_DOWNLOAD_WAYPOINTS,         "gps_download_waypoints",    SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Waypoints:"),               WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_UPLOAD_WAYPOINTS,           "gps_upload_waypoints",      SGVariantType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Waypoints:"),                 WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	{ PARAM_REALTIME_REC,               "record_tracking",           SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Recording tracks"),                  WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Jump to current position on start"), WidgetType::CHECKBUTTON,       NULL,                    sg_variant_false,            NULL, NULL },
-	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::UINT,    GROUP_REALTIME_MODE, N_("Moving Map Method:"),                WidgetType::RADIOGROUP_STATIC, params_vehicle_position, moving_map_method_default,   NULL, NULL },
-	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Update Statusbar:"),                 WidgetType::CHECKBUTTON,       NULL,                    sg_variant_true,             NULL, N_("Display information in the statusbar on GPS updates") },
-	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Host:"),                        WidgetType::ENTRY,             NULL,                    gpsd_host_default,           NULL, NULL },
-	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Port:"),                        WidgetType::ENTRY,             NULL,                    gpsd_port_default,           NULL, NULL },
-	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,             NULL,                    gpsd_retry_interval_default, NULL, NULL },
+	{ PARAM_REALTIME_REC,               "record_tracking",           SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Recording tracks"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
+	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Jump to current position on start"), WidgetType::CHECKBUTTON,   NULL,                    sg_variant_false,            NULL, NULL },
+	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::INT,     GROUP_REALTIME_MODE, N_("Moving Map Method:"),                WidgetType::RADIOGROUP,    params_vehicle_position, moving_map_method_default,   NULL, NULL },
+	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, N_("Update Statusbar:"),                 WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, N_("Display information in the statusbar on GPS updates") },
+	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Host:"),                        WidgetType::ENTRY,         NULL,                    gpsd_host_default,           NULL, NULL },
+	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Port:"),                        WidgetType::ENTRY,         NULL,                    gpsd_port_default,           NULL, NULL },
+	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,         NULL,                    gpsd_retry_interval_default, NULL, NULL },
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-	{ NUM_PARAMS,                       NULL,                        SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                WidgetType::NONE,              NULL,                    NULL,                        NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                       NULL,                        SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
 };
 
 
@@ -541,7 +523,7 @@ bool LayerGPS::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		this->realtime_jump_to_start = data.b;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		this->vehicle_position = data.u;
+		this->vehicle_position = data.i;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		this->realtime_update_statusbar = data.b;
@@ -604,7 +586,7 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 		rv.b = this->realtime_jump_to_start;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		rv.u = this->vehicle_position;
+		rv.i = this->vehicle_position;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		rv.u = this->realtime_update_statusbar;

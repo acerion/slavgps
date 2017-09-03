@@ -430,62 +430,16 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		qDebug() << "II: UI Builder: adding widget ComboBox, label:" << param->title << "success:" << (bool) widget;
 		break;
 
-#if 0
 	case WidgetType::RADIOGROUP:
-		/* widget_data and extra_widget_data are GList. */
-		if (param->type == SGVariantType::UINT && param->widget_data) {
-			rv = vik_radio_group_new((GList *) param->widget_data);
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				int i;
-				int nb_elem = g_list_length((GList *) param->widget_data);
-				for (i = 0; i < nb_elem; i++)
-					if (KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == vlpd.u) {
-						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
-						break;
-					}
-			} else if (vlpd.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
-			}
-
-			widget = widget_;
-		}
-		qDebug() << "II: UI Builder: adding widget RadioGroup, label:" << param->title << "success:" << (bool) widget;
-		break;
-#endif
-
-
-	case WidgetType::RADIOGROUP_STATIC:
-#if 0
-		rv = vik_radio_group_new_static((const char **) param->widget_data);
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
-						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
-						break;
-					}
-			} else if (vlpd.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
-			}
-
-			widget = widget_;
-		}
-		break;
-#else
-		if (param->type == SGVariantType::UINT && param->widget_data) {
-			QStringList labels;
-			for (int i = 0; ((const char **)param->widget_data)[i]; i++) {
-				QString label (((const char **)param->widget_data)[i]);
-				labels << label;
-			}
-			QString title("");
-			SGRadioGroup * widget_ = new SGRadioGroup(title, labels, this);
-
+		if (param->type == SGVariantType::INT && param->widget_data) {
+			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param->widget_data;
+			assert (items);
+			SGRadioGroup * widget_ = new SGRadioGroup("", items, this);
 			widget = widget_;
 		}
 		qDebug() << "II: UI Builder: adding widget RadioGroup Static, label:" << param->title << "success:" << (bool) widget;
 		break;
-#endif
+
 	case WidgetType::SPINBUTTON:
 		if ((param->type == SGVariantType::UINT || param->type == SGVariantType::INT)
 		    && param->widget_data) {
@@ -550,8 +504,13 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		break;
 	case WidgetType::FILEENTRY:
 		if (param->type == SGVariantType::STRING) {
-			QString title("Select file");
-			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, title, NULL);
+
+			SGFileTypeFilter file_type_filter = SGFileTypeFilter::ANY;
+			if (param->widget_data) {
+				file_type_filter = *((SGFileTypeFilter *) param->widget_data); /* Pointer to a table of size one. */
+			}
+
+			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
 			if (vlpd.s) {
 				QString filename(vlpd.s);
 				widget_->set_filename(filename);
@@ -564,8 +523,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 	case WidgetType::FOLDERENTRY:
 		if (param->type == SGVariantType::STRING) {
-			QString title("Select folder");
-			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, title, NULL);
+			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
 			if (vlpd.s) {
 				QString filename(vlpd.s);
 				widget_->set_filename(filename);
@@ -713,13 +671,11 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		break;
 
 	case WidgetType::RADIOGROUP:
-	case WidgetType::RADIOGROUP_STATIC:
-		rv.u = ((SGRadioGroup *) widget)->get_selected();
-		if (param->extra && param->extra->extra_widget_data) {
-			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra->extra_widget_data, rv.u));
-		}
-		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: RadioGroup" << "label:" << param->title << "value:" << rv.u;
+		/* get_id_of_selected() returns arbitrary ID. */
+		rv.i = ((SGRadioGroup *) widget)->get_id_of_selected();
+		qDebug() << "II: UI Builder: saving value of widget" << id << "/" << this->widgets.size() << "type: RadioGroup" << "label:" << param->title << "value:" << rv.i;
 		break;
+
 	case WidgetType::SPINBUTTON:
 		if (param->type == SGVariantType::UINT) {
 			rv.u = ((QSpinBox *) widget)->value();
@@ -1157,15 +1113,14 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 			}
 		}
 		break;
-	case WidgetType::RADIOGROUP:
+	case WidgetType::RADIO_unused_GROUP:
 		/* widget_data and extra_widget_data are GList. */
 		if (param->type == SGVariantType::UINT && param->widget_data) {
 			rv = vik_radio_group_new((GList *) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				int i;
 				int nb_elem = g_list_length((GList *) param->widget_data);
-				for (i = 0; i < nb_elem; i++)
-					if (KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == vlpd.u) {
+				for (int i = 0; i < nb_elem; i++)
+					if (KPOINT_unused_ER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == vlpd.u) {
 						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
 						break;
 					}
@@ -1174,12 +1129,11 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 			}
 		}
 		break;
-	case WidgetType::RADIOGROUP_STATIC:
+	case WidgetType::RADIO_unused_GROUP_STATIC:
 		if (param->type == SGVariantType::UINT && param->widget_data) {
 			rv = vik_radio_group_new_static((const char **) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
+				for (int i = 0; ((const char **)param->widget_data)[i]; i++)
 					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
 						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
 						break;

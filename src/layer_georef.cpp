@@ -883,7 +883,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window)
 	cw.y_spin.setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
-	cw.imageentry = new SGFileEntry(); vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, maybe_read_world_file, &cw);
+	cw.imageentry = new SGFileEntry(); vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
 
 	cw.ce_spin.setValue(this->corner.easting);
 	cw.cn_spin.setValue(this->corner.northing);

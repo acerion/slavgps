@@ -84,8 +84,8 @@ namespace SlavGPS {
 		double min_elev = 0;
 		double max_elev = 0;
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
-		unsigned int source = DEM_SOURCE_SRTM;
-		unsigned int dem_type = DEM_TYPE_HEIGHT;
+		int source = DEM_SOURCE_SRTM;    /* Signed int because this is a generic enum ID. */
+		int dem_type = DEM_TYPE_HEIGHT;  /* Signed int because this is a generic enum ID. */
 
 
 	private slots:

@@ -77,12 +77,12 @@ TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & 
 	QLabel main_label(label);
 
 
-	QStringList labels;
-	labels << QObject::tr("1 min");
-	labels << QObject::tr("1 hour");
-	labels << QObject::tr("1 day");
-	labels << QObject::tr("Custom (in minutes):");
-	this->radio_group = new SGRadioGroup(QString(""), labels, NULL); /* kamilTODO: delete this widget in destructor? */
+	std::vector<SGLabelID> items;
+	items.push_back(SGLabelID(QObject::tr("1 min"), 0));
+	items.push_back(SGLabelID(QObject::tr("1 hour"), 1));
+	items.push_back(SGLabelID(QObject::tr("1 day"), 2));
+	items.push_back(SGLabelID(QObject::tr("Custom (in minutes):"), 3));
+	this->radio_group = new SGRadioGroup(QString(""), &items, NULL); /* kamilTODO: delete this widget in destructor? */
 
 
 	/* TODO: add some kind of validation and indication for values out of range. */
@@ -114,7 +114,7 @@ TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & 
 
 void TimeThresholdDialog::get_value(uint32_t * custom_threshold)
 {
-	const uint32_t selection = this->radio_group->get_selected();
+	const int selection = this->radio_group->get_id_of_selected();
 	switch (selection) {
 	case 0:
 		*custom_threshold = 1;
@@ -139,7 +139,7 @@ void TimeThresholdDialog::get_value(uint32_t * custom_threshold)
 void TimeThresholdDialog::spin_changed_cb(__attribute__((unused)) int new_value)
 {
 	/* Enable "custom value" checkbox. */
-	this->radio_group->set_selected(3);
+	this->radio_group->set_id_of_selected(3);
 }
 
 

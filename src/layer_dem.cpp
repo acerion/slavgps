@@ -108,20 +108,10 @@ static ParameterScale param_scales[] = {
 	{ 1, 30000, 10, 1 },
 };
 
-static char const * params_source[] = {
-	"SRTM Global 90m (3 arcsec)",
-#ifdef VIK_CONFIG_DEM24K
-	"USA 10m (USGS 24k)",
-#endif
-	NULL
-};
 
-static char *params_type[] = {
-	(char *) N_("Absolute height"),
-	(char *) N_("Height gradient"),
-	NULL
-};
 
+static std::vector<SGLabelID> params_source;
+static std::vector<SGLabelID> params_type;
 
 
 
@@ -135,7 +125,7 @@ static SGVariant color_default(void)
 
 static SGVariant source_default(void)
 {
-	return SGVariant((uint32_t) DEM_SOURCE_SRTM);
+	return SGVariant((int32_t) DEM_SOURCE_SRTM);
 }
 
 
@@ -143,7 +133,7 @@ static SGVariant source_default(void)
 
 static SGVariant type_default(void)
 {
-	return SGVariant((uint32_t) DEM_TYPE_HEIGHT);
+	return SGVariant((int32_t) DEM_TYPE_HEIGHT);
 }
 
 
@@ -179,14 +169,14 @@ enum {
 
 
 static Parameter dem_layer_params[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, PARAMETER_GROUP_GENERIC, N_("DEM Files:"),       WidgetType::FILELIST,          NULL,             NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     "source",   SGVariantType::UINT,        PARAMETER_GROUP_GENERIC, N_("Download Source:"), WidgetType::RADIOGROUP_STATIC, params_source,    source_default,   NULL, NULL },
-	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, N_("Min Elev Color:"),  WidgetType::COLOR,             NULL,             color_default,    NULL, NULL },
-	{ PARAM_TYPE,       "type",     SGVariantType::UINT,        PARAMETER_GROUP_GENERIC, N_("Type:"),            WidgetType::RADIOGROUP_STATIC, params_type,      type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, min_elev_default, NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,    param_scales + 0, max_elev_default, NULL, NULL },
+	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, PARAMETER_GROUP_GENERIC, N_("DEM Files:"),       WidgetType::FILELIST,        NULL,             NULL,             NULL, NULL },
+	{ PARAM_SOURCE,     "source",   SGVariantType::INT,         PARAMETER_GROUP_GENERIC, N_("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
+	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, N_("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },
+	{ PARAM_TYPE,       "type",     SGVariantType::INT,         PARAMETER_GROUP_GENERIC, N_("Type:"),            WidgetType::RADIOGROUP,      &params_type,     type_default,     NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, min_elev_default, NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, max_elev_default, NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::CHECKBUTTON,       NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::CHECKBUTTON,     NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
 
@@ -269,6 +259,15 @@ LayerDEMInterface::LayerDEMInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
+
+
+	params_source.push_back(SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), 0));
+#ifdef VIK_CONFIG_DEM24K
+	params_source.push_back(SGLabelID(QObject::tr("USA 10m (USGS 24k)"), 1));
+#endif
+
+	params_type.push_back(SGLabelID(QObject::tr("Absolute height"), 0));
+	params_type.push_back(SGLabelID(QObject::tr("Height gradient"), 1));
 }
 
 
@@ -401,11 +400,11 @@ bool LayerDEM::set_param_value(uint16_t id, SGVariant param_value, bool is_file_
 		break;
 
 	case PARAM_SOURCE:
-		this->source = param_value.u;
+		this->source = param_value.i;
 		break;
 
 	case PARAM_TYPE:
-		this->dem_type = param_value.u;
+		this->dem_type = param_value.i;
 		break;
 
 	case PARAM_MIN_ELEV:
@@ -493,11 +492,11 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 		break;
 
 	case PARAM_SOURCE:
-		rv.u = this->source;
+		rv.i = this->source;
 		break;
 
 	case PARAM_TYPE:
-		rv.u = this->dem_type;
+		rv.i = this->dem_type;
 		break;
 
 	case PARAM_COLOR:

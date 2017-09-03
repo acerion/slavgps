@@ -36,13 +36,14 @@ using namespace SlavGPS;
 
 
 
-SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->file_selector = new QFileDialog();
 	this->file_selector->setFileMode(mode);
 	this->file_selector->setOptions(options);
 	this->file_selector->setWindowTitle(title);
 
+	this->add_file_type_filters(file_type_filter);
 
 	this->line = new QLineEdit(this);
 	this->browse = new QPushButton("Browse", this);
@@ -69,6 +70,47 @@ SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::Fil
 
 SGFileEntry::~SGFileEntry()
 {
+}
+
+
+
+
+void SGFileEntry::add_file_type_filters(SGFileTypeFilter file_type_filter)
+{
+	/* Always have an catch all filter at the end. */
+
+	QStringList mime;
+
+	switch (file_type_filter) {
+	case SGFileTypeFilter::IMAGE: {
+		mime << "image/jpeg";
+		mime << "image/png";
+		mime << "image/tiff";
+		mime << "application/octet-stream"; /* "All files (*)" */
+
+		break;
+	}
+	case SGFileTypeFilter::MBTILES: {
+		mime << tr("MBTiles (*.sqlite, *.mbtiles, *.db3)");
+		mime << tr("All files (*)");
+		break;
+	}
+	case SGFileTypeFilter::XML: {
+		mime << tr("XML (*.xml)");
+		mime << tr("All files (*)");
+		break;
+	}
+	case SGFileTypeFilter::CARTO: {
+		mime << tr("MML (.*.mml)");
+		mime << tr("All files (*)");
+		break;
+	}
+	default:
+		mime << tr("All files (*)");
+		break;
+	}
+
+	this->file_selector->setMimeTypeFilters(mime);
 }
 
 

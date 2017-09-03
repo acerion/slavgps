@@ -87,20 +87,21 @@ enum {
 };
 
 
+
+SGFileTypeFilter file_type_css[1] = { SGFileTypeFilter::CARTO };
+SGFileTypeFilter file_type_xml[1] = { SGFileTypeFilter::XML };
+
+
+
 Parameter mapnik_layer_params[] = {
 
-#ifdef K
-	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), file_default,         NULL, N_("CartoCSS configuration file") },
-	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   file_default,         NULL, N_("Mapnik XML configuration file") },
-#else
-	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   0,                                file_default,         NULL, N_("CartoCSS configuration file") },
-	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   0,                                file_default,         NULL, N_("Mapnik XML configuration file") },
-#endif
-	{ PARAM_ALPHA,          "alpha",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],                       alpha_default,        NULL, NULL },
-	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,                             sg_variant_true,      NULL, NULL },
-	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,                             cache_dir_default,    NULL, NULL },
+	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   file_type_css, file_default,         NULL, N_("CartoCSS configuration file") },
+	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   file_type_xml, file_default,         NULL, N_("Mapnik XML configuration file") },
+	{ PARAM_ALPHA,          "alpha",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],    alpha_default,        NULL, NULL },
+	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,          sg_variant_true,      NULL, NULL },
+	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,          cache_dir_default,    NULL, NULL },
 
-	{ NUM_PARAMS,           NULL,              SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,                             NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,           NULL,              SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,          NULL,                 NULL, NULL }, /* Guard. */
 };
 
 

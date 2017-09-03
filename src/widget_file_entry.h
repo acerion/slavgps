@@ -31,6 +31,8 @@
 #include <QFileDialog>
 #include <QLineEdit>
 
+#include "file.h"
+
 
 
 
@@ -42,7 +44,7 @@ namespace SlavGPS {
 	class SGFileEntry : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
+		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent);
 		~SGFileEntry();
 
 		void set_filename(QString & filename);
@@ -51,17 +53,15 @@ namespace SlavGPS {
 		/* kamil TODO: add setter for file filters. */
 		QFileDialog * file_selector = NULL;
 
-
 	private slots:
-
 		void open_browser_cb();
 
-
 	private:
+		void add_file_type_filters(SGFileTypeFilter file_type_filter);
+
 		QLineEdit * line = NULL;
 		QPushButton * browse = NULL;
 		QHBoxLayout * hbox = NULL;
-
 
 		QString selector_filename;
 	};

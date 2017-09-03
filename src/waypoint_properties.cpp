@@ -230,7 +230,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
 	QLineEdit * descriptionentry = new QLineEdit();
 
 	QLabel * imagelabel = new QLabel(QObject::tr("Image:"));
-	SGFileEntry * imageentry = new SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, QString & title, QWidget * parent); vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
+	SGFileEntry * imageentry = new SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, QString & title, QWidget * parent); vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, NULL, NULL);
 
 	QLabel * symbollabel = NULL;
 	{

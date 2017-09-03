@@ -71,7 +71,6 @@ namespace SlavGPS {
 	enum class WidgetType {
 		CHECKBUTTON = 0,
 		RADIOGROUP,
-		RADIOGROUP_STATIC,
 		SPINBOX_DOUBLE,
 		SPINBUTTON,
 		ENTRY,
