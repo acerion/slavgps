@@ -775,7 +775,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(TreeIndex const & parent_index, vik_layer_sort_order_t order)
+void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 {
 	if (order == VL_SO_NONE) {
 		/* Nothing to do. */

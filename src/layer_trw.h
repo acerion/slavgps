@@ -302,7 +302,7 @@ namespace SlavGPS {
 
 
 		void uniquify_tracks(LayersPanel * panel, Tracks & track_table, bool ontrack);
-		void sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order);
+		void sort_order_specified(SublayerType sublayer_type, sort_order_t order);
 
 		void uniquify_waypoints(LayersPanel * panel);
 
@@ -440,7 +440,7 @@ namespace SlavGPS {
 		LatLonBBox waypoints_bbox;
 		bool track_draw_labels;
 
-		uint8_t track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
+		int track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
 	        bool draw_trackpoints;
 		uint8_t trackpoint_size;
 		uint8_t drawelevation;
@@ -452,17 +452,17 @@ namespace SlavGPS {
 		uint8_t drawdirections_size;
 		uint32_t trk_thickness;
 		uint32_t trk_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
-		vik_layer_sort_order_t track_sort_order;
+		sort_order_t track_sort_order;
 
 		TRWMetadata * metadata = NULL;
 
 		font_size_t trk_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
 
-		uint8_t wp_marker_type;
+		int wp_marker_type;
 		int wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
 		bool wp_draw_symbols;
 		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
-		vik_layer_sort_order_t wp_sort_order;
+		sort_order_t wp_sort_order;
 
 
 		double track_draw_speed_factor;

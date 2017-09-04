@@ -62,6 +62,7 @@ Parameter wp_params[] = {
 	{ SG_WP_PARAM_DESC,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_IMAGE,    "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_SYMBOL,   "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	/* TODO: where is guard item? */
 };
 
 

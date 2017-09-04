@@ -72,14 +72,14 @@ namespace SlavGPS {
 		CHECKBUTTON = 0,
 		RADIOGROUP,
 		SPINBOX_DOUBLE,
-		SPINBUTTON,
+		SPINBOX_INT,
 		ENTRY,
 		PASSWORD,
 		FILEENTRY,
 		FOLDERENTRY,
 		HSCALE,
 		COLOR,
-		COMBOBOX,
+		COMBOBOX, /* SGVariantType::STRING or SGVariantType::INT */
 		FILELIST,
 		BUTTON,
 		DATETIME,
@@ -139,7 +139,7 @@ namespace SlavGPS {
 		VL_SO_DATE_ASCENDING,
 		VL_SO_DATE_DESCENDING,
 		VL_SO_LAST
-	} vik_layer_sort_order_t;
+	} sort_order_t;
 
 
 

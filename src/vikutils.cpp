@@ -646,13 +646,13 @@ void SGUtils::set_auto_features_on_first_run(void)
 
 		/* Enable auto add map + Enable IP lookup. */
 		Parameter pref_add_map[] =        { { 0, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL }, };
-		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL }, };
+		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL }, };
 
 		SGVariant vlp_data;
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_add_map);
 
-		vlp_data.u = VIK_STARTUP_METHOD_AUTO_LOCATION;
+		vlp_data.i = VIK_STARTUP_METHOD_AUTO_LOCATION;
 		a_preferences_run_setparam(vlp_data, pref_startup_method);
 
 		/* Only on Windows make checking for the latest version on by default. */

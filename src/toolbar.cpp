@@ -151,11 +151,10 @@ static config_t extra_widget_data;
 
 static Parameter prefs[] = {
 	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
 	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
-
-	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, "",                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                                      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -194,14 +193,17 @@ void a_toolbar_init(void)
 	SGVariant tmp;
 	tmp.b = false;
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
-	tmp.u = 0;
+
+	tmp.i = 0;
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+
 #ifdef WINDOWS
-	tmp.u = 1; /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
+	tmp.i = 1; /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
 #else
-	tmp.u = 0;
+	tmp.i = 0;
 #endif
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+
 	tmp.ptr = (void *) toolbar_configure_cb;
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 

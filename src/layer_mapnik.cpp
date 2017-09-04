@@ -191,11 +191,11 @@ static Parameter prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,       plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
 	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,       fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
 	{ 2, PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Recurse Fonts Directory:"),  WidgetType::CHECKBUTTON, NULL,       sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::UINT, PARAMETER_GROUP_GENERIC,    N_("Rerender Timeout (hours):"), WidgetType::SPINBUTTON,  &scales[2], NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::UINT, PARAMETER_GROUP_GENERIC,    N_("Rerender Timeout (hours):"), WidgetType::SPINBOX_INT, &scales[2], NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
 	/* Changeable any time. */
 	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,       NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
 
-	{ 5, NULL,                                                  SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,       NULL,            NULL, "" } /* Guard. */
+	{ 5, NULL,                                                  SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,       NULL,            NULL, NULL } /* Guard. */
 };
 
 

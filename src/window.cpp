@@ -1652,10 +1652,10 @@ void Window::set_default_location_cb(void)
 	/* Simplistic repeat of preference setting
 	   Only the name & type are important for setting the preference via this 'external' way */
 	Parameter pref_lat[] = {
-		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_latitude",  SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBUTTON, NULL, NULL, NULL, NULL },
+		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_latitude",  SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBOX_DOUBLE, NULL, NULL, NULL, NULL },
 	};
 	Parameter pref_lon[] = {
-		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBUTTON, NULL, NULL, NULL, NULL },
+		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBOX_DOUBLE, NULL, NULL, NULL, NULL },
 	};
 
 	/* Get current center */

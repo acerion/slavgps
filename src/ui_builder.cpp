@@ -396,6 +396,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 	case WidgetType::COMBOBOX: {
 		assert (param->widget_data);
+		assert (param->type == SGVariantType::INT || param->type == SGVariantType::STRING);
 
 		QComboBox * widget_ = new QComboBox(this);
 
@@ -404,12 +405,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		int selected_idx = 0;
 
 		for (auto iter = items->begin(); iter != items->end(); iter++) {
-			if (param->type == SGVariantType::UINT) {
-				widget_->addItem((*iter).label, QVariant((uint32_t) (*iter).id));
-				if (param_value.u == (uint32_t) (*iter).id) {
-					selected_idx = i;
-				}
-			} else if (param->type == SGVariantType::INT) {
+			if (param->type == SGVariantType::INT) {
 				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
 				if (param_value.i == (int32_t) (*iter).id) {
 					selected_idx = i;
@@ -440,7 +436,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		qDebug() << "II: UI Builder: adding widget RadioGroup Static, label:" << param->title << "success:" << (bool) widget;
 		break;
 
-	case WidgetType::SPINBUTTON:
+	case WidgetType::SPINBOX_INT:
 		if ((param->type == SGVariantType::UINT || param->type == SGVariantType::INT)
 		    && param->widget_data) {
 
@@ -631,25 +627,12 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		break;
 
 	case WidgetType::COMBOBOX:
-		if (param->type == SGVariantType::UINT) {
-			rv.u = (uint32_t) ((QComboBox *) widget)->currentData().toUInt();
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: ComboBox (U)" << "label:" << param->title << "value:" << rv.u;
-			/* Implementation in old code: */
-#if 0
-			rv.i = widget->currentIndex();
-			if (rv.i == -1) {
-				rv.i = 0;
-			}
+		assert (param->type == SGVariantType::INT || param->type == SGVariantType::STRING);
 
-			rv.u = rv.i;
-			if (param->extra_widget_data) {
-				rv.u = ((unsigned int *)param->extra_widget_data)[rv.u];
-			}
-#endif
-
-		} else if (param->type == SGVariantType::INT) {
+		if (param->type == SGVariantType::INT) {
 			rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: ComboBox (I)" << "label:" << param->title << "value:" << rv.i;
+
 		} else if (param->type == SGVariantType::STRING) {
 			/* TODO: implement */
 
@@ -676,7 +659,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		qDebug() << "II: UI Builder: saving value of widget" << id << "/" << this->widgets.size() << "type: RadioGroup" << "label:" << param->title << "value:" << rv.i;
 		break;
 
-	case WidgetType::SPINBUTTON:
+	case WidgetType::SPINBOX_INT:
 		if (param->type == SGVariantType::UINT) {
 			rv.u = ((QSpinBox *) widget)->value();
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (U)" << "label:" << param->title << "value:" << rv.u;

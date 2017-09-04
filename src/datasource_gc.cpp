@@ -108,8 +108,8 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GC "username", VIK_LAYER_PARAM_STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com username:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GC "password", VIK_LAYER_PARAM_STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com password:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
 };
 
 

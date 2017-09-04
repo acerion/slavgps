@@ -72,7 +72,7 @@ static ParameterScale params_scales[] = {
 };
 
 static Parameter prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL },
 };
 
 

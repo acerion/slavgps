@@ -186,7 +186,7 @@ static Parameter dem_layer_params[] = {
 	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, min_elev_default, NULL, NULL },
 	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, max_elev_default, NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::CHECKBUTTON,     NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
 

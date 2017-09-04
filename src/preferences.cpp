@@ -82,15 +82,16 @@ static std::vector<SGLabelID> params_time_ref_frame = {
 };
 
 static Parameter general_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Degree format:"),            WidgetType::COMBOBOX,        &params_degree_formats, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Distance units:"),           WidgetType::COMBOBOX,        &params_units_distance, NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Height units:"),             WidgetType::COMBOBOX,        &params_units_height,   NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Degree format:"),            WidgetType::COMBOBOX,        &params_degree_formats, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Distance units:"),           WidgetType::COMBOBOX,        &params_units_distance, NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Height units:"),             WidgetType::COMBOBOX,        &params_units_height,   NULL, NULL, NULL },
 	{ 4, PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                   NULL, NULL, NULL },
 	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  params_scales_lat,      NULL, NULL, NULL },
 	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  params_scales_long,     NULL, NULL, NULL },
-	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
-	{ 8, NULL,                                                     SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
+	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
+
+	{ 8, NULL,                                                     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL,                            WidgetType::NONE,            NULL,                   NULL, NULL, NULL },
 };
 
 /* External/Export Options */
@@ -113,23 +114,23 @@ static std::vector<SGLabelID> params_gpx_export_wpt_symbols = {
 };
 
 static Parameter io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("KML File Export Units:"), WidgetType::COMBOBOX, &params_kml_export_units,       NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("GPX Track Order:"),       WidgetType::COMBOBOX, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
-	{ 3, NULL,                                                SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
+	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("KML File Export Units:"), WidgetType::COMBOBOX, &params_kml_export_units,       NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Track Order:"),       WidgetType::COMBOBOX, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
+	{ 3, NULL,                                                SGVariantType::INT, PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,     NULL,                           NULL, NULL, NULL }, /* Guard. */
 };
 
 #ifndef WINDOWS
 static Parameter io_prefs_non_windows[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "image_viewer", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
-	{ 1, NULL,                                    SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
+	{ 1, NULL,                                    SGVariantType::STRING, PARAMETER_GROUP_GENERIC, NULL,                WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
 };
 #endif
 
 static Parameter io_prefs_external_gpx[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "external_gpx_1", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_IO "external_gpx_2", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                                      SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
+	{ 2, NULL,                                      SGVariantType::STRING, PARAMETER_GROUP_GENERIC, NULL,                          WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 static std::vector<SGLabelID> params_vik_fileref = {
@@ -140,11 +141,11 @@ static std::vector<SGLabelID> params_vik_fileref = {
 static ParameterScale params_recent_files[] = { {-1, 25, 1, 0} };
 
 static Parameter prefs_advanced[] = {
-	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
+	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
 	{ 1, PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
 	{ 2, PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip",      SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
-	{ 4, NULL,                                                       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBUTTON,  params_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
+	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBOX_INT, params_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
+	{ 4, NULL,                                                       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL,                                      WidgetType::NONE,        NULL,                 NULL, NULL, NULL },  /* Guard. */
 };
 
 static std::vector<SGLabelID> params_startup_methods = {
@@ -157,10 +158,10 @@ static std::vector<SGLabelID> params_startup_methods = {
 static Parameter startup_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_STARTUP "restore_window_state",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Restore window size and layout") },
 	{ 1, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
-	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Startup Method:"),          WidgetType::COMBOBOX,    &params_startup_methods, NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Startup Method:"),          WidgetType::COMBOBOX,    &params_startup_methods, NULL, NULL, NULL },
 	{ 3, PREFERENCES_NAMESPACE_STARTUP "startup_file",          SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Startup File:"),            WidgetType::FILEENTRY,   NULL,                    NULL, NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
 	{ 4, PREFERENCES_NAMESPACE_STARTUP "check_version",         SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
-	{ 5, NULL,                                                  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
+	{ 5, NULL,                                                  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL,                           WidgetType::NONE,        NULL,                    NULL, NULL, NULL }, /* Guard. */
 };
 /* End of Options static stuff. */
 
@@ -504,16 +505,16 @@ void Preferences::register_default_values()
 	Preferences::register_group(PREFERENCES_GROUP_KEY_GENERAL, QObject::tr("General"));
 
 	SGVariant tmp;
-	tmp.u = (uint32_t) DegreeFormat::DMS;
+	tmp.i = (int32_t) DegreeFormat::DMS;
 	Preferences::register_parameter(&general_prefs[0], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.u = (uint32_t) DistanceUnit::KILOMETRES;
+	tmp.i = (int32_t) DistanceUnit::KILOMETRES;
 	Preferences::register_parameter(&general_prefs[1], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.u = (uint32_t) SpeedUnit::KILOMETRES_PER_HOUR;
+	tmp.i = (int32_t) SpeedUnit::KILOMETRES_PER_HOUR;
 	Preferences::register_parameter(&general_prefs[2], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.u = (uint32_t) HeightUnit::METRES;
+	tmp.i = (int32_t) HeightUnit::METRES;
 	Preferences::register_parameter(&general_prefs[3], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	tmp.b = true;
@@ -525,7 +526,7 @@ void Preferences::register_default_values()
 	tmp.d = -74.007130;
 	Preferences::register_parameter(&general_prefs[6], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.u = VIK_TIME_REF_LOCALE;
+	tmp.i = VIK_TIME_REF_LOCALE;
 	Preferences::register_parameter(&general_prefs[7], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	/* New Tab. */
@@ -537,7 +538,7 @@ void Preferences::register_default_values()
 	tmp.b = false;
 	Preferences::register_parameter(&startup_prefs[1], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
-	tmp.u = VIK_STARTUP_METHOD_HOME_LOCATION;
+	tmp.i = VIK_STARTUP_METHOD_HOME_LOCATION;
 	Preferences::register_parameter(&startup_prefs[2], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
 	tmp.s = "";
@@ -549,13 +550,13 @@ void Preferences::register_default_values()
 	/* New Tab. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_IO, QObject::tr("Export/External"));
 
-	tmp.u = VIK_KML_EXPORT_UNITS_METRIC;
+	tmp.i = VIK_KML_EXPORT_UNITS_METRIC;
 	Preferences::register_parameter(&io_prefs[0], tmp, PREFERENCES_GROUP_KEY_IO);
 
-	tmp.u = VIK_GPX_EXPORT_TRK_SORT_TIME;
+	tmp.i = VIK_GPX_EXPORT_TRK_SORT_TIME;
 	Preferences::register_parameter(&io_prefs[1], tmp, PREFERENCES_GROUP_KEY_IO);
 
-	tmp.b = VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE;
+	tmp.b = VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE; /* kamilFIXME: should it be tmp.b or tmp.i? */
 	Preferences::register_parameter(&io_prefs[2], tmp, PREFERENCES_GROUP_KEY_IO);
 
 #ifndef WINDOWS
@@ -573,7 +574,7 @@ void Preferences::register_default_values()
 	/* 'Advanced' Properties. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_ADVANCED, QObject::tr("Advanced"));
 
-	tmp.u = VIK_FILE_REF_FORMAT_ABSOLUTE;
+	tmp.i = VIK_FILE_REF_FORMAT_ABSOLUTE;
 	Preferences::register_parameter(&prefs_advanced[0], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
 
 	tmp.b = true;
@@ -591,7 +592,7 @@ void Preferences::register_default_values()
 
 DegreeFormat Preferences::get_degree_format(void)
 {
-	return (DegreeFormat) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "degree_format")->u;
+	return (DegreeFormat) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "degree_format")->i;
 }
 
 
@@ -599,7 +600,7 @@ DegreeFormat Preferences::get_degree_format(void)
 
 DistanceUnit Preferences::get_unit_distance()
 {
-	return (DistanceUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_distance")->u;
+	return (DistanceUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_distance")->i;
 }
 
 
@@ -607,7 +608,7 @@ DistanceUnit Preferences::get_unit_distance()
 
 SpeedUnit Preferences::get_unit_speed(void)
 {
-	return (SpeedUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_speed")->u;
+	return (SpeedUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_speed")->i;
 }
 
 
@@ -615,7 +616,7 @@ SpeedUnit Preferences::get_unit_speed(void)
 
 HeightUnit Preferences::get_unit_height(void)
 {
-	return (HeightUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_height")->u;
+	return (HeightUnit) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "units_height")->i;
 }
 
 
@@ -651,7 +652,7 @@ double Preferences::get_default_lon()
 
 vik_time_ref_frame_t Preferences::get_time_ref_frame()
 {
-	return (vik_time_ref_frame_t) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "time_reference_frame")->u;
+	return (vik_time_ref_frame_t) a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "time_reference_frame")->i;
 }
 
 
@@ -661,7 +662,7 @@ vik_time_ref_frame_t Preferences::get_time_ref_frame()
 
 vik_kml_export_units_t Preferences::get_kml_export_units()
 {
-	return (vik_kml_export_units_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "kml_export_units")->u;
+	return (vik_kml_export_units_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "kml_export_units")->i;
 }
 
 
@@ -669,7 +670,7 @@ vik_kml_export_units_t Preferences::get_kml_export_units()
 
 vik_gpx_export_trk_sort_t Preferences::get_gpx_export_trk_sort()
 {
-	return (vik_gpx_export_trk_sort_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "gpx_export_track_sort")->u;
+	return (vik_gpx_export_trk_sort_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "gpx_export_track_sort")->i;
 }
 
 
@@ -677,7 +678,7 @@ vik_gpx_export_trk_sort_t Preferences::get_gpx_export_trk_sort()
 
 vik_gpx_export_wpt_sym_name_t Preferences::get_gpx_export_wpt_sym_name()
 {
-	return (vik_gpx_export_wpt_sym_name_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names")->b;
+	return (vik_gpx_export_wpt_sym_name_t) a_preferences_get(PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names")->i;
 }
 
 

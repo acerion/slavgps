@@ -109,7 +109,7 @@ namespace SlavGPS {
 		bool is_visible_in_tree(TreeIndex const & index);
 		bool get_editing();
 		void expand(TreeIndex const & index);
-		void sort_children(TreeIndex const & parent_index, vik_layer_sort_order_t order);
+		void sort_children(TreeIndex const & parent_index, sort_order_t order);
 
 		LayersPanel * get_layers_panel(void);
 
