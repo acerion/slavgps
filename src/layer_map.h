@@ -113,7 +113,7 @@ namespace SlavGPS {
 		int map_index = 0;
 		char * cache_dir = NULL;
 		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
-		uint8_t alpha = 0;
+		int32_t alpha = 0;
 
 		int mapzoom_id = 0;
 		double xmapzoom = 0.0;

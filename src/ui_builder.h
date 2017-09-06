@@ -71,15 +71,15 @@ namespace SlavGPS {
 	enum class WidgetType {
 		CHECKBUTTON = 0,
 		RADIOGROUP,
-		SPINBOX_DOUBLE,
-		SPINBOX_INT,
+		SPINBOX_DOUBLE,  /* SGVariantType::DOUBLE */
+		SPINBOX_INT,     /* SGVariantType::INT */
 		ENTRY,
 		PASSWORD,
 		FILEENTRY,
 		FOLDERENTRY,
-		HSCALE,
+		HSCALE,          /* SGVariantType::DOUBLE or SGVariantType::INT */
 		COLOR,
-		COMBOBOX, /* SGVariantType::STRING or SGVariantType::INT */
+		COMBOBOX,        /* SGVariantType::STRING or SGVariantType::INT */
 		FILELIST,
 		BUTTON,
 		DATETIME,
@@ -127,6 +127,7 @@ namespace SlavGPS {
 	typedef struct {
 		double min;
 		double max;
+		SGVariant initial;
 		double step;
 		uint8_t digits;
 	} ParameterScale;

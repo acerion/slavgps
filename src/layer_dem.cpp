@@ -102,11 +102,11 @@ public:
 
 
 
-/* Upped upper limit incase units are feet */
-static ParameterScale param_scales[] = {
-	{ 0, 30000, 10, 1 },
-	{ 1, 30000, 10, 1 },
-};
+/* Upper limit is that high in case if units are feet. */
+static ParameterScale scale_min_elev = { 0, 30000,    SGVariant(0.0), 10, 1 };
+static ParameterScale scale_max_elev = { 1, 30000, SGVariant(1000.0), 10, 1 };
+
+
 
 
 
@@ -149,22 +149,6 @@ static SGVariant type_default(void)
 
 
 
-static SGVariant min_elev_default(void)
-{
-	return SGVariant(0.0);
-}
-
-
-
-
-static SGVariant max_elev_default(void)
-{
-	return SGVariant(1000.0);
-}
-
-
-
-
 enum {
 	PARAM_FILES = 0,
 	PARAM_SOURCE,
@@ -183,8 +167,8 @@ static Parameter dem_layer_params[] = {
 	{ PARAM_SOURCE,     "source",   SGVariantType::INT,         PARAMETER_GROUP_GENERIC, N_("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
 	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, N_("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },
 	{ PARAM_TYPE,       "type",     SGVariantType::INT,         PARAMETER_GROUP_GENERIC, N_("Type:"),            WidgetType::RADIOGROUP,      &params_type,     type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, min_elev_default, NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  param_scales + 0, max_elev_default, NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
 
 	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };

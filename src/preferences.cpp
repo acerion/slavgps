@@ -72,8 +72,10 @@ static std::vector<SGLabelID> params_units_height = {
 	SGLabelID("Feet",   (int) HeightUnit::FEET),
 };
 
-static ParameterScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
-static ParameterScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
+
+/* Hardwired default location is New York. */
+static ParameterScale scale_lat = {  -90.0,  90.0, SGVariant(40.714490),  0.05, 2 };
+static ParameterScale scale_lon = { -180.0, 180.0, SGVariant(-74.007130), 0.05, 2 };
 
 static std::vector<SGLabelID> params_time_ref_frame = {
 	SGLabelID("Locale", 0),
@@ -87,8 +89,8 @@ static Parameter general_prefs[] = {
 	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
 	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Height units:"),             WidgetType::COMBOBOX,        &params_units_height,   NULL, NULL, NULL },
 	{ 4, PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                   NULL, NULL, NULL },
-	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  params_scales_lat,      NULL, NULL, NULL },
-	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  params_scales_long,     NULL, NULL, NULL },
+	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  &scale_lat,             NULL, NULL, NULL },
+	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  &scale_lon,             NULL, NULL, NULL },
 	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
 
 	{ 8, NULL,                                                     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL,                            WidgetType::NONE,            NULL,                   NULL, NULL, NULL },
@@ -138,13 +140,13 @@ static std::vector<SGLabelID> params_vik_fileref = {
 	SGLabelID("Relative", 1),
 };
 
-static ParameterScale params_recent_files[] = { {-1, 25, 1, 0} };
+static ParameterScale scale_recent_files = { -1, 25, SGVariant((int32_t) 10), 1, 0 }; /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
 
 static Parameter prefs_advanced[] = {
 	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
 	{ 1, PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
 	{ 2, PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip",      SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBOX_INT, params_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
+	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBOX_INT, &scale_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
 	{ 4, NULL,                                                       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL,                                      WidgetType::NONE,        NULL,                 NULL, NULL, NULL },  /* Guard. */
 };
 
@@ -520,11 +522,8 @@ void Preferences::register_default_values()
 	tmp.b = true;
 	Preferences::register_parameter(&general_prefs[4], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	/* Maintain the default location to New York. */
-	tmp.d = 40.714490;
-	Preferences::register_parameter(&general_prefs[5], tmp, PREFERENCES_GROUP_KEY_GENERAL);
-	tmp.d = -74.007130;
-	Preferences::register_parameter(&general_prefs[6], tmp, PREFERENCES_GROUP_KEY_GENERAL);
+	Preferences::register_parameter(&general_prefs[5], scale_lat.initial, PREFERENCES_GROUP_KEY_GENERAL);
+	Preferences::register_parameter(&general_prefs[6], scale_lon.initial, PREFERENCES_GROUP_KEY_GENERAL);
 
 	tmp.i = VIK_TIME_REF_LOCALE;
 	Preferences::register_parameter(&general_prefs[7], tmp, PREFERENCES_GROUP_KEY_GENERAL);
@@ -583,8 +582,7 @@ void Preferences::register_default_values()
 	tmp.b = true;
 	Preferences::register_parameter(&prefs_advanced[2], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
 
-	tmp.i = 10; /* Seemingly GTK's default for the number of recent files. */
-	Preferences::register_parameter(&prefs_advanced[3], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
+	Preferences::register_parameter(&prefs_advanced[3], scale_recent_files.initial, PREFERENCES_GROUP_KEY_ADVANCED);
 }
 
 

@@ -164,10 +164,10 @@ static std::vector<SGLabelID> params_track_drawing_modes = {
 };
 
 static std::vector<SGLabelID> params_wpsymbols = {
-	SGLabelID("Filled Square", 0),
-	SGLabelID("Square",        1),
-	SGLabelID("Circle",        2),
-	SGLabelID("X",             4),
+	SGLabelID("Filled Square", SYMBOL_FILLED_SQUARE),
+	SGLabelID("Square",        SYMBOL_SQUARE),
+	SGLabelID("Circle",        SYMBOL_CIRCLE),
+	SGLabelID("X",             SYMBOL_X),
 };
 
 #define MIN_POINT_SIZE 2
@@ -176,22 +176,21 @@ static std::vector<SGLabelID> params_wpsymbols = {
 #define MIN_ARROW_SIZE 3
 #define MAX_ARROW_SIZE 20
 
-static ParameterScale params_scales[] = {
-	/* min  max    step digits */
-	{  1,   10,    1,   0 }, /* trk_thickness */
-	{  0,   100,   1,   0 }, /* track draw speed factor */
-	{  1.0, 100.0, 1.0, 2 }, /* UNUSED */
-	/* 5 * step == how much to turn */
-	{  16,   128,  4,   0 }, // 3: image_size - NB step size ignored when an HSCALE used
-	{   0,   255,  5,   0 }, // 4: image alpha -    "     "      "            "
-	{   5,   500,  5,   0 }, // 5: image cache_size -     "      "
-	{   0,   8,    1,   0 }, // 6: Background line thickness
-	{   1,  64,    1,   0 }, /* wpsize */
-	{   MIN_STOP_LENGTH, MAX_STOP_LENGTH, 1,   0 }, /* stop_length */
-	{   1, 100, 1,   0 }, // 9: elevation factor
-	{   MIN_POINT_SIZE,  MAX_POINT_SIZE,  1,   0 }, // 10: track point size
-	{   MIN_ARROW_SIZE,  MAX_ARROW_SIZE,  1,   0 }, // 11: direction arrow size
-};
+                                                      /*            min,              max,                     hardwired default,    step,   digits */
+static ParameterScale scale_track_thickness         = {               1,               10,                SGVariant((int32_t) 1),       1,        0 }; /* PARAM_TRACK_THICKNESS */
+static ParameterScale scale_track_draw_speed_factor = {               0,              100,                       SGVariant(30.0),       1,        0 }; /* PARAM_TRACK_DRAW_SPEED_FACTOR */
+static ParameterScale scale_wp_image_size           = {              16,              128,               SGVariant((int32_t) 64),       4,        0 }; /* PARAM_WP_IMAGE_SIZE */
+static ParameterScale scale_wp_image_alpha          = {               0,              255,              SGVariant((int32_t) 255),       5,        0 }; /* PARAM_WP_IMAGE_ALPHA */
+static ParameterScale scale_wp_image_cache_size     = {               5,              500,              SGVariant((int32_t) 300),       5,        0 }; /* PARAM_WP_IMAGE_CACHE_SIZE */
+static ParameterScale scale_track_bg_thickness      = {               0,                8,                SGVariant((int32_t) 0),       1,        0 }; /* PARAM_TRACK_BG_THICKNESS */
+static ParameterScale scale_wp_marker_size          = {               1,               64,                SGVariant((int32_t) 4),       1,        0 }; /* PARAM_WP_MARKER_SIZE */
+static ParameterScale scale_track_min_stop_length   = { MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60),       1,        0 }; /* PARAM_TRACK_MIN_STOP_LENGTH */
+static ParameterScale scale_track_elevation_factor  = {               1,              100,               SGVariant((int32_t) 30),       1,        0 }; /* PARAM_TRACK_ELEVATION_FACTOR */
+static ParameterScale scale_trackpoint_size         = {  MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE),       1,        0 }; /* PARAM_TRACKPOINT_SIZE */
+static ParameterScale scale_track_direction_size    = {  MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5),       1,        0 }; /* PARAM_TRACK_DIRECTION_SIZE */
+
+
+
 
 static std::vector<SGLabelID> params_font_sizes = {
 	SGLabelID("Extra Extra Small",   FS_XX_SMALL),
@@ -215,23 +214,12 @@ static std::vector<SGLabelID> params_sort_order = {
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
 static SGVariant track_drawing_mode_default(void)          { return SGVariant((int32_t) DRAWMODE_BY_TRACK); }
-static SGVariant trk_thickness_default(void)    { return SGVariant((uint32_t) 1); }
-static SGVariant trkpointsize_default(void)      { return SGVariant((uint32_t) MIN_POINT_SIZE); }
-static SGVariant trkdirectionsize_default(void)  { return SGVariant((uint32_t) 5); }
-static SGVariant trk_bg_thickness_default(void) { return SGVariant((uint32_t) 0); }
 static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
-static SGVariant elevation_factor_default(void)  { return SGVariant((uint32_t) 30); }
-static SGVariant stop_length_default(void)       { return SGVariant((uint32_t) 60); }
-static SGVariant speed_factor_default(void)      { return SGVariant(30.0); }
 static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
 static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
-static SGVariant wpsize_default(void)            { return SGVariant((uint32_t) 4); }
-static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) WP_SYMBOL_FILLED_SQUARE); }
-static SGVariant image_size_default(void)        { return SGVariant((uint32_t) 64); }
-static SGVariant image_alpha_default(void)       { return SGVariant((uint32_t) 255); }
-static SGVariant image_cache_size_default(void)  { return SGVariant((uint32_t) 300); }
+static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) SYMBOL_FILLED_SQUARE); }
 static SGVariant sort_order_default(void)        { return SGVariant((int32_t) 0); }
 static SGVariant string_default(void)            { return SGVariant(""); }
 
@@ -250,18 +238,18 @@ enum {
 	PARAM_TRACK_DRAWING_MODE,
 	PARAM_TRACK_COLOR_COMMON,
 	PARAM_DRAW_TRACK_LINES,
-	PARAM_TRK_THICKNESS,
+	PARAM_TRACK_THICKNESS,
 	PARAM_DD,
-	PARAM_DDS,
+	PARAM_TRACK_DIRECTION_SIZE,
 	PARAM_DRAW_TRACKPOINTS,
 	PARAM_TRACKPOINT_SIZE,
 	PARAM_DE,
-	PARAM_EF,
+	PARAM_TRACK_ELEVATION_FACTOR,
 	PARAM_DRAW_TRACK_STOPS,
-	PARAM_SL,
-	PARAM_TRK_BG_THICKNESS,
+	PARAM_TRACK_MIN_STOP_LENGTH,
+	PARAM_TRACK_BG_THICKNESS,
 	PARAM_TRK_BG_COLOR,
-	PARAM_TDSF,
+	PARAM_TRACK_DRAW_SPEED_FACTOR,
 	PARAM_TRACK_SORT_ORDER,
 	// Waypoints
 	PARAM_DLA,
@@ -276,9 +264,9 @@ enum {
 	PARAM_WP_SORT_ORDER,
 	// WP images
 	PARAM_DI,
-	PARAM_IS,
-	PARAM_IA,
-	PARAM_ICS,
+	PARAM_WP_IMAGE_SIZE,
+	PARAM_WP_IMAGE_ALPHA,
+	PARAM_WP_IMAGE_CACHE_SIZE,
 	// Metadata
 	PARAM_MDDESC,
 	PARAM_MDAUTH,
@@ -298,19 +286,19 @@ Parameter trw_layer_params[] = {
 	{ PARAM_TRACK_DRAWING_MODE,    "drawmode",          SGVariantType::INT,     GROUP_TRACKS,            N_("Track Drawing Mode:"),              WidgetType::COMBOBOX,     &params_track_drawing_modes, track_drawing_mode_default, NULL, NULL },
 	{ PARAM_TRACK_COLOR_COMMON,    "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,            N_("All Tracks Color:"),                WidgetType::COLOR,        NULL,                        black_color_default,        NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected") },
 	{ PARAM_DRAW_TRACK_LINES,      "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,            N_("Draw Track Lines"),                 WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_TRK_THICKNESS,         "line_thickness",    SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Track Thickness:"),                 WidgetType::SPINBOX_INT,  &params_scales[0],           trk_thickness_default,      NULL, NULL },
+	{ PARAM_TRACK_THICKNESS,       "line_thickness",    SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Track Thickness:"),                 WidgetType::SPINBOX_INT,  &scale_track_thickness,      NULL,                       NULL, NULL },
 	{ PARAM_DD,                    "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,            N_("Draw Track Direction"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
-	{ PARAM_DDS,                   "trkdirectionsize",  SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Direction Size:"),                  WidgetType::SPINBOX_INT,  &params_scales[11],          trkdirectionsize_default,   NULL, NULL },
+	{ PARAM_TRACK_DIRECTION_SIZE,  "trkdirectionsize",  SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Direction Size:"),                  WidgetType::SPINBOX_INT,  &scale_track_direction_size, NULL,                       NULL, NULL },
 	{ PARAM_DRAW_TRACKPOINTS,      "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,            N_("Draw Trackpoints:"),                WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_TRACKPOINT_SIZE,       "trkpointsize",      SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Trackpoint Size:"),                 WidgetType::SPINBOX_INT,  &params_scales[10],          trkpointsize_default,       NULL, NULL },
+	{ PARAM_TRACKPOINT_SIZE,       "trkpointsize",      SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Trackpoint Size:"),                 WidgetType::SPINBOX_INT,  &scale_trackpoint_size,      NULL,                       NULL, NULL },
 	{ PARAM_DE,                    "drawelevation",     SGVariantType::BOOLEAN, GROUP_TRACKS,            N_("Draw Elevation"),                   WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
-	{ PARAM_EF,                    "elevation_factor",  SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Draw Elevation Height %:"),         WidgetType::HSCALE,       &params_scales[9],           elevation_factor_default,   NULL, NULL },
+	{ PARAM_TRACK_ELEVATION_FACTOR,"elevation_factor",  SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Draw Elevation Height %:"),         WidgetType::HSCALE,       &scale_track_elevation_factor, NULL,                     NULL, NULL },
 	{ PARAM_DRAW_TRACK_STOPS,      "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,            N_("Draw Track Stops:"),                WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
-	{ PARAM_SL,                    "stop_length",       SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Min Stop Length (seconds):"),       WidgetType::SPINBOX_INT,  &params_scales[8],           stop_length_default,        NULL, NULL },
+	{ PARAM_TRACK_MIN_STOP_LENGTH, "stop_length",       SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Min Stop Length (seconds):"),       WidgetType::SPINBOX_INT,  &scale_track_min_stop_length,NULL,                       NULL, NULL },
 
-	{ PARAM_TRK_BG_THICKNESS,      "bg_line_thickness", SGVariantType::UINT,    GROUP_TRACKS_ADV,        N_("Track Background Thickness:"),      WidgetType::SPINBOX_INT,  &params_scales[6],           trk_bg_thickness_default,   NULL, NULL },
+	{ PARAM_TRACK_BG_THICKNESS,    "bg_line_thickness", SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Track Background Thickness:"),      WidgetType::SPINBOX_INT,  &scale_track_bg_thickness,   NULL,                       NULL, NULL },
 	{ PARAM_TRK_BG_COLOR,          "trackbgcolor",      SGVariantType::COLOR,   GROUP_TRACKS_ADV,        N_("Track Background Color"),           WidgetType::COLOR,        NULL,                        trackbgcolor_default,       NULL, NULL },
-	{ PARAM_TDSF,                  "speed_factor",      SGVariantType::DOUBLE,  GROUP_TRACKS_ADV,        N_("Draw by Speed Factor (%):"),        WidgetType::HSCALE,       &params_scales[1],           speed_factor_default,       NULL, N_("The percentage factor away from the average speed determining the color used") },
+	{ PARAM_TRACK_DRAW_SPEED_FACTOR, "speed_factor",    SGVariantType::DOUBLE,  GROUP_TRACKS_ADV,        N_("Draw by Speed Factor (%):"),        WidgetType::HSCALE,       &scale_track_draw_speed_factor, NULL,                    NULL, N_("The percentage factor away from the average speed determining the color used") },
 	{ PARAM_TRACK_SORT_ORDER,      "tracksortorder",    SGVariantType::INT,     GROUP_TRACKS_ADV,        N_("Track Sort Order:"),                WidgetType::COMBOBOX,     &params_sort_order,          sort_order_default,         NULL, NULL },
 
 	{ PARAM_DLA,                   "drawlabels",        SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         N_("Draw Labels"),                      WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
@@ -320,14 +308,14 @@ Parameter trw_layer_params[] = {
 	{ PARAM_WP_LABEL_BG_COLOR,     "wpbgcolor",         SGVariantType::COLOR,   GROUP_WAYPOINTS,         N_("Background of Waypoint's Label:"),  WidgetType::COLOR,        NULL,                        wpbgcolor_default,          NULL, NULL },
 	{ PARAM_WPBA,                  "wpbgand",           SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         N_("Fake BG Color Translucency:"),      WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
 	{ PARAM_WP_MARKER_TYPE,        "wpsymbol",          SGVariantType::INT,     GROUP_WAYPOINTS,         N_("Type of Waypoint's Marker:"),       WidgetType::COMBOBOX,     &params_wpsymbols,           wpsymbol_default,           NULL, NULL },
-	{ PARAM_WP_MARKER_SIZE,        "wpsize",            SGVariantType::UINT,    GROUP_WAYPOINTS,         N_("Size of Waypoint's Marker:"),       WidgetType::SPINBOX_INT,  &params_scales[7],           wpsize_default,             NULL, NULL },
+	{ PARAM_WP_MARKER_SIZE,        "wpsize",            SGVariantType::INT,     GROUP_WAYPOINTS,         N_("Size of Waypoint's Marker:"),       WidgetType::SPINBOX_INT,  &scale_wp_marker_size,       NULL,                       NULL, NULL },
 	{ PARAM_WPSYMS,                "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         N_("Draw Waypoint Symbols:"),           WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_SORT_ORDER,         "wpsortorder",       SGVariantType::INT,     GROUP_WAYPOINTS,         N_("Waypoint Sort Order:"),             WidgetType::COMBOBOX,     &params_sort_order,          sort_order_default,         NULL, NULL },
 
 	{ PARAM_DI,                    "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,            N_("Draw Waypoint Images"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_IS,                    "image_size",        SGVariantType::UINT,    GROUP_IMAGES,            N_("Image Size (pixels):"),             WidgetType::HSCALE,       &params_scales[3],           image_size_default,         NULL, NULL },
-	{ PARAM_IA,                    "image_alpha",       SGVariantType::UINT,    GROUP_IMAGES,            N_("Image Alpha:"),                     WidgetType::HSCALE,       &params_scales[4],           image_alpha_default,        NULL, NULL },
-	{ PARAM_ICS,                   "image_cache_size",  SGVariantType::UINT,    GROUP_IMAGES,            N_("Image Memory Cache Size:"),         WidgetType::HSCALE,       &params_scales[5],           image_cache_size_default,   NULL, NULL },
+	{ PARAM_WP_IMAGE_SIZE,         "image_size",        SGVariantType::INT,     GROUP_IMAGES,            N_("Image Size (pixels):"),             WidgetType::HSCALE,       &scale_wp_image_size,        NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_ALPHA,        "image_alpha",       SGVariantType::INT,     GROUP_IMAGES,            N_("Image Alpha:"),                     WidgetType::HSCALE,       &scale_wp_image_alpha,       NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_CACHE_SIZE,   "image_cache_size",  SGVariantType::INT,     GROUP_IMAGES,            N_("Image Memory Cache Size:"),         WidgetType::HSCALE,       &scale_wp_image_cache_size,  NULL,                       NULL, NULL },
 
 	{ PARAM_MDDESC,                "metadatadesc",      SGVariantType::STRING,  GROUP_METADATA,          N_("Description"),                      WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 	{ PARAM_MDAUTH,                "metadataauthor",    SGVariantType::STRING,  GROUP_METADATA,          N_("Author"),                           WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
@@ -859,8 +847,8 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		this->draw_trackpoints = data.b;
 		break;
 	case PARAM_TRACKPOINT_SIZE:
-		if (data.u >= MIN_POINT_SIZE && data.u <= MAX_POINT_SIZE) {
-			this->trackpoint_size = data.u;
+		if (data.i >= scale_trackpoint_size.min && data.i <= scale_trackpoint_size.max) {
+			this->trackpoint_size = data.i;
 		}
 		break;
 	case PARAM_DE:
@@ -875,31 +863,35 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 	case PARAM_DD:
 		this->drawdirections = data.b;
 		break;
-	case PARAM_DDS:
-		if (data.u >= MIN_ARROW_SIZE && data.u <= MAX_ARROW_SIZE) {
-			this->drawdirections_size = data.u;
+	case PARAM_TRACK_DIRECTION_SIZE:
+		if (data.i >= scale_track_direction_size.min && data.i <= scale_track_direction_size.max) {
+			this->drawdirections_size = data.i;
 		}
 		break;
-	case PARAM_SL:
-		if (data.u >= MIN_STOP_LENGTH && data.u <= MAX_STOP_LENGTH) {
-			this->stop_length = data.u;
+	case PARAM_TRACK_MIN_STOP_LENGTH:
+		if (data.i >= scale_track_min_stop_length.min && data.i <= scale_track_min_stop_length.max) {
+			this->stop_length = data.i;
 		}
 		break;
-	case PARAM_EF:
-		if (data.u >= 1 && data.u <= 100) {
-			this->elevation_factor = data.u;
+	case PARAM_TRACK_ELEVATION_FACTOR:
+		if (data.i >= scale_track_elevation_factor.min && data.i <= scale_track_elevation_factor.max) {
+			this->elevation_factor = data.i;
 		}
 		break;
-	case PARAM_TRK_THICKNESS:
-		if (data.u > 0 && data.u < 15 && data.u != this->trk_thickness) {
-			this->trk_thickness = data.u;
-			this->new_track_pens();
+	case PARAM_TRACK_THICKNESS:
+		if (data.i >= scale_track_thickness.min && data.i <= scale_track_thickness.max) {
+			if (data.i != this->track_thickness) {
+				this->track_thickness = data.i;
+				this->new_track_pens();
+			}
 		}
 		break;
-	case PARAM_TRK_BG_THICKNESS:
-		if (data.u <= 8 && data.u != this->trk_bg_thickness) {
-			this->trk_bg_thickness = data.u;
-			this->new_track_pens();
+	case PARAM_TRACK_BG_THICKNESS:
+		if (data.i >= scale_track_bg_thickness.min && data.i <= scale_track_bg_thickness.max) {
+			if (data.i != this->track_bg_thickness) {
+				this->track_bg_thickness = data.i;
+				this->new_track_pens();
+			}
 		}
 		break;
 
@@ -908,8 +900,10 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		this->track_bg_pen.setColor(this->track_bg_color);
 		break;
 
-	case PARAM_TDSF:
-		this->track_draw_speed_factor = data.d;
+	case PARAM_TRACK_DRAW_SPEED_FACTOR:
+		if (data.d >= scale_track_draw_speed_factor.min && data.d <= scale_track_draw_speed_factor.max) {
+			this->track_draw_speed_factor = data.d;
+		}
 		break;
 	case PARAM_TRACK_SORT_ORDER:
 		if (data.i < VL_SO_LAST) {
@@ -922,25 +916,32 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 	case PARAM_DI:
 		this->drawimages = data.b;
 		break;
-	case PARAM_IS:
-		if (data.u != this->image_size) {
-			this->image_size = data.u;
-			this->image_cache_free();
-			this->image_cache = g_queue_new();
+	case PARAM_WP_IMAGE_SIZE:
+		if (data.i >= scale_wp_image_size.min && data.i <= scale_wp_image_size.max) {
+			if (data.i != this->wp_image_size) {
+				this->wp_image_size = data.i;
+				this->image_cache_free();
+				this->image_cache = g_queue_new();
+			}
 		}
 		break;
-	case PARAM_IA:
-		if (data.u != this->image_alpha) {
-			this->image_alpha = data.u;
-			this->image_cache_free();
-			this->image_cache = g_queue_new();
+	case PARAM_WP_IMAGE_ALPHA:
+		if (data.i >= scale_wp_image_alpha.min && data.i <= scale_wp_image_alpha.max) {
+			if (data.i != this->wp_image_alpha) {
+				this->wp_image_alpha = data.i;
+				this->image_cache_free();
+				this->image_cache = g_queue_new();
+			}
 		}
 		break;
-	case PARAM_ICS:
-		this->image_cache_size = data.u;
-		while (this->image_cache->length > this->image_cache_size) {/* if shrinking cache_size, free pixbuf ASAP */
-			CachedPixmap * pixmap = (CachedPixmap *) g_queue_pop_tail(this->image_cache);
-			delete pixmap;
+
+	case PARAM_WP_IMAGE_CACHE_SIZE:
+		if (data.i >= scale_wp_image_cache_size.min && data.i <= scale_wp_image_cache_size.max) {
+			this->wp_image_cache_size = data.i;
+			while (this->image_cache->length > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
+				CachedPixmap * pixmap = (CachedPixmap *) g_queue_pop_tail(this->image_cache);
+				delete pixmap;
+			}
 		}
 		break;
 
@@ -968,13 +969,13 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 #endif
 		break;
 	case PARAM_WP_MARKER_TYPE:
-		if (data.i < WP_NUM_SYMBOLS) {
+		if (data.i < SYMBOL_NUM_SYMBOLS) {
 			this->wp_marker_type = data.i;
 		}
 		break;
 	case PARAM_WP_MARKER_SIZE:
-		if (data.u > 0 && data.u <= 64) {
-			this->wp_marker_size = (int) data.u;
+		if (data.i >= scale_wp_marker_size.min && data.i <= scale_wp_marker_size.max) {
+			this->wp_marker_size = data.i;
 		}
 		break;
 	case PARAM_WPSYMS:
@@ -1031,30 +1032,30 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_TRACK_DRAWING_MODE: rv.i = this->track_drawing_mode; break;
 	case PARAM_TRACK_COLOR_COMMON: color_to_param(rv, this->track_color_common); break;
 	case PARAM_DRAW_TRACKPOINTS: rv.b = this->draw_trackpoints; break;
-	case PARAM_TRACKPOINT_SIZE: rv.u = this->trackpoint_size; break;
+	case PARAM_TRACKPOINT_SIZE: rv.i = this->trackpoint_size; break;
 	case PARAM_DE: rv.b = this->drawelevation; break;
-	case PARAM_EF: rv.u = this->elevation_factor; break;
+	case PARAM_TRACK_ELEVATION_FACTOR: rv.i = this->elevation_factor; break;
 	case PARAM_DRAW_TRACK_STOPS: rv.b = this->draw_track_stops; break;
-	case PARAM_SL: rv.u = this->stop_length; break;
+	case PARAM_TRACK_MIN_STOP_LENGTH: rv.i = this->stop_length; break;
 	case PARAM_DRAW_TRACK_LINES: rv.b = this->draw_track_lines; break;
 	case PARAM_DD: rv.b = this->drawdirections; break;
-	case PARAM_DDS: rv.u = this->drawdirections_size; break;
-	case PARAM_TRK_THICKNESS: rv.u = this->trk_thickness; break;
-	case PARAM_TRK_BG_THICKNESS: rv.u = this->trk_bg_thickness; break;
+	case PARAM_TRACK_DIRECTION_SIZE: rv.i = this->drawdirections_size; break;
+	case PARAM_TRACK_THICKNESS: rv.i = this->track_thickness; break;
+	case PARAM_TRACK_BG_THICKNESS: rv.i = this->track_bg_thickness; break;
 	case PARAM_DLA: rv.b = this->drawlabels; break;
 	case PARAM_DI: rv.b = this->drawimages; break;
 	case PARAM_TRK_BG_COLOR: color_to_param(rv, this->track_bg_color); break;
-	case PARAM_TDSF: rv.d = this->track_draw_speed_factor; break;
+	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv.d = this->track_draw_speed_factor; break;
 	case PARAM_TRACK_SORT_ORDER: rv.i = this->track_sort_order; break;
-	case PARAM_IS: rv.u = this->image_size; break;
-	case PARAM_IA: rv.u = this->image_alpha; break;
-	case PARAM_ICS: rv.u = this->image_cache_size; break;
+	case PARAM_WP_IMAGE_SIZE: rv.i = this->wp_image_size; break;
+	case PARAM_WP_IMAGE_ALPHA: rv.i = this->wp_image_alpha; break;
+	case PARAM_WP_IMAGE_CACHE_SIZE: rv.i = this->wp_image_cache_size; break;
 	case PARAM_WP_MARKER_COLOR:   color_to_param(rv, this->wp_marker_color); break;
 	case PARAM_WP_LABEL_FG_COLOR: color_to_param(rv, this->wp_label_fg_color); break;
 	case PARAM_WP_LABEL_BG_COLOR: color_to_param(rv, this->wp_label_bg_color); break;
 	case PARAM_WPBA: rv.b = this->wpbgand; break;
 	case PARAM_WP_MARKER_TYPE: rv.i = this->wp_marker_type; break;
-	case PARAM_WP_MARKER_SIZE: rv.u = (uint8_t) this->wp_marker_size; break;
+	case PARAM_WP_MARKER_SIZE: rv.i = this->wp_marker_size; break;
 	case PARAM_WPSYMS: rv.b = this->wp_draw_symbols; break;
 	case PARAM_WP_LABEL_FONT_SIZE: rv.i = this->wp_label_font_size; break;
 	case PARAM_WP_SORT_ORDER: rv.i = this->wp_sort_order; break;
@@ -1099,12 +1100,12 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[OFFSET + PARAM_IS];
-		GtkWidget *w2 = ww2[OFFSET + PARAM_IS];
-		GtkWidget *w3 = ww1[OFFSET + PARAM_IA];
-		GtkWidget *w4 = ww2[OFFSET + PARAM_IA];
-		GtkWidget *w5 = ww1[OFFSET + PARAM_ICS];
-		GtkWidget *w6 = ww2[OFFSET + PARAM_ICS];
+		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_IMAGE_SIZE];
+		GtkWidget *w2 = ww2[OFFSET + PARAM_WP_IMAGE_SIZE];
+		GtkWidget *w3 = ww1[OFFSET + PARAM_WP_IMAGE_ALPHA];
+		GtkWidget *w4 = ww2[OFFSET + PARAM_WP_IMAGE_ALPHA];
+		GtkWidget *w5 = ww1[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
+		GtkWidget *w6 = ww2[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
 		if (w1) gtk_widget_set_sensitive(w1, vlpd.b);
 		if (w2) gtk_widget_set_sensitive(w2, vlpd.b);
 		if (w3) gtk_widget_set_sensitive(w3, vlpd.b);
@@ -1523,16 +1524,16 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints & waypoints_, 
 
 void LayerTRW::new_track_pens(void)
 {
-	uint32_t width = this->trk_thickness;
+	int32_t width = this->track_thickness;
 
 
 	this->track_bg_pen = QPen(this->track_bg_color);
-	this->track_bg_pen.setWidth(width + this->trk_bg_thickness);
+	this->track_bg_pen.setWidth(width + this->track_bg_thickness);
 
 
 	/* Ensure new track drawing heeds line thickness setting,
 	   however always have a minium of 2, as 1 pixel is really narrow. */
-	int new_track_width = (this->trk_thickness < 2) ? 2 : this->trk_thickness;
+	int new_track_width = (this->track_thickness < 2) ? 2 : this->track_thickness;
 	this->current_trk_pen = QPen(QColor("#FF0000"));
 	this->current_trk_pen.setWidth(new_track_width);
 	//gdk_gc_set_line_attributes(this->current_trk_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
@@ -1756,9 +1757,9 @@ bool LayerTRW::sublayer_toggle_visible(Sublayer * sublayer)
 /*
  * Return a property about tracks for this layer.
  */
-uint32_t LayerTRW::get_property_trk_thickness()
+int32_t LayerTRW::get_property_track_thickness()
 {
-	return this->trk_thickness;
+	return this->track_thickness;
 }
 
 

@@ -437,10 +437,11 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		break;
 
 	case WidgetType::SPINBOX_INT:
-		if ((param->type == SGVariantType::UINT || param->type == SGVariantType::INT)
-		    && param->widget_data) {
 
-			int init_val = param->type == SGVariantType::UINT ? vlpd.u : vlpd.i;
+		assert (param->type == SGVariantType::INT);
+		if (param->type == SGVariantType::INT && param->widget_data) {
+
+			int32_t init_val = vlpd.i;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setMinimum(scale->min);
@@ -451,12 +452,13 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			widget = widget_;
 		}
-		qDebug() << "II: UI Builder: adding widget SpinBox (u/i), label:" << param->title << "success:" << (bool) widget;
+		qDebug() << "II: UI Builder: adding widget SpinBox (int), label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::SPINBOX_DOUBLE:
-		if (param->type == SGVariantType::DOUBLE
-		    && param->widget_data) {
+
+		assert (param->type == SGVariantType::DOUBLE);
+		if (param->type == SGVariantType::DOUBLE && param->widget_data) {
 
 			double init_val = vlpd.d;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
@@ -471,7 +473,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 			widget = widget_;
 		}
-		qDebug() << "II: UI Builder: adding widget SpinBox (d), label:" << param->title << "success:" << (bool) widget;
+		qDebug() << "II: UI Builder: adding widget SpinBox (double), label:" << param->title << "success:" << (bool) widget;
 		break;
 
 	case WidgetType::ENTRY:
@@ -529,6 +531,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		}
 		qDebug() << "II: UI Builder: adding widget FolderEntry, label:" << param->title << "success:" << (bool) widget;
 		break;
+
 	case WidgetType::FILELIST:
 		if (param->type == SGVariantType::STRING_LIST) {
 			SGFileList * widget_ = new SGFileList(param->title, *vlpd.sl, this);
@@ -537,34 +540,27 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		}
 		qDebug() << "II: UI Builder: adding widget FileList, label:" << param->title << "success:" << (bool) widget;
 		break;
-	case WidgetType::HSCALE:
-		if ((param->type == SGVariantType::UINT || param->type == SGVariantType::INT)
-		    && param->widget_data) {
 
-			int init_value = (param->type == SGVariantType::UINT ? ((int) vlpd.u) : vlpd.i);
+	case WidgetType::HSCALE:
+		assert (param->type == SGVariantType::INT || param->type == SGVariantType::DOUBLE);
+		if ((param->type == SGVariantType::INT || param->type == SGVariantType::DOUBLE) && param->widget_data) {
+
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 
+			/* TODO: implement a slider for values of type 'double'. */
 			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
-			widget_->set_value(init_value);
 
-			widget = widget_;
+			if (param->type == SGVariantType::INT) {
+				widget_->set_value(vlpd.i);
+				widget = widget_;
+			} else {
+				widget_->set_value(vlpd.d);
+				widget = widget_;
+			}
 		}
-		qDebug() << "II: UI Builder: adding widget HScale (u/i), label:" << param->title << "success:" << (bool) widget;
+		qDebug() << "II: UI Builder: adding widget HScale (" << (param->type == SGVariantType::INT ? "int" : "double") << "), label:" << param->title << "success:" << (bool) widget;
 		break;
 #ifdef K
-	case WidgetType::HSCALE:
-		if (param->type == SGVariantType::DOUBLE && param->widget_data) {
-
-			double init_val = vlpd.d;
-			ParameterScale * scale = (ParameterScale *) param->widget_data;
-			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
-			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
-			gtk_range_set_value(GTK_RANGE(rv), init_val);
-
-			widget = widget_;
-		}
-		qDebug() << "II: UI Builder: adding widget HScale (d), label:" << param->title << "success:" << (bool) widget;
-		break;
 	case WidgetType::BUTTON:
 		if (param->type == SGVariantType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
@@ -660,18 +656,17 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		break;
 
 	case WidgetType::SPINBOX_INT:
-		if (param->type == SGVariantType::UINT) {
-			rv.u = ((QSpinBox *) widget)->value();
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (U)" << "label:" << param->title << "value:" << rv.u;
-		} else {
+		assert (param->type == SGVariantType::INT);
+		if (param->type == SGVariantType::INT) {
 			rv.i = ((QSpinBox *) widget)->value();
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (I)" << "label:" << param->title << "value:" << rv.i;
+			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (int)" << "label:" << param->title << "value:" << rv.i;
 		}
 		break;
 
 	case WidgetType::SPINBOX_DOUBLE:
+		assert (param->type == SGVariantType::DOUBLE);
 		rv.d = ((QDoubleSpinBox *) widget)->value();
-		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (D)" << "label:" << param->title << "value:" << rv.d;
+		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (double)" << "label:" << param->title << "value:" << rv.d;
 		break;
 
 	case WidgetType::ENTRY:
@@ -694,17 +689,18 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		}
 
 		break;
+
 	case WidgetType::HSCALE:
-		if (param->type == SGVariantType::UINT) {
-			rv.u = (uint32_t) ((SGSlider *) widget)->get_value();
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: HScale (U)" << "label:" << param->title << "value:" << rv.u;
-		} else if (param->type == SGVariantType::INT) {
+		assert (param->type == SGVariantType::INT || param->type == SGVariantType::DOUBLE);
+		if (param->type == SGVariantType::INT) {
 			rv.i = (int32_t) ((SGSlider *) widget)->get_value();
-			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: HSCale (I)" << "label:" << param->title << "value:" << rv.i;
-		} else {
+			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: HScale (int)" << "label:" << param->title << "value:" << rv.i;
+		} else if (param->type == SGVariantType::DOUBLE) {
 #ifdef K
 			rv.d = gtk_range_get_value(GTK_RANGE(widget));
 #endif
+		} else {
+			;
 		}
 		break;
 	case WidgetType::DATETIME:

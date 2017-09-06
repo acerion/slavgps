@@ -66,15 +66,11 @@ using namespace SlavGPS;
 
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
-static SGVariant alpha_default(void)     { return SGVariant((uint32_t) 255); }
 static SGVariant cache_dir_default(void) { return SGVariant(g_strconcat(maps_layer_default_dir().toUtf8().constData(), "MapnikRendering", NULL)); }
 
 
-static ParameterScale scales[] = {
-	{ 0, 255, 5, 0 },   /* Alpha. */
-	{ 64, 1024, 8, 0 }, /* Tile size. */
-	{ 0, 1024, 12, 0 }, /* Rerender timeout hours. */
-};
+static ParameterScale scale_alpha   = { 0,  255, SGVariant((int32_t) 255),  5, 0 }; /* PARAM_ALPHA */
+static ParameterScale scale_timeout = { 0, 1024, SGVariant((int32_t) 168), 12, 0 }; /* Renderer timeout hours. Value of hardwired default is one week. */
 
 
 enum {
@@ -97,7 +93,7 @@ Parameter mapnik_layer_params[] = {
 
 	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   file_type_css, file_default,         NULL, N_("CartoCSS configuration file") },
 	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   file_type_xml, file_default,         NULL, N_("Mapnik XML configuration file") },
-	{ PARAM_ALPHA,          "alpha",           SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scales[0],    alpha_default,        NULL, NULL },
+	{ PARAM_ALPHA,          "alpha",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Alpha:"),                 WidgetType::HSCALE,      &scale_alpha,  NULL,                 NULL, NULL },
 	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,          sg_variant_true,      NULL, NULL },
 	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,          cache_dir_default,    NULL, NULL },
 
@@ -188,14 +184,14 @@ static SGVariant fonts_default(void)
 
 static Parameter prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,       plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,       fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 2, PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Recurse Fonts Directory:"),  WidgetType::CHECKBUTTON, NULL,       sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::UINT, PARAMETER_GROUP_GENERIC,    N_("Rerender Timeout (hours):"), WidgetType::SPINBOX_INT, &scales[2], NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 2, PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC,  N_("Recurse Fonts Directory:"),  WidgetType::CHECKBUTTON, NULL,           sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK"rerender_after",          SGVariantType::INT,     PARAMETER_GROUP_GENERIC,  N_("Rerender Timeout (hours):"), WidgetType::SPINBOX_INT, &scale_timeout, NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
 	/* Changeable any time. */
-	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,       NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
+	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
 
-	{ 5, NULL,                                                  SGVariantType::STRING, PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,       NULL,            NULL, NULL } /* Guard. */
+	{ 5, NULL,                                                  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,           NULL,            NULL, NULL } /* Guard. */
 };
 
 
@@ -225,8 +221,7 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	tmp.b = true;
 	Preferences::register_parameter(&prefs[i++], tmp, PREFERENCES_GROUP_KEY_MAPNIK);
 
-	tmp.u = 168; /* One week. */
-	Preferences::register_parameter(&prefs[i++], tmp, PREFERENCES_GROUP_KEY_MAPNIK);
+	Preferences::register_parameter(&prefs[i++], scale_timeout.initial, PREFERENCES_GROUP_KEY_MAPNIK);
 
 	tmp.s = "carto";
 	Preferences::register_parameter(&prefs[i++], tmp, PREFERENCES_GROUP_KEY_MAPNIK);
@@ -359,8 +354,8 @@ bool LayerMapnik::set_param_value(uint16_t id, SGVariant data, bool is_file_oper
 			this->set_file_xml(data.s);
 			break;
 		case PARAM_ALPHA:
-			if (data.u <= 255) {
-				this->alpha = data.u;
+			if (data.i >= scale_alpha.min && data.i <= scale_alpha.max) {
+				this->alpha = data.i;
 			}
 			break;
 		case PARAM_USE_FILE_CACHE:
@@ -422,7 +417,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 			break;
 		}
 		case PARAM_ALPHA:
-			param_value.u = this->alpha;
+			param_value.i = this->alpha;
 			break;
 		case PARAM_USE_FILE_CACHE:
 			param_value.b = this->use_file_cache;

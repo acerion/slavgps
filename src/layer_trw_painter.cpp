@@ -510,7 +510,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		switch (this->trw->track_drawing_mode) {
 		case DRAWMODE_BY_TRACK:
 			main_pen.setColor(trk->color);
-			main_pen.setWidth(this->trw->trk_thickness);
+			main_pen.setWidth(this->trw->track_thickness);
 			break;
 		default:
 			/* Mostly for DRAWMODE_ALL_SAME_COLOR
@@ -889,7 +889,7 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight)
 {
-	if (this->trw->image_alpha == 0) {
+	if (this->trw->wp_image_alpha == 0) {
 		return 0;
 	}
 
@@ -907,18 +907,18 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 		}
 		if (regularthumb) {
 			CachedPixmap * cp = (CachedPixmap *) malloc(sizeof (CachedPixmap));
-			if (this->trw->image_size == 128) {
+			if (this->trw->wp_image_size == 128) {
 				cp->pixmap = regularthumb;
 			} else {
-				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, this->trw->image_size, this->trw->image_size);
+				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, this->trw->wp_image_size, this->trw->image_size);
 				assert (cp->pixmap);
 				g_object_unref(G_OBJECT(regularthumb));
 			}
 			cp->image = g_strdup(image);
 
 			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-			if (this->trw->image_alpha != 255) {
-				cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->image_alpha);
+			if (this->trw->wp_image_alpha != 255) {
+				cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->wp_image_alpha);
 			}
 
 			/* Needed so 'click picture' tool knows how big the pic is; we don't
@@ -927,7 +927,7 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 			wp->image_height = cp->pixmap->heigth();
 
 			g_queue_push_head(this->trw->image_cache, cp);
-			if (this->trw->image_cache->length > this->trw->image_cache_size) {
+			if (this->trw->image_cache->length > this->trw->wp_image_cache_size) {
 				cached_pixbuf_free((CachedPixmap *) g_queue_pop_tail(this->trw->image_cache));
 			}
 
@@ -969,17 +969,17 @@ void TRWPainter::draw_waypoint_symbol(Waypoint * wp, int x, int y)
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
 	} else if (wp == this->trw->current_wp) {
 		switch (this->trw->wp_marker_type) {
-		case WP_SYMBOL_FILLED_SQUARE:
+		case SYMBOL_FILLED_SQUARE:
 			qDebug() << __FUNCTION__ << __LINE__;
 			this->viewport->fill_rectangle(this->trw->wp_marker_pen.color(), x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size * 2, this->trw->wp_marker_size * 2);
 			break;
-		case WP_SYMBOL_SQUARE:
+		case SYMBOL_SQUARE:
 			this->viewport->draw_rectangle(this->trw->wp_marker_pen, x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size * 2, this->trw->wp_marker_size * 2);
 			break;
-		case WP_SYMBOL_CIRCLE:
+		case SYMBOL_CIRCLE:
 			this->viewport->draw_arc(this->trw->wp_marker_pen, x - this->trw->wp_marker_size, y - this->trw->wp_marker_size, this->trw->wp_marker_size, this->trw->wp_marker_size, 0, 360, true);
 			break;
-		case WP_SYMBOL_X:
+		case SYMBOL_X:
 			this->viewport->draw_line(this->trw->wp_marker_pen, x - this->trw->wp_marker_size * 2, y - this->trw->wp_marker_size * 2, x + this->trw->wp_marker_size * 2, y + this->trw->wp_marker_size * 2);
 			this->viewport->draw_line(this->trw->wp_marker_pen, x - this->trw->wp_marker_size * 2, y + this->trw->wp_marker_size * 2, x + this->trw->wp_marker_size * 2, y - this->trw->wp_marker_size * 2);
 		default:
@@ -987,17 +987,17 @@ void TRWPainter::draw_waypoint_symbol(Waypoint * wp, int x, int y)
 		}
 	} else {
 		switch (this->trw->wp_marker_type) {
-		case WP_SYMBOL_FILLED_SQUARE:
+		case SYMBOL_FILLED_SQUARE:
 			qDebug() << __FUNCTION__ << __LINE__;
 			this->viewport->fill_rectangle(this->trw->wp_marker_pen.color(), x - this->trw->wp_marker_size/2, y - this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size);
 			break;
-		case WP_SYMBOL_SQUARE:
+		case SYMBOL_SQUARE:
 			this->viewport->draw_rectangle(this->trw->wp_marker_pen, x - this->trw->wp_marker_size/2, y - this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size);
 			break;
-		case WP_SYMBOL_CIRCLE:
+		case SYMBOL_CIRCLE:
 			this->viewport->draw_arc(this->trw->wp_marker_pen, x-this->trw->wp_marker_size/2, y-this->trw->wp_marker_size/2, this->trw->wp_marker_size, this->trw->wp_marker_size, 0, 360, true);
 			break;
-		case WP_SYMBOL_X:
+		case SYMBOL_X:
 			this->viewport->draw_line(this->trw->wp_marker_pen, x-this->trw->wp_marker_size, y - this->trw->wp_marker_size, x + this->trw->wp_marker_size, y + this->trw->wp_marker_size);
 			this->viewport->draw_line(this->trw->wp_marker_pen, x-this->trw->wp_marker_size, y + this->trw->wp_marker_size, x + this->trw->wp_marker_size, y - this->trw->wp_marker_size);
 			break;

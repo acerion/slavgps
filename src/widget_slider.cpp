@@ -42,7 +42,14 @@ SGSlider::SGSlider(const ParameterScale & scale, Qt::Orientation orientation, QW
 	this->slider.setRange(scale.min, scale.max);
 	this->slider.setSingleStep(scale.step);
 	// gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
-	this->slider.setValue(scale.min);
+	if (scale.initial.type_id == SGVariantType::INT) {
+		this->slider.setValue(scale.initial.i);
+	} else if (scale.initial.type_id == SGVariantType::DOUBLE) {
+		this->slider.setValue(scale.initial.d);
+	} else {
+		qDebug() << "EE: Widget Slider: unsupported type of initial value:" << (int) scale.initial.type_id;
+		this->slider.setValue(scale.min); /* Safe default. */
+	}
 	this->slider.setOrientation(orientation);
 
 	QBoxLayout * layout = NULL;

@@ -149,10 +149,7 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 
 
 
-static ParameterScale params_scales[] = {
-	/* min, max, step, digits (decimal places). */
-	{ 0, 255, 3, 0 }, /* alpha */
-};
+static ParameterScale scale_alpha = { 0, 255, SGVariant((int32_t) 255), 3, 0 };
 
 
 
@@ -181,14 +178,6 @@ static SGVariant directory_default(void)
 static SGVariant file_default(void)
 {
 	return SGVariant("");
-}
-
-
-
-
-static SGVariant alpha_default(void)
-{
-	return SGVariant((uint32_t) 255);
 }
 
 
@@ -241,7 +230,7 @@ Parameter maps_layer_params[] = {
 	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,             directory_default,    NULL, NULL },
 	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Cache Layout:"),                        WidgetType::COMBOBOX,    &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
 	{ PARAM_FILE,          "mapfile",        SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Map File:"),                            WidgetType::FILEENTRY,   map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::UINT,    PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      params_scales,    alpha_default,        NULL, N_("Control the Alpha value for transparency effects") },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Alpha:"),                               WidgetType::HSCALE,      &scale_alpha,     NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
 	{ PARAM_AUTODOWNLOAD,  "autodownload",   SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,             sg_variant_true,      NULL, NULL },
 	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
 	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
@@ -675,8 +664,8 @@ bool LayerMap::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		break;
 	}
 	case PARAM_ALPHA:
-		if (data.u <= 255) {
-			this->alpha = data.u;
+		if (data.i >= scale_alpha.min && data.i <= scale_alpha.max) {
+			this->alpha = data.i;
 		}
 		break;
 	case PARAM_AUTODOWNLOAD:
@@ -744,7 +733,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		rv.i = map_index_to_map_type(this->map_index);
 		break;
 	case PARAM_ALPHA:
-		rv.u = this->alpha;
+		rv.i = this->alpha;
 		break;
 	case PARAM_AUTODOWNLOAD:
 		rv.u = this->autodownload;

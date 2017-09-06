@@ -255,10 +255,10 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
 
 #ifdef HAVE_LIBMAPNIK
-ParameterScale params_threads[] = { {1, 64, 1, 0} }; /* 64 threads should be enough for anyone... */
+ParameterScale scale_threads = { 1, 64, SGVariant((int32_t) 1), 1, 0 }; /* 64 threads should be enough for anyone...; TODO: verify the hardwired default value. */
 /* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
 static Parameter prefs_mapnik[] = {
-	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBOX_INT, params_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
+	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
 };
 #endif
 
@@ -272,7 +272,7 @@ void a_background_init()
 {
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	SGVariant tmp((uint32_t) 1); /* Default to 1 thread due to potential crashing issues. */
+	SGVariant tmp((int32_t) 1); /* Default to 1 thread due to potential crashing issues. */
 	/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
 	Preferences::register_parameter(&prefs_mapnik[0], tmp, "mapnik");
 #endif

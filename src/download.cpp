@@ -146,10 +146,8 @@ static std::mutex dem_files_mutex;
 
 
 
-/* Spin button scales. */
-static ParameterScale params_scales[] = {
-	{1, 365, 1, 0},		/* download_tile_age */
-};
+/* Spin button scale. */
+static ParameterScale scale_age = { 1, 365, SGVariant((uint32_t) VIK_CONFIG_DEFAULT_TILE_AGE / 86400), 1, 0 }; /* download_tile_age; hardwired default value in days. */
 
 
 
@@ -157,7 +155,7 @@ static ParameterScale params_scales[] = {
 static SGVariant convert_to_display(SGVariant value)
 {
 	/* From seconds into days. */
-	return SGVariant((uint32_t) (value.u / 86400));
+	return SGVariant((int32_t) (value.i / 86400));
 }
 
 
@@ -166,14 +164,14 @@ static SGVariant convert_to_display(SGVariant value)
 static SGVariant convert_to_internal(SGVariant value)
 {
 	/* From days into seconds. */
-	return SGVariant((uint32_t) (86400 * value.u));
+	return SGVariant((int32_t) (86400 * value.i));
 }
 
 
-
+/* FIXME: verify that users of the two functions operate on signed int. */
 static ParameterExtra prefs_extra = { convert_to_display, convert_to_internal };
 static Parameter prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBOX_INT, &params_scales[0], NULL, &prefs_extra, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBOX_INT, &scale_age, NULL, &prefs_extra, NULL },
 };
 
 
@@ -181,8 +179,7 @@ static Parameter prefs[] = {
 
 void Download::init(void)
 {
-	SGVariant tmp((uint32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)); /* Now in days. */
-	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
+	Preferences::register_parameter(prefs, scale_age.initial, PREFERENCES_GROUP_KEY_GENERAL);
 }
 
 

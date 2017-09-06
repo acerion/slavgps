@@ -58,13 +58,16 @@
 
 
 
-
+/* These symbols are used for Waypoints, but there is no reason to not
+   to use them elsewhere. */
 enum {
-	WP_SYMBOL_FILLED_SQUARE,
-	WP_SYMBOL_SQUARE,
-	WP_SYMBOL_CIRCLE,
-	WP_SYMBOL_X,
-	WP_NUM_SYMBOLS
+	/* There were four symbols originally in Viking. */
+	SYMBOL_FILLED_SQUARE,
+	SYMBOL_SQUARE,
+	SYMBOL_CIRCLE,
+	SYMBOL_X,
+
+	SYMBOL_NUM_SYMBOLS
 };
 
 

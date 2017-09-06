@@ -40,23 +40,11 @@ using namespace SlavGPS;
 
 
 
+static ParameterScale scale_minutes_width  = { 0.05,  60.0,            SGVariant(1.0), 0.25,    10 }; /* PARAM_MIN_INC */
+static ParameterScale scale_line_thickness = {    1,    15,    SGVariant((int32_t) 3),    1,     0 }; /* PARAM_LINE_THICKNESS */
 
-static ParameterScale param_scales[] = {
-	{ 0.05, 60.0, 0.25, 10 },
-	{ 1,    15,   1,     0 },
-};
-static SGVariant color_default(void)
-{
-	return SGVariant(255, 0, 0, 100);
-}
-static SGVariant min_inc_default(void)
-{
-	return SGVariant(1.0);
-}
-static SGVariant line_thickness_default(void)
-{
-	return SGVariant((uint32_t) 3);
-}
+
+static SGVariant color_default(void) { return SGVariant(255, 0, 0, 100); }
 
 
 enum {
@@ -70,11 +58,11 @@ enum {
 
 
 static Parameter coord_layer_params[] = {
-	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, N_("Color:"),          WidgetType::COLOR,          NULL,             color_default,          NULL, NULL },
-	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], min_inc_default,        NULL, NULL },
-	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::UINT,   PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBOX_INT,    &param_scales[1], line_thickness_default, NULL, NULL },
+	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, N_("Color:"),          WidgetType::COLOR,          NULL,                  color_default,   NULL, NULL },
+	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
+	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },
 
-	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,           NULL,             NULL,                   NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
 };
 
 
@@ -130,9 +118,9 @@ bool LayerCoord::set_param_value(uint16_t id, SGVariant param_value, bool is_fil
 		this->deg_inc = param_value.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		if (param_value.u >= 1 && param_value.u <= 15) {
-			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value.u;
-			this->line_thickness = param_value.u;
+		if (param_value.i >= scale_line_thickness.min && param_value.i <= scale_line_thickness.max) {
+			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value.i;
+			this->line_thickness = param_value.i;
 		}
 		break;
 	default:
@@ -159,7 +147,7 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 		rv.d = this->deg_inc * 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv.u = this->line_thickness;
+		rv.i = this->line_thickness;
 		break;
 	default:
 		break;

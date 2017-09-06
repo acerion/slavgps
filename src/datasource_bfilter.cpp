@@ -46,31 +46,30 @@ using namespace SlavGPS;
 /************************************ Simplify (Count) *****************************/
 
 /* Spin button scales. */
-ParameterScale simplify_params_scales[] = {
-	{1, 10000, 10, 0},
-};
+ParameterScale scale_simplify = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardwired default value. */
 
 Parameter bfilter_simplify_params[] = {
-	{ 0, "numberofpoints", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Max number of points:"), WidgetType::SPINBOX_INT, simplify_params_scales, NULL, NULL, NULL },
+	{ 0, "numberofpoints", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Max number of points:"), WidgetType::SPINBOX_INT, &scale_simplify, NULL, NULL, NULL },
 };
 
 SGVariant bfilter_simplify_params_defaults[] = {
-	SGVariant((unsigned int) 100),
+	SGVariant((int32_t) 100),
 };
 
 
 
 
+/* FIXME: caller of the function may pass value of first argument with type uint32_t, but the function expects int32_t. */
 static ProcessOptions * datasource_bfilter_simplify_get_process_options(SGVariant *paramdatas, void * not_used, const char *input_filename, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
 
 	po->babel_args = "-i gpx";
 	po->input_file_name = QString(input_filename);
-	po->babel_filters = QString("-x simplify,count=%1").arg(paramdatas[0].u);
+	po->babel_filters = QString("-x simplify,count=%1").arg(paramdatas[0].i);
 
 	/* Store for subsequent default use. */
-	bfilter_simplify_params_defaults[0].u = paramdatas[0].u;
+	bfilter_simplify_params_defaults[0].i = paramdatas[0].i;
 
 	return po;
 }
@@ -88,11 +87,11 @@ static void * datasource_bfilter_simplify_init(acq_vik_t *not_used)
 {
 	if (!bfilter_simplify_default_set) {
 		int tmp;
-		if (!a_settings_get_integer (VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
+		if (!a_settings_get_integer(VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
 			tmp = 100;
 		}
 
-		bfilter_simplify_params_defaults[0].u = tmp;
+		bfilter_simplify_params_defaults[0].i = tmp;
 		bfilter_simplify_default_set = true;
 	}
 
@@ -134,11 +133,11 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 
 
 
-static ParameterScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
+static ParameterScale scale_compress = { 0.0, 1.000, SGVariant((double) 0.001), 0.001, 3 }; /* TODO: verify the hardwired default value. */
 
 Parameter bfilter_compress_params[] = {
 	// { 1, "compressmethod", SGVariantType::INT,   PARAMETER_GROUP_GENERIC, N_("Simplify Method:"), WidgetType::COMBOBOX,   compress_method,      NULL, NULL, NULL },
-	{ 0, "compressfactor", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Error Factor:"),    WidgetType::SPINBOX_INT, compress_spin_scales, NULL, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail.") },
+	{ 0, "compressfactor", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Error Factor:"),    WidgetType::SPINBOX_DOUBLE, &scale_compress, NULL, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail.") },
 };
 
 SGVariant bfilter_compress_params_defaults[] = {

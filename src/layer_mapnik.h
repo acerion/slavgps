@@ -88,7 +88,7 @@ namespace SlavGPS {
 
 		char * filename_css = NULL; /* CartoCSS MML File - use 'carto' to convert into xml. */
 		char * filename_xml = NULL;
-		uint8_t alpha = 0;
+		int32_t alpha = 0;
 
 		unsigned int tile_size_x = 0; /* Y is the same as X ATM. */
 		bool loaded = false;

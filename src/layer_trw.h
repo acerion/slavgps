@@ -364,7 +364,7 @@ namespace SlavGPS {
 		void dialog_shift(QDialog * dialog, Coord * coord, bool vertical);
 
 
-		uint32_t get_property_trk_thickness();
+		int32_t get_property_track_thickness();
 
 		static TRWMetadata * metadata_new();
 		static void metadata_free(TRWMetadata * metadata);
@@ -442,16 +442,16 @@ namespace SlavGPS {
 
 		int track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
 	        bool draw_trackpoints;
-		uint8_t trackpoint_size;
+		int32_t trackpoint_size;
 		uint8_t drawelevation;
-		uint8_t elevation_factor;
+		int32_t elevation_factor;
 		bool draw_track_stops;
-		uint32_t stop_length;
+		int32_t stop_length;
 		bool draw_track_lines;
 		uint8_t drawdirections;
-		uint8_t drawdirections_size;
-		uint32_t trk_thickness;
-		uint32_t trk_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
+		int32_t drawdirections_size;
+		int32_t track_thickness;
+		int32_t track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
 		sort_order_t track_sort_order;
 
 		TRWMetadata * metadata = NULL;
@@ -459,7 +459,7 @@ namespace SlavGPS {
 		font_size_t trk_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
 
 		int wp_marker_type;
-		int wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
+		int32_t wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
 		bool wp_draw_symbols;
 		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
 		sort_order_t wp_sort_order;
@@ -508,10 +508,10 @@ namespace SlavGPS {
 
 		bool drawlabels;
 		bool drawimages;
-		uint8_t image_alpha;
+		int32_t wp_image_alpha;
 		GQueue * image_cache = NULL;
-		uint8_t image_size;
-		uint16_t image_cache_size;
+		int32_t wp_image_size;
+		int32_t wp_image_cache_size;
 
 
 		bool has_verified_thumbnails;

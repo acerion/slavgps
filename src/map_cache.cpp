@@ -66,13 +66,10 @@ static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static std::mutex mc_mutex;
 
-static ParameterScale params_scales[] = {
-	/* min, max, step, digits (decimal places) */
-	{ 1, 1024, 1, 0 },
-};
+static ParameterScale scale_cache_size = { 1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0 };
 
 static Parameter prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::UINT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, &scale_cache_size, NULL, NULL, NULL },
 };
 
 
@@ -99,8 +96,7 @@ static void cache_item_free(cache_item_t * ci)
 
 void SlavGPS::map_cache_init()
 {
-	SGVariant val((uint32_t) VIK_CONFIG_MAPCACHE_SIZE);
-	Preferences::register_parameter(prefs, val, PREFERENCES_GROUP_KEY_GENERAL);
+	Preferences::register_parameter(prefs, scale_cache_size.initial, PREFERENCES_GROUP_KEY_GENERAL);
 }
 
 
