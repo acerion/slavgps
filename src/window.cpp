@@ -1370,7 +1370,7 @@ void Window::create_ui(void)
 
 
 		GtkActionEntry action_dl;
-		char *layername = g_strdup_printf("Layer%s", Layer::get_interface(i)->fixed_layer_name);
+		char *layername = g_strdup_printf("Layer%s", Layer::get_interface(i)->layer_type_string);
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
 				      Layer::get_interface(i)->name,
 				      layername,
@@ -1379,7 +1379,7 @@ void Window::create_ui(void)
 
 		// For default layers use action names of the form 'Layer<LayerName>'
 		// This is to avoid clashing with just the layer name used above for the tool actions
-		action_dl.name = g_strconcat("Layer", Layer::get_interface(i)->fixed_layer_name, NULL);
+		action_dl.name = g_strconcat("Layer", Layer::get_interface(i)->layer_type_string, NULL);
 		action_dl.action_icon_path = NULL;
 		action_dl.action_label = g_strconcat("_", Layer::get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
 		action_dl.action_tooltip = NULL;
@@ -2263,7 +2263,7 @@ void Window::show_layer_defaults_cb(void)
 
 	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
 
-	if (Layer::get_interface(layer_type)->params_count == 0) {
+	if (Layer::get_interface(layer_type)->parameters.size() == 0) {
 		Dialog::info(tr("This layer type has no configurable properties."), this);
 	} else {
 		LayerDefaults::show_window(layer_type, this);

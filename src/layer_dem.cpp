@@ -238,8 +238,7 @@ LayerDEMInterface vik_dem_layer_interface;
 
 LayerDEMInterface::LayerDEMInterface()
 {
-	this->params = dem_layer_params; /* Parameters. */
-	this->params_count = NUM_PARAMS;
+	this->parameters_c = dem_layer_params;
 
 	strncpy(this->layer_type_string, "DEM", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

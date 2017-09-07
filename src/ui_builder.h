@@ -150,6 +150,8 @@ namespace SlavGPS {
 	/* Frees data from last (if necessary). */
 	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, Parameter * params, uint16_t params_count);
 
+	bool parameter_get_hardwired_value(SGVariant & value, const Parameter & param);
+
 
 
 

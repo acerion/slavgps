@@ -300,9 +300,8 @@ LayerGPSInterface vik_gps_layer_interface;
 
 LayerGPSInterface::LayerGPSInterface()
 {
-	this->params = gps_layer_params;       /* Parameters. */
-	this->params_count = NUM_PARAMS;
-	this->params_groups = g_params_groups; /* Parameter groups. */
+	this->parameters_c = gps_layer_params;       /* Parameters. */
+	this->parameter_groups = g_params_groups; /* Parameter groups. */
 
 	strncpy(this->layer_type_string, "GPS", sizeof (this->layer_type_string)); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

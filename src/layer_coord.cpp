@@ -75,8 +75,7 @@ LayerCoordInterface vik_coord_layer_interface;
 
 LayerCoordInterface::LayerCoordInterface()
 {
-	this->params = coord_layer_params; /* Parameters. */
-	this->params_count = PARAM_MAX;
+	this->parameters_c = coord_layer_params;
 
 	strncpy(this->layer_type_string, "Coord", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

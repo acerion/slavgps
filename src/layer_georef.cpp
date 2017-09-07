@@ -121,8 +121,7 @@ LayerGeorefInterface vik_georef_layer_interface;
 
 LayerGeorefInterface::LayerGeorefInterface()
 {
-	this->params = georef_layer_params; /* Parameters. */
-	this->params_count = NUM_PARAMS;
+	this->parameters_c = georef_layer_params;
 
 	strncpy(this->layer_type_string, "GeoRef Map", sizeof (this->layer_type_string)); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

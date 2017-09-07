@@ -38,6 +38,8 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include <QDebug>
+
 #include "viewport_internal.h"
 #include "layer_aggregate.h"
 #include "layer_trw.h"
@@ -147,7 +149,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 
 
-void SlavGPS::file_write_layer_param(FILE * f, char const * name, SGVariantType type, SGVariant data)
+void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & data)
 {
 	/* String lists are handled differently. We get a std::list<char *> (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
@@ -157,12 +159,12 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, SGVariantType 
 	if (type == SGVariantType::STRING_LIST) {
 		if (data.sl) {
 			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
-				fprintf(f, "%s=", name);
+				fprintf(f, "%s=", param_name);
 				fprintf(f, "%s\n", (*iter).toUtf8().constData());
 			}
 		}
 	} else {
-		fprintf(f, "%s=", name);
+		fprintf(f, "%s=", param_name);
 		switch (type)	{
 		case SGVariantType::DOUBLE: {
 			// char buf[15]; /* Locale independent. */
@@ -195,20 +197,17 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, SGVariantType 
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	Parameter * params = ((Layer *) layer)->get_interface()->params; /* kamilTODO: remove cast. */
-
 	fprintf(f, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
 	if (!layer->visible) {
 		fprintf(f, "visible=f\n");
 	}
 
-	if (params) {
-		SGVariant param_value;
-		uint16_t params_count = ((Layer *) layer)->get_interface()->params_count; /* kamilTODO: remove cast. */
-		for (uint16_t i = 0; i < params_count; i++) {
-			param_value = layer->get_param_value(i, true);
-			file_write_layer_param(f, params[i].name, params[i].type, param_value);
-		}
+	SGVariant param_value;
+	for (auto iter = ((Layer * ) layer)->get_interface()->parameters.begin(); iter != ((Layer * ) layer)->get_interface()->parameters.end(); iter++) { /* TODO: get rid of cast. */
+
+		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
+		param_value = ((Layer * ) layer)->get_param_value(iter->first, true); /* TODO: get rid of cast. */
+		file_write_layer_param(f, iter->second->name, iter->second->type, param_value);
 	}
 
 	layer->write_file(f);
@@ -410,14 +409,14 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
-						params = Layer::get_interface(layer_type)->params;
-						params_count = Layer::get_interface(layer_type)->params_count;
+						params = Layer::get_interface(layer_type)->parameters_c;
+						params_count = Layer::get_interface(layer_type)->parameters.size();
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::new_(layer_type, viewport);
 						stack->data = (void *) layer;
-						params = Layer::get_interface(layer_type)->params;
-						params_count = Layer::get_interface(layer_type)->params_count;
+						params = Layer::get_interface(layer_type)->parameters_c;
+						params_count = Layer::get_interface(layer_type)->parameters.size();
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
@@ -934,7 +933,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, SGFileType fi
 				a_gpx_write_track_file(trk, f, &options);
 				break;
 			default:
-				fprintf(stderr, "CRITICAL: Houston, we've had a problem. file_type=%d\n", file_type);
+				qDebug() << "EE: File: Export: unexpected file type for track" << (int) file_type;
 			}
 		} else {
 			switch (file_type) {
@@ -966,7 +965,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, SGFileType fi
 				}
 				break;
 			default:
-				fprintf(stderr, "CRITICAL: Houston, we've had a problem. file_type=%d\n", file_type);
+				qDebug() << "EE: File: Export: unexpected file type for non-track" << (int) file_type;
 			}
 		}
 		fclose(f);

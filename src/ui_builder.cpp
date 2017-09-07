@@ -151,9 +151,7 @@ void PropertiesDialog::fill(Layer * layer)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer" << layer->get_name();
 
-	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
-
-	for (auto iter = params->begin(); iter != params->end(); iter++) {
+	for (auto iter = layer->get_interface()->parameters.begin(); iter != layer->get_interface()->parameters.end(); iter++) {
 		param_id_t group_id = iter->second->group_id;
 
 		auto form_iter = this->forms.find(group_id);
@@ -162,8 +160,8 @@ void PropertiesDialog::fill(Layer * layer)
 
 			/* Add new tab, but only for non-hidden parameters */
 
-			QString page_label = layer->get_interface()->params_groups
-				? layer->get_interface()->params_groups[group_id]
+			QString page_label = layer->get_interface()->parameter_groups
+				? layer->get_interface()->parameter_groups[group_id]
 				: tr("Properties");
 			form = this->insert_tab(page_label);
 
@@ -197,10 +195,9 @@ void PropertiesDialog::fill(LayerInterface * interface)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer interface";
 
-	std::map<param_id_t, Parameter *> * params = interface->layer_parameters;
-	std::map<param_id_t, SGVariant> * values = interface->parameter_value_defaults;
+	std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
-	for (auto iter = params->begin(); iter != params->end(); iter++) {
+	for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
 		param_id_t group_id = iter->second->group_id;
 		if (group_id == PARAMETER_GROUP_HIDDEN) {
 			iter++;
@@ -210,8 +207,8 @@ void PropertiesDialog::fill(LayerInterface * interface)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			QString page_label = interface->params_groups
-				? interface->params_groups[group_id]
+			QString page_label = interface->parameter_groups
+				? interface->parameter_groups[group_id]
 				: tr("Properties");
 			form = this->insert_tab(page_label);
 
@@ -774,6 +771,31 @@ void a_uibuilder_free_paramdatas(SGVariant *paramdatas, Parameter *params, uint1
 		}
 	}
 	free(paramdatas);
+}
+
+
+
+
+bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const Parameter & param)
+{
+	SGVariant param_value;
+	if (param.widget_type == WidgetType::SPINBOX_DOUBLE
+	    || param.widget_type == WidgetType::SPINBOX_INT
+	    || param.widget_type == WidgetType::HSCALE) {
+
+		/* This will be overwritten below by value from settings file. */
+		ParameterScale * scale = (ParameterScale *) param.widget_data;
+		value = scale->initial;
+		return true;
+	} else {
+		if (param.hardwired_default_value) {
+			/* This will be overwritten below by value from settings file. */
+			value = param.hardwired_default_value();
+			return true;
+		}
+	}
+
+	return false;
 }
 
 

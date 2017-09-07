@@ -364,7 +364,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 		paramdatas = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
 						    source_interface_->params, source_interface_->params_count,
-						    source_interface_->params_groups, source_interface_->params_groups_count,
+						    source_interface_->parameter_groups, source_interface_->params_groups_count,
 						    source_interface_->params_defaults);
 #endif
 		if (paramdatas) {

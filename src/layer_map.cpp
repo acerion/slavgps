@@ -270,8 +270,7 @@ LayerMapInterface vik_map_layer_interface;
 
 LayerMapInterface::LayerMapInterface()
 {
-	this->params = maps_layer_params; /* Parameters. */
-	this->params_count = NUM_PARAMS;
+	this->parameters_c = maps_layer_params; /* Parameters. */
 
 	strncpy(this->layer_type_string, "Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. kamilTODO: verify this line. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

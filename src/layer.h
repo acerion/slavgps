@@ -226,7 +226,8 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
 
-		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
+		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.
+		   @is_file_operation denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		/* Returns true if needs to redraw due to changed param. */
@@ -367,12 +368,7 @@ namespace SlavGPS {
 		virtual Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 		virtual void change_param(GtkWidget *, ui_change_values *);
 
-		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-		Parameter * params = NULL;
-		uint16_t    params_count = 0;
-		const char  ** params_groups = NULL;
-
-		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. */
+		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. TODO: add "fixed" to the variable name. */
 		QString layer_name;            /* Translate-able name used for display purposes. */
 
 		QKeySequence action_accelerator;
@@ -381,12 +377,27 @@ namespace SlavGPS {
 		std::map<int, ToolConstructorFunc> layer_tool_constructors;  /* Tool index -> Layer Tool constructor function. */
 		std::map<int, LayerTool *>         layer_tools;              /* Tool index -> Layer Tool. */
 
-
 		/* Menu items to be created. */
 		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
 
-		std::map<param_id_t, Parameter *> * layer_parameters = NULL;
-		std::map<param_id_t, SGVariant> * parameter_value_defaults = NULL;
+
+		/* Specification of parameters in each layer type is
+		   stored in 'parameters_c' C array.  During
+		   application startup, in Layer::preconfigure_interfaces(),
+		   pointers to these parameters in C array are stored
+		   in 'parameters' container. The parameters can be later
+		   accessed in C++-like fashion.
+
+		   Each layer type stores (here, in layer interface) a
+		   set of default values of parameters, to be used
+		   when user creates a new instance of layer of type X.
+
+		   Parameters can be combined into groups, they names
+		   of the groups are in parameter_groups. */
+		Parameter * parameters_c = NULL;
+		std::map<param_id_t, Parameter *> parameters;
+		std::map<param_id_t, SGVariant>  parameter_default_values;
+		const char ** parameter_groups = NULL;
 
 		struct {
 			QString new_layer; /* Menu "Layers" -> "New type-X Layer". */

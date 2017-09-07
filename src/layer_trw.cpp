@@ -343,9 +343,8 @@ LayerTRWInterface vik_trw_layer_interface;
 
 LayerTRWInterface::LayerTRWInterface()
 {
-	this->params = trw_layer_params;        /* Parameters. */
-	this->params_count = NUM_PARAMS;
-	this->params_groups = g_params_groups;    /* Parameter groups. */
+	this->parameters_c = trw_layer_params;
+	this->parameter_groups = g_params_groups;
 
 	strncpy(this->layer_type_string, "TrackWaypoint", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

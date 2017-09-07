@@ -204,38 +204,33 @@ void Layer::preconfigure_interfaces(void)
 		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
-		interface->parameter_value_defaults = new std::map<param_id_t, SGVariant>;
-
-		if (!interface->params) {
+		if (!interface->parameters_c) {
 			continue;
 		}
 
-		interface->layer_parameters = new std::map<param_id_t, Parameter *>;
-		int j = 0;
-		while (interface->params[j].name) {
-			interface->layer_parameters->insert(std::pair<param_id_t, Parameter *>(interface->params[j].id, &interface->params[j]));
+		for (Parameter * param_template = interface->parameters_c; param_template->name; param_template++) {
+			interface->parameters.insert(std::pair<param_id_t, Parameter *>(param_template->id, param_template));
 
 			/* Read and store default values of layer's parameters.
 			   First try to get program's internal/hardwired value.
 			   Then try to get value from settings file. */
+
 			SGVariant param_value;
-			if (interface->params[j].hardwired_default_value) {
-				/* This will be overwritten below by value from settings file. */
-				param_value = interface->params[j].hardwired_default_value();
-			}
+
+			/* param_value will be overwritten below by value from settings file. */
+			parameter_get_hardwired_value(param_value, *param_template);
+
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
-			param_value = LayerDefaults::get(interface->layer_type_string, interface->params[j].name, interface->params[j].type);
-			(*interface->parameter_value_defaults)[interface->params[j].id] = param_value;
-
-			j++;
+			/* kamilTODO: what if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
+			param_value = LayerDefaults::get(interface->layer_type_string, param_template->name, param_template->type);
+			interface->parameter_default_values[param_template->id] = param_value;
 		}
 	}
 }
 
 
 
-#ifdef K
 /**
  * Store default values for this layer.
  *
@@ -244,21 +239,14 @@ void Layer::preconfigure_interfaces(void)
 static bool layer_defaults_register(LayerType layer_type)
 {
 	LayerInterface * layer_interface = Layer::get_interface(layer_type);
-
-	Parameter * params = layer_interface->params;
-	if (!params) {
-		return false;
-	}
-
 	bool answer = false; /* In case all parameters are 'not in properties'. */
-	uint16_t params_count = layer_interface->params_count;
 
 	/* Process each parameter. */
-	for (uint16_t i = 0; i < params_count; i++) {
-		if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
-			if (params[i].hardwired_default_value) {
-				SGVariant value = params[i].hardwired_default_value();
-				LayerDefaults::set(layer_interface->fixed_layer_name, &params[i], value);
+	SGVariant value;
+	for (auto iter = layer_interface->parameters.begin(); iter != layer_interface->parameters.end(); iter++) {
+		if (iter->second->group_id != PARAMETER_GROUP_HIDDEN) {
+			if (parameter_get_hardwired_value(value, *iter->second)) {
+				LayerDefaults::set(layer_interface->layer_type_string, iter->second, value);
 				answer = true;
 			}
 		}
@@ -266,8 +254,6 @@ static bool layer_defaults_register(LayerType layer_type)
 
 	return answer;
 }
-#endif
-
 
 
 
@@ -392,44 +378,41 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	vlm_append(this->name.toUtf8().constData(), this->name.size());
 
 	/* Now the actual parameters. */
-	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
-	if (parameters) {
-		SGVariant param_value;
-		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
+	SGVariant param_value;
+	for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
+		qDebug() << "DD: Layer: Marshalling parameter" << iter->second->name;
 
-			param_value = this->get_param_value(iter->first, false);
-			switch (iter->second->type) {
-			case SGVariantType::STRING:
-				/* Remember need braces as these are macro calls, not single statement functions! */
-				if (param_value.s) {
-					vlm_append(param_value.s, strlen(param_value.s));
-				} else {
-					/* Need to insert empty string otherwise the unmarshall will get confused. */
-					vlm_append("", 0);
-				}
-				break;
-				/* Print out the string list in the array. */
-			case SGVariantType::STRING_LIST: {
-				QStringList * a_list = param_value.sl;
-
-				/* Write length of list (# of strings). */
-				int listlen = a_list->size();
-				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
-
-				/* Write each string. */
-				for (auto l = a_list->constBegin(); l != a_list->constEnd(); l++) {
-					QByteArray arr = (*l).toUtf8();
-					const char * s = arr.constData();
-					vlm_append(s, strlen(s));
-				}
-
-				break;
+		param_value = this->get_param_value(iter->first, false);
+		switch (iter->second->type) {
+		case SGVariantType::STRING:
+			/* Remember need braces as these are macro calls, not single statement functions! */
+			if (param_value.s) {
+				vlm_append(param_value.s, strlen(param_value.s));
+			} else {
+				/* Need to insert empty string otherwise the unmarshall will get confused. */
+				vlm_append("", 0);
 			}
-			default:
-				vlm_append(&param_value, sizeof (param_value));
-				break;
+			break;
+			/* Print out the string list in the array. */
+		case SGVariantType::STRING_LIST: {
+			QStringList * a_list = param_value.sl;
+
+			/* Write length of list (# of strings). */
+			int listlen = a_list->size();
+			g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
+
+			/* Write each string. */
+			for (auto l = a_list->constBegin(); l != a_list->constEnd(); l++) {
+				QByteArray arr = (*l).toUtf8();
+				const char * s = arr.constData();
+				vlm_append(s, strlen(s));
 			}
+
+			break;
+		}
+		default:
+			vlm_append(&param_value, sizeof (param_value));
+			break;
 		}
 	}
 
@@ -461,45 +444,40 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 	this->rename(QString(s));
 	free(s);
 
-	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
-	if (parameters) {
-		SGVariant param_value;
+	SGVariant param_value;
+	for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
+		qDebug() << "DD: Layer: Unmarshalling parameter" << iter->second->name;
+		switch (iter->second->type) {
+		case SGVariantType::STRING:
+			s = (char *) malloc(vlm_size + 1);
+			s[vlm_size] = 0;
+			vlm_read(s);
+			param_value.s = s;
+			this->set_param_value(iter->first, param_value, false);
+			free(s);
+			break;
+		case SGVariantType::STRING_LIST: {
+			int listlen = vlm_size;
+			QStringList* list = new QStringList;
+			b += sizeof(int); /* Skip listlen. */;
 
-		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
-
-			switch (iter->second->type) {
-			case SGVariantType::STRING:
+			for (int j = 0; j < listlen; j++) {
+				/* Get a string. */
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
-				param_value.s = s;
-				this->set_param_value(iter->first, param_value, false);
-				free(s);
-				break;
-			case SGVariantType::STRING_LIST: {
-				int listlen = vlm_size;
-				QStringList* list = new QStringList;
-				b += sizeof(int); /* Skip listlen. */;
-
-				for (int j = 0; j < listlen; j++) {
-					/* Get a string. */
-					s = (char *) malloc(vlm_size + 1);
-					s[vlm_size] = 0;
-					vlm_read(s);
-					list->push_back(s);
-				}
-				param_value.sl = list;
-				this->set_param_value(iter->first, param_value, false);
-				/* Don't free -- string list is responsibility of the layer. */
-
-				break;
+				list->push_back(s);
 			}
-			default:
-				vlm_read(&param_value);
-				this->set_param_value(iter->first, param_value, false);
-				break;
-			}
+			param_value.sl = list;
+			this->set_param_value(iter->first, param_value, false);
+			/* Don't free -- string list is responsibility of the layer. */
+
+			break;
+		}
+		default:
+			vlm_read(&param_value);
+			this->set_param_value(iter->first, param_value, false);
+			break;
 		}
 	}
 }
@@ -575,8 +553,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 		bool must_redraw = false;
 
-		std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
-		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+		for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
 			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
@@ -594,10 +571,10 @@ bool Layer::properties_dialog(Viewport * viewport)
 #if 0
 	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
 						  viewport->get_window(),
-						  layer->get_interface()->params,
-						  layer->get_interface()->params_count,
-						  layer->get_interface()->params_groups,
-						  layer->get_interface()->params_groups_count,
+						  layer->get_interface()->parameters_c,
+						  layer->get_interface()->parameters.size(),
+						  layer->get_interface()->parameter_groups,
+						  layer->get_interface()->parameter_groups_count,
 						  (bool (*)(void*, uint16_t, SGVariant, void*, bool)) layer->set_param,
 						  layer,
 						  viewport,
@@ -740,10 +717,9 @@ void Layer::set_initial_parameter_values(void)
 	char const * layer_name = this->get_interface()->layer_type_string;
 	SGVariant param_value;
 
-	std::map<param_id_t, Parameter *> * parameters = this->interface->layer_parameters;
-	std::map<param_id_t, SGVariant> * defaults = this->interface->parameter_value_defaults;
+	std::map<param_id_t, SGVariant> * defaults = &this->interface->parameter_default_values;
 
-	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+	for (auto iter = this->interface->parameters.begin(); iter != this->interface->parameters.end(); iter++) {
 		/* Ensure parameter is for use. */
 		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.

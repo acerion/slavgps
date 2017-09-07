@@ -197,7 +197,7 @@ static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant val
 	int index = KPOINTER_TO_INT (index_ptr);
 	Parameter * layer_param = default_parameters.at(index + id);
 
-	write_parameter_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
+	write_parameter_value(value, Layer::get_interface(layer_param->layer_type)->layer_type_string, layer_param->name, layer_param->type);
 }
 
 
@@ -209,38 +209,40 @@ static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool not
 	int index = (int) (long) (index_ptr);
 	Parameter * layer_param = default_parameters.at(index + id);
 
-	return read_parameter_value(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
+	return read_parameter_value(Layer::get_interface(layer_param->layer_type)->layer_type_string, layer_param->name, layer_param->type);
 }
+
+
+
+
+#endif
 
 
 
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-	Parameter * params = Layer::get_interface(layer_type)->params;
-	if (!params) {
-		return;
-	}
+	LayerInterface * interface = Layer::get_interface(layer_type);
 
-	uint16_t params_count = Layer::get_interface(layer_type)->params_count;
 	/* Process each parameter. */
-	for (uint16_t i = 0; i < params_count; i++) {
-		if (params[i].group_id == PARAMETER_GROUP_HIDDEN) {
+	for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
+		const Parameter * param = iter->second;
+		if (param->group_id == PARAMETER_GROUP_HIDDEN) {
 			continue;
 		}
 
 		bool success = false;
 		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
-		read_parameter_value(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
+		read_parameter_value(Layer::get_interface(layer_type)->layer_type_string, param->name, param->type, &success);
 		if (!success) {
-			if (params[i].hardwired_default_value) {
-				SGVariant value = params[i].hardwired_default_value();
-				write_parameter_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
+			SGVariant value;
+			if (parameter_get_hardwired_value(value, *param)) {
+				write_parameter_value(value, Layer::get_interface(layer_type)->layer_type_string, param->name, param->type);
 			}
 		}
 	}
 }
-#endif
+
 
 
 
@@ -317,10 +319,9 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 	if (dialog_code == QDialog::Accepted) {
 
-		std::map<param_id_t, Parameter *> * parameters = interface->layer_parameters;
-		std::map<param_id_t, SGVariant> * values = interface->parameter_value_defaults;
+		std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
-		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+		for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
 			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
 			write_parameter_value(param_value, interface->layer_type_string, iter->second->name, iter->second->type);

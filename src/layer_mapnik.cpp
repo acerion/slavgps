@@ -116,8 +116,7 @@ LayerMapnikInterface vik_mapnik_layer_interface;
 
 LayerMapnikInterface::LayerMapnikInterface()
 {
-	this->params = mapnik_layer_params; /* Parameters. */
-	this->params_count = NUM_PARAMS,
+	this->parameters_c = mapnik_layer_params; /* Parameters. */
 
 	strncpy(this->layer_type_string, "Mapnik Rendering", sizeof (this->layer_type_string)); /* Non-translatable. */
 	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';

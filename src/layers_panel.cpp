@@ -480,7 +480,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
-	if (ask_user && interface->params_count != 0) {
+	if (ask_user && interface->parameters.size()) {
 		if (!layer->properties_dialog(viewport)) {
 			delete layer;
 			return false;
@@ -599,7 +599,7 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 	TreeIndex const & index = this->tree_view->get_selected_item();
 	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 		LayerType layer_type = this->tree_view->get_layer(index)->type;
-		if (Layer::get_interface(layer_type)->params_count == 0) {
+		if (Layer::get_interface(layer_type)->parameters.size() == 0) {
 			Dialog::info(tr("This layer type has no configurable properties."), this->window);
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
