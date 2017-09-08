@@ -308,7 +308,8 @@ static Parameter prefs[] = {
 void layer_map_init(void)
 {
 	SGVariant tmp;
-	tmp.s = strdup(maps_layer_default_dir().toUtf8().constData());
+
+	tmp = SGVariant(strdup(maps_layer_default_dir().toUtf8().constData()));
 	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	int max_tiles = MAX_TILES;

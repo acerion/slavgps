@@ -197,7 +197,7 @@ static Preferences preferences;
    2.
 */
 static std::map<param_id_t, Parameter *> registered_parameters; /* Parameter id -> Parameter. */
-static std::map<std::string, ParameterValueTyped *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
+static std::map<std::string, SGVariant *> registered_parameter_values; /* Parameter name -> Value of parameter. */
 
 
 
@@ -264,9 +264,9 @@ static bool preferences_load_from_file()
 			break;
 		}
 		if (split_string_from_file_on_equals(buf, &key, &val)) {
-			/* if it's not in there, ignore it. */
-			auto oldval = registered_parameter_values.find(key);
-			if (oldval == registered_parameter_values.end()) {
+			/* If it's not in there, ignore it. */
+			auto old_val_iter = registered_parameter_values.find(key);
+			if (old_val_iter == registered_parameter_values.end()) {
 				qDebug() << "II: Preferences: load from file: ignoring key/val" << key << val;
 				free(key);
 				free(val);
@@ -278,12 +278,12 @@ static bool preferences_load_from_file()
 
 			/* Otherwise change it (you know the type!).
 			   If it's a string list do some funky stuff ... yuck... not yet. */
-			if (oldval->second->type == SGVariantType::STRING_LIST) {
-				fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
+			if (old_val_iter->second->type_id == SGVariantType::STRING_LIST) {
+				qDebug() << "EE: Preferences: Load from File: 'string list' not implemented";
 			}
 
-			ParameterValueTyped * newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
-			registered_parameter_values.at(std::string(key)) = newval;
+			SGVariant * new_val = variant_copy_from_string(old_val_iter->second->type_id, val);
+			registered_parameter_values.at(std::string(key)) = new_val;
 
 			free(key);
 			free(val);
@@ -307,14 +307,14 @@ void Preferences::set_param_value(param_id_t id, SGVariant value)
 		return;
 	}
 	if (registered_parameters[id]->type == SGVariantType::STRING_LIST) {
-		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
+		qDebug() << "EE: Preferences: Set Parameter Value: 'string list' not implemented";
 	}
 
-	ParameterValueTyped * new_value = vik_layer_typed_param_data_copy_from_data(registered_parameters[id]->type, value); /* New value to save under an existing name. */
-	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_value;
+	SGVariant * new_val = variant_copy(registered_parameters[id]->type, value); /* New value to save under an existing name. */
+	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_val;
 
 	if (registered_parameters[id]->type == SGVariantType::DOUBLE) {
-		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_value->data.d;
+		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_val->d;
 	}
 }
 
@@ -335,10 +335,10 @@ SGVariant Preferences::get_param_value(param_id_t id)
 	auto val = registered_parameter_values.find(std::string(registered_parameters[id]->name));
 	assert (val != registered_parameter_values.end());
 
-	if (val->second->type == SGVariantType::STRING_LIST) {
-		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
+	if (val->second->type_id == SGVariantType::STRING_LIST) {
+		qDebug() << "EE: Preferences: Get Param Value: 'string list' not implemented in preferences";
 	}
-	return val->second->data;
+	return *val->second;
 }
 
 
@@ -363,13 +363,13 @@ bool SlavGPS::a_preferences_save_to_file()
 
 	for (unsigned int i = 0; i < registered_parameters.size(); i++) {
 		Parameter * param = registered_parameters[i];
-		auto val = registered_parameter_values.find(std::string(param->name));
-		if (val != registered_parameter_values.end()) {
-			if (val->second->type != SGVariantType::PTR) {
-				if (val->second->type == SGVariantType::DOUBLE) {
-					qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
+		auto val_iter = registered_parameter_values.find(std::string(param->name));
+		if (val_iter != registered_parameter_values.end()) {
+			if (val_iter->second->type_id != SGVariantType::PTR) {
+				if (val_iter->second->type_id == SGVariantType::DOUBLE) {
+					qDebug() << "II: Preferences: saving to file" << param->name << (double) val_iter->second->d;
 				}
-				file_write_layer_param(file, param->name, val->second->type, val->second->data);
+				file_write_layer_param(file, param->name, val_iter->second->type_id, val_iter->second);
 			}
 		}
 	}
@@ -397,6 +397,7 @@ void SlavGPS::preferences_show_window(QWidget * parent)
 			if (iter->second->type == SGVariantType::DOUBLE) {
 				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
 			}
+			qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name;
 			preferences.set_param_value(iter->first, param_value);
 		}
 		a_preferences_save_to_file();
@@ -406,7 +407,7 @@ void SlavGPS::preferences_show_window(QWidget * parent)
 
 
 
-void SlavGPS::Preferences::register_parameter(Parameter * parameter, SGVariant default_value, const char * group_key)
+void SlavGPS::Preferences::register_parameter(Parameter * parameter, const SGVariant & default_value, const char * group_key)
 {
 	static param_id_t param_id = 0;
 
@@ -419,27 +420,24 @@ void SlavGPS::Preferences::register_parameter(Parameter * parameter, SGVariant d
         Parameter * new_parameter = new Parameter;
 	*new_parameter = *parameter;
 
-	ParameterValueTyped * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
+	SGVariant * new_val = variant_copy(parameter->type, default_value); /* TODO: make a constructor or something. */
 	if (group_key) {
 		new_parameter->group_id = preferences_group_key_to_group_id(QString(group_key));
 	}
 
 	registered_parameters.insert(std::pair<param_id_t, Parameter *>(param_id, new_parameter));
-	registered_parameter_values.insert(std::pair<std::string, ParameterValueTyped *>(std::string(new_parameter->name), newval));
+	registered_parameter_values.insert(std::pair<std::string, SGVariant *>(std::string(new_parameter->name), new_val));
 	param_id++;
 }
 
 
 
 
-#if 0
+#ifdef K
 void Preferences::Preferences()
 {
-	/* Not copied. */
-	//registered_parameters = g_ptr_array_new();
-
 	/* Key not copied (same ptr as in pref), actual param data yes. */
-	//registered_parameter_values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
+	registered_parameter_values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, variant_free);
 }
 #endif
 
@@ -458,17 +456,19 @@ void Preferences::uninit()
 SGVariant * SlavGPS::a_preferences_get(const char * key)
 {
 	if (!preferences.loaded) {
-		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);
+		qDebug() << "DD: Preferences: calling _get() for the first time (key is" << key << ")";
+
 		/* Since we can't load the file in Preferences::init() (no params registered yet),
 		   do it once before we get the first key. */
 		preferences_load_from_file();
 		preferences.loaded = true;
 	}
-	auto val = registered_parameter_values.find(std::string(key));
-	if (val == registered_parameter_values.end()) {
+
+	auto val_iter = registered_parameter_values.find(std::string(key));
+	if (val_iter == registered_parameter_values.end()) {
 		return NULL;
 	} else {
-		return &val->second->data;
+		return val_iter->second;
 	}
 }
 
@@ -501,85 +501,85 @@ bool Preferences::get_restore_window_state(void)
 
 void Preferences::register_default_values()
 {
-	fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number(VIKING_VERSION));
+	qDebug() << "DD: Preferences: VIKING VERSION as number:" << viking_version_to_number(VIKING_VERSION);
 
 	/* Defaults for the options are setup here. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_GENERAL, QObject::tr("General"));
 
 	SGVariant tmp;
-	tmp.i = (int32_t) DegreeFormat::DMS;
+	tmp = SGVariant((int32_t) DegreeFormat::DMS);
 	Preferences::register_parameter(&general_prefs[0], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.i = (int32_t) DistanceUnit::KILOMETRES;
+	tmp = SGVariant((int32_t) DistanceUnit::KILOMETRES);
 	Preferences::register_parameter(&general_prefs[1], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.i = (int32_t) SpeedUnit::KILOMETRES_PER_HOUR;
+	tmp = SGVariant((int32_t) SpeedUnit::KILOMETRES_PER_HOUR);
 	Preferences::register_parameter(&general_prefs[2], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.i = (int32_t) HeightUnit::METRES;
+	tmp = SGVariant((int32_t) HeightUnit::METRES);
 	Preferences::register_parameter(&general_prefs[3], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.b = true;
+	tmp = SGVariant(true);
 	Preferences::register_parameter(&general_prefs[4], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	Preferences::register_parameter(&general_prefs[5], scale_lat.initial, PREFERENCES_GROUP_KEY_GENERAL);
 	Preferences::register_parameter(&general_prefs[6], scale_lon.initial, PREFERENCES_GROUP_KEY_GENERAL);
 
-	tmp.i = VIK_TIME_REF_LOCALE;
+	tmp = SGVariant((int32_t) VIK_TIME_REF_LOCALE);
 	Preferences::register_parameter(&general_prefs[7], tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	/* New Tab. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_STARTUP, QObject::tr("Startup"));
 
-	tmp.b = false;
+	tmp = SGVariant(false);
 	Preferences::register_parameter(&startup_prefs[0], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
-	tmp.b = false;
+	tmp = SGVariant(false);
 	Preferences::register_parameter(&startup_prefs[1], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
-	tmp.i = VIK_STARTUP_METHOD_HOME_LOCATION;
+	tmp = SGVariant((int32_t) VIK_STARTUP_METHOD_HOME_LOCATION);
 	Preferences::register_parameter(&startup_prefs[2], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
-	tmp.s = "";
+	tmp = SGVariant("");
 	Preferences::register_parameter(&startup_prefs[3], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
-	tmp.b = false;
+	tmp = SGVariant(false);
 	Preferences::register_parameter(&startup_prefs[4], tmp, PREFERENCES_GROUP_KEY_STARTUP);
 
 	/* New Tab. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_IO, QObject::tr("Export/External"));
 
-	tmp.i = VIK_KML_EXPORT_UNITS_METRIC;
+	tmp = SGVariant((int32_t) VIK_KML_EXPORT_UNITS_METRIC);
 	Preferences::register_parameter(&io_prefs[0], tmp, PREFERENCES_GROUP_KEY_IO);
 
-	tmp.i = VIK_GPX_EXPORT_TRK_SORT_TIME;
+	tmp = SGVariant((int32_t) VIK_GPX_EXPORT_TRK_SORT_TIME);
 	Preferences::register_parameter(&io_prefs[1], tmp, PREFERENCES_GROUP_KEY_IO);
 
-	tmp.b = VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE; /* kamilFIXME: should it be tmp.b or tmp.i? */
+	tmp = SGVariant((int32_t) VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE);
 	Preferences::register_parameter(&io_prefs[2], tmp, PREFERENCES_GROUP_KEY_IO);
 
 #ifndef WINDOWS
-	tmp.s = "xdg-open";
+	tmp = SGVariant("xdg-open");
 	Preferences::register_parameter(&io_prefs_non_windows[0], tmp, PREFERENCES_GROUP_KEY_IO);
 #endif
 
 	/* JOSM for OSM editing around a GPX track. */
-	tmp.s = "josm";
+	tmp = SGVariant("josm");
 	Preferences::register_parameter(&io_prefs_external_gpx[0], tmp, PREFERENCES_GROUP_KEY_IO);
 	/* Add a second external program - another OSM editor by default. */
-	tmp.s = "merkaartor";
+	tmp = SGVariant("merkaartor");
 	Preferences::register_parameter(&io_prefs_external_gpx[1], tmp, PREFERENCES_GROUP_KEY_IO);
 
 	/* 'Advanced' Properties. */
 	Preferences::register_group(PREFERENCES_GROUP_KEY_ADVANCED, QObject::tr("Advanced"));
 
-	tmp.i = VIK_FILE_REF_FORMAT_ABSOLUTE;
+	tmp = SGVariant((int32_t) VIK_FILE_REF_FORMAT_ABSOLUTE);
 	Preferences::register_parameter(&prefs_advanced[0], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
 
-	tmp.b = true;
+	tmp = SGVariant(true);
 	Preferences::register_parameter(&prefs_advanced[1], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
 
-	tmp.b = true;
+	tmp = SGVariant(true);
 	Preferences::register_parameter(&prefs_advanced[2], tmp, PREFERENCES_GROUP_KEY_ADVANCED);
 
 	Preferences::register_parameter(&prefs_advanced[3], scale_recent_files.initial, PREFERENCES_GROUP_KEY_ADVANCED);

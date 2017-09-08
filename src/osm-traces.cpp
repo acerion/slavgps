@@ -211,9 +211,11 @@ void SlavGPS::osm_traces_init()
 	Preferences::register_group(PREFERENCES_GROUP_KEY_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
 
 	SGVariant tmp;
-	tmp.s = "";
+
+	tmp = SGVariant("");
 	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_OSM_TRACES);
-	tmp.s = "";
+
+	tmp = SGVariant("");
 	Preferences::register_parameter(prefs+1, tmp, PREFERENCES_GROUP_KEY_OSM_TRACES);
 }
 

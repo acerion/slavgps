@@ -593,7 +593,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 {
-	SGVariant rv = { 0 };
+	SGVariant rv((bool) false); /* Initial value with initial data type. */
+
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
 		if (param->group_id == PARAMETER_GROUP_HIDDEN) {
@@ -611,11 +612,12 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		rv.c.g = c.green();
 		rv.c.b = c.blue();
 		rv.c.a = c.alpha();
+		rv.type_id = SGVariantType::COLOR; /* TODO: fix this manual assignment of type id. */
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: Color" << "label:" << param->title << "value:" << c.red() << c.green() << c.blue();
 	}
 		break;
 	case WidgetType::CHECKBUTTON:
-		rv.b = ((QCheckBox *) widget)->isChecked();
+		rv = SGVariant((bool) ((QCheckBox *) widget)->isChecked());
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: Checkbox" << "label:" << param->title << "value:" << rv.b;
 		break;
 
@@ -623,7 +625,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 		assert (param->type == SGVariantType::INT || param->type == SGVariantType::STRING);
 
 		if (param->type == SGVariantType::INT) {
-			rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
+			rv = SGVariant((int32_t) ((QComboBox *) widget)->currentData().toInt());
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: ComboBox (I)" << "label:" << param->title << "value:" << rv.i;
 
 		} else if (param->type == SGVariantType::STRING) {
@@ -634,10 +636,10 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 			if (param->extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
 				int pos = widget->currentIndex();
-				rv.s = ((const char **)param->extra_widget_data)[pos];
+				rv = SGVariant((char *) ((const char **)param->extra_widget_data)[pos]);
 			} else {
 				/* Return raw value. */
-				rv.s = widget->currentText();
+				rv = SGVariant((char *) widget->currentText()); /* TODO: verify this assignment. */
 			}
 #endif
 		} else {
@@ -648,39 +650,39 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 
 	case WidgetType::RADIOGROUP:
 		/* get_id_of_selected() returns arbitrary ID. */
-		rv.i = ((SGRadioGroup *) widget)->get_id_of_selected();
+		rv = SGVariant((int32_t) ((SGRadioGroup *) widget)->get_id_of_selected());
 		qDebug() << "II: UI Builder: saving value of widget" << id << "/" << this->widgets.size() << "type: RadioGroup" << "label:" << param->title << "value:" << rv.i;
 		break;
 
 	case WidgetType::SPINBOX_INT:
 		assert (param->type == SGVariantType::INT);
 		if (param->type == SGVariantType::INT) {
-			rv.i = ((QSpinBox *) widget)->value();
+			rv = SGVariant((int32_t) ((QSpinBox *) widget)->value());
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (int)" << "label:" << param->title << "value:" << rv.i;
 		}
 		break;
 
 	case WidgetType::SPINBOX_DOUBLE:
 		assert (param->type == SGVariantType::DOUBLE);
-		rv.d = ((QDoubleSpinBox *) widget)->value();
+		rv = SGVariant((double) ((QDoubleSpinBox *) widget)->value());
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: SpinBox (double)" << "label:" << param->title << "value:" << rv.d;
 		break;
 
 	case WidgetType::ENTRY:
 	case WidgetType::PASSWORD:
-		rv.s = strdup((char *) ((QLineEdit *) widget)->text().toUtf8().constData()); /* FIXME: memory management. */
+		rv = SGVariant((char *) strdup((char *) ((QLineEdit *) widget)->text().toUtf8().constData())); /* FIXME: memory management. */
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: LineEdit" << "label:" << param->title << "value:" << rv.s;
 		break;
 
 	case WidgetType::FILEENTRY:
 	case WidgetType::FOLDERENTRY:
-		rv.s = strdup(((SGFileEntry *) widget)->get_filename().toUtf8().constData()); /* FIXME: memory management. */
+		rv = SGVariant((char *) strdup(((SGFileEntry *) widget)->get_filename().toUtf8().constData())); /* FIXME: memory management. */
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: File/Dir" << "label:" << param->title << "value:" << rv.s;
 		break;
 
 	case WidgetType::FILELIST:
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: FileList" << "label:" << param->title;
-		rv.sl = new QStringList(((SGFileList *) widget)->get_list());
+		rv = SGVariant(new QStringList(((SGFileList *) widget)->get_list()));
 		for (auto iter = rv.sl->constBegin(); iter != rv.sl->constEnd(); iter++) {
 			qDebug() << "II: UI Builder: file on retrieved list: " << QString(*iter);
 		}
@@ -690,18 +692,18 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	case WidgetType::HSCALE:
 		assert (param->type == SGVariantType::INT || param->type == SGVariantType::DOUBLE);
 		if (param->type == SGVariantType::INT) {
-			rv.i = (int32_t) ((SGSlider *) widget)->get_value();
+			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
 			qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: HScale (int)" << "label:" << param->title << "value:" << rv.i;
 		} else if (param->type == SGVariantType::DOUBLE) {
 #ifdef K
-			rv.d = gtk_range_get_value(GTK_RANGE(widget));
+			rv = SGVariant((double) gtk_range_get_value(GTK_RANGE(widget)));
 #endif
 		} else {
 			;
 		}
 		break;
 	case WidgetType::DATETIME:
-		rv.u = ((SGDateTime *) widget)->value();
+		rv = SGVariant((uint32_t) ((SGDateTime *) widget)->value());
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: DateTime" << "label:" << param->title << "value:" << rv.u;
 		break;
 	default:
@@ -724,7 +726,7 @@ void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, 
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
 	case SGVariantType::STRING:
-		paramdatas[i].s = g_strdup(data.s);
+		paramdatas[i] = SGVariant((char *) g_strdup(data.s));
 		break;
 	default:
 		paramdatas[i] = data; /* Dtring list will have to be freed by layer. anything else not freed. */

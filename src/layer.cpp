@@ -612,13 +612,15 @@ LayerType Layer::type_from_string(char const * str)
 
 
 
-void vik_layer_typed_param_data_free(void * gp)
+void variant_free(void * data) /* TODO: convert this into destructor. */
 {
-	ParameterValueTyped * val = (ParameterValueTyped *) gp;
-	switch (val->type) {
+	SGVariant * val = (SGVariant *) data;
+
+	switch (val->type_id) {
 	case SGVariantType::STRING:
-		if (val->data.s) {
-			free((void *) val->data.s);
+		if (val->s) {
+			free((void *) val->s);
+			val->s = NULL;
 		}
 		break;
 		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
@@ -638,29 +640,29 @@ void vik_layer_typed_param_data_free(void * gp)
 
 
 
-ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(SGVariantType type, SGVariant val)
+/* TODO: convert to constructor. */
+SGVariant * SlavGPS::variant_copy(SGVariantType type_id, const SGVariant & val)
 {
-	ParameterValueTyped * newval = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
-	newval->data = val;
-	newval->type = type;
-	switch (newval->type) {
-	case SGVariantType::STRING: {
-		char * s = g_strdup(newval->data.s);
-		newval->data.s = s;
+	SGVariant * new_val = new SGVariant;
+	*new_val = val;
+	assert (new_val->type_id == type_id);
+
+	switch (type_id) {
+	case SGVariantType::STRING:
+		new_val->s = g_strdup(val.s);
 		break;
-	}
+
 		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
-		 * the internals call get_param -- i.e. it should be managed w/in the layer.
-		 * The value passed by the internals into set_param should also be managed
-		 * by the layer -- i.e. free'd by the layer.
-		 */
+		   the internals call get_param -- i.e. it should be managed w/in the layer.
+		   The value passed by the internals into set_param should also be managed
+		   by the layer -- i.e. free'd by the layer. */
 	case SGVariantType::STRING_LIST:
-		fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
+		qDebug() << "EE: Variant Copy: copying 'string list' not implemented";
 		break;
 	default:
 		break;
 	}
-	return newval;
+	return new_val;
 }
 
 
@@ -668,39 +670,41 @@ ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(SGVaria
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
-ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(SGVariantType type, const char * str)
+/* TODO: convert to constructor. */
+SGVariant * SlavGPS::variant_copy_from_string(SGVariantType type_id, const char * str)
 {
-	ParameterValueTyped * rv = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
-	rv->type = type;
-	switch (type) {
+	SGVariant * new_val = new SGVariant;
+	new_val->type_id = type_id;
+
+	switch (type_id) {
 	case SGVariantType::DOUBLE:
-		rv->data.d = strtod(str, NULL);
+		new_val->d = strtod(str, NULL);
 		break;
 	case SGVariantType::UINT:
-		rv->data.u = strtoul(str, NULL, 10);
+		new_val->u = strtoul(str, NULL, 10);
 		break;
 	case SGVariantType::INT:
-		rv->data.i = strtol(str, NULL, 10);
+		new_val->i = strtol(str, NULL, 10);
 		break;
 	case SGVariantType::BOOLEAN:
-		rv->data.b = TEST_BOOLEAN(str);
+		new_val->b = TEST_BOOLEAN(str);
 		break;
 	case SGVariantType::COLOR:
 		{
 			QColor color(str);
-			rv->data.c.r = color.red();
-			rv->data.c.g = color.green();
-			rv->data.c.b = color.blue();
-			rv->data.c.a = color.alpha();
+			new_val->c.r = color.red();
+			new_val->c.g = color.green();
+			new_val->c.b = color.blue();
+			new_val->c.a = color.alpha();
 			break;
 		}
 	/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
-	default: {
-		char *s = g_strdup(str);
-		rv->data.s = s;
+	default:
+		new_val->s = g_strdup(str);
+		break;
 	}
-	}
-	return rv;
+
+	return new_val;
 }
 
 

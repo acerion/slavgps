@@ -407,15 +407,9 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		SGVariant data;
-		SGVariantType type;
-	} ParameterValueTyped;
-
-
-	void vik_layer_typed_param_data_free(void * gp);
-	ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(SGVariantType type, SGVariant val);
-	ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(SGVariantType type, const char * str);
+	SGVariant * variant_copy(SGVariantType type_id, const SGVariant & val);
+	SGVariant * variant_copy_from_string(SGVariantType type_id, const char * str);
+	void variant_free(void * gp);
 
 
 

@@ -649,17 +649,18 @@ void SGUtils::set_auto_features_on_first_run(void)
 		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL }, };
 
 		SGVariant vlp_data;
-		vlp_data.b = true;
+
+		vlp_data = SGVariant((bool) true);
 		a_preferences_run_setparam(vlp_data, pref_add_map);
 
-		vlp_data.i = VIK_STARTUP_METHOD_AUTO_LOCATION;
+		vlp_data = SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION);
 		a_preferences_run_setparam(vlp_data, pref_startup_method);
 
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
 		Parameter pref_startup_version_check[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "check_version", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
-		vlp_data.b = true;
+		vlp_data = SGVariant((bool) true);
 		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
 #endif
 

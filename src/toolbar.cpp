@@ -191,20 +191,22 @@ void a_toolbar_init(void)
 
 	unsigned int i = 0;
 	SGVariant tmp;
-	tmp.b = false;
+
+	tmp = SGVariant(false);
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
-	tmp.i = 0;
+	tmp = SGVariant((int32_t) 0);
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 #ifdef WINDOWS
-	tmp.i = 1; /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
+	tmp = SGVariant((int32_t) 1); /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
 #else
-	tmp.i = 0;
+	tmp = SGVariant((int32_t) 0);
 #endif
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 	tmp.ptr = (void *) toolbar_configure_cb;
+	tmp->type_id = SGVariantType::PTR; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
 	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 	/* Signal data hash. */

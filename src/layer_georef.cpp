@@ -155,10 +155,8 @@ typedef struct {
 
 void SlavGPS::vik_georef_layer_init(void)
 {
-	SGVariant((bool) true);
-#ifdef K
+	SGVariant tmp((bool) true);
 	Preferences::register_parameter(&io_prefs[0], tmp, PREFERENCES_GROUP_KEY_IO);
-#endif
 }
 
 

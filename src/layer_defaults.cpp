@@ -75,7 +75,7 @@ static bool loaded;
    abstraction of settings file. */
 static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success)
 {
-	SGVariant value((bool) false);
+	SGVariant value((bool) false); /* Just some initial value, with initial type id. */
 
 	QString key(QString(group) + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
@@ -89,30 +89,30 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 
 	switch (ptype) {
 	case SGVariantType::DOUBLE: {
-		value.d = variant.toDouble();
+		value = SGVariant((double) variant.toDouble());
 		break;
 	}
 	case SGVariantType::UINT: {
-		value.u = (uint32_t) variant.toULongLong();
+		value = SGVariant((uint32_t) variant.toULongLong());
 		break;
 	}
 	case SGVariantType::INT: {
-		value.i = (int32_t) variant.toLongLong();
+		value = SGVariant((int32_t) variant.toLongLong());
 		break;
 	}
 	case SGVariantType::BOOLEAN: {
-		value.b = variant.toBool();
+		value = SGVariant((bool) variant.toBool());
 		break;
 	}
 	case SGVariantType::STRING: {
-		value.s = strdup(variant.toString().toUtf8().constData());
+		value = SGVariant(strdup(variant.toString().toUtf8().constData()));
 		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
 #if 0
 	case SGVariantType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
-		value.sl = str_to_glist(str); /* TODO convert. */
+		value = SGVariant(str_to_glist(str)); /* TODO convert. */
 		break;
 	}
 #endif
@@ -122,6 +122,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 		value.c.g = color.green();
 		value.c.b = color.blue();
 		value.c.a = color.alpha();
+		value.type_id = SGVariantType::COLOR; /* TODO: fix this manual assignment of data type. */
 		break;
 	}
 	default:
