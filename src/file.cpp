@@ -151,17 +151,14 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & data)
 {
-	/* String lists are handled differently. We get a std::list<char *> (that shouldn't
-	 * be freed) back for get_param and if it is null we shouldn't write
-	 * anything at all (otherwise we'd read in a list with an empty string,
-	 * not an empty string list.
-	 */
+	/* String lists are handled differently. We get a QStringList (that shouldn't
+	   be freed) back for get_param and if it is empty we shouldn't write
+	   anything at all (otherwise we'd read in a list with an empty string,
+	   not an empty string list). */
 	if (type == SGVariantType::STRING_LIST) {
-		if (data.sl) {
-			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
-				fprintf(f, "%s=", param_name);
-				fprintf(f, "%s\n", (*iter).toUtf8().constData());
-			}
+		for (auto iter = data.sl.constBegin(); iter != data.sl.constEnd(); iter++) {
+			fprintf(f, "%s=", param_name);
+			fprintf(f, "%s\n", (*iter).toUtf8().constData());
 		}
 	} else {
 		fprintf(f, "%s=", param_name);
@@ -322,9 +319,9 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 
 
-static void string_list_set_param(int i, std::list<char *> * list, Layer * layer)
+static void string_list_set_param(int i, const QStringList & string_list, Layer * layer)
 {
-	const SGVariant param_value(list);
+	const SGVariant param_value(string_list);
 	layer->set_param_value(i, param_value, true);
 }
 

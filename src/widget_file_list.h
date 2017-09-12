@@ -44,7 +44,7 @@ namespace SlavGPS {
 	class SGFileList : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileList(const QString & title, QStringList & fl, QWidget * parent);
+		SGFileList(const QString & title, const QStringList & fl, QWidget * parent);
 		~SGFileList();
 
 		QStringList get_list(void);

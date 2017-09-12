@@ -343,28 +343,27 @@ void DemLoadJob::cleanup_on_cancel(void)
 /**
  * Process the list of DEM files and convert each one to a relative path.
  */
-static QStringList * dem_layer_convert_to_relative_filenaming(QStringList * files)
+static void dem_layer_convert_to_relative_filenaming(QStringList & relfiles, const QStringList & files)
 {
-	char *cwd = g_get_current_dir();
+	char * cwd = g_get_current_dir();
 	if (!cwd) {
-		return files;
+		relfiles = files;
+		return;
 	}
 
-	QStringList * relfiles = new QStringList;
-	for (auto iter = files->begin(); iter != files->end(); iter++) {
+	for (auto iter = files.begin(); iter != files.end(); iter++) {
 		QString file = file_GetRelativeFilename(cwd, (*iter).toUtf8().constData());
-		relfiles->push_front(file);
+		relfiles.push_front(file);
 	}
 
 	free(cwd);
 
-	if (relfiles->empty()) {
-		return files;
-	} else {
-		/* Replacing current list, so delete old one. */
-		delete files;
-		return relfiles;
+	if (relfiles.empty()) {
+		/* TODO: is this correct? Should we return original files? Is this condition ever true? */
+		relfiles = files;
 	}
+
+	return;
 }
 
 
@@ -412,14 +411,9 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 	case PARAM_FILES: {
 		/* Clear out old settings - if any commonalities with new settings they will have to be read again. */
 		DEMCache::unload_from_cache(this->files);
-		this->files.clear();
 
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
-		if (param_value.sl) {
-			for (auto iter = param_value.sl->begin(); iter != param_value.sl->end(); iter++) {
-				this->files.push_back(QString(*iter));
-			}
-		}
+		this->files = param_value.sl;
 
 		qDebug() << "DD: Layer DEM: set param value: list of files:";
 		if (!this->files.empty()) {
@@ -455,24 +449,17 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 	switch (id) {
 
 	case PARAM_FILES:
-		rv.sl = new QStringList;  /* kamilFIXME: memory leak. */
-		for (auto iter = this->files.constBegin(); iter != this->files.constEnd(); iter++) {
-			rv.sl->push_back(strdup((*iter).toUtf8().constData())); /* kamilFIXME: another memory leak. */
-		}
-		qDebug() << "II: Layer DEM: get param value: string list:";
-		if (!this->files.empty()) {
-			for (auto iter = this->files.constBegin(); iter != this->files.constEnd(); ++iter) {
-				qDebug() << "II: Layer DEM: get param value: string list:" << *iter;
-			}
+		qDebug() << "II: Layer DEM: get param value: string list (" << this->files.size() << " elements):";
+		qDebug() << this->files;
+
+		/* Save in relative format if necessary. */
+		if (is_file_operation && Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			dem_layer_convert_to_relative_filenaming(rv.sl, this->files);
 		} else {
-			qDebug() << "II: Layer DEM: get param value: string list: none";
+			rv.sl = this->files;
 		}
-		if (is_file_operation) {
-			/* Save in relative format if necessary. */
-			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-				rv.sl = dem_layer_convert_to_relative_filenaming(rv.sl);
-			}
-		}
+		rv.type_id = SGVariantType::STRING_LIST; /* TODO: direct assignment of variant type - fix (hide) this. */
+
 		break;
 
 	case PARAM_SOURCE:

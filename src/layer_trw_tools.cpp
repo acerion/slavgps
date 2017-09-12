@@ -302,6 +302,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	tp_search.y = ev->y();
 	tp_search.bbox = bbox;
 
+	/* FIXME: we have a very similar block of code below. */
 	if (this->tracks_visible) {
 		LayerTRWc::track_search_closest_tp(this->tracks, &tp_search);
 

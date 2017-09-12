@@ -37,7 +37,7 @@ using namespace SlavGPS;
 
 
 
-SGFileList::SGFileList(const QString & title, QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
+SGFileList::SGFileList(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
 {
 
 #if 1

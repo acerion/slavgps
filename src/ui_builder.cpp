@@ -532,7 +532,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 
 	case WidgetType::FILELIST:
 		if (param->type == SGVariantType::STRING_LIST) {
-			SGFileList * widget_ = new SGFileList(param->title, *var.sl, this);
+			SGFileList * widget_ = new SGFileList(param->title, var.sl, this);
 
 			widget = widget_;
 		}
@@ -679,9 +679,9 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 
 	case WidgetType::FILELIST:
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: FileList" << "label:" << param->title;
-		rv = SGVariant(new QStringList(((SGFileList *) widget)->get_list()));
-		for (auto iter = rv.sl->constBegin(); iter != rv.sl->constEnd(); iter++) {
-			qDebug() << "II: UI Builder: file on retrieved list: " << QString(*iter);
+		rv = SGVariant(((SGFileList *) widget)->get_list());
+		for (auto iter = rv.sl.constBegin(); iter != rv.sl.constEnd(); iter++) {
+			qDebug() << "II: UI Builder: file on retrieved list: " << *iter;
 		}
 
 		break;
@@ -741,34 +741,24 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 
-static void a_uibuilder_free_paramdatas_sub(SGVariant * paramdatas, int i)
-{
-        /* Should make a util function out of this. */
-        delete paramdatas[i].sl;
-	paramdatas[i].sl = NULL;
-}
-
-
-
-
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(SGVariant * paramdatas, Parameter *params, uint16_t params_count)
+void a_uibuilder_free_paramdatas(SGVariant * param_table, Parameter *params, uint16_t params_count)
 {
 	int i;
 	/* May have to free strings, etc. */
 	for (i = 0; i < params_count; i++) {
 		switch (params[i].type) {
 		case SGVariantType::STRING:
-			free((char *) paramdatas[i].s);
+			free((char *) param_table[i].s);
 			break;
 		case SGVariantType::STRING_LIST:
-			a_uibuilder_free_paramdatas_sub(paramdatas, i);
+			param_table[i].sl.clear();
 			break;
 		default:
 			break;
 		}
 	}
-	free(paramdatas);
+	free(param_table);
 }
 
 

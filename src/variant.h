@@ -49,14 +49,7 @@ namespace SlavGPS {
 		STRING,
 		BOOLEAN,
 		COLOR,
-
-		/* NOTE: string list works uniquely: data.sl should NOT be free'd when
-		 * the internals call get_param -- i.e. it should be managed w/in the layer.
-		 * The value passed by the internals into set_param should also be managed
-		 * by the layer -- i.e. free'd by the layer.
-		 */
-
-		STRING_LIST,
+		STRING_LIST,  /* SGVariant stores a copy of string list. */
 		PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
 	};
 
@@ -76,7 +69,7 @@ namespace SlavGPS {
 		SGVariant(bool b_)         { type_id = SGVariantType::BOOLEAN; b = b_; }
 		SGVariant(int r_, int g_, int b_, int a_) { type_id = SGVariantType::COLOR; c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
 		SGVariant(const QColor & color);
-		SGVariant(QStringList * sl_) { type_id = SGVariantType::STRING_LIST; sl = sl_; }
+		SGVariant(const QStringList & sl_) { type_id = SGVariantType::STRING_LIST; sl = sl_; }
 
 		~SGVariant();
 
@@ -90,7 +83,7 @@ namespace SlavGPS {
 		bool b = false;
 		const char * s = NULL;
 		struct { int r; int g; int b; int a; } c;
-		QStringList * sl = NULL;
+		QStringList sl;
 		void * ptr = NULL; /* For internal usage - don't save this value in a file! */
 	};
 

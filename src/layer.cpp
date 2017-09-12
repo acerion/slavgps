@@ -396,14 +396,12 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 			break;
 			/* Print out the string list in the array. */
 		case SGVariantType::STRING_LIST: {
-			QStringList * a_list = param_value.sl;
-
 			/* Write length of list (# of strings). */
-			int listlen = a_list->size();
+			const int listlen = param_value.sl.size();
 			g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 			/* Write each string. */
-			for (auto l = a_list->constBegin(); l != a_list->constEnd(); l++) {
+			for (auto l = param_value.sl.constBegin(); l != param_value.sl.constEnd(); l++) {
 				QByteArray arr = (*l).toUtf8();
 				const char * s = arr.constData();
 				vlm_append(s, strlen(s));
@@ -459,7 +457,6 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 			break;
 		case SGVariantType::STRING_LIST: {
 			int listlen = vlm_size;
-			QStringList* list = new QStringList;
 			b += sizeof(int); /* Skip listlen. */;
 
 			for (int j = 0; j < listlen; j++) {
@@ -467,11 +464,10 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
-				list->push_back(s);
+				param_value.sl.push_back(s);
 			}
-			param_value.sl = list;
+
 			this->set_param_value(iter->first, param_value, false);
-			/* Don't free -- string list is responsibility of the layer. */
 
 			break;
 		}

@@ -285,7 +285,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/* For UI builder. */
 	void * pass_along_data;
-	SGVariant *paramdatas = NULL;
+	SGVariant * param_table = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
 	if (source_interface_->init_func) {
@@ -362,13 +362,13 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface_->params) {
 #ifdef K
-		paramdatas = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
+		param_table = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
 						    source_interface_->params, source_interface_->params_count,
 						    source_interface_->parameter_groups, source_interface_->params_groups_count,
 						    source_interface_->params_defaults);
 #endif
-		if (paramdatas) {
-			pass_along_data = paramdatas;
+		if (param_table) {
+			pass_along_data = param_table;
 		} else {
 			return; /* TODO: do we have to free anything here? */
 		}
@@ -421,7 +421,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #endif
 	} else if (source_interface_->params) {
 #ifdef K
-		a_uibuilder_free_paramdatas(paramdatas, source_interface_->params, source_interface_->params_count);
+		a_uibuilder_free_paramdatas(param_table, source_interface_->params, source_interface_->params_count);
 #endif
 	}
 

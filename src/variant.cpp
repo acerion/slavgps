@@ -39,14 +39,6 @@ SGVariant::SGVariant(const SGVariant & val)
 	case SGVariantType::STRING:
 		this->s = g_strdup(val.s);
 		break;
-
-		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
-		   the internals call get_param -- i.e. it should be managed w/in the layer.
-		   The value passed by the internals into set_param should also be managed
-		   by the layer -- i.e. free'd by the layer. */
-	case SGVariantType::STRING_LIST:
-		qDebug() << "EE: Variant Copy: copying 'string list' not implemented";
-		break;
 	default:
 		break;
 	}
@@ -115,14 +107,6 @@ SGVariant::~SGVariant()
 #endif
 			this->s = NULL;
 		}
-		break;
-		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
-		 * the internals call get_param -- i.e. it should be managed w/in the layer.
-		 * The value passed by the internals into set_param should also be managed
-		 * by the layer -- i.e. free'd by the layer.
-		 */
-	case SGVariantType::STRING_LIST:
-		fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
 		break;
 	default:
 		break;

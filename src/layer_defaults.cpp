@@ -109,7 +109,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
-#if 0
+#ifdef K
 	case SGVariantType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value = SGVariant(str_to_glist(str)); /* TODO convert. */
