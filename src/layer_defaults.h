@@ -45,7 +45,7 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void set(const char * layer_name, Parameter * layer_param, SGVariant default_value);
+		static void set(const char * layer_name, Parameter * layer_param, const SGVariant & default_value);
 		static SGVariant get(const char * layer_name, const char * param_name, SGVariantType param_type);
 
 		static bool show_window(LayerType layer_type, QWidget * parent);

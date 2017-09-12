@@ -62,6 +62,7 @@
 #include "tree_view_internal.h"
 #include "track_internal.h"
 #include "util.h"
+#include "vikutils.h"
 
 
 
@@ -78,7 +79,6 @@ using namespace SlavGPS;
 
 
 
-#define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 #define VIK_MAGIC "#VIK"
 #define GPX_MAGIC "<?xm"
 #define VIK_MAGIC_LEN 4
@@ -324,7 +324,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 static void string_list_set_param(int i, std::list<char *> * list, Layer * layer)
 {
-	SGVariant param_value(list);
+	const SGVariant param_value(list);
 	layer->set_param_value(i, param_value, true);
 }
 
@@ -565,7 +565,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 				for (i = 0; i < params_count; i++) {
 					if (strlen(params[i].name) == eq_pos && strncasecmp(line, params[i].name, eq_pos) == 0) {
-						SGVariant x;
+
 						line += eq_pos+1;
 						if (params[i].type == SGVariantType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
@@ -574,34 +574,42 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							/* Aadd the value to a list, possibly making a new list.
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
+							SGVariant new_val;
 							switch (params[i].type) {
 							case SGVariantType::DOUBLE:
 #ifdef K
-								x.d = strtod_i8n(line, NULL);
+								new_val = SGVariant((double) strtod_i8n(line, NULL));
 #else
-								x.d = strtod(line, NULL);
+								new_val = SGVariant((double) strtod(line, NULL));
 #endif
 								break;
+
 							case SGVariantType::UINT:
-								x.u = strtoul(line, NULL, 10);
+								new_val = SGVariant((uint32_t) strtoul(line, NULL, 10));
 								break;
+
 							case SGVariantType::INT:
-								x.i = strtol(line, NULL, 10);
+								new_val = SGVariant((int32_t) strtol(line, NULL, 10));
 								break;
+
 							case SGVariantType::BOOLEAN:
-								x.b = TEST_BOOLEAN(line);
+								new_val = SGVariant((bool) TEST_BOOLEAN(line));
 								break;
+
 							case SGVariantType::COLOR:
 #ifdef K
-								memset(&(x.c), 0, sizeof(x.c)); /* default: black */
-								gdk_color_parse(line, &(x.c));
+								memset(new_val.c, 0, sizeof (new_val.c)); /* default: black */
+								gdk_color_parse(line, &new_val.c);
 #endif
 								break;
+
+							default:
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
-							default: x.s = line;
+								/* TODO: review this section. */
+								new_val = SGVariant(line);
 							}
 							Layer * l_a_y_e_r = (Layer *) stack->data;
-							l_a_y_e_r->set_param_value(i, x, true);
+							l_a_y_e_r->set_param_value(i, new_val, true);
 						}
 						found_match = true;
 						break;

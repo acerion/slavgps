@@ -287,7 +287,7 @@ static Parameter gps_layer_params[] = {
 	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,         NULL,                    gpsd_retry_interval_default, NULL, NULL },
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-	{ NUM_PARAMS,                       NULL,                        SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                       NULL,                        SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                                WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
 };
 
 
@@ -427,7 +427,7 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-bool LayerGPS::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
+bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
@@ -523,7 +523,7 @@ bool LayerGPS::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
-		fprintf(stderr, "WARNING: LayerGPS::set_param_value(): unknown parameter\n");
+		qDebug() << "WW: Layer GPS: Set Param Value: unknown parameter" << id;
 	}
 
 	return true;

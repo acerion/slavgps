@@ -62,7 +62,7 @@ static Parameter coord_layer_params[] = {
 	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
 	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },
 
-	{ PARAM_MAX,            NULL,             SGVariantType::PTR,    PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
 };
 
 
@@ -103,7 +103,7 @@ Layer * LayerCoordInterface::unmarshall(uint8_t * data, int len, Viewport * view
 
 
 /* Viewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation)
+bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:

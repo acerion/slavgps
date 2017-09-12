@@ -357,12 +357,12 @@ std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab
 
 
 
-QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
+QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & param_value)
 {
 	/* Perform pre conversion if necessary. */
-	SGVariant vlpd = param_value;
+	SGVariant var = param_value;
 	if (param->extra && param->extra->convert_to_display) {
-		vlpd = param->extra->convert_to_display(param_value);
+		var = param->extra->convert_to_display(param_value);
 	}
 
 	QWidget * widget = NULL;
@@ -370,8 +370,9 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 	case WidgetType::COLOR:
 		if (param->type == SGVariantType::COLOR) {
-			qDebug() << "II: UI Builder: creating color button with colors" << vlpd.c.r << vlpd.c.g << vlpd.c.b << vlpd.c.a;
-			QColor color(vlpd.c.r, vlpd.c.g, vlpd.c.b, vlpd.c.a);
+			qDebug() << "II: UI Builder: creating color button with colors" << var.c.r << var.c.g << var.c.b << var.c.a;
+			QColor color;
+			var.to_qcolor(color);
 			SGColorButton * widget_ = new SGColorButton(color, NULL);
 
 			//widget_->setStyleSheet("* { border: none; background-color: rgb(255,125,100) }");
@@ -383,7 +384,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 	case WidgetType::CHECKBUTTON:
 		if (param->type == SGVariantType::BOOLEAN) {
 			QCheckBox * widget_ = new QCheckBox;
-			if (vlpd.b) {
+			if (var.b) {
 				widget_->setCheckState(Qt::Checked);
 			}
 			widget = widget_;
@@ -438,7 +439,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		assert (param->type == SGVariantType::INT);
 		if (param->type == SGVariantType::INT && param->widget_data) {
 
-			int32_t init_val = vlpd.i;
+			int32_t init_val = var.i;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setMinimum(scale->min);
@@ -457,7 +458,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		assert (param->type == SGVariantType::DOUBLE);
 		if (param->type == SGVariantType::DOUBLE && param->widget_data) {
 
-			double init_val = vlpd.d;
+			double init_val = var.d;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
 			/* Order of fields is important. Use setDecimals() before using setValue(). */
@@ -476,8 +477,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 	case WidgetType::ENTRY:
 		if (param->type == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit;
-			if (vlpd.s) {
-				widget_->insert(QString(vlpd.s));
+			if (var.s) {
+				widget_->insert(QString(var.s));
 			}
 
 			widget = widget_;
@@ -488,8 +489,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 		if (param->type == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit();
 			widget_->setEchoMode(QLineEdit::Password);
-			if (vlpd.s) {
-				widget_->setText(QString(vlpd.s));
+			if (var.s) {
+				widget_->setText(QString(var.s));
 			}
 			widget_->setToolTip(QObject::tr("Notice that this password will be stored clearly in a plain file."));
 
@@ -506,8 +507,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			}
 
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
-			if (vlpd.s) {
-				QString filename(vlpd.s);
+			if (var.s) {
+				QString filename(var.s);
 				widget_->set_filename(filename);
 			}
 
@@ -519,8 +520,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 	case WidgetType::FOLDERENTRY:
 		if (param->type == SGVariantType::STRING) {
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
-			if (vlpd.s) {
-				QString filename(vlpd.s);
+			if (var.s) {
+				QString filename(var.s);
 				widget_->set_filename(filename);
 			}
 
@@ -531,7 +532,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 	case WidgetType::FILELIST:
 		if (param->type == SGVariantType::STRING_LIST) {
-			SGFileList * widget_ = new SGFileList(param->title, *vlpd.sl, this);
+			SGFileList * widget_ = new SGFileList(param->title, *var.sl, this);
 
 			widget = widget_;
 		}
@@ -548,10 +549,10 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 
 			if (param->type == SGVariantType::INT) {
-				widget_->set_value(vlpd.i);
+				widget_->set_value(var.i);
 				widget = widget_;
 			} else {
-				widget_->set_value(vlpd.d);
+				widget_->set_value(var.d);
 				widget = widget_;
 			}
 		}
@@ -561,7 +562,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 	case WidgetType::BUTTON:
 		if (param->type == SGVariantType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
-			QObject::connect(rv, SIGNAL (triggered(bool)), param->extra_widget_data, SLOT (vlpd.ptr));
+			QObject::connect(rv, SIGNAL (triggered(bool)), param->extra_widget_data, SLOT (var.ptr));
 
 			widget = widget_;
 		}
@@ -593,7 +594,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, SGVariant param_value)
 
 SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 {
-	SGVariant rv((bool) false); /* Initial value with initial data type. */
+	SGVariant rv;
 
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
@@ -608,11 +609,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 	switch (param->widget_type) {
 	case WidgetType::COLOR: {
 		QColor c = ((SGColorButton *) widget)->get_color();
-		rv.c.r = c.red();
-		rv.c.g = c.green();
-		rv.c.b = c.blue();
-		rv.c.a = c.alpha();
-		rv.type_id = SGVariantType::COLOR; /* TODO: fix this manual assignment of type id. */
+		rv = SGVariant(c);
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: Color" << "label:" << param->title << "value:" << c.red() << c.green() << c.blue();
 	}
 		break;
@@ -721,7 +718,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 
 
 
-void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, Parameter * params)
+void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, Parameter * params)
 {
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
@@ -755,7 +752,7 @@ static void a_uibuilder_free_paramdatas_sub(SGVariant * paramdatas, int i)
 
 
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(SGVariant *paramdatas, Parameter *params, uint16_t params_count)
+void a_uibuilder_free_paramdatas(SGVariant * paramdatas, Parameter *params, uint16_t params_count)
 {
 	int i;
 	/* May have to free strings, etc. */
@@ -764,12 +761,11 @@ void a_uibuilder_free_paramdatas(SGVariant *paramdatas, Parameter *params, uint1
 		case SGVariantType::STRING:
 			free((char *) paramdatas[i].s);
 			break;
-		case SGVariantType::STRING_LIST: {
+		case SGVariantType::STRING_LIST:
 			a_uibuilder_free_paramdatas_sub(paramdatas, i);
 			break;
-			default:
-				break;
-		}
+		default:
+			break;
 		}
 	}
 	free(paramdatas);
@@ -1018,9 +1014,9 @@ SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, Para
 GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 {
 	/* Perform pre conversion if necessary. */
-	SGVariant vlpd = data;
+	SGVariant var = data;
 	if (param->convert_to_display) {
-		vlpd = param->convert_to_display(data);
+		var = param->convert_to_display(data);
 	}
 
 	GtkWidget *rv = NULL;
@@ -1038,27 +1034,27 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 				/* Set the effective default value. */
 				int i;
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
+					if (((unsigned int *)param->extra_widget_data)[i] == var.u) {
 						/* Match default value. */
 						rv->setCurrentIndex(i);
 						break;
 					}
 			} else {
-				rv->setCurrentIndex(vlpd.u);
+				rv->setCurrentIndex(var.u);
 			}
 		} else if (param->type == SGVariantType::STRING && param->widget_data && !param->extra_widget_data) {
 			/* Build a combobox with editable text. */
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
-			if (vlpd.s) {
-				vik_combo_box_text_append(rv, vlpd.s);
+			if (var.s) {
+				vik_combo_box_text_append(rv, var.s);
 			}
 
 			while (*pstr) {
 				vik_combo_box_text_append(rv, *(pstr++));
 			}
 
-			if (vlpd.s) {
+			if (var.s) {
 				rv->setCurrentIndex(0);
 			}
 		} else if (param->type == SGVariantType::STRING && param->widget_data && param->extra_widget_data) {
@@ -1068,13 +1064,13 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 			while (*pstr) {
 				vik_combo_box_text_append(rv, *(pstr++));
 			}
-			if (vlpd.s) {
+			if (var.s) {
 				/* Set the effective default value. */
 				/* In case of value does not exist, set the first value. */
 				rv->setCurrentIndex(0);
 				int i;
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (strcmp(((const char **)param->extra_widget_data)[i], vlpd.s) == 0) {
+					if (strcmp(((const char **)param->extra_widget_data)[i], var.s) == 0) {
 						/* Match default value. */
 						rv->setCurrentIndex(i);
 						break;
@@ -1091,12 +1087,12 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				int nb_elem = g_list_length((GList *) param->widget_data);
 				for (int i = 0; i < nb_elem; i++)
-					if (KPOINT_unused_ER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == vlpd.u) {
+					if (KPOINT_unused_ER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == var.u) {
 						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
 						break;
 					}
-			} else if (vlpd.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
+			} else if (var.u) { /* Zero is already default. */
+				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), var.u);
 			}
 		}
 		break;
@@ -1105,12 +1101,12 @@ GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
 			rv = vik_radio_group_new_static((const char **) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				for (int i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
+					if (((unsigned int *)param->extra_widget_data)[i] == var.u) {
 						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
 						break;
 					}
-			} else if (vlpd.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
+			} else if (var.u) { /* Zero is already default. */
+				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), var.u);
 			}
 		}
 		break;

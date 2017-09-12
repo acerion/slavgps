@@ -232,7 +232,7 @@ namespace SlavGPS {
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual bool set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation);
+		virtual bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 
 
 		static LayerType type_from_string(char const * str);
@@ -403,13 +403,6 @@ namespace SlavGPS {
 			QString new_layer; /* Menu "Layers" -> "New type-X Layer". */
 		} ui_labels;
 	};
-
-
-
-
-	SGVariant * variant_copy(SGVariantType type_id, const SGVariant & val);
-	SGVariant * variant_copy_from_string(SGVariantType type_id, const char * str);
-	void variant_free(void * gp);
 
 
 

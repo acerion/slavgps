@@ -97,7 +97,7 @@ Parameter mapnik_layer_params[] = {
 	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use File Cache:"),        WidgetType::CHECKBUTTON, NULL,          sg_variant_true,      NULL, NULL },
 	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("File Cache Directory:"),  WidgetType::FOLDERENTRY, NULL,          cache_dir_default,    NULL, NULL },
 
-	{ NUM_PARAMS,           NULL,              SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,          NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,           NULL,              SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,        NULL,          NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -144,18 +144,21 @@ LayerMapnikInterface::LayerMapnikInterface()
 static SGVariant plugins_default(void)
 {
 	SGVariant data;
+
 #ifdef WINDOWS
-	data.s = strdup("input");
+	data = SGVariant(strdup("input"));
 #else
 	if (0 == access("/usr/lib/mapnik/input", F_OK)) {
-		data.s = strdup("/usr/lib/mapnik/input");
 		/* Current Debian locations. */
+		data = SGVariant(strdup("/usr/lib/mapnik/input"));
+
 	} else if (0 == access("/usr/lib/mapnik/3.0/input", F_OK)) {
-		data.s = strdup("/usr/lib/mapnik/3.0/input");
+		data = SGVariant(strdup("/usr/lib/mapnik/3.0/input"));
+
 	} else if (0 == access("/usr/lib/mapnik/2.2/input", F_OK)) {
-		data.s = strdup("/usr/lib/mapnik/2.2/input");
+		data = SGVariant(strdup("/usr/lib/mapnik/2.2/input"));
 	} else {
-		data.s = strdup("");
+		data = SGVariant(strdup(""));
 	}
 #endif
 	return data;
@@ -169,11 +172,11 @@ static SGVariant fonts_default(void)
 	/* Possibly should be string list to allow loading from multiple directories. */
 	SGVariant data;
 #ifdef WINDOWS
-	data.s = strdup("C:\\Windows\\Fonts");
+	data = SGVariant(strdup("C:\\Windows\\Fonts"));
 #elif defined __APPLE__
-	data.s = strdup("/Library/Fonts");
+	data = SGVariant(strdup("/Library/Fonts"));
 #else
-	data.s = strdup("/usr/share/fonts");
+	data = SGVariant(strdup("/usr/share/fonts"));
 #endif
 	return data;
 }
@@ -190,7 +193,7 @@ static Parameter prefs[] = {
 	/* Changeable any time. */
 	{ 4, PREFERENCES_NAMESPACE_MAPNIK"carto",                   SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("CartoCSS:"),                 WidgetType::FILEENTRY,   NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
 
-	{ 5, NULL,                                                  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,           NULL,            NULL, NULL } /* Guard. */
+	{ 5, NULL,                                                  SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC,  "",                              WidgetType::NONE,        NULL,           NULL,            NULL, NULL } /* Guard. */
 };
 
 
@@ -211,7 +214,9 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	Preferences::register_group(PREFERENCES_GROUP_KEY_MAPNIK, QObject::tr("Mapnik"));
 
 	unsigned int i = 0;
-	SGVariant tmp = plugins_default();
+	SGVariant tmp;
+
+	tmp = plugins_default();
 	Preferences::register_parameter(&prefs[i++], tmp, PREFERENCES_GROUP_KEY_MAPNIK);
 
 	tmp = fonts_default();
@@ -268,14 +273,14 @@ void SlavGPS::vik_mapnik_layer_uninit()
 /* NB Only performed once per program run. */
 void SlavGPS::layer_mapnik_init(void)
 {
-	SGVariant *pd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"plugins_directory");
-	SGVariant *fd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"fonts_directory");
-	SGVariant *rfd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory");
+	SGVariant * pd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"plugins_directory");
+	SGVariant * fd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"fonts_directory");
+	SGVariant * rfd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory");
 
 	if (pd && fd && rfd) {
 		mapnik_interface_initialize(pd->s, fd->s, rfd->b);
 	} else {
-		fprintf(stderr, "CRITICAL: Unable to initialize mapnik interface from preferences\n");
+		qDebug() << "EE: Layer Mapnik: Init: Unable to initialize mapnik interface from preferences";
 	}
 }
 
@@ -343,7 +348,7 @@ Layer * LayerMapnikInterface::unmarshall(uint8_t * data, int len, Viewport * vie
 
 
 
-bool LayerMapnik::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
+bool LayerMapnik::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
@@ -443,11 +448,11 @@ bool LayerMapnik::carto_load(void)
 	char *mystderr = NULL;
 	GError *error = NULL;
 
-	SGVariant *vlpd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"carto");
-	char *command = g_strdup_printf("%s %s", vlpd->s, this->filename_css);
+	SGVariant * var = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"carto");
+	char *command = g_strdup_printf("%s %s", var->s, this->filename_css);
 
 	bool answer = true;
-	//char *args[2]; args[0] = vlpd->s; args[1] = this->filename_css;
+	//char *args[2]; args[0] = var->s; args[1] = this->filename_css;
 	//GPid pid;
 	//if (g_spawn_async_with_pipes(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &carto_stdout, &carto_error, &error)) {
 	// cf code in babel.c to handle stdout
@@ -512,11 +517,9 @@ bool LayerMapnik::carto_load(void)
 	free(command);
 
 	if (window) {
-#ifdef K
-		QString msg = QString("%s %s %.1f %s").arg(vlpd->s).arg(" completed in ").arg((double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"))
+		const QString msg = tr("%1 completed in %.1f seconds").arg(var->s).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
 		window->statusbar_update(StatusBarField::INFO, msg);
 		window->clear_busy_cursor();
-#endif
 	}
 	return answer;
 }

@@ -35,6 +35,11 @@
 
 
 
+#define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
+
+
+
+
 namespace SlavGPS {
 
 

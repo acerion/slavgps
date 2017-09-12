@@ -45,10 +45,10 @@ using namespace SlavGPS;
 
 static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success);
 static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype);
-static void write_parameter_value(SGVariant value, const char * group, const char * name, SGVariantType ptype);
+static void write_parameter_value(const SGVariant & value, const char * group, const char * name, SGVariantType ptype);
 
 #if 0
-static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant value, Parameter * params);
+static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, Parameter * params);
 static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 #endif
@@ -75,7 +75,7 @@ static bool loaded;
    abstraction of settings file. */
 static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success)
 {
-	SGVariant value((bool) false); /* Just some initial value, with initial type id. */
+	SGVariant value;
 
 	QString key(QString(group) + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
@@ -117,12 +117,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 	}
 #endif
 	case SGVariantType::COLOR: {
-		QColor color = variant.value<QColor>();
-		value.c.r = color.red();
-		value.c.g = color.green();
-		value.c.b = color.blue();
-		value.c.a = color.alpha();
-		value.type_id = SGVariantType::COLOR; /* TODO: fix this manual assignment of data type. */
+		value = SGVariant(variant.value<QColor>());
 		break;
 	}
 	default:
@@ -154,7 +149,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 /* "write" is supposed to indicate that this is a low-level function,
    writing directly to file, even though the writing is made to QT
    abstraction of settings file. */
-static void write_parameter_value(SGVariant value, const char * group, const char * name, SGVariantType ptype)
+static void write_parameter_value(const SGVariant & value, const char * group, const char * name, SGVariantType ptype)
 {
 	QVariant variant;
 
@@ -192,7 +187,7 @@ static void write_parameter_value(SGVariant value, const char * group, const cha
 #if 0
 
 
-static void defaults_run_setparam(void * index_ptr, param_id_t id, SGVariant value, Parameter * params)
+static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, Parameter * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
@@ -323,7 +318,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
 		for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
-			SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
+			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
 			write_parameter_value(param_value, interface->layer_type_string, iter->second->name, iter->second->type);
 		}
@@ -346,7 +341,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void LayerDefaults::set(const char * layer_name, Parameter * layer_param, SGVariant default_value)
+void LayerDefaults::set(const char * layer_name, Parameter * layer_param, const SGVariant & default_value)
 {
 	/* Copy value. */
 	Parameter * new_param = new Parameter;

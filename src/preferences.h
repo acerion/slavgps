@@ -60,7 +60,7 @@ namespace SlavGPS {
 		/* \param parameter should be persistent through the life of the preference. */
 		static void register_parameter(Parameter * parameter, const SGVariant & default_value, const char * group_key);
 
-		void set_param_value(param_id_t id, SGVariant value);
+		void set_param_value(param_id_t id, const SGVariant & value);
 		SGVariant get_param_value(param_id_t id);
 
 		std::map<param_id_t, Parameter *>::iterator begin();
@@ -113,7 +113,7 @@ namespace SlavGPS {
 	SGVariant * a_preferences_get(const char * key);
 
 	/* Allow preferences to be manipulated externally. */
-	void a_preferences_run_setparam(SGVariant value, Parameter * parameters);
+	void a_preferences_run_setparam(const SGVariant & value, Parameter * parameters);
 
 	bool a_preferences_save_to_file();
 

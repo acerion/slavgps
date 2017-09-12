@@ -1658,15 +1658,21 @@ void Window::set_default_location_cb(void)
 		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBOX_DOUBLE, NULL, NULL, NULL, NULL },
 	};
 
+
 	/* Get current center */
 	struct LatLon ll = this->viewport->get_center()->get_latlon();
 
+
 	/* Apply to preferences */
 	SGVariant vlp_data;
-	vlp_data.d = ll.lat;
+
+	vlp_data = SGVariant((double) ll.lat);
 	a_preferences_run_setparam(vlp_data, pref_lat);
-	vlp_data.d = ll.lon;
+
+	vlp_data = SGVariant((double) ll.lon);
 	a_preferences_run_setparam(vlp_data, pref_lon);
+
+
 	/* Remember to save */
 	a_preferences_save_to_file();
 }

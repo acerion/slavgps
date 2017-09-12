@@ -170,7 +170,7 @@ static Parameter dem_layer_params[] = {
 	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
 	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, N_("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
 
-	{ NUM_PARAMS,       NULL,       SGVariantType::PTR,         PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,       SGVariantType::EMPTY,       PARAMETER_GROUP_GENERIC, NULL,                   WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
 
@@ -370,7 +370,7 @@ static QStringList * dem_layer_convert_to_relative_filenaming(QStringList * file
 
 
 
-bool LayerDEM::set_param_value(uint16_t id, SGVariant param_value, bool is_file_operation)
+bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:

@@ -120,8 +120,10 @@ void a_datasource_gc_init()
 	Preferences::register_group(PREFERENCES_GROUP_KEY_GC, QObject::tr("Geocaching"));
 
 	SGVariant tmp;
+
 	tmp = SGVariant("username");
 	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GC);
+
 	tmp = SGVariant("password");
 	Preferences::register_parameter(prefs+1, tmp, PREFERENCES_GROUP_KEY_GC);
 }

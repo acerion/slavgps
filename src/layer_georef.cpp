@@ -101,7 +101,7 @@ Parameter georef_layer_params[] = {
 	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
 	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,  NULL,                   SGVariantType::PTR,    PARAMETER_GROUP_GENERIC,NULL, WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,  NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,NULL, WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -186,7 +186,7 @@ Layer * LayerGeorefInterface::unmarshall(uint8_t * data, int len, Viewport * vie
 
 
 
-bool LayerGeoref::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
+bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:

@@ -235,7 +235,7 @@ Parameter maps_layer_params[] = {
 	{ PARAM_ONLYMISSING,   "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
 	{ PARAM_MAPZOOM,       "mapzoom",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          NULL,             SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                                       WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -448,11 +448,11 @@ MapTypeID LayerMap::get_default_map_type()
 	LayerInterface * iface = Layer::get_interface(LayerType::MAP);
 
 	/* TODO: verify that this function call works as expected. */
-	SGVariant vlpd = LayerDefaults::get(iface->layer_type_string, "mode", SGVariantType::INT); /* kamilTODO: get the default value from LayerInterface. */
-	if (vlpd.i == 0) {
-		vlpd = id_default();
+	SGVariant var = LayerDefaults::get(iface->layer_type_string, "mode", SGVariantType::INT); /* kamilTODO: get the default value from LayerInterface. */
+	if (var.i == 0) {
+		var = id_default();
 	}
-	return (MapTypeID) vlpd.i;
+	return (MapTypeID) var.i;
 }
 
 
@@ -626,7 +626,7 @@ static void maps_show_license(Window * parent, MapSource * map)
 
 
 
-bool LayerMap::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
+bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -758,11 +758,11 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
 	case PARAM_MAPTYPE: {
 		/* Get new value. */
-		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
-		bool sensitive = (MAP_ID_OSM_ON_DISK != vlpd.i &&
-				  MAP_ID_MBTILES != vlpd.i &&
-				  MAP_ID_OSM_METATILES != vlpd.i);
+		bool sensitive = (MAP_ID_OSM_ON_DISK != var.i &&
+				  MAP_ID_MBTILES != var.i &&
+				  MAP_ID_OSM_METATILES != var.i);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
@@ -801,7 +801,7 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 
 		/* File only applicable for MBTiles type.
 		   Directory for all other types. */
-		sensitive = (MAP_ID_MBTILES == vlpd.i);
+		sensitive = (MAP_ID_MBTILES == var.i);
 		GtkWidget *w5 = ww1[PARAM_FILE];
 		GtkWidget *w6 = ww2[PARAM_FILE];
 		GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
@@ -828,17 +828,17 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		/* Alter sensitivity of 'download only missing' widgets according to the autodownload setting. */
 	case PARAM_AUTODOWNLOAD: {
 		/* Get new value. */
-		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
 		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
 		if (w1) {
-			gtk_widget_set_sensitive(w1, vlpd.b);
+			gtk_widget_set_sensitive(w1, var.b);
 		}
 
 		if (w2) {
-			gtk_widget_set_sensitive(w2, vlpd.b);
+			gtk_widget_set_sensitive(w2, var.b);
 		}
 		break;
 	}

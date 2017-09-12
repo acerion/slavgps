@@ -213,7 +213,7 @@ static std::vector<SGLabelID> params_sort_order = {
 };
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
-static SGVariant track_drawing_mode_default(void)          { return SGVariant((int32_t) DRAWMODE_BY_TRACK); }
+static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) DRAWMODE_BY_TRACK); }
 static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
 static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
@@ -322,7 +322,7 @@ Parameter trw_layer_params[] = {
 	{ PARAM_MDTIME,                "metadatatime",      SGVariantType::STRING,  GROUP_METADATA,          N_("Creation Time"),                    WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 	{ PARAM_MDKEYS,                "metadatakeywords",  SGVariantType::STRING,  GROUP_METADATA,          N_("Keywords"),                         WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 
-	{ NUM_PARAMS,                  NULL,                SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, NULL,                                   WidgetType::NONE,         NULL,                        NULL,                       NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                  NULL,                SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                                   WidgetType::NONE,         NULL,                        NULL,                       NULL, NULL }, /* Guard. */
 };
 
 
@@ -378,24 +378,6 @@ bool have_geojson_export = false;
 bool have_astro_program = false;
 char *astro_program = NULL;
 #define VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM "external_astro_program"
-
-
-
-
-void color_to_param(SGVariant & value, QColor const & color)
-{
-	value.c.r = color.red();
-	value.c.g = color.green();
-	value.c.b = color.blue();
-	value.c.a = color.alpha();
-}
-
-
-
-void param_to_color(QColor & color, SGVariant const & value)
-{
-	color = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
-}
 
 
 
@@ -815,7 +797,7 @@ void LayerTRW::image_cache_free()
 
 
 
-bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operation)
+bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_TRACKS_VISIBLE:
@@ -895,7 +877,7 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		break;
 
 	case PARAM_TRK_BG_COLOR:
-		param_to_color(this->track_bg_color, data);
+		data.to_qcolor(this->track_bg_color);
 		this->track_bg_pen.setColor(this->track_bg_color);
 		break;
 
@@ -945,17 +927,17 @@ bool LayerTRW::set_param_value(uint16_t id, SGVariant data, bool is_file_operati
 		break;
 
 	case PARAM_WP_MARKER_COLOR:
-		param_to_color(this->wp_marker_color, data);
+		data.to_qcolor(this->wp_marker_color);
 		this->wp_marker_pen.setColor(this->wp_marker_color);
 		break;
 
 	case PARAM_WP_LABEL_FG_COLOR:
-		param_to_color(this->wp_label_fg_color, data);
+		data.to_qcolor(this->wp_label_fg_color);
 		this->wp_label_fg_pen.setColor(this->wp_label_fg_color);
 		break;
 
 	case PARAM_WP_LABEL_BG_COLOR:
-		param_to_color(this->wp_label_bg_color, data);
+		data.to_qcolor(this->wp_label_bg_color);
 		this->wp_label_bg_pen.setColor(this->wp_label_bg_color);
 		break;
 
@@ -1029,7 +1011,7 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
 	case PARAM_TRACK_LABEL_FONT_SIZE: rv.i = this->trk_label_font_size; break;
 	case PARAM_TRACK_DRAWING_MODE: rv.i = this->track_drawing_mode; break;
-	case PARAM_TRACK_COLOR_COMMON: color_to_param(rv, this->track_color_common); break;
+	case PARAM_TRACK_COLOR_COMMON: rv = SGVariant(this->track_color_common); break;
 	case PARAM_DRAW_TRACKPOINTS: rv.b = this->draw_trackpoints; break;
 	case PARAM_TRACKPOINT_SIZE: rv.i = this->trackpoint_size; break;
 	case PARAM_DE: rv.b = this->drawelevation; break;
@@ -1043,15 +1025,15 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_TRACK_BG_THICKNESS: rv.i = this->track_bg_thickness; break;
 	case PARAM_DLA: rv.b = this->drawlabels; break;
 	case PARAM_DI: rv.b = this->drawimages; break;
-	case PARAM_TRK_BG_COLOR: color_to_param(rv, this->track_bg_color); break;
+	case PARAM_TRK_BG_COLOR: rv = SGVariant(this->track_bg_color); break;
 	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv.d = this->track_draw_speed_factor; break;
 	case PARAM_TRACK_SORT_ORDER: rv.i = this->track_sort_order; break;
 	case PARAM_WP_IMAGE_SIZE: rv.i = this->wp_image_size; break;
 	case PARAM_WP_IMAGE_ALPHA: rv.i = this->wp_image_alpha; break;
 	case PARAM_WP_IMAGE_CACHE_SIZE: rv.i = this->wp_image_cache_size; break;
-	case PARAM_WP_MARKER_COLOR:   color_to_param(rv, this->wp_marker_color); break;
-	case PARAM_WP_LABEL_FG_COLOR: color_to_param(rv, this->wp_label_fg_color); break;
-	case PARAM_WP_LABEL_BG_COLOR: color_to_param(rv, this->wp_label_bg_color); break;
+	case PARAM_WP_MARKER_COLOR:   rv = SGVariant(this->wp_marker_color); break;
+	case PARAM_WP_LABEL_FG_COLOR: rv = SGVariant(this->wp_label_fg_color); break;
+	case PARAM_WP_LABEL_BG_COLOR: rv = SGVariant(this->wp_label_bg_color); break;
 	case PARAM_WPBA: rv.b = this->wpbgand; break;
 	case PARAM_WP_MARKER_TYPE: rv.i = this->wp_marker_type; break;
 	case PARAM_WP_MARKER_SIZE: rv.i = this->wp_marker_size; break;
@@ -1096,7 +1078,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DI: {
 		// Get new value
-		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_IMAGE_SIZE];
@@ -1105,18 +1087,18 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w4 = ww2[OFFSET + PARAM_WP_IMAGE_ALPHA];
 		GtkWidget *w5 = ww1[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
 		GtkWidget *w6 = ww2[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
-		if (w1) gtk_widget_set_sensitive(w1, vlpd.b);
-		if (w2) gtk_widget_set_sensitive(w2, vlpd.b);
-		if (w3) gtk_widget_set_sensitive(w3, vlpd.b);
-		if (w4) gtk_widget_set_sensitive(w4, vlpd.b);
-		if (w5) gtk_widget_set_sensitive(w5, vlpd.b);
-		if (w6) gtk_widget_set_sensitive(w6, vlpd.b);
+		if (w1) gtk_widget_set_sensitive(w1, var.b);
+		if (w2) gtk_widget_set_sensitive(w2, var.b);
+		if (w3) gtk_widget_set_sensitive(w3, var.b);
+		if (w4) gtk_widget_set_sensitive(w4, var.b);
+		if (w5) gtk_widget_set_sensitive(w5, var.b);
+		if (w6) gtk_widget_set_sensitive(w6, var.b);
 		break;
 	}
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
 	case PARAM_DLA: {
 		// Get new value
-		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_LABEL_FG_COLOR];
@@ -1127,21 +1109,21 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w6 = ww2[OFFSET + PARAM_WPBA];
 		GtkWidget *w7 = ww1[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
 		GtkWidget *w8 = ww2[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
-		if (w1) gtk_widget_set_sensitive(w1, vlpd.b);
-		if (w2) gtk_widget_set_sensitive(w2, vlpd.b);
-		if (w3) gtk_widget_set_sensitive(w3, vlpd.b);
-		if (w4) gtk_widget_set_sensitive(w4, vlpd.b);
-		if (w5) gtk_widget_set_sensitive(w5, vlpd.b);
-		if (w6) gtk_widget_set_sensitive(w6, vlpd.b);
-		if (w7) gtk_widget_set_sensitive(w7, vlpd.b);
-		if (w8) gtk_widget_set_sensitive(w8, vlpd.b);
+		if (w1) gtk_widget_set_sensitive(w1, var.b);
+		if (w2) gtk_widget_set_sensitive(w2, var.b);
+		if (w3) gtk_widget_set_sensitive(w3, var.b);
+		if (w4) gtk_widget_set_sensitive(w4, var.b);
+		if (w5) gtk_widget_set_sensitive(w5, var.b);
+		if (w6) gtk_widget_set_sensitive(w6, var.b);
+		if (w7) gtk_widget_set_sensitive(w7, var.b);
+		if (w8) gtk_widget_set_sensitive(w8, var.b);
 		break;
 	}
 		// Alter sensitivity of all track colors according to the draw track mode.
 	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
-		SGVariant vlpd = a_uibuilder_widget_get_value(widget, values->param);
-		bool sensitive = (vlpd.i == DRAWMODE_ALL_SAME_COLOR);
+		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		bool sensitive = (var.i == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_TRACK_COLOR_COMMON];
