@@ -32,6 +32,7 @@
 
 #include <QDebug>
 #include <QFileDialog>
+#include <QDir>
 
 #include "babel.h"
 #include "babel_dialog.h"
@@ -132,13 +133,12 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 	BabelDialog * dialog = new BabelDialog(title);
 	dialog->build_ui(&mode);
 
+	const QString cwd = QDir::currentPath();
+	if (!cwd.isEmpty()) {
 #ifdef K
-	char *cwd = g_get_current_dir();
-	if (cwd) {
 		gtk_file_chooser_set_current_folder(dialog, cwd);
-		free(cwd);
-	}
 #endif
+	}
 
 	/* Set possible name of the file. */
 	dialog->file_entry->file_selector->selectFile(default_file_name);

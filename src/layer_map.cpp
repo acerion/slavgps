@@ -42,6 +42,7 @@
 #endif
 
 #include <QDebug>
+#include <QDir>
 
 #include "map_source.h"
 #include "map_source_slippy.h"
@@ -166,7 +167,7 @@ static SGVariant directory_default(void)
 {
 	SGVariant * pref = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir");
 	if (pref) {
-		return SGVariant(g_strdup(pref->s));
+		return SGVariant(pref->s);
 	} else {
 		return SGVariant("");
 	}
@@ -524,12 +525,12 @@ const QString & maps_layer_default_dir(void)
 
 void LayerMap::mkdir_if_default_dir()
 {
-	if (this->cache_dir
+	if (!this->cache_dir.isEmpty()
 	    && this->cache_dir == map_cache_dir()
-	    && 0 != access(this->cache_dir, F_OK)) {
+	    && 0 != access(this->cache_dir.toUtf8().constData(), F_OK)) {
 
-		if (g_mkdir(this->cache_dir, 0777) != 0) {
-			fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, this->cache_dir);
+		if (g_mkdir(this->cache_dir.toUtf8().constData(), 0777) != 0) {
+			qDebug() << "WW: Layer Map:: Failed to create directory" << this->cache_dir;
 		}
 	}
 }
@@ -537,26 +538,25 @@ void LayerMap::mkdir_if_default_dir()
 
 
 
-void LayerMap::set_cache_dir(char const * dir)
+void LayerMap::set_cache_dir(const QString & dir)
 {
-	free(this->cache_dir);
-	this->cache_dir = NULL;
+	this->cache_dir = "";
 
-	char const * mydir = dir;
-	if (dir == NULL || dir[0] == '\0') {
+	QString mydir = dir;
+	if (dir.isEmpty()) {
 		if (a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir")) {
 			mydir = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir")->s;
 		}
 	}
 
-	char * canonical_dir = vu_get_canonical_filename(this, mydir);
+	char * canonical_dir = vu_get_canonical_filename(this, mydir.toUtf8().constData());
 
 	/* Ensure cache_dir always ends with a separator. */
 	unsigned int len = strlen(canonical_dir);
 	/* Unless the dir is not valid. */
 	if (len > 0) {
 		if (canonical_dir[len-1] != G_DIR_SEPARATOR) {
-			this->cache_dir = g_strconcat(canonical_dir, G_DIR_SEPARATOR_S, NULL);
+			this->cache_dir = QString(canonical_dir) + QString(G_DIR_SEPARATOR_S);
 			free(canonical_dir);
 		} else {
 			this->cache_dir = canonical_dir;
@@ -569,13 +569,9 @@ void LayerMap::set_cache_dir(char const * dir)
 
 
 
-void LayerMap::set_file(char const * name_)
+void LayerMap::set_file(const QString & name_)
 {
-	if (this->filename) {
-		free(this->filename);
-	}
-
-	this->filename = g_strdup(name_);
+	this->filename = name_;
 }
 
 
@@ -702,24 +698,23 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		   On reading in, when it is blank then the default is reconstructed.
 		   Since the default changes dependent on the user and OS, it means the resultant file is more portable. */
 		if (is_file_operation
-		    && this->cache_dir
+		    && !this->cache_dir.isEmpty()
 		    && this->cache_dir == map_cache_dir()) {
 
-			rv.s = "";
+			rv = SGVariant("");
 			set = true;
-		} else if (is_file_operation && this->cache_dir) {
+		} else if (is_file_operation && !this->cache_dir.isEmpty()) {
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-				char *cwd = g_get_current_dir();
-				if (cwd) {
+				const QString cwd = QDir::currentPath();
+				if (!cwd.isEmpty()) {
 					rv.s = file_GetRelativeFilename(cwd, this->cache_dir);
-					if (!rv.s) rv.s = "";
 					set = true;
 				}
 			}
 		}
 
 		if (!set) {
-			rv.s = this->cache_dir ? this->cache_dir : "";
+			rv = SGVariant(this->cache_dir);
 		}
 		break;
 	}
@@ -727,7 +722,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		rv.i = (int) this->cache_layout;
 		break;
 	case PARAM_FILE:
-		rv.s = this->filename;
+		rv = SGVariant(this->filename);
 		break;
 	case PARAM_MAPTYPE:
 		rv.i = map_index_to_map_type(this->map_index);
@@ -854,16 +849,12 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 /****************************************/
 LayerMap::~LayerMap()
 {
-	free(this->cache_dir);
-	this->cache_dir = NULL;
 	if (this->dl_right_click_menu) {
 		delete this->dl_right_click_menu;
 	}
 
 	free(this->last_center);
 	this->last_center = NULL;
-	free(this->filename);
-	this->filename = NULL;
 
 #ifdef HAVE_SQLITE3_H
 	MapSource * map = map_sources[this->map_index];
@@ -903,7 +894,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 #ifdef HAVE_SQLITE3_H
 	/* Do some SQL stuff. */
 	if (map->is_mbtiles()) {
-		int ans = sqlite3_open_v2(this->filename,
+		int ans = sqlite3_open_v2(this->filename.toUtf8().constData(),
 					  &(this->mbtiles),
 					  SQLITE_OPEN_READONLY,
 					  NULL);
@@ -911,7 +902,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			Dialog::error(tr("Failed to open MBTiles file: %1").arg(QString(this->filename)), viewport->get_window());
+			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->filename), viewport->get_window());
 			this->mbtiles = NULL;
 		}
 	}
@@ -921,8 +912,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	if (map->map_type == MAP_ID_OSM_ON_DISK) {
 		/* Copy the directory into filename.
 		   Thus the map cache look up will be unique when using more than one of these map types. */
-		free(this->filename);
-		this->filename = g_strdup(this->cache_dir);
+		this->filename = this->cache_dir;
 	}
 }
 
@@ -1094,7 +1084,7 @@ static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int 
 		return NULL;
 	}
 
-	int len = metatile_read(layer->cache_dir, xx, yy, zz, buf, tile_max, &compressed, err_msg);
+	int len = metatile_read(layer->cache_dir.toUtf8().constData(), xx, yy, zz, buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
 			/* Not handled yet - I don't think this is used often - so implement later if necessary. */
@@ -1149,7 +1139,7 @@ static QPixmap * pixmap_apply_settings(QPixmap * pixmap, uint8_t alpha, double x
 
 
 
-static void get_cache_filename(const char *cache_dir,
+static void get_cache_filename(const QString & cache_dir,
 			       MapsCacheLayout cl,
 			       uint16_t id,
 			       const char *name,
@@ -1163,17 +1153,17 @@ static void get_cache_filename(const char *cache_dir,
 		if (name) {
 			if (cache_dir != map_cache_dir()) {
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
-				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
+				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension);
 			} else {
 				/* Using default cache - so use the map name in the directory path. */
-				snprintf(filename_buf, buf_len, DIRECTDIRACCESS_WITH_NAME, cache_dir, name, (17 - coord->scale), coord->x, coord->y, file_extension);
+				snprintf(filename_buf, buf_len, DIRECTDIRACCESS_WITH_NAME, cache_dir.toUtf8().constData(), name, (17 - coord->scale), coord->x, coord->y, file_extension);
 			}
 		} else {
-			snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
+			snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension);
 		}
 		break;
 	default:
-		snprintf(filename_buf, buf_len, DIRSTRUCTURE, cache_dir, id, coord->scale, coord->z, coord->x, coord->y);
+		snprintf(filename_buf, buf_len, DIRSTRUCTURE, cache_dir.toUtf8().constData(), id, coord->scale, coord->z, coord->x, coord->y);
 		break;
 	}
 }
@@ -1188,7 +1178,7 @@ static void get_cache_filename(const char *cache_dir,
 static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
-	QPixmap * pixmap = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+	QPixmap * pixmap = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename.toUtf8().constData());
 	if (pixmap) {
 		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
 	} else {
@@ -1217,7 +1207,7 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* ma
 			pixmap = pixmap_apply_settings(pixmap, layer->alpha, xshrinkfactor, yshrinkfactor);
 
 			map_cache_add(pixmap, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
-				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename.toUtf8().constData());
 		}
 	}
 	return pixmap;
@@ -1410,7 +1400,7 @@ void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 			existence_only = true;
 		}
 
-		unsigned int max_path_len = strlen(this->cache_dir) + 40;
+		unsigned int max_path_len = strlen(this->cache_dir.toUtf8().constData()) + 40;
 		char *path_buf = (char *) malloc(max_path_len * sizeof(char));
 
 		if ((!existence_only) && this->autodownload  && should_start_autodownload(this, viewport)) {
@@ -1604,7 +1594,7 @@ public:
 
 	void cleanup_on_cancel(void);
 
-	char * cache_dir = NULL;
+	QString cache_dir;
 	char * filename_buf = NULL;
 	MapsCacheLayout cache_layout;
 	int x0 = 0;
@@ -1762,7 +1752,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 				mdj->mutex.lock();
 				if (remove_mem_cache) {
-					map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdj->map_index]->map_type, mdj->layer->filename);
+					map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdj->map_index]->map_type, mdj->layer->filename.toUtf8().constData());
 				}
 
 				if (mdj->refresh_display && mdj->map_layer_alive) {
@@ -1950,7 +1940,7 @@ void LayerMap::tile_info_cb(void)
 
 	if (map->is_direct_file_access()) {
 		if (map->is_mbtiles()) {
-			tile_filename = g_strdup(this->filename);
+			tile_filename = g_strdup(this->filename.toUtf8().constData());
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
 			char *exists = NULL;
@@ -1976,11 +1966,11 @@ void LayerMap::tile_info_cb(void)
 #endif
 		} else if (map->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
-			xyz_to_meta(path, sizeof (path), this->cache_dir, ulm.x, ulm.y, 17-ulm.scale);
+			xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, 17-ulm.scale);
 			source = g_strdup(path);
 			tile_filename = g_strdup(path);
 		} else {
-			unsigned int max_path_len = strlen(this->cache_dir) + 40;
+			unsigned int max_path_len = strlen(this->cache_dir.toUtf8().constData()) + 40;
 			tile_filename = (char *) malloc(max_path_len * sizeof(char));
 			get_cache_filename(this->cache_dir, MapsCacheLayout::OSM,
 				     map->map_type,
@@ -1990,7 +1980,7 @@ void LayerMap::tile_info_cb(void)
 			source = g_strconcat("Source: file://", tile_filename, NULL);
 		}
 	} else {
-		unsigned int max_path_len = strlen(this->cache_dir) + 40;
+		unsigned int max_path_len = strlen(this->cache_dir.toUtf8().constData()) + 40;
 		tile_filename = (char *) malloc(max_path_len * sizeof(char));
 		get_cache_filename(this->cache_dir, this->cache_layout,
 			     map->map_type,
@@ -2616,8 +2606,8 @@ MapDownloadJob::MapDownloadJob(LayerMap * layer_, TileInfo * ulm_, TileInfo * br
 	this->refresh_display = refresh_display_;
 
 	/* cache_dir and buffer for dest filename. */
-	this->cache_dir = g_strdup(layer->cache_dir);
-	this->maxlen = strlen(layer->cache_dir) + 40;
+	this->cache_dir = layer->cache_dir;
+	this->maxlen = strlen(layer->cache_dir.toUtf8().constData()) + 40;
 	this->filename_buf = (char *) malloc(this->maxlen * sizeof(char));
 	this->map_index = layer->map_index;
 	this->cache_layout = layer->cache_layout;
@@ -2638,8 +2628,6 @@ MapDownloadJob::MapDownloadJob(LayerMap * layer_, TileInfo * ulm_, TileInfo * br
 
 MapDownloadJob::~MapDownloadJob()
 {
-	free(this->cache_dir);
-	this->cache_dir = NULL;
 	free(this->filename_buf);
 	this->filename_buf = NULL;
 }

@@ -387,8 +387,8 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 		switch (iter->second->type) {
 		case SGVariantType::STRING:
 			/* Remember need braces as these are macro calls, not single statement functions! */
-			if (param_value.s) {
-				vlm_append(param_value.s, strlen(param_value.s));
+			if (!param_value.s.isEmpty()) {
+				vlm_append(param_value.s.toUtf8().constData(), param_value.s.length());
 			} else {
 				/* Need to insert empty string otherwise the unmarshall will get confused. */
 				vlm_append("", 0);
@@ -451,7 +451,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 			s = (char *) malloc(vlm_size + 1);
 			s[vlm_size] = 0;
 			vlm_read(s);
-			param_value.s = s;
+			param_value = SGVariant(QString(s));
 			this->set_param_value(iter->first, param_value, false);
 			free(s);
 			break;

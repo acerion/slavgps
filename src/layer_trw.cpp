@@ -974,22 +974,22 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 		// Metadata
 	case PARAM_MDDESC:
-		if (data.s && this->metadata) {
+		if (!data.s.isEmpty() && this->metadata) {
 			this->metadata->set_description(data.s);
 		}
 		break;
 	case PARAM_MDAUTH:
-		if (data.s && this->metadata) {
+		if (!data.s.isEmpty() && this->metadata) {
 			this->metadata->set_author(data.s);
 		}
 		break;
 	case PARAM_MDTIME:
-		if (data.s && this->metadata) {
+		if (!data.s.isEmpty() && this->metadata) {
 			this->metadata->set_timestamp(data.s);
 		}
 		break;
 	case PARAM_MDKEYS:
-		if (data.s && this->metadata) {
+		if (!data.s.isEmpty() && this->metadata) {
 			this->metadata->set_keywords(data.s);
 		}
 		break;
@@ -1043,26 +1043,27 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 		// Metadata
 	case PARAM_MDDESC:
 		if (this->metadata) {
-			rv.s = strdup(this->metadata->description.toUtf8().constData()); /* FIXME: memoryleak */
+			rv = SGVariant(this->metadata->description);
 		}
 		break;
 	case PARAM_MDAUTH:
 		if (this->metadata) {
-			rv.s = strdup(this->metadata->author.toUtf8().constData()); /* FIXME: memoryleak */
+			rv = SGVariant(this->metadata->author);
 		}
 		break;
 	case PARAM_MDTIME:
 		if (this->metadata) {
-			rv.s = strdup(this->metadata->timestamp.toUtf8().constData()); /* FIXME: memoryleak */
+			rv = SGVariant(this->metadata->timestamp);
 		}
 		break;
 	case PARAM_MDKEYS:
 		if (this->metadata) {
-			rv.s = strdup(this->metadata->keywords.toUtf8().constData()); /* FIXME: memoryleak */
+			rv = SGVariant(this->metadata->keywords);
 		}
 		break;
 	default: break;
 	}
+
 	return rv;
 }
 
@@ -2842,7 +2843,7 @@ void LayerTRW::gps_upload_any_cb()
 		     trk,
 		     GPSDirection::UP,
 		     protocol,
-		     port.toUtf8().constData(),
+		     port,
 		     false,
 		     panel->get_viewport(),
 		     panel,

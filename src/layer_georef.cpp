@@ -33,6 +33,7 @@
 #include <glib/gstdio.h>
 
 #include <QDebug>
+#include <QDir>
 
 #include "vikutils.h"
 #include "ui_util.h"
@@ -177,7 +178,7 @@ Layer * LayerGeorefInterface::unmarshall(uint8_t * data, int len, Viewport * vie
 
 	grl->unmarshall_params(data, len);
 
-	if (grl->image) {
+	if (!grl->image.isEmpty()) {
 		grl->post_read(viewport, true);
 	}
 	return (Layer *) grl;
@@ -235,7 +236,7 @@ void LayerGeoref::create_image_file()
 	if (!this->pixmap->save(path, "jpeg")) {
 		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
 	} else {
-		this->image = strdup(path.toUtf8().constData()); /* FIXME: memoryleak. */
+		this->image = path;
 	}
 }
 
@@ -249,21 +250,20 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 	case PARAM_IMAGE: {
 		bool set = false;
 		if (is_file_operation) {
-			if (this->pixmap && !this->image) {
+			if (this->pixmap && this->image.isEmpty()) {
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-				char *cwd = g_get_current_dir();
-				if (cwd) {
+				const QString cwd = QDir::currentPath();
+				if (!cwd.isEmpty()) {
 					rv.s = file_GetRelativeFilename(cwd, this->image);
-					if (!rv.s) rv.s = "";
 					set = true;
 				}
 			}
 		}
 		if (!set) {
-			rv.s = this->image ? this->image : "";
+			rv = SGVariant(this->image);
 		}
 		break;
 	}
@@ -389,10 +389,6 @@ void LayerGeoref::draw(Viewport * viewport)
 
 LayerGeoref::~LayerGeoref()
 {
-	if (this->image != NULL) {
-		free(this->image);
-	}
-
 	if (this->scaled != NULL) {
 #ifdef K
 		g_object_unref(this->scaled);
@@ -415,7 +411,7 @@ bool LayerGeoref::properties_dialog(Viewport * viewport)
 void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 {
 	GError *gx = NULL;
-	if (this->image == NULL) {
+	if (this->image.isEmpty()) {
 		return;
 	}
 
@@ -437,7 +433,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		delete pixmap;
 		pixmap = NULL;
 		if (!from_file) {
-			Dialog::error(tr("Couldn't open image file %1").arg(QString(this->image)), this->get_window());
+			Dialog::error(tr("Couldn't open image file %1").arg(this->image), this->get_window());
 		}
 	} else {
 		this->width = this->pixmap->width();
@@ -454,26 +450,19 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 
 
-void LayerGeoref::set_image(char const * image_)
+void LayerGeoref::set_image(const QString & image_)
 {
-	if (this->image) {
-		free(this->image);
-	}
-
 	if (this->scaled) {
 #ifdef K
 		g_object_unref(this->scaled);
 #endif
 		this->scaled = NULL;
 	}
-	if (image_ == NULL) {
-		this->image = NULL;
-	}
 
-	if (strcmp(image_, "") != 0) {
-		this->image = vu_get_canonical_filename(this, image_);
+	if (image_ != "") {
+		this->image = image_;
 	} else {
-		this->image = g_strdup(image_);
+		this->image = QString(vu_get_canonical_filename(this, image_.toUtf8().constData()));
 	}
 }
 

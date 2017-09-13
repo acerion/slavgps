@@ -108,9 +108,9 @@ static RoutingEngine * search_by_string_id(std::vector<RoutingEngine *> & engine
  *
  * Returns: the found engine or %NULL.
  */
-RoutingEngine * vik_routing_find_engine(const char * id)
+RoutingEngine * vik_routing_find_engine(const QString & id)
 {
-	return search_by_string_id(routing_engines, QString(id));
+	return search_by_string_id(routing_engines, id);
 }
 
 
@@ -123,7 +123,7 @@ RoutingEngine * vik_routing_find_engine(const char * id)
  */
 RoutingEngine * SlavGPS::routing_default_engine(void)
 {
-	const char * id = a_preferences_get(PREFERENCES_NAMESPACE_ROUTING "default")->s;
+	const QString id = a_preferences_get(PREFERENCES_NAMESPACE_ROUTING "default")->s;
 	RoutingEngine * engine = vik_routing_find_engine(id);
 	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */

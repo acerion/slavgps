@@ -70,9 +70,10 @@ namespace SlavGPS {
 
 
 
-		void set_file_xml(char const * name);
-		void set_file_css(char const * name);
-		void set_cache_dir(char const * name);
+		void set_file_xml(const QString & name);
+		void set_file_css(const QString & name);
+		void set_cache_dir(const QString & name);
+
 		bool carto_load(void);
 		void possibly_save_pixmap(QPixmap * pixmap, TileInfo * ulm);
 		void render(Coord * coord_ul, Coord * coord_br, TileInfo * ti_ul);
@@ -86,8 +87,8 @@ namespace SlavGPS {
 
 
 
-		char * filename_css = NULL; /* CartoCSS MML File - use 'carto' to convert into xml. */
-		char * filename_xml = NULL;
+		QString filename_css; /* CartoCSS MML File - use 'carto' to convert into xml. */
+		QString filename_xml;
 		int32_t alpha = 0;
 
 		unsigned int tile_size_x = 0; /* Y is the same as X ATM. */
@@ -96,7 +97,7 @@ namespace SlavGPS {
 		unsigned int rerender_timeout = 0;
 
 		bool use_file_cache = false;
-		char * file_cache_dir = NULL;
+		QString file_cache_dir;
 
 		Coord rerender_ul;
 		Coord rerender_br;

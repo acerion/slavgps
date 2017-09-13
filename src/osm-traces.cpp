@@ -408,22 +408,22 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
-	const char *pref_user = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "username")->s;
-	const char *pref_password = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "password")->s;
+	const QString pref_user = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "username")->s;
+	const QString pref_password = a_preferences_get(PREFERENCES_NAMESPACE_OSM_TRACES "password")->s;
 
 
 	if (osm_user != NULL && osm_user[0] != '\0') {
 		user_entry.setText(QString(osm_user));
-	} else if (pref_user != NULL && pref_user[0] != '\0') {
-		user_entry.setText(QString(pref_user));
+	} else if (!pref_user.isEmpty()) {
+		user_entry.setText(pref_user);
 	} else if (default_user != NULL) {
 		user_entry.setText(QString(default_user));
 	}
 
 	if (osm_password != NULL && osm_password[0] != '\0') {
 		password_entry.setText(QString(osm_password));
-	} else if (pref_password != NULL) {
-		password_entry.setText(QString(pref_password));
+	} else if (!pref_password.isEmpty()) {
+		password_entry.setText(pref_password);
 	}
 	/* This is a password -> invisible. kamilTODO: shouldn't this be already set elsewhere as invisible? */
 	password_entry.setEchoMode(QLineEdit::Password);

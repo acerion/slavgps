@@ -437,7 +437,7 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 		SGVariant param_value;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_params[SG_WP_PARAM_NAME]);
-		entered_name = QString(param_value.s);
+		entered_name = param_value.s;
 		wp->set_name(entered_name);
 
 

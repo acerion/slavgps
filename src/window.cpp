@@ -2364,20 +2364,20 @@ void Window::open_file_cb(void)
 				if (newwindow && check_file_magic_vik(file_name.toUtf8().data())) {
 					/* Load first of many .vik files in current window. */
 					if (first_vik_file) {
-						this->open_file(file_name.toUtf8().data(), true);
+						this->open_file(file_name, true);
 						first_vik_file = false;
 					} else {
 #ifdef K
 						/* Load each subsequent .vik file in a separate window. */
 						Window * new_window = Window::new_window_cb();
 						if (new_window) {
-							new_window->open_file(file_name.toUtf8().data(), true);
+							new_window->open_file(file_name, true);
 						}
 #endif
 					}
 				} else {
 					/* Other file types. */
-					this->open_file(file_name.toUtf8().data(), change_fn);
+					this->open_file(file_name, change_fn);
 				}
 
 				iter++;
@@ -2391,19 +2391,19 @@ void Window::open_file_cb(void)
 
 
 
-void Window::open_file(char const * new_filename, bool change_filename)
+void Window::open_file(const QString & new_filename, bool change_filename)
 {
 	this->set_busy_cursor();
 
 	/* Enable the *new* filename to be accessible by the Layers code. */
 	char * original_filename = this->filename ? strdup(this->filename) : NULL;
 	free(this->filename);
-	this->filename = strdup(new_filename);
+	this->filename = strdup(new_filename.toUtf8().constData());
 	bool success = false;
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->layers_panel->get_top_layer();
-	this->loaded_type = a_file_load(agg, this->viewport, new_filename);
+	this->loaded_type = a_file_load(agg, this->viewport, new_filename.toUtf8().constData());
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		Dialog::error(tr("The file you requested could not be opened."), this);
@@ -2412,16 +2412,16 @@ void Window::open_file(char const * new_filename, bool change_filename)
 		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		Dialog::error(tr("Unable to load malformed GPX file %1").arg(QString(new_filename)), this);
+		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_filename), this);
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		Dialog::error(tr("Unsupported file type for %1").arg(QString(new_filename)), this);
+		Dialog::error(tr("Unsupported file type for %1").arg(new_filename), this);
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_filename)));
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_filename.toUtf8().constData())));
 		}
 		/* No break, carry on to show any data. */
 	case LOAD_TYPE_VIK_SUCCESS:
@@ -2430,7 +2430,7 @@ void Window::open_file(char const * new_filename, bool change_filename)
 			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
 			/* Update UI */
 			if (change_filename) {
-				this->set_filename(new_filename);
+				this->set_filename(new_filename.toUtf8().constData());
 			}
 #ifdef K
 			QAction * drawmode_action = this->grepget_drawmode_action(this->viewport->get_drawmode());
@@ -2467,8 +2467,8 @@ void Window::open_file(char const * new_filename, bool change_filename)
 		success = true;
 		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = ! restore_original_filename;
-		this->update_recently_used_document(new_filename);
-		this->update_recent_files(QString(new_filename));
+		this->update_recently_used_document(new_filename.toUtf8().constData());
+		this->update_recent_files(QString(new_filename.toUtf8().constData()));
 		this->draw_update();
 		break;
 	}

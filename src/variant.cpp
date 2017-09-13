@@ -35,12 +35,8 @@ SGVariant::SGVariant(const SGVariant & val)
 {
 	*this = val;
 
-	switch (val.type_id) {
-	case SGVariantType::STRING:
-		this->s = g_strdup(val.s);
-		break;
-	default:
-		break;
+	if (val.type_id == SGVariantType::EMPTY) {
+		qDebug() << "EE: SG Variant: passed value with empty type to copy constructor";
 	}
 }
 
@@ -76,7 +72,7 @@ SGVariant::SGVariant(const char * str, SGVariantType type_id_)
 		}
 	/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 	default:
-		this->s = strdup(str);
+		this->s = str;
 		break;
 	}
 }
@@ -98,18 +94,8 @@ SGVariant::SGVariant(const QColor & color)
 
 SGVariant::~SGVariant()
 {
-	switch (this->type_id) {
-	case SGVariantType::STRING:
-		if (this->s) {
-#ifdef K
-			/* TODO: restore this line. */
-			free((void *) this->s);
-#endif
-			this->s = NULL;
-		}
-		break;
-	default:
-		break;
+	if (this->type_id == SGVariantType::EMPTY) {
+		qDebug() << "EE: SG Variant: passed value with type id empty to destructor";
 	}
 }
 

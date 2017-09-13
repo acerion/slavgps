@@ -104,7 +104,7 @@ namespace SlavGPS {
 
 
 		void create_image_file();
-		void set_image(char const * image);
+		void set_image(const QString & image);
 		struct LatLon get_ll_tl();
 		struct LatLon get_ll_br();
 		void align_utm2ll();
@@ -123,7 +123,7 @@ namespace SlavGPS {
 
 	public:
 
-		char * image = NULL;
+		QString image;
 		QPixmap * pixmap = NULL;
 		uint8_t alpha = 255;
 

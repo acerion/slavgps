@@ -179,7 +179,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVarian
 			fprintf(f, "%c\n", data.b ? 't' : 'f');
 			break;
 		case SGVariantType::STRING:
-			fprintf(f, "%s\n", data.s ? data.s : "");
+			fprintf(f, "%s\n", data.s.isEmpty() ? "" : data.s.toUtf8().constData());
 			break;
 		case SGVariantType::COLOR:
 			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
@@ -1052,7 +1052,7 @@ char * SlavGPS::file_realpath_dup(char const * path)
    For example, if the current directory is C:\foo\bar and the filename C:\foo\whee\text.txt is given,
    GetRelativeFilename will return ..\whee\text.txt. */
 
-char const * SlavGPS::file_GetRelativeFilename(char * currentDirectory, const char * absoluteFilename)
+char const * SlavGPS::file_GetRelativeFilename(const char * currentDirectory, const char * absoluteFilename)
 {
 	int cdLen = strlen(currentDirectory);
 	int afLen = strlen(absoluteFilename);
@@ -1136,4 +1136,15 @@ char const * SlavGPS::file_GetRelativeFilename(char * currentDirectory, const ch
 
 	return relativeFilename;
 }
+
+QString SlavGPS::file_GetRelativeFilename(const QString & current_dir_path, const QString & file_path)
+{
+	const char * s = file_GetRelativeFilename(current_dir_path.toUtf8().constData(), file_path.toUtf8().constData());
+	if (!s) {
+		return QString("");
+	} else {
+		return QString(s);
+	}
+}
+
 /* END http://www.codeguru.com/cpp/misc/misc/fileanddirectorynaming/article.php/c263 */

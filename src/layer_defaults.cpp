@@ -105,7 +105,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 		break;
 	}
 	case SGVariantType::STRING: {
-		value = SGVariant(strdup(variant.toString().toUtf8().constData()));
+		value = SGVariant(variant.toString());
 		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
@@ -167,7 +167,7 @@ static void write_parameter_value(const SGVariant & value, const char * group, c
 		variant = QVariant((bool) value.b);
 		break;
 	case SGVariantType::STRING:
-		variant = QString(value.s);
+		variant = value.s;
 		break;
 	case SGVariantType::COLOR: {
 		variant = QColor(value.c.r, value.c.g, value.c.b, value.c.a);

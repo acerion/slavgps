@@ -66,8 +66,8 @@ namespace SlavGPS {
 	int vik_gps_comm(LayerTRW * trw_layer,
 			 Track * trk,
 			 GPSDirection dir,
-			 char * protocol,
-			 char * port,
+			 const QString & protocol,
+			 const QString & port,
 			 bool tracking,
 			 Viewport * viewport,
 			 LayersPanel * panel,
@@ -169,8 +169,8 @@ namespace SlavGPS {
 		QPen * realtime_track_pt2_pen = NULL;
 
 		/* Params. */
-		char * gpsd_host = NULL;
-		char * gpsd_port = NULL;
+		QString gpsd_host;
+		QString gpsd_port;
 		int gpsd_retry_interval;
 		bool realtime_record;
 		bool realtime_jump_to_start;
@@ -180,8 +180,8 @@ namespace SlavGPS {
 		Trackpoint * tp_prev = NULL;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-		char * protocol = NULL;
-		char * serial_port = NULL;
+		QString protocol;
+		QString serial_port;
 		bool download_tracks;
 		bool download_routes;
 		bool download_waypoints;

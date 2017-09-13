@@ -145,7 +145,7 @@ static std::vector<SGLabelID> old_params_ports = {
 typedef struct {
 	std::mutex mutex;
 	GPSDirection direction;
-	char * port = NULL;
+	QString port; /* FIXME: this struct is malloced, so this field will be invalid in freshly allocated struct. */
 	bool ok;
 	int total_count;
 	int count;
@@ -184,7 +184,7 @@ enum { GROUP_DATA_MODE, GROUP_REALTIME_MODE };
 
 static SGVariant gps_protocol_default(void)
 {
-	return SGVariant(strdup("garmin"));
+	return SGVariant("garmin");
 }
 
 
@@ -192,21 +192,15 @@ static SGVariant gps_protocol_default(void)
 
 static SGVariant gps_port_default(void)
 {
-	SGVariant data(strdup("usb:"));
+	SGVariant data("usb:");
 #ifndef WINDOWS
 	/* Attempt to auto set default USB serial port entry. */
 	/* Ordered to make lowest device favourite if available. */
 	if (access("/dev/ttyUSB1", R_OK) == 0) {
-		if (data.s) {
-			free((char *)data.s);
-		}
-		data.s = strdup("/dev/ttyUSB1");
+		data = SGVariant("/dev/ttyUSB1");
 	}
 	if (access("/dev/ttyUSB0", R_OK) == 0) {
-		if (data.s) {
-			free((char *)data.s);
-		}
-		data.s = strdup("/dev/ttyUSB0");
+		data = SGVariant("/dev/ttyUSB0");
 	}
 #endif
 	return data;
@@ -232,8 +226,8 @@ enum {
 
 
 static SGVariant moving_map_method_default(void)   { return SGVariant((int32_t) VEHICLE_POSITION_ON_SCREEN); }
-static SGVariant gpsd_host_default(void)           { return SGVariant(strdup("localhost")); }
-static SGVariant gpsd_port_default(void)           { return SGVariant(strdup(DEFAULT_GPSD_PORT)); }
+static SGVariant gpsd_host_default(void)           { return SGVariant("localhost"); }
+static SGVariant gpsd_port_default(void)           { return SGVariant(DEFAULT_GPSD_PORT); }
 static SGVariant gpsd_retry_interval_default(void) { return SGVariant(strdup("10")); }
 
 #endif
@@ -431,9 +425,9 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
-		if (data.s) {
-			free(this->protocol);
+		if (!data.s.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v1.4 stored protocol as an array index. */
+#ifdef K
 			int index_ = data.s[0] - '0';
 			if (data.s[0] != '\0' &&
 			    g_ascii_isdigit (data.s[0]) &&
@@ -441,19 +435,20 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			    index_ < OLD_NUM_PROTOCOLS) {
 
 				/* It is a single digit: activate compatibility. */
-				this->protocol = g_strdup(protocols_args[index_].label.toUtf8().constData()); /* FIXME: memory leak. */
+				this->protocol = protocols_args[index_].label; /* FIXME: memory leak. */
 			} else {
-				this->protocol = g_strdup(data.s);
+				this->protocol = data.s;
 			}
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, this->protocol);
+#endif
+			qDebug() << "DD: Layer GPS: Protocol:" << this->protocol;
 		} else {
-			fprintf(stderr, _("WARNING: Unknown GPS Protocol\n"));
+			qDebug() << "WW: Layer GPS: Protocol: unknown GPS Protocol";
 		}
 		break;
 	case PARAM_PORT:
-		if (data.s) {
-			free(this->serial_port);
+		if (!data.s.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v0.9.91 stored serial_port as an array index. */
+#ifdef K
 			int index_ = data.s[0] - '0';
 			if (data.s[0] != '\0' &&
 			    g_ascii_isdigit(data.s[0]) &&
@@ -461,14 +456,15 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			    index_ < old_params_ports.size()) {
 
 				/* It is a single digit: activate compatibility. */
-				this->serial_port = g_strdup(old_params_ports[index_].label.toUtf8().constData());
+				this->serial_port = old_params_ports[index_].label;
 
 			} else {
-				this->serial_port = g_strdup(data.s);
+				this->serial_port = data.s;
 			}
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, this->serial_port);
+#endif
+			qDebug() << "DD: Layer GPS: Serial Port:" << this->serial_port;
 		} else {
-			fprintf(stderr, _("WARNING: Unknown serial port device\n"));
+			qDebug() << "WW: Layer GPS: Serial Port: unknown serial port device";
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
@@ -491,23 +487,17 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
-		if (data.s) {
-			if (this->gpsd_host) {
-				free(this->gpsd_host);
-			}
-			this->gpsd_host = g_strdup(data.s);
+		if (!data.s.isEmpty()) {
+			this->gpsd_host = data.s;
 		}
 		break;
 	case PARAM_GPSD_PORT:
-		if (data.s) {
-			if (this->gpsd_port) {
-				free(this->gpsd_port);
-			}
-			this->gpsd_port = g_strdup(data.s);
+		if (!data.s.isEmpty()) {
+			this->gpsd_port = data.s;
 		}
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		this->gpsd_retry_interval = strtol(data.s, NULL, 10);
+		this->gpsd_retry_interval = strtol(data.s.toUtf8().constData(), NULL, 10);
 		break;
 	case PARAM_REALTIME_REC:
 		this->realtime_record = data.b;
@@ -537,12 +527,12 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 	SGVariant rv;
 	switch (id) {
 	case PARAM_PROTOCOL:
-		rv.s = this->protocol;
-		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
+		rv = SGVariant(this->protocol);
+		qDebug() << "DD: Layer GPS: Protocol:" << rv.s;
 		break;
 	case PARAM_PORT:
-		rv.s = this->serial_port;
-		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
+		rv = SGVariant(this->serial_port);
+		qDebug() << "DD: Layer GPS: Serial Port:" << rv.s;
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
 		rv.b = this->download_tracks;
@@ -564,13 +554,13 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
-		rv.s = this->gpsd_host ? this->gpsd_host : "";
+		rv = SGVariant(this->gpsd_host);
 		break;
 	case PARAM_GPSD_PORT:
-		rv.s = this->gpsd_port ? this->gpsd_port : g_strdup(DEFAULT_GPSD_PORT);
+		rv = SGVariant(this->gpsd_port.isEmpty() ? DEFAULT_GPSD_PORT: this->gpsd_port);
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		rv.s = g_strdup_printf("%d", this->gpsd_retry_interval);
+		rv = SGVariant(QString("%1").arg(this->gpsd_retry_interval));
 		break;
 	case PARAM_REALTIME_REC:
 		rv.b = this->realtime_record;
@@ -1230,8 +1220,8 @@ static void gps_comm_thread(GpsSession *sess)
 int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			  Track * trk,
 			  GPSDirection dir,
-			  char *protocol,
-			  char *port,
+			  const QString & protocol,
+			  const QString & port,
 			  bool tracking,
 			  Viewport * viewport,
 			  LayersPanel * panel,
@@ -1248,7 +1238,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	sess->direction = dir;
 	sess->trw = layer;
 	sess->trk = trk;
-	sess->port = g_strdup(port);
+	sess->port = port;
 	sess->ok = true;
 	sess->window_title = (dir == GPSDirection::DOWN) ? (char *) _("GPS Download") : (char *) _("GPS Upload");
 	sess->viewport = viewport;
@@ -1351,7 +1341,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			char *device_off = g_strdup_printf("-i %s,%s", protocol, "power_off");
+			char *device_off = g_strdup_printf("-i %s,%s", protocol.toUtf8().constData(), "power_off");
 			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
@@ -1791,21 +1781,21 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 	LayerGPS * layer = (LayerGPS *) gps_layer;
 #ifdef K
 #if GPSD_API_MAJOR_VERSION == 3
-	struct gps_data_t *gpsd = gps_open(layer->gpsd_host, layer->gpsd_port);
+	struct gps_data_t *gpsd = gps_open(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData());
 
 	if (gpsd == NULL) {
 #elif GPSD_API_MAJOR_VERSION == 4
 	layer->vgpsd = malloc(sizeof(VglGpsd));
 
-	if (gps_open_r(layer->gpsd_host, layer->gpsd_port, /*(struct gps_data_t *)*/layer->vgpsd) != 0) {
+	if (gps_open_r(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData(), /*(struct gps_data_t *)*/layer->vgpsd) != 0) {
 #elif GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 	layer->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
-	if (gps_open(layer->gpsd_host, layer->gpsd_port, &layer->vgpsd->gpsd) != 0) {
+	if (gps_open(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData(), &layer->vgpsd->gpsd) != 0) {
 #else
 		/* Delibrately break compilation... */
 #endif
-		fprintf(stderr, "WARNING: Failed to connect to gpsd at %s (port %s). Will retry in %d seconds\n",
-			layer->gpsd_host, layer->gpsd_port, layer->gpsd_retry_interval);
+		qDebug() << QString("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
+			.arg(layer->gpsd_host).arg(layer->gpsd_port).arg(layer->gpsd_retry_interval);
 		return true;   /* Keep timer running. */
 	}
 
@@ -1967,8 +1957,8 @@ LayerGPS::LayerGPS()
 	this->realtime_track_pt2_pen = viewport->new_pen("green", 2);
 	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
 #endif
-	this->gpsd_host = NULL; //strdup("host"); TODO
-	this->gpsd_port = NULL; //strdup("port"); TODO
+	this->gpsd_host = ""; //strdup("host"); TODO
+	this->gpsd_port = ""; //strdup("port"); TODO
 
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 

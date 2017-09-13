@@ -65,7 +65,7 @@ namespace SlavGPS {
 		SGVariant(double d_)       { type_id = SGVariantType::DOUBLE; d = d_; }
 		SGVariant(uint32_t u_)     { type_id = SGVariantType::UINT; u = u_; }
 		SGVariant(int32_t i_)      { type_id = SGVariantType::INT; i = i_; }
-		SGVariant(const char * s_) { type_id = SGVariantType::STRING; s = s_; }
+		SGVariant(const QString & s_) { type_id = SGVariantType::STRING; s = s_; }
 		SGVariant(bool b_)         { type_id = SGVariantType::BOOLEAN; b = b_; }
 		SGVariant(int r_, int g_, int b_, int a_) { type_id = SGVariantType::COLOR; c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
 		SGVariant(const QColor & color);
@@ -81,7 +81,7 @@ namespace SlavGPS {
 		uint32_t u = 0;
 		int32_t i = 0;
 		bool b = false;
-		const char * s = NULL;
+		QString s;
 		struct { int r; int g; int b; int a; } c;
 		QStringList sl;
 		void * ptr = NULL; /* For internal usage - don't save this value in a file! */

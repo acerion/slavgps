@@ -34,6 +34,7 @@
 #include <glib/gstdio.h>
 
 #include <QDebug>
+#include <QDir>
 
 #include "vikutils.h"
 #include "map_ids.h"
@@ -278,7 +279,7 @@ void SlavGPS::layer_mapnik_init(void)
 	SGVariant * rfd = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"recurse_fonts_directory");
 
 	if (pd && fd && rfd) {
-		mapnik_interface_initialize(pd->s, fd->s, rfd->b);
+		mapnik_interface_initialize(pd->s.toUtf8().constData(), fd->s.toUtf8().constData(), rfd->b);
 	} else {
 		qDebug() << "EE: Layer Mapnik: Init: Unable to initialize mapnik interface from preferences";
 	}
@@ -295,39 +296,30 @@ QString LayerMapnik::tooltip()
 
 
 
-void LayerMapnik::set_file_xml(char const * name_)
+void LayerMapnik::set_file_xml(const QString & name_)
 {
-	if (this->filename_xml) {
-		free(this->filename_xml);
-	}
 	/* Mapnik doesn't seem to cope with relative filenames. */
-	if (strcmp(name_, "")) {
-		this->filename_xml = vu_get_canonical_filename(this, name_);
+	if (name_ != "") {
+		this->filename_xml = QString(vu_get_canonical_filename(this, name_.toUtf8().constData()));
 	} else {
-		this->filename_xml = g_strdup(name_);
+		this->filename_xml = name_;
 	}
 }
 
 
 
 
-void LayerMapnik::set_file_css(char const * name_)
+void LayerMapnik::set_file_css(const QString & name_)
 {
-	if (this->filename_css) {
-		free(this->filename_css);
-	}
-	this->filename_css = g_strdup(name_);
+	this->filename_css = name_;
 }
 
 
 
 
-void LayerMapnik::set_cache_dir(char const * name_)
+void LayerMapnik::set_cache_dir(const QString & name_)
 {
-	if (this->file_cache_dir) {
-		free(this->file_cache_dir);
-	}
-	this->file_cache_dir = g_strdup(name_);
+	this->file_cache_dir = name_;
 }
 
 
@@ -381,42 +373,36 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 	SGVariant param_value;
 	switch (id) {
 		case PARAM_CONFIG_CSS: {
-			param_value.s = this->filename_css;
+			param_value = SGVariant(this->filename_css);
 			bool set = false;
 			if (is_file_operation) {
 				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-					char *cwd = g_get_current_dir();
-					if (cwd) {
+					const QString cwd = QDir::currentPath();
+					if (!cwd.isEmpty()) {
 						param_value.s = file_GetRelativeFilename(cwd, this->filename_css);
-						if (!param_value.s) {
-							param_value.s = "";
-						}
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				param_value.s = this->filename_css ? this->filename_css : "";
+				param_value = SGVariant(this->filename_css);
 			}
 			break;
 		}
 		case PARAM_CONFIG_XML: {
-			param_value.s = this->filename_xml;
+			param_value = SGVariant(this->filename_xml);
 			bool set = false;
 			if (is_file_operation) {
 				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-					char *cwd = g_get_current_dir();
-					if (cwd) {
+					const QString cwd = QDir::currentPath();
+					if (!cwd.isEmpty()) {
 						param_value.s = file_GetRelativeFilename(cwd, this->filename_xml);
-						if (!param_value.s) {
-							param_value.s = "";
-						}
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				param_value.s = this->filename_xml ? this->filename_xml : "";
+				param_value = SGVariant(this->filename_xml);
 			}
 			break;
 		}
@@ -427,7 +413,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 			param_value.b = this->use_file_cache;
 			break;
 		case PARAM_FILE_CACHE_DIR:
-			param_value.s = this->file_cache_dir;
+			param_value = SGVariant(this->file_cache_dir);
 			break;
 		default: break;
 	}
@@ -449,7 +435,7 @@ bool LayerMapnik::carto_load(void)
 	GError *error = NULL;
 
 	SGVariant * var = a_preferences_get(PREFERENCES_NAMESPACE_MAPNIK"carto");
-	char *command = g_strdup_printf("%s %s", var->s, this->filename_css);
+	const QString command = QString("%1 %2").arg(var->s).arg(this->filename_css);
 
 	bool answer = true;
 	//char *args[2]; args[0] = var->s; args[1] = this->filename_css;
@@ -474,7 +460,7 @@ bool LayerMapnik::carto_load(void)
 	tt1 = g_get_real_time();
 #endif
 
-	if (g_spawn_command_line_sync(command, &mystdout, &mystderr, NULL, &error)) {
+	if (g_spawn_command_line_sync(command.toUtf8().constData(), &mystdout, &mystderr, NULL, &error)) {
 #if GLIB_CHECK_VERSION (2, 28, 0)
 		tt2 = g_get_real_time();
 #endif
@@ -485,25 +471,22 @@ bool LayerMapnik::carto_load(void)
 			}
 		if (mystdout) {
 			/* NB This will overwrite the specified XML file. */
-			if (! (this->filename_xml && strlen(this->filename_xml) > 1)) {
+			if (! (this->filename_xml.length() > 1)) {
 				/* XML Not specified so try to create based on CSS file name. */
 				GRegex *regex = g_regex_new("\\.mml$|\\.mss|\\.css$", G_REGEX_CASELESS, (GRegexMatchFlags) 0, &error);
 				if (error) {
 					fprintf(stderr, "CRITICAL: %s: %s\n", __FUNCTION__, error->message);
 				}
-				if (this->filename_xml) {
-					free(this->filename_xml);
-				}
-				this->filename_xml = g_regex_replace_literal(regex, this->filename_css, -1, 0, ".xml", (GRegexMatchFlags) 0, &error);
+				this->filename_xml = QString(g_regex_replace_literal(regex, this->filename_css.toUtf8().constData(), -1, 0, ".xml", (GRegexMatchFlags) 0, &error)) ;
 				if (error) {
 					fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 				}
 				/* Prevent overwriting self. */
-				if (!g_strcmp0(this->filename_xml, this->filename_css)) {
-					this->filename_xml = g_strconcat(this->filename_css, ".xml", NULL);
+				if (this->filename_xml == this->filename_css) {
+					this->filename_xml = this->filename_css + ".xml";
 				}
 			}
-			if (!g_file_set_contents(this->filename_xml, mystdout, -1, &error) ) {
+			if (!g_file_set_contents(this->filename_xml.toUtf8().constData(), mystdout, -1, &error) ) {
 				fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 				g_error_free(error);
 			}
@@ -514,7 +497,6 @@ bool LayerMapnik::carto_load(void)
 		fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 		g_error_free(error);
 	}
-	free(command);
 
 	if (window) {
 		const QString msg = tr("%1 completed in %.1f seconds").arg(var->s).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
@@ -531,13 +513,13 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
 	/* Determine if carto needs to be run. */
 	bool do_carto = false;
-	if (this->filename_css && strlen(this->filename_css) > 1) {
-		if (this->filename_xml && strlen(this->filename_xml) > 1) {
+	if (this->filename_css.length() > 1) {
+		if (this->filename_xml.length() > 1) {
 			/* Compare timestamps. */
 			struct stat stat_buf1;
-			if (stat(this->filename_xml, &stat_buf1) == 0) {
+			if (stat(this->filename_xml.toUtf8().constData(), &stat_buf1) == 0) {
 				struct stat stat_buf2;
-				if (stat(this->filename_css, &stat_buf2) == 0) {
+				if (stat(this->filename_css.toUtf8().constData(), &stat_buf2) == 0) {
 					/* Is CSS file newer than the XML file. */
 					if (stat_buf2.st_mtime > stat_buf1.st_mtime) {
 						do_carto = true;
@@ -561,14 +543,14 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			return;
 		}
 
-	char * ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
+	char * ans = mapnik_interface_load_map_file(this->mi, this->filename_xml.toUtf8().constData(), this->tile_size_x, this->tile_size_x);
 	if (ans) {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
 		free(ans);
 	} else {
 		this->loaded = true;
 		if (!from_file) {
-			ui_add_recent_file(this->filename_xml);
+			ui_add_recent_file(this->filename_xml.toUtf8().constData());
 		}
 	}
 }
@@ -593,8 +575,8 @@ static char *get_filename(char *dir, unsigned int x, unsigned int y, unsigned in
 void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ti_ul)
 {
 	if (this->use_file_cache) {
-		if (this->file_cache_dir) {
-			char * filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
+		if (!this->file_cache_dir.isEmpty()) {
+			char * filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul->x, ti_ul->y, ti_ul->scale);
 
 			char *dir = g_path_get_dirname(filename);
 			if (0 != access(filename, F_OK)) {
@@ -671,7 +653,7 @@ void LayerMapnik::render(Coord * coord_ul, Coord * coord_br, TileInfo * ti_ul)
 	if (this->alpha < 255) {
 		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
-	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 #ifdef K
 	g_object_unref(pixmap);
 #endif
@@ -749,7 +731,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 {
 	*rerender_ = false;
 	QPixmap *pixmap = NULL;
-	char *filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
+	char *filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul->x, ti_ul->y, ti_ul->scale);
 
 	struct stat stat_buf;
 	if (stat(filename, &stat_buf) == 0) {
@@ -764,7 +746,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			if (this->alpha < 255) {
 				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
-			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < stat_buf.st_mtime) {
@@ -791,18 +773,20 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 	map_utils_iTMS_to_vikcoord(ti_ul, &ul);
 	map_utils_iTMS_to_vikcoord(ti_br, &br);
 
-	QPixmap * pixmap = map_cache_get(ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	QPixmap * pixmap = map_cache_get(ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 	if (pixmap) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
 		fprintf(stderr, "MapnikLayer: MAP CACHE MISS\n");
 
 		bool rerender_ = false;
-		if (this->use_file_cache && this->file_cache_dir)
+		if (this->use_file_cache && !this->file_cache_dir.isEmpty()) {
 			pixmap = this->load_pixmap(ti_ul, ti_br, &rerender_);
+		}
+
 		if (! pixmap || rerender_) {
 			if (true) {
-				this->thread_add(ti_ul, &ul, &br, ti_ul->x, ti_ul->y, ti_ul->z, ti_ul->scale, this->filename_xml);
+				this->thread_add(ti_ul, &ul, &br, ti_ul->x, ti_ul->y, ti_ul->z, ti_ul->scale, this->filename_xml.toUtf8().constData());
 			} else {
 				/* Run in the foreground. */
 				this->render(&ul, &br, ti_ul);
@@ -911,14 +895,6 @@ void LayerMapnik::draw(Viewport * viewport)
 LayerMapnik::~LayerMapnik()
 {
 	mapnik_interface_free(this->mi);
-
-	if (this->filename_css) {
-		free(this->filename_css);
-	}
-
-	if (this->filename_xml) {
-		free(this->filename_xml);
-	}
 }
 
 
@@ -967,7 +943,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	if (!lmk->carto_load()) {
 		return;
 	}
-	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
+	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml.toUtf8().constData(), lmk->tile_size_x, lmk->tile_size_x);
 	if (ans) {
 		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
 		free(ans);
@@ -1034,7 +1010,7 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_reload));
 	menu->addAction(action);
 
-	if (strcmp("", this->filename_css)) {
+	if ("" != this->filename_css) {
 		action = new QAction(QObject::tr("&Run Carto Command"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
 		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_carto));
@@ -1077,7 +1053,7 @@ void LayerMapnik::rerender()
 	ti_br.x = ti_br.x+1;
 	ti_br.y = ti_br.y+1;
 	map_utils_iTMS_to_vikcoord(&ti_br, &this->rerender_br);
-	this->thread_add(&ti_ul, &this->rerender_ul, &this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml);
+	this->thread_add(&ti_ul, &this->rerender_ul, &this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
 }
 
 
@@ -1100,9 +1076,9 @@ void LayerMapnik::tile_info()
 	/* Requested position to map coord. */
 	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
 
-	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 
-	char * tile_filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
+	char * tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	QStringList items;
 

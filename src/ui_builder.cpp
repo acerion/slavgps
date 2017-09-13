@@ -263,19 +263,19 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString
 	}
 
 	param = &parameters[SG_WP_PARAM_NAME];
-	param_value.s = strdup(default_name.toUtf8().constData()); /* FIXME: memory leak */
+	param_value = SGVariant(default_name);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LAT];
-	param_value.s = lat;
+	param_value = SGVariant(lat);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LON];
-	param_value.s = lon;
+	param_value = SGVariant(lon);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
@@ -287,31 +287,31 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_ALT];
-	param_value.s = alt;
+	param_value = SGVariant(alt);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_COMMENT];
-	param_value.s = (wp->comment.toUtf8().constData()); /* FIXME: memoryleak. */
+	param_value = SGVariant(wp->comment);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_DESC];
-	param_value.s = strdup(wp->description.toUtf8().constData()); /* FIXME: memoryleak. */
+	param_value = SGVariant(wp->description);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_IMAGE];
-	param_value.s = strdup(wp->image.toUtf8().constData()); /* FIXME: memoryleak. */
+	param_value = SGVariant(wp->image);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_SYMBOL];
-	param_value.s = strdup(wp->symbol_name.toUtf8().constData()); /* FIXME: memoryleak. */
+	param_value = SGVariant(wp->symbol_name);
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
@@ -477,8 +477,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 	case WidgetType::ENTRY:
 		if (param->type == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit;
-			if (var.s) {
-				widget_->insert(QString(var.s));
+			if (!var.s.isEmpty()) {
+				widget_->insert(var.s);
 			}
 
 			widget = widget_;
@@ -489,8 +489,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 		if (param->type == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit();
 			widget_->setEchoMode(QLineEdit::Password);
-			if (var.s) {
-				widget_->setText(QString(var.s));
+			if (!var.s.isEmpty()) {
+				widget_->setText(var.s);
 			}
 			widget_->setToolTip(QObject::tr("Notice that this password will be stored clearly in a plain file."));
 
@@ -507,9 +507,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 			}
 
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
-			if (var.s) {
-				QString filename(var.s);
-				widget_->set_filename(filename);
+			if (!var.s.isEmpty()) {
+				widget_->set_filename(var.s);
 			}
 
 			widget = widget_;
@@ -520,9 +519,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 	case WidgetType::FOLDERENTRY:
 		if (param->type == SGVariantType::STRING) {
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
-			if (var.s) {
-				QString filename(var.s);
-				widget_->set_filename(filename);
+			if (!var.s.isEmpty()) {
+				widget_->set_filename(var.s);
 			}
 
 			widget = widget_;
@@ -723,7 +721,7 @@ void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant 
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
 	case SGVariantType::STRING:
-		paramdatas[i] = SGVariant((char *) g_strdup(data.s));
+		paramdatas[i] = SGVariant(data.s);
 		break;
 	default:
 		paramdatas[i] = data; /* Dtring list will have to be freed by layer. anything else not freed. */
@@ -748,9 +746,6 @@ void a_uibuilder_free_paramdatas(SGVariant * param_table, Parameter *params, uin
 	/* May have to free strings, etc. */
 	for (i = 0; i < params_count; i++) {
 		switch (params[i].type) {
-		case SGVariantType::STRING:
-			free((char *) param_table[i].s);
-			break;
 		case SGVariantType::STRING_LIST:
 			param_table[i].sl.clear();
 			break;

@@ -90,9 +90,9 @@ namespace SlavGPS {
 		QString get_map_label(void) const;
 		int how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
-		void set_cache_dir(char const * dir);
+		void set_cache_dir(const QString & dir);
 		void mkdir_if_default_dir();
-		void set_file(char const * name);
+		void set_file(const QString & name);
 
 		void set_map_type(MapTypeID type_id);
 		MapTypeID get_map_type();
@@ -111,7 +111,7 @@ namespace SlavGPS {
 
 
 		int map_index = 0;
-		char * cache_dir = NULL;
+		QString cache_dir;
 		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
 		int32_t alpha = 0;
 
@@ -136,7 +136,7 @@ namespace SlavGPS {
 		Coord redownload_br;
 
 		Viewport * redownload_viewport = NULL;
-		char * filename = NULL;
+		QString filename;
 
 #ifdef HAVE_SQLITE3_H
 		sqlite3 * mbtiles = NULL;

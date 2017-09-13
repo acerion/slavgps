@@ -184,7 +184,7 @@ namespace SlavGPS {
 
 		void activate_layer_tool(LayerType layer_type, int tool_id);
 
-		void open_file(char const * filename, bool change_filename);
+		void open_file(const QString & filename, bool change_filename);
 
 		void set_busy_cursor(void);
 		void clear_busy_cursor(void);

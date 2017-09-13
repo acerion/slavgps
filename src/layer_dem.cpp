@@ -38,6 +38,7 @@
 #include <QMenu>
 #include <QDebug>
 #include <QHash>
+#include <QDir>
 
 #include "background.h"
 #include "layer_map.h"
@@ -345,18 +346,16 @@ void DemLoadJob::cleanup_on_cancel(void)
  */
 static void dem_layer_convert_to_relative_filenaming(QStringList & relfiles, const QStringList & files)
 {
-	char * cwd = g_get_current_dir();
-	if (!cwd) {
+	const QString cwd = QDir::currentPath();
+	if (cwd.isEmpty()) {
 		relfiles = files;
 		return;
 	}
 
 	for (auto iter = files.begin(); iter != files.end(); iter++) {
-		QString file = file_GetRelativeFilename(cwd, (*iter).toUtf8().constData());
+		const QString file = file_GetRelativeFilename(cwd, *iter);
 		relfiles.push_front(file);
 	}
-
-	free(cwd);
 
 	if (relfiles.empty()) {
 		/* TODO: is this correct? Should we return original files? Is this condition ever true? */

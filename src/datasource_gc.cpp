@@ -274,8 +274,8 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 	ProcessOptions * po = new ProcessOptions();
 
 	//char *safe_string = g_shell_quote (widgets->center_entry.text());
-	char *safe_user = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "username")->s);
-	char *safe_pass = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "password")->s);
+	char *safe_user = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "username")->s.toUtf8().constData());
+	char *safe_pass = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "password")->s.toUtf8().constData());
 	char *slat, *slon;
 	double lat, lon;
 	if (2 != sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {

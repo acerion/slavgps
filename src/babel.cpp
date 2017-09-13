@@ -146,14 +146,14 @@ void Babel::get_unbuffer_path_from_system(void)
 
 void Babel::get_gpsbabel_path_from_preferences(void)
 {
-	const char * gpsbabel_path_prefs = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
-	if (gpsbabel_path_prefs && 0 != strlen(gpsbabel_path_prefs)) {
+	const QString gpsbabel_path_prefs = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
+	if (!gpsbabel_path_prefs.isEmpty()) {
 
 		/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */
-		if (0 == strcmp(gpsbabel_path_prefs, "gpsbabel")) {
+		if (gpsbabel_path_prefs == "gpsbabel") {
 			this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 		} else {
-			this->gpsbabel_path = QString(gpsbabel_path_prefs);
+			this->gpsbabel_path = gpsbabel_path_prefs;
 		}
 		qDebug() << "II: Babel: path to gpsbabel set from preferences as" << this->gpsbabel_path;
 	}

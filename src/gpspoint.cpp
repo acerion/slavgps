@@ -35,6 +35,8 @@
 #include <cstring>
 #endif
 
+#include <QDir>
+
 #include "gpspoint.h"
 #include "track_internal.h"
 #include "waypoint.h"
@@ -696,27 +698,24 @@ static void a_gpspoint_write_waypoints(FILE * f, Waypoints & data)
 			free(tmp_type);
 		}
 		if (!wp->image.isEmpty()) {
-			char * tmp_image = NULL;
-			char * cwd = NULL;
+			QString tmp_image;
+			QString cwd;
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-				cwd = g_get_current_dir();
-				if (cwd) {
-					tmp_image = g_strdup(file_GetRelativeFilename(cwd, wp->image.toUtf8().constData()));
+				cwd = QDir::currentPath();
+				if (!cwd.isEmpty()) {
+					tmp_image = file_GetRelativeFilename(cwd, wp->image);
 				}
 			}
 
 			/* If cwd not available - use image filename as is.
 			   This should be an absolute path as set in thumbnails. */
-			if (!cwd) {
-				tmp_image = slashdup(wp->image);
+			if (cwd.isEmpty()) {
+				tmp_image = QString(slashdup(wp->image));
 			}
 
-			if (tmp_image) {
-				fprintf(f, " image=\"%s\"", tmp_image);
+			if (!tmp_image.isEmpty()) {
+				fprintf(f, " image=\"%s\"", tmp_image.toUtf8().constData());
 			}
-
-			free(cwd);
-			free(tmp_image);
 		}
 		if (!wp->symbol_name.isEmpty()) {
 			/* Due to changes in garminsymbols - the symbol name is now in Title Case.

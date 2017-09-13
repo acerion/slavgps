@@ -85,17 +85,17 @@ namespace SlavGPS {
 #ifndef WINDOWS
 		/* Windows automatically uses the system defined viewer.
 		   ATM for other systems need to specify the program to use. */
-		static char const * get_image_viewer();
+		static const QString get_image_viewer(void);
 #endif
-		static char const * get_external_gpx_program_1();
-		static char const * get_external_gpx_program_2();
+		static const QString get_external_gpx_program_1(void);
+		static const QString get_external_gpx_program_2(void);
 		static vik_file_ref_format_t get_file_ref_format();
 		static bool get_ask_for_create_track_name();
 		static bool get_create_track_tooltip();
 		static int get_recent_number_files();
 		static bool get_add_default_map_layer();
 		static vik_startup_method_t get_startup_method();
-		static char const * get_startup_file();
+		static const QString get_startup_file(void);
 		static bool get_check_version();
 
 		bool loaded = false; /* Have the preferences been loaded from file? */

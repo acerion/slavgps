@@ -688,7 +688,7 @@ vik_gpx_export_wpt_sym_name_t Preferences::get_gpx_export_wpt_sym_name()
 
 
 #ifndef WINDOWS
-char const * Preferences::get_image_viewer()
+const QString Preferences::get_image_viewer(void)
 {
 	return a_preferences_get(PREFERENCES_NAMESPACE_IO "image_viewer")->s;
 }
@@ -697,12 +697,12 @@ char const * Preferences::get_image_viewer()
 
 
 
-char const * Preferences::get_external_gpx_program_1()
+const QString Preferences::get_external_gpx_program_1(void)
 {
 	return a_preferences_get(PREFERENCES_NAMESPACE_IO "external_gpx_1")->s;
 }
 
-char const * Preferences::get_external_gpx_program_2()
+const QString Preferences::get_external_gpx_program_2(void)
 {
 	return a_preferences_get(PREFERENCES_NAMESPACE_IO "external_gpx_2")->s;
 }
@@ -760,7 +760,7 @@ vik_startup_method_t Preferences::get_startup_method()
 
 
 
-char const * Preferences::get_startup_file()
+const QString Preferences::get_startup_file(void)
 {
 	return a_preferences_get(PREFERENCES_NAMESPACE_STARTUP "startup_file")->s;
 }
