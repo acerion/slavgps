@@ -77,7 +77,7 @@ QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 			    || file_type->mode.tracks_read
 			    || file_type->mode.routes_read) {
 
-				combo->addItem(QString(file_type->label), iter->first);
+				combo->addItem(file_type->label, iter->first);
 			}
 		}
 	} else {
@@ -94,7 +94,7 @@ QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 			if (mode.routes_write    && !file_type->mode.routes_write)    compat = false;
 			/* Do call. */
 			if (compat) {
-				combo->addItem(QString(file_type->label), iter->first);
+				combo->addItem(file_type->label, iter->first);
 			}
 		}
 	}
@@ -283,8 +283,8 @@ void BabelDialog::build_ui(const BabelMode * mode)
 		//qDebug() << "II: Babel Dialog: adding file filter " << a;
 		filter << a;
 
-		char const * ext = (iter->second)->ext;
-		if (ext == NULL || ext[0] == '\0') {
+		const QString ext = (iter->second)->ext;
+		if (ext.isEmpty()) {
 			/* No file extension => no filter. */
 			continue;
 		}
@@ -394,23 +394,21 @@ void BabelDialog::file_type_changed_cb(int index)
 
 void BabelDialog::add_file_type_filter(BabelFileType * file_type)
 {
-	char const * label = file_type->label;
-	char const * ext = file_type->ext;
-	if (ext == NULL || ext[0] == '\0') {
+	if (file_type->ext.isEmpty()) {
 		/* No file extension => no filter. */
 		return;
 	}
-	const QString pattern = QString("*.%1").arg(ext);
+	const QString pattern = QString("*.%1").arg(file_type->ext);
 
 #ifdef K
 	GtkFileFilter * filter = gtk_file_filter_new();
 	gtk_file_filter_add_pattern(filter, pattern);
-	if (strstr(label, pattern+1)) {
-		gtk_file_filter_set_name(filter, label);
+	if (strstr(file_type->label, pattern+1)) {
+		gtk_file_filter_set_name(filter, file_type->label);
 	} else {
 		/* Ensure displayed label contains file pattern. */
 		/* NB: we skip the '*' in the pattern. */
-		char * name = g_strdup_printf("%s (%s)", label, pattern+1);
+		char * name = g_strdup_printf("%s (%s)", file_type->label, pattern+1);
 		gtk_file_filter_set_name(filter, name);
 		free(name);
 	}

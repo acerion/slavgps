@@ -328,7 +328,6 @@ bool SlavGPS::datasource_gps_get_off(void * user_data)
 static void datasource_gps_off(void * user_data, QString & babel_args, QString & file_path)
 {
 	char *ser = NULL;
-	char *device = NULL;
 	GPSData *w = (GPSData *)user_data;
 
 	if (gps_acquire_in_progress) {
@@ -347,19 +346,18 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 
 	last_active = w->proto_combo->currentIndex();
 
-	device = a_babel_device_list[last_active]->name;
-	fprintf(stderr, "%s:%d: last active device: '%s'\n", __FUNCTION__, __LINE__, device);
-	if (!strcmp(device, "garmin")) {
-		device = (char *) "garmin,power_off";
-	} else if (!strcmp(device, "navilink")) {
-		device = (char *) "navilink,power_off";
+	QString device = a_babel_device_list[last_active]->name;
+	qDebug() << "II: Datasource GPS: GPS off: last active device:" << device;
+
+	if (device == "garmin") {
+		device = "garmin,power_off";
+	} else if (device == "navilink") {
+		device = "navilink,power_off";
 	} else {
 		return;
 	}
 
 	babel_args = QString("-i %1").arg(device);
-	/* Device points to static content => no free. */
-	device = NULL;
 #ifdef K
 	ser = w->ser_combo->currentText();
 #endif
@@ -588,7 +586,7 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 void append_element(void * elem, void * user_data)
 {
-	const char * text = ((BabelDevice *) elem)->label;
+	const QString text = ((BabelDevice *) elem)->label;
 #ifdef K
 	((QComboBox *) user_data))->addItem(text);
 #endif
@@ -602,10 +600,12 @@ static int wanted_entry = -1;
 
 static void find_protocol(void * elem, void * user_data)
 {
-	const char *name = ((BabelDevice*)elem)->name;
-	const char *protocol = (const char *) user_data;
+	const QString name = ((BabelDevice *) elem)->name;
+	const QString protocol = QString((const char *) user_data);
+
 	find_entry++;
-	if (!strcmp(name, protocol)) {
+
+	if (name == protocol) {
 		wanted_entry = find_entry;
 	}
 }

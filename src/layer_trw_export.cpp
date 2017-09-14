@@ -156,13 +156,12 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 
 		this->get_window()->set_busy_cursor();
 		dialog->get_write_mode(mode); /* We overwrite the old values of the struct, but that's ok. */
-#ifdef K
+
 		if (file_type == NULL) {
 			Dialog::error(QObject::tr("You did not select a valid file format."), this->get_window());
 		} else {
 			;
 		}
-#endif
 
 		failed = !a_file_export_babel(this, QString(output_file_path), file_type->name, mode.tracks_write, mode.routes_write, mode.waypoints_write);
 

@@ -665,13 +665,13 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 
 	case WidgetType::ENTRY:
 	case WidgetType::PASSWORD:
-		rv = SGVariant((char *) strdup((char *) ((QLineEdit *) widget)->text().toUtf8().constData())); /* FIXME: memory management. */
+		rv = SGVariant(((QLineEdit *) widget)->text());
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: LineEdit" << "label:" << param->title << "value:" << rv.s;
 		break;
 
 	case WidgetType::FILEENTRY:
 	case WidgetType::FOLDERENTRY:
-		rv = SGVariant((char *) strdup(((SGFileEntry *) widget)->get_filename().toUtf8().constData())); /* FIXME: memory management. */
+		rv = SGVariant(((SGFileEntry *) widget)->get_filename());
 		qDebug() << "II: UI Builder: saving value of widget" << (int) id << "/" << (int) this->widgets.size() << "type: File/Dir" << "label:" << param->title << "value:" << rv.s;
 		break;
 

@@ -2757,8 +2757,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	if (this->viewport_ed) {
 		this->w_ed_current_distance = ui_label_new_selectable(_("No Data"), this);
 		this->w_ed_current_elevation = ui_label_new_selectable(_("No Data"), this);
-		this->w_ed_show_dem = new QCheckBox(_("Show D&EM"), this);
-		this->w_ed_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		this->w_ed_show_dem = new QCheckBox(tr("Show D&EM"), this);
+		this->w_ed_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->viewport_ed,
 							 _("Track Distance:"), this->w_ed_current_distance,
 							 _("Track Height:"),   this->w_ed_current_elevation,
@@ -2768,13 +2768,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		connect(this->w_ed_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_ed_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_ed, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Elevation-distance"));
+		this->tabs->addTab(page, tr("Elevation-distance"));
 	}
 
 	if (this->viewport_gd) {
 		this->w_gd_current_distance = ui_label_new_selectable(_("No Data"), this);
 		this->w_gd_current_gradient = ui_label_new_selectable(_("No Data"), this);
-		this->w_gd_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		this->w_gd_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->viewport_gd,
 							 _("Track Distance:"), this->w_gd_current_distance,
 							 _("Track Gradient:"), this->w_gd_current_gradient,
@@ -2783,14 +2783,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 NULL, false);
 		connect(this->w_gd_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_gd, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Gradient-distance"));
+		this->tabs->addTab(page, tr("Gradient-distance"));
 	}
 
 	if (this->viewport_st) {
 		this->w_st_current_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_st_current_speed = ui_label_new_selectable(_("No Data"), this);
 		this->w_st_current_time_real = ui_label_new_selectable(_("No Data"), this);
-		this->w_st_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		this->w_st_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->viewport_st,
 							 _("Track Time:"),  this->w_st_current_time,
 							 _("Track Speed:"), this->w_st_current_speed,
@@ -2799,14 +2799,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 NULL, false);
 		connect(this->w_st_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_st, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Speed-time"));
+		this->tabs->addTab(page, tr("Speed-time"));
 	}
 
 	if (this->viewport_dt) {
 		this->w_dt_current_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_dt_curent_distance = ui_label_new_selectable(_("No Data"), this);
 		this->w_dt_current_time_real = ui_label_new_selectable(_("No Data"), this);
-		this->w_dt_show_speed = new QCheckBox(_("Show S&peed"), this);
+		this->w_dt_show_speed = new QCheckBox(tr("Show S&peed"), this);
 		QWidget * page = this->create_graph_page(this->viewport_dt,
 							 _("Track Distance:"), this->w_dt_curent_distance,
 							 _("Track Time:"), this->w_dt_current_time,
@@ -2815,15 +2815,15 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 NULL, false);
 		connect(this->w_dt_show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_dt, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Distance-time"));
+		this->tabs->addTab(page, tr("Distance-time"));
 	}
 
 	if (this->viewport_et) {
 		this->w_et_current_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_et_current_elevation = ui_label_new_selectable(_("No Data"), this);
 		this->w_et_current_time_real = ui_label_new_selectable(_("No Data"), this);
-		this->w_et_show_speed = new QCheckBox(_("Show S&peed"), this);
-		this->w_et_show_dem = new QCheckBox(_("Show D&EM"), this);
+		this->w_et_show_speed = new QCheckBox(tr("Show S&peed"), this);
+		this->w_et_show_dem = new QCheckBox(tr("Show D&EM"), this);
 		QWidget * page = this->create_graph_page(this->viewport_et,
 							 _("Track Time:"),   this->w_et_current_time,
 							 _("Track Height:"), this->w_et_current_elevation,
@@ -2833,13 +2833,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		connect(this->w_et_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_et_show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_et, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Elevation-time"));
+		this->tabs->addTab(page, tr("Elevation-time"));
 	}
 
 	if (this->viewport_sd) {
 		this->w_sd_current_distance = ui_label_new_selectable(_("No Data"), this);
 		this->w_sd_current_speed = ui_label_new_selectable(_("No Data"), this);
-		this->w_sd_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		this->w_sd_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->viewport_sd,
 							 _("Track Distance:"), this->w_sd_current_distance,
 							 _("Track Speed:"), this->w_sd_current_speed,
@@ -2848,7 +2848,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 NULL, false);
 		connect(this->w_sd_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->viewport_sd, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
-		this->tabs->addTab(page, _("Speed-distance"));
+		this->tabs->addTab(page, tr("Speed-distance"));
 	}
 
 

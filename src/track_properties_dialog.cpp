@@ -91,14 +91,14 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a
 	old_layout = this->properties_area->layout();
 	delete old_layout;
 	this->properties_area->setLayout(properties_form);
-	this->tabs->addTab(this->properties_area, _("Properties"));
+	this->tabs->addTab(this->properties_area, tr("Properties"));
 
 	this->statistics_form = new QFormLayout();
 	this->statistics_area = new QWidget();
 	old_layout = this->statistics_area->layout();
 	delete old_layout;
 	this->statistics_area->setLayout(statistics_form);
-	this->tabs->addTab(this->statistics_area, _("Statistics"));
+	this->tabs->addTab(this->statistics_area, tr("Statistics"));
 
 	this->vbox->addWidget(this->tabs);
 	this->vbox->addWidget(this->button_box);

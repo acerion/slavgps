@@ -106,12 +106,12 @@ namespace SlavGPS {
 	*/
 	class BabelDevice {
 	public:
-		BabelDevice(const char * mode, const char * name, const char * label);
+		BabelDevice(const char * mode, const QString & name, const QString & label);
 		~BabelDevice();
 
 		BabelMode mode;
-		char * name = NULL;  /* gpsbabel's identifier of the device. */
-		char * label = NULL; /* Human readable label. */
+		QString name;  /* gpsbabel's identifier of the device. */
+		QString label; /* Human readable label. */
 	};
 
 
@@ -122,13 +122,13 @@ namespace SlavGPS {
 	*/
 	class BabelFileType {
 	public:
-		BabelFileType(const char * mode, const char * name, const char * ext, const char * label);
+		BabelFileType(const char * mode, const QString & name, const QString & ext, const QString & label);
 		~BabelFileType();
 
 		BabelMode mode;
-		char * name = NULL;  /* gpsbabel's identifier of the format. */
-		char * ext = NULL;   /* File's extension for this format. */
-		char * label = NULL; /* Human readable label. */
+		QString name;  /* gpsbabel's identifier of the format. */
+		QString ext;   /* File's extension for this format. */
+		QString label; /* Human readable label. */
 	};
 
 

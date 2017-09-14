@@ -310,7 +310,7 @@ void layer_map_init(void)
 {
 	SGVariant tmp;
 
-	tmp = SGVariant(strdup(maps_layer_default_dir().toUtf8().constData()));
+	tmp = SGVariant(maps_layer_default_dir());
 	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GENERAL);
 
 	int max_tiles = MAX_TILES;

@@ -57,8 +57,8 @@ public:
 
 /* Memory of previous selection */
 static int last_engine = 0;
-static char * last_from_str = NULL;
-static char * last_to_str = NULL;
+static QString last_from_str;
+static QString last_to_str;
 
 static void * datasource_routing_init(acq_vik_t * avt);
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
@@ -119,12 +119,13 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	/* From and To entries. */
 	QLabel * from_label = new QLabel(QObject::tr("From:"));
 	QLabel * to_label = new QLabel(QObject::tr("To:"));
-	if (last_from_str) {
-		widgets->from_entry.setText(QString(last_from_str));
+
+	if (!last_from_str.isEmpty()) {
+		widgets->from_entry.setText(last_from_str);
 	}
 
-	if (last_to_str) {
-		widgets->to_entry.setText(QString(last_to_str));
+	if (!last_to_str.isEmpty()) {
+		widgets->to_entry.setText(last_to_str);
 	}
 
 	/* Packing all these widgets. */
@@ -161,14 +162,12 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 	po->url = engine->get_url_from_directions(from, to);
 	po->input_file_type = g_strdup(engine->get_format());
 	dl_options = NULL; /* i.e. use the default download settings. */
+#endif
 
 	/* Save last selection. */
-	free(last_from_str);
-	free(last_to_str);
+	last_from_str = from;
+	last_to_str = to;
 
-	last_from_str = g_strdup(from);
-	last_to_str = g_strdup(to);
-#endif
 	return po;
 }
 

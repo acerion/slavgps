@@ -152,7 +152,7 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 	last_type = data_source_file_dialog->file_types_combo->currentIndex();
 #endif
 
-	const char * selected = (data_source_file_dialog->get_file_type_selection())->name;
+	const QString selected = (data_source_file_dialog->get_file_type_selection())->name;
 
 	/* Generate the process options. */
 	po->babel_args = QString("-i %1").arg(selected);

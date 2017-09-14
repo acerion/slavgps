@@ -534,8 +534,8 @@ QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, Ba
 	QVariant variant;
 
 	/* TITLE_COLUMN */
-	item = new QStandardItem(QString(message));
-	item->setToolTip(QString(message));
+	item = new QStandardItem(message);
+	item->setToolTip(message);
 	items << item;
 
 	/* PROGRESS_COLUMN */

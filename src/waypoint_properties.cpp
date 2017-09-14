@@ -97,7 +97,7 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 	}
 
 	time_t mytime = date_time_dialog(parent,
-					 QString(_("Date/Time Edit")),
+					 ("Date/Time Edit"),
 					 wp->timestamp);
 
 	/* Was the dialog cancelled?. */

@@ -2473,8 +2473,8 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	QInputDialog dialog(this->get_window());
-	dialog.setWindowTitle(_("Find"));
-	dialog.setLabelText(_("Waypoint Name:"));
+	dialog.setWindowTitle(tr("Find"));
+	dialog.setLabelText(tr("Waypoint Name:"));
 	dialog.setInputMode(QInputDialog::TextInput);
 
 
@@ -3555,7 +3555,7 @@ void LayerTRW::delete_all_tracks_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
 	if (Dialog::yes_or_no(tr("Are you sure you want to delete all tracks in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
-		    this->delete_all_tracks();
+		this->delete_all_tracks();
 	}
 }
 
@@ -5367,7 +5367,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 		if (!trk) {
 			/* Broken :( */
 			qDebug() << "EE: Layer TRW: can't retrieve track/route with duplicate name" << duplicate_name;
-			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, _("Internal Error during making tracks/routes unique"));
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making tracks/routes unique"));
 			return;
 		}
 
@@ -5579,7 +5579,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		if (!wp) {
 			/* Broken :( */
 			qDebug() << "EE: Layer TRW: can't retrieve waypoint with duplicate name" << duplicate_name;
-			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(_("Internal Error during making waypoints unique")));
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making waypoints unique"));
 			return;
 		}
 

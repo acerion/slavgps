@@ -569,36 +569,36 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 	menu.addSeparator();
 
 	{
-		QMenu * vis_submenu = menu.addMenu(QString("&Visibility"));
+		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), QString(_("&Show All")));
+		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), tr("&Show All"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_on_cb()));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), QString(_("&Hide All")));
+		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), tr("&Hide All"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_off_cb()));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), QString(_("&Toggle")));
+		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), tr("&Toggle"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_toggle_cb()));
 	}
 
 
 	{
-		QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("REFRESH"), QString("&Sort"));
+		QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("REFRESH"), tr("&Sort"));
 
-		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Name &Ascending")));
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), tr("Name &Ascending"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_a2z_cb()));
 
-		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Name &Descending")));
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), tr("Name &Descending"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_z2a_cb()));
 
-		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Date Ascending")));
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), tr("Date Ascending"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_timestamp_ascend_cb()));
 
-		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Date Descending")));
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), tr("Date Descending"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_timestamp_descend_cb()));
 	}
 
-	qa = menu.addAction(QString(_("&Statistics")));
+	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (analyse_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
@@ -608,11 +608,11 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 
 	{
-		QMenu * search_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), QString("Searc&h"));
+		QMenu * search_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("Searc&h"));
 
-		qa = search_submenu->addAction(QString(_("By &Date...")));
+		qa = search_submenu->addAction(tr("By &Date..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (search_date_cb()));
-		qa->setToolTip(QString(_("Find the first item with a specified date")));
+		qa->setToolTip(tr("Find the first item with a specified date"));
 	}
 }
 

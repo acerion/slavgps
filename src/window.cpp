@@ -380,21 +380,21 @@ void Window::create_actions(void)
 	QAction * qa_file_open = NULL;
 	QAction * qa_file_exit = NULL;
 	{
-		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), _("&New file..."));
+		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), tr("&New file..."));
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
 		qa_file_new->setToolTip("Open a file");
 		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (new_window_cb()));
 
-		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), _("&Open..."));
+		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), tr("&Open..."));
 		qa_file_open->setShortcut(Qt::CTRL + Qt::Key_O);
 		qa_file_open->setData(QVariant((int) 12)); /* kamilFIXME: magic number. */
 		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
 		/* This submenu will be populated by Window::update_recent_files(). */
-		this->submenu_recent_files = this->menu_file->addMenu(QString("Open &Recent File"));
+		this->submenu_recent_files = this->menu_file->addMenu(tr("Open &Recent File"));
 
-		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), _("Append &File..."));
+		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), tr("Append &File..."));
 		qa->setData(QVariant((int) 21)); /* kamilFIXME: magic number. */
 		qa->setToolTip("Append data from a different file");
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
@@ -500,16 +500,16 @@ void Window::create_actions(void)
 
 		qa = this->menu_file->addAction(tr("&Generate Image File..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_image_file_cb()));
-		qa->setToolTip("Save current viewport to image file");
+		qa->setToolTip(tr("Save current viewport to image file"));
 
 		qa = this->menu_file->addAction(tr("Generate &Directory of Images..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_image_dir_cb()));
-		qa->setToolTip("Generate Directory of Images");
+		qa->setToolTip(tr("Generate Directory of Images"));
 
 #ifdef HAVE_ZIP_H
 		qa = this->menu_file->addAction(tr("Generate &KMZ Map File..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (draw_viewport_to_kmz_file_cb()));
-		qa->setToolTip("Generate a KMZ file with an overlay of the current view");
+		qa->setToolTip(tr("Generate a KMZ file with an overlay of the current view"));
 #endif
 
 		qa = this->menu_file->addAction(tr("&Print..."));
@@ -520,14 +520,14 @@ void Window::create_actions(void)
 		this->menu_file->addSeparator();
 
 
-		qa = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("Save and Exit"));
+		qa = this->menu_file->addAction(QIcon::fromTheme("application-exit"), tr("Save and Exit"));
 		qa->setShortcut(Qt::CTRL + Qt::Key_Q);
-		qa->setToolTip("Save and Exit the program");
+		qa->setToolTip(tr("Save and Exit the program"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_and_exit_cb(void)));
 
-		qa_file_exit = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("E&xit"));
+		qa_file_exit = this->menu_file->addAction(QIcon::fromTheme("application-exit"), tr("E&xit"));
 		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_W);
-		qa_file_exit->setToolTip("Exit the program");
+		qa_file_exit->setToolTip(tr("Exit the program"));
 		connect(qa_file_exit, SIGNAL (triggered(bool)), this, SLOT (close(void)));
 	}
 
@@ -823,7 +823,7 @@ void Window::create_actions(void)
 
 		/* "Pan" submenu. */
 		{
-			QMenu * pan_submenu = this->menu_view->addMenu(QString("&Pan"));
+			QMenu * pan_submenu = this->menu_view->addMenu(tr("&Pan"));
 
 			qa = new QAction(tr("Pan &North"), this);
 			qa->setData(0);
@@ -2468,7 +2468,7 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = ! restore_original_filename;
 		this->update_recently_used_document(new_filename.toUtf8().constData());
-		this->update_recent_files(QString(new_filename.toUtf8().constData()));
+		this->update_recent_files(new_filename);
 		this->draw_update();
 		break;
 	}
@@ -2676,7 +2676,7 @@ void Window::set_filename(char const * file_name)
 	}
 
 	/* Refresh window's title */
-	this->setWindowTitle(QString("%1 - SlavGPS").arg(this->get_filename()));
+	this->setWindowTitle(tr("%1 - SlavGPS").arg(this->get_filename()));
 }
 
 
@@ -2838,7 +2838,7 @@ void Window::finish_new(void)
 	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
 		if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
 
-			this->status_bar->set_message(StatusBarField::INFO, _("Trying to determine location..."));
+			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
 			a_background_thread(locator, ThreadPoolType::REMOTE, tr("Determining location"));
 		}

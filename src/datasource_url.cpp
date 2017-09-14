@@ -116,10 +116,10 @@ static int wanted_entry = -1;
 
 
 
-static void find_type(BabelFileType * file_type, char const * type_name)
+static void find_type(BabelFileType * file_type, const QString & type_name)
 {
 	find_entry++;
-	if (!g_strcmp0(file_type->name, type_name)) {
+	if (file_type->name == type_name) {
 		wanted_entry = find_entry;
 	}
 }
@@ -148,7 +148,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 			/* Use setting. */
 			if (type) {
 				for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-					find_type(iter->second, type);
+					find_type(iter->second, QString(type));
 				}
 			}
 		} else {

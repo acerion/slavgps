@@ -309,7 +309,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
-	PropertiesDialog dialog(QString("%1: Layer Defaults").arg(interface->layer_name), parent);
+	PropertiesDialog dialog(QObject::tr("%1: Layer Defaults").arg(interface->layer_name), parent);
 	dialog.fill(interface);
 	int dialog_code = dialog.exec();
 

@@ -116,7 +116,7 @@ void Babel::get_gpsbabel_path_from_system(void)
 	/* The path may be empty string. */
 	this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 
-	SGVariant var = SGVariant(this->gpsbabel_path.toUtf8().constData());
+	SGVariant var = SGVariant(this->gpsbabel_path);
 	Preferences::register_parameter(&prefs[0], var, PREFERENCES_GROUP_KEY_IO);
 
 	if (this->gpsbabel_path.isEmpty()) {
@@ -897,12 +897,12 @@ void BabelConverter::read_stdout_cb()
 
 
 
-BabelFileType::BabelFileType(const char * mode_, const char * name_, const char * ext_, const char * label_)
+BabelFileType::BabelFileType(const char * mode_, const QString & name_, const QString & ext_, const QString & label_)
 {
 	set_mode(&this->mode, mode_);
-	this->name = strdup(name_);
-	this->ext = strdup(ext_);
-	this->label = strdup(label_);
+	this->name = name_;
+	this->ext = ext_;
+	this->label = label_;
 
 #if 1
 	qDebug() << "II: Babel: gpsbabel file type #"
@@ -927,19 +927,16 @@ BabelFileType::BabelFileType(const char * mode_, const char * name_, const char 
 BabelFileType::~BabelFileType()
 {
 	qDebug() << "DD: Babel: delete BabelFileType" << this->name << "/" << this->label;
-	free(this->name);
-	free(this->ext);
-	free(this->label);
 }
 
 
 
 
-BabelDevice::BabelDevice(const char * mode_, const char * name_, const char * label_)
+BabelDevice::BabelDevice(const char * mode_, const QString & name_, const QString & label_)
 {
 	set_mode(&this->mode, mode_);
-	this->name = strdup(name_);
-	this->label = strndup(label_, 50); /* Limit really long label text. */
+	this->name = name_;
+	this->label = label_.left(50); /* Limit really long label text. */
 
 #if 1
 	qDebug() << "DD: Babel: new gpsbabel device:"
@@ -960,6 +957,4 @@ BabelDevice::BabelDevice(const char * mode_, const char * name_, const char * la
 BabelDevice::~BabelDevice()
 {
 	qDebug() << "DD: Babel: freeing device" << this->name << "/" << this->label;
-	free(this->name);
-	free(this->label);
 }

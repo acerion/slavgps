@@ -243,7 +243,7 @@ void TrackListDialog::copy_selected_cb(void)
 
 void TrackListDialog::add_copy_menu_item(QMenu & menu)
 {
-	QAction * qa = menu.addAction(QIcon::fromTheme("edit-copy"), QString(_("&Copy Data")));
+	QAction * qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
 }
 
@@ -255,14 +255,14 @@ void TrackListDialog::add_menu_items(QMenu & menu)
 	QAction * qa = NULL;
 
 #if 0   /* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
-	qa = menu.addAction(QIcon::fromTheme("edit-find"), QString("&Select"));
+	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("&Select"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_select_cb()));
 #endif
 
-	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View")));
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_view_cb()));
 
-	qa = menu.addAction(QString(_("&Statistics")));
+	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_stats_cb()));
 
 	this->add_copy_menu_item(menu);
@@ -567,8 +567,8 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
 
 	const QString speed_units_string = get_speed_unit_string(speed_units);
-	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(QString("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
-	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(QString("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
+	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(tr("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
+	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(tr("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
 
 	if (height_units == HeightUnit::FEET) {
 		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));

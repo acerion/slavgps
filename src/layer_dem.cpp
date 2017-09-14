@@ -1419,7 +1419,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
 		}
 	} else {
-		message = QString("Source: %1\n\nNo local DEM File!").arg(QString(remote_location));
+		message = QString("Source: %1\n\nNo local DEM File!").arg(remote_location);
 	}
 
 	/* Show the info. */
