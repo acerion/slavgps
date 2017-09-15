@@ -63,7 +63,7 @@
 #include "layers_panel.h"
 #include "preferences.h"
 #include "util.h"
-#include "window_layer_tools.h"
+#include "generic_tools.h"
 
 
 #include "layer_gps.h"

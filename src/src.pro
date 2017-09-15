@@ -71,7 +71,7 @@ SOURCES += main.cpp \
     datasource_file.cpp \
     babel.cpp \
     babel_dialog.cpp \
-    window_layer_tools.cpp \
+    generic_tools.cpp \
     viewport.cpp \
     viewport_utils.cpp \
     viewport_zoom.cpp \
@@ -180,7 +180,7 @@ HEADERS += window.h \
     goto_tool.h \
     goto_tool_xml.h \
     geonames.h \
-    window_layer_tools.h \
+    generic_tools.h \
     viewport.h \
     viewport_internal.h \
     viewport_utils.h \

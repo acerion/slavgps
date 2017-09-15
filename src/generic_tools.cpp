@@ -29,7 +29,7 @@
 #include <QDebug>
 
 #include "window.h"
-#include "window_layer_tools.h"
+#include "generic_tools.h"
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "coords.h"

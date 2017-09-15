@@ -38,7 +38,7 @@
 #include <QDebug>
 #include <QPainter>
 
-#include "window_layer_tools.h"
+#include "generic_tools.h"
 #include "viewport.h"
 #include "viewport_internal.h"
 #include "viewport_zoom.h"

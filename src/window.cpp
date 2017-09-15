@@ -33,7 +33,7 @@
 #include <QtWidgets>
 #include <QFileDialog>
 
-#include "window_layer_tools.h"
+#include "generic_tools.h"
 #include "window.h"
 #include "viewport.h"
 #include "viewport_zoom.h"
