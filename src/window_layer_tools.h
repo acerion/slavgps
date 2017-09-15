@@ -47,26 +47,21 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		QPixmap * pixmap = NULL;
-		/* Track zoom bounds for zoom tool with shift modifier: */
-		bool bounds_active = false;
-		int start_x = 0;
-		int start_y = 0;
-	} zoom_tool_state_t;
-
-	class LayerToolZoom : public LayerTool {
+	class GenericToolZoom : public LayerTool {
 	public:
-		LayerToolZoom(Window * window, Viewport * viewport);
-		~LayerToolZoom();
+		GenericToolZoom(Window * window, Viewport * viewport);
+		~GenericToolZoom();
 
 		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 
 	private:
-		void resize_pixmap(void);
-		zoom_tool_state_t * zoom = NULL;
+		/* "ztr" == "zoom to rectangle". */
+		bool ztr_is_active = false;
+		QPixmap  ztr_orig_viewport_pixmap; /* Pixmap with saved viewport's state withouth "zoom to rectangle" mark. */
+		int ztr_start_x = 0;
+		int ztr_start_y = 0;
 	};
 
 
@@ -101,6 +96,7 @@ namespace SlavGPS {
 		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		LayerToolFuncStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
 	};
 
 

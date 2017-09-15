@@ -34,9 +34,7 @@
 #include "layer_aggregate.h"
 #include "coords.h"
 #include "tree_view_internal.h"
-//#include "vikutils.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
+#include "vikutils.h"
 #include "preferences.h"
 #include "viewport_internal.h"
 #include "viewport_zoom.h"
@@ -51,13 +49,11 @@ using namespace SlavGPS;
 
 
 #ifdef WINDOWS
-/* Hopefully Alt key by default. */
 #define SG_MOVE_MODIFIER Qt::AltModifier
 #else
 /* Alt+mouse on Linux desktops tends to be used by the desktop manager.
    Thus use an alternate modifier - you may need to set something into this group.
-   Viking used GDK_MOD5_MASK.
-*/
+   Viking used GDK_MOD5_MASK. */
 #define SG_MOVE_MODIFIER Qt::ControlModifier
 #endif
 
@@ -515,12 +511,10 @@ void LayerToolRuler::deactivate_(Layer * layer)
 bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Escape) {
-#if 0
 		this->ruler->invalidate_start_coord = false;
 		this->ruler->has_start_coord = false;
 		this->deactivate_(layer);
 		return true;
-#endif
 	}
 
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
@@ -530,43 +524,15 @@ bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 
 
 
-/*
- * In case the screen size has changed
- */
-void LayerToolZoom::resize_pixmap(void)
-{
-	/* Allocate a drawing area the size of the viewport. */
-	int w1 = this->window->viewport->get_width();
-	int h1 = this->window->viewport->get_height();
-
-	if (!this->zoom->pixmap) {
-		/* Totally new. */
-		this->zoom->pixmap = new QPixmap(w1, h1); /* TODO: Where do we delete this? */
-	} else {
-
-		int w2 = this->zoom->pixmap->width();
-		int h2 = this->zoom->pixmap->height();
-
-		if (w1 != w2 || h1 != h2) {
-			/* Has changed - delete and recreate with new values. */
-			delete this->zoom->pixmap;
-			this->zoom->pixmap = new QPixmap(w1, h1); /* TODO: Where do we delete this? */
-		}
-	}
-}
-
-
-
-
 LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 {
-	return new LayerToolZoom(window, viewport);
+	return new GenericToolZoom(window, viewport);
 }
 
 
 
 
-LayerToolZoom::LayerToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.zoom";
 
@@ -579,81 +545,124 @@ LayerToolZoom::LayerToolZoom(Window * window_, Viewport * viewport_) : LayerTool
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 	//this->cursor_shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_zoom_pixbuf;
-
-	this->zoom = new zoom_tool_state_t;
 }
 
 
 
 
-LayerToolZoom::~LayerToolZoom()
+GenericToolZoom::~GenericToolZoom()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
-	delete this->zoom;
 }
 
 
 
 
-LayerToolFuncStatus LayerToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Zoom: ->handle_mouse_click() called";
+	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_click() called";
 
-	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
-#if 0
-	this->window->modified = true;
+	const unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 
-	int center_x = this->window->viewport->get_width() / 2;
-	int center_y = this->window->viewport->get_height() / 2;
+	int center_x = this->viewport->get_width() / 2;
+	int center_y = this->viewport->get_height() / 2;
 
-	bool skip_update = false;
+	/* Did the zoom operation affect viewport? */
+	bool redraw_viewport = false;
 
-	this->zoom->bounds_active = false;
+	this->ztr_is_active = false;
 
 	if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
-		/* This zoom is on the center position. */
-		this->window->viewport->set_center_screen(center_x, center_y);
+
+		/* Location at the center of viewport will be
+		   preserved (coordinate at the center before the zoom
+		   and coordinate at the center after the zoom will be
+		   the same). */
+
 		if (event->button() == Qt::LeftButton) {
-			this->window->viewport->zoom_in();
-		} else if (event->button() == Qt::RigthButton) {
-			this->window->viewport->zoom_out();
+			this->viewport->set_center_screen(center_x, center_y);
+			this->viewport->zoom_in();
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+
+		} else if (event->button() == Qt::RightButton) {
+			this->viewport->set_center_screen(center_x, center_y);
+			this->viewport->zoom_out();
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+		} else {
+			/* Ignore other buttons. */
 		}
 	} else if (modifiers == Qt::ControlModifier) {
-		/* This zoom is to recenter on the mouse position. */
-		this->window->viewport->set_center_screen(event->x(), event->y());
+
+		/* Clicked location will be put at the center of
+		   viewport (coordinate of a place under cursor before
+		   zoom will be placed at the center of viewport after
+		   zoom). */
+
 		if (event->button() == Qt::LeftButton) {
-			this->window->viewport->zoom_in();
+			this->viewport->set_center_screen(event->x(), event->y());
+			this->viewport->zoom_in();
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+
 		} else if (event->button() == Qt::RightButton) {
-			this->window->viewport->zoom_out();
+			this->viewport->set_center_screen(event->x(), event->y());
+			this->viewport->zoom_out();
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+		} else {
+			/* Ignore other buttons. */
 		}
 	} else if (modifiers == Qt::ShiftModifier) {
-		/* Get start of new zoom bounds. */
+
+		/* Beginning of "zoom in to rectangle" operation.
+		   Notice that there is no "zoom out to rectangle"
+		   operation. Get start position of zoom bounds. */
+
 		if (event->button() == Qt::LeftButton) {
-			this->zoom->bounds_active = true;
-			this->zoom->start_x = event->x();
-			this->zoom->start_y = event->y();
-			skip_update = true;
+			this->ztr_is_active = true;
+			this->ztr_start_x = event->x();
+			this->ztr_start_y = event->y();
+			this->ztr_orig_viewport_pixmap = *this->viewport->get_pixmap();
 		}
+
+		/* No zoom action (yet), so no redrawing of viewport. */
+
 	} else {
-		/* Make sure mouse is still over the same point on the map when we zoom. */
-		Coord coord = this->window->viewport->screen_to_coord(event->x(), event->y());
-		if (event->button() == Qt::LeftButton) {
-			this->window->viewport->zoom_in();
-		} else if (event->button() == Qt::RightButton) {
-			this->window->viewport->zoom_out();
-		}
+		/* Clicked location will be put after zoom at the same
+		   position in viewport as before zoom.  Before zoom
+		   the location was under cursor, and after zoom it
+		   will be still under cursor. */
+
+		Coord coord;
 		int x, y;
-		this->window->viewport->coord_to_screen(&coord, &x, &y);
-		this->window->viewport->set_center_screen(center_x + (x - event->x()),
-							  center_y + (y - event->y()));
+		if (event->button() == Qt::LeftButton) {
+			coord = this->viewport->screen_to_coord(event->x(), event->y());
+			this->viewport->zoom_in();
+			this->viewport->coord_to_screen(&coord, &x, &y);
+			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+
+		} else if (event->button() == Qt::RightButton) {
+			coord = this->viewport->screen_to_coord(event->x(), event->y());
+			this->viewport->zoom_out();
+			this->viewport->coord_to_screen(&coord, &x, &y);
+			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
+			this->window->contents_modified = true;
+			redraw_viewport = true;
+
+		} else {
+			/* Ignore other buttons. */
+		}
 	}
 
-	if (!skip_update) {
+	if (redraw_viewport) {
 		this->window->draw_update();
 	}
 
-#endif
 
 	return LayerToolFuncStatus::ACK;
 }
@@ -661,103 +670,126 @@ LayerToolFuncStatus LayerToolZoom::handle_mouse_click(Layer * layer, QMouseEvent
 
 
 
-LayerToolFuncStatus LayerToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
-#if 0
+	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_move() called";
 
-	if (this->zoom->bounds_active && modifiers == Qt::ShiftModifier) {
-		this->resize_pixmap();
+	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
 
-		/* Blank out currently drawn area. */
-		gdk_draw_drawable(this->zoom->pixmap,
-				  gtk_widget_get_style(this->window->viewport)->black_gc,
-				  this->window->viewport->get_pixmap(),
-				  0, 0, 0, 0, -1, -1);
+	if (this->ztr_is_active && modifiers != Qt::ShiftModifier) {
 
-		/* Calculate new box starting point & size in pixels. */
-		int xx, yy, width, height;
-		if (event->y() > this->zoom->start_y) {
-			yy = this->zoom->start_y;
-			height = event->y() - this->zoom->start_y;
-		} else {
-			yy = event->y();
-			height = this->zoom->start_y - event->y();
-		}
-		if (event->x() > this->zoom->start_x) {
-			xx = this->zoom->start_x;
-			width = event->x() - this->zoom->start_x;
-		} else {
-			xx = event->x();
-			width = this->zoom->start_x - event->x();
-		}
+		/* When user pressed left mouse button, he also held
+		   down Shift key.  This initiated drawing a "zoom to
+		   rectangle" box/bound.
 
-		/* Draw the box. */
-		draw_rectangle(this->zoom->pixmap, gtk_widget_get_style(this->window->viewport)->black_gc, xx, yy, width, height);
+		   Right now Shift key is released, so stop drawing
+		   the box and abort "zoom to rectangle" procedure. */
 
-		/* Only actually draw when there's time to do so. */
-		if (draw_buf_done) {
-			static draw_buf_data_t pass_along;
-			pass_along.window = gtk_widget_get_window(this->window->viewport);
-			pass_along.pen = gtk_widget_get_style(this->window->viewport)->black_gc;
-			pass_along.pixmap = this->zoom->pixmap;
-			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
-			draw_buf_done = false;
-		}
-	} else {
-		this->zoom->bounds_active = false;
+		this->ztr_is_active = false;
+		return LayerToolFuncStatus::ACK;
 	}
-#endif
+
+	/* Update shape and size of "zoom to rectangle" box. The box
+	   may grow, shrink, change proportions, but at least one of
+	   its corners is always fixed.
+
+	   Calculate new starting point & size of the box, in
+	   pixels. */
+
+	int xx, yy, width, height;
+	if (event->y() > this->ztr_start_y) {
+		yy = this->ztr_start_y;
+		height = event->y() - this->ztr_start_y;
+	} else {
+		yy = event->y();
+		height = this->ztr_start_y - event->y();
+	}
+	if (event->x() > this->ztr_start_x) {
+		xx = this->ztr_start_x;
+		width = event->x() - this->ztr_start_x;
+	} else {
+		xx = event->x();
+		width = this->ztr_start_x - event->x();
+	}
+
+
+	/* Draw the box on saved state of viewport and tell viewport to display it. */
+	QPixmap marked_pixmap = this->ztr_orig_viewport_pixmap;
+	QPainter painter(&marked_pixmap);
+	QPen new_pen(QColor("red"));
+	new_pen.setWidth(1);
+	painter.setPen(new_pen);
+	painter.drawRect(xx, yy, width, height);
+	this->viewport->set_pixmap(marked_pixmap);
+	this->viewport->update();
+
 	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-LayerToolFuncStatus LayerToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
+	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_release() called";
 
-#if 0
-	/* Ensure haven't just released on the exact same position
-	   i.e. probably haven't moved the mouse at all. */
-	if (this->zoom->bounds_active && modifiers == Qt::ShiftModifier
-	    && (event->x() < this->zoom->start_x - 5 || event->x() > this->zoom->start_x + 5)
-	    && (event->y() < this->zoom->start_y - 5 || event->y() > this->zoom->start_y + 5)) {
+	if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
+		return LayerToolFuncStatus::IGNORE;
+	}
 
-		Coord coord1 = this->window->viewport->screen_to_coord(this->zoom->start_x, this->zoom->start_y);
-		Coord coord2 = this->window->viewport->screen_to_coord(event->x(), event->y());
+	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
 
-		/* From the extend of the bounds pick the best zoom level
-		   c.f. trw_layer_zoom_to_show_latlons().
-		   Maybe refactor... */
-		struct LatLon maxmin[2];
-		maxmin[0] = coord1.get_latlon();
-		maxmin[1] = coord2.get_latlon();
+	/* Did the zoom operation affect viewport? */
+	bool redraw_viewport = false;
 
-		vu_zoom_to_show_latlons_common(this->window->viewport->get_coord_mode(), this->window->viewport, maxmin, SG_VIEWPORT_ZOOM_MIN, false);
+	if (this->ztr_is_active) {
+		/* Ensure that we haven't just released mouse button
+		   on the exact same position i.e. probably haven't
+		   moved the mouse at all. */
+		if (modifiers == Qt::ShiftModifier && (abs(event->x() - this->ztr_start_x) >= 5) && (abs(event->y() - this->ztr_start_y) >= 5)) {
+
+			Coord coord1 = this->viewport->screen_to_coord(this->ztr_start_x, this->ztr_start_y);
+			Coord coord2 = this->viewport->screen_to_coord(event->x(), event->y());
+
+			/* From the extend of the bounds pick the best zoom level
+			   c.f. trw_layer_zoom_to_show_latlons().
+			   Maybe refactor... */
+			struct LatLon maxmin[2];
+			maxmin[0] = coord1.get_latlon();
+			maxmin[1] = coord2.get_latlon();
+
+			vu_zoom_to_show_latlons_common(this->viewport->get_coord_mode(), this->viewport, maxmin, SG_VIEWPORT_ZOOM_MIN, false);
+			redraw_viewport = true;
+		}
 	} else {
-		/* When pressing shift and clicking for zoom, then jump three levels. */
+		/* When pressing shift and clicking for zoom, then
+		   change zoom by three levels (zoom in * 3, or zoom
+		   out * 3). */
 		if (modifiers == Qt::ShiftModifier) {
 			/* Zoom in/out by three if possible. */
-			this->window->viewport->set_center_screen(event->x(), event->y());
+
 			if (event->button() == Qt::LeftButton) {
-				this->window->viewport->zoom_in();
-				this->window->viewport->zoom_in();
-				this->window->viewport->zoom_in();
-			} else if (event->button() == Qt::RightButton) {
-				this->window->viewport->zoom_out();
-				this->window->viewport->zoom_out();
-				this->window->viewport->zoom_out();
+				this->viewport->set_center_screen(event->x(), event->y());
+				this->viewport->zoom_in();
+				this->viewport->zoom_in();
+				this->viewport->zoom_in();
+			} else { /* Qt::RightButton */
+				this->viewport->set_center_screen(event->x(), event->y());
+				this->viewport->zoom_out();
+				this->viewport->zoom_out();
+				this->viewport->zoom_out();
 			}
+			redraw_viewport = true;
 		}
 	}
 
-	this->window->draw_update();
+	if (redraw_viewport) {
+		this->window->draw_update();
+	}
 
-	/* Reset. */
-	this->zoom->bounds_active = false;
-#endif
+	/* Reset "zoom to rectangle" tool. */
+	this->ztr_is_active = false;
+
 	return LayerToolFuncStatus::ACK;
 }
 
@@ -797,39 +829,42 @@ LayerToolPan::~LayerToolPan()
 
 
 
-/* NB Double clicking means this gets called THREE times!!! */
 LayerToolFuncStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_click() called";
-	this->window->modified = true;
-#if 0
-	if (event->type == GDK_2BUTTON_PRESS) {
-		/* Zoom in / out on double click.
-		   No need to change the center as that has already occurred in the first click of a double click occurrence. */
-		if (event->button() == Qt::LeftButton) {
-			unsigned int modifier = event->modifiers() & Qt::ShiftModifier;
-			if (modifier) {
-				this->window->viewport->zoom_out();
-			} else {
-				this->window->viewport->zoom_in();
-			}
-		} else if (event->button() == Qt::RightButton) {
-			this->window->viewport->zoom_out();
-		}
+	this->window->contents_modified = true;
 
-		this->window->draw_update();
-	} else {
-#endif
-
-		qDebug() << "DD: Layer Tools: Pan: ->click() called, checking button";
-		/* Standard pan click. */
-		if (event->button() == Qt::LeftButton) {
-			qDebug() << "DD: Layer Tools: Pan click: window->pan_click()";
-			this->window->pan_click(event);
-		}
-#if 0
+	/* Standard pan click. */
+	if (event->button() == Qt::LeftButton) {
+		qDebug() << "DD: Layer Tools: Pan click: window->pan_click()";
+		this->window->pan_click(event);
 	}
-#endif
+
+	return LayerToolFuncStatus::ACK;
+}
+
+
+LayerToolFuncStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+{
+	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_double_click() called";
+	this->window->contents_modified = true;
+
+	/* Zoom in / out on double click.
+	   No need to change the center as that has already occurred in the first click of a double click occurrence. */
+	if (event->button() == Qt::LeftButton) {
+		if (event->modifiers() & Qt::ShiftModifier) {
+			this->window->viewport->zoom_out();
+		} else {
+			this->window->viewport->zoom_in();
+		}
+	} else if (event->button() == Qt::RightButton) {
+		this->window->viewport->zoom_out();
+	} else {
+		/* Ignore other mouse buttons. */
+	}
+
+	this->window->draw_update();
+
 	return LayerToolFuncStatus::ACK;
 }
 
@@ -916,26 +951,7 @@ LayerToolFuncStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEve
 		   layers? Shouldn't we visit only selected items and
 		   its children? */
 
-		bool handled = this->window->layers_panel->get_top_layer()->select_click(event, this->window->viewport, this);
-
-#if 0
-		/* Enable click to apply callback to potentially all track/waypoint layers. */
-		/* Useful as we can find things that aren't necessarily in the currently selected layer. */
-		std::list<Layer const *> * layers = this->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); /* Don't get invisible layers. */
-
-		bool handled = false;
-		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-			/* Stop on first layer that reports "we clicked on some object in this layer". */
-			if (layer->visible) {
-				if (layer->select_click(event, this->window->viewport, this)) {
-					handled = true;
-					break;
-				}
-			}
-		}
-		delete layers;
-#endif
-
+		const bool handled = this->window->layers_panel->get_top_layer()->select_click(event, this->window->viewport, this);
 		if (!handled) {
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 

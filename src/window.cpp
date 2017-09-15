@@ -986,7 +986,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	if (this->layers_panel->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
 		this->draw_update();
-		this->modified = true;
+		this->contents_modified = true;
 	}
 
 }
@@ -1554,7 +1554,7 @@ bool Window::get_pan_move(void)
 void Window::menu_edit_cut_cb(void)
 {
 	this->layers_panel->cut_selected_cb();
-	this->modified = true;
+	this->contents_modified = true;
 }
 
 
@@ -1573,7 +1573,7 @@ void Window::menu_edit_copy_cb(void)
 void Window::menu_edit_paste_cb(void)
 {
 	if (this->layers_panel->paste_selected_cb()) {
-		this->modified = true;
+		this->contents_modified = true;
 	}
 }
 
@@ -1584,7 +1584,7 @@ void Window::menu_edit_delete_cb(void)
 {
 	if (this->layers_panel->get_selected_layer()) {
 		this->layers_panel->delete_selected_cb();
-		this->modified = true;
+		this->contents_modified = true;
 	} else {
 		Dialog::info(tr("You must select a layer to delete."), this);
 	}
@@ -1715,7 +1715,7 @@ void Window::closeEvent(QCloseEvent * ev)
 {
 #if 0
 #ifdef VIKING_PROMPT_IF_MODIFIED
-	if (window->modified)
+	if (window->contents_modified)
 #else
 	if (0)
 #endif
@@ -2346,7 +2346,7 @@ void Window::open_file_cb(void)
 #ifdef K
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
-		if ((window->modified || window->filename) && newwindow) {
+		if ((window->contents_modified || window->filename) && newwindow) {
 #else
 		if (window->filename && newwindow) {
 #endif
@@ -2490,7 +2490,7 @@ bool Window::menu_file_save_cb(void)
 	if (!this->filename) {
 		return this->menu_file_save_as_cb();
 	} else {
-		this->modified = false;
+		this->contents_modified = false;
 		return this->window_save();
 	}
 }
@@ -2546,7 +2546,7 @@ bool Window::menu_file_save_as_cb(void)
 			this->set_filename(fn);
 			rv = this->window_save();
 			if (rv) {
-				this->modified = false;
+				this->contents_modified = false;
 				free(last_folder_files_uri);
 				last_folder_files_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
 			}

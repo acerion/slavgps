@@ -279,7 +279,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			this->current_wp = wp_search.closest_wp;
 
 #ifdef K
-			if (ev->type == GDK_2BUTTON_PRESS) {
+			if (ev->type == GDK_2BUTTON_PRESS) { /* Mouse button has been double-clicked. */
 				if (this->current_wp->image) {
 					trw_menu_sublayer_t data;
 					memset(&data, 0, sizeof (trw_menu_sublayer_t));

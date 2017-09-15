@@ -115,7 +115,12 @@ namespace SlavGPS {
 
 		SlavGPS::LayersPanel * layers_panel = NULL;
 		SlavGPS::Viewport * viewport = NULL;
-		bool modified = false;
+
+		/* Flag set when contents of project is modified. This
+		   flag is set only in a handful of situations. Adding
+		   new waypoint or track doesn't set this flag, so its
+		   usefulness is questionable. */
+		bool contents_modified = false;
 
 		void statusbar_update(StatusBarField field, QString const & message);
 
