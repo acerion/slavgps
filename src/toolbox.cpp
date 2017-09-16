@@ -38,7 +38,7 @@
 #include <QDebug>
 
 #include "window.h"
-#include "layer_toolbox.h"
+#include "toolbox.h"
 #include "layers_panel.h"
 #include "viewport_internal.h"
 

@@ -46,7 +46,7 @@
 #include "coords.h"
 #include "dem_cache.h"
 #include "mapcoord.h"
-#include "layer_toolbox.h"
+#include "toolbox.h"
 #include "preferences.h"
 #include "widget_list_selection.h"
 

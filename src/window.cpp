@@ -40,7 +40,7 @@
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
-#include "layer_toolbox.h"
+#include "toolbox.h"
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layer_map.h"

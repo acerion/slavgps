@@ -89,7 +89,7 @@ SOURCES += main.cpp \
     layer_trw_containers.cpp \
     layer_trw_menu.cpp \
     layers_panel.cpp \
-    layer_toolbox.cpp \
+    toolbox.cpp \
     track.cpp \
     track_properties_dialog.cpp \
     track_profile_dialog.cpp \
@@ -200,7 +200,7 @@ HEADERS += window.h \
     layer_trw_containers.h \
     layer_trw_dialogs.h \
     layers_panel.h \
-    layer_toolbox.h \
+    toolbox.h \
     track.h \
     track_internal.h \
     track_properties_dialog.h \
