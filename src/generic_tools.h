@@ -59,22 +59,17 @@ namespace SlavGPS {
 	private:
 		/* "ztr" == "zoom to rectangle". */
 		bool ztr_is_active = false;
-		QPixmap  ztr_orig_viewport_pixmap; /* Pixmap with saved viewport's state withouth "zoom to rectangle" mark. */
 		int ztr_start_x = 0;
 		int ztr_start_y = 0;
+		QPixmap ztr_orig_viewport_pixmap; /* Pixmap with saved viewport's state without "zoom to rectangle" mark. */
 	};
 
 
-	typedef struct {
-		bool has_start_coord = false;
-		Coord start_coord;
-		bool invalidate_start_coord = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
-	} ruler_tool_state_t;
 
-	class LayerToolRuler : public LayerTool {
+	class GenericToolRuler : public LayerTool {
 	public:
-		LayerToolRuler(Window * window, Viewport * viewport);
-		~LayerToolRuler();
+		GenericToolRuler(Window * window, Viewport * viewport);
+		~GenericToolRuler();
 
 		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
@@ -83,8 +78,15 @@ namespace SlavGPS {
 		bool key_press_(Layer * layer, QKeyEvent * event);
 
 	private:
-		ruler_tool_state_t * ruler = NULL;
-		static void draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance);
+		void draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance);
+
+		QPen pen;
+
+		QPixmap orig_viewport_pixmap; /* Pixmap with saved viewport's state without ruler drawn on top of it. */
+
+		bool has_start_coord = false;
+		Coord start_coord;
+		bool invalidate_start_coord = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
 	};
 
 

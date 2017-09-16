@@ -90,12 +90,12 @@ static int draw_buf(draw_buf_data_t * data)
    @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
    @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
 */
-void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance)
+void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance)
 {
 	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
 #if 0
 	PangoLayout *pl;
-	QPen * lab_pen = viewport->new_pen("#cccccc", 1);
+	QPen * lab_pen = this->viewport->new_pen("#cccccc", 1);
 	QPen * thick_pen = gdk_gc_new(d);
 #endif
 
@@ -106,9 +106,6 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 	double s = sin(DEG2RAD(15.0));
 	double angle;
 	double baseangle = 0;
-
-	QPainter painter(pixmap);
-	painter.setPen(pen);
 
 	/* Draw line with arrow ends. */
 	{
@@ -151,10 +148,10 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 	{
 		// "#2255cc", GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER;
 
-		viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
+		this->viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
 		float start_angle = (90 - RAD2DEG(baseangle)) * 16;
 		float span_angle = -RAD2DEG(angle) * 16;
-		fprintf(stderr, "DD: Layer Tools: Ruler: draw in rectangle %d %d %d %d / %f / %f\n", x1-CR+dist/2, y1-CR+dist/2, 2*CR-dist, 2*CR-dist, start_angle, span_angle);
+		fprintf(stderr, "DD: Generic Tool Ruler: draw in rectangle %d %d %d %d / %f / %f\n", x1-CR+dist/2, y1-CR+dist/2, 2*CR-dist, 2*CR-dist, start_angle, span_angle);
 		QPen new_pen(QColor("red"));
 		new_pen.setWidth(dist);
 		painter.setPen(new_pen);
@@ -255,7 +252,7 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 				yd = (y1 + y2) / 2 - hd / 2 + dx;
 			}
 
-			if (xd < -5 || yd < -5 || xd > viewport->get_width() + 5 || yd > viewport->get_height() + 5) {
+			if (xd < -5 || yd < -5 || xd > this->viewport->get_width() + 5 || yd > this->viewport->get_height() + 5) {
 				xd = x2 + 10;
 				yd = y2 - 5;
 			}
@@ -275,7 +272,7 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 			xb = x1 + CR * cos(angle - M_PI_2);
 			yb = y1 + CR * sin(angle - M_PI_2);
 
-			if (xb < -5 || yb < -5 || xb > viewport->get_width() + 5 || yb > viewport->get_height() + 5) {
+			if (xb < -5 || yb < -5 || xb > this->viewport->get_width() + 5 || yb > this->viewport->get_height() + 5) {
 				xb = x2 + 10;
 				yb = y2 + 10;
 			}
@@ -306,13 +303,13 @@ void LayerToolRuler::draw(Viewport * viewport, QPixmap * pixmap, QPen & pen, int
 
 LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 {
-	return new LayerToolRuler(window, viewport);
+	return new GenericToolRuler(window, viewport);
 }
 
 
 
 
-LayerToolRuler::LayerToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.ruler";
 
@@ -326,62 +323,74 @@ LayerToolRuler::LayerToolRuler(Window * window_, Viewport * viewport_) : LayerTo
 	//shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_ruler_pixbuf;
 
-	this->ruler = new ruler_tool_state_t;
+	//gtk_widget_get_style(this->viewport)->black_gc,
+	this->pen.setColor("black");
+	this->pen.setWidth(1);
 }
 
 
 
 
-LayerToolRuler::~LayerToolRuler()
+GenericToolRuler::~GenericToolRuler()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
-	delete this->ruler;
 }
 
 
 
 
-LayerToolFuncStatus LayerToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Ruler: ->handle_mouse_click() called";
-
-	char temp[128] = { 0 };
+	qDebug() << "DD: Generic Tool Ruler: ->handle_mouse_click() called";
 
 	if (event->button() == Qt::LeftButton) {
-		char * lat = NULL;
-		char * lon = NULL;
-		Coord coord = this->viewport->screen_to_coord(event->x(), event->y());
-		struct LatLon ll = coord.get_latlon();
-		a_coords_latlon_to_string(&ll, &lat, &lon);
-		if (this->ruler->has_start_coord) {
+
+		QString msg;
+
+		const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+
+		QString lat;
+		QString lon;
+		CoordUtils::to_strings(lat, lon, cursor_coord.get_latlon());
+
+		if (this->has_start_coord) {
 			DistanceUnit distance_unit = Preferences::get_unit_distance();
 			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
-				sprintf(temp, "%s %s DIFF %f meters", lat, lon, Coord::distance(coord, this->ruler->start_coord));
+				msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
 				break;
 			case DistanceUnit::MILES:
-				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(Coord::distance(coord, this->ruler->start_coord)));
+				msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES(Coord::distance(cursor_coord, this->start_coord)));
 				break;
 			case DistanceUnit::NAUTICAL_MILES:
-				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(Coord::distance(coord, this->ruler->start_coord)));
+				msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES(Coord::distance(cursor_coord, this->start_coord)));
 				break;
 			default:
-				sprintf(temp, "Just to keep the compiler happy");
-				qDebug() << "EE: Layer Tools: Ruler click: invalid distance unit:" << (int) distance_unit;
+				qDebug() << "EE: Generic Tool Ruler: handle mouse click: invalid distance unit:" << (int) distance_unit;
 			}
 
-			qDebug() << "II: Layer Tools: Ruler: second click, dropping start coordinates";
-			this->ruler->has_start_coord = false;
+			qDebug() << "II: Generic Tool Ruler: second click, dropping start coordinates";
+
+
+
+			this->has_start_coord = false;
+
+			/* Restore clean viewport (clean == without ruler drawn on top of it). */
+			this->viewport->set_pixmap(this->orig_viewport_pixmap);
+			this->viewport->update();
 		} else {
-			sprintf(temp, "%s %s", lat, lon);
-			qDebug() << "II: Layer Tools: Ruler: first click, saving start coordinates";
-			this->ruler->has_start_coord = true;
+			msg = QObject::tr("%1 %2").arg(lat).arg(lon);
+			qDebug() << "II: Generic Tool Ruler: first click, saving start coordinates";
+
+			/* Save clean viewport (clean == without ruler drawn on top of it). */
+			this->orig_viewport_pixmap = *this->viewport->get_pixmap();
+
+			this->has_start_coord = true;
 		}
 
-		QString message(temp);
-		this->window->get_statusbar()->set_message(StatusBarField::INFO, message);
-		this->ruler->start_coord = coord;
+		this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
+		this->start_coord = cursor_coord;
 	} else {
 		this->viewport->set_center_screen(event->x(), event->y());
 		this->window->draw_update_cb();
@@ -393,90 +402,55 @@ LayerToolFuncStatus LayerToolRuler::handle_mouse_click(Layer * layer, QMouseEven
 
 
 
-LayerToolFuncStatus LayerToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Ruler: ->handle_mouse_move()";
+	qDebug() << "DD: Generic Tool Ruler: ->handle_mouse_move() called";
 
-	char temp[128] = { 0 };
-
-	if (!this->ruler->has_start_coord) {
-		qDebug() << "II: Layer Tools: Ruler: not drawing, we don't have start coordinates";
+	if (!this->has_start_coord) {
+		qDebug() << "II: Generic Tool Ruler: not drawing, we don't have start coordinates";
 		return LayerToolFuncStatus::ACK;
 	}
 
-	static QPixmap * buf = NULL;
-	char * lat = NULL;
-	char * lon = NULL;
-	int w1 = this->viewport->get_width();
-	int h1 = this->viewport->get_height();
-	if (!buf) {
-		qDebug() << "II: Layer Tools: Ruler: creating new pixmap of size" << w1 << h1;
-		buf = new QPixmap(w1, h1);
-	} else {
-		if (w1 != buf->width() || h1 != buf->height()) {
-			qDebug() << "EE: Layer Tools: Ruler: discarding old pixmap, creating new pixmap of size" << w1 << h1;
-			delete buf;
-			buf = new QPixmap(w1, h1);
-		}
-	}
-	buf->fill(QColor("transparent"));
-	//buf->fill();
-
-	Coord coord = this->viewport->screen_to_coord(event->x(), event->y());
-	struct LatLon ll = coord.get_latlon();
+	const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
 
 	int start_x;
 	int start_y;
-	this->viewport->coord_to_screen(&this->ruler->start_coord, &start_x, &start_y);
+	this->viewport->coord_to_screen(&this->start_coord, &start_x, &start_y);
 
-	//gdk_draw_drawable(buf, gtk_widget_get_style(this->viewport)->black_gc,
-	//		  this->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
+	QPixmap marked_pixmap = this->orig_viewport_pixmap;
+	//marked_pixmap.fill(QColor("transparent"));
 
-	QPen pen("black");
-	pen.setWidth(1);
-	LayerToolRuler::draw(this->viewport, buf, pen, start_x, start_y, event->x(), event->y(), Coord::distance(coord, this->ruler->start_coord));
+	QPainter painter(&marked_pixmap);
+	//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-	if (draw_buf_done) {
-#if 0
-		static draw_buf_data_t pass_along;
-		pass_along.window = gtk_widget_get_window(this->viewport);
-		pass_along.pen = gtk_widget_get_style(this->viewport)->black_gc;
-		pass_along.pixmap = buf;
-		g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
-		draw_buf_done = false;
+	this->draw(painter, start_x, start_y, event->x(), event->y(), Coord::distance(cursor_coord, this->start_coord));
+	this->viewport->set_pixmap(marked_pixmap);
+	this->viewport->update();
 
-#else
-		QPainter painter(this->viewport->scr_buffer);
-		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-		painter.drawPixmap(0, 0, *buf);
-		this->viewport->update();
-		draw_buf_done = true;
-#endif
+	QString lat;
+	QString lon;
+	CoordUtils::to_strings(lat, lon, cursor_coord.get_latlon());
 
-	}
-
-
-	a_coords_latlon_to_string(&ll, &lat, &lon);
+	QString msg;
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		sprintf(temp, "%s %s DIFF %f meters", lat, lon, Coord::distance(coord, this->ruler->start_coord));
+		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
 		break;
 	case DistanceUnit::MILES:
-		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (Coord::distance(coord, this->ruler->start_coord)));
+		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (Coord::distance(cursor_coord, this->start_coord)));
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(coord, this->ruler->start_coord)));
+		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(cursor_coord, this->start_coord)));
 		break;
 	default:
-		sprintf(temp, "Just to keep the compiler happy");
-		qDebug() << "EE: Layer Tools: Ruler move: unknown distance unit:" << (int) distance_unit;
+		qDebug() << "EE: Generic Tool Ruler: handle mouse move: unknown distance unit:" << (int) distance_unit;
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::INFO, QString(temp));
+	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
-	this->ruler->invalidate_start_coord = true;
+	this->invalidate_start_coord = true;
 
 	return LayerToolFuncStatus::ACK;
 }
@@ -484,14 +458,14 @@ LayerToolFuncStatus LayerToolRuler::handle_mouse_move(Layer * layer, QMouseEvent
 
 
 
-LayerToolFuncStatus LayerToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerToolFuncStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "II: Layer Tools: Ruler: ->release()";
-	if (this->ruler->invalidate_start_coord) {
+	qDebug() << "II: Generic Tool Ruler: ->handle_mouse_release() called";
+	if (this->invalidate_start_coord) {
 		/* In ->move() we have been using ->start_coord to draw a ruler.
 		   Now the ->start_coord is unnecessary and should be discarded. */
-		this->ruler->invalidate_start_coord = false;
-		this->ruler->has_start_coord = false;
+		this->invalidate_start_coord = false;
+		this->has_start_coord = false;
 	}
 	return LayerToolFuncStatus::ACK;
 }
@@ -499,20 +473,25 @@ LayerToolFuncStatus LayerToolRuler::handle_mouse_release(Layer * layer, QMouseEv
 
 
 
-void LayerToolRuler::deactivate_(Layer * layer)
+void GenericToolRuler::deactivate_(Layer * layer)
 {
-	qDebug() << "II: Layer Tools: Ruler: ->deactivate() called";
+	qDebug() << "II: Generic Tool Ruler: ->deactivate() called";
 	this->window->draw_update_cb();
 }
 
 
 
 
-bool LayerToolRuler::key_press_(Layer * layer, QKeyEvent * event)
+bool GenericToolRuler::key_press_(Layer * layer, QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Escape) {
-		this->ruler->invalidate_start_coord = false;
-		this->ruler->has_start_coord = false;
+		this->invalidate_start_coord = false;
+		this->has_start_coord = false;
+
+		/* Restore clean viewport (clean == without ruler drawn on top of it). */
+		this->viewport->set_pixmap(this->orig_viewport_pixmap);
+		this->viewport->update();
+
 		this->deactivate_(layer);
 		return true;
 	}
@@ -636,20 +615,19 @@ LayerToolFuncStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEve
 		   the location was under cursor, and after zoom it
 		   will be still under cursor. */
 
-		Coord coord;
 		int x, y;
 		if (event->button() == Qt::LeftButton) {
-			coord = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
 			this->viewport->zoom_in();
-			this->viewport->coord_to_screen(&coord, &x, &y);
+			this->viewport->coord_to_screen(&cursor_coord, &x, &y);
 			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			coord = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
 			this->viewport->zoom_out();
-			this->viewport->coord_to_screen(&coord, &x, &y);
+			this->viewport->coord_to_screen(&cursor_coord, &x, &y);
 			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
@@ -748,15 +726,15 @@ LayerToolFuncStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseE
 		   moved the mouse at all. */
 		if (modifiers == Qt::ShiftModifier && (abs(event->x() - this->ztr_start_x) >= 5) && (abs(event->y() - this->ztr_start_y) >= 5)) {
 
-			Coord coord1 = this->viewport->screen_to_coord(this->ztr_start_x, this->ztr_start_y);
-			Coord coord2 = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord start_coord = this->viewport->screen_to_coord(this->ztr_start_x, this->ztr_start_y);
+			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
 
 			/* From the extend of the bounds pick the best zoom level
 			   c.f. trw_layer_zoom_to_show_latlons().
 			   Maybe refactor... */
 			struct LatLon maxmin[2];
-			maxmin[0] = coord1.get_latlon();
-			maxmin[1] = coord2.get_latlon();
+			maxmin[0] = start_coord.get_latlon();
+			maxmin[1] = cursor_coord.get_latlon();
 
 			vu_zoom_to_show_latlons_common(this->viewport->get_coord_mode(), this->viewport, maxmin, SG_VIEWPORT_ZOOM_MIN, false);
 			redraw_viewport = true;
@@ -787,7 +765,10 @@ LayerToolFuncStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseE
 		this->window->draw_update();
 	}
 
-	/* Reset "zoom to rectangle" tool. */
+	/* Reset "zoom to rectangle" tool.
+	   If there was any rectangle drawn in viewport, it has
+	   already been erased when zoomed-in or zoomed-out viewport
+	   has been redrawn from scratch. */
 	this->ztr_is_active = false;
 
 	return LayerToolFuncStatus::ACK;
