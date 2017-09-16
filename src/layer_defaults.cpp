@@ -43,9 +43,9 @@ using namespace SlavGPS;
 
 
 
-static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success);
-static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype);
-static void write_parameter_value(const SGVariant & value, const char * group, const char * name, SGVariantType ptype);
+static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success);
+static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype);
+static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 
 #if 0
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, Parameter * params);
@@ -73,11 +73,12 @@ static bool loaded;
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype, bool * success)
+static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success)
 {
 	SGVariant value;
+	QString group = Layer::get_type_string(layer_type);
 
-	QString key(QString(group) + QString("/") + QString(name));
+	QString key(group + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
 
 	if (!variant.isValid()) {
@@ -136,11 +137,11 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static SGVariant read_parameter_value(const char * group, const char * name, SGVariantType ptype)
+static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype)
 {
 	bool success = true;
 	/* This should always succeed - don't worry about 'success'. */
-	return read_parameter_value(group, name, ptype, &success);
+	return read_parameter_value(layer_type, name, ptype, &success);
 }
 
 
@@ -149,7 +150,7 @@ static SGVariant read_parameter_value(const char * group, const char * name, SGV
 /* "write" is supposed to indicate that this is a low-level function,
    writing directly to file, even though the writing is made to QT
    abstraction of settings file. */
-static void write_parameter_value(const SGVariant & value, const char * group, const char * name, SGVariantType ptype)
+static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype)
 {
 	QVariant variant;
 
@@ -178,7 +179,8 @@ static void write_parameter_value(const SGVariant & value, const char * group, c
 		return;
 	}
 
-	QString key(QString(group) + QString("/") + QString(name));
+	const QString group = Layer::get_type_string(layer_type);
+	QString key(group + QString("/") + QString(name));
 	keyfile->setValue(key, variant);
 }
 
@@ -193,7 +195,7 @@ static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVaria
 	int index = KPOINTER_TO_INT (index_ptr);
 	Parameter * layer_param = default_parameters.at(index + id);
 
-	write_parameter_value(value, Layer::get_interface(layer_param->layer_type)->layer_type_string, layer_param->name, layer_param->type);
+	write_parameter_value(value, layer_param->layer_type, layer_param->name, layer_param->type);
 }
 
 
@@ -205,7 +207,7 @@ static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool not
 	int index = (int) (long) (index_ptr);
 	Parameter * layer_param = default_parameters.at(index + id);
 
-	return read_parameter_value(Layer::get_interface(layer_param->layer_type)->layer_type_string, layer_param->name, layer_param->type);
+	return read_parameter_value(layer_param->layer_type, layer_param->name, layer_param->type);
 }
 
 
@@ -229,11 +231,11 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 		bool success = false;
 		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
-		read_parameter_value(Layer::get_interface(layer_type)->layer_type_string, param->name, param->type, &success);
+		read_parameter_value(layer_type, param->name, param->type, &success);
 		if (!success) {
 			SGVariant value;
 			if (parameter_get_hardwired_value(value, *param)) {
-				write_parameter_value(value, Layer::get_interface(layer_type)->layer_type_string, param->name, param->type);
+				write_parameter_value(value, layer_type, param->name, param->type);
 			}
 		}
 	}
@@ -309,7 +311,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
-	PropertiesDialog dialog(QObject::tr("%1: Layer Defaults").arg(interface->layer_name), parent);
+	PropertiesDialog dialog(interface->ui_labels.layer_defaults, parent);
 	dialog.fill(interface);
 	int dialog_code = dialog.exec();
 
@@ -320,7 +322,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
-			write_parameter_value(param_value, interface->layer_type_string, iter->second->name, iter->second->type);
+			write_parameter_value(param_value, layer_type, iter->second->name, iter->second->type);
 		}
 
 		layer_defaults_save_to_file();
@@ -335,20 +337,20 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 
 /**
- * @layer_param:     The parameter
- * @default_value:   The default value
- * @layer_name:      The layer in which the parameter resides
- *
- * Call this function on to set the default value for the particular parameter.
- */
-void LayerDefaults::set(const char * layer_name, Parameter * layer_param, const SGVariant & default_value)
+   @layer_param:     The parameter
+   @default_value:   The default value
+   @layer_type:      Type of layer in which the parameter resides
+
+   Call this function on to set the default value for the particular parameter.
+*/
+void LayerDefaults::set(LayerType layer_type, Parameter * layer_param, const SGVariant & default_value)
 {
 	/* Copy value. */
 	Parameter * new_param = new Parameter;
 	*new_param = *layer_param;
 	default_parameters.push_back(new_param);
 
-	write_parameter_value(default_value, layer_name, layer_param->name, layer_param->type);
+	write_parameter_value(default_value, layer_type, layer_param->name, layer_param->type);
 }
 
 
@@ -390,7 +392,7 @@ void LayerDefaults::uninit(void)
  *
  * Call this function to get the default value for the parameter requested.
  */
-SGVariant LayerDefaults::get(const char * layer_name, const char * param_name, SGVariantType param_type)
+SGVariant LayerDefaults::get(LayerType layer_type, const char * param_name, SGVariantType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -399,7 +401,7 @@ SGVariant LayerDefaults::get(const char * layer_name, const char * param_name, S
 		loaded = true;
 	}
 
-	return read_parameter_value(layer_name, param_name, param_type);
+	return read_parameter_value(layer_type, param_name, param_type);
 }
 
 

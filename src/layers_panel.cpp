@@ -473,7 +473,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
-	Layer * layer = Layer::new_(layer_type, this->viewport);
+	Layer * layer = Layer::construct_layer(layer_type, this->viewport);
 	if (!layer) {
 		return false;
 	}
@@ -488,13 +488,13 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 		/* We translate the name here in order to avoid translating name set by user.
 		   TODO: translate the string. */
-		layer->rename(interface->layer_name);
+		layer->rename(Layer::get_type_ui_label(layer_type));
 	}
 
 	this->add_layer(layer);
 
 	this->viewport->configure();
-	qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << interface->layer_type_string;
+	qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
 	layer->draw(this->viewport);
 
 	return true;

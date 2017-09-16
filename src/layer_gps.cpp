@@ -297,16 +297,16 @@ LayerGPSInterface::LayerGPSInterface()
 	this->parameters_c = gps_layer_params;       /* Parameters. */
 	this->parameter_groups = g_params_groups; /* Parameter groups. */
 
-	strncpy(this->layer_type_string, "GPS", sizeof (this->layer_type_string)); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "GPS"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("GPS");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New GPS Layer");
+	this->ui_labels.layer_type = QObject::tr("GPS");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GPS Layer");
 }
 
 
@@ -1963,7 +1963,7 @@ LayerGPS::LayerGPS()
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
 	this->set_initial_parameter_values();
-	this->rename(vik_gps_layer_interface.layer_name);
+	this->rename(Layer::get_type_ui_label(this->type));
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW();

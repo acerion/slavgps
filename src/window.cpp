@@ -591,10 +591,10 @@ void Window::create_actions(void)
 		{
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
 
-			for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-				qa = defaults_submenu->addAction("&" + QString(Layer::get_interface(i)->layer_name) + "...");
-				qa->setData(QVariant((int) i));
-				qa->setIcon(Layer::get_interface(i)->action_icon);
+			for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
+				qa->setData(QVariant((int) type));
+				qa->setIcon(Layer::get_interface(type)->action_icon);
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_layer_defaults_cb()));
 			}
 		}
@@ -981,7 +981,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	LayerType layer_type = (LayerType) qa->data().toInt();
 
-	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
+	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 	if (this->layers_panel->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
@@ -1068,10 +1068,9 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 void Window::handle_selection_of_layer(Layer * layer)
 {
-	const QString layer_type = layer->get_type_id_string();
-	qDebug() << "II: Window: selected layer type" << layer_type;
+	qDebug() << "II: Window: selected layer type" << layer->get_type_ui_label();
 
-	this->toolbox->handle_selection_of_layer(layer_type);
+	this->toolbox->handle_selection_of_layer(layer->get_type_string());
 }
 
 
@@ -1168,11 +1167,11 @@ QMenu * Window::get_layer_menu(QMenu * menu)
 
 QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 {
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
 
-		const LayerInterface * iface = Layer::get_interface(i);
+		const LayerInterface * iface = Layer::get_interface(type);
 
-		QVariant variant((int) i);
+		QVariant variant((int) type);
 		QAction * qa = new QAction(iface->ui_labels.new_layer, this);
 		qa->setData(variant);
 		qa->setIcon(iface->action_icon);
@@ -1236,9 +1235,9 @@ void Window::create_ui(void)
 
 	{
 		LayerInterface * interface = NULL;
-		for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
 
-			interface = Layer::get_interface(i);
+			interface = Layer::get_interface(type);
 
 			if (interface->layer_tool_constructors.empty()) {
 				continue;
@@ -1247,7 +1246,7 @@ void Window::create_ui(void)
 			this->menu_tools->addSeparator();
 
 			QActionGroup * group = new QActionGroup(this);
-			group->setObjectName(interface->layer_name);
+			group->setObjectName(Layer::get_type_string(type));
 
 			unsigned int j = 0;
 			for (j = 0; j < interface->layer_tool_constructors.size(); j++) {
@@ -1256,7 +1255,7 @@ void Window::create_ui(void)
 				QAction * qa = this->toolbox->add_tool(layer_tool);
 				group->addAction(qa);
 
-				assert (layer_tool->layer_type == i);
+				assert (layer_tool->layer_type == type);
 			}
 			this->toolbar->addActions(group->actions());
 			this->menu_tools->addActions(group->actions());
@@ -1342,45 +1341,45 @@ void Window::create_ui(void)
 		radio_actions[n_radio_actions].value = n_radio_actions;
 	}
 
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
 		GtkActionEntry action;
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/",
-				      Layer::get_interface(i)->name,
-				      Layer::get_interface(i)->name,
+				      Layer::get_interface(type)->name,
+				      Layer::get_interface(type)->name,
 				      GTK_UI_MANAGER_MENUITEM, false);
 
-		GtkIconSet * icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(Layer::get_interface(i)->icon, false, NULL));
-		gtk_icon_factory_add(icon_factory, Layer::get_interface(i)->name, icon_set);
+		GtkIconSet * icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(Layer::get_interface(type)->icon, false, NULL));
+		gtk_icon_factory_add(icon_factory, Layer::get_interface(type)->name, icon_set);
 		gtk_icon_set_unref(icon_set);
 
-		action.name = Layer::get_interface(i)->name;
-		action.action_icon_path = Layer::get_interface(i)->name;
-		action.action_label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(i)->name);
+		action.name = Layer::get_interface(type)->name;
+		action.action_icon_path = Layer::get_interface(type)->name;
+		action.action_label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(type)->name);
 		action.action_tooltip = NULL;
-		action.action_accelerator = Layer::get_interface(i)->accelerator;
+		action.action_accelerator = Layer::get_interface(type)->accelerator;
 		action.callback = (GCallback)menu_layer_new_cb;
 		gtk_action_group_add_actions(action_group, &action, 1, window);
 
 		free((char*)action.label);
 
-		if (Layer::get_interface(i)->tools_count) {
-			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", Layer::get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
+		if (Layer::get_interface(type)->tools_count) {
+			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", Layer::get_interface(type)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
 		}
 
 
 		GtkActionEntry action_dl;
-		char *layername = g_strdup_printf("Layer%s", Layer::get_interface(i)->layer_type_string);
+		char *layername = g_strdup_printf("Layer%s", Layer::get_type_string(type));
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
-				      Layer::get_interface(i)->name,
+				      Layer::get_interface(type)->name,
 				      layername,
 				      GTK_UI_MANAGER_MENUITEM, false);
 		free(layername);
 
 		// For default layers use action names of the form 'Layer<LayerName>'
 		// This is to avoid clashing with just the layer name used above for the tool actions
-		action_dl.name = g_strconcat("Layer", Layer::get_interface(i)->layer_type_string, NULL);
+		action_dl.name = g_strconcat("Layer", Layer::get_type_string(type), NULL);
 		action_dl.action_icon_path = NULL;
-		action_dl.action_label = g_strconcat("_", Layer::get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
+		action_dl.action_label = g_strconcat("_", Layer::get_interface(type)->name, "...", NULL); // Prepend marker for keyboard accelerator
 		action_dl.action_tooltip = NULL;
 		// action_dl.action_accelerator = ...; /* Empty accelerator. */
 		action_dl.callback = (GCallback)layer_defaults_cb;
@@ -1395,10 +1394,10 @@ void Window::create_ui(void)
 
 	gtk_ui_manager_insert_action_group(uim, action_group, 0);
 
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		for (unsigned int j = 0; j < Layer::get_interface(i)->layer_tools.size(); j++) {
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+		for (unsigned int j = 0; j < Layer::get_interface(type)->layer_tools.size(); j++) {
 			GtkAction * action = gtk_action_group_get_action(action_group,
-									 Layer::get_interface(i)->layer_tools[j]->id_string);
+									 Layer::get_interface(type)->layer_tools[j]->id_string);
 			g_object_set(action, "sensitive", false, NULL);
 		}
 	}
@@ -2268,7 +2267,7 @@ void Window::show_layer_defaults_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	LayerType layer_type = (LayerType) qa->data().toInt();
 
-	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_interface(layer_type)->layer_type_string;
+	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 	if (Layer::get_interface(layer_type)->parameters.size() == 0) {
 		Dialog::info(tr("This layer type has no configurable properties."), this);

@@ -346,10 +346,8 @@ LayerTRWInterface::LayerTRWInterface()
 	this->parameters_c = trw_layer_params;
 	this->parameter_groups = g_params_groups;
 
-	strncpy(this->layer_type_string, "TrackWaypoint", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "TrackWaypoint"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("TrackWaypoint");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -364,6 +362,8 @@ LayerTRWInterface::LayerTRWInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Track/Route/Waypoint Layer");
+	this->ui_labels.layer_type = QObject::tr("TrackWaypoint");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Track/Route/Waypoint Layer");
 }
 
 
@@ -7166,7 +7166,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
 
-	this->rename(vik_trw_layer_interface.layer_name);
+	this->rename(Layer::get_type_ui_label(this->type));
 
 
 #ifdef K

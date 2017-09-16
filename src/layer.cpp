@@ -197,11 +197,11 @@ void LayerInterface::change_param(GtkWidget *, ui_change_values * )
 
 void Layer::preconfigure_interfaces(void)
 {
-	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
+	for (SlavGPS::LayerType type = SlavGPS::LayerType::AGGREGATE; type < SlavGPS::LayerType::NUM_TYPES; ++type) {
 
-		LayerInterface * interface = Layer::get_interface(i);
+		LayerInterface * interface = Layer::get_interface(type);
 
-		QString path = QString(":/icons/layer/") + QString(interface->layer_type_string).toLower() + QString(".png");
+		QString path = QString(":/icons/layer/") + Layer::get_type_string(type).toLower() + QString(".png");
 		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
@@ -224,7 +224,7 @@ void Layer::preconfigure_interfaces(void)
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
 			/* kamilTODO: what if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
-			param_value = LayerDefaults::get(interface->layer_type_string, param_template->name, param_template->type);
+			param_value = LayerDefaults::get(type, param_template->name, param_template->type);
 			interface->parameter_default_values[param_template->id] = param_value;
 		}
 	}
@@ -247,7 +247,7 @@ static bool layer_defaults_register(LayerType layer_type)
 	for (auto iter = layer_interface->parameters.begin(); iter != layer_interface->parameters.end(); iter++) {
 		if (iter->second->group_id != PARAMETER_GROUP_HIDDEN) {
 			if (parameter_get_hardwired_value(value, *iter->second)) {
-				LayerDefaults::set(layer_interface->layer_type_string, iter->second, value);
+				LayerDefaults::set(layer_type, iter->second, value);
 				answer = true;
 			}
 		}
@@ -275,16 +275,41 @@ const QString & Layer::get_name()
 
 
 
-QString Layer::get_type_id_string(void) const
+QString Layer::get_type_string(void) const
 {
-	return QString(this->get_interface(this->type)->layer_type_string);
+	return this->get_interface(this->type)->fixed_layer_type_string;
 }
 
 
 
-Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
+
+QString Layer::get_type_string(LayerType type)
 {
-	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->layer_type_string << "layer";
+	return Layer::get_interface(type)->fixed_layer_type_string;
+}
+
+
+
+
+QString Layer::get_type_ui_label(void) const
+{
+	return this->get_interface(this->type)->ui_labels.layer_type;
+}
+
+
+
+
+QString Layer::get_type_ui_label(LayerType type)
+{
+	return Layer::get_interface(type)->ui_labels.layer_type;
+}
+
+
+
+
+Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
+{
+	qDebug() << "II: Layer: will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
@@ -547,7 +572,7 @@ QIcon Layer::get_icon(void)
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
-	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_interface(this->type)->layer_type_string;
+	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_type_ui_label();
 
 	PropertiesDialog dialog(NULL);
 	dialog.fill(this);
@@ -603,11 +628,11 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 
 
-LayerType Layer::type_from_string(char const * str)
+LayerType Layer::type_from_type_string(const QString & type_string)
 {
-	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		if (strcasecmp(str, Layer::get_interface(i)->layer_type_string) == 0) {
-			return i;
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+		if (type_string == Layer::get_type_string(type)) {
+			return type;
 		}
 	}
 	return LayerType::NUM_TYPES;
@@ -624,7 +649,6 @@ LayerType Layer::type_from_string(char const * str)
 */
 void Layer::set_initial_parameter_values(void)
 {
-	char const * layer_name = this->get_interface()->layer_type_string;
 	SGVariant param_value;
 
 	std::map<param_id_t, SGVariant> * defaults = &this->interface->parameter_default_values;
@@ -892,7 +916,7 @@ LayerTool::LayerTool(Window * window_, Viewport * viewport_, LayerType layer_typ
 		strcpy(this->debug_string, "LayerType::generic");
 	} else {
 		strcpy(this->debug_string, "LayerType::");
-		strcpy(this->debug_string + 11, Layer::get_interface(layer_type)->layer_type_string);
+		strcpy(this->debug_string + 11, Layer::get_type_string(layer_type).toUtf8().constData());
 	}
 }
 

@@ -124,10 +124,8 @@ LayerGeorefInterface::LayerGeorefInterface()
 {
 	this->parameters_c = georef_layer_params;
 
-	strncpy(this->layer_type_string, "GeoRef Map", sizeof (this->layer_type_string)); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "GeoRef Map"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("GeoRef Map");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -137,6 +135,8 @@ LayerGeorefInterface::LayerGeorefInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
+	this->ui_labels.layer_type = QObject::tr("GeoRef Map");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GeoRef Map Layer");
 }
 
 

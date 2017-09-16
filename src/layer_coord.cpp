@@ -77,16 +77,16 @@ LayerCoordInterface::LayerCoordInterface()
 {
 	this->parameters_c = coord_layer_params;
 
-	strncpy(this->layer_type_string, "Coord", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "Coord"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("Coordinate");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Coordinates Layer");
+	this->ui_labels.layer_type = QObject::tr("Coordinates");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Coordinates Layer");
 }
 
 

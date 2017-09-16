@@ -55,16 +55,16 @@ LayerAggregateInterface vik_aggregate_layer_interface;
 
 LayerAggregateInterface::LayerAggregateInterface()
 {
-	strncpy(this->layer_type_string, "Aggregate", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "Aggregate"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("Aggregate");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Aggregate Layer");
+	this->ui_labels.layer_type = QObject::tr("Aggregate");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Aggregate Layer");
 }
 
 
@@ -967,6 +967,6 @@ LayerAggregate::LayerAggregate()
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
 	this->interface = &vik_aggregate_layer_interface;
 
-	this->rename(vik_aggregate_layer_interface.layer_name);
+	this->rename(Layer::get_type_ui_label(this->type));
 	this->children = new std::list<Layer *>;
 }

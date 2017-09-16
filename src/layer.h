@@ -152,6 +152,7 @@ namespace SlavGPS {
 
 	class Layer : public TreeItem {
 		Q_OBJECT
+
 	public:
 
 		Layer();
@@ -162,7 +163,7 @@ namespace SlavGPS {
 		static Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 		void           unmarshall_params(uint8_t * data, int len);
 
-		static Layer * new_(LayerType layer_type, Viewport * viewport);
+		static Layer * construct_layer(LayerType layer_type, Viewport * viewport);
 
 		void emit_changed(void);
 		void emit_changed_although_invisible(void);
@@ -235,8 +236,17 @@ namespace SlavGPS {
 		virtual bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 
 
-		static LayerType type_from_string(char const * str);
-		QString get_type_id_string(void) const;
+		/* "type string" means Layer's internal, fixed string
+		   that can be used in .vik file operations and to
+		   create internal IDs of objects. */
+		static LayerType type_from_type_string(const QString & type_string);
+		static QString get_type_string(LayerType type);
+		QString get_type_string(void) const;
+
+		/* "type ui label" means human-readable label that is
+		   suitable for using in UI or in debug messages. */
+		static QString get_type_ui_label(LayerType type);
+		QString get_type_ui_label(void) const;
 
 
 		static bool compare_timestamp_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
@@ -362,14 +372,14 @@ namespace SlavGPS {
 
 
 	class LayerInterface {
+
+	friend class Layer;
+
 	public:
 		LayerInterface();
 
 		virtual Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 		virtual void change_param(GtkWidget *, ui_change_values *);
-
-		char    layer_type_string[30]; /* Used in .vik files - this should never change to maintain file compatibility. TODO: add "fixed" to the variable name. */
-		QString layer_name;            /* Translate-able name used for display purposes. */
 
 		QKeySequence action_accelerator;
 		QIcon action_icon;
@@ -377,7 +387,8 @@ namespace SlavGPS {
 		std::map<int, ToolConstructorFunc> layer_tool_constructors;  /* Tool index -> Layer Tool constructor function. */
 		std::map<int, LayerTool *>         layer_tools;              /* Tool index -> Layer Tool. */
 
-		/* Menu items to be created. */
+		/* Menu items (actions) to be created and put into a
+		   context menu for given layer type. */
 		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
 
 
@@ -400,8 +411,13 @@ namespace SlavGPS {
 		const char ** parameter_groups = NULL;
 
 		struct {
-			QString new_layer; /* Menu "Layers" -> "New type-X Layer". */
+			QString new_layer;      /* Menu "Layers" -> "New type-X Layer". */
+			QString layer_type;     /* Stand-alone label for layer's type. Not to be concatenated with other string to form longer labels. */
+			QString layer_defaults; /* Title of "Default settings of layer type X" dialog window. */
 		} ui_labels;
+
+	protected:
+		QString fixed_layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
 	};
 
 

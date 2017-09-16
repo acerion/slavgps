@@ -266,8 +266,8 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 	aggregates->under = NULL;
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
-		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTOD: remove cast. */
-		fprintf(f, "\n~Layer %s\n", current->get_interface()->layer_type_string);
+		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTODO: remove cast. */
+		fprintf(f, "\n~Layer %s\n", current->get_type_string().toUtf8().constData());
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
@@ -397,7 +397,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					stack->data = NULL;
 					continue;
 				} else {
-					LayerType layer_type = Layer::type_from_string(line + 6);
+					LayerType layer_type = Layer::type_from_type_string(QString(line + 6));
 					push(&stack);
 					if (layer_type == LayerType::NUM_TYPES) {
 						successful_read = false;
@@ -410,7 +410,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						params_count = Layer::get_interface(layer_type)->parameters.size();
 
 					} else { /* Any other LayerType::X type. */
-						Layer * layer = Layer::new_(layer_type, viewport);
+						Layer * layer = Layer::construct_layer(layer_type, viewport);
 						stack->data = (void *) layer;
 						params = Layer::get_interface(layer_type)->parameters_c;
 						params_count = Layer::get_interface(layer_type)->parameters.size();

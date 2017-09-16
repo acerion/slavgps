@@ -241,10 +241,8 @@ LayerDEMInterface::LayerDEMInterface()
 {
 	this->parameters_c = dem_layer_params;
 
-	strncpy(this->layer_type_string, "DEM", sizeof (this->layer_type_string) - 1); /* Non-translatable. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "DEM"; /* Non-translatable. */
 
-	this->layer_name = QObject::tr("DEM");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -253,6 +251,8 @@ LayerDEMInterface::LayerDEMInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
+	this->ui_labels.layer_type = QObject::tr("DEM");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of DEM Layer");
 }
 
 

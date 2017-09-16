@@ -273,10 +273,8 @@ LayerMapInterface::LayerMapInterface()
 {
 	this->parameters_c = maps_layer_params; /* Parameters. */
 
-	strncpy(this->layer_type_string, "Map", sizeof (this->layer_type_string) - 1); /* Non-translatable. kamilTODO: verify this line. */
-	this->layer_type_string[sizeof (this->layer_type_string) - 1] = '\0';
+	this->fixed_layer_type_string = "Map"; /* Non-translatable. kamilTODO: verify this line. */
 
-	this->layer_name = QObject::tr("Map");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
 
@@ -285,6 +283,8 @@ LayerMapInterface::LayerMapInterface()
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Map Layer");
+	this->ui_labels.layer_type = QObject::tr("Map");
+	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Map Layer");
 }
 
 
@@ -446,10 +446,8 @@ void LayerMap::set_map_type(MapTypeID map_type)
 
 MapTypeID LayerMap::get_default_map_type()
 {
-	LayerInterface * iface = Layer::get_interface(LayerType::MAP);
-
 	/* TODO: verify that this function call works as expected. */
-	SGVariant var = LayerDefaults::get(iface->layer_type_string, "mode", SGVariantType::INT); /* kamilTODO: get the default value from LayerInterface. */
+	SGVariant var = LayerDefaults::get(LayerType::MAP, "mode", SGVariantType::INT); /* kamilTODO: get the default value from LayerInterface. */
 	if (var.i == 0) {
 		var = id_default();
 	}
