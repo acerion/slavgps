@@ -2028,10 +2028,10 @@ void LayerMap::tile_info_cb(void)
 
 
 
-LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
+ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
 	if (!_layer || _layer->type != LayerType::MAP) {
-		return LayerToolFuncStatus::IGNORE;
+		return ToolStatus::IGNORED;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
@@ -2042,7 +2042,7 @@ LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, 
 			Coord br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 			layer->start_download_thread(this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
-			return LayerToolFuncStatus::ACK;
+			return ToolStatus::ACK;
 		} else {
 			layer->redownload_ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
 			layer->redownload_br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
@@ -2077,7 +2077,7 @@ LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, 
 			layer->dl_right_click_menu->exec(QCursor::pos());
 		}
 	}
-	return LayerToolFuncStatus::IGNORE;
+	return ToolStatus::IGNORED;
 }
 
 
@@ -2114,11 +2114,11 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 
 
 
-LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
+ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
 	if (!_layer || _layer->type != LayerType::MAP) {
-		return LayerToolFuncStatus::IGNORE;
+		return ToolStatus::IGNORED;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
@@ -2132,9 +2132,9 @@ LayerToolFuncStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QM
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
-		return LayerToolFuncStatus::ACK;
+		return ToolStatus::ACK;
 	}
-	return LayerToolFuncStatus::IGNORE;
+	return ToolStatus::IGNORED;
 }
 
 

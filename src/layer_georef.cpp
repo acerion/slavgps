@@ -1129,9 +1129,9 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 
 
 
-LayerToolFuncStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	return (LayerToolFuncStatus) ((LayerGeoref *) layer)->move_release(ev, this); /* kamilFIXME: resolve this cast of returned value. */
+	return (ToolStatus) ((LayerGeoref *) layer)->move_release(ev, this); /* kamilFIXME: resolve this cast of returned value. */
 }
 
 
@@ -1183,9 +1183,9 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 
 
 
-LayerToolFuncStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
-	return (LayerToolFuncStatus) ((LayerGeoref *) layer)->zoom_press(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return (ToolStatus) ((LayerGeoref *) layer)->zoom_press(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 
@@ -1218,9 +1218,9 @@ bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-LayerToolFuncStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
-	return (LayerToolFuncStatus) ((LayerGeoref *) layer)->move_press(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return (ToolStatus) ((LayerGeoref *) layer)->move_press(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 

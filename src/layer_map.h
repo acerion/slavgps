@@ -163,8 +163,8 @@ namespace SlavGPS {
 	public:
 		LayerToolMapsDownload(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 

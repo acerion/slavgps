@@ -275,6 +275,13 @@ const QString & Layer::get_name()
 
 
 
+QString Layer::get_type_id_string(void) const
+{
+	return QString(this->get_interface(this->type)->layer_type_string);
+}
+
+
+
 Layer * Layer::new_(LayerType layer_type, Viewport * viewport)
 {
 	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->layer_type_string << "layer";

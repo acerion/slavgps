@@ -75,10 +75,9 @@ namespace SlavGPS {
 
 	class Layer;
 	class LayerTRW;
-	class LayerToolbox;
+	class Toolbox;
 	class Viewport;
 	class LayersPanel;
-	class SGFileEntry;
 
 
 
@@ -91,7 +90,7 @@ namespace SlavGPS {
 	class Window : public QMainWindow {
 		Q_OBJECT
 
-	friend class LayerToolbox;
+	friend class Toolbox;
 
 	public:
 		Window();
@@ -102,7 +101,7 @@ namespace SlavGPS {
 		void draw_redraw();
 		void draw_update(void);
 
-		void selected_layer(Layer * layer);
+		void handle_selection_of_layer(Layer * layer);
 
 		Window * new_window();
 
@@ -110,11 +109,11 @@ namespace SlavGPS {
 		LayersPanel * get_layers_panel(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
-		LayerToolbox * get_layer_tools_box(void);
+		Toolbox * get_toolbox(void);
 		StatusBar * get_statusbar(void);
 
-		SlavGPS::LayersPanel * layers_panel = NULL;
-		SlavGPS::Viewport * viewport = NULL;
+		LayersPanel * layers_panel = NULL;
+		Viewport * viewport = NULL;
 
 		/* Flag set when contents of project is modified. This
 		   flag is set only in a handful of situations. Adding
@@ -373,6 +372,7 @@ namespace SlavGPS {
 		QToolBar * toolbar = NULL;
 		QDockWidget * panel_dock = NULL;
 		StatusBar * status_bar = NULL;
+		Toolbox * toolbox = NULL;
 
 		QMenu * menu_file = NULL;
 		QMenu * menu_edit = NULL;
@@ -385,7 +385,7 @@ namespace SlavGPS {
 		QMenu * submenu_file_acquire = NULL;
 
 		/* Half-drawn update. */
-		SlavGPS::Layer * trigger = NULL;
+		Layer * trigger = NULL;
 		Coord trigger_center;
 
 		char * filename = NULL;
@@ -393,11 +393,8 @@ namespace SlavGPS {
 		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
 		/* Tool management state. */
-		LayerTool * current_tool = NULL;
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
-
-		LayerToolbox * layer_toolbox = NULL;
 
 		QCursor * busy_cursor = NULL;
 		QCursor * viewport_cursor = NULL; /* Only a reference. */

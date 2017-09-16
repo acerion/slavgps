@@ -1148,13 +1148,13 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * view
 
 
 
-LayerToolFuncStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (!layer) {
-		return (LayerToolFuncStatus) false; /* kamilFIXME: check this cast of returned value. */
+		return (ToolStatus) false; /* kamilFIXME: check this cast of returned value. */
 	}
 
-	return (LayerToolFuncStatus) ((LayerMapnik *) layer)->feature_release(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return (ToolStatus) ((LayerMapnik *) layer)->feature_release(ev, this); /* kamilFIXME: check this cast of returned value. */
 }
 
 

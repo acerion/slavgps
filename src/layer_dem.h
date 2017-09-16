@@ -99,7 +99,7 @@ namespace SlavGPS {
 	public:
 		LayerToolDEMDownload(Window * window, Viewport * viewport);
 
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 

@@ -384,7 +384,7 @@ namespace SlavGPS {
 		Track * get_track_helper(Sublayer * sublayer);
 		void update_statusbar();
 		void tool_extended_route_finder_undo();
-		LayerToolFuncStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
+		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 		void undo_trackpoint_add();
 
 

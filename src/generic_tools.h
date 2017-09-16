@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _H_GENERIC_LAYER_TOOLS_H_
-#define _H_GENERIC_LAYER_TOOLS_H_
+#ifndef _H_GENERIC_TOOLS_H_
+#define _H_GENERIC_TOOLS_H_
 
 
 
@@ -52,9 +52,9 @@ namespace SlavGPS {
 		GenericToolZoom(Window * window, Viewport * viewport);
 		~GenericToolZoom();
 
-		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 
 	private:
 		/* "ztr" == "zoom to rectangle". */
@@ -71,11 +71,11 @@ namespace SlavGPS {
 		GenericToolRuler(Window * window, Viewport * viewport);
 		~GenericToolRuler();
 
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		void deactivate_(Layer * layer);
-		bool key_press_(Layer * layer, QKeyEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
+		void deactivate_tool(Layer * layer);
 
 	private:
 		void draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance);
@@ -95,10 +95,10 @@ namespace SlavGPS {
 		LayerToolPan(Window * window, Viewport * viewport);
 		~LayerToolPan();
 
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
 	};
 
 
@@ -107,9 +107,9 @@ namespace SlavGPS {
 		LayerToolSelect(Window * window, Viewport * viewport);
 		~LayerToolSelect();
 
-		LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 	};
 
 
@@ -120,4 +120,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _H_GENERIC_LAYER_TOOLS_H_ */
+#endif /* #ifndef _H_GENERIC_TOOLS_H_ */

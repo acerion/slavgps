@@ -1346,21 +1346,21 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 
 
 
-LayerToolFuncStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::DEM) {
-		return LayerToolFuncStatus::IGNORE;
+		return ToolStatus::IGNORED;
 	}
 
 	/* Left button: download. Right button: context menu. */
 	if (ev->button() != Qt::LeftButton && ev->button() != Qt::RightButton) {
-		return LayerToolFuncStatus::IGNORE;
+		return ToolStatus::IGNORED;
 	}
 
 	if (((LayerDEM *) layer)->download_release(ev, this)) {
-		return LayerToolFuncStatus::ACK;
+		return ToolStatus::ACK;
 	} else {
-		return LayerToolFuncStatus::IGNORE;
+		return ToolStatus::IGNORED;
 	}
 }
 

@@ -322,7 +322,7 @@ void TreeView::select_cb(void) /* Slot. */
 		sublayer = this->get_sublayer(item_index);
 	}
 
-	main_window->selected_layer(layer);
+	main_window->handle_selection_of_layer(layer);
 
 	/* Apply settings now we have the all details. */
 	if (layer->layer_selected(tree_item_type, sublayer)) {

@@ -56,8 +56,8 @@
  * this was useful for clicking a way/trackpoint in any layer, if no
  * layer was selected (find way/trackpoint).
  */
-enum class LayerToolFuncStatus {
-	IGNORE = 0,
+enum class ToolStatus {
+	IGNORED = 0,
 	ACK,
 	ACK_REDRAW_ABOVE,
 	ACK_REDRAW_ALL,
@@ -236,7 +236,7 @@ namespace SlavGPS {
 
 
 		static LayerType type_from_string(char const * str);
-
+		QString get_type_id_string(void) const;
 
 
 		static bool compare_timestamp_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
@@ -312,15 +312,15 @@ namespace SlavGPS {
 		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
 		~LayerTool();
 
-		QString get_description() const;
+		QString get_description(void) const;
 
-		virtual LayerToolFuncStatus handle_mouse_click(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
-		virtual LayerToolFuncStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
-		virtual LayerToolFuncStatus handle_mouse_move(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
-		virtual LayerToolFuncStatus handle_mouse_release(Layer * layer, QMouseEvent * event) { return LayerToolFuncStatus::IGNORE; }
-		virtual bool key_press_(Layer * layer, QKeyEvent * event) { return false; }; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
-		virtual void activate_(Layer * layer) { return; };
-		virtual void deactivate_(Layer * layer) { return; };
+		virtual ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::IGNORED; }
+		virtual ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::IGNORED; }
+		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::IGNORED; }
+		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::IGNORED; }
+		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::IGNORED; }; /* TODO: where do we call this function? */
+		virtual void activate_tool(Layer * layer) { return; };
+		virtual void deactivate_tool(Layer * layer) { return; };
 
 		/* Start holding a TRW point. */
 		void sublayer_edit_click(int x, int y);

@@ -50,17 +50,17 @@ using namespace SlavGPS;
 
 
 
-LayerToolbox::~LayerToolbox()
+Toolbox::~Toolbox()
 {
-	for (unsigned int tt = 0; tt < this->n_tools; tt++) {
-		delete this->tools[tt];
+	for (unsigned int i = 0; i < this->tools.size(); i++) {
+		delete this->tools[i];
 	}
 }
 
 
 
 
-QAction * LayerToolbox::add_tool(LayerTool * layer_tool)
+QAction * Toolbox::add_tool(LayerTool * layer_tool)
 {
 #if 0
 	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
@@ -68,12 +68,11 @@ QAction * LayerToolbox::add_tool(LayerTool * layer_tool)
 	QAction * qa = new QAction(layer_tool->action_label, this->window);
 
 	qa->setObjectName(layer_tool->id_string);
-	qDebug() << "DD: Layer Tools: Created qaction with name" << qa->objectName();
+	qDebug() << "DD: Toolbox: Created qaction with name" << qa->objectName();
 	qa->setIcon(QIcon(layer_tool->action_icon_path));
 	qa->setCheckable(true);
 
 	this->tools.push_back(layer_tool);
-	this->n_tools++;
 
 	layer_tool->qa = qa;
 
@@ -83,9 +82,9 @@ QAction * LayerToolbox::add_tool(LayerTool * layer_tool)
 
 
 
-LayerTool * LayerToolbox::get_tool(QString const & tool_id)
+LayerTool * Toolbox::get_tool(QString const & tool_id)
 {
-	for (unsigned i = 0; i < this->n_tools; i++) {
+	for (unsigned int i = 0; i < this->tools.size(); i++) {
 		if (tool_id == this->tools[i]->id_string) {
 			return this->tools[i];
 		}
@@ -96,7 +95,7 @@ LayerTool * LayerToolbox::get_tool(QString const & tool_id)
 
 
 
-void LayerToolbox::activate_tool(QAction * qa)
+void Toolbox::activate_tool(QAction * qa)
 {
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
@@ -108,7 +107,7 @@ void LayerToolbox::activate_tool(QAction * qa)
 #endif
 
 	if (!tool) {
-		qDebug() << "EE: Layer Tools: trying to activate a non-existent tool" << tool_id;
+		qDebug() << "EE: Toolbox: trying to activate a non-existent tool" << tool_id;
 		return;
 	}
 	/* Is the tool already active? */
@@ -118,10 +117,10 @@ void LayerToolbox::activate_tool(QAction * qa)
 	}
 
 	if (this->active_tool) {
-		this->active_tool->deactivate_(NULL);
+		this->active_tool->deactivate_tool(NULL);
 	}
-	qDebug() << "II: Layer Tools: activating tool" << tool_id;
-	tool->activate_(layer);
+	qDebug() << "II: Toolbox: activating tool" << tool_id;
+	tool->activate_tool(layer);
 	this->active_tool = tool;
 	this->active_tool_qa = qa;
 }
@@ -130,20 +129,20 @@ void LayerToolbox::activate_tool(QAction * qa)
 
 
 
-bool LayerToolbox::deactivate_tool(QAction * qa)
+bool Toolbox::deactivate_tool(QAction * qa)
 {
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
 	if (!tool) {
-		qDebug() << "EE: Layer Tools: trying to deactivate a non-existent tool" << tool_id;
+		qDebug() << "EE: Toolbox: trying to deactivate a non-existent tool" << tool_id;
 		return true;
 	}
 
-	qDebug() << "II: Layer Tools: deactivating tool" << tool_id;
+	qDebug() << "II: Toolbox: deactivating tool" << tool_id;
 
 	assert (this->active_tool);
 
-	tool->deactivate_(NULL);
+	tool->deactivate_tool(NULL);
 	qa->setChecked(false);
 
 	this->active_tool = NULL;
@@ -154,11 +153,11 @@ bool LayerToolbox::deactivate_tool(QAction * qa)
 
 
 
-void LayerToolbox::activate_tool(LayerType layer_type, int tool_id)
+void Toolbox::activate_tool(LayerType layer_type, int tool_id)
 {
 	LayerTool * new_tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
 	if (!new_tool) {
-		qDebug() << "EE: Layer Tools: Trying to activate a non-existent tool" << tool_id;
+		qDebug() << "EE: Toolbox: Trying to activate a non-existent tool" << tool_id;
 		return;
 	}
 
@@ -167,17 +166,17 @@ void LayerToolbox::activate_tool(LayerType layer_type, int tool_id)
 			/* Don't re-activate the same tool. */
 			return;
 		}
-		this->active_tool->deactivate_(NULL);
+		this->active_tool->deactivate_tool(NULL);
 	}
 
-	qDebug() << "II: Layer Tools: activating tool" << tool_id;
+	qDebug() << "II: Toolbox: activating tool" << tool_id;
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 0
 	if (!layer) {
 		return;
 	}
 #endif
-	new_tool->activate_(layer);
+	new_tool->activate_tool(layer);
 	this->active_tool = new_tool;
 	this->active_tool_qa = new_tool->qa;
 
@@ -190,21 +189,21 @@ void LayerToolbox::activate_tool(LayerType layer_type, int tool_id)
 
 
 
-void LayerToolbox::deactivate_tool(LayerType layer_type, int tool_id)
+void Toolbox::deactivate_tool(LayerType layer_type, int tool_id)
 {
 	LayerTool * tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
 	if (!tool) {
-		qDebug() << "EE: Layer Tools: Deactivate tool: can't find tool to deactivate:" << (int) layer_type << tool_id;
+		qDebug() << "EE: Toolbox: Deactivate tool: can't find tool to deactivate:" << (int) layer_type << tool_id;
 		return;
 	}
 
 	if (this->active_tool != tool) {
-		qDebug() << "WW: Layer Tools: Deactivate tool: trying to deactivate inactive tool:" << (int) layer_type << tool_id;
+		qDebug() << "WW: Toolbox: Deactivate tool: trying to deactivate inactive tool:" << (int) layer_type << tool_id;
 		return;
 	}
 
 	Layer * layer = this->window->layers_panel->get_selected_layer();
-	tool->deactivate_(layer);
+	tool->deactivate_tool(layer);
 	tool->qa->setChecked(false);
 	this->active_tool = NULL;
 	this->active_tool_qa = NULL;
@@ -214,7 +213,7 @@ void LayerToolbox::deactivate_tool(LayerType layer_type, int tool_id)
 
 
 
-void LayerToolbox::deactivate_current_tool(void)
+void Toolbox::deactivate_current_tool(void)
 {
 	this->deactivate_tool(this->active_tool);
 	this->active_tool = NULL;
@@ -223,26 +222,38 @@ void LayerToolbox::deactivate_current_tool(void)
 
 
 
+
+/* May return NULL */
+const LayerTool * Toolbox::get_current_tool(void) const
+{
+	return this->active_tool;
+}
+
+
+
+
 /**
    @brief Simple wrapper
 
    @param tool - tool to deactivate
 */
-void LayerToolbox::deactivate_tool(LayerTool * tool)
+void Toolbox::deactivate_tool(LayerTool * tool)
 {
 	if (!tool) {
-		qDebug() << "WW: Layer Tools: deactivate tool: passed NULL tool to deactivate";
+		qDebug() << "WW: Toolbox: deactivate tool: passed NULL tool to deactivate";
 		return;
 	}
 
 	Layer * layer = this->window->layers_panel->get_selected_layer();
-	tool->deactivate_(layer);
+	tool->deactivate_tool(layer);
 }
 
 
 
-/* A new layer is selected. Update state of tool groups in tool box accordingly. */
-void LayerToolbox::selected_layer(QString const & group_name)
+/* Called when user selects a layer in tree view.
+   A new layer is selected. Update state of tool
+   groups in tool box accordingly. */
+void Toolbox::handle_selection_of_layer(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 
@@ -279,32 +290,32 @@ void LayerToolbox::selected_layer(QString const & group_name)
 
    If group is non-empty, return first action in that group.
 */
-QAction * LayerToolbox::set_group_enabled(QString const & group_name)
+QAction * Toolbox::set_group_enabled(QString const & group_name)
 {
 	QActionGroup * group = this->get_group(group_name);
 	if (!group) {
 		/* This may a valid situation for layers without tools, e.g. Aggregate. */
-		qDebug() << "WW: Layer Tools: can't find group" << group_name << "to enable";
+		qDebug() << "WW: Toolbox: can't find group" << group_name << "to enable";
 		return NULL;
 	}
 
-	qDebug() << "II: Layer Tools: setting group" << group_name << "enabled";
+	qDebug() << "II: Toolbox: setting group" << group_name << "enabled";
 	group->setEnabled(true);
 
 	/* Return currently selected tool (if any is selected). */
 	QAction * returned = group->checkedAction();
 	if (returned) {
-		qDebug() << "II: Layer Tools: returning selected action" << returned->objectName() << "from group" << group_name;
+		qDebug() << "II: Toolbox: returning selected action" << returned->objectName() << "from group" << group_name;
 		return returned;
 	}
 
 	/* Return first tool from toolbox (even if not selected. */
 	if (!group->actions().empty()) {
-		qDebug() << "II: Layer Tools: returning first action" << (*group->actions().constBegin())->objectName() << "from group" << group_name;
+		qDebug() << "II: Toolbox: returning first action" << (*group->actions().constBegin())->objectName() << "from group" << group_name;
 		return *group->actions().constBegin();
 	}
 
-	qDebug() << "WW: Layer Tools: returning NULL action";
+	qDebug() << "WW: Toolbox: returning NULL action";
 	return NULL;
 }
 
@@ -314,7 +325,7 @@ QAction * LayerToolbox::set_group_enabled(QString const & group_name)
 /**
    Find group by object name
 */
-QActionGroup * LayerToolbox::get_group(QString const & group_name)
+QActionGroup * Toolbox::get_group(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 		if ((*group)->objectName() == group_name) {
@@ -328,7 +339,7 @@ QActionGroup * LayerToolbox::get_group(QString const & group_name)
 
 
 
-QAction * LayerToolbox::get_active_tool_action(void)
+QAction * Toolbox::get_active_tool_action(void)
 {
 	return this->active_tool_qa;
 }
@@ -336,7 +347,7 @@ QAction * LayerToolbox::get_active_tool_action(void)
 
 
 
-LayerTool * LayerToolbox::get_active_tool(void)
+LayerTool * Toolbox::get_active_tool(void)
 {
 	return this->active_tool;
 }
@@ -344,7 +355,7 @@ LayerTool * LayerToolbox::get_active_tool(void)
 
 
 
-void LayerToolbox::add_group(QActionGroup * group)
+void Toolbox::add_group(QActionGroup * group)
 {
 	this->action_groups.push_back(group);
 }
@@ -352,7 +363,7 @@ void LayerToolbox::add_group(QActionGroup * group)
 
 
 
-QCursor const * LayerToolbox::get_cursor_click(QString const & tool_id)
+QCursor const * Toolbox::get_cursor_click(QString const & tool_id)
 {
 	return this->get_tool(tool_id)->cursor_release;
 }
@@ -360,7 +371,7 @@ QCursor const * LayerToolbox::get_cursor_click(QString const & tool_id)
 
 
 
-QCursor const * LayerToolbox::get_cursor_release(QString const & tool_id)
+QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 {
 	return this->get_tool(tool_id)->cursor_release;
 }
@@ -368,18 +379,18 @@ QCursor const * LayerToolbox::get_cursor_release(QString const & tool_id)
 
 
 
-void LayerToolbox::click(QMouseEvent * event)
+void Toolbox::handle_mouse_click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
-		qDebug() << "EE: Layer Tools: click received, no layer";
+		qDebug() << "EE: Toolbox: click received, no layer";
 		return;
 	}
-	qDebug() << "II: Layer Tools: click received, selected layer" << layer->debug_string;
+	qDebug() << "II: Toolbox: click received, selected layer" << layer->debug_string;
 
 
 	if (!this->active_tool) {
-		qDebug() << "EE: Layer Tools: click received, no active tool";
+		qDebug() << "EE: Toolbox: click received, no active tool";
 		return;
 	}
 
@@ -388,11 +399,11 @@ void LayerToolbox::click(QMouseEvent * event)
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
 
-		qDebug() << "EE: Layer Tools: click received, invalid type";
+		qDebug() << "EE: Toolbox: click received, invalid type";
 		return;
 	}
 
-	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "tool received click, passing it to layer" << layer->debug_string;
+	qDebug() << "II: Toolbox:" << this->active_tool->id_string << "tool received click, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
 	this->active_tool->handle_mouse_click(layer, event);
 
@@ -402,18 +413,18 @@ void LayerToolbox::click(QMouseEvent * event)
 
 
 
-void LayerToolbox::double_click(QMouseEvent * event)
+void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
-		qDebug() << "EE: Layer Tools: double click received, no layer";
+		qDebug() << "EE: Toolbox: double click received, no layer";
 		return;
 	}
-	qDebug() << "II: Layer Tools: double click received, selected layer" << layer->debug_string;
+	qDebug() << "II: Toolbox: double click received, selected layer" << layer->debug_string;
 
 
 	if (!this->active_tool) {
-		qDebug() << "EE: Layer Tools: click received, no active tool";
+		qDebug() << "EE: Toolbox: click received, no active tool";
 		return;
 	}
 
@@ -422,12 +433,12 @@ void LayerToolbox::double_click(QMouseEvent * event)
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
 
-		qDebug() << "EE: Layer Tools: double click received, invalid type";
+		qDebug() << "EE: Toolbox: double click received, invalid type";
 		return;
 	}
 
 
-	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "received double click, passing it to layer" << layer->debug_string;
+	qDebug() << "II: Toolbox:" << this->active_tool->id_string << "received double click, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
 	this->active_tool->handle_mouse_double_click(layer, event);
 
@@ -437,18 +448,18 @@ void LayerToolbox::double_click(QMouseEvent * event)
 
 
 
-void LayerToolbox::move(QMouseEvent * event)
+void Toolbox::handle_mouse_move(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
-		qDebug() << "EE: Layer Tools: click received, no layer";
+		qDebug() << "EE: Toolbox: click received, no layer";
 		return;
 	}
-	qDebug() << "II: Layer Tools: move received, selected layer" << layer->debug_string;
+	qDebug() << "II: Toolbox: move received, selected layer" << layer->debug_string;
 
 
 	if (!this->active_tool) {
-		qDebug() << "EE: Layer Tools: move received, no active tool";
+		qDebug() << "EE: Toolbox: move received, no active tool";
 		return;
 	}
 
@@ -457,14 +468,14 @@ void LayerToolbox::move(QMouseEvent * event)
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
 
-		qDebug() << "EE: Layer Tools: double click received, invalid type";
+		qDebug() << "EE: Toolbox: double click received, invalid type";
 		return;
 	}
 
 
-	qDebug() << "II: Layer Tools: move received, passing to tool" << this->active_tool->get_description();
+	qDebug() << "II: Toolbox: move received, passing to tool" << this->active_tool->get_description();
 
-	if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
+	if (ToolStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
 #if 0
 		gtk_widget_grab_focus(this->window->viewport);
 #endif
@@ -476,18 +487,18 @@ void LayerToolbox::move(QMouseEvent * event)
 
 
 
-void LayerToolbox::release(QMouseEvent * event)
+void Toolbox::handle_mouse_release(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 	if (!layer) {
-		qDebug() << "EE: Layer Tools: release received, no layer";
+		qDebug() << "EE: Toolbox: release received, no layer";
 		return;
 	}
-	qDebug() << "II: Layer Tools: release received, selected layer" << layer->debug_string;
+	qDebug() << "II: Toolbox: release received, selected layer" << layer->debug_string;
 
 
 	if (!this->active_tool) {
-		qDebug() << "EE: Layer Tools: release received, no active tool";
+		qDebug() << "EE: Toolbox: release received, no active tool";
 		return;
 	}
 
@@ -496,12 +507,12 @@ void LayerToolbox::release(QMouseEvent * event)
 	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
 	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
 
-		qDebug() << "EE: Layer Tools: release received, invalid type";
+		qDebug() << "EE: Toolbox: release received, invalid type";
 		return;
 	}
 
 
-	qDebug() << "II: Layer Tools:" << this->active_tool->id_string << "received release, passing it to layer" << layer->debug_string;
+	qDebug() << "II: Toolbox:" << this->active_tool->id_string << "received release, passing it to layer" << layer->debug_string;
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO: move this into release() method. */
 	this->active_tool->handle_mouse_release(layer, event);
 

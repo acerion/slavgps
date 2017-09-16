@@ -2155,7 +2155,7 @@ void Viewport::mousePressEvent(QMouseEvent * ev)
 {
 	qDebug() << "II: Viewport: mouse press event, button" << (int) ev->button();
 
-	this->window->get_layer_tools_box()->click(ev);
+	this->window->get_toolbox()->handle_mouse_click(ev);
 
 	ev->accept();
 }
@@ -2170,7 +2170,7 @@ bool Viewport::eventFilter(QObject * object, QEvent * ev)
 		qDebug() << "II: Viewport: mouse DOUBLE CLICK event, button" << (int) m->button();
 
 		if (m->button() == Qt::LeftButton) {
-			this->window->get_layer_tools_box()->double_click(m);
+			this->window->get_toolbox()->handle_mouse_double_click(m);
 			m->accept();
 			return true; /* Eat event. */
 		}
@@ -2188,7 +2188,7 @@ void Viewport::mouseMoveEvent(QMouseEvent * ev)
 
 	if (ev->buttons() != Qt::NoButton) {
 		// qDebug() << "II: Viewport: mouse move with buttons";
-		this->window->get_layer_tools_box()->move(ev);
+		this->window->get_toolbox()->handle_mouse_move(ev);
 	} else {
 		//qDebug() << "II: Viewport: mouse move without buttons";
 	}
@@ -2203,7 +2203,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent * ev)
 {
 	qDebug() << "II: Viewport: mouse release event, button" << (int) ev->button();
 
-	this->window->get_layer_tools_box()->release(ev);
+	this->window->get_toolbox()->handle_mouse_release(ev);
 	emit this->button_released(this, ev);
 
 	ev->accept();
