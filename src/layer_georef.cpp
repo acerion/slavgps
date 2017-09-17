@@ -70,14 +70,6 @@ static SGVariant image_default(void)
 
 
 enum {
-	LAYER_GEOREF_TOOL_MOVE = 0,
-	LAYER_GEOREF_TOOL_ZOOM
-};
-
-
-
-
-enum {
 	PARAM_IMAGE = 0,
 	PARAM_CE,
 	PARAM_CN,
@@ -132,12 +124,27 @@ LayerGeorefInterface::LayerGeorefInterface()
 
 
 
-bool LayerGeorefInterface::build_layer_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewport * viewport)
 {
-	this->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, new LayerToolGeorefMove(window, viewport) }});
-	this->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, new LayerToolGeorefZoom(window, viewport) }});
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
 
-	return true;
+	auto tools = new LayerToolContainer;
+
+	LayerTool * tool = NULL;
+
+	tool = new LayerToolGeorefMove(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolGeorefZoom(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	created = true;
+
+	return tools;
 }
 
 
@@ -1104,7 +1111,7 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
 {
-	this->id_string = QString("georef.move_map");
+	this->id_string = "sg.tool.layer_georef.move";
 
 	this->action_icon_path   = "vik-icon-Georef Move Map";
 	this->action_label       = QObject::tr("_Georef Move Map");
@@ -1115,8 +1122,6 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geomove_pixmap;
 #endif
-
-	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, this }});
 }
 
 
@@ -1151,7 +1156,7 @@ bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
 {
-	this->id_string = QString("georef.zoom");
+	this->id_string = "sg.tool.layer_georef.zoom";
 
 	this->action_icon_path   = "vik-icon-Georef Zoom Tool";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
@@ -1161,8 +1166,6 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_geozoom_pixmap;
 #endif
-
-	Layer::get_interface(LayerType::GEOREF)->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, this }});
 }
 
 

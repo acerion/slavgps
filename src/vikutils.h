@@ -107,6 +107,14 @@ namespace SlavGPS {
 
 
 
+	/* Comparison class for std::maps with QString as a key. */
+	struct qstring_compare {
+		bool operator() (const QString & string1, const QString & string2) const { return string1 < string2; }
+	};
+
+
+
+
 }
 
 

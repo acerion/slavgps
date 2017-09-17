@@ -54,6 +54,7 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "download.h"
 #include "preferences.h"
 #include "util.h"
+#include "vikutils.h"
 
 
 
@@ -255,11 +256,21 @@ LayerDEMInterface::LayerDEMInterface()
 
 
 
-bool LayerDEMInterface::build_layer_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerDEMInterface::create_tools(Window * window, Viewport * viewport)
 {
-	this->layer_tools.insert({{ 0, new LayerToolDEMDownload(window, viewport) }});
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
+	auto tools = new LayerToolContainer;
 
-	return true;
+	LayerTool * tool = new LayerToolDEMDownload(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	created = true;
+
+	return tools;
 }
 
 
@@ -1329,7 +1340,7 @@ static void free_dem_download_params(DEMDownloadJob * p)
 
 LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::DEM)
 {
-	this->id_string = QString("dem.download");
+	this->id_string = "sg.tool.layer_dem.dem_download";
 
 	this->action_icon_path   = ":/icons/layer_tool/dem_download_18.png";
 	this->action_label       = QObject::tr("&DEM Download");
@@ -1338,8 +1349,6 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-
-	Layer::get_interface(LayerType::DEM)->layer_tools.insert({{ 0, this }} ); /* There is only one tool, so this magic number is not that bad. */
 }
 
 

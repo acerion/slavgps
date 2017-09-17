@@ -128,7 +128,7 @@ namespace SlavGPS {
 		LayerTRWInterface();
 		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
 		void change_param(GtkWidget * widget, ui_change_values * values);
-		bool build_layer_tools(Window * window, Viewport * viewport);
+		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 
 

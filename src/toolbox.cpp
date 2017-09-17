@@ -52,19 +52,24 @@ using namespace SlavGPS;
 
 Toolbox::~Toolbox()
 {
-	for (unsigned int i = 0; i < this->tools.size(); i++) {
-		delete this->tools[i];
+	for (auto iter = this->tools.begin(); iter != this->tools.end(); iter++) {
+		delete iter->second;
 	}
 }
 
 
 
 
-QActionGroup * Toolbox::add_tools(const std::map<int, LayerTool *> & new_tools)
+QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 {
+	if (!new_tools) {
+		qDebug() << "EE: Toolbox: Add Tools: NULL tools container";
+		return NULL;
+	}
+
 	QActionGroup * group = new QActionGroup(this->window);
 
-	for (auto iter = new_tools.begin(); iter != new_tools.end(); iter++) {
+	for (auto iter = new_tools->begin(); iter != new_tools->end(); iter++) {
 
 		LayerTool * tool = iter->second;
 
@@ -76,10 +81,12 @@ QActionGroup * Toolbox::add_tools(const std::map<int, LayerTool *> & new_tools)
 
 		tool->qa = qa;
 
-		this->tools.push_back(tool);
-
 		group->addAction(qa);
 	}
+
+	/* We should now get our own copies of Tools - we will become their owner.
+	   The container will be deleted by caller of this function. */
+	this->tools.insert(new_tools->begin(), new_tools->end());
 
 	this->action_groups.push_back(group);
 
@@ -91,12 +98,12 @@ QActionGroup * Toolbox::add_tools(const std::map<int, LayerTool *> & new_tools)
 
 LayerTool * Toolbox::get_tool(QString const & tool_id)
 {
-	for (unsigned int i = 0; i < this->tools.size(); i++) {
-		if (tool_id == this->tools[i]->id_string) {
-			return this->tools[i];
-		}
+	auto iter = this->tools.find(tool_id);
+	if (iter == this->tools.end()) {
+		return NULL;
+	} else {
+		return iter->second;
 	}
-	return NULL;
 }
 
 
@@ -160,9 +167,9 @@ bool Toolbox::deactivate_tool(QAction * qa)
 
 
 
-void Toolbox::activate_tool(LayerType layer_type, int tool_id)
+void Toolbox::activate_tool(const QString & tool_id)
 {
-	LayerTool * new_tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
+	LayerTool * new_tool = this->get_tool(tool_id);
 	if (!new_tool) {
 		qDebug() << "EE: Toolbox: Trying to activate a non-existent tool" << tool_id;
 		return;
@@ -196,16 +203,16 @@ void Toolbox::activate_tool(LayerType layer_type, int tool_id)
 
 
 
-void Toolbox::deactivate_tool(LayerType layer_type, int tool_id)
+void Toolbox::deactivate_tool(const QString & tool_id)
 {
-	LayerTool * tool = Layer::get_interface(layer_type)->layer_tools[tool_id];
+	LayerTool * tool = this->get_tool(tool_id);
 	if (!tool) {
-		qDebug() << "EE: Toolbox: Deactivate tool: can't find tool to deactivate:" << (int) layer_type << tool_id;
+		qDebug() << "EE: Toolbox: Deactivate tool: can't find tool" << tool_id;
 		return;
 	}
 
 	if (this->active_tool != tool) {
-		qDebug() << "WW: Toolbox: Deactivate tool: trying to deactivate inactive tool:" << (int) layer_type << tool_id;
+		qDebug() << "WW: Toolbox: Deactivate tool: trying to deactivate inactive tool" << tool_id;
 		return;
 	}
 
@@ -357,14 +364,6 @@ QAction * Toolbox::get_active_tool_action(void)
 LayerTool * Toolbox::get_active_tool(void)
 {
 	return this->active_tool;
-}
-
-
-
-
-void Toolbox::add_group(QActionGroup * group)
-{
-	this->action_groups.push_back(group);
 }
 
 

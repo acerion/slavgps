@@ -285,11 +285,22 @@ LayerMapInterface::LayerMapInterface()
 
 
 
-bool LayerMapInterface::build_layer_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport * viewport)
 {
-	this->layer_tools.insert({{ 0, new LayerToolMapsDownload(window, viewport) }});
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
 
-	return true;
+	auto tools = new LayerToolContainer;
+
+	LayerTool * tool = new LayerToolMapsDownload(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	created = true;
+
+	return tools;
 }
 
 
@@ -2087,7 +2098,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 
 LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAP)
 {
-	this->id_string = QString("maps.download");
+	this->id_string = "sg.tool.layer_map.maps_download";
 
 	this->action_icon_path   = "vik-icon-Maps Download";
 	this->action_label       = QObject::tr("_Maps Download");
@@ -2101,8 +2112,6 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixmap;
 #endif
-
-	Layer::get_interface(LayerType::MAP)->layer_tools.insert({{ 0, this }});
 }
 
 

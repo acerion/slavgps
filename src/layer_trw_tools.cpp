@@ -446,7 +446,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 
 LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.edit_waypoint");
+	this->id_string = LAYER_TRW_TOOL_EDIT_WAYPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_wp_18.png";
 	this->action_label       = QObject::tr("&Edit Waypoint");
@@ -457,8 +457,6 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * 
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT, this }});
 }
 
 
@@ -634,7 +632,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.create_track");
+	this->id_string = LAYER_TRW_TOOL_CREATE_TRACK;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_tr_18.png";
 	this->action_label       = QObject::tr("Create &Track");
@@ -646,8 +644,6 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_TRACK, this }});
 }
 
 
@@ -1097,7 +1093,7 @@ static ToolStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMous
 
 LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.create_route");
+	this->id_string = LAYER_TRW_TOOL_CREATE_ROUTE;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_route_18.png";
 	this->action_label       = QObject::tr("Create &Route");
@@ -1109,8 +1105,6 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE, this }});
 }
 
 
@@ -1175,7 +1169,7 @@ ToolStatus LayerToolTRWNewRoute::handle_key_press(Layer * layer, QKeyEvent * ev)
 
 LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.create_waypoint");
+	this->id_string = LAYER_TRW_TOOL_CREATE_WAYPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_wp_18.png";
 	this->action_label       = QObject::tr("Create &Waypoint");
@@ -1186,8 +1180,6 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * vi
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, this }});
 }
 
 
@@ -1217,7 +1209,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 
 LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.edit_trackpoint");
+	this->id_string = LAYER_TRW_TOOL_EDIT_TRACKPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_tr_18.png";
 	this->action_label       = QObject::tr("Edit Trac&kpoint");
@@ -1228,8 +1220,6 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewpor
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, this }});
 }
 
 
@@ -1419,7 +1409,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 
 LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.extended_route_finder");
+	this->id_string = LAYER_TRW_TOOL_ROUTE_FINDER;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_find_route_18.png";
 	this->action_label       = QObject::tr("Route &Finder");
@@ -1431,8 +1421,6 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER, this }});
 }
 
 
@@ -1579,7 +1567,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 
 LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
-	this->id_string = QString("trw.show_picture");
+	this->id_string = LAYER_TRW_TOOL_SHOW_PICTURE;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_show_picture_18.png";
 	this->action_label       = QObject::tr("Show P&icture");
@@ -1590,8 +1578,6 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->sublayer_edit = new SublayerEdit;
-
-	Layer::get_interface(LayerType::TRW)->layer_tools.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE, this }});
 }
 
 

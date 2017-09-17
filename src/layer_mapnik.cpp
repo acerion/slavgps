@@ -128,11 +128,22 @@ LayerMapnikInterface::LayerMapnikInterface()
 
 
 
-bool LayerMapnikInterface::build_layer_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, Viewport * viewport)
 {
-	this->layer_tools.insert({{ 0, new LayerToolMapnikFeature(window, viewport) }});
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
 
-	return true;
+	auto tools = new LayerToolContainer;
+
+	LayerTool * tool = new LayerToolMapnikFeature(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	created = true;
+
+	return tools;
 }
 
 
@@ -1124,7 +1135,7 @@ void LayerMapnik::tile_info()
 
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPNIK)
 {
-	this->id_string = QString("mapnik.features");
+	this->id_string = "sg.tool.layer_mapnik.feature";
 #ifdef K
 	this->action_icon_path   = GTK_STOCK_INFO;
 #endif
@@ -1135,8 +1146,6 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * view
 	this->cursor_shape = Qt::ArrowCursor;
 	this->cursor_data = NULL;
 #endif
-
-	Layer::get_interface(LayerType::MAPNIK)->layer_tools.insert({{ 0, this }});
 }
 
 

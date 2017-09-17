@@ -43,8 +43,7 @@ namespace SlavGPS {
 
 	class GenericTools {
 	public:
-		static bool build_tools(Window * window, Viewport * viewport);
-		static std::map<int, LayerTool *> get_tools(void);
+		static LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 
 

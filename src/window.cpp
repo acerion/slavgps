@@ -1202,30 +1202,39 @@ void Window::create_ui(void)
 	/* Menu Tools -> Generic tools;
 	   Toolbar -> Generic Tools. */
 	{
-		GenericTools::build_tools(this, this->viewport);
+		LayerToolContainer * tools = GenericTools::create_tools(this, this->viewport);
 
-		QActionGroup * tools_group = this->toolbox->add_tools(GenericTools::get_tools());
-		const QList <QAction *> actions = tools_group->actions();
+		QActionGroup * tools_group = this->toolbox->add_tools(tools);
 
-		if (!actions.isEmpty()) {
-			tools_group->setObjectName("generic");
+		/* Tools should have been moved to toolbox. Delete container (but not the tools themselves). */
+		tools->erase(tools->begin(), tools->end());
+		delete tools;
 
-			this->toolbar->addSeparator();
-			this->toolbar->addActions(actions);
+		if (tools_group) {
+			const QList <QAction *> actions = tools_group->actions();
 
-			this->menu_tools->addSeparator();
-			this->menu_tools->addActions(actions);
+			if (!actions.isEmpty()) {
+				tools_group->setObjectName("generic");
 
-			/* The same callback for all generic tools. */
-			connect(tools_group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
+				this->toolbar->addSeparator();
+				this->toolbar->addActions(actions);
 
-			/* We want some action in "generic tools"
-			   group to be active by default. Let it be
-			   the first tool in the group. */
-			QAction * default_qa = actions.first();
-			default_qa->setChecked(true);
-			default_qa->trigger();
-			this->toolbox->activate_tool(default_qa);
+				this->menu_tools->addSeparator();
+				this->menu_tools->addActions(actions);
+
+				/* The same callback for all generic tools. */
+				connect(tools_group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
+
+				/* We want some action in "generic tools"
+				   group to be active by default. Let it be
+				   the first tool in the group. */
+				QAction * default_qa = actions.first();
+				default_qa->setChecked(true);
+				default_qa->trigger();
+				this->toolbox->activate_tool(default_qa);
+			}
+		} else {
+			qDebug() << "EE: Window: Create UI: NULL generic tools group";
 		}
 	}
 
@@ -1235,19 +1244,28 @@ void Window::create_ui(void)
 	{
 		for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
 
-			LayerInterface * interface = Layer::get_interface(type);
-
 			/* We can't build the layer tools when a layer
 			   interface is constructed, because the layer
 			   tools require Window and Viewport
 			   variables, which may not be available at that time. */
 
-			if (!interface->build_layer_tools(this, this->viewport)) {
+			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->viewport);
+			if (!tools) {
 				/* Either error, or given layer type has no layer-specific tools. */
 				continue;
 			}
 
-			QActionGroup * tools_group = this->toolbox->add_tools(interface->get_layer_tools());
+			QActionGroup * tools_group = this->toolbox->add_tools(tools);
+
+			/* Tools should have been moved to toolbox. Delete container (but not the tools themselves). */
+			tools->erase(tools->begin(), tools->end());
+			delete tools;
+
+			if (!tools_group) {
+				qDebug() << "EE: Window: Create UI: NULL layer tools group";
+				continue;
+			}
+
 			const QList<QAction *> actions = tools_group->actions();
 
 			if (!actions.isEmpty()) {
@@ -1445,10 +1463,10 @@ void Window::layer_tool_cb(QAction * qa)
 
 
 
-void Window::activate_layer_tool(LayerType layer_type, int tool_id)
+void Window::activate_tool(const QString & tool_id)
 {
 	this->toolbox->deactivate_current_tool();
-	this->toolbox->activate_tool(layer_type, tool_id);
+	this->toolbox->activate_tool(tool_id);
 
 	return;
 }

@@ -44,6 +44,7 @@
 #include "tree_view.h"
 #include "viewport.h"
 #include "globals.h"
+#include "vikutils.h"
 
 
 
@@ -311,16 +312,11 @@ namespace SlavGPS {
 
 
 
-	typedef LayerTool * (*ToolConstructorFunc) (Window *, Viewport *);
-
-
-
-
 	class LayerTool {
 
 	public:
 		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
-		~LayerTool();
+		virtual ~LayerTool();
 
 		QString get_description(void) const;
 
@@ -357,12 +353,18 @@ namespace SlavGPS {
 		SublayerEdit * sublayer_edit = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
-		int id;
-		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */
+
+		/* Globally unique tool ID, e.g. "sg.tool.generic.zoom", or "sg.tool.layer_dem.download".
+		   For internal use, not visible to end user. */
+		QString id_string;
 
 		char debug_string[100]; /* For debug purposes only. */
 	};
 
+
+
+
+	typedef std::map<QString, LayerTool *, qstring_compare> LayerToolContainer;
 
 
 
@@ -384,14 +386,12 @@ namespace SlavGPS {
 		QKeySequence action_accelerator;
 		QIcon action_icon;
 
-		/* The default property of a layer type is that the
-		   layer type has no layer-specific tools. */
-		virtual bool build_layer_tools(Window * window, Viewport * viewport) { return false; };
+		/* Create a container with layer-type-specific tools.
+		   The container is owned by caller.
+		   Pointers in the container are owned by caller.
 
-		/* May return empty container if there are no tools for given layer type. */
-		std::map<int, LayerTool *> get_layer_tools(void) const { return this->layer_tools; };
-
-		std::map<int, LayerTool *> layer_tools; /* Tool id -> Layer Tool. */
+		   By default a layer-type has no layer-specific tools. */
+		virtual LayerToolContainer * create_tools(Window * window, Viewport * viewport) { return NULL; };
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given layer type. */

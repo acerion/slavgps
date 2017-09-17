@@ -186,7 +186,7 @@ namespace SlavGPS {
 
 		static void set_redraw_trigger(Layer * layer);
 
-		void activate_layer_tool(LayerType layer_type, int tool_id);
+		void activate_tool(const QString & tool_id);
 
 		void open_file(const QString & filename, bool change_filename);
 

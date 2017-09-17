@@ -60,41 +60,33 @@ using namespace SlavGPS;
 
 
 
-static std::map<int, LayerTool *> generic_tools;
-
-
-
-
-bool GenericTools::build_tools(Window * window, Viewport * viewport)
+LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * viewport)
 {
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
+
+	auto tools = new LayerToolContainer;
+
 	LayerTool * tool = NULL;
-	int id = 0;
 
 	tool = new LayerToolSelect(window, viewport);
-	generic_tools.insert({{ id, tool }});
-	id++;
+	tools->insert({{ tool->id_string, tool }});
 
 	tool = new GenericToolRuler(window, viewport);
-	generic_tools.insert({{ id, tool }});
-	id++;
+	tools->insert({{ tool->id_string, tool }});
 
 	tool = new GenericToolZoom(window, viewport);
-	generic_tools.insert({{ id, tool }});
-	id++;
+	tools->insert({{ tool->id_string, tool }});
 
 	tool = new LayerToolPan(window, viewport);
-	generic_tools.insert({{ id, tool }});
-	id++;
+	tools->insert({{ tool->id_string, tool }});
 
-	return true;
-}
+	created = true;
 
-
-
-
-std::map<int, LayerTool *> GenericTools::get_tools(void)
-{
-	return generic_tools;
+	return tools;
 }
 
 
@@ -317,7 +309,7 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 
 GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
-	this->id_string = "generic.ruler";
+	this->id_string = "sg.tool.generic.ruler";
 
 	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
 	this->action_label       = QObject::tr("&Ruler");
@@ -511,7 +503,7 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
-	this->id_string = "generic.zoom";
+	this->id_string = "sg.tool.generic.zoom";
 
 	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
 	this->action_label       = QObject::tr("&Zoom");
@@ -777,7 +769,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 
 LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
-	this->id_string = "generic.pan";
+	this->id_string = "sg.tool.generic.pan";
 
 	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
 	this->action_label       = QObject::tr("&Pan");
@@ -866,7 +858,7 @@ ToolStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event
 
 LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
-	this->id_string = "generic.select";
+	this->id_string = "sg.tool.generic.select";
 
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");

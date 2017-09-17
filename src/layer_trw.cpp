@@ -361,17 +361,42 @@ LayerTRWInterface::LayerTRWInterface()
 
 
 
-bool LayerTRWInterface::build_layer_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport * viewport)
 {
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, new LayerToolTRWNewWaypoint(window, viewport)         }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    new LayerToolTRWNewTrack(window, viewport)            }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    new LayerToolTRWNewRoute(window, viewport)            }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    new LayerToolTRWExtendedRouteFinder(window, viewport) }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   new LayerToolTRWEditWaypoint(window, viewport)        }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, new LayerToolTRWEditTrackpoint(window, viewport)      }});
-	this->layer_tools.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    new LayerToolTRWShowPicture(window, viewport)         }});
+	/* This method should be called only once. */
+	static bool created = false;
+	if (created) {
+		return NULL;
+	}
 
-	return true;
+	auto tools = new LayerToolContainer;
+
+	LayerTool * tool = NULL;
+
+	tool = new LayerToolTRWNewWaypoint(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWNewTrack(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWNewRoute(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWExtendedRouteFinder(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWEditWaypoint(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWEditTrackpoint(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	tool = new LayerToolTRWShowPicture(window, viewport);
+	tools->insert({{ tool->id_string, tool }});
+
+	created = true;
+
+	return tools;
 }
 
 
@@ -2910,7 +2935,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::TRACK, tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
-		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_TRACK);
+		this->get_window()->activate_tool(LAYER_TRW_TOOL_CREATE_TRACK);
 	}
 }
 
@@ -2939,7 +2964,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 		const QString uniq_name = this->new_unique_sublayer_name(SublayerType::ROUTE, tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
-		this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_CREATE_ROUTE);
+		this->get_window()->activate_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 	}
 }
 
@@ -3903,7 +3928,7 @@ void LayerTRW::extend_track_end_cb(void)
 
 	this->current_trk = trk;
 
-	this->get_window()->activate_layer_tool(LayerType::TRW, trk->sublayer_type == SublayerType::ROUTE ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
+	this->get_window()->activate_tool(trk->sublayer_type == SublayerType::ROUTE ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!trk->empty()) {
 		goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
@@ -3924,7 +3949,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 		return;
 	}
 
-	this->get_window()->activate_layer_tool(LayerType::TRW, LAYER_TRW_TOOL_ROUTE_FINDER);
+	this->get_window()->activate_tool(LAYER_TRW_TOOL_ROUTE_FINDER);
 
 	this->current_trk = trk;
 	this->route_finder_started = true;
