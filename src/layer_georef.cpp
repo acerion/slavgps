@@ -108,13 +108,6 @@ Parameter georef_layer_params[] = {
 
 
 
-/* Tools. */
-static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
-static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
-
-
-
-
 LayerGeorefInterface vik_georef_layer_interface;
 
 
@@ -129,14 +122,22 @@ LayerGeorefInterface::LayerGeorefInterface()
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_MOVE, georef_layer_move_create }});
-	this->layer_tool_constructors.insert({{ LAYER_GEOREF_TOOL_ZOOM, georef_layer_zoom_create }});
-
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
 	this->ui_labels.layer_type = QObject::tr("GeoRef Map");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GeoRef Map Layer");
+}
+
+
+
+
+bool LayerGeorefInterface::build_layer_tools(Window * window, Viewport * viewport)
+{
+	this->layer_tools.insert({{ LAYER_GEOREF_TOOL_MOVE, new LayerToolGeorefMove(window, viewport) }});
+	this->layer_tools.insert({{ LAYER_GEOREF_TOOL_ZOOM, new LayerToolGeorefZoom(window, viewport) }});
+
+	return true;
 }
 
 
@@ -1101,14 +1102,6 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 
 
-static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolGeorefMove(window, viewport);
-}
-
-
-
-
 LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
 {
 	this->id_string = QString("georef.move_map");
@@ -1151,14 +1144,6 @@ bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 		return true;
 	}
 	return false; /* I didn't move anything on this layer! */
-}
-
-
-
-
-static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolGeorefZoom(window, viewport);
 }
 
 

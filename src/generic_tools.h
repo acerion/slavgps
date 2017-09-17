@@ -40,10 +40,13 @@ namespace SlavGPS {
 
 
 
-	LayerTool * ruler_create(Window * window, Viewport * viewport);
-	LayerTool * zoomtool_create(Window * window, Viewport * viewport);
-	LayerTool * pantool_create(Window * window, Viewport * viewport);
-	LayerTool * selecttool_create(Window * window, Viewport * viewport);
+
+	class GenericTools {
+	public:
+		static bool build_tools(Window * window, Viewport * viewport);
+		static std::map<int, LayerTool *> get_tools(void);
+	};
+
 
 
 

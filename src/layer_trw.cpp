@@ -351,19 +351,27 @@ LayerTRWInterface::LayerTRWInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, tool_new_waypoint_create          }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    tool_new_track_create             }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    tool_new_route_create             }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    tool_extended_route_finder_create }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   tool_edit_waypoint_create         }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, tool_edit_trackpoint_create       }});
-	this->layer_tool_constructors.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    tool_show_picture_create          }});
-
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Track/Route/Waypoint Layer");
 	this->ui_labels.layer_type = QObject::tr("TrackWaypoint");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Track/Route/Waypoint Layer");
+}
+
+
+
+
+bool LayerTRWInterface::build_layer_tools(Window * window, Viewport * viewport)
+{
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_WAYPOINT, new LayerToolTRWNewWaypoint(window, viewport)         }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_TRACK,    new LayerToolTRWNewTrack(window, viewport)            }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_CREATE_ROUTE,    new LayerToolTRWNewRoute(window, viewport)            }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_ROUTE_FINDER,    new LayerToolTRWExtendedRouteFinder(window, viewport) }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_WAYPOINT,   new LayerToolTRWEditWaypoint(window, viewport)        }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_EDIT_TRACKPOINT, new LayerToolTRWEditTrackpoint(window, viewport)      }});
+	this->layer_tools.insert({{ LAYER_TRW_TOOL_SHOW_PICTURE,    new LayerToolTRWShowPicture(window, viewport)         }});
+
+	return true;
 }
 
 

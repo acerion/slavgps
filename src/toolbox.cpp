@@ -60,23 +60,30 @@ Toolbox::~Toolbox()
 
 
 
-QAction * Toolbox::add_tool(LayerTool * layer_tool)
+QActionGroup * Toolbox::add_tools(const std::map<int, LayerTool *> & new_tools)
 {
-#if 0
-	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
-#endif
-	QAction * qa = new QAction(layer_tool->action_label, this->window);
+	QActionGroup * group = new QActionGroup(this->window);
 
-	qa->setObjectName(layer_tool->id_string);
-	qDebug() << "DD: Toolbox: Created qaction with name" << qa->objectName();
-	qa->setIcon(QIcon(layer_tool->action_icon_path));
-	qa->setCheckable(true);
+	for (auto iter = new_tools.begin(); iter != new_tools.end(); iter++) {
 
-	this->tools.push_back(layer_tool);
+		LayerTool * tool = iter->second;
 
-	layer_tool->qa = qa;
+		QAction * qa = new QAction(tool->action_label, this->window);
+		qa->setObjectName(tool->id_string);
+		qDebug() << "DD: Toolbox: Created qaction with name" << qa->objectName();
+		qa->setIcon(QIcon(tool->action_icon_path));
+		qa->setCheckable(true);
 
-	return qa;
+		tool->qa = qa;
+
+		this->tools.push_back(tool);
+
+		group->addAction(qa);
+	}
+
+	this->action_groups.push_back(group);
+
+	return group;
 }
 
 

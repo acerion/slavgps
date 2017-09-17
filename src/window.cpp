@@ -1198,72 +1198,72 @@ void Window::create_ui(void)
 		submenu_webtools->addActions(group->actions());
 	}
 
+
+	/* Menu Tools -> Generic tools;
+	   Toolbar -> Generic Tools. */
 	{
-		QActionGroup * group = new QActionGroup(this);
-		group->setObjectName("generic");
-		QAction * qa = NULL;
-		QAction * default_qa = NULL;
+		GenericTools::build_tools(this, this->viewport);
 
-		this->toolbar->addSeparator();
+		QActionGroup * tools_group = this->toolbox->add_tools(GenericTools::get_tools());
+		const QList <QAction *> actions = tools_group->actions();
 
+		if (!actions.isEmpty()) {
+			tools_group->setObjectName("generic");
 
-		qa = this->toolbox->add_tool(selecttool_create(this, this->viewport));
-		group->addAction(qa);
-		default_qa = qa;
+			this->toolbar->addSeparator();
+			this->toolbar->addActions(actions);
 
-		qa = this->toolbox->add_tool(ruler_create(this, this->viewport));
-		group->addAction(qa);
+			this->menu_tools->addSeparator();
+			this->menu_tools->addActions(actions);
 
-		qa = this->toolbox->add_tool(zoomtool_create(this, this->viewport));
-		group->addAction(qa);
+			/* The same callback for all generic tools. */
+			connect(tools_group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
 
-		qa = this->toolbox->add_tool(pantool_create(this, this->viewport));
-		group->addAction(qa);
-
-
-		this->toolbar->addActions(group->actions());
-		this->menu_tools->addActions(group->actions());
-		this->toolbox->add_group(group);
-
-		/* The same callback for all layer tools. */
-		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
-		default_qa->setChecked(true);
-		default_qa->trigger();
-		this->toolbox->activate_tool(default_qa);
+			/* We want some action in "generic tools"
+			   group to be active by default. Let it be
+			   the first tool in the group. */
+			QAction * default_qa = actions.first();
+			default_qa->setChecked(true);
+			default_qa->trigger();
+			this->toolbox->activate_tool(default_qa);
+		}
 	}
 
 
+	/* Menu Tools -> layer-specific tools;
+	   Toolbar -> layer-specific tools. */
 	{
-		LayerInterface * interface = NULL;
 		for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
 
-			interface = Layer::get_interface(type);
+			LayerInterface * interface = Layer::get_interface(type);
 
-			if (interface->layer_tool_constructors.empty()) {
+			/* We can't build the layer tools when a layer
+			   interface is constructed, because the layer
+			   tools require Window and Viewport
+			   variables, which may not be available at that time. */
+
+			if (!interface->build_layer_tools(this, this->viewport)) {
+				/* Either error, or given layer type has no layer-specific tools. */
 				continue;
 			}
-			this->toolbar->addSeparator();
-			this->menu_tools->addSeparator();
 
-			QActionGroup * group = new QActionGroup(this);
-			group->setObjectName(Layer::get_type_string(type));
+			QActionGroup * tools_group = this->toolbox->add_tools(interface->get_layer_tools());
+			const QList<QAction *> actions = tools_group->actions();
 
-			unsigned int j = 0;
-			for (j = 0; j < interface->layer_tool_constructors.size(); j++) {
+			if (!actions.isEmpty()) {
+				tools_group->setObjectName(Layer::get_type_string(type));
 
-				LayerTool * layer_tool = interface->layer_tool_constructors[j](this, this->viewport);
-				QAction * qa = this->toolbox->add_tool(layer_tool);
-				group->addAction(qa);
+				this->toolbar->addSeparator();
+				this->toolbar->addActions(actions);
 
-				assert (layer_tool->layer_type == type);
+				this->menu_tools->addSeparator();
+				this->menu_tools->addActions(actions);
+
+				tools_group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
+
+				/* The same callback for all layer tools. */
+				connect(tools_group, SIGNAL (triggered(QAction *)), this, SLOT (layer_tool_cb(QAction *)));
 			}
-			this->toolbar->addActions(group->actions());
-			this->menu_tools->addActions(group->actions());
-			this->toolbox->add_group(group);
-			group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
-
-			/* The same callback for all layer tools. */
-			connect(group, SIGNAL (triggered(QAction *)), this, SLOT (layer_tool_cb(QAction *)));
 		}
 	}
 

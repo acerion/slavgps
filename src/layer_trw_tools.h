@@ -32,16 +32,6 @@
 
 
 
-SlavGPS::LayerTool * tool_edit_trackpoint_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_show_picture_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_edit_waypoint_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_new_route_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_new_track_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_new_waypoint_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-SlavGPS::LayerTool * tool_extended_route_finder_create(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-
-
-
 namespace SlavGPS {
 
 

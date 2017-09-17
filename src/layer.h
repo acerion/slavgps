@@ -384,8 +384,14 @@ namespace SlavGPS {
 		QKeySequence action_accelerator;
 		QIcon action_icon;
 
-		std::map<int, ToolConstructorFunc> layer_tool_constructors;  /* Tool index -> Layer Tool constructor function. */
-		std::map<int, LayerTool *>         layer_tools;              /* Tool index -> Layer Tool. */
+		/* The default property of a layer type is that the
+		   layer type has no layer-specific tools. */
+		virtual bool build_layer_tools(Window * window, Viewport * viewport) { return false; };
+
+		/* May return empty container if there are no tools for given layer type. */
+		std::map<int, LayerTool *> get_layer_tools(void) const { return this->layer_tools; };
+
+		std::map<int, LayerTool *> layer_tools; /* Tool id -> Layer Tool. */
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given layer type. */

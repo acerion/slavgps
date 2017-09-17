@@ -104,12 +104,6 @@ Parameter mapnik_layer_params[] = {
 
 
 
-
-static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
-
-
-
-
 LayerMapnikInterface vik_mapnik_layer_interface;
 
 
@@ -124,13 +118,21 @@ LayerMapnikInterface::LayerMapnikInterface()
 	// this->action_accelerator =  ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->layer_tool_constructors.insert({{ 0, mapnik_feature_create }});
-
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Mapnik Rendering Layer");
 	this->ui_labels.layer_type = QObject::tr("Mapnik Rendering");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Mapnik Rendering Layer");
+}
+
+
+
+
+bool LayerMapnikInterface::build_layer_tools(Window * window, Viewport * viewport)
+{
+	this->layer_tools.insert({{ 0, new LayerToolMapnikFeature(window, viewport) }});
+
+	return true;
 }
 
 
@@ -1115,14 +1117,6 @@ void LayerMapnik::tile_info()
 	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
 
 	free(tile_filename);
-}
-
-
-
-
-static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolMapnikFeature(window, viewport);
 }
 
 

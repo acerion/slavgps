@@ -60,6 +60,46 @@ using namespace SlavGPS;
 
 
 
+static std::map<int, LayerTool *> generic_tools;
+
+
+
+
+bool GenericTools::build_tools(Window * window, Viewport * viewport)
+{
+	LayerTool * tool = NULL;
+	int id = 0;
+
+	tool = new LayerToolSelect(window, viewport);
+	generic_tools.insert({{ id, tool }});
+	id++;
+
+	tool = new GenericToolRuler(window, viewport);
+	generic_tools.insert({{ id, tool }});
+	id++;
+
+	tool = new GenericToolZoom(window, viewport);
+	generic_tools.insert({{ id, tool }});
+	id++;
+
+	tool = new LayerToolPan(window, viewport);
+	generic_tools.insert({{ id, tool }});
+	id++;
+
+	return true;
+}
+
+
+
+
+std::map<int, LayerTool *> GenericTools::get_tools(void)
+{
+	return generic_tools;
+}
+
+
+
+
 /**
    @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
    @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
@@ -275,14 +315,6 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 
 
 
-LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
-{
-	return new GenericToolRuler(window, viewport);
-}
-
-
-
-
 GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.ruler";
@@ -472,14 +504,6 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
 	return ToolStatus::IGNORED;
-}
-
-
-
-
-LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
-{
-	return new GenericToolZoom(window, viewport);
 }
 
 
@@ -751,14 +775,6 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 
 
 
-LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolPan(window, viewport);
-}
-
-
-
-
 LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
 {
 	this->id_string = "generic.pan";
@@ -843,14 +859,6 @@ ToolStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event
 		this->window->pan_release(event);
 	}
 	return ToolStatus::ACK;
-}
-
-
-
-
-LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolSelect(window, viewport);
 }
 
 

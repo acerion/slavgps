@@ -444,14 +444,6 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 
 
 
-LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWEditWaypoint(window, viewport);
-}
-
-
-
-
 LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("trw.edit_waypoint");
@@ -635,14 +627,6 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	} else {
 		return ToolStatus::IGNORED;
 	}
-}
-
-
-
-
-LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWNewTrack(window, viewport);
 }
 
 
@@ -1111,14 +1095,6 @@ static ToolStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMous
 
 
 
-/*** New route ****/
-
-LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWNewRoute(window, viewport);
-}
-
-
 LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("trw.create_route");
@@ -1197,15 +1173,6 @@ ToolStatus LayerToolTRWNewRoute::handle_key_press(Layer * layer, QKeyEvent * ev)
 
 
 
-/*** New waypoint ****/
-
-LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWNewWaypoint(window, viewport);
-}
-
-
-
 LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("trw.create_waypoint");
@@ -1243,17 +1210,6 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 		}
 	}
 	return ToolStatus::ACK;
-}
-
-
-
-
-
-/*** Edit trackpoint ****/
-
-LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWEditTrackpoint(window, viewport);
 }
 
 
@@ -1461,16 +1417,6 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 
 
 
-/*** Extended Route Finder ***/
-
-LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWExtendedRouteFinder(window, viewport);
-}
-
-
-
-
 LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
 {
 	this->id_string = QString("trw.extended_route_finder");
@@ -1626,14 +1572,6 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 	} else {
 		return ToolStatus::IGNORED;
 	}
-}
-
-
-
-
-LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolTRWShowPicture(window, viewport);
 }
 
 

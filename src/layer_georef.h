@@ -77,6 +77,7 @@ namespace SlavGPS {
 	public:
 		LayerGeorefInterface();
 		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		bool build_layer_tools(Window * window, Viewport * viewport);
 	};
 
 

@@ -145,9 +145,6 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 static int map_type_to_map_index(MapTypeID map_type);
 
 
-static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport);
-
-
 
 
 static ParameterScale scale_alpha = { 0, 255, SGVariant((int32_t) 255), 3, 0 };
@@ -278,8 +275,6 @@ LayerMapInterface::LayerMapInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->layer_tool_constructors.insert({{ 0, maps_layer_download_create }});
-
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New Map Layer");
@@ -287,6 +282,15 @@ LayerMapInterface::LayerMapInterface()
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Map Layer");
 }
 
+
+
+
+bool LayerMapInterface::build_layer_tools(Window * window, Viewport * viewport)
+{
+	this->layer_tools.insert({{ 0, new LayerToolMapsDownload(window, viewport) }});
+
+	return true;
+}
 
 
 
@@ -2076,14 +2080,6 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 		}
 	}
 	return ToolStatus::IGNORED;
-}
-
-
-
-
-static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolMapsDownload(window, viewport);
 }
 
 

@@ -177,7 +177,6 @@ static Parameter dem_layer_params[] = {
 
 
 
-static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport);
 static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static void srtm_draw_existence(Viewport * viewport);
@@ -246,13 +245,21 @@ LayerDEMInterface::LayerDEMInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->layer_tool_constructors.insert({{ 0, dem_layer_download_create }});
-
 	this->menu_items_selection = LayerMenuItem::ALL;
 
 	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
 	this->ui_labels.layer_type = QObject::tr("DEM");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of DEM Layer");
+}
+
+
+
+
+bool LayerDEMInterface::build_layer_tools(Window * window, Viewport * viewport)
+{
+	this->layer_tools.insert({{ 0, new LayerToolDEMDownload(window, viewport) }});
+
+	return true;
 }
 
 
@@ -1315,14 +1322,6 @@ static int dem_download_thread(BackgroundJob * bg_job)
 static void free_dem_download_params(DEMDownloadJob * p)
 {
 	delete p;
-}
-
-
-
-
-static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
-{
-	return new LayerToolDEMDownload(window, viewport);
 }
 
 

@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include <map>
 
 #include <QAction>
 #include <QMouseEvent>
@@ -31,7 +32,7 @@ namespace SlavGPS {
 		Toolbox(Window * win) : window(win) {};
 		~Toolbox();
 
-		QAction * add_tool(LayerTool * layer_tool);
+		QActionGroup * add_tools(const std::map<int, LayerTool *> & tools);
 		void add_group(QActionGroup * group);
 		LayerTool * get_tool(const QString & tool_name);
 		const LayerTool * get_current_tool(void) const;
