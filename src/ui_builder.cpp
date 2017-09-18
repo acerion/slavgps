@@ -38,6 +38,7 @@
 #include <QSlider>
 
 #include "layer.h"
+#include "layer_interface.h"
 #include "ui_builder.h"
 #include "globals.h"
 #include "widget_color_button.h"

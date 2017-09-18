@@ -25,6 +25,7 @@
 
 
 #include "layer.h"
+#include "layer_interface.h"
 
 
 

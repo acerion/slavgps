@@ -24,12 +24,12 @@
 
 
 
-#include <cstdint>
 #include <list>
 
 #include <QDialog>
 
 #include "layer.h"
+#include "layer_interface.h"
 
 
 

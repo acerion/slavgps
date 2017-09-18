@@ -23,9 +23,10 @@
 
 
 
-#include <QMouseEvent>
 
 #include "layer.h"
+#include "layer_tool.h"
+#include "layer_interface.h"
 
 
 

@@ -39,6 +39,7 @@
 
 #include "window.h"
 #include "toolbox.h"
+#include "layer_tool.h"
 #include "layers_panel.h"
 #include "viewport_internal.h"
 

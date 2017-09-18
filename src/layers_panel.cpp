@@ -33,6 +33,7 @@
 #include "layers_panel.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"
+#include "layer_interface.h"
 #include "tree_view_internal.h"
 #include "dialog.h"
 #include "globals.h"

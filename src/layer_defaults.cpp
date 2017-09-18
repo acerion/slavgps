@@ -31,6 +31,7 @@
 
 #include "ui_builder.h"
 #include "layer_defaults.h"
+#include "layer_interface.h"
 #include "dir.h"
 #include "file.h"
 #include "globals.h"

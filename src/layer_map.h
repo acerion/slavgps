@@ -33,6 +33,8 @@
 
 #include "coord.h"
 #include "layer.h"
+#include "layer_tool.h"
+#include "layer_interface.h"
 #include "map_source.h"
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"

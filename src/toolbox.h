@@ -5,13 +5,13 @@
 
 
 #include <vector>
-#include <map>
 
 #include <QAction>
 #include <QMouseEvent>
 #include <QCursor>
+#include <QString>
 
-#include "layer.h"
+#include "layer_interface.h"
 
 
 

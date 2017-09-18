@@ -24,47 +24,20 @@
 
 
 
-#include <cstdio>
 #include <cstdint>
-#include <map>
 
 #include <QObject>
-#include <QTreeWidgetItem>
-#include <QPersistentModelIndex>
 #include <QIcon>
 #include <QMouseEvent>
-#include <QKeyEvent>
-#include <QCursor>
 #include <QMenu>
 #include <QString>
-#include <QPixmap>
 #include <QPen>
 
-#include "ui_builder.h"
 #include "tree_view.h"
 #include "viewport.h"
 #include "globals.h"
-#include "vikutils.h"
-
-
-
-
-/* I think most of these are ignored, returning GRAB_FOCUS grabs the
- * focus for mouse move, mouse click, release always grabs
- * focus. Focus allows key presses to be handled.
- *
- * It used to be that, if ignored, Viking could look for other layers.
- * this was useful for clicking a way/trackpoint in any layer, if no
- * layer was selected (find way/trackpoint).
- */
-enum class ToolStatus {
-	IGNORED = 0,
-	ACK,
-	ACK_REDRAW_ABOVE,
-	ACK_REDRAW_ALL,
-	ACK_REDRAW_IF_VISIBLE,
-	ACK_GRAB_FOCUS, /* Only for move. */
-};
+#include "ui_builder.h"
+#include "variant.h"
 
 
 
@@ -80,11 +53,6 @@ namespace SlavGPS {
 	class LayerInterface;
 	class trw_menu_sublayer_t;
 	class LayersPanel;
-
-
-
-
-	typedef int GtkWidget; /* TODO: remove sooner or later. */
 
 
 
@@ -312,119 +280,7 @@ namespace SlavGPS {
 
 
 
-	class LayerTool {
-
-	public:
-		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
-		virtual ~LayerTool();
-
-		QString get_description(void) const;
-
-		virtual ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::IGNORED; }; /* TODO: where do we call this function? */
-		virtual void activate_tool(Layer * layer) { return; };
-		virtual void deactivate_tool(Layer * layer) { return; };
-
-		/* Start holding a TRW point. */
-		void sublayer_edit_click(int x, int y);
-		/* A TRW point that is being held is now also moved around. */
-		void sublayer_edit_move(int x, int y);
-		/* Stop holding (i.e. release) a TRW point. */
-		void sublayer_edit_release(void);
-
-		QString action_icon_path;
-		QString action_label;
-		QString action_tooltip;
-		QKeySequence action_accelerator;
-		QAction * qa = NULL;
-
-		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
-
-		QCursor const * cursor_click = NULL;
-		QCursor const * cursor_release = NULL;
-
-		Window * window = NULL;
-		Viewport * viewport = NULL;
-
-		/* This should be moved to class LayerToolTRW. */
-		SublayerEdit * sublayer_edit = NULL;
-
-		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
-
-		/* Globally unique tool ID, e.g. "sg.tool.generic.zoom", or "sg.tool.layer_dem.download".
-		   For internal use, not visible to end user. */
-		QString id_string;
-
-		char debug_string[100]; /* For debug purposes only. */
-	};
-
-
-
-
-	typedef std::map<QString, LayerTool *, qstring_compare> LayerToolContainer;
-
-
-
 	void layer_init(void);
-
-
-
-
-	class LayerInterface {
-
-	friend class Layer;
-
-	public:
-		LayerInterface();
-
-		virtual Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
-		virtual void change_param(GtkWidget *, ui_change_values *);
-
-		QKeySequence action_accelerator;
-		QIcon action_icon;
-
-		/* Create a container with layer-type-specific tools.
-		   The container is owned by caller.
-		   Pointers in the container are owned by caller.
-
-		   By default a layer-type has no layer-specific tools. */
-		virtual LayerToolContainer * create_tools(Window * window, Viewport * viewport) { return NULL; };
-
-		/* Menu items (actions) to be created and put into a
-		   context menu for given layer type. */
-		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
-
-
-		/* Specification of parameters in each layer type is
-		   stored in 'parameters_c' C array.  During
-		   application startup, in Layer::preconfigure_interfaces(),
-		   pointers to these parameters in C array are stored
-		   in 'parameters' container. The parameters can be later
-		   accessed in C++-like fashion.
-
-		   Each layer type stores (here, in layer interface) a
-		   set of default values of parameters, to be used
-		   when user creates a new instance of layer of type X.
-
-		   Parameters can be combined into groups, they names
-		   of the groups are in parameter_groups. */
-		Parameter * parameters_c = NULL;
-		std::map<param_id_t, Parameter *> parameters;
-		std::map<param_id_t, SGVariant>  parameter_default_values;
-		const char ** parameter_groups = NULL;
-
-		struct {
-			QString new_layer;      /* Menu "Layers" -> "New type-X Layer". */
-			QString layer_type;     /* Stand-alone label for layer's type. Not to be concatenated with other string to form longer labels. */
-			QString layer_defaults; /* Title of "Default settings of layer type X" dialog window. */
-		} ui_labels;
-
-	protected:
-		QString fixed_layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
-	};
 
 
 
@@ -443,7 +299,7 @@ namespace SlavGPS {
 
 
 
-}
+} /* namespace SlavGPS */
 
 
 

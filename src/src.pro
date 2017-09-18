@@ -80,6 +80,7 @@ SOURCES += main.cpp \
     degrees_converters.cpp \
     layer_defaults.cpp \
     layer.cpp \
+    layer_tool.cpp \
     layer_coord.cpp \
     layer_aggregate.cpp \
     layer_dem.cpp \
@@ -191,6 +192,8 @@ HEADERS += window.h \
     degrees_converters.h \
     layer_defaults.h \
     layer.h \
+    layer_tool.h \
+    layer_interface.h \
     layer_coord.h \
     layer_aggregate.h \
     layer_dem.h \
