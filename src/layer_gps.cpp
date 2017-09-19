@@ -688,7 +688,7 @@ LayerGPS::~LayerGPS()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		if (this->connected_to_tree) {
-			this->disconnect_layer_signal(this->trw_children[i]);
+			//this->disconnect_layer_signal(this->trw_children[i]);
 		}
 		this->trw_children[i]->unref();
 	}
@@ -1963,7 +1963,7 @@ LayerGPS::LayerGPS()
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
 	this->set_initial_parameter_values();
-	this->rename(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_type_ui_label(this->type));
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW();

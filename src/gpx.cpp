@@ -392,7 +392,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_gpx_name:
-		trw->rename(QString(c_cdata->str));
+		trw->set_name(QString(c_cdata->str));
 		g_string_erase(c_cdata, 0, -1);
 		break;
 

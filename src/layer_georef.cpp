@@ -1246,7 +1246,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 	LayerGeoref * grl = new LayerGeoref();
 	grl->configure_from_viewport(viewport);
-	grl->rename(name);
+	grl->set_name(name);
 	grl->pixmap = pixmap;
 
 	grl->corner = coord_tl->get_utm();

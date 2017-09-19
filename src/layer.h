@@ -150,31 +150,31 @@ namespace SlavGPS {
 		   created from create() or set_param(). */
 		virtual void post_read(Viewport * viewport, bool from_file);
 
-		virtual void draw(Viewport * viewport);
-		virtual QString tooltip();
-		virtual QString sublayer_tooltip(Sublayer * sublayer);
+		virtual void draw(Viewport * viewport) { return; };
+		virtual QString get_tooltip(void) const;
+		virtual QString get_sublayer_tooltip(Sublayer * sublayer) const;
 
 		virtual bool kamil_selected(TreeItemType type, Sublayer * sublayer);
 		bool layer_selected(TreeItemType type, Sublayer * sublayer);
 
 		/* Methods for generic "Select" tool. */
-		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		virtual bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		virtual bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		virtual bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
+		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)   { return false; };
+		virtual bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)    { return false; };
+		virtual bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool) { return false; };
+		virtual bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport)         { return false; };
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
-		virtual void set_menu_selection(LayerMenuItem selection);
-		virtual LayerMenuItem get_menu_selection();
+		virtual void set_menu_selection(LayerMenuItem selection) { return; };
+		virtual LayerMenuItem get_menu_selection(void) const { return LayerMenuItem::NONE; };
 
-		virtual void cut_sublayer(Sublayer * sublayer);
-		virtual void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len);
-		virtual bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
-		virtual void delete_sublayer(Sublayer * sublayer);
+		virtual void cut_sublayer(Sublayer * sublayer) { return; };
+		virtual void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len) { return; };
+		virtual bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len) { return false; };
+		virtual void delete_sublayer(Sublayer * sublayer) { return; };
 
-		virtual void change_coord_mode(CoordMode dest_mode);
+		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
-		virtual time_t get_timestamp();
+		virtual time_t get_timestamp(void) const { return 0; };
 
 		/* Treeview drag and drop method. called on the
 		   destination layer. it is given a source and
@@ -205,12 +205,12 @@ namespace SlavGPS {
 		virtual bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 
 
-		/* "type string" means Layer's internal, fixed string
+		/* "type id string" means Layer's internal, fixed string
 		   that can be used in .vik file operations and to
 		   create internal IDs of objects. */
-		static LayerType type_from_type_string(const QString & type_string);
-		static QString get_type_string(LayerType type);
-		QString get_type_string(void) const;
+		static LayerType type_from_type_id_string(const QString & type_id_string);
+		static QString get_type_id_string(LayerType type);
+		QString get_type_id_string(void) const;
 
 		/* "type ui label" means human-readable label that is
 		   suitable for using in UI or in debug messages. */
@@ -226,9 +226,10 @@ namespace SlavGPS {
 
 
 
+		const QString get_name(void) const;
+		void set_name(const QString & new_name);
 
-		const QString & get_name();
-		void rename(const QString & new_name);
+
 		void draw_visible(Viewport * viewport);
 
 		void set_initial_parameter_values(void);
@@ -240,9 +241,7 @@ namespace SlavGPS {
 		void weak_ref(LayerRefCB cb, void * obj);
 		void weak_unref(LayerRefCB cb, void * obj);
 
-		bool the_same_object(Layer const * layer);
-		void disconnect_layer_signal(Layer * layer);
-
+		bool the_same_object(const Layer * layer) const;
 
 		/* GUI. */
 		QIcon get_icon(void);
@@ -254,7 +253,6 @@ namespace SlavGPS {
 		bool visible = true;
 		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
 
-		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
 
 		trw_menu_sublayer_t * menu_data = NULL;
@@ -275,6 +273,9 @@ namespace SlavGPS {
 
 	signals:
 		void changed(void);
+
+	private:
+		sg_uid_t layer_instance_uid = SG_UID_INITIAL;
 	};
 
 
@@ -289,7 +290,6 @@ namespace SlavGPS {
 	public:
 		Sublayer * sublayer = NULL;
 		Viewport * viewport = NULL;
-		LayersPanel * layers_panel = NULL;
 
 		bool confirm = false;
 		void * misc = NULL;

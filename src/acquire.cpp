@@ -474,7 +474,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	if (wi->creating_new_layer) {
 		wi->trw = new LayerTRW();
 		wi->trw->set_coord_mode(this->viewport->get_coord_mode());
-		wi->trw->rename(QObject::tr(source_interface_->layer_title));
+		wi->trw->set_name(QObject::tr(source_interface_->layer_title));
 	}
 
 #ifdef K

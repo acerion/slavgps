@@ -35,6 +35,7 @@
 #include <cctype>
 #include <cassert>
 
+#include "window.h"
 #include "layers_panel.h"
 #include "util.h"
 #include "layer_trw.h"
@@ -271,14 +272,14 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	/* kamilFIXME: .addMenu() does not make menu take ownership of the submenu. */
 
 
-	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(), this->menu_data->layers_panel,
-						  this->menu_data->layers_panel->get_viewport(), this);
+	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(), this->get_window()->get_layers_panel(),
+						  this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
 
-	submenu = a_acquire_trwlayer_track_menu(this->get_window(), this->menu_data->layers_panel,
-						this->menu_data->layers_panel->get_viewport(), this);
+	submenu = a_acquire_trwlayer_track_menu(this->get_window(), this->get_window()->get_layers_panel(),
+						this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
@@ -371,7 +372,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			menu.addSeparator();
 
 			/* Could be a right-click using the tool. */
-			if (this->menu_data->layers_panel != NULL) {
+			if (this->get_window()->get_layers_panel() != NULL) {
 				qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Go to this Waypoint"));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (go_to_selected_waypoint_cb()));
 			}
@@ -438,7 +439,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->layers_panel && (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS || this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT)) {
+	if (this->get_window()->get_layers_panel() && (this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINTS || this->menu_data->sublayer->sublayer_type == SublayerType::WAYPOINT)) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_waypoint_cb()));
@@ -784,7 +785,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		}
 
 		/* ATM This function is only available via the layers panel, due to the method in finding out the maps in use. */
-		if (this->menu_data->layers_panel) {
+		if (this->get_window()->get_layers_panel()) {
 			if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK) {
 				qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), tr("Down&load Maps Along Track..."));
 			} else {
@@ -880,8 +881,8 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 		/* ATM This function is only available via the layers panel, due to needing a panel. */
-		if (this->menu_data->layers_panel) {
-			QMenu * submenu = a_acquire_track_menu(this->get_window(), this->menu_data->layers_panel,
+		if (this->get_window()->get_layers_panel()) {
+			QMenu * submenu = a_acquire_track_menu(this->get_window(), this->get_window()->get_layers_panel(),
 							       this->menu_data->viewport,
 							       this->tracks.at(this->menu_data->sublayer->uid));
 			if (submenu) {
@@ -898,7 +899,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	if (this->menu_data->sublayer->sublayer_type == SublayerType::TRACK || this->menu_data->sublayer->sublayer_type == SublayerType::ROUTE) {
 		/* Only show on viewport popmenu when a trackpoint is selected. */
-		if (!this->menu_data->layers_panel && this->selected_tp.valid) {
+		if (!this->get_window()->get_layers_panel() && this->selected_tp.valid) {
 
 			menu.addSeparator();
 

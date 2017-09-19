@@ -329,8 +329,7 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
-	LayersPanel * panel = this->menu_data->layers_panel;
-	TreeView * treeview = panel->get_treeview(); /* kamilTODO: There is already tree_view in LayerAggregate */
+	TreeView * treeview = this->get_window()->get_layers_panel()->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -367,7 +366,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 {
-	this->child_visible_set(this->menu_data->layers_panel, true);
+	this->child_visible_set(this->get_window()->get_layers_panel(), true);
 }
 
 
@@ -375,7 +374,7 @@ void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 
 void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 {
-	this->child_visible_set(this->menu_data->layers_panel, false);
+	this->child_visible_set(this->get_window()->get_layers_panel(), false);
 }
 
 
@@ -621,13 +620,10 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 
 LayerAggregate::~LayerAggregate()
 {
-#ifdef K
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		this->disconnect_layer_signal(*child);
-		(*child)->unref();
+		delete *child;
 	}
-	// g_list_free(val->children); /* kamilFIXME: clean up the list. */
-#endif
+	delete this->children;
 }
 
 
@@ -637,13 +633,12 @@ void LayerAggregate::clear()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		this->disconnect_layer_signal(layer);
 		if (layer->connected_to_tree) {
 			layer->tree_view->erase(layer->index);
 		}
 		delete layer;
 	}
-	// g_list_free(val->children); /* kamilFIXME: clean up the list
+	this->children->clear();
 }
 
 
@@ -665,7 +660,6 @@ bool LayerAggregate::delete_layer(TreeIndex const & tree_index)
 			break;
 		}
 	}
-	this->disconnect_layer_signal(layer);
 	delete layer;
 
 	return was_visible;
@@ -967,6 +961,6 @@ LayerAggregate::LayerAggregate()
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
 	this->interface = &vik_aggregate_layer_interface;
 
-	this->rename(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_type_ui_label(this->type));
 	this->children = new std::list<Layer *>;
 }

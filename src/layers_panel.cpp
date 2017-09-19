@@ -134,7 +134,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	this->toplayer = new LayerAggregate();
-	this->toplayer->rename(tr("Top Layer"));
+	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0);
 	this->toplayer->connect_to_tree(this->tree_view, this->toplayer_item);
@@ -258,7 +258,7 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		Layer * layer = this->tree_view->get_layer(index);
 
 		if (layer->name != new_text) {
-			layer->rename(new_text);
+			layer->set_name(new_text);
 			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
@@ -489,7 +489,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 		/* We translate the name here in order to avoid translating name set by user.
 		   TODO: translate the string. */
-		layer->rename(Layer::get_type_ui_label(layer_type));
+		layer->set_name(Layer::get_type_ui_label(layer_type));
 	}
 
 	this->add_layer(layer);
@@ -961,8 +961,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 				}
 				index = index2;
 			}
-			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->layers_panel = this;
 		} else {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
 
@@ -972,7 +970,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->sublayer = this->tree_view->get_sublayer(index);
 			layer->menu_data->viewport = this->get_viewport();
-			layer->menu_data->layers_panel = this;
 			layer->menu_data->confirm = true; /* Confirm delete request. */
 		}
 

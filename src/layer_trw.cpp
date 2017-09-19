@@ -2795,14 +2795,15 @@ void LayerTRW::upload_to_gps_cb(void) /* Slot. */
  */
 void LayerTRW::gps_upload_any_cb()
 {
-	LayersPanel * panel = this->menu_data->layers_panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t uid = this->menu_data->sublayer->uid;
-#ifdef K
 
 	/* May not actually get a track here as values[2&3] can be null. */
 	Track * trk = NULL;
 	GPSTransferType xfer_type = GPSTransferType::TRK; /* SublayerType::TRACKS = 0 so hard to test different from NULL! */
 	bool xfer_all = false;
+
+#ifdef K
 
 	if ((bool) data->sublayer_type) { /* kamilFIXME: don't cast. */
 		xfer_all = false;
@@ -3750,7 +3751,7 @@ void LayerTRW::profile_item_cb(void)
 			track_profile_dialog(this->get_window(),
 					     this,
 					     trk,
-					     this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL,
+					     this->get_window()->get_layers_panel(),
 					     this->menu_data->viewport);
 		}
 	}
@@ -3955,7 +3956,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		goto_coord(this->menu_data->layers_panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
+		goto_coord(this->get_window()->get_layers_panel(), this, this->menu_data->viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -4228,7 +4229,7 @@ void LayerTRW::auto_track_view_cb(void)
 	if (trk && !trk->empty()) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
-		this->zoom_to_show_latlons(this->menu_data->viewport, maxmin);
+		this->zoom_to_show_latlons(this->get_window()->get_viewport(), maxmin);
 		if (panel) {
 			panel->emit_update_cb();
 		} else {
@@ -6955,7 +6956,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	const QStringList zoom_labels = { "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024" };
 	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
-	LayersPanel * panel = this->menu_data->layers_panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 	if (!trk) {
@@ -7199,7 +7200,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
 
-	this->rename(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_type_ui_label(this->type));
 
 
 #ifdef K

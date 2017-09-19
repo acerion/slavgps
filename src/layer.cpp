@@ -70,15 +70,11 @@ extern LayerDEMInterface vik_dem_layer_interface;
 extern LayerMapnikInterface vik_mapnik_layer_interface;
 #endif
 
-enum {
-	VL_UPDATE_SIGNAL,
-	VL_LAST_SIGNAL
-};
-static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
-#ifdef K
+
+
 static bool layer_defaults_register(LayerType layer_type);
-#endif
+
 
 
 
@@ -178,7 +174,7 @@ void Layer::preconfigure_interfaces(void)
 
 		LayerInterface * interface = Layer::get_interface(type);
 
-		QString path = QString(":/icons/layer/") + Layer::get_type_string(type).toLower() + QString(".png");
+		QString path = QString(":/icons/layer/") + Layer::get_type_id_string(type).toLower() + QString(".png");
 		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
@@ -236,7 +232,7 @@ static bool layer_defaults_register(LayerType layer_type)
 
 
 /* Frees old name. */
-void Layer::rename(const QString & new_name)
+void Layer::set_name(const QString & new_name)
 {
 	this->name = new_name;
 }
@@ -244,7 +240,7 @@ void Layer::rename(const QString & new_name)
 
 
 
-const QString & Layer::get_name()
+const QString Layer::get_name(void) const
 {
 	return this->name;
 }
@@ -252,7 +248,7 @@ const QString & Layer::get_name()
 
 
 
-QString Layer::get_type_string(void) const
+QString Layer::get_type_id_string(void) const
 {
 	return this->get_interface(this->type)->fixed_layer_type_string;
 }
@@ -260,7 +256,7 @@ QString Layer::get_type_string(void) const
 
 
 
-QString Layer::get_type_string(LayerType type)
+QString Layer::get_type_id_string(LayerType type)
 {
 	return Layer::get_interface(type)->fixed_layer_type_string;
 }
@@ -287,6 +283,8 @@ QString Layer::get_type_ui_label(LayerType type)
 Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 {
 	qDebug() << "II: Layer: will create new" << Layer::get_type_ui_label(layer_type) << "layer";
+
+	static sg_uid_t layer_uid = SG_UID_INITIAL;
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
@@ -321,6 +319,8 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 
 	assert (layer);
 
+	layer->layer_instance_uid = ++layer_uid;
+
 	return layer;
 }
 
@@ -347,7 +347,7 @@ typedef struct {
 
 void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 {
-#ifndef SLAVGPS_QT
+#ifdef K
 	layer->marshall(data, len);
 	if (*data) {
 		header_t * header = (header_t *) malloc(*len + sizeof (*header));
@@ -449,7 +449,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
-	this->rename(QString(s));
+	this->set_name(QString(s));
 	free(s);
 
 	SGVariant param_value;
@@ -605,10 +605,10 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 
 
-LayerType Layer::type_from_type_string(const QString & type_string)
+LayerType Layer::type_from_type_id_string(const QString & type_id_string)
 {
 	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		if (type_string == Layer::get_type_string(type)) {
+		if (type_id_string == Layer::get_type_id_string(type)) {
 			return type;
 		}
 	}
@@ -660,22 +660,6 @@ Layer::Layer()
 
 
 
-bool Layer::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
-{
-	return false;
-}
-
-
-
-
-bool Layer::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
-{
-	return false;
-}
-
-
-
-
 void Layer::post_read(Viewport * viewport, bool from_file)
 {
 	return;
@@ -684,23 +668,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 
 
-bool Layer::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
-{
-	return false;
-}
-
-
-
-
-void Layer::draw(Viewport * viewport)
-{
-	return;
-}
-
-
-
-
-QString Layer::tooltip()
+QString Layer::get_tooltip(void) const
 {
 	return QString(tr("Layer::tooltip"));
 }
@@ -708,7 +676,7 @@ QString Layer::tooltip()
 
 
 
-QString Layer::sublayer_tooltip(Sublayer * sublayer)
+QString Layer::get_sublayer_tooltip(Sublayer * sublayer) const
 {
 	return QString("Layer::sublayer_tooltip");
 }
@@ -719,79 +687,6 @@ QString Layer::sublayer_tooltip(Sublayer * sublayer)
 bool Layer::kamil_selected(TreeItemType item_type, Sublayer * sublayer)
 {
 	return false;
-}
-
-
-
-
-
-bool Layer::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
-{
-	return false;
-}
-
-
-
-
-void Layer::set_menu_selection(LayerMenuItem selection)
-{
-	return;
-}
-
-
-
-
-LayerMenuItem Layer::get_menu_selection()
-{
-	return LayerMenuItem::NONE;
-}
-
-
-
-
-void Layer::cut_sublayer(Sublayer * sublayer)
-{
-	return;
-}
-
-
-
-
-void Layer::copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len)
-{
-	return;
-}
-
-
-
-
-bool Layer::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
-{
-	return false;
-}
-
-
-
-
-void Layer::delete_sublayer(Sublayer * sublayer)
-{
-	return;
-}
-
-
-
-
-void Layer::change_coord_mode(CoordMode dest_mode)
-{
-	return;
-}
-
-
-
-
-time_t Layer::get_timestamp()
-{
-	return 0;
 }
 
 
@@ -967,24 +862,9 @@ void Layer::weak_unref(LayerRefCB cb, void * obj)
 
 
 
-bool Layer::the_same_object(Layer const * layer)
+bool Layer::the_same_object(const Layer * layer) const
 {
-#ifndef SLAVGPS_QT
-	return layer && this->vl == layer->vl;
-#endif
-}
-
-
-
-
-void Layer::disconnect_layer_signal(Layer * layer)
-{
-#ifndef SLAVGPS_QT
-	unsigned int number_handlers = g_signal_handlers_disconnect_matched(layer->vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, this->vl);
-	if (number_handlers != 1) {
-		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
-	}
-#endif
+	return layer && (layer->layer_instance_uid == this->layer_instance_uid);
 }
 
 

@@ -49,7 +49,7 @@ LayerTool::LayerTool(Window * window_, Viewport * viewport_, LayerType layer_typ
 		strcpy(this->debug_string, "LayerType::generic");
 	} else {
 		strcpy(this->debug_string, "LayerType::");
-		strcpy(this->debug_string + 11, Layer::get_type_string(layer_type).toUtf8().constData());
+		strcpy(this->debug_string + 11, Layer::get_type_id_string(layer_type).toUtf8().constData());
 	}
 }
 

@@ -730,9 +730,9 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			target_layer = new LayerTRW();
 			target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
-				target_layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
+				target_layer->set_name(((gpx_meta_data_t *) selected_iterator->data)->name);
 			} else {
-				target_layer->rename(QObject::tr("My OSM Traces"));
+				target_layer->set_name(QObject::tr("My OSM Traces"));
 			}
 		} else {
 			target_layer = trw;

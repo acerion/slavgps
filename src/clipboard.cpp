@@ -301,7 +301,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 			/* Try to sanitize input: */
 			char *name = g_strescape(text, NULL);
 
-			selected->rename(name);
+			selected->set_name(name);
 			selected->tree_view->set_name(&iter, name);
 			free(name);
 		}

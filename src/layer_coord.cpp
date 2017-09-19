@@ -388,5 +388,5 @@ LayerCoord::LayerCoord()
 
 	this->set_initial_parameter_values();
 
-	this->rename(tr("My Coord Layer")); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
+	this->set_name(Layer::get_type_ui_label());
 }

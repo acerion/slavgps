@@ -77,7 +77,7 @@ static bool loaded;
 static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success)
 {
 	SGVariant value;
-	QString group = Layer::get_type_string(layer_type);
+	QString group = Layer::get_type_id_string(layer_type);
 
 	QString key(group + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
@@ -180,7 +180,7 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 		return;
 	}
 
-	const QString group = Layer::get_type_string(layer_type);
+	const QString group = Layer::get_type_id_string(layer_type);
 	QString key(group + QString("/") + QString(name));
 	keyfile->setValue(key, variant);
 }

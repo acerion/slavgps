@@ -119,7 +119,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 
 		trw = (LayerTRW *) new LayerTRW();
 		trw->set_coord_mode(viewport->get_coord_mode());
-		trw->rename(file_basename(filename));
+		trw->set_name(file_basename(filename));
 		create_layer = true;
 	} else {
 		trw = (LayerTRW *) layer;

@@ -1026,7 +1026,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 			LayerMap * layer = new LayerMap();
 
 			layer->set_map_type(the_type_id);
-			layer->rename(QObject::tr("Map"));
+			layer->set_name(Layer::get_type_ui_label(layer->type));
 
 			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_changed();

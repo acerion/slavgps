@@ -1070,7 +1070,7 @@ void Window::handle_selection_of_layer(Layer * layer)
 {
 	qDebug() << "II: Window: selected layer type" << layer->get_type_ui_label();
 
-	this->toolbox->handle_selection_of_layer(layer->get_type_string());
+	this->toolbox->handle_selection_of_layer(layer->get_type_id_string());
 }
 
 
@@ -1269,7 +1269,7 @@ void Window::create_ui(void)
 			const QList<QAction *> actions = tools_group->actions();
 
 			if (!actions.isEmpty()) {
-				tools_group->setObjectName(Layer::get_type_string(type));
+				tools_group->setObjectName(Layer::get_type_id_string(type));
 
 				this->toolbar->addSeparator();
 				this->toolbar->addActions(actions);
@@ -1386,7 +1386,7 @@ void Window::create_ui(void)
 
 
 		GtkActionEntry action_dl;
-		char *layername = g_strdup_printf("Layer%s", Layer::get_type_string(type));
+		char *layername = g_strdup_printf("Layer%s", Layer::get_type_id_string(type));
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
 				      Layer::get_interface(type)->name,
 				      layername,
@@ -1395,7 +1395,7 @@ void Window::create_ui(void)
 
 		// For default layers use action names of the form 'Layer<LayerName>'
 		// This is to avoid clashing with just the layer name used above for the tool actions
-		action_dl.name = g_strconcat("Layer", Layer::get_type_string(type), NULL);
+		action_dl.name = g_strconcat("Layer", Layer::get_type_id_string(type), NULL);
 		action_dl.action_icon_path = NULL;
 		action_dl.action_label = g_strconcat("_", Layer::get_interface(type)->name, "...", NULL); // Prepend marker for keyboard accelerator
 		action_dl.action_tooltip = NULL;
@@ -2845,7 +2845,7 @@ void Window::finish_new(void)
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 		LayerMap * layer = new LayerMap();
-		layer->rename(QObject::tr("Default Map"));
+		layer->set_name(QObject::tr("Default Map"));
 
 		this->layers_panel->get_top_layer()->add_layer(layer, true);
 

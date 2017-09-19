@@ -267,7 +267,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
 		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTODO: remove cast. */
-		fprintf(f, "\n~Layer %s\n", current->get_type_string().toUtf8().constData());
+		fprintf(f, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
@@ -397,7 +397,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					stack->data = NULL;
 					continue;
 				} else {
-					LayerType layer_type = Layer::type_from_type_string(QString(line + 6));
+					LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
 					push(&stack);
 					if (layer_type == LayerType::NUM_TYPES) {
 						successful_read = false;
@@ -543,7 +543,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				viewport->set_draw_with_highlight(TEST_BOOLEAN(line+14));
 
 			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
-				layer->rename(QString(line+5));
+				layer->set_name(QString(line+5));
 
 			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
 				layer->visible = TEST_BOOLEAN(line+8);
@@ -799,7 +799,7 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 
 		LayerTRW * layer = new LayerTRW();
 		layer->set_coord_mode(viewport->get_coord_mode());
-		layer->rename(file_basename(filename));
+		layer->set_name(file_basename(filename));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {

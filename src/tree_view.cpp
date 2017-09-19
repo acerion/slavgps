@@ -640,7 +640,7 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 	QStandardItem * first_item = NULL;
 	QVariant variant;
 
-	QString tooltip = parent_layer->sublayer_tooltip(sublayer);
+	const QString tooltip = parent_layer->get_sublayer_tooltip(sublayer);
 
 
 	/* LayersTreeColumn::NAME */
@@ -923,7 +923,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
-	QString tooltip = layer->tooltip();
+	const QString tooltip = layer->get_tooltip();
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -1151,7 +1151,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		if (this->get_layer(*index)) {
 			QStandardItem * item = this->model->itemFromIndex(*index);
 			qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
-			this->get_layer(*index)->rename(item->text());
+			this->get_layer(*index)->set_name(item->text());
 		} else {
 			/* No layer probably means that we want to edit a sublayer. */
 		}
