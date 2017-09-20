@@ -401,7 +401,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool visible = trw->visible && trk->visible;
-	visible = visible && (trk->sublayer_type == SublayerType::ROUTE ? trw->get_routes_visibility() : trw->get_tracks_visibility());
+	visible = visible && (trk->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 	unsigned int trk_duration = 0; /* In minutes. */
 	if (!trk->empty()) {
@@ -676,27 +676,27 @@ void TrackListDialog::build_model(bool hide_layer_names)
 /**
  * @title:               The title for the dialog
  * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
- * @sublayer_typea:      Sublayer type to be show in list (NONE for both TRACKS and LAYER)
+ * @type_ida:      Sublayer type to be show in list (empty string for both tracks and layers)
  * @show_layer_names:    Normally only set when called from an aggregate level
  *
  * Common method for showing a list of tracks with extended information
  */
-void SlavGPS::track_list_dialog(QString const & title, Layer * layer, SublayerType sublayer_type, bool show_layer_names)
+void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id, bool show_layer_names)
 {
 	TrackListDialog dialog(title, layer->get_window());
 
 
 	if (layer->type == LayerType::AGGREGATE) {
-		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
+		if (type_id == "") { /* No particular sublayer type means both tracks and layers. */
 			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list();
 		} else {
-			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(sublayer_type);
+			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(type_id);
 		}
 	} else if (layer->type == LayerType::TRW) {
-		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
+		if (type_id == "") { /* No particular sublayer type means both tracks and layers. */
 			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list();
 		} else {
-			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(sublayer_type);
+			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(type_id);
 		}
 	} else {
 		assert (0);

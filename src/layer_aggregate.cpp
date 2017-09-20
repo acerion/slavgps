@@ -510,7 +510,7 @@ std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_l
 
 
 
-std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(SublayerType sublayer_type)
+std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(const QString & items_type_id)
 {
 	return this->create_tracks_and_layers_list();
 }
@@ -548,7 +548,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Track and Route List").arg(this->name);
-	track_list_dialog(title, this, SublayerType::NONE, true);
+	track_list_dialog(title, this, "", true);
 }
 
 
@@ -556,7 +556,7 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->get_window(), this->name, this, SublayerType::NONE);
+	layer_trw_show_stats(this->get_window(), this->name, this, "");
 }
 
 

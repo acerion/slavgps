@@ -2548,10 +2548,10 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		std::list<Track *> * tracks = this->trk->split_into_segments();
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				const QString new_tr_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
+				const QString new_tr_name = this->trw->new_unique_sublayer_name(this->trk->type_id, this->trk->name);
 				(*iter)->set_name(new_tr_name);
 
-				if (this->trk->sublayer_type == SublayerType::ROUTE) {
+				if (this->trk->type_id == "sg.trw.route") {
 					this->trw->add_route(*iter);
 				} else {
 					this->trw->add_track(*iter);
@@ -2562,7 +2562,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		if (tracks) {
 			delete tracks;
 			/* Don't let track destroy this dialog. */
-			if (this->trk->sublayer_type == SublayerType::ROUTE) {
+			if (this->trk->type_id == "sg.trw.route") {
 				this->trw->delete_route(this->trk);
 			} else {
 				this->trw->delete_track(this->trk);
@@ -2585,7 +2585,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			break;
 		}
 
-		const QString r_name = this->trw->new_unique_sublayer_name(this->trk->sublayer_type, this->trk->name);
+		const QString r_name = this->trw->new_unique_sublayer_name(this->trk->type_id, this->trk->name);
 
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
@@ -2598,10 +2598,10 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			trk_right->set_comment(this->trk->comment);
 		}
 		trk_right->visible = this->trk->visible;
-		trk_right->sublayer_type = this->trk->sublayer_type;
+		trk_right->type_id = this->trk->type_id;
 		trk_right->set_name(r_name);
 
-		if (this->trk->sublayer_type == SublayerType::ROUTE) {
+		if (this->trk->type_id == "sg.trw.route") {
 			this->trw->add_route(trk_right);
 		} else {
 			this->trw->add_track(trk_right);

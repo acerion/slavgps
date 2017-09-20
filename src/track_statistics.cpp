@@ -118,8 +118,8 @@ void TrackStatistics::add_track_maybe(Track * trk, bool layer_is_visible, bool t
 	if (!include_invisible) {
 		/* Skip invisible layers or sublayers. */
 		if (!layer_is_visible
-		    || (trk->sublayer_type == SublayerType::TRACK && !tracks_are_visible)
-		    || (trk->sublayer_type == SublayerType::ROUTE && !routes_are_visible)) {
+		    || (trk->type_id == "sg.trw.track" && !tracks_are_visible)
+		    || (trk->type_id == "sg.trw.route" && !routes_are_visible)) {
 
 			return;
 		}

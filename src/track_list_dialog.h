@@ -55,7 +55,7 @@ namespace SlavGPS {
 
 
 
-	void track_list_dialog(QString const & title, Layer * layer, SublayerType sublayer_type, bool is_aggregate);
+	void track_list_dialog(QString const & title, Layer * layer, const QString & type_id, bool is_aggregate);
 
 
 

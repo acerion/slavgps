@@ -257,7 +257,7 @@ namespace SlavGPS {
 
 		void reset_waypoints();
 
-		QString new_unique_sublayer_name(SublayerType sublayer_type, const QString& old_name);
+		QString new_unique_sublayer_name(const QString & type_id, const QString& old_name);
 
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
@@ -268,7 +268,7 @@ namespace SlavGPS {
 
 
 
-		void move_item(LayerTRW * vtl_dest, sg_uid_t sublayer_uid, SublayerType sublayer_type);
+		void move_item(LayerTRW * vtl_dest, sg_uid_t sublayer_uid, const QString & type_id);
 
 
 
@@ -295,7 +295,7 @@ namespace SlavGPS {
 
 
 
-		void split_at_selected_trackpoint(SublayerType sublayer_type);
+		void split_at_selected_trackpoint(const QString & type_id);
 		void trackpoint_selected_delete(Track * trk);
 
 
@@ -305,7 +305,7 @@ namespace SlavGPS {
 
 
 		void uniquify_tracks(LayersPanel * panel, Tracks & track_table, bool ontrack);
-		void sort_order_specified(SublayerType sublayer_type, sort_order_t order);
+		void sort_order_specified(const QString & type_id, sort_order_t order);
 
 		void uniquify_waypoints(LayersPanel * panel);
 
@@ -316,7 +316,7 @@ namespace SlavGPS {
 
 
 		std::list<track_layer_t *> * create_tracks_and_layers_list();
-		std::list<track_layer_t *> * create_tracks_and_layers_list(SublayerType sublayer_type);
+		std::list<track_layer_t *> * create_tracks_and_layers_list(const QString & type_id);
 		std::list<track_layer_t *> * create_tracks_and_layers_list_helper(std::list<Track *> * tracks);
 
 

@@ -54,7 +54,7 @@ Waypoint::Waypoint()
 	this->uid = ++global_wp_uid;
 	wp_uid_mutex.unlock();
 
-	this->sublayer_type = SublayerType::WAYPOINT;
+	this->type_id = "sg.trw.waypoint";
 
 	/* kamilTODO: what about image_width / image_height? */
 }

@@ -51,7 +51,7 @@ typedef struct {
 	void * clipboard;
 	int pid;
 	VikClipboardDataType type;
-	SublayerType sublayer_type;
+	QString type_id;    /* Type of tree item. */
 	LayerType layer_type;
 	unsigned int len;
 	char *text;
@@ -415,7 +415,7 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 	GtkTreeIter iter;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
 	LayerType layer_type = LayerType::AGGREGATE;
-	SublayerType sublayer_type = (SublayerType ) 0; /* kamilFIXME: don't cast. */
+	QString type_id; /* Type ID of copied tree item. */
 	uint8_t *data = NULL;
 	unsigned int len = 0;
 	const char *name = NULL;
@@ -450,20 +450,20 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 			name = selected->tree_view->get_layer(&iter)->get_name();
 		}
 	}
-	a_clipboard_copy(type, layer_type, sublayer_type, len, name, data);
+	a_clipboard_copy(type, layer_type, type_id, len, name, data);
 }
 
 
 
 
-void SlavGPS::a_clipboard_copy(VikClipboardDataType type, LayerType layer_type, SublayerType sublayer_type, unsigned int len, const char * text, uint8_t * data)
+void SlavGPS::a_clipboard_copy(VikClipboardDataType type, LayerType layer_type, const QString & type_id, unsigned int len, const char * text, uint8_t * data)
 {
 	vik_clipboard_t * vc = (vik_clipboard_t *) malloc(sizeof(*vc) + len); /* kamil: + len? */
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	vc->type = type;
 	vc->layer_type = layer_type;
-	vc->sublayer_type = sublayer_type;
+	vc->type_id = type_id;
 	vc->len = len;
 	vc->text = g_strdup(text);
 	if (data) {

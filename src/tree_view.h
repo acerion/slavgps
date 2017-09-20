@@ -88,6 +88,8 @@ namespace SlavGPS {
 		TreeItemType tree_item_type;
 		TreeIndex index;
 		TreeView * tree_view = NULL; /* Reference. */
+
+		QString type_id;
 	};
 
 

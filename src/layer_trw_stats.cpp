@@ -301,9 +301,9 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	/* Get the latest list of items to analyse. */
 	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
-		this->tracks_and_layers = ((LayerTRW *) this->layer)->create_tracks_and_layers_list(this->sublayer_type);
+		this->tracks_and_layers = ((LayerTRW *) this->layer)->create_tracks_and_layers_list(this->type_id);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		this->tracks_and_layers = ((LayerAggregate *) this->layer)->create_tracks_and_layers_list(this->sublayer_type);
+		this->tracks_and_layers = ((LayerAggregate *) this->layer)->create_tracks_and_layers_list(this->type_id);
 	} else {
 		assert (0);
 	}
@@ -340,11 +340,11 @@ TRWStatsDialog::~TRWStatsDialog()
  * @window: main application window
  * @name: name of object, for which the stats will be calculated
  * @layer: layer containing given tracks/routes
- * @sublayer_type: type of TRW sublayer to show stats for
+ * @type_id: type of TRW sublayer to show stats for
  *
  * Display a dialog with stats across many tracks.
  */
-void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer * layer, SublayerType sublayer_type_)
+void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer * layer, const QString & type_id_)
 {
 
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
@@ -368,12 +368,12 @@ void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer 
 	}
 
 	dialog->layer = layer;
-	dialog->sublayer_type = sublayer_type_;
+	dialog->type_id = type_id_;
 
 	if (layer->type == LayerType::TRW) {
-		dialog->tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(dialog->sublayer_type);
+		dialog->tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(dialog->type_id);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		dialog->tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(dialog->sublayer_type);
+		dialog->tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(dialog->type_id);
 	} else {
 		qDebug() << "EE: Layer TRW Stats: wrong layer type" << (int) layer->type;
 		assert (0);

@@ -221,13 +221,13 @@ void Track::free()
 Track::Track(bool is_route)
 {
 	if (is_route) {
-		this->sublayer_type = SublayerType::ROUTE;
+		this->type_id = "sg.trw.route";
 
 		rt_uid_mutex.lock();
 		this->uid = ++global_rt_uid;
 		rt_uid_mutex.unlock();
 	} else {
-		this->sublayer_type = SublayerType::TRACK;
+		this->type_id = "sg.trw.track";
 
 		trk_uid_mutex.lock();
 		this->uid = ++global_trk_uid;
@@ -251,7 +251,7 @@ Track::Track(bool is_route)
  *
  * Returns: the copied Track.
  */
-Track::Track(const Track & from) : Track(from.sublayer_type == SublayerType::ROUTE)
+Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 {
 	/* Copy points. */
 	for (auto iter = from.trackpoints.begin(); iter != from.trackpoints.end(); iter++) {
@@ -1772,7 +1772,7 @@ void Track::marshall(uint8_t **data, size_t *datalen)
  */
 Track * Track::unmarshall(uint8_t *data, size_t datalen)
 {
-	Track * new_trk = new Track(((Track *)data)->sublayer_type == SublayerType::ROUTE);
+	Track * new_trk = new Track(((Track *)data)->type_id == "sg.trw.route");
 	/* Basic properties: */
 	new_trk->visible = ((Track *)data)->visible;
 	new_trk->draw_name_mode = ((Track *)data)->draw_name_mode;

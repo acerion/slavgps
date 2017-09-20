@@ -88,7 +88,7 @@ namespace SlavGPS {
 		LayerTRW * trw = NULL;
 		bool holding = false;
 		bool moving = false;
-		SublayerType sublayer_type = SublayerType::NONE; /* WAYPOINT or TRACK or ROUTE. */
+		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
 		QPen pen;
 		int oldx = 0;
 		int oldy = 0;
@@ -106,13 +106,13 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		Sublayer() {}
-		Sublayer(SublayerType t) { sublayer_type = t; tree_item_type = TreeItemType::SUBLAYER; }
+		Sublayer(const QString & item_type_id) { type_id = item_type_id; tree_item_type = TreeItemType::SUBLAYER; }
 		~Sublayer() {};
 
 		sg_uid_t get_uid(void);
 
 	//protected:
-		SublayerType sublayer_type;
+		//SublayerType sublayer_type;
 		sg_uid_t uid = SG_UID_INITIAL;
 	};
 

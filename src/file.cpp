@@ -934,7 +934,7 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, SGFileType fi
 			switch (file_type) {
 			case SGFileType::GPX:
 				/* trk defined so can set the option. */
-				options.is_route = trk->sublayer_type == SublayerType::ROUTE;
+				options.is_route = trk->type_id == "sg.route";
 				a_gpx_write_track_file(trk, f, &options);
 				break;
 			default:

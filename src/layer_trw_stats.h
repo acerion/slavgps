@@ -63,7 +63,7 @@ namespace SlavGPS {
 		QCheckBox * checkbox = NULL;
 		std::list<track_layer_t *> * tracks_and_layers = NULL;
 		Layer * layer = NULL; /* Just a reference. */
-		SublayerType sublayer_type;
+		QString type_id;
 
 		void collect_stats(TrackStatistics & stats, bool include_invisible);
 		void display_stats(TrackStatistics & stats);
@@ -76,7 +76,7 @@ namespace SlavGPS {
 
 
 
-	void layer_trw_show_stats(Window * window, const QString & name, Layer * layer, SublayerType sublayer_type);
+	void layer_trw_show_stats(Window * window, const QString & name, Layer * layer, const QString & type_id);
 
 
 

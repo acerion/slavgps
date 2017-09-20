@@ -87,7 +87,7 @@ namespace SlavGPS {
 
 
 
-
+#if 0
 	enum class SublayerType {
 		NONE,
 		TRACKS,
@@ -97,6 +97,7 @@ namespace SlavGPS {
 		ROUTES,
 		ROUTE
 	};
+#endif
 
 
 

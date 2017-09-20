@@ -165,7 +165,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	/* Prevent accidental (small) shifts when specific movement has not been requested
 	   (as the click release has occurred within the click object detection area). */
 	if (!tool->sublayer_edit->moving
-	    || tool->sublayer_edit->sublayer_type == SublayerType::NONE) {
+	    || tool->sublayer_edit->type_id == "") {
 		return false;
 	}
 
@@ -190,16 +190,14 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	tool->sublayer_edit_release();
 
 	/* Determine if working on a waypoint or a trackpoint. */
-	if (tool->sublayer_edit->sublayer_type == SublayerType::WAYPOINT) {
+	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
 		/* Update waypoint position. */
 		this->current_wp->coord = new_coord;
 		this->calculate_bounds_waypoints();
 		/* Reset waypoint pointer. */
 		this->current_wp = NULL;
 
-	} else if (tool->sublayer_edit->sublayer_type == SublayerType::TRACK
-		   || tool->sublayer_edit->sublayer_type == SublayerType::ROUTE) {
-
+	} else if (tool->sublayer_edit->type_id == "sg.trw.track" || tool->sublayer_edit->type_id == "sg.trw.route") {
 		if (this->selected_tp.valid) {
 			(*this->selected_tp.iter)->coord = new_coord;
 
@@ -271,7 +269,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
 				tool->sublayer_edit->trw = this;
-				tool->sublayer_edit->sublayer_type = SublayerType::WAYPOINT;
+				tool->sublayer_edit->type_id = "sg.trw.waypoint";
 
 				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
@@ -311,7 +309,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			/* Always select + highlight the track. */
 			this->tree_view->select_and_expose(tp_search.closest_track->index);
 
-			tool->sublayer_edit->sublayer_type = SublayerType::TRACK;
+			tool->sublayer_edit->type_id = "sg.trw.track";
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
@@ -349,7 +347,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			/* Always select + highlight the track. */
 			this->tree_view->select_and_expose(tp_search.closest_track->index);
 
-			tool->sublayer_edit->sublayer_type = SublayerType::ROUTE;
+			tool->sublayer_edit->type_id = "sg.trw.route";
 
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
@@ -925,7 +923,7 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
 		/* Bin track if only one point as it's not very useful. */
 		if (trw->current_trk->get_tp_count() == 1) {
-			if (trw->current_trk->sublayer_type == SublayerType::ROUTE) {
+			if (trw->current_trk->type_id == "sg.trw.route") {
 				trw->delete_route(trw->current_trk);
 			} else {
 				trw->delete_track(trw->current_trk);
@@ -1026,9 +1024,9 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 	/* If either no track/route was being created
 	   or we were in the middle of creating a route... */
 	if (!trw->current_trk
-	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)) {
+	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.route")) {
 
-		QString new_name = trw->new_unique_sublayer_name(SublayerType::TRACK, QObject::tr("Track"));
+		QString new_name = trw->new_unique_sublayer_name("sg.trw.track", QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, false, trw->get_window());
 			if (new_name.isEmpty()) {
@@ -1125,9 +1123,9 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 	/* If either no track/route was being created
 	   or we were in the middle of creating a track.... */
 	if (!trw->current_trk
-	    || (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::TRACK)) {
+	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.track")) {
 
-		QString new_name = trw->new_unique_sublayer_name(SublayerType::ROUTE, QObject::tr("Route"));
+		QString new_name = trw->new_unique_sublayer_name("sg.trw.route", QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
 			if (new_name.isEmpty()) {
@@ -1479,10 +1477,10 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		return ToolStatus::IGNORED;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
-	else if (trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE && !trw->current_trk->get_tp_first()) {
+	else if (trw->current_trk && trw->current_trk->type_id == "sg.trw.route" && !trw->current_trk->get_tp_first()) {
 		return trw->tool_new_track_or_route_click(ev, this->viewport);
 
-	} else if ((trw->current_trk && trw->current_trk->sublayer_type == SublayerType::ROUTE)
+	} else if ((trw->current_trk && trw->current_trk->type_id == "sg.trw.route")
 		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
 
 		Trackpoint * tp_start = trw->current_trk->get_tp_last();

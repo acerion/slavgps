@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 
-	void a_clipboard_copy(VikClipboardDataType  type, LayerType layer_type, SublayerType sublayer_type, unsigned int len, const char * text, uint8_t * data);
+	void a_clipboard_copy(VikClipboardDataType  type, LayerType layer_type, const QString & type_id, unsigned int len, const char * text, uint8_t * data);
 	void a_clipboard_copy_selected(LayersPanel * panel);
 	bool a_clipboard_paste(LayersPanel * panel);
 	VikClipboardDataType a_clipboard_type();
