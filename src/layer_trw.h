@@ -227,8 +227,10 @@ namespace SlavGPS {
 		void draw_with_highlight(Viewport * viewport, Waypoints & waypoints, bool do_highlight);
 
 
-		void realize_tracks(Tracks & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
-		void realize_waypoints(Waypoints & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
+		/* Add tracks (tracks and routes) and waypoints from C++ containers
+		   to programs tree structure as tree children of a trw layer. */
+		void add_tracks_as_children(Sublayer * _tracks_node, Tracks & tracks);
+		void add_waypoints_as_children(Sublayer * _waypoints_node, Waypoints & data);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -404,16 +406,13 @@ namespace SlavGPS {
 
 
 		Tracks tracks;
-		Sublayer * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
-		bool tracks_visible = true;
+		Sublayer tracks_node; /* Sub-node, under which all layer's tracks are shown. */
 
 		Tracks routes;
-		Sublayer * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
-		bool routes_visible = true;
+		Sublayer routes_node; /* Sub-node, under which all layer's routes are shown. */
 
 		Waypoints waypoints;
-		Sublayer * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
-		bool waypoints_visible = true;
+		Sublayer waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		/* Waypoint editing tool. */

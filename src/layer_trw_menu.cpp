@@ -479,7 +479,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 
-	if (this->menu_data->sublayer->type_id == "sg.tracks") {
+	if (this->menu_data->sublayer->type_id == "sg.trw.tracks") {
 		rv = true;
 
 		if (this->current_trk && this->current_trk->type_id == "sg.trw.track") {
@@ -524,7 +524,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.routes") {
+	if (this->menu_data->sublayer->type_id == "sg.trw.routes") {
 		rv = true;
 
 		if (this->current_trk && this->current_trk->type_id == "sg.trw.route") {

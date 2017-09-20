@@ -69,6 +69,7 @@ namespace SlavGPS {
 
 
 	class TreeView;
+	class Layer;
 
 
 
@@ -79,8 +80,15 @@ namespace SlavGPS {
 		TreeItem() {};
 		~TreeItem() {};
 
+		TreeIndex const & add_child(TreeItem * child, Layer * parent_layer, const QString & name, QIcon * icon, time_t timestamp);
+
 		TreeIndex const & get_index(void);
 		void set_index(TreeIndex & i);
+
+
+		/* Change visibility of tree item.
+		   Return visibility state after the toggle has been performed. */
+		virtual bool toggle_visible(void);
 
 		char debug_string[100] = { 0 };
 
@@ -89,7 +97,11 @@ namespace SlavGPS {
 		TreeIndex index;
 		TreeView * tree_view = NULL; /* Reference. */
 
+		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
+		bool visible = true;  /* Is this item is visible in a tree of data items? */
+
 		QString type_id;
+		QStringList accepted_child_type_ids;
 	};
 
 

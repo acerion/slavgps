@@ -826,7 +826,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		}
 
 		char * tmp_name = slashdup(trk->name);
-		fprintf(f, "type=\"%s\" name=\"%s\"", trk->type_id == "sg.route" ? "route" : "track", tmp_name);
+		fprintf(f, "type=\"%s\" name=\"%s\"", trk->type_id == "sg.trw.route" ? "route" : "track", tmp_name);
 		free(tmp_name);
 
 		if (!trk->comment.isEmpty()) {
@@ -871,7 +871,7 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 		}
 		fprintf(f, "\n");
 
-		TP_write_info_type tp_write_info = { f, trk->type_id == "sg.route" };
+		TP_write_info_type tp_write_info = { f, trk->type_id == "sg.trw.route" };
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 			a_gpspoint_write_trackpoint(*iter, &tp_write_info);
 		}

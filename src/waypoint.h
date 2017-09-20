@@ -77,7 +77,7 @@ namespace SlavGPS {
 
 
 		Coord coord;
-		bool visible = true;
+		//bool visible = true;
 		bool has_timestamp = false;
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;

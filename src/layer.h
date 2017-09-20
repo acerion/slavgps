@@ -250,7 +250,7 @@ namespace SlavGPS {
 
 
 		QString name;
-		bool visible = true;
+		//bool visible = true;
 		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
 
 		LayerType type;

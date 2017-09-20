@@ -238,7 +238,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 		return false;
 	}
 #ifdef K
-	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
+	if (!this->tracks_node.visible && !this->waypoints_node.visible && !this->routes_node.visible) {
 		return false;
 	}
 #endif
@@ -248,7 +248,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints_visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
+	if (this->waypoints_node.visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
 		WaypointSearch wp_search;
 		wp_search.viewport = viewport;
 		wp_search.x = ev->x();
@@ -301,7 +301,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	tp_search.bbox = bbox;
 
 	/* FIXME: we have a very similar block of code below. */
-	if (this->tracks_visible) {
+	if (this->tracks_node.visible) {
 		LayerTRWc::track_search_closest_tp(this->tracks, &tp_search);
 
 		if (tp_search.closest_tp) {
@@ -339,7 +339,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	}
 
 	/* Try again for routes. */
-	if (this->routes_visible) {
+	if (this->routes_node.visible) {
 		LayerTRWc::track_search_closest_tp(this->routes, &tp_search);
 
 		if (tp_search.closest_tp)  {
@@ -406,7 +406,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 	}
 
 #ifdef K
-	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
+	if (!this->tracks_node.visible && !this->waypoints_node.visible && !this->routes_node.visible) {
 		return false;
 	}
 #endif
@@ -471,7 +471,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		return ToolStatus::ACK;
 	}
 #ifdef K
-	if (!trw->visible || !trw->waypoints_visible) {
+	if (!trw->visible || !trw->waypoints_node.visible) {
 		return ToolStatus::IGNORED;
 	}
 #endif
@@ -1250,7 +1250,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		return ToolStatus::IGNORED;
 	}
 #ifdef K
-	if (!trw->visible || !(trw->tracks_visible || trw->routes_visible)) {
+	if (!trw->visible || !(trw->tracks_node.visible || trw->routes_node.visible)) {
 		return ToolStatus::IGNORED;
 	}
 #endif
@@ -1277,7 +1277,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 	}
 #ifdef K
-	if (trw->tracks_visible) {
+	if (trw->tracks_node.visible) {
 #else
 	if (1) {
 #endif
@@ -1298,7 +1298,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	}
 
 #ifdef K
-	if (trw->routes_visible) {
+	if (trw->routes_node.visible) {
 #else
 	if (1) {
 #endif

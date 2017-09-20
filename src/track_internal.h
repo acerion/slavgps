@@ -233,7 +233,7 @@ namespace SlavGPS {
 		QString type;
 
 		TrackPoints trackpoints;
-		bool visible = false;
+		//bool visible = false;
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
 		uint8_t max_number_dist_labels = 0;
 

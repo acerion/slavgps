@@ -1187,6 +1187,30 @@ void TreeItem::set_index(TreeIndex & i)
 
 
 
+TreeIndex const & TreeItem::add_child(TreeItem * child, Layer * parent_layer, const QString & name, QIcon * icon, time_t timestamp)
+{
+	TreeIndex const & i = this->tree_view->add_sublayer((Sublayer *) child, parent_layer, this->index, name, icon, this->editable, timestamp);
+
+#ifdef K
+	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
+	Sublayer * sublayer = (Sublayer *) child;
+	if (!sublayer->visible) {
+		this->tree_view->set_visibility(child->index, false);
+	}
+#endif
+
+	return i;
+}
+
+
+bool TreeItem::toggle_visible(void)
+{
+	this->visible = !this->visible;
+	return this->visible;
+}
+
+
+
 Qt::ItemFlags TreeModel::flags(const QModelIndex & idx) const
 {
 	Qt::ItemFlags defaultFlags = QStandardItemModel::flags(idx);
