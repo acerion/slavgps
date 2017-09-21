@@ -220,6 +220,8 @@ void Track::free()
 
 Track::Track(bool is_route)
 {
+	this->tree_item_type = TreeItemType::SUBLAYER;
+
 	if (is_route) {
 		this->type_id = "sg.trw.route";
 
@@ -253,6 +255,8 @@ Track::Track(bool is_route)
  */
 Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 {
+	this->tree_item_type = TreeItemType::SUBLAYER;
+
 	/* Copy points. */
 	for (auto iter = from.trackpoints.begin(); iter != from.trackpoints.end(); iter++) {
 		Trackpoint * new_tp = new Trackpoint(**iter);
@@ -281,6 +285,8 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 /* kamilFIXME: parent constructor first copies all trackpoints from 'from', this constructor does ->assign(). Copying in parent constructor is unnecessary. */
 Track::Track(const Track & from, TrackPoints::iterator first, TrackPoints::iterator last) : Track(from)
 {
+	this->tree_item_type = TreeItemType::SUBLAYER;
+
 	this->trackpoints.assign(first, last);
 }
 

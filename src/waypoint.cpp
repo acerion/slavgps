@@ -49,6 +49,8 @@ static std::mutex wp_uid_mutex;
 
 Waypoint::Waypoint()
 {
+	this->tree_item_type = TreeItemType::SUBLAYER;
+
 	this->name = tr("Waypoint");
 	wp_uid_mutex.lock();
 	this->uid = ++global_wp_uid;
@@ -65,6 +67,8 @@ Waypoint::Waypoint()
 /* Copy constructor. */
 Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 {
+	this->tree_item_type = TreeItemType::SUBLAYER;
+
 	this->coord = wp.coord;
 	this->visible = wp.visible;
 	this->has_timestamp = wp.has_timestamp;

@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class Waypoint : public Sublayer {
+	class Waypoint : public TreeItem {
 		Q_OBJECT
 	public:
 		Waypoint();

@@ -102,23 +102,6 @@ namespace SlavGPS {
 
 
 
-	class Sublayer : public TreeItem {
-		Q_OBJECT
-	public:
-		Sublayer() {}
-		Sublayer(const QString & item_type_id) { type_id = item_type_id; tree_item_type = TreeItemType::SUBLAYER; }
-		~Sublayer() {};
-
-		sg_uid_t get_uid(void);
-
-	//protected:
-		//SublayerType sublayer_type;
-		sg_uid_t uid = SG_UID_INITIAL;
-	};
-
-
-
-
 	class Layer : public TreeItem {
 		Q_OBJECT
 
@@ -152,10 +135,10 @@ namespace SlavGPS {
 
 		virtual void draw(Viewport * viewport) { return; };
 		virtual QString get_tooltip(void) const;
-		virtual QString get_sublayer_tooltip(Sublayer * sublayer) const;
+		virtual QString get_sublayer_tooltip(TreeItem * sublayer) const;
 
-		virtual bool kamil_selected(TreeItemType type, Sublayer * sublayer);
-		bool layer_selected(TreeItemType type, Sublayer * sublayer);
+		virtual bool kamil_selected(TreeItemType type, TreeItem * sublayer);
+		bool layer_selected(TreeItemType type, TreeItem * sublayer);
 
 		/* Methods for generic "Select" tool. */
 		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)   { return false; };
@@ -167,10 +150,10 @@ namespace SlavGPS {
 		virtual void set_menu_selection(LayerMenuItem selection) { return; };
 		virtual LayerMenuItem get_menu_selection(void) const { return LayerMenuItem::NONE; };
 
-		virtual void cut_sublayer(Sublayer * sublayer) { return; };
-		virtual void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len) { return; };
-		virtual bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len) { return false; };
-		virtual void delete_sublayer(Sublayer * sublayer) { return; };
+		virtual void cut_sublayer(TreeItem * sublayer) { return; };
+		virtual void copy_sublayer(TreeItem * sublayer, uint8_t ** item, unsigned int * len) { return; };
+		virtual bool paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len) { return false; };
+		virtual void delete_sublayer(TreeItem * sublayer) { return; };
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
@@ -187,8 +170,8 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 		virtual bool sublayer_add_menu_items(QMenu & menu);
-		virtual QString sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel);
-		virtual bool sublayer_toggle_visible(Sublayer * sublayer);
+		virtual QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel);
+		virtual bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);
 
@@ -288,7 +271,7 @@ namespace SlavGPS {
 
 	class trw_menu_sublayer_t {
 	public:
-		Sublayer * sublayer = NULL;
+		TreeItem * sublayer = NULL;
 		Viewport * viewport = NULL;
 
 		bool confirm = false;

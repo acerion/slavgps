@@ -676,7 +676,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 /**
  * @title:               The title for the dialog
  * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
- * @type_ida:      Sublayer type to be show in list (empty string for both tracks and layers)
+ * @type_id:             TreeItem type to be show in list (empty string for both tracks and layers)
  * @show_layer_names:    Normally only set when called from an aggregate level
  *
  * Common method for showing a list of tracks with extended information

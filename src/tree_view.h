@@ -29,6 +29,8 @@
 #include <QPersistentModelIndex>
 #include <QObject>
 
+#include "globals.h"
+
 
 
 
@@ -85,6 +87,8 @@ namespace SlavGPS {
 		TreeIndex const & get_index(void);
 		void set_index(TreeIndex & i);
 
+		sg_uid_t get_uid(void) const;
+
 
 		/* Change visibility of tree item.
 		   Return visibility state after the toggle has been performed. */
@@ -93,12 +97,14 @@ namespace SlavGPS {
 		char debug_string[100] = { 0 };
 
 	//protected:
-		TreeItemType tree_item_type;
+		TreeItemType tree_item_type = TreeItemType::LAYER;
 		TreeIndex index;
 		TreeView * tree_view = NULL; /* Reference. */
 
 		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */
+
+		sg_uid_t uid = SG_UID_INITIAL;
 
 		QString type_id;
 		QStringList accepted_child_type_ids;

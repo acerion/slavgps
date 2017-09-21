@@ -146,9 +146,9 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		QString tooltip();
-		QString sublayer_tooltip(Sublayer * sublayer);
+		QString sublayer_tooltip(TreeItem * sublayer);
 
-		bool kamil_selected(TreeItemType type, Sublayer * sublayer);
+		bool kamil_selected(TreeItemType type, TreeItem * sublayer);
 
 		/* Methods for generic "Select" tool. */
 		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
@@ -161,10 +161,10 @@ namespace SlavGPS {
 
 		void marshall(uint8_t ** data, int * len);
 
-		void cut_sublayer(Sublayer * sublayer);
-		void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len);
-		bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
-		void delete_sublayer(Sublayer * sublayer);
+		void cut_sublayer(TreeItem * sublayer);
+		void copy_sublayer(TreeItem * sublayer, uint8_t ** item, unsigned int * len);
+		bool paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len);
+		void delete_sublayer(TreeItem * sublayer);
 
 		void change_coord_mode(CoordMode dest_mode);
 
@@ -178,8 +178,8 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		QString sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel);
-		bool sublayer_toggle_visible(Sublayer * sublayer);
+		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel);
+		bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
@@ -229,8 +229,8 @@ namespace SlavGPS {
 
 		/* Add tracks (tracks and routes) and waypoints from C++ containers
 		   to programs tree structure as tree children of a trw layer. */
-		void add_tracks_as_children(Sublayer * _tracks_node, Tracks & tracks);
-		void add_waypoints_as_children(Sublayer * _waypoints_node, Waypoints & data);
+		void add_tracks_as_children(TreeItem * _tracks_node, Tracks & tracks);
+		void add_waypoints_as_children(TreeItem * _waypoints_node, Waypoints & data);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -386,7 +386,7 @@ namespace SlavGPS {
 		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
-		Track * get_track_helper(Sublayer * sublayer);
+		Track * get_track_helper(TreeItem * sublayer);
 		void update_statusbar();
 		void tool_extended_route_finder_undo();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
@@ -406,13 +406,13 @@ namespace SlavGPS {
 
 
 		Tracks tracks;
-		Sublayer tracks_node; /* Sub-node, under which all layer's tracks are shown. */
+		TreeItem tracks_node; /* Sub-node, under which all layer's tracks are shown. */
 
 		Tracks routes;
-		Sublayer routes_node; /* Sub-node, under which all layer's routes are shown. */
+		TreeItem routes_node; /* Sub-node, under which all layer's routes are shown. */
 
 		Waypoints waypoints;
-		Sublayer waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
+		TreeItem waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		/* Waypoint editing tool. */

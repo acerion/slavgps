@@ -118,7 +118,7 @@ namespace SlavGPS {
 	  they are shown.
 	*/
 
-	class Track : public Sublayer {
+	class Track : public TreeItem {
 		Q_OBJECT
 	public:
 		/* Track/Route differentiation is made either explicitly (through 'is_route' argument)

@@ -45,7 +45,7 @@ namespace SlavGPS {
 
 
 	class Layer;
-	class Sublayer;
+	class TreeItem;
 	class LayersPanel;
 	class TreeView;
 
@@ -78,13 +78,13 @@ namespace SlavGPS {
 
 		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp);
 		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index);
-		TreeIndex const & add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp);
+		TreeIndex const & add_sublayer(TreeItem * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp);
 
 		TreeItemType get_item_type(TreeIndex const & index);
 
 		Layer * get_parent_layer(TreeIndex const & index);
 		Layer * get_layer(TreeIndex const & index);
-		Sublayer * get_sublayer(TreeIndex const & index);
+		TreeItem * get_sublayer(TreeIndex const & index);
 
 		QString get_name(TreeIndex const & index);
 

@@ -510,7 +510,7 @@ Layer::~Layer()
 
 
 
-bool Layer::layer_selected(TreeItemType item_type, Sublayer * sublayer)
+bool Layer::layer_selected(TreeItemType item_type, TreeItem * sublayer)
 {
 	bool result = this->kamil_selected(item_type, sublayer);
 	if (result) {
@@ -652,7 +652,7 @@ Layer::Layer()
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
-	this->tree_item_type = TreeItemType::LAYER; /* TODO: re-think initializing parent classes of Layer and Sublayer. */
+	this->tree_item_type = TreeItemType::LAYER; /* TODO: re-think initializing parent classes of Layer and TreeItem. */
 
 	this->menu_data = new trw_menu_sublayer_t;
 }
@@ -676,7 +676,7 @@ QString Layer::get_tooltip(void) const
 
 
 
-QString Layer::get_sublayer_tooltip(Sublayer * sublayer) const
+QString Layer::get_sublayer_tooltip(TreeItem * sublayer) const
 {
 	return QString("Layer::sublayer_tooltip");
 }
@@ -684,7 +684,7 @@ QString Layer::get_sublayer_tooltip(Sublayer * sublayer) const
 
 
 
-bool Layer::kamil_selected(TreeItemType item_type, Sublayer * sublayer)
+bool Layer::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 {
 	return false;
 }
@@ -733,7 +733,7 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-QString Layer::sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel)
+QString Layer::sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel)
 {
 	return QString("");
 }
@@ -741,7 +741,7 @@ QString Layer::sublayer_rename_request(Sublayer * sublayer, const QString & new_
 
 
 
-bool Layer::sublayer_toggle_visible(Sublayer * sublayer)
+bool Layer::sublayer_toggle_visible(TreeItem * sublayer)
 {
 	/* If unknown, will always be visible. */
 	return true;
@@ -896,14 +896,6 @@ void Layer::visibility_toggled_cb(QStandardItem * item) /* Slot. */
 void Layer::location_info_cb(void) /* Slot. */
 {
 
-}
-
-
-
-
-sg_uid_t Sublayer::get_uid(void)
-{
-	return this->uid;
 }
 
 

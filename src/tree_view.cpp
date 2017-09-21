@@ -211,7 +211,7 @@ Layer * TreeView::get_layer(TreeIndex const & index)
 
 
 
-Sublayer * TreeView::get_sublayer(TreeIndex const & index)
+TreeItem * TreeView::get_sublayer(TreeIndex const & index)
 {
 	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
 	if (!parent_item) {
@@ -223,7 +223,7 @@ Sublayer * TreeView::get_sublayer(TreeIndex const & index)
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-	return variant.value<Sublayer *>();
+	return variant.value<TreeItem *>();
 }
 
 
@@ -317,7 +317,7 @@ void TreeView::select_cb(void) /* Slot. */
 	Window * main_window = this->layers_panel->get_window();
 	TreeItemType tree_item_type = this->get_item_type(item_index);
 
-	Sublayer * sublayer = NULL;
+	TreeItem * sublayer = NULL;
 	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
 		sublayer = this->get_sublayer(item_index);
 	}
@@ -631,7 +631,7 @@ void TreeView::unselect(TreeIndex const & index)
   TODO: improve handling of 'editable' argument.
   Non-editable items have e.g limited number of fields in context menu.
 */
-TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp)
+TreeIndex const & TreeView::add_sublayer(TreeItem * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -1189,11 +1189,11 @@ void TreeItem::set_index(TreeIndex & i)
 
 TreeIndex const & TreeItem::add_child(TreeItem * child, Layer * parent_layer, const QString & name, QIcon * icon, time_t timestamp)
 {
-	TreeIndex const & i = this->tree_view->add_sublayer((Sublayer *) child, parent_layer, this->index, name, icon, this->editable, timestamp);
+	TreeIndex const & i = this->tree_view->add_sublayer((TreeItem *) child, parent_layer, this->index, name, icon, this->editable, timestamp);
 
 #ifdef K
 	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
-	Sublayer * sublayer = (Sublayer *) child;
+	TreeItem * sublayer = (TreeItem *) child;
 	if (!sublayer->visible) {
 		this->tree_view->set_visibility(child->index, false);
 	}
@@ -1208,6 +1208,18 @@ bool TreeItem::toggle_visible(void)
 	this->visible = !this->visible;
 	return this->visible;
 }
+
+
+
+sg_uid_t TreeItem::get_uid(void) const
+{
+	return this->uid;
+}
+
+
+
+
+
 
 
 

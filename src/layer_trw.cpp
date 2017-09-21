@@ -600,7 +600,7 @@ bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport,
 
 
 
-void LayerTRW::delete_sublayer(Sublayer * sublayer)
+void LayerTRW::delete_sublayer(TreeItem * sublayer)
 {
 	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: 'delete sublayer' received NULL sublayer";
@@ -620,7 +620,7 @@ void LayerTRW::delete_sublayer(Sublayer * sublayer)
 
 
 
-void LayerTRW::cut_sublayer(Sublayer * sublayer)
+void LayerTRW::cut_sublayer(TreeItem * sublayer)
 {
 	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: 'cut sublayer' received NULL sublayer";
@@ -643,7 +643,7 @@ void LayerTRW::cut_sublayer(Sublayer * sublayer)
 
 void LayerTRW::copy_sublayer_cb(void)
 {
-	Sublayer * sublayer = this->menu_data->sublayer;
+	TreeItem * sublayer = this->menu_data->sublayer;
 	uint8_t *data_ = NULL;
 	unsigned int len;
 
@@ -709,7 +709,7 @@ void LayerTRW::paste_sublayer_cb(void)
 
 
 
-void LayerTRW::copy_sublayer(Sublayer * sublayer, uint8_t **item, unsigned int *len)
+void LayerTRW::copy_sublayer(TreeItem * sublayer, uint8_t **item, unsigned int *len)
 {
 	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: 'copy sublayer' received NULL sublayer";
@@ -741,7 +741,7 @@ void LayerTRW::copy_sublayer(Sublayer * sublayer, uint8_t **item, unsigned int *
 
 
 
-bool LayerTRW::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
+bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 {
 	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: 'paste sublayer' received NULL sublayer";
@@ -1604,7 +1604,7 @@ QIcon * get_wp_sym_small(const QString & symbol_name)
 
 
 
-void LayerTRW::add_tracks_as_children(Sublayer * _tracks_node, Tracks & tracks_)
+void LayerTRW::add_tracks_as_children(TreeItem * _tracks_node, Tracks & tracks_)
 {
 	for (auto i = tracks_.begin(); i != tracks_.end(); i++) {
 		Track * trk = i->second;
@@ -1632,7 +1632,7 @@ void LayerTRW::add_tracks_as_children(Sublayer * _tracks_node, Tracks & tracks_)
 
 
 
-void LayerTRW::add_waypoints_as_children(Sublayer * _waypoints_node, Waypoints & waypoints_)
+void LayerTRW::add_waypoints_as_children(TreeItem * _waypoints_node, Waypoints & waypoints_)
 {
 	for (auto i = waypoints_.begin(); i != waypoints_.end(); i++) {
 		time_t timestamp = 0;
@@ -1652,6 +1652,8 @@ void LayerTRW::add_tracks_node(void)
 {
 	assert(this->connected_to_tree);
 
+	this->tracks_node.tree_item_type = TreeItemType::SUBLAYER;
+
 	this->tracks_node.type_id = "sg.trw.tracks";
 	this->tracks_node.accepted_child_type_ids << "sg.trw.track";
 	this->tracks_node.tree_view = this->tree_view;
@@ -1666,6 +1668,8 @@ void LayerTRW::add_waypoints_node(void)
 {
 	assert(this->connected_to_tree);
 
+	this->waypoints_node.tree_item_type = TreeItemType::SUBLAYER;
+
 	this->waypoints_node.type_id = "sg.trw.waypoints";
 	this->waypoints_node.accepted_child_type_ids << "sg.trw.waypoint";
 	this->waypoints_node.tree_view = this->tree_view;
@@ -1679,6 +1683,8 @@ void LayerTRW::add_waypoints_node(void)
 void LayerTRW::add_routes_node(void)
 {
 	assert(this->connected_to_tree);
+
+	this->routes_node.tree_item_type = TreeItemType::SUBLAYER;
 
 	this->routes_node.type_id = "sg.trw.routes";
 	this->routes_node.accepted_child_type_ids << "sg.trw.route";
@@ -1722,7 +1728,7 @@ void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_in
 
 
 
-bool LayerTRW::sublayer_toggle_visible(Sublayer * sublayer)
+bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 {
 	if (sublayer->type_id == "sg.trw.tracks") {
 		return this->tracks_node.toggle_visible();
@@ -1936,7 +1942,7 @@ QString LayerTRW::tooltip()
 
 
 
-QString LayerTRW::sublayer_tooltip(Sublayer * sublayer)
+QString LayerTRW::sublayer_tooltip(TreeItem * sublayer)
 {
 	if (!sublayer) {
 		qDebug() << "WW: Layer TRW: NULL sublayer in sublayer_tooltip()";
@@ -2097,7 +2103,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action.
  */
-bool LayerTRW::kamil_selected(TreeItemType item_type, Sublayer * sublayer)
+bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 {
 	/* Reset. */
 	this->current_wp = NULL;
@@ -2594,8 +2600,8 @@ void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
  */
 void LayerTRW::geotagging_track_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->tracks.at(child_uid);
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
 	trw_layer_geotag_dialog(this->get_window(), this, NULL, trk);
@@ -2763,7 +2769,7 @@ void LayerTRW::upload_to_gps_cb(void) /* Slot. */
 void LayerTRW::gps_upload_any_cb()
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	/* May not actually get a track here as values[2&3] can be null. */
 	Track * trk = NULL;
@@ -2775,10 +2781,10 @@ void LayerTRW::gps_upload_any_cb()
 	if ((bool) data->type_id) { /* kamilFIXME: don't cast. */
 		xfer_all = false;
 		if (this->menu_data->sublayer->type == "sg.trw.route") {
-			trk = this->routes.at(uid);
+			trk = this->routes.at(child_uid);
 			xfer_type = GPSTransferType::RTE;
 		} else if (this->menu_data->sublayer->type == "sg.trw.track") {
-			trk = this->tracks.at(uid);
+			trk = this->tracks.at(child_uid);
 			xfer_type = GPSTransferType::TRK;
 		} else if (this->menu_data->sublayer->type == "sg.trw.waypoints") {
 			xfer_type = GPSTransferType::WPT;
@@ -3289,7 +3295,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	Sublayer * sublayer = trw_src->tree_view->get_sublayer(src_item_iter);
+	TreeItem * sublayer = trw_src->tree_view->get_sublayer(src_item_iter);
 
 	if (!trw_src->tree_view->get_name(src_item_iter)) {
 		GList *items = NULL;
@@ -3585,11 +3591,11 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 	bool was_visible = false;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(uid);
+		Waypoint * wp = this->waypoints.at(child_uid);
 		if (wp && !wp->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3605,7 +3611,7 @@ void LayerTRW::delete_sublayer_cb(void)
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(uid);
+		Track * trk = this->tracks.at(child_uid);
 		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3619,7 +3625,7 @@ void LayerTRW::delete_sublayer_cb(void)
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else {
-		Track * trk = this->routes.at(uid);
+		Track * trk = this->routes.at(child_uid);
 		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3907,8 +3913,8 @@ void LayerTRW::extend_track_end_cb(void)
  */
 void LayerTRW::extend_track_end_route_finder_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->routes.at(child_uid);
 	if (!trk) {
 		return;
 	}
@@ -4355,7 +4361,7 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
  */
 void LayerTRW::merge_with_other_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 	Tracks * ght_tracks = NULL;
 	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
 		ght_tracks = &this->routes;
@@ -4363,7 +4369,7 @@ void LayerTRW::merge_with_other_cb(void)
 		ght_tracks = &this->tracks;
 	}
 
-	Track * trk = ght_tracks->at(uid);
+	Track * trk = ght_tracks->at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4452,8 +4458,8 @@ void LayerTRW::append_track_cb(void)
 		ght_tracks = &this->tracks;
 	}
 
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	trk = ght_tracks->at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	trk = ght_tracks->at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4516,7 +4522,7 @@ void LayerTRW::append_track_cb(void)
  */
 void LayerTRW::append_other_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	Tracks * ght_mykind;
 	Tracks * ght_others;
@@ -4528,7 +4534,7 @@ void LayerTRW::append_other_cb(void)
 		ght_others = &this->routes;
 	}
 
-	Track * trk = ght_mykind->at(uid);
+	Track * trk = ght_mykind->at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4606,8 +4612,8 @@ void LayerTRW::append_other_cb(void)
 /* Merge by segments. */
 void LayerTRW::merge_by_segment_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->tracks.at(child_uid);
 	unsigned int segments = trk->merge_segments();
 	/* NB currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened: */
@@ -4623,11 +4629,11 @@ void LayerTRW::merge_by_segment_cb(void)
 /* merge by time routine */
 void LayerTRW::merge_by_timestamp_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	//time_t t1, t2;
 
-	Track * orig_trk = this->tracks.at(uid);
+	Track * orig_trk = this->tracks.at(child_uid);
 
 	if (!orig_trk->empty()
 	    && !orig_trk->get_tp_first()->has_timestamp) {
@@ -4758,8 +4764,8 @@ void LayerTRW::split_at_selected_trackpoint(const QString & item_type_id)
 void LayerTRW::split_by_timestamp_cb(void)
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->tracks.at(child_uid);
 
 	static uint32_t thr = 1;
 
@@ -4941,8 +4947,8 @@ void LayerTRW::split_at_trackpoint_cb(void)
  */
 void LayerTRW::split_segments_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track *trk = this->tracks.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track *trk = this->tracks.at(child_uid);
 
 	if (!trk) {
 		return;
@@ -5154,10 +5160,10 @@ void LayerTRW::diary_open(char const * date_str)
  */
 void LayerTRW::diary_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(uid);
+		Track * trk = this->tracks.at(child_uid);
 		if (!trk) {
 			return;
 		}
@@ -5263,10 +5269,10 @@ static char *convert_to_dms(double dec)
  */
 void LayerTRW::astro_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(uid);
+		Track * trk = this->tracks.at(child_uid);
 		if (!trk) {
 			return;
 		}
@@ -5883,7 +5889,7 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-QString LayerTRW::sublayer_rename_request(Sublayer * sublayer, const QString & new_name, LayersPanel * panel)
+QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel)
 {
 	QString empty_string("");
 
@@ -6013,8 +6019,8 @@ bool is_valid_geocache_name(const char *str)
 #ifndef WINDOWS
 void LayerTRW::track_use_with_filter_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->tracks.at(child_uid);
 	a_acquire_set_filter_track(trk);
 }
 #endif
@@ -6036,8 +6042,8 @@ bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 
 void LayerTRW::google_route_webpage_cb(void)
 {
-	sg_uid_t uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes.at(uid);
+	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * trk = this->routes.at(child_uid);
 	if (trk) {
 		char *escaped = uri_escape(trk->comment.toUtf8().data());
 		QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
@@ -7108,7 +7114,7 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 
 
 
-Track * LayerTRW::get_track_helper(Sublayer * sublayer)
+Track * LayerTRW::get_track_helper(TreeItem * sublayer)
 {
 	/* TODO: either get rid of this method, or reduce it to checking
 	   of consistency between function argument and contents of this->table.at(). */
