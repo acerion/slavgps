@@ -105,7 +105,7 @@ Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int 
 	search.viewport = viewport;
 	search.draw_images = this->drawimages;
 
-	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &search);
+	this->waypoints_node_.search_closest_wp(&search);
 
 	return search.closest_wp;
 }
@@ -248,14 +248,14 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints_node.visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
+	if (this->waypoints_node_.visible && BBOX_INTERSECT (this->waypoints_node_.bbox, bbox)) {
 		WaypointSearch wp_search;
 		wp_search.viewport = viewport;
 		wp_search.x = ev->x();
 		wp_search.y = ev->y();
 		wp_search.draw_images = this->drawimages;
 
-		LayerTRWc::waypoint_search_closest_tp(this->waypoints, &wp_search);
+		this->waypoints_node_.search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
 
@@ -497,7 +497,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	search.y = ev->y();
 	search.draw_images = trw->drawimages;
 
-	LayerTRWc::waypoint_search_closest_tp(trw->waypoints, &search);
+	trw->waypoints_node_.search_closest_wp(&search);
 	if (trw->current_wp && (trw->current_wp == search.closest_wp)) {
 		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
@@ -1612,7 +1612,7 @@ ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEven
 
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	QString found_image = LayerTRWc::tool_show_picture_wp(trw->waypoints, ev->x(), ev->y(), this->viewport);
+	QString found_image = trw->waypoints_node_.tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
 	if (!found_image.isEmpty()) {
 #ifdef K
 		trw_menu_sublayer_t data;

@@ -89,6 +89,8 @@ namespace SlavGPS {
 
 		sg_uid_t get_uid(void) const;
 
+		virtual QString get_tooltip(void);
+
 
 		/* Change visibility of tree item.
 		   Return visibility state after the toggle has been performed. */

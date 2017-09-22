@@ -81,20 +81,6 @@ namespace SlavGPS {
 
 
 
-	class WaypointSearch {
-	public:
-		int x = 0;
-		int y = 0;
-		int closest_x = 0;
-		int closest_y = 0;
-		bool draw_images = false;
-		Waypoint * closest_wp = NULL;
-		Viewport * viewport = NULL;
-	};
-
-
-
-
 	class TrackpointSearch {
 	public:
 		int x = 0;
@@ -114,40 +100,27 @@ namespace SlavGPS {
 	class LayerTRWc {
 	public:
 		static Track * find_track_by_name(Tracks & input, const QString & trk_name);
-		static Waypoint * find_waypoint_by_name(Waypoints & waypoints, const QString & wp_name);
 		static Track * find_track_by_date(Tracks & tracks, char const * date_str);
-		static Waypoint * find_waypoint_by_date(Waypoints & waypoints, char const * date_str);
 
 		static void find_maxmin_in_tracks(Tracks & tracks, struct LatLon maxmin[2]);
-		static void single_waypoint_jump(Waypoints & waypoints, Viewport * viewport);
 
-		static void list_wp_uids(Waypoints & waypoints, GList ** l);
 		static void list_trk_uids(Tracks & tracks, GList ** l);
 
 		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(Tracks * tracks, bool with_timestamps, Track * exclude);
 		static GList * find_nearby_tracks_by_time(Tracks & tracks, Track * orig_trk, unsigned int threshold);
 		static std::list<QString> get_sorted_track_name_list(Tracks & tracks);
 		static std::list<QString> get_sorted_track_name_list_exclude_self(Tracks * tracks, Track const * self);
-		static std::list<QString> get_sorted_wp_name_list(Waypoints & waypoints);
+
 		static QString has_duplicate_track_names(Tracks & tracks);
-		static QString has_duplicate_waypoint_names(Waypoints & waypoints);
 
 
-		static void set_waypoints_visibility(Waypoints & waypoints, bool on_off);
-		static void waypoints_toggle_visibility(Waypoints & waypoints);
 		static void set_tracks_visibility(Tracks & tracks, bool on_off);
 		static void tracks_toggle_visibility(Tracks & tracks);
 
 		static std::list<Track *> * get_track_values(std::list<Track *> * target, Tracks & tracks);
-		static void waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch * search);
 		static void track_search_closest_tp(Tracks & tracks, TrackpointSearch * search);
 
-		static QString tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport);
-		static QStringList * image_wp_make_list(Waypoints & waypoints);
-
-
-		static void waypoints_convert(Waypoints & waypoints, CoordMode dest_mode);
-		static void tracks_convert(Tracks & tracks, CoordMode dest_mode);
+ 		static void tracks_convert(Tracks & tracks, CoordMode dest_mode);
 	};
 
 

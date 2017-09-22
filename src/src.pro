@@ -89,6 +89,7 @@ SOURCES += main.cpp \
     layer_trw_tools.cpp \
     layer_trw_containers.cpp \
     layer_trw_menu.cpp \
+    layer_trw_waypoints.cpp \
     layers_panel.cpp \
     toolbox.cpp \
     track.cpp \
@@ -202,6 +203,7 @@ HEADERS += window.h \
     layer_trw_tools.h \
     layer_trw_containers.h \
     layer_trw_dialogs.h \
+    layer_trw_waypoints.h \
     layers_panel.h \
     toolbox.h \
     track.h \

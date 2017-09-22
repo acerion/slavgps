@@ -291,7 +291,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
-	qa->setEnabled((bool) (this->waypoints.size()));
+	qa->setEnabled((bool) (this->waypoints_node_.waypoints.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
@@ -377,7 +377,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (go_to_selected_waypoint_cb()));
 			}
 
-			Waypoint * wp = this->waypoints.at(this->menu_data->sublayer->uid);
+			Waypoint * wp = this->waypoints_node_.waypoints.at(this->menu_data->sublayer->uid);
 
 			if (wp && !wp->name.isEmpty()) {
 				if (is_valid_geocache_name(wp->name.toUtf8().constData())) {

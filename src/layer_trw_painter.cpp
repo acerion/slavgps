@@ -1068,7 +1068,7 @@ void TRWPainter::draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highli
 
 void TRWPainter::draw_waypoint(Waypoint * wp, bool do_highlight)
 {
-	if (BBOX_INTERSECT (this->trw->waypoints_bbox, this->bbox)) {
+	if (BBOX_INTERSECT (this->trw->waypoints_node_.bbox, this->bbox)) {
 		this->draw_waypoint_sub(wp, do_highlight);
 	}
 }
@@ -1078,7 +1078,7 @@ void TRWPainter::draw_waypoint(Waypoint * wp, bool do_highlight)
 
 void TRWPainter::draw_waypoints(Waypoints & waypoints, bool do_highlight)
 {
-	if (BBOX_INTERSECT (this->trw->waypoints_bbox, this->bbox)) {
+	if (BBOX_INTERSECT (this->trw->waypoints_node_.bbox, this->bbox)) {
 		for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 			this->draw_waypoint_sub(i->second, do_highlight);
 		}

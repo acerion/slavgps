@@ -57,7 +57,6 @@ using namespace SlavGPS;
 
 /* This is how it knows when you click if you are clicking close to a trackpoint. */
 #define TRACKPOINT_SIZE_APPROX 5
-#define WAYPOINT_SIZE_APPROX 5
 
 
 
@@ -79,49 +78,6 @@ Track * LayerTRWc::find_track_by_date(Tracks & tracks, char const * date)
 
 			if (!g_strcmp0(date, date_buf)) {
 				return trk;
-			}
-		}
-	}
-	return NULL;
-}
-
-
-
-
-Waypoint * LayerTRWc::find_waypoint_by_date(Waypoints & waypoints, char const * date)
-{
-	char date_buf[20];
-	Waypoint * wp = NULL;
-
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		date_buf[0] = '\0';
-		wp = i->second;
-
-		/* Might be an easier way to compare dates rather than converting the strings all the time... */
-		if (wp->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(wp->timestamp)));
-
-			if (!g_strcmp0(date, date_buf)) {
-				return wp;
-			}
-		}
-	}
-	return NULL;
-}
-
-
-
-
-/*
- * ATM use a case sensitive find.
- * Finds the first one.
- */
-Waypoint * LayerTRWc::find_waypoint_by_name(Waypoints & waypoints, const QString & wp_name)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		if (i->second && !i->second->name.isEmpty()) {
-			if (i->second->name == wp_name) {
-				return i->second;
 			}
 		}
 	}
@@ -155,27 +111,6 @@ void LayerTRWc::find_maxmin_in_tracks(Tracks & tracks, struct LatLon maxmin[2])
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		LayerTRW::find_maxmin_in_track(i->second, maxmin);
-	}
-}
-
-
-
-
-void LayerTRWc::single_waypoint_jump(Waypoints & waypoints, Viewport * viewport)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		/* NB do not care if wp is visible or not. */
-		viewport->set_center_coord(i->second->coord, true);
-	}
-}
-
-
-
-
-void LayerTRWc::list_wp_uids(Waypoints & waypoints, GList ** l)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		*l = g_list_append(*l, (void *) ((long) i->first)); /* kamilTODO: i->first or i->second? */
 	}
 }
 
@@ -336,20 +271,6 @@ static void trw_layer_sorted_name_list(void * key, void * value, void * udata)
 
 
 
-std::list<QString> LayerTRWc::get_sorted_wp_name_list(Waypoints & waypoints)
-{
-	std::list<QString> result;
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		result.push_back(i->second->name);
-	}
-	result.sort();
-
-	return result;
-}
-
-
-
-
 std::list<QString> LayerTRWc::get_sorted_track_name_list(Tracks & tracks)
 {
 	std::list<QString> result;
@@ -395,63 +316,6 @@ QString LayerTRWc::has_duplicate_track_names(Tracks & tracks)
 
 
 
-/**
- * Find out if any waypoints have the same name in this layer.
- */
-QString LayerTRWc::has_duplicate_waypoint_names(Waypoints & waypoints)
-{
-	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
-
-	if (waypoints.size() <= 1) {
-		return QString("");
-	}
-
-	std::list<QString> waypoint_names = LayerTRWc::get_sorted_wp_name_list(waypoints);
-
-	for (auto iter = std::next(waypoint_names.begin()); iter != waypoint_names.end(); iter++) {
-		QString const this_one = *iter;
-		QString const previous = *(std::prev(iter));
-
-		if (this_one == previous) {
-			return this_one;
-		}
-	}
-
-	return QString("");
-}
-
-
-
-
-/**
- *
- */
-void LayerTRWc::set_waypoints_visibility(Waypoints & waypoints, bool on_off)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		i->second->visible = on_off;
-#ifdef K
-		tree_view->set_visibility(i->second->index, on_off);
-#endif
-	}
-}
-
-
-
-
-void LayerTRWc::waypoints_toggle_visibility(Waypoints & waypoints)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		i->second->visible = !i->second->visible;
-#ifdef K
-		tree_view->toggle_visibility(i->second->index);
-#endif
-	}
-}
-
-
-
-
 void LayerTRWc::set_tracks_visibility(Tracks & tracks, bool on_off)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
@@ -490,45 +354,6 @@ std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, Tr
 
 
 
-void LayerTRWc::waypoint_search_closest_tp(Waypoints & waypoints, WaypointSearch * search)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		Waypoint * wp = i->second;
-		if (!wp->visible) {
-			continue;
-		}
-
-		int x, y;
-		search->viewport->coord_to_screen(&wp->coord, &x, &y);
-
-		/* If waypoint has an image then use the image size to select. */
-		if (search->draw_images && !wp->image.isEmpty()) {
-
-			int slackx = wp->image_width / 2;
-			int slacky = wp->image_height / 2;
-
-			if (x <= search->x + slackx && x >= search->x - slackx
-			    && y <= search->y + slacky && y >= search->y - slacky) {
-
-				search->closest_wp = wp;
-				search->closest_x = x;
-				search->closest_y = y;
-			}
-		} else if (abs(x - search->x) <= WAYPOINT_SIZE_APPROX && abs(y - search->y) <= WAYPOINT_SIZE_APPROX
-			   && ((!search->closest_wp)        /* Was the old waypoint we already found closer than this one? */
-			       || abs(x - search->x) + abs(y - search->y) < abs(x - search->closest_x) + abs(y - search->closest_y))) {
-
-			search->closest_wp = wp;
-			search->closest_x = x;
-			search->closest_y = y;
-		}
-
-	}
-}
-
-
-
-
 void LayerTRWc::track_search_closest_tp(Tracks & tracks, TrackpointSearch * search)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
@@ -561,66 +386,6 @@ void LayerTRWc::track_search_closest_tp(Tracks & tracks, TrackpointSearch * sear
 			}
 
 		}
-	}
-}
-
-
-
-
-/* Params are: viewport, event, last match found or NULL. */
-QString LayerTRWc::tool_show_picture_wp(Waypoints & waypoints, int event_x, int event_y, Viewport * viewport)
-{
-	QString found;
-
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-
-		Waypoint * wp = i->second;
-		if (!wp->image.isEmpty() && wp->visible) {
-			int x, y;
-			viewport->coord_to_screen(&wp->coord, &x, &y);
-			int slackx = wp->image_width / 2;
-			int slacky = wp->image_height / 2;
-			if (x <= event_x + slackx && x >= event_x - slackx
-			    && y <= event_y + slacky && y >= event_y - slacky) {
-
-				found = wp->image; /* We've found a match. However continue searching
-						      since we want to find the last match -- that
-						      is, the match that was drawn last. */
-			}
-		}
-
-	}
-
-	return found;
-}
-
-
-
-
-QStringList * LayerTRWc::image_wp_make_list(Waypoints & waypoints)
-{
-	QStringList * pics = new QStringList;
-
-	Waypoint * wp = NULL;
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		wp = i->second;
-#ifdef K
-		if (!wp->image.isEmpty() && (!a_thumbnails_exists(wp->image))) {
-			pics->push_back(wp->image);
-		}
-#endif
-	}
-
-	return pics;
-}
-
-
-
-
-void LayerTRWc::waypoints_convert(Waypoints & waypoints, CoordMode dest_mode)
-{
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		i->second->convert(dest_mode);
 	}
 }
 

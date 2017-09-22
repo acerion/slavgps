@@ -41,6 +41,7 @@
 #include "layer_interface.h"
 #include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
+#include "layer_trw_waypoints.h"
 #include "viewport.h"
 #include "waypoint.h"
 #include "trackpoint_properties.h"
@@ -411,8 +412,7 @@ namespace SlavGPS {
 		Tracks routes;
 		TreeItem routes_node; /* Sub-node, under which all layer's routes are shown. */
 
-		Waypoints waypoints;
-		TreeItem waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
+		LayerTRWWaypoints waypoints_node_; /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		/* Waypoint editing tool. */
@@ -439,7 +439,6 @@ namespace SlavGPS {
 
 
 
-		LatLonBBox waypoints_bbox;
 		bool track_draw_labels;
 
 		int track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */

@@ -588,7 +588,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
  */
 bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport, bool select)
 {
-	Waypoint * wp = LayerTRWc::find_waypoint_by_date(this->waypoints, date_str);
+	Waypoint * wp = this->waypoints_node_.find_waypoint_by_date(date_str);
 	if (wp && select) {
 		viewport->set_center_coord(wp->coord, true);
 		this->tree_view->select_and_expose(wp->index);
@@ -653,7 +653,7 @@ void LayerTRW::copy_sublayer_cb(void)
 	if (data_) {
 		const char* name = NULL;
 		if (sublayer->type == "sg.trw.waypoint") {
-			Waypoint * wp = this->waypoints.at(sublayer->uid);
+			Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer->uid);
 			if (wp && wp->name) {
 				name = wp->name;
 			} else {
@@ -723,7 +723,7 @@ void LayerTRW::copy_sublayer(TreeItem * sublayer, uint8_t **item, unsigned int *
 	GByteArray *ba = g_byte_array_new();
 
 	if (sublayer->type_id == "sg.trw.waypoint") {
-		this->waypoints.at(sublayer->uid)->marshall(&id, &il);
+		this->waypoints_node_.waypoints.at(sublayer->uid)->marshall(&id, &il);
 	} else if (sublayer->type_id == "sg.trw.track") {
 		this->tracks.at(sublayer->uid)->marshall(&id, &il);
 	} else {
@@ -764,7 +764,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 		this->calculate_bounds_waypoints();
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->waypoints_node.visible && wp->visible) {
+		if (this->visible && this->waypoints_node_.visible && wp->visible) {
 			this->emit_changed();
 		}
 		return true;
@@ -837,7 +837,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		this->tracks_node.visible = data.b;
 		break;
 	case PARAM_WAYPOINTS_VISIBLE:
-		this->waypoints_node.visible = data.b;
+		this->waypoints_node_.visible = data.b;
 		break;
 	case PARAM_ROUTES_VISIBLE:
 		this->routes_node.visible = data.b;
@@ -1039,7 +1039,7 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	SGVariant rv;
 	switch (id) {
 	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks_node.visible; break;
-	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints_node.visible; break;
+	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints_node_.visible; break;
 	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_node.visible; break;
 	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
 	case PARAM_TRACK_LABEL_FONT_SIZE: rv.i = this->trk_label_font_size; break;
@@ -1218,7 +1218,7 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 
 #ifdef K
 	// Waypoints
-	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+	for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::WAYPOINT);
 		std::free(sl_data);
@@ -1347,7 +1347,6 @@ static unsigned int strcase_hash(gconstpointer v)
 LayerTRW::~LayerTRW()
 {
 	/* kamilTODO: call destructors of objects in these maps. */
-	this->waypoints.clear();
 	this->tracks.clear();
 	this->routes.clear();
 
@@ -1374,9 +1373,9 @@ void LayerTRW::draw_with_highlight_sub(Viewport * viewport, bool do_highlight)
 		painter.draw_tracks(this->routes, do_highlight);
 	}
 
-	if (true /* this->waypoints_node.visible */) { /* TODO: fix condition. */
+	if (true /* this->waypoints_node_.visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw waypoints";
-		painter.draw_waypoints(this->waypoints, do_highlight);
+		painter.draw_waypoints(this->waypoints_node_.waypoints, do_highlight);
 	}
 }
 
@@ -1459,7 +1458,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_h
 	}
 #endif
 
-	if (!this->waypoints_node.visible) {
+	if (!this->waypoints_node_.visible) {
 		return;
 	}
 
@@ -1521,7 +1520,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints & waypoints_, 
 	}
 #endif
 
-	if (!this->waypoints_node.visible) {
+	if (!this->waypoints_node_.visible) {
 		return;
 	}
 
@@ -1668,13 +1667,9 @@ void LayerTRW::add_waypoints_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->waypoints_node.tree_item_type = TreeItemType::SUBLAYER;
+	this->waypoints_node_.tree_view = this->tree_view;
 
-	this->waypoints_node.type_id = "sg.trw.waypoints";
-	this->waypoints_node.accepted_child_type_ids << "sg.trw.waypoint";
-	this->waypoints_node.tree_view = this->tree_view;
-
-	this->tree_view->add_sublayer(&this->waypoints_node, this, this->index, tr("Waypoints"), NULL, false, 0);
+	this->tree_view->add_sublayer(&this->waypoints_node_, this, this->index, tr("Waypoints"), NULL, false, 0);
 }
 
 
@@ -1714,10 +1709,10 @@ void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_in
 		this->tree_view->set_visibility(this->routes_node.get_index(), this->routes_node.visible);
 	}
 
-	if (this->waypoints.size() > 0) {
+	if (this->waypoints_node_.waypoints.size() > 0) {
 		this->add_waypoints_node();
-		this->add_waypoints_as_children(&this->waypoints_node, this->waypoints);
-		this->tree_view->set_visibility(this->waypoints_node.get_index(), this->waypoints_node.visible);
+		this->add_waypoints_as_children(&this->waypoints_node_, this->waypoints_node_.waypoints);
+		this->tree_view->set_visibility(this->waypoints_node_.get_index(), this->waypoints_node_.visible);
 	}
 
 	this->verify_thumbnails();
@@ -1734,7 +1729,7 @@ bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 		return this->tracks_node.toggle_visible();
 
 	} else if (sublayer->type_id == "sg.trw.waypoints") {
-		return this->waypoints_node.toggle_visible();
+		return this->waypoints_node_.toggle_visible();
 
 	} else if (sublayer->type_id == "sg.trw.routes") {
 		return this->routes_node.toggle_visible();
@@ -1748,7 +1743,7 @@ bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 		}
 
 	} else if (sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(sublayer->uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer->uid);
 		if (wp) {
 			return wp->toggle_visible();
 		} else {
@@ -1931,7 +1926,7 @@ QString LayerTRW::tooltip()
 		/* Put together all the elements to form compact tooltip text. */
 		snprintf(tmp_buf, sizeof(tmp_buf),
 			 _("Tracks: %ld - Waypoints: %ld - Routes: %ld%s%s"),
-			 this->tracks.size(), this->waypoints.size(), this->routes.size(), tbuf2, tbuf1);
+			 this->tracks.size(), this->waypoints_node_.waypoints.size(), this->routes.size(), tbuf2, tbuf1);
 
 		g_date_free(gdate_start);
 		g_date_free(gdate_end);
@@ -2004,13 +1999,12 @@ QString LayerTRW::sublayer_tooltip(TreeItem * sublayer)
 			return QString(tmp_buf);
 		}
 	} else if (sublayer->type_id == "sg.trw.waypoints") {
-		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Waypoints: %1").arg(this->waypoints.size());
+		return sublayer->get_tooltip();
 
 	} else if (sublayer->type_id == "sg.trw.waypoint") {
 		assert (sublayer->uid != SG_UID_INITIAL);
 
-		Waypoint * wp = this->waypoints.at(sublayer->uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer->uid);
 		/* It's OK to return NULL. */
 		if (wp) {
 			if (!wp->comment.isEmpty()) {
@@ -2153,12 +2147,12 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 
 			} else if (sublayer->type_id == "sg.trw.waypoints") {
 				qDebug() << "II: LayerTRW:   selection: set selected: waypoints";
-				this->get_window()->set_selected_waypoints(&this->waypoints, this);
+				this->get_window()->set_selected_waypoints(&this->waypoints_node_.waypoints, this);
 				/* Mark for redraw. */
 				return true;
 
 			} else if (sublayer->type_id == "sg.trw.waypoint") {
-				Waypoint * wp = this->waypoints.at(sublayer->uid);
+				Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer->uid);
 				qDebug() << "II: LayerTRW:   selection: set selected: waypoint" << wp->name;
 				if (wp) {
 					this->get_window()->set_selected_waypoint(wp, this);
@@ -2202,7 +2196,7 @@ Tracks & LayerTRW::get_routes()
 
 Waypoints & LayerTRW::get_waypoints()
 {
-	return waypoints;
+	return this->waypoints_node_.waypoints;
 }
 
 
@@ -2210,7 +2204,7 @@ Waypoints & LayerTRW::get_waypoints()
 
 bool LayerTRW::is_empty()
 {
-	return ! (tracks.size() || routes.size() || waypoints.size());
+	return ! (tracks.size() || routes.size() || this->waypoints_node_.waypoints.size());
 }
 
 
@@ -2234,7 +2228,7 @@ bool LayerTRW::get_routes_visibility()
 
 bool LayerTRW::get_waypoints_visibility()
 {
-	return this->waypoints_node.visible;
+	return this->waypoints_node_.visible;
 }
 
 
@@ -2246,7 +2240,7 @@ bool LayerTRW::get_waypoints_visibility()
  */
 Waypoint * LayerTRW::get_waypoint(const QString & wp_name)
 {
-	return LayerTRWc::find_waypoint_by_name(waypoints, wp_name);
+	return this->waypoints_node_.find_waypoint_by_name(wp_name);
 }
 
 
@@ -2303,13 +2297,8 @@ void LayerTRW::find_maxmin(struct LatLon maxmin[2])
 {
 	/* Continually reuse maxmin to find the latest maximum and minimum values.
 	   First set to waypoints bounds. */
-	if (this->waypoints.size() > 1) { /* kamil TODO this condition may have to be improved. */
-		maxmin[0].lat = this->waypoints_bbox.north;
-		maxmin[1].lat = this->waypoints_bbox.south;
-		maxmin[0].lon = this->waypoints_bbox.east;
-		maxmin[1].lon = this->waypoints_bbox.west;
-	}
 
+	this->waypoints_node_.find_maxmin(maxmin);
 	LayerTRWc::find_maxmin_in_tracks(tracks, maxmin);
 	LayerTRWc::find_maxmin_in_tracks(routes, maxmin);
 }
@@ -2568,7 +2557,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 void LayerTRW::geotagging_waypoint_mtime_keep_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	if (wp) {
 #ifdef K
 		/* Update directly - not changing the mtime. */
@@ -2583,7 +2572,7 @@ void LayerTRW::geotagging_waypoint_mtime_keep_cb(void)
 void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	if (wp) {
 #ifdef K
 		/* Update directly. */
@@ -2613,7 +2602,7 @@ void LayerTRW::geotagging_track_cb(void)
 void LayerTRW::geotagging_waypoint_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	trw_layer_geotag_dialog(this->get_window(), this, wp, NULL);
 }
 
@@ -2990,17 +2979,17 @@ void LayerTRW::full_view_waypoints_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Only 1 waypoint - jump straight to it */
-	if (this->waypoints.size() == 1) {
+	if (this->waypoints_node_.waypoints.size() == 1) {
 		Viewport * viewport = panel->get_viewport();
-		LayerTRWc::single_waypoint_jump(this->waypoints, viewport);
+		this->waypoints_node_.single_waypoint_jump(viewport);
 	}
 	/* If at least 2 waypoints - find center and then zoom to fit */
-	else if (this->waypoints.size() > 1) {
+	else if (this->waypoints_node_.waypoints.size() > 1) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		maxmin[0].lat = this->waypoints_bbox.north;
-		maxmin[1].lat = this->waypoints_bbox.south;
-		maxmin[0].lon = this->waypoints_bbox.east;
-		maxmin[1].lon = this->waypoints_bbox.west;
+		maxmin[0].lat = this->waypoints_node_.bbox.north;
+		maxmin[1].lat = this->waypoints_node_.bbox.south;
+		maxmin[0].lon = this->waypoints_node_.bbox.east;
+		maxmin[1].lon = this->waypoints_node_.bbox.west;
 		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
 	}
 
@@ -3031,10 +3020,10 @@ void LayerTRW::osm_traces_upload_track_cb(void)
 
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
-	this->waypoints.insert({{ wp->uid, wp }});
+	this->waypoints_node_.waypoints.insert({{ wp->uid, wp }});
 
 	if (this->connected_to_tree) {
-		if (waypoints.size() == 1) { /* We compare against '1' because we already added a first wp to ::waypoints() at the beginning of this function. */
+		if (this->waypoints_node_.waypoints.size() == 1) { /* We compare against '1' because we already added a first wp to ::waypoints() at the beginning of this function. */
 			this->add_waypoints_node();
 		}
 
@@ -3044,13 +3033,13 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		}
 
 		/* Visibility column always needed for waypoints. */
-		this->waypoints_node.add_child(wp, this, wp->name, NULL /* wp->symbol */, timestamp);
+		this->waypoints_node_.add_child(wp, this, wp->name, NULL /* wp->symbol */, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(wp->index, wp->visible);
 
 		/* Sort now as post_read is not called on a waypoint connected to tree. */
-		this->tree_view->sort_children(this->waypoints_node.get_index(), this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node_.get_index(), this->wp_sort_order);
 	}
 
 	this->highest_wp_number_add_wp(wp->name);
@@ -3131,7 +3120,7 @@ void LayerTRW::cancel_tps_of_track(Track * trk)
  */
 void LayerTRW::reset_waypoints()
 {
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+	for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 		Waypoint * wp = i->second;
 		if (!wp->symbol_name.isEmpty()) {
 			/* Reapply symbol setting to update the pixbuf. TODO: what's does it really do? */
@@ -3266,7 +3255,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	}
 
 	if (item_type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(sublayer_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer_uid);
 		Waypoint * wp2 = new Waypoint(*wp);
 
 		const QString uniq_name = trw_dest->new_unique_sublayer_name(item_type_id, wp->name_);
@@ -3304,7 +3293,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 			LayerTRWc::list_trk_uids(trw_src->tracks, &items);
 		}
 		if (sublayer->type == "sg.trw.waypoints") {
-			LayerTRWc::list_wp_uids(trw_src->waypoints, &items);
+			trw_src->waypoints_node_.list_wp_uids(&items);
 		}
 		if (sublayer->type == "sg.trw.routes") {
 			LayerTRWc::list_trk_uids(trw_src->routes, &items);
@@ -3430,11 +3419,11 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 	this->highest_wp_number_remove_wp(wp->name);
 
 	/* kamilTODO: should this line be inside of "if (it)"? */
-	waypoints.erase(wp->uid); /* Last because this frees the name. */
+	this->waypoints_node_.waypoints.erase(wp->uid); /* Last because this frees the name. */
 
 	/* If last sublayer, then remove sublayer container. */
-	if (waypoints.size() == 0) {
-		this->tree_view->erase(this->waypoints_node.get_index());
+	if (this->waypoints_node_.waypoints.size() == 0) {
+		this->tree_view->erase(this->waypoints_node_.get_index());
 	}
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
@@ -3453,7 +3442,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 bool LayerTRW::delete_waypoint_by_name(const QString & wp_name)
 {
 	/* Currently only the name is used in this waypoint find function. */
-	Waypoint * wp = LayerTRWc::find_waypoint_by_name(waypoints, wp_name);
+	Waypoint * wp = this->waypoints_node_.find_waypoint_by_name(wp_name);
 	if (wp) {
 		return delete_waypoint(wp);
 	} else {
@@ -3540,13 +3529,13 @@ void LayerTRW::delete_all_waypoints()
 
 	this->highest_wp_number_reset();
 
-	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+	for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 		tree_view->erase(i->second->index);
 	}
 
-	this->waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
+	this->waypoints_node_.waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
 
-	this->tree_view->erase(this->waypoints_node.get_index());
+	this->tree_view->erase(this->waypoints_node_.get_index());
 
 	this->emit_changed();
 }
@@ -3595,7 +3584,7 @@ void LayerTRW::delete_sublayer_cb(void)
 	bool was_visible = false;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(child_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(child_uid);
 		if (wp && !wp->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3654,7 +3643,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, const QString & new_name)
 	/* Update the treeview as well. */
 	if (wp->index.isValid()) {
 		this->tree_view->set_name(wp->index, new_name);
-		this->tree_view->sort_children(this->waypoints_node.get_index(), this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node_.get_index(), this->wp_sort_order);
 	} else {
 		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";
 	}
@@ -3683,7 +3672,7 @@ void LayerTRW::properties_item_cb(void)
 {
 	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints.at(wp_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 
 		if (wp && !wp->name.isEmpty()) {
 			bool updated = false;
@@ -4068,13 +4057,13 @@ void LayerTRW::apply_dem_data_wpt_all_cb(void)
 	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
 		/* Single Waypoint. */
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints.at(wp_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 		if (wp) {
 			changed_ = (int) wp->apply_dem_data(false);
 		}
 	} else {
 		/* All waypoints. */
-		for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+		for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 			changed_ = changed_ + (int) i->second->apply_dem_data(false);
 		}
 	}
@@ -4096,13 +4085,13 @@ void LayerTRW::apply_dem_data_wpt_only_missing_cb(void)
 	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
 		/* Single Waypoint. */
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints.at(wp_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 		if (wp) {
 			changed_ = (int) wp->apply_dem_data(true);
 		}
 	} else {
 		/* All waypoints. */
-		for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+		for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 			changed_ = changed_ + (int) i->second->apply_dem_data(true);
 		}
 	}
@@ -5177,7 +5166,7 @@ void LayerTRW::diary_cb(void)
 			Dialog::info(tr("This track has no date information."), this->get_window());
 		}
 	} else if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(uid);
 		if (!wp) {
 			return;
 		}
@@ -5308,7 +5297,7 @@ void LayerTRW::astro_cb(void)
 		}
 	} else if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
 		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints.at(wp_uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 		if (!wp) {
 			return;
 		}
@@ -5412,7 +5401,7 @@ void LayerTRW::sort_order_specified(const QString & item_type_id, sort_order_t o
 		this->track_sort_order = order;
 
 	} else { /* "sg.trw.waypoints" */
-		tree_index = this->waypoints_node.get_index();
+		tree_index = this->waypoints_node_.get_index();
 		this->wp_sort_order = order;
 	}
 
@@ -5558,7 +5547,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
  */
 void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 {
-	if (this->waypoints.empty()) {
+	if (this->waypoints_node_.waypoints.empty()) {
 		qDebug() << "EE: Layer TRW: ::uniquify() called for empty waypoints set";
 		return;
 	}
@@ -5572,7 +5561,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 	*/
 
 	/* TODO: make the ::has_duplicate_waypoint_names() return the waypoint itself (or NULL). */
-	QString duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
+	QString duplicate_name = this->waypoints_node_.has_duplicate_waypoint_names();
 	while (duplicate_name != "") {
 
 		/* Get that waypoint that has duplicate name. */
@@ -5590,7 +5579,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
-		duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
+		duplicate_name = this->waypoints_node_.has_duplicate_waypoint_names();
 	}
 
 	/* Update. */
@@ -5603,7 +5592,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 void LayerTRW::delete_selected_waypoints_cb(void)
 {
 	/* Ensure list of waypoint names offered is unique. */
-	QString duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
+	QString duplicate_name = this->waypoints_node_.has_duplicate_waypoint_names();
 	if (duplicate_name != "") {
 		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), this->get_window())) {
 			this->uniquify_waypoints(this->get_window()->get_layers_panel());
@@ -5613,7 +5602,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	}
 
 	/* Sort list alphabetically for better presentation. */
-	std::list<QString> all = LayerTRWc::get_sorted_wp_name_list(this->waypoints);
+	std::list<QString> all = this->waypoints_node_.get_sorted_wp_name_list();
 	if (all.empty()) {
 		Dialog::error(tr("No waypoints found"), this->get_window());
 		return;
@@ -5650,7 +5639,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 void LayerTRW::waypoints_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_waypoints_visibility(this->waypoints, false);
+	this->waypoints_node_.set_waypoints_visibility(false);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5660,7 +5649,7 @@ void LayerTRW::waypoints_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::waypoints_visibility_on_cb(void) /* Slot. */
 {
-	LayerTRWc::set_waypoints_visibility(this->waypoints, true);
+	this->waypoints_node_.set_waypoints_visibility(true);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5670,7 +5659,7 @@ void LayerTRW::waypoints_visibility_on_cb(void) /* Slot. */
 
 void LayerTRW::waypoints_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::waypoints_toggle_visibility(this->waypoints);
+	this->waypoints_node_.waypoints_toggle_visibility();
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5766,7 +5755,7 @@ std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_l
 {
 	std::list<Waypoint *> pure_waypoints;
 
-	for (auto iter = this->waypoints.begin(); iter != this->waypoints.end(); iter++) {
+	for (auto iter = this->waypoints_node_.waypoints.begin(); iter != this->waypoints_node_.waypoints.end(); iter++) {
 		pure_waypoints.push_back((*iter).second);
 	}
 
@@ -5852,7 +5841,7 @@ void LayerTRW::go_to_selected_waypoint_cb(void)
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	if (wp) {
 		goto_coord(panel, this, this->menu_data->viewport, wp->coord);
 	}
@@ -5864,7 +5853,7 @@ void LayerTRW::go_to_selected_waypoint_cb(void)
 void LayerTRW::waypoint_geocache_webpage_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	if (!wp) {
 		return;
 	}
@@ -5878,7 +5867,7 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 void LayerTRW::waypoint_webpage_cb(void)
 {
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints.at(wp_uid);
+	Waypoint * wp = this->waypoints_node_.waypoints.at(wp_uid);
 	if (!wp || !wp->has_any_url()) {
 		return;
 	}
@@ -5894,7 +5883,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 	QString empty_string("");
 
 	if (sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.at(sublayer->uid);
+		Waypoint * wp = this->waypoints_node_.waypoints.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
 		if (!wp->name.isEmpty()) {
@@ -5916,7 +5905,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		wp->set_name(new_name);
 
 		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->waypoints_node.get_index(), this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node_.get_index(), this->wp_sort_order);
 
 		panel->emit_update_cb();
 
@@ -6400,7 +6389,7 @@ void LayerTRW::verify_thumbnails(void)
 		return;
 	}
 
-	QStringList * pics = LayerTRWc::image_wp_make_list(this->waypoints);
+	QStringList * pics = this->waypoints_node_.image_wp_make_list();
 	int len = pics->size();
 	if (!len) {
 		delete pics;
@@ -6497,8 +6486,8 @@ void LayerTRW::calculate_bounds_waypoints()
 	struct LatLon bottomright = { 0.0, 0.0 };
 
 
-	auto i = this->waypoints.begin();
-	if (i == this->waypoints.end()) {
+	auto i = this->waypoints_node_.waypoints.begin();
+	if (i == this->waypoints_node_.waypoints.end()) {
 		/* E.g. after all waypoints have been removed from trw layer. */
 		return;
 	}
@@ -6510,9 +6499,9 @@ void LayerTRW::calculate_bounds_waypoints()
 	}
 
 	/* Ensure there is another point... */
-	if (this->waypoints.size() > 1) {
+	if (this->waypoints_node_.waypoints.size() > 1) {
 
-		while (++i != this->waypoints.end()) { /* kamilTODO: check the conditon. */
+		while (++i != this->waypoints_node_.waypoints.end()) { /* kamilTODO: check the conditon. */
 
 			wp = i->second;
 
@@ -6534,10 +6523,10 @@ void LayerTRW::calculate_bounds_waypoints()
 		}
 	}
 
-	this->waypoints_bbox.north = topleft.lat;
-	this->waypoints_bbox.east = bottomright.lon;
-	this->waypoints_bbox.south = bottomright.lat;
-	this->waypoints_bbox.west = topleft.lon;
+	this->waypoints_node_.bbox.north = topleft.lat;
+	this->waypoints_node_.bbox.east = bottomright.lon;
+	this->waypoints_node_.bbox.south = bottomright.lat;
+	this->waypoints_node_.bbox.west = topleft.lon;
 }
 
 
@@ -6577,8 +6566,8 @@ void LayerTRW::sort_all()
 		this->tree_view->sort_children(this->routes_node.get_index(), this->track_sort_order);
 	}
 
-	if (this->waypoints.size() > 1) {
-		this->tree_view->sort_children(this->waypoints_node.get_index(), this->wp_sort_order);
+	if (this->waypoints_node_.waypoints.size() > 1) {
+		this->tree_view->sort_children(this->waypoints_node_.get_index(), this->wp_sort_order);
 	}
 }
 
@@ -6619,7 +6608,7 @@ time_t LayerTRW::get_timestamp_waypoints()
 {
 	time_t timestamp = 0;
 
-	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
+	for (auto i = this->waypoints_node_.waypoints.begin(); i != this->waypoints_node_.waypoints.end(); i++) {
 		Waypoint * wp = i->second;
 		if (wp->has_timestamp) {
 			/* When timestamp not set yet - use the first value encountered. */
@@ -6751,7 +6740,7 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 {
 	if (this->coord_mode != dest_mode) {
 		this->coord_mode = dest_mode;
-		LayerTRWc::waypoints_convert(this->waypoints, dest_mode);
+		this->waypoints_node_.change_coord_mode(dest_mode);
 		LayerTRWc::tracks_convert(this->tracks, dest_mode);
 		LayerTRWc::tracks_convert(this->routes, dest_mode);
 	}
@@ -7160,7 +7149,7 @@ LayerTRW::LayerTRW() : Layer()
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */
-	this->waypoints_node.visible = this->tracks_node.visible = this->routes_node.visible = true;
+	this->waypoints_node_.visible = this->tracks_node.visible = this->routes_node.visible = true;
 
 	this->metadata = new TRWMetadata();
 	this->draw_sync_done = true;

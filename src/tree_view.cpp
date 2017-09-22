@@ -1219,6 +1219,12 @@ sg_uid_t TreeItem::get_uid(void) const
 
 
 
+QString TreeItem::get_tooltip(void)
+{
+	return QString("generic TreeItem tooltip");
+}
+
+
 
 
 
