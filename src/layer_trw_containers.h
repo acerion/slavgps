@@ -72,55 +72,11 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		GList ** result;
-		Track * exclude;
-		bool with_timestamps;
-	} twt_udata;
-
-
-
-
-	class TrackpointSearch {
-	public:
-		int x = 0;
-		int y = 0;
-		int closest_x = 0;
-		int closest_y = 0;
-		Track * closest_track = NULL;
-		Trackpoint * closest_tp = NULL;
-		Viewport * viewport = NULL;
-		TrackPoints::iterator closest_tp_iter;
-		LatLonBBox bbox;
-	};
-
 
 
 
 	class LayerTRWc {
 	public:
-		static Track * find_track_by_name(Tracks & input, const QString & trk_name);
-		static Track * find_track_by_date(Tracks & tracks, char const * date_str);
-
-		static void find_maxmin_in_tracks(Tracks & tracks, struct LatLon maxmin[2]);
-
-		static void list_trk_uids(Tracks & tracks, GList ** l);
-
-		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(Tracks * tracks, bool with_timestamps, Track * exclude);
-		static GList * find_nearby_tracks_by_time(Tracks & tracks, Track * orig_trk, unsigned int threshold);
-		static std::list<QString> get_sorted_track_name_list(Tracks & tracks);
-		static std::list<QString> get_sorted_track_name_list_exclude_self(Tracks * tracks, Track const * self);
-
-		static QString has_duplicate_track_names(Tracks & tracks);
-
-
-		static void set_tracks_visibility(Tracks & tracks, bool on_off);
-		static void tracks_toggle_visibility(Tracks & tracks);
-
-		static std::list<Track *> * get_track_values(std::list<Track *> * target, Tracks & tracks);
-		static void track_search_closest_tp(Tracks & tracks, TrackpointSearch * search);
-
- 		static void tracks_convert(Tracks & tracks, CoordMode dest_mode);
 	};
 
 

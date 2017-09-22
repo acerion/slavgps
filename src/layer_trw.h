@@ -41,6 +41,7 @@
 #include "layer_interface.h"
 #include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
+#include "layer_trw_tracks.h"
 #include "layer_trw_waypoints.h"
 #include "viewport.h"
 #include "waypoint.h"
@@ -200,6 +201,9 @@ namespace SlavGPS {
 		Tracks & get_routes();
 		Waypoints & get_waypoints();
 
+		LayerTRWTracks & get_tracks_sublayer(void);
+		LayerTRWTracks & get_routes_sublayer(void);
+
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
 		bool get_waypoints_visibility();
@@ -307,7 +311,7 @@ namespace SlavGPS {
 
 
 
-		void uniquify_tracks(LayersPanel * panel, Tracks & track_table, bool ontrack);
+		void uniquify_tracks(LayersPanel * panel, LayerTRWTracks & tracks_table, bool ontrack);
 		void sort_order_specified(const QString & type_id, sort_order_t order);
 
 		void uniquify_waypoints(LayersPanel * panel);
@@ -334,10 +338,7 @@ namespace SlavGPS {
 		void track_alloc_colors();
 
 		void calculate_bounds_waypoints();
-
-		static void calculate_bounds_track(Tracks & tracks);
-
-		void calculate_bounds_tracks();
+		void calculate_bounds_tracks_and_routes();
 
 
 		void sort_all();
@@ -406,12 +407,8 @@ namespace SlavGPS {
 
 
 
-		Tracks tracks;
-		TreeItem tracks_node; /* Sub-node, under which all layer's tracks are shown. */
-
-		Tracks routes;
-		TreeItem routes_node; /* Sub-node, under which all layer's routes are shown. */
-
+		LayerTRWTracks tracks_node_; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks routes_node_; /* Sub-node, under which all layer's routes are shown. */
 		LayerTRWWaypoints waypoints_node_; /* Sub-node, under which all layer's waypoints are shown. */
 
 

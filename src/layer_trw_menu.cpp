@@ -287,7 +287,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
-	qa->setEnabled((bool) (this->tracks.size() + this->routes.size()));
+	qa->setEnabled((bool) (this->tracks_node_.tracks.size() + this->routes_node_.tracks.size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
@@ -318,13 +318,13 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_item_cb()));
 
 		if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-			const Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
+			const Track * trk = this->tracks_node_.tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->properties_dialog) {
 				qa->setEnabled(false);
 			}
 		}
 		if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-			const Track * trk = this->routes.at(this->menu_data->sublayer->uid);
+			const Track * trk = this->routes_node_.tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->properties_dialog) {
 				qa->setEnabled(false);
 			}
@@ -338,13 +338,13 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_item_cb()));
 
 		if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-			const Track * trk = this->tracks.at(this->menu_data->sublayer->uid);
+			const Track * trk = this->tracks_node_.tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->profile_dialog) {
 				qa->setEnabled(false);
 			}
 		}
 		if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-			const Track * trk = this->routes.at(this->menu_data->sublayer->uid);
+			const Track * trk = this->routes_node_.tracks.at(this->menu_data->sublayer->uid);
 			if (trk && trk->profile_dialog) {
 				qa->setEnabled(false);
 			}
@@ -869,7 +869,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 #ifdef VIK_CONFIG_OPENSTREETMAP
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 		/* Convert internal pointer into track. */
-		this->menu_data->misc = this->tracks.at(this->menu_data->sublayer->uid);
+		this->menu_data->misc = this->tracks_node_.tracks.at(this->menu_data->sublayer->uid);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (osm_traces_upload_track_cb()));
 #endif
 
@@ -884,7 +884,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		if (this->get_window()->get_layers_panel()) {
 			QMenu * submenu = a_acquire_track_menu(this->get_window(), this->get_window()->get_layers_panel(),
 							       this->menu_data->viewport,
-							       this->tracks.at(this->menu_data->sublayer->uid));
+							       this->tracks_node_.tracks.at(this->menu_data->sublayer->uid));
 			if (submenu) {
 				/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
 				menu.addMenu(submenu);

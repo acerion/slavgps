@@ -89,7 +89,7 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 
 	search.viewport->get_bbox(&search.bbox);
 
-	LayerTRWc::track_search_closest_tp(this->tracks, &search);
+	this->tracks_node_.track_search_closest_tp(&search);
 
 	return search.closest_tp;
 }
@@ -301,8 +301,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	tp_search.bbox = bbox;
 
 	/* FIXME: we have a very similar block of code below. */
-	if (this->tracks_node.visible) {
-		LayerTRWc::track_search_closest_tp(this->tracks, &tp_search);
+	if (this->tracks_node_.visible) {
+		this->tracks_node_.track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp) {
 
@@ -339,8 +339,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	}
 
 	/* Try again for routes. */
-	if (this->routes_node.visible) {
-		LayerTRWc::track_search_closest_tp(this->routes, &tp_search);
+	if (this->routes_node_.visible) {
+		this->routes_node_.track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp)  {
 
@@ -1281,7 +1281,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 #else
 	if (1) {
 #endif
-		LayerTRWc::track_search_closest_tp(trw->tracks, &search);
+		trw->tracks_node_.track_search_closest_tp(&search);
 	}
 
 	if (search.closest_tp) {
@@ -1302,7 +1302,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 #else
 	if (1) {
 #endif
-		LayerTRWc::track_search_closest_tp(trw->routes, &search);
+		trw->routes_node_.track_search_closest_tp(&search);
 	}
 
 	if (search.closest_tp) {

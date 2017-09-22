@@ -571,7 +571,7 @@ void TRWMetadata::set_timestamp(const QString & new_timestamp)
  */
 bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bool select)
 {
-	Track * trk = LayerTRWc::find_track_by_date(this->tracks, date_str);
+	Track * trk = this->tracks_node_.find_track_by_date(date_str);
 	if (trk && select) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
@@ -725,9 +725,9 @@ void LayerTRW::copy_sublayer(TreeItem * sublayer, uint8_t **item, unsigned int *
 	if (sublayer->type_id == "sg.trw.waypoint") {
 		this->waypoints_node_.waypoints.at(sublayer->uid)->marshall(&id, &il);
 	} else if (sublayer->type_id == "sg.trw.track") {
-		this->tracks.at(sublayer->uid)->marshall(&id, &il);
+		this->tracks_node_.tracks.at(sublayer->uid)->marshall(&id, &il);
 	} else {
-		this->routes.at(sublayer->uid)->marshall(&id, &il);
+		this->routes_node_.tracks.at(sublayer->uid)->marshall(&id, &il);
 	}
 
 	g_byte_array_append(ba, id, il);
@@ -781,7 +781,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 		trk->convert(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->tracks_node.visible && trk->visible) {
+		if (this->visible && this->tracks_node_.visible && trk->visible) {
 			this->emit_changed();
 		}
 		return true;
@@ -796,7 +796,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 		trk->convert(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->routes_node.visible && trk->visible) {
+		if (this->visible && this->routes_node_.visible && trk->visible) {
 			this->emit_changed();
 		}
 		return true;
@@ -834,13 +834,13 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_TRACKS_VISIBLE:
-		this->tracks_node.visible = data.b;
+		this->tracks_node_.visible = data.b;
 		break;
 	case PARAM_WAYPOINTS_VISIBLE:
 		this->waypoints_node_.visible = data.b;
 		break;
 	case PARAM_ROUTES_VISIBLE:
-		this->routes_node.visible = data.b;
+		this->routes_node_.visible = data.b;
 		break;
 	case PARAM_DRAW_TRACK_LABELS:
 		this->track_draw_labels = data.b;
@@ -1038,9 +1038,9 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks_node.visible; break;
+	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks_node_.visible; break;
 	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints_node_.visible; break;
-	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_node.visible; break;
+	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes_node_.visible; break;
 	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
 	case PARAM_TRACK_LABEL_FONT_SIZE: rv.i = this->trk_label_font_size; break;
 	case PARAM_TRACK_DRAWING_MODE: rv.i = this->track_drawing_mode; break;
@@ -1346,11 +1346,6 @@ static unsigned int strcase_hash(gconstpointer v)
 
 LayerTRW::~LayerTRW()
 {
-	/* kamilTODO: call destructors of objects in these maps. */
-	this->tracks.clear();
-	this->routes.clear();
-
-
 	this->image_cache_free();
 
 	delete this->tpwin;
@@ -1365,12 +1360,12 @@ void LayerTRW::draw_with_highlight_sub(Viewport * viewport, bool do_highlight)
 
 	if (true /* this->tracks_node.visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw tracks";
-		painter.draw_tracks(this->tracks, do_highlight);
+		painter.draw_tracks(this->tracks_node_.tracks, do_highlight);
 	}
 
 	if (true /* this->routes_node.visible */) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw routes";
-		painter.draw_tracks(this->routes, do_highlight);
+		painter.draw_tracks(this->routes_node_.tracks, do_highlight);
 	}
 
 	if (true /* this->waypoints_node_.visible */) { /* TODO: fix condition. */
@@ -1434,7 +1429,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Track * trk, bool do_hig
 		return;
 	}
 
-	bool do_draw = (trk->type_id == "sg.trw.route" && this->routes_node.visible) || (trk->type_id == "sg.trw.track" && this->tracks_node.visible);
+	bool do_draw = (trk->type_id == "sg.trw.route" && this->routes_node_.visible) || (trk->type_id == "sg.trw.track" && this->tracks_node_.visible);
 	if (!do_draw) {
 		return;
 	}
@@ -1493,7 +1488,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks & tracks_, bool d
 	}
 
 	bool is_routes = (*tracks_.begin()).second->type_id == "sg.trw.route";
-	bool is_visible = (is_routes && this->routes_node.visible) || (!is_routes && this->tracks_node.visible);
+	bool is_visible = (is_routes && this->routes_node_.visible) || (!is_routes && this->tracks_node_.visible);
 	if (!is_visible) {
 		return;
 	}
@@ -1651,13 +1646,13 @@ void LayerTRW::add_tracks_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->tracks_node.tree_item_type = TreeItemType::SUBLAYER;
+	this->tracks_node_.tree_item_type = TreeItemType::SUBLAYER;
 
-	this->tracks_node.type_id = "sg.trw.tracks";
-	this->tracks_node.accepted_child_type_ids << "sg.trw.track";
-	this->tracks_node.tree_view = this->tree_view;
+	this->tracks_node_.type_id = "sg.trw.tracks";
+	this->tracks_node_.accepted_child_type_ids << "sg.trw.track";
+	this->tracks_node_.tree_view = this->tree_view;
 
-	this->tree_view->add_sublayer(&this->tracks_node, this, this->index, tr("Tracks"), NULL, false, 0);
+	this->tree_view->add_sublayer(&this->tracks_node_, this, this->index, tr("Tracks"), NULL, false, 0);
 }
 
 
@@ -1679,13 +1674,13 @@ void LayerTRW::add_routes_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->routes_node.tree_item_type = TreeItemType::SUBLAYER;
+	this->routes_node_.tree_item_type = TreeItemType::SUBLAYER;
 
-	this->routes_node.type_id = "sg.trw.routes";
-	this->routes_node.accepted_child_type_ids << "sg.trw.route";
-	this->routes_node.tree_view = this->tree_view;
+	this->routes_node_.type_id = "sg.trw.routes";
+	this->routes_node_.accepted_child_type_ids << "sg.trw.route";
+	this->routes_node_.tree_view = this->tree_view;
 
-	this->tree_view->add_sublayer(&this->routes_node, this, this->index, tr("Routes"), NULL, false, 0);
+	this->tree_view->add_sublayer(&this->routes_node_, this, this->index, tr("Routes"), NULL, false, 0);
 }
 
 
@@ -1697,16 +1692,16 @@ void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_in
 	this->index = layer_index;
 	this->connected_to_tree = true;
 
-	if (this->tracks.size() > 0) {
+	if (this->tracks_node_.tracks.size() > 0) {
 		this->add_tracks_node();
-		this->add_tracks_as_children(&this->tracks_node, this->tracks);
-		this->tree_view->set_visibility(this->tracks_node.get_index(), this->tracks_node.visible);
+		this->add_tracks_as_children(&this->tracks_node_, this->tracks_node_.tracks);
+		this->tree_view->set_visibility(this->tracks_node_.get_index(), this->tracks_node_.visible);
 	}
 
-	if (this->routes.size() > 0) {
+	if (this->routes_node_.tracks.size() > 0) {
 		this->add_routes_node();
-		this->add_tracks_as_children(&this->routes_node, this->routes);
-		this->tree_view->set_visibility(this->routes_node.get_index(), this->routes_node.visible);
+		this->add_tracks_as_children(&this->routes_node_, this->routes_node_.tracks);
+		this->tree_view->set_visibility(this->routes_node_.get_index(), this->routes_node_.visible);
 	}
 
 	if (this->waypoints_node_.waypoints.size() > 0) {
@@ -1726,16 +1721,16 @@ void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_in
 bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 {
 	if (sublayer->type_id == "sg.trw.tracks") {
-		return this->tracks_node.toggle_visible();
+		return this->tracks_node_.toggle_visible();
 
 	} else if (sublayer->type_id == "sg.trw.waypoints") {
 		return this->waypoints_node_.toggle_visible();
 
 	} else if (sublayer->type_id == "sg.trw.routes") {
-		return this->routes_node.toggle_visible();
+		return this->routes_node_.toggle_visible();
 
 	} else if (sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(sublayer->uid);
+		Track * trk = this->tracks_node_.tracks.at(sublayer->uid);
 		if (trk) {
 			return trk->toggle_visible();
 		} else {
@@ -1751,7 +1746,7 @@ bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 		}
 
 	} else if (sublayer->type_id == "sg.trw.route") {
-		Track * trk = this->routes.at(sublayer->uid);
+		Track * trk = this->routes_node_.tracks.at(sublayer->uid);
 		if (trk) {
 			return trk->toggle_visible();
 		} else {
@@ -1870,9 +1865,9 @@ QString LayerTRW::tooltip()
 
 	/* For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.] */
 
-	if (!this->tracks.empty()) {
+	if (!this->tracks_node_.tracks.empty()) {
 		tooltip_tracks tt = { 0.0, 0, 0, 0 };
-		trw_layer_tracks_tooltip(this->tracks, &tt);
+		trw_layer_tracks_tooltip(this->tracks_node_.tracks, &tt);
 
 		GDate* gdate_start = g_date_new();
 		g_date_set_time_t(gdate_start, tt.start_time);
@@ -1913,7 +1908,7 @@ QString LayerTRW::tooltip()
 
 		tbuf1[0] = '\0';
 		double rlength = 0.0;
-		trw_layer_routes_tooltip(this->routes, &rlength);
+		trw_layer_routes_tooltip(this->routes_node_.tracks, &rlength);
 		if (rlength > 0.0) {
 
 			/* Setup info dependent on distance units. */
@@ -1926,7 +1921,7 @@ QString LayerTRW::tooltip()
 		/* Put together all the elements to form compact tooltip text. */
 		snprintf(tmp_buf, sizeof(tmp_buf),
 			 _("Tracks: %ld - Waypoints: %ld - Routes: %ld%s%s"),
-			 this->tracks.size(), this->waypoints_node_.waypoints.size(), this->routes.size(), tbuf2, tbuf1);
+			 this->tracks_node_.tracks.size(), this->waypoints_node_.waypoints.size(), this->routes_node_.tracks.size(), tbuf2, tbuf1);
 
 		g_date_free(gdate_start);
 		g_date_free(gdate_end);
@@ -1944,13 +1939,10 @@ QString LayerTRW::sublayer_tooltip(TreeItem * sublayer)
 		return QString("");
 	}
 
-	if (sublayer->type_id == "sg.trw.tracks") {
-		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Tracks: %1").arg(this->tracks.size());
+	if (sublayer->type_id == "sg.trw.tracks"
+	    || sublayer->type_id == "sg.trw.routes") {
 
-	} else if (sublayer->type_id == "sg.trw.routes") {
-		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Routes: %1").arg(this->routes.size());
+		return sublayer->get_tooltip();
 
 	} else if (sublayer->type_id == "sg.trw.route" || sublayer->type_id == "sg.trw.track") {
 		/* Same tooltip for route and track. */
@@ -1959,9 +1951,9 @@ QString LayerTRW::sublayer_tooltip(TreeItem * sublayer)
 
 		Track * trk = NULL;
 		if (sublayer->type_id == "sg.trw.track") {
-			trk = this->tracks.at(sublayer->uid);
+			trk = this->tracks_node_.tracks.at(sublayer->uid);
 		} else {
-			trk = this->routes.at(sublayer->uid);
+			trk = this->routes_node_.tracks.at(sublayer->uid);
 		}
 
 		if (trk) {
@@ -2122,11 +2114,11 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 		{
 			if (sublayer->type_id == "sg.trw.tracks") {
 				qDebug() << "II: LayerTRW:   selection: set selected: tracks";
-				this->get_window()->set_selected_tracks(&this->tracks, this);
+				this->get_window()->set_selected_tracks(&this->tracks_node_.tracks, this);
 				/* Mark for redraw. */
 				return true;
 			} else if (sublayer->type_id == "sg.trw.track") {
-				Track * trk = this->tracks.at(sublayer->uid);
+				Track * trk = this->tracks_node_.tracks.at(sublayer->uid);
 				qDebug() << "II: LayerTRW:   selection: set selected: track" << trk->name;
 				this->get_window()->set_selected_track(trk, this);
 				/* Mark for redraw. */
@@ -2134,12 +2126,12 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 
 			} else if (sublayer->type_id == "sg.trw.routes") {
 				qDebug() << "II: LayerTRW:   selection: set selected: routes";
-				this->get_window()->set_selected_tracks(&this->routes, this);
+				this->get_window()->set_selected_tracks(&this->routes_node_.tracks, this);
 				/* Mark for redraw. */
 				return true;
 
 			} else if (sublayer->type_id == "sg.trw.route") {
-				Track * trk = this->routes.at(sublayer->uid);
+				Track * trk = this->routes_node_.tracks.at(sublayer->uid);
 				qDebug() << "II: LayerTRW:   selection: set selected: route" << trk->name;
 				this->get_window()->set_selected_track(trk, this);
 				/* Mark for redraw. */
@@ -2180,7 +2172,7 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 
 Tracks & LayerTRW::get_tracks()
 {
-	return tracks;
+	return this->tracks_node_.tracks;
 }
 
 
@@ -2188,7 +2180,7 @@ Tracks & LayerTRW::get_tracks()
 
 Tracks & LayerTRW::get_routes()
 {
-	return routes;
+	return this->routes_node_.tracks;
 }
 
 
@@ -2202,9 +2194,25 @@ Waypoints & LayerTRW::get_waypoints()
 
 
 
+LayerTRWTracks & LayerTRW::get_tracks_sublayer(void)
+{
+	return this->tracks_node_;
+}
+
+
+
+
+LayerTRWTracks & LayerTRW::get_routes_sublayer(void)
+{
+	return this->routes_node_;
+}
+
+
+
+
 bool LayerTRW::is_empty()
 {
-	return ! (tracks.size() || routes.size() || this->waypoints_node_.waypoints.size());
+	return ! (this->tracks_node_.tracks.size() || this->routes_node_.tracks.size() || this->waypoints_node_.waypoints.size());
 }
 
 
@@ -2212,7 +2220,7 @@ bool LayerTRW::is_empty()
 
 bool LayerTRW::get_tracks_visibility()
 {
-	return this->tracks_node.visible;
+	return this->tracks_node_.visible;
 }
 
 
@@ -2220,7 +2228,7 @@ bool LayerTRW::get_tracks_visibility()
 
 bool LayerTRW::get_routes_visibility()
 {
-	return this->routes_node.visible;
+	return this->routes_node_.visible;
 }
 
 
@@ -2252,7 +2260,7 @@ Waypoint * LayerTRW::get_waypoint(const QString & wp_name)
  */
 Track * LayerTRW::get_track(const QString & trk_name)
 {
-	return LayerTRWc::find_track_by_name(tracks, trk_name);
+	return this->tracks_node_.find_track_by_name(trk_name);
 }
 
 
@@ -2264,7 +2272,7 @@ Track * LayerTRW::get_track(const QString & trk_name)
  */
 Track * LayerTRW::get_route(const QString & route_name)
 {
-	return LayerTRWc::find_track_by_name(routes, route_name);
+	return this->routes_node_.find_track_by_name(route_name);
 }
 
 
@@ -2299,8 +2307,8 @@ void LayerTRW::find_maxmin(struct LatLon maxmin[2])
 	   First set to waypoints bounds. */
 
 	this->waypoints_node_.find_maxmin(maxmin);
-	LayerTRWc::find_maxmin_in_tracks(tracks, maxmin);
-	LayerTRWc::find_maxmin_in_tracks(routes, maxmin);
+	this->tracks_node_.find_maxmin_in_tracks(maxmin);
+	this->routes_node_.find_maxmin_in_tracks(maxmin);
 }
 
 
@@ -2590,7 +2598,7 @@ void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
 void LayerTRW::geotagging_track_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(child_uid);
+	Track * trk = this->tracks_node_.tracks.at(child_uid);
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
 	trw_layer_geotag_dialog(this->get_window(), this, NULL, trk);
@@ -2938,9 +2946,9 @@ void LayerTRW::full_view_routes_cb(void) /* Slot. */
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-	if (this->routes.size() > 0) {
+	if (this->routes_node_.tracks.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(this->routes, maxmin);
+		this->routes_node_.find_maxmin_in_tracks(maxmin);
 		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
 		panel->emit_update_cb();
 	}
@@ -2963,9 +2971,9 @@ void LayerTRW::full_view_tracks_cb(void) /* Slot. */
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-	if (this->tracks.size() > 0) {
+	if (this->tracks_node_.tracks.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(this->tracks, maxmin);
+		this->tracks_node_.find_maxmin_in_tracks(maxmin);
 		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
 		panel->emit_update_cb();
 	}
@@ -3050,10 +3058,10 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 void LayerTRW::add_track(Track * trk)
 {
-	this->tracks.insert({{ trk->uid, trk }});
+	this->tracks_node_.tracks.insert({{ trk->uid, trk }});
 
 	if (this->connected_to_tree) {
-		if (tracks.size() == 1) { /* We compare against '1' because we already added a first trk to ::tracks() at the beginning of this function. */
+		if (this->tracks_node_.tracks.size() == 1) { /* We compare against '1' because we already added a first trk to ::tracks() at the beginning of this function. */
 			this->add_tracks_node();
 		}
 
@@ -3064,13 +3072,13 @@ void LayerTRW::add_track(Track * trk)
 		}
 
 		/* Visibility column always needed for tracks. */
-		this->tracks_node.add_child(trk, this, trk->name, NULL, timestamp);
+		this->tracks_node_.add_child(trk, this, trk->name, NULL, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
 		/* Sort now as post_read is not called on a track connected to tree. */
-		this->tree_view->sort_children(this->tracks_node.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node_.get_index(), this->track_sort_order);
 	}
 
 	this->update_treeview(trk);
@@ -3081,21 +3089,21 @@ void LayerTRW::add_track(Track * trk)
 
 void LayerTRW::add_route(Track * trk)
 {
-	this->routes.insert({{ trk->uid, trk }});
+	this->routes_node_.tracks.insert({{ trk->uid, trk }});
 
 	if (this->connected_to_tree) {
-		if (routes.size() == 1) { /* We compare against '1' because we already added a first trk to ::routes() at the beginning of this function. */
+		if (this->routes_node_.tracks.size() == 1) { /* We compare against '1' because we already added a first trk to ::routes() at the beginning of this function. */
 			this->add_routes_node();
 		}
 
 		/* Visibility column always needed for routes. */
-		this->routes_node.add_child(trk, this, trk->name, NULL, 0); /* Routes don't have times. */
+		this->routes_node_.add_child(trk, this, trk->name, NULL, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
 		/* Sort now as post_read is not called on a route connected to tree. */
-		this->tree_view->sort_children(this->routes_node.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(this->routes_node_.get_index(), this->track_sort_order);
 	}
 
 	this->update_treeview(trk);
@@ -3290,13 +3298,13 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 		GList *items = NULL;
 
 		if (sublayer->type == "sg.trw.tracks") {
-			LayerTRWc::list_trk_uids(trw_src->tracks, &items);
+			trw_src->tracks_node_.list_trk_uids(&items);
 		}
 		if (sublayer->type == "sg.trw.waypoints") {
 			trw_src->waypoints_node_.list_wp_uids(&items);
 		}
 		if (sublayer->type == "sg.trw.routes") {
-			LayerTRWc::list_trk_uids(trw_src->routes, &items);
+			trw_src->routes_node_.list_trk_uids(&items);
 		}
 
 		GList * iter = items;
@@ -3347,11 +3355,11 @@ bool LayerTRW::delete_track(Track * trk)
 
 	qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
 	this->tree_view->erase(trk->index);
-	tracks.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
+	this->tracks_node_.tracks.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
 	/* If last sublayer, then remove sublayer container. */
-	if (tracks.size() == 0) {
-		this->tree_view->erase(this->tracks_node.get_index());
+	if (this->tracks_node_.tracks.size() == 0) {
+		this->tree_view->erase(this->tracks_node_.get_index());
 	}
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
@@ -3384,11 +3392,11 @@ bool LayerTRW::delete_route(Track * trk)
 	this->cancel_tps_of_track(trk);
 
 	this->tree_view->erase(trk->index);
-	routes.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
+	this->routes_node_.tracks.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
 	/* If last sublayer, then remove sublayer container. */
-	if (routes.size() == 0) {
-		this->tree_view->erase(this->routes_node.get_index());
+	if (this->routes_node_.tracks.size() == 0) {
+		this->tree_view->erase(this->routes_node_.get_index());
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
@@ -3461,12 +3469,12 @@ bool LayerTRW::delete_waypoint_by_name(const QString & wp_name)
 bool LayerTRW::delete_track_by_name(const QString & trk_name, bool is_route)
 {
 	if (is_route) {
-		Track * trk = LayerTRWc::find_track_by_name(routes, trk_name);
+		Track * trk = this->routes_node_.find_track_by_name(trk_name);
 		if (trk) {
 			return delete_route(trk);
 		}
 	} else {
-		Track * trk = LayerTRWc::find_track_by_name(tracks, trk_name);
+		Track * trk = this->tracks_node_.find_track_by_name(trk_name);
 		if (trk) {
 			return delete_track(trk);
 		}
@@ -3486,13 +3494,13 @@ void LayerTRW::delete_all_routes()
 		this->cancel_current_tp(false);
 	}
 
-	for (auto i = this->routes.begin(); i != this->routes.end(); i++) {
+	for (auto i = this->routes_node_.tracks.begin(); i != this->routes_node_.tracks.end(); i++) {
 		tree_view->erase(i->second->index);
 	}
 
-	this->routes.clear(); /* kamilTODO: call destructors of routes. */
+	this->routes_node_.tracks.clear(); /* kamilTODO: call destructors of routes. */
 
-	this->tree_view->erase(this->routes_node.get_index());
+	this->tree_view->erase(this->routes_node_.get_index());
 
 	this->emit_changed();
 }
@@ -3508,13 +3516,13 @@ void LayerTRW::delete_all_tracks()
 		this->cancel_current_tp(false);
 	}
 
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->tracks_node_.tracks.begin(); i != this->tracks_node_.tracks.end(); i++) {
 		tree_view->erase(i->second->index);
 	}
 
-	this->tracks.clear(); /* kamilTODO: call destructors of tracks. */
+	this->tracks_node_.tracks.clear(); /* kamilTODO: call destructors of tracks. */
 
-	this->tree_view->erase(this->tracks_node.get_index());
+	this->tree_view->erase(this->tracks_node_.get_index());
 
 	this->emit_changed();
 }
@@ -3600,7 +3608,7 @@ void LayerTRW::delete_sublayer_cb(void)
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(child_uid);
+		Track * trk = this->tracks_node_.tracks.at(child_uid);
 		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3614,7 +3622,7 @@ void LayerTRW::delete_sublayer_cb(void)
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else {
-		Track * trk = this->routes.at(child_uid);
+		Track * trk = this->routes_node_.tracks.at(child_uid);
 		if (trk && !trk->name.isEmpty()) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
@@ -3903,7 +3911,7 @@ void LayerTRW::extend_track_end_cb(void)
 void LayerTRW::extend_track_end_route_finder_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes.at(child_uid);
+	Track * trk = this->routes_node_.tracks.at(child_uid);
 	if (!trk) {
 		return;
 	}
@@ -4351,14 +4359,14 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
 void LayerTRW::merge_with_other_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Tracks * ght_tracks = NULL;
+	LayerTRWTracks * ght_tracks = NULL;
 	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_tracks = &this->routes;
+		ght_tracks = &this->routes_node_;
 	} else {
-		ght_tracks = &this->tracks;
+		ght_tracks = &this->tracks_node_;
 	}
 
-	Track * trk = ght_tracks->at(child_uid);
+	Track * trk = ght_tracks->tracks.at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4371,7 +4379,7 @@ void LayerTRW::merge_with_other_cb(void)
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
 	bool with_timestamps = trk->get_tp_first()->has_timestamp;
-	std::list<sg_uid_t> * other_tracks = LayerTRWc::find_tracks_with_timestamp_type(ght_tracks, with_timestamps, trk);
+	std::list<sg_uid_t> * other_tracks = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, trk);
 
 	if (other_tracks->empty()) {
 		if (with_timestamps) {
@@ -4388,7 +4396,7 @@ void LayerTRW::merge_with_other_cb(void)
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 	std::list<QString> other_tracks_names;
 	for (auto iter = other_tracks->begin(); iter != other_tracks->end(); iter++) {
-		other_tracks_names.push_back(ght_tracks->at(*iter)->name);
+		other_tracks_names.push_back(ght_tracks->tracks.at(*iter)->name);
 	}
 
 	/* Sort alphabetically for user presentation. */
@@ -4440,15 +4448,15 @@ void LayerTRW::merge_with_other_cb(void)
 void LayerTRW::append_track_cb(void)
 {
 	Track * trk = NULL;
-	Tracks * ght_tracks = NULL;
+	LayerTRWTracks * ght_tracks = NULL;
 	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_tracks = &this->routes;
+		ght_tracks = &this->routes_node_;
 	} else {
-		ght_tracks = &this->tracks;
+		ght_tracks = &this->tracks_node_;
 	}
 
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	trk = ght_tracks->at(child_uid);
+	trk = ght_tracks->tracks.at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4457,7 +4465,7 @@ void LayerTRW::append_track_cb(void)
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 
-	std::list<QString> other_tracks_names = LayerTRWc::get_sorted_track_name_list_exclude_self(ght_tracks, trk);
+	std::list<QString> other_tracks_names = ght_tracks->get_sorted_track_name_list_exclude_self(trk);
 
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
@@ -4513,17 +4521,17 @@ void LayerTRW::append_other_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
-	Tracks * ght_mykind;
-	Tracks * ght_others;
+	LayerTRWTracks * ght_mykind = NULL;
+	LayerTRWTracks * ght_others = NULL;
 	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_mykind = &this->routes;
-		ght_others = &this->tracks;
+		ght_mykind = &this->routes_node_;
+		ght_others = &this->tracks_node_;
 	} else {
-		ght_mykind = &this->tracks;
-		ght_others = &this->routes;
+		ght_mykind = &this->tracks_node_;
+		ght_others = &this->routes_node_;
 	}
 
-	Track * trk = ght_mykind->at(child_uid);
+	Track * trk = ght_mykind->tracks.at(child_uid);
 
 	if (!trk) {
 		return;
@@ -4532,7 +4540,7 @@ void LayerTRW::append_other_cb(void)
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 
-	std::list<QString> const other_tracks_names = LayerTRWc::get_sorted_track_name_list_exclude_self(ght_others, trk);
+	std::list<QString> const other_tracks_names = ght_others->get_sorted_track_name_list_exclude_self(trk);
 
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
@@ -4602,7 +4610,7 @@ void LayerTRW::append_other_cb(void)
 void LayerTRW::merge_by_segment_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(child_uid);
+	Track * trk = this->tracks_node_.tracks.at(child_uid);
 	unsigned int segments = trk->merge_segments();
 	/* NB currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened: */
@@ -4622,7 +4630,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 	//time_t t1, t2;
 
-	Track * orig_trk = this->tracks.at(child_uid);
+	Track * orig_trk = this->tracks_node_.tracks.at(child_uid);
 
 	if (!orig_trk->empty()
 	    && !orig_trk->get_tp_first()->has_timestamp) {
@@ -4632,7 +4640,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 #ifdef K
 
-	std::list<sg_uid_t> * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&this->tracks, true, orig_trk);
+	std::list<sg_uid_t> * tracks_with_timestamp = this->tracks.find_tracks_with_timestamp_type(true, orig_trk);
 	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
 
 	if (!tracks_with_timestamp) {
@@ -4669,7 +4677,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		}
 
 		/* Get a list of adjacent-in-time tracks. */
-		nearby_tracks = LayerTRWc::find_nearby_tracks_by_time(this->tracks, orig_trk, (threshold_in_minutes * 60));
+		nearby_tracks = this->tracks_node_.find_nearby_tracks_by_time(orig_trk, (threshold_in_minutes * 60));
 
 		/* Merge them. */
 
@@ -4754,7 +4762,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(child_uid);
+	Track * trk = this->tracks_node_.tracks.at(child_uid);
 
 	static uint32_t thr = 1;
 
@@ -4937,7 +4945,7 @@ void LayerTRW::split_at_trackpoint_cb(void)
 void LayerTRW::split_segments_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track *trk = this->tracks.at(child_uid);
+	Track *trk = this->tracks_node_.tracks.at(child_uid);
 
 	if (!trk) {
 		return;
@@ -5152,7 +5160,7 @@ void LayerTRW::diary_cb(void)
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(child_uid);
+		Track * trk = this->tracks_node_.tracks.at(child_uid);
 		if (!trk) {
 			return;
 		}
@@ -5261,7 +5269,7 @@ void LayerTRW::astro_cb(void)
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(child_uid);
+		Track * trk = this->tracks_node_.tracks.at(child_uid);
 		if (!trk) {
 			return;
 		}
@@ -5329,9 +5337,9 @@ void LayerTRW::astro_cb(void)
  * Note the panel is a required parameter to enable the update of the names displayed
  * Specify if on tracks or else on routes
  */
-void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool ontrack)
+void LayerTRW::uniquify_tracks(LayersPanel * panel, LayerTRWTracks & tracks_table, bool ontrack)
 {
-	if (tracks_table.empty()) {
+	if (tracks_table.tracks.empty()) {
 		qDebug() << "EE: Layer TRW: ::uniquify() called for empty tracks/routes set";
 		return;
 	}
@@ -5345,7 +5353,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 	*/
 
 	/* TODO: make the ::has_duplicate_track_names() return the track/route itself (or NULL). */
-	QString duplicate_name = LayerTRWc::has_duplicate_track_names(tracks_table);
+	QString duplicate_name = tracks_table.has_duplicate_track_names();
 	while (duplicate_name != "") {
 
 		/* Get the track with duplicate name. */
@@ -5371,14 +5379,14 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, Tracks & tracks_table, bool 
 		if (trk->index.isValid()) {
 			this->tree_view->set_name(trk->index, uniq_name);
 			if (ontrack) {
-				this->tree_view->sort_children(this->tracks_node.get_index(), this->track_sort_order);
+				this->tree_view->sort_children(this->tracks_node_.get_index(), this->track_sort_order);
 			} else {
-				this->tree_view->sort_children(this->routes_node.get_index(), this->track_sort_order);
+				this->tree_view->sort_children(this->routes_node_.get_index(), this->track_sort_order);
 			}
 		}
 
 		/* Try to find duplicate names again in the updated set of tracks. */
-		QString duplicate_name_ = LayerTRWc::has_duplicate_track_names(tracks_table); /* kamilTODO: there is a variable in this class with this name. */
+		QString duplicate_name_ = tracks_table.has_duplicate_track_names(); /* kamilTODO: there is a variable in this class with this name. */
 	}
 
 	/* Update. */
@@ -5393,11 +5401,11 @@ void LayerTRW::sort_order_specified(const QString & item_type_id, sort_order_t o
 	TreeIndex tree_index;
 
 	if (item_type_id == "sg.trw.tracks") {
-		tree_index = this->tracks_node.get_index();
+		tree_index = this->tracks_node_.get_index();
 		this->track_sort_order = order;
 
 	} else if (item_type_id == "sg.trw.routes") {
-		tree_index = this->routes_node.get_index();
+		tree_index = this->routes_node_.get_index();
 		this->track_sort_order = order;
 
 	} else { /* "sg.trw.waypoints" */
@@ -5448,17 +5456,17 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	QString duplicate_name = LayerTRWc::has_duplicate_track_names(this->tracks);
+	QString duplicate_name = this->tracks_node_.has_duplicate_track_names();
 	if (duplicate_name != "") {
 		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")), this->get_window()) {
-			this->uniquify_tracks(panel, this->tracks, true);
+			this->uniquify_tracks(panel, this->tracks_node_, true);
 		} else {
 			return;
 		}
 	}
 
 	/* Sort list alphabetically for better presentation. */
-	std::list<QString> const all = LayerTRWc::get_sorted_track_name_list(this->tracks);
+	std::list<QString> const all = this->tracks_node_.get_sorted_track_name_list();
 
 	if (all.empty()) {
 		Dialog::error(tr("No tracks found"), this->get_window());
@@ -5499,17 +5507,17 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	QString duplicate_name = LayerTRWc::has_duplicate_track_names(this->routes);
+	QString duplicate_name = this->routes_node_.has_duplicate_track_names();
 	if (duplicate_name != "") {
 		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), this->get_window())) {
-			this->uniquify_tracks(panel, this->routes, false);
+			this->uniquify_tracks(panel, this->routes_node_, false);
 		} else {
 			return;
 		}
 	}
 
 	/* Sort list alphabetically for better presentation. */
-	std::list<QString> all = LayerTRWc::get_sorted_track_name_list(this->routes);
+	std::list<QString> all = this->routes_node_.get_sorted_track_name_list();
 
 	if (all.empty()) {
 		Dialog::error(tr("No routes found"), this->get_window());
@@ -5669,7 +5677,7 @@ void LayerTRW::waypoints_visibility_toggle_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_tracks_visibility(this->tracks, false);
+	this->tracks_node_.set_tracks_visibility(false);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5679,7 +5687,7 @@ void LayerTRW::tracks_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_on_cb(void) /* Slot. */
 {
-	LayerTRWc::set_tracks_visibility(this->tracks, true);
+	this->tracks_node_.set_tracks_visibility(true);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5689,7 +5697,7 @@ void LayerTRW::tracks_visibility_on_cb(void) /* Slot. */
 
 void LayerTRW::tracks_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::tracks_toggle_visibility(this->tracks);
+	this->tracks_node_.tracks_toggle_visibility();
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5699,7 +5707,7 @@ void LayerTRW::tracks_visibility_toggle_cb(void) /* Slot. */
 
 void LayerTRW::routes_visibility_off_cb(void) /* Slot. */
 {
-	LayerTRWc::set_tracks_visibility(this->routes, false);
+	this->routes_node_.set_tracks_visibility(false);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5709,7 +5717,7 @@ void LayerTRW::routes_visibility_off_cb(void) /* Slot. */
 
 void LayerTRW::routes_visibility_on_cb() /* Slot. */
 {
-	LayerTRWc::set_tracks_visibility(this->routes, true);
+	this->routes_node_.set_tracks_visibility(true);
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5719,7 +5727,7 @@ void LayerTRW::routes_visibility_on_cb() /* Slot. */
 
 void LayerTRW::routes_visibility_toggle_cb(void) /* Slot. */
 {
-	LayerTRWc::tracks_toggle_visibility(this->routes);
+	this->routes_node_.tracks_toggle_visibility();
 	/* Redraw. */
 	this->emit_changed();
 }
@@ -5792,9 +5800,9 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Laye
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
 	if (type_id == "sg.trw.tracks") {
-		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
+		tracks = ((LayerTRW *) layer)->tracks_node_.get_track_values(tracks);
 	} else {
-		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
+		tracks = ((LayerTRW *) layer)->routes_node_.get_track_values(tracks);
 	}
 
 	return ((LayerTRW *) layer)->create_tracks_and_layers_list_helper(tracks);
@@ -5810,9 +5818,9 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(const QStri
 {
 	std::list<Track *> * tracks_ = new std::list<Track *>;
 	if (item_type_id == "sg.trw.tracks") {
-		tracks_ = LayerTRWc::get_track_values(tracks_, this->get_tracks());
+		tracks_ = this->tracks_node_.get_track_values(tracks_);
 	} else {
-		tracks_ = LayerTRWc::get_track_values(tracks_, this->get_routes());
+		tracks_ = this->routes_node_.get_track_values(tracks_);
 	}
 
 	return this->create_tracks_and_layers_list_helper(tracks_);
@@ -5913,7 +5921,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 	}
 
 	if (sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks.at(sublayer->uid);
+		Track * trk = this->tracks_node_.tracks.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
 		if (trk->name.size()) {
@@ -5944,7 +5952,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		trk->update_profile_dialog();
 
 		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->tracks_node.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node_.get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
@@ -5952,7 +5960,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 	}
 
 	if (sublayer->type_id == "sg.trw.route") {
-		Track * trk = this->routes.at(sublayer->uid);
+		Track * trk = this->routes_node_.tracks.at(sublayer->uid);
 
 		/* No actual change to the name supplied. */
 		if (trk->name.size()) {
@@ -5983,7 +5991,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		trk->update_profile_dialog();
 
 		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->tracks_node.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node_.get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
@@ -6009,7 +6017,7 @@ bool is_valid_geocache_name(const char *str)
 void LayerTRW::track_use_with_filter_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks.at(child_uid);
+	Track * trk = this->tracks_node_.tracks.at(child_uid);
 	a_acquire_set_filter_track(trk);
 }
 #endif
@@ -6022,7 +6030,7 @@ void LayerTRW::track_use_with_filter_cb(void)
 
 bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 {
-	Track * trk = this->routes.at(track_uid);
+	Track * trk = this->routes_node_.tracks.at(track_uid);
 	return (trk && trk->comment.size() > 7 && !strncmp(trk->comment.toUtf8().constData(), "from:", 5));
 }
 
@@ -6032,7 +6040,7 @@ bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 void LayerTRW::google_route_webpage_cb(void)
 {
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes.at(child_uid);
+	Track * trk = this->routes_node_.tracks.at(child_uid);
 	if (trk) {
 		char *escaped = uri_escape(trk->comment.toUtf8().data());
 		QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
@@ -6429,7 +6437,7 @@ void LayerTRW::track_alloc_colors()
 {
 	/* Tracks. */
 	int ii = 0;
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->tracks_node_.tracks.begin(); i != this->tracks_node_.tracks.end(); i++) {
 
 		Track * trk = i->second;
 
@@ -6453,7 +6461,7 @@ void LayerTRW::track_alloc_colors()
 
 	/* Routes. */
 	ii = 0;
-	for (auto i = this->routes.begin(); i != this->routes.end(); i++) {
+	for (auto i = this->routes_node_.tracks.begin(); i != this->routes_node_.tracks.end(); i++) {
 
 		Track * trk = i->second;
 
@@ -6532,20 +6540,10 @@ void LayerTRW::calculate_bounds_waypoints()
 
 
 
-void LayerTRW::calculate_bounds_track(Tracks & tracks)
+void LayerTRW::calculate_bounds_tracks_and_routes()
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		i->second->calculate_bounds();
-	}
-}
-
-
-
-
-void LayerTRW::calculate_bounds_tracks()
-{
-	LayerTRW::calculate_bounds_track(this->tracks);
-	LayerTRW::calculate_bounds_track(this->routes);
+	this->tracks_node_.calculate_bounds_tracks();
+	this->routes_node_.calculate_bounds_tracks();
 }
 
 
@@ -6558,12 +6556,12 @@ void LayerTRW::sort_all()
 	}
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
-	if (this->tracks.size() > 1) {
-		this->tree_view->sort_children(this->tracks_node.get_index(), this->track_sort_order);
+	if (this->tracks_node_.tracks.size() > 1) {
+		this->tree_view->sort_children(this->tracks_node_.get_index(), this->track_sort_order);
 	}
 
-	if (this->routes.size() > 1) {
-		this->tree_view->sort_children(this->routes_node.get_index(), this->track_sort_order);
+	if (this->routes_node_.tracks.size() > 1) {
+		this->tree_view->sort_children(this->routes_node_.get_index(), this->track_sort_order);
 	}
 
 	if (this->waypoints_node_.waypoints.size() > 1) {
@@ -6581,7 +6579,7 @@ time_t LayerTRW::get_timestamp_tracks()
 {
 	time_t timestamp = 0;
 	std::list<Track *> * tracks_ = new std::list<Track *>;
-	tracks_ = LayerTRWc::get_track_values(tracks_, this->tracks);
+	tracks_ = this->tracks_node_.get_track_values(tracks_);
 
 	if (!tracks_->empty()) {
 		tracks_->sort(Track::compare_timestamp);
@@ -6667,7 +6665,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	this->track_alloc_colors();
 
 	this->calculate_bounds_waypoints();
-	this->calculate_bounds_tracks();
+	this->calculate_bounds_tracks_and_routes();
 
 	/*
 	  Apply treeview sort after loading all the tracks for this
@@ -6725,8 +6723,8 @@ CoordMode LayerTRW::get_coord_mode()
 bool LayerTRW::uniquify(LayersPanel * panel)
 {
 	if (panel) {
-		this->uniquify_tracks(panel, this->tracks, true);
-		this->uniquify_tracks(panel, this->routes, false);
+		this->uniquify_tracks(panel, this->tracks_node_, true);
+		this->uniquify_tracks(panel, this->routes_node_, false);
 		this->uniquify_waypoints(panel);
 		return true;
 	}
@@ -6741,8 +6739,8 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 	if (this->coord_mode != dest_mode) {
 		this->coord_mode = dest_mode;
 		this->waypoints_node_.change_coord_mode(dest_mode);
-		LayerTRWc::tracks_convert(this->tracks, dest_mode);
-		LayerTRWc::tracks_convert(this->routes, dest_mode);
+		this->tracks_node_.change_coord_mode(dest_mode);
+		this->routes_node_.change_coord_mode(dest_mode);
 	}
 }
 
@@ -7049,8 +7047,8 @@ QString LayerTRW::highest_wp_number_get()
 static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer)
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
-	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
-	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
+	tracks = ((LayerTRW *) layer)->tracks_node_.get_track_values(tracks);
+	tracks = ((LayerTRW *) layer)->routes_node_.get_track_values(tracks);
 	return ((LayerTRW *) layer)->create_tracks_and_layers_list_helper(tracks);
 }
 
@@ -7063,8 +7061,8 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 {
 	std::list<Track *> * tracks_ = new std::list<Track *>;
-	tracks_ = LayerTRWc::get_track_values(tracks_, this->get_tracks());
-	tracks_ = LayerTRWc::get_track_values(tracks_, this->get_routes());
+	tracks_ = this->tracks_node_.get_track_values(tracks_);
+	tracks_ = this->routes_node_.get_track_values(tracks_);
 	return this->create_tracks_and_layers_list_helper(tracks_);
 }
 
@@ -7108,9 +7106,9 @@ Track * LayerTRW::get_track_helper(TreeItem * sublayer)
 	/* TODO: either get rid of this method, or reduce it to checking
 	   of consistency between function argument and contents of this->table.at(). */
 	if (sublayer->type_id == "sg.trw.route") {
-		return this->routes.at(sublayer->uid);
+		return this->routes_node_.tracks.at(sublayer->uid);
 	} else {
-		return this->tracks.at(sublayer->uid);
+		return this->tracks_node_.tracks.at(sublayer->uid);
 	}
 }
 
@@ -7149,7 +7147,7 @@ LayerTRW::LayerTRW() : Layer()
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */
-	this->waypoints_node_.visible = this->tracks_node.visible = this->routes_node.visible = true;
+	this->waypoints_node_.visible = this->tracks_node_.visible = this->routes_node_.visible = true;
 
 	this->metadata = new TRWMetadata();
 	this->draw_sync_done = true;
