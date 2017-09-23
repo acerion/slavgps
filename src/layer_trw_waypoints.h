@@ -137,8 +137,8 @@ namespace SlavGPS {
 		void list_wp_uids(GList ** l);
 		std::list<QString> get_sorted_wp_name_list();
 		QString has_duplicate_waypoint_names();
-		void set_waypoints_visibility(bool on_off);
-		void waypoints_toggle_visibility();
+		void set_items_visibility(bool on_off);
+		void toggle_items_visibility();
 		void search_closest_wp(WaypointSearch * search);
 		QString tool_show_picture_wp(int event_x, int event_y, Viewport * viewport);
 		QStringList * image_wp_make_list();
@@ -147,7 +147,7 @@ namespace SlavGPS {
 
 
 
-		Waypoints waypoints;
+		Waypoints items;
 		LatLonBBox bbox;
 	};
 

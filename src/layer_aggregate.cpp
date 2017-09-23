@@ -427,7 +427,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 		std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
 		/* TODO: move this to layer trw containers. */
-		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoints();
+		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoint_items();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints->push_back(i->second);
 		}
@@ -529,8 +529,8 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 	std::list<Track *> * tracks = new std::list<Track *>;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 
-		((LayerTRW *) (*iter))->get_tracks_sublayer().get_track_values(tracks);
-		((LayerTRW *) (*iter))->get_routes_sublayer().get_track_values(tracks);
+		((LayerTRW *) (*iter))->get_tracks_node().get_track_values(tracks);
+		((LayerTRW *) (*iter))->get_routes_node().get_track_values(tracks);
 
 		tracks_and_layers->splice(tracks_and_layers->begin(), *((LayerTRW *) (*iter))->create_tracks_and_layers_list_helper(tracks));
 

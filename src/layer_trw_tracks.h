@@ -147,8 +147,8 @@ namespace SlavGPS {
 		QString has_duplicate_track_names(void);
 
 
-		void set_tracks_visibility(bool on_off);
-		void tracks_toggle_visibility();
+		void set_items_visibility(bool on_off);
+		void toggle_items_visibility();
 
 		std::list<Track *> * get_track_values(std::list<Track *> * target);
 		void track_search_closest_tp(TrackpointSearch * search);
@@ -158,7 +158,7 @@ namespace SlavGPS {
 
 
 
-		Tracks tracks;
+		Tracks items;
 		LatLonBBox bbox;
 	};
 

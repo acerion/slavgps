@@ -89,7 +89,7 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 
 	search.viewport->get_bbox(&search.bbox);
 
-	this->tracks_node_.track_search_closest_tp(&search);
+	this->tracks.track_search_closest_tp(&search);
 
 	return search.closest_tp;
 }
@@ -105,7 +105,7 @@ Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int 
 	search.viewport = viewport;
 	search.draw_images = this->drawimages;
 
-	this->waypoints_node_.search_closest_wp(&search);
+	this->waypoints.search_closest_wp(&search);
 
 	return search.closest_wp;
 }
@@ -193,7 +193,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
 		/* Update waypoint position. */
 		this->current_wp->coord = new_coord;
-		this->waypoints_node_.calculate_bounds();
+		this->waypoints.calculate_bounds();
 		/* Reset waypoint pointer. */
 		this->current_wp = NULL;
 
@@ -248,14 +248,14 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints_node_.visible && BBOX_INTERSECT (this->waypoints_node_.bbox, bbox)) {
+	if (this->waypoints.visible && BBOX_INTERSECT (this->waypoints.bbox, bbox)) {
 		WaypointSearch wp_search;
 		wp_search.viewport = viewport;
 		wp_search.x = ev->x();
 		wp_search.y = ev->y();
 		wp_search.draw_images = this->drawimages;
 
-		this->waypoints_node_.search_closest_wp(&wp_search);
+		this->waypoints.search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
 
@@ -301,8 +301,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	tp_search.bbox = bbox;
 
 	/* FIXME: we have a very similar block of code below. */
-	if (this->tracks_node_.visible) {
-		this->tracks_node_.track_search_closest_tp(&tp_search);
+	if (this->tracks.visible) {
+		this->tracks.track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp) {
 
@@ -339,8 +339,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	}
 
 	/* Try again for routes. */
-	if (this->routes_node_.visible) {
-		this->routes_node_.track_search_closest_tp(&tp_search);
+	if (this->routes.visible) {
+		this->routes.track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp)  {
 
@@ -497,7 +497,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	search.y = ev->y();
 	search.draw_images = trw->drawimages;
 
-	trw->waypoints_node_.search_closest_wp(&search);
+	trw->get_waypoints_node().search_closest_wp(&search);
 	if (trw->current_wp && (trw->current_wp == search.closest_wp)) {
 		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
@@ -604,7 +604,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		trw->current_wp->coord = new_coord;
 
-		trw->waypoints_node_.calculate_bounds();
+		trw->get_waypoints_node().calculate_bounds();
 		trw->emit_changed();
 		return ToolStatus::ACK;
 
@@ -1193,7 +1193,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 
 	Coord coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 	if (trw->new_waypoint(trw->get_window(), &coord)) {
-		trw->waypoints_node_.calculate_bounds();
+		trw->get_waypoints_node().calculate_bounds();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
 			trw->emit_changed();
@@ -1277,11 +1277,11 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 	}
 #ifdef K
-	if (trw->tracks_node.visible) {
+	if (trw->get_tracks_node().visible) {
 #else
 	if (1) {
 #endif
-		trw->tracks_node_.track_search_closest_tp(&search);
+		trw->get_tracks_node().track_search_closest_tp(&search);
 	}
 
 	if (search.closest_tp) {
@@ -1302,7 +1302,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 #else
 	if (1) {
 #endif
-		trw->routes_node_.track_search_closest_tp(&search);
+		trw->get_routes_node().track_search_closest_tp(&search);
 	}
 
 	if (search.closest_tp) {
@@ -1612,7 +1612,7 @@ ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEven
 
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	QString found_image = trw->waypoints_node_.tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
+	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
 	if (!found_image.isEmpty()) {
 #ifdef K
 		trw_menu_sublayer_t data;

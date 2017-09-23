@@ -884,9 +884,9 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 
 void SlavGPS::a_gpspoint_write_file(LayerTRW const * trw, FILE *f)
 {
-	Tracks & tracks = ((LayerTRW *) trw)->get_tracks();
-	Tracks & routes = ((LayerTRW *) trw)->get_routes();
-	auto waypoints = ((LayerTRW *) trw)->get_waypoints();
+	Tracks & tracks = ((LayerTRW *) trw)->get_track_items();
+	Tracks & routes = ((LayerTRW *) trw)->get_route_items();
+	Waypoints & waypoints = ((LayerTRW *) trw)->get_waypoint_items();
 
 	fprintf(f, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(f, waypoints);

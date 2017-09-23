@@ -98,7 +98,7 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes, TreeView * ref_tree_view) : Layer
 LayerTRWTracks::~LayerTRWTracks()
 {
 	/* kamilTODO: call destructors of Track objects? */
-	this->tracks.clear();
+	this->items.clear();
 }
 
 
@@ -108,10 +108,10 @@ QString LayerTRWTracks::get_tooltip(void)
 {
 	if (this->type_id == "sg.trw.routes") {
 		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Routes: %1").arg(this->tracks.size());
+		return QString("Routes: %1").arg(this->items.size());
 	} else {
 		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Tracks: %1").arg(this->tracks.size());
+		return QString("Tracks: %1").arg(this->items.size());
 	}
 }
 
@@ -123,7 +123,7 @@ Track * LayerTRWTracks::find_track_by_date(char const * date)
 	char date_buf[20];
 	Track * trk = NULL;
 
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		date_buf[0] = '\0';
 		trk = i->second;
 
@@ -150,7 +150,7 @@ Track * LayerTRWTracks::find_track_by_date(char const * date)
  */
 Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 		if (trk && !trk->name.isEmpty()) {
 			if (trk->name == trk_name) {
@@ -166,7 +166,7 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 
 void LayerTRWTracks::find_maxmin(struct LatLon maxmin[2])
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->find_maxmin(maxmin);
 	}
 }
@@ -176,7 +176,7 @@ void LayerTRWTracks::find_maxmin(struct LatLon maxmin[2])
 
 void LayerTRWTracks::list_trk_uids(GList ** l)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		*l = g_list_append(*l, (void *) ((long) i->first)); /* kamilTODO: i->first or i->second? */
 	}
 }
@@ -188,7 +188,7 @@ std::list<sg_uid_t> * LayerTRWTracks::find_tracks_with_timestamp_type(bool with_
 {
 	std::list<sg_uid_t> * result = new std::list<sg_uid_t>;
 
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Trackpoint * p1, * p2;
 		Track * trk = i->second;
 		if (trk == exclude) {
@@ -233,7 +233,7 @@ GList * LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned in
 		return NULL;
 	}
 
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 
 		/* Outline:
@@ -283,7 +283,7 @@ GList * LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned in
 std::list<QString> LayerTRWTracks::get_sorted_track_name_list_exclude_self(Track const * self)
 {
 	std::list<QString> result;
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 
 		/* Skip self. */
 		if (i->second == self) {
@@ -316,7 +316,7 @@ static void trw_layer_sorted_name_list(void * key, void * value, void * udata)
 std::list<QString> LayerTRWTracks::get_sorted_track_name_list(void)
 {
 	std::list<QString> result;
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		result.push_back(i->second->name);
 	}
 
@@ -336,7 +336,7 @@ QString LayerTRWTracks::has_duplicate_track_names(void)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->tracks.size() <= 1) {
+	if (this->items.size() <= 1) {
 		return QString("");
 	}
 
@@ -358,9 +358,9 @@ QString LayerTRWTracks::has_duplicate_track_names(void)
 
 
 
-void LayerTRWTracks::set_tracks_visibility(bool on_off)
+void LayerTRWTracks::set_items_visibility(bool on_off)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = on_off;
 #ifdef K
 		tree_view->set_visibility(i->second->index, on_off);
@@ -371,9 +371,9 @@ void LayerTRWTracks::set_tracks_visibility(bool on_off)
 
 
 
-void LayerTRWTracks::tracks_toggle_visibility(void)
+void LayerTRWTracks::toggle_items_visibility(void)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = !i->second->visible;
 #ifdef K
 		tree_view->toggle_visibility(i->second->index);
@@ -386,7 +386,7 @@ void LayerTRWTracks::tracks_toggle_visibility(void)
 
 std::list<Track *> * LayerTRWTracks::get_track_values(std::list<Track *> * target)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		target->push_back(i->second);
 	}
 
@@ -398,7 +398,7 @@ std::list<Track *> * LayerTRWTracks::get_track_values(std::list<Track *> * targe
 
 void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 
 		Track * trk = i->second;
 
@@ -436,7 +436,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->convert(dest_mode);
 	}
 }
@@ -446,7 +446,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 
 void LayerTRWTracks::calculate_bounds(void)
 {
-	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->calculate_bounds();
 	}
 }
@@ -459,7 +459,7 @@ void LayerTRWTracks::calculate_bounds(void)
 */
 void LayerTRWTracks::uniquify(sort_order_t sort_order)
 {
-	if (this->tracks.empty()) {
+	if (this->items.empty()) {
 		qDebug() << "EE: Layer TRW: ::uniquify() called for empty tracks/routes set";
 		return;
 	}
@@ -556,7 +556,7 @@ void LayerTRWTracks::assign_colors(int track_drawing_mode, const QColor & track_
 	if (this->type_id == "sg.trw.tracks") {
 
 		int ii = 0;
-		for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+		for (auto i = this->items.begin(); i != this->items.end(); i++) {
 
 			Track * trk = i->second;
 
@@ -581,7 +581,7 @@ void LayerTRWTracks::assign_colors(int track_drawing_mode, const QColor & track_
 	} else { /* Routes. */
 
 		int ii = 0;
-		for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
+		for (auto i = this->items.begin(); i != this->items.end(); i++) {
 
 			Track * trk = i->second;
 

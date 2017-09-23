@@ -388,7 +388,7 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
 
-	this->trw->get_tracks_sublayer().update_treeview(this->trk);
+	this->trw->get_tracks_node().update_treeview(this->trk);
 	this->trw->emit_changed();
 
 	this->accept();

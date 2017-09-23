@@ -197,13 +197,13 @@ namespace SlavGPS {
 		void add_route(Track * trk);
 		void add_waypoint(Waypoint * wp);
 
-		Tracks & get_tracks();
-		Tracks & get_routes();
-		Waypoints & get_waypoints();
+		Tracks & get_track_items();
+		Tracks & get_route_items();
+		Waypoints & get_waypoint_items();
 
-		LayerTRWTracks & get_tracks_sublayer(void);
-		LayerTRWTracks & get_routes_sublayer(void);
-		LayerTRWWaypoints & get_waypoints_sublayer(void);
+		LayerTRWTracks & get_tracks_node(void);
+		LayerTRWTracks & get_routes_node(void);
+		LayerTRWWaypoints & get_waypoints_node(void);
 
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
@@ -375,11 +375,6 @@ namespace SlavGPS {
 		void open_layer_with_external_program(const QString & external_program);
 		int export_layer_with_gpsbabel(const QString & title, const QString & default_name);
 
-
-
-		LayerTRWTracks tracks_node_; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks routes_node_; /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints waypoints_node_; /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		/* Waypoint editing tool. */
@@ -651,6 +646,11 @@ namespace SlavGPS {
 		void add_routes_node(void);
 
 		void draw_with_highlight_sub(Viewport * viewport, bool do_highlight);
+
+
+		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
 	};
 
 
