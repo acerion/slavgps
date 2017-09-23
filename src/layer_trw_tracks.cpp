@@ -644,3 +644,31 @@ void LayerTRWTracks::update_treeview(Track * trk)
 		this->tree_view->set_icon(trk->index, &icon);
 	}
 }
+
+
+
+
+void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_layer)
+{
+	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+		Track * trk = i->second;
+
+		QIcon * icon = NULL;
+		if (trk->has_color) {
+			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
+			pixmap.fill(trk->color);
+			icon = new QIcon(pixmap);
+		}
+
+		time_t timestamp = 0;
+		Trackpoint * tpt = trk->get_tp_first();
+		if (tpt && tpt->has_timestamp) {
+			timestamp = tpt->timestamp;
+		}
+
+		/* "this" is a layer, which is not an immediate parent, but a grandparent of added child. */
+		this->add_child(trk, (Layer *) parent_layer, trk->name, icon, timestamp);
+
+		delete icon;
+	}
+}

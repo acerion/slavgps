@@ -57,6 +57,7 @@ namespace SlavGPS {
 
 	class Waypoint;
 	class Viewport;
+	class LayerTRW;
 
 
 
@@ -113,6 +114,10 @@ namespace SlavGPS {
 
 		QString get_tooltip();
 
+
+		/* Add waypoints from C++ container to program's tree
+		   structure as tree children of a trw layer. */
+		void add_items_as_children(Waypoints & waypoints, LayerTRW * parent_layer);
 
 
 		void find_maxmin(struct LatLon maxmin[2]);

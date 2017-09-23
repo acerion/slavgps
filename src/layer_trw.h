@@ -205,6 +205,11 @@ namespace SlavGPS {
 		LayerTRWTracks & get_routes_node(void);
 		LayerTRWWaypoints & get_waypoints_node(void);
 
+		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
+
+
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
 		bool get_waypoints_visibility();
@@ -225,12 +230,6 @@ namespace SlavGPS {
 		void draw_with_highlight(Viewport * viewport, Tracks & tracks, bool do_highlight);
 		void draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight);
 		void draw_with_highlight(Viewport * viewport, Waypoints & waypoints, bool do_highlight);
-
-
-		/* Add tracks (tracks and routes) and waypoints from C++ containers
-		   to programs tree structure as tree children of a trw layer. */
-		void add_tracks_as_children(TreeItem * _tracks_node, Tracks & tracks);
-		void add_waypoints_as_children(TreeItem * _waypoints_node, Waypoints & data);
 
 
 		void find_maxmin(struct LatLon maxmin[2]);
@@ -648,9 +647,6 @@ namespace SlavGPS {
 		void draw_with_highlight_sub(Viewport * viewport, bool do_highlight);
 
 
-		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
 	};
 
 

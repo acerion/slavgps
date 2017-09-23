@@ -53,6 +53,7 @@ namespace SlavGPS {
 
 	class Track;
 	class Viewport;
+	class LayerTRW;
 
 
 
@@ -115,6 +116,8 @@ namespace SlavGPS {
 
 		QString get_tooltip();
 
+
+		void add_items_as_children(Tracks & tracks, LayerTRW * parent_layer);
 
 		void calculate_bounds(void);
 

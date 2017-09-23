@@ -807,18 +807,6 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 
 
 
-#if 0
-void trw_layer_free_copied_item(int subtype, void * item)
-{
-	if (item) {
-		free(item);
-	}
-}
-#endif
-
-
-
-
 void LayerTRW::image_cache_free()
 {
 #ifdef K
@@ -1577,50 +1565,6 @@ void LayerTRW::new_track_pens(void)
 
 
 
-void LayerTRW::add_tracks_as_children(TreeItem * _tracks_node, Tracks & tracks_)
-{
-	for (auto i = tracks_.begin(); i != tracks_.end(); i++) {
-		Track * trk = i->second;
-
-		QIcon * icon = NULL;
-		if (trk->has_color) {
-			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
-			pixmap.fill(trk->color);
-			icon = new QIcon(pixmap);
-		}
-
-		time_t timestamp = 0;
-		Trackpoint * tpt = trk->get_tp_first();
-		if (tpt && tpt->has_timestamp) {
-			timestamp = tpt->timestamp;
-		}
-
-		/* "this" is a layer, which is not an immediate parent, but a grandparent of added child. */
-		_tracks_node->add_child(trk, this, trk->name, icon, timestamp);
-
-		delete icon;
-	}
-}
-
-
-
-
-void LayerTRW::add_waypoints_as_children(TreeItem * _waypoints_node, Waypoints & waypoints_)
-{
-	for (auto i = waypoints_.begin(); i != waypoints_.end(); i++) {
-		time_t timestamp = 0;
-		if (i->second->has_timestamp) {
-			timestamp = i->second->timestamp;
-		}
-
-		/* "this" is a layer, which is not an immediate parent, but a grandparent of added child. */
-		_waypoints_node->add_child(i->second, this, i->second->name, NULL /* i->second->symbol */, timestamp);
-	}
-}
-
-
-
-
 void LayerTRW::add_tracks_node(void)
 {
 	assert(this->connected_to_tree);
@@ -1673,19 +1617,19 @@ void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_in
 
 	if (this->tracks.items.size() > 0) {
 		this->add_tracks_node();
-		this->add_tracks_as_children(&this->tracks, this->tracks.items);
+		this->tracks.add_items_as_children(this->tracks.items, this);
 		this->tree_view->set_visibility(this->tracks.get_index(), this->tracks.visible);
 	}
 
 	if (this->routes.items.size() > 0) {
 		this->add_routes_node();
-		this->add_tracks_as_children(&this->routes, this->routes.items);
+		this->routes.add_items_as_children(this->routes.items, this);
 		this->tree_view->set_visibility(this->routes.get_index(), this->routes.visible);
 	}
 
 	if (this->waypoints.items.size() > 0) {
 		this->add_waypoints_node();
-		this->add_waypoints_as_children(&this->waypoints, this->waypoints.items);
+		this->waypoints.add_items_as_children(this->waypoints.items, this);
 		this->tree_view->set_visibility(this->waypoints.get_index(), this->waypoints.visible);
 	}
 
@@ -3480,8 +3424,7 @@ void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
 	if (Dialog::yes_or_no(tr("Are you sure you want to delete all routes in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
-
-		    this->delete_all_routes();
+		this->delete_all_routes();
 	}
 }
 
@@ -3492,8 +3435,7 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
 	if (Dialog::yes_or_no(tr("Are you sure you want to delete all waypoints in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
-
-		    this->delete_all_waypoints();
+		this->delete_all_waypoints();
 	}
 }
 
