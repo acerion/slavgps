@@ -113,7 +113,7 @@ namespace SlavGPS {
 
 
 
-		int map_index = 0;
+		unsigned int map_index = 0;
 		QString cache_dir;
 		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
 		int32_t alpha = 0;

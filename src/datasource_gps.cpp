@@ -387,7 +387,7 @@ void SlavGPS::datasource_gps_clean_up(void * user_data)
 
 
 
-static void set_total_count(int cnt, AcquireProcess * acquiring)
+static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 {
 	char *s = NULL;
 #ifdef K
@@ -559,7 +559,7 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 		}
 		/* Tells us how many items there will be. */
 		if (strstr(line, "RECORD")) {
-			int lsb, msb, cnt;
+			unsigned int lsb, msb, cnt;
 
 			if (strlen(line) > 20) {
 				sscanf(line+17, "%x", &lsb);

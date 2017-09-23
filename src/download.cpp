@@ -169,7 +169,7 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 /* FIXME: verify that users of the two functions operate on signed int. */
-static ParameterExtra prefs_extra = { convert_to_display, convert_to_internal };
+static ParameterExtra prefs_extra = { convert_to_display, convert_to_internal, NULL };
 static Parameter prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Tile age (days):"), WidgetType::SPINBOX_INT, &scale_age, NULL, &prefs_extra, NULL },
 };

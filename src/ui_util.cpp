@@ -150,7 +150,9 @@ int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default
 		g_object_get(G_OBJECT(gtk_settings_get_default()), property_name, &value, NULL);
 		return value;
 	} else {
+#endif
 		return default_value;
+#ifdef K
 	}
 #endif
 }

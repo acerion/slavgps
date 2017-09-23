@@ -386,7 +386,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 
 
 
-	snprintf(tmp_str, sizeof (tmp_str), "%d / %d", tp->nsats, tp->fix_mode);
+	snprintf(tmp_str, sizeof (tmp_str), "%d / %d", tp->nsats, (int) tp->fix_mode);
 	this->sat->setText(QString(tmp_str));
 
 	this->cur_tp = tp;

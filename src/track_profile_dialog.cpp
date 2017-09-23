@@ -1115,10 +1115,10 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * ev)
 {
-	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
+	int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	int graph_left = GRAPH_MARGIN_LEFT;
+	int graph_top = GRAPH_MARGIN_TOP;
 
 	QPoint position = viewport->mapFromGlobal(QCursor::pos());
 

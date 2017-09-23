@@ -136,8 +136,8 @@ namespace SlavGPS {
 		unsigned int height = 0;
 
 		QPixmap * scaled = NULL;
-		uint32_t scaled_width = 0;
-		uint32_t scaled_height = 0;
+		int scaled_width = 0;
+		int scaled_height = 0;
 
 		int click_x = -1;
 		int click_y = -1;

@@ -666,7 +666,9 @@ void LayerMapnik::render(Coord * coord_ul, Coord * coord_br, TileInfo * ti_ul)
 	if (this->alpha < 255) {
 		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
-	map_cache_add(pixmap, (map_cache_extra_t){ tt }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+	map_cache_extra_t arg;
+	arg.duration = tt;
+	map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 #ifdef K
 	g_object_unref(pixmap);
 #endif

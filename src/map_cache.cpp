@@ -28,6 +28,7 @@
 #include <cstdlib>
 
 #include <glib.h>
+#include <QDebug>
 
 #include "globals.h"
 #include "map_cache.h"
@@ -44,8 +45,8 @@ using namespace SlavGPS;
 
 #define MC_KEY_SIZE 64
 
-#define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%d-%d-%.3f-%.3f"
-#define HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA "%d-%d-%d-%d-%d-%d-"
+#define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%lu-%d-%.3f-%.3f"
+#define HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA "%d-%d-%d-%d-%d-%lu-"
 #define HASHKEY_FORMAT_STRING_TYPE "%d-"
 
 
@@ -196,7 +197,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 
 	static int tmp = 0;
 	if ((++tmp == 20)) {
-		fprintf(stderr, "DEBUG: keys count = %d, cache count = %d, cache size = %u, max cache size = %u\n", keys_list.size(), maps_cache.size(), cache_size, max_cache_size);
+		qDebug() << QString("DD: Map Cache: keys count = %1, cache count = %2, cache size = %3, max cache size = %4").arg(keys_list.size()).arg(maps_cache.size()).arg(cache_size).arg(max_cache_size);
 		tmp = 0;
 	}
 }
@@ -245,7 +246,9 @@ map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID ma
 	if (iter != maps_cache.end() && iter->second) {
 		return iter->second->extra;
 	} else {
-		return (map_cache_extra_t) { 0.0 };
+		map_cache_extra_t ret;
+		ret.duration = 0.0;
+		return ret;
 	}
 }
 

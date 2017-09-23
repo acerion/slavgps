@@ -594,7 +594,7 @@ void LayerMap::set_file(const QString & name_)
 /************** PARAMETERS **************/
 /****************************************/
 
-static MapTypeID map_index_to_map_type(int index)
+static MapTypeID map_index_to_map_type(unsigned int index)
 {
 	assert (index < map_sources.size());
 	return map_sources[index]->map_type;
@@ -611,9 +611,9 @@ static MapTypeID map_index_to_map_type(int index)
 */
 static int map_type_to_map_index(MapTypeID map_type)
 {
-	for (int i = 0; i < map_sources.size(); i++) {
+	for (unsigned int i = 0; i < map_sources.size(); i++) {
 		if (map_sources[i]->map_type == map_type) {
-			return i;
+			return (int) i;
 		}
 	}
 	return -1; /* no such thing */
@@ -654,7 +654,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		if (map_index_ == -1) {
 			fprintf(stderr, _("WARNING: Unknown map type\n"));
 		} else {
-			this->map_index = map_index_;
+			this->map_index = (unsigned int) map_index_;
 
 			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
 			if (is_file_operation) {
@@ -1219,7 +1219,9 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const char* ma
 		if (pixmap) {
 			pixmap = pixmap_apply_settings(pixmap, layer->alpha, xshrinkfactor, yshrinkfactor);
 
-			map_cache_add(pixmap, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
+			map_cache_extra_t arg;
+			arg.duration = 0.0;
+			map_cache_add(pixmap, arg, mapcoord, map_sources[layer->map_index]->map_type,
 				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename.toUtf8().constData());
 		}
 	}
