@@ -29,26 +29,19 @@
 #include "config.h"
 #endif
 
-//#include <cstdint>
-//#include <list>
-//#include <unordered_map>
 
-//#include <QStandardItem>
-//#include <QDialog>
 
-//#include "layer.h"
-//#include "layer_tool.h"
-//#include "layer_interface.h"
-//#include "layer_trw_containers.h"
-//#include "layer_trw_dialogs.h"
-//#include "viewport.h"
-//#include "waypoint.h"
-//#include "trackpoint_properties.h"
-//#include "file.h"
+
+#include <unordered_map>
+
+
+
+
+#include "track.h"
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
-#include "layer_trw_containers.h"
+#include "globals.h"
 
 
 
@@ -59,6 +52,35 @@ namespace SlavGPS {
 
 
 	class Track;
+	class Viewport;
+
+
+
+
+	/* Comment from viking, perhaps still applies:
+
+	   It's not entirely clear the benefits of hash tables usage
+	   here - possibly the simplicity of first implementation for
+	   unique names.  Now with the name of the item stored as part
+	   of the item - these tables are effectively straightforward
+	   lists.
+
+	   For this reworking I've choosen to keep the use of hash
+	   tables since for the expected data sizes - even many hundreds
+	   of waypoints and tracks is quite small in the grand scheme of
+	   things, and with normal PC processing capabilities - it has
+	   negligible performance impact.  This also minimized the
+	   amount of rework - as the management of the hash tables
+	   already exists.
+
+	   The hash tables are indexed by simple integers acting as a
+	   UUID hash, which again shouldn't affect performance much we
+	   have to maintain a uniqueness (as before when multiple names
+	   where not allowed), this is to ensure it refers to the same
+	   item in the data structures used on the viewport and on the
+	   layers panel.
+	*/
+	typedef std::unordered_map<sg_uid_t, Track *> Tracks;
 
 
 
@@ -94,13 +116,26 @@ namespace SlavGPS {
 		QString get_tooltip();
 
 
-		void calculate_bounds_tracks(void);
+		void calculate_bounds(void);
 
 
+		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);
 		Track * find_track_by_date(char const * date_str);
 
-		void find_maxmin_in_tracks(struct LatLon maxmin[2]);
+		void find_maxmin(struct LatLon maxmin[2]);
+		void uniquify(sort_order_t sort_order);
+		QString new_unique_element_name(const QString & old_name);
+
+		/* Update the treeview of the track id - primarily to update the icon. */
+		void update_treeview(Track * trk);
+
+		void assign_colors(int track_drawing_mode, const QColor & track_color_common);
+
+
+		time_t get_earliest_timestamp();
+
+
 
 		void list_trk_uids(GList ** l);
 

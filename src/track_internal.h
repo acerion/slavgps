@@ -196,6 +196,7 @@ namespace SlavGPS {
 		static Track * unmarshall(uint8_t * data, size_t datalen);
 
 		void calculate_bounds();
+		void find_maxmin(struct LatLon maxmin[2]);
 
 		void anonymize_times();
 		void interpolate_times();

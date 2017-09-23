@@ -1765,7 +1765,7 @@ static char *make_track_name(LayerTRW * trw)
 	strcpy(name, basename);
 	int i = 2;
 
-	while (trw->get_track(name) != NULL) {
+	while (trw->get_tracks_sublayer().find_track_by_name(name) != NULL) {
 		snprintf(name, bufsize, "%s#%d", basename, i);
 		i++;
 	}

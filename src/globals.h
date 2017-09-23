@@ -120,6 +120,18 @@ namespace SlavGPS {
 
 
 
+	typedef enum sort_order_e {
+		VL_SO_NONE = 0,
+		VL_SO_ALPHABETICAL_ASCENDING,
+		VL_SO_ALPHABETICAL_DESCENDING,
+		VL_SO_DATE_ASCENDING,
+		VL_SO_DATE_DESCENDING,
+		VL_SO_LAST
+	} sort_order_t;
+
+
+
+
 } /* namespace SlavGPS */
 
 

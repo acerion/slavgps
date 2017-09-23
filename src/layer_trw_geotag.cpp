@@ -477,7 +477,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 				bool updated_waypoint = false;
 
 				if (options->ov.overwrite_waypoints) {
-					Waypoint * current_wp = options->trw->get_waypoint(file_name);
+					Waypoint * current_wp = options->trw->get_waypoints_sublayer().find_waypoint_by_name(file_name);
 					if (current_wp) {
 						/* Existing wp found, so set new position, comment and image. */
 						(void)a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
@@ -527,7 +527,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 					/* Update existing WP. */
 					/* Find a WP with current name. */
 					QString file_name = file_base_name(options->image);
-					Waypoint * wp = options->trw->get_waypoint(file_name);
+					Waypoint * wp = options->trw->get_waypoints_sublayer().find_waypoint_by_name(file_name);
 					if (wp) {
 						/* Found, so set new position, comment and image. */
 						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
@@ -601,7 +601,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
 
 	if (geotag->redraw) {
 		if (geotag->trw) {
-			geotag->trw->calculate_bounds_waypoints();
+			geotag->trw->get_waypoints_sublayer().calculate_bounds();
 			/* Ensure any new images get show. */
 			geotag->trw->verify_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */

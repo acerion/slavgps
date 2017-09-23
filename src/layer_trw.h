@@ -39,7 +39,6 @@
 #include "layer.h"
 #include "layer_tool.h"
 #include "layer_interface.h"
-#include "layer_trw_containers.h"
 #include "layer_trw_dialogs.h"
 #include "layer_trw_tracks.h"
 #include "layer_trw_waypoints.h"
@@ -47,6 +46,7 @@
 #include "waypoint.h"
 #include "trackpoint_properties.h"
 #include "file.h"
+#include "track.h"
 
 
 
@@ -203,6 +203,7 @@ namespace SlavGPS {
 
 		LayerTRWTracks & get_tracks_sublayer(void);
 		LayerTRWTracks & get_routes_sublayer(void);
+		LayerTRWWaypoints & get_waypoints_sublayer(void);
 
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
@@ -213,12 +214,6 @@ namespace SlavGPS {
 
 		bool find_track_by_date(char const * date, Viewport * viewport, bool select);
 		bool find_waypoint_by_date(char const * date, Viewport * viewport, bool select);
-
-		Track * get_track(const QString & trk_name);
-		Track * get_route(const QString & route_name);
-
-		Waypoint * get_waypoint(const QString & wp_name);
-
 
 		/* Draw all items of the layer, without highlight. */
 		void draw(Viewport * viewport);
@@ -236,10 +231,6 @@ namespace SlavGPS {
 		   to programs tree structure as tree children of a trw layer. */
 		void add_tracks_as_children(TreeItem * _tracks_node, Tracks & tracks);
 		void add_waypoints_as_children(TreeItem * _waypoints_node, Waypoints & data);
-
-
-		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
-
 
 
 		void find_maxmin(struct LatLon maxmin[2]);
@@ -264,7 +255,7 @@ namespace SlavGPS {
 
 		void reset_waypoints();
 
-		QString new_unique_sublayer_name(const QString & type_id, const QString& old_name);
+		QString new_unique_element_name(const QString & type_id, const QString& old_name);
 
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
@@ -291,10 +282,6 @@ namespace SlavGPS {
 		void delete_all_waypoints();
 
 
-		void waypoint_rename(Waypoint * wp, const QString & new_name);
-		void waypoint_reset_icon(Waypoint * wp);
-		void update_treeview(Track * trk);
-
 		bool dem_test(LayersPanel * panel);
 		void apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations);
 		void smooth_it(Track * trk, bool flat);
@@ -311,11 +298,7 @@ namespace SlavGPS {
 
 
 
-		void uniquify_tracks(LayersPanel * panel, LayerTRWTracks & tracks_table, bool ontrack);
 		void sort_order_specified(const QString & type_id, sort_order_t order);
-
-		void uniquify_waypoints(LayersPanel * panel);
-
 
 
 		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
@@ -335,16 +318,8 @@ namespace SlavGPS {
 		Waypoint * closest_wp_in_five_pixel_interval(Viewport * viewport, int x, int y);
 
 
-		void track_alloc_colors();
-
-		void calculate_bounds_waypoints();
-		void calculate_bounds_tracks_and_routes();
-
-
 		void sort_all();
 
-		time_t get_timestamp_tracks();
-		time_t get_timestamp_waypoints();
 
 
 		void set_coord_mode(CoordMode mode);
@@ -399,11 +374,6 @@ namespace SlavGPS {
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
 		void open_layer_with_external_program(const QString & external_program);
 		int export_layer_with_gpsbabel(const QString & title, const QString & default_name);
-
-
-
-		/* Move this to layer_trw_containers.h. */
-
 
 
 
@@ -692,11 +662,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-QIcon * get_wp_sym_small(const QString & symbol_name);
 
 
 

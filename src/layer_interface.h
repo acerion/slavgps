@@ -37,6 +37,7 @@
 #include "viewport.h"
 #include "globals.h"
 #include "vikutils.h"
+#include "layer.h"
 
 
 

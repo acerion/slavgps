@@ -321,7 +321,7 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
 	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
 		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
-		LayerTRW::find_maxmin_in_track(trk, maxmin);
+		trk->find_maxmin(maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 		Coord coord(average, this->trw->coord_mode);

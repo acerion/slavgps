@@ -30,6 +30,7 @@
 
 #include "layer.h"
 #include "layer_trw.h"
+#include "layer_trw_waypoints.h"
 #include "layer_aggregate.h"
 #include "window.h"
 #include "viewport_internal.h"
@@ -105,11 +106,11 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	bool updated = false;
 	const QString new_name = waypoint_properties_dialog(trw->get_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
 	if (new_name.size()) {
-		trw->waypoint_rename(wp, new_name);
+		trw->get_waypoints_sublayer().rename_waypoint(wp, new_name);
 	}
 
 	if (updated) {
-		trw->waypoint_reset_icon(wp);
+		trw->get_waypoints_sublayer().reset_waypoint_icon(wp);
 	}
 
 	if (updated && trw->visible) {

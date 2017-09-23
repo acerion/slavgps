@@ -29,26 +29,23 @@
 #include "config.h"
 #endif
 
-//#include <cstdint>
-//#include <list>
-//#include <unordered_map>
 
-//#include <QStandardItem>
-//#include <QDialog>
 
-//#include "layer.h"
-//#include "layer_tool.h"
-//#include "layer_interface.h"
-//#include "layer_trw_containers.h"
-//#include "layer_trw_dialogs.h"
-//#include "viewport.h"
-//#include "waypoint.h"
-//#include "trackpoint_properties.h"
-//#include "file.h"
+
+#include <unordered_map>
+
+
+
+
+#include <QIcon>
+
+
+
+
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
-#include "layer_trw_containers.h"
+#include "globals.h"
 
 
 
@@ -59,6 +56,35 @@ namespace SlavGPS {
 
 
 	class Waypoint;
+	class Viewport;
+
+
+
+
+	/* Comment from viking, perhaps still applies:
+
+	   It's not entirely clear the benefits of hash tables usage
+	   here - possibly the simplicity of first implementation for
+	   unique names.  Now with the name of the item stored as part
+	   of the item - these tables are effectively straightforward
+	   lists.
+
+	   For this reworking I've choosen to keep the use of hash
+	   tables since for the expected data sizes - even many hundreds
+	   of waypoints and tracks is quite small in the grand scheme of
+	   things, and with normal PC processing capabilities - it has
+	   negligible performance impact.  This also minimized the
+	   amount of rework - as the management of the hash tables
+	   already exists.
+
+	   The hash tables are indexed by simple integers acting as a
+	   UUID hash, which again shouldn't affect performance much we
+	   have to maintain a uniqueness (as before when multiple names
+	   where not allowed), this is to ensure it refers to the same
+	   item in the data structures used on the viewport and on the
+	   layers panel.
+	*/
+	typedef std::unordered_map<sg_uid_t, Waypoint *> Waypoints;
 
 
 
@@ -87,10 +113,24 @@ namespace SlavGPS {
 
 		QString get_tooltip();
 
-		Waypoint * find_waypoint_by_name(const QString & wp_name);
-		Waypoint * find_waypoint_by_date(char const * date);
+
 
 		void find_maxmin(struct LatLon maxmin[2]);
+		void uniquify(sort_order_t sort_order);
+		QString new_unique_element_name(const QString & old_name);
+
+		void rename_waypoint(Waypoint * wp, const QString & new_name);
+		void reset_waypoint_icon(Waypoint * wp);
+
+		/* Uses a case sensitive find. Finds the first waypoint matching given name. */
+		Waypoint * find_waypoint_by_name(const QString & wp_name);
+
+		Waypoint * find_waypoint_by_date(char const * date);
+
+		void calculate_bounds();
+
+
+		time_t get_earliest_timestamp();
 
 
 		void single_waypoint_jump(Viewport * viewport);
@@ -110,6 +150,11 @@ namespace SlavGPS {
 		Waypoints waypoints;
 		LatLonBBox bbox;
 	};
+
+
+
+
+	QIcon * get_wp_sym_small(const QString & symbol_name);
 
 
 

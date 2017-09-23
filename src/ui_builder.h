@@ -48,6 +48,11 @@
 
 
 
+#define SMALL_ICON_SIZE 18
+
+
+
+
 namespace SlavGPS {
 
 
@@ -131,18 +136,6 @@ namespace SlavGPS {
 		double step;
 		uint8_t digits;
 	} ParameterScale;
-
-
-	typedef enum {
-		VL_SO_NONE = 0,
-		VL_SO_ALPHABETICAL_ASCENDING,
-		VL_SO_ALPHABETICAL_DESCENDING,
-		VL_SO_DATE_ASCENDING,
-		VL_SO_DATE_DESCENDING,
-		VL_SO_LAST
-	} sort_order_t;
-
-
 
 
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, Parameter * params);

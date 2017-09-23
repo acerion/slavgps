@@ -2534,7 +2534,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		this->reject();
 		break;
 	case SG_TRACK_PROFILE_OK:
-		this->trw->update_treeview(this->trk);
+		this->trw->get_tracks_sublayer().update_treeview(this->trk);
 		this->trw->emit_changed();
 		this->accept();
 		break;
@@ -2548,7 +2548,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		std::list<Track *> * tracks = this->trk->split_into_segments();
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				const QString new_tr_name = this->trw->new_unique_sublayer_name(this->trk->type_id, this->trk->name);
+				const QString new_tr_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
 				(*iter)->set_name(new_tr_name);
 
 				if (this->trk->type_id == "sg.trw.route") {
@@ -2585,7 +2585,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			break;
 		}
 
-		const QString r_name = this->trw->new_unique_sublayer_name(this->trk->type_id, this->trk->name);
+		const QString r_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
 
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */

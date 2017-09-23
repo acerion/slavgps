@@ -23,7 +23,6 @@
 
 
 
-
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QToolBar>
@@ -36,9 +35,11 @@
 #include "statusbar.h"
 #include "file.h"
 #include "acquire.h"
+#include "viewport.h"
 #include "viewport_utils.h"
 #include "track.h"
-#include "layer_trw_containers.h"
+#include "layer_trw_waypoints.h"
+#include "layer_trw_tracks.h"
 
 
 

@@ -29,7 +29,6 @@
 
 
 #include <list>
-#include <unordered_map>
 
 #include "waypoint.h"
 #include "layer.h"
@@ -39,38 +38,6 @@
 
 
 namespace SlavGPS {
-
-
-
-
-	/* Comment from viking, perhaps still applies:
-
-	   It's not entirely clear the benefits of hash tables usage
-	   here - possibly the simplicity of first implementation for
-	   unique names.  Now with the name of the item stored as part
-	   of the item - these tables are effectively straightforward
-	   lists.
-
-	   For this reworking I've choosen to keep the use of hash
-	   tables since for the expected data sizes - even many hundreds
-	   of waypoints and tracks is quite small in the grand scheme of
-	   things, and with normal PC processing capabilities - it has
-	   negligible performance impact.  This also minimized the
-	   amount of rework - as the management of the hash tables
-	   already exists.
-
-	   The hash tables are indexed by simple integers acting as a
-	   UUID hash, which again shouldn't affect performance much we
-	   have to maintain a uniqueness (as before when multiple names
-	   where not allowed), this is to ensure it refers to the same
-	   item in the data structures used on the viewport and on the
-	   layers panel.
-	*/
-	typedef std::unordered_map<sg_uid_t, Track *> Tracks;
-	typedef std::unordered_map<sg_uid_t, Waypoint *> Waypoints;
-
-
-
 
 
 

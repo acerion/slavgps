@@ -2385,3 +2385,25 @@ bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 	/* kamilFIXME: shouldn't this be difftime()? */
 	return a->timestamp < b->timestamp;
 }
+
+
+
+
+void Track::find_maxmin(struct LatLon maxmin[2])
+{
+	if (this->bbox.north > maxmin[0].lat || maxmin[0].lat == 0.0) {
+		maxmin[0].lat = this->bbox.north;
+	}
+
+	if (this->bbox.south < maxmin[1].lat || maxmin[1].lat == 0.0) {
+		maxmin[1].lat = this->bbox.south;
+	}
+
+	if (this->bbox.east > maxmin[0].lon || maxmin[0].lon == 0.0) {
+		maxmin[0].lon = this->bbox.east;
+	}
+
+	if (this->bbox.west < maxmin[1].lon || maxmin[1].lon == 0.0) {
+		maxmin[1].lon = this->bbox.west;
+	}
+}

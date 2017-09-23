@@ -193,7 +193,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
 		/* Update waypoint position. */
 		this->current_wp->coord = new_coord;
-		this->calculate_bounds_waypoints();
+		this->waypoints_node_.calculate_bounds();
 		/* Reset waypoint pointer. */
 		this->current_wp = NULL;
 
@@ -604,7 +604,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		trw->current_wp->coord = new_coord;
 
-		trw->calculate_bounds_waypoints();
+		trw->waypoints_node_.calculate_bounds();
 		trw->emit_changed();
 		return ToolStatus::ACK;
 
@@ -1026,7 +1026,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 	if (!trw->current_trk
 	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.route")) {
 
-		QString new_name = trw->new_unique_sublayer_name("sg.trw.track", QObject::tr("Track"));
+		QString new_name = trw->new_unique_element_name("sg.trw.track", QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, false, trw->get_window());
 			if (new_name.isEmpty()) {
@@ -1125,7 +1125,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 	if (!trw->current_trk
 	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.track")) {
 
-		QString new_name = trw->new_unique_sublayer_name("sg.trw.route", QObject::tr("Route"));
+		QString new_name = trw->new_unique_element_name("sg.trw.route", QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
 			if (new_name.isEmpty()) {
@@ -1193,7 +1193,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 
 	Coord coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 	if (trw->new_waypoint(trw->get_window(), &coord)) {
-		trw->calculate_bounds_waypoints();
+		trw->waypoints_node_.calculate_bounds();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
 			trw->emit_changed();
