@@ -201,6 +201,7 @@ HEADERS += window.h \
     layer_trw.h \
     layer_trw_painter.h \
     layer_trw_tools.h \
+    layer_trw_menu.h \
     layer_trw_dialogs.h \
     layer_trw_tracks.h \
     layer_trw_waypoints.h \
