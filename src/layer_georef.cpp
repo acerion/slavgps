@@ -1054,7 +1054,7 @@ static void georef_layer_zoom_to_fit(georef_data_t * data)
 
 	panel->get_viewport()->set_xmpp(layer->mpp_easting);
 	panel->get_viewport()->set_ympp(layer->mpp_northing);
-	panel->emit_update_cb();
+	panel->emit_update_window_cb();
 }
 
 
@@ -1074,7 +1074,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	Coord coord(utm, viewport->get_coord_mode());
 	viewport->set_center_coord(coord, true);
 
-	panel->emit_update_cb();
+	panel->emit_update_window_cb();
 }
 
 

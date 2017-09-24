@@ -113,7 +113,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_routes_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_waypoints_cb()));
+		connect(qa, SIGNAL (triggered(bool)), &this->waypoints, SLOT (rezoom_to_show_all_items_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Goto Center of Layer"));

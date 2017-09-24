@@ -87,6 +87,11 @@ static std::list<Window *> window_list;
 
 
 
+Tree * g_tree = NULL;
+
+
+
+
 extern VikDataSourceInterface vik_datasource_gps_interface;
 extern VikDataSourceInterface vik_datasource_file_interface;
 extern VikDataSourceInterface vik_datasource_routing_interface;
@@ -148,7 +153,15 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
-	connect(this->layers_panel, SIGNAL(update()), this, SLOT(draw_update_cb()));
+	connect(this->layers_panel, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
+
+	g_tree = new Tree();
+	g_tree->tree_view = this->get_layers_panel()->get_treeview();
+	g_tree->window = this;
+	g_tree->layers_panel = this->layers_panel;
+	g_tree->viewport = this->viewport;
+
+	connect(g_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
 
 
 #if 0
@@ -1803,7 +1816,7 @@ void Window::goto_default_location_cb(void)
 	ll.lat = Preferences::get_default_lat();
 	ll.lon = Preferences::get_default_lon();
 	this->viewport->set_center_latlon(&ll, true);
-	this->layers_panel->emit_update_cb();
+	this->layers_panel->emit_update_window_cb();
 }
 
 
@@ -1812,7 +1825,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	goto_location(this, this->viewport);
-	this->layers_panel->emit_update_cb();
+	this->layers_panel->emit_update_window_cb();
 }
 
 
@@ -2814,7 +2827,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		free(name);
 
 		// Signal to redraw from the background
-		locator->window->layers_panel->emit_update_cb();
+		locator->window->layers_panel->emit_update_window_cb();
 	} else {
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}

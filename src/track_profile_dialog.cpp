@@ -328,7 +328,7 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 		Coord coord = tp->coord;
 		if (panel) {
 			panel->get_viewport()->set_center_coord(coord, true);
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		} else {
 			/* Since panel not set, viewport should be valid instead! */
 			if (viewport) {

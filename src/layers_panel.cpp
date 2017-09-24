@@ -141,7 +141,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_cb(void)));
+	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_window_cb(void)));
 #ifdef K
 	connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
 #endif
@@ -191,11 +191,11 @@ Viewport * LayersPanel::get_viewport()
 
 
 
-void LayersPanel::emit_update_cb()
+void LayersPanel::emit_update_window_cb()
 {
 	qDebug() << "SLOT?: Layers Panel received 'changed' signal from top level layer?";
 	qDebug() << "SIGNAL: Layers Panel emits 'update' signal";
-	emit this->update();
+	emit this->update_window();
 }
 
 
@@ -565,7 +565,7 @@ void LayersPanel::add_layer(Layer * layer)
 		}
 	}
 
-	this->emit_update_cb();
+	this->emit_update_window_cb();
 }
 
 
@@ -586,7 +586,7 @@ void LayersPanel::move_item(bool up)
 		if (parent_layer) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
 			parent_layer->move_layer(selected_index, up);
-			this->emit_update_cb();
+			this->emit_update_window_cb();
 #endif
 		}
 	}
@@ -657,7 +657,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(index)) {
-					this->emit_update_cb();
+					this->emit_update_window_cb();
 				}
 			}
 #endif
@@ -745,7 +745,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(index)) {
-					this->emit_update_cb();
+					this->emit_update_window_cb();
 				}
 			}
 #endif

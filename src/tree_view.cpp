@@ -328,7 +328,7 @@ void TreeView::select_cb(void) /* Slot. */
 	if (layer->layer_selected(tree_item_type, sublayer)) {
 
 		/* Redraw required. */
-		main_window->get_layers_panel()->emit_update_cb();
+		main_window->get_layers_panel()->emit_update_window_cb();
 	}
 }
 

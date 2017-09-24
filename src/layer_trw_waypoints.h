@@ -140,7 +140,6 @@ namespace SlavGPS {
 		time_t get_earliest_timestamp();
 
 
-		void single_waypoint_jump(Viewport * viewport);
 		void list_wp_uids(GList ** l);
 		std::list<QString> get_sorted_wp_name_list();
 		QString has_duplicate_waypoint_names();
@@ -162,6 +161,10 @@ namespace SlavGPS {
 
 		Window * window = NULL;
 		LayerTRW * parent_layer = NULL;
+
+
+	public slots:
+		void rezoom_to_show_all_items_cb(void); /* Slot. */
 	};
 
 

@@ -74,6 +74,8 @@ namespace SlavGPS {
 	class TreeView;
 	class Layer;
 	class Window;
+	class LayersPanel;
+	class Viewport;
 
 
 
@@ -117,6 +119,31 @@ namespace SlavGPS {
 
 		Window * window = NULL;
 		void * parent_layer = NULL;
+	};
+
+
+
+
+	class Tree : public QObject {
+		Q_OBJECT
+	public:
+		Tree() {};
+		~Tree() {};
+
+		TreeView * tree_get_tree_view() { return this->tree_view; };
+		Window * tree_get_main_window() { return this->window; };
+		LayersPanel * tree_get_layers_panel() { return this->layers_panel; };
+		Viewport * tree_get_main_viewport() { return this->viewport; };
+
+		TreeView * tree_view = NULL; /* Reference. */
+		Window * window = NULL;
+		LayersPanel * layers_panel = NULL;
+		Viewport * viewport = NULL;
+
+		void emit_update_window(void) { emit this->update_window(); };
+
+	signals:
+		void update_window(void);
 	};
 
 

@@ -178,7 +178,7 @@ static void on_complete_process(w_and_interface_t * wi)
 			if (wi->acquiring->source_interface->autoview) {
 				wi->trw->auto_set_view(wi->acquiring->panel->get_viewport());
 			}
-			wi->acquiring->panel->emit_update_cb();
+			wi->acquiring->panel->emit_update_window_cb();
 		}
 	} else {
 		/* Cancelled. */

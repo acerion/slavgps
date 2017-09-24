@@ -116,14 +116,13 @@ namespace SlavGPS {
 		void copy_selected_cb(void);
 		bool paste_selected_cb(void);
 		void delete_selected_cb(void);
-		void emit_update_cb();
+		void emit_update_window_cb();
 
 		void move_item_up_cb(void);
 		void move_item_down_cb(void);
 
 	signals:
-		void update(void);
-
+		void update_window(void);
 	};
 
 

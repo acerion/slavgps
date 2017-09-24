@@ -2250,7 +2250,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
 	if (this->auto_set_view(this->menu_data->viewport)) {
-		this->get_window()->get_layers_panel()->emit_update_cb();
+		this->get_window()->get_layers_panel()->emit_update_window_cb();
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -2370,7 +2370,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
 			panel->get_viewport()->set_center_coord(wp->coord, true);
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 			this->tree_view->select_and_expose(wp->index);
 
 			break;
@@ -2419,7 +2419,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->waypoints.calculate_bounds();
-	panel->emit_update_cb();
+	panel->emit_update_window_cb();
 }
 
 
@@ -2434,7 +2434,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->waypoints.calculate_bounds();
-	panel->emit_update_cb();
+	panel->emit_update_window_cb();
 }
 
 
@@ -2748,7 +2748,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 	if (this->new_waypoint(this->get_window(), panel->get_viewport()->get_center())) {
 		this->waypoints.calculate_bounds();
 		if (this->visible) {
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		}
 	}
 }
@@ -2829,7 +2829,7 @@ void LayerTRW::full_view_routes_cb(void) /* Slot. */
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		this->routes.find_maxmin(maxmin);
 		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 	}
 }
 
@@ -2854,33 +2854,8 @@ void LayerTRW::full_view_tracks_cb(void) /* Slot. */
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		this->tracks.find_maxmin(maxmin);
 		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 	}
-}
-
-
-
-
-void LayerTRW::full_view_waypoints_cb(void) /* Slot. */
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
-	/* Only 1 waypoint - jump straight to it */
-	if (this->waypoints.items.size() == 1) {
-		Viewport * viewport = panel->get_viewport();
-		this->waypoints.single_waypoint_jump(viewport);
-	}
-	/* If at least 2 waypoints - find center and then zoom to fit */
-	else if (this->waypoints.items.size() > 1) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		maxmin[0].lat = this->waypoints.bbox.north;
-		maxmin[1].lat = this->waypoints.bbox.south;
-		maxmin[0].lon = this->waypoints.bbox.east;
-		maxmin[1].lon = this->waypoints.bbox.west;
-		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-	}
-
-	panel->emit_update_cb();
 }
 
 
@@ -3583,7 +3558,7 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 {
 	if (panel) {
 		panel->get_viewport()->set_center_coord(coord, true);
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 	} else {
 		/* Since panel not set, layer & viewport should be valid instead! */
 		if (layer && viewport) {
@@ -4018,7 +3993,7 @@ void LayerTRW::auto_track_view_cb(void)
 		trk->find_maxmin(maxmin);
 		this->zoom_to_show_latlons(this->get_window()->get_viewport(), maxmin);
 		if (panel) {
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		} else {
 			this->emit_changed();
 		}
@@ -5219,7 +5194,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 			this->tracks.uniquify(this->track_sort_order);
 
 			/* Update. */
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		} else {
 			return;
 		}
@@ -5273,7 +5248,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 			this->routes.uniquify(this->track_sort_order);
 
 			/* Update. */
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		} else {
 			return;
 		}
@@ -5322,7 +5297,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 			LayersPanel * panel = this->get_window()->get_layers_panel();
 			/* Update. */
-			panel->emit_update_cb();
+			panel->emit_update_window_cb();
 		} else {
 			return;
 		}
@@ -5616,7 +5591,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
 
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 
 		return new_name;
 	}
@@ -5654,7 +5629,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
 
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 
 		return new_name;
 	}
@@ -5692,7 +5667,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
 
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 
 		return new_name;
 	}
@@ -6239,7 +6214,7 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 		this->waypoints.uniquify(this->wp_sort_order);
 
 		/* Update. */
-		panel->emit_update_cb();
+		panel->emit_update_window_cb();
 
 		return true;
 	}

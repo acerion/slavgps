@@ -492,7 +492,6 @@ namespace SlavGPS {
 		void full_view_cb(void);
 		void full_view_tracks_cb(void);
 		void full_view_routes_cb(void);
-		void full_view_waypoints_cb(void);
 
 		void centerize_cb(void);
 		void find_waypoint_dialog_cb(void);    /* In context menu for "Layer TRW" or "Waypoints" node in tree view. */
