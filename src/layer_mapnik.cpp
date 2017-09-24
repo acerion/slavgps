@@ -459,11 +459,11 @@ bool LayerMapnik::carto_load(void)
 	/* NB Running carto may take several seconds, especially for
 	   large style sheets like the default OSM Mapnik style (~6
 	   seconds on my system). */
-	Window * window = this->get_window();
-	if (window) {
+	Window * window_ = this->get_window();
+	if (window_) {
 		// char *msg = g_strdup_printf(); // kamil kamil
-		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command));
-		window->set_busy_cursor();
+		window_->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command));
+		window_->set_busy_cursor();
 	}
 
 	int64_t tt1 = 0;
@@ -511,10 +511,10 @@ bool LayerMapnik::carto_load(void)
 		g_error_free(error);
 	}
 
-	if (window) {
+	if (window_) {
 		const QString msg = tr("%1 completed in %.1f seconds").arg(var->s).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
-		window->statusbar_update(StatusBarField::INFO, msg);
-		window->clear_busy_cursor();
+		window_->statusbar_update(StatusBarField::INFO, msg);
+		window_->clear_busy_cursor();
 	}
 	return answer;
 }

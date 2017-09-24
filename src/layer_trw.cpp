@@ -402,13 +402,13 @@ LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport *
 
 
 
-bool have_diary_program = false;
+bool g_have_diary_program = false;
 char *diary_program = NULL;
 #define VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM "external_diary_program"
 
 bool have_geojson_export = false;
 
-bool have_astro_program = false;
+bool g_have_astro_program = false;
 char *astro_program = NULL;
 #define VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM "external_astro_program"
 
@@ -426,7 +426,7 @@ void SlavGPS::layer_trw_init(void)
 #endif
 	} else {
 		/* User specified so assume it works. */
-		have_diary_program = true;
+		g_have_diary_program = true;
 	}
 
 	if (g_find_program_in_path(diary_program)) {
@@ -456,7 +456,7 @@ void SlavGPS::layer_trw_init(void)
 				while (token && num < 2) {
 					if (num == 1) {
 						if (viking_version_to_number(token) >= viking_version_to_number((char *) "1.7.3")) {
-							have_diary_program = true;
+							g_have_diary_program = true;
 						}
 					}
 					num++;
@@ -485,10 +485,10 @@ void SlavGPS::layer_trw_init(void)
 #endif
 	} else {
 		/* User specified so assume it works. */
-		have_astro_program = true;
+		g_have_astro_program = true;
 	}
 	if (g_find_program_in_path(astro_program)) {
-		have_astro_program = true;
+		g_have_astro_program = true;
 	}
 }
 
@@ -1574,6 +1574,9 @@ void LayerTRW::add_tracks_node(void)
 	this->tracks.type_id = "sg.trw.tracks";
 	this->tracks.accepted_child_type_ids << "sg.trw.track";
 	this->tracks.tree_view = this->tree_view;
+	this->tracks.window = this->get_window();
+	this->tracks.parent_layer = this;
+
 
 	this->tree_view->add_sublayer(&this->tracks, this, this->index, tr("Tracks"), NULL, false, 0);
 }
@@ -1586,6 +1589,8 @@ void LayerTRW::add_waypoints_node(void)
 	assert(this->connected_to_tree);
 
 	this->waypoints.tree_view = this->tree_view;
+	this->waypoints.window = this->get_window();
+	this->waypoints.parent_layer = this;
 
 	this->tree_view->add_sublayer(&this->waypoints, this, this->index, tr("Waypoints"), NULL, false, 0);
 }
@@ -1602,6 +1607,8 @@ void LayerTRW::add_routes_node(void)
 	this->routes.type_id = "sg.trw.routes";
 	this->routes.accepted_child_type_ids << "sg.trw.route";
 	this->routes.tree_view = this->tree_view;
+	this->routes.window = this->get_window();
+	this->routes.parent_layer = this;
 
 	this->tree_view->add_sublayer(&this->routes, this, this->index, tr("Routes"), NULL, false, 0);
 }
@@ -2504,15 +2511,15 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 void LayerTRW::acquire(VikDataSourceInterface *datasource)
 {
-	Window * window = this->get_window();
-	LayersPanel * panel = window->get_layers_panel();
-	Viewport * viewport =  window->get_viewport();
+	Window * window_ = this->get_window();
+	LayersPanel * panel = window_->get_layers_panel();
+	Viewport * viewport =  window_->get_viewport();
 
 	DatasourceMode mode = datasource->mode;
 	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DatasourceMode::ADDTOLAYER;
 	}
-	a_acquire(window, panel, viewport, mode, datasource, NULL, NULL);
+	a_acquire(window_, panel, viewport, mode, datasource, NULL, NULL);
 }
 
 
@@ -2900,6 +2907,9 @@ void LayerTRW::osm_traces_upload_track_cb(void)
 
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
+	wp->window = this->get_window();
+	wp->parent_layer = this;
+
 	this->waypoints.items.insert({{ wp->uid, wp }});
 
 	if (this->connected_to_tree) {
@@ -2930,6 +2940,9 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 void LayerTRW::add_track(Track * trk)
 {
+	trk->window = this->get_window();
+	trk->parent_layer = this;
+
 	this->tracks.items.insert({{ trk->uid, trk }});
 
 	if (this->connected_to_tree) {
@@ -2961,6 +2974,9 @@ void LayerTRW::add_track(Track * trk)
 
 void LayerTRW::add_route(Track * trk)
 {
+	trk->window = this->get_window();
+	trk->parent_layer = this;
+
 	this->routes.items.insert({{ trk->uid, trk }});
 
 	if (this->connected_to_tree) {

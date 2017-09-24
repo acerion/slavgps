@@ -817,11 +817,11 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 
 
 /* Returns true if OK was pressed. */
-bool LayerGeoref::dialog(Viewport * viewport, Window * window)
+bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 {
 #ifdef K
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Layer Properties"),
-							window,
+							window_,
 							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							GTK_STOCK_CANCEL,
 							GTK_RESPONSE_REJECT,

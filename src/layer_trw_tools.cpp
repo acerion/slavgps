@@ -418,7 +418,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 
 			QMenu menu(viewport);
 
-			this->sublayer_add_menu_items(menu);
+			this->current_trk->add_context_menu_items(menu);
 			menu.exec(QCursor::pos());
 			return true;
 		}
@@ -429,7 +429,7 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 
 			QMenu menu(viewport);
 
-			this->sublayer_add_menu_items(menu);
+			this->current_wp->add_context_menu_items(menu);
 			menu.exec(QCursor::pos());
 			return true;
 		}
@@ -614,7 +614,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 			trw->menu_data->viewport = this->viewport;
 
 			QMenu menu;
-			trw->sublayer_add_menu_items(menu);
+			trw->current_wp->add_context_menu_items(menu);
 			menu.exec(QCursor::pos());
 		}
 		trw->waypoint_rightclick = false;

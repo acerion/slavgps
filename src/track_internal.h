@@ -34,6 +34,7 @@
 #include <time.h>
 
 #include <QColor>
+#include <QMenu>
 
 #include "coord.h"
 #include "bbox.h"
@@ -226,6 +227,8 @@ namespace SlavGPS {
 		TrackPoints::iterator get_last();
 		std::list<Rect *> * get_rectangles(LatLon * wh);
 		CoordMode get_coord_mode();
+
+		bool add_context_menu_items(QMenu & menu);
 
 		QString name;
 		QString comment;

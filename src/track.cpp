@@ -44,11 +44,18 @@
 
 #include "track_profile_dialog.h"
 #include "track_properties_dialog.h"
+#include "layer_trw_menu.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+extern bool g_have_astro_program;
+extern bool g_have_diary_program;
 
 
 
@@ -2406,4 +2413,65 @@ void Track::find_maxmin(struct LatLon maxmin[2])
 	if (this->bbox.west < maxmin[1].lon || maxmin[1].lon == 0.0) {
 		maxmin[1].lon = this->bbox.west;
 	}
+}
+
+
+
+
+bool Track::add_context_menu_items(QMenu & menu)
+{
+	QAction * qa = NULL;
+	bool rv = false;
+
+
+	rv = true;
+	layer_trw_sublayer_menu_waypoint_track_route_properties((LayerTRW *) this->parent_layer, menu);
+
+
+	layer_trw_sublayer_menu_track_route_profile((LayerTRW *) this->parent_layer, menu);
+
+
+	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
+
+
+	menu.addSeparator();
+
+
+	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
+
+	/* These are only made available if a suitable program is installed. */
+	if ((g_have_astro_program || g_have_diary_program)
+	    && this->type_id == "sg.trw.track") {
+
+		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->parent_layer, menu, external_submenu);
+	}
+
+
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+
+
+#ifdef K
+#ifdef VIK_CONFIG_GOOGLE
+	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route(this->uid))) {
+		layer_trw_sublayer_menu_route_google_directions((LayerTRW *) this->parent_layer, menu);
+	}
+#endif
+#endif
+
+
+	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
+
+	layer_trw_sublayer_menu_track_route_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+
+
+	/* Some things aren't usable with routes. */
+	if (this->type_id == "sg.trw.track") {
+		layer_trw_sublayer_menu_track_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+	}
+
+
+	layer_trw_sublayer_menu_track_route_edit_trackpoint((LayerTRW *) this->parent_layer, menu);
+
+
+	return rv;
 }

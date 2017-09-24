@@ -38,6 +38,7 @@
 
 
 #include <QIcon>
+#include <QMenu>
 
 
 
@@ -58,6 +59,7 @@ namespace SlavGPS {
 	class Waypoint;
 	class Viewport;
 	class LayerTRW;
+	class Window;
 
 
 
@@ -150,10 +152,15 @@ namespace SlavGPS {
 		void change_coord_mode(CoordMode new_mode);
 
 
+		bool add_context_menu_items(QMenu & menu);
+
 
 
 		Waypoints items;
 		LatLonBBox bbox;
+
+		Window * window = NULL;
+		LayerTRW * parent_layer = NULL;
 	};
 
 

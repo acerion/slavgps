@@ -426,7 +426,9 @@ void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Laye
 		layer->add_menu_items(*menu);
 	} else {
 		menu = new QMenu(this);
-		if (!layer->sublayer_add_menu_items(*menu)) { /* Here 'layer' is a parent layer. */
+
+		TreeItem * item = this->tree_view->get_sublayer(index);
+		if (!item->add_context_menu_items(*menu)) {
 			delete menu;
 			return;
 		}

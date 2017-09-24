@@ -37,6 +37,11 @@
 
 
 
+#include <QMenu>
+
+
+
+
 #include "track.h"
 #include "tree_view.h"
 #include "bbox.h"
@@ -54,6 +59,7 @@ namespace SlavGPS {
 	class Track;
 	class Viewport;
 	class LayerTRW;
+	class Window;
 
 
 
@@ -158,6 +164,9 @@ namespace SlavGPS {
 
  		void change_coord_mode(CoordMode dest_mode);
 
+
+
+		bool add_context_menu_items(QMenu & menu);
 
 
 

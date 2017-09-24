@@ -46,6 +46,7 @@ namespace SlavGPS {
 	void layer_trw_sublayer_menu_waypoint_track_route_properties(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_track_route_profile(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoint_track_route_edit(LayerTRW * parent_layer, QMenu & menu);
+	void layer_trw_sublayer_menu_waypoint_misc(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoints_tracks_routes_paste(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoints_waypoint_new(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoints_A(LayerTRW * parent_layer, QMenu & menu);

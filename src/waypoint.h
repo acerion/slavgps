@@ -76,6 +76,8 @@ namespace SlavGPS {
 		QString get_any_url(void) const;
 
 
+		bool add_context_menu_items(QMenu & menu);
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;

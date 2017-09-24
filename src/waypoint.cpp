@@ -28,14 +28,22 @@
 #include "coord.h"
 #include "waypoint.h"
 #include "globals.h"
+#include "layer_trw_menu.h"
 //#include "garminsymbols.h"
 #include "dem_cache.h"
 #include "util.h"
+#include "window.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+extern bool g_have_astro_program;
+extern bool g_have_diary_program;
 
 
 
@@ -316,4 +324,48 @@ QString Waypoint::get_any_url(void) const
 	} else {
 		return QString("");
 	}
+}
+
+
+
+
+bool Waypoint::add_context_menu_items(QMenu & menu)
+{
+	QAction * qa = NULL;
+	bool rv = false;
+
+	rv = true;
+	layer_trw_sublayer_menu_waypoint_track_route_properties((LayerTRW *) this->parent_layer, menu);
+
+
+	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
+
+
+	menu.addSeparator();
+
+
+	layer_trw_sublayer_menu_waypoint_misc((LayerTRW *) this->parent_layer, menu);
+
+
+	if (this->window->get_layers_panel()) {
+		rv = true;
+		layer_trw_sublayer_menu_waypoints_waypoint_new((LayerTRW *) this->parent_layer, menu);
+	}
+
+
+	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
+
+	/* These are only made available if a suitable program is installed. */
+	if (g_have_astro_program || g_have_diary_program) {
+		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->parent_layer, menu, external_submenu);
+	}
+
+
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+
+
+	layer_trw_sublayer_menu_waypoints_waypoint_transform((LayerTRW *) this->parent_layer, menu);
+
+
+	return rv;
 }

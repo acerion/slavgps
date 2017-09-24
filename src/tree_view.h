@@ -28,6 +28,7 @@
 #include <QStandardItem>
 #include <QPersistentModelIndex>
 #include <QObject>
+#include <QMenu>
 
 #include "globals.h"
 
@@ -72,6 +73,7 @@ namespace SlavGPS {
 
 	class TreeView;
 	class Layer;
+	class Window;
 
 
 
@@ -90,6 +92,8 @@ namespace SlavGPS {
 		sg_uid_t get_uid(void) const;
 
 		virtual QString get_tooltip(void);
+
+		virtual bool add_context_menu_items(QMenu & menu) { return false; };
 
 
 		/* Change visibility of tree item.
@@ -110,6 +114,9 @@ namespace SlavGPS {
 
 		QString type_id;
 		QStringList accepted_child_type_ids;
+
+		Window * window = NULL;
+		void * parent_layer = NULL;
 	};
 
 

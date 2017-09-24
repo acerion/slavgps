@@ -43,6 +43,7 @@
 
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
+#include "layer_trw_menu.h"
 #include "viewport_internal.h"
 #include "track_internal.h"
 #include "tree_view_internal.h"
@@ -648,7 +649,7 @@ void LayerTRWTracks::update_treeview(Track * trk)
 
 
 
-void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_layer)
+void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_layer_)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -667,8 +668,41 @@ void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_la
 		}
 
 		/* "this" is a layer, which is not an immediate parent, but a grandparent of added child. */
-		this->add_child(trk, (Layer *) parent_layer, trk->name, icon, timestamp);
+		this->add_child(trk, (Layer *) parent_layer_, trk->name, icon, timestamp);
 
 		delete icon;
 	}
+}
+
+
+
+
+
+bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
+{
+	QAction * qa = NULL;
+
+
+	layer_trw_sublayer_menu_waypoints_tracks_routes_paste((LayerTRW *) this->parent_layer, menu);
+	menu.addSeparator();
+
+
+	if (this->type_id == "sg.trw.tracks") {
+		layer_trw_sublayer_menu_tracks_A((LayerTRW *) this->parent_layer, menu);
+	}
+
+
+	if (this->type_id == "sg.trw.routes") {
+		layer_trw_sublayer_menu_routes_A((LayerTRW *) this->parent_layer, menu);
+	}
+
+
+	layer_trw_sublayer_menu_tracks_routes_waypoints_sort((LayerTRW *) this->parent_layer, menu);
+
+
+	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+
+
+	return true;
 }

@@ -1187,9 +1187,9 @@ void TreeItem::set_index(TreeIndex & i)
 
 
 
-TreeIndex const & TreeItem::add_child(TreeItem * child, Layer * parent_layer, const QString & name, QIcon * icon, time_t timestamp)
+TreeIndex const & TreeItem::add_child(TreeItem * child, Layer * parent_layer_, const QString & name, QIcon * icon, time_t timestamp)
 {
-	TreeIndex const & i = this->tree_view->add_sublayer((TreeItem *) child, parent_layer, this->index, name, icon, this->editable, timestamp);
+	TreeIndex const & i = this->tree_view->add_sublayer((TreeItem *) child, parent_layer_, this->index, name, icon, this->editable, timestamp);
 
 #ifdef K
 	/* Item is visible in tree by default, so set (in)visibility only when necessary. */

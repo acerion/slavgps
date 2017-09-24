@@ -73,9 +73,9 @@ using namespace SlavGPS;
 
 
 
-extern bool have_astro_program;
+extern bool g_have_astro_program;
 extern char * astro_program;
-extern bool have_diary_program;
+extern bool g_have_diary_program;
 extern char *diary_program;
 extern bool have_geojson_export;
 
@@ -362,57 +362,60 @@ void SlavGPS::layer_trw_sublayer_menu_waypoint_track_route_edit(LayerTRW * paren
 
 	qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
 	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_sublayer_cb()));
+}
 
-	if (parent_layer->menu_data->sublayer->type_id == "sg.trw.waypoint") {
 
-		/* Always create separator as now there is always at least the transform menu option. */
-		menu.addSeparator();
 
-		/* Could be a right-click using the tool. */
-		if (parent_layer->get_window()->get_layers_panel() != NULL) {
-			qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("&Go to this Waypoint"));
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (go_to_selected_waypoint_cb()));
-		}
 
-		Waypoint * wp = parent_layer->waypoints.items.at(parent_layer->menu_data->sublayer->uid);
+void SlavGPS::layer_trw_sublayer_menu_waypoint_misc(LayerTRW * parent_layer, QMenu & menu)
+{
+	QAction * qa = NULL;
 
-		if (wp && !wp->name.isEmpty()) {
-			if (is_valid_geocache_name(wp->name.toUtf8().constData())) {
-				qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("&Visit Geocache Webpage"));
+
+	/* Could be a right-click using the tool. */
+	if (parent_layer->get_window()->get_layers_panel() != NULL) {
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("&Go to this Waypoint"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (go_to_selected_waypoint_cb()));
+	}
+
+	Waypoint * wp = parent_layer->waypoints.items.at(parent_layer->menu_data->sublayer->uid);
+
+	if (wp && !wp->name.isEmpty()) {
+		if (is_valid_geocache_name(wp->name.toUtf8().constData())) {
+			qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("&Visit Geocache Webpage"));
 				QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (waypoint_geocache_webpage_cb()));
-			}
+		}
 #ifdef VIK_CONFIG_GEOTAG
-			qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("Geotag &Images..."));
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_cb()));
-			qa->setToolTip(QObject::tr("Geotag multiple images against this waypoint"));
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), QObject::tr("Geotag &Images..."));
+		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_cb()));
+		qa->setToolTip(QObject::tr("Geotag multiple images against this waypoint"));
 #endif
-		}
+	}
 
 
-		if (wp && !wp->image.isEmpty()) {
-			/* Set up image parameter. */
-			parent_layer->menu_data->string = wp->image;
+	if (wp && !wp->image.isEmpty()) {
+		/* Set up image parameter. */
+		parent_layer->menu_data->string = wp->image;
 
-			qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), QObject::tr("&Show Picture...")); /* TODO: icon. */
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (show_picture_cb()));
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), QObject::tr("&Show Picture...")); /* TODO: icon. */
+		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (show_picture_cb()));
 
 #ifdef VIK_CONFIG_GEOTAG
-			{
-				QMenu * geotag_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QObject::tr("Update Geotag on &Image"));
+		{
+			QMenu * geotag_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QObject::tr("Update Geotag on &Image"));
 
-				qa = geotag_submenu->addAction(QObject::tr("&Update"));
-				QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_mtime_update_cb()));
+			qa = geotag_submenu->addAction(QObject::tr("&Update"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_mtime_update_cb()));
 
-				qa = geotag_submenu->addAction(QObject::tr("Update and &Keep File Timestamp"));
-				QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_mtime_keep_cb()));
-			}
+			qa = geotag_submenu->addAction(QObject::tr("Update and &Keep File Timestamp"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (geotagging_waypoint_mtime_keep_cb()));
+		}
 #endif
-		}
+	}
 
-		if (wp && wp->has_any_url()) {
-			qa = menu.addAction(QIcon::fromTheme("applications-internet"), QObject::tr("Visit &Webpage"));
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (waypoint_webpage_cb()));
-		}
+	if (wp && wp->has_any_url()) {
+		qa = menu.addAction(QIcon::fromTheme("applications-internet"), QObject::tr("Visit &Webpage"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (waypoint_webpage_cb()));
 	}
 }
 
@@ -844,13 +847,13 @@ void SlavGPS::layer_trw_sublayer_menu_track_waypoint_diary_astro(LayerTRW * pare
 {
 	QAction * qa = NULL;
 
-	if (have_diary_program) {
+	if (g_have_diary_program) {
 		qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QObject::tr("&Diary"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (diary_cb()));
 		qa->setToolTip(QObject::tr("Open diary program at this date"));
 	}
 
-	if (have_astro_program) {
+	if (g_have_astro_program) {
 		qa = external_submenu->addAction(QObject::tr("&Astronomy"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (astro_cb()));
 		qa->setToolTip(QObject::tr("Open astronomy program at this date and location"));
@@ -968,6 +971,7 @@ void SlavGPS::layer_trw_sublayer_menu_waypoints_waypoint_transform(LayerTRW * pa
 
 
 
+#if 0 /* Saving original version of the function for possible future reference. */
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
 bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
@@ -1050,7 +1054,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 
 	/* These are only made available if a suitable program is installed. */
-	if ((have_astro_program || have_diary_program)
+	if ((g_have_astro_program || g_have_diary_program)
 	    && (this->menu_data->sublayer->type_id == "sg.trw.track" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
 
 		layer_trw_sublayer_menu_track_waypoint_diary_astro(this, menu, external_submenu);
@@ -1085,3 +1089,4 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	return rv;
 }
+#endif /* #if 0 */
