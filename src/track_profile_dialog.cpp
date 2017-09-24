@@ -334,7 +334,7 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 			if (viewport) {
 				viewport->set_center_coord(coord, true);
 			}
-			trw->emit_changed();
+			trw->emit_layer_changed();
 		}
 	}
 	return tp;
@@ -2535,12 +2535,12 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		break;
 	case SG_TRACK_PROFILE_OK:
 		this->trw->get_tracks_node().update_treeview(this->trk);
-		this->trw->emit_changed();
+		this->trw->emit_layer_changed();
 		this->accept();
 		break;
 	case SG_TRACK_PROFILE_REVERSE:
 		this->trk->reverse();
-		this->trw->emit_changed();
+		this->trw->emit_layer_changed();
 		keep_dialog = true;
 		break;
 	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
@@ -2567,7 +2567,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			} else {
 				this->trw->delete_track(this->trk);
 			}
-			this->trw->emit_changed(); /* Chase thru the hoops. */
+			this->trw->emit_layer_changed(); /* Chase thru the hoops. */
 		}
 	}
 		break;
@@ -2609,7 +2609,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		this->trk->calculate_bounds();
 		trk_right->calculate_bounds();
 
-		this->trw->emit_changed();
+		this->trw->emit_layer_changed();
 	}
 		break;
 	default:

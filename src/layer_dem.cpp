@@ -339,7 +339,7 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
 	if (load_job->layer) {
 		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' B";
-		load_job->layer->emit_changed(); /* NB update from background thread. */
+		load_job->layer->emit_layer_changed(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
 
@@ -1317,7 +1317,7 @@ static int dem_download_thread(BackgroundJob * bg_job)
 
 		if (dl_job->layer->add_file(dl_job->dest_file_path)) {
 			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' A";
-			dl_job->layer->emit_changed(); /* NB update from background thread. */
+			dl_job->layer->emit_layer_changed(); /* NB update from background thread. */
 		}
 	}
 	dl_job->mutex.unlock();
@@ -1472,7 +1472,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
 		} else {
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, successfully added the file, emitting 'changed'";
-			this->emit_changed();
+			this->emit_layer_changed();
 		}
 
 	} else if (ev->button() == Qt::RightButton) {

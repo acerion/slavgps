@@ -691,7 +691,7 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 	tp_mutex.unlock();
 
 	if (res == 0) {
-		data->lmk->emit_changed(); /* NB update display from background. */
+		data->lmk->emit_layer_changed(); /* NB update display from background. */
 	}
 	return res;
 }
@@ -805,7 +805,7 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 			} else {
 				/* Run in the foreground. */
 				this->render(&ul, &br, ti_ul);
-				this->emit_changed();
+				this->emit_layer_changed();
 			}
 		}
 	}

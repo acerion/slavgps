@@ -605,7 +605,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
 			/* Ensure any new images get show. */
 			geotag->trw->verify_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			geotag->trw->emit_changed(); /* NB Update from background. */
+			geotag->trw->emit_layer_changed(); /* NB Update from background. */
 		}
 	}
 

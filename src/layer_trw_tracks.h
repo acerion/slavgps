@@ -174,6 +174,12 @@ namespace SlavGPS {
 
 		Tracks items;
 		LatLonBBox bbox;
+
+	public slots:
+		void rezoom_to_show_all_items_cb(void);
+		void items_visibility_on_cb(void);
+		void items_visibility_off_cb(void);
+		void items_visibility_toggle_cb(void);
 	};
 
 

@@ -340,7 +340,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 		treeview->toggle_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -358,7 +358,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 	}
 
 	/* Redraw as view may have changed. */
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 

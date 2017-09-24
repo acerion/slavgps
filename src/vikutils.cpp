@@ -1029,7 +1029,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
 			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
-			layer->emit_changed();
+			layer->emit_layer_changed();
 		}
 	}
 }

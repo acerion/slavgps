@@ -212,13 +212,13 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 	case TreeItemType::LAYER: {
 		Layer * layer = this->tree_view->get_layer(index);
 		visible = (layer->visible ^= 1);
-		layer->emit_changed_although_invisible(); /* Set trigger for half-drawn. */
+		layer->emit_layer_changed_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
 		Layer * parent_layer = this->tree_view->get_parent_layer(index);
 		visible = parent_layer->sublayer_toggle_visible(this->tree_view->get_sublayer(index));
-		parent_layer->emit_changed_although_invisible();
+		parent_layer->emit_layer_changed_although_invisible();
 		break;
 	}
 	default:
@@ -607,7 +607,7 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
-				layer->emit_changed();
+				layer->emit_layer_changed();
 			}
 		}
 		return true;

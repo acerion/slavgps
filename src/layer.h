@@ -117,8 +117,8 @@ namespace SlavGPS {
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport);
 
-		void emit_changed(void);
-		void emit_changed_although_invisible(void);
+		void emit_layer_changed(void);
+		void emit_layer_changed_although_invisible(void);
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
@@ -254,7 +254,7 @@ namespace SlavGPS {
 		virtual void location_info_cb(void);
 
 	signals:
-		void changed(void);
+		void layer_changed(void);
 
 	private:
 		sg_uid_t layer_instance_uid = SG_UID_INITIAL;

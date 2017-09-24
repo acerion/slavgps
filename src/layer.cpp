@@ -95,12 +95,12 @@ void SlavGPS::layer_init(void)
 /**
  * Draw specified layer.
  */
-void Layer::emit_changed()
+void Layer::emit_layer_changed()
 {
 	if (this->visible && this->connected_to_tree) {
 		Window::set_redraw_trigger(this);
-		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
-		emit this->changed();
+		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'layer changed' signal";
+		emit this->layer_changed();
 	}
 }
 
@@ -111,11 +111,11 @@ void Layer::emit_changed()
  * Should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void Layer::emit_changed_although_invisible()
+void Layer::emit_layer_changed_although_invisible()
 {
 	Window::set_redraw_trigger(this);
 	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
-	emit this->changed();
+	emit this->layer_changed();
 }
 
 
@@ -129,7 +129,7 @@ void Layer::child_layer_changed_cb(void) /* Slot. */
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
-		emit this->changed();
+		emit this->layer_changed();
 	}
 }
 

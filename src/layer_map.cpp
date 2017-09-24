@@ -1772,7 +1772,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 				if (mdj->refresh_display && mdj->map_layer_alive) {
 					/* TODO: check if it's on visible area. */
-					mdj->layer->emit_changed(); /* NB update display from background. */
+					mdj->layer->emit_layer_changed(); /* NB update display from background. */
 				}
 				mdj->mutex.unlock();
 

@@ -216,7 +216,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		assert(0);
 	}
 
-	this->emit_changed();
+	this->emit_layer_changed();
 	return true;
 }
 
@@ -288,7 +288,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			}
 #endif
 
-			this->emit_changed();
+			this->emit_layer_changed();
 			return true;
 		}
 	}
@@ -333,7 +333,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 				this->my_tpwin_set_tp();
 			}
 
-			this->emit_changed();
+			this->emit_layer_changed();
 			return true;
 		}
 	}
@@ -371,7 +371,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 				this->my_tpwin_set_tp();
 			}
 
-			this->emit_changed();
+			this->emit_layer_changed();
 			return true;
 		}
 	}
@@ -517,13 +517,13 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		trw->current_wp = search.closest_wp;
 
 		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 
 	trw->current_wp = NULL;
 	trw->waypoint_rightclick = false;
-	trw->emit_changed();
+	trw->emit_layer_changed();
 
 	return ToolStatus::IGNORED;
 }
@@ -605,7 +605,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 		trw->current_wp->coord = new_coord;
 
 		trw->get_waypoints_node().calculate_bounds();
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 
 	} else if (ev->button() == Qt::RightButton && trw->waypoint_rightclick) {
@@ -666,7 +666,7 @@ static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
 	if (1 /* trw->draw_sync_do*/ ) {
 		QPainter painter(drawable);
 		painter.drawPixmap(0, 0, *pixmap);
-		emit trw->changed();
+		emit trw->layer_changed();
 #if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
@@ -930,12 +930,12 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 			}
 		}
 		trw->current_trk = NULL;
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
 		trw->undo_trackpoint_add();
 		trw->update_statusbar();
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	} else {
 		return ToolStatus::IGNORED;
@@ -969,7 +969,7 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 		}
 		this->undo_trackpoint_add();
 		this->update_statusbar();
-		this->emit_changed();
+		this->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 
@@ -1000,7 +1000,7 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 	this->ct_x2 = ev->x();
 	this->ct_y2 = ev->y();
 
-	this->emit_changed();
+	this->emit_layer_changed();
 
 	return ToolStatus::ACK;
 }
@@ -1060,7 +1060,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 		trw->undo_trackpoint_add();
 		trw->current_trk = NULL;
 	}
-	trw->emit_changed();
+	trw->emit_layer_changed();
 	return ToolStatus::ACK;
 }
 
@@ -1196,7 +1196,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 		trw->get_waypoints_node().calculate_bounds();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
-			trw->emit_changed();
+			trw->emit_layer_changed();
 		}
 	}
 	return ToolStatus::ACK;
@@ -1293,7 +1293,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		trw->current_trk = search.closest_track;
 		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 
@@ -1315,7 +1315,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		trw->current_trk = search.closest_track;
 		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 	/* These aren't the droids you're looking for. */
@@ -1397,7 +1397,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 		}
 	}
 
-	trw->emit_changed();
+	trw->emit_layer_changed();
 
 	return ToolStatus::ACK;
 }
@@ -1447,7 +1447,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 	}
 	delete new_end;
 
-	this->emit_changed();
+	this->emit_layer_changed();
 #ifdef K
 	/* Remove last ' to:...' */
 	if (!this->current_trk->comment_.isEmpty()) {
@@ -1525,7 +1525,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg2);
 
 
-		trw->emit_changed();
+		trw->emit_layer_changed();
 	} else {
 		trw->current_trk = NULL;
 
@@ -1550,7 +1550,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
 		trw->route_finder_started = false;
 		trw->current_trk = NULL;
-		trw->emit_changed();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
 		trw->tool_extended_route_finder_undo();

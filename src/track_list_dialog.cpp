@@ -745,7 +745,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 	trk->set_comment(this->w_comment->text());
 
 	this->trw->update_treeview(this->trk);
-	this->trw->emit_changed();
+	this->trw->emit_layer_changed();
 #endif
 
 	this->accept();

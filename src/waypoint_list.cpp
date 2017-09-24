@@ -114,7 +114,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	}
 
 	if (updated && trw->visible) {
-		trw->emit_changed();
+		trw->emit_layer_changed();
 	}
 }
 
@@ -125,7 +125,7 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 {
 	this->menu_data.viewport->set_center_coord(this->menu_data.wp->coord, true);
 	this->waypoint_select(this->menu_data.trw);
-	this->menu_data.trw->emit_changed();
+	this->menu_data.trw->emit_layer_changed();
 }
 
 
@@ -643,7 +643,7 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 	/* Here we save in track objects changes made in the dialog. */
 
 	this->trw->update_treeview(this->wp);
-	this->trw->emit_changed();
+	this->trw->emit_layer_changed();
 #endif
 
 	this->accept();

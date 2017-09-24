@@ -57,6 +57,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 /* This is how it knows when you click if you are clicking close to a trackpoint. */
 #define TRACKPOINT_SIZE_APPROX 5
 
@@ -689,7 +694,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Tracks"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (full_view_tracks_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_all_items_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Track"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_track_cb()));
@@ -706,13 +711,13 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), tr("&Hide All Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(tr("&Toggle"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
 	}
 
 	qa = menu.addAction(tr("&Tracks List..."));
@@ -741,8 +746,8 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 		menu.addSeparator();
 	}
 
-	qa = menu.addAction(QIcon::fromTheme("ZOOM_FIT"), tr("&View All Routes"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (full_view_routes_cb()));
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Routes"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_all_items_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Route"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_route_cb()));
@@ -759,13 +764,13 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Routes"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-delete"), tr("&Hide All Routes"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), tr("&Toggle"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&List Routes..."));
@@ -813,4 +818,55 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
 
 
 	return true;
+}
+
+
+
+
+
+/**
+   \brief Re-adjust main viewport to show all items in this node
+*/
+void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
+{
+	const unsigned int n_items = this->items.size();
+
+	if (0 < n_items) {
+		struct LatLon maxmin[2] = { {0,0}, {0,0} };
+		this->find_maxmin(maxmin);
+		((LayerTRW *) this->parent_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
+
+		qDebug() << "SIGNAL: Layer TRW Tracks: re-zooming to show all items (" << n_items << "items)";
+		g_tree->emit_update_window();
+	}
+}
+
+
+
+
+void LayerTRWTracks::items_visibility_on_cb(void) /* Slot. */
+{
+	this->set_items_visibility(true);
+	/* Redraw. */
+	((LayerTRW *) this->parent_layer)->emit_layer_changed();
+}
+
+
+
+
+void LayerTRWTracks::items_visibility_off_cb(void) /* Slot. */
+{
+	this->set_items_visibility(false);
+	/* Redraw. */
+	((LayerTRW *) this->parent_layer)->emit_layer_changed();
+}
+
+
+
+
+void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
+{
+	this->toggle_items_visibility();
+	/* Redraw. */
+	((LayerTRW *) this->parent_layer)->emit_layer_changed();
 }

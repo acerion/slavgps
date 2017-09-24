@@ -278,7 +278,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
 	if (selected && selected->type == LayerType::TRW) {
 		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &coord);
 		((LayerTRW *) selected)->get_waypoints_node().calculate_bounds();
-		selected->emit_changed();
+		selected->emit_layer_changed();
 	} else {
 		Dialog::error(tr("In order to paste a waypoint, please select an appropriate layer to paste into."), panel->get_window());
 	}

@@ -577,7 +577,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
 		trk->find_maxmin(maxmin);
 		this->zoom_to_show_latlons(viewport, maxmin);
 		this->tree_view->select_and_expose(trk->index);
-		this->emit_changed();
+		this->emit_layer_changed();
 	}
 	return (bool) trk;
 }
@@ -592,7 +592,7 @@ bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport,
 	if (wp && select) {
 		viewport->set_center_coord(wp->coord, true);
 		this->tree_view->select_and_expose(wp->index);
-		this->emit_changed();
+		this->emit_layer_changed();
 	}
 	return (bool) wp;
 }
@@ -765,7 +765,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->waypoints.visible && wp->visible) {
-			this->emit_changed();
+			this->emit_layer_changed();
 		}
 		return true;
 	}
@@ -782,7 +782,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->tracks.visible && trk->visible) {
-			this->emit_changed();
+			this->emit_layer_changed();
 		}
 		return true;
 	}
@@ -797,7 +797,7 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->routes.visible && trk->visible) {
-			this->emit_changed();
+			this->emit_layer_changed();
 		}
 		return true;
 	}
@@ -2821,41 +2821,11 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 
 
-void LayerTRW::full_view_routes_cb(void) /* Slot. */
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
-	if (this->routes.items.size() > 0) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		this->routes.find_maxmin(maxmin);
-		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update_window_cb();
-	}
-}
-
-
-
-
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
 	this->current_trk = NULL;
 	this->route_finder_started = false;
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::full_view_tracks_cb(void) /* Slot. */
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
-	if (this->tracks.items.size() > 0) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		this->tracks.find_maxmin(maxmin);
-		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update_window_cb();
-	}
+	this->emit_layer_changed();
 }
 
 
@@ -3351,7 +3321,7 @@ void LayerTRW::delete_all_routes()
 
 	this->tree_view->erase(this->routes.get_index());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -3373,7 +3343,7 @@ void LayerTRW::delete_all_tracks()
 
 	this->tree_view->erase(this->tracks.get_index());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -3394,7 +3364,7 @@ void LayerTRW::delete_all_waypoints()
 
 	this->tree_view->erase(this->waypoints.get_index());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -3481,7 +3451,7 @@ void LayerTRW::delete_sublayer_cb(void)
 		}
 	}
 	if (was_visible) {
-		this->emit_changed();
+		this->emit_layer_changed();
 	}
 }
 
@@ -3507,7 +3477,7 @@ void LayerTRW::properties_item_cb(void)
 			}
 
 			if (updated && this->visible) {
-				this->emit_changed();
+				this->emit_layer_changed();
 			}
 		}
 	} else {
@@ -3563,7 +3533,7 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 		/* Since panel not set, layer & viewport should be valid instead! */
 		if (layer && viewport) {
 			viewport->set_center_coord(coord, true);
-			layer->emit_changed();
+			layer->emit_layer_changed();
 		}
 	}
 }
@@ -3646,7 +3616,7 @@ void LayerTRW::convert_track_route_cb(void)
 	}
 
 	/* Update in case color of track / route changes when moving between sublayers. */
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -3995,7 +3965,7 @@ void LayerTRW::auto_track_view_cb(void)
 		if (panel) {
 			panel->emit_update_window_cb();
 		} else {
-			this->emit_changed();
+			this->emit_layer_changed();
 		}
 	}
 }
@@ -4074,7 +4044,7 @@ void LayerTRW::route_refine_cb(void)
 			this->route_finder_added_track = NULL;
 			this->route_finder_check_added_track = false;
 
-			this->emit_changed();
+			this->emit_layer_changed();
 
 			/* Restore cursor */
 			this->get_window()->clear_busy_cursor();
@@ -4230,7 +4200,7 @@ void LayerTRW::merge_with_other_cb(void)
 			trk->sort(Trackpoint::compare_timestamps);
 		}
 	}
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4301,7 +4271,7 @@ void LayerTRW::append_track_cb(void)
 		}
 	}
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4396,7 +4366,7 @@ void LayerTRW::append_other_cb(void)
 		}
 	}
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4491,7 +4461,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 	g_list_free(nearby_tracks);
 
-	this->emit_changed();
+	this->emit_layer_changed();
 #endif
 }
 
@@ -4547,7 +4517,7 @@ void LayerTRW::split_at_selected_trackpoint(const QString & item_type_id)
 
 	this->add_track(new_track);
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4715,7 +4685,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 	} else {
 		this->delete_track(orig);
 	}
-	this->emit_changed();
+	this->emit_layer_changed();
 
 	return true;
 }
@@ -4761,7 +4731,7 @@ void LayerTRW::split_segments_cb(void)
 		delete tracks_;
 		/* Remove original track. */
 		this->delete_track(trk);
-		this->emit_changed();
+		this->emit_layer_changed();
 	} else {
 		Dialog::error(tr("Can not split track as it has no segments"), this->get_window());
 	}
@@ -4810,7 +4780,7 @@ void LayerTRW::delete_point_selected_cb(void)
 	/* Track has been updated so update tps: */
 	this->cancel_tps_of_track(trk);
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4839,7 +4809,7 @@ void LayerTRW::delete_points_same_position_cb(void)
 	snprintf(str, 64, tmp_str, removed);
 	Dialog::info(str, this->get_window());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4868,7 +4838,7 @@ void LayerTRW::delete_points_same_time_cb(void)
 	snprintf(str, 64, tmp_str, removed);
 	Dialog::info(str, this->get_window());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4887,7 +4857,7 @@ void LayerTRW::insert_point_after_cb(void)
 
 	this->insert_tp_beside_current_tp(false);
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4903,7 +4873,7 @@ void LayerTRW::insert_point_before_cb(void)
 
 	this->insert_tp_beside_current_tp(true);
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -4922,7 +4892,7 @@ void LayerTRW::reverse_cb(void)
 
 	trk->reverse();
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -5231,7 +5201,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	/* Reset layer timestamps in case they have now changed. */
 	this->tree_view->set_timestamp(this->index, this->get_timestamp());
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -5281,7 +5251,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 		this->delete_track_by_name(*iter, true);
 	}
 
-	this->emit_changed();
+	this->emit_layer_changed();
 }
 
 
@@ -5332,98 +5302,8 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	this->waypoints.calculate_bounds();
 	/* Reset layer timestamp in case it has now changed. */
 	this->tree_view->set_timestamp(this->index, this->get_timestamp());
-	this->emit_changed();
+	this->emit_layer_changed();
 
-}
-
-
-
-
-void LayerTRW::waypoints_visibility_off_cb(void) /* Slot. */
-{
-	this->waypoints.set_items_visibility(false);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::waypoints_visibility_on_cb(void) /* Slot. */
-{
-	this->waypoints.set_items_visibility(true);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::waypoints_visibility_toggle_cb(void) /* Slot. */
-{
-	this->waypoints.toggle_items_visibility();
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::tracks_visibility_off_cb(void) /* Slot. */
-{
-	this->tracks.set_items_visibility(false);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::tracks_visibility_on_cb(void) /* Slot. */
-{
-	this->tracks.set_items_visibility(true);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::tracks_visibility_toggle_cb(void) /* Slot. */
-{
-	this->tracks.toggle_items_visibility();
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::routes_visibility_off_cb(void) /* Slot. */
-{
-	this->routes.set_items_visibility(false);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::routes_visibility_on_cb() /* Slot. */
-{
-	this->routes.set_items_visibility(true);
-	/* Redraw. */
-	this->emit_changed();
-}
-
-
-
-
-void LayerTRW::routes_visibility_toggle_cb(void) /* Slot. */
-{
-	this->routes.toggle_items_visibility();
-	/* Redraw. */
-	this->emit_changed();
 }
 
 
@@ -5793,7 +5673,7 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		this->selected_tp.valid = false;
 
 		this->current_trk = NULL;
-		this->emit_changed();
+		this->emit_layer_changed();
 	}
 }
 
@@ -5843,7 +5723,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 			this->my_tpwin_set_tp();
 		}
 
-		this->emit_changed();
+		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_FORWARD
 		   && this->current_trk
@@ -5851,7 +5731,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 		this->selected_tp.iter++;
 		this->my_tpwin_set_tp();
-		this->emit_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
+		this->emit_layer_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
 	} else if (response == SG_TRACK_BACK
 		   && this->current_trk
@@ -5859,17 +5739,17 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 		this->selected_tp.iter--;
 		this->my_tpwin_set_tp();
-		this->emit_changed();
+		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_INSERT
 		   && this->current_trk
 		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
 		this->insert_tp_beside_current_tp(false);
-		this->emit_changed();
+		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_CHANGED) {
-		this->emit_changed();
+		this->emit_layer_changed();
 	}
 }
 
@@ -6048,7 +5928,7 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 
 	/* Redraw to show the thumbnails as they are now created. */
 	if (creator->layer) {
-		creator->layer->emit_changed(); /* NB update from background thread. */
+		creator->layer->emit_layer_changed(); /* NB update from background thread. */
 	}
 
 	return 0;

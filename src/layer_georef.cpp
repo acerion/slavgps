@@ -1145,7 +1145,7 @@ bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	if (this->click_x != -1) {
 		this->corner.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
 		this->corner.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
-		this->emit_changed();
+		this->emit_layer_changed();
 		return true;
 	}
 	return false; /* I didn't move anything on this layer! */
@@ -1199,7 +1199,7 @@ bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	}
 	tool->viewport->set_xmpp(this->mpp_easting);
 	tool->viewport->set_ympp(this->mpp_northing);
-	this->emit_changed();
+	this->emit_layer_changed();
 	return true;
 }
 

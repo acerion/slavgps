@@ -1177,7 +1177,7 @@ static void gps_comm_thread(GpsSession *sess)
 					sess->trw->post_read(sess->viewport, true);
 					/* View the data available. */
 					sess->trw->auto_set_view(sess->viewport) ;
-					sess->trw->emit_changed(); /* NB update from background thread. */
+					sess->trw->emit_layer_changed(); /* NB update from background thread. */
 				}
 			}
 		} else {
@@ -1719,9 +1719,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		/* NB update from background thread. */
 		if (update_all) {
-			layer->emit_changed();
+			layer->emit_layer_changed();
 		} else {
-			layer->trw_children[TRW_REALTIME]->emit_changed();
+			layer->trw_children[TRW_REALTIME]->emit_layer_changed();
 		}
 	}
 }
