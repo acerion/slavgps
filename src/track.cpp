@@ -45,6 +45,8 @@
 #include "track_profile_dialog.h"
 #include "track_properties_dialog.h"
 #include "layer_trw_menu.h"
+#include "layer_trw.h"
+#include "window.h"
 
 
 
@@ -2418,6 +2420,254 @@ void Track::find_maxmin(struct LatLon maxmin[2])
 
 
 
+
+void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu)
+{
+	QAction * qa = NULL;
+
+#ifdef VIK_CONFIG_OPENSTREETMAP
+	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
+	/* Convert internal pointer into track. */
+	parent_layer_->menu_data->misc = parent_layer_->tracks.items.at(parent_layer_->menu_data->sublayer->uid);
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (osm_traces_upload_track_cb()));
+#endif
+
+	/* Currently filter with functions all use shellcommands and thus don't work in Windows. */
+#ifndef WINDOWS
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("Use with &Filter"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_use_with_filter_cb()));
+#endif
+
+
+	/* ATM This function is only available via the layers panel, due to needing a panel. */
+	if (this->window->get_layers_panel()) {
+		QMenu * submenu = a_acquire_track_menu(this->window, this->window->get_layers_panel(),
+						       parent_layer_->menu_data->viewport,
+						       parent_layer_->tracks.items.at(parent_layer_->menu_data->sublayer->uid));
+		if (submenu) {
+			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
+			menu.addMenu(submenu);
+		}
+	}
+
+#ifdef VIK_CONFIG_GEOTAG
+	qa = menu.addAction(tr("Geotag _Images..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_track_cb()));
+#endif
+}
+
+
+
+
+
+void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu)
+{
+	QAction * qa = NULL;
+
+	if (parent_layer_->current_trk && this->type_id == "sg.trw.track" && parent_layer_->current_trk->type_id == "sg.trw.track") {
+		qa = menu.addAction(tr("&Finish Track"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+		menu.addSeparator();
+	} else if (parent_layer_->current_trk && this->type_id == "sg.trw.route" && parent_layer_->current_trk->type_id == "sg.trw.route") {
+		qa = menu.addAction(tr("&Finish Route"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+		menu.addSeparator();
+	}
+
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->type_id == "sg.trw.track" ? tr("&View Track") : tr("&View Route"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (auto_track_view_cb()));
+
+	qa = menu.addAction(tr("&Statistics"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_statistics_cb()));
+
+	{
+		QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Goto"));
+
+		qa = goto_submenu->addAction(QIcon::fromTheme("go-first"), tr("&Startpoint"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_startpoint_cb()));
+
+		qa = goto_submenu->addAction(QIcon::fromTheme("go-jump"), tr("\"&Center\""));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_center_cb()));
+
+		qa = goto_submenu->addAction(QIcon::fromTheme("go-last"), tr("&Endpoint"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_endpoint_cb()));
+
+		qa = goto_submenu->addAction(QIcon::fromTheme("go-top"), tr("&Highest Altitude"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_max_alt_cb()));
+
+		qa = goto_submenu->addAction(QIcon::fromTheme("go-bottom"), tr("&Lowest Altitude"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_min_alt_cb()));
+
+		/* Routes don't have speeds. */
+		if (this->type_id == "sg.trw.track") {
+			qa = goto_submenu->addAction(QIcon::fromTheme("media-seek-forward"), tr("&Maximum Speed"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_max_speed_cb()));
+		}
+	}
+
+	{
+
+		QMenu * combine_submenu = menu.addMenu(QIcon::fromTheme("CONNECT"), tr("Co&mbine"));
+
+		/* Routes don't have times or segments... */
+		if (this->type_id == "sg.trw.track") {
+			qa = combine_submenu->addAction(tr("&Merge By Time..."));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (merge_by_timestamp_cb()));
+
+			qa = combine_submenu->addAction(tr("Merge &Segments"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (merge_by_segment_cb()));
+		}
+
+		qa = combine_submenu->addAction(tr("Merge &With Other Tracks..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (merge_with_other_cb()));
+
+		qa = combine_submenu->addAction(this->type_id == "sg.trw.track" ? tr("&Append Track...") : tr("&Append Route..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (append_track_cb()));
+
+		qa = combine_submenu->addAction(this->type_id == "sg.trw.track" ? tr("Append &Route...") : tr("Append &Track..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (append_other_cb()));
+	}
+
+
+
+	{
+		QMenu * split_submenu = menu.addMenu(QIcon::fromTheme("DISCONNECT"), tr("&Split"));
+
+		/* Routes don't have times or segments... */
+		if (this->type_id == "sg.trw.track") {
+			qa = split_submenu->addAction(tr("&Split By Time..."));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_by_timestamp_cb()));
+
+			/* ATM always enable parent_layer_ entry - don't want to have to analyse the track before displaying the menu - to keep the menu speedy. */
+			qa = split_submenu->addAction(tr("Split Se&gments"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_segments_cb()));
+		}
+
+		qa = split_submenu->addAction(tr("Split By &Number of Points..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_by_n_points_cb()));
+
+		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
+		/* Make it available only when a trackpoint is selected. */
+		qa->setEnabled(parent_layer_->selected_tp.valid);
+	}
+
+
+
+	{
+		QMenu * insert_submenu = menu.addMenu(QIcon::fromTheme("list-add"), tr("&Insert Points"));
+
+		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_before_cb()));
+		/* Make it available only when a point is selected. */
+		qa->setEnabled(parent_layer_->selected_tp.valid);
+
+		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_after_cb()));
+		/* Make it available only when a point is selected. */
+		qa->setEnabled(parent_layer_->selected_tp.valid);
+	}
+
+
+	{
+		QMenu * delete_submenu = menu.addMenu(QIcon::fromTheme("list-delete"), tr("Delete Poi&nts"));
+
+		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_point_selected_cb()));
+		/* Make it available only when a point is selected. */
+		qa->setEnabled(parent_layer_->selected_tp.valid);
+
+		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_position_cb()));
+
+		qa = delete_submenu->addAction(tr("Delete Points With The Same &Time"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_time_cb()));
+	}
+
+	{
+		QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), tr("&Transform"));
+		{
+			QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), tr("&Apply DEM Data"));
+
+			qa = dem_submenu->addAction(tr("&Overwrite"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (apply_dem_data_all_cb()));
+			qa->setToolTip(tr("Overwrite any existing elevation values with DEM values"));
+
+			qa = dem_submenu->addAction(tr("&Keep Existing"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (apply_dem_data_only_missing_cb()));
+			qa->setToolTip(tr("Keep existing elevation values, only attempt for missing values"));
+		}
+
+		{
+			QMenu * smooth_submenu = transform_submenu->addMenu(tr("&Smooth Missing Elevation Data"));
+
+			qa = smooth_submenu->addAction(tr("&Interpolated"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (missing_elevation_data_interp_cb()));
+			qa->setToolTip(tr("Interpolate between known elevation values to derive values for the missing elevations"));
+
+			qa = smooth_submenu->addAction(tr("&Flat"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (missing_elevation_data_flat_cb()));
+			qa->setToolTip(tr("Set unknown elevation values to the last known value"));
+		}
+
+		qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), this->type_id == "sg.trw.track" ? tr("C&onvert to a Route") : tr("C&onvert to a Track"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (convert_track_route_cb()));
+
+		/* Routes don't have timestamps - so these are only available for tracks. */
+		if (this->type_id == "sg.trw.track") {
+			qa = transform_submenu->addAction(tr("&Anonymize Times"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (anonymize_times_cb()));
+			qa->setToolTip(tr("Shift timestamps to a relative offset from 1901-01-01"));
+
+			qa = transform_submenu->addAction(tr("&Interpolate Times"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (interpolate_times_cb()));
+			qa->setToolTip(tr("Reset trackpoint timestamps between the first and last points such that track is traveled at equal speed"));
+		}
+	}
+
+
+	qa = menu.addAction(QIcon::fromTheme("go-back"), this->type_id == "sg.trw.track" ? tr("&Reverse Track") : tr("&Reverse Route"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (reverse_cb()));
+
+	if (this->type_id == "sg.trw.route") {
+		qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("Refine Route..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (route_refine_cb()));
+	}
+
+	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
+	if (parent_layer_->get_window()->get_layers_panel()) {
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->type_id == "sg.trw.track" ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
+	}
+
+	qa = menu.addAction(QIcon::fromTheme("document-save-as"), this->type_id == "sg.trw.track" ? tr("&Export Track as GPX...") : tr("&Export Route as GPX..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (export_gpx_track_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("list-add"), this->type_id == "sg.trw.track" ? tr("E&xtend Track End") : tr("E&xtend Route End"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_cb()));
+
+	if (this->type_id == "sg.trw.route") {
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Route Finder"), tr("Extend &Using Route Finder"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_route_finder_cb()));
+	}
+
+	/* ATM can't upload a single waypoint but can do waypoints to a GPS. */
+	if (this->type_id != "sg.trw.waypoint") { /* FIXME: this should be also in some other TRW sublayer. */
+		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (gps_upload_any_cb()));
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
 bool Track::add_context_menu_items(QMenu & menu)
 {
 	QAction * qa = NULL;
@@ -2425,10 +2675,23 @@ bool Track::add_context_menu_items(QMenu & menu)
 
 
 	rv = true;
-	layer_trw_sublayer_menu_waypoint_track_route_properties((LayerTRW *) this->parent_layer, menu);
+	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+	if (this->properties_dialog) {
+		/* A properties dialog window is already opened.
+		   Don't give possibility to open a duplicate properties dialog window. */
+		qa->setEnabled(false);
+	}
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (properties_item_cb()));
 
 
-	layer_trw_sublayer_menu_track_route_profile((LayerTRW *) this->parent_layer, menu);
+
+	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("P&rofile"));
+	if (this->profile_dialog) {
+		/* A profile dialog window is already opened.
+		   Don't give possibility to open a duplicate profile dialog window. */
+		qa->setEnabled(false);
+	}
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (profile_item_cb()));
 
 
 	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
@@ -2453,7 +2716,8 @@ bool Track::add_context_menu_items(QMenu & menu)
 #ifdef K
 #ifdef VIK_CONFIG_GOOGLE
 	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route(this->uid))) {
-		layer_trw_sublayer_menu_route_google_directions((LayerTRW *) this->parent_layer, menu);
+		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("&View Google Directions"));
+		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (google_route_webpage_cb()));
 	}
 #endif
 #endif
@@ -2461,16 +2725,22 @@ bool Track::add_context_menu_items(QMenu & menu)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-	layer_trw_sublayer_menu_track_route_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+	this->sublayer_menu_track_route_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
 
 
 	/* Some things aren't usable with routes. */
 	if (this->type_id == "sg.trw.track") {
-		layer_trw_sublayer_menu_track_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+		this->sublayer_menu_track_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
 	}
 
 
-	layer_trw_sublayer_menu_track_route_edit_trackpoint((LayerTRW *) this->parent_layer, menu);
+	/* Only show on viewport popmenu when a trackpoint is selected. */
+	if (!this->window->get_layers_panel() && ((LayerTRW *) parent_layer)->selected_tp.valid) {
+		menu.addSeparator();
+
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
+		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (edit_trackpoint_cb()));
+	}
 
 
 	return rv;

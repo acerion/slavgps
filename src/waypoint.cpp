@@ -28,6 +28,7 @@
 #include "coord.h"
 #include "waypoint.h"
 #include "globals.h"
+#include "layer_trw.h"
 #include "layer_trw_menu.h"
 //#include "garminsymbols.h"
 #include "dem_cache.h"
@@ -328,6 +329,58 @@ QString Waypoint::get_any_url(void) const
 
 
 
+void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu)
+{
+	QAction * qa = NULL;
+
+
+	/* Could be a right-click using the tool. */
+	if (this->window->get_layers_panel() != NULL) {
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Go to this Waypoint"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (go_to_selected_waypoint_cb()));
+	}
+
+	if (!this->name.isEmpty()) {
+		if (is_valid_geocache_name(this->name.toUtf8().constData())) {
+			qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Visit Geocache Webpage"));
+				connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (waypoint_geocache_webpage_cb()));
+		}
+#ifdef VIK_CONFIG_GEOTAG
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("Geotag &Images..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_cb()));
+		qa->setToolTip(tr("Geotag multiple images against this waypoint"));
+#endif
+	}
+
+
+	if (!this->image.isEmpty()) {
+		/* Set up image parameter. */
+		parent_layer_->menu_data->string = this->image;
+
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture...")); /* TODO: icon. */
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (show_picture_cb()));
+
+#ifdef VIK_CONFIG_GEOTAG
+		{
+			QMenu * geotag_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), tr("Update Geotag on &Image"));
+
+			qa = geotag_submenu->addAction(tr("&Update"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_mtime_update_cb()));
+
+			qa = geotag_submenu->addAction(tr("Update and &Keep File Timestamp"));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_mtime_keep_cb()));
+		}
+#endif
+	}
+
+	if (this->has_any_url()) {
+		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (waypoint_webpage_cb()));
+	}
+}
+
+
+
 
 bool Waypoint::add_context_menu_items(QMenu & menu)
 {
@@ -335,7 +388,9 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	bool rv = false;
 
 	rv = true;
-	layer_trw_sublayer_menu_waypoint_track_route_properties((LayerTRW *) this->parent_layer, menu);
+
+	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (properties_item_cb()));
 
 
 	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
@@ -344,12 +399,13 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	menu.addSeparator();
 
 
-	layer_trw_sublayer_menu_waypoint_misc((LayerTRW *) this->parent_layer, menu);
+	this->sublayer_menu_waypoint_misc((LayerTRW *) this->parent_layer, menu);
 
 
 	if (this->window->get_layers_panel()) {
 		rv = true;
-		layer_trw_sublayer_menu_waypoints_waypoint_new((LayerTRW *) this->parent_layer, menu);
+		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
+		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (new_waypoint_cb()));
 	}
 
 

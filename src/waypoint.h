@@ -77,6 +77,7 @@ namespace SlavGPS {
 
 
 		bool add_context_menu_items(QMenu & menu);
+		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu);
 
 		Coord coord;
 		//bool visible = true;

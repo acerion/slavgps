@@ -43,22 +43,10 @@ namespace SlavGPS {
 
 
 
-	void layer_trw_sublayer_menu_waypoint_track_route_properties(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_track_route_profile(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoint_track_route_edit(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_waypoint_misc(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_waypoints_tracks_routes_paste(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_waypoints_waypoint_new(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_waypoints_A(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_tracks_A(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_routes_A(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_track_route_misc(LayerTRW * parent_layer, QMenu & menu, QMenu * upload_submenu);
 	void layer_trw_sublayer_menu_track_waypoint_diary_astro(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu);
 	void layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu);
-	void layer_trw_sublayer_menu_route_google_directions(LayerTRW * parent_layer, QMenu & menu);
-	void layer_trw_sublayer_menu_track_misc(LayerTRW * parent_layer, QMenu & menu, QMenu * upload_submenu);
-	void layer_trw_sublayer_menu_track_route_edit_trackpoint(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_waypoints_waypoint_transform(LayerTRW * parent_layer, QMenu & menu);
 
 

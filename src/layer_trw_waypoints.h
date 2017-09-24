@@ -153,6 +153,7 @@ namespace SlavGPS {
 
 
 		bool add_context_menu_items(QMenu & menu);
+		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
 
 
 

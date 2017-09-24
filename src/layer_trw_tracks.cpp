@@ -677,23 +677,131 @@ void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_la
 
 
 
+void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu)
+{
+	QAction * qa = NULL;
+
+	if (parent_layer_->current_trk && parent_layer_->current_trk->type_id == "sg.trw.track") {
+		qa = menu.addAction(tr("&Finish Track"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+
+		menu.addSeparator();
+	}
+
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Tracks"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (full_view_tracks_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Track"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_track_cb()));
+	/* Make it available only when a new track is *not* already in progress. */
+	qa->setEnabled(!parent_layer_->current_trk);
+
+	qa = menu.addAction(QIcon::fromTheme("list-remove"), tr("Delete &All Tracks"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_tracks_cb()));
+
+	qa = menu.addAction(tr("&Delete Tracks From Selection..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_selected_tracks_cb()));
+
+	{
+		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
+
+		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Tracks"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_on_cb()));
+
+		qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), tr("&Hide All Tracks"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_off_cb()));
+
+		qa = vis_submenu->addAction(tr("&Toggle"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_visibility_toggle_cb()));
+	}
+
+	qa = menu.addAction(tr("&Tracks List..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_list_dialog_single_cb()));
+
+	qa = menu.addAction(tr("&Statistics"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_stats_cb()));
+}
+
+
+
+
+
+
+
+
+void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu)
+{
+	QAction * qa = NULL;
+
+	if (parent_layer_->current_trk && parent_layer_->current_trk->type_id == "sg.trw.route") {
+		qa = menu.addAction(tr("&Finish Route"));
+		/* Reuse finish track method. */
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+
+		menu.addSeparator();
+	}
+
+	qa = menu.addAction(QIcon::fromTheme("ZOOM_FIT"), tr("&View All Routes"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (full_view_routes_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Route"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_route_cb()));
+	/* Make it available only when a new track is *not* already in progress. */
+	qa->setEnabled(!parent_layer_->current_trk);
+
+	qa = menu.addAction(QIcon::fromTheme("list-delete"), tr("Delete &All Routes"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_routes_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Delete Routes From Selection..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_selected_routes_cb()));
+
+	{
+		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
+
+		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Routes"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_on_cb()));
+
+		qa = vis_submenu->addAction(QIcon::fromTheme("list-delete"), tr("&Hide All Routes"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_off_cb()));
+
+		qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), tr("&Toggle"));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_visibility_toggle_cb()));
+	}
+
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&List Routes..."));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_list_dialog_single_cb()));
+
+
+	qa = menu.addAction(tr("&Statistics"));
+	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (routes_stats_cb()));
+}
+
+
+
 
 bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
 {
 	QAction * qa = NULL;
 
 
-	layer_trw_sublayer_menu_waypoints_tracks_routes_paste((LayerTRW *) this->parent_layer, menu);
+	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (paste_sublayer_cb()));
+#ifdef K
+	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
+	qa->setEnabled(a_clipboard_type() == VIK_CLIPBOARD_DATA_SUBLAYER);
+#endif
+
+
 	menu.addSeparator();
 
 
 	if (this->type_id == "sg.trw.tracks") {
-		layer_trw_sublayer_menu_tracks_A((LayerTRW *) this->parent_layer, menu);
+		this->sublayer_menu_tracks_misc((LayerTRW *) this->parent_layer, menu);
 	}
 
 
 	if (this->type_id == "sg.trw.routes") {
-		layer_trw_sublayer_menu_routes_A((LayerTRW *) this->parent_layer, menu);
+		this->sublayer_menu_routes_misc((LayerTRW *) this->parent_layer, menu);
 	}
 
 

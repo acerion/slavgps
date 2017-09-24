@@ -229,6 +229,8 @@ namespace SlavGPS {
 		CoordMode get_coord_mode();
 
 		bool add_context_menu_items(QMenu & menu);
+		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
+		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 
 		QString name;
 		QString comment;
