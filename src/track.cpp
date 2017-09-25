@@ -2699,7 +2699,7 @@ bool Track::add_context_menu_items(QMenu & menu)
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_dialog_cb()));
 
 
-	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
+	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->owning_layer, menu);
 
 
 	menu.addSeparator();
@@ -2711,11 +2711,11 @@ bool Track::add_context_menu_items(QMenu & menu)
 	if ((g_have_astro_program || g_have_diary_program)
 	    && this->type_id == "sg.trw.track") {
 
-		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->parent_layer, menu, external_submenu);
+		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->owning_layer, menu, external_submenu);
 	}
 
 
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
 
 
 #ifdef K
@@ -2730,21 +2730,21 @@ bool Track::add_context_menu_items(QMenu & menu)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-	this->sublayer_menu_track_route_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+	this->sublayer_menu_track_route_misc((LayerTRW *) this->owning_layer, menu, upload_submenu);
 
 
 	/* Some things aren't usable with routes. */
 	if (this->type_id == "sg.trw.track") {
-		this->sublayer_menu_track_misc((LayerTRW *) this->parent_layer, menu, upload_submenu);
+		this->sublayer_menu_track_misc((LayerTRW *) this->owning_layer, menu, upload_submenu);
 	}
 
 
 	/* Only show on viewport popmenu when a trackpoint is selected. */
-	if (!this->window->get_layers_panel() && ((LayerTRW *) parent_layer)->selected_tp.valid) {
+	if (!this->window->get_layers_panel() && ((LayerTRW *) owning_layer)->selected_tp.valid) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (edit_trackpoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (edit_trackpoint_cb()));
 	}
 
 
@@ -2757,7 +2757,7 @@ bool Track::add_context_menu_items(QMenu & menu)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+		LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 		Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 		parent_layer_->goto_coord(viewport, this->get_tp_first()->coord);
 	}
@@ -2772,7 +2772,7 @@ void Track::goto_center_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
 	this->find_maxmin(maxmin);
@@ -2793,7 +2793,7 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, this->get_tp_last()->coord);
 }
@@ -2808,7 +2808,7 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
@@ -2823,7 +2823,7 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
@@ -2838,7 +2838,7 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
@@ -2897,7 +2897,7 @@ void Track::profile_dialog_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
 	track_profile_dialog(g_tree->tree_get_main_window(), this, viewport);
@@ -2947,7 +2947,7 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	struct LatLon maxmin[2] = { {0,0}, {0,0} };
 	this->find_maxmin(maxmin);

@@ -78,13 +78,13 @@ namespace SlavGPS {
 
 		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp);
 		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index);
-		TreeIndex const & add_sublayer(TreeItem * sublayer, Layer * parent_layer, TreeIndex const & parent_index, const QString & name, QIcon * icon, bool editable, time_t timestamp);
+		Layer * get_owning_layer(TreeIndex const & index);
+		Layer * get_layer(TreeIndex const & index);
 
 		TreeItemType get_item_type(TreeIndex const & index);
 
-		Layer * get_parent_layer(TreeIndex const & index);
-		Layer * get_layer(TreeIndex const & index);
-		TreeItem * get_sublayer(TreeIndex const & index);
+		TreeIndex const & add_tree_item(TreeItem * item, TreeIndex const & parent_index, Layer * owner, const QString & name);
+		TreeItem * get_tree_item(TreeIndex const & item_index);
 
 		QString get_name(TreeIndex const & index);
 

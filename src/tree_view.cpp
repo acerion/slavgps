@@ -175,15 +175,15 @@ TreeItemType TreeView::get_item_type(TreeIndex const & index)
 
 
 
-Layer * TreeView::get_parent_layer(TreeIndex const & index)
+Layer * TreeView::get_owning_layer(TreeIndex const & item_index)
 {
-	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
+	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+		/* "item_index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << item_index.row() << item_index.column();
 		parent_item = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::PARENT_LAYER);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) LayersTreeColumn::OWNING_LAYER);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -211,6 +211,7 @@ Layer * TreeView::get_layer(TreeIndex const & index)
 
 
 
+#ifdef K /* Replaced with ::get_tree_item(). */
 TreeItem * TreeView::get_sublayer(TreeIndex const & index)
 {
 	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
@@ -220,6 +221,25 @@ TreeItem * TreeView::get_sublayer(TreeIndex const & index)
 		parent_item = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
+
+	QVariant variant = ch->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	return variant.value<TreeItem *>();
+}
+#endif
+
+
+
+
+TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
+{
+	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
+	if (!parent_item) {
+		/* "item_index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << item_index.row() << item_index.column();
+		parent_item = this->model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) LayersTreeColumn::TREE_ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -319,7 +339,7 @@ void TreeView::select_cb(void) /* Slot. */
 
 	TreeItem * sublayer = NULL;
 	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
-		sublayer = this->get_sublayer(item_index);
+		sublayer = this->get_tree_item(item_index);
 	}
 
 	main_window->handle_selection_of_layer(layer);
@@ -495,7 +515,7 @@ TreeIndex const & TreeView::get_selected_item(void)
 		return this->get_layer(selected)->index;
 	} else if (tree_item_type == TreeItemType::SUBLAYER) {
 		qDebug() << "II: Tree View: get selected item: sublayer";
-		return this->get_sublayer(selected)->index;
+		return this->get_tree_item(selected)->index;
 	} else {
 		qDebug() << "EE: Tree View: get selected item: unknown tree item type" << (int) tree_item_type;
 		return invalid;
@@ -627,6 +647,8 @@ void TreeView::unselect(TreeIndex const & index)
 
 
 
+#ifdef K /* Replaced with ::add_tree_item() */
+
 /*
   TODO: improve handling of 'editable' argument.
   Non-editable items have e.g limited number of fields in context menu.
@@ -640,7 +662,7 @@ TreeIndex const & TreeView::add_sublayer(TreeItem * sublayer, Layer * parent_lay
 	QStandardItem * first_item = NULL;
 	QVariant variant;
 
-	const QString tooltip = parent_layer->get_sublayer_tooltip(sublayer);
+	const QString tooltip = sublayer->get_tooltip();
 
 
 	/* LayersTreeColumn::NAME */
@@ -670,7 +692,7 @@ TreeIndex const & TreeView::add_sublayer(TreeItem * sublayer, Layer * parent_lay
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::PARENT_LAYER */
+	/* LayersTreeColumn::OWNING_LAYER */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(parent_layer);
 	item->setData(variant, RoleLayerData);
@@ -710,6 +732,105 @@ TreeIndex const & TreeView::add_sublayer(TreeItem * sublayer, Layer * parent_lay
 	sublayer->index = QPersistentModelIndex(first_item->index());
 
 	return sublayer->index;
+}
+#endif
+
+
+
+
+/*
+  TODO: improve handling of 'editable' property.
+  Non-editable items have e.g limited number of fields in context menu.
+*/
+TreeIndex const & TreeView::add_tree_item(TreeItem * tree_item, TreeIndex const & parent_index, Layer * owner, const QString & name)
+{
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QStandardItem * first_item = NULL;
+	QVariant variant;
+
+	const QString tooltip = tree_item->get_tooltip();
+
+
+	/* LayersTreeColumn::NAME */
+	item = new QStandardItem(name);
+	item->setToolTip(tooltip);
+	item->setEditable(tree_item->editable);
+	first_item = item;
+	items << item;
+
+	/* LayersTreeColumn::VISIBLE */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	item->setCheckable(true);
+	item->setCheckState(owner->visible ? Qt::Checked : Qt::Unchecked);
+	items << item;
+
+	/* LayersTreeColumn::ICON */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+#if 0
+	item->setIcon(*icon);
+	item->setEditable(false);
+#endif
+	items << item;
+
+	/* LayersTreeColumn::TREE_ITEM_TYPE */
+	item = new QStandardItem();
+	variant = QVariant((int) TreeItemType::SUBLAYER);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::OWNING_LAYER */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(owner);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::TREE_ITEM */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(tree_item);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::EDITABLE */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(tree_item->editable);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::TIMESTAMP */
+	qlonglong timestamp = 0;
+#ifdef K
+	item = new QStandardItem((qlonglong) timestamp);
+#else
+	timestamp = 0;
+	item = new QStandardItem((qlonglong) timestamp);
+#endif
+	items << item;
+
+
+	if (parent_index.isValid()) {
+		this->model->itemFromIndex(parent_index)->appendRow(items);
+	} else {
+		/* TODO: this shouldn't happen, we can't add sublayers right on top. */
+		qDebug() << "EE: Tree View: adding sublayer on top level";
+		this->model->invisibleRootItem()->appendRow(items);
+	}
+	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled_cb(QStandardItem *)));
+
+	tree_item->index = QPersistentModelIndex(first_item->index());
+
+#ifdef K
+	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
+	if (!tree_item->visible) {
+		this->set_visibility(tree_item->index, false);
+	}
+#endif
+
+	return tree_item->index;
 }
 
 
@@ -879,7 +1000,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 				 && layer->tree_view->get_item_type(dest_parent) != TreeItemType::LAYER);
 
 
-			Layer * layer_source  = layer->tree_view->get_parent_layer(&src_item);
+			Layer * layer_source  = layer->tree_view->get_owning_layer(&src_item);
 			assert (layer_source);
 			Layer * layer_dest = layer->tree_view->get_layer(&dest_parent);
 
@@ -960,7 +1081,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::PARENT_LAYER */
+	/* LayersTreeColumn::OWNING_LAYER */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(parent_layer);
 	item->setData(variant, RoleLayerData);
@@ -1052,7 +1173,7 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM_TYPE, header_item);
 
 	header_item = new QStandardItem("Parent Layer");
-	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::PARENT_LAYER, header_item);
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::OWNING_LAYER, header_item);
 
 	header_item = new QStandardItem("Item");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM, header_item);
@@ -1073,7 +1194,7 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 
 	this->header()->setSectionResizeMode((int) LayersTreeColumn::VISIBLE, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
-	this->header()->setSectionHidden((int) LayersTreeColumn::PARENT_LAYER, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::OWNING_LAYER, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::EDITABLE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
@@ -1187,27 +1308,20 @@ void TreeItem::set_index(TreeIndex & i)
 
 
 
-TreeIndex const & TreeItem::add_child(TreeItem * child, Layer * parent_layer_, const QString & name, QIcon * icon, time_t timestamp)
-{
-	TreeIndex const & i = this->tree_view->add_sublayer((TreeItem *) child, parent_layer_, this->index, name, icon, this->editable, timestamp);
-
-#ifdef K
-	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
-	TreeItem * sublayer = (TreeItem *) child;
-	if (!sublayer->visible) {
-		this->tree_view->set_visibility(child->index, false);
-	}
-#endif
-
-	return i;
-}
-
-
 bool TreeItem::toggle_visible(void)
 {
 	this->visible = !this->visible;
 	return this->visible;
 }
+
+
+
+
+void TreeItem::set_visible(bool new_state)
+{
+	this->visible = new_state;
+}
+
 
 
 

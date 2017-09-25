@@ -141,7 +141,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_window_cb(void)));
+	connect(this->toplayer, SIGNAL(layer_changed(void)), this, SLOT(emit_update_window_cb(void)));
 #ifdef K
 	connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
 #endif
@@ -216,8 +216,8 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		Layer * parent_layer = this->tree_view->get_parent_layer(index);
-		visible = parent_layer->sublayer_toggle_visible(this->tree_view->get_sublayer(index));
+		Layer * parent_layer = this->tree_view->get_owning_layer(index);
+		visible = parent_layer->sublayer_toggle_visible(this->tree_view->get_tree_item(index));
 		parent_layer->emit_layer_changed_although_invisible();
 		break;
 	}
@@ -262,8 +262,8 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
-		Layer * parent_layer = this->tree_view->get_parent_layer(index);
-		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text);
+		Layer * parent_layer = this->tree_view->get_owning_layer(index);
+		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_tree_item(index), new_text);
 		if (!name.isEmpty()) {
 			this->tree_view->set_name(index, name);
 		}
@@ -427,7 +427,7 @@ void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Laye
 	} else {
 		menu = new QMenu(this);
 
-		TreeItem * item = this->tree_view->get_sublayer(index);
+		TreeItem * item = this->tree_view->get_tree_item(index);
 		if (!item->add_context_menu_items(*menu)) {
 			delete menu;
 			return;
@@ -534,7 +534,7 @@ void LayersPanel::add_layer(Layer * layer)
 		Layer * current = NULL;
 
 		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_parent_layer(selected_index);
+			current = this->tree_view->get_owning_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
 		} else {
 			current = this->tree_view->get_layer(selected_index);
@@ -581,7 +581,7 @@ void LayersPanel::move_item(bool up)
 
 	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
 	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(selected_index);
 
 		if (parent_layer) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
@@ -642,7 +642,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 	TreeItemType type = this->tree_view->get_item_type(index);
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(index);
 
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
@@ -666,7 +666,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		selected->cut_sublayer(this->tree_view->get_sublayer(index));
+		selected->cut_sublayer(this->tree_view->get_tree_item(index));
 	}
 }
 
@@ -732,7 +732,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			return;
 		}
 
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(index);
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
@@ -754,7 +754,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		selected->delete_sublayer(this->tree_view->get_sublayer(index));
+		selected->delete_sublayer(this->tree_view->get_tree_item(index));
 	}
 }
 
@@ -966,11 +966,11 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		} else {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
 
-			layer = this->tree_view->get_parent_layer(index);
+			layer = this->tree_view->get_owning_layer(index);
 			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->sublayer = this->tree_view->get_sublayer(index);
+			layer->menu_data->sublayer = this->tree_view->get_tree_item(index);
 			layer->menu_data->viewport = this->get_viewport();
 			layer->menu_data->confirm = true; /* Confirm delete request. */
 		}

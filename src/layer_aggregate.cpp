@@ -182,7 +182,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 		this->children->push_back(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(changed(void)), (Layer *) this, SLOT(child_layer_changed_cb(void)));
+	QObject::connect(layer, SIGNAL(layer_changed(void)), (Layer *) this, SLOT(child_layer_changed_cb(void)));
 }
 
 
@@ -228,7 +228,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(changed(void)), this, SLOT(child_layer_changed_cb(void)));
+	QObject::connect(layer, SIGNAL(layer_changed(void)), this, SLOT(child_layer_changed_cb(void)));
 }
 
 

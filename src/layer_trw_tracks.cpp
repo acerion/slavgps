@@ -666,14 +666,18 @@ void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_la
 			icon = new QIcon(pixmap);
 		}
 
+		/* TODO: pass icon to tree view. */
+
 		time_t timestamp = 0;
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
 			timestamp = tpt->timestamp;
 		}
 
-		/* "this" is a layer, which is not an immediate parent, but a grandparent of added child. */
-		this->add_child(trk, (Layer *) parent_layer_, trk->name, icon, timestamp);
+		/* TODO: pass timestamp to tree view. */
+
+		/* "parent_layer_" is a layer, which is not an immediate parent, but a grandparent of added child. */
+		this->tree_view->add_tree_item(trk, this->index, parent_layer_, trk->name);
 
 		delete icon;
 	}
@@ -790,7 +794,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
 
 
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (paste_sublayer_cb()));
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (paste_sublayer_cb()));
 #ifdef K
 	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(a_clipboard_type() == VIK_CLIPBOARD_DATA_SUBLAYER);
@@ -801,20 +805,20 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
 
 
 	if (this->type_id == "sg.trw.tracks") {
-		this->sublayer_menu_tracks_misc((LayerTRW *) this->parent_layer, menu);
+		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
 	}
 
 
 	if (this->type_id == "sg.trw.routes") {
-		this->sublayer_menu_routes_misc((LayerTRW *) this->parent_layer, menu);
+		this->sublayer_menu_routes_misc((LayerTRW *) this->owning_layer, menu);
 	}
 
 
-	layer_trw_sublayer_menu_tracks_routes_waypoints_sort((LayerTRW *) this->parent_layer, menu);
+	layer_trw_sublayer_menu_tracks_routes_waypoints_sort((LayerTRW *) this->owning_layer, menu);
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
 
 
 	return true;
@@ -834,7 +838,7 @@ void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
 	if (0 < n_items) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		this->find_maxmin(maxmin);
-		((LayerTRW *) this->parent_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
+		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 
 		qDebug() << "SIGNAL: Layer TRW Tracks: re-zooming to show all items (" << n_items << "items)";
 		g_tree->emit_update_window();
@@ -848,7 +852,7 @@ void LayerTRWTracks::items_visibility_on_cb(void) /* Slot. */
 {
 	this->set_items_visibility(true);
 	/* Redraw. */
-	((LayerTRW *) this->parent_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed();
 }
 
 
@@ -858,7 +862,7 @@ void LayerTRWTracks::items_visibility_off_cb(void) /* Slot. */
 {
 	this->set_items_visibility(false);
 	/* Redraw. */
-	((LayerTRW *) this->parent_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed();
 }
 
 
@@ -868,5 +872,5 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 {
 	this->toggle_items_visibility();
 	/* Redraw. */
-	((LayerTRW *) this->parent_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed();
 }

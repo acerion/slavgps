@@ -397,19 +397,19 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this, SLOT (properties_dialog_cb()));
 
 
-	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
+	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->owning_layer, menu);
 
 
 	menu.addSeparator();
 
 
-	this->sublayer_menu_waypoint_misc((LayerTRW *) this->parent_layer, menu);
+	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu);
 
 
 	if (this->window->get_layers_panel()) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (new_waypoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
 
 
@@ -417,14 +417,14 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 
 	/* These are only made available if a suitable program is installed. */
 	if (g_have_astro_program || g_have_diary_program) {
-		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->parent_layer, menu, external_submenu);
+		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->owning_layer, menu, external_submenu);
 	}
 
 
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->parent_layer, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
 
 
-	layer_trw_sublayer_menu_waypoints_waypoint_transform((LayerTRW *) this->parent_layer, menu);
+	layer_trw_sublayer_menu_waypoints_waypoint_transform((LayerTRW *) this->owning_layer, menu);
 
 
 	return rv;
@@ -440,7 +440,7 @@ void Waypoint::properties_dialog_cb(void)
 	}
 
 	bool updated = false;
-	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	const QString new_name = waypoint_properties_dialog(g_tree->tree_get_main_window(), this->name, this, parent_layer_->coord_mode, false, &updated);
 	if (new_name.size()) {

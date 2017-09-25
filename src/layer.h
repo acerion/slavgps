@@ -135,7 +135,6 @@ namespace SlavGPS {
 
 		virtual void draw(Viewport * viewport) { return; };
 		virtual QString get_tooltip(void) const;
-		virtual QString get_sublayer_tooltip(TreeItem * sublayer) const;
 
 		virtual bool kamil_selected(TreeItemType type, TreeItem * sublayer);
 		bool layer_selected(TreeItemType type, TreeItem * sublayer);

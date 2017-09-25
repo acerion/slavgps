@@ -439,7 +439,7 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 	} else {
 		if (selected->tree_view->get_item_type(&iter) == TreeItemType::SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			selected->copy_sublayer(selected->tree_view->get_sublayer(&iter), &data, &len);
+			selected->copy_sublayer(selected->tree_view->get_tree_item(&iter), &data, &len);
 			/* This name is used in setting the text representation of the item on the clipboard. */
 			name = selected->tree_view->get_name(&iter);
 		} else {

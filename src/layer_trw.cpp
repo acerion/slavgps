@@ -1577,10 +1577,10 @@ void LayerTRW::add_tracks_node(void)
 	this->tracks.accepted_child_type_ids << "sg.trw.track";
 	this->tracks.tree_view = this->tree_view;
 	this->tracks.window = this->get_window();
-	this->tracks.parent_layer = this;
+	this->tracks.owning_layer = this;
+	this->tracks.editable = false;
 
-
-	this->tree_view->add_sublayer(&this->tracks, this, this->index, tr("Tracks"), NULL, false, 0);
+	this->tree_view->add_tree_item(&this->tracks, this->index, this, tr("Tracks"));
 }
 
 
@@ -1590,11 +1590,14 @@ void LayerTRW::add_waypoints_node(void)
 {
 	assert(this->connected_to_tree);
 
+	this->routes.tree_item_type = TreeItemType::SUBLAYER;
+
 	this->waypoints.tree_view = this->tree_view;
 	this->waypoints.window = this->get_window();
 	this->waypoints.parent_layer = this;
+	this->waypoints.editable = false;
 
-	this->tree_view->add_sublayer(&this->waypoints, this, this->index, tr("Waypoints"), NULL, false, 0);
+	this->tree_view->add_tree_item(&this->waypoints, this->index, this, tr("Waypoints"));
 }
 
 
@@ -1610,9 +1613,10 @@ void LayerTRW::add_routes_node(void)
 	this->routes.accepted_child_type_ids << "sg.trw.route";
 	this->routes.tree_view = this->tree_view;
 	this->routes.window = this->get_window();
-	this->routes.parent_layer = this;
+	this->routes.owning_layer = this;
+	this->routes.editable = false;
 
-	this->tree_view->add_sublayer(&this->routes, this, this->index, tr("Routes"), NULL, false, 0);
+	this->tree_view->add_tree_item(&this->routes, this->index, this, tr("Routes"));
 }
 
 
@@ -2851,7 +2855,7 @@ void LayerTRW::osm_traces_upload_track_cb(void)
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
 	wp->window = this->get_window();
-	wp->parent_layer = this;
+	wp->owning_layer = this;
 
 	this->waypoints.items.insert({{ wp->uid, wp }});
 
@@ -2865,9 +2869,13 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 			timestamp = wp->timestamp;
 		}
 
-		/* Visibility column always needed for waypoints. */
-		this->waypoints.add_child(wp, this, wp->name, NULL /* wp->symbol */, timestamp);
+		/* TODO: somehow pass timestamp to tree for sorting. */
 
+		/* Visibility column always needed for waypoints. */
+		this->tree_view->add_tree_item(wp, this->waypoints.index, this, wp->name);
+
+		/* TODO: verify whether this setting is necessary.
+		   I think that we already do setting of visibility in add_tree_item(). */
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(wp->index, wp->visible);
 
@@ -2884,7 +2892,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 void LayerTRW::add_track(Track * trk)
 {
 	trk->window = this->get_window();
-	trk->parent_layer = this;
+	trk->owning_layer = this;
 
 	this->tracks.items.insert({{ trk->uid, trk }});
 
@@ -2899,9 +2907,13 @@ void LayerTRW::add_track(Track * trk)
 			timestamp = tp->timestamp;
 		}
 
-		/* Visibility column always needed for tracks. */
-		this->tracks.add_child(trk, this, trk->name, NULL, timestamp);
+		/* TODO: somehow pass timestamp to tree for sorting. */
 
+		/* Visibility column always needed for tracks. */
+		this->tree_view->add_tree_item(trk, this->tracks.index, this, trk->name);
+
+		/* TODO: verify whether this setting is necessary.
+		   I think that we already do setting of visibility in add_tree_item(). */
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
@@ -2918,7 +2930,7 @@ void LayerTRW::add_track(Track * trk)
 void LayerTRW::add_route(Track * trk)
 {
 	trk->window = this->get_window();
-	trk->parent_layer = this;
+	trk->owning_layer = this;
 
 	this->routes.items.insert({{ trk->uid, trk }});
 
@@ -2928,8 +2940,10 @@ void LayerTRW::add_route(Track * trk)
 		}
 
 		/* Visibility column always needed for routes. */
-		this->routes.add_child(trk, this, trk->name, NULL, 0); /* Routes don't have times. */
+		this->tree_view->add_tree_item(trk, this->routes.index, this, trk->name);
 
+		/* TODO: verify whether this setting is necessary.
+		   I think that we already do setting of visibility in add_tree_item(). */
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(trk->index, trk->visible);
 
@@ -3109,7 +3123,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	TreeItem * sublayer = trw_src->tree_view->get_sublayer(src_item_iter);
+	TreeItem * sublayer = trw_src->tree_view->get_tree_item(src_item_iter);
 
 	if (!trw_src->tree_view->get_name(src_item_iter)) {
 		GList *items = NULL;

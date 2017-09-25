@@ -59,7 +59,7 @@ namespace SlavGPS {
 
 		/* These columns are not visible in tree view. */
 		TREE_ITEM_TYPE = 3, /* Implicit, based on function adding an item. */
-		PARENT_LAYER   = 4, /* Parent layer of tree item. */
+		OWNING_LAYER   = 4, /* Tree View doesn't care about how complicated internal structure of a layer and its sublayers and their sublayers. Every item, no matter how much nested, has an owner that is of type Layer. The owner is called "owning layer". */
 		TREE_ITEM      = 5, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
 		EDITABLE       = 6,
 		TIMESTAMP      = 7, /* Item's timestamp. Sortable column. */
@@ -86,8 +86,6 @@ namespace SlavGPS {
 		TreeItem() {};
 		~TreeItem() {};
 
-		TreeIndex const & add_child(TreeItem * child, Layer * parent_layer, const QString & name, QIcon * icon, time_t timestamp);
-
 		TreeIndex const & get_index(void);
 		void set_index(TreeIndex & i);
 
@@ -101,6 +99,8 @@ namespace SlavGPS {
 		/* Change visibility of tree item.
 		   Return visibility state after the toggle has been performed. */
 		virtual bool toggle_visible(void);
+		virtual void set_visible(bool new_state);
+
 
 		char debug_string[100] = { 0 };
 
@@ -118,7 +118,7 @@ namespace SlavGPS {
 		QStringList accepted_child_type_ids;
 
 		Window * window = NULL;
-		void * parent_layer = NULL;
+		Layer * owning_layer = NULL;
 	};
 
 

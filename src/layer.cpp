@@ -676,14 +676,6 @@ QString Layer::get_tooltip(void) const
 
 
 
-QString Layer::get_sublayer_tooltip(TreeItem * sublayer) const
-{
-	return QString("Layer::sublayer_tooltip");
-}
-
-
-
-
 bool Layer::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 {
 	return false;
