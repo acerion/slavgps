@@ -35,7 +35,6 @@
 
 #include "track_profile_dialog.h"
 #include "viewport_internal.h"
-#include "layers_panel.h"
 #include "layer_trw.h"
 #include "dem_cache.h"
 #include "vikutils.h"
@@ -301,8 +300,7 @@ static unsigned int get_distance_chunk_index(double length)
 
 static Trackpoint * set_center_at_graph_position(int event_x,
 						 LayerTRW * trw,
-						 LayersPanel * panel,
-						 Viewport * viewport,
+						 Viewport * main_viewport,
 						 Track * trk,
 						 bool time_base,
 						 int graph_width)
@@ -326,16 +324,8 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 
 	if (tp) {
 		Coord coord = tp->coord;
-		if (panel) {
-			panel->get_viewport()->set_center_coord(coord, true);
-			panel->emit_update_window_cb();
-		} else {
-			/* Since panel not set, viewport should be valid instead! */
-			if (viewport) {
-				viewport->set_center_coord(coord, true);
-			}
-			trw->emit_layer_changed();
-		}
+		main_viewport->set_center_coord(coord, true);
+		trw->emit_layer_changed();
 	}
 	return tp;
 }
@@ -479,7 +469,7 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 			      || graph_type == SG_TRACK_PROFILE_TYPE_ET);
 
 	int pos_x = get_cursor_pos_x_in_graph(viewport, ev);
-	Trackpoint * tp = set_center_at_graph_position(pos_x, this->trw, this->panel, this->main_viewport, this->trk, is_time_graph, graph_width);
+	Trackpoint * tp = set_center_at_graph_position(pos_x, this->trw, this->main_viewport, this->trk, is_time_graph, graph_width);
 	if (tp == NULL) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -2701,9 +2691,9 @@ QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
 
 
 
-void SlavGPS::track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport)
+void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main_viewport)
 {
-	TrackProfileDialog dialog(QString("Track Profile"), layer, trk, panel, viewport, parent);
+	TrackProfileDialog dialog(QString("Track Profile"), trk, main_viewport, parent);
 	trk->set_profile_dialog(&dialog);
 	dialog.exec();
 	trk->clear_profile_dialog();
@@ -2712,14 +2702,13 @@ void SlavGPS::track_profile_dialog(Window * parent, LayerTRW * layer, Track * tr
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
+TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent) : QDialog(a_parent)
 {
 	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
-	this->trw = a_layer;
+	this->trw = (LayerTRW *) a_trk->parent_layer;
 	this->trk = a_trk;
-	this->panel = a_panel;
-	this->main_viewport = a_viewport;
+	this->main_viewport = main_viewport_;
 	this->parent = a_parent;
 
 

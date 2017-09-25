@@ -103,6 +103,10 @@ namespace SlavGPS {
 
 		/* Only for GUI display. */
 		QPixmap * symbol_pixmap = NULL;
+
+
+	public slots:
+		void properties_dialog_cb(void);
 	};
 
 

@@ -132,7 +132,7 @@ void TrackListDialog::track_stats_cb(void)
 		/* Kill off this dialog to allow interaction with properties window.
 		   Since the properties also allows track manipulations it won't cause conflicts here. */
 		this->accept();
-		track_properties_dialog(trw->get_window(), trw, trk, true);
+		track_properties_dialog(trw->get_window(), trk, true);
 	}
 }
 

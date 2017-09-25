@@ -35,6 +35,8 @@
 #include <glib.h>
 #include <time.h>
 
+#include <libintl.h>
+
 #include "coords.h"
 #include "coord.h"
 #include "track_internal.h"
@@ -47,6 +49,7 @@
 #include "layer_trw_menu.h"
 #include "layer_trw.h"
 #include "window.h"
+#include "dialog.h"
 
 
 
@@ -55,6 +58,8 @@ using namespace SlavGPS;
 
 
 
+
+extern Tree * g_tree;
 
 extern bool g_have_astro_program;
 extern bool g_have_diary_program;
@@ -2475,33 +2480,33 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->type_id == "sg.trw.track" ? tr("&View Track") : tr("&View Route"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (auto_track_view_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_full_cb()));
 
 	qa = menu.addAction(tr("&Statistics"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_statistics_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (statistics_dialog_cb()));
 
 	{
 		QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Goto"));
 
 		qa = goto_submenu->addAction(QIcon::fromTheme("go-first"), tr("&Startpoint"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_startpoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_startpoint_cb()));
 
 		qa = goto_submenu->addAction(QIcon::fromTheme("go-jump"), tr("\"&Center\""));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_center_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_center_cb()));
 
 		qa = goto_submenu->addAction(QIcon::fromTheme("go-last"), tr("&Endpoint"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_endpoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_endpoint_cb()));
 
 		qa = goto_submenu->addAction(QIcon::fromTheme("go-top"), tr("&Highest Altitude"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_max_alt_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_max_alt_cb()));
 
 		qa = goto_submenu->addAction(QIcon::fromTheme("go-bottom"), tr("&Lowest Altitude"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_min_alt_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_min_alt_cb()));
 
 		/* Routes don't have speeds. */
 		if (this->type_id == "sg.trw.track") {
 			qa = goto_submenu->addAction(QIcon::fromTheme("media-seek-forward"), tr("&Maximum Speed"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_track_max_speed_cb()));
+			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_max_speed_cb()));
 		}
 	}
 
@@ -2602,11 +2607,11 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 			QMenu * smooth_submenu = transform_submenu->addMenu(tr("&Smooth Missing Elevation Data"));
 
 			qa = smooth_submenu->addAction(tr("&Interpolated"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (missing_elevation_data_interp_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (missing_elevation_data_interp_cb()));
 			qa->setToolTip(tr("Interpolate between known elevation values to derive values for the missing elevations"));
 
 			qa = smooth_submenu->addAction(tr("&Flat"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (missing_elevation_data_flat_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (missing_elevation_data_flat_cb()));
 			qa->setToolTip(tr("Set unknown elevation values to the last known value"));
 		}
 
@@ -2616,11 +2621,11 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		/* Routes don't have timestamps - so these are only available for tracks. */
 		if (this->type_id == "sg.trw.track") {
 			qa = transform_submenu->addAction(tr("&Anonymize Times"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (anonymize_times_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (anonymize_times_cb()));
 			qa->setToolTip(tr("Shift timestamps to a relative offset from 1901-01-01"));
 
 			qa = transform_submenu->addAction(tr("&Interpolate Times"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (interpolate_times_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (interpolate_times_cb()));
 			qa->setToolTip(tr("Reset trackpoint timestamps between the first and last points such that track is traveled at equal speed"));
 		}
 	}
@@ -2681,7 +2686,7 @@ bool Track::add_context_menu_items(QMenu & menu)
 		   Don't give possibility to open a duplicate properties dialog window. */
 		qa->setEnabled(false);
 	}
-	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (properties_item_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_dialog_cb()));
 
 
 
@@ -2691,7 +2696,7 @@ bool Track::add_context_menu_items(QMenu & menu)
 		   Don't give possibility to open a duplicate profile dialog window. */
 		qa->setEnabled(false);
 	}
-	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (profile_item_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_dialog_cb()));
 
 
 	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
@@ -2744,4 +2749,209 @@ bool Track::add_context_menu_items(QMenu & menu)
 
 
 	return rv;
+}
+
+
+
+
+void Track::goto_startpoint_cb(void)
+{
+	if (!this->empty()) {
+		LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+		Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+		parent_layer_->goto_coord(viewport, this->get_tp_first()->coord);
+	}
+}
+
+
+
+
+void Track::goto_center_cb(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+
+	struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
+	this->find_maxmin(maxmin);
+	average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
+	average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
+
+	Coord coord(average, parent_layer_->coord_mode);
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	parent_layer_->goto_coord(viewport, coord);
+}
+
+
+
+
+void Track::goto_endpoint_cb(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	parent_layer_->goto_coord(viewport, this->get_tp_last()->coord);
+}
+
+
+
+
+void Track::goto_max_speed_cb()
+{
+	Trackpoint * tp = this->get_tp_by_max_speed();
+	if (!tp) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	parent_layer_->goto_coord(viewport, tp->coord);
+}
+
+
+
+
+void Track::goto_max_alt_cb(void)
+{
+	Trackpoint * tp = this->get_tp_by_max_alt();
+	if (!tp) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	parent_layer_->goto_coord(viewport, tp->coord);
+}
+
+
+
+
+void Track::goto_min_alt_cb(void)
+{
+	Trackpoint * tp = this->get_tp_by_min_alt();
+	if (!tp) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	parent_layer_->goto_coord(viewport, tp->coord);
+}
+
+
+
+
+void Track::anonymize_times_cb(void)
+{
+	this->anonymize_times();
+}
+
+
+
+
+void Track::interpolate_times_cb(void)
+{
+	this->interpolate_times();
+}
+
+
+
+
+void Track::properties_dialog_cb(void)
+{
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+	track_properties_dialog(g_tree->tree_get_main_window(), this);
+}
+
+
+
+
+/**
+ * Show track statistics.
+ * ATM jump to the stats page in the properties
+ * TODO: consider separating the stats into an individual dialog?
+ */
+void Track::statistics_dialog_cb(void)
+{
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+	track_properties_dialog(g_tree->tree_get_main_window(), this, true);
+}
+
+
+
+
+void Track::profile_dialog_cb(void)
+{
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+
+	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	track_profile_dialog(g_tree->tree_get_main_window(), this, viewport);
+}
+
+
+
+
+/**
+ * A common function for applying the elevation smoothing and reporting the results.
+ */
+void Track::smooth_it(bool flat)
+{
+	unsigned long changed_ = this->smooth_missing_elevation_data(flat);
+	/* Inform user how much was changed. */
+	char str[64];
+	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
+	snprintf(str, 64, tmp_str, changed_);
+	Dialog::info(str, g_tree->tree_get_main_window());
+}
+
+
+
+
+void Track::missing_elevation_data_interp_cb(void)
+{
+	this->smooth_it(false);
+}
+
+
+
+
+void Track::missing_elevation_data_flat_cb(void)
+{
+	this->smooth_it(true);
+}
+
+
+
+
+/*
+ * Automatically change the viewport to center on the track and zoom to see the extent of the track.
+ */
+void Track::rezoom_to_show_full_cb(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+
+	struct LatLon maxmin[2] = { {0,0}, {0,0} };
+	this->find_maxmin(maxmin);
+	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
+
+	g_tree->emit_update_window();
 }

@@ -158,6 +158,8 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 		std::list<Track *> * split_into_segments();
 
+		void smooth_it(bool flat);
+
 		unsigned int merge_segments(void);
 		void reverse(void);
 		time_t get_duration(bool include_segments) const;
@@ -254,6 +256,26 @@ namespace SlavGPS {
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
+
+	public slots:
+		void goto_startpoint_cb(void);
+		void goto_center_cb(void);
+		void goto_endpoint_cb(void);
+		void goto_max_speed_cb(void);
+		void goto_max_alt_cb(void);
+		void goto_min_alt_cb(void);
+
+		void anonymize_times_cb(void);
+		void interpolate_times_cb(void);
+
+		void properties_dialog_cb(void);
+		void statistics_dialog_cb(void);
+		void profile_dialog_cb(void);
+
+		void missing_elevation_data_interp_cb(void);
+		void missing_elevation_data_flat_cb(void);
+
+		void rezoom_to_show_full_cb(void);
 	};
 
 

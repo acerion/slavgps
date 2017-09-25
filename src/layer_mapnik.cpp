@@ -65,6 +65,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
 static SGVariant cache_dir_default(void) { return SGVariant(maps_layer_default_dir() + "MapnikRendering"); }
@@ -916,7 +921,6 @@ LayerMapnik::~LayerMapnik()
 
 typedef struct {
 	LayerMapnik * lmk;
-	Viewport * viewport;
 } menu_array_values;
 
 
@@ -933,7 +937,7 @@ static void mapnik_layer_flush_memory(menu_array_values * values)
 static void mapnik_layer_reload(menu_array_values * values)
 {
 	LayerMapnik * lmk = values->lmk;
-	Viewport * viewport = values->viewport;
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	lmk->post_read(viewport, false);
 	lmk->draw(viewport);
@@ -952,7 +956,8 @@ static void mapnik_layer_reload(menu_array_values * values)
 static void mapnik_layer_carto(menu_array_values * values)
 {
 	LayerMapnik * lmk = values->lmk;
-	Viewport * viewport = values->viewport;
+
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	/* Don't load the XML config if carto load fails. */
 	if (!lmk->carto_load()) {
@@ -1008,7 +1013,6 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 
 	static menu_array_values values = {
 		this,
-		panel->get_viewport()
 	};
 
 	QAction * action = NULL;

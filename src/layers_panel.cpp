@@ -263,7 +263,7 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		}
 	} else {
 		Layer * parent_layer = this->tree_view->get_parent_layer(index);
-		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
+		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text);
 		if (!name.isEmpty()) {
 			this->tree_view->set_name(index, name);
 		}

@@ -41,7 +41,6 @@
 #include "globals.h"
 #include "ui_builder.h"
 #include "date_time_dialog.h"
-#include "layer_trw.h"
 #include "waypoint.h"
 
 
@@ -142,7 +141,7 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
    The name to use is returned.
 */
 /* TODO: less on this side, like add track. */
-char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
+char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 #if 0
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
@@ -424,7 +423,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, LayerTRW * trw, W
    user rejected the dialog (e.g by pressing Cancel button), the
    returned string is empty.
 */
-QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, LayerTRW * trw, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
+QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
 	dialog.fill(wp, wp_params, default_name);

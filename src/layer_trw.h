@@ -179,7 +179,7 @@ namespace SlavGPS {
 
 		void add_menu_items(QMenu & menu);
 
-		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel);
+		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
@@ -325,6 +325,7 @@ namespace SlavGPS {
 
 		bool uniquify(LayersPanel * panel);
 
+		void goto_coord(Viewport * viewport, const Coord & coord);
 
 		void highest_wp_number_reset();
 		void highest_wp_number_add_wp(const QString & new_wp_name);
@@ -562,13 +563,6 @@ namespace SlavGPS {
 		void geotagging_track_cb(void);
 #endif
 
-		void goto_track_startpoint_cb(void);
-		void goto_track_endpoint_cb(void);
-		void goto_track_max_speed_cb(void);
-		void goto_track_max_alt_cb(void);
-		void goto_track_min_alt_cb(void);
-		void goto_track_center_cb(void);
-
 		void merge_by_segment_cb(void);
 		void merge_by_timestamp_cb(void);
 		void merge_with_other_cb(void);
@@ -585,24 +579,16 @@ namespace SlavGPS {
 		void edit_trackpoint_cb(void);
 		void gps_upload_any_cb(void);
 		void track_list_dialog_cb(void);
-		void properties_item_cb(void); /* TODO?? */
-		void profile_item_cb(void);
 		void waypoint_webpage_cb(void);
 		void export_gpx_track_cb(void);
 		void osm_traces_upload_track_cb(void);
-		void track_statistics_cb(void);
 		void convert_track_route_cb(void);
-		void anonymize_times_cb(void);
-		void interpolate_times_cb(void);
 		void extend_track_end_cb(void);
 		void extend_track_end_route_finder_cb(void);
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
-		void missing_elevation_data_interp_cb(void);
-		void missing_elevation_data_flat_cb(void);
 		void apply_dem_data_wpt_all_cb(void);
 		void apply_dem_data_wpt_only_missing_cb(void);
-		void auto_track_view_cb(void);
 		void route_refine_cb(void);
 		void append_other_cb(void);
 		void insert_point_after_cb(void);

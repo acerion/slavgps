@@ -169,7 +169,7 @@ namespace SlavGPS {
 		virtual void write_file(FILE * f) const;
 
 		virtual void add_menu_items(QMenu & menu);
-		virtual QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel);
+		virtual QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		virtual bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);

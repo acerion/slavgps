@@ -34,6 +34,8 @@
 #include "dem_cache.h"
 #include "util.h"
 #include "window.h"
+#include "tree_view_internal.h"
+#include "waypoint_properties.h"
 
 
 
@@ -42,6 +44,8 @@ using namespace SlavGPS;
 
 
 
+
+extern Tree * g_tree;
 
 extern bool g_have_astro_program;
 extern bool g_have_diary_program;
@@ -390,7 +394,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	rv = true;
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (properties_item_cb()));
+	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this, SLOT (properties_dialog_cb()));
 
 
 	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->parent_layer, menu);
@@ -424,4 +428,30 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 
 
 	return rv;
+}
+
+
+
+
+void Waypoint::properties_dialog_cb(void)
+{
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+	bool updated = false;
+	LayerTRW * parent_layer_ = (LayerTRW *) this->parent_layer;
+
+	const QString new_name = waypoint_properties_dialog(g_tree->tree_get_main_window(), this->name, this, parent_layer_->coord_mode, false, &updated);
+	if (new_name.size()) {
+		parent_layer_->waypoints.rename_waypoint(this, new_name);
+	}
+
+	if (updated && this->index.isValid()) {
+		this->tree_view->set_icon(this->index, get_wp_sym_small(this->symbol_name));
+	}
+
+	if (updated && parent_layer_->visible) {
+		parent_layer_->emit_layer_changed();
+	}
 }

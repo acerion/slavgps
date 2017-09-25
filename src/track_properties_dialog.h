@@ -56,7 +56,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackPropertiesDialog() {};
-		TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent = NULL);
+		TrackPropertiesDialog(QString const & title, Track * a_trk, bool start_on_stats, Window * a_parent = NULL);
 		~TrackPropertiesDialog() {};
 
 		void create_properties_page(void);
@@ -66,7 +66,6 @@ namespace SlavGPS {
 		void dialog_accept_cb(void);
 
 	private:
-		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 
 		QTabWidget * tabs = NULL;
@@ -115,7 +114,7 @@ namespace SlavGPS {
 
 
 
-	void track_properties_dialog(Window * parent, LayerTRW * layer, Track * trk, bool start_on_stats = false);
+	void track_properties_dialog(Window * parent, Track * trk, bool start_on_stats = false);
 
 
 

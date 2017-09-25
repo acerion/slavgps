@@ -54,12 +54,9 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::track_properties_dialog(Window * parent,
-				      LayerTRW * layer,
-				      Track * trk,
-				      bool start_on_stats)
+void SlavGPS::track_properties_dialog(Window * parent, Track * trk, bool start_on_stats)
 {
-	TrackPropertiesDialog dialog(QString("Track Profile"), layer, trk, start_on_stats, parent);
+	TrackPropertiesDialog dialog(QString("Track Profile"), trk, start_on_stats, parent);
 	dialog.create_properties_page();
 	dialog.create_statistics_page();
 	trk->set_properties_dialog(&dialog);
@@ -70,11 +67,10 @@ void SlavGPS::track_properties_dialog(Window * parent,
 
 
 
-TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
+TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
 {
 	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->name));
 
-	this->trw = a_layer;
 	this->trk = a_trk;
 
 	this->button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -323,7 +319,8 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		struct LatLon center = { (this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2 };
-		const Coord coord(center, this->trw->get_coord_mode());
+		LayerTRW * parent_layer = (LayerTRW *) this->trk->parent_layer;
+		const Coord coord(center, parent_layer->get_coord_mode());
 		this->tz = vu_get_tz_at_location(&coord);
 
 
@@ -388,8 +385,9 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
 
-	this->trw->get_tracks_node().update_treeview(this->trk);
-	this->trw->emit_layer_changed();
+	LayerTRW * parent_layer = (LayerTRW *) this->trk->parent_layer;
+	parent_layer->get_tracks_node().update_treeview(this->trk);
+	parent_layer->emit_layer_changed();
 
 	this->accept();
 }

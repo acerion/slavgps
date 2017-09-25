@@ -45,11 +45,11 @@
 #include "layer_map.h"
 #include "tree_view_internal.h"
 #include "vikutils.h"
-#include "track_properties_dialog.h"
+//#include "track_properties_dialog.h"
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
 #include "track_internal.h"
-#include "track_profile_dialog.h"
+//#include "track_profile_dialog.h"
 #include "track_list_dialog.h"
 #include "file.h"
 #include "dialog.h"
@@ -121,6 +121,9 @@ using namespace SlavGPS;
 
 
 
+
+extern Tree * g_tree;
+
 extern VikDataSourceInterface vik_datasource_gps_interface;
 extern VikDataSourceInterface vik_datasource_file_interface;
 extern VikDataSourceInterface vik_datasource_routing_interface;
@@ -142,7 +145,6 @@ extern VikDataSourceInterface vik_datasource_geojson_interface;
 
 
 
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord & coord);
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 
@@ -2214,7 +2216,8 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, coord);
+		Viewport * viewport = g_tree->tree_get_main_viewport();
+		this->goto_coord(viewport, coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -2352,8 +2355,6 @@ void LayerTRW::export_gpx_track_cb(void)
 
 void LayerTRW::find_waypoint_dialog_cb(void)
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
 	QInputDialog dialog(this->get_window());
 	dialog.setWindowTitle(tr("Find"));
 	dialog.setLabelText(tr("Waypoint Name:"));
@@ -2369,8 +2370,8 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			panel->get_viewport()->set_center_coord(wp->coord, true);
-			panel->emit_update_window_cb();
+			g_tree->tree_get_main_viewport()->set_center_coord(wp->coord, true);
+			g_tree->emit_update_window();
 			this->tree_view->select_and_expose(wp->index);
 
 			break;
@@ -2392,7 +2393,7 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	const QString returned_name = waypoint_properties_dialog(parent_window, default_name, this, wp, this->coord_mode, true, &updated);
+	const QString returned_name = waypoint_properties_dialog(parent_window, default_name, wp, this->coord_mode, true, &updated);
 
 	if (returned_name.size()) {
 		wp->visible = true;
@@ -2411,15 +2412,14 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Viewport * viewport = this->get_window()->get_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function: */
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->waypoints.calculate_bounds();
-	panel->emit_update_window_cb();
+	g_tree->emit_update_window();
 }
 
 
@@ -2427,14 +2427,13 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	this->find_maxmin(maxmin);
 
 	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
 	this->waypoints.calculate_bounds();
-	panel->emit_update_window_cb();
+	g_tree->emit_update_window();
 }
 
 
@@ -2513,7 +2512,7 @@ void LayerTRW::acquire(VikDataSourceInterface *datasource)
 {
 	Window * window_ = this->get_window();
 	LayersPanel * panel = window_->get_layers_panel();
-	Viewport * viewport =  window_->get_viewport();
+	Viewport * viewport =  g_tree->tree_get_main_viewport();
 
 	DatasourceMode mode = datasource->mode;
 	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
@@ -2728,7 +2727,7 @@ void LayerTRW::gps_upload_any_cb()
 		     protocol,
 		     port,
 		     false,
-		     panel->get_viewport(),
+		     g_tree->tree_get_main_viewport(),
 		     panel,
 		     do_tracks,
 		     do_routes,
@@ -2742,13 +2741,12 @@ void LayerTRW::gps_upload_any_cb()
 
 void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
 	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (this->new_waypoint(this->get_window(), panel->get_viewport()->get_center())) {
+	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center())) {
 		this->waypoints.calculate_bounds();
 		if (this->visible) {
-			panel->emit_update_window_cb();
+			g_tree->emit_update_window();
 		}
 	}
 }
@@ -3458,114 +3456,11 @@ void LayerTRW::delete_sublayer_cb(void)
 
 
 
-void LayerTRW::properties_item_cb(void)
+void LayerTRW::goto_coord(Viewport * viewport, const Coord & coord)
 {
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints.items.at(wp_uid);
-
-		if (wp && !wp->name.isEmpty()) {
-			bool updated = false;
-
-			const QString new_name = waypoint_properties_dialog(this->get_window(), wp->name, this, wp, this->coord_mode, false, &updated);
-			if (new_name.size()) {
-				this->waypoints.rename_waypoint(wp, new_name);
-			}
-
-			if (updated && this->menu_data->sublayer->index.isValid()) {
-				this->tree_view->set_icon(this->menu_data->sublayer->index, get_wp_sym_small(wp->symbol_name));
-			}
-
-			if (updated && this->visible) {
-				this->emit_layer_changed();
-			}
-		}
-	} else {
-		Track * trk = this->get_track_helper(this->menu_data->sublayer);
-		if (trk && !trk->name.isEmpty()) {
-			track_properties_dialog(this->get_window(), this, trk);
-		}
-	}
-}
-
-
-
-
-void LayerTRW::profile_item_cb(void)
-{
-	if (this->menu_data->sublayer->type_id != "sg.trw.waypoint") {
-		Track * trk = this->get_track_helper(this->menu_data->sublayer);
-		if (trk && !trk->name.isEmpty()) {
-			track_profile_dialog(this->get_window(),
-					     this,
-					     trk,
-					     this->get_window()->get_layers_panel(),
-					     this->menu_data->viewport);
-		}
-	}
-}
-
-
-
-
-/**
- * Show track statistics.
- * ATM jump to the stats page in the properties
- * TODO: consider separating the stats into an individual dialog?
- */
-void LayerTRW::track_statistics_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-	if (trk && !trk->name.isEmpty()) {
-		track_properties_dialog(this->get_window(), this, trk, true);
-	}
-}
-
-
-
-
-static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const Coord & coord)
-{
-	if (panel) {
-		panel->get_viewport()->set_center_coord(coord, true);
-		panel->emit_update_window_cb();
-	} else {
-		/* Since panel not set, layer & viewport should be valid instead! */
-		if (layer && viewport) {
-			viewport->set_center_coord(coord, true);
-			layer->emit_layer_changed();
-		}
-	}
-}
-
-
-
-
-void LayerTRW::goto_track_startpoint_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (trk && !trk->empty()) {
-		goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_first()->coord);
-	}
-}
-
-
-
-
-void LayerTRW::goto_track_center_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (trk && !trk->empty()) {
-		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
-		trk->find_maxmin(maxmin);
-		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
-		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		Coord coord(average, this->coord_mode);
-		goto_coord(panel, this, this->menu_data->viewport, coord);
+	if (viewport) {
+		viewport->set_center_coord(coord, true);
+		this->emit_layer_changed();
 	}
 }
 
@@ -3622,37 +3517,8 @@ void LayerTRW::convert_track_route_cb(void)
 
 
 
-void LayerTRW::anonymize_times_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	trk->anonymize_times();
-}
-
-
-
-
-void LayerTRW::interpolate_times_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	trk->interpolate_times();
-}
-
-
-
-
 void LayerTRW::extend_track_end_cb(void)
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 
 	if (!trk) {
@@ -3664,7 +3530,8 @@ void LayerTRW::extend_track_end_cb(void)
 	this->get_window()->activate_tool(trk->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!trk->empty()) {
-		goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
+		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
+		this->goto_coord(this->menu_data->viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -3688,7 +3555,8 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		goto_coord(this->get_window()->get_layers_panel(), this, this->menu_data->viewport, trk->get_tp_last()->coord);
+		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
+		this->goto_coord(viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -3762,50 +3630,6 @@ void LayerTRW::apply_dem_data_only_missing_cb(void)
 
 
 /**
- * A common function for applying the elevation smoothing and reporting the results.
- */
-void LayerTRW::smooth_it(Track * trk, bool flat)
-{
-	unsigned long changed_ = trk->smooth_missing_elevation_data(flat);
-	/* Inform user how much was changed. */
-	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
-	snprintf(str, 64, tmp_str, changed_);
-	Dialog::info(str, this->get_window());
-}
-
-
-
-
-void LayerTRW::missing_elevation_data_interp_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	this->smooth_it(trk, false);
-}
-
-
-
-
-void LayerTRW::missing_elevation_data_flat_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	this->smooth_it(trk, true);
-}
-
-
-
-
-/**
  * Commonal helper function.
  */
 void LayerTRW::wp_changed_message(int changed_)
@@ -3870,104 +3694,6 @@ void LayerTRW::apply_dem_data_wpt_only_missing_cb(void)
 		}
 	}
 	this->wp_changed_message(changed_);
-}
-
-
-
-
-void LayerTRW::goto_track_endpoint_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	if (trk->empty()) {
-		return;
-	}
-	goto_coord(panel, this, this->menu_data->viewport, trk->get_tp_last()->coord);
-}
-
-
-
-
-void LayerTRW::goto_track_max_speed_cb()
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	Trackpoint * vtp = trk->get_tp_by_max_speed();
-	if (!vtp) {
-		return;
-	}
-	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
-}
-
-
-
-
-void LayerTRW::goto_track_max_alt_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	Trackpoint* vtp = trk->get_tp_by_max_alt();
-	if (!vtp) {
-		return;
-	}
-	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
-}
-
-
-
-
-void LayerTRW::goto_track_min_alt_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	Trackpoint* vtp = trk->get_tp_by_min_alt();
-	if (!vtp) {
-		return;
-	}
-	goto_coord(panel, this, this->menu_data->viewport, vtp->coord);
-}
-
-
-
-
-/*
- * Automatically change the viewport to center on the track and zoom to see the extent of the track.
- */
-void LayerTRW::auto_track_view_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (trk && !trk->empty()) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		trk->find_maxmin(maxmin);
-		this->zoom_to_show_latlons(this->get_window()->get_viewport(), maxmin);
-		if (panel) {
-			panel->emit_update_window_cb();
-		} else {
-			this->emit_layer_changed();
-		}
-	}
 }
 
 
@@ -4526,7 +4252,6 @@ void LayerTRW::split_at_selected_trackpoint(const QString & item_type_id)
 /* split by time routine */
 void LayerTRW::split_by_timestamp_cb(void)
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 	Track * trk = this->tracks.items.at(child_uid);
 
@@ -4559,7 +4284,8 @@ void LayerTRW::split_by_timestamp_cb(void)
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
 
 			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), this->get_window()) {
-				goto_coord(panel, this, this->menu_data->viewport, (*iter)->coord);
+				Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
+				this->goto_coord(viewport, (*iter)->coord);
 			}
 			return;
 		}
@@ -5155,8 +4881,6 @@ void LayerTRW::sort_order_timestamp_descend_cb(void)
 
 void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
 	/* Ensure list of track names offered is unique. */
 	QString duplicate_name = this->tracks.has_duplicate_track_names();
 	if (duplicate_name != "") {
@@ -5164,7 +4888,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 			this->tracks.uniquify(this->track_sort_order);
 
 			/* Update. */
-			panel->emit_update_window_cb();
+			g_tree->emit_update_window();
 		} else {
 			return;
 		}
@@ -5209,8 +4933,6 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 
 void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
 	/* Ensure list of track names offered is unique. */
 	QString duplicate_name = this->routes.has_duplicate_track_names();
 	if (duplicate_name != "") {
@@ -5218,7 +4940,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 			this->routes.uniquify(this->track_sort_order);
 
 			/* Update. */
-			panel->emit_update_window_cb();
+			g_tree->emit_update_window();
 		} else {
 			return;
 		}
@@ -5265,9 +4987,8 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), this->get_window())) {
 			this->waypoints.uniquify(this->wp_sort_order);
 
-			LayersPanel * panel = this->get_window()->get_layers_panel();
 			/* Update. */
-			panel->emit_update_window_cb();
+			g_tree->emit_update_window();
 		} else {
 			return;
 		}
@@ -5403,11 +5124,11 @@ void LayerTRW::routes_stats_cb(void)
 
 void LayerTRW::go_to_selected_waypoint_cb(void)
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
 	Waypoint * wp = this->waypoints.items.at(wp_uid);
 	if (wp) {
-		goto_coord(panel, this, this->menu_data->viewport, wp->coord);
+		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
+		this->goto_coord(viewport, wp->coord);
 	}
 }
 
@@ -5442,7 +5163,7 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel)
+QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & new_name)
 {
 	QString empty_string("");
 
@@ -5471,7 +5192,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
 
-		panel->emit_update_window_cb();
+		g_tree->emit_update_window();
 
 		return new_name;
 	}
@@ -5509,7 +5230,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
 
-		panel->emit_update_window_cb();
+		g_tree->emit_update_window();
 
 		return new_name;
 	}
@@ -5547,7 +5268,7 @@ QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & n
 		this->tree_view->set_name(sublayer->index, new_name);
 		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
 
-		panel->emit_update_window_cb();
+		g_tree->emit_update_window();
 
 		return new_name;
 	}
@@ -5783,7 +5504,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 		return;
 	}
 
-	Viewport * viewport = this->get_window()->get_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	int vp_xx, vp_yy; /* In viewport pixels. */
 	viewport->coord_to_screen(coord, &vp_xx, &vp_yy);
@@ -6287,7 +6008,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		return;
 	}
 
-	const Viewport * viewport = this->get_window()->get_viewport();
+	const Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	std::list<Layer const *> * layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
 	int num_maps = layers->size();

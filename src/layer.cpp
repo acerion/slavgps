@@ -725,7 +725,7 @@ void Layer::add_menu_items(QMenu & menu)
 
 
 
-QString Layer::sublayer_rename_request(TreeItem * sublayer, const QString & new_name, LayersPanel * panel)
+QString Layer::sublayer_rename_request(TreeItem * sublayer, const QString & new_name)
 {
 	return QString("");
 }

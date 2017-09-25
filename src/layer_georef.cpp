@@ -47,7 +47,7 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "file.h"
 #include "settings.h"
 #include "globals.h"
-#include "layers_panel.h"
+//#include "layers_panel.h"
 #include "util.h"
 #include "viewport_zoom.h"
 
@@ -59,6 +59,7 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
 /*
 static SGVariant image_default(void)
 {
@@ -156,7 +157,6 @@ static Parameter io_prefs[] = {
 
 typedef struct {
 	LayerGeoref * layer;
-	LayersPanel * panel;
 } georef_data_t;
 
 
@@ -1050,11 +1050,12 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 static void georef_layer_zoom_to_fit(georef_data_t * data)
 {
 	LayerGeoref * layer = data->layer;
-	LayersPanel * panel = data->panel;
 
-	panel->get_viewport()->set_xmpp(layer->mpp_easting);
-	panel->get_viewport()->set_ympp(layer->mpp_northing);
-	panel->emit_update_window_cb();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
+	viewport->set_xmpp(layer->mpp_easting);
+	viewport->set_ympp(layer->mpp_northing);
+
+	g_tree->emit_update_window();
 }
 
 
@@ -1063,8 +1064,8 @@ static void georef_layer_zoom_to_fit(georef_data_t * data)
 static void georef_layer_goto_center(georef_data_t * data)
 {
 	LayerGeoref * layer = data->layer;
-	LayersPanel * panel = data->panel;
-	Viewport * viewport = panel->get_viewport();
+
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	struct UTM utm = viewport->get_center()->get_utm();
 
@@ -1074,7 +1075,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	Coord coord(utm, viewport->get_coord_mode());
 	viewport->set_center_coord(coord, true);
 
-	panel->emit_update_window_cb();
+	g_tree->emit_update_window();
 }
 
 
@@ -1085,7 +1086,6 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 #ifdef K
 	static georef_data_t pass_along;
 	pass_along.layer = this;
-	pass_along.panel = (LayersPanel *) panel;
 
 	QAction * action = NULL;
 

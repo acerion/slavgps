@@ -50,7 +50,6 @@ namespace SlavGPS {
 
 	class Window;
 	class Viewport;
-	class LayersPanel;
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
@@ -83,7 +82,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent = NULL);
+		TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent = NULL);
 		~TrackProfileDialog();
 
 	private slots:
@@ -177,7 +176,6 @@ namespace SlavGPS {
 		Window * parent = NULL;
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
-		LayersPanel * panel = NULL;
 		Viewport * main_viewport = NULL;
 
 		QTabWidget * tabs = NULL;
@@ -289,7 +287,7 @@ namespace SlavGPS {
 
 
 
-	void track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport);
+	void track_profile_dialog(Window * parent, Track * trk, Viewport * main_viewport);
 
 
 
