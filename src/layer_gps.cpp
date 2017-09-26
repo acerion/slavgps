@@ -739,10 +739,11 @@ void LayerGPS::connect_to_tree(TreeView * tree_view_, TreeIndex *layer_iter)
 
 	for (int ix = 0; ix < NUM_TRW; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
-		// void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, LayerType layer_type, time_t timestamp);
-		this->tree_view->add_layer(layer_iter, &iter,
-					   _(trw_names[ix]), this, true,
-					   trw, trw->type, trw->get_timestamp());
+
+		/* TODO: find a way to pass trw->get_timestamp() to tree view's item. */
+		/* TODO: find a way to pass 'above==true' argument to function adding new tree item. */
+		TreeIndex const & iter = this->tree_view->add_tree_item(layer_iter, trw, _(trw_names[ix]));
+
 		if (!trw->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}

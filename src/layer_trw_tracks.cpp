@@ -677,7 +677,7 @@ void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_la
 		/* TODO: pass timestamp to tree view. */
 
 		/* "parent_layer_" is a layer, which is not an immediate parent, but a grandparent of added child. */
-		this->tree_view->add_tree_item(trk, this->index, parent_layer_, trk->name);
+		this->tree_view->add_tree_item(this->index, trk, trk->name);
 
 		delete icon;
 	}

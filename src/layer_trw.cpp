@@ -1580,7 +1580,7 @@ void LayerTRW::add_tracks_node(void)
 	this->tracks.owning_layer = this;
 	this->tracks.editable = false;
 
-	this->tree_view->add_tree_item(&this->tracks, this->index, this, tr("Tracks"));
+	this->tree_view->add_tree_item(this->index, &this->tracks, tr("Tracks"));
 }
 
 
@@ -1595,9 +1595,10 @@ void LayerTRW::add_waypoints_node(void)
 	this->waypoints.tree_view = this->tree_view;
 	this->waypoints.window = this->get_window();
 	this->waypoints.parent_layer = this;
+	this->waypoints.owning_layer = this;
 	this->waypoints.editable = false;
 
-	this->tree_view->add_tree_item(&this->waypoints, this->index, this, tr("Waypoints"));
+	this->tree_view->add_tree_item(this->index, &this->waypoints, tr("Waypoints"));
 }
 
 
@@ -1616,7 +1617,7 @@ void LayerTRW::add_routes_node(void)
 	this->routes.owning_layer = this;
 	this->routes.editable = false;
 
-	this->tree_view->add_tree_item(&this->routes, this->index, this, tr("Routes"));
+	this->tree_view->add_tree_item(this->index, &this->routes, tr("Routes"));
 }
 
 
@@ -2872,7 +2873,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		/* TODO: somehow pass timestamp to tree for sorting. */
 
 		/* Visibility column always needed for waypoints. */
-		this->tree_view->add_tree_item(wp, this->waypoints.index, this, wp->name);
+		this->tree_view->add_tree_item(this->waypoints.index, wp, wp->name);
 
 		/* TODO: verify whether this setting is necessary.
 		   I think that we already do setting of visibility in add_tree_item(). */
@@ -2910,7 +2911,7 @@ void LayerTRW::add_track(Track * trk)
 		/* TODO: somehow pass timestamp to tree for sorting. */
 
 		/* Visibility column always needed for tracks. */
-		this->tree_view->add_tree_item(trk, this->tracks.index, this, trk->name);
+		this->tree_view->add_tree_item(this->tracks.index, trk, trk->name);
 
 		/* TODO: verify whether this setting is necessary.
 		   I think that we already do setting of visibility in add_tree_item(). */
@@ -2940,7 +2941,7 @@ void LayerTRW::add_route(Track * trk)
 		}
 
 		/* Visibility column always needed for routes. */
-		this->tree_view->add_tree_item(trk, this->routes.index, this, trk->name);
+		this->tree_view->add_tree_item(this->routes.index, trk, trk->name);
 
 		/* TODO: verify whether this setting is necessary.
 		   I think that we already do setting of visibility in add_tree_item(). */

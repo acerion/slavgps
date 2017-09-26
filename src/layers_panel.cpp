@@ -136,7 +136,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->toplayer = new LayerAggregate();
 	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
-	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0);
+	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
 	this->toplayer->connect_to_tree(this->tree_view, this->toplayer_item);
 
 
@@ -206,9 +206,14 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 {
 	/* Get type and data. */
 	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeItem * item = this->tree_view->get_tree_item(index);
+	if (!item) {
+		qDebug() << "EE: Layers Panel: item toggled: failed to get non-NULL item";
+		return;
+	}
 
 	bool visible;
-	switch (type) {
+	switch (item->tree_item_type) {
 	case TreeItemType::LAYER: {
 		Layer * layer = this->tree_view->get_layer(index);
 		visible = (layer->visible ^= 1);
@@ -216,8 +221,8 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		Layer * parent_layer = this->tree_view->get_owning_layer(index);
-		visible = parent_layer->sublayer_toggle_visible(this->tree_view->get_tree_item(index));
+		Layer * parent_layer = (Layer *) item;
+		visible = parent_layer->sublayer_toggle_visible(item);
 		parent_layer->emit_layer_changed_although_invisible();
 		break;
 	}
@@ -262,8 +267,9 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
-		Layer * parent_layer = this->tree_view->get_owning_layer(index);
-		const QString name = parent_layer->sublayer_rename_request(this->tree_view->get_tree_item(index), new_text);
+		TreeItem * item = this->tree_view->get_tree_item(index);
+		Layer * parent_layer = (Layer *) item->owning_layer;
+		const QString name = parent_layer->sublayer_rename_request(item, new_text);
 		if (!name.isEmpty()) {
 			this->tree_view->set_name(index, name);
 		}
@@ -517,6 +523,9 @@ void LayersPanel::add_layer(Layer * layer)
 	layer->change_coord_mode(this->viewport->get_coord_mode());
 	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
 
+	/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
+	layer->tree_view = this->tree_view;
+
 	TreeIndex const & selected_index = this->tree_view->get_selected_item();
 	if (!selected_index.isValid()) {
 		/* No particular layer is selected in panel, so the
@@ -532,9 +541,10 @@ void LayersPanel::add_layer(Layer * layer)
 
 		TreeIndex replace_index;
 		Layer * current = NULL;
+		TreeItem * selected_item = this->tree_view->get_tree_item(selected_index);
 
-		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_owning_layer(selected_index);
+		if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
+			current = (Layer *) selected_item->owning_layer;
 			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
 		} else {
 			current = this->tree_view->get_layer(selected_index);
@@ -545,7 +555,9 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* A new layer can be inserted only under an Aggregate layer.
 		   Find first one in tree hierarchy (going up). */
+		qDebug() << "---- will call 'go up to layer'";
 		TreeIndex aggregate_index = this->tree_view->go_up_to_layer(current->index, LayerType::AGGREGATE);
+		qDebug() << "---- called 'go up to layer'";
 		if (aggregate_index.isValid()) {
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_layer(aggregate_index);
 			assert(aggregate->connected_to_tree);
@@ -580,9 +592,13 @@ void LayersPanel::move_item(bool up)
 	}
 
 	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
-	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(selected_index);
 
+	TreeItem * selected_item = this->tree_view->get_tree_item(selected_index);
+
+	if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		/* A layer can be owned only by Aggregate layer.
+		   TODO: what about TRW layers under GPS layer? */
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
 			parent_layer->move_layer(selected_index, up);
@@ -639,11 +655,12 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeItem * selected_item = this->tree_view->get_tree_item(index);
 
-	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(index);
-
+	if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		/* A layer can be owned only by Aggregate layer.
+		     TODO: what about TRW layers under GPS layer? */
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
@@ -664,7 +681,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		} else {
 			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
-	} else if (type == TreeItemType::SUBLAYER) {
+	} else if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
 		selected->cut_sublayer(this->tree_view->get_tree_item(index));
 	}
@@ -722,8 +739,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(index);
-	if (type == TreeItemType::LAYER) {
+	TreeItem * selected_item = this->tree_view->get_tree_item(index);
+	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		Layer * layer = this->tree_view->get_layer(index);
 
 
@@ -732,7 +749,9 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			return;
 		}
 
-		LayerAggregate * parent_layer = (LayerAggregate *) this->tree_view->get_owning_layer(index);
+		/* A layer can be owned only by Aggregate layer.
+		     TODO: what about TRW layers under GPS layer? */
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
@@ -752,9 +771,9 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		} else {
 			Dialog::info(tr("You cannot delete the Top Layer."), this->window);
 		}
-	} else if (type == TreeItemType::SUBLAYER) {
-		Layer * selected = this->get_selected_layer();
-		selected->delete_sublayer(this->tree_view->get_tree_item(index));
+	} else if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
+		Layer * parent_layer = this->get_selected_layer();
+		parent_layer->delete_sublayer(selected_item);
 	}
 }
 
@@ -947,12 +966,15 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	if (ind.isValid()) {
 		qDebug() << "II: Layers Panel: context menu event: valid tree view index, row =" << ind.row();
 		index = QPersistentModelIndex(ind);
+		TreeItem * item = this->tree_view->get_tree_item(index);
 
-		if (TreeItemType::LAYER == this->tree_view->get_item_type(index)) {
-			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::LAYER";
+		if (TreeItemType::LAYER == item->tree_item_type) {
 
 			layer = this->tree_view->get_layer(index);
-			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
+
+			qDebug() << "II: Layers Panel: context menu event: menu for layer type" << (layer ? layer->debug_string : "NULL");
+
+
 
 			QModelIndex parent_index = index.parent();
 			if (parent_index.isValid()) {
@@ -964,13 +986,12 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 				index = index2;
 			}
 		} else {
-			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
+			qDebug() << "II: Layers Panel: context menu event: menu for sublayer of layer type" << (layer ? layer->debug_string : "NULL");
 
-			layer = this->tree_view->get_owning_layer(index);
-			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
+			layer = (Layer *) item->owning_layer;
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->sublayer = this->tree_view->get_tree_item(index);
+			layer->menu_data->sublayer = item;
 			layer->menu_data->viewport = this->get_viewport();
 			layer->menu_data->confirm = true; /* Confirm delete request. */
 		}

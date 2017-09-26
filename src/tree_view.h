@@ -59,10 +59,9 @@ namespace SlavGPS {
 
 		/* These columns are not visible in tree view. */
 		TREE_ITEM_TYPE = 3, /* Implicit, based on function adding an item. */
-		OWNING_LAYER   = 4, /* Tree View doesn't care about how complicated internal structure of a layer and its sublayers and their sublayers. Every item, no matter how much nested, has an owner that is of type Layer. The owner is called "owning layer". */
-		TREE_ITEM      = 5, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
-		EDITABLE       = 6,
-		TIMESTAMP      = 7, /* Item's timestamp. Sortable column. */
+		TREE_ITEM      = 4, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
+		EDITABLE       = 5,
+		TIMESTAMP      = 6, /* Item's timestamp. Sortable column. */
 	};
 
 

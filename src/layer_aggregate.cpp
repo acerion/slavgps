@@ -208,7 +208,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 	if (this->connected_to_tree) {
-		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, layer->get_timestamp());
+		/* TODO: find a way to pass layer->get_timestamp() to created tree item. */
+		TreeIndex const & new_index = this->tree_view->add_tree_item(this->index, layer, layer->name);
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
@@ -877,7 +878,8 @@ void LayerAggregate::connect_to_tree(TreeView * tree_view_, TreeIndex const & la
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, layer->get_timestamp());
+		/* TODO: find way to pass layer->get_timestamp() to tree view's item. */
+		TreeIndex const & new_index = this->tree_view->add_tree_item(this->index, layer, layer->name);
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
