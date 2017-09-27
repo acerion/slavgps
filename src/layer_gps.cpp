@@ -723,13 +723,12 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::connect_to_tree(TreeView * tree_view_, TreeIndex *layer_iter)
+void LayerGPS::connect_to_tree(TreeView * tree_view_)
 {
 #ifdef K
 	GtkTreeIter iter;
 
 	this->tree_view = tree_view_;
-	this->iter = *layer_iter;
 	this->connected_to_tree = true;
 
 	/* TODO set to garmin by default.
@@ -740,14 +739,14 @@ void LayerGPS::connect_to_tree(TreeView * tree_view_, TreeIndex *layer_iter)
 	for (int ix = 0; ix < NUM_TRW; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
 
-		/* TODO: find a way to pass trw->get_timestamp() to tree view's item. */
-		/* TODO: find a way to pass 'above==true' argument to function adding new tree item. */
-		TreeIndex const & iter = this->tree_view->add_tree_item(layer_iter, trw, _(trw_names[ix]));
+		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
+		/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'trw').
+		   From now on the ::index will be used e.g. ::set_timestamp() (explicitly) or
+		   in ::connect_to_tree() (implicitly). */
+		this->tree_view->add_tree_item(this->iter, trw, _(trw_names[ix]));
+		this->tree_view->set_timestamp(trw->index, trw->get_timestamp());
 
-		if (!trw->visible) {
-			this->tree_view->set_visibility(&iter, false);
-		}
-		trw->connect_to_tree(this->tree_view, &iter);
+		trw->connect_to_tree(this->tree_view);
 		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb));
 	}
 #endif

@@ -182,7 +182,7 @@ namespace SlavGPS {
 		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		bool sublayer_toggle_visible(TreeItem * sublayer);
 
-		void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
+		void connect_to_tree(TreeView * tree_view);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 

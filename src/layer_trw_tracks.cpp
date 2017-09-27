@@ -74,6 +74,7 @@ LayerTRWTracks::LayerTRWTracks()
 	/* Default values, may be changed by caller's code. */
 	this->type_id = "sg.trw.routes";
 	this->accepted_child_type_ids << "sg.trw.route";
+	this->editable = false;
 }
 
 
@@ -654,9 +655,12 @@ void LayerTRWTracks::update_treeview(Track * trk)
 
 
 
-void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_layer_)
+void LayerTRWTracks::connect_to_tree(TreeView * tree_view_)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+	this->tree_view = tree_view_;
+	/* this->connected_to_tree = true; */
+
+	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 
 		QIcon * icon = NULL;
@@ -666,18 +670,17 @@ void LayerTRWTracks::add_items_as_children(Tracks & tracks, LayerTRW * parent_la
 			icon = new QIcon(pixmap);
 		}
 
-		/* TODO: pass icon to tree view. */
-
 		time_t timestamp = 0;
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
 			timestamp = tpt->timestamp;
 		}
 
-		/* TODO: pass timestamp to tree view. */
+		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
-		/* "parent_layer_" is a layer, which is not an immediate parent, but a grandparent of added child. */
 		this->tree_view->add_tree_item(this->index, trk, trk->name);
+		this->tree_view->set_icon(trk->index, icon);
+		this->tree_view->set_timestamp(trk->index, timestamp);
 
 		delete icon;
 	}

@@ -118,8 +118,8 @@ namespace SlavGPS {
 
 
 		/* Add waypoints from C++ container to program's tree
-		   structure as tree children of a trw layer. */
-		void add_items_as_children(Waypoints & waypoints, LayerTRW * parent_layer);
+		   view as tree items under "Waypoints" node. */
+		void connect_to_tree(TreeView * tree_view);
 
 
 		void find_maxmin(struct LatLon maxmin[2]);

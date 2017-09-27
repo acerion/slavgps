@@ -809,12 +809,10 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 
 	tree_item->index = QPersistentModelIndex(first_item->index());
 
-#ifdef K
 	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
 	if (!tree_item->visible) {
 		this->set_visibility(tree_item->index, false);
 	}
-#endif
 
 	return tree_item->index;
 }
@@ -1113,7 +1111,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 
 TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index)
 {
-	/* kamilTODO: handle "sibling" */
+	/* TODO: handle "sibling" and "above" arguments. */
 #ifdef K
 	if (sibling_index.isValid()) {
 		if (above) {
@@ -1124,9 +1122,10 @@ TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, Tr
 	} else
 #endif
 		{
-		/* TODO: find a way to pass "timestamp" and "above" arguments to "add_tree_item()" */
-		return this->add_tree_item(parent_index, layer, layer->name);
-	}
+			this->add_tree_item(parent_index, layer, layer->name);
+			this->set_timestamp(layer->index, timestamp);
+			return layer->index;
+		}
 }
 
 

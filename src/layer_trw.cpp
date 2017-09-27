@@ -1571,14 +1571,12 @@ void LayerTRW::add_tracks_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->tracks.tree_item_type = TreeItemType::SUBLAYER;
-
 	this->tracks.type_id = "sg.trw.tracks";
 	this->tracks.accepted_child_type_ids << "sg.trw.track";
-	this->tracks.tree_view = this->tree_view;
 	this->tracks.window = this->get_window();
 	this->tracks.owning_layer = this;
-	this->tracks.editable = false;
+
+	this->tracks.tree_view = this->tree_view;
 
 	this->tree_view->add_tree_item(this->index, &this->tracks, tr("Tracks"));
 }
@@ -1590,13 +1588,11 @@ void LayerTRW::add_waypoints_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->routes.tree_item_type = TreeItemType::SUBLAYER;
-
-	this->waypoints.tree_view = this->tree_view;
 	this->waypoints.window = this->get_window();
 	this->waypoints.parent_layer = this;
 	this->waypoints.owning_layer = this;
-	this->waypoints.editable = false;
+
+	this->waypoints.tree_view = this->tree_view;
 
 	this->tree_view->add_tree_item(this->index, &this->waypoints, tr("Waypoints"));
 }
@@ -1608,14 +1604,12 @@ void LayerTRW::add_routes_node(void)
 {
 	assert(this->connected_to_tree);
 
-	this->routes.tree_item_type = TreeItemType::SUBLAYER;
-
 	this->routes.type_id = "sg.trw.routes";
 	this->routes.accepted_child_type_ids << "sg.trw.route";
-	this->routes.tree_view = this->tree_view;
 	this->routes.window = this->get_window();
 	this->routes.owning_layer = this;
-	this->routes.editable = false;
+
+	this->routes.tree_view = this->tree_view;
 
 	this->tree_view->add_tree_item(this->index, &this->routes, tr("Routes"));
 }
@@ -1623,28 +1617,24 @@ void LayerTRW::add_routes_node(void)
 
 
 
-void LayerTRW::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index)
+void LayerTRW::connect_to_tree(TreeView * tree_view_)
 {
 	this->tree_view = tree_view_;
-	this->index = layer_index;
 	this->connected_to_tree = true;
 
 	if (this->tracks.items.size() > 0) {
 		this->add_tracks_node();
-		this->tracks.add_items_as_children(this->tracks.items, this);
-		this->tree_view->set_visibility(this->tracks.get_index(), this->tracks.visible);
+		this->tracks.connect_to_tree(this->tree_view);
 	}
 
 	if (this->routes.items.size() > 0) {
 		this->add_routes_node();
-		this->routes.add_items_as_children(this->routes.items, this);
-		this->tree_view->set_visibility(this->routes.get_index(), this->routes.visible);
+		this->routes.connect_to_tree(this->tree_view);
 	}
 
 	if (this->waypoints.items.size() > 0) {
 		this->add_waypoints_node();
-		this->waypoints.add_items_as_children(this->waypoints.items, this);
-		this->tree_view->set_visibility(this->waypoints.get_index(), this->waypoints.visible);
+		this->waypoints.connect_to_tree(this->tree_view);
 	}
 
 	this->verify_thumbnails();
@@ -2870,15 +2860,8 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 			timestamp = wp->timestamp;
 		}
 
-		/* TODO: somehow pass timestamp to tree for sorting. */
-
-		/* Visibility column always needed for waypoints. */
 		this->tree_view->add_tree_item(this->waypoints.index, wp, wp->name);
-
-		/* TODO: verify whether this setting is necessary.
-		   I think that we already do setting of visibility in add_tree_item(). */
-		/* Actual setting of visibility dependent on the waypoint. */
-		this->tree_view->set_visibility(wp->index, wp->visible);
+		this->tree_view->set_timestamp(wp->index, timestamp);
 
 		/* Sort now as post_read is not called on a waypoint connected to tree. */
 		this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
@@ -2908,15 +2891,8 @@ void LayerTRW::add_track(Track * trk)
 			timestamp = tp->timestamp;
 		}
 
-		/* TODO: somehow pass timestamp to tree for sorting. */
-
-		/* Visibility column always needed for tracks. */
 		this->tree_view->add_tree_item(this->tracks.index, trk, trk->name);
-
-		/* TODO: verify whether this setting is necessary.
-		   I think that we already do setting of visibility in add_tree_item(). */
-		/* Actual setting of visibility dependent on the track. */
-		this->tree_view->set_visibility(trk->index, trk->visible);
+		this->tree_view->set_timestamp(trk->index, timestamp);
 
 		/* Sort now as post_read is not called on a track connected to tree. */
 		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
@@ -2940,13 +2916,7 @@ void LayerTRW::add_route(Track * trk)
 			this->add_routes_node();
 		}
 
-		/* Visibility column always needed for routes. */
 		this->tree_view->add_tree_item(this->routes.index, trk, trk->name);
-
-		/* TODO: verify whether this setting is necessary.
-		   I think that we already do setting of visibility in add_tree_item(). */
-		/* Actual setting of visibility dependent on the route. */
-		this->tree_view->set_visibility(trk->index, trk->visible);
 
 		/* Sort now as post_read is not called on a route connected to tree. */
 		this->tree_view->sort_children(this->routes.get_index(), this->track_sort_order);

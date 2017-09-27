@@ -173,9 +173,7 @@ namespace SlavGPS {
 
 		virtual bool properties_dialog(Viewport * viewport);
 
-		/* Normally only needed for layers with sublayers. This is called when they
-		   are added to the treeview so they can add sublayers to the treeview. */
-		virtual void connect_to_tree(TreeView * tree_view, TreeIndex const & layer_index);
+		virtual void connect_to_tree(TreeView * tree_view);
 
 		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.
 		   @is_file_operation denotes if for file I/O, as opposed to display/cut/copy etc... operations. */

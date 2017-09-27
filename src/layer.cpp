@@ -734,10 +734,9 @@ bool Layer::sublayer_toggle_visible(TreeItem * sublayer)
 
 
 
-void Layer::connect_to_tree(TreeView * tree_view_, TreeIndex const & layer_index)
+void Layer::connect_to_tree(TreeView * tree_view_)
 {
 	this->tree_view = tree_view_;
-	this->index = layer_index;
 	this->connected_to_tree = true;
 
 	return;

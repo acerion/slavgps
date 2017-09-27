@@ -136,8 +136,13 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->toplayer = new LayerAggregate();
 	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
+
+
+	/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'this->toplayer').
+	   From now on the ::index will be used e.g. in ::connect_to_tree() (implicitly). */
 	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
-	this->toplayer->connect_to_tree(this->tree_view, this->toplayer_item);
+
+	this->toplayer->connect_to_tree(this->tree_view);
 
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
