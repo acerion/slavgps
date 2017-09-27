@@ -107,13 +107,13 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		QMenu * view_submenu = menu.addMenu(QIcon::fromTheme("edit-find"), tr("V&iew"));
 
 		qa = view_submenu->addAction(tr("View All &Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), &this->tracks, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->tracks, SLOT (rezoom_to_show_all_items_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Routes"));
-		connect(qa, SIGNAL (triggered(bool)), &this->routes, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->routes, SLOT (rezoom_to_show_all_items_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), &this->waypoints, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->waypoints, SLOT (rezoom_to_show_all_items_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Goto Center of Layer"));
@@ -288,11 +288,11 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
-	qa->setEnabled((bool) (this->tracks.items.size() + this->routes.items.size()));
+	qa->setEnabled((bool) (this->tracks->items.size() + this->routes->items.size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
-	qa->setEnabled((bool) (this->waypoints.items.size()));
+	qa->setEnabled((bool) (this->waypoints->items.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */

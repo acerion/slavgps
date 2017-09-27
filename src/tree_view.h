@@ -92,6 +92,14 @@ namespace SlavGPS {
 
 		virtual QString get_tooltip(void);
 
+		/* A TreeItem object needs to implement this method if it contains (is direct
+		   parent of) any items/children that need to be added to application's tree
+		   of items.
+
+		   This method should call add_tree_item() on any such
+		   child that needs to be added to the tree. */
+		virtual void add_children_to_tree(void) {};
+
 		virtual bool add_context_menu_items(QMenu & menu) { return false; };
 
 
@@ -100,13 +108,10 @@ namespace SlavGPS {
 		virtual bool toggle_visible(void);
 		virtual void set_visible(bool new_state);
 
-
-		char debug_string[100] = { 0 };
-
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
-		TreeIndex index;
-		TreeView * tree_view = NULL; /* Reference. */
+		TreeIndex index;             /* Set in TreeView::add_tree_item(). */
+		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::add_tree_item(). */
 
 		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */
@@ -116,8 +121,9 @@ namespace SlavGPS {
 		QString type_id;
 		QStringList accepted_child_type_ids;
 
-		Window * window = NULL;
-		Layer * owning_layer = NULL;
+		Layer * owning_layer = NULL; /* Reference. */
+
+		char debug_string[100] = { 0 };
 	};
 
 

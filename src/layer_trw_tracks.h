@@ -122,10 +122,7 @@ namespace SlavGPS {
 
 		QString get_tooltip();
 
-
-		/* Add waypoints from C++ container to program's tree
-		   view as tree items under "Tracks" or "Routes" node. */
-		void connect_to_tree(TreeView * tree_view);
+		void add_children_to_tree(void);
 
 		void calculate_bounds(void);
 

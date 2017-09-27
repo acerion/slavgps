@@ -808,6 +808,7 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled_cb(QStandardItem *)));
 
 	tree_item->index = QPersistentModelIndex(first_item->index());
+	tree_item->tree_view = this;
 
 	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
 	if (!tree_item->visible) {
@@ -1307,7 +1308,6 @@ sg_uid_t TreeItem::get_uid(void) const
 {
 	return this->uid;
 }
-
 
 
 

@@ -117,9 +117,7 @@ namespace SlavGPS {
 		QString get_tooltip();
 
 
-		/* Add waypoints from C++ container to program's tree
-		   view as tree items under "Waypoints" node. */
-		void connect_to_tree(TreeView * tree_view);
+		void add_children_to_tree(void);
 
 
 		void find_maxmin(struct LatLon maxmin[2]);
@@ -158,9 +156,6 @@ namespace SlavGPS {
 
 		Waypoints items;
 		LatLonBBox bbox;
-
-		Window * window = NULL;
-		LayerTRW * parent_layer = NULL;
 
 
 	public slots:

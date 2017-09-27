@@ -2433,7 +2433,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
-	parent_layer_->menu_data->misc = parent_layer_->tracks.items.at(parent_layer_->menu_data->sublayer->uid);
+	parent_layer_->menu_data->misc = parent_layer_->tracks->items.at(parent_layer_->menu_data->sublayer->uid);
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (osm_traces_upload_track_cb()));
 #endif
 
@@ -2445,10 +2445,11 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 
 
 	/* ATM This function is only available via the layers panel, due to needing a panel. */
-	if (this->window->get_layers_panel()) {
-		QMenu * submenu = a_acquire_track_menu(this->window, this->window->get_layers_panel(),
+	if (g_tree->tree_get_layers_panel()) {
+		QMenu * submenu = a_acquire_track_menu(g_tree->tree_get_main_window(),
+						       g_tree->tree_get_layers_panel(),
 						       parent_layer_->menu_data->viewport,
-						       parent_layer_->tracks.items.at(parent_layer_->menu_data->sublayer->uid));
+						       parent_layer_->tracks->items.at(parent_layer_->menu_data->sublayer->uid));
 		if (submenu) {
 			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
 			menu.addMenu(submenu);
@@ -2740,7 +2741,7 @@ bool Track::add_context_menu_items(QMenu & menu)
 
 
 	/* Only show on viewport popmenu when a trackpoint is selected. */
-	if (!this->window->get_layers_panel() && ((LayerTRW *) owning_layer)->selected_tp.valid) {
+	if (!g_tree->tree_get_layers_panel() && ((LayerTRW *) owning_layer)->selected_tp.valid) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));

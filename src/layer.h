@@ -173,8 +173,6 @@ namespace SlavGPS {
 
 		virtual bool properties_dialog(Viewport * viewport);
 
-		virtual void connect_to_tree(TreeView * tree_view);
-
 		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.
 		   @is_file_operation denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
@@ -226,11 +224,7 @@ namespace SlavGPS {
 		QIcon get_icon(void);
 		LayerMenuItem get_menu_items_selection(void);
 
-
-
 		QString name;
-		//bool visible = true;
-		bool connected_to_tree = false; /* A layer cannot be totally stand-alone, it has to be a part of layers tree. */
 
 		LayerType type;
 

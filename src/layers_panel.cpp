@@ -138,12 +138,8 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 
 
-	/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'this->toplayer').
-	   From now on the ::index will be used e.g. in ::connect_to_tree() (implicitly). */
+	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
-
-	this->toplayer->connect_to_tree(this->tree_view);
-
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(layer_changed(void)), this, SLOT(emit_update_window_cb(void)));
@@ -555,7 +551,7 @@ void LayersPanel::add_layer(Layer * layer)
 			current = this->tree_view->get_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
 		}
-		assert(current->connected_to_tree);
+		assert(current->tree_view);
 		replace_index = current->index;
 
 		/* A new layer can be inserted only under an Aggregate layer.
@@ -565,7 +561,7 @@ void LayersPanel::add_layer(Layer * layer)
 		qDebug() << "---- called 'go up to layer'";
 		if (aggregate_index.isValid()) {
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_layer(aggregate_index);
-			assert(aggregate->connected_to_tree);
+			assert(aggregate->tree_view);
 
 			if (false
 #ifdef K

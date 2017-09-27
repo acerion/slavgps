@@ -647,7 +647,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 		viewport->set_center_latlon(&ll, true);
 	}
 
-	if ((!aggregate->visible) && aggregate->connected_to_tree) {
+	if ((!aggregate->visible) && aggregate->tree_view) {
 		aggregate->tree_view->set_visibility(aggregate->index, false);
 	}
 

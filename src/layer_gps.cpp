@@ -52,6 +52,7 @@
 #include "layer_gps.h"
 #include "layer_trw.h"
 #include "track_internal.h"
+#include "tree_view_internal.h"
 #include "settings.h"
 #include "globals.h"
 typedef int GdkPixdata; /* TODO: remove sooner or later. */
@@ -407,7 +408,7 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
-			   as this will always be performed later on in vik_gps_layer_connect_to_tree(). */
+			   as this will always be performed later on in LayerGPS::add_children_to_tree(). */
 		}
 		alm_next;
 	}
@@ -687,7 +688,7 @@ void LayerGPS::add_menu_items(QMenu & menu)
 LayerGPS::~LayerGPS()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
-		if (this->connected_to_tree) {
+		if (this->tree_view) {
 			//this->disconnect_layer_signal(this->trw_children[i]);
 		}
 		this->trw_children[i]->unref();
@@ -723,14 +724,9 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::connect_to_tree(TreeView * tree_view_)
+void LayerGPS::add_children_to_tree(void)
 {
-#ifdef K
-	GtkTreeIter iter;
-
-	this->tree_view = tree_view_;
-	this->connected_to_tree = true;
-
+#if 1
 	/* TODO set to garmin by default.
 	   if (a_babel_device_list)
 	           device = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
@@ -740,14 +736,15 @@ void LayerGPS::connect_to_tree(TreeView * tree_view_)
 		LayerTRW * trw = this->trw_children[ix];
 
 		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
-		/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'trw').
-		   From now on the ::index will be used e.g. ::set_timestamp() (explicitly) or
-		   in ::connect_to_tree() (implicitly). */
-		this->tree_view->add_tree_item(this->iter, trw, _(trw_names[ix]));
+
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		this->tree_view->add_tree_item(this->index, trw, _(trw_names[ix]));
+
 		this->tree_view->set_timestamp(trw->index, trw->get_timestamp());
 
-		trw->connect_to_tree(this->tree_view);
+#ifdef K
 		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb));
+#endif
 	}
 #endif
 }

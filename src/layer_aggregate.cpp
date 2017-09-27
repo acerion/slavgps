@@ -144,12 +144,9 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 		put_above = false;
 	}
 
-	if (this->connected_to_tree) {
-		/* ::insert_layer() sets TreeIndex index of added item (i.e. of 'layer').
-		   From now on the ::index will be used e.g. in ::connect_to_tree(). */
+	if (this->tree_view) {
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->insert_layer(layer, this, this->index, put_above, layer->get_timestamp(), replace_index);
-
-		layer->connect_to_tree(this->tree_view);
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
 			this->tree_view->expand(this->index);
@@ -206,14 +203,11 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 
-	if (this->connected_to_tree) {
-		/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'layer').
-		   From now on the ::index will be used e.g. ::set_timestamp() (explicitly) or
-		   in ::connect_to_tree() (implicitly). */
+	if (this->tree_view) {
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->add_tree_item(this->index, layer, layer->name);
-		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
 
-		layer->connect_to_tree(this->tree_view);
+		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
 
 		if (this->children->empty()) {
 			this->tree_view->expand(this->index);
@@ -633,7 +627,7 @@ void LayerAggregate::clear()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		if (layer->connected_to_tree) {
+		if (layer->tree_view) {
 			layer->tree_view->erase(layer->index);
 		}
 		delete layer;
@@ -863,11 +857,8 @@ bool LayerAggregate::select_click(QMouseEvent * event, Viewport * viewport, Laye
 
 
 
-void LayerAggregate::connect_to_tree(TreeView * tree_view_)
+void LayerAggregate::add_children_to_tree(void)
 {
-	this->tree_view = tree_view_;
-	this->connected_to_tree = true;
-
 	if (this->children->empty()) {
 		return;
 	}
@@ -875,13 +866,10 @@ void LayerAggregate::connect_to_tree(TreeView * tree_view_)
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 
-		/* ::add_tree_item() sets TreeIndex index of added item (i.e. of 'layer').
-		   From now on the ::index will be used e.g. ::set_timestamp() (explicitly) or
-		   in ::connect_to_tree() (implicitly). */
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->add_tree_item(this->index, layer, layer->name);
-		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
 
-		layer->connect_to_tree(this->tree_view);
+		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
 	}
 }
 

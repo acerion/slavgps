@@ -66,8 +66,6 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, size_t * len);
 		static Waypoint * unmarshall(uint8_t * data, size_t datalen);
 
-		static void delete_waypoint(Waypoint *);
-
 		void convert(CoordMode dest_mode);
 
 		/* Does ::url, ::comment or ::description field contain an url? */

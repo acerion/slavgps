@@ -291,15 +291,6 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 
 
 
-void Waypoint::delete_waypoint(Waypoint * wp)
-{
-	delete wp;
-	return;
-}
-
-
-
-
 void Waypoint::convert(CoordMode dest_mode)
 {
 	this->coord.change_mode(dest_mode);
@@ -339,7 +330,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 	/* Could be a right-click using the tool. */
-	if (this->window->get_layers_panel() != NULL) {
+	if (g_tree->tree_get_layers_panel() != NULL) {
 		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Go to this Waypoint"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (go_to_selected_waypoint_cb()));
 	}
@@ -406,7 +397,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu);
 
 
-	if (this->window->get_layers_panel()) {
+	if (g_tree->tree_get_layers_panel()) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
@@ -444,7 +435,7 @@ void Waypoint::properties_dialog_cb(void)
 
 	const QString new_name = waypoint_properties_dialog(g_tree->tree_get_main_window(), this->name, this, parent_layer_->coord_mode, false, &updated);
 	if (new_name.size()) {
-		parent_layer_->waypoints.rename_waypoint(this, new_name);
+		parent_layer_->waypoints->rename_waypoint(this, new_name);
 	}
 
 	if (updated && this->index.isValid()) {

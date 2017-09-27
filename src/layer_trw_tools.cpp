@@ -89,7 +89,7 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 
 	search.viewport->get_bbox(&search.bbox);
 
-	this->tracks.track_search_closest_tp(&search);
+	this->tracks->track_search_closest_tp(&search);
 
 	return search.closest_tp;
 }
@@ -105,7 +105,7 @@ Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int 
 	search.viewport = viewport;
 	search.draw_images = this->drawimages;
 
-	this->waypoints.search_closest_wp(&search);
+	this->waypoints->search_closest_wp(&search);
 
 	return search.closest_wp;
 }
@@ -193,7 +193,7 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
 		/* Update waypoint position. */
 		this->current_wp->coord = new_coord;
-		this->waypoints.calculate_bounds();
+		this->waypoints->calculate_bounds();
 		/* Reset waypoint pointer. */
 		this->current_wp = NULL;
 
@@ -248,14 +248,14 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints.visible && BBOX_INTERSECT (this->waypoints.bbox, bbox)) {
+	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, bbox)) {
 		WaypointSearch wp_search;
 		wp_search.viewport = viewport;
 		wp_search.x = ev->x();
 		wp_search.y = ev->y();
 		wp_search.draw_images = this->drawimages;
 
-		this->waypoints.search_closest_wp(&wp_search);
+		this->waypoints->search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
 
@@ -301,8 +301,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	tp_search.bbox = bbox;
 
 	/* FIXME: we have a very similar block of code below. */
-	if (this->tracks.visible) {
-		this->tracks.track_search_closest_tp(&tp_search);
+	if (this->tracks->visible) {
+		this->tracks->track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp) {
 
@@ -339,8 +339,8 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	}
 
 	/* Try again for routes. */
-	if (this->routes.visible) {
-		this->routes.track_search_closest_tp(&tp_search);
+	if (this->routes->visible) {
+		this->routes->track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp)  {
 

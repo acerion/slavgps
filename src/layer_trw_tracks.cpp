@@ -655,11 +655,8 @@ void LayerTRWTracks::update_treeview(Track * trk)
 
 
 
-void LayerTRWTracks::connect_to_tree(TreeView * tree_view_)
+void LayerTRWTracks::add_children_to_tree(void)
 {
-	this->tree_view = tree_view_;
-	/* this->connected_to_tree = true; */
-
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 

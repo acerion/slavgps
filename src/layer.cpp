@@ -97,7 +97,7 @@ void SlavGPS::layer_init(void)
  */
 void Layer::emit_layer_changed()
 {
-	if (this->visible && this->connected_to_tree) {
+	if (this->visible && this->tree_view) {
 		Window::set_redraw_trigger(this);
 		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'layer changed' signal";
 		emit this->layer_changed();
@@ -729,17 +729,6 @@ bool Layer::sublayer_toggle_visible(TreeItem * sublayer)
 {
 	/* If unknown, will always be visible. */
 	return true;
-}
-
-
-
-
-void Layer::connect_to_tree(TreeView * tree_view_)
-{
-	this->tree_view = tree_view_;
-	this->connected_to_tree = true;
-
-	return;
 }
 
 

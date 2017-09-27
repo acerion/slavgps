@@ -182,7 +182,7 @@ namespace SlavGPS {
 		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		bool sublayer_toggle_visible(TreeItem * sublayer);
 
-		void connect_to_tree(TreeView * tree_view);
+		void add_children_to_tree(void);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
@@ -204,9 +204,9 @@ namespace SlavGPS {
 		LayerTRWTracks & get_routes_node(void);
 		LayerTRWWaypoints & get_waypoints_node(void);
 
-		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
+		LayerTRWTracks * tracks = NULL; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks * routes = NULL; /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints * waypoints = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		bool get_tracks_visibility();
@@ -609,14 +609,7 @@ namespace SlavGPS {
 		void acquire(VikDataSourceInterface *datasource);
 
 	private:
-		/* Add a node in tree view, under which layers' tracks/waypoints/routes will be displayed. */
-		void add_tracks_node(void);
-		void add_waypoints_node(void);
-		void add_routes_node(void);
-
 		void draw_with_highlight_sub(Viewport * viewport, bool do_highlight);
-
-
 	};
 
 
