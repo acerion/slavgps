@@ -60,6 +60,7 @@ namespace SlavGPS {
 	class Viewport;
 	class LayerTRW;
 	class Window;
+	class LayersPanel;
 
 
 
@@ -137,6 +138,8 @@ namespace SlavGPS {
 
 		time_t get_earliest_timestamp();
 
+		void apply_dem_data_common(bool skip_existing_elevations);
+
 
 		void list_wp_uids(GList ** l);
 		std::list<QString> get_sorted_wp_name_list();
@@ -163,6 +166,9 @@ namespace SlavGPS {
 		void items_visibility_on_cb(void);
 		void items_visibility_off_cb(void);
 		void items_visibility_toggle_cb(void);
+
+		void apply_dem_data_all_cb(void);
+		void apply_dem_data_only_missing_cb(void);
 	};
 
 

@@ -932,7 +932,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString LayerMap::tooltip(void)
+QString LayerMap::get_tooltip(void)
 {
 	return this->get_map_label();
 }

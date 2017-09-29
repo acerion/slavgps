@@ -50,6 +50,7 @@
 #include "layer_trw.h"
 #include "window.h"
 #include "dialog.h"
+#include "layers_panel.h"
 
 
 
@@ -2018,7 +2019,7 @@ void Track::apply_dem_data_last_trackpoint()
 		return;
 	}
 
-	/* As in vik_track_apply_dem_data above - use 'best' interpolation method. */
+	/* As in apply_dem_data() - use 'best' interpolation method. */
 	auto last = std::prev(this->trackpoints.end());
 	int16_t elev = DEMCache::get_elev_by_coord(&(*last)->coord, DemInterpolation::BEST);
 	if (elev != DEM_INVALID_ELEVATION) {
@@ -2433,7 +2434,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
-	parent_layer_->menu_data->misc = parent_layer_->tracks->items.at(parent_layer_->menu_data->sublayer->uid);
+	parent_layer_->menu_data->misc = this;
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (osm_traces_upload_track_cb()));
 #endif
 
@@ -2449,7 +2450,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 		QMenu * submenu = a_acquire_track_menu(g_tree->tree_get_main_window(),
 						       g_tree->tree_get_layers_panel(),
 						       parent_layer_->menu_data->viewport,
-						       parent_layer_->tracks->items.at(parent_layer_->menu_data->sublayer->uid));
+						       this);
 		if (submenu) {
 			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
 			menu.addMenu(submenu);
@@ -2596,11 +2597,11 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 			QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), tr("&Apply DEM Data"));
 
 			qa = dem_submenu->addAction(tr("&Overwrite"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (apply_dem_data_all_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_all_cb()));
 			qa->setToolTip(tr("Overwrite any existing elevation values with DEM values"));
 
 			qa = dem_submenu->addAction(tr("&Keep Existing"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (apply_dem_data_only_missing_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_only_missing_cb()));
 			qa->setToolTip(tr("Keep existing elevation values, only attempt for missing values"));
 		}
 
@@ -2955,4 +2956,83 @@ void Track::rezoom_to_show_full_cb(void)
 	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 
 	g_tree->emit_update_window();
+}
+
+
+
+
+/* The same tooltip for route and track. */
+QString Track::get_tooltip(void)
+{
+	/* Could be a better way of handling strings - but this works. */
+	char time_buf1[20] = { 0 };
+	char time_buf2[20] = { 0 };
+
+	static char tmp_buf[100];
+	/* Compact info: Short date eg (11/20/99), duration and length.
+	   Hopefully these are the things that are most useful and so promoted into the tooltip. */
+	if (!this->empty() && this->get_tp_first()->has_timestamp) {
+		/* %x     The preferred date representation for the current locale without the time. */
+		strftime(time_buf1, sizeof(time_buf1), "%x: ", gmtime(&(this->get_tp_first()->timestamp)));
+		time_t dur = this->get_duration(true);
+		if (dur > 0) {
+			snprintf(time_buf2, sizeof(time_buf2), _("- %d:%02d hrs:mins"), (int)(dur/3600), (int)round(dur/60.0)%60);
+		}
+	}
+	/* Get length and consider the appropriate distance units. */
+	double tr_len = this->get_length();
+	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
+		break;
+	case DistanceUnit::MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
+		break;
+	case DistanceUnit::NAUTICAL_MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
+		break;
+	default:
+		break;
+	}
+
+	return QString(tmp_buf);
+}
+
+
+
+
+/**
+   A common function for applying the DEM values and reporting the results
+*/
+void Track::apply_dem_data_common(bool skip_existing_elevations)
+{
+	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+		return;
+	}
+
+	unsigned long changed_ = this->apply_dem_data(skip_existing_elevations);
+
+	/* Inform user how much was changed. */
+	char str[64];
+	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
+	snprintf(str, 64, tmp_str, changed_);
+	Dialog::info(str, g_tree->tree_get_main_window());
+}
+
+
+
+
+void Track::apply_dem_data_all_cb(void)
+{
+	this->apply_dem_data_common(false);
+}
+
+
+
+
+void Track::apply_dem_data_only_missing_cb(void)
+{
+	this->apply_dem_data_common(true);
 }

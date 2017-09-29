@@ -123,7 +123,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
-		QString tooltip();
+		QString get_tooltip();
 		void marshall(uint8_t ** data, int * len);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);

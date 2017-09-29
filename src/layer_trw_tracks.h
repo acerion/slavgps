@@ -179,6 +179,8 @@ namespace SlavGPS {
 		void items_visibility_on_cb(void);
 		void items_visibility_off_cb(void);
 		void items_visibility_toggle_cb(void);
+
+		void track_list_dialog_cb(void);
 	};
 
 

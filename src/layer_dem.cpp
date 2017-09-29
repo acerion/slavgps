@@ -276,7 +276,7 @@ LayerToolContainer * LayerDEMInterface::create_tools(Window * window, Viewport *
 
 
 
-QString LayerDEM::tooltip()
+QString LayerDEM::get_tooltip()
 {
 	return QString(tr("Number of files: %1")).arg(this->files.size());
 }

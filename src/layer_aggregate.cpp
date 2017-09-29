@@ -925,7 +925,7 @@ void LayerAggregate::drag_drop_request(Layer * src, TreeIndex *src_item_iter, vo
 /**
  * Generate tooltip text for the layer.
  */
-QString LayerAggregate::tooltip()
+QString LayerAggregate::get_tooltip()
 {
 	QString tool_tip;
 

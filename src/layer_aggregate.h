@@ -68,7 +68,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 
 		void draw(Viewport * viewport);
-		QString tooltip();
+		QString get_tooltip();
 		void marshall(uint8_t ** data, int * len);
 		void change_coord_mode(CoordMode mode);
 		void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);

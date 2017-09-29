@@ -63,7 +63,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
-		QString tooltip();
+		QString get_tooltip();
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;

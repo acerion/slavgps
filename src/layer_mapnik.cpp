@@ -306,7 +306,7 @@ void SlavGPS::layer_mapnik_init(void)
 
 
 
-QString LayerMapnik::tooltip()
+QString LayerMapnik::get_tooltip()
 {
 	return this->filename_xml;
 }

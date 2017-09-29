@@ -171,7 +171,7 @@ void SlavGPS::vik_georef_layer_init(void)
 
 
 
-QString LayerGeoref::tooltip()
+QString LayerGeoref::get_tooltip()
 {
 	return this->image;
 }

@@ -147,8 +147,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
-		QString tooltip();
-		QString sublayer_tooltip(TreeItem * sublayer);
+		QString get_tooltip();
 
 		bool kamil_selected(TreeItemType type, TreeItem * sublayer);
 
@@ -280,8 +279,6 @@ namespace SlavGPS {
 		void delete_all_waypoints();
 
 
-		bool dem_test(LayersPanel * panel);
-		void apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations);
 		void smooth_it(Track * trk, bool flat);
 		void wp_changed_message(int changed);
 
@@ -552,7 +549,6 @@ namespace SlavGPS {
 		void waypoint_geocache_webpage_cb(void);
 		void geotagging_waypoint_cb(void);
 
-		void track_list_dialog_single_cb(void);
 		void tracks_stats_cb(void);
 
 		void show_picture_cb(void);
@@ -585,10 +581,7 @@ namespace SlavGPS {
 		void convert_track_route_cb(void);
 		void extend_track_end_cb(void);
 		void extend_track_end_route_finder_cb(void);
-		void apply_dem_data_all_cb(void);
-		void apply_dem_data_only_missing_cb(void);
-		void apply_dem_data_wpt_all_cb(void);
-		void apply_dem_data_wpt_only_missing_cb(void);
+
 		void route_refine_cb(void);
 		void append_other_cb(void);
 		void insert_point_after_cb(void);

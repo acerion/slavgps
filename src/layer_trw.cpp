@@ -1721,7 +1721,7 @@ static void trw_layer_tracks_tooltip(Tracks & tracks, tooltip_tracks * tt)
   no tracks, a single track or multiple tracks
   (which may or may not have timing information)
 */
-QString LayerTRW::tooltip()
+QString LayerTRW::get_tooltip()
 {
 	char tbuf1[64] = { 0 };
 	char tbuf2[64] = { 0 };
@@ -1794,89 +1794,6 @@ QString LayerTRW::tooltip()
 		g_date_free(gdate_end);
 	}
 	return QString(tmp_buf);
-}
-
-
-
-
-QString LayerTRW::sublayer_tooltip(TreeItem * sublayer)
-{
-	if (!sublayer) {
-		qDebug() << "WW: Layer TRW: NULL sublayer in sublayer_tooltip()";
-		return QString("");
-	}
-
-	if (sublayer->type_id == "sg.trw.tracks"
-	    || sublayer->type_id == "sg.trw.routes") {
-
-		return sublayer->get_tooltip();
-
-	} else if (sublayer->type_id == "sg.trw.route" || sublayer->type_id == "sg.trw.track") {
-		/* Same tooltip for route and track. */
-
-		assert (sublayer->uid != SG_UID_INITIAL);
-
-		Track * trk = NULL;
-		if (sublayer->type_id == "sg.trw.track") {
-			trk = this->tracks->items.at(sublayer->uid);
-		} else {
-			trk = this->routes->items.at(sublayer->uid);
-		}
-
-		if (trk) {
-			/* Could be a better way of handling strings - but this works. */
-			char time_buf1[20] = { 0 };
-			char time_buf2[20] = { 0 };
-
-			static char tmp_buf[100];
-			/* Compact info: Short date eg (11/20/99), duration and length.
-			   Hopefully these are the things that are most useful and so promoted into the tooltip. */
-			if (!trk->empty() && trk->get_tp_first()->has_timestamp) {
-				/* %x     The preferred date representation for the current locale without the time. */
-				strftime(time_buf1, sizeof(time_buf1), "%x: ", gmtime(&(trk->get_tp_first()->timestamp)));
-				time_t dur = trk->get_duration(true);
-				if (dur > 0) {
-					snprintf(time_buf2, sizeof(time_buf2), _("- %d:%02d hrs:mins"), (int)(dur/3600), (int)round(dur/60.0)%60);
-				}
-			}
-			/* Get length and consider the appropriate distance units. */
-			double tr_len = trk->get_length();
-			DistanceUnit distance_unit = Preferences::get_unit_distance();
-			switch (distance_unit) {
-			case DistanceUnit::KILOMETRES:
-				snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
-				break;
-			case DistanceUnit::MILES:
-				snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
-				break;
-			case DistanceUnit::NAUTICAL_MILES:
-				snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
-				break;
-			default:
-				break;
-			}
-			return QString(tmp_buf);
-		}
-	} else if (sublayer->type_id == "sg.trw.waypoints") {
-		return sublayer->get_tooltip();
-
-	} else if (sublayer->type_id == "sg.trw.waypoint") {
-		assert (sublayer->uid != SG_UID_INITIAL);
-
-		Waypoint * wp = this->waypoints->items.at(sublayer->uid);
-		/* It's OK to return NULL. */
-		if (wp) {
-			if (!wp->comment.isEmpty()) {
-				return wp->comment;
-			} else {
-				return wp->description;
-			}
-		}
-	} else {
-		;
-	}
-
-	return QString("");
 }
 
 
@@ -3525,72 +3442,6 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 
 
 
-bool LayerTRW::dem_test(LayersPanel * panel)
-{
-	/* If have a panel then perform a basic test to see if any DEM info available... */
-	if (panel) {
-		std::list<Layer const *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); /* Includes hidden DEM layer types. */
-		if (dems->empty()) {
-			Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->get_window());
-			return false;
-		}
-	}
-	return true;
-}
-
-
-
-
-/**
- * A common function for applying the DEM values and reporting the results.
- */
-void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations)
-{
-	if (!this->dem_test(panel)) {
-		return;
-	}
-
-	unsigned long changed_ = trk->apply_dem_data(skip_existing_elevations);
-	/* Inform user how much was changed. */
-	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
-	snprintf(str, 64, tmp_str, changed_);
-	Dialog::info(str, this->get_window());
-}
-
-
-
-
-void LayerTRW::apply_dem_data_all_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	this->apply_dem_data_common(panel, trk, false);
-}
-
-
-
-
-void LayerTRW::apply_dem_data_only_missing_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	this->apply_dem_data_common(panel, trk, true);
-}
-
-
-
-
 /**
  * Commonal helper function.
  */
@@ -3600,62 +3451,6 @@ void LayerTRW::wp_changed_message(int changed_)
 	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed_);
 	snprintf(str, 64, tmp_str, changed_);
 	Dialog::info(str, this->get_window());
-}
-
-
-
-
-void LayerTRW::apply_dem_data_wpt_all_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
-	if (!this->dem_test(panel)) {
-		return;
-	}
-
-	int changed_ = 0;
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		/* Single Waypoint. */
-		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints->items.at(wp_uid);
-		if (wp) {
-			changed_ = (int) wp->apply_dem_data(false);
-		}
-	} else {
-		/* All waypoints. */
-		for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-			changed_ = changed_ + (int) i->second->apply_dem_data(false);
-		}
-	}
-	this->wp_changed_message(changed_);
-}
-
-
-
-
-void LayerTRW::apply_dem_data_wpt_only_missing_cb(void)
-{
-	LayersPanel * panel = this->get_window()->get_layers_panel();
-
-	if (!this->dem_test(panel)) {
-		return;
-	}
-
-	int changed_ = 0;
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		/* Single Waypoint. */
-		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints->items.at(wp_uid);
-		if (wp) {
-			changed_ = (int) wp->apply_dem_data(true);
-		}
-	} else {
-		/* All waypoints. */
-		for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-			changed_ = changed_ + (int) i->second->apply_dem_data(true);
-		}
-	}
-	this->wp_changed_message(changed_);
 }
 
 
@@ -6103,20 +5898,6 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 	tracks_ = this->tracks->get_track_values(tracks_);
 	tracks_ = this->routes->get_track_values(tracks_);
 	return this->create_tracks_and_layers_list_helper(tracks_);
-}
-
-
-
-
-void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
-{
-	QString title;
-	if (this->menu_data->sublayer->type_id == "sg.trw.tracks") {
-		title = tr("%1: Track List").arg(this->name);
-	} else {
-		title = tr("%1: Route List").arg(this->name);
-	}
-	track_list_dialog(title, this, this->menu_data->sublayer->type_id, false);
 }
 
 

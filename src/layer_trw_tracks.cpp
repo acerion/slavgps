@@ -46,6 +46,7 @@
 #include "layer_trw_menu.h"
 #include "viewport_internal.h"
 #include "track_internal.h"
+#include "track_list_dialog.h"
 #include "tree_view_internal.h"
 //#include "thumbnails.h"
 
@@ -725,7 +726,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(tr("&Tracks List..."));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_list_dialog_single_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
 
 	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_stats_cb()));
@@ -778,7 +779,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&List Routes..."));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_list_dialog_single_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
 
 
 	qa = menu.addAction(tr("&Statistics"));
@@ -873,4 +874,18 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 	this->toggle_items_visibility();
 	/* Redraw. */
 	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+}
+
+
+
+
+void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
+{
+	QString title;
+	if (this->type_id == "sg.trw.tracks") {
+		title = tr("%1: Track List").arg(this->owning_layer->name);
+	} else {
+		title = tr("%1: Route List").arg(this->owning_layer->name);
+	}
+	track_list_dialog(title, this->owning_layer, this->type_id, false);
 }

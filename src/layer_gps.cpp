@@ -349,7 +349,7 @@ void SlavGPS::layer_gps_init(void)
 
 
 
-QString LayerGPS::tooltip()
+QString LayerGPS::get_tooltip()
 {
 	return this->protocol;
 }

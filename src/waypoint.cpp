@@ -36,6 +36,7 @@
 #include "window.h"
 #include "tree_view_internal.h"
 #include "waypoint_properties.h"
+#include "layers_panel.h"
 
 
 
@@ -415,7 +416,18 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
 
 
-	layer_trw_sublayer_menu_waypoints_waypoint_transform((LayerTRW *) this->owning_layer, menu);
+	QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QObject::tr("&Transform"));
+	{
+		QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), QObject::tr("&Apply DEM Data"));
+
+		qa = dem_submenu->addAction(QObject::tr("&Overwrite"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_all_cb()));
+		qa->setToolTip(QObject::tr("Overwrite any existing elevation values with DEM values"));
+
+		qa = dem_submenu->addAction(QObject::tr("&Keep Existing"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_only_missing_cb()));
+		qa->setToolTip(QObject::tr("Keep existing elevation values, only attempt for missing values"));
+	}
 
 
 	return rv;
@@ -445,4 +457,48 @@ void Waypoint::properties_dialog_cb(void)
 	if (updated && parent_layer_->visible) {
 		parent_layer_->emit_layer_changed();
 	}
+}
+
+
+
+
+QString Waypoint::get_tooltip(void)
+{
+	if (!this->comment.isEmpty()) {
+		return this->comment;
+	} else {
+		return this->description;
+	}
+}
+
+
+
+
+void Waypoint::apply_dem_data_all_cb(void)
+{
+	this->apply_dem_data_common(false);
+}
+
+
+
+
+void Waypoint::apply_dem_data_only_missing_cb(void)
+{
+	this->apply_dem_data_common(true);
+}
+
+
+
+
+void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
+{
+	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+		return;
+	}
+
+	LayerTRW * trw = (LayerTRW *) this->owning_layer;
+	int changed = (int) this->apply_dem_data(skip_existing_elevations);
+
+	trw->wp_changed_message(changed);
 }

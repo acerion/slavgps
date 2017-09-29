@@ -60,8 +60,10 @@ namespace SlavGPS {
 		void set_image(const QString & new_image);
 		void set_symbol_name(const QString & new_symbol_name);
 
-		bool apply_dem_data(bool skip_existing);
+		bool apply_dem_data(bool skip_existing_elevations);
+		void apply_dem_data_common(bool skip_existing_elevations);
 
+		QString get_tooltip(void);
 
 		void marshall(uint8_t ** data, size_t * len);
 		static Waypoint * unmarshall(uint8_t * data, size_t datalen);
@@ -105,6 +107,8 @@ namespace SlavGPS {
 
 	public slots:
 		void properties_dialog_cb(void);
+		void apply_dem_data_all_cb(void);
+		void apply_dem_data_only_missing_cb(void);
 	};
 
 

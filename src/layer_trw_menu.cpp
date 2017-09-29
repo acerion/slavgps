@@ -382,27 +382,6 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 
 
 
-void SlavGPS::layer_trw_sublayer_menu_waypoints_waypoint_transform(LayerTRW * parent_layer, QMenu & menu)
-{
-	QAction * qa = NULL;
-
-	QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QObject::tr("&Transform"));
-	{
-		QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), QObject::tr("&Apply DEM Data"));
-
-		qa = dem_submenu->addAction(QObject::tr("&Overwrite"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (apply_dem_data_wpt_all_cb()));
-		qa->setToolTip(QObject::tr("Overwrite any existing elevation values with DEM values"));
-
-		qa = dem_submenu->addAction(QObject::tr("&Keep Existing"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (apply_dem_data_wpt_only_missing_cb()));
-		qa->setToolTip(QObject::tr("Keep existing elevation values, only attempt for missing values"));
-	}
-}
-
-
-
-
 #if 0 /* Saving original version of the function for possible future reference. */
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */

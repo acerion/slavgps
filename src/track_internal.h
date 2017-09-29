@@ -139,6 +139,8 @@ namespace SlavGPS {
 		void ref();
 		void free();
 
+		QString get_tooltip(void);
+
 
 		/* STL-like container interface. */
 		TrackPoints::iterator begin();
@@ -203,6 +205,7 @@ namespace SlavGPS {
 
 		void anonymize_times();
 		void interpolate_times();
+		void apply_dem_data_common(bool skip_existing_elevations);
 		unsigned long apply_dem_data(bool skip_existing);
 		void apply_dem_data_last_trackpoint();
 		unsigned long smooth_missing_elevation_data(bool flat);
@@ -276,6 +279,9 @@ namespace SlavGPS {
 		void missing_elevation_data_flat_cb(void);
 
 		void rezoom_to_show_full_cb(void);
+
+		void apply_dem_data_all_cb(void);
+		void apply_dem_data_only_missing_cb(void);
 	};
 
 

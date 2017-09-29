@@ -873,6 +873,19 @@ std::list<Layer const *> * LayersPanel::get_all_layers_of_type(LayerType layer_t
 
 
 
+bool LayersPanel::has_any_layer_of_type(LayerType type)
+{
+	std::list<Layer const *> * dems = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
+	if (dems->empty()) {
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->get_window());
+		return false;
+	}
+	return true;
+}
+
+
+
+
 LayerAggregate * LayersPanel::get_top_layer()
 {
 	return this->toplayer;

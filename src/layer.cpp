@@ -668,7 +668,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString Layer::get_tooltip(void) const
+QString Layer::get_tooltip(void)
 {
 	return QString(tr("Layer::tooltip"));
 }
