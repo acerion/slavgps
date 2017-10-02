@@ -341,26 +341,6 @@ void SlavGPS::layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * pa
 
 
 
-void SlavGPS::layer_trw_sublayer_menu_track_waypoint_diary_astro(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu)
-{
-	QAction * qa = NULL;
-
-	if (g_have_diary_program) {
-		qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QObject::tr("&Diary"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (diary_cb()));
-		qa->setToolTip(QObject::tr("Open diary program at this date"));
-	}
-
-	if (g_have_astro_program) {
-		qa = external_submenu->addAction(QObject::tr("&Astronomy"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (astro_cb()));
-		qa->setToolTip(QObject::tr("Open astronomy program at this date and location"));
-	}
-}
-
-
-
-
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu)
 {
 	if (parent_layer->selected_tp.valid || parent_layer->current_wp) {

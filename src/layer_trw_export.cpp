@@ -78,7 +78,7 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 
 		this->get_window()->set_busy_cursor();
 		/* Don't Export invisible items - unless requested on this specific track. */
-		const bool success = a_file_export(this, output_file_name.toUtf8().constData(), file_type, trk, trk ? true : false);
+		const bool success = a_file_export(this, output_file_name, file_type, trk, trk ? true : false);
 		this->get_window()->clear_busy_cursor();
 
 		if (!success) {

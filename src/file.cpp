@@ -914,8 +914,81 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
 
 
 
+bool SlavGPS::a_file_export_track(Track * trk, const QString & file_path, SGFileType file_type, bool write_hidden)
+{
+	GpxWritingOptions options = { false, false, write_hidden, false };
+	FILE * f = fopen(file_path.toUtf8().constData(), "w");
+	if (!f) {
+		return false;
+	}
+
+	switch (file_type) {
+	case SGFileType::GPX:
+		/* trk defined so can set the option. */
+		options.is_route = trk->type_id == "sg.trw.route";
+		a_gpx_write_track_file(trk, f, &options);
+		fclose(f);
+		return true;
+		break;
+	default:
+		qDebug() << "EE: File: Export: unexpected file type for track" << (int) file_type;
+		fclose(f);
+		return false;
+	}
+}
+
+
+/* Call it when 'trk' argument to 'a_file_export()' is NULL. */
+bool SlavGPS::a_file_export_layer(LayerTRW * trw, const QString & file_path, SGFileType file_type, bool write_hidden)
+{
+	GpxWritingOptions options = { false, false, write_hidden, false };
+	FILE * f = fopen(file_path.toUtf8().constData(), "w");
+	if (!f) {
+		return false;
+	}
+
+	bool result = true;
+
+	switch (file_type) {
+	case SGFileType::GPSMAPPER:
+		gpsmapper_write_file(f, trw);
+		break;
+	case SGFileType::GPX:
+		a_gpx_write_file(trw, f, &options);
+		break;
+	case SGFileType::GPSPOINT:
+		a_gpspoint_write_file(trw, f);
+		break;
+	case SGFileType::GEOJSON:
+		result = geojson_write_file(trw, f);
+		break;
+	case SGFileType::KML:
+		fclose(f);
+		switch (Preferences::get_kml_export_units()) {
+		case VIK_KML_EXPORT_UNITS_STATUTE:
+			return a_babel_convert_to(trw, NULL, "-o kml", file_path, NULL, NULL);
+			break;
+		case VIK_KML_EXPORT_UNITS_NAUTICAL:
+			return a_babel_convert_to(trw, NULL, "-o kml,units=n", file_path, NULL, NULL);
+			break;
+		default:
+			/* VIK_KML_EXPORT_UNITS_METRIC: */
+			return a_babel_convert_to(trw, NULL, "-o kml,units=m", file_path, NULL, NULL);
+			break;
+		}
+		break;
+	default:
+		qDebug() << "EE: File: Export: unexpected file type for non-track" << (int) file_type;
+	}
+
+	fclose(f);
+	return result;
+}
+
+
+
 /**
- * @filename: The name of the file to be written
+ * @file_path: The path of the file to be written
  * @file_type: Choose one of the supported file types for the export
  * @trk: If specified then only export this track rather than the whole layer
  * @write_hidden: Whether to write invisible items
@@ -923,60 +996,13 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, SGFileType file_type, Track * trk, bool write_hidden)
+bool SlavGPS::a_file_export(LayerTRW * trw, const QString & file_path, SGFileType file_type, Track * trk, bool write_hidden)
 {
-	GpxWritingOptions options = { false, false, write_hidden, false };
-	FILE * f = fopen(filename, "w");
-	if (f) {
-		bool result = true;
-
-		if (trk) {
-			switch (file_type) {
-			case SGFileType::GPX:
-				/* trk defined so can set the option. */
-				options.is_route = trk->type_id == "sg.trw.route";
-				a_gpx_write_track_file(trk, f, &options);
-				break;
-			default:
-				qDebug() << "EE: File: Export: unexpected file type for track" << (int) file_type;
-			}
-		} else {
-			switch (file_type) {
-			case SGFileType::GPSMAPPER:
-				gpsmapper_write_file(f, trw);
-				break;
-			case SGFileType::GPX:
-				a_gpx_write_file(trw, f, &options);
-				break;
-			case SGFileType::GPSPOINT:
-				a_gpspoint_write_file(trw, f);
-				break;
-			case SGFileType::GEOJSON:
-				result = geojson_write_file(trw, f);
-				break;
-			case SGFileType::KML:
-				fclose(f);
-				switch (Preferences::get_kml_export_units()) {
-				case VIK_KML_EXPORT_UNITS_STATUTE:
-					return a_babel_convert_to(trw, NULL, "-o kml", filename, NULL, NULL);
-					break;
-				case VIK_KML_EXPORT_UNITS_NAUTICAL:
-					return a_babel_convert_to(trw, NULL, "-o kml,units=n", filename, NULL, NULL);
-					break;
-				default:
-					/* VIK_KML_EXPORT_UNITS_METRIC: */
-					return a_babel_convert_to(trw, NULL, "-o kml,units=m", filename, NULL, NULL);
-					break;
-				}
-				break;
-			default:
-				qDebug() << "EE: File: Export: unexpected file type for non-track" << (int) file_type;
-			}
-		}
-		fclose(f);
-		return result;
+	if (trk) {
+		return a_file_export_track(trk, file_path, file_type, write_hidden);
+	} else {
+		return a_file_export_layer(trw, file_path, file_type, write_hidden);
 	}
-	return false;
 }
 
 

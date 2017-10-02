@@ -491,7 +491,6 @@ namespace SlavGPS {
 
 		void centerize_cb(void);
 		void find_waypoint_dialog_cb(void);    /* In context menu for "Layer TRW" or "Waypoints" node in tree view. */
-		void go_to_selected_waypoint_cb(void); /* In context menu for specific Waypoint node in tree view. */
 
 		void export_as_gpspoint_cb(void);
 		void export_as_gpsmapper_cb(void);
@@ -546,7 +545,6 @@ namespace SlavGPS {
 		void cut_sublayer_cb(void);
 		void paste_sublayer_cb(void);
 
-		void waypoint_geocache_webpage_cb(void);
 		void geotagging_waypoint_cb(void);
 
 		void tracks_stats_cb(void);
@@ -575,8 +573,6 @@ namespace SlavGPS {
 		void edit_trackpoint_cb(void);
 		void gps_upload_any_cb(void);
 		void track_list_dialog_cb(void);
-		void waypoint_webpage_cb(void);
-		void export_gpx_track_cb(void);
 		void osm_traces_upload_track_cb(void);
 		void convert_track_route_cb(void);
 		void extend_track_end_cb(void);
@@ -586,8 +582,6 @@ namespace SlavGPS {
 		void append_other_cb(void);
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);
-		void diary_cb(void);
-		void astro_cb(void);
 		void sort_order_a2z_cb(void);
 		void sort_order_z2a_cb(void);
 		void sort_order_timestamp_ascend_cb(void);
@@ -609,6 +603,7 @@ namespace SlavGPS {
 
 
 	void layer_trw_init(void);
+	char * convert_to_dms(double dec);
 
 
 

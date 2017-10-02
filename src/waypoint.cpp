@@ -37,6 +37,8 @@
 #include "tree_view_internal.h"
 #include "waypoint_properties.h"
 #include "layers_panel.h"
+#include "dialog.h"
+#include "ui_util.h"
 
 
 
@@ -332,14 +334,14 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 	/* Could be a right-click using the tool. */
 	if (g_tree->tree_get_layers_panel() != NULL) {
-		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Go to this Waypoint"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (go_to_selected_waypoint_cb()));
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Show this Waypoint in main Viewport"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_in_viewport_cb()));
 	}
 
 	if (!this->name.isEmpty()) {
 		if (is_valid_geocache_name(this->name.toUtf8().constData())) {
 			qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Visit Geocache Webpage"));
-				connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (waypoint_geocache_webpage_cb()));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_geocache_webpage_cb()));
 		}
 #ifdef VIK_CONFIG_GEOTAG
 		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("Geotag &Images..."));
@@ -370,8 +372,8 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	if (this->has_any_url()) {
-		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (waypoint_webpage_cb()));
+		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("Visit &Webpage associated with this Waypoint"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_waypoint_webpage_cb()));
 	}
 }
 
@@ -409,7 +411,17 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 
 	/* These are only made available if a suitable program is installed. */
 	if (g_have_astro_program || g_have_diary_program) {
-		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->owning_layer, menu, external_submenu);
+		if (g_have_diary_program) {
+			qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QObject::tr("&Diary"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_diary_cb()));
+			qa->setToolTip(QObject::tr("Open diary program at this date"));
+		}
+
+		if (g_have_astro_program) {
+			qa = external_submenu->addAction(QObject::tr("&Astronomy"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_astro_cb()));
+			qa->setToolTip(QObject::tr("Open astronomy program at this date and location"));
+		}
 	}
 
 
@@ -501,4 +513,79 @@ void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 	int changed = (int) this->apply_dem_data(skip_existing_elevations);
 
 	trw->wp_changed_message(changed);
+}
+
+
+
+
+/**
+   \brief Open a diary at the date of the waypoint
+*/
+void Waypoint::open_diary_cb(void)
+{
+	char date_buf[20];
+	date_buf[0] = '\0';
+	if (this->has_timestamp) {
+		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&this->timestamp));
+		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
+	} else {
+		Dialog::info(tr("This waypoint has no date information."), g_tree->tree_get_main_window());
+	}
+}
+
+
+
+
+/**
+   \brief Open an astronomy program at the date & position of the waypoint
+*/
+void Waypoint::open_astro_cb(void)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	if (this->has_timestamp) {
+		char date_buf[20];
+		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&this->timestamp));
+		char time_buf[20];
+		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&this->timestamp));
+		struct LatLon ll = this->coord.get_latlon();
+		char *lat_str = convert_to_dms(ll.lat);
+		char *lon_str = convert_to_dms(ll.lon);
+		char alt_buf[20];
+		snprintf(alt_buf, sizeof(alt_buf), "%d", (int) round(this->altitude));
+		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
+		free(lat_str);
+		free(lon_str);
+	} else {
+		Dialog::info(tr("This waypoint has no date information."), g_tree->tree_get_main_window());
+	}
+}
+
+
+
+
+void Waypoint::show_in_viewport_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->goto_coord(g_tree->tree_get_main_viewport(), this->coord);
+}
+
+
+
+
+void Waypoint::open_geocache_webpage_cb(void)
+{
+	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(this->name);
+	open_url(webpage);
+}
+
+
+
+
+void Waypoint::open_waypoint_webpage_cb(void)
+{
+	if (!this->has_any_url()) {
+		return;
+	}
+
+	open_url(this->get_any_url());
 }

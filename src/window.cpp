@@ -3850,7 +3850,7 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = a_file_export((LayerTRW *) (*iter), fn, vft, NULL, true);
+			bool this_success = a_file_export_layer((LayerTRW *) (*iter), QString(fn), vft, true);
 
 			/* Show some progress. */
 			if (this_success) {

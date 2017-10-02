@@ -83,8 +83,12 @@ namespace SlavGPS {
 	QString append_file_ext(const QString & file_name, SGFileType file_type);
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
+
 	/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
-	bool a_file_export(LayerTRW * trw, char const * filename, SGFileType file_type, Track * trk, bool write_hidden);
+	bool a_file_export(LayerTRW * trw, const QString & file_path, SGFileType file_type, Track * trk, bool write_hidden);
+	bool a_file_export_track(Track * trk, const QString & file_path, SGFileType file_type, bool write_hidden);
+	bool a_file_export_layer(LayerTRW * trw, const QString & file_path, SGFileType file_type, bool write_hidden);
+
 	bool a_file_export_babel(LayerTRW * trw, const QString & output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints);
 
 	void file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & param_value);

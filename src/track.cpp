@@ -2648,7 +2648,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("document-save-as"), this->type_id == "sg.trw.track" ? tr("&Export Track as GPX...") : tr("&Export Route as GPX..."));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (export_gpx_track_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_track_as_gpx_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("list-add"), this->type_id == "sg.trw.track" ? tr("E&xtend Track End") : tr("E&xtend Route End"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_cb()));
@@ -2664,13 +2664,6 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (gps_upload_any_cb()));
 	}
 }
-
-
-
-
-
-
-
 
 
 
@@ -2713,7 +2706,17 @@ bool Track::add_context_menu_items(QMenu & menu)
 	if ((g_have_astro_program || g_have_diary_program)
 	    && this->type_id == "sg.trw.track") {
 
-		layer_trw_sublayer_menu_track_waypoint_diary_astro((LayerTRW *) this->owning_layer, menu, external_submenu);
+		if (g_have_diary_program) {
+			qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QObject::tr("&Diary"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_diary_cb()));
+			qa->setToolTip(QObject::tr("Open diary program at this date"));
+		}
+
+		if (g_have_astro_program) {
+			qa = external_submenu->addAction(QObject::tr("&Astronomy"));
+			QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_astro_cb()));
+			qa->setToolTip(QObject::tr("Open astronomy program at this date and location"));
+		}
 	}
 
 
@@ -3035,4 +3038,116 @@ void Track::apply_dem_data_all_cb(void)
 void Track::apply_dem_data_only_missing_cb(void)
 {
 	this->apply_dem_data_common(true);
+}
+
+
+
+
+void Track::export_track_as_gpx_cb(void)
+{
+	if (this->name.isEmpty()) { /* TODO: will track's name be ever empty? */
+		return;
+	}
+
+	const QString title = this->type_id == "sg.trw.route" ? tr("Export Route as GPX") : tr("Export Track as GPX");
+	const QString auto_save_name = append_file_ext(this->name, SGFileType::GPX);
+
+	this->export_track(title, auto_save_name, SGFileType::GPX);
+}
+
+
+
+
+void Track::export_track(const QString & title, const QString & default_file_name, SGFileType file_type)
+{
+	QFileDialog file_selector(g_tree->tree_get_main_window(), title);
+	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+
+#ifdef K
+	if (!last_folder_url.toString().isEmpty()) {
+		file_selector.setDirectoryUrl(last_folder_url);
+	}
+#endif
+
+	file_selector.selectFile(default_file_name);
+
+	if (QDialog::Accepted == file_selector.exec()) {
+		const QString output_file_name = file_selector.selectedFiles().at(0);
+
+#ifdef K
+		last_folder_url = file_selector.directoryUrl();
+#endif
+
+		g_tree->tree_get_main_window()->set_busy_cursor();
+		const bool success = a_file_export_track(this, output_file_name, file_type, true);
+		g_tree->tree_get_main_window()->clear_busy_cursor();
+
+		if (!success) {
+			Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), g_tree->tree_get_main_window());
+		}
+	}
+}
+
+
+
+
+/**
+   \brief Open a diary at the date of the track
+
+   Call this method only for a track, not for route.
+*/
+void Track::open_diary_cb(void)
+{
+	char date_buf[20];
+	date_buf[0] = '\0';
+	if (!this->empty() && (*this->trackpoints.begin())->has_timestamp) {
+		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*this->trackpoints.begin())->timestamp));
+		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
+	} else {
+		Dialog::info(tr("This track has no date information."), g_tree->tree_get_main_window());
+	}
+}
+
+
+
+
+/**
+   \brief Open an astronomy program at the date & position of the track center or trackpoint
+
+   Call this method only for a track, not for route.
+*/
+void Track::open_astro_cb(void)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	Trackpoint * tp = NULL;
+	if (parent_layer->selected_tp.valid) {
+		/* Current trackpoint. */
+		tp = *parent_layer->selected_tp.iter;
+
+	} else if (!this->empty()) {
+		/* Otherwise first trackpoint. */
+		tp = *this->begin();
+	} else {
+		/* Give up. */
+		return;
+	}
+
+	if (tp->has_timestamp) {
+		char date_buf[20];
+		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&tp->timestamp));
+		char time_buf[20];
+		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&tp->timestamp));
+		struct LatLon ll = tp->coord.get_latlon();
+		char *lat_str = convert_to_dms(ll.lat);
+		char *lon_str = convert_to_dms(ll.lon);
+		char alt_buf[20];
+		snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude));
+		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
+		std::free(lat_str);
+		std::free(lon_str);
+	} else {
+		Dialog::info(tr("This track has no date information."), g_tree->tree_get_main_window());
+	}
 }

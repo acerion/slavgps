@@ -1587,43 +1587,7 @@ void LayerTRW::add_children_to_tree(void)
 
 bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
 {
-	if (sublayer->type_id == "sg.trw.tracks") {
-		return this->tracks->toggle_visible();
-
-	} else if (sublayer->type_id == "sg.trw.waypoints") {
-		return this->waypoints->toggle_visible();
-
-	} else if (sublayer->type_id == "sg.trw.routes") {
-		return this->routes->toggle_visible();
-
-	} else if (sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(sublayer->uid);
-		if (trk) {
-			return trk->toggle_visible();
-		} else {
-			return true;
-		}
-
-	} else if (sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints->items.at(sublayer->uid);
-		if (wp) {
-			return wp->toggle_visible();
-		} else {
-			return true;
-		}
-
-	} else if (sublayer->type_id == "sg.trw.route") {
-		Track * trk = this->routes->items.at(sublayer->uid);
-		if (trk) {
-			return trk->toggle_visible();
-		} else {
-			return true;
-		}
-	} else {
-		;
-	}
-
-	return true;
+	return sublayer->toggle_visible();
 }
 
 
@@ -2178,28 +2142,6 @@ void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 {
 	this->open_layer_with_external_program(Preferences::get_external_gpx_program_2());
-}
-
-
-
-
-void LayerTRW::export_gpx_track_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk || trk->name.isEmpty()) { /* TODO: will track's name be ever empty? */
-		return;
-	}
-
-	const QString auto_save_name = append_file_ext(trk->name, SGFileType::GPX);
-
-	QString title;
-	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		title = tr("Export Route as GPX");
-	} else {
-		title = tr("Export Track as GPX");
-	}
-	this->export_layer(title, auto_save_name, trk, SGFileType::GPX);
 }
 
 
@@ -4402,47 +4344,6 @@ void LayerTRW::diary_open(char const * date_str)
 
 
 /**
- * Open a diary at the date of the track or waypoint
- */
-void LayerTRW::diary_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-
-	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(child_uid);
-		if (!trk) {
-			return;
-		}
-
-		char date_buf[20];
-		date_buf[0] = '\0';
-		if (!trk->empty() && (*trk->trackpoints.begin())->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
-			this->diary_open(date_buf);
-		} else {
-			Dialog::info(tr("This track has no date information."), this->get_window());
-		}
-	} else if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints->items.at(uid);
-		if (!wp) {
-			return;
-		}
-
-		char date_buf[20];
-		date_buf[0] = '\0';
-		if (wp->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(wp->timestamp)));
-			this->diary_open(date_buf);
-		} else {
-			Dialog::info(tr("This waypoint has no date information."), this->get_window());
-		}
-	}
-}
-
-
-
-
-/**
  * Open a program at the specified date
  * Mainly for Stellarium - http://stellarium.org/
  * But could work with any program that accepts the same command line options...
@@ -4475,12 +4376,14 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 
 
 /*
+  TODO: move to common file, e.g. to astro.cpp.
+
   Format of stellarium lat & lon seems designed to be particularly awkward
   who uses ' & " in the parameters for the command line?!
   -1d4'27.48"
   +53d58'16.65"
 */
-static char *convert_to_dms(double dec)
+char * SlavGPS::convert_to_dms(double dec)
 {
 	char sign_c = ' ';
 	if (dec > 0) {
@@ -4505,77 +4408,6 @@ static char *convert_to_dms(double dec)
 	/* Format. */
 	char * result = g_strdup_printf("%c%dd%d\\\'%.4f\\\"", sign_c, val_d, val_m, val_s);
 	return result;
-}
-
-
-
-
-/**
- * Open an astronomy program at the date & position of the track center, trackpoint or waypoint
- */
-void LayerTRW::astro_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-
-	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(child_uid);
-		if (!trk) {
-			return;
-		}
-
-		Trackpoint * tp = NULL;
-		if (this->selected_tp.valid) {
-			/* Current trackpoint. */
-			tp = *this->selected_tp.iter;
-
-		} else if (!trk->empty()) {
-			/* Otherwise first trackpoint. */
-			tp = *trk->begin();
-		} else {
-			/* Give up. */
-			return;
-		}
-
-		if (tp->has_timestamp) {
-			char date_buf[20];
-			strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&(tp->timestamp)));
-			char time_buf[20];
-			strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&(tp->timestamp)));
-			struct LatLon ll = tp->coord.get_latlon();
-			char *lat_str = convert_to_dms(ll.lat);
-			char *lon_str = convert_to_dms(ll.lon);
-			char alt_buf[20];
-			snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude));
-			this->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
-			free(lat_str);
-			free(lon_str);
-		} else {
-			Dialog::info(tr("This track has no date information."), this->get_window());
-		}
-	} else if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-		Waypoint * wp = this->waypoints->items.at(wp_uid);
-		if (!wp) {
-			return;
-		}
-
-		if (wp->has_timestamp) {
-			char date_buf[20];
-			strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&(wp->timestamp)));
-			char time_buf[20];
-			strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&(wp->timestamp)));
-			struct LatLon ll = wp->coord.get_latlon();
-			char *lat_str = convert_to_dms(ll.lat);
-			char *lon_str = convert_to_dms(ll.lon);
-			char alt_buf[20];
-			snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(wp->altitude));
-			this->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
-			free(lat_str);
-			free(lon_str);
-		} else {
-			Dialog::info(tr("This waypoint has no date information."), this->get_window());
-		}
-	}
 }
 
 
@@ -4874,47 +4706,6 @@ void LayerTRW::tracks_stats_cb(void)
 void LayerTRW::routes_stats_cb(void)
 {
 	layer_trw_show_stats(this->get_window(), this->name, this, "sg.trw.routes");
-}
-
-
-
-
-void LayerTRW::go_to_selected_waypoint_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	if (wp) {
-		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
-		this->goto_coord(viewport, wp->coord);
-	}
-}
-
-
-
-
-void LayerTRW::waypoint_geocache_webpage_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	if (!wp) {
-		return;
-	}
-	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(wp->name);
-	open_url(webpage);
-}
-
-
-
-
-void LayerTRW::waypoint_webpage_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	if (!wp || !wp->has_any_url()) {
-		return;
-	}
-
-	open_url(wp->get_any_url());
 }
 
 

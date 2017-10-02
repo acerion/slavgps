@@ -34,6 +34,7 @@
 #include "globals.h"
 #include "tree_view.h"
 #include "layer.h"
+#include "file.h"
 
 
 
@@ -109,6 +110,13 @@ namespace SlavGPS {
 		void properties_dialog_cb(void);
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
+
+		void open_diary_cb(void);
+		void open_astro_cb(void);
+		void open_geocache_webpage_cb(void);
+		void open_waypoint_webpage_cb(void);
+
+		void show_in_viewport_cb(void);
 	};
 
 

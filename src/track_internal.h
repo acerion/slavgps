@@ -42,6 +42,7 @@
 #include "tree_view.h"
 #include "layer.h"
 #include "track.h"
+#include "file.h"
 
 
 
@@ -224,6 +225,8 @@ namespace SlavGPS {
 		void update_profile_dialog(void);
 		void clear_profile_dialog();
 
+		void export_track(const QString & title, const QString & default_file_name, SGFileType file_type);
+
 
 		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);
 		TrackPoints::iterator delete_trackpoint(TrackPoints::iterator iter);
@@ -282,6 +285,11 @@ namespace SlavGPS {
 
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
+
+		void export_track_as_gpx_cb(void);
+
+		void open_diary_cb(void);
+		void open_astro_cb(void);
 	};
 
 
