@@ -198,8 +198,8 @@ namespace SlavGPS {
 		double * make_speed_dist_map(uint16_t num_chunks) const;
 		bool get_minmax_alt(double * min_alt, double * max_alt) const;
 
-		void marshall(uint8_t ** data, size_t * len);
-		static Track * unmarshall(uint8_t * data, size_t datalen);
+		void marshall(uint8_t ** data, size_t * data_len);
+		static Track * unmarshall(uint8_t * data, size_t data_len);
 
 		void calculate_bounds();
 		void find_maxmin(struct LatLon maxmin[2]);
@@ -240,7 +240,7 @@ namespace SlavGPS {
 		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 
-		QString name;
+		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
 		QString description;
 		QString source;
@@ -290,6 +290,10 @@ namespace SlavGPS {
 
 		void open_diary_cb(void);
 		void open_astro_cb(void);
+
+		void reverse_cb(void);
+
+		QString sublayer_rename_request(const QString & new_name);
 	};
 
 

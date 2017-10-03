@@ -66,8 +66,8 @@ namespace SlavGPS {
 
 		QString get_tooltip(void);
 
-		void marshall(uint8_t ** data, size_t * len);
-		static Waypoint * unmarshall(uint8_t * data, size_t datalen);
+		void marshall(uint8_t ** data, size_t * data_len);
+		static Waypoint * unmarshall(uint8_t * data, size_t data_len);
 
 		void convert(CoordMode dest_mode);
 
@@ -86,7 +86,7 @@ namespace SlavGPS {
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;
 
-		QString name;
+		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
 		QString description;
 		QString source;
@@ -117,6 +117,8 @@ namespace SlavGPS {
 		void open_waypoint_webpage_cb(void);
 
 		void show_in_viewport_cb(void);
+
+		QString sublayer_rename_request(const QString & new_name);
 	};
 
 

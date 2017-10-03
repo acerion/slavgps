@@ -130,7 +130,7 @@ namespace SlavGPS {
 	class LayerTRWInterface : public LayerInterface {
 	public:
 		LayerTRWInterface();
-		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
 		void change_param(GtkWidget * widget, ui_change_values * values);
 		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
@@ -160,12 +160,12 @@ namespace SlavGPS {
 		void set_menu_selection(LayerMenuItem selection);
 		LayerMenuItem get_menu_selection();
 
-		void marshall(uint8_t ** data, int * len);
+		void marshall(uint8_t ** data, size_t * data_len);
 
-		void cut_sublayer(TreeItem * sublayer);
-		void copy_sublayer(TreeItem * sublayer, uint8_t ** item, unsigned int * len);
-		bool paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len);
-		void delete_sublayer(TreeItem * sublayer);
+		void cut_sublayer(TreeItem * item);
+		void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len);
+		bool paste_sublayer(TreeItem * item, uint8_t * data, size_t len);
+		void delete_sublayer(TreeItem * item);
 
 		void change_coord_mode(CoordMode dest_mode);
 
@@ -178,7 +178,6 @@ namespace SlavGPS {
 
 		void add_menu_items(QMenu & menu);
 
-		QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		void add_children_to_tree(void);
@@ -364,6 +363,10 @@ namespace SlavGPS {
 		void tool_extended_route_finder_undo();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 		void undo_trackpoint_add();
+
+		void delete_sublayer_common(TreeItem * item, bool confirm);
+		void copy_sublayer_common(TreeItem * item);
+		void cut_sublayer_common(TreeItem * item, bool confirm);
 
 
 		/* Export. */
@@ -568,7 +571,6 @@ namespace SlavGPS {
 		void delete_point_selected_cb(void);
 		void delete_points_same_position_cb(void);
 		void delete_points_same_time_cb(void);
-		void reverse_cb(void);
 		void download_map_along_track_cb(void);
 		void edit_trackpoint_cb(void);
 		void gps_upload_any_cb(void);

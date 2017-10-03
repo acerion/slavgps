@@ -108,6 +108,8 @@ namespace SlavGPS {
 		virtual bool toggle_visible(void);
 		virtual void set_visible(bool new_state);
 
+		virtual void marshall(uint8_t ** data, size_t * data_len) { };
+
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
 		TreeIndex index;             /* Set in TreeView::add_tree_item(). */
@@ -118,6 +120,7 @@ namespace SlavGPS {
 
 		sg_uid_t uid = SG_UID_INITIAL;
 
+		QString name;
 		QString type_id;
 		QStringList accepted_child_type_ids;
 

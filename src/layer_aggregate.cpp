@@ -70,10 +70,10 @@ LayerAggregateInterface::LayerAggregateInterface()
 
 
 
-void LayerAggregate::marshall(uint8_t **data, int *datalen)
+void LayerAggregate::marshall(uint8_t **data, size_t * data_len)
 {
 	uint8_t *ld;
-	int ll;
+	size_t ll;
 	GByteArray* b = g_byte_array_new();
 	int len;
 
@@ -94,7 +94,7 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 		}
 	}
 	*data = b->data;
-	*datalen = b->len;
+	*data_len = b->len;
 	g_byte_array_free(b, false);
 #undef alm_append
 }
@@ -102,11 +102,11 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 
 
 
-Layer * LayerAggregateInterface::unmarshall(uint8_t *data, int len, Viewport * viewport)
+Layer * LayerAggregateInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
-	len -= sizeof(int) + alm_size;		\
+	data_len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
 	LayerAggregate * aggregate = new LayerAggregate();
@@ -114,7 +114,7 @@ Layer * LayerAggregateInterface::unmarshall(uint8_t *data, int len, Viewport * v
 	aggregate->unmarshall_params(data + sizeof (int), alm_size);
 	alm_next;
 
-	while (len > 0) {
+	while (data_len > 0) {
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
@@ -122,7 +122,7 @@ Layer * LayerAggregateInterface::unmarshall(uint8_t *data, int len, Viewport * v
 		}
 		alm_next;
 	}
-	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << len;
+	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << data_len;
 	return aggregate;
 #undef alm_size
 #undef alm_next

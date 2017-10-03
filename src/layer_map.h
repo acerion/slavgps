@@ -68,7 +68,7 @@ namespace SlavGPS {
 	class LayerMapInterface : public LayerInterface {
 	public:
 		LayerMapInterface();
-		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
 		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 

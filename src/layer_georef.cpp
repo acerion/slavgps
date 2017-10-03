@@ -179,12 +179,12 @@ QString LayerGeoref::get_tooltip()
 
 
 
-Layer * LayerGeorefInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 	LayerGeoref * grl = new LayerGeoref();
 	grl->configure_from_viewport(viewport);
 
-	grl->unmarshall_params(data, len);
+	grl->unmarshall_params(data, data_len);
 
 	if (!grl->image.isEmpty()) {
 		grl->post_read(viewport, true);

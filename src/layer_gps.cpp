@@ -363,10 +363,10 @@ QString LayerGPS::get_tooltip()
 	}
 
 /* "Copy". */
-void LayerGPS::marshall(uint8_t **data, int *datalen)
+void LayerGPS::marshall(uint8_t ** data, size_t * data_len)
 {
 	uint8_t *ld;
-	int ll;
+	size_t ll;
 	GByteArray* b = g_byte_array_new();
 
 	this->marshall_params(&ld, &ll);
@@ -381,7 +381,7 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 		}
 	}
 	*data = b->data;
-	*datalen = b->len;
+	*data_len = b->len;
 	g_byte_array_free(b, false);
 }
 #undef alm_append
@@ -389,11 +389,11 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 
 
 /* "Paste". */
-Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerGPSInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
-	len -= sizeof(int) + alm_size;		\
+	data_len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
 	LayerGPS * layer = new LayerGPS();
@@ -403,7 +403,7 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 	alm_next;
 
 	int i = 0;
-	while (len>0 && i < NUM_TRW) {
+	while (data_len > 0 && i < NUM_TRW) {
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
@@ -412,8 +412,8 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 		}
 		alm_next;
 	}
-	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << len;
-	assert (len == 0);
+	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << data_len;
+	assert (data_len == 0);
 	return layer;
 #undef alm_size
 #undef alm_next

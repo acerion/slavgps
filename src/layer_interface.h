@@ -67,7 +67,7 @@ namespace SlavGPS {
 	public:
 		LayerInterface() {};
 
-		virtual Layer * unmarshall(uint8_t * data, int len, Viewport * viewport) { return NULL; };
+		virtual Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport) { return NULL; };
 		virtual void change_param(void * gtk_widget, ui_change_values *) { };
 
 		QKeySequence action_accelerator;

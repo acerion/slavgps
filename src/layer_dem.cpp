@@ -284,7 +284,7 @@ QString LayerDEM::get_tooltip()
 
 
 
-Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerDEMInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM();
 
@@ -298,7 +298,7 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 		layer->gradients[i] = new QColor(dem_gradient_colors[i]);
 	}
 
-	layer->unmarshall_params(data, len);
+	layer->unmarshall_params(data, data_len);
 	return layer;
 }
 

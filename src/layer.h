@@ -110,10 +110,10 @@ namespace SlavGPS {
 		Layer();
 		~Layer();
 
-		static void    marshall(Layer * layer, uint8_t ** data, int * len);
-		void           marshall_params(uint8_t ** data, int * datalen);
-		static Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
-		void           unmarshall_params(uint8_t * data, int len);
+		static void    marshall(Layer * layer, uint8_t ** data, size_t * data_len);
+		void           marshall_params(uint8_t ** data, size_t * data_len);
+		static Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		void           unmarshall_params(uint8_t * data, size_t data_len);
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport);
 
@@ -149,10 +149,10 @@ namespace SlavGPS {
 		virtual void set_menu_selection(LayerMenuItem selection) { return; };
 		virtual LayerMenuItem get_menu_selection(void) const { return LayerMenuItem::NONE; };
 
-		virtual void cut_sublayer(TreeItem * sublayer) { return; };
-		virtual void copy_sublayer(TreeItem * sublayer, uint8_t ** item, unsigned int * len) { return; };
-		virtual bool paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len) { return false; };
-		virtual void delete_sublayer(TreeItem * sublayer) { return; };
+		virtual void cut_sublayer(TreeItem * item) { return; };
+		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
+		virtual bool paste_sublayer(TreeItem * item, uint8_t * data, size_t len) { return false; };
+		virtual void delete_sublayer(TreeItem * item) { return; };
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
@@ -168,7 +168,6 @@ namespace SlavGPS {
 		virtual void write_file(FILE * f) const;
 
 		virtual void add_menu_items(QMenu & menu);
-		virtual QString sublayer_rename_request(TreeItem * sublayer, const QString & new_name);
 		virtual bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);
@@ -224,14 +223,14 @@ namespace SlavGPS {
 		QIcon get_icon(void);
 		LayerMenuItem get_menu_items_selection(void);
 
-		QString name;
+		/* QString name; */ /* Inherited from TreeItem. */
 
 		LayerType type;
 
 		trw_menu_sublayer_t * menu_data = NULL;
 
 	protected:
-		virtual void marshall(uint8_t ** data, int * len);
+		virtual void marshall(uint8_t ** data, size_t * data_len);
 
 		LayerInterface * interface = NULL;
 		QMenu * right_click_menu = NULL;
@@ -264,7 +263,7 @@ namespace SlavGPS {
 		TreeItem * sublayer = NULL;
 		Viewport * viewport = NULL;
 
-		bool confirm = false;
+		//bool confirm = false;
 		void * misc = NULL;
 		QString string;
 	};

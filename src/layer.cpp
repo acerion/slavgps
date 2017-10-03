@@ -345,18 +345,18 @@ typedef struct {
 	uint8_t data[0];
 } header_t;
 
-void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
+void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
 {
 #ifdef K
-	layer->marshall(data, len);
+	layer->marshall(data, data_len);
 	if (*data) {
-		header_t * header = (header_t *) malloc(*len + sizeof (*header));
+		header_t * header = (header_t *) malloc(*data_len + sizeof (*header));
 		header->layer_type = layer->type;
-		header->len = *len;
-		memcpy(header->data, *data, *len);
+		header->len = *data_len;
+		memcpy(header->data, *data, *data_len);
 		free(*data);
 		*data = (uint8_t *) header;
-		*len = *len + sizeof (*header);
+		*data_len = *data_len + sizeof (*header);
 	}
 #endif
 }
@@ -364,16 +364,16 @@ void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 
 
 
-void Layer::marshall(uint8_t ** data, int * len)
+void Layer::marshall(uint8_t ** data, size_t * data_len)
 {
-	this->marshall_params(data, len);
+	this->marshall_params(data, data_len);
 	return;
 }
 
 
 
 
-void Layer::marshall_params(uint8_t ** data, int * datalen)
+void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 {
 	GByteArray* b = g_byte_array_new();
 	int len;
@@ -425,7 +425,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	}
 
 	*data = b->data;
-	*datalen = b->len;
+	*data_len = b->len;
 	g_byte_array_free (b, false);
 
 #undef vlm_append
@@ -434,7 +434,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 
 
-void Layer::unmarshall_params(uint8_t * data, int datalen)
+void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 {
 	char *s;
 	uint8_t *b = (uint8_t *) data;
@@ -491,7 +491,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen)
 
 
 
-Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * Layer::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 	header_t * header = (header_t *) data;
 	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
@@ -712,14 +712,6 @@ void Layer::write_file(FILE * f) const
 void Layer::add_menu_items(QMenu & menu)
 {
 	return;
-}
-
-
-
-
-QString Layer::sublayer_rename_request(TreeItem * sublayer, const QString & new_name)
-{
-	return QString("");
 }
 
 

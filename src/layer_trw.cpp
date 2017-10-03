@@ -93,11 +93,11 @@
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
-#include "clipboard.h"
 #include "routing.h"
 #include "icons/icons.h"
 #endif
 
+#include "clipboard.h"
 #include "gpspoint.h"
 
 #include "widget_list_selection.h"
@@ -609,14 +609,8 @@ void LayerTRW::delete_sublayer(TreeItem * sublayer)
 		return;
 	}
 
-	static trw_menu_sublayer_t data;
-	memset(&data, 0, sizeof (trw_menu_sublayer_t));
-
-	data.sublayer = sublayer;
-	data.confirm  = true;  /* Confirm delete request. */
-#ifdef K
-	this->delete_sublayer_cb(&data);
-#endif
+	/* true: confirm delete request. */
+	this->delete_sublayer_common(sublayer, true);
 }
 
 
@@ -629,15 +623,9 @@ void LayerTRW::cut_sublayer(TreeItem * sublayer)
 		return;
 	}
 
-	static trw_menu_sublayer_t data;
-	memset(&data, 0, sizeof (trw_menu_sublayer_t));
-
-	data.sublayer = sublayer;
-	data.confirm  = true; /* Confirm delete request. */
-#ifdef K
-	this->copy_sublayer_cb(&data);
-	this->cut_sublayer_cb(&data);
-#endif
+	this->copy_sublayer_common(sublayer);
+	/* true: confirm delete request. */
+	this->cut_sublayer_common(sublayer, true);
 }
 
 
@@ -645,44 +633,24 @@ void LayerTRW::cut_sublayer(TreeItem * sublayer)
 
 void LayerTRW::copy_sublayer_cb(void)
 {
-	TreeItem * sublayer = this->menu_data->sublayer;
-	uint8_t *data_ = NULL;
+	this->copy_sublayer_common(this->menu_data->sublayer);
+}
+
+
+
+
+void LayerTRW::copy_sublayer_common(TreeItem * item)
+{
+	uint8_t * data_ = NULL;
 	unsigned int len;
 
-	this->copy_sublayer(sublayer, &data_, &len);
+	this->copy_sublayer(item, &data_, &len);
 
-#ifdef K
 	if (data_) {
-		const char* name = NULL;
-		if (sublayer->type == "sg.trw.waypoint") {
-			Waypoint * wp = this->waypoints->items.at(sublayer->uid);
-			if (wp && wp->name) {
-				name = wp->name;
-			} else {
-				name = NULL; // Broken :(
-			}
-		} else if (sublayer->type == "sg.trw.track") {
-			Track * trk = this->tracks->at(sublayer->uid);
-			if (trk && trk->name) {
-				name = trk->name;
-			} else {
-				name = NULL; // Broken :(
-			}
-		} else {
-			Track * trk = this->routes->at(sublayer->uid);
-			if (trk && trk->name) {
-				name = trk->name;
-			} else {
-				name = NULL; // Broken :(
-			}
-		}
-
 #ifdef K
-		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, LayerType::TRW,
-				 sublayer->type, len, name, data_);
+		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, LayerType::TRW, item->type_id, len, item->name.toUtf8().constData(), data_);
 #endif
 	}
-#endif
 }
 
 
@@ -690,11 +658,17 @@ void LayerTRW::copy_sublayer_cb(void)
 
 void LayerTRW::cut_sublayer_cb(void) /* Slot. */
 {
-#ifdef K
-	this->copy_sublayer_cb(data);
-	data->confirm = false; /* Never need to confirm automatic delete. */
-	this->delete_sublayer_cb(data);
-#endif
+	/* false: never need to confirm automatic delete. */
+	this->cut_sublayer_common(this->menu_data->sublayer, false);
+}
+
+
+
+
+void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
+{
+	this->copy_sublayer_common(item);
+	this->delete_sublayer_common(item, confirm);
 }
 
 
@@ -704,18 +678,18 @@ void LayerTRW::paste_sublayer_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
 #ifdef K
-	a_clipboard_paste(this->menu_data->layers_panel);
+	a_clipboard_paste(g_tree->tree_get_layers_panel());
 #endif
 }
 
 
 
 
-void LayerTRW::copy_sublayer(TreeItem * sublayer, uint8_t **item, unsigned int *len)
+void LayerTRW::copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len)
 {
-	if (!sublayer) {
+	if (!item) {
 		qDebug() << "WW: Layer TRW: 'copy sublayer' received NULL sublayer";
-		*item = NULL;
+		*data = NULL;
 		return;
 	}
 
@@ -724,38 +698,32 @@ void LayerTRW::copy_sublayer(TreeItem * sublayer, uint8_t **item, unsigned int *
 
 	GByteArray *ba = g_byte_array_new();
 
-	if (sublayer->type_id == "sg.trw.waypoint") {
-		this->waypoints->items.at(sublayer->uid)->marshall(&id, &il);
-	} else if (sublayer->type_id == "sg.trw.track") {
-		this->tracks->items.at(sublayer->uid)->marshall(&id, &il);
-	} else {
-		this->routes->items.at(sublayer->uid)->marshall(&id, &il);
-	}
+	item->marshall(&id, &il);
 
 	g_byte_array_append(ba, id, il);
 
 	std::free(id);
 
 	*len = ba->len;
-	*item = ba->data;
+	*data = ba->data;
 }
 
 
 
 
-bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
+bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
 {
-	if (!sublayer) {
-		qDebug() << "WW: Layer TRW: 'paste sublayer' received NULL sublayer";
-		return false;
-	}
-
 	if (!item) {
+		qDebug() << "WW: Layer TRW: 'paste sublayer' received NULL item";
 		return false;
 	}
 
-	if (sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = Waypoint::unmarshall(item, len);
+	if (!data) {
+		return false;
+	}
+
+	if (item->type_id == "sg.trw.waypoint") {
+		Waypoint * wp = Waypoint::unmarshall(data, data_len);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.waypoint", wp->name);
 		wp->set_name(uniq_name);
@@ -771,8 +739,8 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 		}
 		return true;
 	}
-	if (sublayer->type_id == "sg.trw.track") {
-		Track * trk = Track::unmarshall(item, len);
+	if (item->type_id == "sg.trw.track") {
+		Track * trk = Track::unmarshall(data, data_len);
 
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.track", trk->name);
@@ -788,8 +756,8 @@ bool LayerTRW::paste_sublayer(TreeItem * sublayer, uint8_t * item, size_t len)
 		}
 		return true;
 	}
-	if (sublayer->type_id == "sg.trw.route") {
-		Track * trk = Track::unmarshall(item, len);
+	if (item->type_id == "sg.trw.route") {
+		Track * trk = Track::unmarshall(data, data_len);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.route", trk->name);
 		trk->set_name(uniq_name);
@@ -1172,10 +1140,10 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 
 
 
-void LayerTRW::marshall(uint8_t **data, int *len)
+void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
 {
 	uint8_t *pd;
-	int pl;
+	size_t pl;
 
 	*data = NULL;
 
@@ -1232,13 +1200,13 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 #undef tlm_append
 
 	*data = ba->data;
-	*len = ba->len;
+	*data_len = ba->len;
 }
 
 
 
 
-Layer * LayerTRWInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerTRWInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 	LayerTRW * trw = new LayerTRW();
 	trw->set_coord_mode(viewport->get_coord_mode());
@@ -1261,11 +1229,11 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 	// Now the individual sublayers:
 
-	while (*data && consumed_length < len) {
+	while (*data && consumed_length < data_len) {
 		// Normally four extra bytes at the end of the datastream
 		//  (since it's a GByteArray and that's where it's length is stored)
 		//  So only attempt read when there's an actual block of sublayer data
-		if (consumed_length + tlm_size < len) {
+		if (consumed_length + tlm_size < data_len) {
 
 			// Reuse pl to read the subtype from the data stream
 			memcpy(&pl, data+sizeof(int), sizeof(pl));
@@ -1295,7 +1263,7 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, int len, Viewport * viewpo
 		consumed_length += tlm_size + sizeof_len_and_subtype;
 		tlm_next;
 	}
-	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, len);
+	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, data_len);
 
 	// Not stored anywhere else so need to regenerate
 	trw->get_waypoints_node().calculate_bounds();
@@ -2926,30 +2894,30 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path)
 {
-#ifdef K
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	TreeItem * sublayer = trw_src->tree_view->get_tree_item(src_item_iter);
+	TreeItem * sublayer = trw_src->tree_view->get_tree_item(*src_item_iter);
 
+#if 0
 	if (!trw_src->tree_view->get_name(src_item_iter)) {
 		GList *items = NULL;
 
-		if (sublayer->type == "sg.trw.tracks") {
+		if (sublayer->type_id == "sg.trw.tracks") {
 			trw_src->tracks.list_trk_uids(&items);
 		}
-		if (sublayer->type == "sg.trw.waypoints") {
+		if (sublayer->type_id == "sg.trw.waypoints") {
 			trw_src->waypoints.list_wp_uids(&items);
 		}
-		if (sublayer->type == "sg.trw.routes") {
+		if (sublayer->type_id == "sg.trw.routes") {
 			trw_src->routes.list_trk_uids(&items);
 		}
 
 		GList * iter = items;
 		while (iter) {
-			if (sublayer->type == "sg.trw.tracks") {
+			if (sublayer->type_id == "sg.trw.tracks") {
 				trw_src->move_item(trw_dest, iter->data, "sg.trw.track");
-			} else if (sublayer->type == "sg.trw.routes") {
+			} else if (sublayer->type_id == "sg.trw.routes") {
 				trw_src->move_item(trw_dest, iter->data, "sg.trw.route");
 			} else {
 				trw_src->move_item(trw_dest, iter->data, "sg.trw.waypoint");
@@ -2961,7 +2929,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 		}
 	} else {
 		char * name = trw_src->tree_view->get_name(src_item_iter);
-		trw_src->move_item(trw_dest, name, sublayer->type);
+		trw_src->move_item(trw_dest, name, sublayer->type_id);
 	}
 #endif
 }
@@ -3224,13 +3192,19 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	this->delete_sublayer_common(this->menu_data->sublayer, false);
+}
+
+
+
+void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
+{
 	bool was_visible = false;
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints->items.at(child_uid);
-		if (wp && !wp->name.isEmpty()) {
-			if (this->menu_data->confirm) {
+	if (item->type_id == "sg.trw.waypoint") {
+		Waypoint * wp = (Waypoint *) item;
+		if (!wp->name.isEmpty()) {
+			if (confirm) {
 				/* Get confirmation from the user. */
 				/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
 				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->name)), this->get_window()) {
@@ -3243,10 +3217,10 @@ void LayerTRW::delete_sublayer_cb(void)
 			/* Reset layer timestamp in case it has now changed. */
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
-	} else if (this->menu_data->sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(child_uid);
-		if (trk && !trk->name.isEmpty()) {
-			if (this->menu_data->confirm) {
+	} else if (item->type_id == "sg.trw.track") {
+		Track * trk = (Track *) item;
+		if (!trk->name.isEmpty()) {
+			if (confirm) {
 				/* Get confirmation from the user. */
 				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(trk->name)), this->get_window()) {
 					return;
@@ -3258,9 +3232,9 @@ void LayerTRW::delete_sublayer_cb(void)
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else {
-		Track * trk = this->routes->items.at(child_uid);
-		if (trk && !trk->name.isEmpty()) {
-			if (this->menu_data->confirm) {
+		Track * trk = (Track *) item;
+		if (!trk->name.isEmpty()) {
+			if (confirm) {
 				/* Get confirmation from the user. */
 				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(trk->name)), this->get_window()) {
 					return;
@@ -3273,6 +3247,11 @@ void LayerTRW::delete_sublayer_cb(void)
 		this->emit_layer_changed();
 	}
 }
+
+
+
+
+
 
 
 
@@ -4305,25 +4284,6 @@ void LayerTRW::insert_point_before_cb(void)
 
 
 /**
- * Reverse a track
- */
-void LayerTRW::reverse_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	trk->reverse();
-
-	this->emit_layer_changed();
-}
-
-
-
-
-/**
  * Open a program at the specified date
  * Mainly for RedNotebook - http://rednotebook.sourceforge.net/
  * But could work with any program that accepts a command line of --date=<date>
@@ -4706,122 +4666,6 @@ void LayerTRW::tracks_stats_cb(void)
 void LayerTRW::routes_stats_cb(void)
 {
 	layer_trw_show_stats(this->get_window(), this->name, this, "sg.trw.routes");
-}
-
-
-
-
-QString LayerTRW::sublayer_rename_request(TreeItem * sublayer, const QString & new_name)
-{
-	QString empty_string("");
-
-	if (sublayer->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints->items.at(sublayer->uid);
-
-		/* No actual change to the name supplied. */
-		if (!wp->name.isEmpty()) {
-			if (new_name == wp->name) {
-				return empty_string;
-			}
-		}
-
-		Waypoint * wpf = this->waypoints->find_waypoint_by_name(new_name);
-
-		if (wpf) {
-			/* An existing waypoint has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
-				return empty_string;
-			}
-		}
-
-		/* Update WP name and refresh the treeview. */
-		wp->set_name(new_name);
-
-		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->waypoints->get_index(), this->wp_sort_order);
-
-		g_tree->emit_update_window();
-
-		return new_name;
-	}
-
-	if (sublayer->type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(sublayer->uid);
-
-		/* No actual change to the name supplied. */
-		if (trk->name.size()) {
-			if (new_name == trk->name) {
-				return empty_string;
-			}
-		}
-
-		Track * trkf = this->tracks->find_track_by_name(new_name);
-		if (trkf) {
-			/* An existing track has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
-				return empty_string;
-			}
-		}
-		/* Update track name and refresh GUI parts. */
-		trk->set_name(new_name);
-
-		/* Update any subwindows that could be displaying this track which has changed name.
-		   Only one Track Edit Window. */
-		if (this->current_trk == trk && this->tpwin) {
-			this->tpwin->set_track_name(new_name);
-		}
-
-		/* Update the dialog windows if any of them is visible. */
-		trk->update_properties_dialog();
-		trk->update_profile_dialog();
-
-		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->tracks->get_index(), this->track_sort_order);
-
-		g_tree->emit_update_window();
-
-		return new_name;
-	}
-
-	if (sublayer->type_id == "sg.trw.route") {
-		Track * trk = this->routes->items.at(sublayer->uid);
-
-		/* No actual change to the name supplied. */
-		if (trk->name.size()) {
-			if (new_name == trk->name) {
-				return empty_string;
-			}
-		}
-
-		Track * trkf = this->routes->find_track_by_name(new_name);
-		if (trkf) {
-			/* An existing track has been found with the requested name. */
-			if (!Dialog::yes_or_no(tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), this->get_window())) {
-				return empty_string;
-			}
-		}
-		/* Update track name and refresh GUI parts. */
-		trk->set_name(new_name);
-
-		/* Update any subwindows that could be displaying this track which has changed name.
-		   Only one Track Edit Window. */
-		if (this->current_trk == trk && this->tpwin) {
-			this->tpwin->set_track_name(new_name);
-		}
-
-		/* Update the dialog windows if any of them is visible. */
-		trk->update_properties_dialog();
-		trk->update_profile_dialog();
-
-		this->tree_view->set_name(sublayer->index, new_name);
-		this->tree_view->sort_children(this->tracks->get_index(), this->track_sort_order);
-
-		g_tree->emit_update_window();
-
-		return new_name;
-	}
-
-	return empty_string;
 }
 
 

@@ -940,11 +940,11 @@ QString LayerMap::get_tooltip(void)
 
 
 
-Layer * LayerMapInterface::unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * LayerMapInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
 	LayerMap * layer = new LayerMap();
 
-	layer->unmarshall_params(data, len);
+	layer->unmarshall_params(data, data_len);
 	layer->post_read(viewport, false);
 	return layer;
 }

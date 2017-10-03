@@ -270,9 +270,9 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 	} else {
 		TreeItem * item = this->tree_view->get_tree_item(index);
 		Layer * parent_layer = (Layer *) item->owning_layer;
-		const QString name = parent_layer->sublayer_rename_request(item, new_text);
-		if (!name.isEmpty()) {
-			this->tree_view->set_name(index, name);
+		const QString result_name = item->sublayer_rename_request(new_text);
+		if (!result_name.isEmpty()) {
+			this->tree_view->set_name(index, result_name);
 		}
 	}
 #endif
@@ -1007,7 +1007,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->sublayer = item;
 			layer->menu_data->viewport = this->get_viewport();
-			layer->menu_data->confirm = true; /* Confirm delete request. */
 		}
 
 		this->show_context_menu(index, layer);

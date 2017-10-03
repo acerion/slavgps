@@ -220,7 +220,7 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 /*
  * Take a Waypoint and convert it into a byte array.
  */
-void Waypoint::marshall(uint8_t **data, size_t * datalen)
+void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 {
 	GByteArray *b = g_byte_array_new();
 	size_t len;
@@ -246,7 +246,7 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 	vwm_append(symbol_name.toUtf8().constData());
 
 	*data = b->data;
-	*datalen = b->len;
+	*data_len = b->len;
 	g_byte_array_free(b, false);
 #undef vwm_append
 }
@@ -257,7 +257,7 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 /*
  * Take a byte array and convert it into a Waypoint.
  */
-Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
+Waypoint *Waypoint::unmarshall(uint8_t * data, size_t data_len)
 {
 	size_t len;
 	Waypoint *wp = new Waypoint();
@@ -588,4 +588,39 @@ void Waypoint::open_waypoint_webpage_cb(void)
 	}
 
 	open_url(this->get_any_url());
+}
+
+
+
+
+
+QString Waypoint::sublayer_rename_request(const QString & new_name)
+{
+	static const QString empty_string("");
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	/* No actual change to the name supplied. */
+	if (!this->name.isEmpty()) {
+		if (new_name == this->name) {
+			return empty_string;
+		}
+	}
+
+	if (parent_layer->waypoints->find_waypoint_by_name(new_name)) {
+		/* An existing waypoint has been found with the requested name. */
+		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), g_tree->tree_get_main_window())) {
+			return empty_string;
+		}
+	}
+
+	/* Update WP name and refresh the treeview. */
+	this->set_name(new_name);
+
+	parent_layer->tree_view->set_name(this->index, new_name);
+	parent_layer->tree_view->sort_children(parent_layer->waypoints->get_index(), parent_layer->wp_sort_order);
+
+	g_tree->emit_update_window();
+
+	return new_name;
 }

@@ -51,6 +51,7 @@
 #include "window.h"
 #include "dialog.h"
 #include "layers_panel.h"
+#include "tree_view_internal.h"
 
 
 
@@ -1746,7 +1747,7 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 
 
 
-void Track::marshall(uint8_t **data, size_t *datalen)
+void Track::marshall(uint8_t ** data, size_t * data_len)
 {
 	GByteArray * b = g_byte_array_new();
 	g_byte_array_append(b, (uint8_t *) this, sizeof(Track));
@@ -1781,7 +1782,7 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	/* kamilTODO: where is ->type? */
 
 	*data = b->data;
-	*datalen = b->len;
+	*data_len = b->len;
 	g_byte_array_free(b, false);
 }
 
@@ -1791,7 +1792,7 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 /*
  * Take a byte array and convert it into a Track.
  */
-Track * Track::unmarshall(uint8_t *data, size_t datalen)
+Track * Track::unmarshall(uint8_t * data, size_t data_len)
 {
 	Track * new_trk = new Track(((Track *)data)->type_id == "sg.trw.route");
 	/* Basic properties: */
@@ -2634,7 +2635,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 	qa = menu.addAction(QIcon::fromTheme("go-back"), this->type_id == "sg.trw.track" ? tr("&Reverse Track") : tr("&Reverse Route"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (reverse_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (reverse_cb()));
 
 	if (this->type_id == "sg.trw.route") {
 		qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("Refine Route..."));
@@ -3150,4 +3151,80 @@ void Track::open_astro_cb(void)
 	} else {
 		Dialog::info(tr("This track has no date information."), g_tree->tree_get_main_window());
 	}
+}
+
+
+
+
+/**
+   \brief Reverse a track
+*/
+void Track::reverse_cb(void)
+{
+	this->reverse();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+}
+
+
+
+
+
+
+QString Track::sublayer_rename_request(const QString & new_name)
+{
+	static const QString empty_string("");
+
+	/* No actual change to the name supplied. */
+	if (!this->name.isEmpty()) {
+		if (new_name == this->name) {
+			return empty_string;
+		}
+	}
+
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRWTracks * tracks = NULL;
+	QString message;
+
+	if (this->type_id == "sg.trw.track") {
+		tracks = parent_layer->tracks;
+		message = tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
+	} else {
+		tracks = parent_layer->routes;
+		message = tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
+	}
+
+	if (tracks->find_track_by_name(new_name)) {
+		/* An existing track/route has been found with the requested name. */
+		if (!Dialog::yes_or_no(message, g_tree->tree_get_main_window())) {
+			return empty_string;
+		}
+	}
+
+
+	/* Update track name and refresh GUI parts. */
+	this->set_name(new_name);
+
+
+
+
+	/* Update any subwindows that could be displaying this track which has changed name.
+	   Only one Track Edit Window. */
+	if (parent_layer->current_trk == this && parent_layer->tpwin) {
+		parent_layer->tpwin->set_track_name(new_name);
+	}
+
+
+	/* Update the dialog windows if any of them is visible. */
+	this->update_properties_dialog();
+	this->update_profile_dialog();
+
+
+	parent_layer->tree_view->set_name(this->index, new_name);
+	parent_layer->tree_view->sort_children(tracks->get_index(), parent_layer->track_sort_order);
+
+
+	g_tree->emit_update_window();
+
+	return new_name;
 }

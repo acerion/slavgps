@@ -110,7 +110,7 @@ namespace SlavGPS {
 	class LayerGPSInterface : public LayerInterface {
 	public:
 		LayerGPSInterface();
-		Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
 	};
 
 
@@ -124,7 +124,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
 		QString get_tooltip();
-		void marshall(uint8_t ** data, int * len);
+		void marshall(uint8_t ** data, size_t * data_len);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
 		void add_children_to_tree(void);
