@@ -1332,7 +1332,7 @@ void LayerTRW::draw(Viewport * viewport)
 	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
 #ifdef K
 	if (viewport->get_draw_with_highlight()
-	    && this->get_window()->get_selected_trw_layer() == this) {
+	    && g_tree->selected_layer == this) {
 
 		return;
 	}
@@ -1818,68 +1818,51 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 
 	switch (item_type) {
 	case TreeItemType::LAYER:
-		{
-			qDebug() << "II: LayerTRW:   selection: set selected: layer" << this->name;
-			this->get_window()->set_selected_trw_layer(this);
-			/* Mark for redraw. */
-			return true;
-		}
-		break;
+		qDebug() << "II: LayerTRW:   selection: set selected: layer" << this->name;
+		this->set_selected_layer();
+		/* Mark for redraw. */
+		return true;
 
 	case TreeItemType::SUBLAYER:
-		{
-			if (sublayer->type_id == "sg.trw.tracks") {
-				qDebug() << "II: LayerTRW:   selection: set selected: tracks";
-				this->get_window()->set_selected_tracks(&this->tracks->items, this);
-				/* Mark for redraw. */
-				return true;
-			} else if (sublayer->type_id == "sg.trw.track") {
-				Track * trk = this->tracks->items.at(sublayer->uid);
-				qDebug() << "II: LayerTRW:   selection: set selected: track" << trk->name;
-				this->get_window()->set_selected_track(trk, this);
-				/* Mark for redraw. */
-				return true;
+		if (sublayer->type_id.isEmpty()) {
+			qDebug() << "II: LayerTRW:   selection: set selected: clear highlight";
+			return this->get_window()->clear_highlight();
+		}
 
-			} else if (sublayer->type_id == "sg.trw.routes") {
-				qDebug() << "II: LayerTRW:   selection: set selected: routes";
-				this->get_window()->set_selected_tracks(&this->routes->items, this);
-				/* Mark for redraw. */
-				return true;
-
-			} else if (sublayer->type_id == "sg.trw.route") {
-				Track * trk = this->routes->items.at(sublayer->uid);
-				qDebug() << "II: LayerTRW:   selection: set selected: route" << trk->name;
-				this->get_window()->set_selected_track(trk, this);
-				/* Mark for redraw. */
-				return true;
-
-			} else if (sublayer->type_id == "sg.trw.waypoints") {
-				qDebug() << "II: LayerTRW:   selection: set selected: waypoints";
-				this->get_window()->set_selected_waypoints(&this->waypoints->items, this);
-				/* Mark for redraw. */
-				return true;
-
-			} else if (sublayer->type_id == "sg.trw.waypoint") {
-				Waypoint * wp = this->waypoints->items.at(sublayer->uid);
-				qDebug() << "II: LayerTRW:   selection: set selected: waypoint" << wp->name;
-				if (wp) {
-					this->get_window()->set_selected_waypoint(wp, this);
-					/* Show some waypoint info. */
-					this->set_statusbar_msg_info_wpt(wp);
-					/* Mark for redraw. */
-					return true;
-				}
-			} else {
-				qDebug() << "II: LayerTRW:   selection: set selected: clear highlight";
-				return this->get_window()->clear_highlight();
-			}
+#ifdef K
+		/* TODO: do something like this? */
+		if (!this->accepted_child_type_ids.contains(sublayer->type_id)) {
+			qDebug() << "EE: LayerTRW: selected: incorrect sublayer type id" << sublayer->type_id;
 			return false;
 		}
-		break;
+#else
+		if (sublayer->type_id != "sg.trw.tracks"
+		    && sublayer->type_id != "sg.trw.track"
+		    && sublayer->type_id != "sg.trw.route"
+		    && sublayer->type_id != "sg.trw.routes"
+		    && sublayer->type_id != "sg.trw.waypoints"
+		    && sublayer->type_id != "sg.trw.waypoint") {
+
+			qDebug() << "EE: LayerTRW: selected: incorrect sublayer type id" << sublayer->type_id;
+			return false;
+		}
+#endif
+
+
+		if (sublayer->type_id == "sg.trw.waypoint") {
+			Waypoint * wp = (Waypoint *) sublayer;
+			this->set_statusbar_msg_info_wpt(wp);
+		}
+
+		qDebug() << "II: LayerTRW:   selection: set selected:" << sublayer->type_id << sublayer->name;
+
+		this->set_selected_sublayer(&sublayer->index);
+
+		/* Mark for redraw. */
+		return true;
 
 	default:
 		return this->get_window()->clear_highlight();
-		break;
 	}
 }
 
@@ -5665,4 +5648,69 @@ LayerTRW::~LayerTRW()
 void LayerTRW::set_coord_mode(CoordMode mode)
 {
 	this->coord_mode = mode;
+}
+
+
+
+
+void LayerTRW::draw_with_highlight_2(Viewport * viewport)
+{
+	if (!this->selected_sublayer_index) {
+		return;
+	}
+
+	TreeItem * selected_item = g_tree->tree_get_tree_view()->get_tree_item(*this->selected_sublayer_index);
+
+	if (selected_item->type_id == "sg.trw.tracks" || selected_item->type_id == "sg.trw.routes") {
+		this->draw_with_highlight(viewport, ((LayerTRWTracks *) selected_item)->items, true);
+
+	} else if (selected_item->type_id == "sg.trw.waypoints") {
+		this->draw_with_highlight(viewport, ((LayerTRWWaypoints *) selected_item)->items, true);
+
+	} else if (selected_item->type_id == "sg.trw.track" || selected_item->type_id == "sg.trw.route") {
+		this->draw_with_highlight(viewport, (Track *) selected_item, true);
+
+	} else if (selected_item->type_id == "sg.trw.waypoint") {
+		this->draw_with_highlight(viewport, (Waypoint *) selected_item, true);
+
+	} else {
+		;
+	}
+}
+
+
+
+
+void LayerTRW::set_selected_layer()
+{
+	/* User has selected this layer. */
+	g_tree->selected_layer   = this;
+	g_tree->containing_layer = this;
+
+	this->selected_sublayer_index = NULL;
+
+	/* Set highlight thickness. */
+	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_property_track_thickness());
+}
+
+
+
+
+void LayerTRW::set_selected_sublayer(TreeIndex * sublayer_index)
+{
+	g_tree->containing_layer = this;
+	this->selected_sublayer_index = sublayer_index;
+	g_tree->selected_layer   = NULL;
+}
+
+
+
+bool LayerTRW::clear_highlight()
+{
+	if (this->selected_sublayer_index) {
+		this->selected_sublayer_index = NULL;
+		return true;
+	} else {
+		return false;
+	}
 }

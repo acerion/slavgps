@@ -1035,21 +1035,13 @@ void Window::draw_redraw()
 
 	if (this->viewport->get_draw_with_highlight()) {
 		qDebug() << "II: Window:    selection: do draw with highlight";
-		if (this->containing_trw) {
-			if (this->selected_tracks) {
-				this->containing_trw->draw_with_highlight(this->viewport, *this->selected_tracks, true);
-			} else if (this->selected_waypoints) {
-				this->containing_trw->draw_with_highlight(this->viewport, *this->selected_waypoints, true);
-			} else if (this->selected_track) {
-				this->containing_trw->draw_with_highlight(this->viewport, this->selected_track, true);
-			} else if (this->selected_waypoint) {
-				qDebug() << "II: Window:    selection: draw waypoint" << this->selected_waypoint->name << "with highlight";
-				this->containing_trw->draw_with_highlight(this->viewport, this->selected_waypoint, true);
-			} else {
-				;
-			}
-		} else if (this->selected_trw) {
-			this->selected_trw->draw_with_highlight(this->viewport);
+
+		/* If there is a layer or layer's sublayers or items that are selected in main tree,
+		   draw them with highlight. */
+		if (g_tree->containing_layer) {
+			((LayerTRW *) g_tree->containing_layer)->draw_with_highlight_2(this->viewport);
+		} else if (g_tree->selected_layer) {
+			((LayerTRW *) g_tree->selected_layer)->draw_with_highlight(this->viewport);
 		} else {
 			;
 		}
@@ -2129,118 +2121,6 @@ void Window::display_tool_name(void)
 
 
 
-LayerTRW * Window::get_selected_trw_layer()
-{
-	return this->selected_trw;
-}
-
-
-
-
-void Window::set_selected_trw_layer(LayerTRW * trw)
-{
-	this->selected_trw       = trw;
-	this->containing_trw     = trw;
-	/* Clear others */
-	this->selected_track     = NULL;
-	this->selected_tracks    = NULL;
-	this->selected_waypoint  = NULL;
-	this->selected_waypoints = NULL;
-	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_track_thickness());
-}
-
-
-
-
-Tracks * Window::get_selected_tracks()
-{
-	return this->selected_tracks;
-}
-
-
-
-
-void Window::set_selected_tracks(Tracks * tracks, LayerTRW * trw)
-{
-	this->selected_tracks    = tracks;
-	this->containing_trw     = trw;
-	/* Clear others */
-	this->selected_trw       = NULL;
-	this->selected_track     = NULL;
-	this->selected_waypoint  = NULL;
-	this->selected_waypoints = NULL;
-	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_track_thickness());
-}
-
-
-
-
-Track * Window::get_selected_track()
-{
-	return this->selected_track;
-}
-
-
-
-
-void Window::set_selected_track(Track * track, LayerTRW * trw)
-{
-	this->selected_track     = track;
-	this->containing_trw     = trw;
-	/* Clear others */
-	this->selected_trw       = NULL;
-	this->selected_tracks    = NULL;
-	this->selected_waypoint  = NULL;
-	this->selected_waypoints = NULL;
-	// Set highlight thickness
-	this->viewport->set_highlight_thickness(this->containing_trw->get_property_track_thickness());
-}
-
-
-
-
-Waypoints * Window::get_selected_waypoints()
-{
-	return this->selected_waypoints;
-}
-
-
-
-
-void Window::set_selected_waypoints(Waypoints * waypoints, LayerTRW * trw)
-{
-	this->selected_waypoints = waypoints;
-	this->containing_trw     = trw;
-	/* Clear others */
-	this->selected_trw       = NULL;
-	this->selected_track     = NULL;
-	this->selected_tracks    = NULL;
-	this->selected_waypoint  = NULL;
-}
-
-
-
-
-Waypoint * Window::get_selected_waypoint()
-{
-	return this->selected_waypoint;
-}
-
-
-
-
-void Window::set_selected_waypoint(Waypoint * wp, LayerTRW * trw)
-{
-	this->selected_waypoint  = wp;
-	this->containing_trw     = trw;
-	/* Clear others */
-	this->selected_trw       = NULL;
-	this->selected_track     = NULL;
-	this->selected_tracks    = NULL;
-	this->selected_waypoints = NULL;
-}
 
 
 
@@ -2256,25 +2136,13 @@ bool vik_window_clear_highlight_cb(Window * window)
 bool Window::clear_highlight()
 {
 	bool need_redraw = false;
-	if (this->selected_trw != NULL) {
-		this->selected_trw = NULL;
+	if (g_tree->selected_layer != NULL) {
+		g_tree->selected_layer = NULL;
 		need_redraw = true;
 	}
-	if (this->selected_track != NULL) {
-		this->selected_track = NULL;
-		need_redraw = true;
-	}
-	if (this->selected_tracks != NULL) {
-		this->selected_tracks = NULL;
-		need_redraw = true;
-	}
-	if (this->selected_waypoint != NULL) {
-		this->selected_waypoint = NULL;
-		need_redraw = true;
-	}
-	if (this->selected_waypoints != NULL) {
-		this->selected_waypoints = NULL;
-		need_redraw = true;
+	if (g_tree->containing_layer) {
+		need_redraw |= ((LayerTRW *) g_tree->containing_layer)->clear_highlight();
+		g_tree->containing_layer = NULL;
 	}
 	return need_redraw;
 }

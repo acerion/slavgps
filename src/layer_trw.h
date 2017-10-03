@@ -228,6 +228,8 @@ namespace SlavGPS {
 		void draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight);
 		void draw_with_highlight(Viewport * viewport, Waypoints & waypoints, bool do_highlight);
 
+		void draw_with_highlight_2(Viewport * viewport);
+
 
 		void find_maxmin(struct LatLon maxmin[2]);
 		bool find_center(Coord * dest);
@@ -369,6 +371,10 @@ namespace SlavGPS {
 		void cut_sublayer_common(TreeItem * item, bool confirm);
 
 
+		void set_selected_layer();
+		void set_selected_sublayer(TreeIndex * sublayer_index);
+
+
 		/* Export. */
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
 		void open_layer_with_external_program(const QString & external_program);
@@ -480,6 +486,12 @@ namespace SlavGPS {
 
 		/* Menu. */
 		LayerMenuItem menu_selection;
+
+
+		TreeIndex * selected_sublayer_index = NULL;
+
+		bool clear_highlight();
+
 
 	public slots:
 		void trackpoint_properties_cb(int response);

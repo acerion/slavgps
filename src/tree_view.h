@@ -148,6 +148,9 @@ namespace SlavGPS {
 		LayersPanel * layers_panel = NULL;
 		Viewport * viewport = NULL;
 
+		Layer * selected_layer = NULL;
+		Layer * containing_layer = NULL;
+
 		void emit_update_window(void) { emit this->update_window(); };
 
 	signals:
