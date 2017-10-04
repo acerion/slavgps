@@ -785,7 +785,6 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 {
 	qDebug() << "II: Layer TRW: new track's move()" << trw->draw_sync_done;
 	qDebug() << "II: Layer TRW: new track's move()" << trw->current_trk;
-	qDebug() << "II: Layer TRW: new track's move()" << !trw->current_trk->empty();
 	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (/* trw->draw_sync_done && */ trw->current_trk && !trw->current_trk->empty()) {
 		Trackpoint * last_tpt = trw->current_trk->get_tp_last();

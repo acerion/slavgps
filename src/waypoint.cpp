@@ -30,6 +30,7 @@
 #include "globals.h"
 #include "layer_trw.h"
 #include "layer_trw_menu.h"
+#include "layer_trw_painter.h"
 //#include "garminsymbols.h"
 #include "dem_cache.h"
 #include "util.h"
@@ -593,7 +594,6 @@ void Waypoint::open_waypoint_webpage_cb(void)
 
 
 
-
 QString Waypoint::sublayer_rename_request(const QString & new_name)
 {
 	static const QString empty_string("");
@@ -623,4 +623,40 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	g_tree->emit_update_window();
 
 	return new_name;
+}
+
+
+
+
+bool Waypoint::handle_selection_in_tree(void)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	parent_layer->set_statusbar_msg_info_wpt(this);
+
+	g_tree->selected_layer = parent_layer;                 /* This means "this layer OR its sublayer/item is selected. */
+	parent_layer->selected_sublayer_index = &this->index;  /* This means "this sublayer has been selected, so selection is not of layer itself, but of its sublayer". */
+
+	return true;
+}
+
+
+
+
+/**
+ * Only handles a single waypoint
+ * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
+ */
+void Waypoint::draw_with_highlight(Viewport * viewport, bool do_highlight)
+{
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
+	/* Check the layer for visibility (including all the parents visibilities). */
+	if (!this->tree_view->is_visible_in_tree(this->index)) {
+		return;
+	}
+#endif
+
+	static TRWPainter painter((LayerTRW *) this->owning_layer, viewport);
+	painter.draw_waypoint(this, do_highlight);
 }

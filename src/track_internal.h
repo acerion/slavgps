@@ -240,6 +240,10 @@ namespace SlavGPS {
 		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 
+		bool handle_selection_in_tree(void);
+
+		void draw_with_highlight(Viewport * viewport, bool do_highlight);
+
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
 		QString description;

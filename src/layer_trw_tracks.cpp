@@ -889,3 +889,44 @@ void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 	}
 	track_list_dialog(title, this->owning_layer, this->type_id, false);
 }
+
+
+
+
+bool LayerTRWTracks::handle_selection_in_tree(void)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	//parent_layer->set_statusbar_msg_info_trk(this);
+
+	g_tree->selected_layer = parent_layer;                 /* This means "this layer OR its sublayer/item is selected. */
+	parent_layer->selected_sublayer_index = &this->index;  /* This means "this sublayer has been selected, so selection is not of layer itself, but of its sublayer". */
+
+	return true;
+}
+
+
+
+
+/**
+ * Generally for drawing all tracks or routes or waypoints
+ * tracks may be actually routes
+ * It assumes they belong to the TRW Layer (it doesn't check this is the case)
+ */
+void LayerTRWTracks::draw_with_highlight(Viewport * viewport, bool do_highlight)
+{
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
+	/* Check the layer for visibility (including all the parents visibilities). */
+	if (!this->tree_view->is_visible_in_tree(this->index)) {
+		return;
+	}
+#endif
+
+	if (this->items.empty()) {
+		return;
+	}
+
+	static TRWPainter painter((LayerTRW *) this->owning_layer, viewport);
+	painter.draw_tracks(this->items, do_highlight);
+}

@@ -156,6 +156,9 @@ namespace SlavGPS {
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
 
 
+		bool handle_selection_in_tree(void);
+
+		void draw_with_highlight(Viewport * viewport, bool do_highlight);
 
 		Waypoints items;
 		LatLonBBox bbox;

@@ -80,6 +80,10 @@ namespace SlavGPS {
 		bool add_context_menu_items(QMenu & menu);
 		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu);
 
+		bool handle_selection_in_tree(void);
+
+		void draw_with_highlight(Viewport * viewport, bool do_highlight);
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;

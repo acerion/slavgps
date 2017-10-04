@@ -110,6 +110,16 @@ namespace SlavGPS {
 
 		virtual void marshall(uint8_t ** data, size_t * data_len) { };
 
+		/**
+		   \brief The item has been selected in items tree. Do something about it.
+
+		   @return false if the event of being selected was not handled
+		   @return true otherwise
+		 */
+		virtual bool handle_selection_in_tree(void) { return false; };
+
+		virtual void draw_with_highlight(Viewport * viewport, bool do_highlight) { return; };
+
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
 		TreeIndex index;             /* Set in TreeView::add_tree_item(). */
@@ -149,7 +159,6 @@ namespace SlavGPS {
 		Viewport * viewport = NULL;
 
 		Layer * selected_layer = NULL;
-		Layer * containing_layer = NULL;
 
 		void emit_update_window(void) { emit this->update_window(); };
 

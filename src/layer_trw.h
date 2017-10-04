@@ -221,14 +221,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 
 		/* Draw all items of the layer, with highlight. */
-		void draw_with_highlight(Viewport * viewport);
-
-		void draw_with_highlight(Viewport * viewport, Track * trk, bool do_highlight);
-		void draw_with_highlight(Viewport * viewport, Tracks & tracks, bool do_highlight);
-		void draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight);
-		void draw_with_highlight(Viewport * viewport, Waypoints & waypoints, bool do_highlight);
-
-		void draw_with_highlight_2(Viewport * viewport);
+		void draw_with_highlight(Viewport * viewport, bool do_highlight);
 
 
 		void find_maxmin(struct LatLon maxmin[2]);
@@ -370,10 +363,7 @@ namespace SlavGPS {
 		void copy_sublayer_common(TreeItem * item);
 		void cut_sublayer_common(TreeItem * item, bool confirm);
 
-
-		void set_selected_layer();
-		void set_selected_sublayer(TreeIndex * sublayer_index);
-
+		bool handle_selection_in_tree();
 
 		/* Export. */
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
@@ -608,9 +598,6 @@ namespace SlavGPS {
 
 	public:
 		void acquire(VikDataSourceInterface *datasource);
-
-	private:
-		void draw_with_highlight_sub(Viewport * viewport, bool do_highlight);
 	};
 
 

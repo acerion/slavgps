@@ -1302,24 +1302,48 @@ static unsigned int strcase_hash(gconstpointer v)
 
 
 
-void LayerTRW::draw_with_highlight_sub(Viewport * viewport, bool do_highlight)
+void LayerTRW::draw_with_highlight(Viewport * viewport, bool do_highlight)
 {
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
+	/* Check the layer for visibility (including all the parents visibilities). */
+	if (!this->tree_view->is_visible_in_tree(this->index)) {
+		return;
+	}
+#endif
+
 	static TRWPainter painter(this, viewport);
 
 	if (true /* this->tracks_node.visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw tracks";
-		painter.draw_tracks(this->tracks->items, do_highlight);
+		qDebug() << "II: Layer TRW: calling function to draw tracks, do highlight =" << do_highlight;
+			painter.draw_tracks(this->tracks->items, do_highlight);
 	}
 
 	if (true /* this->routes_node.visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw routes";
+		qDebug() << "II: Layer TRW: calling function to draw routes, do highlight =" << do_highlight;
 		painter.draw_tracks(this->routes->items, do_highlight);
 	}
 
 	if (true /* this->waypoints->visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw waypoints";
+		qDebug() << "II: Layer TRW: calling function to draw waypoints, do highlight =" << do_highlight;
 		painter.draw_waypoints(this->waypoints->items, do_highlight);
 	}
+
+#if 0
+	if (this->selected_sublayer_index && do_highlight) {
+
+		/* tree->selected_layer and this->selected_sublayer_index
+		   are both set - this means that a sublayer/item within
+		   tree->selected_layer is selected in tree view. Draw
+		   only that sublayer/item. */
+
+		TreeItem * selected_item = g_tree->tree_get_tree_view()->get_tree_item(*this->selected_sublayer_index);
+		selected_item->draw_with_highlight(viewport, do_highlight);
+	}
+#endif
+
+	return;
+
 }
 
 
@@ -1338,141 +1362,7 @@ void LayerTRW::draw(Viewport * viewport)
 	}
 #endif
 
-	this->draw_with_highlight_sub(viewport, false);
-}
-
-
-
-
-void LayerTRW::draw_with_highlight(Viewport * viewport)
-{
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
-		return;
-	}
-#endif
-	this->draw_with_highlight_sub(viewport, true);
-}
-
-
-
-
-/**
- * Only handles a single track
- * It assumes the track belongs to the TRW Layer (it doesn't check this is the case)
- */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Track * trk, bool do_highlight)
-{
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
-		return;
-	}
-#endif
-
-	if (!trk) {
-		return;
-	}
-
-	bool do_draw = (trk->type_id == "sg.trw.route" && this->routes->visible) || (trk->type_id == "sg.trw.track" && this->tracks->visible);
-	if (!do_draw) {
-		return;
-	}
-
-	static TRWPainter painter(this, viewport);
-	painter.draw_track(trk, do_highlight);
-}
-
-
-/**
- * Only handles a single waypoint
- * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
- */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoint * wp, bool do_highlight)
-{
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
-		return;
-	}
-#endif
-
-	if (!this->waypoints->visible) {
-		return;
-	}
-
-	if (!wp) {
-		return;
-	}
-
-	static TRWPainter painter(this, viewport);
-	painter.draw_waypoint(wp, do_highlight);
-}
-
-
-
-
-/**
- * Generally for drawing all tracks or routes or waypoints
- * tracks may be actually routes
- * It assumes they belong to the TRW Layer (it doesn't check this is the case)
- */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Tracks & tracks_, bool do_highlight)
-{
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
-		return;
-	}
-#endif
-
-	if (tracks_.empty()) {
-		return;
-	}
-
-	bool is_routes = (*tracks_.begin()).second->type_id == "sg.trw.route";
-	bool is_visible = (is_routes && this->routes->visible) || (!is_routes && this->tracks->visible);
-	if (!is_visible) {
-		return;
-	}
-
-	static TRWPainter painter(this, viewport);
-	painter.draw_tracks(tracks_, do_highlight);
-}
-
-
-
-
-/**
- * Generally for drawing all tracks or routes or waypoints
- * tracks may be actually routes
- * It assumes they belong to the TRW Layer (it doesn't check this is the case)
- */
-void LayerTRW::draw_with_highlight(Viewport * viewport, Waypoints & waypoints_, bool do_highlight)
-{
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
-		return;
-	}
-#endif
-
-	if (!this->waypoints->visible) {
-		return;
-	}
-
-	if (waypoints_.empty()) {
-		return;
-	}
-
-	static TRWPainter painter(this, viewport);
-	painter.draw_waypoints(waypoints_, do_highlight);
+	this->draw_with_highlight(viewport, false);
 }
 
 
@@ -1819,7 +1709,7 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 	switch (item_type) {
 	case TreeItemType::LAYER:
 		qDebug() << "II: LayerTRW:   selection: set selected: layer" << this->name;
-		this->set_selected_layer();
+		this->handle_selection_in_tree();
 		/* Mark for redraw. */
 		return true;
 
@@ -1847,17 +1737,9 @@ bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
 			return false;
 		}
 #endif
-
-
-		if (sublayer->type_id == "sg.trw.waypoint") {
-			Waypoint * wp = (Waypoint *) sublayer;
-			this->set_statusbar_msg_info_wpt(wp);
-		}
-
 		qDebug() << "II: LayerTRW:   selection: set selected:" << sublayer->type_id << sublayer->name;
 
-		this->set_selected_sublayer(&sublayer->index);
-
+		sublayer->handle_selection_in_tree();
 		/* Mark for redraw. */
 		return true;
 
@@ -3230,11 +3112,6 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 		this->emit_layer_changed();
 	}
 }
-
-
-
-
-
 
 
 
@@ -5653,55 +5530,17 @@ void LayerTRW::set_coord_mode(CoordMode mode)
 
 
 
-void LayerTRW::draw_with_highlight_2(Viewport * viewport)
+bool LayerTRW::handle_selection_in_tree()
 {
-	if (!this->selected_sublayer_index) {
-		return;
-	}
-
-	TreeItem * selected_item = g_tree->tree_get_tree_view()->get_tree_item(*this->selected_sublayer_index);
-
-	if (selected_item->type_id == "sg.trw.tracks" || selected_item->type_id == "sg.trw.routes") {
-		this->draw_with_highlight(viewport, ((LayerTRWTracks *) selected_item)->items, true);
-
-	} else if (selected_item->type_id == "sg.trw.waypoints") {
-		this->draw_with_highlight(viewport, ((LayerTRWWaypoints *) selected_item)->items, true);
-
-	} else if (selected_item->type_id == "sg.trw.track" || selected_item->type_id == "sg.trw.route") {
-		this->draw_with_highlight(viewport, (Track *) selected_item, true);
-
-	} else if (selected_item->type_id == "sg.trw.waypoint") {
-		this->draw_with_highlight(viewport, (Waypoint *) selected_item, true);
-
-	} else {
-		;
-	}
-}
-
-
-
-
-void LayerTRW::set_selected_layer()
-{
-	/* User has selected this layer. */
-	g_tree->selected_layer   = this;
-	g_tree->containing_layer = this;
-
-	this->selected_sublayer_index = NULL;
+	g_tree->selected_layer = this;         /* This means "this layer OR its sublayer/item is selected. */
+	this->selected_sublayer_index = NULL;  /* This means "no sublayer in this layer is selected, so it's the layer itself that is selected. */
 
 	/* Set highlight thickness. */
 	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_property_track_thickness());
+
+	return true;
 }
 
-
-
-
-void LayerTRW::set_selected_sublayer(TreeIndex * sublayer_index)
-{
-	g_tree->containing_layer = this;
-	this->selected_sublayer_index = sublayer_index;
-	g_tree->selected_layer   = NULL;
-}
 
 
 

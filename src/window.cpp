@@ -1036,12 +1036,16 @@ void Window::draw_redraw()
 	if (this->viewport->get_draw_with_highlight()) {
 		qDebug() << "II: Window:    selection: do draw with highlight";
 
-		/* If there is a layer or layer's sublayers or items that are selected in main tree,
-		   draw them with highlight. */
-		if (g_tree->containing_layer) {
-			((LayerTRW *) g_tree->containing_layer)->draw_with_highlight_2(this->viewport);
-		} else if (g_tree->selected_layer) {
-			((LayerTRW *) g_tree->selected_layer)->draw_with_highlight(this->viewport);
+		/* If there is a layer or layer's sublayers or items
+		   that are selected in main tree, draw them with
+		   highlight. */
+		if (g_tree->selected_layer) {
+			/* If a selection exists, ->selected_layer is
+			   always set. It is up to the selected layer
+			   to see and decide what exactly is selected
+			   within the layer. Window class doesn't care
+			   about such details. */
+			((LayerTRW *) g_tree->selected_layer)->draw_with_highlight(this->viewport, true);
 		} else {
 			;
 		}
@@ -2136,13 +2140,9 @@ bool vik_window_clear_highlight_cb(Window * window)
 bool Window::clear_highlight()
 {
 	bool need_redraw = false;
-	if (g_tree->selected_layer != NULL) {
+	if (g_tree->selected_layer) {
+		need_redraw |= ((LayerTRW *) g_tree->selected_layer)->clear_highlight();
 		g_tree->selected_layer = NULL;
-		need_redraw = true;
-	}
-	if (g_tree->containing_layer) {
-		need_redraw |= ((LayerTRW *) g_tree->containing_layer)->clear_highlight();
-		g_tree->containing_layer = NULL;
 	}
 	return need_redraw;
 }
