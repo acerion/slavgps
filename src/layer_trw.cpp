@@ -1688,60 +1688,10 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 
 
-/**
- * General layer selection function, find out which bit is selected and take appropriate action.
- */
-bool LayerTRW::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
+void LayerTRW::reset_internal_selections(void)
 {
-	/* Reset. */
 	this->current_wp = NULL;
 	this->cancel_current_tp(false);
-
-	/* Clear statusbar. */
-	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
-
-	qDebug() << "II: LayerTRW:   selection: set selected: top";
-
-	switch (item_type) {
-	case TreeItemType::LAYER:
-		qDebug() << "II: LayerTRW:   selection: set selected: layer" << this->name;
-		this->handle_selection_in_tree();
-		/* Mark for redraw. */
-		return true;
-
-	case TreeItemType::SUBLAYER:
-		if (sublayer->type_id.isEmpty()) {
-			qDebug() << "II: LayerTRW:   selection: set selected: clear highlight";
-			return this->get_window()->clear_highlight();
-		}
-
-#ifdef K
-		/* TODO: do something like this? */
-		if (!this->accepted_child_type_ids.contains(sublayer->type_id)) {
-			qDebug() << "EE: LayerTRW: selected: incorrect sublayer type id" << sublayer->type_id;
-			return false;
-		}
-#else
-		if (sublayer->type_id != "sg.trw.tracks"
-		    && sublayer->type_id != "sg.trw.track"
-		    && sublayer->type_id != "sg.trw.route"
-		    && sublayer->type_id != "sg.trw.routes"
-		    && sublayer->type_id != "sg.trw.waypoints"
-		    && sublayer->type_id != "sg.trw.waypoint") {
-
-			qDebug() << "EE: LayerTRW: selected: incorrect sublayer type id" << sublayer->type_id;
-			return false;
-		}
-#endif
-		qDebug() << "II: LayerTRW:   selection: set selected:" << sublayer->type_id << sublayer->name;
-
-		sublayer->handle_selection_in_tree();
-		/* Mark for redraw. */
-		return true;
-
-	default:
-		return this->get_window()->clear_highlight();
-	}
 }
 
 
@@ -5528,11 +5478,18 @@ void LayerTRW::set_coord_mode(CoordMode mode)
 
 bool LayerTRW::handle_selection_in_tree()
 {
+	qDebug() << "II: LayerTRW: handle selection in tree: top";
+
+	/* Reset info about old selection. */
+	this->reset_internal_selections();
+
+	/* Set info about current selection. */
 	g_tree->selected_tree_item = this;
 
 	/* Set highlight thickness. */
 	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_property_track_thickness());
 
+	/* Mark for redraw. */
 	return true;
 }
 

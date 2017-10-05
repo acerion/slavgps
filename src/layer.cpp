@@ -71,6 +71,9 @@ extern LayerMapnikInterface vik_mapnik_layer_interface;
 #endif
 
 
+extern Tree * g_tree;
+
+
 
 
 static bool layer_defaults_register(LayerType layer_type);
@@ -510,15 +513,16 @@ Layer::~Layer()
 
 
 
-bool Layer::layer_selected(TreeItemType item_type, TreeItem * sublayer)
+bool Layer::handle_selection_in_tree(void)
 {
-	bool result = this->kamil_selected(item_type, sublayer);
-	if (result) {
-		return result;
-	} else {
-		return this->get_window()->clear_highlight();
-	}
+#if 0
+	/* A generic layer doesn't want anyone know that it is
+	   selected - no one would be interested in knowing that.
+	   So we don't set it here. */
+	g_tree->selected_tree_item = this;
+#endif
 
+	return g_tree->tree_get_main_window()->clear_highlight();
 }
 
 
@@ -671,14 +675,6 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 QString Layer::get_tooltip(void)
 {
 	return QString(tr("Layer::tooltip"));
-}
-
-
-
-
-bool Layer::kamil_selected(TreeItemType item_type, TreeItem * sublayer)
-{
-	return false;
 }
 
 

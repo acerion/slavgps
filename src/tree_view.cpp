@@ -46,6 +46,10 @@ using namespace SlavGPS;
 
 
 
+
+extern Tree * g_tree;
+
+
 typedef int GtkTreeDragSource;
 typedef int GtkTreeDragDest;
 typedef int GtkCellRenderer;
@@ -310,26 +314,30 @@ void TreeView::select_cb(void) /* Slot. */
 		return;
 	}
 
-	TreeIndex const layer_index = this->go_up_to_layer(item_index);
-	if (!layer_index.isValid()) {
+	TreeItem * selected_item = this->get_tree_item(item_index);
+	if (!selected_item) {
 		return;
 	}
 
-	Layer * layer = this->get_layer(layer_index);
-	Window * main_window = this->layers_panel->get_window();
-	TreeItemType tree_item_type = this->get_item_type(item_index);
+	Window * main_window = g_tree->tree_get_main_window();
 
-	TreeItem * sublayer = NULL;
-	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
-		sublayer = this->get_tree_item(item_index);
+	/* Clear statusbar. */
+	main_window->get_statusbar()->set_message(StatusBarField::INFO, "");
+
+	Layer * layer = NULL; /* Either the selected layer itself, or an owner/parent of selected sublayer item. */
+	if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		qDebug() << "II: Tree View: select CB: selected item is layer";
+		layer = (Layer *) selected_item;
+	} else {
+		qDebug() << "II: Tree View: select CB: selected item is sublayer";
+		layer = selected_item->owning_layer;
 	}
 
+	/* This should activate toolbox relevant to selected layer's type. */
 	main_window->handle_selection_of_layer(layer);
 
-	/* Apply settings now we have the all details. */
-	if (layer->layer_selected(tree_item_type, sublayer)) {
-
-		/* Redraw required. */
+	const bool redraw_required = selected_item->handle_selection_in_tree();
+	if (redraw_required) {
 		main_window->get_layers_panel()->emit_update_window_cb();
 	}
 }

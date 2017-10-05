@@ -149,7 +149,6 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		QString get_tooltip();
 
-		bool kamil_selected(TreeItemType type, TreeItem * sublayer);
 
 		/* Methods for generic "Select" tool. */
 		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
@@ -365,6 +364,8 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree();
 
+		void reset_internal_selections(void);
+
 		/* Export. */
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
 		void open_layer_with_external_program(const QString & external_program);
@@ -477,8 +478,6 @@ namespace SlavGPS {
 		/* Menu. */
 		LayerMenuItem menu_selection;
 
-
-		TreeIndex * selected_sublayer_index = NULL;
 
 		bool clear_highlight();
 
