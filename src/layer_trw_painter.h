@@ -112,16 +112,12 @@ namespace SlavGPS {
 
 
 		void draw_waypoint(Waypoint * wp, bool do_highlight);
-		void draw_waypoints(Waypoints & waypoints, bool do_highlight);
-
 		void draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight);
 		int  draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight);
 		void draw_waypoint_symbol(Waypoint * wp, int x, int y);
 
 
 		void draw_track(Track * trk, bool do_highlight);
-		void draw_tracks(Tracks & tracks, bool do_highlight);
-
 		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord);
 		void draw_track_dist_labels(Track * trk, bool do_highlight);
 		void draw_track_point_names(Track * trk, bool do_highlight);

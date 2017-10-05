@@ -1302,8 +1302,25 @@ static unsigned int strcase_hash(gconstpointer v)
 
 
 
-void LayerTRW::draw_with_highlight(Viewport * viewport, bool do_highlight)
+void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
+
+#ifdef K
+	/* TODO: re-implement/re-enable this feature. */
+
+	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
+	   This may seem slightly inefficient to test each time for every layer
+	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
+	if (viewport->get_draw_with_highlight()
+	    && g_tree->selected_tree_item && *g_tree->selected_tree_item == this) { /* TODO: use UID to compare tree items. */
+
+		return;
+	}
+#endif
+
+
+
+
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
 	/* Check the layer for visibility (including all the parents visibilities). */
@@ -1312,35 +1329,25 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool do_highlight)
 	}
 #endif
 
-	static TRWPainter painter(this, viewport);
+	const bool allowed = hl_is_allowed;
+	const bool required = allowed
+		&& (hl_is_required /* Parent code requires us to do highlight. */
+		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
 
 	if (true /* this->tracks_node.visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw tracks, do highlight =" << do_highlight;
-			painter.draw_tracks(this->tracks->items, do_highlight);
+		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << allowed << required;
+		this->tracks->draw_tree_item(viewport, allowed, required);
 	}
 
 	if (true /* this->routes_node.visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw routes, do highlight =" << do_highlight;
-		painter.draw_tracks(this->routes->items, do_highlight);
+		qDebug() << "II: Layer TRW: calling function to draw routes, highlight:" << allowed << required;
+		this->routes->draw_tree_item(viewport, allowed, required);
 	}
 
 	if (true /* this->waypoints->visible */) { /* TODO: fix condition. */
-		qDebug() << "II: Layer TRW: calling function to draw waypoints, do highlight =" << do_highlight;
-		painter.draw_waypoints(this->waypoints->items, do_highlight);
+		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << allowed << required;
+		this->waypoints->draw_tree_item(viewport, allowed, required);
 	}
-
-#if 0
-	if (this->selected_sublayer_index && do_highlight) {
-
-		/* tree->selected_layer and this->selected_sublayer_index
-		   are both set - this means that a sublayer/item within
-		   tree->selected_layer is selected in tree view. Draw
-		   only that sublayer/item. */
-
-		TreeItem * selected_item = g_tree->tree_get_tree_view()->get_tree_item(*this->selected_sublayer_index);
-		selected_item->draw_with_highlight(viewport, do_highlight);
-	}
-#endif
 
 	return;
 
@@ -1351,18 +1358,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool do_highlight)
 
 void LayerTRW::draw(Viewport * viewport)
 {
-	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
-	   This may seem slightly inefficient to test each time for every layer
-	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
-#ifdef K
-	if (viewport->get_draw_with_highlight()
-	    && g_tree->selected_layer == this) {
-
-		return;
-	}
-#endif
-
-	this->draw_with_highlight(viewport, false);
+	this->draw_tree_item(viewport, false, false);
 }
 
 
@@ -5532,8 +5528,7 @@ void LayerTRW::set_coord_mode(CoordMode mode)
 
 bool LayerTRW::handle_selection_in_tree()
 {
-	g_tree->selected_layer = this;         /* This means "this layer OR its sublayer/item is selected. */
-	this->selected_sublayer_index = NULL;  /* This means "no sublayer in this layer is selected, so it's the layer itself that is selected. */
+	g_tree->selected_tree_item = this;
 
 	/* Set highlight thickness. */
 	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_property_track_thickness());
@@ -5546,10 +5541,14 @@ bool LayerTRW::handle_selection_in_tree()
 
 bool LayerTRW::clear_highlight()
 {
+#ifdef K
+	/* TODO: this is not used anymore. What to do with this code? When to return true and when false? */
 	if (this->selected_sublayer_index) {
 		this->selected_sublayer_index = NULL;
 		return true;
 	} else {
 		return false;
 	}
+#endif
+	return true;
 }

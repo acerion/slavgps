@@ -634,8 +634,7 @@ bool Waypoint::handle_selection_in_tree(void)
 
 	parent_layer->set_statusbar_msg_info_wpt(this);
 
-	g_tree->selected_layer = parent_layer;                 /* This means "this layer OR its sublayer/item is selected. */
-	parent_layer->selected_sublayer_index = &this->index;  /* This means "this sublayer has been selected, so selection is not of layer itself, but of its sublayer". */
+	g_tree->selected_tree_item = this;
 
 	return true;
 }
@@ -647,7 +646,7 @@ bool Waypoint::handle_selection_in_tree(void)
  * Only handles a single waypoint
  * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
  */
-void Waypoint::draw_with_highlight(Viewport * viewport, bool do_highlight)
+void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 0
@@ -657,6 +656,12 @@ void Waypoint::draw_with_highlight(Viewport * viewport, bool do_highlight)
 	}
 #endif
 
-	static TRWPainter painter((LayerTRW *) this->owning_layer, viewport);
-	painter.draw_waypoint(this, do_highlight);
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	const bool allowed = hl_is_allowed;
+	const bool required = allowed
+		&& (hl_is_required /* Parent code requires us to do highlight. */
+		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
+
+	static TRWPainter painter(parent_layer, viewport);
+	painter.draw_waypoint(this, allowed && required);
 }

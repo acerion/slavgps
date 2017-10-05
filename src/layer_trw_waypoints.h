@@ -158,7 +158,7 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_with_highlight(Viewport * viewport, bool do_highlight);
+		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
 
 		Waypoints items;
 		LatLonBBox bbox;

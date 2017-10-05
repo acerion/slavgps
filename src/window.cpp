@@ -62,6 +62,7 @@
 #include "preferences.h"
 #include "clipboard.h"
 #include "map_cache.h"
+#include "tree_view_internal.h"
 
 
 
@@ -1031,21 +1032,20 @@ void Window::draw_redraw()
 	this->viewport->clear();
 	/* Main layer drawing. */
 	this->layers_panel->draw_all();
-	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 
+	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 	if (this->viewport->get_draw_with_highlight()) {
 		qDebug() << "II: Window:    selection: do draw with highlight";
 
 		/* If there is a layer or layer's sublayers or items
 		   that are selected in main tree, draw them with
 		   highlight. */
-		if (g_tree->selected_layer) {
-			/* If a selection exists, ->selected_layer is
-			   always set. It is up to the selected layer
-			   to see and decide what exactly is selected
-			   within the layer. Window class doesn't care
-			   about such details. */
-			((LayerTRW *) g_tree->selected_layer)->draw_with_highlight(this->viewport, true);
+		if (g_tree->selected_tree_item) {
+			/* It is up to the selected item to see and
+			   decide what exactly is selected and how to
+			   draw it. Window class doesn't care about
+			   such details. */
+			g_tree->selected_tree_item->draw_tree_item(this->viewport, true, true);
 		} else {
 			;
 		}
@@ -2140,9 +2140,12 @@ bool vik_window_clear_highlight_cb(Window * window)
 bool Window::clear_highlight()
 {
 	bool need_redraw = false;
-	if (g_tree->selected_layer) {
-		need_redraw |= ((LayerTRW *) g_tree->selected_layer)->clear_highlight();
-		g_tree->selected_layer = NULL;
+	if (g_tree->selected_tree_item) {
+		if (g_tree->selected_tree_item->tree_item_type == TreeItemType::LAYER) { /* TODO: use UID to compare tree items. */
+			/* FIXME: we assume here that only LayerTRW can be a selected layer. */
+			need_redraw |= ((LayerTRW *) g_tree->selected_tree_item)->clear_highlight();
+		}
+		g_tree->selected_tree_item = NULL;
 	}
 	return need_redraw;
 }

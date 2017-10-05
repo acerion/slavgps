@@ -118,7 +118,7 @@ namespace SlavGPS {
 		 */
 		virtual bool handle_selection_in_tree(void) { return false; };
 
-		virtual void draw_with_highlight(Viewport * viewport, bool do_highlight) { return; };
+		virtual void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required) { return; };
 
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
@@ -158,7 +158,8 @@ namespace SlavGPS {
 		LayersPanel * layers_panel = NULL;
 		Viewport * viewport = NULL;
 
-		Layer * selected_layer = NULL;
+		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
+		TreeItem * selected_tree_item = NULL;
 
 		void emit_update_window(void) { emit this->update_window(); };
 

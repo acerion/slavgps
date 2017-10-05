@@ -840,16 +840,6 @@ void TRWPainter::draw_track(Track * trk, bool do_highlight)
 
 
 
-void TRWPainter::draw_tracks(Tracks & tracks, bool do_highlight)
-{
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		this->draw_track(i->second, do_highlight);
-	}
-}
-
-
-
-
 void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	if (!wp->visible) {
@@ -1070,18 +1060,6 @@ void TRWPainter::draw_waypoint(Waypoint * wp, bool do_highlight)
 {
 	if (BBOX_INTERSECT (this->trw->get_waypoints_node().bbox, this->bbox)) {
 		this->draw_waypoint_sub(wp, do_highlight);
-	}
-}
-
-
-
-
-void TRWPainter::draw_waypoints(Waypoints & waypoints, bool do_highlight)
-{
-	if (BBOX_INTERSECT (this->trw->get_waypoints_node().bbox, this->bbox)) {
-		for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-			this->draw_waypoint_sub(i->second, do_highlight);
-		}
 	}
 }
 
