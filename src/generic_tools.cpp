@@ -911,15 +911,13 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 
 			TreeView * tree_view = this->window->layers_panel->get_treeview();
-			TreeIndex const & index = tree_view->get_selected_item();
+			TreeItem * selected_item = tree_view->get_selected_item();
+			if (selected_item) {
+				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
+				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
+				    || selected_item->to_layer()->type == LayerType::TRW) {
 
-			if (index.isValid()) {
-				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
-				TreeItemType type = tree_view->get_item_type(index);
-				if (type == TreeItemType::SUBLAYER
-				    || tree_view->get_layer(index)->type == LayerType::TRW) {
-
-					tree_view->unselect(index);
+					tree_view->unselect(selected_item->index);
 					if (this->window->clear_highlight()) {
 						this->window->draw_update();
 					}

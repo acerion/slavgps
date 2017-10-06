@@ -309,12 +309,7 @@ void TreeView::add_columns()
 
 void TreeView::select_cb(void) /* Slot. */
 {
-	TreeIndex const & item_index = this->get_selected_item();
-	if (!item_index.isValid()) {
-		return;
-	}
-
-	TreeItem * selected_item = this->get_tree_item(item_index);
+	TreeItem * selected_item = this->get_selected_item();
 	if (!selected_item) {
 		return;
 	}
@@ -340,38 +335,6 @@ void TreeView::select_cb(void) /* Slot. */
 	if (redraw_required) {
 		main_window->get_layers_panel()->emit_update_window_cb();
 	}
-}
-
-
-
-
-/*
-  Go up the tree to find a Layer.
-
-  If @param index already refers to a layer, the function doesn't
-  really go up, it returns the same index.
-
-  If you want to skip item pointed to by @param index and start from
-  its parent, you have to calculate parent by yourself before passing
-  an index to this function.
-*/
-TreeIndex const TreeView::go_up_to_layer(TreeIndex const & index)
-{
-        TreeIndex this_index = index;
-	TreeIndex parent_index;
-
-	TreeItem * item = this->get_tree_item(this_index);
-
-	while (item->tree_item_type != TreeItemType::LAYER) {
-		parent_index = this_index.parent();
-		if (!parent_index.isValid()) {
-			return parent_index; /* Returning copy of invalid index. */
-		}
-		this_index = QPersistentModelIndex(parent_index);
-		item = this->get_tree_item(this_index);
-	}
-
-	return this_index; /* Even if while() loop executes zero times, this_index is still a valid index. */
 }
 
 
@@ -496,25 +459,19 @@ void TreeView::select_and_expose(TreeIndex const & index)
 
 
 
-TreeIndex const & TreeView::get_selected_item(void)
+TreeItem * TreeView::get_selected_item(void)
 {
-	static TreeIndex invalid;
 	TreeIndex selected = QPersistentModelIndex(this->currentIndex());
 	if (!selected.isValid()) {
-		return invalid;
+		return NULL;
 	}
 
-	TreeItemType tree_item_type = this->get_item_type(selected);
-	if (tree_item_type == TreeItemType::LAYER) {
-		qDebug() << "II: Tree View: get selected item: layer";
-		return this->get_layer(selected)->index;
-	} else if (tree_item_type == TreeItemType::SUBLAYER) {
-		qDebug() << "II: Tree View: get selected item: sublayer";
-		return this->get_tree_item(selected)->index;
-	} else {
-		qDebug() << "EE: Tree View: get selected item: unknown tree item type" << (int) tree_item_type;
-		return invalid;
+	TreeItem * item = this->get_tree_item(selected);
+	if (!item) {
+		qDebug() << "EE: TreeView: get selected item: can't get item for valid index";
 	}
+
+	return item;
 }
 
 
@@ -1424,4 +1381,16 @@ bool TreeModel::dropMimeData(const QMimeData * data_, Qt::DropAction action, int
 Qt::DropActions TreeModel::supportedDropActions() const
 {
 	return Qt::MoveAction;
+}
+
+
+
+
+Layer * TreeItem::to_layer(void) const
+{
+	if (this->tree_item_type == TreeItemType::LAYER) {
+		return (Layer *) this;
+	} else {
+		return this->owning_layer;
+	}
 }

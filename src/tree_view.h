@@ -120,6 +120,11 @@ namespace SlavGPS {
 
 		virtual void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required) { return; };
 
+		/* Get layer associated with this tree item.
+		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
+		   Return one of these. */
+		Layer * to_layer(void) const;
+
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
 		TreeIndex index;             /* Set in TreeView::add_tree_item(). */

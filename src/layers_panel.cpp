@@ -206,7 +206,6 @@ void LayersPanel::emit_update_window_cb()
 void LayersPanel::item_toggled(TreeIndex const & index)
 {
 	/* Get type and data. */
-	TreeItemType type = this->tree_view->get_item_type(index);
 	TreeItem * item = this->tree_view->get_tree_item(index);
 	if (!item) {
 		qDebug() << "EE: Layers Panel: item toggled: failed to get non-NULL item";
@@ -222,7 +221,7 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		Layer * parent_layer = (Layer *) item;
+		Layer * parent_layer = item->owning_layer;
 		visible = parent_layer->sublayer_toggle_visible(item);
 		parent_layer->emit_layer_changed_although_invisible();
 		break;
@@ -256,26 +255,26 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		Dialog::error(tr("New name can not be blank."), this->window);
 		return;
 	}
-#ifdef K
 
-	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
+	TreeItem * item = this->tree_view->get_tree_item(index);
 
-		/* Get index and layer. */
-		Layer * layer = this->tree_view->get_layer(index);
-
+	if (item->tree_item_type == TreeItemType::LAYER) {
+		Layer * layer = item->to_layer();
 		if (layer->name != new_text) {
 			layer->set_name(new_text);
+#ifdef K
 			this->tree_view->set_name(index, layer->name);
+#endif
 		}
 	} else {
-		TreeItem * item = this->tree_view->get_tree_item(index);
-		Layer * parent_layer = (Layer *) item->owning_layer;
+#ifdef K
 		const QString result_name = item->sublayer_rename_request(new_text);
 		if (!result_name.isEmpty()) {
 			this->tree_view->set_name(index, result_name);
 		}
-	}
 #endif
+	}
+
 }
 
 
@@ -527,8 +526,8 @@ void LayersPanel::add_layer(Layer * layer)
 	/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
 	layer->tree_view = this->tree_view;
 
-	TreeIndex const & selected_index = this->tree_view->get_selected_item();
-	if (!selected_index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
@@ -541,14 +540,10 @@ void LayersPanel::add_layer(Layer * layer)
 		   layer that we meet going up in hierarchy. */
 
 		TreeIndex replace_index;
-		Layer * current = NULL;
-		TreeItem * selected_item = this->tree_view->get_tree_item(selected_index);
-
+		Layer * current = selected_item->to_layer(); /* If selected item is layer, then the layer itself is returned here. Otherwise, parent/owning layer of selected sublayer is returned. */
 		if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
-			current = (Layer *) selected_item->owning_layer;
 			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
 		} else {
-			current = this->tree_view->get_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
 		}
 		assert(current->tree_view);
@@ -586,15 +581,13 @@ void LayersPanel::add_layer(Layer * layer)
 
 void LayersPanel::move_item(bool up)
 {
-	TreeIndex const & selected_index = this->tree_view->get_selected_item();
-	/* TODO: deactivate the buttons and stuff. */
-	if (!selected_index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
+		/* TODO: deactivate the buttons and stuff. */
 		return;
 	}
 
-	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
-
-	TreeItem * selected_item = this->tree_view->get_tree_item(selected_index);
+	this->tree_view->select(selected_item->index); /* Cancel any layer-name editing going on... */
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		/* A layer can be owned only by Aggregate layer.
@@ -602,7 +595,7 @@ void LayersPanel::move_item(bool up)
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
-			parent_layer->move_layer(selected_index, up);
+			parent_layer->move_layer(selected_item->index, up);
 			this->emit_update_window_cb();
 #endif
 		}
@@ -616,13 +609,16 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 {
 	assert (this->viewport);
 
-	TreeIndex const & index = this->tree_view->get_selected_item();
-	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
-		LayerType layer_type = this->tree_view->get_layer(index)->type;
-		if (Layer::get_interface(layer_type)->parameters.size() == 0) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
+		return false;
+	}
+
+	if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		Layer * layer = selected_item->to_layer();
+		if (Layer::get_interface(layer->type)->parameters.size() == 0) {
 			Dialog::info(tr("This layer type has no configurable properties."), this->window);
 		} else {
-			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
 				layer->emit_layer_changed();
 			}
@@ -650,13 +646,11 @@ void LayersPanel::draw_all()
 
 void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
-        TreeIndex const & index = this->tree_view->get_selected_item();
-	if (!index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		/* Nothing to do. */
 		return;
 	}
-
-	TreeItem * selected_item = this->tree_view->get_tree_item(index);
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		/* A layer can be owned only by Aggregate layer.
@@ -674,7 +668,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			if (parent_layer->type == LayerType::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent_layer->delete_layer(index)) {
+				if (parent_layer->delete_layer(selected_item->index)) {
 					this->emit_update_window_cb();
 				}
 			}
@@ -684,7 +678,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		}
 	} else if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		selected->cut_sublayer(this->tree_view->get_tree_item(index));
+		selected->cut_sublayer(selected_item);
 	}
 }
 
@@ -693,8 +687,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
-	TreeIndex const & selected_index = this->tree_view->get_selected_item();
-	if (!selected_index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		/* Nothing to do. */
 		return;
 	}
@@ -709,8 +703,8 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 
 bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
-	TreeIndex const & selected_index = this->tree_view->get_selected_item();
-	if (!selected_index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		/* Nothing to do. */
 		return false;
 	}
@@ -734,15 +728,14 @@ void LayersPanel::add_layer_cb(void)
 
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
-	TreeIndex const & index = this->tree_view->get_selected_item();
-	if (!index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		/* Nothing to do. */
 		return;
 	}
 
-	TreeItem * selected_item = this->tree_view->get_tree_item(index);
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
-		Layer * layer = this->tree_view->get_layer(index);
+		Layer * layer = selected_item->to_layer();
 
 
 		/* Get confirmation from the user. */
@@ -764,7 +757,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent_layer->delete_layer(index)) {
+				if (parent_layer->delete_layer(selected_item->index)) {
 					this->emit_update_window_cb();
 				}
 			}
@@ -783,31 +776,14 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 Layer * LayersPanel::get_selected_layer()
 {
-	TreeIndex const & index = this->tree_view->get_selected_item();
-	if (!index.isValid()) {
+	TreeItem * selected_item = this->tree_view->get_selected_item();
+	if (!selected_item) {
 		return NULL;
 	}
 
-#if 1
-	TreeIndex const layer_index = this->tree_view->go_up_to_layer(index);
-	if (layer_index.isValid()) {
-		return this->tree_view->get_layer(layer_index);
-	} else {
-		return NULL;
-	}
-#else
-	TreeIndex layer_index = index;
-	TreeItemType type = this->tree_view->get_item_type(layer_index);
-	while (type != TreeItemType::LAYER) {
-		TreeIndex parent_index = layer_index.parent();
-		if (!parent_index.isValid()) {
-			return NULL;
-		}
-		type = this->tree_view->get_item_type(parent_index);
-		layer_index = parent_index;
-	}
-	return this->tree_view->get_layer(layer_index);
-#endif
+	/* If a layer is selected, return the layer itself.
+	   If a sublayer is selected, return its parent/owning layer. */
+	return selected_item->to_layer();
 }
 
 

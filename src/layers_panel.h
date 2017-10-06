@@ -54,6 +54,9 @@ namespace SlavGPS {
 
 		void add_layer(Layer * layer);
 		void draw_all();
+
+		/* If a layer is selected, get the layer.
+		   If a sublayer is selected, get the sublayer's owning/parent layer. */
 		Layer * get_selected_layer();
 
 		Layer * get_layer_of_type(LayerType layer_type);

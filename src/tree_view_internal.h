@@ -87,9 +87,9 @@ namespace SlavGPS {
 
 		QString get_name(TreeIndex const & index);
 
-		TreeIndex const & get_selected_item();
 		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
+		TreeItem * get_selected_item(void);
 
 
 		void set_icon(TreeIndex const & index, QIcon const * icon);
@@ -112,7 +112,6 @@ namespace SlavGPS {
 
 		LayersPanel * get_layers_panel(void);
 
-		TreeIndex const go_up_to_layer(TreeIndex const & index);
 		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
 
 		bool editing = false;
