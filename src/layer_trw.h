@@ -170,7 +170,7 @@ namespace SlavGPS {
 
 		time_t get_timestamp();
 
-		void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);
+		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;

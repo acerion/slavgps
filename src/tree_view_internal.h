@@ -76,16 +76,10 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		//TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp);
-		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index);
-		Layer * get_layer(TreeIndex const & index);
-
-		TreeItemType get_item_type(TreeIndex const & index);
-
 		TreeIndex const & add_tree_item(TreeIndex const & parent_index, TreeItem * item, const QString & name);
+		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
-
-		QString get_name(TreeIndex const & index);
+		TreeItemType get_item_type(TreeIndex const & index);
 
 		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
@@ -110,8 +104,6 @@ namespace SlavGPS {
 		void expand(TreeIndex const & index);
 		void sort_children(TreeIndex const & parent_index, sort_order_t order);
 
-		LayersPanel * get_layers_panel(void);
-
 		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
 
 		bool editing = false;
@@ -128,7 +120,7 @@ namespace SlavGPS {
 		void layer_needs_redraw(sg_uid_t uid);
 
 	private:
-		LayersPanel * layers_panel = NULL; /* Just a reference to panel, in which the tree is embedded. */
+		//LayersPanel * layers_panel = NULL; /* Just a reference to panel, in which the tree is embedded. */
 	};
 
 

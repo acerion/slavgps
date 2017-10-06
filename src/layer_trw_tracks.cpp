@@ -789,7 +789,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 
 
 
-bool LayerTRWTracks::add_context_menu_items(QMenu & menu)
+bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 

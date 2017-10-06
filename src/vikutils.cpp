@@ -57,6 +57,12 @@ using namespace SlavGPS;
 
 
 
+
+extern Tree * g_tree;
+
+
+
+
 static struct kdtree * kd = NULL;
 
 
@@ -1010,7 +1016,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 		}
 
 		/* Don't add map layer if one already exists. */
-		std::list<Layer const *> * maps = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
+		std::list<Layer const *> * maps = g_tree->tree_get_layers_panel()->get_all_layers_of_type(LayerType::MAP, true);
 		bool add_map = true;
 
 		for (auto iter = maps->begin(); iter != maps->end(); iter++) {
@@ -1028,7 +1034,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 			layer->set_map_type(the_type_id);
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
-			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
+			g_tree->tree_get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_layer_changed();
 		}
 	}

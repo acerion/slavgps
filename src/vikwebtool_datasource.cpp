@@ -56,6 +56,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 static GHashTable *last_user_strings = NULL;
 
 
@@ -245,7 +250,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 	};
 	memcpy(vik_datasource_interface, &data, sizeof(VikDataSourceInterface));
 
-	a_acquire(a_window, a_window->get_layers_panel(), a_window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
+	a_acquire(a_window, g_tree->tree_get_layers_panel(), a_window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
 }
 
 

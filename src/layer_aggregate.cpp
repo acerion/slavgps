@@ -48,6 +48,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 LayerAggregateInterface vik_aggregate_layer_interface;
 
 
@@ -146,7 +151,8 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->insert_layer(layer, this, this->index, put_above, layer->get_timestamp(), replace_index);
+		TreeIndex inserted_item_index = this->tree_view->insert_tree_item(this->index, replace_index, layer, put_above, layer->name);
+		this->tree_view->set_timestamp(inserted_item_index, layer->get_timestamp());
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
 			this->tree_view->expand(this->index);
@@ -154,7 +160,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 	}
 
 	if (replace_index.isValid()) {
-		Layer * existing_layer = this->tree_view->get_layer(replace_index);
+		Layer * existing_layer = this->tree_view->get_tree_item(replace_index)->to_layer();
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -228,14 +234,13 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 
-void LayerAggregate::move_layer(TreeIndex *child_iter, bool up)
+void LayerAggregate::move_layer(TreeIndex & child_index, bool up)
 {
-#ifdef K
 	auto theone = this->children->end();
 
-	this->tree_view->move(child_iter, up);
+	this->tree_view->move(child_index, up);
 
-	Layer * layer = this->tree_view->get_layer(child_iter);
+	Layer * layer = this->tree_view->get_tree_item(child_index)->to_layer();
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if (layer->the_same_object(*i)) {
@@ -266,7 +271,6 @@ void LayerAggregate::move_layer(TreeIndex *child_iter, bool up)
 	} else {
 		return;
 	}
-#endif
 #endif
 }
 
@@ -323,7 +327,7 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
-	TreeView * treeview = this->get_window()->get_layers_panel()->get_treeview();
+	TreeView * treeview = g_tree->tree_get_layers_panel()->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -360,7 +364,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 {
-	this->child_visible_set(this->get_window()->get_layers_panel(), true);
+	this->child_visible_set(g_tree->tree_get_layers_panel(), true);
 }
 
 
@@ -368,7 +372,7 @@ void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 
 void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 {
-	this->child_visible_set(this->get_window()->get_layers_panel(), false);
+	this->child_visible_set(g_tree->tree_get_layers_panel(), false);
 }
 
 
@@ -643,7 +647,7 @@ bool LayerAggregate::delete_layer(TreeIndex const & tree_index)
 {
 	assert(tree_index.isValid());
 
-	Layer * layer = this->tree_view->get_layer(tree_index);
+	Layer * layer = this->tree_view->get_tree_item(tree_index)->to_layer();
 	bool was_visible = layer->visible;
 
 	this->tree_view->erase(tree_index);
@@ -897,18 +901,19 @@ bool LayerAggregate::is_empty()
 
 
 
-void LayerAggregate::drag_drop_request(Layer * src, TreeIndex *src_item_iter, void *GtkTreePath_dest_path)
+void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *GtkTreePath_dest_path)
 {
-#ifdef K
-	Layer * layer = src->tree_view->get_layer(src_item_iter);
 
+	Layer * layer = src->tree_view->get_tree_item(src_item_index)->to_layer();
+
+#ifdef K
 	char * dp = gtk_tree_path_to_string(dest_path);
 	TreeIndex * dest_index = src->tree_view->get_index_from_path_str(dp);
 
 	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
 	   We're still using the layer. */
 	layer->ref();
-	((LayerAggregate *) src)->delete_layer(src_item_iter);
+	((LayerAggregate *) src)->delete_layer(src_item_index);
 
 	if (dest_index && dest_index->isValid()) {
 		this->insert_layer(layer, dest_index);

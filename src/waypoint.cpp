@@ -328,13 +328,15 @@ QString Waypoint::get_any_url(void) const
 
 
 
-void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu)
+void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 
 
-	/* Could be a right-click using the tool. */
-	if (g_tree->tree_get_layers_panel() != NULL) {
+	if (tree_view_context_menu) {
+		/* Add this menu item only if context menu is displayed for item in tree view.
+		   There is little sense in command "show this waypoint in main viewport"
+		   if context menu is already displayed in main viewport. */
 		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Show this Waypoint in main Viewport"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_in_viewport_cb()));
 	}
@@ -381,7 +383,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-bool Waypoint::add_context_menu_items(QMenu & menu)
+bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	bool rv = false;
@@ -398,7 +400,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu)
 	menu.addSeparator();
 
 
-	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu);
+	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, tree_view_context_menu);
 
 
 	if (g_tree->tree_get_layers_panel()) {

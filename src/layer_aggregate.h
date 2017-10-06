@@ -71,14 +71,14 @@ namespace SlavGPS {
 		QString get_tooltip();
 		void marshall(uint8_t ** data, size_t * data_len);
 		void change_coord_mode(CoordMode mode);
-		void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);
+		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		void add_menu_items(QMenu & menu);
 		void add_children_to_tree(void);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);
 		void insert_layer(Layer * layer, TreeIndex const & replace_index);
-		void move_layer(TreeIndex * child_iter, bool up);
+		void move_layer(TreeIndex & child_index, bool up);
 		bool delete_layer(TreeIndex const & index);
 		void clear();
 

@@ -236,7 +236,7 @@ namespace SlavGPS {
 		std::list<Rect *> * get_rectangles(LatLon * wh);
 		CoordMode get_coord_mode();
 
-		bool add_context_menu_items(QMenu & menu);
+		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
 		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 

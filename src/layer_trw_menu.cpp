@@ -54,6 +54,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 #define VIK_CONFIG_OPENSTREETMAP
 #define VIK_CONFIG_GEONAMES
 #define VIK_CONFIG_GEOCACHES
@@ -273,13 +278,15 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	/* kamilFIXME: .addMenu() does not make menu take ownership of the submenu. */
 
 
-	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(), this->get_window()->get_layers_panel(),
+	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(),
+						  g_tree->tree_get_layers_panel(),
 						  this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
 
-	submenu = a_acquire_trwlayer_track_menu(this->get_window(), this->get_window()->get_layers_panel(),
+	submenu = a_acquire_trwlayer_track_menu(this->get_window(),
+						g_tree->tree_get_layers_panel(),
 						this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
@@ -404,7 +411,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (this->get_window()->get_layers_panel() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
+	if (g_tree->tree_get_layers_panel() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
 		rv = true;
 		layer_trw_sublayer_menu_waypoints_waypoint_new(this, menu);
 	}

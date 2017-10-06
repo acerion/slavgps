@@ -1848,7 +1848,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
 	if (this->auto_set_view(this->menu_data->viewport)) {
-		this->get_window()->get_layers_panel()->emit_update_window_cb();
+		g_tree->tree_get_layers_panel()->emit_update_window_cb();
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -2084,7 +2084,7 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 void LayerTRW::acquire(VikDataSourceInterface *datasource)
 {
 	Window * window_ = this->get_window();
-	LayersPanel * panel = window_->get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_layers_panel();
 	Viewport * viewport =  g_tree->tree_get_main_viewport();
 
 	DatasourceMode mode = datasource->mode;
@@ -2216,7 +2216,7 @@ void LayerTRW::upload_to_gps_cb(void) /* Slot. */
  */
 void LayerTRW::gps_upload_any_cb()
 {
-	LayersPanel * panel = this->get_window()->get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_layers_panel();
 	sg_uid_t child_uid = this->menu_data->sublayer->uid;
 
 	/* May not actually get a track here as values[2&3] can be null. */
@@ -2290,7 +2290,7 @@ void LayerTRW::gps_upload_any_cb()
 
 	/* When called from the viewport - work the corresponding layerspanel: */
 	if (!panel) {
-		panel = this->get_window()->get_layers_panel();
+		panel = g_tree->tree_get_layers_panel();
 	}
 
 	/* Apply settings to transfer to the GPS device. */
@@ -2703,15 +2703,15 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 
 
-void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path)
+void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path)
 {
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	TreeItem * sublayer = trw_src->tree_view->get_tree_item(*src_item_iter);
+	TreeItem * sublayer = trw_src->tree_view->get_tree_item(src_item_index);
 
 #if 0
-	if (!trw_src->tree_view->get_name(src_item_iter)) {
+	if (sublayer->name.isEmpty()) {
 		GList *items = NULL;
 
 		if (sublayer->type_id == "sg.trw.tracks") {
@@ -2739,8 +2739,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * 
 			g_list_free(items);
 		}
 	} else {
-		char * name = trw_src->tree_view->get_name(src_item_iter);
-		trw_src->move_item(trw_dest, name, sublayer->type_id);
+		trw_src->move_item(trw_dest, sublayer->name, sublayer->type_id);
 	}
 #endif
 }
@@ -5199,7 +5198,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	const QStringList zoom_labels = { "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024" };
 	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
-	LayersPanel * panel = this->get_window()->get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_layers_panel();
 
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 	if (!trk) {

@@ -215,13 +215,13 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 	bool visible;
 	switch (item->tree_item_type) {
 	case TreeItemType::LAYER: {
-		Layer * layer = this->tree_view->get_layer(index);
+		Layer * layer = item->to_layer();
 		visible = (layer->visible ^= 1);
 		layer->emit_layer_changed_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		Layer * parent_layer = item->owning_layer;
+		Layer * parent_layer = item->to_layer();
 		visible = parent_layer->sublayer_toggle_visible(item);
 		parent_layer->emit_layer_changed_although_invisible();
 		break;
@@ -434,7 +434,7 @@ void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Laye
 		menu = new QMenu(this);
 
 		TreeItem * item = this->tree_view->get_tree_item(index);
-		if (!item->add_context_menu_items(*menu)) {
+		if (!item->add_context_menu_items(*menu, true)) {
 			delete menu;
 			return;
 		}
@@ -551,11 +551,9 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* A new layer can be inserted only under an Aggregate layer.
 		   Find first one in tree hierarchy (going up). */
-		qDebug() << "---- will call 'go up to layer'";
 		TreeIndex aggregate_index = this->tree_view->go_up_to_layer(current->index, LayerType::AGGREGATE);
-		qDebug() << "---- called 'go up to layer'";
 		if (aggregate_index.isValid()) {
-			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_layer(aggregate_index);
+			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
 			assert(aggregate->tree_view);
 
 			if (false
@@ -594,10 +592,8 @@ void LayersPanel::move_item(bool up)
 		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Not toplevel. */
-#ifndef SLAVGPS_QT
 			parent_layer->move_layer(selected_item->index, up);
 			this->emit_update_window_cb();
-#endif
 		}
 	}
 }
@@ -960,7 +956,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 
 		if (TreeItemType::LAYER == item->tree_item_type) {
 
-			layer = this->tree_view->get_layer(index);
+			layer = item->to_layer();
 
 			qDebug() << "II: Layers Panel: context menu event: menu for layer type" << (layer ? layer->debug_string : "NULL");
 
@@ -978,7 +974,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		} else {
 			qDebug() << "II: Layers Panel: context menu event: menu for sublayer of layer type" << (layer ? layer->debug_string : "NULL");
 
-			layer = (Layer *) item->owning_layer;
+			layer = item->to_layer();
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->sublayer = item;

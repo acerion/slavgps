@@ -165,7 +165,7 @@ namespace SlavGPS {
 
 
 
-		bool add_context_menu_items(QMenu & menu);
+		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
 		void sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
 

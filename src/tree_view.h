@@ -100,7 +100,7 @@ namespace SlavGPS {
 		   child that needs to be added to the tree. */
 		virtual void add_children_to_tree(void) {};
 
-		virtual bool add_context_menu_items(QMenu & menu) { return false; };
+		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
 
 
 		/* Change visibility of tree item.

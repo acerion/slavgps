@@ -2644,7 +2644,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
-	if (parent_layer_->get_window()->get_layers_panel()) {
+	if (g_tree->tree_get_layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->type_id == "sg.trw.track" ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
 	}
@@ -2670,7 +2670,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-bool Track::add_context_menu_items(QMenu & menu)
+bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	bool rv = false;

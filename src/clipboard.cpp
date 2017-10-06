@@ -412,7 +412,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 {
 	Layer * selected = panel->get_selected_layer();
-	GtkTreeIter iter;
+	TreeIndex index;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
 	LayerType layer_type = LayerType::AGGREGATE;
 	QString type_id; /* Type ID of copied tree item. */
@@ -424,7 +424,7 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 		return;
 	}
 
-	if (!selected->tree_view->get_selected_iter(&iter)) {
+	if (!selected->tree_view->get_selected_iter(index)) {
 		return;
 	}
 	layer_type = selected->type;
@@ -434,20 +434,20 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 		type = VIK_CLIPBOARD_DATA_TEXT;
 		/* I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item.
 		   At least this is better than copying the layer data - which is even further away from what the user would be expecting... */
-		name = selected->tree_view->get_name(&iter);
+		name = selected->tree_view->get_name(index);
 		len = 0;
 	} else {
-		if (selected->tree_view->get_item_type(&iter) == TreeItemType::SUBLAYER) {
+		if (selected->tree_view->get_item_type(index) == TreeItemType::SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			selected->copy_sublayer(selected->tree_view->get_tree_item(&iter), &data, &len);
+			selected->copy_sublayer(selected->tree_view->get_tree_item(index), &data, &len);
 			/* This name is used in setting the text representation of the item on the clipboard. */
-			name = selected->tree_view->get_name(&iter);
+			name = selected->tree_view->get_name(index);
 		} else {
 			int ilen;
 			type = VIK_CLIPBOARD_DATA_LAYER;
 			Layer::marshall(selected, &data, &ilen);
 			len = ilen;
-			name = selected->tree_view->get_layer(&iter)->get_name();
+			name = selected->tree_view->get_tree_item(index)->name;
 		}
 	}
 	a_clipboard_copy(type, layer_type, type_id, len, name, data);

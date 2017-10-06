@@ -680,7 +680,7 @@ QString Layer::get_tooltip(void)
 
 
 
-void Layer::drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path)
+void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path)
 {
 	return;
 }
@@ -774,7 +774,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	return this->tree_view->get_layers_panel()->get_window();
+	return g_tree->tree_get_layers_panel()->get_window();
 }
 
 

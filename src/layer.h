@@ -161,7 +161,7 @@ namespace SlavGPS {
 		   destination layer. it is given a source and
 		   destination layer, and the source and destination
 		   iters in the treeview. */
-		virtual void drag_drop_request(Layer * src, TreeIndex * src_item_iter, void * GtkTreePath_dest_path);
+		virtual void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
 		virtual int read_file(FILE * f, char const * dirpath);
 		virtual void write_file(FILE * f) const;

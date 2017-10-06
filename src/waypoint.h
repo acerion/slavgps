@@ -77,8 +77,8 @@ namespace SlavGPS {
 		QString get_any_url(void) const;
 
 
-		bool add_context_menu_items(QMenu & menu);
-		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu);
+		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
+		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool tree_view_context_menu);
 
 		bool handle_selection_in_tree(void);
 
