@@ -244,6 +244,15 @@ namespace SlavGPS {
 
 		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
 
+		QString sublayer_rename_request(const QString & new_name);
+
+		std::list<Rect *> * get_map_rectangles(double zoom_level);
+
+#ifdef VIK_CONFIG_GOOGLE
+		bool is_valid_google_route();
+#endif
+
+
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
 		QString description;
@@ -297,7 +306,24 @@ namespace SlavGPS {
 
 		void reverse_cb(void);
 
-		QString sublayer_rename_request(const QString & new_name);
+		void upload_to_gps_cb(void);
+		void upload_to_osm_traces_cb(void);
+
+		void convert_track_route_cb(void);
+
+#ifdef VIK_CONFIG_GEOTAG
+		void geotagging_track_cb(void);
+#endif
+
+#ifdef VIK_CONFIG_GOOGLE
+		void google_route_webpage_cb(void);
+#endif
+
+#ifndef WINDOWS
+		void track_use_with_filter_cb(void);
+#endif
+
+
 	};
 
 

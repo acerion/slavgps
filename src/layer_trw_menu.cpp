@@ -241,11 +241,11 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	{
 		QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-		qa = upload_submenu->addAction(QIcon::fromTheme("go-next"), tr("Upload to &GPS..."));
+		qa = upload_submenu->addAction(QIcon::fromTheme("go-next"), tr("Upload Layer to &GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
+		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload Layer to &OSM..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
 #endif
 	}
@@ -463,7 +463,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 #ifdef VIK_CONFIG_GOOGLE
-	if (this->menu_data->sublayer->type_id == "sg.trw.route" && (this->is_valid_google_route(this->menu_data->sublayer->uid))) {
+	if (this->menu_data->sublayer->type_id == "sg.trw.route" && ((Track *) this->menu_data->sublayer)->is_valid_google_route())) {
 		layer_trw_sublayer_menu_route_google_directions(this, menu);
 	}
 #endif

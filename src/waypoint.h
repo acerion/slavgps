@@ -24,6 +24,10 @@
 
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstdint>
 
 #include <time.h>
@@ -84,6 +88,8 @@ namespace SlavGPS {
 
 		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
 
+		QString sublayer_rename_request(const QString & new_name);
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;
@@ -122,7 +128,12 @@ namespace SlavGPS {
 
 		void show_in_viewport_cb(void);
 
-		QString sublayer_rename_request(const QString & new_name);
+#ifdef VIK_CONFIG_GEOTAG
+		void geotagging_waypoint_cb(void);
+		void geotagging_waypoint_mtime_keep_cb(void);
+		void geotagging_waypoint_mtime_update_cb(void);
+#endif
+
 	};
 
 

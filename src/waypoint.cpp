@@ -31,6 +31,7 @@
 #include "layer_trw.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_painter.h"
+#include "layer_trw_geotag.h"
 //#include "garminsymbols.h"
 #include "dem_cache.h"
 #include "util.h"
@@ -348,7 +349,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 		}
 #ifdef VIK_CONFIG_GEOTAG
 		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("Geotag &Images..."));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_cb()));
 		qa->setToolTip(tr("Geotag multiple images against this waypoint"));
 #endif
 	}
@@ -366,10 +367,10 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 			QMenu * geotag_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), tr("Update Geotag on &Image"));
 
 			qa = geotag_submenu->addAction(tr("&Update"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_mtime_update_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_mtime_update_cb()));
 
 			qa = geotag_submenu->addAction(tr("Update and &Keep File Timestamp"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_waypoint_mtime_keep_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_mtime_keep_cb()));
 		}
 #endif
 	}
@@ -668,3 +669,35 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	static TRWPainter painter(parent_layer, viewport);
 	painter.draw_waypoint(this, allowed && required);
 }
+
+
+
+
+#ifdef VIK_CONFIG_GEOTAG
+void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
+{
+#ifdef K
+	/* Update directly - not changing the mtime. */
+	SlavGPS::a_geotag_write_exif_gps(this->image, this->coord, this->altitude, true);
+#endif
+}
+
+
+
+
+void Waypoint::geotagging_waypoint_mtime_update_cb(void)
+{
+#ifdef K
+	/* Update directly. */
+	a_geotag_write_exif_gps(this->image, this->coord, this->altitude, false);
+#endif
+}
+
+
+
+
+void Waypoint::geotagging_waypoint_cb(void)
+{
+	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), (LayerTRW *) this->owning_layer, this, NULL);
+}
+#endif

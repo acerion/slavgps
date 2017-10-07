@@ -321,10 +321,6 @@ namespace SlavGPS {
 		QString highest_wp_number_get();
 
 
-#ifdef VIK_CONFIG_GOOGLE
-		bool is_valid_google_route(sg_uid_t track_uid);
-#endif
-
 		void insert_tp_beside_current_tp(bool before);
 
 		void my_tpwin_set_tp();
@@ -369,6 +365,9 @@ namespace SlavGPS {
 		void open_layer_with_external_program(const QString & external_program);
 		int export_layer_with_gpsbabel(const QString & title, const QString & default_name);
 
+
+		/* Common for LayerTRW and for Tracks. */
+		void upload_to_gps(TreeItem * sublayer);
 
 
 		/* Waypoint editing tool. */
@@ -547,17 +546,9 @@ namespace SlavGPS {
 		void cut_sublayer_cb(void);
 		void paste_sublayer_cb(void);
 
-		void geotagging_waypoint_cb(void);
-
 		void tracks_stats_cb(void);
 
 		void show_picture_cb(void);
-
-#ifdef VIK_CONFIG_GEOTAG
-		void geotagging_waypoint_mtime_keep_cb(void);
-		void geotagging_waypoint_mtime_update_cb(void);
-		void geotagging_track_cb(void);
-#endif
 
 		void merge_by_segment_cb(void);
 		void merge_by_timestamp_cb(void);
@@ -572,10 +563,7 @@ namespace SlavGPS {
 		void delete_points_same_time_cb(void);
 		void download_map_along_track_cb(void);
 		void edit_trackpoint_cb(void);
-		void gps_upload_any_cb(void);
 		void track_list_dialog_cb(void);
-		void osm_traces_upload_track_cb(void);
-		void convert_track_route_cb(void);
 		void extend_track_end_cb(void);
 		void extend_track_end_route_finder_cb(void);
 
@@ -588,10 +576,6 @@ namespace SlavGPS {
 		void sort_order_timestamp_ascend_cb(void);
 		void sort_order_timestamp_descend_cb(void);
 		void routes_stats_cb();
-#ifndef WINDOWS
-		void track_use_with_filter_cb(void);
-#endif
-		void google_route_webpage_cb(void);
 
 	public:
 		void acquire(VikDataSourceInterface *datasource);

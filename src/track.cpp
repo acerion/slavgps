@@ -43,12 +43,14 @@
 #include "dem_cache.h"
 #include "settings.h"
 #include "util.h"
+#include "osm-traces.h"
 
 #include "track_profile_dialog.h"
 #include "track_properties_dialog.h"
 #include "layer_trw_menu.h"
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
+#include "layer_trw_geotag.h"
 #include "window.h"
 #include "dialog.h"
 #include "layers_panel.h"
@@ -2437,13 +2439,13 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
 	parent_layer_->menu_data->misc = this;
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (osm_traces_upload_track_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
 #endif
 
 	/* Currently filter with functions all use shellcommands and thus don't work in Windows. */
 #ifndef WINDOWS
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("Use with &Filter"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (track_use_with_filter_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_filter_cb()));
 #endif
 
 
@@ -2461,7 +2463,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = menu.addAction(tr("Geotag _Images..."));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (geotagging_track_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_track_cb()));
 #endif
 }
 
@@ -2620,7 +2622,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		}
 
 		qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), this->type_id == "sg.trw.track" ? tr("C&onvert to a Route") : tr("C&onvert to a Track"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (convert_track_route_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (convert_track_route_cb()));
 
 		/* Routes don't have timestamps - so these are only available for tracks. */
 		if (this->type_id == "sg.trw.track") {
@@ -2661,9 +2663,9 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM can't upload a single waypoint but can do waypoints to a GPS. */
-	if (this->type_id != "sg.trw.waypoint") { /* FIXME: this should be also in some other TRW sublayer. */
+	if (this->type_id != "sg.trw.waypoint") { /* FIXME: this should be also in some other TRW sublayer (in Waypoints?). */
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (gps_upload_any_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 	}
 }
 
@@ -2727,9 +2729,9 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 #ifdef K
 #ifdef VIK_CONFIG_GOOGLE
-	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route(this->uid))) {
+	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route())) {
 		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("&View Google Directions"));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->parent_layer, SLOT (google_route_webpage_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (google_route_webpage_cb()));
 	}
 #endif
 #endif
@@ -3269,3 +3271,248 @@ void Track::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_r
 	static TRWPainter painter(parent_layer, viewport);
 	painter.draw_track(this, allowed && required);
 }
+
+
+
+
+void Track::upload_to_gps_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->upload_to_gps(this);
+}
+
+
+
+
+void Track::upload_to_osm_traces_cb(void)
+{
+	osm_traces_upload_viktrwlayer((LayerTRW *) this->owning_layer, this);
+}
+
+
+
+
+void Track::convert_track_route_cb(void)
+{
+	/* Converting a track to a route can be a bit more complicated,
+	   so give a chance to change our minds: */
+	if (this->type_id == "sg.trw.track"
+	    && ((this->get_segment_count() > 1)
+		|| (this->get_average_speed() > 0.0))) {
+
+		if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), g_tree->tree_get_main_window())) {
+			return;
+		}
+	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	/* Copy it. */
+	Track * trk_copy = new Track(*this);
+
+	/* Convert. */
+	trk_copy->type_id = trk_copy->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
+
+	/* ATM can't set name to self - so must create temporary copy. TODO: verify this comment. */
+	const QString copy_name = trk_copy->name;
+
+	/* Delete old one and then add new one. */
+	if (this->type_id == "sg.trw.route") {
+		parent_layer->delete_route(this);
+		trk_copy->set_name(copy_name);
+		parent_layer->add_track(trk_copy);
+	} else {
+		/* Extra route conversion bits... */
+		trk_copy->merge_segments();
+		trk_copy->to_routepoints();
+
+		parent_layer->delete_track(this);
+		trk_copy->set_name(copy_name);
+		parent_layer->add_route(trk_copy);
+	}
+
+	/* Update in case color of track / route changes when moving between sublayers. */
+	parent_layer->emit_layer_changed();
+}
+
+
+
+
+/*
+ * Use code in separate file for this feature as reasonably complex.
+ */
+void Track::geotagging_track_cb(void)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	/* Unset so can be reverified later if necessary. */
+	parent_layer->has_verified_thumbnails = false;
+	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), parent_layer, NULL, this);
+}
+
+
+
+
+static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
+{
+	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
+	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
+
+		return NULL;
+	}
+
+	Coord * coord = new Coord();
+	coord->mode = CoordMode::LATLON;
+
+	if (ABS(gradient) < 1) {
+		if (from->ll.lon > to->ll.lon) {
+			coord->ll.lon = from->ll.lon - dist->lon;
+		} else {
+			coord->ll.lon = from->ll.lon + dist->lon;
+		}
+		coord->ll.lat = gradient * (coord->ll.lon - from->ll.lon) + from->ll.lat;
+	} else {
+		if (from->ll.lat > to->ll.lat) {
+			coord->ll.lat = from->ll.lat - dist->lat;
+		} else {
+			coord->ll.lat = from->ll.lat + dist->lat;
+		}
+		coord->ll.lon = (1/gradient) * (coord->ll.lat - from->ll.lat) + from->ll.lat;
+	}
+
+	return coord;
+}
+
+
+
+
+static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon *dist)
+{
+	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
+	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
+
+	Coord * next = from;
+	while (true) {
+		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
+			break;
+		}
+		list = g_list_prepend(list, next);
+	}
+
+	return list;
+}
+
+
+
+
+static int get_download_area_width(double zoom_level, struct LatLon * wh) /* kamilFIXME: viewport is unused, why? */
+{
+	/* TODO: calculating based on current size of viewport. */
+	const double w_at_zoom_0_125 = 0.0013;
+	const double h_at_zoom_0_125 = 0.0011;
+	double zoom_factor = zoom_level/0.125;
+
+	wh->lat = h_at_zoom_0_125 * zoom_factor;
+	wh->lon = w_at_zoom_0_125 * zoom_factor;
+
+	return 0;   /* All OK. */
+}
+
+
+
+
+std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
+{
+	if (this->empty()) {
+		return NULL;
+	}
+
+	struct LatLon wh;
+	if (get_download_area_width(zoom_level, &wh)) {
+		return NULL;
+	}
+
+	std::list<Rect *> * rects_to_download = this->get_rectangles(&wh);
+
+#ifdef K
+	GList * fillins = NULL;
+
+	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
+	/* Seems that ATM the function get_next_coord works only for LATLON. */
+	if (this->owning_layer->get_coord_mode() == CoordMode::LATLON) {
+
+		/* Fill-ins for far apart points. */
+		std::list<Rect *>::iterator cur_rect;
+		std::list<Rect *>::iterator next_rect;
+
+		for (cur_rect = rects_to_download->begin();
+		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
+		     cur_rect++) {
+
+			if ((wh.lon < ABS ((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
+			    || (wh.lat < ABS ((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
+
+				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
+			}
+		}
+	} else {
+		qDebug() << "WW: Track: 'download map' feature works only in Mercator mode";
+	}
+
+	if (fillins) {
+		Coord tl, br;
+		for (GList * fiter = fillins; fiter; fiter = fiter->next) {
+			Coord * cur_coord = (Coord *)(fiter->data);
+			cur_coord->set_area(&wh, &tl, &br);
+			Rect * rect = (Rect *) malloc(sizeof (Rect));
+			rect->tl = tl;
+			rect->br = br;
+			rect->center = *cur_coord;
+			rects_to_download->push_front(rect);
+		}
+	}
+
+	if (fillins) {
+		for (GList * iter = fillins; iter; iter = iter->next) {
+			free(iter->data);
+		}
+		g_list_free(fillins);
+	}
+#endif
+
+	return rects_to_download;
+}
+
+
+
+
+#ifdef VIK_CONFIG_GOOGLE
+
+bool Track::is_valid_google_route()
+{
+	return this->type_id == "sg.trw.route"
+		&& this->comment.size() > 7
+		&& !strncmp(this->comment.toUtf8().constData(), "from:", 5);
+}
+
+
+
+
+void Track::google_route_webpage_cb(void)
+{
+	char *escaped = uri_escape(this->comment.toUtf8().data());
+	QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
+	open_url(webpage);
+	std::free(escaped);
+}
+
+#endif
+
+
+
+
+#ifndef WINDOWS
+void Track::track_use_with_filter_cb(void)
+{
+	a_acquire_set_filter_track(this);
+}
+#endif

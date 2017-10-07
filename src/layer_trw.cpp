@@ -2005,61 +2005,6 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 
 
 #ifdef VIK_CONFIG_GEOTAG
-void LayerTRW::geotagging_waypoint_mtime_keep_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	if (wp) {
-#ifdef K
-		/* Update directly - not changing the mtime. */
-		SlavGPS::a_geotag_write_exif_gps(wp->image, wp->coord, wp->altitude, true);
-#endif
-	}
-}
-
-
-
-
-void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	if (wp) {
-#ifdef K
-		/* Update directly. */
-		a_geotag_write_exif_gps(wp->image, wp->coord, wp->altitude, false);
-#endif
-	}
-}
-
-
-
-
-/*
- * Use code in separate file for this feature as reasonably complex.
- */
-void LayerTRW::geotagging_track_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks->items.at(child_uid);
-	/* Unset so can be reverified later if necessary. */
-	this->has_verified_thumbnails = false;
-	trw_layer_geotag_dialog(this->get_window(), this, NULL, trk);
-}
-
-
-
-
-void LayerTRW::geotagging_waypoint_cb(void)
-{
-	sg_uid_t wp_uid = this->menu_data->sublayer->uid;
-	Waypoint * wp = this->waypoints->items.at(wp_uid);
-	trw_layer_geotag_dialog(this->get_window(), this, wp, NULL);
-}
-
-
-
-
 void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
 	/* Unset so can be reverified later if necessary. */
@@ -2187,52 +2132,47 @@ void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 
 
 
-void LayerTRW::upload_to_gps_cb(void) /* Slot. */
+/**
+ * If data->tree is defined that this will upload just that track.
+ */
+void LayerTRW::upload_to_gps_cb()
 {
-#ifdef K
-	trw_menu_sublayer_t data2;
-	memset(&data2, 0, sizeof (trw_menu_sublayer_t));
-
-	data2.layer = this;
-	data2.panel = this->menu_data->layers_panel;
-
-	this->gps_upload_any_cb(&data2);
-#endif
+	this->upload_to_gps(NULL);
 }
 
 
 
 
 /**
- * If data->tree is defined that this will upload just that track.
+ * If @param sublayer is defined then this function will upload just that sublayer.
  */
-void LayerTRW::gps_upload_any_cb()
+void LayerTRW::upload_to_gps(TreeItem * sublayer)
 {
 	LayersPanel * panel = g_tree->tree_get_layers_panel();
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-
-	/* May not actually get a track here as values[2&3] can be null. */
 	Track * trk = NULL;
 	GPSTransferType xfer_type = GPSTransferType::TRK; /* "sg.trw.tracks" = 0 so hard to test different from NULL! */
 	bool xfer_all = false;
 
-#ifdef K
-
-	if ((bool) data->type_id) { /* kamilFIXME: don't cast. */
+	if (sublayer) {
+		/* Upload only specified sublayer, not whole layer. */
 		xfer_all = false;
-		if (this->menu_data->sublayer->type == "sg.trw.route") {
-			trk = this->routes->at(child_uid);
-			xfer_type = GPSTransferType::RTE;
-		} else if (this->menu_data->sublayer->type == "sg.trw.track") {
-			trk = this->tracks->at(child_uid);
+		if (sublayer->type_id == "sg.trw.track") {
+			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::TRK;
-		} else if (this->menu_data->sublayer->type == "sg.trw.waypoints") {
+
+		} else if (sublayer->type_id == "sg.trw.route") {
+			trk = (Track *) sublayer;
+			xfer_type = GPSTransferType::RTE;
+
+		} else if (sublayer->type_id == "sg.trw.waypoints") {
 			xfer_type = GPSTransferType::WPT;
-		} else if (this->menu_data->sublayer->type == "sg.trw.routes") {
+
+		} else if (sublayer->type_id == "sg.trw.routes") {
 			xfer_type = GPSTransferType::RTE;
 		}
-	} else if (!data->confirm) {
-		xfer_all = true; /* i.e. whole layer. */
+	} else {
+		/* No specific sublayer, so upload whole layer. */
+		xfer_all = true;
 	}
 
 	if (trk && !trk->visible) {
@@ -2240,7 +2180,8 @@ void LayerTRW::gps_upload_any_cb()
 		return;
 	}
 
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("GPS Upload"),
+#ifdef K
+	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("GPS Upload"),
 							this->get_window(),
 							GTK_DIALOG_DESTROY_WITH_PARENT,
 							GTK_STOCK_OK,
@@ -2397,17 +2338,6 @@ void LayerTRW::finish_track_cb(void) /* Slot. */
 void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 {
 	osm_traces_upload_viktrwlayer(this, NULL);
-}
-
-
-
-
-void LayerTRW::osm_traces_upload_track_cb(void)
-{
-	if (this->menu_data->misc) {
-		Track * trk = ((Track *) this->menu_data->misc);
-		osm_traces_upload_viktrwlayer(this, trk);
-	}
 }
 
 
@@ -3059,56 +2989,6 @@ void LayerTRW::goto_coord(Viewport * viewport, const Coord & coord)
 		viewport->set_center_coord(coord, true);
 		this->emit_layer_changed();
 	}
-}
-
-
-
-
-void LayerTRW::convert_track_route_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
-		return;
-	}
-
-	/* Converting a track to a route can be a bit more complicated,
-	   so give a chance to change our minds: */
-	if (trk->type_id == "sg.trw.track"
-	    && ((trk->get_segment_count() > 1)
-		|| (trk->get_average_speed() > 0.0))) {
-
-		if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
-			return;
-		}
-	}
-
-	/* Copy it. */
-	Track * trk_copy = new Track(*trk);
-
-	/* Convert. */
-	trk_copy->type_id = trk_copy->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
-
-	/* ATM can't set name to self - so must create temporary copy. TODO: verify this comment. */
-	const QString copy_name = trk_copy->name;
-
-	/* Delete old one and then add new one. */
-	if (trk->type_id == "sg.trw.route") {
-		this->delete_route(trk);
-		trk_copy->set_name(copy_name);
-		this->add_track(trk_copy);
-	} else {
-		/* Extra route conversion bits... */
-		trk_copy->merge_segments();
-		trk_copy->to_routepoints();
-
-		this->delete_track(trk);
-		trk_copy->set_name(copy_name);
-		this->add_route(trk_copy);
-	}
-
-	/* Update in case color of track / route changes when moving between sublayers. */
-	this->emit_layer_changed();
 }
 
 
@@ -4477,47 +4357,6 @@ bool is_valid_geocache_name(const char *str)
 
 
 
-#ifndef WINDOWS
-void LayerTRW::track_use_with_filter_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks->items.at(child_uid);
-	a_acquire_set_filter_track(trk);
-}
-#endif
-
-
-
-
-#ifdef VIK_CONFIG_GOOGLE
-
-
-bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
-{
-	Track * trk = this->routes->items.at(track_uid);
-	return (trk && trk->comment.size() > 7 && !strncmp(trk->comment.toUtf8().constData(), "from:", 5));
-}
-
-
-
-
-void LayerTRW::google_route_webpage_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes->items.at(child_uid);
-	if (trk) {
-		char *escaped = uri_escape(trk->comment.toUtf8().data());
-		QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
-		open_url(webpage);
-		free(escaped);
-	}
-}
-
-#endif
-
-
-
-
 /* TODO: Probably better to rework this track manipulation in viktrack.c. */
 void LayerTRW::insert_tp_beside_current_tp(bool before)
 {
@@ -5045,141 +4884,23 @@ LayerMenuItem LayerTRW::get_menu_selection()
 
 /* ----------- Downloading maps along tracks --------------- */
 
-static int get_download_area_width(double zoom_level, struct LatLon *wh) /* kamilFIXME: viewport is unused, why? */
+void vik_track_download_map(Track * trk, LayerMap * layer_map, double zoom_level)
 {
-	/* TODO: calculating based on current size of viewport. */
-	const double w_at_zoom_0_125 = 0.0013;
-	const double h_at_zoom_0_125 = 0.0011;
-	double zoom_factor = zoom_level/0.125;
-
-	wh->lat = h_at_zoom_0_125 * zoom_factor;
-	wh->lon = w_at_zoom_0_125 * zoom_factor;
-
-	return 0;   /* All OK. */
-}
-
-
-
-
-static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
-{
-	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
-	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
-
-		return NULL;
-	}
-
-	Coord * coord = new Coord();
-	coord->mode = CoordMode::LATLON;
-
-	if (ABS(gradient) < 1) {
-		if (from->ll.lon > to->ll.lon) {
-			coord->ll.lon = from->ll.lon - dist->lon;
-		} else {
-			coord->ll.lon = from->ll.lon + dist->lon;
-		}
-		coord->ll.lat = gradient * (coord->ll.lon - from->ll.lon) + from->ll.lat;
-	} else {
-		if (from->ll.lat > to->ll.lat) {
-			coord->ll.lat = from->ll.lat - dist->lat;
-		} else {
-			coord->ll.lat = from->ll.lat + dist->lat;
-		}
-		coord->ll.lon = (1/gradient) * (coord->ll.lat - from->ll.lat) + from->ll.lat;
-	}
-
-	return coord;
-}
-
-
-
-
-static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon *dist)
-{
-	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
-	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
-
-	Coord * next = from;
-	while (true) {
-		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
-			break;
-		}
-		list = g_list_prepend(list, next);
-	}
-
-	return list;
-}
-
-
-
-
-void vik_track_download_map(Track *tr, LayerMap * layer_map, double zoom_level)
-{
-	struct LatLon wh;
-	if (get_download_area_width(zoom_level, &wh)) {
+	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(zoom_level);
+	if (!rects_to_download) {
 		return;
-	}
-
-	if (tr->empty()) {
-		return;
-	}
-#ifdef K
-	std::list<Rect *> * rects_to_download = tr->get_rectangles(&wh);
-
-	GList * fillins = NULL;
-
-	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
-	/* Seems that ATM the function get_next_coord works only for LATLON. */
-	if (tr->get_coord_mode() == CoordMode::LATLON) {
-
-		/* Fill-ins for far apart points. */
-		std::list<Rect *>::iterator cur_rect;
-		std::list<Rect *>::iterator next_rect;
-
-		for (cur_rect = rects_to_download->begin();
-		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
-		     cur_rect++) {
-
-			if ((wh.lon < ABS ((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
-			    || (wh.lat < ABS ((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
-
-				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
-			}
-		}
-	} else {
-		qDebug() << "WW: Layer TRW: 'download map' feature works only in Mercator mode";
-	}
-
-	if (fillins) {
-		Coord tl, br;
-		for (GList * fiter = fillins; fiter; fiter = fiter->next) {
-			Coord * cur_coord = (Coord *)(fiter->data);
-			cur_coord->set_area(&wh, &tl, &br);
-			Rect * rect = (Rect *) malloc(sizeof (Rect));
-			rect->tl = tl;
-			rect->br = br;
-			rect->center = *cur_coord;
-			rects_to_download->push_front(rect);
-		}
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
 		layer_map->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
 	}
 
-	if (fillins) {
-		for (GList * iter = fillins; iter; iter = iter->next) {
-			free(iter->data);
-		}
-		g_list_free(fillins);
-	}
 	if (rects_to_download) {
 		for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
 			free(*rect_iter);
 		}
 		delete rects_to_download;
 	}
-#endif
 }
 
 
@@ -5191,13 +4912,12 @@ void LayerTRW::download_map_along_track_cb(void)
 	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
 	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	const Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	Track * trk = this->get_track_helper(this->menu_data->sublayer);
 	if (!trk) {
 		return;
 	}
-
-	const Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	std::list<Layer const *> * layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
 	int num_maps = layers->size();
