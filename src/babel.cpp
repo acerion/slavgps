@@ -886,7 +886,7 @@ void BabelConverter::read_stdout_cb()
 
 	while (this->process->canReadLine()) {
 		this->process->readLine(buffer, sizeof (buffer));
-		qDebug() << "DD: Babel: Converter: read stdout" << buffer;
+		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
 		if (this->conversion_cb) {
 			this->conversion_cb(BABEL_DIAG_OUTPUT, buffer, this->conversion_data);
