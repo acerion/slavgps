@@ -3219,7 +3219,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	this->update_profile_dialog();
 
 
-	parent_layer->tree_view->set_name(this->index, new_name);
+	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
 	parent_layer->tree_view->sort_children(tracks->get_index(), parent_layer->track_sort_order);
 
 

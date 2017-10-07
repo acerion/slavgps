@@ -2445,7 +2445,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 	this->tree_view->add_tree_item(this->waypoints->index, wp, wp->name);
 
-	this->tree_view->set_timestamp(wp->index, timestamp);
+	this->tree_view->set_tree_item_timestamp(wp->index, timestamp);
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
 	this->tree_view->sort_children(this->waypoints->get_index(), this->wp_sort_order);
@@ -2488,7 +2488,7 @@ void LayerTRW::add_track(Track * trk)
 	}
 
 	this->tree_view->add_tree_item(this->tracks->index, trk, trk->name);
-	this->tree_view->set_timestamp(trk->index, timestamp);
+	this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
 
 	/* Sort now as post_read is not called on a track connected to tree. */
 	this->tree_view->sort_children(this->tracks->get_index(), this->track_sort_order);
@@ -2655,8 +2655,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		this->delete_track(trk);
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_timestamp(trw_dest->index, trw_dest->get_timestamp());
-		trw_src->tree_view->set_timestamp(trw_src->index, trw_src->get_timestamp());
+		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
+		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
 	}
 
 	if (item_type_id == "sg.trw.route") {
@@ -2686,8 +2686,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		trw_dest->waypoints.calculate_bounds();
 		trw_src->waypoints.calculate_bounds();
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_timestamp(trw_dest->index, trw_dest->get_timestamp());
-		trw_src->tree_view->set_timestamp(trw_src->index, trw_src->get_timestamp());
+		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
+		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
 	}
 #endif
 }
@@ -3017,7 +3017,7 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 			was_visible = this->delete_waypoint(wp);
 			this->waypoints->calculate_bounds();
 			/* Reset layer timestamp in case it has now changed. */
-			this->tree_view->set_timestamp(this->index, this->get_timestamp());
+			this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
 		}
 	} else if (item->type_id == "sg.trw.track") {
 		Track * trk = (Track *) item;
@@ -3031,7 +3031,7 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 
 			was_visible = this->delete_track(trk);
 			/* Reset layer timestamp in case it has now changed. */
-			this->tree_view->set_timestamp(this->index, this->get_timestamp());
+			this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
 		}
 	} else {
 		Track * trk = (Track *) item;
@@ -4269,7 +4269,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
-	this->tree_view->set_timestamp(this->index, this->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
 
 	this->emit_layer_changed();
 }
@@ -4368,7 +4368,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	this->waypoints->calculate_bounds();
 	/* Reset layer timestamp in case it has now changed. */
-	this->tree_view->set_timestamp(this->index, this->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
 	this->emit_layer_changed();
 
 }

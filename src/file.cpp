@@ -648,7 +648,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	}
 
 	if ((!aggregate->visible) && aggregate->tree_view) {
-		aggregate->tree_view->set_visibility(aggregate->index, false);
+		aggregate->tree_view->set_tree_item_visibility(aggregate->index, false);
 	}
 
 	/* Delete anything we've forgotten about -- should only happen when file ends before an EndLayer. */

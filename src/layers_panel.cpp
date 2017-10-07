@@ -214,7 +214,7 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 
 	bool visible = item->toggle_visible();
 	item->to_layer()->emit_layer_changed_although_invisible();
-	this->tree_view->set_visibility(index, visible); /* Set trigger for half-drawn. */
+	this->tree_view->set_tree_item_visibility(index, visible); /* Set trigger for half-drawn. */
 
 }
 
@@ -248,14 +248,14 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		if (layer->name != new_text) {
 			layer->set_name(new_text);
 #ifdef K
-			this->tree_view->set_name(index, layer->name);
+			this->tree_view->set_tree_item_name(index, layer->name);
 #endif
 		}
 	} else {
 #ifdef K
 		const QString result_name = item->sublayer_rename_request(new_text);
 		if (!result_name.isEmpty()) {
-			this->tree_view->set_name(index, result_name);
+			this->tree_view->set_tree_item_name(index, result_name);
 		}
 #endif
 	}
@@ -392,7 +392,9 @@ void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Laye
 
 	QMenu * menu = NULL;
 
-	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
+	TreeItem * item = this->tree_view->get_tree_item(index);
+
+	if (item->tree_item_type == TreeItemType::LAYER) {
 
 		uint16_t layer_menu_items;
 
@@ -418,7 +420,6 @@ void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Laye
 	} else {
 		menu = new QMenu(this);
 
-		TreeItem * item = this->tree_view->get_tree_item(index);
 		if (!item->add_context_menu_items(*menu, true)) {
 			delete menu;
 			return;
@@ -511,7 +512,7 @@ void LayersPanel::add_layer(Layer * layer)
 	/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
 	layer->tree_view = this->tree_view;
 
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
@@ -564,7 +565,7 @@ void LayersPanel::add_layer(Layer * layer)
 
 void LayersPanel::move_item(bool up)
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* TODO: deactivate the buttons and stuff. */
 		return;
@@ -590,7 +591,7 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 {
 	assert (this->viewport);
 
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		return false;
 	}
@@ -627,7 +628,7 @@ void LayersPanel::draw_all()
 
 void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* Nothing to do. */
 		return;
@@ -668,7 +669,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* Nothing to do. */
 		return;
@@ -684,7 +685,7 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 
 bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* Nothing to do. */
 		return false;
@@ -709,7 +710,7 @@ void LayersPanel::add_layer_cb(void)
 
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* Nothing to do. */
 		return;
@@ -757,7 +758,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 Layer * LayersPanel::get_selected_layer()
 {
-	TreeItem * selected_item = this->tree_view->get_selected_item();
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		return NULL;
 	}

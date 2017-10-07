@@ -79,18 +79,18 @@ namespace SlavGPS {
 		TreeIndex const & add_tree_item(TreeIndex const & parent_index, TreeItem * item, const QString & name);
 		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
-		TreeItemType get_item_type(TreeIndex const & index);
 
 		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
-		TreeItem * get_selected_item(void);
+		TreeItem * get_selected_tree_item(void);
 
 
-		void set_icon(TreeIndex const & index, QIcon const * icon);
-		void set_name(TreeIndex const &  index, QString const & name);
-		void set_visibility(TreeIndex const &  index, bool visible);
-		void toggle_visibility(TreeIndex const & index);
-		void set_timestamp(TreeIndex const & index, time_t timestamp);
+		void set_tree_item_name(TreeIndex const & item_index, QString const & name);
+		void set_tree_item_icon(TreeIndex const & item_index, QIcon const * icon);
+		void set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp);
+		void set_tree_item_visibility(TreeIndex const &  item_index, bool visible);
+		void toggle_tree_item_visibility(TreeIndex const & item_index);
+
 
 
 		void select(TreeIndex const & index);

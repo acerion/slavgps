@@ -911,7 +911,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 
 			TreeView * tree_view = this->window->layers_panel->get_treeview();
-			TreeItem * selected_item = tree_view->get_selected_item();
+			TreeItem * selected_item = tree_view->get_selected_tree_item();
 			if (selected_item) {
 				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
 				if (selected_item->tree_item_type == TreeItemType::SUBLAYER

@@ -148,23 +148,6 @@ bool TreeView::is_visible(TreeIndex const & index)
 
 
 
-TreeItemType TreeView::get_item_type(TreeIndex const & index)
-{
-	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
-	if (!parent_item) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
-		parent_item = this->model->invisibleRootItem();
-	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::TREE_ITEM_TYPE);
-
-	QVariant variant = ch->data(RoleLayerData);
-	return (TreeItemType) variant.toInt();
-}
-
-
-
-
 TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 {
 	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
@@ -183,15 +166,15 @@ TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 
 
 
-void TreeView::set_timestamp(TreeIndex const & index, time_t timestamp)
+void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp)
 {
-	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
+	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+		/* "item_index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << item_index.row() << item_index.column();
 		parent_item = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::TIMESTAMP);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) LayersTreeColumn::TIMESTAMP);
 
 	QVariant variant = QVariant::fromValue((qlonglong) timestamp);
 	this->model->setData(ch->index(), variant, RoleLayerData);
@@ -266,7 +249,7 @@ void TreeView::add_columns()
 
 void TreeView::select_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->get_selected_item();
+	TreeItem * selected_item = this->get_selected_tree_item();
 	if (!selected_item) {
 		return;
 	}
@@ -351,30 +334,30 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, QStandardI
 
 
 
-bool TreeView::move(TreeIndex const & index, bool up)
+bool TreeView::move(TreeIndex const & item_index, bool up)
 {
-	TreeItemType t = this->get_item_type(index);
-	if (t != TreeItemType::LAYER) {
+	TreeItem * item = this->get_tree_item(item_index);
+	if (item->tree_item_type != TreeItemType::LAYER) {
 		return false;
 	}
 
 #ifdef K
-	GtkTreeIter switch_iter;
+	TreeIndex switch_index;
 	if (up) {
 		/* Iter to path to iter. */
-		GtkTreePath *path = gtk_tree_model_get_path(this->model, iter);
-		if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->model, &switch_iter, path)) {
+		GtkTreePath *path = gtk_tree_model_get_path(this->model, item_index);
+		if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->model, &switch_index, path)) {
 			gtk_tree_path_free(path);
 			return false;
 		}
 		gtk_tree_path_free(path);
 	} else {
-		switch_iter = *iter;
-		if (!gtk_tree_model_iter_next(this->model, &switch_iter)) {
+		switch_index = *item_index;
+		if (!gtk_tree_model_iter_next(this->model, &switch_index)) {
 			return false;
 		}
 	}
-	gtk_tree_store_swap(GTK_TREE_STORE(this->model), iter, &switch_iter);
+	gtk_tree_store_swap(GTK_TREE_STORE(this->model), item_index, &switch_index);
 #endif
 	/* Now, the easy part. actually switching them, not the GUI. */
 	/* If item is map... */
@@ -412,7 +395,7 @@ void TreeView::select_and_expose(TreeIndex const & index)
 
 
 
-TreeItem * TreeView::get_selected_item(void)
+TreeItem * TreeView::get_selected_tree_item(void)
 {
 	TreeIndex selected = QPersistentModelIndex(this->currentIndex());
 	if (!selected.isValid()) {
@@ -421,7 +404,7 @@ TreeItem * TreeView::get_selected_item(void)
 
 	TreeItem * item = this->get_tree_item(selected);
 	if (!item) {
-		qDebug() << "EE: TreeView: get selected item: can't get item for valid index";
+		qDebug() << "EE: TreeView: get selected tree item: can't get item for valid index";
 	}
 
 	return item;
@@ -450,63 +433,63 @@ void TreeView::erase(TreeIndex const & index)
 
 
 
-void TreeView::set_icon(TreeIndex const & index, QIcon const * icon)
+void TreeView::set_tree_item_icon(TreeIndex const & item_index, QIcon const * icon)
 {
-	if (!index.isValid()) {
-		qDebug() << "EE: TreeView: invalid index in" << __FUNCTION__;
+	if (!item_index.isValid()) {
+		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
 		return;
 	}
 
-	/* index may be pointing to first column. We want to update LayersTreeColumn::ICON column. */
+	/* Item index may be pointing to first column. We want to update LayersTreeColumn::ICON column. */
 
-	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
+	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+		/* "item_index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << item_index.row() << item_index.column();
 		parent_item = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::ICON);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) LayersTreeColumn::ICON);
 	ch->setIcon(*icon);
 }
 
 
 
 
-void TreeView::set_name(TreeIndex const & index, QString const & name)
+void TreeView::set_tree_item_name(TreeIndex const & item_index, QString const & name)
 {
-	if (!index.isValid()) {
-		qDebug() << "EE: TreeView: invalid index in" << __FUNCTION__;
+	if (!item_index.isValid()) {
+		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
 		return;
 	}
-	this->model->itemFromIndex(index)->setText(name);
+	this->model->itemFromIndex(item_index)->setText(name);
 }
 
 
 
 
-void TreeView::set_visibility(TreeIndex const & index, bool visible)
+void TreeView::set_tree_item_visibility(TreeIndex const & item_index, bool visible)
 {
-	if (!!index.isValid()) {
-		qDebug() << "EE: Tree View: invalid index in" << __FUNCTION__;
+	if (!!item_index.isValid()) {
+		qDebug() << "EE: Tree View: invalid item index in" << __FUNCTION__;
 		return;
 	}
 	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = index.sibling(index.row(), (int) LayersTreeColumn::VISIBLE);
+	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) LayersTreeColumn::VISIBLE);
 	this->model->itemFromIndex(visible_index)->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 }
 
 
 
 
-void TreeView::toggle_visibility(TreeIndex const & index)
+void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 {
-	if (!index.isValid()) {
-		qDebug() << "EE: Tree View: invalid index in" << __FUNCTION__;
+	if (!item_index.isValid()) {
+		qDebug() << "EE: Tree View: invalid item index in" << __FUNCTION__;
 		return;
 	}
 
 	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = index.sibling(index.row(), (int) LayersTreeColumn::VISIBLE);
+	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) LayersTreeColumn::VISIBLE);
 	QStandardItem * item = this->model->itemFromIndex(visible_index);
 	bool visible = item->checkState() == Qt::Checked;
 	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
@@ -555,6 +538,12 @@ void TreeView::unselect(TreeIndex const & index)
 /*
   TODO: improve handling of 'editable' property.
   Non-editable items have e.g limited number of fields in context menu.
+
+  The following properties of @tree_item are used to set properties of entry in tree:
+  - TreeItem::editable
+  - TreeItem::visible;
+  - TreeItem::get_tooltip()
+
 */
 TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
@@ -583,18 +572,13 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	items << item;
 
 	/* LayersTreeColumn::ICON */
+	/* Value in this column can be set with ::set_tree_item_icon(). */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 #if 0
-	item->setIcon(*icon);
-	item->setEditable(false);
+	item->setIcon();
 #endif
-	items << item;
-
-	/* LayersTreeColumn::TREE_ITEM_TYPE */
-	item = new QStandardItem();
-	variant = QVariant((int) TreeItemType::SUBLAYER);
-	item->setData(variant, RoleLayerData);
+	item->setEditable(false);
 	items << item;
 
 	/* LayersTreeColumn::TREE_ITEM */
@@ -610,13 +594,9 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	items << item;
 
 	/* LayersTreeColumn::TIMESTAMP */
+	/* Value in this column can be set with ::set_tree_item_timestamp(). */
 	qlonglong timestamp = 0;
-#ifdef K
 	item = new QStandardItem((qlonglong) timestamp);
-#else
-	timestamp = 0;
-	item = new QStandardItem((qlonglong) timestamp);
-#endif
 	items << item;
 
 
@@ -631,11 +611,6 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 
 	tree_item->index = QPersistentModelIndex(first_item->index());
 	tree_item->tree_view = this;
-
-	/* Item is visible in tree by default, so set (in)visibility only when necessary. */
-	if (!tree_item->visible) {
-		this->set_visibility(tree_item->index, false);
-	}
 
 	return tree_item->index;
 }
@@ -801,12 +776,15 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 
 		if (gtk_tree_path_get_depth(dest_cp) > 1) { /* Can't be sibling of top layer. */
 
+			TreeItem * item = NULL;
+
 			/* Find the first ancestor that is a full layer, and store in dest_parent_index. */
 			do {
 				gtk_tree_path_up(dest_cp);
 				gtk_tree_model_get_iter(src_model, &dest_parent_index, dest_cp);
-			} while (gtk_tree_path_get_depth(dest_cp) > 1
-				 && layer->tree_view->get_item_type(dest_parent_index) != TreeItemType::LAYER);
+
+				item = layer->tree_view->get_tree_item(dest_parent_index);
+			} while (gtk_tree_path_get_depth(dest_cp) > 1 && item->tree_item_type != TreeItemType::LAYER);
 
 
 			TreeItem * item = layer->tree_view->get_tree_item(&src_item);
@@ -888,9 +866,6 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 	header_item = new QStandardItem("Type");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ICON, header_item);
 
-	header_item = new QStandardItem("Tree Item Type");
-	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM_TYPE, header_item);
-
 	header_item = new QStandardItem("Item");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM, header_item);
 
@@ -909,7 +884,6 @@ TreeView::TreeView(LayersPanel * panel) : QTreeView((QWidget *) panel)
 
 
 	this->header()->setSectionResizeMode((int) LayersTreeColumn::VISIBLE, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
-	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::EDITABLE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
@@ -1041,12 +1015,11 @@ sg_uid_t TreeItem::get_uid(void) const
 
 
 
+
 QString TreeItem::get_tooltip(void)
 {
 	return QString("generic TreeItem tooltip");
 }
-
-
 
 
 
@@ -1087,15 +1060,15 @@ bool TreeModel::canDropMimeData(const QMimeData * data_, Qt::DropAction action, 
 	}
 
 
-	TreeItemType parent_type = this->view->get_item_type(parent_);
-	if (parent_type == TreeItemType::LAYER) {
+	TreeItem * parent_item = this->view->get_tree_item(parent_);
+	if (parent_item->tree_item_type == TreeItemType::LAYER) {
 		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Layer";
 		return true;
-	} else if (parent_type == TreeItemType::SUBLAYER) {
+	} else if (parent_item->tree_item_type == TreeItemType::SUBLAYER) {
 		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Sublayer";
 		return true;
 	} else {
-		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: wrong type of parent:" << (int) parent_type;
+		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: wrong type of parent:" << (int) parent_item->tree_item_type;
 		return false;
 	}
 
@@ -1124,7 +1097,8 @@ bool TreeModel::dropMimeData(const QMimeData * data_, Qt::DropAction action, int
 	if (row == -1 && column == -1) {
 		/* Drop onto an existing item. */
 		if (parent_.isValid()) {
-			//qDebug() << "II: Tree View: Drop Mime Data: dropping onto existing item, parent =" << parent_.row() << parent_.column() << this->view->get_name(parent_) << (int) this->view->get_item_type(parent_);
+			TreeItem * parent_item = this->view->get_tree_item(parent_);
+			qDebug() << "II: Tree View: Drop Mime Data: dropping onto existing item, parent =" << parent_.row() << parent_.column() << parent_item->name << (int) parent_item->tree_item_type;
 			return true;
 		} else {
 			return false;

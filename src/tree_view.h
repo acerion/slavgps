@@ -41,7 +41,8 @@ namespace SlavGPS {
 
 
 	enum class TreeItemType {
-		LAYER = 0,
+		INVALID = 0,
+		LAYER,
 		SUBLAYER
 	};
 
@@ -58,10 +59,9 @@ namespace SlavGPS {
 		ICON           = 2,
 
 		/* These columns are not visible in tree view. */
-		TREE_ITEM_TYPE = 3, /* Implicit, based on function adding an item. */
-		TREE_ITEM      = 4, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
-		EDITABLE       = 5,
-		TIMESTAMP      = 6, /* Item's timestamp. Sortable column. */
+		TREE_ITEM      = 3, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
+		EDITABLE       = 4,
+		TIMESTAMP      = 5, /* Item's timestamp. Sortable column. */
 	};
 
 

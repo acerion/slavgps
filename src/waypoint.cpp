@@ -466,7 +466,7 @@ void Waypoint::properties_dialog_cb(void)
 	}
 
 	if (updated && this->index.isValid()) {
-		this->tree_view->set_icon(this->index, get_wp_sym_small(this->symbol_name));
+		this->tree_view->set_tree_item_icon(this->index, get_wp_sym_small(this->symbol_name));
 	}
 
 	if (updated && parent_layer_->visible) {
@@ -619,7 +619,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	/* Update WP name and refresh the treeview. */
 	this->set_name(new_name);
 
-	parent_layer->tree_view->set_name(this->index, new_name);
+	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
 	parent_layer->tree_view->sort_children(parent_layer->waypoints->get_index(), parent_layer->wp_sort_order);
 
 	g_tree->emit_update_window();

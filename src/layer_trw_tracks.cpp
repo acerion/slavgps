@@ -370,7 +370,7 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = on_off;
-		this->tree_view->set_visibility(i->second->index, on_off);
+		this->tree_view->set_tree_item_visibility(i->second->index, on_off);
 	}
 }
 
@@ -381,7 +381,7 @@ void LayerTRWTracks::toggle_items_visibility(void)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = !i->second->visible;
-		this->tree_view->toggle_visibility(i->second->index);
+		this->tree_view->toggle_tree_item_visibility(i->second->index);
 	}
 }
 
@@ -497,7 +497,7 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 
 		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
 		if (trk->index.isValid()) {
-			this->tree_view->set_name(trk->index, uniq_name);
+			this->tree_view->set_tree_item_name(trk->index, uniq_name);
 			this->tree_view->sort_children(this->get_index(), sort_order);
 		}
 
@@ -645,7 +645,7 @@ void LayerTRWTracks::update_treeview(Track * trk)
 		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 		pixmap.fill(trk->color);
 		QIcon icon(pixmap);
-		this->tree_view->set_icon(trk->index, &icon);
+		this->tree_view->set_tree_item_icon(trk->index, &icon);
 	}
 }
 
@@ -673,8 +673,8 @@ void LayerTRWTracks::add_children_to_tree(void)
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
 		this->tree_view->add_tree_item(this->index, trk, trk->name);
-		this->tree_view->set_icon(trk->index, icon);
-		this->tree_view->set_timestamp(trk->index, timestamp);
+		this->tree_view->set_tree_item_icon(trk->index, icon);
+		this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
 
 		delete icon;
 	}

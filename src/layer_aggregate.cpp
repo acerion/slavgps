@@ -152,7 +152,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		TreeIndex inserted_item_index = this->tree_view->insert_tree_item(this->index, replace_index, layer, put_above, layer->name);
-		this->tree_view->set_timestamp(inserted_item_index, layer->get_timestamp());
+		this->tree_view->set_tree_item_timestamp(inserted_item_index, layer->get_timestamp());
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
 			this->tree_view->expand(this->index);
@@ -213,7 +213,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->add_tree_item(this->index, layer, layer->name);
 
-		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
+		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
 		if (this->children->empty()) {
 			this->tree_view->expand(this->index);
@@ -335,7 +335,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		treeview->toggle_visibility(layer->index);
+		treeview->toggle_tree_item_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_layer_changed();
@@ -352,7 +352,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		/* Also set checkbox on_off. */
-		panel->get_treeview()->set_visibility(layer->index, on_off);
+		panel->get_treeview()->set_tree_item_visibility(layer->index, on_off);
 	}
 
 	/* Redraw as view may have changed. */
@@ -873,7 +873,7 @@ void LayerAggregate::add_children_to_tree(void)
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->add_tree_item(this->index, layer, layer->name);
 
-		this->tree_view->set_timestamp(layer->index, layer->get_timestamp());
+		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
 }
 
