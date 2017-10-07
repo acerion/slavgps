@@ -1322,8 +1322,8 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 
 
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
-	/* Check the layer for visibility (including all the parents visibilities). */
+#if 1
+	/* Check the layer for visibility (including all the parents' visibilities). */
 	if (!this->tree_view->is_visible_in_tree(this->index)) {
 		return;
 	}
@@ -1334,17 +1334,17 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 		&& (hl_is_required /* Parent code requires us to do highlight. */
 		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
 
-	if (true /* this->tracks_node.visible */) { /* TODO: fix condition. */
+	if (this->tracks->visible) {
 		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << allowed << required;
 		this->tracks->draw_tree_item(viewport, allowed, required);
 	}
 
-	if (true /* this->routes_node.visible */) { /* TODO: fix condition. */
+	if (this->routes->visible) {
 		qDebug() << "II: Layer TRW: calling function to draw routes, highlight:" << allowed << required;
 		this->routes->draw_tree_item(viewport, allowed, required);
 	}
 
-	if (true /* this->waypoints->visible */) { /* TODO: fix condition. */
+	if (this->waypoints->visible) { /* TODO: fix condition. */
 		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << allowed << required;
 		this->waypoints->draw_tree_item(viewport, allowed, required);
 	}
@@ -1434,14 +1434,6 @@ void LayerTRW::add_children_to_tree(void)
 	this->verify_thumbnails();
 
 	this->sort_all();
-}
-
-
-
-
-bool LayerTRW::sublayer_toggle_visible(TreeItem * sublayer)
-{
-	return sublayer->toggle_visible();
 }
 
 
@@ -2314,7 +2306,7 @@ void LayerTRW::gps_upload_any_cb()
 
 void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
-	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
+	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
 	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center())) {
 		this->waypoints->calculate_bounds();

@@ -142,7 +142,7 @@ bool TreeView::is_visible(TreeIndex const & index)
 	QStandardItem * ch = parent_item->child(index.row(), (int) LayersTreeColumn::VISIBLE);
 
 	QVariant variant = ch->data();
-	return variant.toBool();;
+	return ch->checkState() != Qt::Unchecked; /* See if Item is either checked (Qt::Checked) or partially checked (Qt::PartiallyChecked). */
 }
 
 
@@ -213,31 +213,40 @@ TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 
 
 /**
- * Get visibility of an item considering visibility of all parents
- * i.e. if any parent is off then this item will also be considered
- * off (even though itself may be marked as on).
- */
+   Get visibility of an item considering visibility of all parents
+   i.e. if any parent is invisible then this item will also be considered
+   invisible (even though it itself may be marked as visible).
+*/
 bool TreeView::is_visible_in_tree(TreeIndex const & index)
 {
-	bool visible = this->is_visible(index);
+	int loop_depth = 1;
 
-	if (!visible) {
-		return visible;
-	}
+	TreeIndex this_item_index = index;
 
-	TreeIndex child = index;
+	do {
+#if 1           /* Debug. */
+		TreeItem * item = this->get_tree_item(this_item_index);
+		qDebug() << "II: TreeView: Checking visibility of" << item->name << "in tree, forever loop depth =" << loop_depth++;
+#endif
 
-	while (child.parent().isValid()) {
-		TreeIndex parent_item = child.parent();
-		/* Visibility of this parent. */
-		visible = this->is_visible(parent_item);
-		/* If not visible, no need to check further ancestors. */
-		if (!visible) {
-			break;
+		if (!this->is_visible(this_item_index)) {
+			/* Simple case: this item is not visible. */
+			return false;
 		}
-		child = parent_item;
-	}
-	return visible;
+		/* This item is visible. What about its parent? */
+
+		TreeIndex parent_item_index = this_item_index.parent();
+		if (!parent_item_index.isValid()) {
+			/* This item doesn't have valid parent, so it
+			   must be a top-level layer. The top-level layer
+			   was visible (we checked this few lines above),
+			   so return true. */
+			return true;
+		}
+
+		this_item_index = parent_item_index;
+
+	} while (1); /* Forever loop that will finish either on first invisible item it meets, or on visible top-level layer. */
 }
 
 
@@ -570,12 +579,7 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 	item->setCheckable(true);
-	if (tree_item->owning_layer) {
-		item->setCheckState(tree_item->owning_layer->visible ? Qt::Checked : Qt::Unchecked);
-	} else {
-		/* This may happen for top-level Aggregate layer that doesn't have any owner. */
-		item->setCheckState(Qt::Checked);
-	}
+	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 	items << item;
 
 	/* LayersTreeColumn::ICON */
@@ -987,6 +991,8 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		} else {
 			/* No layer probably means that we want to edit a sublayer. */
 		}
+	} else if (index->column() == (int) LayersTreeColumn::ICON) {
+		qDebug() << "EE: Tree View: edited item in column ICON";
 	} else {
 		qDebug() << "EE: Tree View: edited item in column" << index->column();
 	}

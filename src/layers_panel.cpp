@@ -212,25 +212,10 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		return;
 	}
 
-	bool visible;
-	switch (item->tree_item_type) {
-	case TreeItemType::LAYER: {
-		Layer * layer = item->to_layer();
-		visible = (layer->visible ^= 1);
-		layer->emit_layer_changed_although_invisible(); /* Set trigger for half-drawn. */
-		break;
-		}
-	case TreeItemType::SUBLAYER: {
-		Layer * parent_layer = item->to_layer();
-		visible = parent_layer->sublayer_toggle_visible(item);
-		parent_layer->emit_layer_changed_although_invisible();
-		break;
-	}
-	default:
-		return;
-	}
+	bool visible = item->toggle_visible();
+	item->to_layer()->emit_layer_changed_although_invisible();
+	this->tree_view->set_visibility(index, visible); /* Set trigger for half-drawn. */
 
-	this->tree_view->set_visibility(index, visible);
 }
 
 

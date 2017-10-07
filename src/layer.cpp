@@ -713,15 +713,6 @@ void Layer::add_menu_items(QMenu & menu)
 
 
 
-bool Layer::sublayer_toggle_visible(TreeItem * sublayer)
-{
-	/* If unknown, will always be visible. */
-	return true;
-}
-
-
-
-
 SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	SGVariant param_value; /* Type ID will be ::EMPTY. */

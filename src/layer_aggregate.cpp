@@ -568,13 +568,13 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 	{
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), tr("&Show All"));
+		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), tr("&Show All Layers"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_on_cb()));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), tr("&Hide All"));
+		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), tr("&Hide All Layers"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_off_cb()));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), tr("&Toggle"));
+		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), tr("&Toggle Visibility of All Layers"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_toggle_cb()));
 	}
 

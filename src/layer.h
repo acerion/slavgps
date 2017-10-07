@@ -167,7 +167,6 @@ namespace SlavGPS {
 		virtual void write_file(FILE * f) const;
 
 		virtual void add_menu_items(QMenu & menu);
-		virtual bool sublayer_toggle_visible(TreeItem * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);
 

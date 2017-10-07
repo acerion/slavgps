@@ -3253,7 +3253,7 @@ bool Track::handle_selection_in_tree(void)
 void Track::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
+#if 1
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->is_visible_in_tree(this->index)) {
 		return;

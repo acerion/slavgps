@@ -370,9 +370,7 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = on_off;
-#ifdef K
-		tree_view->set_visibility(i->second->index, on_off);
-#endif
+		this->tree_view->set_visibility(i->second->index, on_off);
 	}
 }
 
@@ -383,9 +381,7 @@ void LayerTRWTracks::toggle_items_visibility(void)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->visible = !i->second->visible;
-#ifdef K
-		tree_view->toggle_visibility(i->second->index);
-#endif
+		this->tree_view->toggle_visibility(i->second->index);
 	}
 }
 
@@ -721,7 +717,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), tr("&Hide All Tracks"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
 
-		qa = vis_submenu->addAction(tr("&Toggle"));
+		qa = vis_submenu->addAction(tr("&Toggle Visibility of All Tracks"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
 	}
 
@@ -774,7 +770,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-delete"), tr("&Hide All Routes"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
 
-		qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), tr("&Toggle"));
+		qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), tr("&Toggle Visibility of All Routes"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
 	}
 
@@ -915,8 +911,13 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
  */
 void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
+	if (!this->tree_view) {
+		/* This subnode hasn't been added to tree yet. */
+		return;
+	}
+
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 0
+#if 1
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->is_visible_in_tree(this->index)) {
 		return;
