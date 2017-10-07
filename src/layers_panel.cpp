@@ -141,7 +141,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
 
-	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
+	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(layer_changed(void)), this, SLOT(emit_update_window_cb(void)));
 #ifdef K
 	connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
@@ -537,7 +537,7 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* A new layer can be inserted only under an Aggregate layer.
 		   Find first one in tree hierarchy (going up). */
-		TreeIndex aggregate_index = this->tree_view->go_up_to_layer(current->index, LayerType::AGGREGATE);
+		TreeIndex aggregate_index = this->go_up_to_layer(current->index, LayerType::AGGREGATE);
 		if (aggregate_index.isValid()) {
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
 			assert(aggregate->tree_view);
@@ -982,4 +982,49 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		this->show_context_menu(index, layer);
 	}
 	return;
+}
+
+
+
+
+
+
+/*
+  Go up the tree to find a Layer of given type.
+
+  If @param index already refers to layer of given type, the function
+  doesn't really go up, it returns the same index.
+
+  If you want to skip item pointed to by @param index and start from
+  its parent, you have to calculate parent by yourself before passing
+  an index to this function.
+*/
+TreeIndex const LayersPanel::go_up_to_layer(TreeIndex const & item_index, LayerType expected_layer_type)
+{
+        TreeIndex this_index = item_index;
+	TreeIndex parent_index;
+
+	while (1) {
+		if (!this_index.isValid()) {
+			return this_index; /* Returning copy of invalid index. */
+		}
+
+		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
+		if (this_item->tree_item_type == TreeItemType::LAYER) {
+
+			if (((Layer *) this_item)->type ==  expected_layer_type) {
+				return this_index; /* Returning index of matching layer. */
+			}
+		}
+
+		/* Go one step up to parent. */
+		parent_index = this_index.parent();
+
+		/* Parent also may be invalid. */
+		if (!parent_index.isValid()) {
+			return parent_index; /* Returning copy of invalid index. */
+		}
+
+		this_index = parent_index;
+	}
 }

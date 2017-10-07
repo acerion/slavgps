@@ -234,7 +234,6 @@ namespace SlavGPS {
 		QMenu * right_click_menu = NULL;
 
 	public slots:
-		void visibility_toggled_cb(QStandardItem * item);
 		void child_layer_changed_cb(void);
 
 

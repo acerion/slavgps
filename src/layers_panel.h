@@ -95,6 +95,8 @@ namespace SlavGPS {
 		QMenu * create_context_menu(uint16_t layer_menu_items);
 		QMenu * add_submenu_new_layer(QMenu * menu);
 
+		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
+
 		LayerAggregate * toplayer = NULL;
 		TreeIndex toplayer_item;
 		TreeView * tree_view = NULL;

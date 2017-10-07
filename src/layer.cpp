@@ -830,20 +830,6 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 
 
 
-void Layer::visibility_toggled_cb(QStandardItem * item) /* Slot. */
-{
-	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
-		QVariant layer_variant = item->data(RoleLayerData);
-		Layer * layer = layer_variant.value<Layer *>();
-		if (layer == this) {
-			qDebug() << "[II] Layer" << this->debug_string << this->name << "slot 'changed' called, visibility =" << item->checkState();
-		}
-	}
-}
-
-
-
-
 void Layer::location_info_cb(void) /* Slot. */
 {
 

@@ -23,10 +23,7 @@
 
 
 
-#include <cstdint>
-
-#include <QStandardItem>
-#include <QPersistentModelIndex>
+#include <QStandardItemModel>
 #include <QTreeView>
 #include <QString>
 #include <QObject>
@@ -44,9 +41,7 @@ namespace SlavGPS {
 
 
 
-	class Layer;
 	class TreeItem;
-	class LayersPanel;
 	class TreeView;
 
 
@@ -62,7 +57,6 @@ namespace SlavGPS {
 
 	private:
 		TreeView * view = NULL;
-
 	};
 
 
@@ -71,7 +65,7 @@ namespace SlavGPS {
 	class TreeView : public QTreeView {
 		Q_OBJECT
 	public:
-		TreeView(LayersPanel * panel);
+		TreeView(QWidget * parent_widget);
 		TreeView();
 
 		~TreeView();
@@ -88,26 +82,23 @@ namespace SlavGPS {
 		void set_tree_item_name(TreeIndex const & item_index, QString const & name);
 		void set_tree_item_icon(TreeIndex const & item_index, QIcon const * icon);
 		void set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp);
+
+		bool get_tree_item_visibility(TreeIndex const & item_index);
+		bool get_tree_item_visibility_with_parents(TreeIndex const & item_index);
 		void set_tree_item_visibility(TreeIndex const &  item_index, bool visible);
 		void toggle_tree_item_visibility(TreeIndex const & item_index);
-
-
 
 		void select(TreeIndex const & index);
 		void select_and_expose(TreeIndex  const & index);
 		void unselect(TreeIndex const & index);
 		void erase(TreeIndex const & index);
 		bool move(TreeIndex const & index, bool up);
-		bool is_visible(TreeIndex const & index);
-		bool is_visible_in_tree(TreeIndex const & index);
+
 		bool get_editing();
 		void expand(TreeIndex const & index);
 		void sort_children(TreeIndex const & parent_index, sort_order_t order);
 
-		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
-
 		bool editing = false;
-		bool was_a_toggle = false;
 
 		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
 		TreeModel * model = NULL;
@@ -117,10 +108,7 @@ namespace SlavGPS {
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
 
 	signals:
-		void layer_needs_redraw(sg_uid_t uid);
-
-	private:
-		//LayersPanel * layers_panel = NULL; /* Just a reference to panel, in which the tree is embedded. */
+		void tree_item_needs_redraw(sg_uid_t uid);
 	};
 
 
