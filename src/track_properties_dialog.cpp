@@ -386,7 +386,11 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
 
 	LayerTRW * parent_layer = (LayerTRW *) this->trk->owning_layer;
-	parent_layer->get_tracks_node().update_treeview(this->trk);
+	if (this->trk->type_id == "sg.trw.track") {
+		parent_layer->get_tracks_node().update_treeview(this->trk);
+	} else {
+		parent_layer->get_routes_node().update_treeview(this->trk);
+	}
 	parent_layer->emit_layer_changed();
 
 	this->accept();
