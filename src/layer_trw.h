@@ -275,7 +275,6 @@ namespace SlavGPS {
 
 
 
-		void split_at_selected_trackpoint(const QString & type_id);
 		void trackpoint_selected_delete(Track * trk);
 
 
@@ -320,8 +319,6 @@ namespace SlavGPS {
 		void highest_wp_number_remove_wp(const QString & old_wp_name);
 		QString highest_wp_number_get();
 
-
-		void insert_tp_beside_current_tp(bool before);
 
 		void my_tpwin_set_tp();
 
@@ -376,10 +373,7 @@ namespace SlavGPS {
 		bool waypoint_rightclick = false;
 
 		/* Track editing tool. */
-		struct {
-			bool valid = false;
-			TrackPoints::iterator iter;
-		} selected_tp;
+		Trackpoint2 selected_tp;
 
 		Track * selected_track = NULL;  /* Track, to which belongs currently selected trackpoint (tp)? */
 
@@ -541,10 +535,6 @@ namespace SlavGPS {
 
 		void waypoint_list_dialog_cb(void);
 
-		void delete_sublayer_cb(void);
-		void copy_sublayer_cb(void);
-		void cut_sublayer_cb(void);
-		void paste_sublayer_cb(void);
 
 		void tracks_stats_cb(void);
 
@@ -554,10 +544,7 @@ namespace SlavGPS {
 		void merge_by_timestamp_cb(void);
 		void merge_with_other_cb(void);
 		void append_track_cb(void);
-		void split_by_timestamp_cb(void);
-		void split_by_n_points_cb(void);
 		void split_at_trackpoint_cb(void);
-		void split_segments_cb(void);
 		void delete_point_selected_cb(void);
 		void delete_points_same_position_cb(void);
 		void delete_points_same_time_cb(void);
@@ -567,7 +554,6 @@ namespace SlavGPS {
 		void extend_track_end_cb(void);
 		void extend_track_end_route_finder_cb(void);
 
-		void route_refine_cb(void);
 		void append_other_cb(void);
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);

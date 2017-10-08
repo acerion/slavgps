@@ -90,6 +90,8 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
+		void delete_sublayer(bool confirm);
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;
@@ -134,6 +136,9 @@ namespace SlavGPS {
 		void geotagging_waypoint_mtime_update_cb(void);
 #endif
 
+		void cut_sublayer_cb(void);
+		void copy_sublayer_cb(void);
+		void delete_sublayer_cb(void);
 	};
 
 

@@ -730,6 +730,62 @@ std::list<Track *> * Track::split_into_segments()
 
 
 
+/**
+   \brief Split a track at given trackpoint
+
+   Return a track that has been created as a result of spilt. The new
+   track contains trackpoints from tp+1 till the last tp of original
+   track.
+
+   @return newly create track on success
+   @return NULL on errors
+*/
+Track * Track::split_at_trackpoint(Trackpoint2 * tp2)
+{
+	if (!tp2 || !tp2->valid) {
+		return NULL;
+	}
+
+	if (tp2->iter == this->begin()) {
+		/* First TP in track. Don't split. This function shouldn't be called at all. */
+		qDebug() << "WW: Layer TRW: attempting to split track on first tp";
+		return NULL;
+	}
+
+	if (tp2->iter == std::prev(this->end())) {
+		/* Last TP in track. Don't split. This function shouldn't be called at all. */
+		qDebug() << "WW: Layer TRW: attempting to split track on last tp";
+		return NULL;
+	}
+
+	/* TODO: make sure that tp is a member of this track. */
+
+	const QString uniq_name = ((LayerTRW *) this->owning_layer)->new_unique_element_name(this->type_id, this->name);
+	if (!uniq_name.size()) {
+		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->name;
+		return NULL;
+	}
+
+	/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
+	Trackpoint * selected_ = new Trackpoint(**tp2->iter);
+
+	Track * new_track = new Track(*this, std::next(tp2->iter), this->end());
+	new_track->push_front(selected_);
+	new_track->set_name(uniq_name);
+	new_track->calculate_bounds();
+
+	this->erase(std::next(tp2->iter), this->end());
+	this->calculate_bounds(); /* Bounds of original track changed due to the split. */
+
+	/* kamilTODO: how it's possible that a new track will already have an uid? */
+	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
+
+	return new_track;
+}
+
+
+
+
 /*
  * Simply remove any subsequent segment markers in a track to form one continuous track.
  * Return the number of segments merged.
@@ -2547,15 +2603,15 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		/* Routes don't have times or segments... */
 		if (this->type_id == "sg.trw.track") {
 			qa = split_submenu->addAction(tr("&Split By Time..."));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_by_timestamp_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_timestamp_cb()));
 
 			/* ATM always enable parent_layer_ entry - don't want to have to analyse the track before displaying the menu - to keep the menu speedy. */
-			qa = split_submenu->addAction(tr("Split Se&gments"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_segments_cb()));
+			qa = split_submenu->addAction(tr("Split By Se&gments"));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_segments_cb()));
 		}
 
 		qa = split_submenu->addAction(tr("Split By &Number of Points..."));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_by_n_points_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_n_points_cb()));
 
 		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
@@ -2642,7 +2698,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 	if (this->type_id == "sg.trw.route") {
 		qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("Refine Route..."));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (route_refine_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (refine_route_cb()));
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
@@ -2698,7 +2754,17 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_dialog_cb()));
 
 
-	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->owning_layer, menu);
+	/* Common "Edit" items. */
+	{
+		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_sublayer_cb()));
+	}
 
 
 	menu.addSeparator();
@@ -3516,3 +3582,365 @@ void Track::track_use_with_filter_cb(void)
 	a_acquire_set_filter_track(this);
 }
 #endif
+
+
+
+
+void Track::split_by_timestamp_cb(void)
+{
+	static uint32_t threshold = 1;
+
+	if (this->empty()) {
+		return;
+	}
+
+	Window * main_window = g_tree->tree_get_main_window();
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	if (!a_dialog_time_threshold(tr("Split Threshold..."),
+				     tr("Split when time between trackpoints exceeds:"),
+				     &threshold,
+				     main_window)) {
+		return;
+	}
+
+	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
+	auto iter = this->trackpoints.begin();
+	time_t prev_ts = (*iter)->timestamp;
+
+	TrackPoints * newtps = new TrackPoints;
+	std::list<TrackPoints *> points;
+
+	for (; iter != this->trackpoints.end(); iter++) {
+		time_t ts = (*iter)->timestamp;
+
+		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
+		if (ts < prev_ts) {
+			char tmp_str[64];
+			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
+
+			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), main_window) {
+				Viewport * viewport = g_tree->tree_get_main_viewport();
+				parent_layer->goto_coord(viewport, (*iter)->coord);
+			}
+			return;
+		}
+
+		if (ts - prev_ts > threshold * 60) {
+			/* Flush accumulated trackpoints into new list. */
+			points.push_back(newtps);
+			newtps = new TrackPoints;
+		}
+
+		/* Accumulate trackpoint copies in newtps. */
+		newtps->push_back(new Trackpoint(**iter));
+		prev_ts = ts;
+	}
+	if (!newtps->empty()) {
+		points.push_back(newtps);
+	}
+
+	/* Only bother updating if the split results in new tracks. */
+	if (points.size() > 1) {
+		parent_layer->create_new_tracks(this, &points);
+	}
+
+	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
+	for (auto iter2 = points.begin(); iter2 != points.end(); iter2++) {
+		delete *iter2;
+	}
+
+	return;
+}
+
+
+
+
+/**
+ * Split a track by the number of points as specified by the user
+ */
+void Track::split_by_n_points_cb(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	int n_points = Dialog::get_int(tr("Split Every Nth Point"),
+				       tr("Split on every Nth point:"),
+				       250,   /* Default value as per typical limited track capacity of various GPS devices. */
+				       2,     /* Min */
+				       65536, /* Max */
+				       5,     /* Step */
+				       NULL,  /* ok */
+				       g_tree->tree_get_main_window());
+	/* Was a valid number returned? */
+	if (!n_points) {
+		return;
+	}
+
+	/* Now split. */
+	TrackPoints * newtps = new TrackPoints;
+	std::list<TrackPoints *> points;
+
+	int count = 0;
+
+	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
+		/* Accumulate trackpoint copies in newtps, in reverse order */
+		newtps->push_back(new Trackpoint(**iter));
+		count++;
+		if (count >= n_points) {
+			/* flush accumulated trackpoints into new list */
+			points.push_back(newtps);
+			newtps = new TrackPoints;
+			count = 0;
+		}
+	}
+
+	/* If there is a remaining chunk put that into the new split list.
+	   This may well be the whole track if no split points were encountered. */
+	if (newtps->size()) {
+		points.push_back(newtps);
+	}
+
+	/* Only bother updating if the split results in new tracks. */
+	if (points.size() > 1) {
+		((LayerTRW *) this->owning_layer)->create_new_tracks(this, &points);
+	}
+
+	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
+	for (auto iter = points.begin(); iter != points.end(); iter++) {
+		delete *iter;
+	}
+}
+
+
+
+
+
+/*
+  Refine the selected route with a routing engine.
+  The routing engine is selected by the user, when requestiong the job.
+*/
+void Track::refine_route_cb(void)
+{
+	static int last_engine = 0;
+
+	if (this->empty()) {
+		return;
+	}
+
+	Window * main_window = g_tree->tree_get_main_window();
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	/* Check size of the route */
+	int nb = this->get_tp_count();
+#ifdef K
+	if (nb > 100) {
+		GtkWidget *dialog = gtk_message_dialog_new(main_window,
+							   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+							   GTK_MESSAGE_WARNING,
+							   GTK_BUTTONS_OK_CANCEL,
+							   _("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?"),
+							   nb);
+		int response = gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+		if (response != GTK_RESPONSE_OK) {
+			return;
+		}
+	}
+	/* Select engine from dialog */
+	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
+							main_window,
+							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+							GTK_STOCK_CANCEL,
+							GTK_RESPONSE_REJECT,
+							GTK_STOCK_OK,
+							GTK_RESPONSE_ACCEPT,
+							NULL);
+	QLabel * label = new QLabel(QObject::tr("Select routing engine"));
+	gtk_widget_show_all(label);
+
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
+
+	QComboBox * combo = routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
+	combo->setCurrentIndex(last_engine);
+	gtk_widget_show_all(combo);
+
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
+
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		/* Dialog validated: retrieve selected engine and do the job */
+		last_engine = combo->currentIndex();
+		RoutingEngine *routing = routing_ui_selector_get_nth(combo, last_engine);
+
+		/* Change cursor */
+		main_window->set_busy_cursor();
+
+		/* Force saving track */
+		/* FIXME: remove or rename this hack */
+		parent_layer->route_finder_check_added_track = true;
+
+		/* the job */
+		routing->refine(parent_layer, this);
+
+		/* FIXME: remove or rename this hack */
+		if (parent_layer->route_finder_added_track) {
+			parent_layer->route_finder_added_track->calculate_bounds();
+		}
+
+		parent_layer->route_finder_added_track = NULL;
+		parent_layer->route_finder_check_added_track = false;
+
+		parent_layer->emit_layer_changed();
+
+		/* Restore cursor */
+		main_window->clear_busy_cursor();
+	}
+	gtk_widget_destroy(dialog);
+#endif
+}
+
+
+
+
+/**
+   Split a track by its segments
+   Routes do not have segments so don't call this for routes
+*/
+void Track::split_by_segments_cb(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	QString new_tr_name;
+	std::list<Track *> * tracks_ = this->split_into_segments();
+	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
+		if (*iter) {
+			new_tr_name = parent_layer->new_unique_element_name(this->type_id, this->name);
+			(*iter)->set_name(new_tr_name);
+
+			parent_layer->add_track(*iter);
+		}
+	}
+	if (tracks_) {
+		delete tracks_;
+		/* Remove original track. */
+		parent_layer->delete_track(this);
+		parent_layer->emit_layer_changed();
+	} else {
+		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
+	}
+}
+
+
+
+
+/**
+   \brief Create a new trackpoint and insert it next to given @param reference_tp.
+
+   Insert it before or after @param reference_tp, depending on value of @param before.
+
+   The new trackpoint is created at center position between @param
+   reference_tp and one of its neighbours: next tp or previous tp.
+*/
+void Track::create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool before)
+{
+	/* Sanity check. */
+	if (!reference_tp || !reference_tp->valid) {
+		return;
+	}
+
+	/* TODO: verify that reference_tp belongs to this track. */
+
+	Trackpoint * other_tp = NULL;
+
+	if (before) {
+		if (reference_tp->iter == this->begin()) {
+			return;
+		}
+		other_tp = *std::prev(reference_tp->iter);
+	} else {
+		if (std::next(reference_tp->iter) == this->end()) {
+			return;
+		}
+		other_tp = *std::next(reference_tp->iter);
+	}
+
+	/* Use current and other trackpoints to form a new
+	   trackpoint which is inserted into the tracklist. */
+	if (other_tp) {
+
+		Trackpoint * new_tp = new Trackpoint(**reference_tp->iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
+		/* Insert new point into the appropriate trackpoint list,
+		   either before or after the current trackpoint as directed. */
+
+		this->insert(*reference_tp->iter, new_tp, before);
+	}
+}
+
+
+
+
+void Track::delete_sublayer(bool confirm)
+{
+	bool was_visible = false;
+
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+
+       Window * main_window = g_tree->tree_get_main_window();
+       LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	if (this->type_id == "sg.trw.track") {
+		if (confirm) {
+			/* Get confirmation from the user. */
+			if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(this->name)), main_window) {
+				return;
+			}
+		}
+
+		was_visible = parent_layer->delete_track(this);
+
+		/* Reset layer timestamp in case it has now changed. */
+		parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
+	} else {
+		if (confirm) {
+			/* Get confirmation from the user. */
+			if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(this->name)), main_window) {
+				return;
+			}
+		}
+		was_visible = parent_layer->delete_route(this);
+	}
+
+	if (was_visible) {
+		parent_layer->emit_layer_changed();
+	}
+}
+
+
+
+
+void Track::cut_sublayer_cb(void)
+{
+	/* false: don't require confirmation in callbacks. */
+	((LayerTRW *) this->owning_layer)->cut_sublayer_common(this, false);
+}
+
+void Track::copy_sublayer_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->copy_sublayer_common(this);
+}
+
+void Track::delete_sublayer_cb(void)
+{
+	/* false: don't require confirmation in callbacks. */
+	this->delete_sublayer(false);
+}

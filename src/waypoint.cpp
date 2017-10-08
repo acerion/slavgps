@@ -395,7 +395,17 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this, SLOT (properties_dialog_cb()));
 
 
-	layer_trw_sublayer_menu_waypoint_track_route_edit((LayerTRW *) this->owning_layer, menu);
+	/* Common "Edit" items. */
+	{
+		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_sublayer_cb()));
+	}
 
 
 	menu.addSeparator();
@@ -701,3 +711,57 @@ void Waypoint::geotagging_waypoint_cb(void)
 	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), (LayerTRW *) this->owning_layer, this, NULL);
 }
 #endif
+
+
+
+
+
+
+void Waypoint::delete_sublayer(bool confirm)
+{
+	if (this->name.isEmpty()) {
+		return;
+	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	Window * main_window = g_tree->tree_get_main_window();
+
+	if (confirm) {
+		/* Get confirmation from the user. */
+		/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
+		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(this->name)), main_window) {
+			return;
+		}
+	}
+
+	bool was_visible = parent_layer->delete_waypoint(this);
+	parent_layer->waypoints->calculate_bounds();
+
+	/* Reset layer timestamp in case it has now changed. */
+	parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
+
+	if (was_visible) {
+		parent_layer->emit_layer_changed();
+	}
+}
+
+
+
+
+
+void Waypoint::cut_sublayer_cb(void)
+{
+	/* false: don't require confirmation in callbacks. */
+	((LayerTRW *) this->owning_layer)->cut_sublayer_common(this, false);
+}
+
+void Waypoint::copy_sublayer_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->copy_sublayer_common(this);
+}
+
+void Waypoint::delete_sublayer_cb(void)
+{
+	/* false: don't require confirmation in callbacks. */
+	this->delete_sublayer(false);
+}

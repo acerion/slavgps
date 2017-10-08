@@ -172,6 +172,8 @@ namespace SlavGPS {
 
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
+
+		void paste_sublayer_cb(void);
 	};
 
 

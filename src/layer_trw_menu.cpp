@@ -309,23 +309,6 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 
-void SlavGPS::layer_trw_sublayer_menu_waypoint_track_route_edit(LayerTRW * parent_layer, QMenu & menu)
-{
-	QAction * qa = NULL;
-
-	qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (cut_sublayer_cb()));
-
-	qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (copy_sublayer_cb()));
-
-	qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_sublayer_cb()));
-}
-
-
-
-
 void SlavGPS::layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * parent_layer, QMenu & menu)
 {
 	QAction * qa = NULL;

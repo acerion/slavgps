@@ -631,14 +631,6 @@ void LayerTRW::cut_sublayer(TreeItem * sublayer)
 
 
 
-void LayerTRW::copy_sublayer_cb(void)
-{
-	this->copy_sublayer_common(this->menu_data->sublayer);
-}
-
-
-
-
 void LayerTRW::copy_sublayer_common(TreeItem * item)
 {
 	uint8_t * data_ = NULL;
@@ -656,30 +648,10 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 
 
 
-void LayerTRW::cut_sublayer_cb(void) /* Slot. */
-{
-	/* false: never need to confirm automatic delete. */
-	this->cut_sublayer_common(this->menu_data->sublayer, false);
-}
-
-
-
-
 void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
 {
 	this->copy_sublayer_common(item);
 	this->delete_sublayer_common(item, confirm);
-}
-
-
-
-
-void LayerTRW::paste_sublayer_cb(void)
-{
-	/* Slightly cheating method, routing via the panels capability. */
-#ifdef K
-	a_clipboard_paste(g_tree->tree_get_layers_panel());
-#endif
 }
 
 
@@ -2922,61 +2894,18 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 
 
-void LayerTRW::delete_sublayer_cb(void)
-{
-	this->delete_sublayer_common(this->menu_data->sublayer, false);
-}
-
-
-
 void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 {
 	bool was_visible = false;
 
 	if (item->type_id == "sg.trw.waypoint") {
 		Waypoint * wp = (Waypoint *) item;
-		if (!wp->name.isEmpty()) {
-			if (confirm) {
-				/* Get confirmation from the user. */
-				/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->name)), this->get_window()) {
-					return;
-				}
-			}
-
-			was_visible = this->delete_waypoint(wp);
-			this->waypoints->calculate_bounds();
-			/* Reset layer timestamp in case it has now changed. */
-			this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
-		}
-	} else if (item->type_id == "sg.trw.track") {
+		wp->delete_sublayer(confirm);
+	} else if (item->type_id == "sg.trw.track" || item->type_id == "sg.trw.route") {
 		Track * trk = (Track *) item;
-		if (!trk->name.isEmpty()) {
-			if (confirm) {
-				/* Get confirmation from the user. */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(trk->name)), this->get_window()) {
-					return;
-				}
-			}
-
-			was_visible = this->delete_track(trk);
-			/* Reset layer timestamp in case it has now changed. */
-			this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
-		}
+		trk->delete_sublayer(confirm);
 	} else {
-		Track * trk = (Track *) item;
-		if (!trk->name.isEmpty()) {
-			if (confirm) {
-				/* Get confirmation from the user. */
-				if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(trk->name)), this->get_window()) {
-					return;
-				}
-			}
-			was_visible = this->delete_route(trk);
-		}
-	}
-	if (was_visible) {
-		this->emit_layer_changed();
+		qDebug() << "EE: Layer TRW: unknown sublayer type" << item->type_id;
 	}
 }
 
@@ -3007,8 +2936,8 @@ void LayerTRW::extend_track_end_cb(void)
 	this->get_window()->activate_tool(trk->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!trk->empty()) {
-		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
-		this->goto_coord(this->menu_data->viewport, trk->get_tp_last()->coord);
+		Viewport * viewport = g_tree->tree_get_main_viewport();
+		this->goto_coord(viewport, trk->get_tp_last()->coord);
 	}
 }
 
@@ -3032,7 +2961,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
+		Viewport * viewport = g_tree->tree_get_main_viewport();
 		this->goto_coord(viewport, trk->get_tp_last()->coord);
 	}
 }
@@ -3049,90 +2978,6 @@ void LayerTRW::wp_changed_message(int changed_)
 	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed_);
 	snprintf(str, 64, tmp_str, changed_);
 	Dialog::info(str, this->get_window());
-}
-
-
-
-
-/*
- * Refine the selected track/route with a routing engine.
- * The routing engine is selected by the user, when requestiong the job.
- */
-void LayerTRW::route_refine_cb(void)
-{
-	static int last_engine = 0;
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (trk && !trk->empty()) {
-		/* Check size of the route */
-		int nb = trk->get_tp_count();
-#ifdef K
-		if (nb > 100) {
-			GtkWidget *dialog = gtk_message_dialog_new(this->get_window(),
-								   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-								   GTK_MESSAGE_WARNING,
-								   GTK_BUTTONS_OK_CANCEL,
-								   _("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?"),
-								   nb);
-			int response = gtk_dialog_run(GTK_DIALOG(dialog));
-			gtk_widget_destroy(dialog);
-			if (response != GTK_RESPONSE_OK) {
-				return;
-			}
-		}
-		/* Select engine from dialog */
-		GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
-								this->get_window(),
-								(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-								GTK_STOCK_CANCEL,
-								GTK_RESPONSE_REJECT,
-								GTK_STOCK_OK,
-								GTK_RESPONSE_ACCEPT,
-								NULL);
-		QLabel * label = new QLabel(QObject::tr("Select routing engine"));
-		gtk_widget_show_all(label);
-
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
-
-		QComboBox * combo = routing_ui_selector_new((Predicate)vik_routing_engine_supports_refine, NULL);
-		combo->setCurrentIndex(last_engine);
-		gtk_widget_show_all(combo);
-
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
-
-		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			/* Dialog validated: retrieve selected engine and do the job */
-			last_engine = combo->currentIndex();
-			RoutingEngine *routing = routing_ui_selector_get_nth(combo, last_engine);
-
-			/* Change cursor */
-			this->get_window()->set_busy_cursor();
-
-			/* Force saving track */
-			/* FIXME: remove or rename this hack */
-			this->route_finder_check_added_track = true;
-
-			/* the job */
-			routing->refine(this, trk);
-
-			/* FIXME: remove or rename this hack */
-			if (this->route_finder_added_track) {
-				this->route_finder_added_track->calculate_bounds();
-			}
-
-			this->route_finder_added_track = NULL;
-			this->route_finder_check_added_track = false;
-
-			this->emit_layer_changed();
-
-			/* Restore cursor */
-			this->get_window()->clear_busy_cursor();
-		}
-		gtk_widget_destroy(dialog);
-#endif
-	}
 }
 
 
@@ -3548,213 +3393,22 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 
 
-
-/**
- * Split a track at the currently selected trackpoint
- */
-void LayerTRW::split_at_selected_trackpoint(const QString & item_type_id)
-{
-	if (!this->selected_tp.valid) {
-		return;
-	}
-
-	if (this->selected_tp.iter == this->current_trk->begin()) {
-		/* First TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << "WW: Layer TRW: attempting to split track on first tp";
-		return;
-	}
-
-	if (this->selected_tp.iter == std::prev(this->current_trk->end())) {
-		/* Last TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << "WW: Layer TRW: attempting to split track on last tp";
-		return;
-	}
-
-	const QString uniq_name = this->new_unique_element_name(item_type_id, this->current_trk->name);
-	if (!uniq_name.size()) {
-		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->current_trk->name;
-		return;
-	}
-
-	/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
-	Trackpoint * selected_ = new Trackpoint(**this->selected_tp.iter);
-
-	Track * new_track = new Track(*this->current_trk, std::next(this->selected_tp.iter), this->current_trk->end());
-	new_track->push_front(selected_);
-
-	this->current_trk->erase(std::next(this->selected_tp.iter), this->current_trk->end());
-	this->current_trk->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
-
-	this->selected_tp.iter = new_track->begin();
-	this->current_trk = new_track;
-	this->current_trk->calculate_bounds();
-
-	/* kamilTODO: how it's possible that a new track will already have an uid? */
-	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
-
-	this->current_trk = new_track;
-
-	new_track->set_name(uniq_name);
-
-	this->add_track(new_track);
-
-	this->emit_layer_changed();
-}
-
-
-
-
-/* split by time routine */
-void LayerTRW::split_by_timestamp_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks->items.at(child_uid);
-
-	static uint32_t thr = 1;
-
-	if (trk->empty()) {
-		return;
-	}
-
-	if (!a_dialog_time_threshold(tr("Split Threshold..."),
-				     tr("Split when time between trackpoints exceeds:"),
-				     &thr,
-				     this->get_window())) {
-		return;
-	}
-
-	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
-	auto iter = trk->trackpoints.begin();
-	time_t prev_ts = (*iter)->timestamp;
-
-	TrackPoints * newtps = new TrackPoints;
-	std::list<TrackPoints *> points;
-
-	for (; iter != trk->trackpoints.end(); iter++) {
-		time_t ts = (*iter)->timestamp;
-
-		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
-		if (ts < prev_ts) {
-			char tmp_str[64];
-			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
-
-			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), this->get_window()) {
-				Viewport * viewport = this->menu_data->viewport ? this->menu_data->viewport : g_tree->tree_get_main_viewport();
-				this->goto_coord(viewport, (*iter)->coord);
-			}
-			return;
-		}
-
-		if (ts - prev_ts > thr * 60) {
-			/* Flush accumulated trackpoints into new list. */
-			points.push_back(newtps);
-			newtps = new TrackPoints;
-		}
-
-		/* Accumulate trackpoint copies in newtps. */
-		newtps->push_back(new Trackpoint(**iter));
-		prev_ts = ts;
-	}
-	if (!newtps->empty()) {
-		points.push_back(newtps);
-	}
-
-	/* Only bother updating if the split results in new tracks. */
-	if (points.size() > 1) {
-		this->create_new_tracks(trk, &points);
-	}
-
-	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
-	for (auto iter2 = points.begin(); iter2 != points.end(); iter2++) {
-		delete *iter2;
-	}
-
-	return;
-}
-
-
-
-
-/**
- * Split a track by the number of points as specified by the user
- */
-void LayerTRW::split_by_n_points_cb(void)
-{
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk || trk->empty()) {
-		return;
-	}
-
-	int n_points = Dialog::get_int(tr("Split Every Nth Point"),
-				       tr("Split on every Nth point:"),
-				       250,   /* Default value as per typical limited track capacity of various GPS devices. */
-				       2,     /* Min */
-				       65536, /* Max */
-				       5,     /* Step */
-				       NULL,  /* ok */
-				       this->get_window());
-	/* Was a valid number returned? */
-	if (!n_points) {
-		return;
-	}
-
-	/* Now split. */
-	TrackPoints * newtps = new TrackPoints;
-	std::list<TrackPoints *> points;
-
-	int count = 0;
-
-	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-		/* Accumulate trackpoint copies in newtps, in reverse order */
-		newtps->push_back(new Trackpoint(**iter));
-		count++;
-		if (count >= n_points) {
-			/* flush accumulated trackpoints into new list */
-			points.push_back(newtps);
-			newtps = new TrackPoints;
-			count = 0;
-		}
-	}
-
-	/* If there is a remaining chunk put that into the new split list.
-	   This may well be the whole track if no split points were encountered. */
-	if (newtps->size()) {
-		points.push_back(newtps);
-	}
-
-	/* Only bother updating if the split results in new tracks. */
-	if (points.size() > 1) {
-		this->create_new_tracks(trk, &points);
-	}
-
-	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
-	for (auto iter = points.begin(); iter != points.end(); iter++) {
-		delete *iter;
-	}
-}
-
-
-
-
 /*
   orig - original track
   points- list of trackpoint lists
 */
 bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points)
 {
-	QString new_tr_name;
 	for (auto iter = points->begin(); iter != points->end(); iter++) {
 
 		Track * copy = new Track(*orig, (*iter)->begin(), (*iter)->end());
 
+		const QString new_name = this->new_unique_element_name(orig->type_id, orig->name);
+		copy->set_name(new_name);
+
 		if (orig->type_id == "sg.trw.route") {
-			new_tr_name = this->new_unique_element_name("sg.trw.route", orig->name);
-			copy->set_name(new_tr_name);
 			this->add_route(copy);
 		} else {
-			new_tr_name = this->new_unique_element_name("sg.trw.track", orig->name);
-			copy->set_name(new_tr_name);
 			this->add_track(copy);
 		}
 		copy->calculate_bounds();
@@ -3779,44 +3433,18 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
  */
 void LayerTRW::split_at_trackpoint_cb(void)
 {
-	this->split_at_selected_trackpoint(this->menu_data->sublayer->type_id);
-}
-
-
-
-
-/**
- * Split a track by its segments
- * Routes do not have segments so don't call this for routes
- */
-void LayerTRW::split_segments_cb(void)
-{
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track *trk = this->tracks->items.at(child_uid);
-
-	if (!trk) {
-		return;
-	}
-
-	QString new_tr_name;
-	std::list<Track *> * tracks_ = trk->split_into_segments();
-	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
-		if (*iter) {
-			new_tr_name = this->new_unique_element_name("sg.trw.track", trk->name);
-			(*iter)->set_name(new_tr_name);
-
-			this->add_track(*iter);
-		}
-	}
-	if (tracks_) {
-		delete tracks_;
-		/* Remove original track. */
-		this->delete_track(trk);
+	Track * new_track = ((Track *) this->menu_data->sublayer)->split_at_trackpoint(&this->selected_tp);
+	if (new_track) {
+		this->selected_tp.iter = new_track->begin();
+		this->current_trk = new_track;
+		this->add_track(new_track);
 		this->emit_layer_changed();
-	} else {
-		Dialog::error(tr("Can not split track as it has no segments"), this->get_window());
 	}
 }
+
+
+
+
 /* end of split/merge routines */
 
 
@@ -3936,7 +3564,7 @@ void LayerTRW::insert_point_after_cb(void)
 		return;
 	}
 
-	this->insert_tp_beside_current_tp(false);
+	this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, false);
 
 	this->emit_layer_changed();
 }
@@ -3952,7 +3580,7 @@ void LayerTRW::insert_point_before_cb(void)
 		return;
 	}
 
-	this->insert_tp_beside_current_tp(true);
+	this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, true);
 
 	this->emit_layer_changed();
 }
@@ -4357,48 +3985,6 @@ bool is_valid_geocache_name(const char *str)
 
 
 
-/* TODO: Probably better to rework this track manipulation in viktrack.c. */
-void LayerTRW::insert_tp_beside_current_tp(bool before)
-{
-	/* Sanity check. */
-	if (!this->selected_tp.valid) {
-		return;
-	}
-
-	Trackpoint * tp_current = *this->selected_tp.iter;
-	Trackpoint * tp_other = NULL;
-
-	if (before) {
-		if (this->selected_tp.iter == this->current_trk->begin()) {
-			return;
-		}
-		tp_other = *std::prev(this->selected_tp.iter);
-	} else {
-		if (std::next(this->selected_tp.iter) == this->current_trk->end()) {
-			return;
-		}
-		tp_other = *std::next(this->selected_tp.iter);
-	}
-
-	/* Use current and other trackpoints to form a new
-	   track point which is inserted into the tracklist. */
-	if (tp_other) {
-
-		Trackpoint * tp_new = new Trackpoint(*tp_current, *tp_other, this->coord_mode);
-		/* Insert new point into the appropriate trackpoint list,
-		   either before or after the current trackpoint as directed. */
-
-		if (this->current_trk) {
-			this->current_trk->insert(tp_current, tp_new, before);
-		} else {
-			/* TODO: under which conditions this ::insert_tp_beside_current_tp() would be called and ->current_trk would be NULL? */
-		}
-	}
-}
-
-
-
-
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy)
 {
 	layer->cancel_current_tp(destroy);
@@ -4457,7 +4043,13 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 	    && this->selected_tp.iter != this->current_trk->begin()
 	    && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
-		this->split_at_selected_trackpoint(this->current_trk->type_id);
+		Track * new_track = this->current_trk->split_at_trackpoint(&this->selected_tp);
+		if (new_track) {
+			this->selected_tp.iter = new_track->begin();
+			this->current_trk = new_track;
+			this->add_track(new_track);
+			this->emit_layer_changed();
+		}
 		this->my_tpwin_set_tp();
 
 	} else if (response == SG_TRACK_DELETE) {
@@ -4494,7 +4086,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		   && this->current_trk
 		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
 
-		this->insert_tp_beside_current_tp(false);
+		this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, false);
 		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_CHANGED) {

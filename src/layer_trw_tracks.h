@@ -185,6 +185,8 @@ namespace SlavGPS {
 		void items_visibility_toggle_cb(void);
 
 		void track_list_dialog_cb(void);
+
+		void paste_sublayer_cb(void);
 	};
 
 

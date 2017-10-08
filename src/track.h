@@ -80,6 +80,15 @@ namespace SlavGPS {
 
 
 
+	class Trackpoint2 {
+	public:
+		bool valid = false;
+		TrackPoints::iterator iter;
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 

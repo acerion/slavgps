@@ -43,7 +43,6 @@ namespace SlavGPS {
 
 
 
-	void layer_trw_sublayer_menu_waypoint_track_route_edit(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * parent_layer, QMenu & menu);
 	void layer_trw_sublayer_menu_track_waypoint_diary_astro(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu);
 	void layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu);

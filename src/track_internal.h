@@ -59,6 +59,7 @@ namespace SlavGPS {
 
 
 
+	class Trackpoint2;
 	class Trackpoint;
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
@@ -161,6 +162,8 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 		std::list<Track *> * split_into_segments();
 
+		Track * split_at_trackpoint(Trackpoint2 * tp);
+
 		void smooth_it(bool flat);
 
 		unsigned int merge_segments(void);
@@ -248,6 +251,10 @@ namespace SlavGPS {
 
 		std::list<Rect *> * get_map_rectangles(double zoom_level);
 
+		void create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool before);
+
+		void delete_sublayer(bool confirm);
+
 #ifdef VIK_CONFIG_GOOGLE
 		bool is_valid_google_route();
 #endif
@@ -323,7 +330,15 @@ namespace SlavGPS {
 		void track_use_with_filter_cb(void);
 #endif
 
+		void split_by_timestamp_cb(void);
+		void split_by_n_points_cb(void);
+		void split_by_segments_cb(void);
 
+		void refine_route_cb(void);
+
+		void cut_sublayer_cb(void);
+		void copy_sublayer_cb(void);
+		void delete_sublayer_cb(void);
 	};
 
 
