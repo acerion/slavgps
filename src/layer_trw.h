@@ -282,9 +282,6 @@ namespace SlavGPS {
 
 		void trackpoint_selected_delete(Track * trk);
 
-		Track * get_selected_track();
-
-
 		void diary_open(char const * date_str);
 		void astro_open(char const * date_str,  char const * time_str, char const * lat_str, char const * lon_str, char const * alt_str);
 
@@ -327,7 +324,7 @@ namespace SlavGPS {
 		QString highest_wp_number_get();
 
 
-		void my_tpwin_set_tp();
+		void tpwin_update_dialog_data();
 
 
 		void dialog_shift(QDialog * dialog, Coord * coord, bool vertical);
@@ -352,11 +349,11 @@ namespace SlavGPS {
 		void tpwin_response(int response);
 		Track * get_track_helper(TreeItem * sublayer);
 		void update_statusbar();
-		void tool_extended_route_finder_undo();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
-		void undo_trackpoint_add();
 
-		void set_current_track(Track * track, const TrackPoints::iterator & tp_iter);
+		Track * get_edited_track();
+		void set_edited_track(Track * track, const TrackPoints::iterator & tp_iter);
+		void reset_edited_track(void);
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);
 		void copy_sublayer_common(TreeItem * item);

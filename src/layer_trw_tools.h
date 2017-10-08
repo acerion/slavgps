@@ -73,6 +73,8 @@ namespace SlavGPS {
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
+
+		void undo(LayerTRW * trw, Track * track);
 	};
 
 	class LayerToolTRWShowPicture : public LayerTool {

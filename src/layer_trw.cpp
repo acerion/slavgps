@@ -2310,7 +2310,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
-	this->current_track = NULL;
+	this->reset_edited_track();
 	this->route_finder_started = false;
 	this->emit_layer_changed();
 }
@@ -2660,7 +2660,7 @@ bool LayerTRW::delete_track(Track * trk)
 	}
 
 	if (trk == this->current_track) {
-		this->current_track = NULL;
+		this->reset_edited_track();
 		this->moving_tp = false;
 		this->route_finder_started = false;
 	}
@@ -2699,7 +2699,7 @@ bool LayerTRW::delete_route(Track * trk)
 	}
 
 	if (trk == this->current_track) {
-		this->current_track = NULL;
+		this->reset_edited_track();
 		this->moving_tp = false;
 	}
 
@@ -2809,11 +2809,11 @@ bool LayerTRW::delete_track_by_name(const QString & trk_name, bool is_route)
 
 void LayerTRW::delete_all_routes()
 {
-	this->current_track = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->current_track) { /* FIXME: we have just set this to NULL! */
+	if (this->current_track) {
 		this->cancel_current_tp(false);
 	}
+	this->reset_edited_track();
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
 		tree_view->erase(i->second->index);
@@ -2831,11 +2831,11 @@ void LayerTRW::delete_all_routes()
 
 void LayerTRW::delete_all_tracks()
 {
-	this->current_track = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->current_track) { /* FIXME: we have just set this to NULL! */
+	if (this->current_track) {
 		this->cancel_current_tp(false);
 	}
+	this->reset_edited_track();
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
 		tree_view->erase(i->second->index);
@@ -3444,14 +3444,14 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
  */
 void LayerTRW::split_at_trackpoint_cb(void)
 {
-	Track * current_trk = this->get_selected_track();
-	if (!current_trk) {
+	Track * selected_track = this->get_edited_track();
+	if (!selected_track) {
 		return;
 	}
 
-	Track * new_track = current_trk->split_at_trackpoint(&current_trk->selected_tp);
+	Track * new_track = selected_track->split_at_trackpoint(selected_track->selected_tp);
 	if (new_track) {
-		this->set_current_track(new_track, new_track->begin());
+		this->set_edited_track(new_track, new_track->begin());
 		this->add_track(new_track);
 		this->emit_layer_changed();
 	}
@@ -3489,7 +3489,7 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
  */
 void LayerTRW::delete_point_selected_cb(void)
 {
-	Track * selected_track = this->get_selected_track();
+	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
 		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
@@ -3574,7 +3574,7 @@ void LayerTRW::delete_points_same_time_cb(void)
  */
 void LayerTRW::insert_point_after_cb(void)
 {
-	Track * selected_track = this->get_selected_track();
+	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
 		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
@@ -3590,7 +3590,7 @@ void LayerTRW::insert_point_after_cb(void)
 
 void LayerTRW::insert_point_before_cb(void)
 {
-	Track * selected_track = this->get_selected_track();
+	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
 		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
@@ -4016,14 +4016,14 @@ void LayerTRW::cancel_current_tp(bool destroy)
 			delete this->tpwin;
 			this->tpwin = NULL;
 		} else {
-			this->tpwin->set_empty();
+			this->tpwin->reset_dialog_data();
 		}
 	}
 
 	if (this->current_track && this->current_track->selected_tp.valid) {
 		this->current_track->selected_tp.valid = false;
+		this->reset_edited_track();
 
-		this->current_track = NULL;
 		this->emit_layer_changed();
 	}
 }
@@ -4031,13 +4031,15 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 
 
-void LayerTRW::my_tpwin_set_tp()
+void LayerTRW::tpwin_update_dialog_data()
 {
-	Track * trk = this->current_track;
-	/* Notional center of a track is simply an average of the bounding box extremities. */
-	struct LatLon ll_center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-	Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
-	this->tpwin->set_tp(trk, &this->current_track->selected_tp.iter, trk->name, trk->type_id == "sg.trw.route");
+	Track * track = this->get_edited_track();
+	if (track) {
+		/* Notional center of a track is simply an average of the bounding box extremities. */
+		struct LatLon ll_center = { (track->bbox.north + track->bbox.south)/2, (track->bbox.east + track->bbox.west)/2 };
+		Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
+		this->tpwin->set_dialog_data(track, track->selected_tp.iter, track->type_id == "sg.trw.route");
+	}
 }
 
 
@@ -4046,66 +4048,121 @@ void LayerTRW::my_tpwin_set_tp()
 void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 {
 	assert (this->tpwin != NULL);
-	if (response == SG_TRACK_CLOSE) {
+
+	Track * track = this->get_edited_track();
+
+	switch (response) {
+	case SG_TRACK_CLOSE_DIALOG:
 		this->cancel_current_tp(true);
 		//this->tpwin->reject();
-	}
+		break;
 
-	if (!this->current_track->selected_tp.valid) {
-		return;
-	}
+	case SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP: {
+		if (!track) {
+			return;
+		}
+		if (!track->selected_tp.valid) {
+			return;
+		}
+		if (track->selected_tp.iter == track->begin()) {
+			/* Can't split track at first trackpoint in track. */
+			break;
+		}
+		if (std::next(track->selected_tp.iter) == track->end()) {
+			/* Can't split track at last trackpoint in track. */
+			break;
+		}
 
-	if (response == SG_TRACK_SPLIT
-	    && this->current_track->selected_tp.iter != this->current_track->begin()
-	    && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
-
-		Track * new_track = this->current_track->split_at_trackpoint(&this->current_track->selected_tp);
+		Track * new_track = track->split_at_trackpoint(track->selected_tp);
 		if (new_track) {
-			this->set_current_track(new_track, new_track->begin());
+			this->set_edited_track(new_track, new_track->begin());
 			this->add_track(new_track);
 			this->emit_layer_changed();
 		}
-		this->my_tpwin_set_tp();
 
-	} else if (response == SG_TRACK_DELETE) {
+		this->tpwin_update_dialog_data();
+		}
+		break;
 
-		if (!this->current_track) {
+	case SG_TRACK_DELETE_CURRENT_TP:
+		if (!track) {
 			return;
 		}
-		this->trackpoint_selected_delete(this->current_track);
+		if (!track->selected_tp.valid) {
+			return;
+		}
+		this->trackpoint_selected_delete(track);
 
-		if (this->current_track && this->current_track->selected_tp.valid) {
-			/* Reset dialog with the available adjacent trackpoint. */
-			this->my_tpwin_set_tp();
+		if (track->selected_tp.valid) {
+			/* Update Trackpoint Properties with the available adjacent trackpoint. */
+			this->tpwin_update_dialog_data();
 		}
 
 		this->emit_layer_changed();
+		break;
 
-	} else if (response == SG_TRACK_FORWARD
-		   && this->current_track
-		   && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
+	case SG_TRACK_GO_FORWARD:
+		if (!track) {
+			break;
+		}
+		if (!track->selected_tp.valid) {
+			return;
+		}
+		if (std::next(track->selected_tp.iter) == track->end()) {
+			/* Can't go forward if we are already at the end. */
+			break;
+		}
 
-		this->current_track->selected_tp.iter++;
-		this->my_tpwin_set_tp();
+		track->selected_tp.iter++;
+		this->tpwin_update_dialog_data();
 		this->emit_layer_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
-	} else if (response == SG_TRACK_BACK
-		   && this->current_track
-		   && this->current_track->selected_tp.iter != this->current_track->begin()) {
+		break;
 
-		this->current_track->selected_tp.iter--;
-		this->my_tpwin_set_tp();
+	case SG_TRACK_GO_BACK:
+		if (!track) {
+			break;
+		}
+		if (!track->selected_tp.valid) {
+			return;
+		}
+		if (track->selected_tp.iter == track->begin()) {
+			/* Can't go back if we are already at the beginning. */
+			break;
+		}
+
+		track->selected_tp.iter--;
+		this->tpwin_update_dialog_data();
 		this->emit_layer_changed();
 
-	} else if (response == SG_TRACK_INSERT
-		   && this->current_track
-		   && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
+		break;
 
-		this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, false);
-		this->emit_layer_changed();
+	case SG_TRACK_INSERT_TP_AFTER:
+		if (!track) {
+			break;
+		}
+		if (!track->selected_tp.valid) {
+			return;
+		}
+		if (std::next(track->selected_tp.iter) == track->end()) {
+			/* Can't inset trackpoint after last
+			   trackpoint in track.  This is because the
+			   algorithm for inserting a new trackpoint
+			   uses two existing trackpoints and adds the
+			   new one between the two existing tps. */
+			break;
+		}
 
-	} else if (response == SG_TRACK_CHANGED) {
+		track->create_tp_next_to_reference_tp(&track->selected_tp, false);
 		this->emit_layer_changed();
+		break;
+
+	case SG_TRACK_CHANGED:
+		this->emit_layer_changed();
+		break;
+
+	default:
+		qDebug() << "EE: LayerTRW: Trackpoint Properties Dialog: unhandled dialog response" << response;
 	}
 }
 
@@ -4218,15 +4275,11 @@ void LayerTRW::trackpoint_properties_show()
 	if (this->current_track && this->current_track->selected_tp.valid) {
 		/* Get tp pixel position. */
 		Trackpoint * tp = *this->current_track->selected_tp.iter;
+
 		/* Shift up/down to try not to obscure the trackpoint. */
 		this->dialog_shift(this->tpwin, &tp->coord, true);
-	}
 
-
-	if (this->current_track && this->current_track->selected_tp.valid) {
-		if (this->current_track) {
-			this->my_tpwin_set_tp();
-		}
+		this->tpwin_update_dialog_data();
 	}
 	/* Set layer name and TP data. */
 }
@@ -4837,7 +4890,7 @@ bool LayerTRW::clear_highlight()
    Returns track or route selected in this layer (if any track or route is selected in this layer)
    Returns NULL otherwise.
 */
-Track * LayerTRW::get_selected_track()
+Track * LayerTRW::get_edited_track()
 {
 	return this->current_track;
 #if 0
@@ -4861,13 +4914,21 @@ Track * LayerTRW::get_selected_track()
 
 
 
-void LayerTRW::set_current_track(Track * track, const TrackPoints::iterator & tp_iter)
+void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_iter)
 {
 	if (track) {
 		this->current_track = track;
 		this->current_track->selected_tp.iter = tp_iter;
 		this->current_track->selected_tp.valid = true;
 	} else {
-		/* Deselect/reset current track. */
+		qDebug() << "EE: Layer TRW: Set Current Track: null track";
 	}
+}
+
+
+
+
+void LayerTRW::reset_edited_track(void)
+{
+	this->current_track = NULL;
 }

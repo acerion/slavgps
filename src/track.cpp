@@ -740,19 +740,19 @@ std::list<Track *> * Track::split_into_segments()
    @return newly create track on success
    @return NULL on errors
 */
-Track * Track::split_at_trackpoint(Trackpoint2 * tp2)
+Track * Track::split_at_trackpoint(const Trackpoint2 & tp2)
 {
-	if (!tp2 || !tp2->valid) {
+	if (!tp2.valid) {
 		return NULL;
 	}
 
-	if (tp2->iter == this->begin()) {
+	if (tp2.iter == this->begin()) {
 		/* First TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << "WW: Layer TRW: attempting to split track on first tp";
 		return NULL;
 	}
 
-	if (tp2->iter == std::prev(this->end())) {
+	if (tp2.iter == std::prev(this->end())) {
 		/* Last TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << "WW: Layer TRW: attempting to split track on last tp";
 		return NULL;
@@ -767,14 +767,14 @@ Track * Track::split_at_trackpoint(Trackpoint2 * tp2)
 	}
 
 	/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
-	Trackpoint * selected_ = new Trackpoint(**tp2->iter);
+	Trackpoint * selected_ = new Trackpoint(**tp2.iter);
 
-	Track * new_track = new Track(*this, std::next(tp2->iter), this->end());
+	Track * new_track = new Track(*this, std::next(tp2.iter), this->end());
 	new_track->push_front(selected_);
 	new_track->set_name(uniq_name);
 	new_track->calculate_bounds();
 
-	this->erase(std::next(tp2->iter), this->end());
+	this->erase(std::next(tp2.iter), this->end());
 	this->calculate_bounds(); /* Bounds of original track changed due to the split. */
 
 	/* kamilTODO: how it's possible that a new track will already have an uid? */
@@ -3278,7 +3278,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	/* Update any subwindows that could be displaying this track which has changed name.
 	   Only one Track Edit Window. */
 	if (parent_layer->current_track == this && parent_layer->tpwin) {
-		parent_layer->tpwin->set_track_name(new_name);
+		parent_layer->tpwin->set_dialog_title(new_name);
 	}
 
 
@@ -3943,4 +3943,18 @@ void Track::delete_sublayer_cb(void)
 {
 	/* false: don't require confirmation in callbacks. */
 	this->delete_sublayer(false);
+}
+
+
+
+
+void Track::remove_last_trackpoint(void)
+{
+	if (this->empty()) {
+		return;
+	}
+
+	auto iter = this->get_last();
+	this->erase_trackpoint(iter);
+	this->calculate_bounds();
 }

@@ -192,7 +192,7 @@ bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 
 
 
-void PropertiesDialogTP::set_empty()
+void PropertiesDialogTP::reset_dialog_data(void)
 {
 	/* TODO: shouldn't we set ->cur_tp to NULL? */
 	this->trkpt_name->insert("");
@@ -209,11 +209,11 @@ void PropertiesDialogTP::set_empty()
 	this->datetime->setEnabled(false);
 
 	/* Only keep close button enabled. */
-	this->button_insert_after->setEnabled(false);
-	this->button_split_here->setEnabled(false);
-	this->button_delete->setEnabled(false);
-	this->button_back->setEnabled(false);
-	this->button_forward->setEnabled(false);
+	this->button_insert_tp_after->setEnabled(false);
+	this->button_split_track->setEnabled(false);
+	this->button_delete_current_tp->setEnabled(false);
+	this->button_go_back->setEnabled(false);
+	this->button_go_forward->setEnabled(false);
 
 
 	this->diff_dist->setText(QString(""));
@@ -232,21 +232,19 @@ void PropertiesDialogTP::set_empty()
 
 
 /**
- * @tpwin:      The Trackpoint Edit Window
  * @track:      A Track
  * @iter:       Iterator to given Track
- * @track_name: The name of the track in which the trackpoint belongs
  * @is_route:   Is the track of the trackpoint actually a route?
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  */
-void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const QString & track_name, bool is_route)
+void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route)
 {
 	static char tmp_str[64];
 	static QString tmp_string;
 	static struct LatLon ll;
 
-	Trackpoint * tp = **iter;
+	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
 	if (tp->name.isEmpty()) { /* TODO: do we need these two branches at all? */
@@ -256,14 +254,14 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	}
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
-	this->button_insert_after->setEnabled(std::next(*iter) != track->end());
-	this->button_delete->setEnabled(true);
+	this->button_insert_tp_after->setEnabled(std::next(current_tp_iter) != track->end());
+	this->button_delete_current_tp->setEnabled(true);
 
 	/* We can only split up a track if it's not an endpoint. */
-	this->button_split_here->setEnabled(std::next(*iter) != track->end() && *iter != track->begin());
+	this->button_split_track->setEnabled(std::next(current_tp_iter) != track->end() && current_tp_iter != track->begin());
 
-	this->button_forward->setEnabled(std::next(*iter) != track->end());
-	this->button_back->setEnabled(*iter != track->begin());
+	this->button_go_forward->setEnabled(std::next(current_tp_iter) != track->end());
+	this->button_go_back->setEnabled(current_tp_iter != track->begin());
 
 
 	this->lat->setEnabled(true);
@@ -277,7 +275,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		this->datetime->setEnabled(true);
 		this->datetime->setIcon(QIcon::fromTheme("list-add"));
 	} else {
-		this->set_track_name(track_name);
+		this->set_dialog_title(track->name);
 		if (!this->datetime->icon().isNull()) {
 			this->datetime->setIcon(QIcon());
 		}
@@ -395,11 +393,10 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 
 
 
-void PropertiesDialogTP::set_track_name(const QString & track_name)
+void PropertiesDialogTP::set_dialog_title(const QString & track_name)
 {
-	QString new_name = QString("%1: %2").arg(track_name).arg(QString("Trackpoint"));
-	this->setWindowTitle(new_name);
-	//this->track_name->setText(track_name);
+	const QString title = QString("%1: %2").arg(track_name).arg(QString("Trackpoint"));
+	this->setWindowTitle(title);
 }
 
 
@@ -419,33 +416,33 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->button_box = new QDialogButtonBox();
 	this->parent = parent_widget;
 
-	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
-	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
-	this->button_insert_after->setIcon(QIcon::fromTheme("list-add"));
-	this->button_delete = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
-	this->button_delete->setIcon(QIcon::fromTheme("list-delete"));
-	this->button_split_here = this->button_box->addButton("Split Here", QDialogButtonBox::ActionRole);
-	this->button_back = this->button_box->addButton("&Back", QDialogButtonBox::ActionRole);
-	this->button_back->setIcon(QIcon::fromTheme("go-previous"));
-	this->button_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
-	this->button_forward->setIcon(QIcon::fromTheme("go-next"));
+	this->button_close_dialog = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->button_insert_tp_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
+	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
+	this->button_delete_current_tp = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
+	this->button_delete_current_tp->setIcon(QIcon::fromTheme("list-delete"));
+	this->button_split_track = this->button_box->addButton("Split Here", QDialogButtonBox::ActionRole);
+	this->button_go_back = this->button_box->addButton("&Back", QDialogButtonBox::ActionRole);
+	this->button_go_back->setIcon(QIcon::fromTheme("go-previous"));
+	this->button_go_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
+	this->button_go_forward->setIcon(QIcon::fromTheme("go-next"));
 
 
 
 	this->signalMapper = new QSignalMapper(this);
-	connect(this->button_close,        SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_insert_after, SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_delete,       SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_split_here,   SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_back,         SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_forward,      SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_close_dialog,      SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_insert_tp_after,   SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_delete_current_tp, SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_split_track,       SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_go_back,           SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_go_forward,        SIGNAL (released()), signalMapper, SLOT (map()));
 
-	this->signalMapper->setMapping(this->button_close,        SG_TRACK_CLOSE);
-	this->signalMapper->setMapping(this->button_insert_after, SG_TRACK_INSERT);
-	this->signalMapper->setMapping(this->button_delete,       SG_TRACK_DELETE);
-	this->signalMapper->setMapping(this->button_split_here,   SG_TRACK_SPLIT);
-	this->signalMapper->setMapping(this->button_back,         SG_TRACK_BACK);
-	this->signalMapper->setMapping(this->button_forward,      SG_TRACK_FORWARD);
+	this->signalMapper->setMapping(this->button_close_dialog,      SG_TRACK_CLOSE_DIALOG);
+	this->signalMapper->setMapping(this->button_insert_tp_after,   SG_TRACK_INSERT_TP_AFTER);
+	this->signalMapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_CURRENT_TP);
+	this->signalMapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP);
+	this->signalMapper->setMapping(this->button_go_back,           SG_TRACK_GO_BACK);
+	this->signalMapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
 
 
 	this->vbox = new QVBoxLayout; /* Main track info. */
@@ -503,7 +500,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lon->setMaximum(180);
 	this->lon->setSingleStep(0.00005);
 	this->lon->setValue(0);
-	left_form->addRow(QString("Latitude:"), this->lon);
+	left_form->addRow(QString("Longitude:"), this->lon);
 	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
 
 

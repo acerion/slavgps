@@ -162,7 +162,7 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 		std::list<Track *> * split_into_segments();
 
-		Track * split_at_trackpoint(Trackpoint2 * tp);
+		Track * split_at_trackpoint(const Trackpoint2 & tp);
 
 		void smooth_it(bool flat);
 
@@ -254,6 +254,8 @@ namespace SlavGPS {
 		void create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool before);
 
 		void delete_sublayer(bool confirm);
+
+		void remove_last_trackpoint(void);
 
 #ifdef VIK_CONFIG_GOOGLE
 		bool is_valid_google_route();

@@ -56,12 +56,12 @@ namespace SlavGPS {
 
 	/* Dialog response codes. */
 	enum {
-		SG_TRACK_CLOSE,
-		SG_TRACK_INSERT,
-		SG_TRACK_DELETE,
-		SG_TRACK_SPLIT,
-		SG_TRACK_BACK,
-		SG_TRACK_FORWARD,
+		SG_TRACK_CLOSE_DIALOG,
+		SG_TRACK_INSERT_TP_AFTER,
+		SG_TRACK_DELETE_CURRENT_TP,
+		SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP,
+		SG_TRACK_GO_BACK,
+		SG_TRACK_GO_FORWARD,
 
 		SG_TRACK_CHANGED
 	};
@@ -76,9 +76,9 @@ namespace SlavGPS {
 		PropertiesDialogTP(QWidget * parent);
 		~PropertiesDialogTP();
 
-		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, const QString & track_name, bool is_route);
-		void set_track_name(const QString & track_name);
-		void set_empty();
+		void set_dialog_data(Track * track, const std::list<Trackpoint *>::iterator & current_tp_iter, bool is_route); /* TODO: use typedef'ed type for second arg. */
+		void reset_dialog_data(void);
+		void set_dialog_title(const QString & track_name);
 
 		QSignalMapper * signalMapper = NULL;
 
@@ -99,12 +99,12 @@ namespace SlavGPS {
 
 		QDialogButtonBox * button_box = NULL;
 
-		QPushButton * button_close = NULL;
-		QPushButton * button_insert_after = NULL;
-		QPushButton * button_delete = NULL;
-		QPushButton * button_split_here = NULL;
-		QPushButton * button_back = NULL;
-		QPushButton * button_forward = NULL;
+		QPushButton * button_close_dialog = NULL;
+		QPushButton * button_insert_tp_after = NULL;
+		QPushButton * button_delete_current_tp = NULL;
+		QPushButton * button_split_track = NULL;
+		QPushButton * button_go_back = NULL;
+		QPushButton * button_go_forward = NULL;
 
 		QVBoxLayout * vbox = NULL;
 		QHBoxLayout * hbox = NULL;
