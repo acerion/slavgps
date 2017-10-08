@@ -259,6 +259,8 @@ namespace SlavGPS {
 		bool is_valid_google_route();
 #endif
 
+		/* Track editing tool. */
+		Trackpoint2 selected_tp;
 
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;

@@ -379,7 +379,7 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			this->draw_track_label(name_start, fg_color, bg_color, &begin_coord);
 		}
 		/* Don't draw end label if this is the one being created. */
-		if (trk != this->trw->current_trk) {
+		if (trk != this->trw->current_track) {
 			if (trk->draw_name_mode == TrackDrawNameMode::END
 			    || trk->draw_name_mode == TrackDrawNameMode::START_END
 			    || trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
@@ -498,7 +498,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 #endif
 
 	QPen main_pen;
-	if (trk == this->trw->current_trk) {
+	if (trk == this->trw->current_track) {
 		/* The track is being created by user, it gets a special pen. */
 		main_pen = this->trw->current_trk_pen;
 	} else if (do_highlight) {
@@ -528,7 +528,8 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 	auto iter = trk->trackpoints.begin();
 
-	uint8_t tp_size = (this->trw->selected_tp.valid && *iter == *this->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
+	Track * selected_track = this->trw->current_track;
+	uint8_t tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 	int x, y;
 	this->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
@@ -562,7 +563,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	for (; iter != trk->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
 
-		tp_size = (this->trw->selected_tp.valid && tp == *this->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
+		tp_size = (selected_track && selected_track->selected_tp.valid && tp == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 
@@ -819,7 +820,7 @@ void TRWPainter::draw_track(Track * trk, bool do_highlight)
 		return;
 	}
 
-	if (trk != this->trw->current_trk) { /* Don't draw background of a track that is currently being created. */
+	if (trk != this->trw->current_track) { /* Don't draw background of a track that is currently being created. */
 		this->draw_track_bg_sub(trk, do_highlight);
 	}
 	this->draw_track_fg_sub(trk, do_highlight);

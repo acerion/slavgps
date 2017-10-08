@@ -2531,11 +2531,11 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_trk && this->type_id == "sg.trw.track" && parent_layer_->current_trk->type_id == "sg.trw.track") {
+	if (parent_layer_->current_track && this->type_id == "sg.trw.track" && parent_layer_->current_track->type_id == "sg.trw.track") {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 		menu.addSeparator();
-	} else if (parent_layer_->current_trk && this->type_id == "sg.trw.route" && parent_layer_->current_trk->type_id == "sg.trw.route") {
+	} else if (parent_layer_->current_track && this->type_id == "sg.trw.route" && parent_layer_->current_track->type_id == "sg.trw.route") {
 		qa = menu.addAction(tr("&Finish Route"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 		menu.addSeparator();
@@ -2616,7 +2616,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
-		qa->setEnabled(parent_layer_->selected_tp.valid);
+		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
 	}
 
 
@@ -2627,12 +2627,12 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->selected_tp.valid);
+		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->selected_tp.valid);
+		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
 	}
 
 
@@ -2642,7 +2642,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_point_selected_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->selected_tp.valid);
+		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_position_cb()));
@@ -2815,7 +2815,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	/* Only show on viewport popmenu when a trackpoint is selected. */
-	if (!g_tree->tree_get_layers_panel() && ((LayerTRW *) owning_layer)->selected_tp.valid) {
+	if (!g_tree->tree_get_layers_panel() && ((LayerTRW *) owning_layer)->current_track->selected_tp.valid) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
@@ -3192,9 +3192,9 @@ void Track::open_astro_cb(void)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	Trackpoint * tp = NULL;
-	if (parent_layer->selected_tp.valid) {
+	if (parent_layer->current_track->selected_tp.valid) {
 		/* Current trackpoint. */
-		tp = *parent_layer->selected_tp.iter;
+		tp = *parent_layer->current_track->selected_tp.iter;
 
 	} else if (!this->empty()) {
 		/* Otherwise first trackpoint. */
@@ -3277,7 +3277,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 	/* Update any subwindows that could be displaying this track which has changed name.
 	   Only one Track Edit Window. */
-	if (parent_layer->current_trk == this && parent_layer->tpwin) {
+	if (parent_layer->current_track == this && parent_layer->tpwin) {
 		parent_layer->tpwin->set_track_name(new_name);
 	}
 

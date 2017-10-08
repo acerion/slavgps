@@ -687,7 +687,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_trk && parent_layer_->current_trk->type_id == "sg.trw.track") {
+	if (parent_layer_->current_track && parent_layer_->current_track->type_id == "sg.trw.track") {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 
@@ -700,7 +700,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Track"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_track_cb()));
 	/* Make it available only when a new track is *not* already in progress. */
-	qa->setEnabled(!parent_layer_->current_trk);
+	qa->setEnabled(!parent_layer_->current_track);
 
 	qa = menu.addAction(QIcon::fromTheme("list-remove"), tr("Delete &All Tracks"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_tracks_cb()));
@@ -739,7 +739,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_trk && parent_layer_->current_trk->type_id == "sg.trw.route") {
+	if (parent_layer_->current_track && parent_layer_->current_track->type_id == "sg.trw.route") {
 		qa = menu.addAction(tr("&Finish Route"));
 		/* Reuse finish track method. */
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
@@ -753,7 +753,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Route"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_route_cb()));
 	/* Make it available only when a new track is *not* already in progress. */
-	qa->setEnabled(!parent_layer_->current_trk);
+	qa->setEnabled(!parent_layer_->current_track);
 
 	qa = menu.addAction(QIcon::fromTheme("list-delete"), tr("Delete &All Routes"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_routes_cb()));

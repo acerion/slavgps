@@ -233,8 +233,8 @@ namespace SlavGPS {
 
 
 		bool new_waypoint(Window * parent, const Coord * def_coord);
-		void new_track_create_common(const QString & new_name);
-		void new_route_create_common(const QString & new_name);
+		Track * new_track_create_common(const QString & new_name);
+		Track * new_route_create_common(const QString & new_name);
 
 
 
@@ -276,6 +276,8 @@ namespace SlavGPS {
 
 
 		void trackpoint_selected_delete(Track * trk);
+
+		Track * get_selected_track();
 
 
 		void diary_open(char const * date_str);
@@ -372,11 +374,6 @@ namespace SlavGPS {
 		bool moving_wp = false;
 		bool waypoint_rightclick = false;
 
-		/* Track editing tool. */
-		Trackpoint2 selected_tp;
-
-		Track * selected_track = NULL;  /* Track, to which belongs currently selected trackpoint (tp)? */
-
 		PropertiesDialogTP * tpwin = NULL;
 
 		/* Track editing tool -- more specifically, moving tps. */
@@ -440,7 +437,7 @@ namespace SlavGPS {
 
 		/* Track or Route that user currently operates.
 		   Reference to an object already existing in ::tracks or ::routes. */
-		Track * current_trk = NULL;
+		Track * current_track = NULL;
 
 		uint16_t ct_x1;
 		uint16_t ct_y1;

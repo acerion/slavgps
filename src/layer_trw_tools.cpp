@@ -198,15 +198,15 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		this->current_wp = NULL;
 
 	} else if (tool->sublayer_edit->type_id == "sg.trw.track" || tool->sublayer_edit->type_id == "sg.trw.route") {
-		if (this->selected_tp.valid) {
-			(*this->selected_tp.iter)->coord = new_coord;
+		if (this->current_track && this->current_track->selected_tp.valid) {
+			(*this->current_track->selected_tp.iter)->coord = new_coord;
 
-			if (this->current_trk) {
-				this->current_trk->calculate_bounds();
+			if (this->current_track) {
+				this->current_track->calculate_bounds();
 			}
 
 			if (this->tpwin) {
-				if (this->current_trk) {
+				if (this->current_track) {
 					this->my_tpwin_set_tp();
 				}
 			}
@@ -314,7 +314,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
 			if (ev->modifiers() & Qt::ControlModifier
-			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
+			    || (this->current_track && this->current_track->selected_tp.iter == tp_search.closest_tp_iter)) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
@@ -322,10 +322,9 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
 
-			this->selected_tp.iter = tp_search.closest_tp_iter;
-			this->selected_tp.valid = true;
-
-			this->current_trk = tp_search.closest_track;
+			this->current_track = tp_search.closest_track;
+			this->current_track->selected_tp.iter = tp_search.closest_tp_iter;
+			this->current_track->selected_tp.valid = true;
 
 			this->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
 
@@ -352,7 +351,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 			/* Select the Trackpoint.
 			   Can move it immediately when control held or it's the previously selected tp. */
 			if (ev->modifiers() & Qt::ControlModifier
-			    || this->selected_tp.iter == tp_search.closest_tp_iter) {
+			    || this->current_track->selected_tp.iter == tp_search.closest_tp_iter) {
 
 				/* Put into 'move buffer'.
 				   Viewport & window already set in tool. */
@@ -360,10 +359,9 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 				tool->sublayer_edit_click(ev->x(), ev->y());
 			}
 
-			this->selected_tp.iter = tp_search.closest_tp_iter;
-			this->selected_tp.valid = true;
-
-			this->current_trk = tp_search.closest_track;
+			this->current_track = tp_search.closest_track;
+			this->current_track->selected_tp.iter = tp_search.closest_tp_iter;
+			this->current_track->selected_tp.valid = true;
 
 			this->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
 
@@ -411,14 +409,14 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 	}
 #endif
 
-	if (this->current_trk && this->current_trk->visible) { /* Track or Route. */
-		if (!this->current_trk->name.isEmpty()) {
-			this->menu_data->sublayer = this->current_trk;
+	if (this->current_track && this->current_track->visible) { /* Track or Route. */
+		if (!this->current_track->name.isEmpty()) {
+			this->menu_data->sublayer = this->current_track;
 			this->menu_data->viewport = viewport;
 
 			QMenu menu(viewport);
 
-			this->current_trk->add_context_menu_items(menu, false);
+			this->current_track->add_context_menu_items(menu, false);
 			menu.exec(QCursor::pos());
 			return true;
 		}
@@ -762,10 +760,10 @@ void LayerTRW::update_statusbar()
 {
 	/* Get elevation data. */
 	double elev_gain, elev_loss;
-	this->current_trk->get_total_elevation_gain(&elev_gain, &elev_loss);
+	this->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 	/* Find out actual distance of current track. */
-	double distance = this->current_trk->get_length();
+	double distance = this->current_track->get_length();
 
 	statusbar_write(distance, elev_gain, elev_loss, 0, 0, this);
 }
@@ -784,10 +782,10 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev)
 {
 	qDebug() << "II: Layer TRW: new track's move()" << trw->draw_sync_done;
-	qDebug() << "II: Layer TRW: new track's move()" << trw->current_trk;
+	qDebug() << "II: Layer TRW: new track's move()" << trw->current_track;
 	/* If we haven't sync'ed yet, we don't have time to do more. */
-	if (/* trw->draw_sync_done && */ trw->current_trk && !trw->current_trk->empty()) {
-		Trackpoint * last_tpt = trw->current_trk->get_tp_last();
+	if (/* trw->draw_sync_done && */ trw->current_track && !trw->current_track->empty()) {
+		Trackpoint * last_tpt = trw->current_track->get_tp_last();
 
 		static QPixmap * pixmap = NULL;
 
@@ -830,7 +828,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
 
 		/* Find out actual distance of current track. */
-		double distance = trw->current_trk->get_length();
+		double distance = trw->current_track->get_length();
 
 		/* Now add distance to where the pointer is. */
 		Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
@@ -840,7 +838,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		/* Get elevation data. */
 		double elev_gain, elev_loss;
-		trw->current_trk->get_total_elevation_gain(&elev_gain, &elev_loss);
+		trw->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		double elev_new = (double) DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
@@ -901,17 +899,17 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 
 
-/* trw->current_trk must be valid. */
+/* trw->current_track must be valid. */
 void LayerTRW::undo_trackpoint_add()
 {
-	if (!this->current_trk || this->current_trk->empty()) {
+	if (!this->current_track || this->current_track->empty()) {
 		return;
 	}
 
-	auto iter = this->current_trk->get_last();
-	this->current_trk->erase_trackpoint(iter);
+	auto iter = this->current_track->get_last();
+	this->current_track->erase_trackpoint(iter);
 
-	this->current_trk->calculate_bounds();
+	this->current_track->calculate_bounds();
 }
 
 
@@ -919,19 +917,19 @@ void LayerTRW::undo_trackpoint_add()
 
 static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * ev)
 {
-	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
+	if (trw->current_track && ev->key() == Qt::Key_Escape) {
 		/* Bin track if only one point as it's not very useful. */
-		if (trw->current_trk->get_tp_count() == 1) {
-			if (trw->current_trk->type_id == "sg.trw.route") {
-				trw->delete_route(trw->current_trk);
+		if (trw->current_track->get_tp_count() == 1) {
+			if (trw->current_track->type_id == "sg.trw.route") {
+				trw->delete_route(trw->current_track);
 			} else {
-				trw->delete_track(trw->current_trk);
+				trw->delete_track(trw->current_track);
 			}
 		}
-		trw->current_trk = NULL;
+		trw->current_track = NULL;
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
-	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
+	} else if (trw->current_track && ev->key() == Qt::Key_Backspace) {
 		trw->undo_trackpoint_add();
 		trw->update_statusbar();
 		trw->emit_layer_changed();
@@ -963,7 +961,7 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 	}
 
 	if (ev->button() == Qt::RightButton) {
-		if (!this->current_trk) {
+		if (!this->current_track) {
 			return ToolStatus::IGNORED;
 		}
 		this->undo_trackpoint_add();
@@ -987,10 +985,10 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 	tp->has_timestamp = false;
 	tp->timestamp = 0;
 
-	if (this->current_trk) {
-		this->current_trk->add_trackpoint(tp, true); /* Ensure bounds is updated. */
+	if (this->current_track) {
+		this->current_track->add_trackpoint(tp, true); /* Ensure bounds is updated. */
 		/* Auto attempt to get elevation from DEM data (if it's available). */
-		this->current_trk->apply_dem_data_last_trackpoint();
+		this->current_track->apply_dem_data_last_trackpoint();
 	}
 
 	/* TODO: I think that in current implementation of handling of double click we don't need these fields. */
@@ -1022,8 +1020,8 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 
 	/* If either no track/route was being created
 	   or we were in the middle of creating a route... */
-	if (!trw->current_trk
-	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.route")) {
+	if (!trw->current_track
+	    || (trw->current_track && trw->current_track->type_id == "sg.trw.route")) {
 
 		QString new_name = trw->new_unique_element_name("sg.trw.track", QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
@@ -1053,11 +1051,11 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 	}
 
 	/* Subtract last (duplicate from double click) tp then end. */
-	if (trw->current_trk && !trw->current_trk->empty() /*  && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
+	if (trw->current_track && !trw->current_track->empty() /*  && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
 		/* Undo last, then end.
 		   TODO: I think that in current implementation of handling of double click we don't need the undo. */
 		trw->undo_trackpoint_add();
-		trw->current_trk = NULL;
+		trw->current_track = NULL;
 	}
 	trw->emit_layer_changed();
 	return ToolStatus::ACK;
@@ -1121,8 +1119,8 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 
 	/* If either no track/route was being created
 	   or we were in the middle of creating a track.... */
-	if (!trw->current_trk
-	    || (trw->current_trk && trw->current_trk->type_id == "sg.trw.track")) {
+	if (!trw->current_track
+	    || (trw->current_track && trw->current_track->type_id == "sg.trw.track")) {
 
 		QString new_name = trw->new_unique_element_name("sg.trw.route", QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
@@ -1254,19 +1252,19 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	}
 #endif
 
-	if (trw->selected_tp.valid) {
+	if (trw->current_track && trw->current_track->selected_tp.valid) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
-		if (!trw->current_trk) {
+		if (!trw->current_track) {
 			return ToolStatus::IGNORED;
 		}
 
-		Trackpoint * tp = *trw->selected_tp.iter;
+		Trackpoint * tp = *trw->current_track->selected_tp.iter;
 
 		int x, y;
 		this->viewport->coord_to_screen(&tp->coord, &x, &y);
 
-		if (trw->current_trk->visible
+		if (trw->current_track->visible
 		    && abs(x - (int) round(ev->x())) < TRACKPOINT_SIZE_APPROX
 		    && abs(y - (int) round(ev->y())) < TRACKPOINT_SIZE_APPROX) {
 
@@ -1286,10 +1284,10 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	if (search.closest_tp) {
 		trw->tree_view->select_and_expose(search.closest_track->index);
 
-		trw->selected_tp.iter = search.closest_tp_iter;
-		trw->selected_tp.valid = true;
+		trw->current_track = search.closest_track;
+		trw->current_track->selected_tp.iter = search.closest_tp_iter;
+		trw->current_track->selected_tp.valid = true;
 
-		trw->current_trk = search.closest_track;
 		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
 		trw->emit_layer_changed();
@@ -1307,11 +1305,10 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	if (search.closest_tp) {
 		trw->tree_view->select_and_expose(search.closest_track->index);
 
-		trw->selected_tp.iter = search.closest_tp_iter;
-		trw->selected_tp.iter = search.closest_tp_iter;
-		trw->selected_tp.valid = true;
+		trw->current_track = search.closest_track;
+		trw->current_track->selected_tp.iter = search.closest_tp_iter;
+		trw->current_track->selected_tp.valid = true;
 
-		trw->current_trk = search.closest_track;
 		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(search.closest_tp);
 		trw->emit_layer_changed();
@@ -1341,7 +1338,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *trw->selected_tp.iter) {
+		if (tp && tp != *trw->current_track->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
 	}
@@ -1377,21 +1374,21 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *trw->selected_tp.iter) {
+		if (tp && tp != *trw->current_track->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
 	}
 
-	(*trw->selected_tp.iter)->coord = new_coord;
-	if (trw->current_trk) {
-		trw->current_trk->calculate_bounds();
+	(*trw->current_track->selected_tp.iter)->coord = new_coord;
+	if (trw->current_track) {
+		trw->current_track->calculate_bounds();
 	}
 
 	this->sublayer_edit_release();
 
 	/* Diff dist is diff from orig. */
 	if (trw->tpwin) {
-		if (trw->current_trk) {
+		if (trw->current_track) {
 			trw->my_tpwin_set_tp();
 		}
 	}
@@ -1440,7 +1437,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_release(Layer * layer, 
 
 void LayerTRW::tool_extended_route_finder_undo()
 {
-	Coord * new_end = this->current_trk->cut_back_to_double_point();
+	Coord * new_end = this->current_track->cut_back_to_double_point();
 	if (!new_end) {
 		return;
 	}
@@ -1449,12 +1446,12 @@ void LayerTRW::tool_extended_route_finder_undo()
 	this->emit_layer_changed();
 #ifdef K
 	/* Remove last ' to:...' */
-	if (!this->current_trk->comment_.isEmpty()) {
-		char *last_to = strrchr(this->current_trk->comment_, 't');
-		if (last_to && (last_to - this->current_trk->comment_ > 1)) {
-			char *new_comment = g_strndup(this->current_trk->comment_,
-						      last_to - this->current_trk->comment_ - 1); /* FIXME: memory leak. */
-			this->current_trk->set_comment(QString(new_comment));
+	if (!this->current_track->comment_.isEmpty()) {
+		char *last_to = strrchr(this->current_track->comment_, 't');
+		if (last_to && (last_to - this->current_track->comment_ > 1)) {
+			char *new_comment = g_strndup(this->current_track->comment_,
+						      last_to - this->current_track->comment_ - 1); /* FIXME: memory leak. */
+			this->current_track->set_comment(QString(new_comment));
 		}
 	}
 #endif
@@ -1468,7 +1465,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	Coord tmp = this->viewport->screen_to_coord(ev->x(), ev->y());
-	if (ev->button() == Qt::RightButton && trw->current_trk) {
+	if (ev->button() == Qt::RightButton && trw->current_track) {
 		trw->tool_extended_route_finder_undo();
 
 	} else if (ev->button() == Qt::MiddleButton) {
@@ -1476,13 +1473,13 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		return ToolStatus::IGNORED;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
-	else if (trw->current_trk && trw->current_trk->type_id == "sg.trw.route" && !trw->current_trk->get_tp_first()) {
+	else if (trw->current_track && trw->current_track->type_id == "sg.trw.route" && !trw->current_track->get_tp_first()) {
 		return trw->tool_new_track_or_route_click(ev, this->viewport);
 
-	} else if ((trw->current_trk && trw->current_trk->type_id == "sg.trw.route")
-		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_trk)) {
+	} else if ((trw->current_track && trw->current_track->type_id == "sg.trw.route")
+		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_track)) {
 
-		Trackpoint * tp_start = trw->current_trk->get_tp_last();
+		Trackpoint * tp_start = trw->current_track->get_tp_last();
 		struct LatLon start = tp_start->coord.get_latlon();
 		struct LatLon end = tmp.get_latlon();
 
@@ -1526,7 +1523,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 
 		trw->emit_layer_changed();
 	} else {
-		trw->current_trk = NULL;
+		trw->current_track = NULL;
 
 		/* Create a new route where we will add the planned route to. */
 		ToolStatus ret = this->handle_mouse_click(trw, ev);
@@ -1546,12 +1543,12 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	if (trw->current_trk && ev->key() == Qt::Key_Escape) {
+	if (trw->current_track && ev->key() == Qt::Key_Escape) {
 		trw->route_finder_started = false;
-		trw->current_trk = NULL;
+		trw->current_track = NULL;
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
-	} else if (trw->current_trk && ev->key() == Qt::Key_Backspace) {
+	} else if (trw->current_track && ev->key() == Qt::Key_Backspace) {
 		trw->tool_extended_route_finder_undo();
 		return ToolStatus::ACK;
 	} else {

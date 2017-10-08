@@ -1600,9 +1600,9 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 		need2free = true;
 	} else {
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
-		tp_prev = this->current_trk->get_tp_prev(tp);
+		tp_prev = this->current_track->get_tp_prev(tp);
 	}
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_trk, NAN);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_track, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 
 	if (need2free) {
@@ -2232,24 +2232,29 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 
 
 
-void LayerTRW::new_track_create_common(const QString & new_name)
+Track * LayerTRW::new_track_create_common(const QString & new_name)
 {
 	qDebug() << "II: Layer TRW: new track create common, track name" << new_name;
 
-	this->current_trk = new Track(false);
-	this->current_trk->set_defaults();
-	this->current_trk->visible = true;
+	Track * track = new Track(false);
+	track->set_defaults();
+	track->visible = true; /* TODO: verify if this is necessary. Tracks are visible by default. */
 
 	if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
 		/* Create track with the preferred color from the layer properties. */
-		this->current_trk->color = this->track_color_common;
+		track->color = this->track_color_common;
 	} else {
-		this->current_trk->color = QColor("#aa22dd"); //QColor("#000000");
+		track->color = QColor("#aa22dd"); //QColor("#000000");
 	}
 
-	this->current_trk->has_color = true;
-	this->current_trk->set_name(new_name);
-	this->add_track(this->current_trk);
+	track->has_color = true;
+	track->set_name(new_name);
+
+	this->current_track = track;
+
+	this->add_track(track);
+
+	return track;
 }
 
 
@@ -2257,7 +2262,7 @@ void LayerTRW::new_track_create_common(const QString & new_name)
 
 void LayerTRW::new_track_cb() /* Slot. */
 {
-	if (!this->current_trk) {
+	if (!this->current_track) {
 		const QString uniq_name = this->new_unique_element_name("sg.trw.track", tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
@@ -2268,17 +2273,23 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 
 
-void LayerTRW::new_route_create_common(const QString & new_name)
+Track * LayerTRW::new_route_create_common(const QString & new_name)
 {
-	this->current_trk = new Track(true);
-	this->current_trk->set_defaults();
-	this->current_trk->visible = true;
-	/* By default make all routes red. */
-	this->current_trk->has_color = true;
-	this->current_trk->color = QColor("red");
-	this->current_trk->set_name(new_name);
+	Track * route = new Track(true);
+	route->set_defaults();
+	route->visible = true; /* TODO: verify if this is necessary. Routes are visible by default. */
 
-	this->add_route(this->current_trk);
+	/* By default make all routes red. */
+	route->has_color = true;
+	route->color = QColor("red");
+
+	route->set_name(new_name);
+
+	this->current_track = route;
+
+	this->add_route(route);
+
+	return route;
 }
 
 
@@ -2286,7 +2297,7 @@ void LayerTRW::new_route_create_common(const QString & new_name)
 
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
-	if (!this->current_trk) {
+	if (!this->current_track) {
 		const QString uniq_name = this->new_unique_element_name("sg.trw.route", tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
@@ -2299,7 +2310,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
-	this->current_trk = NULL;
+	this->current_track = NULL;
 	this->route_finder_started = false;
 	this->emit_layer_changed();
 }
@@ -2440,7 +2451,7 @@ void LayerTRW::add_route(Track * trk)
 /* to be called whenever a track has been deleted or may have been changed. */
 void LayerTRW::cancel_tps_of_track(Track * trk)
 {
-	if (this->current_trk == trk) {
+	if (this->current_track == trk) {
 		this->cancel_current_tp(false);
 	}
 }
@@ -2496,19 +2507,19 @@ void LayerTRW::filein_add_waypoint(Waypoint * wp, const QString & wp_name)
 
 void LayerTRW::filein_add_track(Track * trk, const QString & trk_name)
 {
-	if (this->route_finder_append && this->current_trk) {
+	if (this->route_finder_append && this->current_track) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
 
 		/* Enforce end of current track equal to start of tr. */
-		Trackpoint * cur_end = this->current_trk->get_tp_last();
+		Trackpoint * cur_end = this->current_track->get_tp_last();
 		Trackpoint * new_start = trk->get_tp_first();
 		if (cur_end && new_start) {
 			if (cur_end->coord != new_start->coord) {
-				this->current_trk->add_trackpoint(new Trackpoint(*cur_end), false);
+				this->current_track->add_trackpoint(new Trackpoint(*cur_end), false);
 			}
 		}
 
-		this->current_trk->steal_and_append_trackpoints(trk);
+		this->current_track->steal_and_append_trackpoints(trk);
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
@@ -2648,8 +2659,8 @@ bool LayerTRW::delete_track(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_trk) {
-		this->current_trk = NULL;
+	if (trk == this->current_track) {
+		this->current_track = NULL;
 		this->moving_tp = false;
 		this->route_finder_started = false;
 	}
@@ -2687,8 +2698,8 @@ bool LayerTRW::delete_route(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_trk) {
-		this->current_trk = NULL;
+	if (trk == this->current_track) {
+		this->current_track = NULL;
 		this->moving_tp = false;
 	}
 
@@ -2798,9 +2809,9 @@ bool LayerTRW::delete_track_by_name(const QString & trk_name, bool is_route)
 
 void LayerTRW::delete_all_routes()
 {
-	this->current_trk = NULL;
+	this->current_track = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->current_trk) { /* FIXME: we have just set this to NULL! */
+	if (this->current_track) { /* FIXME: we have just set this to NULL! */
 		this->cancel_current_tp(false);
 	}
 
@@ -2820,9 +2831,9 @@ void LayerTRW::delete_all_routes()
 
 void LayerTRW::delete_all_tracks()
 {
-	this->current_trk = NULL;
+	this->current_track = NULL;
 	this->route_finder_added_track = NULL;
-	if (this->current_trk) { /* FIXME: we have just set this to NULL! */
+	if (this->current_track) { /* FIXME: we have just set this to NULL! */
 		this->cancel_current_tp(false);
 	}
 
@@ -2931,7 +2942,7 @@ void LayerTRW::extend_track_end_cb(void)
 		return;
 	}
 
-	this->current_trk = trk;
+	this->current_track = trk;
 
 	this->get_window()->activate_tool(trk->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
@@ -2957,7 +2968,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 
 	this->get_window()->activate_tool(LAYER_TRW_TOOL_ROUTE_FINDER);
 
-	this->current_trk = trk;
+	this->current_track = trk;
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
@@ -3433,10 +3444,15 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
  */
 void LayerTRW::split_at_trackpoint_cb(void)
 {
-	Track * new_track = ((Track *) this->menu_data->sublayer)->split_at_trackpoint(&this->selected_tp);
+	Track * current_trk = this->get_selected_track();
+	if (!current_trk) {
+		return;
+	}
+
+	Track * new_track = current_trk->split_at_trackpoint(&current_trk->selected_tp);
 	if (new_track) {
-		this->selected_tp.iter = new_track->begin();
-		this->current_trk = new_track;
+		this->current_track = new_track;
+		this->current_track->selected_tp.iter = new_track->begin();
 		this->add_track(new_track);
 		this->emit_layer_changed();
 	}
@@ -3452,14 +3468,14 @@ void LayerTRW::split_at_trackpoint_cb(void)
 
 void LayerTRW::trackpoint_selected_delete(Track * trk)
 {
-	TrackPoints::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter);
+	TrackPoints::iterator new_tp_iter = trk->delete_trackpoint(this->current_track->selected_tp.iter);
 
 	if (new_tp_iter != trk->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		this->selected_tp.iter = new_tp_iter;
+		this->current_track->selected_tp.iter = new_tp_iter;
 
-		if (this->current_trk) {
-			this->current_trk->calculate_bounds();
+		if (this->current_track) {
+			this->current_track->calculate_bounds();
 		}
 	} else {
 		this->cancel_current_tp(false);
@@ -3480,7 +3496,7 @@ void LayerTRW::delete_point_selected_cb(void)
 		return;
 	}
 
-	if (!this->selected_tp.valid) {
+	if (!this->current_track->selected_tp.valid) {
 		return;
 	}
 
@@ -3564,7 +3580,7 @@ void LayerTRW::insert_point_after_cb(void)
 		return;
 	}
 
-	this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, false);
+	this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, false);
 
 	this->emit_layer_changed();
 }
@@ -3580,7 +3596,7 @@ void LayerTRW::insert_point_before_cb(void)
 		return;
 	}
 
-	this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, true);
+	this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, true);
 
 	this->emit_layer_changed();
 }
@@ -4004,10 +4020,10 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		}
 	}
 
-	if (this->selected_tp.valid) {
-		this->selected_tp.valid = false;
+	if (this->current_track && this->current_track->selected_tp.valid) {
+		this->current_track->selected_tp.valid = false;
 
-		this->current_trk = NULL;
+		this->current_track = NULL;
 		this->emit_layer_changed();
 	}
 }
@@ -4017,11 +4033,11 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 void LayerTRW::my_tpwin_set_tp()
 {
-	Track * trk = this->current_trk;
+	Track * trk = this->current_track;
 	/* Notional center of a track is simply an average of the bounding box extremities. */
 	struct LatLon ll_center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
-	this->tpwin->set_tp(trk, &this->selected_tp.iter, trk->name, trk->type_id == "sg.trw.route");
+	this->tpwin->set_tp(trk, &this->current_track->selected_tp.iter, trk->name, trk->type_id == "sg.trw.route");
 }
 
 
@@ -4035,18 +4051,18 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		//this->tpwin->reject();
 	}
 
-	if (!this->selected_tp.valid) {
+	if (!this->current_track->selected_tp.valid) {
 		return;
 	}
 
 	if (response == SG_TRACK_SPLIT
-	    && this->selected_tp.iter != this->current_trk->begin()
-	    && std::next(this->selected_tp.iter) != this->current_trk->end()) {
+	    && this->current_track->selected_tp.iter != this->current_track->begin()
+	    && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
 
-		Track * new_track = this->current_trk->split_at_trackpoint(&this->selected_tp);
+		Track * new_track = this->current_track->split_at_trackpoint(&this->current_track->selected_tp);
 		if (new_track) {
-			this->selected_tp.iter = new_track->begin();
-			this->current_trk = new_track;
+			this->current_track = new_track;
+			this->current_track->selected_tp.iter = new_track->begin();
 			this->add_track(new_track);
 			this->emit_layer_changed();
 		}
@@ -4054,12 +4070,12 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 	} else if (response == SG_TRACK_DELETE) {
 
-		if (!this->current_trk) {
+		if (!this->current_track) {
 			return;
 		}
-		this->trackpoint_selected_delete(this->current_trk);
+		this->trackpoint_selected_delete(this->current_track);
 
-		if (this->selected_tp.valid) {
+		if (this->current_track && this->current_track->selected_tp.valid) {
 			/* Reset dialog with the available adjacent trackpoint. */
 			this->my_tpwin_set_tp();
 		}
@@ -4067,26 +4083,26 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_FORWARD
-		   && this->current_trk
-		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
+		   && this->current_track
+		   && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
 
-		this->selected_tp.iter++;
+		this->current_track->selected_tp.iter++;
 		this->my_tpwin_set_tp();
 		this->emit_layer_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
 	} else if (response == SG_TRACK_BACK
-		   && this->current_trk
-		   && this->selected_tp.iter != this->current_trk->begin()) {
+		   && this->current_track
+		   && this->current_track->selected_tp.iter != this->current_track->begin()) {
 
-		this->selected_tp.iter--;
+		this->current_track->selected_tp.iter--;
 		this->my_tpwin_set_tp();
 		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_INSERT
-		   && this->current_trk
-		   && std::next(this->selected_tp.iter) != this->current_trk->end()) {
+		   && this->current_track
+		   && std::next(this->current_track->selected_tp.iter) != this->current_track->end()) {
 
-		this->current_trk->create_tp_next_to_reference_tp(&this->selected_tp, false);
+		this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, false);
 		this->emit_layer_changed();
 
 	} else if (response == SG_TRACK_CHANGED) {
@@ -4200,16 +4216,16 @@ void LayerTRW::trackpoint_properties_show()
 	this->tpwin->show();
 
 
-	if (this->selected_tp.valid) {
+	if (this->current_track && this->current_track->selected_tp.valid) {
 		/* Get tp pixel position. */
-		Trackpoint * tp = *this->selected_tp.iter;
+		Trackpoint * tp = *this->current_track->selected_tp.iter;
 		/* Shift up/down to try not to obscure the trackpoint. */
 		this->dialog_shift(this->tpwin, &tp->coord, true);
 	}
 
 
-	if (this->selected_tp.valid) {
-		if (this->current_trk) {
+	if (this->current_track && this->current_track->selected_tp.valid) {
+		if (this->current_track) {
 			this->my_tpwin_set_tp();
 		}
 	}
@@ -4811,4 +4827,34 @@ bool LayerTRW::clear_highlight()
 	}
 #endif
 	return true;
+}
+
+
+
+
+/**
+   \brief Get layer's selected track or route
+
+   Returns track or route selected in this layer (if any track or route is selected in this layer)
+   Returns NULL otherwise.
+*/
+Track * LayerTRW::get_selected_track()
+{
+	return this->current_track;
+#if 0
+	TreeItem * item = g_tree->selected_tree_item;
+	if (!item) {
+		return NULL;
+	}
+
+	if (item->owning_layer != this) {
+		return NULL;
+	}
+
+	if (item->type_id != "sg.trw.track" && item->type_id != "sg.trw.route") {
+		return NULL;
+	}
+
+	return (Track *) item;
+#endif
 }

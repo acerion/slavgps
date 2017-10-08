@@ -93,8 +93,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	menu.addSeparator();
 
-	if (this->current_trk) {
-		if (this->current_trk->type_id == "sg.trw.route") {
+	if (this->current_track) {
+		if (this->current_track->type_id == "sg.trw.route") {
 			qa = menu.addAction(tr("&Finish Route"));
 		} else {
 			qa = menu.addAction(tr("&Finish Track"));
@@ -168,12 +168,12 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), tr("New &Track"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_track_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		qa->setEnabled(!this->current_trk);
+		qa->setEnabled(!this->current_track);
 
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), tr("New &Route"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_route_cb()));
 		/* Make it available only when a new route is *not* already in progress. */
-		qa->setEnabled(!this->current_trk);
+		qa->setEnabled(!this->current_track);
 	}
 
 
@@ -333,11 +333,11 @@ void SlavGPS::layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * pa
 
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu)
 {
-	if (parent_layer->selected_tp.valid || parent_layer->current_wp) {
+	if (parent_layer->current_track->selected_tp.valid || parent_layer->current_wp) {
 		/* For the selected point. */
 		Coord * coord = NULL;
-		if (parent_layer->selected_tp.valid) {
-			coord = &(*parent_layer->selected_tp.iter)->coord;
+		if (parent_layer->current_track->selected_tp.valid) {
+			coord = &(*parent_layer->current_track->selected_tp.iter)->coord;
 		} else {
 			coord = &parent_layer->current_wp->coord;
 		}
