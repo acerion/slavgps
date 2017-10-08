@@ -3451,8 +3451,7 @@ void LayerTRW::split_at_trackpoint_cb(void)
 
 	Track * new_track = current_trk->split_at_trackpoint(&current_trk->selected_tp);
 	if (new_track) {
-		this->current_track = new_track;
-		this->current_track->selected_tp.iter = new_track->begin();
+		this->set_current_track(new_track, new_track->begin());
 		this->add_track(new_track);
 		this->emit_layer_changed();
 	}
@@ -3490,20 +3489,21 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
  */
 void LayerTRW::delete_point_selected_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * selected_track = this->get_selected_track();
+	if (!selected_track) {
+		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
-	if (!this->current_track->selected_tp.valid) {
+
+	if (!selected_track->selected_tp.valid) {
 		return;
 	}
 
-	this->trackpoint_selected_delete(trk);
+	this->trackpoint_selected_delete(selected_track);
 
 	/* Track has been updated so update tps: */
-	this->cancel_tps_of_track(trk);
+	this->cancel_tps_of_track(selected_track);
 
 	this->emit_layer_changed();
 }
@@ -3574,13 +3574,13 @@ void LayerTRW::delete_points_same_time_cb(void)
  */
 void LayerTRW::insert_point_after_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * selected_track = this->get_selected_track();
+	if (!selected_track) {
+		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
-	this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, false);
+	selected_track->create_tp_next_to_reference_tp(&selected_track->selected_tp, false);
 
 	this->emit_layer_changed();
 }
@@ -3590,13 +3590,13 @@ void LayerTRW::insert_point_after_cb(void)
 
 void LayerTRW::insert_point_before_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * selected_track = this->get_selected_track();
+	if (!selected_track) {
+		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
-	this->current_track->create_tp_next_to_reference_tp(&this->current_track->selected_tp, true);
+	selected_track->create_tp_next_to_reference_tp(&selected_track->selected_tp, true);
 
 	this->emit_layer_changed();
 }
@@ -4061,8 +4061,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 		Track * new_track = this->current_track->split_at_trackpoint(&this->current_track->selected_tp);
 		if (new_track) {
-			this->current_track = new_track;
-			this->current_track->selected_tp.iter = new_track->begin();
+			this->set_current_track(new_track, new_track->begin());
 			this->add_track(new_track);
 			this->emit_layer_changed();
 		}
@@ -4857,4 +4856,18 @@ Track * LayerTRW::get_selected_track()
 
 	return (Track *) item;
 #endif
+}
+
+
+
+
+void LayerTRW::set_current_track(Track * track, const TrackPoints::iterator & tp_iter)
+{
+	if (track) {
+		this->current_track = track;
+		this->current_track->selected_tp.iter = tp_iter;
+		this->current_track->selected_tp.valid = true;
+	} else {
+		/* Deselect/reset current track. */
+	}
 }

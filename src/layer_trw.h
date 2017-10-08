@@ -59,6 +59,8 @@ namespace SlavGPS {
 	class LayerTRW;
 	class LayersPanel;
 	class Track;
+	class TrackpointSearch;
+	class WaypointSearch;
 
 
 
@@ -155,6 +157,9 @@ namespace SlavGPS {
 		bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
+
+		void select_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, TrackpointSearch * tp_search, const QString & item_type_id);
+		void select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, WaypointSearch * wp_search);
 
 		void set_menu_selection(LayerMenuItem selection);
 		LayerMenuItem get_menu_selection();
@@ -350,6 +355,8 @@ namespace SlavGPS {
 		void tool_extended_route_finder_undo();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 		void undo_trackpoint_add();
+
+		void set_current_track(Track * track, const TrackPoints::iterator & tp_iter);
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);
 		void copy_sublayer_common(TreeItem * item);

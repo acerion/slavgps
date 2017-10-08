@@ -95,13 +95,22 @@ namespace SlavGPS {
 
 	class WaypointSearch {
 	public:
+		WaypointSearch(int ev_x, int ev_y, Viewport * viewport_, bool draw_images_) :
+			x(ev_x),
+			y(ev_y),
+			draw_images(draw_images_),
+			viewport(viewport_) {};
+
+		/* Input. */
 		int x = 0;
 		int y = 0;
+		bool draw_images = false;
+		Viewport * viewport = NULL;
+
+		/* Output. */
 		int closest_x = 0;
 		int closest_y = 0;
-		bool draw_images = false;
 		Waypoint * closest_wp = NULL;
-		Viewport * viewport = NULL;
 	};
 
 

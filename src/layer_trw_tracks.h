@@ -94,15 +94,25 @@ namespace SlavGPS {
 
 	class TrackpointSearch {
 	public:
+	TrackpointSearch(int ev_x, int ev_y, Viewport * viewport_) :
+		x(ev_x),
+		y(ev_y),
+		viewport(viewport_) {};
+
+		/* Input. */
 		int x = 0;
 		int y = 0;
+		Viewport * viewport = NULL;
+		LatLonBBox bbox;
+
+		/* Output. */
 		int closest_x = 0;
 		int closest_y = 0;
 		Track * closest_track = NULL;
 		Trackpoint * closest_tp = NULL;
-		Viewport * viewport = NULL;
+
 		TrackPoints::iterator closest_tp_iter;
-		LatLonBBox bbox;
+
 	};
 
 
