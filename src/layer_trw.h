@@ -376,6 +376,13 @@ namespace SlavGPS {
 		void upload_to_gps(TreeItem * sublayer);
 
 
+		bool get_track_creation_in_progress() const;
+		void reset_track_creation_in_progress();
+
+		bool get_route_creation_in_progress() const;
+		void reset_route_creation_in_progress();
+
+
 		/* Track or Route that user currently operates.
 		   Reference to an object already existing in ::tracks or ::routes. */
 		Track * current_track = NULL;
@@ -488,6 +495,7 @@ namespace SlavGPS {
 		/* Context menu callbacks. */
 
 		void finish_track_cb(void);
+		void finish_route_cb(void);
 
 		void full_view_cb(void);
 

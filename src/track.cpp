@@ -2533,14 +2533,42 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 	Track * track = parent_layer_->get_edited_track();
 
-	if (track && this->type_id == "sg.trw.track" && track->type_id == "sg.trw.track") {
+	if (parent_layer_->get_track_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 		menu.addSeparator();
-	} else if (track && this->type_id == "sg.trw.route" && track->type_id == "sg.trw.route") {
+
+#if 1
+		/* Consistency check. */
+		if (!track) {
+			qDebug() << "EE: Track: menu: inconsistency 1";
+		}
+		if (track->type_id != "sg.trw.track") {
+			qDebug() << "EE: Track: menu: inconsistency 2";
+		}
+		if (this->type_id != "sg.trw.track") {
+			qDebug() << "EE: Track: menu: inconsistency 3";
+		}
+#endif
+
+	} else if (parent_layer_->get_route_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Route"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_route_cb()));
 		menu.addSeparator();
+
+#if 1
+		/* Consistency check. */
+		if (!track) {
+			qDebug() << "EE: Track: menu: inconsistency 4";
+		}
+		if (track->type_id != "sg.trw.route") {
+			qDebug() << "EE: Track: menu: inconsistency 5";
+		}
+		if (this->type_id != "sg.trw.route") {
+			qDebug() << "EE: Track: menu: inconsistency 6";
+		}
+#endif
+
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->type_id == "sg.trw.track" ? tr("&View Track") : tr("&View Route"));

@@ -759,8 +759,8 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev)
 {
-	qDebug() << "II: Layer TRW: new track's move()" << trw->draw_sync_done;
-	qDebug() << "II: Layer TRW: new track's move()" << trw->current_track;
+	qDebug() << "II: Layer TRW: new track's move(): draw_sync_done" << (int) trw->draw_sync_done << ", current track:" << (long) trw->current_track;
+
 	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (/* trw->draw_sync_done && */ trw->current_track && !trw->current_track->empty()) {
 		Trackpoint * last_tpt = trw->current_track->get_tp_last();
@@ -879,21 +879,41 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * ev)
 {
-	Track * track = trw->get_edited_track();
-	if (!track) {
+	if (tool->id_string == LAYER_TRW_TOOL_CREATE_TRACK && !((LayerToolTRWNewTrack *) tool)->creation_in_progress) {
+		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
+		return ToolStatus::IGNORED;
+	}
+	if (tool->id_string == LAYER_TRW_TOOL_CREATE_ROUTE && !((LayerToolTRWNewRoute *) tool)->creation_in_progress) {
+		/* Route is not being created at the moment, so a Key can't affect work of this tool. */
 		return ToolStatus::IGNORED;
 	}
 
+	Track * track = trw->get_edited_track();
+
+#if 1
+	/* Consistency check between layer and tool. */
+	if (!track) {
+		qDebug() << "EE: Layer TRW Tools: new track handle key press: creation-in-progress=true, but no track selected in layer";
+		return ToolStatus::IGNORED;
+	}
+#endif
+
 	switch (ev->key()) {
 	case Qt::Key_Escape:
-		/* Bin track if only one point as it's not very useful. */
-		if (track->get_tp_count() == 1) {
-			if (track->type_id == "sg.trw.route") {
+		if (track->type_id == "sg.trw.route") {
+			((LayerToolTRWNewRoute *) tool)->creation_in_progress = NULL;
+			if (track->get_tp_count() == 1) {
+				/* Bin track if only one point as it's not very useful. */
 				trw->delete_route(track);
-			} else {
+			}
+		} else {
+			((LayerToolTRWNewTrack *) tool)->creation_in_progress = NULL;
+			if (track->get_tp_count() == 1) {
+				/* Bin track if only one point as it's not very useful. */
 				trw->delete_track(track);
 			}
 		}
+
 		trw->reset_edited_track();
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
@@ -982,17 +1002,26 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 	/* If we were running the route finder, cancel it. */
 	trw->route_finder_started = false;
 
-	/* If current is a route - switch to new track. */
 	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
 		return ToolStatus::IGNORED;
 	}
 
-	/* If either no track/route was being created
-	   or we were in the middle of creating a route... */
-	if (!trw->current_track
-	    || (trw->current_track && trw->current_track->type_id == "sg.trw.route")) {
+#if 1
+	/* Consistency check. */
+	if (trw->get_edited_track()) {
+		if (!this->creation_in_progress) {
+			qDebug() << "EE: Layer TRW Tools: New Track: handle mouse click: mismatch 1";
+		}
+	} else {
+		if (this->creation_in_progress) {
+			qDebug() << "EE: Layer TRW Tools: New Track: handle mouse click: mismatch 2";
+		}
+	}
+#endif
 
+	if (!this->creation_in_progress) {
+		/* Fixme: how to handle a situation, when a route is being created right now? */
 		QString new_name = trw->new_unique_element_name("sg.trw.track", QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, false, trw->get_window());
@@ -1001,6 +1030,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 			}
 		}
 		trw->new_track_create_common(new_name);
+		this->creation_in_progress = trw;
 	}
 
 	return trw->tool_new_track_or_route_click(ev, this->viewport);
@@ -1020,12 +1050,25 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 		return ToolStatus::IGNORED;
 	}
 
-	/* Subtract last (duplicate from double click) tp then end. */
-	if (trw->current_track && !trw->current_track->empty() /*  && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
-		/* Undo last, then end.
-		   TODO: I think that in current implementation of handling of double click we don't need the undo. */
-		trw->current_track->remove_last_trackpoint();
-		trw->reset_edited_track();
+	/* End the process of creating a track. */
+	if (this->creation_in_progress) {
+#if 1
+		/* Consistency check. */
+		if (!trw->get_edited_track()) {
+			qDebug() << "Layer TRW Tools: Handle Double Mouse Click: inconsistency 1";
+		}
+#endif
+		if (!trw->get_edited_track()->empty() /* && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
+			trw->reset_edited_track();
+			this->creation_in_progress = NULL;
+		}
+	} else {
+#if 1
+		/* Consistency check. */
+		if (trw->get_edited_track()) {
+			qDebug() << "Layer TRW Tools: Handle Double Mouse Click: inconsistency 2";
+		}
+#endif
 	}
 	trw->emit_layer_changed();
 	return ToolStatus::ACK;
@@ -1087,11 +1130,21 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 		return ToolStatus::IGNORED;
 	}
 
-	/* If either no track/route was being created
-	   or we were in the middle of creating a track.... */
-	if (!trw->current_track
-	    || (trw->current_track && trw->current_track->type_id == "sg.trw.track")) {
+#if 1
+	/* Consistency check. */
+	if (trw->get_edited_track()) {
+		if (!this->creation_in_progress) {
+			qDebug() << "EE: Layer TRW Tools: New Route: handle mouse click: mismatch 1";
+		}
+	} else {
+		if (this->creation_in_progress) {
+			qDebug() << "EE: Layer TRW Tools: New Route: handle mouse click: mismatch 2";
+		}
+	}
+#endif
 
+	if (!this->creation_in_progress) {
+		/* Fixme: how to handle a situation, when a track is being created right now? */
 		QString new_name = trw->new_unique_element_name("sg.trw.route", QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
@@ -1099,11 +1152,51 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 				return ToolStatus::IGNORED;
 			}
 		}
-
 		trw->new_route_create_common(new_name);
+		this->creation_in_progress = trw;
 	}
+
 	return trw->tool_new_track_or_route_click(ev, this->viewport);
 }
+
+
+
+
+ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
+{
+	LayerTRW * trw = (LayerTRW *) layer;
+	if (trw->type != LayerType::TRW) {
+		return ToolStatus::IGNORED;
+	}
+
+	if (ev->button() != Qt::LeftButton) {
+		return ToolStatus::IGNORED;
+	}
+
+	/* End the process of creating a track. */
+	if (this->creation_in_progress) {
+#if 1
+		/* Consistency check. */
+		if (!trw->get_edited_track()) {
+			qDebug() << "Layer TRW Tools: New Route: Handle Double Mouse Click: inconsistency 1";
+		}
+#endif
+		if (!trw->get_edited_track()->empty() /* && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
+			trw->reset_edited_track();
+			this->creation_in_progress = NULL;
+		}
+	} else {
+#if 1
+		/* Consistency check. */
+		if (trw->get_edited_track()) {
+			qDebug() << "Layer TRW Tools: New Route: Handle Double Mouse Click: inconsistency 2";
+		}
+#endif
+	}
+	trw->emit_layer_changed();
+	return ToolStatus::ACK;
+}
+
 
 
 

@@ -687,7 +687,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_track && parent_layer_->current_track->type_id == "sg.trw.track") {
+	if (parent_layer_->get_track_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 
@@ -739,10 +739,9 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_track && parent_layer_->current_track->type_id == "sg.trw.route") {
+	if (parent_layer_->get_route_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Route"));
-		/* Reuse finish track method. */
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_route_cb()));
 
 		menu.addSeparator();
 	}

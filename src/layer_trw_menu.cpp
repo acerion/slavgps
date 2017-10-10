@@ -93,17 +93,18 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	menu.addSeparator();
 
-	if (this->current_track) {
-		if (this->current_track->type_id == "sg.trw.route") {
-			qa = menu.addAction(tr("&Finish Route"));
-		} else {
-			qa = menu.addAction(tr("&Finish Track"));
-		}
+	if (this->get_track_creation_in_progress()) {
+		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
-
-
 		menu.addSeparator();
+	} else if (this->get_route_creation_in_progress()) {
+		qa = menu.addAction(tr("&Finish Route"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_route_cb()));
+		menu.addSeparator();
+	} else {
+		; /* Neither Track nor Route is being created at the moment. */
 	}
+
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View Layer"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_cb()));

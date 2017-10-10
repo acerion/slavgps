@@ -64,6 +64,7 @@
 #include "preferences.h"
 #include "util.h"
 #include "generic_tools.h"
+#include "toolbox.h"
 
 
 #include "layer_gps.h"
@@ -85,7 +86,6 @@
 #include "gpx.h"
 #include "geojson.h"
 #include "babel.h"
-
 
 #include "acquire.h"
 #include "datasources.h"
@@ -2311,8 +2311,21 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 
 
+
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
+	this->reset_track_creation_in_progress();
+	this->reset_edited_track();
+	this->route_finder_started = false;
+	this->emit_layer_changed();
+}
+
+
+
+
+void LayerTRW::finish_route_cb(void) /* Slot. */
+{
+	this->reset_route_creation_in_progress();
 	this->reset_edited_track();
 	this->route_finder_started = false;
 	this->emit_layer_changed();
@@ -4871,4 +4884,44 @@ void LayerTRW::set_edited_wp(Waypoint * wp)
 void LayerTRW::reset_edited_wp(void)
 {
 	this->current_wp = NULL;
+}
+
+
+
+
+bool LayerTRW::get_track_creation_in_progress() const
+{
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	return new_track_tool->creation_in_progress == this;
+}
+
+
+
+
+void LayerTRW::reset_track_creation_in_progress()
+{
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	if (new_track_tool->creation_in_progress == this) {
+		new_track_tool->creation_in_progress = NULL;
+	}
+}
+
+
+
+
+bool LayerTRW::get_route_creation_in_progress() const
+{
+	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	return new_route_tool->creation_in_progress == this;
+}
+
+
+
+
+void LayerTRW::reset_route_creation_in_progress()
+{
+	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	if (new_route_tool->creation_in_progress == this) {
+		new_route_tool->creation_in_progress = NULL;
+	}
 }

@@ -102,6 +102,8 @@ namespace SlavGPS {
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
+
+		LayerTRW * creation_in_progress = NULL;
 	};
 
 	class LayerToolTRWNewRoute : public LayerTool {
@@ -109,9 +111,12 @@ namespace SlavGPS {
 		LayerToolTRWNewRoute(Window * window, Viewport * viewport);
 
 		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
+
+		LayerTRW * creation_in_progress = NULL;
 	};
 
 
