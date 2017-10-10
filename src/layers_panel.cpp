@@ -963,7 +963,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 			layer = item->to_layer();
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->sublayer = item;
 			layer->menu_data->viewport = this->get_viewport();
 		}
 

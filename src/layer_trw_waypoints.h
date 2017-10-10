@@ -163,6 +163,7 @@ namespace SlavGPS {
 
 		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
+		void sublayer_menu_sort(QMenu & menu);
 
 
 		bool handle_selection_in_tree(void);
@@ -183,6 +184,11 @@ namespace SlavGPS {
 		void apply_dem_data_only_missing_cb(void);
 
 		void paste_sublayer_cb(void);
+
+		void sort_order_a2z_cb(void);
+		void sort_order_z2a_cb(void);
+		void sort_order_timestamp_ascend_cb(void);
+		void sort_order_timestamp_descend_cb(void);
 	};
 
 

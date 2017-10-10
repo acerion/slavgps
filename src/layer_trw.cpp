@@ -2936,19 +2936,16 @@ void LayerTRW::goto_coord(Viewport * viewport, const Coord & coord)
 
 void LayerTRW::extend_track_end_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
 		return;
 	}
 
-	this->current_track = trk;
+	this->get_window()->activate_tool(track->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
-	this->get_window()->activate_tool(trk->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
-
-	if (!trk->empty()) {
+	if (!track->empty()) {
 		Viewport * viewport = g_tree->tree_get_main_viewport();
-		this->goto_coord(viewport, trk->get_tp_last()->coord);
+		this->goto_coord(viewport, track->get_tp_last()->coord);
 	}
 }
 
@@ -2960,20 +2957,18 @@ void LayerTRW::extend_track_end_cb(void)
  */
 void LayerTRW::extend_track_end_route_finder_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->routes->items.at(child_uid);
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
 		return;
 	}
 
 	this->get_window()->activate_tool(LAYER_TRW_TOOL_ROUTE_FINDER);
 
-	this->current_track = trk;
 	this->route_finder_started = true;
 
-	if (!trk->empty()) {
+	if (!track->empty()) {
 		Viewport * viewport = g_tree->tree_get_main_viewport();
-		this->goto_coord(viewport, trk->get_tp_last()->coord);
+		this->goto_coord(viewport, track->get_tp_last()->coord);
 	}
 }
 
@@ -3061,28 +3056,23 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
  */
 void LayerTRW::merge_with_other_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	LayerTRWTracks * ght_tracks = NULL;
-	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_tracks = this->routes;
-	} else {
-		ght_tracks = this->tracks;
+	Track * track = this->get_edited_track();
+	if (!track) {
+		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		return;
 	}
-
-	Track * trk = ght_tracks->items.at(child_uid);
-
-	if (!trk) {
+	if (track->empty()) {
 		return;
 	}
 
-	if (trk->empty()) {
-		return;
-	}
+	const bool is_route = track->type_id == "sg.trw.route";
+
+	LayerTRWTracks * ght_tracks = is_route ? this->routes : this->tracks;
 
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
-	bool with_timestamps = trk->get_tp_first()->has_timestamp;
-	std::list<sg_uid_t> * other_tracks = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, trk);
+	bool with_timestamps = track->get_tp_first()->has_timestamp;
+	std::list<sg_uid_t> * other_tracks = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, track);
 
 	if (other_tracks->empty()) {
 		if (with_timestamps) {
@@ -3105,7 +3095,7 @@ void LayerTRW::merge_with_other_cb(void)
 	/* Sort alphabetically for user presentation. */
 	other_tracks_names.sort();
 
-	const QStringList headers = { trk->type_id == "sg.trw.route" ? tr("Select route to merge with") : tr("Select track to merge with") };
+	const QStringList headers = { is_route ? tr("Select route to merge with") : tr("Select track to merge with") };
 	std::list<QString> merge_list = a_dialog_select_from_list(other_tracks_names,
 								  true,
 								  tr("Merge with..."),
@@ -3120,7 +3110,7 @@ void LayerTRW::merge_with_other_cb(void)
 
 	for (auto iter = merge_list.begin(); iter != merge_list.end(); iter++) {
 		Track * merge_track = NULL;
-		if (trk->type_id == "sg.trw.route") {
+		if (is_route) {
 			merge_track = this->routes->find_track_by_name(*iter);
 		} else {
 			merge_track = this->tracks->find_track_by_name(*iter);
@@ -3128,13 +3118,13 @@ void LayerTRW::merge_with_other_cb(void)
 
 		if (merge_track) {
 			qDebug() << "II: Layer TRW: we have a merge track";
-			trk->steal_and_append_trackpoints(merge_track);
-			if (trk->type_id == "sg.trw.route") {
+			track->steal_and_append_trackpoints(merge_track);
+			if (is_route) {
 				this->delete_route(merge_track);
 			} else {
 				this->delete_track(merge_track);
 			}
-			trk->sort(Trackpoint::compare_timestamps);
+			track->sort(Trackpoint::compare_timestamps);
 		}
 	}
 	this->emit_layer_changed();
@@ -3150,36 +3140,28 @@ void LayerTRW::merge_with_other_cb(void)
  */
 void LayerTRW::append_track_cb(void)
 {
-	Track * trk = NULL;
-	LayerTRWTracks * ght_tracks = NULL;
-	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_tracks = this->routes;
-	} else {
-		ght_tracks = this->tracks;
-	}
-
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	trk = ght_tracks->items.at(child_uid);
-
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
+		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
+
+	const bool is_route = track->type_id == "sg.trw.route";
+
+	LayerTRWTracks * ght_tracks = is_route ? this->routes : this->tracks;
 
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 
-	std::list<QString> other_tracks_names = ght_tracks->get_sorted_track_name_list_exclude_self(trk);
+	std::list<QString> other_tracks_names = ght_tracks->get_sorted_track_name_list_exclude_self(track);
 
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	const QStringList headers = { trk->type_id == "sg.trw.route" ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track") };
+	const QStringList headers = { is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track") };
 	std::list<QString> append_list = a_dialog_select_from_list(other_tracks_names,
 								   false,
-
-								   trk->type_id == "sg.trw.route"
-								   ? tr("Append Route")
-								   : tr("Append Track"),
+								   is_route ? tr("Append Route") : tr("Append Track"),
 								   headers,
 								   this->get_window());
 
@@ -3192,15 +3174,15 @@ void LayerTRW::append_track_cb(void)
 		/* TODO: at present this uses the first track found by name,
 		   which with potential multiple same named tracks may not be the one selected... */
 		Track * append_track = NULL;
-		if (trk->type_id == "sg.trw.route") {
+		if (is_route) {
 			append_track = this->routes->find_track_by_name(*iter);
 		} else {
 			append_track = this->tracks->find_track_by_name(*iter);
 		}
 
 		if (append_track) {
-			trk->steal_and_append_trackpoints(append_track);
-			if (trk->type_id == "sg.trw.route") {
+			track->steal_and_append_trackpoints(append_track);
+			if (is_route) {
 				this->delete_route(append_track);
 			} else {
 				this->delete_track(append_track);
@@ -3222,40 +3204,29 @@ void LayerTRW::append_track_cb(void)
  */
 void LayerTRW::append_other_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-
-	LayerTRWTracks * ght_mykind = NULL;
-	LayerTRWTracks * ght_others = NULL;
-	if (this->menu_data->sublayer->type_id == "sg.trw.route") {
-		ght_mykind = this->routes;
-		ght_others = this->tracks;
-	} else {
-		ght_mykind = this->tracks;
-		ght_others = this->routes;
-	}
-
-	Track * trk = ght_mykind->items.at(child_uid);
-
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
+		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
+
+	const bool is_route = track->type_id == "sg.trw.route";
+
+	LayerTRWTracks * ght_mykind = is_route ? this->routes : this->tracks;
+	LayerTRWTracks * ght_others = is_route ? this->tracks : this->routes;
 
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 
-	std::list<QString> const other_tracks_names = ght_others->get_sorted_track_name_list_exclude_self(trk);
+	std::list<QString> const other_tracks_names = ght_others->get_sorted_track_name_list_exclude_self(track);
 
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	const QStringList headers = { trk->type_id == "sg.trw.route" ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track") };
+	const QStringList headers = { is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track") };
 	std::list<QString> append_list = a_dialog_select_from_list(other_tracks_names,
 								   false,
-
-								   trk->type_id == "sg.trw.route"
-								   ? tr("Append Track")
-								   : tr("Append Route"),
-
+								   is_route ? tr("Append Track") : tr("Append Route"),
 								   headers,
 								   this->get_window());
 
@@ -3272,7 +3243,7 @@ void LayerTRW::append_other_cb(void)
 
 		/* Get FROM THE OTHER TYPE list. */
 		Track * append_track = NULL;
-		if (trk->type_id == "sg.trw.route") {
+		if (is_route) {
 			append_track = this->tracks->find_track_by_name(*iter);
 		} else {
 			append_track = this->routes->find_track_by_name(*iter);
@@ -3292,10 +3263,10 @@ void LayerTRW::append_other_cb(void)
 				}
 			}
 
-			trk->steal_and_append_trackpoints(append_track);
+			track->steal_and_append_trackpoints(append_track);
 
 			/* Delete copied which is FROM THE OTHER TYPE list. */
-			if (trk->type_id == "sg.trw.route") {
+			if (is_route) {
 				this->delete_track(append_track);
 			} else {
 				this->delete_route(append_track);
@@ -3312,9 +3283,13 @@ void LayerTRW::append_other_cb(void)
 /* Merge by segments. */
 void LayerTRW::merge_by_segment_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
-	Track * trk = this->tracks->items.at(child_uid);
-	unsigned int segments = trk->merge_segments();
+	Track * track = this->get_edited_track();
+	if (!track) {
+		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		return;
+	}
+
+	unsigned int segments = track->merge_segments();
 	/* NB currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened: */
 	char str[64];
@@ -3329,21 +3304,21 @@ void LayerTRW::merge_by_segment_cb(void)
 /* merge by time routine */
 void LayerTRW::merge_by_timestamp_cb(void)
 {
-	sg_uid_t child_uid = this->menu_data->sublayer->uid;
+	Track * orig_track = this->get_edited_track();
+	if (!orig_track) {
+		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		return;
+	}
 
-	//time_t t1, t2;
-
-	Track * orig_trk = this->tracks->items.at(child_uid);
-
-	if (!orig_trk->empty()
-	    && !orig_trk->get_tp_first()->has_timestamp) {
+	if (!orig_track->empty()
+	    && !orig_track->get_tp_first()->has_timestamp) {
 		Dialog::error(tr("Failed. This track does not have timestamp"), this->get_window());
 		return;
 	}
 
 #ifdef K
 
-	std::list<sg_uid_t> * tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_trk);
+	std::list<sg_uid_t> * tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_track);
 	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
 
 	if (!tracks_with_timestamp) {
@@ -3370,7 +3345,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		attempt_merge = false;
 
 		/* kamilTODO: why call this here? Shouldn't we call this way earlier? */
-		if (orig_trk->empty()) {
+		if (orig_track->empty()) {
 			return;
 		}
 
@@ -3380,20 +3355,20 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		}
 
 		/* Get a list of adjacent-in-time tracks. */
-		nearby_tracks = this->tracks->find_nearby_tracks_by_time(orig_trk, (threshold_in_minutes * 60));
+		nearby_tracks = this->tracks->find_nearby_tracks_by_time(orig_track, (threshold_in_minutes * 60));
 
 		/* Merge them. */
 
 		for (GList *l = nearby_tracks; l; l = g_list_next(l)) {
 			/* remove trackpoints from merged track, delete track */
-			orig_trk->steal_and_append_trackpoints(((Track *) l->data));
+			orig_track->steal_and_append_trackpoints(((Track *) l->data));
 			this->delete_track(((Track *) l->data));
 
 			/* Tracks have changed, therefore retry again against all the remaining tracks. */
 			attempt_merge = true;
 		}
 
-		orig_trk->sort(Trackpoint::compare_timestamps);
+		orig_track->sort(Trackpoint::compare_timestamps);
 	}
 
 	g_list_free(nearby_tracks);
@@ -3517,16 +3492,15 @@ void LayerTRW::delete_point_selected_cb(void)
  */
 void LayerTRW::delete_points_same_position_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
 		return;
 	}
 
-	unsigned long removed = trk->remove_dup_points();
+	unsigned long removed = track->remove_dup_points();
 
 	/* Track has been updated so update tps: */
-	this->cancel_tps_of_track(trk);
+	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
 	char str[64];
@@ -3546,16 +3520,15 @@ void LayerTRW::delete_points_same_position_cb(void)
  */
 void LayerTRW::delete_points_same_time_cb(void)
 {
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
 		return;
 	}
 
-	unsigned long removed = trk->remove_same_time_points();
+	unsigned long removed = track->remove_same_time_points();
 
 	/* Track has been updated so update tps: */
-	this->cancel_tps_of_track(trk);
+	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
 	char str[64];
@@ -3689,61 +3662,6 @@ char * SlavGPS::convert_to_dms(double dec)
 	/* Format. */
 	char * result = g_strdup_printf("%c%dd%d\\\'%.4f\\\"", sign_c, val_d, val_m, val_s);
 	return result;
-}
-
-
-
-
-void LayerTRW::sort_order_specified(const QString & item_type_id, sort_order_t order)
-{
-	TreeIndex tree_index;
-
-	if (item_type_id == "sg.trw.tracks") {
-		tree_index = this->tracks->get_index();
-		this->track_sort_order = order;
-
-	} else if (item_type_id == "sg.trw.routes") {
-		tree_index = this->routes->get_index();
-		this->track_sort_order = order;
-
-	} else { /* "sg.trw.waypoints" */
-		tree_index = this->waypoints->get_index();
-		this->wp_sort_order = order;
-	}
-
-	this->tree_view->sort_children(tree_index, order);
-}
-
-
-
-
-void LayerTRW::sort_order_a2z_cb(void)
-{
-	this->sort_order_specified(this->menu_data->sublayer->type_id, VL_SO_ALPHABETICAL_ASCENDING);
-}
-
-
-
-
-void LayerTRW::sort_order_z2a_cb(void)
-{
-	this->sort_order_specified(this->menu_data->sublayer->type_id, VL_SO_ALPHABETICAL_DESCENDING);
-}
-
-
-
-
-void LayerTRW::sort_order_timestamp_ascend_cb(void)
-{
-	this->sort_order_specified(this->menu_data->sublayer->type_id, VL_SO_DATE_ASCENDING);
-}
-
-
-
-
-void LayerTRW::sort_order_timestamp_descend_cb(void)
-{
-	this->sort_order_specified(this->menu_data->sublayer->type_id, VL_SO_DATE_DESCENDING);
 }
 
 
@@ -4574,8 +4492,8 @@ void LayerTRW::download_map_along_track_cb(void)
 	LayersPanel * panel = g_tree->tree_get_layers_panel();
 	const Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	Track * trk = this->get_track_helper(this->menu_data->sublayer);
-	if (!trk) {
+	Track * track = this->get_edited_track();
+	if (!track) {
 		return;
 	}
 
@@ -4617,7 +4535,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		iter++;
 	}
 
-	vik_track_download_map(trk, *iter, zoom_values[selected_zoom_idx]);
+	vik_track_download_map(track, *iter, zoom_values[selected_zoom_idx]);
 
 	delete layers;
 	return;
@@ -4728,20 +4646,6 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Waypoint List").arg(this->name);
 	waypoint_list_dialog(title, this, false);
-}
-
-
-
-
-Track * LayerTRW::get_track_helper(TreeItem * sublayer)
-{
-	/* TODO: either get rid of this method, or reduce it to checking
-	   of consistency between function argument and contents of this->table.at(). */
-	if (sublayer->type_id == "sg.trw.route") {
-		return this->routes->items.at(sublayer->uid);
-	} else {
-		return this->tracks->items.at(sublayer->uid);
-	}
 }
 
 
@@ -4893,22 +4797,6 @@ bool LayerTRW::clear_highlight()
 Track * LayerTRW::get_edited_track()
 {
 	return this->current_track;
-#if 0
-	TreeItem * item = g_tree->selected_tree_item;
-	if (!item) {
-		return NULL;
-	}
-
-	if (item->owning_layer != this) {
-		return NULL;
-	}
-
-	if (item->type_id != "sg.trw.track" && item->type_id != "sg.trw.route") {
-		return NULL;
-	}
-
-	return (Track *) item;
-#endif
 }
 
 
@@ -4931,4 +4819,18 @@ void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_
 void LayerTRW::reset_edited_track(void)
 {
 	this->current_track = NULL;
+}
+
+
+
+
+/**
+   \brief Get layer's selected waypoint
+
+   Returns waypoint selected in this layer (if any waypoint is selected in this layer)
+   Returns NULL otherwise.
+*/
+Waypoint * LayerTRW::get_edited_wp()
+{
+	return this->current_wp;
 }

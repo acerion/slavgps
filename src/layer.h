@@ -257,10 +257,7 @@ namespace SlavGPS {
 
 	class trw_menu_sublayer_t {
 	public:
-		TreeItem * sublayer = NULL;
 		Viewport * viewport = NULL;
-
-		//bool confirm = false;
 		void * misc = NULL;
 		QString string;
 	};

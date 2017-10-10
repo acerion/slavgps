@@ -158,8 +158,8 @@ namespace SlavGPS {
 		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
-		void select_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, TrackpointSearch * tp_search, const QString & item_type_id);
-		void select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, WaypointSearch * wp_search);
+		void select_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
+		void select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
 		void set_menu_selection(LayerMenuItem selection);
 		LayerMenuItem get_menu_selection();
@@ -287,9 +287,6 @@ namespace SlavGPS {
 
 
 
-		void sort_order_specified(const QString & type_id, sort_order_t order);
-
-
 		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
 		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints);
 
@@ -347,13 +344,14 @@ namespace SlavGPS {
 		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
-		Track * get_track_helper(TreeItem * sublayer);
 		void update_statusbar();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 
 		Track * get_edited_track();
 		void set_edited_track(Track * track, const TrackPoints::iterator & tp_iter);
 		void reset_edited_track(void);
+
+		Waypoint * get_edited_wp();
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);
 		void copy_sublayer_common(TreeItem * item);
@@ -558,10 +556,6 @@ namespace SlavGPS {
 		void append_other_cb(void);
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);
-		void sort_order_a2z_cb(void);
-		void sort_order_z2a_cb(void);
-		void sort_order_timestamp_ascend_cb(void);
-		void sort_order_timestamp_descend_cb(void);
 		void routes_stats_cb();
 
 	public:

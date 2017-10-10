@@ -785,6 +785,28 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 
 
 
+void LayerTRWTracks::sublayer_menu_sort(QMenu & menu)
+{
+	QAction * qa = NULL;
+
+	QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QObject::tr("&Sort"));
+
+	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QObject::tr("Name &Ascending"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_a2z_cb()));
+
+	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QObject::tr("Name &Descending"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_z2a_cb()));
+
+	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QObject::tr("Date Ascending"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_timestamp_ascend_cb()));
+
+	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QObject::tr("Date Descending"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_timestamp_descend_cb()));
+}
+
+
+
+
 bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
@@ -811,7 +833,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	}
 
 
-	layer_trw_sublayer_menu_tracks_routes_waypoints_sort((LayerTRW *) this->owning_layer, menu);
+	this->sublayer_menu_sort(menu);
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
@@ -958,4 +980,40 @@ void LayerTRWTracks::paste_sublayer_cb(void)
 #ifdef K
 	a_clipboard_paste(g_tree->tree_get_layers_panel());
 #endif
+}
+
+
+
+
+void LayerTRWTracks::sort_order_a2z_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_ALPHABETICAL_ASCENDING;
+	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_ASCENDING);
+}
+
+
+
+
+void LayerTRWTracks::sort_order_z2a_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_ALPHABETICAL_DESCENDING;
+	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_DESCENDING);
+}
+
+
+
+
+void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_DATE_ASCENDING;
+	this->tree_view->sort_children(this->index, VL_SO_DATE_ASCENDING);
+}
+
+
+
+
+void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
+{
+	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_DATE_DESCENDING;
+	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
 }

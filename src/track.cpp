@@ -2531,11 +2531,13 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 {
 	QAction * qa = NULL;
 
-	if (parent_layer_->current_track && this->type_id == "sg.trw.track" && parent_layer_->current_track->type_id == "sg.trw.track") {
+	Track * track = parent_layer_->get_edited_track();
+
+	if (track && this->type_id == "sg.trw.track" && track->type_id == "sg.trw.track") {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 		menu.addSeparator();
-	} else if (parent_layer_->current_track && this->type_id == "sg.trw.route" && parent_layer_->current_track->type_id == "sg.trw.route") {
+	} else if (track && this->type_id == "sg.trw.route" && track->type_id == "sg.trw.route") {
 		qa = menu.addAction(tr("&Finish Route"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
 		menu.addSeparator();
@@ -2616,7 +2618,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
-		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp.valid);
 	}
 
 
@@ -2627,12 +2629,12 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp.valid);
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp.valid);
 	}
 
 
@@ -2642,7 +2644,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_point_selected_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(parent_layer_->current_track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp.valid);
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_position_cb()));

@@ -309,44 +309,29 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 
-void SlavGPS::layer_trw_sublayer_menu_tracks_routes_waypoints_sort(LayerTRW * parent_layer, QMenu & menu)
-{
-	QAction * qa = NULL;
-
-	QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QObject::tr("&Sort"));
-
-	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QObject::tr("Name &Ascending"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (sort_order_a2z_cb()));
-
-	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QObject::tr("Name &Descending"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (sort_order_z2a_cb()));
-
-	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QObject::tr("Date Ascending"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (sort_order_timestamp_ascend_cb()));
-
-	qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QObject::tr("Date Descending"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (sort_order_timestamp_descend_cb()));
-}
-
-
-
-
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu)
 {
-	if (parent_layer->current_track->selected_tp.valid || parent_layer->current_wp) {
-		/* For the selected point. */
-		Coord * coord = NULL;
-		if (parent_layer->current_track->selected_tp.valid) {
-			coord = &(*parent_layer->current_track->selected_tp.iter)->coord;
-		} else {
-			coord = &parent_layer->current_wp->coord;
-		}
+	/* Try adding submenu items with external tools pre-configured for selected Trackpoint. */
+	const Track * track = parent_layer->get_edited_track();
+	if (track && track->selected_tp.valid) {
+		/* For the selected Trackpoint. */
+		const Coord * coord = &(*track->selected_tp.iter)->coord;
 		external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
-	} else {
-		/* Otherwise for the selected sublayer.
-		   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
-		external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, NULL);
+		return;
 	}
+
+	/* Try adding submenu items with external tools pre-configured for selected Waypoint. */
+	const Waypoint * wp = parent_layer->get_edited_wp();
+	if (wp) {
+		/* For the selected Waypoint. */
+		const Coord * coord = &wp->coord;
+		external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
+		return;
+	}
+
+	/* Otherwise add submenu items with external tools pre-configured for selected sublayer.
+	   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
+	external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, NULL);
 }
 
 
