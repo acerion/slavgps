@@ -184,10 +184,9 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 	/* Determine if working on a waypoint or a trackpoint. */
 	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
 		/* Update waypoint position. */
-		this->current_wp->coord = new_coord;
+		this->get_edited_wp()->coord = new_coord;
 		this->waypoints->calculate_bounds();
-		/* Reset waypoint pointer. */
-		this->current_wp = NULL;
+		this->reset_edited_wp();
 
 	} else if (tool->sublayer_edit->type_id == "sg.trw.track" || tool->sublayer_edit->type_id == "sg.trw.route") {
 
@@ -255,7 +254,6 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
 	tp_search.bbox = viewport_bbox;
 
-	/* FIXME: we have a very similar block of code below. */
 	if (this->tracks->visible) {
 		this->tracks->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
@@ -285,8 +283,10 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 		}
 	}
 
-	/* These aren't the droids you're looking for. */
-	this->current_wp = NULL;
+	/* Mouse click didn't happen anywhere near a Trackpoint or Waypoint from this layer.
+	   So unmark/deselect all "current"/"edited" elements of this layer. */
+	this->reset_edited_wp();
+	this->reset_edited_track();
 	this->cancel_current_tp(false);
 
 	/* Blank info. */
@@ -321,7 +321,7 @@ void LayerTRW::select_click_do_track_selection(QMouseEvent * ev, LayerTool * too
 
 	this->set_edited_track(track, tp_iter);
 
-	this->set_statusbar_msg_info_trkpt(*tp_iter);
+	this->set_statusbar_msg_info_tp(tp_iter, track);
 }
 
 
@@ -338,7 +338,7 @@ void LayerTRW::select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * 
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 	if (ev->modifiers() & Qt::ShiftModifier
-	    || (this->current_wp == wp && this->current_wp->image.isEmpty())) {
+	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image.isEmpty())) {
 		/* Put into 'move buffer'.
 		   Viewport & window already set in tool. */
 		tool->sublayer_edit->trw = this;
@@ -347,15 +347,15 @@ void LayerTRW::select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * 
 		tool->sublayer_edit_click(ev->x(), ev->y());
 	}
 
-	this->current_wp = wp;
+	this->set_edited_wp(wp);
 
 #ifdef K
 	if (ev->type == GDK_2BUTTON_PRESS) { /* Mouse button has been double-clicked. */
-		if (this->current_wp->image) {
+		if (this->get_edited_wp()->image) {
 			trw_menu_sublayer_t data;
 			memset(&data, 0, sizeof (trw_menu_sublayer_t));
 			data.layer = this;
-			data.string = this->current_wp->image;
+			data.string = this->get_edited_wp()->image;
 			this->show_picture_cb(&data);
 		}
 	}
@@ -452,10 +452,12 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		return ToolStatus::IGNORED;
 	}
 
-	if (trw->current_wp && trw->current_wp->visible) {
+	Waypoint * current_wp = trw->get_edited_wp();
+
+	if (current_wp && current_wp->visible) {
 		/* First check if current WP is within area (other may be 'closer', but we want to move the current). */
 		int x, y;
-		this->viewport->coord_to_screen(&trw->current_wp->coord, &x, &y);
+		this->viewport->coord_to_screen(&current_wp->coord, &x, &y);
 
 		if (abs(x - ev->x()) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - ev->y()) <= WAYPOINT_SIZE_APPROX) {
@@ -472,7 +474,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->drawimages);
 
 	trw->get_waypoints_node().search_closest_wp(&wp_search);
-	if (trw->current_wp && (trw->current_wp == wp_search.closest_wp)) {
+	if (current_wp && (current_wp == wp_search.closest_wp)) {
 		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
@@ -488,14 +490,14 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 
 		trw->tree_view->select_and_expose(wp_search.closest_wp->index);
 
-		trw->current_wp = wp_search.closest_wp;
+		trw->set_edited_wp(wp_search.closest_wp);
 
 		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 
-	trw->current_wp = NULL;
+	trw->reset_edited_wp();
 	trw->waypoint_rightclick = false;
 	trw->emit_layer_changed();
 
@@ -526,7 +528,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 		}
 	} else if (ev->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
 		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-		if (wp && wp != trw->current_wp) {
+		if (wp && wp != trw->get_edited_wp()) {
 			new_coord = wp->coord;
 		}
 	} else {
@@ -569,14 +571,14 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 		/* Snap to waypoint. */
 		if (ev->modifiers() & Qt::ShiftModifier) {
 			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-			if (wp && wp != trw->current_wp) {
+			if (wp && wp != trw->get_edited_wp()) {
 				new_coord = wp->coord;
 			}
 		}
 
 		this->sublayer_edit_release();
 
-		trw->current_wp->coord = new_coord;
+		trw->get_edited_wp()->coord = new_coord;
 
 		trw->get_waypoints_node().calculate_bounds();
 		trw->emit_layer_changed();
@@ -1246,7 +1248,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
 			trw->trackpoint_properties_show();
-			trw->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
+			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_layer_changed();
 			return ToolStatus::ACK;
 		}
@@ -1260,7 +1262,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
 			trw->trackpoint_properties_show();
-			trw->set_statusbar_msg_info_trkpt(tp_search.closest_tp);
+			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_layer_changed();
 			return ToolStatus::ACK;
 		}

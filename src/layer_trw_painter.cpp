@@ -958,7 +958,7 @@ void TRWPainter::draw_waypoint_symbol(Waypoint * wp, int x, int y)
 
 	if (this->trw->wp_draw_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
-	} else if (wp == this->trw->current_wp) {
+	} else if (wp == this->trw->get_edited_wp()) {
 		switch (this->trw->wp_marker_type) {
 		case SYMBOL_FILLED_SQUARE:
 			qDebug() << __FUNCTION__ << __LINE__;

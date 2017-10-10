@@ -229,7 +229,7 @@ namespace SlavGPS {
 		void find_maxmin(struct LatLon maxmin[2]);
 		bool find_center(Coord * dest);
 
-		void set_statusbar_msg_info_trkpt(Trackpoint * tp);
+		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
 		void zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2]);
@@ -280,7 +280,7 @@ namespace SlavGPS {
 
 
 
-		void trackpoint_selected_delete(Track * trk);
+		void delete_selected_tp(Track * trk);
 
 		void diary_open(char const * date_str);
 		void astro_open(char const * date_str,  char const * time_str, char const * lat_str, char const * lon_str, char const * alt_str);
@@ -347,11 +347,16 @@ namespace SlavGPS {
 		void update_statusbar();
 		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 
-		Track * get_edited_track();
+
+		Track * get_edited_track(void);
 		void set_edited_track(Track * track, const TrackPoints::iterator & tp_iter);
+		void set_edited_track(Track * track);
 		void reset_edited_track(void);
 
-		Waypoint * get_edited_wp();
+		Waypoint * get_edited_wp(void);
+		void set_edited_wp(Waypoint * wp);
+		void reset_edited_wp(void);
+
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);
 		void copy_sublayer_common(TreeItem * item);
@@ -371,10 +376,17 @@ namespace SlavGPS {
 		void upload_to_gps(TreeItem * sublayer);
 
 
-		/* Waypoint editing tool. */
+		/* Track or Route that user currently operates.
+		   Reference to an object already existing in ::tracks or ::routes. */
+		Track * current_track = NULL;
+
+		/* Waypoint that user currently operates on.
+		   Reference to an object already existing in ::waypoints. */
 		Waypoint * current_wp = NULL;
+
 		bool moving_wp = false;
 		bool waypoint_rightclick = false;
+
 
 		PropertiesDialogTP * tpwin = NULL;
 
@@ -436,10 +448,6 @@ namespace SlavGPS {
 
 		GdkFunction wpbgand;
 
-
-		/* Track or Route that user currently operates.
-		   Reference to an object already existing in ::tracks or ::routes. */
-		Track * current_track = NULL;
 
 		uint16_t ct_x1;
 		uint16_t ct_y1;

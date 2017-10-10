@@ -1584,25 +1584,28 @@ QString LayerTRW::get_tooltip()
 #define VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT "trkpt_selected_statusbar_format"
 
 /**
- * set_statusbar_msg_info_trkpt:
- *
- * Function to show track point information on the statusbar
- *  Items displayed is controlled by the settings format code
- */
-void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
+   Function to show track point information on the statusbar.
+   Items displayed is controlled by the settings format code.
+*/
+void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track)
 {
 	char * statusbar_format_code = NULL;
 	bool need2free = false;
+
 	Trackpoint * tp_prev = NULL;
+
 	if (!a_settings_get_string(VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT, &statusbar_format_code)) {
 		/* Otherwise use default. */
 		statusbar_format_code = strdup("KEATDN");
 		need2free = true;
 	} else {
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
-		tp_prev = this->current_track->get_tp_prev(tp);
+		auto iter = std::prev(tp_iter);
+		tp_prev = iter == track->end() ? NULL : *iter;
 	}
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, this->current_track, NAN);
+
+	Trackpoint * tp = tp_iter == track->end() ? NULL : *tp_iter;
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 
 	if (need2free) {
@@ -1654,7 +1657,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 void LayerTRW::reset_internal_selections(void)
 {
-	this->current_wp = NULL;
+	this->reset_edited_wp();
 	this->cancel_current_tp(false);
 }
 
@@ -2250,7 +2253,7 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 	track->has_color = true;
 	track->set_name(new_name);
 
-	this->current_track = track;
+	this->set_edited_track(track);
 
 	this->add_track(track);
 
@@ -2285,7 +2288,7 @@ Track * LayerTRW::new_route_create_common(const QString & new_name)
 
 	route->set_name(new_name);
 
-	this->current_track = route;
+	this->set_edited_track(route);
 
 	this->add_route(route);
 
@@ -2451,7 +2454,7 @@ void LayerTRW::add_route(Track * trk)
 /* to be called whenever a track has been deleted or may have been changed. */
 void LayerTRW::cancel_tps_of_track(Track * trk)
 {
-	if (this->current_track == trk) {
+	if (this->get_edited_track() == trk) {
 		this->cancel_current_tp(false);
 	}
 }
@@ -2505,35 +2508,37 @@ void LayerTRW::filein_add_waypoint(Waypoint * wp, const QString & wp_name)
 
 
 
-void LayerTRW::filein_add_track(Track * trk, const QString & trk_name)
+void LayerTRW::filein_add_track(Track * incoming_track, const QString & incoming_track_name)
 {
-	if (this->route_finder_append && this->current_track) {
-		trk->remove_dup_points(); /* Make "double point" track work to undo. */
+	Track * curr_track = this->get_edited_track();
+
+	if (this->route_finder_append && curr_track) {
+		incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
 
 		/* Enforce end of current track equal to start of tr. */
-		Trackpoint * cur_end = this->current_track->get_tp_last();
-		Trackpoint * new_start = trk->get_tp_first();
+		Trackpoint * cur_end = curr_track->get_tp_last();
+		Trackpoint * new_start = incoming_track->get_tp_first();
 		if (cur_end && new_start) {
 			if (cur_end->coord != new_start->coord) {
-				this->current_track->add_trackpoint(new Trackpoint(*cur_end), false);
+				curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
 			}
 		}
 
-		this->current_track->steal_and_append_trackpoints(trk);
-		trk->free();
+		curr_track->steal_and_append_trackpoints(incoming_track);
+		incoming_track->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
-		trk->set_name(trk_name);
+		incoming_track->set_name(incoming_track_name);
 		/* No more uniqueness of name forced when loading from a file. */
-		if (trk->type_id == "sg.trw.route") {
-			this->add_route(trk);
+		if (incoming_track->type_id == "sg.trw.route") {
+			this->add_route(incoming_track);
 		} else {
-			this->add_track(trk);
+			this->add_track(incoming_track);
 		}
 
 		if (this->route_finder_check_added_track) {
-			trk->remove_dup_points(); /* Make "double point" track work to undo. */
-			this->route_finder_added_track = trk;
+			incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
+			this->route_finder_added_track = incoming_track;
 		}
 	}
 }
@@ -2659,7 +2664,7 @@ bool LayerTRW::delete_track(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_track) {
+	if (trk == this->get_edited_track()) {
 		this->reset_edited_track();
 		this->moving_tp = false;
 		this->route_finder_started = false;
@@ -2698,7 +2703,7 @@ bool LayerTRW::delete_route(Track * trk)
 		return false;
 	}
 
-	if (trk == this->current_track) {
+	if (trk == this->get_edited_track()) {
 		this->reset_edited_track();
 		this->moving_tp = false;
 	}
@@ -2736,8 +2741,8 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 		return false;
 	}
 
-	if (wp == current_wp) {
-		this->current_wp = NULL;
+	if (wp == this->get_edited_wp()) {
+		this->reset_edited_wp();
 		this->moving_wp = false;
 	}
 
@@ -2810,10 +2815,10 @@ bool LayerTRW::delete_track_by_name(const QString & trk_name, bool is_route)
 void LayerTRW::delete_all_routes()
 {
 	this->route_finder_added_track = NULL;
-	if (this->current_track) {
+	if (this->get_edited_track()) {
 		this->cancel_current_tp(false);
+		this->reset_edited_track();
 	}
-	this->reset_edited_track();
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
 		tree_view->erase(i->second->index);
@@ -2832,10 +2837,10 @@ void LayerTRW::delete_all_routes()
 void LayerTRW::delete_all_tracks()
 {
 	this->route_finder_added_track = NULL;
-	if (this->current_track) {
+	if (this->get_edited_track()) {
 		this->cancel_current_tp(false);
+		this->reset_edited_track();
 	}
-	this->reset_edited_track();
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
 		tree_view->erase(i->second->index);
@@ -2853,7 +2858,7 @@ void LayerTRW::delete_all_tracks()
 
 void LayerTRW::delete_all_waypoints()
 {
-	this->current_wp = NULL;
+	this->reset_edited_wp();
 	this->moving_wp = false;
 
 	this->highest_wp_number_reset();
@@ -3440,17 +3445,14 @@ void LayerTRW::split_at_trackpoint_cb(void)
 
 
 
-void LayerTRW::trackpoint_selected_delete(Track * trk)
+void LayerTRW::delete_selected_tp(Track * track)
 {
-	TrackPoints::iterator new_tp_iter = trk->delete_trackpoint(this->current_track->selected_tp.iter);
+	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->selected_tp.iter);
 
-	if (new_tp_iter != trk->end()) {
+	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		this->current_track->selected_tp.iter = new_tp_iter;
-
-		if (this->current_track) {
-			this->current_track->calculate_bounds();
-		}
+		track->selected_tp.iter = new_tp_iter;
+		track->calculate_bounds();
 	} else {
 		this->cancel_current_tp(false);
 	}
@@ -3475,7 +3477,7 @@ void LayerTRW::delete_point_selected_cb(void)
 		return;
 	}
 
-	this->trackpoint_selected_delete(selected_track);
+	this->delete_selected_tp(selected_track);
 
 	/* Track has been updated so update tps: */
 	this->cancel_tps_of_track(selected_track);
@@ -4009,7 +4011,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		if (!track->selected_tp.valid) {
 			return;
 		}
-		this->trackpoint_selected_delete(track);
+		this->delete_selected_tp(track);
 
 		if (track->selected_tp.valid) {
 			/* Update Trackpoint Properties with the available adjacent trackpoint. */
@@ -4190,9 +4192,10 @@ void LayerTRW::trackpoint_properties_show()
 	this->tpwin->show();
 
 
-	if (this->current_track && this->current_track->selected_tp.valid) {
+	Track * track = this->get_edited_track();
+	if (track && track->selected_tp.valid) {
 		/* Get tp pixel position. */
-		Trackpoint * tp = *this->current_track->selected_tp.iter;
+		Trackpoint * tp = *track->selected_tp.iter;
 
 		/* Shift up/down to try not to obscure the trackpoint. */
 		this->dialog_shift(this->tpwin, &tp->coord, true);
@@ -4809,9 +4812,24 @@ void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_
 		this->current_track->selected_tp.iter = tp_iter;
 		this->current_track->selected_tp.valid = true;
 	} else {
-		qDebug() << "EE: Layer TRW: Set Current Track: null track";
+		qDebug() << "EE: Layer TRW: Set Current Track (1): NULL track";
 	}
 }
+
+
+
+
+
+void LayerTRW::set_edited_track(Track * track)
+{
+	if (track) {
+		this->current_track = track;
+		this->current_track->selected_tp.valid = false;
+	} else {
+		qDebug() << "EE: Layer TRW: Set Current Track (2): NULL track";
+	}
+}
+
 
 
 
@@ -4833,4 +4851,24 @@ void LayerTRW::reset_edited_track(void)
 Waypoint * LayerTRW::get_edited_wp()
 {
 	return this->current_wp;
+}
+
+
+
+
+void LayerTRW::set_edited_wp(Waypoint * wp)
+{
+	if (wp) {
+		this->current_wp = wp;
+	} else {
+		qDebug() << "EE: Layer TRW: Set Current Waypoint: null waypoint";
+	}
+}
+
+
+
+
+void LayerTRW::reset_edited_wp(void)
+{
+	this->current_wp = NULL;
 }
