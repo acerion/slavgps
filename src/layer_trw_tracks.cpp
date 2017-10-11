@@ -687,6 +687,8 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
+	bool creation_in_progress = parent_layer_->get_track_creation_in_progress() || parent_layer_->get_route_creation_in_progress();
+
 	if (parent_layer_->get_track_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Track"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_track_cb()));
@@ -699,8 +701,8 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Track"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_track_cb()));
-	/* Make it available only when a new track is *not* already in progress. */
-	qa->setEnabled(!parent_layer_->current_track);
+	/* Make it available only when a new track/route is *not* already in progress. */
+	qa->setEnabled(!creation_in_progress);
 
 	qa = menu.addAction(QIcon::fromTheme("list-remove"), tr("Delete &All Tracks"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_tracks_cb()));
@@ -739,6 +741,8 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 {
 	QAction * qa = NULL;
 
+	bool creation_in_progress = parent_layer_->get_track_creation_in_progress() || parent_layer_->get_route_creation_in_progress();
+
 	if (parent_layer_->get_route_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Route"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (finish_route_cb()));
@@ -751,8 +755,8 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Route"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_route_cb()));
-	/* Make it available only when a new track is *not* already in progress. */
-	qa->setEnabled(!parent_layer_->current_track);
+	/* Make it available only when a new track/route is *not* already in progress. */
+	qa->setEnabled(!creation_in_progress);
 
 	qa = menu.addAction(QIcon::fromTheme("list-delete"), tr("Delete &All Routes"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_all_routes_cb()));

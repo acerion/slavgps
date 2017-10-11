@@ -2265,7 +2265,10 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 
 void LayerTRW::new_track_cb() /* Slot. */
 {
-	if (!this->current_track) {
+	if (!this->get_edited_track()) {
+
+		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
+
 		const QString uniq_name = this->new_unique_element_name("sg.trw.track", tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
@@ -2300,7 +2303,10 @@ Track * LayerTRW::new_route_create_common(const QString & new_name)
 
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
-	if (!this->current_track) {
+	if (!this->get_edited_track()) {
+
+		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
+
 		const QString uniq_name = this->new_unique_element_name("sg.trw.route", tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
@@ -3953,8 +3959,9 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		}
 	}
 
-	if (this->current_track && this->current_track->selected_tp.valid) {
-		this->current_track->selected_tp.valid = false;
+	Track * track = this->get_edited_track();
+	if (track && track->selected_tp.valid) {
+		track->selected_tp.valid = false;
 		this->reset_edited_track();
 
 		this->emit_layer_changed();
@@ -4812,7 +4819,7 @@ bool LayerTRW::clear_highlight()
 */
 Track * LayerTRW::get_edited_track()
 {
-	return this->current_track;
+	return this->current_track_;
 }
 
 
@@ -4821,9 +4828,9 @@ Track * LayerTRW::get_edited_track()
 void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_iter)
 {
 	if (track) {
-		this->current_track = track;
-		this->current_track->selected_tp.iter = tp_iter;
-		this->current_track->selected_tp.valid = true;
+		this->current_track_ = track;
+		this->current_track_->selected_tp.iter = tp_iter;
+		this->current_track_->selected_tp.valid = true;
 	} else {
 		qDebug() << "EE: Layer TRW: Set Current Track (1): NULL track";
 	}
@@ -4836,8 +4843,8 @@ void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_
 void LayerTRW::set_edited_track(Track * track)
 {
 	if (track) {
-		this->current_track = track;
-		this->current_track->selected_tp.valid = false;
+		this->current_track_ = track;
+		this->current_track_->selected_tp.valid = false;
 	} else {
 		qDebug() << "EE: Layer TRW: Set Current Track (2): NULL track";
 	}
@@ -4849,7 +4856,7 @@ void LayerTRW::set_edited_track(Track * track)
 
 void LayerTRW::reset_edited_track(void)
 {
-	this->current_track = NULL;
+	this->current_track_ = NULL;
 }
 
 
@@ -4863,7 +4870,7 @@ void LayerTRW::reset_edited_track(void)
 */
 Waypoint * LayerTRW::get_edited_wp()
 {
-	return this->current_wp;
+	return this->current_wp_;
 }
 
 
@@ -4872,7 +4879,7 @@ Waypoint * LayerTRW::get_edited_wp()
 void LayerTRW::set_edited_wp(Waypoint * wp)
 {
 	if (wp) {
-		this->current_wp = wp;
+		this->current_wp_ = wp;
 	} else {
 		qDebug() << "EE: Layer TRW: Set Current Waypoint: null waypoint";
 	}
@@ -4883,7 +4890,7 @@ void LayerTRW::set_edited_wp(Waypoint * wp)
 
 void LayerTRW::reset_edited_wp(void)
 {
-	this->current_wp = NULL;
+	this->current_wp_ = NULL;
 }
 
 

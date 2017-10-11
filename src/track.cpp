@@ -2820,7 +2820,10 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	}
 
 
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
+	LayerTRW * trw = (LayerTRW *) this->owning_layer;
+
+
+	layer_trw_sublayer_menu_all_add_external_tools(trw, menu, external_submenu);
 
 
 #ifdef K
@@ -2835,21 +2838,21 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-	this->sublayer_menu_track_route_misc((LayerTRW *) this->owning_layer, menu, upload_submenu);
+	this->sublayer_menu_track_route_misc(trw, menu, upload_submenu);
 
 
 	/* Some things aren't usable with routes. */
 	if (this->type_id == "sg.trw.track") {
-		this->sublayer_menu_track_misc((LayerTRW *) this->owning_layer, menu, upload_submenu);
+		this->sublayer_menu_track_misc(trw, menu, upload_submenu);
 	}
 
 
-	/* Only show on viewport popmenu when a trackpoint is selected. */
-	if (!g_tree->tree_get_layers_panel() && ((LayerTRW *) owning_layer)->current_track->selected_tp.valid) {
+	/* Only show in viewport context menu, and only when a trackpoint is selected. */
+	if (!tree_view_context_menu && this->selected_tp.valid) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (edit_trackpoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), trw, SLOT (edit_trackpoint_cb()));
 	}
 
 
@@ -3219,12 +3222,10 @@ void Track::open_diary_cb(void)
 */
 void Track::open_astro_cb(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
 	Trackpoint * tp = NULL;
-	if (parent_layer->current_track->selected_tp.valid) {
+	if (this->selected_tp.valid) {
 		/* Current trackpoint. */
-		tp = *parent_layer->current_track->selected_tp.iter;
+		tp = *this->selected_tp.iter;
 
 	} else if (!this->empty()) {
 		/* Otherwise first trackpoint. */
@@ -3235,6 +3236,8 @@ void Track::open_astro_cb(void)
 	}
 
 	if (tp->has_timestamp) {
+		LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
 		char date_buf[20];
 		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&tp->timestamp));
 		char time_buf[20];
@@ -3305,9 +3308,9 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 
 
-	/* Update any subwindows that could be displaying this track which has changed name.
-	   Only one Track Edit Window. */
-	if (parent_layer->current_track == this && parent_layer->tpwin) {
+	/* Update any subwindows/dialogs that could be displaying this track which has changed name.
+	   Currently only one additional window may display a track: Track Edit Dialog. */
+	if (parent_layer->tpwin) {
 		parent_layer->tpwin->set_dialog_title(new_name);
 	}
 

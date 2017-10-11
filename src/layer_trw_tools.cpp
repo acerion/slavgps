@@ -73,6 +73,8 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev);
 static ToolStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev);
 
+static ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport);
+
 
 
 
@@ -738,10 +740,10 @@ void LayerTRW::update_statusbar()
 {
 	/* Get elevation data. */
 	double elev_gain, elev_loss;
-	this->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
+	this->get_edited_track()->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 	/* Find out actual distance of current track. */
-	double distance = this->current_track->get_length();
+	double distance = this->get_edited_track()->get_length();
 
 	statusbar_write(distance, elev_gain, elev_loss, 0, 0, this);
 }
@@ -759,11 +761,12 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEvent * ev)
 {
-	qDebug() << "II: Layer TRW: new track's move(): draw_sync_done" << (int) trw->draw_sync_done << ", current track:" << (long) trw->current_track;
+	Track * track = trw->get_edited_track();
+	qDebug() << "II: Layer TRW: new track's move(): draw_sync_done" << (int) trw->draw_sync_done << ", current track:" << (long) track;
 
 	/* If we haven't sync'ed yet, we don't have time to do more. */
-	if (/* trw->draw_sync_done && */ trw->current_track && !trw->current_track->empty()) {
-		Trackpoint * last_tpt = trw->current_track->get_tp_last();
+	if (/* trw->draw_sync_done && */ track && !track->empty()) {
+		Trackpoint * last_tpt = track->get_tp_last();
 
 		static QPixmap * pixmap = NULL;
 
@@ -806,7 +809,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
 
 		/* Find out actual distance of current track. */
-		double distance = trw->current_track->get_length();
+		double distance = track->get_length();
 
 		/* Now add distance to where the pointer is. */
 		Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
@@ -816,7 +819,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		/* Get elevation data. */
 		double elev_gain, elev_loss;
-		trw->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
+		track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		double elev_new = (double) DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
@@ -891,7 +894,7 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 	Track * track = trw->get_edited_track();
 
 #if 1
-	/* Consistency check between layer and tool. */
+	/* Check of consistency between LayerTRW and the tool. */
 	if (!track) {
 		qDebug() << "EE: Layer TRW Tools: new track handle key press: creation-in-progress=true, but no track selected in layer";
 		return ToolStatus::IGNORED;
@@ -932,31 +935,37 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 
 
 
-/*
- * Common function to handle trackpoint button requests on either a route or a track
- *  . enables adding a point via normal click
- *  . enables removal of last point via right click
- */
-ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * viewport)
+/**
+   \brief Edit given track/route in response to given mouse click
+
+   Function can add a point to track if a normal mouse click occurred.
+   Function can remove last point from track if right-click occurred.
+
+   Call this function only for single clicks.
+
+   \param trw - parent layer of track
+   \param track - track to modify
+   \param ev - mouse event
+   \param viewport - viewport, in which a click occurred
+*/
+ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport)
 {
-	if (this->type != LayerType::TRW) {
+	if (!track) {
+		qDebug() << "EE: LayerTRW: Extend Track: NULL track argument";
 		return ToolStatus::IGNORED;
 	}
 
 	if (ev->button() == Qt::MiddleButton) {
 		/* As the display is panning, the new track pixmap is now invalid so don't draw it
 		   otherwise this drawing done results in flickering back to an old image. */
-		this->draw_sync_do = false;
+		trw->draw_sync_do = false;
 		return ToolStatus::IGNORED;
 	}
 
 	if (ev->button() == Qt::RightButton) {
-		if (!this->current_track) {
-			return ToolStatus::IGNORED;
-		}
-		this->current_track->remove_last_trackpoint();
-		this->update_statusbar();
-		this->emit_layer_changed();
+		track->remove_last_trackpoint();
+		trw->update_statusbar();
+		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 	}
 
@@ -965,7 +974,7 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 
 	/* Snap to other TP. */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		const Trackpoint * other_tp = trw->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
 		if (other_tp) {
 			tp->coord = other_tp->coord;
 		}
@@ -975,19 +984,18 @@ ToolStatus LayerTRW::tool_new_track_or_route_click(QMouseEvent * ev, Viewport * 
 	tp->has_timestamp = false;
 	tp->timestamp = 0;
 
-	if (this->current_track) {
-		this->current_track->add_trackpoint(tp, true); /* Ensure bounds is updated. */
-		/* Auto attempt to get elevation from DEM data (if it's available). */
-		this->current_track->apply_dem_data_last_trackpoint();
-	}
+	track->add_trackpoint(tp, true); /* Ensure bounds is updated. */
+	/* Auto attempt to get elevation from DEM data (if it's available). */
+	track->apply_dem_data_last_trackpoint();
+
 
 	/* TODO: I think that in current implementation of handling of double click we don't need these fields. */
-	this->ct_x1 = this->ct_x2;
-	this->ct_y1 = this->ct_y2;
-	this->ct_x2 = ev->x();
-	this->ct_y2 = ev->y();
+	trw->ct_x1 = trw->ct_x2;
+	trw->ct_y1 = trw->ct_y2;
+	trw->ct_x2 = ev->x();
+	trw->ct_y2 = ev->y();
 
-	this->emit_layer_changed();
+	trw->emit_layer_changed();
 
 	return ToolStatus::ACK;
 }
@@ -1004,24 +1012,29 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 
 	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
+		/* TODO: this function calls extend_track_with_mouse_click() which handles right mouse button. Why we don't allow it here? */
 		return ToolStatus::IGNORED;
 	}
 
+	Track * track = NULL;
+	if (this->creation_in_progress) {
 #if 1
-	/* Consistency check. */
-	if (trw->get_edited_track()) {
-		if (!this->creation_in_progress) {
+		/* Check of consistency between LayerTRW and the tool. */
+		if (!trw->get_edited_track()) {
 			qDebug() << "EE: Layer TRW Tools: New Track: handle mouse click: mismatch 1";
 		}
-	} else {
-		if (this->creation_in_progress) {
-			qDebug() << "EE: Layer TRW Tools: New Track: handle mouse click: mismatch 2";
-		}
-	}
 #endif
 
-	if (!this->creation_in_progress) {
-		/* Fixme: how to handle a situation, when a route is being created right now? */
+		track = trw->get_edited_track();
+	} else {
+#if 1
+		/* Check of consistency between LayerTRW and the tool. */
+		if (trw->get_edited_track()) {
+			qDebug() << "EE: Layer TRW Tools: New Track: handle mouse click: mismatch 1";
+		}
+#endif
+
+		/* FIXME: how to handle a situation, when a route is being created right now? */
 		QString new_name = trw->new_unique_element_name("sg.trw.track", QObject::tr("Track"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, false, trw->get_window());
@@ -1029,11 +1042,11 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 				return ToolStatus::IGNORED;
 			}
 		}
-		trw->new_track_create_common(new_name);
+		track = trw->new_track_create_common(new_name);
 		this->creation_in_progress = trw;
 	}
 
-	return trw->tool_new_track_or_route_click(ev, this->viewport);
+	return extend_track_with_mouse_click(trw, track, ev, this->viewport);
 }
 
 
@@ -1053,7 +1066,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 	/* End the process of creating a track. */
 	if (this->creation_in_progress) {
 #if 1
-		/* Consistency check. */
+		/* Check of consistency between LayerTRW and the tool. */
 		if (!trw->get_edited_track()) {
 			qDebug() << "Layer TRW Tools: Handle Double Mouse Click: inconsistency 1";
 		}
@@ -1064,7 +1077,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 		}
 	} else {
 #if 1
-		/* Consistency check. */
+		/* Check of consistency between LayerTRW and the tool. */
 		if (trw->get_edited_track()) {
 			qDebug() << "Layer TRW Tools: Handle Double Mouse Click: inconsistency 2";
 		}
@@ -1127,24 +1140,29 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 
 	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
+		/* TODO: this function calls extend_track_with_mouse_click() which handles right mouse button. Why we don't allow it here? */
 		return ToolStatus::IGNORED;
 	}
 
+	Track * track = NULL;
+	if (this->creation_in_progress) {
 #if 1
-	/* Consistency check. */
-	if (trw->get_edited_track()) {
-		if (!this->creation_in_progress) {
+		/* Check of consistency between LayerTRW and the tool. */
+		if (!trw->get_edited_track()) {
 			qDebug() << "EE: Layer TRW Tools: New Route: handle mouse click: mismatch 1";
 		}
-	} else {
-		if (this->creation_in_progress) {
-			qDebug() << "EE: Layer TRW Tools: New Route: handle mouse click: mismatch 2";
-		}
-	}
 #endif
 
-	if (!this->creation_in_progress) {
-		/* Fixme: how to handle a situation, when a track is being created right now? */
+		track = trw->get_edited_track();
+	} else {
+#if 1
+		/* Check of consistency between LayerTRW and the tool. */
+		if (trw->get_edited_track()) {
+			qDebug() << "EE: Layer TRW Tools: New Route: handle mouse click: mismatch 1";
+		}
+#endif
+
+		/* FIXME: how to handle a situation, when a track is being created right now? */
 		QString new_name = trw->new_unique_element_name("sg.trw.route", QObject::tr("Route"));
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
@@ -1152,11 +1170,11 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 				return ToolStatus::IGNORED;
 			}
 		}
-		trw->new_route_create_common(new_name);
+		track = trw->new_route_create_common(new_name);
 		this->creation_in_progress = trw;
 	}
 
-	return trw->tool_new_track_or_route_click(ev, this->viewport);
+	return extend_track_with_mouse_click(trw, track, ev, this->viewport);
 }
 
 
@@ -1176,7 +1194,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouse
 	/* End the process of creating a track. */
 	if (this->creation_in_progress) {
 #if 1
-		/* Consistency check. */
+		/* Check of consistency between LayerTRW and the tool. */
 		if (!trw->get_edited_track()) {
 			qDebug() << "Layer TRW Tools: New Route: Handle Double Mouse Click: inconsistency 1";
 		}
@@ -1187,7 +1205,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouse
 		}
 	} else {
 #if 1
-		/* Consistency check. */
+		/* Check of consistency between LayerTRW and the tool. */
 		if (trw->get_edited_track()) {
 			qDebug() << "Layer TRW Tools: New Route: Handle Double Mouse Click: inconsistency 2";
 		}
@@ -1385,7 +1403,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *trw->current_track->selected_tp.iter) {
+		if (tp && tp != *trw->get_edited_track()->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
 	}
@@ -1416,28 +1434,30 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 		return ToolStatus::IGNORED;
 	}
 
+	Track * track = trw->get_edited_track(); /* This is the track, to which belongs the edited trackpoint. */
+	if (!track) {
+		/* Well, there was no track that was edited, so nothing to do here. */
+		return ToolStatus::IGNORED;
+	}
+
 	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *trw->current_track->selected_tp.iter) {
+		if (tp && tp != *track->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
 	}
 
-	(*trw->current_track->selected_tp.iter)->coord = new_coord;
-	if (trw->current_track) {
-		trw->current_track->calculate_bounds();
-	}
+	(*track->selected_tp.iter)->coord = new_coord;
+	track->calculate_bounds();
 
 	this->sublayer_edit_release();
 
 	/* Diff dist is diff from orig. */
 	if (trw->tpwin) {
-		if (trw->current_track) {
-			trw->tpwin_update_dialog_data();
-		}
+		trw->tpwin_update_dialog_data();
 	}
 
 	trw->emit_layer_changed();
@@ -1515,22 +1535,24 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
+	Track * track = trw->get_edited_track();
+
 	Coord tmp = this->viewport->screen_to_coord(ev->x(), ev->y());
-	if (ev->button() == Qt::RightButton && trw->current_track) {
-		this->undo(trw, trw->current_track);
+	if (ev->button() == Qt::RightButton && track) {
+		this->undo(trw, track);
 
 	} else if (ev->button() == Qt::MiddleButton) {
 		trw->draw_sync_do = false;
 		return ToolStatus::IGNORED;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
-	else if (trw->current_track && trw->current_track->type_id == "sg.trw.route" && !trw->current_track->get_tp_first()) {
-		return trw->tool_new_track_or_route_click(ev, this->viewport);
+	else if (track && track->type_id == "sg.trw.route" && !track->get_tp_first()) {
+		return extend_track_with_mouse_click(trw, track, ev, this->viewport);
 
-	} else if ((trw->current_track && trw->current_track->type_id == "sg.trw.route")
-		   || ((ev->modifiers() & Qt::ControlModifier) && trw->current_track)) {
+	} else if ((track && track->type_id == "sg.trw.route")
+		   || ((ev->modifiers() & Qt::ControlModifier) && track)) {
 
-		Trackpoint * tp_start = trw->current_track->get_tp_last();
+		Trackpoint * tp_start = track->get_tp_last();
 		struct LatLon start = tp_start->coord.get_latlon();
 		struct LatLon end = tmp.get_latlon();
 

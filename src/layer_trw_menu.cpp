@@ -163,18 +163,20 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	{
 		QMenu * new_submenu = menu.addMenu(QIcon::fromTheme("document-new"), tr("&New"));
 
+		bool creation_in_progress = this->get_track_creation_in_progress() || this->get_route_creation_in_progress();
+
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), tr("New &Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_waypoint_cb()));
 
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), tr("New &Track"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_track_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		qa->setEnabled(!this->current_track);
+		qa->setEnabled(!creation_in_progress);
 
 		qa = new_submenu->addAction(QIcon::fromTheme("document-new"), tr("New &Route"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_route_cb()));
 		/* Make it available only when a new route is *not* already in progress. */
-		qa->setEnabled(!this->current_track);
+		qa->setEnabled(!creation_in_progress);
 	}
 
 

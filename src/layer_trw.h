@@ -307,6 +307,8 @@ namespace SlavGPS {
 		void sort_all();
 
 
+		void acquire(VikDataSourceInterface *datasource);
+
 
 		void set_coord_mode(CoordMode mode);
 		CoordMode get_coord_mode();
@@ -345,7 +347,6 @@ namespace SlavGPS {
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
 		void update_statusbar();
-		ToolStatus tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 
 
 		Track * get_edited_track(void);
@@ -382,14 +383,6 @@ namespace SlavGPS {
 		bool get_route_creation_in_progress() const;
 		void reset_route_creation_in_progress();
 
-
-		/* Track or Route that user currently operates.
-		   Reference to an object already existing in ::tracks or ::routes. */
-		Track * current_track = NULL;
-
-		/* Waypoint that user currently operates on.
-		   Reference to an object already existing in ::waypoints. */
-		Waypoint * current_wp = NULL;
 
 		bool moving_wp = false;
 		bool waypoint_rightclick = false;
@@ -574,8 +567,15 @@ namespace SlavGPS {
 		void insert_point_before_cb(void);
 		void routes_stats_cb();
 
-	public:
-		void acquire(VikDataSourceInterface *datasource);
+
+	private:
+		/* Track or Route that user currently operates on (creates or modifies).
+		   Reference to an object already existing in ::tracks or ::routes. */
+		Track * current_track_ = NULL;
+
+		/* Waypoint that user currently operates on (creates or modifies).
+		   Reference to an object already existing in ::waypoints. */
+		Waypoint * current_wp_ = NULL;
 	};
 
 
