@@ -89,8 +89,7 @@ namespace SlavGPS {
 		bool button_press_cb(QMouseEvent * event);
 
 	private:
-		void show_context_menu(TreeIndex const & index, Layer * layer);
-		void show_context_menu_layer_specific(TreeIndex const & index, Layer * layer);
+		void show_context_menu_for_item(TreeItem * item);
 		void show_context_menu_new_layer();
 		QMenu * create_context_menu(uint16_t layer_menu_items);
 		QMenu * add_submenu_new_layer(QMenu * menu);

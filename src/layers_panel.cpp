@@ -324,9 +324,7 @@ QMenu * LayersPanel::create_context_menu(uint16_t layer_menu_items)
 	QMenu * menu = new QMenu(this);
 
 	if (layer_menu_items & (uint16_t) LayerMenuItem::PROPERTIES) {
-#if 0
-		menu->addAction(qa_layer_properties);
-#endif
+		menu->addAction(this->get_window()->qa_layer_properties);
 	}
 
 	if (layer_menu_items & (uint16_t) LayerMenuItem::CUT) {
@@ -367,57 +365,36 @@ QMenu * LayersPanel::add_submenu_new_layer(QMenu * menu)
 
 
 
-void LayersPanel::show_context_menu(TreeIndex const & index, Layer * layer)
+void LayersPanel::show_context_menu_for_item(TreeItem * item)
 {
-	if (index.isValid()) {
-		/* We have clicked on some valid item in tree view. */
-		this->show_context_menu_layer_specific(index, layer);
-	} else {
-		/* We have clicked on empty space, not on tree item.  */
-		this->show_context_menu_new_layer();
-	}
-
-	return;
-}
-
-
-
-
-void LayersPanel::show_context_menu_layer_specific(TreeIndex const & index, Layer * layer)
-{
-	if (!index.isValid()) {
-		qDebug() << "EE: Layers Panel: layer-specific context menu: index is invalid";
+	if (!item) {
+		qDebug() << "EE: Layers Panel: show context menu for item: NULL item";
 		return;
 	}
 
 	QMenu * menu = NULL;
 
-	TreeItem * item = this->tree_view->get_tree_item(index);
-
 	if (item->tree_item_type == TreeItemType::LAYER) {
 
-		uint16_t layer_menu_items;
+		qDebug() << "II: Layers Panel: context menu event: menu for layer" << item->type_id << item->name;
 
-		if (layer->type == LayerType::AGGREGATE) {
-			layer_menu_items = (uint16_t) LayerMenuItem::PROPERTIES
-				| (uint16_t) LayerMenuItem::CUT
-				| (uint16_t) LayerMenuItem::COPY
-				| (uint16_t) LayerMenuItem::PASTE
-				| (uint16_t) LayerMenuItem::DELETE;
-		} else {
-			/* kamilFIXME: this doesn't work for Map in treeview. Why? */
-			qDebug() << "II: Layers Panel: will call get_menu_items_selection";
-			layer_menu_items = (uint16_t) layer->get_menu_items_selection();
-		}
+		Layer * layer = item->to_layer();
 
+		/* kamilFIXME: this doesn't work for Map in treeview. Why? */
+		uint16_t layer_menu_items = (uint16_t) layer->get_menu_items_selection();
+
+#ifdef K
 		/* "New layer -> layer types" submenu. */
 		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
+#endif
 
 		menu = this->create_context_menu(layer_menu_items);
 
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(*menu);
 	} else {
+		qDebug() << "II: Layers Panel: context menu event: menu for sublayer" << item->type_id << item->name;
+
 		menu = new QMenu(this);
 
 		if (!item->add_context_menu_items(*menu, true)) {
@@ -927,63 +904,40 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	qDebug() << "DD: Layers Panel: context menu event: viewport @" << v;
 	qDebug() << "DD: Layers Panel: context menu event: treeview @" << t;
 
-	orig.setX(orig.x() - v.x() - t.x());
-	orig.setY(orig.y() - v.y() - t.y());
+	QPoint point;
+	point.setX(orig.x() - v.x() - t.x());
+	point.setY(orig.y() - v.y() - t.y());
 
-	QPoint point = orig;
 	QModelIndex ind = this->tree_view->indexAt(point);
-	TreeIndex index;
-	Layer * layer = NULL;
 
 	if (ind.isValid()) {
+		/* We have clicked on some valid item in tree view. */
+
 		qDebug() << "II: Layers Panel: context menu event: valid tree view index, row =" << ind.row();
-		index = QPersistentModelIndex(ind);
+		TreeIndex index = QPersistentModelIndex(ind);
 		TreeItem * item = this->tree_view->get_tree_item(index);
 
-		if (TreeItemType::LAYER == item->tree_item_type) {
+		Layer * layer = item->to_layer();
 
-			layer = item->to_layer();
-
-			qDebug() << "II: Layers Panel: context menu event: menu for layer type" << (layer ? layer->debug_string : "NULL");
-
-
-
-			QModelIndex parent_index = index.parent();
-			if (parent_index.isValid()) {
-				QModelIndex index2 = parent_index.child(ind.row(), 0);
-				qDebug() << "II: Layers Panel: context menu event: item" << index << "index2" << index2;
-				if (index.isValid()) {
-					qDebug() << "II: Layers Panel: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->tree_view->model->itemFromIndex(index2)->text();
-				}
-				index = index2;
-			}
-		} else {
-			qDebug() << "II: Layers Panel: context menu event: menu for sublayer of layer type" << (layer ? layer->debug_string : "NULL");
-
-			layer = item->to_layer();
-
-			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->viewport = this->get_viewport();
-		}
-
-		this->show_context_menu(index, layer);
 		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-
+		layer->menu_data->viewport = this->get_viewport();
+		this->show_context_menu_for_item(item);
+		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 	} else {
+		/* We have clicked on empty space, not on tree item.  */
+
 		qDebug() << "II: Layers Panel: context menu event: tree view not hit";
 		if (!this->tree_view->viewport()->geometry().contains(ev->pos())) {
 			qDebug() << "II: Layers Panel: context menu event outside of tree view's viewport";
 			return;
+		} else {
+			qDebug() << "II: Layers Panel: context menu event inside of tree view's viewport";
 		}
-		qDebug() << "II: Layers Panel: context menu event inside of tree view's viewport";
 
-		/* Invalid index and NULL layer. */
-		this->show_context_menu(index, layer);
+		this->show_context_menu_new_layer();
 	}
 	return;
 }
-
-
 
 
 
