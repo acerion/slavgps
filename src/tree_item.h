@@ -102,6 +102,8 @@ namespace SlavGPS {
 
 		virtual void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required) { return; };
 
+		virtual bool properties_dialog() { return false; };
+
 		/* Get layer associated with this tree item.
 		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
 		   Return one of these. */
@@ -114,6 +116,8 @@ namespace SlavGPS {
 
 		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */
+
+		bool has_properties_dialog = false; /* Does this tree item has dialog, in which you can view or change *configurable* properties? */
 
 		sg_uid_t uid = SG_UID_INITIAL;
 

@@ -92,6 +92,8 @@ namespace SlavGPS {
 
 		void delete_sublayer(bool confirm);
 
+		bool properties_dialog();
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;

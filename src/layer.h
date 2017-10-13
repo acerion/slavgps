@@ -169,6 +169,7 @@ namespace SlavGPS {
 		virtual void add_menu_items(QMenu & menu);
 
 		virtual bool properties_dialog(Viewport * viewport);
+		virtual bool properties_dialog();
 
 		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.
 		   @is_file_operation denotes if for file I/O, as opposed to display/cut/copy etc... operations. */

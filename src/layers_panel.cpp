@@ -51,7 +51,6 @@ using namespace SlavGPS;
 
 
 
-static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text);
 static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev);
 
 
@@ -150,7 +149,6 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 #ifndef SLAVGPS_QT
 	QObject::connect(this->tree_view, this, SIGNAL("button_press_event"), SLOT (button_press_cb));
-	QObject::connect(this->tree_view, this, SIGNAL("item_edited"), SLOT (layers_item_edited_cb));
 	QObject::connect(this->tree_view, this, SIGNAL("key_press_event"), SLOT (layers_key_press_cb));
 #endif
 }
@@ -215,50 +213,6 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 	bool visible = item->toggle_visible();
 	item->to_layer()->emit_layer_changed_although_invisible();
 	this->tree_view->set_tree_item_visibility(index, visible); /* Set trigger for half-drawn. */
-
-}
-
-
-
-
-static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text)
-{
-	panel->item_edited(index, new_text);
-}
-
-
-
-
-/* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
-{
-	if (!new_text) {
-		return;
-	}
-
-	if (new_text[0] == '\0') {
-		Dialog::error(tr("New name can not be blank."), this->window);
-		return;
-	}
-
-	TreeItem * item = this->tree_view->get_tree_item(index);
-
-	if (item->tree_item_type == TreeItemType::LAYER) {
-		Layer * layer = item->to_layer();
-		if (layer->name != new_text) {
-			layer->set_name(new_text);
-#ifdef K
-			this->tree_view->set_tree_item_name(index, layer->name);
-#endif
-		}
-	} else {
-#ifdef K
-		const QString result_name = item->sublayer_rename_request(new_text);
-		if (!result_name.isEmpty()) {
-			this->tree_view->set_tree_item_name(index, result_name);
-		}
-#endif
-	}
 
 }
 
@@ -573,20 +527,20 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 		return false;
 	}
 
-	if (selected_item->tree_item_type == TreeItemType::LAYER) {
-		Layer * layer = selected_item->to_layer();
-		if (Layer::get_interface(layer->type)->parameters.size() == 0) {
-			Dialog::info(tr("This layer type has no configurable properties."), this->window);
-		} else {
-			if (layer->properties_dialog(this->viewport)) {
-				layer->emit_layer_changed();
-			}
+	if (!selected_item->has_properties_dialog) {
+		Dialog::info(tr("This item has no configurable properties."), this->window);
+		return true;
+	}
+
+	bool result = selected_item->properties_dialog();
+	if (result) {
+		if (selected_item->tree_item_type == TreeItemType::LAYER) {
+			selected_item->to_layer()->emit_layer_changed();
 		}
 		return true;
-	} else {
-		Dialog::info(tr("You must select a layer to show its properties."), this->window);
-		return false;
 	}
+
+	return false;
 }
 
 

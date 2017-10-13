@@ -261,6 +261,8 @@ namespace SlavGPS {
 		bool is_valid_google_route();
 #endif
 
+		bool properties_dialog();
+
 		/* Track editing tool. */
 		Trackpoint2 selected_tp;
 
@@ -280,7 +282,7 @@ namespace SlavGPS {
 		QColor color;
 		LatLonBBox bbox;
 
-		TrackPropertiesDialog * properties_dialog = NULL;
+		TrackPropertiesDialog * props_dialog = NULL;
 		TrackProfileDialog * profile_dialog = NULL;
 
 	private:

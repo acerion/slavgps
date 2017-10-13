@@ -76,6 +76,8 @@ Waypoint::Waypoint()
 
 	this->type_id = "sg.trw.waypoint";
 
+	this->has_properties_dialog = true;
+
 	/* kamilTODO: what about image_width / image_height? */
 }
 
@@ -457,6 +459,15 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	return rv;
+}
+
+
+
+
+bool Waypoint::properties_dialog()
+{
+	this->properties_dialog_cb();
+	return true;
 }
 
 

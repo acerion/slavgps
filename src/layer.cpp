@@ -551,6 +551,15 @@ QIcon Layer::get_icon(void)
 
 
 /* Returns true if OK was pressed. */
+bool Layer::properties_dialog()
+{
+	return this->properties_dialog(g_tree->tree_get_main_viewport());
+}
+
+
+
+
+/* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
 	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_type_ui_label();
@@ -645,6 +654,8 @@ void Layer::set_initial_parameter_values(void)
 			}
 		}
 	}
+
+	this->has_properties_dialog = this->interface->parameters.size() != 0;
 }
 
 

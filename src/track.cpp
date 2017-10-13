@@ -157,7 +157,7 @@ void Track::ref()
 
 void Track::set_properties_dialog(TrackPropertiesDialog * dialog)
 {
-	this->properties_dialog = dialog;
+	this->props_dialog = dialog;
 }
 
 
@@ -165,7 +165,7 @@ void Track::set_properties_dialog(TrackPropertiesDialog * dialog)
 
 void Track::clear_properties_dialog()
 {
-	this->properties_dialog = NULL;
+	this->props_dialog = NULL;
 }
 
 
@@ -177,13 +177,13 @@ void Track::clear_properties_dialog()
 void Track::update_properties_dialog(void)
 {
 	/* If not displayed do nothing. */
-	if (!this->properties_dialog) {
+	if (!this->props_dialog) {
 		return;
 	}
 
 	/* Update title with current name. */
 	if (!this->name.isEmpty()) {
-		this->properties_dialog->setWindowTitle(tr("%1 - Track Properties").arg(this->name));
+		this->props_dialog->setWindowTitle(tr("%1 - Track Properties").arg(this->name));
 	}
 }
 
@@ -296,6 +296,8 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 	this->has_color = from.has_color;
 	this->color = from.color;
 	this->bbox = from.bbox;
+
+	this->has_properties_dialog = true;
 }
 
 
@@ -2766,7 +2768,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 	rv = true;
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	if (this->properties_dialog) {
+	if (this->props_dialog) {
 		/* A properties dialog window is already opened.
 		   Don't give possibility to open a duplicate properties dialog window. */
 		qa->setEnabled(false);
@@ -2965,6 +2967,13 @@ void Track::anonymize_times_cb(void)
 void Track::interpolate_times_cb(void)
 {
 	this->interpolate_times();
+}
+
+
+bool Track::properties_dialog(void)
+{
+	this->properties_dialog_cb();
+	return true;
 }
 
 
