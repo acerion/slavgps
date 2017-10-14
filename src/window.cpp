@@ -139,10 +139,16 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 
 Window::Window()
 {
-
 	strcpy(this->type_string, "SG QT WINDOW");
 
+
+	for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
+		qDebug() << "II: Window: XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
+	}
 	QIcon::setThemeName("default");
+	qDebug() << "II: Window: Using icon theme " << QIcon::themeName();
+
+
 	this->create_layout();
 	this->create_actions();
 
@@ -352,7 +358,6 @@ void Window::create_layout()
 	this->panel_dock->setAllowedAreas(Qt::TopDockWidgetArea);
 
 	this->items_tree = new LayersPanel(this->panel_dock, this);
-	this->items_tree->set_viewport(this->viewport);
 
 	this->panel_dock->setWidget(this->items_tree);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
@@ -893,9 +898,9 @@ void Window::create_actions(void)
 
 	/* "Layers" menu. */
 	{
-		this->qa_layer_properties = new QAction("Properties...", this);
-		this->menu_layers->addAction(this->qa_layer_properties);
-		connect(this->qa_layer_properties, SIGNAL (triggered(bool)), this->items_tree, SLOT (properties_cb(void)));
+		this->qa_tree_item_properties = new QAction("Properties...", this);
+		this->menu_layers->addAction(this->qa_tree_item_properties);
+		connect(this->qa_tree_item_properties, SIGNAL (triggered(bool)), this->items_tree->get_tree_view(), SLOT (tree_item_properties_cb(void)));
 
 		this->new_layers_submenu_add_actions(this->menu_layers);
 	}
@@ -1000,12 +1005,19 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
-	if (this->items_tree->new_layer(layer_type)) {
+
+	Layer * layer = Layer::construct_layer(layer_type, this->viewport, true);
+	if (layer) {
+		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
+
+		this->viewport->configure();
+		qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
+		layer->draw(this->viewport);
+
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
 		this->draw_update();
 		this->contents_modified = true;
 	}
-
 }
 
 
@@ -1034,7 +1046,7 @@ void Window::draw_redraw()
 	/* Actually draw. */
 	this->viewport->clear();
 	/* Main layer drawing. */
-	this->items_tree->draw_all();
+	this->items_tree->draw_all(this->viewport);
 
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 	if (this->viewport->get_draw_with_highlight()) {
@@ -1170,7 +1182,7 @@ void Window::center_changed_cb(void) /* Slot. */
 
 QMenu * Window::get_layer_menu(QMenu * menu)
 {
-	menu->addAction(this->qa_layer_properties);
+	menu->addAction(this->qa_tree_item_properties);
 	return menu;
 }
 

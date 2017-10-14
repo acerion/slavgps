@@ -47,6 +47,7 @@
 #include "tree_view_internal.h"
 #include "ui_builder.h"
 #include "vikutils.h"
+#include "settings.h"
 
 
 
@@ -77,6 +78,11 @@ extern Tree * g_tree;
 
 
 static bool layer_defaults_register(LayerType layer_type);
+
+
+
+
+#define VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT "layers_create_trw_auto_default"
 
 
 
@@ -283,7 +289,7 @@ QString Layer::get_type_ui_label(LayerType type)
 
 
 
-Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
+Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool interactive)
 {
 	qDebug() << "II: Layer: will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
@@ -291,6 +297,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
+	bool use_default_properties = true;
 	Layer * layer = NULL;
 
 	if (layer_type == LayerType::AGGREGATE) {
@@ -298,8 +305,8 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 
 	} else if (layer_type == LayerType::TRW) {
 		layer = new LayerTRW();
+		(void) a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &use_default_properties);
 		((LayerTRW *) layer)->set_coord_mode(viewport->get_coord_mode());
-
 	} else if (layer_type == LayerType::COORD) {
 		layer = new LayerCoord();
 	} else if (layer_type == LayerType::MAP) {
@@ -321,6 +328,18 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 	}
 
 	assert (layer);
+
+
+	if (interactive && layer->has_properties_dialog && !use_default_properties) {
+		if (!layer->properties_dialog()) {
+			delete layer;
+			return NULL;
+		}
+
+		/* We translate the name here in order to avoid translating name set by user.
+		   TODO: translate the string. */
+		layer->set_name(Layer::get_type_ui_label(layer_type));
+	}
 
 	layer->layer_instance_uid = ++layer_uid;
 
@@ -776,7 +795,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	return g_tree->tree_get_items_tree()->get_window();
+	return g_tree->tree_get_main_window();
 }
 
 

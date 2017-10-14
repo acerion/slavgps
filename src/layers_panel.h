@@ -49,11 +49,11 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 
-		LayersPanel(QWidget * parent, Window * window_);
+		LayersPanel(QWidget * parent, Window * window);
 		~LayersPanel();
 
-		void add_layer(Layer * layer);
-		void draw_all();
+		void add_layer(Layer * layer, const CoordMode & viewport_coord_mode);
+		void draw_all(Viewport * viewport);
 
 		/* If a layer is selected, get the layer.
 		   If a sublayer is selected, get the sublayer's owning/parent layer. */
@@ -62,7 +62,6 @@ namespace SlavGPS {
 		Layer * get_layer_of_type(LayerType layer_type);
 
 
-		bool new_layer(LayerType layer_type);
 		void clear();
 
 		void change_coord_mode(CoordMode mode);
@@ -74,24 +73,20 @@ namespace SlavGPS {
 
 		LayerAggregate * get_top_layer();
 		TreeView * get_tree_view();
-		Window * get_window(void);
-		Viewport * get_viewport();
-		void set_viewport(Viewport * viewport);
 
 		void contextMenuEvent(QContextMenuEvent * event);
 
 
 		/* This should be somehow private. */
-		void item_toggled(TreeIndex const & index);
 		bool key_press(QKeyEvent * ev);
 		void move_item(bool up);
 		bool button_press_cb(QMouseEvent * event);
 
 	private:
-		void show_context_menu_for_item(TreeItem * item);
-		void show_context_menu_new_layer();
-		QMenu * create_context_menu(uint16_t layer_menu_items);
-		QMenu * add_submenu_new_layer(QMenu * menu);
+		void context_menu_show_for_item(TreeItem * item);
+		void context_menu_show_for_new_layer();
+		void context_menu_add_standard_items(QMenu * menu, uint16_t layer_menu_items);
+		void context_menu_add_new_layer_submenu(QMenu * menu);
 
 		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
 
@@ -99,7 +94,6 @@ namespace SlavGPS {
 		TreeIndex toplayer_item;
 		TreeView * tree_view = NULL;
 		Window * window = NULL; /* Reference. */
-		Viewport * viewport = NULL; /* Reference. */
 
 
 		QAction * qa_layer_add = NULL;
@@ -115,7 +109,6 @@ namespace SlavGPS {
 
 	public slots:
 		void add_layer_cb();
-		bool properties_cb(void);
 		void cut_selected_cb(void);
 		void copy_selected_cb(void);
 		bool paste_selected_cb(void);

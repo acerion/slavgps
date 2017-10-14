@@ -258,6 +258,8 @@ Track::Track(bool is_route)
 	memset(&bbox, 0, sizeof (LatLonBBox));
 
 	ref_count = 1;
+
+	this->has_properties_dialog = true;
 }
 
 
@@ -296,8 +298,6 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 	this->has_color = from.has_color;
 	this->color = from.color;
 	this->bbox = from.bbox;
-
-	this->has_properties_dialog = true;
 }
 
 
@@ -2511,7 +2511,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	if (g_tree->tree_get_items_tree()) {
 		QMenu * submenu = a_acquire_track_menu(g_tree->tree_get_main_window(),
 						       g_tree->tree_get_items_tree(),
-						       parent_layer_->menu_data->viewport,
+						       g_tree->tree_get_main_viewport(),
 						       this);
 		if (submenu) {
 			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
@@ -2868,7 +2868,7 @@ void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
 		LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-		Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+		Viewport * viewport = g_tree->tree_get_main_viewport();
 		parent_layer_->goto_coord(viewport, this->get_tp_first()->coord);
 	}
 }
@@ -2890,7 +2890,7 @@ void Track::goto_center_cb(void)
 	average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 
 	Coord coord(average, parent_layer_->coord_mode);
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, coord);
 }
 
@@ -2904,7 +2904,7 @@ void Track::goto_endpoint_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, this->get_tp_last()->coord);
 }
 
@@ -2919,7 +2919,7 @@ void Track::goto_max_speed_cb()
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -2934,7 +2934,7 @@ void Track::goto_max_alt_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -2949,7 +2949,7 @@ void Track::goto_min_alt_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -3016,7 +3016,7 @@ void Track::profile_dialog_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	Viewport * viewport = parent_layer_->menu_data->viewport ? parent_layer_->menu_data->viewport : g_tree->tree_get_main_viewport();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
 	track_profile_dialog(g_tree->tree_get_main_window(), this, viewport);
 }
 

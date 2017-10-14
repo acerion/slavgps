@@ -37,7 +37,6 @@
 #include "tree_view_internal.h"
 #include "dialog.h"
 #include "globals.h"
-#include "window.h"
 #include "util.h"
 #ifdef K
 #include "clipboard.h"
@@ -58,8 +57,8 @@ static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev);
 
 LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
-	this->window = window_;
 	this->panel_box = new QVBoxLayout;
+	this->window = window_;
 
 	this->setMaximumWidth(300);
 	this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
@@ -72,13 +71,6 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	}
 
 	{
-		for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
-			qDebug() << "II: Layers Panel: XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
-		}
-
-
-		qDebug() << "II: Layers Panel: Using icon theme " << QIcon::themeName();
-
 		this->tool_bar = new QToolBar();
 		this->panel_box->addWidget(this->tool_bar);
 
@@ -135,16 +127,12 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->toplayer = new LayerAggregate();
 	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
-
-
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
 
+
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(layer_changed(void)), this, SLOT(emit_update_window_cb(void)));
-#ifdef K
-	connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
-#endif
 
 
 #ifndef SLAVGPS_QT
@@ -173,47 +161,11 @@ LayersPanel::~LayersPanel()
 
 
 
-void LayersPanel::set_viewport(Viewport * vp)
-{
-	this->viewport = vp;
-	/* TODO: also update GCs (?) */
-}
-
-
-
-
-Viewport * LayersPanel::get_viewport()
-{
-	return this->viewport;
-}
-
-
-
-
 void LayersPanel::emit_update_window_cb()
 {
 	qDebug() << "SLOT?: Layers Panel received 'changed' signal from top level layer?";
 	qDebug() << "SIGNAL: Layers Panel emits 'update' signal";
 	emit this->update_window();
-}
-
-
-
-
-/* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_toggled(TreeIndex const & index)
-{
-	/* Get type and data. */
-	TreeItem * item = this->tree_view->get_tree_item(index);
-	if (!item) {
-		qDebug() << "EE: Layers Panel: item toggled: failed to get non-NULL item";
-		return;
-	}
-
-	bool visible = item->toggle_visible();
-	item->to_layer()->emit_layer_changed_although_invisible();
-	this->tree_view->set_tree_item_visibility(index, visible); /* Set trigger for half-drawn. */
-
 }
 
 
@@ -273,12 +225,10 @@ bool LayersPanel::key_press(QKeyEvent * ev)
 
    \return freshly created menu with specified items
 */
-QMenu * LayersPanel::create_context_menu(uint16_t layer_menu_items)
+void LayersPanel::context_menu_add_standard_items(QMenu * menu, uint16_t layer_menu_items)
 {
-	QMenu * menu = new QMenu(this);
-
 	if (layer_menu_items & (uint16_t) LayerMenuItem::PROPERTIES) {
-		menu->addAction(this->get_window()->qa_layer_properties);
+		menu->addAction(this->window->qa_tree_item_properties);
 	}
 
 	if (layer_menu_items & (uint16_t) LayerMenuItem::CUT) {
@@ -298,35 +248,31 @@ QMenu * LayersPanel::create_context_menu(uint16_t layer_menu_items)
 	}
 
 	if (layer_menu_items & (uint16_t) LayerMenuItem::NEW) {
-		this->add_submenu_new_layer(menu);
+		this->context_menu_add_new_layer_submenu(menu);
 	}
-
-	return menu;
-
 }
 
 
 
-QMenu * LayersPanel::add_submenu_new_layer(QMenu * menu)
+
+void LayersPanel::context_menu_add_new_layer_submenu(QMenu * menu)
 {
 	QMenu * layers_submenu = new QMenu("New Layer");
 	menu->addMenu(layers_submenu);
 	this->window->new_layers_submenu_add_actions(layers_submenu);
-
-	return menu;
 }
 
 
 
 
-void LayersPanel::show_context_menu_for_item(TreeItem * item)
+void LayersPanel::context_menu_show_for_item(TreeItem * item)
 {
 	if (!item) {
 		qDebug() << "EE: Layers Panel: show context menu for item: NULL item";
 		return;
 	}
 
-	QMenu * menu = NULL;
+	QMenu * menu = new QMenu(this);
 
 	if (item->tree_item_type == TreeItemType::LAYER) {
 
@@ -342,14 +288,14 @@ void LayersPanel::show_context_menu_for_item(TreeItem * item)
 		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
 #endif
 
-		menu = this->create_context_menu(layer_menu_items);
+
+		this->context_menu_add_standard_items(menu, layer_menu_items);
 
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(*menu);
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: menu for sublayer" << item->type_id << item->name;
 
-		menu = new QMenu(this);
 
 		if (!item->add_context_menu_items(*menu, true)) {
 			delete menu;
@@ -372,56 +318,12 @@ void LayersPanel::show_context_menu_for_item(TreeItem * item)
 
 
 
-void LayersPanel::show_context_menu_new_layer(void)
+void LayersPanel::context_menu_show_for_new_layer(void)
 {
-	QMenu * menu = this->create_context_menu((uint16_t) LayerMenuItem::NEW);
+	QMenu * menu = new QMenu(this);
+	this->context_menu_add_standard_items(menu, (uint16_t) LayerMenuItem::NEW);
 	menu->exec(QCursor::pos());
 	delete menu;
-}
-
-
-
-
-#define VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT "layers_create_trw_auto_default"
-/**
- * @type: type of the new layer.
- *
- * Create a new layer and add to panel.
- */
-bool LayersPanel::new_layer(LayerType layer_type)
-{
-	assert (this->viewport);
-	bool ask_user = false;
-	if (layer_type == LayerType::TRW) {
-		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
-	}
-	ask_user = !ask_user;
-
-	assert (layer_type != LayerType::NUM_TYPES);
-
-	Layer * layer = Layer::construct_layer(layer_type, this->viewport);
-	if (!layer) {
-		return false;
-	}
-
-	if (layer->has_properties_dialog && ask_user) {
-		if (!layer->properties_dialog()) {
-			delete layer;
-			return false;
-		}
-
-		/* We translate the name here in order to avoid translating name set by user.
-		   TODO: translate the string. */
-		layer->set_name(Layer::get_type_ui_label(layer_type));
-	}
-
-	this->add_layer(layer);
-
-	this->viewport->configure();
-	qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
-	layer->draw(this->viewport);
-
-	return true;
 }
 
 
@@ -432,10 +334,11 @@ bool LayersPanel::new_layer(LayerType layer_type)
  *
  * Add an existing layer to panel.
  */
-void LayersPanel::add_layer(Layer * layer)
+void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode)
 {
 	/* Could be something different so we have to do this. */
-	layer->change_coord_mode(this->viewport->get_coord_mode());
+	layer->change_coord_mode(viewport_coord_mode);
+
 	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
 
 	/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
@@ -515,39 +418,11 @@ void LayersPanel::move_item(bool up)
 
 
 
-bool LayersPanel::properties_cb(void) /* Slot. */
+void LayersPanel::draw_all(Viewport * viewport_)
 {
-	assert (this->viewport);
-
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
-	if (!selected_item) {
-		return false;
-	}
-
-	if (!selected_item->has_properties_dialog) {
-		Dialog::info(tr("This item has no configurable properties."), this->window);
-		return true;
-	}
-
-	bool result = selected_item->properties_dialog();
-	if (result) {
-		if (selected_item->tree_item_type == TreeItemType::LAYER) {
-			selected_item->to_layer()->emit_layer_changed();
-		}
-		return true;
-	}
-
-	return false;
-}
-
-
-
-
-void LayersPanel::draw_all()
-{
-	if (this->viewport && this->toplayer->visible) {
+	if (viewport_ && this->toplayer->visible) {
 		qDebug() << "II: Layers Panel: calling toplayer->draw()";
-		this->toplayer->draw(this->viewport);
+		this->toplayer->draw(viewport_);
 	}
 }
 
@@ -569,8 +444,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
-				this->viewport->set_trigger(NULL);
+			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
+				g_tree->tree_get_main_viewport()->set_trigger(NULL);
 			}
 
 			a_clipboard_copy_selected(this);
@@ -630,7 +505,7 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 
 void LayersPanel::add_layer_cb(void)
 {
-	this->show_context_menu_new_layer();
+	this->context_menu_show_for_new_layer();
 }
 
 
@@ -659,8 +534,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
-				this->viewport->set_trigger(NULL);
+			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
+				g_tree->tree_get_main_viewport()->set_trigger(NULL);
 			}
 
 			if (parent_layer->type == LayerType::AGGREGATE) {
@@ -684,21 +559,6 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 
 
-Layer * LayersPanel::get_selected_layer()
-{
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
-	if (!selected_item) {
-		return NULL;
-	}
-
-	/* If a layer is selected, return the layer itself.
-	   If a sublayer is selected, return its parent/owning layer. */
-	return selected_item->to_layer();
-}
-
-
-
-
 void LayersPanel::move_item_up_cb(void)
 {
 	this->move_item(true);
@@ -710,6 +570,21 @@ void LayersPanel::move_item_up_cb(void)
 void LayersPanel::move_item_down_cb(void)
 {
 	this->move_item(false);
+}
+
+
+
+
+Layer * LayersPanel::get_selected_layer()
+{
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	if (!selected_item) {
+		return NULL;
+	}
+
+	/* If a layer is selected, return the layer itself.
+	   If a sublayer is selected, return its parent/owning layer. */
+	return selected_item->to_layer();
 }
 
 
@@ -763,9 +638,11 @@ bool LayersPanel::has_any_layer_of_type(LayerType type)
 {
 	std::list<Layer const *> * dems = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
 	if (dems->empty()) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->get_window());
+		delete dems;
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->window);
 		return false;
 	}
+	delete dems;
 	return true;
 }
 
@@ -829,14 +706,6 @@ TreeView * LayersPanel::get_tree_view()
 
 
 
-Window * LayersPanel::get_window()
-{
-	return this->window;
-}
-
-
-
-
 void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 {
 	if (!this->tree_view->geometry().contains(ev->pos())) {
@@ -869,11 +738,9 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		TreeItem * item = this->tree_view->get_tree_item(index);
 
 		Layer * layer = item->to_layer();
+		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 
-		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-		layer->menu_data->viewport = this->get_viewport();
-		this->show_context_menu_for_item(item);
-		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
+		this->context_menu_show_for_item(item);
 	} else {
 		/* We have clicked on empty space, not on tree item.  */
 
@@ -885,7 +752,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 			qDebug() << "II: Layers Panel: context menu event inside of tree view's viewport";
 		}
 
-		this->show_context_menu_new_layer();
+		this->context_menu_show_for_new_layer();
 	}
 	return;
 }

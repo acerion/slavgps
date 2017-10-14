@@ -106,6 +106,7 @@ namespace SlavGPS {
 	private slots:
 		void select_cb(void);
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
+		bool tree_item_properties_cb(void);
 
 	signals:
 		void tree_item_needs_redraw(sg_uid_t uid);

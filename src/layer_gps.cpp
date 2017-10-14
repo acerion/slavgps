@@ -71,6 +71,7 @@ using namespace SlavGPS;
 #ifdef K
 extern std::vector<BabelDevice *> a_babel_device_list;
 #endif
+extern Tree * g_tree;
 
 
 
@@ -1426,7 +1427,7 @@ static void gps_empty_upload_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Upload data?"), panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Upload data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
@@ -1444,7 +1445,7 @@ static void gps_empty_download_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Download data?"), panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Download data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
@@ -1463,7 +1464,7 @@ static void gps_empty_realtime_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
@@ -1481,7 +1482,7 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete All GPS data?"), panel->get_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete All GPS data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 

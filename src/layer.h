@@ -115,7 +115,7 @@ namespace SlavGPS {
 		static Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
 		void           unmarshall_params(uint8_t * data, size_t data_len);
 
-		static Layer * construct_layer(LayerType layer_type, Viewport * viewport);
+		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 
 		void emit_layer_changed(void);
 		void emit_layer_changed_although_invisible(void);
@@ -256,7 +256,7 @@ namespace SlavGPS {
 
 	class trw_menu_sublayer_t {
 	public:
-		Viewport * viewport = NULL;
+		//Viewport * viewport = NULL;
 		void * misc = NULL;
 		QString string;
 	};

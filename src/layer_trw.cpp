@@ -1814,7 +1814,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
-	if (this->auto_set_view(this->menu_data->viewport)) {
+	if (this->auto_set_view(g_tree->tree_get_main_viewport())) {
 		g_tree->tree_get_items_tree()->emit_update_window_cb();
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());

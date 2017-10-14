@@ -185,7 +185,7 @@ namespace SlavGPS {
 		bool select_move = false;
 
 
-		QAction * qa_layer_properties = NULL;
+		QAction * qa_tree_item_properties = NULL;
 
 
 		unsigned int draw_image_width;

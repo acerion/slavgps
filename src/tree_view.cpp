@@ -38,6 +38,7 @@
 #include "layers_panel.h"
 #include "globals.h"
 #include "ui_builder.h"
+#include "dialog.h"
 //#include "layer_aggregate.h"
 //#include "layer_coord.h"
 
@@ -1001,4 +1002,31 @@ bool TreeView::get_editing()
 
 	/* Instead maintain our own value applying to the whole tree. */
 	return this->editing;
+}
+
+
+
+
+bool TreeView::tree_item_properties_cb(void) /* Slot. */
+{
+	TreeItem * selected_item = this->get_selected_tree_item();
+	if (!selected_item) {
+		return false;
+	}
+
+	if (!selected_item->has_properties_dialog) {
+		Dialog::info(tr("This item has no configurable properties."), g_tree->tree_get_main_window());
+		qDebug() << "II: Tree View: selected item" << selected_item->type_id << "has no configurable properties";
+		return true;
+	}
+
+	bool result = selected_item->properties_dialog();
+	if (result) {
+		if (selected_item->tree_item_type == TreeItemType::LAYER) {
+			selected_item->to_layer()->emit_layer_changed();
+		}
+		return true;
+	}
+
+	return false;
 }

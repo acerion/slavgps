@@ -283,14 +283,14 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(),
 						  g_tree->tree_get_items_tree(),
-						  this->menu_data->viewport, this);
+						  g_tree->tree_get_main_viewport(), this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
 
 	submenu = a_acquire_trwlayer_track_menu(this->get_window(),
 						g_tree->tree_get_items_tree(),
-						this->menu_data->viewport, this);
+						g_tree->tree_get_main_viewport(), this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}

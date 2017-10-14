@@ -392,7 +392,6 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 	Track * track = this->get_edited_track(); /* Track or route that is currently being selected/edited. */
 	if (track && track->visible) { /* Track or Route. */
 		if (!track->name.isEmpty()) {
-			this->menu_data->viewport = viewport;
 
 			QMenu menu(viewport);
 
@@ -405,8 +404,6 @@ bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 	Waypoint * wp = this->get_edited_wp(); /* Waypoint that is currently being selected/edited. */
 	if (wp && wp->visible) {
 		if (!wp->name.isEmpty()) {
-			this->menu_data->viewport = viewport;
-
 			QMenu menu(viewport);
 
 			wp->add_context_menu_items(menu, false);
@@ -589,8 +586,6 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	} else if (ev->button() == Qt::RightButton && trw->waypoint_rightclick) {
 		Waypoint * wp = trw->get_edited_wp();  /* Waypoint that is currently being selected/edited. */
 		if (wp) {
-			trw->menu_data->viewport = this->viewport;
-
 			QMenu menu;
 			wp->add_context_menu_items(menu, false);
 			menu.exec(QCursor::pos());

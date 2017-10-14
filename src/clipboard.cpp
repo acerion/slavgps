@@ -131,7 +131,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 
 	if (vc->type == VIK_CLIPBOARD_DATA_LAYER) {
 		Layer * new_layer = Layer::unmarshall(vc->data, vc->len, panel->get_viewport());
-		panel->add_layer(new_layer);
+		panel->add_layer(new_layer, viewport->get_coord_mode());
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
 		Layer * selected = panel->get_selected_layer();
 		if (selected && selected->type == vc->layer_type) {
