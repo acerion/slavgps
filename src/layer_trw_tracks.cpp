@@ -472,7 +472,7 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 	  - Search tracks set for an instance of repeated name
 	  - get track with this name
 	  - create new name
-	  - rename track & update equiv. treeview iter
+	  - rename track & update equiv. tree view iter
 	  - repeat until all different
 	*/
 
@@ -574,7 +574,7 @@ void LayerTRWTracks::assign_colors(int track_drawing_mode, const QColor & track_
 				trk->has_color = true;
 			}
 
-			this->update_treeview(trk);
+			this->update_tree_view(trk);
 
 			ii++;
 			if (ii > TRW_LAYER_TRACK_COLORS_MAX) {
@@ -599,7 +599,7 @@ void LayerTRWTracks::assign_colors(int track_drawing_mode, const QColor & track_
 				trk->has_color = true;
 			}
 
-			this->update_treeview(trk);
+			this->update_tree_view(trk);
 
 			ii = !ii;
 		}
@@ -637,9 +637,9 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 
 
 /*
- * Update the treeview of the track id - primarily to update the icon.
+ * Update the tree view of the track id - primarily to update the icon.
  */
-void LayerTRWTracks::update_treeview(Track * trk)
+void LayerTRWTracks::update_tree_view(Track * trk)
 {
 	if (trk->index.isValid()) {
 		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
@@ -981,7 +981,7 @@ void LayerTRWTracks::paste_sublayer_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
 #ifdef K
-	a_clipboard_paste(g_tree->tree_get_layers_panel());
+	a_clipboard_paste(g_tree->tree_get_items_tree());
 #endif
 }
 

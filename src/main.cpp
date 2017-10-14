@@ -267,7 +267,6 @@ int main(int argc, char ** argv)
 	SGUtils::set_auto_features_on_first_run();
 
 	Window window;
-	window.layers_panel->set_viewport(window.viewport); /* Ugly, FIXME. */
 	SGUtils::command_line(&window, startup_latitude, startup_longitude, startup_zoom_level_osm, startup_map_type_id);
 	window.show();
 

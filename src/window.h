@@ -107,13 +107,13 @@ namespace SlavGPS {
 		Window * new_window();
 
 		Viewport * get_viewport(void);
-		LayersPanel * get_layers_panel(void);
+		LayersPanel * get_items_tree(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
 		Toolbox * get_toolbox(void);
 		StatusBar * get_statusbar(void);
 
-		LayersPanel * layers_panel = NULL;
+		LayersPanel * items_tree = NULL;
 		Viewport * viewport = NULL;
 
 		/* Flag set when contents of project is modified. This

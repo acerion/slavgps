@@ -387,9 +387,9 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	LayerTRW * parent_layer = (LayerTRW *) this->trk->owning_layer;
 	if (this->trk->type_id == "sg.trw.track") {
-		parent_layer->get_tracks_node().update_treeview(this->trk);
+		parent_layer->get_tracks_node().update_tree_view(this->trk);
 	} else {
-		parent_layer->get_routes_node().update_treeview(this->trk);
+		parent_layer->get_routes_node().update_tree_view(this->trk);
 	}
 	parent_layer->emit_layer_changed();
 

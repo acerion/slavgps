@@ -125,8 +125,6 @@ namespace SlavGPS {
 		void configure_interface(LayerInterface * intf, Parameter * parameters);
 		static void preconfigure_interfaces(void);
 
-		/* Layer interface methods. */
-
 		/* Rarely used, this is called after a read operation
 		   or properties box is run.  usually used to create
 		   GC's that depend on params, but GC's can also be
@@ -134,6 +132,8 @@ namespace SlavGPS {
 		virtual void post_read(Viewport * viewport, bool from_file);
 
 		virtual void draw(Viewport * viewport) { return; };
+		void draw_if_visible(Viewport * viewport);
+
 		virtual QString get_tooltip(void);
 
 		bool handle_selection_in_tree(void);
@@ -160,7 +160,7 @@ namespace SlavGPS {
 		/* Treeview drag and drop method. called on the
 		   destination layer. it is given a source and
 		   destination layer, and the source and destination
-		   iters in the treeview. */
+		   iters in the tree view. */
 		virtual void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
 		virtual int read_file(FILE * f, char const * dirpath);
@@ -204,8 +204,6 @@ namespace SlavGPS {
 		const QString get_name(void) const;
 		void set_name(const QString & new_name);
 
-
-		void draw_visible(Viewport * viewport);
 
 		void set_initial_parameter_values(void);
 

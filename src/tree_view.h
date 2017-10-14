@@ -80,12 +80,12 @@ namespace SlavGPS {
 
 		TreeView * tree_get_tree_view() { return this->tree_view; };
 		Window * tree_get_main_window() { return this->window; };
-		LayersPanel * tree_get_layers_panel() { return this->layers_panel; };
+		LayersPanel * tree_get_items_tree() { return this->items_tree; };
 		Viewport * tree_get_main_viewport() { return this->viewport; };
 
 		TreeView * tree_view = NULL; /* Reference. */
 		Window * window = NULL;
-		LayersPanel * layers_panel = NULL;
+		LayersPanel * items_tree = NULL;
 		Viewport * viewport = NULL;
 
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */

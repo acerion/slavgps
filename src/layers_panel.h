@@ -73,7 +73,7 @@ namespace SlavGPS {
 		bool get_visible(void);
 
 		LayerAggregate * get_top_layer();
-		TreeView * get_treeview();
+		TreeView * get_tree_view();
 		Window * get_window(void);
 		Viewport * get_viewport();
 		void set_viewport(Viewport * viewport);

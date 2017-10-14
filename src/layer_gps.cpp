@@ -601,7 +601,7 @@ void LayerGPS::draw(Viewport * viewport)
 			}
 		}
 		if (!viewport->get_half_drawn()) {
-			trw->draw_visible(viewport);
+			trw->draw_if_visible(viewport);
 		}
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)

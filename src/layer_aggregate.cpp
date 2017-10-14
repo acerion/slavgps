@@ -176,7 +176,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 			this->children->insert(theone, layer);
 		}
 	} else {
-		/* Effectively insert at 'end' of the list to match how displayed in the treeview
+		/* Effectively insert at 'end' of the list to match how displayed in the tree view
 		   - but since it is drawn from 'bottom first' it is actually the first in the child list.
 		   This ordering is especially important if it is a map or similar type,
 		   which needs be drawn first for the layering draw method to work properly.
@@ -305,8 +305,8 @@ void LayerAggregate::draw(Viewport * viewport)
 		    || layer->type == LayerType::GPS
 		    || !viewport->get_half_drawn()) {
 
-			qDebug() << "II: Layer Aggregate: calling draw_visible() for" << layer->name;
-			layer->draw_visible(viewport);
+			qDebug() << "II: Layer Aggregate: calling draw_if_visible() for" << layer->name;
+			layer->draw_if_visible(viewport);
 		}
 	}
 }
@@ -327,7 +327,7 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
-	TreeView * treeview = g_tree->tree_get_layers_panel()->get_treeview();
+	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -335,7 +335,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		treeview->toggle_tree_item_visibility(layer->index);
+		t_view->toggle_tree_item_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_layer_changed();
@@ -352,7 +352,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		/* Also set checkbox on_off. */
-		panel->get_treeview()->set_tree_item_visibility(layer->index, on_off);
+		panel->get_tree_view()->set_tree_item_visibility(layer->index, on_off);
 	}
 
 	/* Redraw as view may have changed. */
@@ -364,7 +364,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 {
-	this->child_visible_set(g_tree->tree_get_layers_panel(), true);
+	this->child_visible_set(g_tree->tree_get_items_tree(), true);
 }
 
 
@@ -372,7 +372,7 @@ void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 
 void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 {
-	this->child_visible_set(g_tree->tree_get_layers_panel(), false);
+	this->child_visible_set(g_tree->tree_get_items_tree(), false);
 }
 
 

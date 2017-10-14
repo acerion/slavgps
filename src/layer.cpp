@@ -331,7 +331,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport)
 
 
 
-void Layer::draw_visible(Viewport * viewport)
+void Layer::draw_if_visible(Viewport * viewport)
 {
 	if (this->visible) {
 		qDebug() << "II: Layer: calling draw() for" << this->name;
@@ -655,7 +655,7 @@ void Layer::set_initial_parameter_values(void)
 		}
 	}
 
-	this->has_properties_dialog = this->interface->parameters.size() != 0;
+	this->has_properties_dialog = this->interface->has_properties_dialog();
 }
 
 
@@ -776,7 +776,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	return g_tree->tree_get_layers_panel()->get_window();
+	return g_tree->tree_get_items_tree()->get_window();
 }
 
 

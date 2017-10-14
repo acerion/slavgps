@@ -282,14 +282,14 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 	QMenu * submenu = a_acquire_trwlayer_menu(this->get_window(),
-						  g_tree->tree_get_layers_panel(),
+						  g_tree->tree_get_items_tree(),
 						  this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
 
 	submenu = a_acquire_trwlayer_track_menu(this->get_window(),
-						g_tree->tree_get_layers_panel(),
+						g_tree->tree_get_items_tree(),
 						this->menu_data->viewport, this);
 	if (submenu) {
 		menu.addMenu(submenu);
@@ -382,7 +382,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (g_tree->tree_get_layers_panel() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
+	if (g_tree->tree_get_items_tree() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
 		rv = true;
 		layer_trw_sublayer_menu_waypoints_waypoint_new(this, menu);
 	}

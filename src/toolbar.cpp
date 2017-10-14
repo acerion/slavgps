@@ -887,10 +887,10 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 
 
 
-static void tb_editor_scroll_to_iter(GtkTreeView *treeview, GtkTreeIter *iter)
+static void tb_editor_scroll_to_iter(GtkTreeView * tree_view, GtkTreeIter *iter)
 {
-	GtkTreePath *path = gtk_tree_model_get_path(gtk_tree_view_get_model(treeview), iter);
-	gtk_tree_view_scroll_to_cell(treeview, path, NULL, true, 0.5, 0.0);
+	GtkTreePath *path = gtk_tree_model_get_path(gtk_tree_view_get_model(tree_view), iter);
+	gtk_tree_view_scroll_to_cell(tree_view, path, NULL, true, 0.5, 0.0);
 	gtk_tree_path_free(path);
 }
 

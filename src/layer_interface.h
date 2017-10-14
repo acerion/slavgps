@@ -80,6 +80,10 @@ namespace SlavGPS {
 		   By default a layer-type has no layer-specific tools. */
 		virtual LayerToolContainer * create_tools(Window * window, Viewport * viewport) { return NULL; };
 
+		/* Does given layer type have configurable properties that can be viewed and edited in dialog window?
+		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */
+		bool has_properties_dialog(void) { return this->parameters.size() != 0; };
+
 		/* Menu items (actions) to be created and put into a
 		   context menu for given layer type. */
 		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;

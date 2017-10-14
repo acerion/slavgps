@@ -154,12 +154,12 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
-	connect(this->layers_panel, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
+	connect(this->items_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
 
 	g_tree = new Tree();
-	g_tree->tree_view = this->get_layers_panel()->get_treeview();
+	g_tree->tree_view = this->get_items_tree()->get_tree_view();
 	g_tree->window = this;
-	g_tree->layers_panel = this->layers_panel;
+	g_tree->items_tree = this->items_tree;
 	g_tree->viewport = this->viewport;
 
 	connect(g_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
@@ -211,7 +211,7 @@ Window::Window()
 
 
 
-	QObject::connect(this->layers_panel, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
+	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
 	// Allow key presses to be processed anywhere
 	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
@@ -220,7 +220,7 @@ Window::Window()
 	this->center_changed_cb();
 
 	this->hpaned = gtk_hpaned_new();
-	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_panel, false, true);
+	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_tree, false, true);
 	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport, true, true);
 
 	/* This packs the button into the window (a gtk container). */
@@ -328,7 +328,7 @@ Window::~Window()
 	vik_toolbar_finalize(this->viking_vtb);
 
 	delete this->viewport;
-	delete this->layers_panel;
+	delete this->layers_tree;
 #endif
 }
 
@@ -350,8 +350,11 @@ void Window::create_layout()
 
 	this->panel_dock = new QDockWidget(tr("Layers"), this);
 	this->panel_dock->setAllowedAreas(Qt::TopDockWidgetArea);
-	this->layers_panel = new LayersPanel(this->panel_dock, this);
-	this->panel_dock->setWidget(this->layers_panel);
+
+	this->items_tree = new LayersPanel(this->panel_dock, this);
+	this->items_tree->set_viewport(this->viewport);
+
+	this->panel_dock->setWidget(this->items_tree);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
 
 
@@ -892,7 +895,7 @@ void Window::create_actions(void)
 	{
 		this->qa_layer_properties = new QAction("Properties...", this);
 		this->menu_layers->addAction(this->qa_layer_properties);
-		connect(this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties_cb(void)));
+		connect(this->qa_layer_properties, SIGNAL (triggered(bool)), this->items_tree, SLOT (properties_cb(void)));
 
 		this->new_layers_submenu_add_actions(this->menu_layers);
 	}
@@ -997,7 +1000,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
-	if (this->layers_panel->new_layer(layer_type)) {
+	if (this->items_tree->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
 		this->draw_update();
 		this->contents_modified = true;
@@ -1031,7 +1034,7 @@ void Window::draw_redraw()
 	/* Actually draw. */
 	this->viewport->clear();
 	/* Main layer drawing. */
-	this->layers_panel->draw_all();
+	this->items_tree->draw_all();
 
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
 	if (this->viewport->get_draw_with_highlight()) {
@@ -1093,9 +1096,9 @@ Viewport * Window::get_viewport()
 
 
 
-LayersPanel * Window::get_layers_panel()
+LayersPanel * Window::get_items_tree()
 {
-	return this->layers_panel;
+	return this->items_tree;
 }
 
 
@@ -1577,7 +1580,7 @@ bool Window::get_pan_move(void)
 
 void Window::menu_edit_cut_cb(void)
 {
-	this->layers_panel->cut_selected_cb();
+	this->items_tree->cut_selected_cb();
 	this->contents_modified = true;
 }
 
@@ -1587,7 +1590,7 @@ void Window::menu_edit_cut_cb(void)
 void Window::menu_edit_copy_cb(void)
 {
 #ifdef K
-	a_clipboard_copy_selected(this->layers_panel);
+	a_clipboard_copy_selected(this->layers_tree);
 #endif
 }
 
@@ -1596,7 +1599,7 @@ void Window::menu_edit_copy_cb(void)
 
 void Window::menu_edit_paste_cb(void)
 {
-	if (this->layers_panel->paste_selected_cb()) {
+	if (this->items_tree->paste_selected_cb()) {
 		this->contents_modified = true;
 	}
 }
@@ -1606,8 +1609,8 @@ void Window::menu_edit_paste_cb(void)
 
 void Window::menu_edit_delete_cb(void)
 {
-	if (this->layers_panel->get_selected_layer()) {
-		this->layers_panel->delete_selected_cb();
+	if (this->items_tree->get_selected_layer()) {
+		this->items_tree->delete_selected_cb();
 		this->contents_modified = true;
 	} else {
 		Dialog::info(tr("You must select a layer to delete."), this);
@@ -1620,9 +1623,9 @@ void Window::menu_edit_delete_cb(void)
 void Window::menu_edit_delete_all_cb(void)
 {
 	/* Do nothing if empty. */
-	if (!this->layers_panel->get_top_layer()->is_empty()) {
+	if (!this->items_tree->get_top_layer()->is_empty()) {
 		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), this)) {
-			this->layers_panel->clear();
+			this->items_tree->clear();
 			this->set_filename(NULL);
 			this->draw_update();
 		}
@@ -1812,7 +1815,7 @@ void Window::goto_default_location_cb(void)
 	ll.lat = Preferences::get_default_lat();
 	ll.lon = Preferences::get_default_lon();
 	this->viewport->set_center_latlon(&ll, true);
-	this->layers_panel->emit_update_window_cb();
+	this->items_tree->emit_update_window_cb();
 }
 
 
@@ -1821,7 +1824,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	goto_location(this, this->viewport);
-	this->layers_panel->emit_update_window_cb();
+	this->items_tree->emit_update_window_cb();
 }
 
 
@@ -2171,10 +2174,10 @@ void Window::show_layer_defaults_cb(void)
 
 	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_type_ui_label(layer_type);
 
-	if (Layer::get_interface(layer_type)->parameters.size() == 0) {
-		Dialog::info(tr("This layer type has no configurable properties."), this);
-	} else {
+	if (Layer::get_interface(layer_type)->has_properties_dialog()) {
 		LayerDefaults::show_window(layer_type, this);
+	} else {
+		Dialog::info(tr("This layer type has no configurable properties."), this);
 	}
 
 	/* No update needed. */
@@ -2304,7 +2307,7 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 	bool success = false;
 	bool restore_original_filename = false;
 
-	LayerAggregate * agg = this->layers_panel->get_top_layer();
+	LayerAggregate * agg = this->items_tree->get_top_layer();
 	this->loaded_type = a_file_load(agg, this->viewport, new_filename.toUtf8().constData());
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
@@ -2341,7 +2344,7 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 			this->only_updating_coord_mode_ui = false;
 #endif
 
-			this->layers_panel->change_coord_mode(this->viewport->get_coord_mode());
+			this->items_tree->change_coord_mode(this->viewport->get_coord_mode());
 
 			/* Slightly long winded methods to align loaded viewport settings with the UI. */
 			bool vp_state_scale = this->viewport->get_draw_scale();
@@ -2698,7 +2701,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		free(name);
 
 		// Signal to redraw from the background
-		locator->window->layers_panel->emit_update_window_cb();
+		locator->window->items_tree->emit_update_window_cb();
 	} else {
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}
@@ -2731,7 +2734,7 @@ void Window::finish_new(void)
 		LayerMap * layer = new LayerMap();
 		layer->set_name(QObject::tr("Default Map"));
 
-		this->layers_panel->get_top_layer()->add_layer(layer, true);
+		this->items_tree->get_top_layer()->add_layer(layer, true);
 
 		this->draw_update();
 	}
@@ -2825,7 +2828,7 @@ void Window::my_acquire(VikDataSourceInterface * datasource)
 	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DatasourceMode::CREATENEWLAYER;
 	}
-	a_acquire(this, this->layers_panel, this->viewport, mode, datasource, NULL, NULL);
+	a_acquire(this, this->items_tree, this->viewport, mode, datasource, NULL, NULL);
 }
 
 
@@ -3459,9 +3462,9 @@ void Window::change_coord_mode_cb(QAction * qa)
 		/* this takes care of coord mode too */
 		this->viewport->set_drawmode(drawmode);
 		if (drawmode == ViewportDrawMode::UTM) {
-			this->layers_panel->change_coord_mode(CoordMode::UTM);
+			this->items_tree->change_coord_mode(CoordMode::UTM);
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
-			this->layers_panel->change_coord_mode(CoordMode::LATLON);
+			this->items_tree->change_coord_mode(CoordMode::LATLON);
 		}
 		this->draw_update();
 	}
@@ -3528,9 +3531,9 @@ void Window::menu_view_pan_cb(void)
 	qDebug() << "SLOT: Window: 'Menu View Pan'" << qa->text() << direction;
 
 #if 0
-	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
+	// Since the tree view cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	Layer * sel = window->layers_panel->get_selected_layer();
+	Layer * sel = window->items_tree->get_selected_layer();
 	if (sel && sel->tree_view->get_editing()) {
 		return;
 	}
@@ -3563,7 +3566,7 @@ void Window::menu_view_pan_cb(void)
 void Window::simple_map_update(bool only_new)
 {
 	// Find the most relevent single map layer to operate on
-	Layer * layer = this->layers_panel->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAP);
+	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAP);
 	if (layer) {
 		((LayerMap *) layer)->download(this->viewport, only_new);
 	}
@@ -3753,7 +3756,7 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 
 void Window::export_to_common(SGFileType vft, char const * extension)
 {
-	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
 		Dialog::info(tr("Nothing to Export!"), this);
@@ -3846,7 +3849,7 @@ bool Window::window_save()
 	this->set_busy_cursor();
 	bool success = true;
 
-	if (a_file_save(this->layers_panel->get_top_layer(), this->viewport, this->filename)) {
+	if (a_file_save(this->items_tree->get_top_layer(), this->viewport, this->filename)) {
 		this->update_recently_used_document(this->filename);
 	} else {
 		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
@@ -3886,7 +3889,7 @@ void Window::import_kmz_file_cb(void)
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)  {
 		char *fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		// TODO convert ans value into readable explaination of failure...
-		int ans = kmz_open_file(fn, window->viewport, window->layers_panel);
+		int ans = kmz_open_file(fn, window->viewport, window->items_tree);
 		if (ans) {
 			Dialog::error(tr("Unable to import %1.").arg(QString(fn)), window);
 		}
@@ -3927,7 +3930,7 @@ Window * Window::new_window()
 			bool sidepanel;
 			if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &sidepanel)) {
 				if (! sidepanel) {
-					window->layers_panel->set_visible(false);
+					window->items_tree->set_visible(false);
 					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewSidePanel");
 					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
 				}
@@ -3994,7 +3997,7 @@ void Window::help_cache_info_cb(void)
 void Window::preferences_change_update(void)
 {
 	// Want to update all TrackWaypoint layers
-	std::list<Layer const *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
+	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
 	if (!layers || layers->empty()) {
 		return;
 	}
@@ -4078,7 +4081,7 @@ bool Window::key_press_event_cb(QKeyEvent * event)
 		return true; // handled keypress
 	}
 
-	Layer * layer = this->layers_panel->get_selected_layer();
+	Layer * layer = this->items_tree->get_selected_layer();
 	if (layer && this->tb->active_tool && this->tb->active_tool->key_press) {
 		LayerType ltype = this->tb->active_tool->layer_type;
 		if (layer && ltype == layer->type) {

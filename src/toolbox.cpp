@@ -114,7 +114,7 @@ void Toolbox::activate_tool(QAction * qa)
 {
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 #if 0
 	if (!layer) {
 		return;
@@ -185,7 +185,7 @@ void Toolbox::activate_tool(const QString & tool_id)
 	}
 
 	qDebug() << "II: Toolbox: activating tool" << tool_id;
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 #if 0
 	if (!layer) {
 		return;
@@ -217,7 +217,7 @@ void Toolbox::deactivate_tool(const QString & tool_id)
 		return;
 	}
 
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	tool->deactivate_tool(layer);
 	tool->qa->setChecked(false);
 	this->active_tool = NULL;
@@ -259,7 +259,7 @@ void Toolbox::deactivate_tool(LayerTool * tool)
 		return;
 	}
 
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	tool->deactivate_tool(layer);
 }
 
@@ -388,7 +388,7 @@ QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 
 void Toolbox::handle_mouse_click(QMouseEvent * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	if (!layer) {
 		qDebug() << "EE: Toolbox: click received, no layer";
 		return;
@@ -422,7 +422,7 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 
 void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	if (!layer) {
 		qDebug() << "EE: Toolbox: double click received, no layer";
 		return;
@@ -457,7 +457,7 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 
 void Toolbox::handle_mouse_move(QMouseEvent * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	if (!layer) {
 		qDebug() << "EE: Toolbox: click received, no layer";
 		return;
@@ -496,7 +496,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 
 void Toolbox::handle_mouse_release(QMouseEvent * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected_layer();
+	Layer * layer = this->window->items_tree->get_selected_layer();
 	if (!layer) {
 		qDebug() << "EE: Toolbox: release received, no layer";
 		return;

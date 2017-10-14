@@ -334,7 +334,7 @@ void LayersPanel::show_context_menu_for_item(TreeItem * item)
 
 		Layer * layer = item->to_layer();
 
-		/* kamilFIXME: this doesn't work for Map in treeview. Why? */
+		/* kamilFIXME: this doesn't work for Map in tree view. Why? */
 		uint16_t layer_menu_items = (uint16_t) layer->get_menu_items_selection();
 
 #ifdef K
@@ -404,10 +404,8 @@ bool LayersPanel::new_layer(LayerType layer_type)
 		return false;
 	}
 
-	LayerInterface * interface = Layer::get_interface(layer_type);
-
-	if (ask_user && interface->parameters.size()) {
-		if (!layer->properties_dialog(viewport)) {
+	if (layer->has_properties_dialog && ask_user) {
+		if (!layer->properties_dialog()) {
 			delete layer;
 			return false;
 		}
@@ -456,29 +454,28 @@ void LayersPanel::add_layer(Layer * layer)
 		   place for given layer to be added - a first aggregate
 		   layer that we meet going up in hierarchy. */
 
-		TreeIndex replace_index;
-		Layer * current = selected_item->to_layer(); /* If selected item is layer, then the layer itself is returned here. Otherwise, parent/owning layer of selected sublayer is returned. */
+		Layer * selected_layer = selected_item->to_layer(); /* If selected item is layer, then the layer itself is returned here. Otherwise, parent/owning layer of selected sublayer is returned. */
 		if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
-			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
+			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << selected_layer->debug_string << "as selected layer";
 		} else {
-			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
+			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << selected_layer->debug_string << "as selected layer";
 		}
-		assert(current->tree_view);
-		replace_index = current->index;
+		assert (selected_layer->tree_view);
+		TreeIndex sibling_layer_index = selected_layer->index;
 
 		/* A new layer can be inserted only under an Aggregate layer.
 		   Find first one in tree hierarchy (going up). */
-		TreeIndex aggregate_index = this->go_up_to_layer(current->index, LayerType::AGGREGATE);
+		TreeIndex aggregate_index = this->go_up_to_layer(selected_layer->index, LayerType::AGGREGATE);
 		if (aggregate_index.isValid()) {
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
-			assert(aggregate->tree_view);
+			assert (aggregate->tree_view);
 
 			if (false
 #ifdef K
-			    replace_index.isValid()
+			    sibling_layer_index.isValid()
 #endif
 			    ) {
-				aggregate->insert_layer(layer, replace_index);
+				aggregate->insert_layer(layer, sibling_layer_index);
 			} else {
 				aggregate->add_layer(layer, true);
 			}
@@ -567,7 +564,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		/* A layer can be owned only by Aggregate layer.
-		     TODO: what about TRW layers under GPS layer? */
+		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifndef SLAVGPS_QT
@@ -579,7 +576,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			a_clipboard_copy_selected(this);
 
 			if (parent_layer->type == LayerType::AGGREGATE) {
-				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item->index)) {
 					this->emit_update_window_cb();
@@ -590,8 +587,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
 	} else if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
-		Layer * selected = this->get_selected_layer();
-		selected->cut_sublayer(selected_item);
+		Layer * parent_layer = this->get_selected_layer();
+		parent_layer->cut_sublayer(selected_item);
 	}
 }
 
@@ -668,7 +665,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 			if (parent_layer->type == LayerType::AGGREGATE) {
 
-				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item->index)) {
 					this->emit_update_window_cb();
@@ -739,15 +736,15 @@ bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, Gdk
 Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 {
 	Layer * layer = this->get_selected_layer();
-	if (layer == NULL || layer->type != layer_type) {
-		if (this->toplayer->visible) {
-			return this->toplayer->get_top_visible_layer_of_type(layer_type);
-		} else {
-			return NULL;
-		}
-	} else {
-		return (Layer *) layer;
+	if (layer && layer->type == layer_type) {
+		return layer;
 	}
+
+	if (this->toplayer->visible) {
+		return this->toplayer->get_top_visible_layer_of_type(layer_type);
+	}
+
+	return NULL;
 }
 
 
@@ -790,7 +787,7 @@ void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
 #ifndef SLAVGPS_QT
-		g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+		g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 #endif
 		this->toplayer->clear(); /* simply deletes all layers */
 	}
@@ -824,7 +821,7 @@ bool LayersPanel::get_visible(void)
 
 
 
-TreeView * LayersPanel::get_treeview()
+TreeView * LayersPanel::get_tree_view()
 {
 	return this->tree_view;
 }
@@ -856,7 +853,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 
 	qDebug() << "DD: Layers Panel: context menu event: event @" << orig.x() << orig.y();
 	qDebug() << "DD: Layers Panel: context menu event: viewport @" << v;
-	qDebug() << "DD: Layers Panel: context menu event: treeview @" << t;
+	qDebug() << "DD: Layers Panel: context menu event: tree view @" << t;
 
 	QPoint point;
 	point.setX(orig.x() - v.x() - t.x());

@@ -99,14 +99,14 @@ static void track_select_cb(GtkTreeSelection * selection, void * data)
 		return;
 	}
 
-	//vik_treeview_select_iter(trw->vt, g_hash_table_lookup(trw->track_iters, uuid), true);
+	//vik_tree_view_select_iter(trw->vt, g_hash_table_lookup(trw->track_iters, uuid), true);
 }
 */
 
 
 
 
-/* Instead of hooking automatically on treeview item selection,
+/* Instead of hooking automatically on tree view item selection,
    this is performed on demand via the specific menu request. */
 void TrackListDialog::track_select(LayerTRW * trw, Track * trk)
 {
@@ -744,7 +744,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 
 	trk->set_comment(this->w_comment->text());
 
-	this->trw->update_treeview(this->trk);
+	this->trw->update_tree_view(this->trk);
 	this->trw->emit_layer_changed();
 #endif
 

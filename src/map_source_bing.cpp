@@ -365,7 +365,7 @@ int MapSourceBing::emit_update(void * data)
 #ifdef K
 	gdk_threads_enter();
 	/* TODO
-	vik_layers_panel_emit_update(VIK_LAYERS_PANEL (data));
+	items_tree_emit_update(VIK_LAYERS_PANEL (data));
 	*/
 	gdk_threads_leave();
 #endif

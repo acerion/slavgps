@@ -642,7 +642,7 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 
 	/* Here we save in track objects changes made in the dialog. */
 
-	this->trw->update_treeview(this->wp);
+	this->trw->update_tree_view(this->wp);
 	this->trw->emit_layer_changed();
 #endif
 

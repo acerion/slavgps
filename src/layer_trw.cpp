@@ -1815,7 +1815,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
 	if (this->auto_set_view(this->menu_data->viewport)) {
-		g_tree->tree_get_layers_panel()->emit_update_window_cb();
+		g_tree->tree_get_items_tree()->emit_update_window_cb();
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1996,7 +1996,7 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 void LayerTRW::acquire(VikDataSourceInterface *datasource)
 {
 	Window * window_ = this->get_window();
-	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	Viewport * viewport =  g_tree->tree_get_main_viewport();
 
 	DatasourceMode mode = datasource->mode;
@@ -2123,7 +2123,7 @@ void LayerTRW::upload_to_gps_cb()
  */
 void LayerTRW::upload_to_gps(TreeItem * sublayer)
 {
-	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	Track * trk = NULL;
 	GPSTransferType xfer_type = GPSTransferType::TRK; /* "sg.trw.tracks" = 0 so hard to test different from NULL! */
 	bool xfer_all = false;
@@ -2198,7 +2198,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 	/* When called from the viewport - work the corresponding layerspanel: */
 	if (!panel) {
-		panel = g_tree->tree_get_layers_panel();
+		panel = g_tree->tree_get_items_tree();
 	}
 
 	/* Apply settings to transfer to the GPS device. */
@@ -2428,7 +2428,7 @@ void LayerTRW::add_track(Track * trk)
 	/* Sort now as post_read is not called on a track connected to tree. */
 	this->tree_view->sort_children(this->tracks->get_index(), this->track_sort_order);
 
-	this->tracks->update_treeview(trk);
+	this->tracks->update_tree_view(trk);
 }
 
 
@@ -2464,7 +2464,7 @@ void LayerTRW::add_route(Track * trk)
 	/* Sort now as post_read is not called on a route connected to tree. */
 	this->tree_view->sort_children(this->routes->get_index(), this->track_sort_order);
 
-	this->routes->update_treeview(trk);
+	this->routes->update_tree_view(trk);
 }
 
 
@@ -3065,7 +3065,7 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
 	if (namea == NULL || nameb == NULL) {
 		return 0;
 	} else {
-		/* Same sort method as used in the vik_treeview_*_alphabetize functions. */
+		/* Same sort method as used in the vik_tree_view_*_alphabetize functions. */
 		return strcmp(namea, nameb);
 	}
 }
@@ -4384,11 +4384,11 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 
 
 	/*
-	  Apply treeview sort after loading all the tracks for this
+	  Apply tree view sort after loading all the tracks for this
 	  layer (rather than sorted insert on each individual track
 	  additional) and after subsequent changes to the properties
 	  as the specified order may have changed.  since the sorting
-	  of a treeview section is now very quick.  NB sorting is also
+	  of a tree view section is now very quick.  NB sorting is also
 	  performed after every name change as well to maintain the
 	  list order.
 	*/
@@ -4512,7 +4512,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	const QStringList zoom_labels = { "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024" };
 	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
-	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	const Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	Track * track = this->get_edited_track();

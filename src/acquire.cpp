@@ -456,9 +456,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 	if (mode == DatasourceMode::ADDTOLAYER) {
-		Layer * current_selected = this->panel->get_selected_layer();
-		if (current_selected->type == LayerType::TRW) {
-			wi->trw = (LayerTRW *) current_selected;
+		Layer * selected_layer = this->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			wi->trw = (LayerTRW *) selected_layer;
 			wi->creating_new_layer = false;
 		}
 	} else if (mode == DatasourceMode::CREATENEWLAYER) {
@@ -466,9 +466,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	} else if (mode == DatasourceMode::MANUAL_LAYER_MANAGEMENT) {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		wi->creating_new_layer = false;
-		Layer * current_selected = this->panel->get_selected_layer();
-		if (current_selected->type == LayerType::TRW) {
-			wi->trw = (LayerTRW *) current_selected;
+		Layer * selected_layer = this->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			wi->trw = (LayerTRW *) selected_layer;
 		}
 	}
 	if (wi->creating_new_layer) {

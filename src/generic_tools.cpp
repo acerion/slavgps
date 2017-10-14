@@ -906,11 +906,11 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   layers? Shouldn't we visit only selected items and
 		   its children? */
 
-		const bool handled = this->window->layers_panel->get_top_layer()->select_click(event, this->window->viewport, this);
+		const bool handled = this->window->items_tree->get_top_layer()->select_click(event, this->window->viewport, this);
 		if (!handled) {
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 
-			TreeView * tree_view = this->window->layers_panel->get_treeview();
+			TreeView * tree_view = this->window->items_tree->get_tree_view();
 			TreeItem * selected_item = tree_view->get_selected_tree_item();
 			if (selected_item) {
 				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */

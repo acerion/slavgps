@@ -62,8 +62,8 @@ typedef int GtkSelectionData;
 typedef int GtkTreeSelection;
 typedef int GtkTreePath;
 
-static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
-static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path);
+static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
+static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path);
 
 
 
@@ -125,7 +125,7 @@ void TreeView::select_cb(void) /* Slot. */
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
-		g_tree->tree_get_layers_panel()->emit_update_window_cb();
+		g_tree->tree_get_items_tree()->emit_update_window_cb();
 	}
 }
 
@@ -484,9 +484,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
  * Note: I don't believe we can sensibility use built in model sort gtk_tree_model_sort_new_with_model() on the name,
  * since that would also sort the layers - but that needs to be user controlled for ordering, such as which maps get drawn on top.
  *
- * vik_treeview_sort_children:
- * @vt:     The treeview to operate on
- * @parent: The level within the treeview to sort
+ * @parent: The level within the tree view to sort
  * @order:  How the items should be sorted
  *
  * Use the gtk_tree_store_reorder method as it very quick.
@@ -534,7 +532,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 			  sort_tuple_compare,
 			  KINT_TO_POINTER(order));
 
-	/* As the sorted list contains the reordered position offsets, extract this and then apply to the treeview. */
+	/* As the sorted list contains the reordered position offsets, extract this and then apply to the tree view. */
 	int * positions = (int *) malloc(sizeof(int) * length);
 	for (ii = 0; ii < length; ii++) {
 		positions[ii] = sort_array[ii].offset;
@@ -551,7 +549,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 
 
 
-static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
+static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
 	bool retval = false;
 #ifdef K
@@ -637,7 +635,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 /*
  * This may not be necessary.
  */
-static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path)
+static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path)
 {
 #ifdef K
 	char *s_dest = gtk_tree_path_to_string(path);
@@ -726,8 +724,8 @@ TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 
 #if 0
 	/* Can not specify 'auto' sort order with a 'GtkTreeSortable' on the name since we want to control the ordering of layers.
-	   Thus need to create special sort to operate on a subsection of treeview (i.e. from a specific child either a layer or sublayer).
-	   See vik_treeview_sort_children(). */
+	   Thus need to create special sort to operate on a subsection of tree_view (i.e. from a specific child either a layer or sublayer).
+	   See vik_tree_view_sort_children(). */
 
 	gtk_tree_view_set_reorderable(this, true);
 	QObject::connect(gtk_tree_view_get_selection(this), SIGNAL("changed"), this, SLOT (select_cb));
@@ -921,7 +919,7 @@ Qt::DropActions TreeModel::supportedDropActions() const
 
 
 
-static void vik_treeview_edited_cb(GtkCellRendererText *cell, char *path_str, const char *new_name, TreeView * tree_view)
+static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, const char *new_name, TreeView * tree_view)
 {
 	tree_view->editing = false;
 
@@ -929,14 +927,14 @@ static void vik_treeview_edited_cb(GtkCellRendererText *cell, char *path_str, co
 	TreeIndex * index = tree_view->get_index_from_path_str(path_str);
 
 #ifdef K
-	g_signal_emit(G_OBJECT(tree_view), treeview_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
+	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
 #endif
 }
 
 
 
 
-static void vik_treeview_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *editable, char *path, TreeView * tree_view)
+static void vik_tree_view_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *editable, char *path, TreeView * tree_view)
 {
 	tree_view->editing = true;
 }
@@ -944,7 +942,7 @@ static void vik_treeview_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *e
 
 
 
-static void vik_treeview_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_view)
+static void vik_tree_view_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_view)
 {
 	tree_view->editing = false;
 }
@@ -967,10 +965,10 @@ TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 #ifdef K
 void TreeView::add_columns()
 {
-	QObject::connect(renderer, SIGNAL("edited"), this, SLOT (vik_treeview_edited_cb));
-	QObject::connect(renderer, SIGNAL("editing-started"), this, SLOT (vik_treeview_edit_start_cb));
-	QObject::connect(renderer, SIGNAL("editing-canceled"), this, SLOT (vik_treeview_edit_stop_cb));
-	QObject::connect(renderer, SIGNAL("toggled"), this, SLOT (vik_treeview_toggled_cb));
+	QObject::connect(renderer, SIGNAL("edited"), this, SLOT (vik_tree_view_edited_cb));
+	QObject::connect(renderer, SIGNAL("editing-started"), this, SLOT (vik_tree_view_edit_start_cb));
+	QObject::connect(renderer, SIGNAL("editing-canceled"), this, SLOT (vik_tree_view_edit_stop_cb));
+	QObject::connect(renderer, SIGNAL("toggled"), this, SLOT (vik_tree_view_toggled_cb));
 }
 #endif
 

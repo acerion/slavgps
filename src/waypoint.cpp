@@ -416,7 +416,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, tree_view_context_menu);
 
 
-	if (g_tree->tree_get_layers_panel()) {
+	if (g_tree->tree_get_items_tree()) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
@@ -529,7 +529,7 @@ void Waypoint::apply_dem_data_only_missing_cb(void)
 
 void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
 		return;
 	}
@@ -638,7 +638,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 		}
 	}
 
-	/* Update WP name and refresh the treeview. */
+	/* Update WP name and refresh the tree view. */
 	this->set_name(new_name);
 
 	parent_layer->tree_view->set_tree_item_name(this->index, new_name);

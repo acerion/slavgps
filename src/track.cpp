@@ -2508,9 +2508,9 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 
 
 	/* ATM This function is only available via the layers panel, due to needing a panel. */
-	if (g_tree->tree_get_layers_panel()) {
+	if (g_tree->tree_get_items_tree()) {
 		QMenu * submenu = a_acquire_track_menu(g_tree->tree_get_main_window(),
-						       g_tree->tree_get_layers_panel(),
+						       g_tree->tree_get_items_tree(),
 						       parent_layer_->menu_data->viewport,
 						       this);
 		if (submenu) {
@@ -2734,7 +2734,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
-	if (g_tree->tree_get_layers_panel()) {
+	if (g_tree->tree_get_items_tree()) {
 		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->type_id == "sg.trw.track" ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
 	}
@@ -3122,7 +3122,7 @@ QString Track::get_tooltip(void)
 */
 void Track::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = g_tree->tree_get_layers_panel();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
 		return;
 	}
