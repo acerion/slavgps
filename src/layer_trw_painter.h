@@ -77,20 +77,6 @@ enum {
 
 
 
-/* A cached waypoint image. */
-/* This data structure probably should be put somewhere else. */
-class CachedPixmap {
- public:
-	CachedPixmap() {};
-	~CachedPixmap();
-	QPixmap * pixmap = NULL;
-	QString image_file_name; /* Filename. */
-};
-int cached_pixmap_cmp(CachedPixmap * cp, const char * name);
-
-
-
-
 namespace SlavGPS {
 
 
@@ -113,7 +99,7 @@ namespace SlavGPS {
 
 		void draw_waypoint(Waypoint * wp, bool do_highlight);
 		void draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight);
-		int  draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight);
+		bool draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight);
 		void draw_waypoint_symbol(Waypoint * wp, int x, int y);
 
 

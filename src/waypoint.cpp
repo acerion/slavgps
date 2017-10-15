@@ -655,6 +655,7 @@ bool Waypoint::handle_selection_in_tree(void)
 
 	parent_layer->set_statusbar_msg_info_wpt(this);
 	parent_layer->reset_internal_selections();
+	parent_layer->set_edited_wp(this);
 
 	g_tree->selected_tree_item = this;
 

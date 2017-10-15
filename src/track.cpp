@@ -3345,8 +3345,12 @@ bool Track::handle_selection_in_tree(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	//parent_layer->set_statusbar_msg_info_trk(this);
+#ifdef K
+	/* TODO: to be implemented? */
+	parent_layer->set_statusbar_msg_info_trk(this);
+#endif
 	parent_layer->reset_internal_selections();
+	parent_layer->set_edited_track(this);
 
 	g_tree->selected_tree_item = this;
 

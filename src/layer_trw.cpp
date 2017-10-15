@@ -265,7 +265,7 @@ enum {
 	PARAM_WPSYMS,
 	PARAM_WP_SORT_ORDER,
 	// WP images
-	PARAM_DI,
+	PARAM_WP_IMAGE_DRAW,
 	PARAM_WP_IMAGE_SIZE,
 	PARAM_WP_IMAGE_ALPHA,
 	PARAM_WP_IMAGE_CACHE_SIZE,
@@ -314,10 +314,10 @@ Parameter trw_layer_params[] = {
 	{ PARAM_WPSYMS,                "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         N_("Draw Waypoint Symbols:"),           WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_SORT_ORDER,         "wpsortorder",       SGVariantType::INT,     GROUP_WAYPOINTS,         N_("Waypoint Sort Order:"),             WidgetType::COMBOBOX,     &params_sort_order,          sort_order_default,         NULL, NULL },
 
-	{ PARAM_DI,                    "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,            N_("Draw Waypoint Images"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_WP_IMAGE_SIZE,         "image_size",        SGVariantType::INT,     GROUP_IMAGES,            N_("Image Size (pixels):"),             WidgetType::HSCALE,       &scale_wp_image_size,        NULL,                       NULL, NULL },
-	{ PARAM_WP_IMAGE_ALPHA,        "image_alpha",       SGVariantType::INT,     GROUP_IMAGES,            N_("Image Alpha:"),                     WidgetType::HSCALE,       &scale_wp_image_alpha,       NULL,                       NULL, NULL },
-	{ PARAM_WP_IMAGE_CACHE_SIZE,   "image_cache_size",  SGVariantType::INT,     GROUP_IMAGES,            N_("Image Memory Cache Size:"),         WidgetType::HSCALE,       &scale_wp_image_cache_size,  NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_DRAW,         "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,            N_("Draw Waypoint Images"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_WP_IMAGE_SIZE,         "image_size",        SGVariantType::INT,     GROUP_IMAGES,            N_("Waypoint Image Size (pixels):"),    WidgetType::HSCALE,       &scale_wp_image_size,        NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_ALPHA,        "image_alpha",       SGVariantType::INT,     GROUP_IMAGES,            N_("Waypoint Image Alpha:"),            WidgetType::HSCALE,       &scale_wp_image_alpha,       NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_CACHE_SIZE,   "image_cache_size",  SGVariantType::INT,     GROUP_IMAGES,            N_("Waypoint Images' Memory Cache Size:"),WidgetType::HSCALE,       &scale_wp_image_cache_size,  NULL,                       NULL, NULL },
 
 	{ PARAM_MDDESC,                "metadatadesc",      SGVariantType::STRING,  GROUP_METADATA,          N_("Description"),                      WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 	{ PARAM_MDAUTH,                "metadataauthor",    SGVariantType::STRING,  GROUP_METADATA,          N_("Author"),                           WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
@@ -749,11 +749,13 @@ bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
 
 
 
-void LayerTRW::image_cache_free()
+void LayerTRW::wp_image_cache_flush()
 {
+	for (auto iter = this->wp_image_cache.begin(); iter != this->wp_image_cache.end(); iter++) {
+		delete *iter;
+	}
 #ifdef K
-	g_list_foreach(this->image_cache->head, (GFunc) cached_pixmap_free, NULL);
-	g_queue_free(this->image_cache);
+	g_list_foreach(this->wp_image_cache->head, (GFunc) cached_pixmap_free, NULL);
 #endif
 }
 
@@ -857,15 +859,14 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_DLA:
 		this->drawlabels = data.b;
 		break;
-	case PARAM_DI:
-		this->drawimages = data.b;
+	case PARAM_WP_IMAGE_DRAW:
+		this->wp_image_draw = data.b;
 		break;
 	case PARAM_WP_IMAGE_SIZE:
 		if (data.i >= scale_wp_image_size.min && data.i <= scale_wp_image_size.max) {
 			if (data.i != this->wp_image_size) {
 				this->wp_image_size = data.i;
-				this->image_cache_free();
-				this->image_cache = g_queue_new();
+				this->wp_image_cache_flush();
 			}
 		}
 		break;
@@ -873,8 +874,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		if (data.i >= scale_wp_image_alpha.min && data.i <= scale_wp_image_alpha.max) {
 			if (data.i != this->wp_image_alpha) {
 				this->wp_image_alpha = data.i;
-				this->image_cache_free();
-				this->image_cache = g_queue_new();
+				this->wp_image_cache_flush();
 			}
 		}
 		break;
@@ -882,9 +882,8 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_WP_IMAGE_CACHE_SIZE:
 		if (data.i >= scale_wp_image_cache_size.min && data.i <= scale_wp_image_cache_size.max) {
 			this->wp_image_cache_size = data.i;
-			while (this->image_cache->length > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
-				CachedPixmap * pixmap = (CachedPixmap *) g_queue_pop_tail(this->image_cache);
-				delete pixmap;
+			while (this->wp_image_cache.size() > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
+				this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 			}
 		}
 		break;
@@ -987,13 +986,15 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_TRACK_THICKNESS: rv.i = this->track_thickness; break;
 	case PARAM_TRACK_BG_THICKNESS: rv.i = this->track_bg_thickness; break;
 	case PARAM_DLA: rv.b = this->drawlabels; break;
-	case PARAM_DI: rv.b = this->drawimages; break;
 	case PARAM_TRK_BG_COLOR: rv = SGVariant(this->track_bg_color); break;
 	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv.d = this->track_draw_speed_factor; break;
 	case PARAM_TRACK_SORT_ORDER: rv.i = this->track_sort_order; break;
+
+	case PARAM_WP_IMAGE_DRAW: rv.b = this->wp_image_draw; break;
 	case PARAM_WP_IMAGE_SIZE: rv.i = this->wp_image_size; break;
 	case PARAM_WP_IMAGE_ALPHA: rv.i = this->wp_image_alpha; break;
 	case PARAM_WP_IMAGE_CACHE_SIZE: rv.i = this->wp_image_cache_size; break;
+
 	case PARAM_WP_MARKER_COLOR:   rv = SGVariant(this->wp_marker_color); break;
 	case PARAM_WP_LABEL_FG_COLOR: rv = SGVariant(this->wp_label_fg_color); break;
 	case PARAM_WP_LABEL_BG_COLOR: rv = SGVariant(this->wp_label_bg_color); break;
@@ -1040,7 +1041,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 #ifdef K
 	switch (values->param_id) {
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
-	case PARAM_DI: {
+	case PARAM_WP_IMAGE_DRAW: {
 		// Get new value
 		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
@@ -4708,8 +4709,6 @@ LayerTRW::LayerTRW() : Layer()
 
 	memset(&coord_mode, 0, sizeof (CoordMode));
 
-	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */
-
 	this->set_initial_parameter_values();
 
 	/* Param settings that are not available via the GUI. */
@@ -4752,7 +4751,7 @@ LayerTRW::LayerTRW() : Layer()
 
 LayerTRW::~LayerTRW()
 {
-	this->image_cache_free();
+	this->wp_image_cache_flush();
 
 	delete this->tpwin;
 
@@ -4931,4 +4930,31 @@ void LayerTRW::reset_route_creation_in_progress()
 	if (new_route_tool->creation_in_progress == this) {
 		new_route_tool->creation_in_progress = NULL;
 	}
+}
+
+
+
+
+void LayerTRW::show_wp_picture_cb(void) /* Slot. */
+{
+	Waypoint * wp = this->get_edited_wp();
+	if (!wp) {
+		qDebug() << "EE: Layer TRW: no waypoint in waypoint-related callback" << __FUNCTION__;
+		return;
+	}
+
+	const QString program = Preferences::get_image_viewer();
+	const QString image_path = this->get_edited_wp()->image;
+#ifdef K
+	char * quoted_file = g_shell_quote((char *) image_path);
+#endif
+	QStringList args;
+	args << image_path;
+
+	qDebug() << "II: Layer TRW: Show WP picture:" << program << image_path;
+
+	/* "Fire and forget". The viewer will run detached from this application. */
+	QProcess::startDetached(program, args);
+
+	/* TODO: add handling of errors from process. */
 }

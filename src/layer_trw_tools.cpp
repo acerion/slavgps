@@ -96,7 +96,7 @@ Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 
 Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
 {
-	WaypointSearch search(x, y, viewport, this->drawimages);
+	WaypointSearch search(x, y, viewport, this->wp_image_draw);
 
 	this->waypoints->search_closest_wp(&search);
 
@@ -253,7 +253,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, viewport_bbox)) {
 		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->drawimages);
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->wp_image_draw);
 		this->waypoints->search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
@@ -524,7 +524,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		}
 	}
 
-	WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->drawimages);
+	WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->wp_image_draw);
 	trw->get_waypoints_node().search_closest_wp(&wp_search);
 
 	if (current_wp && (current_wp == wp_search.closest_wp)) {
@@ -1705,39 +1705,6 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	this->layer_edit_info = new LayerEditInfo;
-}
-
-
-
-
-void LayerTRW::show_wp_picture_cb(void) /* Slot. */
-{
-	qDebug() << "---------------------------------- ------ ------ ----------" << __FUNCTION__;
-
-
-	Waypoint * wp = this->get_edited_wp();
-	if (!wp) {
-		qDebug() << "EE: Layer TRW: no waypoint in waypoint-related callback" << __FUNCTION__;
-		return;
-	}
-
-	const QString image_path = this->get_edited_wp()->image;
-#ifdef K
-	/* Thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async. */
-#ifdef WINDOWS
-	ShellExecute(NULL, "open", (char *) image_path.toUtf8().constData(), NULL, NULL, SW_SHOWNORMAL);
-#else /* WINDOWS */
-	GError *err = NULL;
-	char *quoted_file = g_shell_quote((char *) image_path);
-	const QString viewer = Preferences::get_image_viewer();
-	const QString cmd = QString("%1 %2").arg(viewer).arg(quoted_file);
-	free(quoted_file);
-	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
-		Dialog::error(tr("Could not launch %1 to open file.").arg(viewer), g_tree->tree_get_main_window());
-		g_error_free(err);
-	}
-#endif /* WINDOWS */
-#endif
 }
 
 

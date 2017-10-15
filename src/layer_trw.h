@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <list>
 #include <unordered_map>
+#include <deque>
 
 #include <QStandardItem>
 #include <QDialog>
@@ -72,6 +73,32 @@ namespace SlavGPS {
 	/* To be removed. */
 	typedef int GdkFunction;
 	typedef int PangoLayout;
+
+
+
+
+	/* A cached waypoint image. */
+	/* This data structure probably should be put somewhere else - it could be reused in other modules. */
+	class CachedPixmap {
+	public:
+		CachedPixmap() {};
+		~CachedPixmap();
+		QPixmap * pixmap = NULL;
+		QString image_file_path;
+	};
+
+
+
+
+	/* Binary predicate for searching a pixmap (CachedPixmap) in pixmap cache container. */
+	struct CachedPixmapCompareByPath {
+	CachedPixmapCompareByPath(const QString & searched_full_path) : searched_full_path_(searched_full_path) { }
+		bool operator()(CachedPixmap * item) const { return item->image_file_path == searched_full_path_; }
+	private:
+		const QString searched_full_path_;
+	};
+
+
 
 
 	class TRWMetadata {
@@ -344,7 +371,6 @@ namespace SlavGPS {
 
 
 		/* This should be private. */
-		void image_cache_free();
 		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
@@ -466,10 +492,12 @@ namespace SlavGPS {
 
 
 		bool drawlabels;
-		bool drawimages;
+		bool wp_image_draw;
 		int32_t wp_image_alpha;
-		GQueue * image_cache = NULL;
 		int32_t wp_image_size;
+		/* Viking has been using queue to be able to easily remove (pop()) oldest images (the ones that
+		   are the longest in queue) when size of cached images goes over cache size limit. */
+		std::deque<CachedPixmap *> wp_image_cache;
 		int32_t wp_image_cache_size;
 
 
@@ -571,6 +599,8 @@ namespace SlavGPS {
 
 
 	private:
+		void wp_image_cache_flush();
+
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */
 		Track * current_track_ = NULL;

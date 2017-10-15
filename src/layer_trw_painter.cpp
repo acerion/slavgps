@@ -860,15 +860,12 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 	int x, y;
 	this->viewport->coord_to_screen(&wp->coord, &x, &y);
 
-	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
-	if (!wp->image.isEmpty() && this->trw->drawimages) {
-		if (0 == this->draw_waypoint_image(wp, x, y, do_highlight)) {
-			return;
-		}
+	if (this->trw->wp_image_draw && !wp->image.isEmpty() && this->draw_waypoint_image(wp, x, y, do_highlight)) {
+		return;
+	} else {
+		/* Draw appropriate symbol - either symbol image or simple types. */
+		this->draw_waypoint_symbol(wp, x, y);
 	}
-
-	/* Draw appropriate symbol - either symbol image or simple types. */
-	this->draw_waypoint_symbol(wp, x, y);
 
 	if (this->trw->drawlabels) {
 		this->draw_waypoint_label(wp, x, y, do_highlight);
@@ -878,18 +875,29 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 
 
-int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight)
+/**
+   @brief Draw waypoint's image
+
+   Draw waypoint's image specified by wp->image.
+
+   @return true on success
+   @return false on failure
+*/
+bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight)
 {
 	if (this->trw->wp_image_alpha == 0) {
-		return 0;
+		return false;
 	}
 
 	QPixmap * pixmap = NULL;
-#ifdef K
-	GList * l = g_list_find_custom(this->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixmap_cmp);
-	if (l) {
-		pixmap = ((CachedPixmap *) l->data)->pixmap;
+
+	auto iter = std::find_if(this->trw->wp_image_cache.begin(), this->trw->wp_image_cache.end(), CachedPixmapCompareByPath(wp->image));
+	if (iter != this->trw->wp_image_cache.end()) {
+		/* Found a matching pixmap in cache. */
+		pixmap = (*iter)->pixmap;
 	} else {
+		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image << "not found in cache";
+#ifdef K
 		char * image = wp->image;
 		QPixmap * regularthumb = a_thumbnails_get(wp->image);
 		if (!regularthumb) {
@@ -897,7 +905,7 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
 		}
 		if (regularthumb) {
-			CachedPixmap * cp = (CachedPixmap *) malloc(sizeof (CachedPixmap));
+			CachedPixmap * cp = new CachedPixmap;
 			if (this->trw->wp_image_size == 128) {
 				cp->pixmap = regularthumb;
 			} else {
@@ -917,17 +925,19 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 			wp->image_width = cp->pixmap->width();
 			wp->image_height = cp->pixmap->heigth();
 
-			g_queue_push_head(this->trw->image_cache, cp);
-			if (this->trw->image_cache->length > this->trw->wp_image_cache_size) {
-				cached_pixbuf_free((CachedPixmap *) g_queue_pop_tail(this->trw->image_cache));
+			this->trw->wp_image_cache.push_back(cp);
+			/* Keep size of queue under a limit. */
+			if (this->trw->wp_image_cache->length > this->trw->wp_image_cache_size) {
+				this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 			}
 
 			pixmap = cp->pixmap;
 		} else {
 			pixmap = a_thumbnails_get_default(); /* thumbnail not yet loaded */
 		}
-	}
 #endif
+	}
+
 	if (pixmap) {
 		int w = pixmap->width();
 		int h = pixmap->height();
@@ -943,11 +953,10 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 			}
 			this->viewport->draw_pixmap(*pixmap, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
-		return 0;
+		return true;
 	}
 
-	/* If failed to draw picture, default to drawing regular waypoint. */
-	return 1;
+	return false;
 }
 
 
@@ -955,7 +964,6 @@ int TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlig
 
 void TRWPainter::draw_waypoint_symbol(Waypoint * wp, int x, int y)
 {
-
 	if (this->trw->wp_draw_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
 	} else if (wp == this->trw->get_edited_wp()) {
@@ -1072,14 +1080,6 @@ CachedPixmap::~CachedPixmap()
 #ifdef K
 	g_object_unref(G_OBJECT(cp->pixmap));
 #endif
-}
-
-
-
-
-int cached_pixmap_cmp(CachedPixmap * cp, const char * name)
-{
-	return strcmp(cp->image_file_name.toUtf8().constData(), name);
 }
 
 
