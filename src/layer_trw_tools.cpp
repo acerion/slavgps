@@ -82,10 +82,9 @@ static ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, Q
   ATM: Leave this as 'Track' only.
   Not overly bothered about having a snap to route trackpoint capability.
 */
-Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, int x, int y)
+Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 {
 	TrackpointSearch search(x, y, viewport);
-	search.viewport->get_bbox(&search.bbox);
 
 	this->tracks->track_search_closest_tp(&search);
 
@@ -95,7 +94,7 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 
 
 
-Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int x, int y)
+Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
 {
 	WaypointSearch search(x, y, viewport, this->drawimages);
 
@@ -125,7 +124,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, La
 
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
@@ -133,7 +132,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, La
 
 	/* Snap to waypoint. */
 	if (ev->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
 		if (wp) {
 			new_coord = wp->coord;
 		}
@@ -178,7 +177,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
@@ -186,7 +185,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 
 	/* Snap to waypoint. */
 	if (ev->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
 		if (wp) {
 			new_coord = wp->coord;
 		}
@@ -235,12 +234,15 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	if (ev->button() != Qt::LeftButton) {
+		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 		return false;
 	}
 	if (this->type != LayerType::TRW) {
+		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 		return false;
 	}
 	if (!this->tracks->visible && !this->waypoints->visible && !this->routes->visible) {
+		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 		return false;
 	}
 
@@ -250,26 +252,36 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
 	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, viewport_bbox)) {
+		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->drawimages);
 		this->waypoints->search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
+			qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
 			tool->layer_edit_info->edited_layer = this;
 			tool->layer_edit_info->type_id = wp_search.closest_wp->type_id;
 
-			this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
+			if (ev->type() == QEvent::MouseButtonDblClick
+			    /* flags() & Qt::MouseEventCreatedDoubleClick */) {
+				qDebug() << "DD: Layer TRW: double" << __FUNCTION__ << __LINE__;
+				this->handle_select_tool_double_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
+			} else {
+				qDebug() << "DD: Layer TRW: single" << __FUNCTION__ << __LINE__;
+				this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
+			}
 
+			qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 			this->emit_layer_changed();
 			return true;
 		}
 	}
+	qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 
 	/* Used for both track and route lists. */
 	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
-	tp_search.bbox = viewport_bbox;
 
-	if (this->tracks->visible) {
+	if (this->tracks->visible && BBOX_INTERSECT (this->tracks->bbox, viewport_bbox)) {
 		this->tracks->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
@@ -288,7 +300,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	}
 
 	/* Try again for routes. */
-	if (this->routes->visible) {
+	if (this->routes->visible && BBOX_INTERSECT (this->routes->bbox, viewport_bbox)) {
 		this->routes->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
@@ -316,6 +328,23 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
 
 	return false;
+}
+
+
+
+/*
+  This method is for handling "double click" event coming from generic Select tool.
+  The generic Select tool doesn't know how to implement layer-specific response to double-click, so the layer has to implement the behaviour itself.
+
+  Returns true if a waypoint or track is found near the requested event position for this particular layer.
+  The item found is automatically selected.
+  This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in window.c
+*/
+bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
+{
+	/* Double-click will be handled by checking event->flags() in the function below, and calling proper handling method. */
+	qDebug() << "DD: Layer TRW:" << __FUNCTION__;
+	return this->handle_select_tool_click(ev, viewport, tool);
 }
 
 
@@ -366,18 +395,29 @@ void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, 
 	}
 
 	this->set_edited_wp(wp);
+}
 
-#ifdef K
-	if (ev->type == GDK_2BUTTON_PRESS) { /* Mouse button has been double-clicked. */
-		if (this->get_edited_wp()->image) {
-			trw_menu_sublayer_t data;
-			memset(&data, 0, sizeof (trw_menu_sublayer_t));
-			data.layer = this;
-			data.string = this->get_edited_wp()->image;
-			this->show_picture_cb(&data);
-		}
+
+
+/**
+   Given @param wp has been selected by clicking with mouse cursor.
+   Propagate the information about selection to all important places.
+*/
+void LayerTRW::handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp)
+{
+	this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp);
+
+	qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << __FUNCTION__ << __LINE__;
+
+	if (wp) {
+		qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << wp->image.isEmpty() << __FUNCTION__ << __LINE__;
 	}
-#endif
+
+
+	if (wp && !wp->image.isEmpty()) {
+		qDebug() << "DD: Layer TRW: call call back" << __FUNCTION__ << __LINE__;
+		this->show_wp_picture_cb();
+	}
 }
 
 
@@ -399,11 +439,9 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 		return false;
 	}
 
-#ifdef K
-	if (!this->tracks_node.visible && !this->waypoints_node.visible && !this->routes_node.visible) {
+	if (!this->tracks->visible && !this->waypoints->visible && !this->routes->visible) {
 		return false;
 	}
-#endif
 
 	Track * track = this->get_edited_track(); /* Track or route that is currently being selected/edited. */
 	if (track && track->visible) { /* Track or Route. */
@@ -487,8 +525,8 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	}
 
 	WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->drawimages);
-
 	trw->get_waypoints_node().search_closest_wp(&wp_search);
+
 	if (current_wp && (current_wp == wp_search.closest_wp)) {
 		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
@@ -537,12 +575,12 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 	if (ev->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
 		if (tp) {
 			new_coord = tp->coord;
 		}
 	} else if (ev->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
-		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+		Waypoint * wp = trw->search_nearby_wp(this->viewport, ev->x(), ev->y());
 		if (wp && wp != trw->get_edited_wp()) {
 			new_coord = wp->coord;
 		}
@@ -579,7 +617,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		/* Snap to trackpoint. */
 		if (ev->modifiers() & Qt::ControlModifier) {
-			Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+			Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
@@ -587,7 +625,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		/* Snap to waypoint. */
 		if (ev->modifiers() & Qt::ShiftModifier) {
-			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+			Waypoint * wp = trw->search_nearby_wp(this->viewport, ev->x(), ev->y());
 			if (wp && wp != trw->get_edited_wp()) {
 				new_coord = wp->coord;
 			}
@@ -987,7 +1025,7 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 
 	/* Snap to other TP. */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		const Trackpoint * other_tp = trw->closest_tp_in_five_pixel_interval(viewport, ev->x(), ev->y());
+		const Trackpoint * other_tp = trw->search_nearby_tp(viewport, ev->x(), ev->y());
 		if (other_tp) {
 			tp->coord = other_tp->coord;
 		}
@@ -1326,7 +1364,6 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	TrackpointSearch tp_search(ev->x(), ev->y(), this->viewport);
-	this->viewport->get_bbox(&tp_search.bbox);
 
 	if (ev->button() != Qt::LeftButton) {
 		return ToolStatus::IGNORED;
@@ -1415,7 +1452,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 
 	/* Snap to trackpoint. */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
 		if (tp && tp != *trw->get_edited_track()->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
@@ -1459,7 +1496,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(this->viewport, ev->x(), ev->y());
+		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
 		if (tp && tp != *track->selected_tp.iter) {
 			new_coord = tp->coord;
 		}
@@ -1592,7 +1629,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg1);
 		trw->get_window()->set_busy_cursor();
 
- #ifdef K
+#ifdef K
 		/* Give GTK a change to display the new status bar before querying the web. */
 		while (gtk_events_pending()) {
 			gtk_main_iteration();
@@ -1673,20 +1710,30 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 
 
 
-void LayerTRW::show_picture_cb(void) /* Slot. */
+void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 {
+	qDebug() << "---------------------------------- ------ ------ ----------" << __FUNCTION__;
+
+
+	Waypoint * wp = this->get_edited_wp();
+	if (!wp) {
+		qDebug() << "EE: Layer TRW: no waypoint in waypoint-related callback" << __FUNCTION__;
+		return;
+	}
+
+	const QString image_path = this->get_edited_wp()->image;
 #ifdef K
 	/* Thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async. */
 #ifdef WINDOWS
-	ShellExecute(NULL, "open", (char *) data->string, NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, "open", (char *) image_path.toUtf8().constData(), NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
 	GError *err = NULL;
-	char *quoted_file = g_shell_quote((char *) data->string);
+	char *quoted_file = g_shell_quote((char *) image_path);
 	const QString viewer = Preferences::get_image_viewer();
 	const QString cmd = QString("%1 %2").arg(viewer).arg(quoted_file);
 	free(quoted_file);
 	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
-		Dialog::error(tr("Could not launch %1 to open file.").arg(viewer), data->layer->get_window());
+		Dialog::error(tr("Could not launch %1 to open file.").arg(viewer), g_tree->tree_get_main_window());
 		g_error_free(err);
 	}
 #endif /* WINDOWS */
@@ -1706,13 +1753,7 @@ ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEven
 
 	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
 	if (!found_image.isEmpty()) {
-#ifdef K
-		trw_menu_sublayer_t data;
-		memset(&data, 0, sizeof (trw_menu_sublayer_t));
-		data.layer = trw;
-		data.string = found_image;
-		trw->show_picture_cb(&data);
-#endif
+		trw->show_wp_picture_cb();
 		return ToolStatus::ACK; /* Found a match. */
 	} else {
 		return ToolStatus::IGNORED; /* Go through other layers, searching for a match. */

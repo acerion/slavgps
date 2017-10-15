@@ -154,12 +154,14 @@ namespace SlavGPS {
 
 		/* Methods for generic "Select" tool. */
 		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
 		void handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
 		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
+		void handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
 		void set_menu_selection(LayerMenuItem selection);
 		LayerMenuItem get_menu_selection();
@@ -300,8 +302,8 @@ namespace SlavGPS {
 
 
 
-		Trackpoint * closest_tp_in_five_pixel_interval(Viewport * viewport, int x, int y);
-		Waypoint * closest_wp_in_five_pixel_interval(Viewport * viewport, int x, int y);
+		Trackpoint * search_nearby_tp(Viewport * viewport, int x, int y);
+		Waypoint * search_nearby_wp(Viewport * viewport, int x, int y);
 
 
 		void sort_all();
@@ -546,7 +548,7 @@ namespace SlavGPS {
 
 		void tracks_stats_cb(void);
 
-		void show_picture_cb(void);
+		void show_wp_picture_cb(void);
 
 		void merge_by_segment_cb(void);
 		void merge_by_timestamp_cb(void);

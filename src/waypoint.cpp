@@ -358,11 +358,8 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 	if (!this->image.isEmpty()) {
-		/* Set up image parameter. */
-		parent_layer_->menu_data->string = this->image;
-
-		qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture...")); /* TODO: icon. */
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (show_picture_cb()));
+		qa = menu.addAction(QIcon::fromTheme("TODO-vik-icon-Show Picture"), tr("&Show Picture..."));
+		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (show_wp_picture_cb()));
 
 #ifdef VIK_CONFIG_GEOTAG
 		{

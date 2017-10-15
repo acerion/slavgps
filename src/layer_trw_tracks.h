@@ -94,10 +94,7 @@ namespace SlavGPS {
 
 	class TrackpointSearch {
 	public:
-	TrackpointSearch(int ev_x, int ev_y, Viewport * viewport_) :
-		x(ev_x),
-		y(ev_y),
-		viewport(viewport_) {};
+		TrackpointSearch(int ev_x, int ev_y, Viewport * viewport);
 
 		/* Input. */
 		int x = 0;
@@ -112,11 +109,7 @@ namespace SlavGPS {
 		Trackpoint * closest_tp = NULL;
 
 		TrackPoints::iterator closest_tp_iter;
-
 	};
-
-
-
 
 
 

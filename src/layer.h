@@ -118,10 +118,11 @@ namespace SlavGPS {
 		bool handle_selection_in_tree(void);
 
 		/* Methods for generic "Select" tool. */
-		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)   { return false; };
-		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)    { return false; };
-		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool) { return false; };
-		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)              { return false; };
+		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)         { return false; };
+		virtual bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)  { return false; };
+		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)          { return false; };
+		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)       { return false; };
+		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                    { return false; };
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(LayerMenuItem selection) { return; };

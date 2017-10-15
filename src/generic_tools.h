@@ -110,9 +110,10 @@ namespace SlavGPS {
 		LayerToolSelect(Window * window, Viewport * viewport);
 		~LayerToolSelect();
 
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 
 	private:
 		/* When a mouse click happens and some layer handles the click,

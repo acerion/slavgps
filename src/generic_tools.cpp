@@ -935,6 +935,58 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 
 
+ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+{
+	qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() called";
+
+	this->select_and_move_activated = false;
+
+	/* Only allow selection on primary button. */
+	if (event->button() != Qt::LeftButton) {
+		return ToolStatus::IGNORED;
+	}
+
+
+	if (event->modifiers() & SG_MOVE_MODIFIER) {
+		this->window->pan_click(event);
+	} else {
+		/* TODO: the code in this branch visits (in one way or
+		   the other) whole tree of layers, starting with top
+		   level aggregate layer.  Should we really visit all
+		   layers? Shouldn't we visit only selected items and
+		   its children? */
+
+		qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() called, looking for layer";
+		const bool handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport, this);
+		if (!handled) {
+			qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() not handled";
+			/* Deselect & redraw screen if necessary to remove the highlight. */
+
+			TreeView * tree_view = this->window->items_tree->get_tree_view();
+			TreeItem * selected_item = tree_view->get_selected_tree_item();
+			if (selected_item) {
+				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
+				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
+				    || selected_item->to_layer()->type == LayerType::TRW) {
+
+					tree_view->unselect(selected_item->index);
+					if (this->window->clear_highlight()) {
+						this->window->draw_update();
+					}
+				}
+			}
+		} else {
+			/* Some layer has handled the click - so enable movement. */
+			this->select_and_move_activated = true;
+		}
+	}
+
+	return ToolStatus::ACK;
+}
+
+
+
+
 ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (layer != this->layer_edit_info->edited_layer) {

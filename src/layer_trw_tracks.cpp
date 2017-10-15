@@ -420,9 +420,13 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 			int x, y;
 			search->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
 
-			if (abs(x - search->x) <= TRACKPOINT_SIZE_APPROX && abs(y - search->y) <= TRACKPOINT_SIZE_APPROX
-			    && ((!search->closest_tp)        /* Was the old trackpoint we already found closer than this one? */
-				|| abs(x - search->x) + abs(y - search->y) < abs(x - search->closest_x) + abs(y - search->closest_y))) {
+			const int dist_x = abs(x - search->x);
+			const int dist_y = abs(y - search->y);
+
+			if (dist_x <= TRACKPOINT_SIZE_APPROX && dist_y <= TRACKPOINT_SIZE_APPROX
+			    && ((!search->closest_tp)
+				/* Was the old trackpoint we already found closer than this one? */
+				|| dist_x + dist_y < abs(x - search->closest_x) + abs(y - search->closest_y))) {
 
 				search->closest_track = i->second;
 				search->closest_tp = *iter;
@@ -1019,4 +1023,15 @@ void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_DATE_DESCENDING;
 	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
+}
+
+
+
+
+TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * viewport_)
+{
+	this->x = ev_x;
+	this->y = ev_y;
+	this->viewport = viewport_;
+	this->viewport->get_bbox(&this->bbox);
 }
