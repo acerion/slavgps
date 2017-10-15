@@ -788,7 +788,7 @@ std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Laye
 
 
 
-bool LayerAggregate::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * layer_tool)
+bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * layer_tool)
 {
 	if (this->children->empty()) {
 		return false;
@@ -799,7 +799,7 @@ bool LayerAggregate::select_click(QMouseEvent * event, Viewport * viewport, Laye
 		   top-level aggregate layer only. For child aggregate
 		   layers the visibility condition in a loop below
 		   will be tested first, before a call to the child's
-		   select_click().  */
+		   handle_select_tool_click(). */
 		return false;
 	}
 
@@ -810,9 +810,9 @@ bool LayerAggregate::select_click(QMouseEvent * event, Viewport * viewport, Laye
 			continue;
 		}
 
-		has_been_handled = (*iter)->select_click(event, viewport, layer_tool);
+		has_been_handled = (*iter)->handle_select_tool_click(event, viewport, layer_tool);
 		if (has_been_handled) {
-			/* iter/layer has handled the event. */
+			/* A Layer has handled the event. */
 			break;
 		}
 	}

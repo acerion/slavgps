@@ -107,9 +107,13 @@ Waypoint * LayerTRW::closest_wp_in_five_pixel_interval(Viewport * viewport, int 
 
 
 
-bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
+/*
+  This method is for handling "move" event coming from generic Select tool.
+  The generic Select tool doesn't know how to implement layer-specific movement, so the layer has to implement the behaviour itself.
+*/
+bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
-	if (!tool->sublayer_edit->holding) {
+	if (!tool->layer_edit_info->holding) {
 		return false;
 	}
 
@@ -138,7 +142,8 @@ bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * to
 	int x, y;
 	viewport->coord_to_screen(&new_coord, &x, &y);
 
-	tool->sublayer_edit_move(x, y);
+	/* The selected item is being moved to new position. */
+	tool->perform_move(x, y);
 
 	return true;
 }
@@ -146,20 +151,26 @@ bool LayerTRW::select_move(QMouseEvent * ev, Viewport * viewport, LayerTool * to
 
 
 
-bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
+/*
+  This method is for handling "release" event coming from generic Select tool.
+  The generic Select tool doesn't know how to implement layer-specific release, so the layer has to implement the behaviour itself.
+*/
+bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
-	if (!tool->sublayer_edit->holding) {
+	if (!tool->layer_edit_info->holding) {
+		/* The tool wasn't holding any item, so there is nothing to do on mouse release. */
 		return false;
 	}
 
 	if (ev->button() != Qt::LeftButton) {
+		/* If we are still holding something, but we didn't release this with left button, then we aren't interested. */
 		return false;
 	}
 
 	/* Prevent accidental (small) shifts when specific movement has not been requested
 	   (as the click release has occurred within the click object detection area). */
-	if (!tool->sublayer_edit->moving
-	    || tool->sublayer_edit->type_id == "") {
+	if (!tool->layer_edit_info->moving
+	    || tool->layer_edit_info->type_id == "") {
 		return false;
 	}
 
@@ -181,19 +192,19 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 		}
 	}
 
-	tool->sublayer_edit_release();
+	tool->perform_release();
 
-	/* Determine if working on a waypoint or a trackpoint. */
-	if (tool->sublayer_edit->type_id == "sg.trw.waypoint") {
-		/* Update waypoint position. */
+	/* Update information about new position of Waypoint/Trackpoint. */
+	if (tool->layer_edit_info->type_id == "sg.trw.waypoint") {
 		this->get_edited_wp()->coord = new_coord;
 		this->waypoints->calculate_bounds();
 		this->reset_edited_wp();
 
-	} else if (tool->sublayer_edit->type_id == "sg.trw.track" || tool->sublayer_edit->type_id == "sg.trw.route") {
+	} else if (tool->layer_edit_info->type_id == "sg.trw.track" || tool->layer_edit_info->type_id == "sg.trw.route") {
 
 		Track * track = this->get_edited_track();
 		if (track && track->selected_tp.valid) {
+			/* Don't reset the selected trackpoint, thus ensuring it's still presented in Trackpoint Properties window. */
 			(*track->selected_tp.iter)->coord = new_coord;
 
 			track->calculate_bounds();
@@ -201,7 +212,6 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 			if (this->tpwin) {
 				this->tpwin_update_dialog_data();
 			}
-			/* NB don't reset the selected trackpoint, thus ensuring it's still in the tpwin. */
 		}
 	} else {
 		assert(0);
@@ -215,24 +225,24 @@ bool LayerTRW::select_release(QMouseEvent * ev, Viewport * viewport, LayerTool *
 
 
 /*
+  This method is for handling "click" event coming from generic Select tool.
+  The generic Select tool doesn't know how to implement layer-specific selection, so the layer has to implement the behaviour itself.
+
   Returns true if a waypoint or track is found near the requested event position for this particular layer.
   The item found is automatically selected.
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in window.c
- */
-bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
+*/
+bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	if (ev->button() != Qt::LeftButton) {
 		return false;
 	}
-
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
-#ifdef K
-	if (!this->tracks_node.visible && !this->waypoints_node.visible && !this->routes_node.visible) {
+	if (!this->tracks->visible && !this->waypoints->visible && !this->routes->visible) {
 		return false;
 	}
-#endif
 
 	LatLonBBox viewport_bbox;
 	viewport->get_bbox(&viewport_bbox);
@@ -241,11 +251,14 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 
 	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, viewport_bbox)) {
 		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->drawimages);
-
 		this->waypoints->search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
-			this->select_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
+			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
+			tool->layer_edit_info->edited_layer = this;
+			tool->layer_edit_info->type_id = wp_search.closest_wp->type_id;
+
+			this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
 
 			this->emit_layer_changed();
 			return true;
@@ -259,7 +272,11 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	if (this->tracks->visible) {
 		this->tracks->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
-			this->select_click_do_track_selection(ev, tool, tp_search.closest_track, tp_search.closest_tp_iter);
+			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
+			tool->layer_edit_info->edited_layer = this;
+			tool->layer_edit_info->type_id = tp_search.closest_track->type_id;
+
+			this->handle_select_tool_click_do_track_selection(ev, tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
 			if (this->tpwin) {
 				this->tpwin_update_dialog_data();
@@ -274,7 +291,11 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
 	if (this->routes->visible) {
 		this->routes->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
-			this->select_click_do_track_selection(ev, tool, tp_search.closest_track, tp_search.closest_tp_iter);
+			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
+			tool->layer_edit_info->edited_layer = this;
+			tool->layer_edit_info->type_id = tp_search.closest_track->type_id;
+
+			this->handle_select_tool_click_do_track_selection(ev, tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
 			if (this->tpwin) {
 				this->tpwin_update_dialog_data();
@@ -304,7 +325,7 @@ bool LayerTRW::select_click(QMouseEvent * ev, Viewport * viewport, LayerTool * t
    Given @param track and @param tp_iter have been selected by clicking with mouse cursor.
    Propagate the information about selection to all important places.
 */
-void LayerTRW::select_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter)
+void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter)
 {
 	/* Always select + highlight the track. */
 	this->tree_view->select_and_expose(track->index);
@@ -315,10 +336,8 @@ void LayerTRW::select_click_do_track_selection(QMouseEvent * ev, LayerTool * too
 	if (ev->modifiers() & Qt::ControlModifier
 	    || (current_selected_track && current_selected_track->selected_tp.iter == tp_iter)) {
 
-		/* Put into 'move buffer'.
-		   Viewport & window already set in tool. */
-		tool->sublayer_edit->trw = this;
-		tool->sublayer_edit_click(ev->x(), ev->y());
+		/* Remember position at which selection occurred. */
+		tool->perform_selection(ev->x(), ev->y());
 	}
 
 	this->set_edited_track(track, tp_iter);
@@ -332,7 +351,7 @@ void LayerTRW::select_click_do_track_selection(QMouseEvent * ev, LayerTool * too
    Given @param wp has been selected by clicking with mouse cursor.
    Propagate the information about selection to all important places.
 */
-void LayerTRW::select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp)
+void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp)
 {
 	/* Select. */
 	this->tree_view->select_and_expose(wp->index);
@@ -341,12 +360,9 @@ void LayerTRW::select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * 
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 	if (ev->modifiers() & Qt::ShiftModifier
 	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image.isEmpty())) {
-		/* Put into 'move buffer'.
-		   Viewport & window already set in tool. */
-		tool->sublayer_edit->trw = this;
-		tool->sublayer_edit->type_id = "sg.trw.waypoint";
 
-		tool->sublayer_edit_click(ev->x(), ev->y());
+		/* Remember position at which selection occurred. */
+		tool->perform_selection(ev->x(), ev->y());
 	}
 
 	this->set_edited_wp(wp);
@@ -373,7 +389,7 @@ void LayerTRW::select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * 
    This function is called when generic Select tool is selected from tool bar.
    It would be nice to somehow merge this function with code used when "edit track/route/waypoint" tool is selected.
 */
-bool LayerTRW::select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
+bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
 {
 	if (ev->button() != Qt::RightButton) {
 		return false;
@@ -431,7 +447,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * 
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -444,7 +460,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	if (trw->type != LayerType::TRW) {
 		return ToolStatus::IGNORED;
 	}
-	if (this->sublayer_edit->holding) {
+	if (this->layer_edit_info->holding) {
 		return ToolStatus::ACK;
 	}
 	if (!trw->visible || !trw->waypoints->visible) {
@@ -464,7 +480,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			if (ev->button() == Qt::RightButton) {
 				trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 			} else {
-				this->sublayer_edit_click(ev->x(), ev->y());
+				this->perform_selection(ev->x(), ev->y());
 			}
 			return ToolStatus::ACK;
 		}
@@ -477,7 +493,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		if (ev->button() == Qt::RightButton) {
 			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
-			this->sublayer_edit_click(ev->x(), ev->y());
+			this->perform_selection(ev->x(), ev->y());
 		}
 		return ToolStatus::IGNORED;
 	} else if (wp_search.closest_wp) {
@@ -514,7 +530,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 		return ToolStatus::IGNORED;
 	}
 
-	if (!this->sublayer_edit->holding) {
+	if (!this->layer_edit_info->holding) {
 		return ToolStatus::IGNORED;
 	}
 
@@ -536,7 +552,9 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 
 	int x, y;
 	this->viewport->coord_to_screen(&new_coord, &x, &y);
-	this->sublayer_edit_move(x, y);
+
+	/* Selected item is being moved to new position. */
+	this->perform_move(x, y);
 
 	return ToolStatus::ACK;
 }
@@ -552,7 +570,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 		return ToolStatus::IGNORED;
 	}
 
-	if (!this->sublayer_edit->holding) {
+	if (!this->layer_edit_info->holding) {
 		return ToolStatus::IGNORED;
 	}
 
@@ -575,7 +593,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 			}
 		}
 
-		this->sublayer_edit_release();
+		this->perform_release();
 
 		trw->get_edited_wp()->coord = new_coord;
 
@@ -614,7 +632,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -1120,7 +1138,7 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -1250,7 +1268,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * vi
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -1290,7 +1308,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewpor
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -1340,7 +1358,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		    && abs(x - ev->x()) < TRACKPOINT_SIZE_APPROX
 		    && abs(y - ev->y()) < TRACKPOINT_SIZE_APPROX) {
 
-			this->sublayer_edit_click(ev->x(), ev->y());
+			this->perform_selection(ev->x(), ev->y());
 			return ToolStatus::ACK;
 		}
 
@@ -1389,7 +1407,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 		return ToolStatus::IGNORED;
 	}
 
-	if (!this->sublayer_edit->holding) {
+	if (!this->layer_edit_info->holding) {
 		return ToolStatus::IGNORED;
 	}
 
@@ -1405,7 +1423,9 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	// trw->selected_tp.tp->coord = new_coord;
 	int x, y;
 	this->viewport->coord_to_screen(&new_coord, &x, &y);
-	this->sublayer_edit_move(x, y);
+
+	/* Selected item is being moved to new position. */
+	this->perform_move(x, y);
 
 	return ToolStatus::ACK;
 }
@@ -1425,7 +1445,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 		return ToolStatus::IGNORED;
 	}
 
-	if (!this->sublayer_edit->holding) {
+	if (!this->layer_edit_info->holding) {
 		return ToolStatus::IGNORED;
 	}
 
@@ -1448,7 +1468,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	(*track->selected_tp.iter)->coord = new_coord;
 	track->calculate_bounds();
 
-	this->sublayer_edit_release();
+	this->perform_release();
 
 	/* Diff dist is diff from orig. */
 	if (trw->tpwin) {
@@ -1476,7 +1496,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -1647,7 +1667,7 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 

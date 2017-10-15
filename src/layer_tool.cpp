@@ -93,7 +93,7 @@ LayerTool::~LayerTool()
 	delete this->cursor_click;
 	delete this->cursor_release;
 
-	delete this->sublayer_edit; /* This may not be the best place to do this delete (::sublayer_edit is alloced in subclasses)... */
+	delete this->layer_edit_info; /* This may not be the best place to do this delete (::layer_edit_info is alloced in subclasses)... */
 }
 
 
@@ -116,34 +116,46 @@ static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
 
 
 
-void LayerTool::sublayer_edit_click(int x, int y)
+void LayerTool::perform_selection(int x, int y)
 {
-	assert (this->sublayer_edit);
+	assert (this->layer_edit_info);
 
-	/* We have clicked on a point, and we are holding it.
-	   We hold it during move, until we release it. */
-	this->sublayer_edit->holding = true;
+	/* We have clicked on an item, and we are holding it.
+	   We will hold it during move, until we release it. */
+	this->layer_edit_info->holding = true;
 
-	//gdk_gc_set_function(this->sublayer_edit->pen, GDK_INVERT);
-	this->viewport->draw_rectangle(this->sublayer_edit->pen, x - 3, y - 3, 6, 6);
+	/* We have just clicked the item, we aren't moving the cursor yet. */
+	this->layer_edit_info->moving = false;
+
+#ifdef K
+	/* What was this supposed to do? */
+	//gdk_gc_set_function(this->layer_edit_info->pen, GDK_INVERT);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, x - 3, y - 3, 6, 6);
 	this->viewport->sync();
-	this->sublayer_edit->oldx = x;
-	this->sublayer_edit->oldy = y;
-	this->sublayer_edit->moving = false;
+#endif
+
+	this->layer_edit_info->oldx = x;
+	this->layer_edit_info->oldy = y;
 }
 
 
 
 
-void LayerTool::sublayer_edit_move(int x, int y)
+void LayerTool::perform_move(int x, int y)
 {
-	assert (this->sublayer_edit);
+	assert (this->layer_edit_info);
 
-	this->viewport->draw_rectangle(this->sublayer_edit->pen, this->sublayer_edit->oldx - 3, this->sublayer_edit->oldy - 3, 6, 6);
-	this->viewport->draw_rectangle(this->sublayer_edit->pen, x - 3, y - 3, 6, 6);
-	this->sublayer_edit->oldx = x;
-	this->sublayer_edit->oldy = y;
-	this->sublayer_edit->moving = true;
+	/* We are in the process of moving the pressed cursor. */
+	this->layer_edit_info->moving = true;
+
+#ifdef K
+	/* What was this supposed to do? */
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->oldx - 3, this->layer_edit_info->oldy - 3, 6, 6);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, x - 3, y - 3, 6, 6);
+#endif
+
+	this->layer_edit_info->oldx = x;
+	this->layer_edit_info->oldy = y;
 
 	if (tool_sync_done) {
 		this->viewport->sync();
@@ -154,11 +166,24 @@ void LayerTool::sublayer_edit_move(int x, int y)
 
 
 
-void LayerTool::sublayer_edit_release(void)
+void LayerTool::perform_release(void)
 {
-	assert (this->sublayer_edit);
+	assert (this->layer_edit_info);
 
-	this->viewport->draw_rectangle(this->sublayer_edit->pen, this->sublayer_edit->oldx - 3, this->sublayer_edit->oldy - 3, 6, 6);
-	this->sublayer_edit->holding = false;
-	this->sublayer_edit->moving = false;
+#ifdef K
+	/* What was this supposed to do? */
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->oldx - 3, this->layer_edit_info->oldy - 3, 6, 6);
+#endif
+
+	this->layer_edit_info->holding = false;
+	this->layer_edit_info->moving = false;
+}
+
+
+
+
+LayerEditInfo::LayerEditInfo()
+{
+	this->pen.setColor(QColor("black"));
+	this->pen.setWidth(2);
 }

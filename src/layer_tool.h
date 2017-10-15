@@ -58,8 +58,33 @@ namespace SlavGPS {
 	class Window;
 	class Viewport;
 	class Layer;
-	class SublayerEdit;
 	enum class LayerType;
+
+
+
+
+	/*
+	  Class holding information about editing process currently happening to a layer.
+
+	  Currently this information is related only to editing of TRW's sublayers.
+	  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
+	  The points can be selected by either TRW-specific edit tools, or by generic select tool.
+	*/
+	class LayerEditInfo {
+	public:
+		LayerEditInfo();
+
+		Layer * edited_layer = NULL;
+		bool holding = false;
+		bool moving = false;
+		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
+		QPen pen;
+		int oldx = 0;
+		int oldy = 0;
+	};
+
+
+
 
 
 
@@ -101,12 +126,21 @@ namespace SlavGPS {
 		virtual void activate_tool(Layer * layer) { return; };
 		virtual void deactivate_tool(Layer * layer) { return; };
 
-		/* Start holding a TRW point. */
-		void sublayer_edit_click(int x, int y);
-		/* A TRW point that is being held is now also moved around. */
-		void sublayer_edit_move(int x, int y);
-		/* Stop holding (i.e. release) a TRW point. */
-		void sublayer_edit_release(void);
+
+		/* Start holding a layer's item at point x/y.
+		   You want to call this method in response to click event of a tool, when some item of a layer has been selected.
+		   The generic Layer Tool itself doesn't actually select any selections
+		   inside of a layer, but it still does some useful, generic stuff. */
+		void perform_selection(int x, int y);
+
+		/* Selected item belonging to a layer is being moved to new position x/y.
+		   Call this method only when there is an item (in a layer) that is selected. */
+		void perform_move(int x, int y);
+
+		/* Selected item belonging to a layer has been released.
+		   Call this method only when there was an item that was being selected. */
+		void perform_release(void);
+
 
 		QString action_icon_path;
 		QString action_label;
@@ -122,8 +156,7 @@ namespace SlavGPS {
 		Window * window = NULL;
 		Viewport * viewport = NULL;
 
-		/* This should be moved to class LayerToolTRW. */
-		SublayerEdit * sublayer_edit = NULL;
+		LayerEditInfo * layer_edit_info = NULL;
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 

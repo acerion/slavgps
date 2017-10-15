@@ -868,15 +868,6 @@ void Layer::location_info_cb(void) /* Slot. */
 
 
 
-SublayerEdit::SublayerEdit()
-{
-	this->pen.setColor(QColor("black"));
-	this->pen.setWidth(2);
-}
-
-
-
-
 LayerMenuItem operator&(LayerMenuItem& arg1, LayerMenuItem& arg2)
 {
 	LayerMenuItem result = static_cast<LayerMenuItem>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));

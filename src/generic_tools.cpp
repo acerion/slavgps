@@ -868,7 +868,7 @@ LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : Layer
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 
-	this->sublayer_edit = new SublayerEdit;
+	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -879,7 +879,7 @@ LayerToolSelect::~LayerToolSelect()
 	delete this->cursor_click;
 	delete this->cursor_release;
 
-	delete this->sublayer_edit;
+	delete this->layer_edit_info;
 }
 
 
@@ -889,7 +889,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 {
 	qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_click() called";
 
-	this->window->select_move = false;
+	this->select_and_move_activated = false;
 
 	/* Only allow selection on primary button. */
 	if (event->button() != Qt::LeftButton) {
@@ -906,7 +906,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   layers? Shouldn't we visit only selected items and
 		   its children? */
 
-		const bool handled = this->window->items_tree->get_top_layer()->select_click(event, this->window->viewport, this);
+		const bool handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport, this);
 		if (!handled) {
 			/* Deselect & redraw screen if necessary to remove the highlight. */
 
@@ -925,7 +925,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 			}
 		} else {
 			/* Some layer has handled the click - so enable movement. */
-			this->window->select_move = true;
+			this->select_and_move_activated = true;
 		}
 	}
 
@@ -937,10 +937,14 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	if (this->window->select_move) {
-		/* Don't care about trw here. */
-		if (this->sublayer_edit->trw) {
-			layer->select_move(event, this->viewport, this); /* kamilFIXME: layer->select_move or trw->select_move? */
+	if (layer != this->layer_edit_info->edited_layer) {
+		/* TODO: these two pointers should be the same, so one of them is redundant. */
+		qDebug() << "EE: LayerToolSelect: release: layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
+	}
+
+	if (this->select_and_move_activated) {
+		if (this->layer_edit_info->edited_layer) {
+			layer->handle_select_tool_move(event, this->viewport, this);
 		}
 	} else {
 		/* Optional Panning. */
@@ -956,10 +960,14 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	if (this->window->select_move) {
-		/* Don't care about trw here. */
-		if (this->sublayer_edit->trw) {
-			((LayerTRW *) this->sublayer_edit->trw)->select_release(event, this->viewport, this);
+	if (layer != this->layer_edit_info->edited_layer) {
+		/* TODO: these two pointers should be the same, so one of them is redundant. */
+		qDebug() << "EE: LayerToolSelect: release: layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
+	}
+
+	if (this->select_and_move_activated) {
+		if (this->layer_edit_info->edited_layer) {
+			this->layer_edit_info->edited_layer->handle_select_tool_release(event, this->viewport, this);
 		}
 	}
 
@@ -970,13 +978,13 @@ ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	/* Force pan off in case it was on. */
 	this->window->pan_off();
 
-	/* End of this select movement. */
-	this->window->select_move = false;
+	/* End of this "select & move" operation. */
+	this->select_and_move_activated = false;
 
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->type == LayerType::TRW && layer->visible) {
 			/* See if a TRW item is selected, and show menu for the item. */
-			layer->select_tool_context_menu(event, this->window->viewport);
+			layer->handle_select_tool_context_menu(event, this->window->viewport);
 		}
 	}
 

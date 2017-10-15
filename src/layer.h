@@ -76,27 +76,6 @@ namespace SlavGPS {
 
 
 
-	/*
-	  Stuff related to editing TRW's sublayers.
-	  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
-	  The points can be selected by either TRW-specific edit tools, or by generic select tool.
-	*/
-	class SublayerEdit {
-	public:
-		SublayerEdit();
-
-		LayerTRW * trw = NULL;
-		bool holding = false;
-		bool moving = false;
-		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
-		QPen pen;
-		int oldx = 0;
-		int oldy = 0;
-	};
-
-
-
-
 	typedef void (* LayerRefCB) (void * ptr, void * dead_vml);
 
 
@@ -139,10 +118,10 @@ namespace SlavGPS {
 		bool handle_selection_in_tree(void);
 
 		/* Methods for generic "Select" tool. */
-		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)   { return false; };
-		virtual bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)    { return false; };
-		virtual bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool) { return false; };
-		virtual bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport)         { return false; };
+		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)   { return false; };
+		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)    { return false; };
+		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool) { return false; };
+		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)              { return false; };
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(LayerMenuItem selection) { return; };

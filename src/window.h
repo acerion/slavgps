@@ -181,10 +181,6 @@ namespace SlavGPS {
 		void preferences_change_update(void);
 
 
-		/* Display controls. */
-		bool select_move = false;
-
-
 		QAction * qa_tree_item_properties = NULL;
 
 

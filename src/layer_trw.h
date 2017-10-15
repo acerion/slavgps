@@ -153,13 +153,13 @@ namespace SlavGPS {
 
 
 		/* Methods for generic "Select" tool. */
-		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		bool select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
+		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
 
-		void select_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
-		void select_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
+		void handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
+		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
 		void set_menu_selection(LayerMenuItem selection);
 		LayerMenuItem get_menu_selection();
