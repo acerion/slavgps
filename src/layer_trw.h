@@ -332,6 +332,9 @@ namespace SlavGPS {
 		Trackpoint * search_nearby_tp(Viewport * viewport, int x, int y);
 		Waypoint * search_nearby_wp(Viewport * viewport, int x, int y);
 
+		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, Viewport * viewport);
+		bool get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, Viewport * viewport);
+
 
 		void sort_all();
 

@@ -122,21 +122,8 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, La
 	   This is useful when one decides not to move the thing after all.
 	   If one wants to move the item only a little bit then don't hold down the 'snap' key! */
 
-	/* Snap to trackpoint. */
-	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
-		if (tp) {
-			new_coord = tp->coord;
-		}
-	}
-
-	/* Snap to waypoint. */
-	if (ev->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
-		if (wp) {
-			new_coord = wp->coord;
-		}
-	}
+	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
+	this->get_nearby_snap_coordinates(new_coord, ev, viewport);
 
 	int x, y;
 	viewport->coord_to_screen(&new_coord, &x, &y);
@@ -175,21 +162,8 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 
 	Coord new_coord = viewport->screen_to_coord(ev->x(), ev->y());
 
-	/* Snap to trackpoint. */
-	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
-		if (tp) {
-			new_coord = tp->coord;
-		}
-	}
-
-	/* Snap to waypoint. */
-	if (ev->modifiers() & Qt::ShiftModifier) {
-		Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
-		if (wp) {
-			new_coord = wp->coord;
-		}
-	}
+	/* See if the coordinates of the new "release" position should be snapped to existing nearby Trackpoint or Waypoint. */
+	this->get_nearby_snap_coordinates(new_coord, ev, viewport);
 
 	tool->perform_release();
 
@@ -574,19 +548,8 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 
 	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
-	if (ev->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
-		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
-		if (tp) {
-			new_coord = tp->coord;
-		}
-	} else if (ev->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
-		Waypoint * wp = trw->search_nearby_wp(this->viewport, ev->x(), ev->y());
-		if (wp && wp != trw->get_edited_wp()) {
-			new_coord = wp->coord;
-		}
-	} else {
-		; /* No modifiers. */
-	}
+	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
+	trw->get_nearby_snap_coordinates(new_coord, ev, viewport);
 
 	int x, y;
 	this->viewport->coord_to_screen(&new_coord, &x, &y);
@@ -615,21 +578,8 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	if (ev->button() == Qt::LeftButton) {
 		Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
-		/* Snap to trackpoint. */
-		if (ev->modifiers() & Qt::ControlModifier) {
-			Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
-			if (tp) {
-				new_coord = tp->coord;
-			}
-		}
-
-		/* Snap to waypoint. */
-		if (ev->modifiers() & Qt::ShiftModifier) {
-			Waypoint * wp = trw->search_nearby_wp(this->viewport, ev->x(), ev->y());
-			if (wp && wp != trw->get_edited_wp()) {
-				new_coord = wp->coord;
-			}
-		}
+		/* See if the coordinates of the release position should be snapped to existing nearby Trackpoint or Waypoint. */
+		trw->get_nearby_snap_coordinates(new_coord, ev, this->viewport);
 
 		this->perform_release();
 
@@ -652,6 +602,59 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	} else {
 		return ToolStatus::IGNORED;
 	}
+}
+
+
+
+
+/*
+  See if mouse event @param ev happened close to a Trackpoint or a
+  Waypoint and if keyboard modifier specific for Trackpoint or
+  Waypoint was used. If both conditions are true, put coordinates of
+  such Trackpoint or Waypoint in @param point_coord.
+*/
+bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, Viewport * viewport)
+{
+	bool snapped = false;
+
+	/* Snap to Trackpoint. */
+	if (this->get_nearby_snap_coordinates_tp(point_coord, ev, viewport)) {
+		snapped = true;
+	}
+
+	/* Snap to waypoint. */
+	if (ev->modifiers() & Qt::ShiftModifier) {
+		const Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
+		if (wp && wp != this->get_edited_wp()) {
+			point_coord = wp->coord;
+			snapped = true;
+		}
+	}
+
+	return snapped;
+}
+
+
+
+
+/*
+  See if mouse event @param ev happened close to a Trackpoint and if
+  keyboard modifier specific for a Trackpoint was used. If both
+  conditions are true, put coordinates of such Trackpoint in @param
+  point_coord.
+*/
+bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, Viewport * viewport)
+{
+	bool snapped = false;
+	if (ev->modifiers() & Qt::ControlModifier) {
+		const Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
+		if (tp && tp != *this->get_edited_track()->selected_tp.iter) {
+			point_coord = tp->coord;
+			snapped = true;
+		}
+	}
+
+	return snapped;
 }
 
 
@@ -1023,13 +1026,8 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 	Trackpoint * tp = new Trackpoint();
 	tp->coord = viewport->screen_to_coord(ev->x(), ev->y());
 
-	/* Snap to other TP. */
-	if (ev->modifiers() & Qt::ControlModifier) {
-		const Trackpoint * other_tp = trw->search_nearby_tp(viewport, ev->x(), ev->y());
-		if (other_tp) {
-			tp->coord = other_tp->coord;
-		}
-	}
+	/* Snap to other Trackpoint. */
+	trw->get_nearby_snap_coordinates_tp(tp->coord, ev, viewport);
 
 	tp->newsegment = false;
 	tp->has_timestamp = false;
@@ -1450,13 +1448,9 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 
 	Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
-	/* Snap to trackpoint. */
-	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *trw->get_edited_track()->selected_tp.iter) {
-			new_coord = tp->coord;
-		}
-	}
+	/* Snap to Trackpoint */
+	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->viewport);
+
 	// trw->selected_tp.tp->coord = new_coord;
 	int x, y;
 	this->viewport->coord_to_screen(&new_coord, &x, &y);
