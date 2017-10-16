@@ -51,7 +51,6 @@ namespace SlavGPS {
 	class LayerTRW;
 	class LayerTool;
 	class LayerInterface;
-	class trw_menu_sublayer_t;
 	class LayersPanel;
 
 
@@ -204,8 +203,6 @@ namespace SlavGPS {
 
 		LayerType type;
 
-		trw_menu_sublayer_t * menu_data = NULL;
-
 	protected:
 		virtual void marshall(uint8_t ** data, size_t * data_len);
 
@@ -230,16 +227,6 @@ namespace SlavGPS {
 
 
 	void layer_init(void);
-
-
-
-
-	class trw_menu_sublayer_t {
-	public:
-		//Viewport * viewport = NULL;
-		void * misc = NULL;
-		QString string;
-	};
 
 
 

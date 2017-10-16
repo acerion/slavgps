@@ -2494,10 +2494,12 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	QAction * qa = NULL;
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
+#ifdef K
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
 	parent_layer_->menu_data->misc = this;
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
+#endif
 #endif
 
 	/* Currently filter with functions all use shellcommands and thus don't work in Windows. */

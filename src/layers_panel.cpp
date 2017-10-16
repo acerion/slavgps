@@ -738,7 +738,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		TreeItem * item = this->tree_view->get_tree_item(index);
 
 		Layer * layer = item->to_layer();
-		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 
 		this->context_menu_show_for_item(item);
 	} else {

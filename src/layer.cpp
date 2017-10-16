@@ -525,8 +525,6 @@ Layer * Layer::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 Layer::~Layer()
 {
 	delete right_click_menu;
-
-	delete this->menu_data;
 }
 
 
@@ -687,8 +685,6 @@ Layer::Layer()
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
 	this->tree_item_type = TreeItemType::LAYER; /* TODO: re-think initializing parent classes of Layer and TreeItem. */
-
-	this->menu_data = new trw_menu_sublayer_t;
 }
 
 
