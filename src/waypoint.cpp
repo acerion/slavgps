@@ -774,3 +774,17 @@ void Waypoint::delete_sublayer_cb(void)
 	/* false: don't require confirmation in callbacks. */
 	this->delete_sublayer(false);
 }
+
+
+
+
+/**
+   Simple accessor
+
+   Created to avoid constant casting of Waypoint::owning_layer to LayerTRW* type.
+*/
+LayerTRW * Waypoint::get_parent_layer_trw() const
+{
+	return (LayerTRW *) this->owning_layer;
+
+}

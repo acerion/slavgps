@@ -94,6 +94,8 @@ namespace SlavGPS {
 
 		bool properties_dialog();
 
+		LayerTRW * get_parent_layer_trw() const;
+
 		Coord coord;
 		//bool visible = true;
 		bool has_timestamp = false;

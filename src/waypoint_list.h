@@ -46,14 +46,13 @@ namespace SlavGPS {
 
 	class Layer;
 	class LayerTRW;
-	class waypoint_layer_t;
 	class Waypoint;
 	class Viewport;
 
 
 
 
-	void waypoint_list_dialog(QString const & title, Layer * layer, bool is_aggregate_layer);
+	void waypoint_list_dialog(QString const & title, Layer * layer);
 
 
 
@@ -65,7 +64,7 @@ namespace SlavGPS {
 		~WaypointListDialog();
 		void build_model(bool hide_layer_names);
 
-		std::list<waypoint_layer_t*> * waypoints_and_layers = NULL;
+		std::list<Waypoint *> * waypoints = NULL;
 
 	private slots:
 		void waypoint_view_cb(void);
@@ -78,9 +77,9 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add(Waypoint * wp, LayerTRW * trw, HeightUnit height_units, const char * date_format);
+		void add_row(Waypoint * wp, HeightUnit height_units, const char * date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
-		void add_menu_items(QMenu & menu);
+		void add_menu_items(QMenu & menu, bool wp_has_image);
 		void add_copy_menu_items(QMenu & menu);
 		void waypoint_select(LayerTRW * layer);
 
@@ -91,13 +90,8 @@ namespace SlavGPS {
 		QStandardItemModel * model = NULL;
 		QTableView * view = NULL;
 
-
-
-		struct {
-			LayerTRW * trw;
-			Waypoint * wp;
-			Viewport * viewport;
-		} menu_data;
+		/* Waypoint selected in list. */
+		Waypoint * selected_wp = NULL;
 	};
 
 

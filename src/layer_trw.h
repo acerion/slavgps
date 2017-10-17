@@ -136,26 +136,6 @@ namespace SlavGPS {
 
 
 
-
-	/* For creating a list of tracks with the corresponding layer it is in
-	   (thus a selection of tracks may be from differing layers). */
-	class track_layer_t {
-	public:
-		Track * trk = NULL;
-		LayerTRW * trw = NULL;
-	};
-
-	/* For creating a list of waypoints with the corresponding layer it is in
-	   (thus a selection of waypoints may be from differing layers). */
-	class waypoint_layer_t {
-	public:
-		Waypoint * wp = NULL;
-		LayerTRW * trw = NULL;
-	};
-
-
-
-
 	class LayerTRWInterface : public LayerInterface {
 	public:
 		LayerTRWInterface();
@@ -316,13 +296,10 @@ namespace SlavGPS {
 
 
 
-		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
-		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints);
+		std::list<Waypoint *> * create_waypoints_list();
 
-
-		std::list<track_layer_t *> * create_tracks_and_layers_list();
-		std::list<track_layer_t *> * create_tracks_and_layers_list(const QString & type_id);
-		std::list<track_layer_t *> * create_tracks_and_layers_list_helper(std::list<Track *> * tracks);
+		std::list<Track *> * create_tracks_list();
+		std::list<Track *> * create_tracks_list(const QString & type_id);
 
 
 		void trackpoint_properties_show();

@@ -46,7 +46,6 @@ namespace SlavGPS {
 
 	class Window;
 	class Layer;
-	class track_layer_t;
 
 
 
@@ -61,7 +60,7 @@ namespace SlavGPS {
 
 		QGridLayout * stats_table = NULL;
 		QCheckBox * checkbox = NULL;
-		std::list<track_layer_t *> * tracks_and_layers = NULL;
+		std::list<Track *> * tracks = NULL;
 		Layer * layer = NULL; /* Just a reference. */
 		QString type_id;
 

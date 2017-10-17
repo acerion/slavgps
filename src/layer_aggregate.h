@@ -43,8 +43,6 @@ namespace SlavGPS {
 	class Viewport;
 	class LayersPanel;
 	class Track;
-	struct track_layer_t;
-	struct waypoint_layer_t;
 
 
 
@@ -84,9 +82,9 @@ namespace SlavGPS {
 
 
 		Layer * get_top_visible_layer_of_type(LayerType layer_type);
-		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
-		std::list<track_layer_t *> * create_tracks_and_layers_list();
-		std::list<track_layer_t *> * create_tracks_and_layers_list(const QString & type_id);
+		std::list<Waypoint *> * create_waypoints_list();
+		std::list<Track *> * create_tracks_list();
+		std::list<Track *> * create_tracks_list(const QString & type_id);
 		std::list<Layer const *> * get_all_layers_of_type(std::list<Layer const *> * layers, LayerType layer_type, bool include_invisible);
 		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);

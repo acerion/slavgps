@@ -41,6 +41,7 @@
 #include "settings.h"
 #include "preferences.h"
 #include "tree_view_internal.h"
+#include "dialog.h"
 
 #ifdef K
 #include "clipboard.h"
@@ -54,6 +55,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 /* Long formatted date+basic time - listing this way ensures the string
    comparison sort works - so no local type format %x or %c here! */
 #define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
@@ -63,14 +69,12 @@ using namespace SlavGPS;
 
 enum {
 	LAYER_NAME_COLUMN = 0,    /* Layer Name (string). May not be displayed. */
-	WAYPOINT_NAME_COLUMN,     /* Waypoint Name (string). */
+	WAYPOINT_COLUMN,          /* Waypoint Name (string) + pointer to waypoint */
 	DATE_COLUMN,              /* Date (string). */
 	VISIBLE_COLUMN,           /* Visibility (boolean). */
 	COMMENT_COLUMN,           /* Comment (string). */
-	HEIGHT_COLUMN,            /* Height (int). */
+	HEIGHT_COLUMN,            /* Height (integer). */
 	SYMBOL_COLUMN,            /* Symbol icon (pixmap). */
-	LAYER_POINTER_COLUMN,     /* Pointer to TRW layer (pointer). */
-	WAYPOINT_POINTER_COLUMN,  /* Pointer to waypoint (pointer). */
 };
 
 
@@ -80,10 +84,18 @@ enum {
    this is performed on demand via the specific context menu request. */
 void WaypointListDialog::waypoint_select(LayerTRW * layer)
 {
-	if (this->menu_data.trw && this->menu_data.wp) {
-		this->menu_data.trw->tree_view->select_and_expose(this->menu_data.wp->index);
+	if (!this->selected_wp) {
+		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		return;
+	}
+
+	Waypoint * wp = this->selected_wp;
+	LayerTRW * trw = wp->get_parent_layer_trw();
+
+	if (wp && trw) {
+		trw->tree_view->select_and_expose(wp->index);
 	} else {
-		qDebug() << "EE: Waypoint List Dialog: selecting either NULL layer or NULL wp:" << (qintptr) this->menu_data.trw << (qintptr) this->menu_data.wp;
+		qDebug() << "EE: Waypoint List Dialog: selecting either NULL layer or NULL wp:" << (qintptr) trw << (qintptr) wp;
 	}
 }
 
@@ -92,10 +104,15 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 
 void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 {
-	LayerTRW * trw = this->menu_data.trw;
-	Waypoint * wp = this->menu_data.wp;
+	if (!this->selected_wp) {
+		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		return;
+	}
 
-	if (!wp || wp->name.isEmpty()) {
+	Waypoint * wp = this->selected_wp;
+	LayerTRW * trw = wp->get_parent_layer_trw();
+
+	if (wp->name.isEmpty()) {
 		return;
 	}
 
@@ -123,9 +140,18 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 
 void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 {
-	this->menu_data.viewport->set_center_coord(this->menu_data.wp->coord, true);
-	this->waypoint_select(this->menu_data.trw);
-	this->menu_data.trw->emit_layer_changed();
+	if (!this->selected_wp) {
+		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		return;
+	}
+
+	Waypoint * wp = this->selected_wp;
+	LayerTRW * trw = wp->get_parent_layer_trw();
+	Viewport * viewport = g_tree->tree_get_main_viewport();
+
+	viewport->set_center_coord(wp->coord, true);
+	this->waypoint_select(trw);
+	trw->emit_layer_changed();
 }
 
 
@@ -133,24 +159,24 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 
 void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 {
-	Waypoint * wp = this->menu_data.wp;
-	LayerTRW * trw = this->menu_data.trw;
-#ifdef K
-#ifdef WINDOWS
-	ShellExecute(NULL, "open", wp->image, NULL, NULL, SW_SHOWNORMAL);
-#else
-
-	GError * err = NULL;
-	char * quoted_file = g_shell_quote(wp->image);
-	const QString viewer = Preferences::get_image_viewer();
-	const QString cmd = QString("%1 %2").arg(viewer).arg(quoted_file);
-	free(quoted_file);
-	if (! g_spawn_command_line_async(cmd, &err)) {
-		Dialog::error(tr("Could not launch %1 to open file.").arg(viewer), trw->get_window());
-		g_error_free(err);
+	if (!this->selected_wp) {
+		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		return;
 	}
+
+	Waypoint * wp = this->selected_wp;
+	LayerTRW * trw = wp->get_parent_layer_trw();
+
+#ifdef K
+	char * quoted_file = g_shell_quote(wp->image);
 #endif
-#endif
+	const QString viewer = Preferences::get_image_viewer();
+	const QString path = wp->image;
+	const QString command = QString("%1 %2").arg(viewer).arg(path);
+
+	if (!QProcess::startDetached(command)) {
+		Dialog::error(QObject::QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(path), trw->get_window());
+	}
 }
 
 
@@ -198,7 +224,7 @@ static void copy_selection(QStandardItemModel * model,
 	gtk_tree_model_get(model, iter, 5, &hh, -1);
 
 	Waypoint * wp;
-        gtk_tree_model_get(model, iter, WAYPOINT_POINTER_COLUMN, &wp, -1);
+        gtk_tree_model_get(model, iter, WAYPOINT_COLUMN, &wp, -1);
 	struct LatLon ll;
 	if (wp) {
 		ll = wp->coord.get_latlon();
@@ -285,7 +311,7 @@ void WaypointListDialog::add_copy_menu_items(QMenu & menu)
 
 
 
-void WaypointListDialog::add_menu_items(QMenu & menu)
+void WaypointListDialog::add_menu_items(QMenu & menu, bool wp_has_image)
 {
 	QAction * qa = NULL;
 
@@ -297,7 +323,7 @@ void WaypointListDialog::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_waypoint_cb()));
-	qa->setEnabled(!this->menu_data.wp->image.isEmpty());
+	qa->setEnabled(wp_has_image);
 
 	return;
 }
@@ -327,26 +353,24 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QStandardItem * parent_item = this->model->invisibleRootItem();
 
 
-	QStandardItem * child = parent_item->child(index.row(), WAYPOINT_NAME_COLUMN);
+	QStandardItem * child = parent_item->child(index.row(), WAYPOINT_COLUMN);
 	qDebug() << "II: Waypoint List: selected waypoint" << child->text();
 
-	child = parent_item->child(index.row(), WAYPOINT_POINTER_COLUMN);
-	QVariant variant = child->data(RoleLayerData);
-	Waypoint * wp = variant.value<Waypoint *>();
-
-
-	child = parent_item->child(index.row(), LAYER_POINTER_COLUMN);
-	variant = child->data(RoleLayerData);
-	LayerTRW * trw = (LayerTRW *) variant.value<Layer *>();
-	if (trw->type != LayerType::TRW) {
-		qDebug() << "EE: Waypoint List: layer type is not TRW:" << (int) trw->type;
+	child = parent_item->child(index.row(), WAYPOINT_COLUMN);
+	Waypoint * wp = child->data(RoleLayerData).value<Waypoint *>();
+	if (!wp) {
+		qDebug() << "EE: Waypoint List: failed to get non-NULL Waypoint from table";
 		return;
 	}
 
+	/* If we were able to get list of Waypoints, all of them need to have associated parent layer. */
+	LayerTRW * trw = wp->get_parent_layer_trw();
+	if (!trw) {
+		qDebug() << "EE: Waypoint List: failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
+		return;
+	}
 
-	this->menu_data.trw = trw;
-	this->menu_data.wp = wp;
-	this->menu_data.viewport = trw->get_window()->get_viewport();
+	this->selected_wp = wp;
 
 	QMenu menu(this);
 #if 0
@@ -356,7 +380,7 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 		this->add_copy_menu_items(QMenu & menu);
 	}
 #else
-	this->add_menu_items(menu);
+	this->add_menu_items(menu, !wp->image.isEmpty());
 #endif
 
 	menu.exec(QCursor::pos());
@@ -370,7 +394,7 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * For each entry we copy the various individual waypoint properties into the table,
  * formatting & converting the internal values into something for display.
  */
-void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_units, const char * date_format)
+void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const char * date_format)
 {
 	/* Get start date. */
 	char time_buf[32] = { 0 };
@@ -391,6 +415,8 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 #endif
 #endif
 	}
+
+	LayerTRW * trw = wp->get_parent_layer_trw();
 
 	/* This parameter doesn't include aggegrate visibility. */
 	bool visible = trw->visible && wp->visible;
@@ -421,9 +447,11 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
-	/* WAYPOINT_NAME_COLUMN */
+	/* WAYPOINT_COLUMN */
 	item = new QStandardItem(wp->name);
 	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(wp);
+	item->setData(variant, RoleLayerData);
 	items << item;
 
 	/* DATE_COLUMN */
@@ -461,18 +489,6 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
 	item->setEditable(false);
 	items << item;
 
-	/* LAYER_POINTER_COLUMN */
-	item = new QStandardItem();
-	variant = QVariant::fromValue((Layer *) trw);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
-	/* WAYPOINT_POINTER_COLUMN */
-	item = new QStandardItem();
-	variant = QVariant::fromValue(wp);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
 	this->model->invisibleRootItem()->appendRow(items);
 }
 
@@ -487,7 +503,7 @@ void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_un
  */
 void WaypointListDialog::build_model(bool hide_layer_names)
 {
-	if (!this->waypoints_and_layers || this->waypoints_and_layers->empty()) {
+	if (!this->waypoints || this->waypoints->empty()) {
 		return;
 	}
 
@@ -495,7 +511,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(WAYPOINT_NAME_COLUMN, new QStandardItem("Name"));
+	this->model->setHorizontalHeaderItem(WAYPOINT_COLUMN, new QStandardItem("Name"));
 	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
 	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
 	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
@@ -505,8 +521,6 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Metres)"));
 	}
 	this->model->setHorizontalHeaderItem(SYMBOL_COLUMN, new QStandardItem("Symbol"));
-	this->model->setHorizontalHeaderItem(LAYER_POINTER_COLUMN, new QStandardItem("Layer Pointer"));
-	this->model->setHorizontalHeaderItem(WAYPOINT_POINTER_COLUMN, new QStandardItem("Waypoint Pointer"));
 
 
 	this->view = new QTableView();
@@ -528,8 +542,8 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, hide_layer_names);
 	this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
 
-	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_NAME_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(WAYPOINT_NAME_COLUMN, QHeaderView::Interactive);
+	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WAYPOINT_COLUMN, QHeaderView::Interactive);
 
 	this->view->horizontalHeader()->setSectionHidden(DATE_COLUMN, false);
 	this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
@@ -545,10 +559,6 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 
 	this->view->horizontalHeader()->setSectionHidden(SYMBOL_COLUMN, false);
 	this->view->horizontalHeader()->setSectionResizeMode(SYMBOL_COLUMN, QHeaderView::ResizeToContents);
-
-	this->view->horizontalHeader()->setSectionHidden(LAYER_POINTER_COLUMN, true);
-	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_POINTER_COLUMN, true);
-
 
 	this->vbox->addWidget(this->view);
 	this->vbox->addWidget(this->button_box);
@@ -566,8 +576,8 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		date_format = g_strdup(WAYPOINT_LIST_DATE_FORMAT);
 	}
 
-	for (auto iter = waypoints_and_layers->begin(); iter != waypoints_and_layers->end(); iter++) {
-		this->add((*iter)->wp, (*iter)->trw, height_units, date_format);
+	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
+		this->add_row(*iter, height_units, date_format);
 	}
 	free(date_format);
 
@@ -587,26 +597,24 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 
 
 /**
- * @title:                The title for the dialog
- * @layer:                The layer, for which a create_waypoints_and_layers_list() call will be made
- * @is_aggregate_layer:   Is it an Aggregate Layer, or TRW Layer?
- *
- * Common method for showing a list of waypoints with extended information
- */
-void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer, bool is_aggregate_layer)
+   @title: the title for the dialog
+   @layer: the layer, from which a list of waypoints should be extracted
+
+   Common method for showing a list of waypoints with extended information
+*/
+void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer)
 {
 	WaypointListDialog dialog(title, layer->get_window());
 
-
 	if (layer->type == LayerType::TRW) {
-		dialog.waypoints_and_layers = ((LayerTRW *) layer)->create_waypoints_and_layers_list();
+		dialog.waypoints = ((LayerTRW *) layer)->create_waypoints_list();
 	} else if (layer->type == LayerType::AGGREGATE) {
-		dialog.waypoints_and_layers = ((LayerAggregate *) layer)->create_waypoints_and_layers_list();
+		dialog.waypoints = ((LayerAggregate *) layer)->create_waypoints_list();
 	} else {
 		assert (0);
 	}
 
-	dialog.build_model(!is_aggregate_layer);
+	dialog.build_model(layer->type != LayerType::AGGREGATE);
 	dialog.exec();
 }
 
@@ -629,7 +637,7 @@ WaypointListDialog::WaypointListDialog(QString const & title, QWidget * parent_w
 
 WaypointListDialog::~WaypointListDialog()
 {
-	delete this->waypoints_and_layers;
+	delete this->waypoints;
 }
 
 

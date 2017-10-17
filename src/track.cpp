@@ -4006,3 +4006,17 @@ void Track::remove_last_trackpoint(void)
 	this->erase_trackpoint(iter);
 	this->calculate_bounds();
 }
+
+
+
+
+/**
+   Simple accessor
+
+   Created to avoid constant casting of Track::owning_layer to LayerTRW* type.
+*/
+LayerTRW * Track::get_parent_layer_trw() const
+{
+	return (LayerTRW *) this->owning_layer;
+
+}

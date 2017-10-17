@@ -912,7 +912,7 @@ void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 	} else {
 		title = tr("%1: Route List").arg(this->owning_layer->name);
 	}
-	track_list_dialog(title, this->owning_layer, this->type_id, false);
+	track_list_dialog(title, this->owning_layer, this->type_id);
 }
 
 

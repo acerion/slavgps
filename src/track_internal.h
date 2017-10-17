@@ -263,6 +263,8 @@ namespace SlavGPS {
 
 		bool properties_dialog();
 
+		LayerTRW * get_parent_layer_trw() const;
+
 		/* Track editing tool. */
 		Trackpoint2 selected_tp;
 

@@ -414,27 +414,25 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 
 
-std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
+std::list<Waypoint *> * LayerAggregate::create_waypoints_list()
 {
 	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
-	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
+	std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
+
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
 		/* TODO: move this to layer trw containers. */
 		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoint_items();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints->push_back(i->second);
 		}
-
-		waypoints_and_layers->splice(waypoints_and_layers->begin(), *((LayerTRW *) (*iter))->create_waypoints_and_layers_list_helper(waypoints));
 	}
 	delete layers;
 
-	return waypoints_and_layers;
+	return waypoints;
 }
 
 
@@ -443,7 +441,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Waypoint List").arg(this->name);
-	waypoint_list_dialog(title, this, true);
+	waypoint_list_dialog(title, this);
 }
 
 
@@ -500,44 +498,29 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer)
+std::list<Track *> * LayerAggregate::create_tracks_list(const QString & items_type_id)
 {
-	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
+	/* FIXME: add handling of items_type_id. */
+	return this->create_tracks_list();
 }
 
 
 
 
-std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(const QString & items_type_id)
-{
-	return this->create_tracks_and_layers_list();
-}
-
-
-
-
-std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
+std::list<Track *> * LayerAggregate::create_tracks_list()
 {
 	std::list<Layer const *> * layers = new std::list<Layer const *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the tracks and routes to build a list of all of them. */
-	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
-
 	std::list<Track *> * tracks = new std::list<Track *>;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-
 		((LayerTRW *) (*iter))->get_tracks_node().get_track_values(tracks);
 		((LayerTRW *) (*iter))->get_routes_node().get_track_values(tracks);
-
-		tracks_and_layers->splice(tracks_and_layers->begin(), *((LayerTRW *) (*iter))->create_tracks_and_layers_list_helper(tracks));
-
-		tracks->clear();
 	}
-	delete tracks;
 	delete layers;
 
-	return tracks_and_layers;
+	return tracks;
 }
 
 
@@ -546,7 +529,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Track and Route List").arg(this->name);
-	track_list_dialog(title, this, "", true);
+	track_list_dialog(title, this, "");
 }
 
 

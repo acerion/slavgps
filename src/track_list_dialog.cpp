@@ -60,7 +60,7 @@ using namespace SlavGPS;
 
 enum {
 	LAYER_NAME_COLUMN,
-	TRACK_NAME_COLUMN,
+	TRACK_COLUMN,
 	DATE_COLUMN,
 	VISIBLE_COLUMN,
 	COMMENT_COLUMN,
@@ -69,8 +69,6 @@ enum {
 	AVERAGE_SPEED_COLUMN,
 	MAXIMUM_SPEED_COLUMN,
 	MAXIMUM_HEIGHT_COLUMN,
-	LAYER_POINTER_COLUMN,
-	TRACK_POINTER_COLUMN,
 };
 
 
@@ -123,11 +121,15 @@ void TrackListDialog::track_select(LayerTRW * trw, Track * trk)
 
 void TrackListDialog::track_stats_cb(void)
 {
-	LayerTRW * trw = this->menu_data.trw;
-	Track * trk = this->menu_data.trk;
-	Viewport * viewport = this->menu_data.viewport;
+	if (!this->selected_track) {
+		qDebug() << "EE: Track List: encountered NULL Track in callback" << __FUNCTION__;
+		return;
+	}
 
-	if (trk && !trk->name.isEmpty()) {
+	Track * trk = this->selected_track;
+	LayerTRW * trw = trk->get_parent_layer_trw();
+
+	if (!trk->name.isEmpty()) {
 
 		/* Kill off this dialog to allow interaction with properties window.
 		   Since the properties also allows track manipulations it won't cause conflicts here. */
@@ -141,10 +143,14 @@ void TrackListDialog::track_stats_cb(void)
 
 void TrackListDialog::track_view_cb(void)
 {
-	LayerTRW * trw = this->menu_data.trw;
-	Track * trk = this->menu_data.trk;
-	Viewport * viewport = this->menu_data.viewport;
+	if (!this->selected_track) {
+		qDebug() << "EE: Track List: encountered NULL Track in callback" << __FUNCTION__;
+		return;
+	}
 
+	Track * trk = this->selected_track;
+	LayerTRW * trw = trk->get_parent_layer_trw();
+	Viewport * viewport = trw->get_window()->get_viewport();
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
 	struct LatLon maxmin[2];
@@ -295,27 +301,24 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QStandardItem * parent_item = this->model->invisibleRootItem();
 
 
-	QStandardItem * child = parent_item->child(index.row(), TRACK_NAME_COLUMN);
+	QStandardItem * child = parent_item->child(index.row(), TRACK_COLUMN);
 	qDebug() << "II: Track List: selected track" << child->text();
 
-	child = parent_item->child(index.row(), TRACK_POINTER_COLUMN);
+	child = parent_item->child(index.row(), TRACK_COLUMN);
 	Track * trk = child->data(RoleLayerData).value<Track *>();
 	if (!trk) {
 		qDebug() << "EE: Track List Dialog: null track in context menu handler";
 		return;
 	}
 
-	child = parent_item->child(index.row(), LAYER_POINTER_COLUMN);
-	LayerTRW * trw = (LayerTRW *) child->data(RoleLayerData).value<Layer *>();
-	if (trw->type != LayerType::TRW) {
-		qDebug() << "EE: Track List: layer type is not TRW:" << (int) trw->type;
+	/* If we were able to get list of Tracks, all of them need to have associated parent layer. */
+	LayerTRW * trw = trk->get_parent_layer_trw();
+	if (!trw) {
+		qDebug() << "EE: Track List: failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
 		return;
 	}
 
-
-	this->menu_data.trw = trw;
-	this->menu_data.trk = trk;
-	this->menu_data.viewport = trw->get_window()->get_viewport();
+	this->selected_track = trk;
 
 	QMenu menu(this);
 #if 0
@@ -339,7 +342,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 #if 0
 static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 					      GdkEventButton * ev,
-					      void * tracks_and_layers)
+					      void * tracks)
 {
 	/* Only on right clicks... */
 	if (!(event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
@@ -361,7 +364,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 			gtk_tree_path_free(path);
 		}
 	}
-	return trw_layer_track_menu_popup(tree_view, event, tracks_and_layers);
+	return trw_layer_track_menu_popup(tree_view, event, tracks);
 }
 #endif
 
@@ -372,7 +375,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format)
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format)
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
@@ -398,6 +401,8 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 #endif
 #endif
 	}
+
+	LayerTRW * trw = trk->get_parent_layer_trw();
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool visible = trw->visible && trk->visible;
@@ -462,9 +467,11 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
-	/* TRACK_NAME_COLUMN */
+	/* TRACK_COLUMN */
 	item = new QStandardItem(trk->name);
 	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(trk);
+	item->setData(variant, RoleLayerData);
 	items << item;
 
 	/* DATE_COLUMN */
@@ -524,18 +531,6 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
 	items << item;
 
-	/* LAYER_POINTER_COLUMN */
-	item = new QStandardItem();
-	variant = QVariant::fromValue((Layer *) trw);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
-	/* TRACK_POINTER_COLUMN */
-	item = new QStandardItem();
-	variant = QVariant::fromValue(trk);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
 	this->model->invisibleRootItem()->appendRow(items);
 }
 
@@ -551,7 +546,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(TRACK_NAME_COLUMN, new QStandardItem("Track Name"));
+	this->model->setHorizontalHeaderItem(TRACK_COLUMN, new QStandardItem("Track Name"));
 	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
 	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
 	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
@@ -576,9 +571,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
 		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Metres)"));
 	}
 
-	this->model->setHorizontalHeaderItem(LAYER_POINTER_COLUMN, new QStandardItem("Layer Pointer"));
-	this->model->setHorizontalHeaderItem(TRACK_POINTER_COLUMN, new QStandardItem("Track Pointer"));
-
 
 	this->view = new QTableView();
 	this->view->horizontalHeader()->setStretchLastSection(false);
@@ -599,8 +591,8 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, hide_layer_names);
 	this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
 
-	this->view->horizontalHeader()->setSectionHidden(TRACK_NAME_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(TRACK_NAME_COLUMN, QHeaderView::Interactive);
+	this->view->horizontalHeader()->setSectionHidden(TRACK_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(TRACK_COLUMN, QHeaderView::Interactive);
 
 	this->view->horizontalHeader()->setSectionHidden(DATE_COLUMN, false);
 	this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
@@ -626,9 +618,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->horizontalHeader()->setSectionHidden(MAXIMUM_HEIGHT_COLUMN, false);
 	this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
 
-	this->view->horizontalHeader()->setSectionHidden(LAYER_POINTER_COLUMN, true);
-	this->view->horizontalHeader()->setSectionHidden(TRACK_POINTER_COLUMN, true);
-
 	this->view->horizontalHeader()->setStretchLastSection(true);
 
 	this->vbox->addWidget(this->view);
@@ -647,8 +636,8 @@ void TrackListDialog::build_model(bool hide_layer_names)
 		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
 	}
 
-	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
-		this->add((*iter)->trk, (*iter)->trw, distance_units, speed_units, height_units, date_format);
+	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
+		this->add_row(*iter, distance_units, speed_units, height_units, date_format);
 	}
 	free(date_format);
 
@@ -656,7 +645,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	/* Notice that we enable and perform sorting after adding all items in the for() loop. */
 	this->view->setSortingEnabled(true);
 	if (hide_layer_names) {
-		this->view->sortByColumn(TRACK_NAME_COLUMN, Qt::AscendingOrder);
+		this->view->sortByColumn(TRACK_COLUMN, Qt::AscendingOrder);
 	} else {
 		this->view->sortByColumn(LAYER_NAME_COLUMN, Qt::AscendingOrder);
 	}
@@ -665,8 +654,8 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 #ifdef K
 	//QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
-	QObject::connect(view, SIGNAL("popup-menu"), tracks_and_layers, SLOT (trw_layer_track_menu_popup));
-	QObject::connect(view, SIGNAL("button-press-event"), tracks_and_layers, SLOT (trw_layer_track_button_pressed_cb));
+	QObject::connect(view, SIGNAL("popup-menu"), tracks, SLOT (trw_layer_track_menu_popup));
+	QObject::connect(view, SIGNAL("button-press-event"), tracks, SLOT (trw_layer_track_button_pressed_cb));
 #endif
 }
 
@@ -674,35 +663,34 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 /**
- * @title:               The title for the dialog
- * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
- * @type_id:             TreeItem type to be show in list (empty string for both tracks and layers)
- * @show_layer_names:    Normally only set when called from an aggregate level
- *
- * Common method for showing a list of tracks with extended information
- */
-void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id, bool show_layer_names)
+   @title: the title for the dialog
+   @layer: The layer, from which a list of tracks should be extracted
+   @type_id: TreeItem type to be show in list (empty string for both tracks and layers)
+
+  Common method for showing a list of tracks with extended information
+*/
+void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id)
 {
 	TrackListDialog dialog(title, layer->get_window());
 
 
 	if (layer->type == LayerType::AGGREGATE) {
-		if (type_id == "") { /* No particular sublayer type means both tracks and layers. */
-			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list();
+		if (type_id == "") { /* No particular sublayer type means both tracks and routes. */
+			dialog.tracks = ((LayerAggregate *) layer)->create_tracks_list();
 		} else {
-			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(type_id);
+			dialog.tracks = ((LayerAggregate *) layer)->create_tracks_list(type_id);
 		}
 	} else if (layer->type == LayerType::TRW) {
-		if (type_id == "") { /* No particular sublayer type means both tracks and layers. */
-			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list();
+		if (type_id == "") { /* No particular sublayer type means both tracks and routes. */
+			dialog.tracks = ((LayerTRW *) layer)->create_tracks_list();
 		} else {
-			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(type_id);
+			dialog.tracks = ((LayerTRW *) layer)->create_tracks_list(type_id);
 		}
 	} else {
 		assert (0);
 	}
 
-	dialog.build_model(!show_layer_names);
+	dialog.build_model(layer->type != LayerType::AGGREGATE);
 	dialog.exec();
 }
 
@@ -729,7 +717,7 @@ TrackListDialog::TrackListDialog(QString const & title, QWidget * parent_widget)
 
 TrackListDialog::~TrackListDialog()
 {
-	delete this->tracks_and_layers;
+	delete this->tracks;
 }
 
 

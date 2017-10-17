@@ -50,12 +50,11 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class Viewport;
-	class track_layer_t;
 
 
 
 
-	void track_list_dialog(QString const & title, Layer * layer, const QString & type_id, bool is_aggregate);
+	void track_list_dialog(QString const & title, Layer * layer, const QString & type_id);
 
 
 
@@ -67,7 +66,7 @@ namespace SlavGPS {
 		~TrackListDialog();
 		void build_model(bool hide_layer_names);
 
-		std::list<track_layer_t*> * tracks_and_layers = NULL;
+		std::list<Track *> * tracks = NULL;
 
 	private slots:
 		void copy_selected_cb(void);
@@ -76,7 +75,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add(Track * trk, LayerTRW * trw, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format);
+		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void add_menu_items(QMenu & menu);
 		void add_copy_menu_item(QMenu & menu);
@@ -90,13 +89,8 @@ namespace SlavGPS {
 		QStandardItemModel * model = NULL;
 		QTableView * view = NULL;
 
-
-
-		struct {
-			LayerTRW * trw;
-			Track * trk;
-			Viewport * viewport;
-		} menu_data;
+		/* Track selected in list. */
+		Track * selected_track = NULL;
 	};
 
 

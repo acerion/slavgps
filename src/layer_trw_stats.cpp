@@ -42,6 +42,7 @@
 #include "globals.h"
 #include "vikutils.h"
 #include "util.h"
+#include "track_internal.h"
 
 
 
@@ -264,22 +265,23 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 /**
-   @brief Collect statistics for each item in this->tracks_and_layers list
+   @brief Collect statistics for each item in this->tracks list
 
    @stats: statistics object to be filled
    @include_invisible: whether to include invisible layers and tracks
 */
 void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisible)
 {
-	for (auto iter = this->tracks_and_layers->begin(); iter != this->tracks_and_layers->end(); iter++) {
-		LayerTRW * trw = (*iter)->trw;
+	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
+		Track * trk = *iter;
+		LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->type == LayerType::TRW);
 		qDebug() << "II: Layer TRW Stats: collecting stats with layer/tracks/routes/include visibility:"
 			 << trw->visible
 			 << trw->get_tracks_visibility()
 			 << trw->get_routes_visibility()
 			 << include_invisible;
-		stats.add_track_maybe((*iter)->trk, trw->visible, trw->get_tracks_visibility(), trw->get_routes_visibility(), include_invisible);
+		stats.add_track_maybe(trk, trw->visible, trw->get_tracks_visibility(), trw->get_routes_visibility(), include_invisible);
 	}
 
 	return;
@@ -294,16 +296,16 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	qDebug() << "DD: Layer TRW Stats: include invisible items:" << include_invisible;
 
 	/* Delete old list of items. */
-	if (this->tracks_and_layers) {
-		/* kamilTODO: delete this->tracks_and_layers. */
+	if (this->tracks) {
+		/* kamilTODO: delete this->tracks. */
 	}
 
 	/* Get the latest list of items to analyse. */
 	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
-		this->tracks_and_layers = ((LayerTRW *) this->layer)->create_tracks_and_layers_list(this->type_id);
+		this->tracks = ((LayerTRW *) this->layer)->create_tracks_list(this->type_id);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		this->tracks_and_layers = ((LayerAggregate *) this->layer)->create_tracks_and_layers_list(this->type_id);
+		this->tracks = ((LayerAggregate *) this->layer)->create_tracks_list(this->type_id);
 	} else {
 		assert (0);
 	}
@@ -330,7 +332,7 @@ TRWStatsDialog::~TRWStatsDialog()
 
 	//free(this->stats_table);
 
-	/* kamilTODO: delete this->tracks_and_layers here? */
+	/* kamilTODO: delete this->tracks here? */
 }
 
 
@@ -346,7 +348,6 @@ TRWStatsDialog::~TRWStatsDialog()
  */
 void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer * layer, const QString & type_id_)
 {
-
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
 	dialog->setWindowTitle(QObject::tr("Statistics"));
 
@@ -371,9 +372,9 @@ void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer 
 	dialog->type_id = type_id_;
 
 	if (layer->type == LayerType::TRW) {
-		dialog->tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(dialog->type_id);
+		dialog->tracks = ((LayerTRW *) layer)->create_tracks_list(dialog->type_id);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		dialog->tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(dialog->type_id);
+		dialog->tracks = ((LayerAggregate *) layer)->create_tracks_list(dialog->type_id);
 	} else {
 		qDebug() << "EE: Layer TRW Stats: wrong layer type" << (int) layer->type;
 		assert (0);

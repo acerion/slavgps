@@ -3841,57 +3841,19 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 
 /**
- * Helper function to construct a list of #waypoint_layer_t.
- */
-std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints_)
+   \brief Create the latest list of waypoints in this layer
+
+   Function returns freshly allocated container. The container itself is owned by caller. Elements in container are not.
+*/
+std::list<SlavGPS::Waypoint *> * LayerTRW::create_waypoints_list()
 {
-	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
-	/* Build waypoints_and_layers list. */
-	for (auto iter = waypoints_->begin(); iter != waypoints_->end(); iter++) {
-		waypoint_layer_t * element = (waypoint_layer_t *) malloc(sizeof (waypoint_layer_t));
-		element->wp = *iter;
-		element->trw = this;
-		waypoints_and_layers->push_back(element);
-	}
-
-	return waypoints_and_layers;
-}
-
-
-
-
-/**
- * Create the latest list of waypoints with the associated layer(s).
- * Although this will always be from a single layer here.
- */
-std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list()
-{
-	std::list<Waypoint *> pure_waypoints;
+	std::list<Waypoint *> * wps = new std::list<Waypoint *>;
 
 	for (auto iter = this->waypoints->items.begin(); iter != this->waypoints->items.end(); iter++) {
-		pure_waypoints.push_back((*iter).second);
+		wps->push_back((*iter).second);
 	}
 
-	return this->create_waypoints_and_layers_list_helper(&pure_waypoints);
-}
-
-
-
-
-/**
- * Helper function to construct a list of #track_layer_t.
- */
-std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks_)
-{
-	/* Build tracks_and_layers list. */
-	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
-	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
-		track_layer_t * element = (track_layer_t *) malloc(sizeof (track_layer_t));
-		element->trk = *iter;
-		element->trw = this;
-		tracks_and_layers->push_back(element);
-	}
-	return tracks_and_layers;
+	return wps;
 }
 
 
@@ -3901,7 +3863,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std:
  * Create the latest list of tracks with the associated layer(s).
  * Although this will always be from a single layer here.
  */
-std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(const QString & item_type_id)
+std::list<Track *> * LayerTRW::create_tracks_list(const QString & item_type_id)
 {
 	std::list<Track *> * tracks_ = new std::list<Track *>;
 	if (item_type_id == "sg.trw.tracks") {
@@ -3910,7 +3872,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(const QStri
 		tracks_ = this->routes->get_track_values(tracks_);
 	}
 
-	return this->create_tracks_and_layers_list_helper(tracks_);
+	return tracks_;
 }
 
 
@@ -4646,12 +4608,12 @@ QString LayerTRW::highest_wp_number_get()
 /**
  * Create the latest list of tracks and routes.
  */
-std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
+std::list<Track *> * LayerTRW::create_tracks_list()
 {
 	std::list<Track *> * tracks_ = new std::list<Track *>;
 	tracks_ = this->tracks->get_track_values(tracks_);
 	tracks_ = this->routes->get_track_values(tracks_);
-	return this->create_tracks_and_layers_list_helper(tracks_);
+	return tracks_;
 }
 
 
@@ -4660,7 +4622,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 void LayerTRW::track_list_dialog_cb(void)
 {
 	QString title = tr("%1: Track and Route List").arg(this->name);
-	track_list_dialog(title, this, "", false);
+	track_list_dialog(title, this, "");
 }
 
 
@@ -4669,7 +4631,7 @@ void LayerTRW::track_list_dialog_cb(void)
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Waypoint List").arg(this->name);
-	waypoint_list_dialog(title, this, false);
+	waypoint_list_dialog(title, this);
 }
 
 
