@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #include <cmath>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+//#include <cstring>
+//#include <cstdlib>
+//#include <cstdio>
 #include <cassert>
 
 #include <QMenu>
@@ -198,10 +198,7 @@ typedef struct {
  *
  * ATM The visibility flag is not copied and neither is a text representation of the waypoint symbol.
  */
-static void copy_selection(QStandardItemModel * model,
-			   GtkTreePath  * path,
-			   GtkTreeIter  * iter,
-			   void         * data)
+static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTreeIter * iter, void * data)
 {
 	copy_data_t * cd = (copy_data_t *) data;
 
@@ -405,13 +402,10 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const c
 		GDateTime * gdt = g_date_time_new_from_unix_utc(wp->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
 		g_strlcpy(time_buf, time, sizeof(time_buf));
-		free(time);
-		g_date_time_unref(gdt);
 #else
 		GDate * gdate_start = g_date_new();
 		g_date_set_time_t(gdate_start, wp->timestamp);
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
-		g_date_free(gdate_start);
 #endif
 #endif
 	}

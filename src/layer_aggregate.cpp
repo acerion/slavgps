@@ -537,7 +537,7 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->get_window(), this->name, this, "");
+	layer_trw_show_stats(this->name, this, "", this->get_window());
 }
 
 

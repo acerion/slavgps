@@ -75,7 +75,7 @@ namespace SlavGPS {
 
 
 
-	void layer_trw_show_stats(Window * window, const QString & name, Layer * layer, const QString & type_id);
+	void layer_trw_show_stats(const QString & name, Layer * layer, const QString & type_id, QWidget * parent = NULL);
 
 
 

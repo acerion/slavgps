@@ -16,19 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cmath>
-#include <cstring>
-#include <cstdlib>
 #include <cassert>
-
-#include <glib/gprintf.h>
 #include <time.h>
 
 #include <QDebug>
@@ -103,20 +97,17 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	int cnt = 0;
-	char tmp_buf[64];
 	QString tmp_string;
 
 
 	/* 0: Number of Tracks */
-	snprintf(tmp_buf, sizeof(tmp_buf), "%d", stats.count);
-	((QLabel *) grid->itemAtPosition(0, col)->widget())->setText(QString(tmp_buf));
+	((QLabel *) grid->itemAtPosition(0, col)->widget())->setText(QString("%1").arg(stats.count));
 
 
 	if (stats.count == 0) {
 		/* Blank all other fields. */
-		snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		for (int row = 1; row < N_LABELS; row++) {
-			((QLabel *) grid->itemAtPosition(row, col)->widget())->setText(QString(tmp_buf));
+			((QLabel *) grid->itemAtPosition(row, col)->widget())->setText("--");
 		}
 		return;
 	}
@@ -140,13 +131,13 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	g_date_free(gdate_end);
 
 	if (stats.start_time == stats.end_time) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		tmp_string = tr("No Data");
 	} else if (strncmp(time_start, time_end, 32)) {
-		snprintf(tmp_buf, sizeof(tmp_buf), "%s --> %s", time_start, time_end);
+		tmp_string = tr("%1 --> %2").arg(time_start).arg(time_end);
 	} else {
-		snprintf(tmp_buf, sizeof(tmp_buf), "%s", time_start);
+		tmp_string = time_start;
 	}
-	((QLabel *) grid->itemAtPosition(1, col)->widget())->setText(QString(tmp_buf));
+	((QLabel *) grid->itemAtPosition(1, col)->widget())->setText(tmp_string);
 #endif
 
 
@@ -185,30 +176,30 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 		/* 6: Minimum Altitude */
 		if (stats.min_alt != VIK_VAL_MIN_ALT) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet"), (int)round(VIK_METERS_TO_FEET(stats.min_alt)));
+			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.min_alt)));
 		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			tmp_string = "--";
 		}
-		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(QString(tmp_buf));
+		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
 
 
 		/* 7: Maximum Altitude */
 		if (stats.max_alt != VIK_VAL_MAX_ALT) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet"), (int)round(VIK_METERS_TO_FEET(stats.max_alt)));
+			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.max_alt)));
 		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			tmp_string = "--";
 		}
-		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(QString(tmp_buf));
+		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
 
 
 		/* 8: Total Elevation Gain/Loss */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(stats.elev_gain)), (int)round(VIK_METERS_TO_FEET(stats.elev_loss)));
-		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(QString(tmp_buf));
+		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss)));
+		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
 
 
 		/* 9: Avg. Elevation Gain/Loss */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(stats.elev_gain/stats.count)), (int)round(VIK_METERS_TO_FEET(stats.elev_loss/stats.count)));
-		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(QString(tmp_buf));
+		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain/stats.count))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss/stats.count)));
+		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
 
 		break;
 	default:
@@ -216,30 +207,30 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 		/* 6: Minimum Altitude */
 		if (stats.min_alt != VIK_VAL_MIN_ALT) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%d m"), (int)round(stats.min_alt));
+			tmp_string = tr("%1 m").arg((int) round(stats.min_alt));
 		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			tmp_string = "--";
 		}
-		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(QString(tmp_buf));
+		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
 
 
 		/* 7: Maximum Altitude */
 		if (stats.max_alt != VIK_VAL_MAX_ALT) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%d m"), (int)round(stats.max_alt));
+			tmp_string = tr("%1 m").arg((int) round(stats.max_alt));
 		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			tmp_string = "--";
 		}
-		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(QString(tmp_buf));
+		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
 
 
 		/* 8: Total Elevation Gain/Loss */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(stats.elev_gain), (int)round(stats.elev_loss));
-		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(QString(tmp_buf));
+		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain)).arg((int) round(stats.elev_loss));
+		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
 
 
 		/* 9: Avg. Elevation Gain/Loss */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(stats.elev_gain/stats.count), (int)round(stats.elev_loss/stats.count));
-		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(QString(tmp_buf));
+		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain/stats.count)).arg((int) round(stats.elev_loss/stats.count));
+		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
 
 		break;
 	}
@@ -249,16 +240,16 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	int days    = (int) (stats.duration / (60 * 60 * 24));
 	int hours   = (int) floor((stats.duration - (days * 60 * 60 * 24)) / (60 * 60));
 	int minutes = (int) ((stats.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
-	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d:%02d days:hrs:mins"), days, hours, minutes);
-	((QLabel *) grid->itemAtPosition(10, col)->widget())->setText(QString(tmp_buf));
+	tmp_string = tr("%1:%2:%3 days:hrs:mins").arg(days).arg(hours, 2, 10, (QChar) '0').arg(minutes, 2, 10, (QChar) '0');
+	((QLabel *) grid->itemAtPosition(10, col)->widget())->setText(tmp_string);
 
 
 	/* 11: Average Duration. */
 	int avg_dur = stats.duration / stats.count;
 	hours   = (int) floor(avg_dur / (60 * 60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
-	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes);
-	((QLabel *) grid->itemAtPosition(11, col)->widget())->setText(QString(tmp_buf));
+	tmp_string = tr("%1:%2 hrs:mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');
+	((QLabel *) grid->itemAtPosition(11, col)->widget())->setText(tmp_string);
 }
 
 
@@ -339,14 +330,14 @@ TRWStatsDialog::~TRWStatsDialog()
 
 
 /**
- * @window: main application window
- * @name: name of object, for which the stats will be calculated
- * @layer: layer containing given tracks/routes
- * @type_id: type of TRW sublayer to show stats for
- *
- * Display a dialog with stats across many tracks.
- */
-void SlavGPS::layer_trw_show_stats(Window * parent, const QString & name, Layer * layer, const QString & type_id_)
+   @name: name of object, for which the stats will be calculated
+   @layer: layer containing given tracks/routes
+   @type_id: type of TRW sublayer to show stats for
+   @parent: parent widget
+
+   Display a dialog with stats across many tracks.
+*/
+void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QString & type_id_, QWidget * parent)
 {
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
 	dialog->setWindowTitle(QObject::tr("Statistics"));

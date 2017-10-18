@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <cstdio>
+#include <QDebug>
 
 #include "track_internal.h"
 #include "track_statistics.h"
@@ -38,7 +38,7 @@ using namespace SlavGPS;
 */
 void TrackStatistics::add_track(Track * trk)
 {
-	fprintf(stderr, "TrackStatistics::add_track()\n");
+	qDebug() << "II: Track Statistics: add track" << trk->name;
 
 	this->count++;
 

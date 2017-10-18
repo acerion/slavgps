@@ -23,16 +23,14 @@
 #include "config.h"
 #endif
 
-#include <cmath>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
 #include <cassert>
+
+#include <QHeaderView>
+#include <QDebug>
 
 #include "track_list_dialog.h"
 #include "track_internal.h"
 #include "track_properties_dialog.h"
-#include "clipboard.h"
 #include "settings.h"
 #include "globals.h"
 #include "window.h"
@@ -43,6 +41,10 @@
 #include "layer.h"
 #include "layer_trw.h"
 #include "layer_aggregate.h"
+
+#ifdef K
+#include "clipboard.h"
+#endif
 
 
 
@@ -71,35 +73,6 @@ enum {
 	MAXIMUM_HEIGHT_COLUMN,
 };
 
-
-
-
-/*
-static void track_select_cb(GtkTreeSelection * selection, void * data)
-{
-	GtkTreeIter iter;
-	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
-		return;
-	}
-
-	GtkTreeView * tree_view = GTK_TREE_VIEW (data);
-	QStandardItemModel * model = gtk_tree_view_get_model(tree_view);
-
-	Track * trk;
-	gtk_tree_model_get(model, &iter, TRACK_POINTER_COLUMN, &trk, -1);
-	if (!trk) {
-		return;
-	}
-
-	LayerTRW * trw;
-	gtk_tree_model_get(model, &iter, LAYER_POINTER_COLUMN, &trw, -1);
-	if (trw->type != LayerType::TRW) {
-		return;
-	}
-
-	//vik_tree_view_select_iter(trw->vt, g_hash_table_lookup(trw->track_iters, uuid), true);
-}
-*/
 
 
 
@@ -176,10 +149,7 @@ typedef struct {
 
 
 
-static void copy_selection(QStandardItemModel * model,
-			   GtkTreePath  * path,
-			   GtkTreeIter  * iter,
-			   void         * data)
+static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTreeIter * iter,  void * data)
 {
 	copy_data_t * cd = (copy_data_t *) data;
 
@@ -262,6 +232,7 @@ void TrackListDialog::add_menu_items(QMenu & menu)
 
 #if 0   /* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
 	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("&Select"));
+	/* The callback worked by exposing selected item in tree view. */
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_select_cb()));
 #endif
 
@@ -339,38 +310,6 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 
 
-#if 0
-static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
-					      GdkEventButton * ev,
-					      void * tracks)
-{
-	/* Only on right clicks... */
-	if (!(event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
-		return false;
-	}
-
-	/* ATM Force a selection... */
-	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
-	if (gtk_tree_selection_count_selected_rows(selection) <= 1) {
-		GtkTreePath * path;
-		/* Get tree path for row that was clicked. */
-		if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
-						  (int) event->x,
-						  (int) event->y,
-						  &path, NULL, NULL, NULL)) {
-
-			gtk_tree_selection_unselect_all(selection);
-			gtk_tree_selection_select_path(selection, path);
-			gtk_tree_path_free(path);
-		}
-	}
-	return trw_layer_track_menu_popup(tree_view, event, tracks);
-}
-#endif
-
-
-
-
 /*
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
@@ -391,13 +330,10 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpoints.begin())->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
 		g_strlcpy(time_buf, time, sizeof(time_buf));
-		free(time);
-		g_date_time_unref(gdt);
 #else
 		GDate * gdate_start = g_date_new();
 		g_date_set_time_t(gdate_start, (*trk->trackpoints.begin())->timestamp);
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
-		g_date_free(gdate_start);
 #endif
 #endif
 	}
@@ -653,9 +589,10 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->setMinimumSize(750, 400);
 
 #ifdef K
-	//QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
-	QObject::connect(view, SIGNAL("popup-menu"), tracks, SLOT (trw_layer_track_menu_popup));
-	QObject::connect(view, SIGNAL("button-press-event"), tracks, SLOT (trw_layer_track_button_pressed_cb));
+	/* TODO: The callback worked by exposing selected item in tree view. */
+	QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
+
+	/* TODOL Maybe add full menu of a Track class in the table view too. */
 #endif
 }
 

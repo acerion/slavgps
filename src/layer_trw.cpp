@@ -3880,7 +3880,7 @@ std::list<Track *> * LayerTRW::create_tracks_list(const QString & item_type_id)
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->get_window(), this->name, this, "sg.trw.tracks");
+	layer_trw_show_stats(this->name, this, "sg.trw.tracks", this->get_window());
 }
 
 
@@ -3888,7 +3888,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->get_window(), this->name, this, "sg.trw.routes");
+	layer_trw_show_stats(this->name, this, "sg.trw.routes", this->get_window());
 }
 
 
