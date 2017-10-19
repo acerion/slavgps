@@ -40,8 +40,8 @@ namespace SlavGPS {
 
 
 
-	time_t date_time_dialog(QWidget * parent, QString const & title, time_t date_time);
-	time_t date_dialog(QWidget * parent, QString const & title, time_t date);
+	bool date_time_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent = NULL);
+	bool date_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent = NULL);
 
 
 
@@ -59,7 +59,6 @@ namespace SlavGPS {
 		QTimeEdit * clock = NULL;
 		QDialogButtonBox * button_box = NULL;
 	};
-
 
 
 

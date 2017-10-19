@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cmath>
+//#include <cmath>
 #include <cstdlib>
 #include <ctime>
 
@@ -60,12 +59,11 @@ void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
 	if (tp->has_timestamp) {
 		this->timestamp->setValue(tp->timestamp);
-		char * msg = vu_get_time_string(&tp->timestamp, "%c", &tp->coord, NULL);
-		this->datetime->setText(QString(msg));
-		free(msg);
+		const QString msg = vu_get_time_string(&tp->timestamp, "%c", &tp->coord, NULL);
+		this->datetime->setText(msg);
 	} else {
 		this->timestamp->setValue(0);
-		this->datetime->setText(QString(""));
+		this->datetime->setText("");
 	}
 }
 
@@ -74,19 +72,24 @@ void PropertiesDialogTP::update_times(Trackpoint * tp)
 
 void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 {
-	if (this->cur_tp && (!this->sync_to_tp_block)) {
-		struct LatLon ll;
-		ll.lat = this->lat->value();
-		ll.lon = this->lon->value();
-		Coord coord(ll, this->cur_tp->coord.mode);
+	if (!this->cur_tp) {
+		return;
+	}
+	if (this->sync_to_tp_block) {
+		return;
+	}
 
-		/* Don't redraw unless we really have to. */
-		if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
-			this->cur_tp->coord = coord;
+	struct LatLon ll;
+	ll.lat = this->lat->value();
+	ll.lon = this->lon->value();
+	Coord coord(ll, this->cur_tp->coord.mode);
+
+	/* Don't redraw unless we really have to. */
+	if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
+		this->cur_tp->coord = coord;
 #ifdef K
-			gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
+		gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
 #endif
-		}
 	}
 }
 
@@ -95,20 +98,25 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 
 void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 {
-	if (this->cur_tp && (!this->sync_to_tp_block)) {
-		/* Always store internally in metres. */
-		HeightUnit height_units = Preferences::get_unit_height();
-		switch (height_units) {
-		case HeightUnit::METRES:
-			this->cur_tp->altitude = this->alt->value();
-			break;
-		case HeightUnit::FEET:
-			this->cur_tp->altitude = VIK_FEET_TO_METERS(this->alt->value());
-			break;
-		default:
-			this->cur_tp->altitude = this->alt->value();
-			qDebug() << "EE: TrackPoint Properties: invalid height unit in" << __FUNCTION__;
-		}
+	if (!this->cur_tp) {
+		return;
+	}
+	if (this->sync_to_tp_block) {
+		return;
+	}
+
+	/* Always store internally in metres. */
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	switch (height_unit) {
+	case HeightUnit::METRES:
+		this->cur_tp->altitude = this->alt->value();
+		break;
+	case HeightUnit::FEET:
+		this->cur_tp->altitude = VIK_FEET_TO_METERS(this->alt->value());
+		break;
+	default:
+		this->cur_tp->altitude = this->alt->value();
+		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
 	}
 }
 
@@ -117,10 +125,15 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 
 void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
 {
-	if (this->cur_tp && (!this->sync_to_tp_block)) {
-		this->cur_tp->timestamp = this->timestamp->value();
-		this->update_times(this->cur_tp);
+	if (!this->cur_tp) {
+		return;
 	}
+	if (this->sync_to_tp_block) {
+		return;
+	}
+
+	this->cur_tp->timestamp = this->timestamp->value();
+	this->update_times(this->cur_tp);
 }
 
 
@@ -130,7 +143,10 @@ static time_t last_edit_time = 0;
 
 void PropertiesDialogTP::datetime_clicked_cb(void)
 {
-	if (!this->cur_tp || this->sync_to_tp_block) {
+	if (!this->cur_tp) {
+		return;
+	}
+	if (this->sync_to_tp_block) {
 		return;
 	}
 
@@ -146,28 +162,24 @@ void PropertiesDialogTP::datetime_clicked_cb(void)
 	}
 #endif
 
-	if (!this->cur_tp || this->sync_to_tp_block) {
-		return;
-	}
-
 	if (this->cur_tp->has_timestamp) {
 		last_edit_time = this->cur_tp->timestamp;
 	} else if (last_edit_time == 0) {
 		time(&last_edit_time);
+	} else {
+	        /* Use last_edit_time that was set previously. */
 	}
 
-	time_t mytime = date_time_dialog(this,
-					 tr("Edit Date/Time"),
-					 last_edit_time);
-
-	/* Was the dialog cancelled? */
-	if (mytime == 0) {
+	time_t new_timestamp = 0;
+	if (!date_time_dialog(tr("Edit Date/Time"), last_edit_time, new_timestamp, this)) {
+		/* The dialog was cancelled? */
 		return;
+	} else {
+		last_edit_time = new_timestamp;
+		this->cur_tp->timestamp = new_timestamp;
+		this->cur_tp->has_timestamp = true;
 	}
 
-	/* Otherwise use the new value. */
-	this->cur_tp->timestamp = mytime;
-	this->cur_tp->has_timestamp = true;
 	/* TODO: consider warning about unsorted times? */
 
 	/* Clear the previous 'Add' icon as now a time is set. */
@@ -183,10 +195,16 @@ void PropertiesDialogTP::datetime_clicked_cb(void)
 
 bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 {
-	if (this->cur_tp && (!this->sync_to_tp_block)) {
-		this->cur_tp->set_name(this->trkpt_name->text().toUtf8().constData());
+	if (!this->cur_tp) {
+		return false;
 	}
-	return false;
+	if (this->sync_to_tp_block) {
+		return false;
+	}
+
+	this->cur_tp->set_name(this->trkpt_name->text());
+
+	return true;
 }
 
 
@@ -198,9 +216,9 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
 
-	this->datetime->setText(QString(""));
+	this->datetime->setText("");
 
-	this->course->setText(QString(""));
+	this->course->setText("");
 
 	this->lat->setEnabled(false);
 	this->lon->setEnabled(false);
@@ -208,7 +226,7 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->timestamp->setEnabled(false);
 	this->datetime->setEnabled(false);
 
-	/* Only keep close button enabled. */
+	/* Only keep Close button enabled. */
 	this->button_insert_tp_after->setEnabled(false);
 	this->button_split_track->setEnabled(false);
 	this->button_delete_current_tp->setEnabled(false);
@@ -216,14 +234,14 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->button_go_forward->setEnabled(false);
 
 
-	this->diff_dist->setText(QString(""));
-	this->diff_time->setText(QString(""));
-	this->diff_speed->setText(QString(""));
-	this->speed->setText(QString(""));
-	this->vdop->setText(QString(""));
-	this->hdop->setText(QString(""));
-	this->pdop->setText(QString(""));
-	this->sat->setText(QString(""));
+	this->diff_dist->setText("");
+	this->diff_time->setText("");
+	this->diff_speed->setText("");
+	this->speed->setText("");
+	this->vdop->setText("");
+	this->hdop->setText("");
+	this->pdop->setText("");
+	this->sat->setText("");
 
 	this->setWindowTitle(QString("Trackpoint"));
 }
@@ -248,7 +266,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->trkpt_name->setEnabled(true);
 	if (tp->name.isEmpty()) { /* TODO: do we need these two branches at all? */
-		this->trkpt_name->insert(QString(""));
+		this->trkpt_name->insert("");
 	} else {
 		this->trkpt_name->insert(tp->name);
 	}
@@ -284,12 +302,13 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 
 	ll = tp->coord.get_latlon();
+	qDebug() << "--------------------" << ll.lat << ll.lon;
 	this->lat->setValue(ll.lat);
 	this->lon->setValue(ll.lon);
 
 
-	HeightUnit height_units = Preferences::get_unit_height();
-	switch (height_units) {
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	switch (height_unit) {
 	case HeightUnit::METRES:
 		this->alt->setValue(tp->altitude);
 		break;
@@ -298,16 +317,16 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		break;
 	default:
 		this->alt->setValue(tp->altitude);
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
+		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
 	}
 
 	this->update_times(tp);
 
-	this->sync_to_tp_block = false; /* Don't update while setting data. */
+	this->sync_to_tp_block = false; /* Can now update after setting data. */
 
 
-	SpeedUnit speed_units = Preferences::get_unit_speed();
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	if (this->cur_tp) {
 		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
@@ -318,7 +337,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", Coord::distance(tp->coord, this->cur_tp->coord) * 1.0936133);
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
+			qDebug() << "EE: TrackPoint Properties: invalid distance unit" << (int) distance_unit << "in" << __FUNCTION__;
 		}
 
 		this->diff_dist->setText(QString(tmp_str));
@@ -329,12 +348,12 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 				this->diff_speed->setText(QString("--"));
 			} else {
 				double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
-				tmp_string = get_speed_string(tmp_speed, speed_units);
+				tmp_string = get_speed_string(tmp_speed, speed_unit);
 				this->diff_speed->setText(tmp_string);
 			}
 		} else {
-			this->diff_time->setText(QString(""));
-			this->diff_speed->setText(QString(""));
+			this->diff_time->setText("");
+			this->diff_speed->setText("");
 		}
 	}
 
@@ -348,9 +367,10 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	if (std::isnan(tp->speed)) {
 		tmp_string = "--";
 	} else {
-		tmp_string = get_speed_string(tp->speed, speed_units);
+		tmp_string = get_speed_string(tp->speed, speed_unit);
 	}
 	this->speed->setText(tmp_string);
+
 
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
@@ -369,7 +389,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
 	}
 
-	switch (height_units) {
+
+	switch (height_unit) {
 	case HeightUnit::METRES:
 		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->vdop);
 		break;
@@ -378,14 +399,14 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		break;
 	default:
 		snprintf(tmp_str, sizeof (tmp_str), "--");
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
+		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
 	}
 	this->vdop->setText(QString(tmp_str));
 
 
 
-	snprintf(tmp_str, sizeof (tmp_str), "%d / %d", tp->nsats, (int) tp->fix_mode);
-	this->sat->setText(QString(tmp_str));
+	tmp_string = tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode);
+	this->sat->setText(QString(tmp_string));
 
 	this->cur_tp = tp;
 }
@@ -495,7 +516,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 
 	this->lon = new QDoubleSpinBox(this);
-	this->lon->setDecimals(0);
+	this->lon->setDecimals(6);
 	this->lon->setMinimum(-180);
 	this->lon->setMaximum(180);
 	this->lon->setSingleStep(0.00005);

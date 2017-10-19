@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename);
 
-	char * vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * gtz);
+	QString vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * gtz);
 
 	char * vu_get_tz_at_location(const Coord * coord);
 

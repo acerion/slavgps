@@ -212,7 +212,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint 
 		}
 
 		case 'T': {
-			char * time_string;
+			QString time_string;
 			if (tp->has_timestamp) {
 				/* Compact date time format. */
 				time_string = vu_get_time_string(&tp->timestamp, "%x %X", &tp->coord, NULL);
@@ -220,7 +220,6 @@ QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint 
 				time_string = strdup("--");
 			}
 			values[i] = QObject::tr("%1Time %2").arg(separator).arg(time_string);
-			free(time_string);
 			break;
 		}
 
@@ -935,7 +934,7 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
  *
  * Returns: A string of the time according to the time display property.
  */
-char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * tz)
+QString SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * tz)
 {
 	if (!format) {
 		return NULL;
@@ -972,7 +971,10 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coo
 			strftime(str, 64, format, localtime(time));
 			break;
 	}
-	return str;
+
+	const QString result(str);
+	free(str);
+	return result;
 }
 
 

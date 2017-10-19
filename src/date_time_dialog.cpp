@@ -33,50 +33,44 @@ using namespace SlavGPS;
 
 
 /**
- * @parent:     The parent window
- * @title:      The title to use for the dialog
- * @date_time:  The inital date/time to be shown
- *
- * Returns: A time selected by the user via this dialog.
- *          Even though a time of zero is notionally valid - consider it unlikely to be actually wanted!
- *          Thus if the time is zero then the dialog was cancelled or somehow an invalid date was encountered.
- */
-time_t SlavGPS::date_time_dialog(QWidget * parent, QString const & title, time_t date_time)
+   @title: title to use for the dialog
+   @initial_timestamp: the initial date/time to be shown in dialog
+   @result_timestamp: timestamp entered in dialog if user accepted dialog; not changed if user cancelled the dialog;
+   @parent: the parent widget
+
+   @return true if user accepted the dialog (pressed OK/Enter); @result_timestamp is then modified
+   @return false if user cancelled the dialog (pressed Cancel/Escape); @result_timestamp is then not modified
+*/
+bool SlavGPS::date_time_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent)
 {
-	SGDateTimeDialog * dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(date_time));
+	SGDateTimeDialog * dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(initial_timestamp));
 	dialog->setWindowTitle(title);
-	int dialog_code = dialog->exec();
 
-	time_t ret = date_time;
-
-	if (dialog_code == QDialog::Accepted) {
-		ret = dialog->get_timestamp();
-		qDebug() << "II DateTime: date time dialog: returning timestamp" << ret;
-		return ret;
+	if (QDialog::Accepted == dialog->exec()) {
+		result_timestamp = dialog->get_timestamp();
+		qDebug() << "II Date Time Dialog: accepted, returning timestamp" << result_timestamp;
+		return true;
 	} else {
-		qDebug() << "II DateTime: date time dialog: returning zero";
-		return 0;
+		qDebug() << "II Date Time Dialog: cancelled";
+		return false;
 	}
 }
 
 
 
-time_t SlavGPS::date_dialog(QWidget * parent, QString const & title, time_t date)
+bool SlavGPS::date_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent)
 {
-	SGDateTimeDialog * dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(date));
+	SGDateTimeDialog * dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(initial_timestamp));
 	dialog->setWindowTitle(title);
 	dialog->show_clock(false);
-	int dialog_code = dialog->exec();
 
-	time_t ret = date;
-
-	if (dialog_code == QDialog::Accepted) {
-		ret = dialog->get_timestamp();
-		qDebug() << "II DateTime: date dialog: returning timestamp" << ret;
-		return ret;
+	if (QDialog::Accepted == dialog->exec()) {
+		result_timestamp = dialog->get_timestamp();
+		qDebug() << "II Date Dialog: accepted, returning timestamp" << result_timestamp;
+		return true;
 	} else {
-		qDebug() << "II DateTime: date dialog: returning zero";
-		return 0;
+		qDebug() << "II Date Dialog: cancelled";
+		return false;
 	}
 }
 

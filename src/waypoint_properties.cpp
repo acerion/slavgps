@@ -70,9 +70,8 @@ Parameter wp_params[] = {
 #if 0
 static void update_time(GtkWidget * widget, Waypoint * wp)
 {
-	char * msg = vu_get_time_string(&(wp->timestamp), "%c", &(wp->coord), NULL);
+	const QString msg = vu_get_time_string(&wp->timestamp, "%c", &wp->coord, NULL);
 	gtk_button_set_label(GTK_BUTTON(widget), msg);
-	free(msg);
 }
 
 
@@ -95,17 +94,13 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 		return;
 	}
 
-	time_t mytime = date_time_dialog(parent,
-					 ("Date/Time Edit"),
-					 wp->timestamp);
-
-	/* Was the dialog cancelled?. */
-	if (mytime == 0) {
+	time_t new_timestamp = 0;
+	if (!date_time_dialog(QObject::tr("Date/Time Edit"), wp->timestamp, new_timestamp, parent)) {
+		/* The dialog was cancelled. */
 		return;
+	} else {
+		edit_wp->timestamp = new_timestamp;
 	}
-
-	/* Otherwise use new value in the edit buffer. */
-	edit_wp->timestamp = mytime;
 
 	/* Clear the previous 'Add' image as now a time is set. */
 	if (gtk_button_get_image(GTK_BUTTON(widget))) {

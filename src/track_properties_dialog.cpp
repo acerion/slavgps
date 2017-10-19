@@ -324,15 +324,13 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		this->tz = vu_get_tz_at_location(&coord);
 
 
-		char * msg = vu_get_time_string(&t1, "%c", &coord, this->tz);
-		this->w_time_start = ui_label_new_selectable(msg, this);
-		free(msg);
+		QString msg = vu_get_time_string(&t1, "%c", &coord, this->tz);
+		this->w_time_start = ui_label_new_selectable(msg.toUtf8().constData(), this);
 		this->statistics_form->addRow(QString("Start:"), this->w_time_start);
 
 
 		msg = vu_get_time_string(&t2, "%c", &coord, this->tz);
-		this->w_time_end = ui_label_new_selectable(msg, this);
-		free(msg);
+		this->w_time_end = ui_label_new_selectable(msg.toUtf8().constData(), this);
 		this->statistics_form->addRow(QString("End:"), this->w_time_end);
 
 

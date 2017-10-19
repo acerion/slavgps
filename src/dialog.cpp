@@ -95,13 +95,12 @@ void Dialog::error(QString const & message, QWidget * parent)
  */
 char * a_dialog_get_date(const QString & title, QWidget * parent)
 {
-	time_t mytime = date_dialog(parent, title, time(NULL));
-
-	if (!mytime) {
+	time_t new_timestamp;
+	if (!date_dialog(title, time(NULL), new_timestamp, parent)) {
 		return NULL;
 	}
 
-	struct tm * out = localtime(&mytime);
+	struct tm * out = localtime(&new_timestamp);
 	size_t size = strlen("YYYY-MM-DD") + 1;
 	char * date_str = (char *) malloc(size);
 	snprintf(date_str, size, "%04d-%02d-%02d", 1900 + out->tm_year, out->tm_mon + 1, out->tm_mday);
