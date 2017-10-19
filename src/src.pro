@@ -268,8 +268,15 @@ HEADERS += window.h \
 CONFIG += link_pkgconfig debug
 PKGCONFIG += glib-2.0 zlib gio-2.0
 
+# Put *.o files in the same location as corresponding *.cpp files.
+# Useful when moc_*.cpp files are put into separate dir.
+# https://wiki.qt.io/Undocumented_QMake#Config_features
+CONFIG += object_parallel_to_source
+
 DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
+# Put moc_*.cpp files in a subdirectory.
+MOC_DIR = ./moc/
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
