@@ -2377,19 +2377,21 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 {
 	TrackPoints::iterator iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), tp_at);
 	if (iter == this->trackpoints.end()) {
-		/* kamilTODO: report some error. */
+		qDebug() << "EE: Track: failed to find existing trackpoint in track" << this->name << "in" << __FUNCTION__ << __LINE__;
 		return;
 	}
 
-	if (iter == std::prev(this->trackpoints.end()) && !before) {
-		return;
+	/* std::list::insert() inserts element before position indicated by iter. */
+
+	if (before) {
+		/* We can always perform this operation, even if iter is at ::begin(). */
+		this->trackpoints.insert(iter, tp_new);
+	} else {
+		/* TODO: Can we do this if we already are at the end of list? */
+		iter++;
+		this->trackpoints.insert(iter, tp_new);
 	}
 
-	if (iter == this->trackpoints.begin() && !before) {
-		iter--;
-	}
-
-	this->trackpoints.insert(iter, tp_new);
 	return;
 }
 
@@ -3908,11 +3910,13 @@ void Track::create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool befo
 	Trackpoint * other_tp = NULL;
 
 	if (before) {
+		qDebug() << "------ insert trackpoint before.";
 		if (reference_tp->iter == this->begin()) {
 			return;
 		}
 		other_tp = *std::prev(reference_tp->iter);
 	} else {
+		qDebug() << "------ insert trackpoint after.";
 		if (std::next(reference_tp->iter) == this->end()) {
 			return;
 		}
