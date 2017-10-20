@@ -31,12 +31,12 @@
 #include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_stats.h"
+#include "layer_trw_track_internal.h"
 #include "ui_util.h"
 #include "settings.h"
 #include "globals.h"
 #include "vikutils.h"
 #include "util.h"
-#include "track_internal.h"
 
 
 

@@ -39,12 +39,12 @@
 #include "layers_panel.h"
 #include "util.h"
 #include "layer_trw.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_menu.h"
 #include "preferences.h"
 #include "acquire.h"
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
-#include "track_internal.h"
-#include "layer_trw_menu.h"
 
 
 

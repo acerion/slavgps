@@ -39,7 +39,7 @@
 #include "util.h"
 #include "layer_aggregate.h"
 #include "layer_trw.h"
-#include "track_internal.h"
+#include "layer_trw_track_internal.h"
 
 
 

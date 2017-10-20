@@ -20,8 +20,8 @@
 
 #include <QDebug>
 
-#include "track_internal.h"
-#include "track_statistics.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_track_statistics.h"
 
 
 

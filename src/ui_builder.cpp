@@ -39,6 +39,8 @@
 
 #include "layer.h"
 #include "layer_interface.h"
+#include "layer_trw_waypoint_properties.h"
+#include "layer_trw_waypoint.h"
 #include "ui_builder.h"
 #include "globals.h"
 #include "widget_color_button.h"
@@ -46,9 +48,7 @@
 #include "widget_file_entry.h"
 #include "widget_radio_group.h"
 #include "widget_slider.h"
-#include "waypoint_properties.h"
 #include "date_time_dialog.h"
-#include "waypoint.h"
 #include "preferences.h"
 
 

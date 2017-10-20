@@ -37,7 +37,7 @@
 
 #include "window.h"
 #include "layer_trw.h"
-#include "track_internal.h"
+#include "layer_trw_track_internal.h"
 #include "osm-traces.h"
 #include "gpx.h"
 #include "background.h"

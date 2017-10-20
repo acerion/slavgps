@@ -30,16 +30,16 @@
 #include <QDebug>
 
 #include "ui_builder.h"
-#include "trackpoint_properties.h"
+#include "layer_trw_trackpoint_properties.h"
+#include "layer_trw_track_internal.h"
 #include "vikutils.h"
 #include "date_time_dialog.h"
 #include "util.h"
-#include "track_internal.h"
 #include "measurements.h"
 #if 0
 #include "coords.h"
 #include "coord.h"
-#include "waypoint.h"
+#include "layer_trw_waypoint.h"
 #include "dialog.h"
 #include "globals.h"
 #include "ui_util.h"

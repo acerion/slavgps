@@ -39,14 +39,13 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "track_internal.h"
 #include "dem_cache.h"
 #include "settings.h"
 #include "util.h"
 #include "osm-traces.h"
-
-#include "track_profile_dialog.h"
-#include "track_properties_dialog.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_track_profile_dialog.h"
+#include "layer_trw_track_properties_dialog.h"
 #include "layer_trw_menu.h"
 #include "layer_trw.h"
 #include "layer_trw_painter.h"

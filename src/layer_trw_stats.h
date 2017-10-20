@@ -33,8 +33,8 @@
 #include <QCheckBox>
 
 #include "globals.h"
-#include "track.h"
-#include "track_statistics.h"
+#include "layer_trw_track.h"
+#include "layer_trw_track_statistics.h"
 
 
 

@@ -37,7 +37,7 @@
 #include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
-#include "track_internal.h"
+#include "layer_trw_track_internal.h"
 
 #ifdef WINDOWS
 #include <windows.h>

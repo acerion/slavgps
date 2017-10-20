@@ -38,8 +38,8 @@
 #include <QDir>
 
 #include "gpspoint.h"
-#include "track_internal.h"
-#include "waypoint.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_waypoint.h"
 #include "layer_trw.h"
 #include "file.h"
 #include "globals.h"

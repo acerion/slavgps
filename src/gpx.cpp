@@ -53,7 +53,7 @@
 #include "globals.h"
 #include "preferences.h"
 #include "layer_trw.h"
-#include "track_internal.h"
+#include "layer_trw_track_internal.h"
 #include "util.h"
 
 

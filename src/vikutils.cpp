@@ -39,7 +39,7 @@
 #include "layer_aggregate.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
-#include "track_internal.h"
+#include "layer_trw_track_internal.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"

@@ -41,13 +41,13 @@
 #include "layer_tool.h"
 #include "layer_interface.h"
 #include "layer_trw_dialogs.h"
+#include "layer_trw_track.h"
 #include "layer_trw_tracks.h"
+#include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"
+#include "layer_trw_trackpoint_properties.h"
 #include "viewport.h"
-#include "waypoint.h"
-#include "trackpoint_properties.h"
 #include "file.h"
-#include "track.h"
 
 
 

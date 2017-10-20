@@ -41,7 +41,7 @@
 #include "globals.h"
 #include "tree_view.h"
 #include "layer.h"
-#include "track.h"
+#include "layer_trw_track.h"
 #include "file.h"
 
 

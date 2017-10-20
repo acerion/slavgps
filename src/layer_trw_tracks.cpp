@@ -44,9 +44,9 @@
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
 #include "layer_trw_menu.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_track_list_dialog.h"
 #include "viewport_internal.h"
-#include "track_internal.h"
-#include "track_list_dialog.h"
 #include "tree_view_internal.h"
 //#include "thumbnails.h"
 

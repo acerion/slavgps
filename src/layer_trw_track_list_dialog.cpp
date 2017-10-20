@@ -28,9 +28,11 @@
 #include <QHeaderView>
 #include <QDebug>
 
-#include "track_list_dialog.h"
-#include "track_internal.h"
-#include "track_properties_dialog.h"
+#include "layer.h"
+#include "layer_trw.h"
+#include "layer_trw_track_list_dialog.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_track_properties_dialog.h"
 #include "settings.h"
 #include "globals.h"
 #include "window.h"
@@ -38,8 +40,6 @@
 #include "util.h"
 #include "preferences.h"
 #include "tree_view_internal.h"
-#include "layer.h"
-#include "layer_trw.h"
 #include "layer_aggregate.h"
 
 #ifdef K

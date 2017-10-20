@@ -48,7 +48,7 @@ SOURCES += main.cpp \
     layer_trw_stats.cpp \
     layer_trw_export.cpp \
     layer_trw_geotag.cpp \
-    track_statistics.cpp \
+    layer_trw_track_statistics.cpp \
     jpg.cpp \
     mapnik_interface.cpp \
     gpsmapper.cpp \
@@ -92,14 +92,14 @@ SOURCES += main.cpp \
     layer_trw_waypoints.cpp \
     layers_panel.cpp \
     toolbox.cpp \
-    track.cpp \
-    track_properties_dialog.cpp \
-    track_profile_dialog.cpp \
-    track_list_dialog.cpp \
-    trackpoint_properties.cpp \
-    waypoint.cpp \
-    waypoint_properties.cpp \
-    waypoint_list.cpp \
+    layer_trw_track.cpp \
+    layer_trw_track_properties_dialog.cpp \
+    layer_trw_track_profile_dialog.cpp \
+    layer_trw_track_list_dialog.cpp \
+    layer_trw_trackpoint_properties.cpp \
+    layer_trw_waypoint.cpp \
+    layer_trw_waypoint_properties.cpp \
+    layer_trw_waypoint_list.cpp \
     tree_item.cpp \
     tree_view.cpp \
     ui_builder.cpp \
@@ -166,7 +166,7 @@ HEADERS += window.h \
     datasource_gps.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \
-    track_statistics.h \
+    layer_trw_track_statistics.h \
     jpg.h \
     mapnik_interface.h \
     gpsmapper.h \
@@ -209,15 +209,15 @@ HEADERS += window.h \
     layer_trw_waypoints.h \
     layers_panel.h \
     toolbox.h \
-    track.h \
-    track_internal.h \
-    track_properties_dialog.h \
-    track_profile_dialog.h \
-    track_list_dialog.h \
-    trackpoint_properties.h \
-    waypoint.h \
-    waypoint_properties.h \
-    waypoint_list.h \
+    layer_trw_track.h \
+    layer_trw_track_internal.h \
+    layer_trw_track_properties_dialog.h \
+    layer_trw_track_profile_dialog.h \
+    layer_trw_track_list_dialog.h \
+    layer_trw_trackpoint_properties.h \
+    layer_trw_waypoint.h \
+    layer_trw_waypoint_properties.h \
+    layer_trw_waypoint_list.h \
     tree_item.h \
     tree_view.h \
     tree_view_internal.h \
