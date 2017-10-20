@@ -4168,7 +4168,7 @@ void LayerTRW::trackpoint_properties_show()
 		this->tpwin = new PropertiesDialogTP(this->get_window());
 		//connect(this->tpwin, SIGNAL (changed(void)), this, SLOT (trackpoint_properties_cb(void)));
 
-		connect(this->tpwin->signalMapper, SIGNAL (mapped(int)), this, SLOT (trackpoint_properties_cb(int)));
+		connect(this->tpwin->signal_mapper, SIGNAL (mapped(int)), this, SLOT (trackpoint_properties_cb(int)));
 
 		//QObject::connect(this->tpwin, SIGNAL("delete-event"), this, SLOT (trw_layer_cancel_current_tp_cb));
 	}

@@ -80,7 +80,7 @@ namespace SlavGPS {
 		void reset_dialog_data(void);
 		void set_dialog_title(const QString & track_name);
 
-		QSignalMapper * signalMapper = NULL;
+		QSignalMapper * signal_mapper = NULL;
 
 	private slots:
 		void sync_ll_to_tp_cb(void);
@@ -90,7 +90,6 @@ namespace SlavGPS {
 		void datetime_clicked_cb(void);
 
 	private:
-
 		void update_times(Trackpoint * tp);
 
 		Trackpoint * cur_tp = NULL;

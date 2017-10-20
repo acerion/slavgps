@@ -117,6 +117,7 @@ SOURCES += main.cpp \
     fileutils.cpp \
     util.cpp \
     vikutils.cpp \
+    measurements.cpp \
     ui_util.cpp \
     misc/kdtree.c \
     file.cpp \
@@ -234,6 +235,7 @@ HEADERS += window.h \
     fileutils.h \
     util.h \
     vikutils.h \
+    measurements.h \
     ui_util.h \
     misc/kdtree.h \
     file.h \

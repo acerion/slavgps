@@ -432,7 +432,7 @@ QString SlavGPS::get_distance_string(double distance, DistanceUnit distance_unit
 		result = QObject::tr("%1 km").arg(distance / 1000.0, 0, 'f', fract);
 		break;
 	case DistanceUnit::MILES:
-		result = QObject::tr("1 miles").arg(VIK_METERS_TO_MILES (distance), 0, 'f', fract);
+		result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES (distance), 0, 'f', fract);
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
 		result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES (distance), 0, 'f', fract);

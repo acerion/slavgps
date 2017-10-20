@@ -35,6 +35,7 @@
 #include "date_time_dialog.h"
 #include "util.h"
 #include "track_internal.h"
+#include "measurements.h"
 #if 0
 #include "coords.h"
 #include "coord.h"
@@ -302,7 +303,6 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 
 	ll = tp->coord.get_latlon();
-	qDebug() << "--------------------" << ll.lat << ll.lon;
 	this->lat->setValue(ll.lat);
 	this->lon->setValue(ll.lon);
 
@@ -325,30 +325,20 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sync_to_tp_block = false; /* Can now update after setting data. */
 
 
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	if (this->cur_tp) {
-		switch (distance_unit) {
-		case DistanceUnit::KILOMETRES:
-			snprintf(tmp_str, sizeof (tmp_str), "%.2f m", Coord::distance(tp->coord, this->cur_tp->coord));
-			break;
-		case DistanceUnit::MILES:
-		case DistanceUnit::NAUTICAL_MILES:
-			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", Coord::distance(tp->coord, this->cur_tp->coord) * 1.0936133);
-			break;
-		default:
-			qDebug() << "EE: TrackPoint Properties: invalid distance unit" << (int) distance_unit << "in" << __FUNCTION__;
-		}
 
-		this->diff_dist->setText(QString(tmp_str));
+		tmp_string = Measurements::get_distance_string_short(Coord::distance(tp->coord, this->cur_tp->coord));
+		this->diff_dist->setText(tmp_string);
+
+
 		if (tp->has_timestamp && this->cur_tp->has_timestamp) {
-			snprintf(tmp_str, sizeof (tmp_str), "%ld s", tp->timestamp - this->cur_tp->timestamp);
-			this->diff_time->setText(QString(tmp_str));
+			tmp_string = tr("%1 s").arg((long) (tp->timestamp - this->cur_tp->timestamp));
+			this->diff_time->setText(tmp_string);
 			if (tp->timestamp == this->cur_tp->timestamp) {
 				this->diff_speed->setText(QString("--"));
 			} else {
 				double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
-				tmp_string = get_speed_string(tmp_speed, speed_unit);
+				tmp_string = Measurements::get_speed_string(tmp_speed);
 				this->diff_speed->setText(tmp_string);
 			}
 		} else {
@@ -357,52 +347,25 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		}
 	}
 
-	if (std::isnan(tp->course)) {
-		snprintf(tmp_str, sizeof (tmp_str), "--");
-	} else {
-		snprintf(tmp_str, sizeof (tmp_str), "%05.1f\302\260", tp->course);
-	}
-	this->course->setText(QString(tmp_str));
 
-	if (std::isnan(tp->speed)) {
-		tmp_string = "--";
-	} else {
-		tmp_string = get_speed_string(tp->speed, speed_unit);
-	}
+	tmp_string = Measurements::get_course_string(tp->course);
+	this->course->setText(QString(tmp_string));
+
+
+	tmp_string = Measurements::get_speed_string(tp->speed);
 	this->speed->setText(tmp_string);
 
 
-	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->hdop);
-		this->hdop->setText(QString(tmp_str));
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->pdop);
-		this->pdop->setText(QString(tmp_str));
-		break;
-	case DistanceUnit::MILES:
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f yards", tp->hdop*1.0936133);
-		this->hdop->setText(QString(tmp_str));
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f yards", tp->pdop*1.0936133);
-		this->pdop->setText(QString(tmp_str));
-		break;
-	default: /* kamilTODO: where NM are handled? */
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
-	}
+	tmp_string = Measurements::get_distance_string(tp->hdop, 5);
+	this->hdop->setText(tmp_string);
 
 
-	switch (height_unit) {
-	case HeightUnit::METRES:
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->vdop);
-		break;
-	case HeightUnit::FEET:
-		snprintf(tmp_str, sizeof (tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop));
-		break;
-	default:
-		snprintf(tmp_str, sizeof (tmp_str), "--");
-		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
-	}
-	this->vdop->setText(QString(tmp_str));
+	tmp_string = Measurements::get_distance_string(tp->pdop * 1.0936133, 5);
+	this->pdop->setText(tmp_string);
 
+
+	tmp_string = Measurements::get_altitude_string(tp->vdop, 5);
+	this->vdop->setText(tmp_string);
 
 
 	tmp_string = tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode);
@@ -450,20 +413,20 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 
 
-	this->signalMapper = new QSignalMapper(this);
-	connect(this->button_close_dialog,      SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_insert_tp_after,   SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_delete_current_tp, SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_split_track,       SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_go_back,           SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_go_forward,        SIGNAL (released()), signalMapper, SLOT (map()));
+	this->signal_mapper = new QSignalMapper(this);
+	connect(this->button_close_dialog,      SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_insert_tp_after,   SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_delete_current_tp, SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_split_track,       SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_go_back,           SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_go_forward,        SIGNAL (released()), signal_mapper, SLOT (map()));
 
-	this->signalMapper->setMapping(this->button_close_dialog,      SG_TRACK_CLOSE_DIALOG);
-	this->signalMapper->setMapping(this->button_insert_tp_after,   SG_TRACK_INSERT_TP_AFTER);
-	this->signalMapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_CURRENT_TP);
-	this->signalMapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP);
-	this->signalMapper->setMapping(this->button_go_back,           SG_TRACK_GO_BACK);
-	this->signalMapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
+	this->signal_mapper->setMapping(this->button_close_dialog,      SG_TRACK_CLOSE_DIALOG);
+	this->signal_mapper->setMapping(this->button_insert_tp_after,   SG_TRACK_INSERT_TP_AFTER);
+	this->signal_mapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_CURRENT_TP);
+	this->signal_mapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP);
+	this->signal_mapper->setMapping(this->button_go_back,           SG_TRACK_GO_BACK);
+	this->signal_mapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
 
 
 	this->vbox = new QVBoxLayout; /* Main track info. */
