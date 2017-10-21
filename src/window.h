@@ -147,12 +147,10 @@ namespace SlavGPS {
 		void toggle_main_menu();
 		void simple_map_update(bool only_new);
 
-		bool export_to(std::list<Layer *> * layers, SGFileType vft, char const *dir, char const *extension);
-		void export_to_common(SGFileType vft, char const * extension);
+		bool export_to(std::list<const Layer *> * layers, SGFileType file_type, const QString & full_dir_path, char const *extension);
+		void export_to_common(SGFileType file_type, char const * extension);
 
 		void import_kmz_file_cb(void);
-
-		void file_properties_cb(void);
 
 
 		/* Return indicates if a redraw is necessary. */
@@ -165,19 +163,25 @@ namespace SlavGPS {
 		void save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
 		void save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
+		/* Set full path to current document. */
+		void set_current_document_full_path(const QString & document_full_path);
+		/* Get full path to current document. */
+		QString get_current_document_full_path(void);
+		/* Get last part of path to current document, i.e. only file name. */
+		QString get_current_document_file_name(void);
+
 
 		static void set_redraw_trigger(Layer * layer);
 
 		void activate_tool(const QString & tool_id);
 
-		void open_file(const QString & filename, bool change_filename);
+		void open_file(const QString & new_document_full_path, bool set_as_current_document);
 
 		void set_busy_cursor(void);
 		void clear_busy_cursor(void);
 
 
 		bool window_save();
-		const char * get_filename_2();
 		void preferences_change_update(void);
 
 
@@ -305,6 +309,7 @@ namespace SlavGPS {
 		void preferences_cb(void);
 		void open_file_cb(void);
 
+		void menu_file_properties_cb(void);
 		bool menu_file_save_cb(void);
 		bool menu_file_save_as_cb(void);
 		bool menu_file_save_and_exit_cb(void);
@@ -319,12 +324,9 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void set_filename(char const * filename);
-		char const * get_filename(void);
-		void update_recently_used_document(char const * filename);
+		void update_recently_used_document(const QString & file_full_path);
 		void update_recent_files(QString const & path);
 		void open_window(void);
-
 
 		bool pan_move_flag = false;
 		int pan_x = -1;
@@ -354,7 +356,7 @@ namespace SlavGPS {
 		Layer * trigger = NULL;
 		Coord trigger_center;
 
-		char * filename = NULL;
+		QString current_document_full_path;
 
 		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 

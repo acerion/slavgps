@@ -700,13 +700,13 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 	if (g_path_is_absolute(filename)) {
 		canonical = g_strdup(filename);
 	} else {
-		const char * vw_filename = layer->get_window()->get_filename_2();
+		const QString vw_full_path = layer->get_window()->get_current_document_full_path();
 #ifdef K
 		char * dirpath = NULL;
-		if (vw_filename) {
-			dirpath = g_path_get_dirname(vw_filename);
-		} else {
+		if (vw_full_path.isEmpty()) {
 			dirpath = g_get_current_dir(); /* Fallback - if here then probably can't create the correct path. */
+		} else {
+			dirpath = g_path_get_dirname(vw_full_path);
 		}
 
 		char *full = NULL;

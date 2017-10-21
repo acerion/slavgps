@@ -745,7 +745,7 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 	/* Do. */
 	QString new_name;
-	if (ext != NULL && !a_file_check_ext(file_name.toUtf8().constData(), ext)) {
+	if (ext != NULL && !a_file_check_ext(file_name, ext)) {
 		new_name = file_name + ext;
 	} else {
 		/* Simply duplicate. */
@@ -888,9 +888,9 @@ bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const 
 /* Example:
    bool is_gpx = a_file_check_ext ("a/b/c.gpx", ".gpx");
 */
-bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
+bool SlavGPS::a_file_check_ext(const QString & file_name, char const * fileext)
 {
-	if (!filename) {
+	if (file_name.isEmpty()) {
 		return false;
 	}
 
@@ -898,7 +898,7 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
 		return false;
 	}
 
-	char const * basename = file_basename(filename);
+	char const * basename = file_basename(file_name.toUtf8().constData());
 	if (!basename) {
 		return false;
 	}

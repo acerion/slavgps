@@ -172,7 +172,7 @@ Window::Window()
 
 
 #if 0
-	this->set_filename(NULL);
+	this->set_current_document_full_path("");
 
 	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
 #endif
@@ -433,8 +433,8 @@ void Window::create_actions(void)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_as_cb()));
 
 		qa = this->menu_file->addAction(tr("Properties..."));
-		qa->setToolTip("File Properties");
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (file_properties_cb()));
+		qa->setToolTip("Properties of current file");
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_properties_cb()));
 
 
 		this->menu_file->addSeparator();
@@ -1638,7 +1638,7 @@ void Window::menu_edit_delete_all_cb(void)
 	if (!this->items_tree->get_top_layer()->is_empty()) {
 		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), this)) {
 			this->items_tree->clear();
-			this->set_filename(NULL);
+			this->set_current_document_full_path("");
 			this->draw_update();
 		}
 	}
@@ -1762,7 +1762,7 @@ void Window::closeEvent(QCloseEvent * ev)
 	{
 		QMessageBox::StandardButton reply = QMessageBox::question(this, "SlavGPS",
 									  QString("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
-										  "Do you want to save the changes?").arg("some file"), // window->get_filename()
+										  "Do you want to save the changes?").arg("some file"), // window->get_current_document_file_name()
 									  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
 									  QMessageBox::Yes);
 		if (reply == QMessageBox::No) {
@@ -2216,7 +2216,7 @@ void Window::open_file_cb(void)
 	//GSList *cur_file = NULL;
 
 
-	QFileDialog dialog(this, "Please select a GPS data file to open.");
+	QFileDialog dialog(this, "Select a GPS data file to open");
 
 	if (last_folder_files_url.isValid()) {
 		dialog.setDirectoryUrl(last_folder_files_url);
@@ -2263,16 +2263,16 @@ void Window::open_file_cb(void)
 #ifdef K
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
-		if ((window->contents_modified || window->filename) && newwindow) {
+		if ((window->contents_modified || !window->current_document_full_path.isEmpty()) && newwindow) {
 #else
-		if (window->filename && newwindow) {
+		if (!window->current_document_full_path.isEmpty() && newwindow) {
 #endif
 			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
 		} else {
 #endif
 
 			QStringList files = dialog.selectedFiles();
-			bool change_fn = newwindow && (files.size() == 1); /* Only change fn if one file. */
+			bool set_as_current_document = newwindow && (files.size() == 1); /* Only change current document path if one file. */
 			bool first_vik_file = true;
 			auto iter = files.begin();
 			while (iter != files.end()) {
@@ -2294,7 +2294,7 @@ void Window::open_file_cb(void)
 					}
 				} else {
 					/* Other file types. */
-					this->open_file(file_name, change_fn);
+					this->open_file(file_name, set_as_current_document);
 				}
 
 				iter++;
@@ -2308,19 +2308,19 @@ void Window::open_file_cb(void)
 
 
 
-void Window::open_file(const QString & new_filename, bool change_filename)
+void Window::open_file(const QString & new_document_full_path, bool set_as_current_document)
 {
 	this->set_busy_cursor();
 
 	/* Enable the *new* filename to be accessible by the Layers code. */
-	char * original_filename = this->filename ? strdup(this->filename) : NULL;
-	free(this->filename);
-	this->filename = strdup(new_filename.toUtf8().constData());
+	const QString original_filename = this->current_document_full_path;
+	this->current_document_full_path = new_document_full_path;
+
 	bool success = false;
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->loaded_type = a_file_load(agg, this->viewport, new_filename.toUtf8().constData());
+	this->loaded_type = a_file_load(agg, this->viewport, new_document_full_path.toUtf8().constData());
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		Dialog::error(tr("The file you requested could not be opened."), this);
@@ -2329,16 +2329,16 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_filename), this);
+		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_document_full_path), this);
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		Dialog::error(tr("Unsupported file type for %1").arg(new_filename), this);
+		Dialog::error(tr("Unsupported file type for %1").arg(new_document_full_path), this);
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_filename.toUtf8().constData())));
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path.toUtf8().constData())));
 		}
 		/* No break, carry on to show any data. */
 	case LOAD_TYPE_VIK_SUCCESS:
@@ -2346,8 +2346,8 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 
 			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
 			/* Update UI */
-			if (change_filename) {
-				this->set_filename(new_filename.toUtf8().constData());
+			if (set_as_current_document) {
+				this->set_current_document_full_path(new_document_full_path);
 			}
 #ifdef K
 			QAction * drawmode_action = this->grepget_drawmode_action(this->viewport->get_drawmode());
@@ -2383,18 +2383,17 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 	default:
 		success = true;
 		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
-		restore_original_filename = ! restore_original_filename;
-		this->update_recently_used_document(new_filename.toUtf8().constData());
-		this->update_recent_files(new_filename);
+		restore_original_filename = !restore_original_filename;
+		this->update_recently_used_document(new_document_full_path.toUtf8().constData());
+		this->update_recent_files(new_document_full_path);
 		this->draw_update();
 		break;
 	}
 
 	if (!success || restore_original_filename) {
 		// Load didn't work or want to keep as the existing Viking project, keep using the original name
-		this->set_filename(original_filename);
+		this->set_current_document_full_path(original_filename);
 	}
-	free(original_filename);
 
 	this->clear_busy_cursor();
 }
@@ -2404,7 +2403,7 @@ void Window::open_file(const QString & new_filename, bool change_filename)
 
 bool Window::menu_file_save_cb(void)
 {
-	if (!this->filename) {
+	if (this->current_document_full_path.isEmpty()) {
 		return this->menu_file_save_as_cb();
 	} else {
 		this->contents_modified = false;
@@ -2418,61 +2417,55 @@ bool Window::menu_file_save_cb(void)
 bool Window::menu_file_save_as_cb(void)
 {
 	bool rv = false;
-	char const * fn;
+
+	QFileDialog file_selector(this, QObject::tr("Save as Viking File."));
+	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+
+	/* TODO: make sure that Viking file format is default one. */
+	QStringList filter;
+	filter << tr("All (*)");
+	filter << tr("Viking (*.vik, *.viking)");
+	file_selector.setNameFilters(filter);
+
+
+	if (last_folder_files_url.isValid()) {
+		file_selector.setDirectoryUrl(last_folder_files_url);
+	}
 
 #ifdef K
+	gtk_window_set_transient_for(file_selector, this);
+	gtk_window_set_destroy_with_parent(file_selector, true);
 
-	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save as Viking File."),
-							 this,
-							 GTK_FILE_CHOOSER_ACTION_SAVE,
-							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-							 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-							 NULL);
-	if (last_folder_files_uri) {
-		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_files_uri);
-	}
+#endif
 
-	GtkFileFilter * filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("All"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Viking"));
-	gtk_file_filter_add_pattern(filter, "*.vik");
-	gtk_file_filter_add_pattern(filter, "*.viking");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	// Default to a Viking file
-	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
-
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
-	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
-
-
-	// Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File
-	char * auto_save_name = g_strdup(this->get_filename());
+	/* Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File. */
+	QString auto_save_name = this->get_current_document_file_name();
 	if (!a_file_check_ext(auto_save_name, ".vik")) {
-		auto_save_name = g_strconcat(auto_save_name, ".vik", NULL);
+		auto_save_name = auto_save_name + ".vik";
 	}
 
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), auto_save_name);
+	file_selector.selectFile(auto_save_name);
 
-	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (0 != access(fn, F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(fn)), GTK_WINDOW(dialog))) {
-			this->set_filename(fn);
+
+	while (QDialog::Accepted == file_selector.exec()) {
+		QStringList selection = file_selector.selectedFiles();
+		if (!selection.size()) {
+			continue;
+		}
+		const QString full_path = selection.at(0);
+
+		if (0 != access(full_path.toUtf8().constData(), F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(full_path)), this)) {
+			this->set_current_document_full_path(full_path);
 			rv = this->window_save();
 			if (rv) {
 				this->contents_modified = false;
-				free(last_folder_files_uri);
-				last_folder_files_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
+				last_folder_files_url = file_selector.directoryUrl();
 			}
 			break;
 		}
 	}
-	free(auto_save_name);
-	gtk_widget_destroy(dialog);
-#endif
+
 	return rv;
 }
 
@@ -2515,16 +2508,16 @@ void Window::update_recent_files(QString const & path)
 
 
 
-void Window::update_recently_used_document(char const * file_name)
+void Window::update_recently_used_document(const QString & file_full_path)
 {
 #ifdef K
 	/* Update Recently Used Document framework */
 	GtkRecentManager *manager = gtk_recent_manager_get_default();
 	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
 	char *groups[] = { (char *) "viking", NULL};
-	GFile * file = g_file_new_for_commandline_arg(file_name);
+	GFile * file = g_file_new_for_commandline_arg(file_full_path);
 	char * uri = g_file_get_uri(file);
-	char * basename = g_path_get_basename(file_name);
+	char * basename = g_path_get_basename(file_full_path);
 	g_object_unref(file);
 	file = NULL;
 
@@ -2582,36 +2575,28 @@ void Window::clear_busy_cursor()
 
 
 
-void Window::set_filename(char const * file_name)
+void Window::set_current_document_full_path(const QString & document_full_path)
 {
-	if (this->filename) {
-		free(this->filename);
-		this->filename = NULL;
-	}
-	if (filename) {
-		this->filename = strdup(file_name);
-	}
+	this->current_document_full_path = document_full_path;
 
-	/* Refresh window's title */
-	this->setWindowTitle(tr("%1 - SlavGPS").arg(this->get_filename()));
+	/* Refresh title of main window, but not with full (and possibly long) path, but just file name. */
+	this->setWindowTitle(tr("%1 - SlavGPS").arg(this->get_current_document_file_name()));
 }
 
 
 
 
-char const * Window::get_filename()
+QString Window::get_current_document_file_name(void)
 {
-	return this->filename ? file_basename(this->filename) : _("Untitled");
+	return this->current_document_full_path.isEmpty() ? tr("Untitled") : file_basename(this->current_document_full_path.toUtf8().constData());
 }
 
 
 
-/**
-   Returns the 'project' filename.
- */
-const char * Window::get_filename_2()
+
+QString Window::get_current_document_full_path(void)
 {
-	return this->filename;
+	return this->current_document_full_path;
 }
 
 
@@ -2730,13 +2715,13 @@ int determine_location_thread(BackgroundJob * bg_job)
 void Window::finish_new(void)
 {
 	/* Don't add a map if we've loaded a Viking file already. */
-	if (this->filename) {
+	if (!this->current_document_full_path.isEmpty()) {
 		return;
 	}
 
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
 		this->open_file(Preferences::get_startup_file(), true);
-		if (this->filename) {
+		if (!this->current_document_full_path.isEmpty()) {
 			return;
 		}
 	}
@@ -2769,12 +2754,12 @@ void Window::open_window(void)
 {
 	GSList *files = NULL;
 
-	bool change_fn = (g_slist_length(files) == 1); /* Only change fn if one file. */
+	bool set_as_current_document = (g_slist_length(files) == 1); /* Only change fn if one file. */
 	GSList *cur_file = files;
 	while (cur_file) {
 		/* Only open a new window if a viking file. */
 		char *file_name = (char *) cur_file->data;
-		if (this->filename && check_file_magic_vik(file_name)) {
+		if (!this->current_document_full_path.isEmpty() && check_file_magic_vik(file_name)) {
 #ifdef K
 			Window * new_window = Window::new_window();
 			if (new_window) {
@@ -2782,7 +2767,7 @@ void Window::open_window(void)
 			}
 #endif
 		} else {
-			this->open_file(file_name, change_fn);
+			this->open_file(file_name, set_as_current_document);
 		}
 		free(file_name);
 		cur_file = g_slist_next(cur_file);
@@ -3701,7 +3686,7 @@ void Window::export_to_kml_cb(void)
 
    Returns: %true on success
 */
-bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *dir, char const *extension)
+bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, const QString & full_dir_path, char const *extension)
 {
 	bool success = true;
 
@@ -3710,8 +3695,8 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 	this->set_busy_cursor();
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		Layer * l = *iter;
-		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, l->name, extension, NULL);
+		const Layer * l = *iter;
+		char *fn = g_strconcat(full_dir_path.toUtf8().constData(), G_DIR_SEPARATOR_S, l->name, extension, NULL);
 
 		/* Some protection in attempting to write too many same named files.
 		   As this will get horribly slow... */
@@ -3722,7 +3707,7 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 				/* Try rename. */
 				free(fn);
 #ifdef K
-				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, l->name, ii, extension);
+				fn = g_strdup_printf ("%s%s%s#%03d%s", full_dir_path, G_DIR_SEPARATOR_S, l->name, ii, extension);
 #endif
 			} else {
 				safe = true;
@@ -3736,7 +3721,7 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = a_file_export_layer((LayerTRW *) (*iter), QString(fn), vft, true);
+			bool this_success = a_file_export_layer((LayerTRW *) (*iter), QString(fn), file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {
@@ -3766,7 +3751,7 @@ bool Window::export_to(std::list<Layer *> * layers, SGFileType vft, char const *
 
 
 
-void Window::export_to_common(SGFileType vft, char const * extension)
+void Window::export_to_common(SGFileType file_type, char const * extension)
 {
 	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
 
@@ -3775,68 +3760,70 @@ void Window::export_to_common(SGFileType vft, char const * extension)
 		/* kamilFIXME: delete layers? */
 		return;
 	}
+
+	QFileDialog file_selector(this, QObject::tr("Export to directory"));
+	file_selector.setFileMode(QFileDialog::Directory);
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+
 #ifdef K
-	GtkWidget *dialog = gtk_file_chooser_dialog_new(tr("Export to directory"),
-							this,
-							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), this);
-	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
-	gtk_window_set_modal(GTK_WINDOW(dialog), true);
-
-	gtk_widget_show_all(dialog);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		char *dir = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		gtk_widget_destroy(dialog);
-		if (dir) {
-			if (!this->export_to(layers, vft, dir, extension)) {
-				Dialog::error(tr("Could not convert all files"), this->get_window());
-			}
-			free(dir);
-		}
-	} else {
-		gtk_widget_destroy(dialog);
-	}
+	gtk_window_set_transient_for(file_selector, this);
+	gtk_window_set_destroy_with_parent(file_selector, true);
+	gtk_window_set_modal(file_selector, true);
+	gtk_widget_show_all(file_selector);
 #endif
+
+	if (QDialog::Accepted != file_selector.exec()) {
+		/* kamilFIXME: delete layers? */
+		return;
+	}
+
+	QStringList selection = file_selector.selectedFiles();
+	if (!selection.size()) {
+		/* kamilFIXME: delete layers? */
+		return;
+	}
+
+	const QString full_dir_path = selection.at(0);
+	if (!this->export_to(layers, file_type, full_dir_path, extension)) {
+		Dialog::error(tr("Could not convert all files"), this);
+	}
+
 	delete layers;
 }
 
 
 
 
-void Window::file_properties_cb(void)
+void Window::menu_file_properties_cb(void)
 {
-	QString message;
-	if (this->filename) {
-		if (0 == access(this->filename, F_OK)) {
-			// Get some timestamp information of the file
-			struct stat stat_buf;
-			if (stat(this->filename, &stat_buf) == 0) {
-				char time_buf[64];
-				strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-				char *size = NULL;
-				int byte_size = stat_buf.st_size;
-#if GLIB_CHECK_VERSION(2,30,0)
-				size = g_format_size_full(byte_size, G_FORMAT_SIZE_DEFAULT);
-#else
-				size = g_format_size_for_display(byte_size);
-#endif
-				message = QObject::tr("%1\n\n%2\n\n%3").arg(this->filename).arg(time_buf).arg(size);
-				free(size);
-			}
-		} else {
-			message = QObject::tr("File not accessible");
-		}
-	} else {
-		message = QObject::tr("No Viking File");
+	if (this->current_document_full_path.isEmpty()) {
+		Dialog::info(tr("No Viking File"), this);
+		return;
 	}
 
-	/* Show the info. */
+	if (0 != access(this->current_document_full_path.toUtf8().constData(), F_OK)) {
+		Dialog::info(tr("File not accessible"), this);
+		return;
+	}
+
+	/* Get some timestamp information of the file. */
+	struct stat stat_buf;
+	if (0 != stat(this->current_document_full_path.toUtf8().constData(), &stat_buf) == 0) {
+		Dialog::info(tr("File not accessible"), this);
+		return;
+	}
+
+	char time_buf[64];
+	strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
+	int byte_size = stat_buf.st_size;
+#if GLIB_CHECK_VERSION(2,30,0)
+	char * size = g_format_size_full(byte_size, G_FORMAT_SIZE_DEFAULT);
+#else
+	char * size = g_format_size_for_display(byte_size);
+#endif
+	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(time_buf).arg(size);
+	free(size);
+
 	Dialog::info(message, this);
 }
 
@@ -3861,8 +3848,8 @@ bool Window::window_save()
 	this->set_busy_cursor();
 	bool success = true;
 
-	if (a_file_save(this->items_tree->get_top_layer(), this->viewport, this->filename)) {
-		this->update_recently_used_document(this->filename);
+	if (a_file_save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path.toUtf8().constData())) {
+		this->update_recently_used_document(this->current_document_full_path);
 	} else {
 		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
 		success = false;
@@ -3876,40 +3863,33 @@ bool Window::window_save()
 
 void Window::import_kmz_file_cb(void)
 {
-#ifdef K
-	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Open File"),
-							 window,
-							 GTK_FILE_CHOOSER_ACTION_OPEN,
-							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-							 NULL);
+	QFileDialog file_selector(this, QObject::tr("Open File"));
+	file_selector.setFileMode(QFileDialog::ExistingFile);
+	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
 
-	GtkFileFilter * filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("KMZ"));
-	gtk_file_filter_add_mime_type(filter, "vnd.google-earth.kmz");
-	gtk_file_filter_add_pattern(filter, "*.kmz");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+	/* TODO: make sure that "all" is the default filter. */
+	QStringList mime;
+	mime << "application/octet-stream"; /* "All files (*)" */
+	mime << "vnd.google-earth.kmz";     /* "KMZ" / "*.kmz"; */
+	file_selector.setMimeTypeFilters(mime);
 
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("All"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	// Default to any file - same as before open filters were added
-	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)  {
-		char *fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		// TODO convert ans value into readable explaination of failure...
-		int ans = kmz_open_file(fn, window->viewport, window->items_tree);
-		if (ans) {
-			Dialog::error(tr("Unable to import %1.").arg(QString(fn)), window);
-		}
-
-		window->draw_update();
+	if (QDialog::Accepted != file_selector.exec())  {
+		return;
 	}
-	gtk_widget_destroy(dialog);
-#endif
+
+	QStringList selection = file_selector.selectedFiles();
+	if (!selection.size()) {
+		return;
+	}
+	const QString full_path = selection.at(0);
+
+	/* TODO convert ans value into readable explaination of failure... */
+	int ans = kmz_open_file(full_path.toUtf8().constData(), this->viewport, this->items_tree);
+	if (ans) {
+		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
+	}
+
+	this->draw_update();
 }
 
 

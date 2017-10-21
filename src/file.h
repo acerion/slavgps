@@ -75,7 +75,7 @@ namespace SlavGPS {
 
 
 
-	bool a_file_check_ext(char const * filename, char const * fileext);
+	bool a_file_check_ext(const QString & file_name, char const * fileext);
 
 	/* Function to determine if a filename is a 'viking' type file. */
 	bool check_file_magic_vik(char const * filename);

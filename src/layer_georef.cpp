@@ -522,11 +522,11 @@ static bool world_file_read_line(FILE *ff, double *value, bool use_value)
  *  x&y scale as meters per pixel
  *  x&y coords as UTM eastings and northings respectively.
  */
-static int world_file_read_file(const char* filename, double values[4])
+static int world_file_read_file(const QString & full_path, double values[4])
 {
-	fprintf(stderr, "DEBUG: %s - trying world file %s\n", __FUNCTION__, filename);
+	qDebug() << "II: Layer Georef: Read World File: file" << full_path;
 
-	FILE *f = fopen(filename, "r");
+	FILE *f = fopen(full_path.toUtf8().constData(), "r");
 	if (!f) {
 		return 1;
 	} else {
@@ -541,7 +541,7 @@ static int world_file_read_file(const char* filename, double values[4])
 		    )
 			{
 				/* Success. */
-				fprintf(stderr, "DEBUG: %s - %s - world file read success\n", __FUNCTION__, filename);
+				qDebug() << "II: Layer Georef: Read World File: success";
 				answer = 0;
 			}
 		fclose(f);
@@ -554,29 +554,30 @@ static int world_file_read_file(const char* filename, double values[4])
 
 static void georef_layer_dialog_load(changeable_widgets *cw)
 {
-#ifdef K
-	GtkWidget *file_selector = gtk_file_chooser_dialog_new(_("Choose World file"),
-								NULL,
-								GTK_FILE_CHOOSER_ACTION_OPEN,
-								GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-								GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-								NULL);
+	Window * window = g_tree->tree_get_main_window();
+	QFileDialog file_selector(window, QObject::tr("Choose World file"));
+	file_selector.setFileMode(QFileDialog::ExistingFile);
+	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
 
-	if (gtk_dialog_run(GTK_DIALOG (file_selector)) == GTK_RESPONSE_ACCEPT) {
-		double values[4];
-		int answer = world_file_read_file(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), values);
-		if (answer == 1) {
-			Dialog::error(tr("The World file you requested could not be opened for reading."), this->get_window());
-		} else if (answer == 2) {
-			Dialog::error(tr("Unexpected end of file reading World file."), this->get_window());
-		} else {
-			/* NB answer should == 0 for success. */
-			set_widget_values(cw, values);
-		}
+	if (QDialog::Accepted != file_selector.exec()) {
+		return;
 	}
 
-	gtk_widget_destroy(file_selector);
-#endif
+	QStringList selection = file_selector.selectedFiles();
+	if (!selection.size()) {
+		return;
+	}
+
+	double values[4];
+	int answer = world_file_read_file(selection.at(0), values);
+	if (answer == 1) {
+		Dialog::error(QObject::tr("The World file you requested could not be opened for reading."), window);
+	} else if (answer == 2) {
+		Dialog::error(QObject::tr("Unexpected end of file reading World file."), window);
+	} else {
+		/* NB answer should == 0 for success. */
+		set_widget_values(cw, values);
+	}
 }
 
 
@@ -585,29 +586,33 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 static void georef_layer_export_params(georef_data_t * data)
 {
 	LayerGeoref * layer = data->layer;
-#ifdef K
-	GtkWidget * file_selector = gtk_file_chooser_dialog_new(_("Choose World file"),
-								NULL,
-								GTK_FILE_CHOOSER_ACTION_SAVE,
-								GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-								GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-								NULL);
-	if (gtk_dialog_run(GTK_DIALOG (file_selector)) == GTK_RESPONSE_ACCEPT) {
-		FILE * f = fopen(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), "w");
+	Window * window = g_tree->tree_get_main_window();
 
-		gtk_widget_destroy(file_selector);
-		if (!f) {
-			Dialog::error(tr("The file you requested could not be opened for writing."), layer->get_window());
-			return;
-		} else {
-			fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
-			fclose(f);
-			f = NULL;
-		}
-	} else {
-		gtk_widget_destroy(file_selector);
+	QFileDialog file_selector(window, QObject::tr("Choose World file"));
+	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+
+
+	if (QDialog::Accepted != file_selector.exec()) {
+		return;
 	}
-#endif
+
+
+	QStringList selection = file_selector.selectedFiles();
+	if (!selection.size()) {
+		return;
+	}
+
+
+	FILE * f = fopen(selection.at(0).toUtf8().constData(), "w");
+	if (!f) {
+		Dialog::error(QObject::tr("The file you requested could not be opened for writing."), window);
+		return;
+	}
+
+	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
+	fclose(f);
+	f = NULL;
 }
 
 

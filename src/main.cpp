@@ -234,15 +234,15 @@ int main(int argc, char ** argv)
 			dashdash_already = true; /* Hack to open '-' */
 		} else {
 			SlavGPS::Window * new_window = first_window;
-			bool change_filename = (i == 1);
+			bool set_as_current_document = (i == 1);
 
 			/* Open any subsequent .vik files in their own window. */
 			if (i > 1 && check_file_magic_vik(argv[i])) {
 				new_window = SlavGPS::Window::new_window();
-				change_filename = true;
+				set_as_current_document = true;
 			}
 
-			new_window->open_file(argv[i], change_filename);
+			new_window->open_file(argv[i], set_as_current_document);
 		}
 	}
 
