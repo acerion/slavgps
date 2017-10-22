@@ -96,6 +96,7 @@ namespace SlavGPS {
 	public:
 		Window();
 		~Window();
+		static Window * new_window();
 
 		void draw_sync();
 		void draw_status();
@@ -103,8 +104,6 @@ namespace SlavGPS {
 		void draw_update(void);
 
 		void handle_selection_of_layer(Layer * layer);
-
-		Window * new_window();
 
 		Viewport * get_viewport(void);
 		LayersPanel * get_items_tree(void);
@@ -282,7 +281,7 @@ namespace SlavGPS {
 		void export_to_kml_cb(void);
 
 
-		void help_cache_info_cb(void);
+		void menu_view_cache_info_cb(void);
 
 		bool key_press_event_cb(QKeyEvent * event);
 		void drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time);

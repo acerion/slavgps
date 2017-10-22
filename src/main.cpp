@@ -220,41 +220,7 @@ int main(int argc, char ** argv)
 	/* Set the icon. */
 	QPixmap * main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
 	gtk_window_set_default_icon(main_icon);
-
-	gdk_threads_enter();
-
-
-	/* Create the first window. */
-	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
-
-	int i = 0;
-	bool dashdash_already = false;
-	while (++i < argc) {
-		if (strcmp(argv[i],"--") == 0 && !dashdash_already) {
-			dashdash_already = true; /* Hack to open '-' */
-		} else {
-			SlavGPS::Window * new_window = first_window;
-			bool set_as_current_document = (i == 1);
-
-			/* Open any subsequent .vik files in their own window. */
-			if (i > 1 && check_file_magic_vik(argv[i])) {
-				new_window = SlavGPS::Window::new_window();
-				set_as_current_document = true;
-			}
-
-			new_window->open_file(argv[i], set_as_current_document);
-		}
-	}
-
-	first_window->finish_new();
 #endif
-
-#ifdef K
-	gtk_main();
-	gdk_threads_leave();
-#endif
-
-
 
 	QApplication app(argc, argv);
 
@@ -266,11 +232,37 @@ int main(int argc, char ** argv)
 	/* Ask for confirmation of default settings on first run. */
 	SGUtils::set_auto_features_on_first_run();
 
-	Window window;
-	SGUtils::command_line(&window, startup_latitude, startup_longitude, startup_zoom_level_osm, startup_map_type_id);
-	window.show();
 
-	SGUtils::check_latest_version(&window);
+
+	/* Create the first window. */
+	Window * first_window = Window::new_window();
+
+	int i = 0;
+	bool dashdash_already = false;
+	while (++i < argc) {
+		if (strcmp(argv[i], "--") == 0 && !dashdash_already) {
+			dashdash_already = true; /* Hack to open '-' */
+		} else {
+			Window * new_window = first_window;
+			bool set_as_current_document = (i == 1);
+
+			/* Open any subsequent .vik files in their own window. */
+			if (i > 1 && check_file_magic_vik(argv[i])) {
+				new_window = Window::new_window();
+				set_as_current_document = true;
+			}
+
+			new_window->open_file(argv[i], set_as_current_document);
+		}
+	}
+
+	first_window->finish_new();
+	SGUtils::command_line(first_window, startup_latitude, startup_longitude, startup_zoom_level_osm, startup_map_type_id);
+	first_window->show();
+
+
+
+	SGUtils::check_latest_version(first_window);
 
 	int rv = app.exec();
 
@@ -295,8 +287,9 @@ int main(int argc, char ** argv)
 
 	/* Clean up any temporary files. */
 	util_remove_all_in_deletion_list();
+#endif
 
 	delete first_window;
-#endif
+
 	return rv;
 }

@@ -63,6 +63,7 @@
 #include "clipboard.h"
 #include "map_cache.h"
 #include "tree_view_internal.h"
+#include "measurements.h"
 
 
 
@@ -889,7 +890,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa);
 
 		qa = new QAction("&Map Cache Info", this);
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (help_cache_info_cb(void)));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_cache_info_cb(void)));
 		this->menu_view->addAction(qa);
 #endif
 	}
@@ -1308,150 +1309,6 @@ void Window::create_ui(void)
 			}
 		}
 	}
-
-#if 0
-	GError * error = NULL;
-	unsigned int mid;
-	if (!(mid = gtk_ui_manager_add_ui_from_string(uim, menu_xml, -1, &error))) {
-		g_error_free(error);
-		exit(1);
-	}
-
-	GtkActionGroup * action_group = gtk_action_group_new("MenuActions");
-	gtk_action_group_set_translation_domain(action_group, PACKAGE_NAME);
-	gtk_action_group_add_actions(action_group, entries, G_N_ELEMENTS (entries), window);
-	gtk_action_group_add_toggle_actions(action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
-	if (vik_debug) {
-		if (gtk_ui_manager_add_ui_from_string(uim,
-						      "<ui><menubar name='MainMenu'><menu action='Help'>"
-						      "<menuitem action='MapCacheInfo'/>"
-						      "<menuitem action='BackForwardInfo'/>"
-						      "</menu></menubar></ui>",
-						      -1, NULL)) {
-			gtk_action_group_add_actions(action_group, debug_entries, G_N_ELEMENTS (debug_entries), window);
-		}
-	}
-
-	for (unsigned int i = 0; i < G_N_ELEMENTS (entries); i++) {
-		if (entries[i].callback) {
-			toolbar_action_entry_register(window->viking_vtb, &entries[i]);
-		}
-	}
-
-	if (G_N_ELEMENTS (toggle_entries) !=  G_N_ELEMENTS (toggle_entries_toolbar_cb)) {
-		fprintf(stdout,  "Broken entries definitions\n");
-		exit(1);
-	}
-	for (unsigned int i = 0; i < G_N_ELEMENTS (toggle_entries); i++) {
-		if (toggle_entries_toolbar_cb[i]) {
-			toolbar_action_toggle_entry_register(window->viking_vtb, &toggle_entries[i], (void *) toggle_entries_toolbar_cb[i]);
-		}
-	}
-
-	// Use this to see if GPSBabel is available:
-	if (a_babel_available()) {
-		// If going to add more entries then might be worth creating a menu_gpsbabel.xml.h file
-		if (gtk_ui_manager_add_ui_from_string(uim,
-						      "<ui><menubar name='MainMenu'><menu action='File'><menu action='Export'><menuitem action='ExportKML'/></menu></menu></menubar></ui>",
-						      -1, &error)) {
-			gtk_action_group_add_actions(action_group, entries_gpsbabel, G_N_ELEMENTS (entries_gpsbabel), window);
-		}
-	}
-
-	/* GeoJSON import capability. */
-	if (g_find_program_in_path(geojson_program_import())) {
-		if (gtk_ui_manager_add_ui_from_string(uim,
-						      "<ui><menubar name='MainMenu'><menu action='File'><menu action='Acquire'><menuitem action='AcquireGeoJSON'/></menu></menu></menubar></ui>",
-						      -1, &error)) {
-			gtk_action_group_add_actions(action_group, entries_geojson, G_N_ELEMENTS (entries_geojson), window);
-		}
-	}
-
-	GtkIconFactory * icon_factory = gtk_icon_factory_new();
-	gtk_icon_factory_add_default(icon_factory);
-
-	register_vik_icons(icon_factory);
-
-	/* Copy the tool RadioActionEntries out of the main Window structure into an extending array 'tools'
-	   so that it can be applied to the UI in one action group add function call below. */
-	GtkRadioActionEntry * radio_actions = NULL;
-	unsigned int n_radio_actions = 0;
-	for (unsigned int i = 0; i < window->toolbox->n_tools; i++) {
-		radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
-		radio_actions[n_radio_actions] = window->toolbox->tools[i]->radioActionEntry;
-		++n_radio_actions;
-		radio_actions[n_radio_actions].value = n_radio_actions;
-	}
-
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		GtkActionEntry action;
-		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/",
-				      Layer::get_interface(type)->name,
-				      Layer::get_interface(type)->name,
-				      GTK_UI_MANAGER_MENUITEM, false);
-
-		GtkIconSet * icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(Layer::get_interface(type)->icon, false, NULL));
-		gtk_icon_factory_add(icon_factory, Layer::get_interface(type)->name, icon_set);
-		gtk_icon_set_unref(icon_set);
-
-		action.name = Layer::get_interface(type)->name;
-		action.action_icon_path = Layer::get_interface(type)->name;
-		action.action_label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(type)->name);
-		action.action_tooltip = NULL;
-		action.action_accelerator = Layer::get_interface(type)->accelerator;
-		action.callback = (GCallback)menu_layer_new_cb;
-		gtk_action_group_add_actions(action_group, &action, 1, window);
-
-		free((char*)action.label);
-
-		if (Layer::get_interface(type)->tools_count) {
-			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", Layer::get_interface(type)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
-		}
-
-
-		GtkActionEntry action_dl;
-		char *layername = g_strdup_printf("Layer%s", Layer::get_type_id_string(type));
-		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
-				      Layer::get_interface(type)->name,
-				      layername,
-				      GTK_UI_MANAGER_MENUITEM, false);
-		free(layername);
-
-		// For default layers use action names of the form 'Layer<LayerName>'
-		// This is to avoid clashing with just the layer name used above for the tool actions
-		action_dl.name = g_strconcat("Layer", Layer::get_type_id_string(type), NULL);
-		action_dl.action_icon_path = NULL;
-		action_dl.action_label = g_strconcat("_", Layer::get_interface(type)->name, "...", NULL); // Prepend marker for keyboard accelerator
-		action_dl.action_tooltip = NULL;
-		// action_dl.action_accelerator = ...; /* Empty accelerator. */
-		action_dl.callback = (GCallback)layer_defaults_cb;
-		gtk_action_group_add_actions(action_group, &action_dl, 1, window);
-		free((char*)action_dl.name);
-		free((char*)action_dl.label);
-	}
-	g_object_unref(icon_factory);
-
-	gtk_action_group_add_radio_actions(action_group, radio_actions, n_radio_actions, 0, (GCallback) menu_cb, window);
-	free(radio_actions);
-
-	gtk_ui_manager_insert_action_group(uim, action_group, 0);
-
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		for (unsigned int j = 0; j < Layer::get_interface(type)->layer_tools.size(); j++) {
-			GtkAction * action = gtk_action_group_get_action(action_group,
-									 Layer::get_interface(type)->layer_tools[j]->id_string);
-			g_object_set(action, "sensitive", false, NULL);
-		}
-	}
-
-
-
-	window->action_group = action_group;
-
-	GtkAccelGroup * accel_group = gtk_ui_manager_get_accel_group(uim);
-	gtk_window_add_accel_group(GTK_WINDOW (window), accel_group);
-	gtk_ui_manager_ensure_update(uim);
-#endif
 
 	a_background_post_init_window(this);
 }
@@ -2284,13 +2141,11 @@ void Window::open_file_cb(void)
 						this->open_file(file_name, true);
 						first_vik_file = false;
 					} else {
-#ifdef K
 						/* Load each subsequent .vik file in a separate window. */
-						Window * new_window = Window::new_window_cb();
+						Window * new_window = Window::new_window();
 						if (new_window) {
 							new_window->open_file(file_name, true);
 						}
-#endif
 					}
 				} else {
 					/* Other file types. */
@@ -2714,6 +2569,7 @@ int determine_location_thread(BackgroundJob * bg_job)
  */
 void Window::finish_new(void)
 {
+#ifdef K
 	/* Don't add a map if we've loaded a Viking file already. */
 	if (!this->current_document_full_path.isEmpty()) {
 		return;
@@ -2745,6 +2601,7 @@ void Window::finish_new(void)
 			a_background_thread(locator, ThreadPoolType::REMOTE, tr("Determining location"));
 		}
 	}
+#endif
 }
 
 
@@ -2760,12 +2617,10 @@ void Window::open_window(void)
 		/* Only open a new window if a viking file. */
 		char *file_name = (char *) cur_file->data;
 		if (!this->current_document_full_path.isEmpty() && check_file_magic_vik(file_name)) {
-#ifdef K
 			Window * new_window = Window::new_window();
 			if (new_window) {
 				new_window->open_file(file_name, true);
 			}
-#endif
 		} else {
 			this->open_file(file_name, set_as_current_document);
 		}
@@ -3695,20 +3550,17 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 	this->set_busy_cursor();
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		const Layer * l = *iter;
-		char *fn = g_strconcat(full_dir_path.toUtf8().constData(), G_DIR_SEPARATOR_S, l->name, extension, NULL);
+		const Layer * layer = *iter;
+		QString path = full_dir_path + QDir::separator() + layer->name + extension;
 
 		/* Some protection in attempting to write too many same named files.
 		   As this will get horribly slow... */
 		bool safe = false;
 		int ii = 2;
 		while (ii < 5000) {
-			if (0 == access(fn, F_OK)) {
+			if (0 == access(path.toUtf8().constData(), F_OK)) {
 				/* Try rename. */
-				free(fn);
-#ifdef K
-				fn = g_strdup_printf ("%s%s%s#%03d%s", full_dir_path, G_DIR_SEPARATOR_S, l->name, ii, extension);
-#endif
+				path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
 			} else {
 				safe = true;
 				break;
@@ -3721,12 +3573,12 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = a_file_export_layer((LayerTRW *) (*iter), QString(fn), file_type, true);
+			bool this_success = a_file_export_layer((LayerTRW *) layer, path, file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {
 				export_count++;
-				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(fn));
+				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(path));
 #ifdef K
 				while (gtk_events_pending()) {
 					gtk_main_iteration();
@@ -3736,8 +3588,6 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 			success = success && this_success;
 		}
-
-		free(fn);
 	}
 
 	this->clear_busy_cursor();
@@ -3808,21 +3658,15 @@ void Window::menu_file_properties_cb(void)
 
 	/* Get some timestamp information of the file. */
 	struct stat stat_buf;
-	if (0 != stat(this->current_document_full_path.toUtf8().constData(), &stat_buf) == 0) {
+	if (0 != stat(this->current_document_full_path.toUtf8().constData(), &stat_buf)) {
 		Dialog::info(tr("File not accessible"), this);
 		return;
 	}
 
 	char time_buf[64];
 	strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-	int byte_size = stat_buf.st_size;
-#if GLIB_CHECK_VERSION(2,30,0)
-	char * size = g_format_size_full(byte_size, G_FORMAT_SIZE_DEFAULT);
-#else
-	char * size = g_format_size_for_display(byte_size);
-#endif
-	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(time_buf).arg(size);
-	free(size);
+	const QString size_string = Measurements::get_file_size_string(stat_buf.st_size);
+	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(time_buf).arg(size_string);
 
 	Dialog::info(message, this);
 }
@@ -3895,11 +3739,9 @@ void Window::import_kmz_file_cb(void)
 
 
 
-
 Window * Window::new_window_cb(void)
 {
-	/* FIXME: this is not right... */
-	return new Window();
+	return new_window();
 }
 
 
@@ -3907,95 +3749,73 @@ Window * Window::new_window_cb(void)
 
 Window * Window::new_window()
 {
-#ifdef K
-	if (window_count < MAX_WINDOWS) {
-		Window * window = new Window();
-
-		QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window_cb));
-		QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (new_window_cb));
-		QObject::connect(window, SIGNAL("openwindow"), NULL, SLOT (open_window));
-
-		gtk_widget_show_all(window);
-
-		if (a_vik_get_restore_window_state()) {
-			// These settings are applied after the show all as these options hide widgets
-			bool sidepanel;
-			if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &sidepanel)) {
-				if (! sidepanel) {
-					window->items_tree->set_visible(false);
-					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewSidePanel");
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
-				}
-			}
-
-			bool statusbar;
-			if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &statusbar)) {
-				if (! statusbar) {
-					gtk_widget_hide(GTK_WIDGET(window->viking_vs));
-					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewStatusBar");
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
-				}
-			}
-
-			bool toolbar;
-			if (a_settings_get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &toolbar)) {
-				if (! toolbar) {
-					gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
-					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewToolBar");
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
-				}
-			}
-
-			bool menubar;
-			if (a_settings_get_boolean(VIK_SETTINGS_WIN_MENUBAR, &menubar)) {
-				if (! menubar) {
-					gtk_widget_hide(gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu"));
-					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewMainMenu");
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
-				}
-			}
-		}
-		window_count++;
-
-		return window;
+	if (window_count >= MAX_WINDOWS) {
+		return NULL;
 	}
+
+	Window * window = new Window();
+
+#ifdef K
+	QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window_cb));
+	QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (new_window_cb));
+	QObject::connect(window, SIGNAL("openwindow"), NULL, SLOT (open_window));
 #endif
-	return NULL;
+
+	if (Preferences::get_restore_window_state()) {
+		/* These settings are applied after the show all as these options hide widgets. */
+		bool visibility;
+
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
+			window->show_side_panel(visibility);
+		}
+
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
+#ifdef K
+			window->view_statusbar_cb(visibility);
+#endif
+		}
+
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &visibility)) {
+#ifdef K
+			gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
+#endif
+		}
+
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MENUBAR, &visibility)) {
+			window->view_main_menu_cb(visibility);
+		}
+	}
+
+	window_count++;
+
+	return window;
 }
 
 
 
 
-void Window::help_cache_info_cb(void)
+void Window::menu_view_cache_info_cb(void)
 {
-	/* No i18n as this is just for debug. */
+	const size_t bytes = map_cache_get_size();
+	const QString size_string = Measurements::get_file_size_string(bytes);
+	const QString msg = QString("Map Cache size is %1 with %2 items").arg(size_string).arg(map_cache_get_count());
 
-	int byte_size = map_cache_get_size();
-	char *msg_sz = NULL;
-#if GLIB_CHECK_VERSION(2,30,0)
-	msg_sz = g_format_size_full(byte_size, G_FORMAT_SIZE_LONG_FORMAT);
-#else
-	msg_sz = g_format_size_for_display(byte_size);
-#endif
-	const QString msg = QString("Map Cache size is %1 with %2 items").arg(msg_sz).arg(map_cache_get_count());
 	Dialog::info(msg, this);
-	free(msg_sz);
 }
-
 
 
 
 
 void Window::preferences_change_update(void)
 {
-	// Want to update all TrackWaypoint layers
+	/* Want to update all TRW layers. */
 	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
 	if (!layers || layers->empty()) {
 		return;
 	}
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		// Reset the individual waypoints themselves due to the preferences change
+		/* Reset the individual waypoints themselves due to the preferences change. */
 		LayerTRW * trw = (LayerTRW *) *iter;
 		trw->reset_waypoints();
 	}
@@ -4010,12 +3830,7 @@ void Window::preferences_change_update(void)
 
 void Window::destroy_window_cb(void)
 {
-#ifdef K
-	if (!--window_count) {
-		free(last_folder_files_uri);
-		gtk_main_quit();
-	}
-#endif
+	window_count--;
 }
 
 
