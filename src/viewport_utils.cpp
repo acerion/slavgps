@@ -131,7 +131,7 @@ void ViewportToImageDialog::accept_cb(void) /* Slot. */
 
 
 
-void ViewportToImageDialog::build_ui(ViewportToImageMode mode)
+void ViewportToImageDialog::build_ui(ViewportSaveMode mode)
 {
 	qDebug() << "II: Viewport To Image Dialog: building dialog UI";
 
@@ -198,7 +198,7 @@ void ViewportToImageDialog::build_ui(ViewportToImageMode mode)
 
 
 
-	if (mode == ViewportToImageMode::KMZ_FILE) {
+	if (mode == ViewportSaveMode::FILE_KMZ) {
 		/* Don't show image type selection if creating a KMZ (always JPG internally).
 		   Start with viewable area by default. */
 		this->get_size_from_viewport_cb();
@@ -209,12 +209,12 @@ void ViewportToImageDialog::build_ui(ViewportToImageMode mode)
 		this->output_format_radios = new SGRadioGroup(tr("Output format"), &items, this);
 		this->vbox->addWidget(this->output_format_radios);
 
-		if (!this->viewport->get_window()->draw_image_save_as_png) {
+		if (!this->viewport->get_window()->save_viewport_as_png) {
 			this->output_format_radios->set_id_of_selected(1); /* '1' corresponds to '1' in code preparing items above. */
 		}
 	}
 
-	if (mode == ViewportToImageMode::DIRECTORY_OF_IMAGES) {
+	if (mode == ViewportSaveMode::DIRECTORY) {
 
 		label = new QLabel(tr("East-west image tiles:"));
 		this->vbox->addWidget(label);

@@ -196,11 +196,11 @@ Window::Window()
 	} else {
 		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
 	}
-	bool draw_image_save_as_png_;
-	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &draw_image_save_as_png_)) {
-		this->draw_image_save_as_png = draw_image_save_as_png_;
+	bool save_viewport_as_png_;
+	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &save_viewport_as_png_)) {
+		this->save_viewport_as_png = save_viewport_as_png_;
 	} else {
-		this->draw_image_save_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
+		this->save_viewport_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
 	}
 
 
@@ -1671,7 +1671,7 @@ void Window::closeEvent(QCloseEvent * ev)
 #ifdef K
 		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, window->draw_image_width);
 		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
-		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->draw_image_save_as_png);
+		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->save_viewport_as_png);
 
 		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
 		gtk_accel_map_save(accel_file_full_path.toUtf8().constData());
@@ -2779,7 +2779,27 @@ void Window::acquire_from_url_cb(void)
 
 void Window::draw_viewport_to_image_file_cb(void)
 {
-	this->draw_viewport_to_image_file(ViewportToImageMode::SINGLE_IMAGE);
+	ViewportToImageDialog dialog(tr("Save Viewport to Image File"), this->get_viewport(), NULL);
+	dialog.build_ui(ViewportSaveMode::FILE);
+	if (QDialog::Accepted != dialog.exec()) {
+		return;
+	}
+
+	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FILE);
+	if (file_full_path.isEmpty()) {
+		return;
+	}
+
+	int active_z = dialog.zoom_combo->currentIndex();
+	double zoom = pow(2, active_z - 2);
+	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
+
+	this->save_viewport_to_image(file_full_path,
+				     this->draw_image_width = dialog.width_spin->value(),
+				     this->draw_image_height = dialog.height_spin->value(),
+				     zoom,
+				     this->save_viewport_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				     false);
 }
 
 
@@ -2787,7 +2807,29 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
-	this->draw_viewport_to_image_file(ViewportToImageMode::DIRECTORY_OF_IMAGES);
+	ViewportToImageDialog dialog(tr("Save Viewport to Images in Directory"), this->get_viewport(), NULL);
+	dialog.build_ui(ViewportSaveMode::DIRECTORY);
+	if (QDialog::Accepted != dialog.exec()) {
+		return;
+	}
+
+	QString dir_full_path = this->save_viewport_get_full_path(ViewportSaveMode::DIRECTORY);
+	if (dir_full_path.isEmpty()) {
+		return;
+	}
+
+	int active_z = dialog.zoom_combo->currentIndex();
+	double zoom = pow(2, active_z - 2);
+	qDebug() << "II: Window: Viewport to image dir: zoom index:" << active_z << ", zoom value:" << zoom;
+
+	/* UTM mode ATM. */
+	this->save_viewport_to_dir(dir_full_path,
+				   this->draw_image_width = dialog.width_spin->value(),
+				   this->draw_image_height = dialog.height_spin->value(),
+				   zoom,
+				   this->save_viewport_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				   dialog.tiles_width_spin->value(),
+				   dialog.tiles_height_spin->value());
 }
 
 
@@ -2801,12 +2843,56 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		return;
 	}
 
+	ViewportToImageDialog dialog(tr("Save Viewport to KMZ File"), this->get_viewport(), NULL);
+	dialog.build_ui(mode);
+	if (QDialog::Accepted != dialog.exec()) {
+		return;
+	}
+
+	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FILE_KMZ);
+	if (file_full_path.isEmpty()) {
+		return;
+	}
+
+	int active_z = dialog.zoom_combo->currentIndex();
+	double zoom = pow(2, active_z - 2);
+	qDebug() << "II: Window: Viewport to kmz file: zoom index:" << active_z << ", zoom value:" << zoom;
+
+
 	/* ATM This only generates a KMZ file with the current
 	   viewport image - intended mostly for map images [but will
 	   include any lines/icons from track & waypoints that are
 	   drawn] (it does *not* include a full KML dump of every
 	   track, waypoint etc...). */
-	this->draw_viewport_to_image_file(ViewportToImageMode::KMZ_FILE);
+
+	/* Remove some viewport overlays as these aren't useful in KMZ file. */
+	bool has_xhair = this->viewport->get_draw_centermark();
+	if (has_xhair) {
+		this->viewport->set_draw_centermark(false);
+	}
+	bool has_scale = this->viewport->get_draw_scale();
+	if (has_scale) {
+		this->viewport->set_draw_scale(false);
+	}
+
+	this->save_viewport_to_image(file_full_path,
+				     dialog.width_spin->value(),
+				     dialog.height_spin->value(),
+				     zoom,
+				     false, // JPG
+				     true);
+
+	if (has_xhair) {
+		this->viewport->set_draw_centermark(true);
+	}
+
+	if (has_scale) {
+		this->viewport->set_draw_scale(true);
+	}
+
+	if (has_xhair || has_scale) {
+		this->draw_update();
+	}
 }
 #endif
 
@@ -2821,16 +2907,11 @@ void Window::print_cb(void)
 
 
 
-void Window::save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz)
+void Window::save_viewport_to_image(const QString & file_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz)
 {
-	double old_xmpp;
-	double old_ympp;
-
-	/* more efficient way: stuff draws directly to pixbuf (fork viewport) */
-	QPixmap *pixmap_to_save;
+	/* More efficient way: stuff draws directly to pixbuf (fork viewport). TODO: verify this comment. */
 
 #ifdef K
-
 	GtkWidget * msgbox = gtk_message_dialog_new(this,
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						    GTK_MESSAGE_INFO,
@@ -2841,31 +2922,23 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	// Ensure dialog shown
 	gtk_widget_show_all(msgbox);
 #endif
-	/* Try harder... */
+
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
-#ifdef K
-	while (gtk_events_pending()) {
-		gtk_main_iteration();
-	}
-	// Despite many efforts & variations, GTK on my Linux system doesn't show the actual msgbox contents :(
-	// At least the empty box can give a clue something's going on + the statusbar msg...
-	// Windows version under Wine OK!
-#endif
 
 	/* backup old zoom & set new */
-	old_xmpp = this->viewport->get_xmpp();
-	old_ympp = this->viewport->get_ympp();
+	double old_xmpp = this->viewport->get_xmpp();
+	double old_ympp = this->viewport->get_ympp();
 	this->viewport->set_zoom(zoom);
 
-	/* reset width and height: */
+	/* Set expected width and height. */
 	this->viewport->configure_manually(w, h);
 
-	/* draw all layers */
+	/* Redraw all layers at current position and zoom. */
 	this->draw_redraw();
 
 	/* Save buffer as file. */
 	QPixmap * pixmap = this->viewport->get_pixmap();
-	//pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+	//QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 
 	if (!pixmap) {
 		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", w, h);
@@ -2887,12 +2960,12 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 		double north, east, south, west;
 		this->viewport->get_min_max_lat_lon(&south, &north, &west, &east);
 #ifdef K
-		ans = kmz_save_file(pixmap_to_save, file_path, north, east, south, west);
+		ans = kmz_save_file(pixmap, file_full_path, north, east, south, west);
 #endif
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
-		if (!pixmap->save(file_path, save_as_png ? "png" : "jpeg")) {
-			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_path;
+		if (!pixmap->save(file_full_path, save_as_png ? "png" : "jpeg")) {
+			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_full_path;
 			success = false;
 		}
 	}
@@ -2901,12 +2974,7 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 	g_object_unref(G_OBJECT(pixmap));
 #endif
 
-	QString message;
-	if (success) {
-		message = tr("Image file generated.");
-	} else {
-		message = tr("Failed to generate image file.");
-	}
+	const QString message = success ? tr("Image file generated.") : tr("Failed to generate image file.");
 
 	/* Cleanup. */
 
@@ -2922,9 +2990,12 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 
 
 
-bool Window::save_image_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
 {
-	/* *** copied from above *** */
+	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
+		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
+		return false;
+	}
 
 
 	/* backup old zoom & set new */
@@ -2932,11 +3003,8 @@ bool Window::save_image_dir(const QString & dir_full_path, unsigned int w, unsig
 	double old_ympp = this->viewport->get_ympp();
 	this->viewport->set_zoom(zoom);
 
-	/* reset width and height: do this only once for all images (same size) */
+	/* Set expected width and height. Do this only once for all images (all images have the same size). */
 	this->viewport->configure_manually(w, h);
-	/* *** end copy from above *** */
-
-	assert (this->viewport->get_coord_mode() == CoordMode::UTM);
 
 	QDir dir(dir_full_path);
 	if (!dir.exists()) {
@@ -2966,18 +3034,21 @@ bool Window::save_image_dir(const QString & dir_full_path, unsigned int w, unsig
 				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (h*zoom);
 			}
 
-			/* move to correct place. */
+			/* TODO: move to correct place. */
 			this->viewport->set_center_utm(&utm, false);
 
+			/* Redraw all layers at current position and zoom. */
 			this->draw_redraw();
 #ifdef K
-			/* save buffer as file. */
-			QPixmap * pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
-			if (!pixmap_to_save->save(file_full_path, extension) {
+			/* Save buffer as file. */
+			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+			QPixmap * pixmap = this->viewport->get_pixmap();
+			if (!pixmap->save(file_full_path, extension)) {
+				qDebug() << "WW: Viewport: Save to Image Dir: Unable to write to file" << file_full_path;
 				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
 			}
 
-			g_object_unref(G_OBJECT(pixmap_to_save));
+			g_object_unref(G_OBJECT(pixmap));
 #endif
 		}
 	}
@@ -2994,153 +3065,77 @@ bool Window::save_image_dir(const QString & dir_full_path, unsigned int w, unsig
 
 
 
-/*
- * Get an allocated filename (or directory as specified)
- */
-QString Window::draw_viewport_full_path(ViewportToImageMode mode)
+/**
+   Get full path to either single file or to directory, to which to save a viewport image(s).
+*/
+QString Window::save_viewport_get_full_path(ViewportSaveMode mode)
 {
 	QString result;
-	if (mode == ViewportToImageMode::DIRECTORY_OF_IMAGES) {
+	QStringList mime;
 
-		/* A directory.
-		   For some reason this method is only written to work in UTM... */
-		if (this->viewport->get_coord_mode() != CoordMode::UTM) {
-			Dialog::error(tr("You must be in UTM mode to use this feature"), this);
-			return result;
-		}
+	QFileDialog file_selector(this);
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+	if (last_folder_images_url.isValid()) {
+		file_selector.setDirectoryUrl(last_folder_images_url);
+	}
 
-		QFileDialog dialog(this, tr("Choose a directory to hold images"));
-		dialog.setFileMode(QFileDialog::Directory);
-		dialog.setOption(QFileDialog::ShowDirsOnly);
-		dialog.setAcceptMode(QFileDialog::AcceptSave);
+	switch (mode) {
+	case ViewportSaveMode::DIRECTORY:
 
-		if (last_folder_images_url.toString().size()) {
-			dialog.setDirectoryUrl(last_folder_images_url);
-		}
+		file_selector.setWindowTitle(tr("Select directory to save Viewport to"));
+		file_selector.setFileMode(QFileDialog::Directory);
+		file_selector.setOption(QFileDialog::ShowDirsOnly);
 
-		if (QDialog::Accepted == dialog.exec()) {
-			last_folder_images_url = dialog.directoryUrl();
-			qDebug() << "II: Viewport: Save to Directory of Images: last directory saved as:" << last_folder_images_url;
+		break;
 
-			result = dialog.selectedFiles().at(0);
-			qDebug() << "II: Viewport: Save to Directory of Images: target directory:" << result;
-		}
-	} else {
-		QFileDialog dialog(this, tr("Save Image"));
-		dialog.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
-		dialog.setAcceptMode(QFileDialog::AcceptSave);
+	case ViewportSaveMode::FILE_KMZ:
+	case ViewportSaveMode::FILE: /* png or jpeg. */
 
-		QStringList mime;
+		file_selector.setWindowTitle(tr("Select file to save Viewport to"));
+		file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+
 		mime << "application/octet-stream"; /* "All files (*)" */
-		if (mode == ViewportToImageMode::KMZ_FILE) {
+		if (mode == ViewportSaveMode::FILE_KMZ) {
 			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
 		} else {
-			if (!this->draw_image_save_as_png) {
+			if (this->save_viewport_as_png) {
+				mime << "image/png";
+			} else {
 				mime << "image/jpeg";
 			}
-			if (this->draw_image_save_as_png) {
-				mime << "image/png";
-			}
 		}
-		dialog.setMimeTypeFilters(mime);
-
-		if (last_folder_images_url.toString().size()) {
-			dialog.setDirectoryUrl(last_folder_images_url);
-		}
-
-
-		if (QDialog::Accepted == dialog.exec()) {
-			last_folder_images_url = dialog.directoryUrl();
-			qDebug() << "II: Viewport: Save to Image: last directory saved as:" << last_folder_images_url;
-
-			result = dialog.selectedFiles().at(0);
-			qDebug() << "II: Viewport: Save to Image: target file:" << result;
-
-			if (0 == access(result.toUtf8().constData(), F_OK)) {
-				if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this, "")) {
-					result.resize(0);
-				}
-			}
-		}
+		file_selector.setMimeTypeFilters(mime);
+		break;
+	default:
+		qDebug() << "EE: Window: Save Viewport / get full path: unsupported mode" << (int) mode;
+		return result; /* Empty string. */
 	}
-	qDebug() << "DD: Viewport: Save to Image: result:" << result << "strdup:" << strdup(result.toUtf8().constData());
-	if (result.length()) {
-		return strdup(result.toUtf8().constData());
-	} else {
+
+
+	if (QDialog::Accepted == file_selector.exec()) {
+		last_folder_images_url = file_selector.directoryUrl();
+		qDebug() << "II: Viewport: Save to Image: last directory saved as:" << last_folder_images_url;
+
+		result = file_selector.selectedFiles().at(0);
+		qDebug() << "II: Viewport: Save to Image: target file:" << result;
+
+#ifdef K
+		if (0 == access(result.toUtf8().constData(), F_OK)) {
+			if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this, "")) {
+				result.resize(0);
+			}
+		}
+#endif
+	}
+
+
+	qDebug() << "DD: Viewport: Save to Image: result: '" << result << "'";
+	if (result.isEmpty()) {
 		qDebug() << "DD: Viewport: Save to Image: returning NULL\n";
-		return NULL;
 	}
+
+	return result;
 }
-
-
-
-
-void Window::draw_viewport_to_image_file(ViewportToImageMode mode)
-{
-	ViewportToImageDialog dialog(tr("Save to Image File"), this->get_viewport(), NULL);
-	dialog.build_ui(mode);
-	if (QDialog::Accepted != dialog.exec()) {
-		return;
-	}
-
-	QString full_path = this->draw_viewport_full_path(mode);
-	if (full_path.isEmpty()) {
-		return;
-	}
-
-	int active_z = dialog.zoom_combo->currentIndex();
-	double zoom = pow(2, active_z - 2);
-	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
-
-	if (mode == ViewportToImageMode::SINGLE_IMAGE) {
-		this->save_image_file(full_path,
-				      this->draw_image_width = dialog.width_spin->value(),
-				      this->draw_image_height = dialog.height_spin->value(),
-				      zoom,
-				      this->draw_image_save_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
-				      false);
-	} else if (mode == ViewportToImageMode::KMZ_FILE) {
-
-		/* Remove some viewport overlays as these aren't useful in KMZ file. */
-		bool restore_xhair = this->viewport->get_draw_centermark();
-		if (restore_xhair) {
-			this->viewport->set_draw_centermark(false);
-		}
-		bool restore_scale = this->viewport->get_draw_scale();
-		if (restore_scale) {
-			this->viewport->set_draw_scale(false);
-		}
-
-		this->save_image_file(full_path,
-				      dialog.width_spin->value(),
-				      dialog.height_spin->value(),
-				      zoom,
-				      false, // JPG
-				      true);
-
-		if (restore_xhair) {
-			this->viewport->set_draw_centermark(true);
-		}
-
-		if (restore_scale) {
-			this->viewport->set_draw_scale(true);
-		}
-
-		if (restore_xhair || restore_scale) {
-			this->draw_update();
-		}
-	} else {
-		/* UTM mode ATM. */
-		this->save_image_dir(full_path,
-				     this->draw_image_width = dialog.width_spin->value(),
-				     this->draw_image_height = dialog.height_spin->value(),
-				     zoom,
-				     this->draw_image_save_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
-				     dialog.tiles_width_spin->value(),
-				     dialog.tiles_height_spin->value());
-	}
-}
-
 
 
 

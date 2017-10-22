@@ -21,10 +21,10 @@ namespace SlavGPS {
 
 
 
-	enum class ViewportToImageMode {
-		SINGLE_IMAGE,
-		DIRECTORY_OF_IMAGES,
-		KMZ_FILE,
+	enum class ViewportSaveMode {
+		FILE, /* png or jpeg. */
+		DIRECTORY,
+		FILE_KMZ,
 	};
 
 
@@ -41,7 +41,7 @@ namespace SlavGPS {
 		ViewportToImageDialog(QString const & title, Viewport * viewport, QWidget * parent = NULL);
 		~ViewportToImageDialog();
 
-		void build_ui(ViewportToImageMode img_gen);
+		void build_ui(ViewportSaveMode mode);
 
 	private slots:
 		void accept_cb(void);
@@ -57,7 +57,7 @@ namespace SlavGPS {
 		QSpinBox * width_spin = NULL;
 		QSpinBox * height_spin = NULL;
 
-		/* Only used for ViewportToImageMode::DIRECTORY_OF_IMAGES */
+		/* Only used for ViewportSaveMode::DIRECTORY. */
 		QSpinBox * tiles_width_spin = NULL;
 		QSpinBox * tiles_height_spin = NULL;
 

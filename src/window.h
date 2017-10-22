@@ -157,10 +157,9 @@ namespace SlavGPS {
 
 		void finish_new(void);
 
-		QString draw_viewport_full_path(ViewportToImageMode img_gen);
-		void draw_viewport_to_image_file(ViewportToImageMode img_gen);
-		void save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
-		bool save_image_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		QString save_viewport_get_full_path(ViewportSaveMode mode);
+		void save_viewport_to_image(const QString & file_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
+		bool save_viewport_to_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);
@@ -189,7 +188,7 @@ namespace SlavGPS {
 
 		unsigned int draw_image_width;
 		unsigned int draw_image_height;
-		bool draw_image_save_as_png = false;
+		bool save_viewport_as_png = false;
 
 	public slots:
 		Window * new_window_cb(void);
