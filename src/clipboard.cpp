@@ -295,7 +295,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 
 	Layer * selected = panel->get_selected_layer();
 
-	if (selected && selected->tree_view->get_editing()) {
+	if (selected && selected->tree_view->is_editing_in_progress()) {
 		GtkTreeIter iter;
 		if (selected->tree_view->get_selected_iter(&iter)) {
 			/* Try to sanitize input: */
@@ -429,7 +429,7 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 	layer_type = selected->type;
 
 	/* Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited. */
-	if (selected->tree_view->get_editing()) {
+	if (selected->tree_view->is_editing_in_progress()) {
 		type = VIK_CLIPBOARD_DATA_TEXT;
 		/* I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item.
 		   At least this is better than copying the layer data - which is even further away from what the user would be expecting... */

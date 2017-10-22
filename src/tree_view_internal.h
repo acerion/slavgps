@@ -94,7 +94,7 @@ namespace SlavGPS {
 		void erase(TreeIndex const & index);
 		bool move(TreeIndex const & index, bool up);
 
-		bool get_editing();
+		bool is_editing_in_progress();
 		void expand(TreeIndex const & index);
 		void sort_children(TreeIndex const & parent_index, sort_order_t order);
 

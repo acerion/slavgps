@@ -218,10 +218,8 @@ void PrintPreview::set_use_full_page(bool full_page)
 static void vik_print_preview_realize(GtkWidget * widget)
 {
 #ifdef K
-	QCursor * cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
-							GDK_FLEUR);
-	gdk_window_set_cursor(gtk_widget_get_window(widget), cursor);
-	gdk_cursor_unref(cursor);
+	QCursor * cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget), GDK_FLEUR);
+	widget->setCursor(cursor);
 #endif
 }
 

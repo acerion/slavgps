@@ -995,7 +995,7 @@ TreeIndex * TreeView::get_index_at_pos(int pos_x, int pos_y)
 
 
 
-bool TreeView::get_editing()
+bool TreeView::is_editing_in_progress()
 {
 	/* Don't know how to get cell for the selected item. */
 	//return KPOINTER_TO_INT(g_object_get_data(G_OBJECT(cell), "editing"));

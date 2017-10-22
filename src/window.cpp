@@ -121,6 +121,15 @@ static QUrl last_folder_files_url;
 
 
 
+enum WindowPan {
+	PAN_NORTH = 0,
+	PAN_EAST,
+	PAN_SOUTH,
+	PAN_WEST
+};
+
+
+
 
 #define VIK_SETTINGS_WIN_SIDEPANEL "window_sidepanel"
 #define VIK_SETTINGS_WIN_STATUSBAR "window_statusbar"
@@ -172,11 +181,8 @@ Window::Window()
 	connect(g_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
 
 
-#if 0
-	this->set_current_document_full_path("");
 
-	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
-#endif
+	this->set_current_document_full_path("");
 
 	int draw_image_width_;
 	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width_)) {
@@ -327,8 +333,6 @@ Window::~Window()
 	a_background_remove_window(this);
 
 	window_list.remove(this);
-
-	gdk_cursor_unref(this->busy_cursor);
 
 	delete this->tb;
 
@@ -849,25 +853,25 @@ void Window::create_actions(void)
 			QMenu * pan_submenu = this->menu_view->addMenu(tr("&Pan"));
 
 			qa = new QAction(tr("Pan &North"), this);
-			qa->setData(0);
+			qa->setData(PAN_NORTH);
 			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Up);
 			pan_submenu->addAction(qa);
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
 
 			qa = new QAction(tr("Pan &East"), this);
-			qa->setData(1);
+			qa->setData(PAN_EAST);
 			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Right);
 			pan_submenu->addAction(qa);
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
 
 			qa = new QAction(tr("Pan &South"), this);
-			qa->setData(2);
+			qa->setData(PAN_SOUTH);
 			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Down);
 			pan_submenu->addAction(qa);
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
 
 			qa = new QAction(tr("Pan &West"), this);
-			qa->setData(3);
+			qa->setData(PAN_WEST);
 			qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Left);
 			pan_submenu->addAction(qa);
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_pan_cb(void)));
@@ -2404,11 +2408,12 @@ void Window::update_recently_used_document(const QString & file_full_path)
  */
 void Window::set_busy_cursor()
 {
+	this->setCursor(Qt::WaitCursor);
+	/* Viewport has a separate cursor. TODO: verify this */
+	this->viewport->setCursor(Qt::WaitCursor);
+
 #ifdef K
-	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), this->busy_cursor);
-	// Viewport has a separate cursor
-	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->busy_cursor);
-	// Ensure cursor updated before doing stuff
+	/* Ensure cursor updated before doing stuff. TODO: do we need this? */
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
@@ -2420,11 +2425,9 @@ void Window::set_busy_cursor()
 
 void Window::clear_busy_cursor()
 {
-#ifdef K
-	gdk_window_set_cursor(gtk_widget_get_window(this), NULL);
-	// Restore viewport cursor
-	gdk_window_set_cursor(gtk_widget_get_window(this->viewport), this->viewport_cursor);
-#endif
+	this->setCursor(Qt::ArrowCursor);
+	/* Viewport has a separate cursor. */
+	this->viewport->setCursor(this->viewport_cursor);
 }
 
 
@@ -2919,12 +2922,8 @@ void Window::save_image_file(const QString & file_path, unsigned int w, unsigned
 
 
 
-void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_image_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
 {
-	unsigned long a_size = sizeof(char) * (file_path.length() + 15);
-	char *name_of_file = (char *) malloc(a_size);
-	struct UTM utm;
-
 	/* *** copied from above *** */
 
 
@@ -2938,16 +2937,22 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 	/* *** end copy from above *** */
 
 	assert (this->viewport->get_coord_mode() == CoordMode::UTM);
-#ifdef K
-	if (g_mkdir(file_path.toUtf8.constData(), 0777) != 0) {
-		qDebug() << "WW: Window: Save Viewport to Image: failed to create directory" << file_path;
+
+	QDir dir(dir_full_path);
+	if (!dir.exists()) {
+		if (!dir.mkpath(dir_full_path)) {
+			qDebug() << "EE: Window: failed to create directory" << dir_full_path << "in" << __FUNCTION__ << __LINE__;
+			return false;
+		}
 	}
 
+	struct UTM utm;
 	struct UTM utm_orig = this->viewport->get_center()->utm;
+	const QString extension = save_as_png ? "png" : "jpg";
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
-			snprintf(name_of_file, a_size, "%s%cy%d-x%d.%s", file_path, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
+			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
 				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (w*zoom);
@@ -2965,14 +2970,15 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 			this->viewport->set_center_utm(&utm, false);
 
 			this->draw_redraw();
-
+#ifdef K
 			/* save buffer as file. */
 			QPixmap * pixmap_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
-			if (!pixmap_to_save->save(name_of_file, save_as_png ? "png" : "jpeg")) {
-				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(name_of_file));
+			if (!pixmap_to_save->save(file_full_path, extension) {
+				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
 			}
 
 			g_object_unref(G_OBJECT(pixmap_to_save));
+#endif
 		}
 	}
 
@@ -2982,8 +2988,7 @@ void Window::save_image_dir(const QString & file_path, unsigned int w, unsigned 
 	this->viewport->configure();
 	this->draw_update();
 
-	free(name_of_file);
-#endif
+	return true;
 }
 
 
@@ -3079,7 +3084,7 @@ void Window::draw_viewport_to_image_file(ViewportToImageMode mode)
 	}
 
 	QString full_path = this->draw_viewport_full_path(mode);
-	if (!full_path.size()) {
+	if (full_path.isEmpty()) {
 		return;
 	}
 
@@ -3212,13 +3217,9 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 {
 	QMenu * menu = NULL;
 	if (parent) {
-		qDebug() << "II: Window: Zoom: creating zoom menu with parent...";
 		menu = parent->addMenu(label);
-		qDebug() << "II: Window: Zoom:       ... success";
 	} else {
-		qDebug() << "II: Window: Zoom: creating zoom menu without parent...";
 		menu = new QMenu(label);
-		qDebug() << "II: Window: Zoom:       ... success";
 	}
 
 	if (!zoom_actions.size()) {
@@ -3229,24 +3230,17 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 		menu->addAction(*iter);
 	}
 
-#ifdef K
-	for (int i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
-		QAction * action = QAction(QString(itemLabels[i]), this);
-		menu->addAction(action);
-		gtk_widget_show(item);
-		g_object_set_data(G_OBJECT (item), "position", KINT_TO_POINTER(i));
-	}
+
 
 	int active = 5 + round(log(mpp) / log(2));
-	// Ensure value derived from mpp is in bounds of the menu
-	if (active >= G_N_ELEMENTS(itemLabels)) {
-		active = G_N_ELEMENTS(itemLabels) - 1;
+	/* Ensure value derived from mpp is in bounds of the menu. */
+	if (active >= (int) zoom_actions.size()) {
+		active = zoom_actions.size() - 1;
 	}
 	if (active < 0) {
 		active = 0;
 	}
-	gtk_menu_set_active(GTK_MENU(menu), active);
-#endif
+	menu->setActiveAction(zoom_actions[active]);
 
 	return menu;
 }
@@ -3339,18 +3333,14 @@ void Window::menu_view_refresh_cb(void)
 
 void Window::menu_view_set_highlight_color_cb(void)
 {
-#ifdef K
-	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a track highlight color"));
-	const QColor color = window->viewport->get_highlight_color();
-	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
-		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_highlight_qcolor(color);
-		window->draw_update();
+	QColorDialog color_dialog(this);
+	color_dialog.setCurrentColor(this->viewport->get_highlight_color());
+	color_dialog.setWindowTitle(tr("Choose a highlight color"));
+	if (QDialog::Accepted == color_dialog.exec()) {
+		const QColor selected_color = color_dialog.selectedColor();
+		this->viewport->set_highlight_color(selected_color);
+		this->draw_update();
 	}
-	gtk_widget_destroy(colorsd);
-#endif
 }
 
 
@@ -3358,19 +3348,14 @@ void Window::menu_view_set_highlight_color_cb(void)
 
 void Window::menu_view_set_bg_color_cb(void)
 {
-#ifdef K
-	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a background color"));
-	QColor * color = window->viewport->get_background_qcolor();
-	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
-		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_background_qcolor(color);
-		window->draw_update();
+	QColorDialog color_dialog(this);
+	color_dialog.setCurrentColor(this->viewport->get_background_color());
+	color_dialog.setWindowTitle(tr("Choose a background color"));
+	if (QDialog::Accepted == color_dialog.exec()) {
+		const QColor selected_color = color_dialog.selectedColor();
+		this->viewport->set_background_color(selected_color);
+		this->draw_update();
 	}
-	free(color);
-	gtk_widget_destroy(colorsd);
-#endif
 }
 
 
@@ -3380,28 +3365,40 @@ void Window::menu_view_pan_cb(void)
 {
 	const QAction * qa = (QAction *) QObject::sender();
 	const int direction = qa->data().toInt();
-	qDebug() << "SLOT: Window: 'Menu View Pan'" << qa->text() << direction;
+	qDebug() << "SLOT: Window: Menu View Pan:" << qa->text() << direction;
 
-#if 0
-	// Since the tree view cell editting intercepts standard keyboard handlers, it means we can receive events here
-	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	Layer * sel = window->items_tree->get_selected_layer();
-	if (sel && sel->tree_view->get_editing()) {
+	/* TODO: verify how this comment applies to Qt application. */
+	/* Since the tree view cell editting intercepts standard
+	   keyboard handlers, it means we can receive events here.
+	   Thus if currently editting, ensure we don't move the
+	   viewport when Ctrl+<arrow> is received. */
+	Layer * layer = this->items_tree->get_selected_layer();
+	if (layer && layer->tree_view->is_editing_in_progress()) {
+		qDebug() << "SLOT: Window: Menu View Pan: editing in progress";
 		return;
 	}
 
-	if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
-		window->viewport->set_center_screen(window->viewport->get_width()/2, 0);
-	} else if (!strcmp(gtk_action_get_name(a), "PanEast")) {
-		window->viewport->set_center_screen(window->viewport->get_width(), window->viewport->get_height()/2);
-	} else if (!strcmp(gtk_action_get_name(a), "PanSouth")) {
-		window->viewport->set_center_screen(window->viewport->get_width()/2, window->viewport->get_height());
-	} else if (!strcmp(gtk_action_get_name(a), "PanWest")) {
-		window->viewport->set_center_screen(0, window->viewport->get_height()/2);
+	Viewport * v = this->viewport;
+
+	switch (direction) {
+	case PAN_NORTH:
+		v->set_center_screen(v->get_width() / 2, 0);
+		break;
+	case PAN_EAST:
+		v->set_center_screen(v->get_width(), v->get_height() / 2);
+		break;
+	case PAN_SOUTH:
+		v->set_center_screen(v->get_width() / 2, v->get_height());
+		break;
+	case PAN_WEST:
+		v->set_center_screen(0, v->get_height() / 2);
+		break;
+	default:
+		qDebug() << "EE: Window: unknown direction" << direction << "in" << __FUNCTION__ << __LINE__;
+		break;
 	}
 
-	window->draw_update();
-#endif
+	this->draw_update();
 }
 
 
@@ -3417,7 +3414,7 @@ void Window::menu_view_pan_cb(void)
 */
 void Window::simple_map_update(bool only_new)
 {
-	// Find the most relevent single map layer to operate on
+	/* Find the most relevent single map layer to operate on. */
 	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAP);
 	if (layer) {
 		((LayerMap *) layer)->download(this->viewport, only_new);
@@ -3436,11 +3433,9 @@ void Window::configure_event_cb()
 		/* This is a hack to set the cursor corresponding to the first tool.
 		   FIXME find the correct way to initialize both tool and its cursor. */
 		first = 0;
-#ifdef K
-		this->viewport_cursor = (QCursor *) window->tb->get_cursor("Pan");
-		/* We set cursor, even if it is NULL: it resets to default. */
-		gdk_window_set_cursor(gtk_widget_get_window(this->viewport), this->viewport_cursor);
-#endif
+
+		this->viewport_cursor = Qt::OpenHandCursor;
+		this->viewport->setCursor(this->viewport_cursor);
 	}
 }
 

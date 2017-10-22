@@ -137,9 +137,9 @@ double Viewport::calculate_utm_zone_width()
 
 
 
-QColor * Viewport::get_background_qcolor()
+const QColor & Viewport::get_background_color(void) const
 {
-	return new QColor(this->background_color);
+	return this->background_color;
 }
 
 
@@ -276,10 +276,10 @@ void Viewport::set_background_color(char const * colorname)
 
 
 
-void Viewport::set_background_color(QColor * color)
+void Viewport::set_background_color(const QColor & color)
 {
-	this->background_color = *color;
-	this->background_pen.setColor(this->background_color);
+	this->background_color = color;
+	this->background_pen.setColor(color);
 }
 
 
@@ -316,10 +316,10 @@ void Viewport::set_highlight_color(char const * colorname)
 
 
 
-void Viewport::set_highlight_qcolor(QColor * color)
+void Viewport::set_highlight_color(const QColor & color)
 {
-	this->highlight_color = *color;
-	this->highlight_pen.setColor(*color);
+	this->highlight_color = color;
+	this->highlight_pen.setColor(color);
 }
 
 

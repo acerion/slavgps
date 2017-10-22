@@ -160,7 +160,7 @@ namespace SlavGPS {
 		QString draw_viewport_full_path(ViewportToImageMode img_gen);
 		void draw_viewport_to_image_file(ViewportToImageMode img_gen);
 		void save_image_file(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
-		void save_image_dir(const QString & file_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		bool save_image_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);
@@ -363,10 +363,8 @@ namespace SlavGPS {
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 
-		QCursor * busy_cursor = NULL;
-		QCursor * viewport_cursor = NULL; /* Only a reference. */
-
-
+		/* Cursor of window's central widget. */
+		QCursor viewport_cursor;
 
 		/* Display various window items. */
 		bool view_full_screen = false;

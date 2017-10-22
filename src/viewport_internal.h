@@ -142,7 +142,7 @@ namespace SlavGPS {
 		void set_highlight_color(char const * color);
 		char const * get_highlight_color();
 		const QColor & get_highlight_color(void) const;
-		void set_highlight_qcolor(QColor * color);
+		void set_highlight_color(const QColor & color);
 		QPen get_highlight_pen();
 		void set_highlight_thickness(int thickness);
 
@@ -151,8 +151,8 @@ namespace SlavGPS {
 		/* Color/graphics context management. */
 		void set_background_color(char const * color);
 		const char * get_background_color();
-		QColor * get_background_qcolor();
-		void set_background_color(QColor * color);
+		const QColor & get_background_color(void) const;
+		void set_background_color(const QColor & color);
 
 
 		double calculate_utm_zone_width(); // private
