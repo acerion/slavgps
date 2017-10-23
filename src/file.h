@@ -77,9 +77,6 @@ namespace SlavGPS {
 
 	bool a_file_check_ext(const QString & file_name, char const * fileext);
 
-	/* Function to determine if a filename is a 'viking' type file. */
-	bool check_file_magic_vik(char const * filename);
-
 	QString append_file_ext(const QString & file_name, SGFileType file_type);
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
@@ -98,6 +95,13 @@ namespace SlavGPS {
 	QString file_GetRelativeFilename(const QString & current_dir_path, const QString & file_path);
 
 
+
+
+	class VikFile {
+	public:
+		/* Function to determine if a filename is a 'viking' type file. */
+		static bool has_vik_file_magic(const QString & file_full_path);
+	};
 
 
 } /* namespace SlavGPS */

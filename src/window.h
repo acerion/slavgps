@@ -138,12 +138,6 @@ namespace SlavGPS {
 		QAction * get_drawmode_action(ViewportDrawMode mode);
 
 
-		void toggle_full_screen();
-
-		void toggle_side_panel();
-		void show_side_panel(bool visible);
-		void toggle_statusbar();
-		void toggle_main_menu();
 		void simple_map_update(bool only_new);
 
 		bool export_to(std::list<const Layer *> * layers, SGFileType file_type, const QString & full_dir_path, char const *extension);
@@ -324,7 +318,7 @@ namespace SlavGPS {
 		void display_tool_name();
 		void update_recently_used_document(const QString & file_full_path);
 		void update_recent_files(QString const & path);
-		void open_window(void);
+		void open_window(const QString & file_full_paths);
 
 		bool pan_move_flag = false;
 		int pan_x = -1;
@@ -375,7 +369,6 @@ namespace SlavGPS {
 		bool view_side_panel = true;
 		bool view_statusbar = true;
 		bool view_toolbar = true;
-		bool view_main_menu = true;
 
 		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
 

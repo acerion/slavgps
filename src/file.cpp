@@ -700,13 +700,10 @@ static void xfclose(FILE * f)
 
 
 
-/*
- * Function to determine if a filename is a 'viking' type file.
- */
-bool SlavGPS::check_file_magic_vik(char const * filename)
+bool VikFile::has_vik_file_magic(const QString & file_full_path)
 {
 	bool result = false;
-	FILE * ff = fopen(filename, "r");
+	FILE * ff = fopen(file_full_path.toUtf8().constData(), "r");
 	if (ff) {
 		result = check_magic(ff, VIK_MAGIC, VIK_MAGIC_LEN);
 		fclose(ff);

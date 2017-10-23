@@ -805,7 +805,7 @@ void Window::create_actions(void)
 		this->qa_view_show_main_menu = new QAction("Show &Menu", this);
 		this->qa_view_show_main_menu->setShortcut(Qt::Key_F4);
 		this->qa_view_show_main_menu->setCheckable(true);
-		this->qa_view_show_main_menu->setChecked(this->view_main_menu);
+		this->qa_view_show_main_menu->setChecked(true);
 		this->qa_view_show_main_menu->setToolTip("Show Menu");
 		connect(qa_view_show_main_menu, SIGNAL(triggered(bool)), this, SLOT(view_main_menu_cb(bool)));
 
@@ -1637,17 +1637,11 @@ void Window::closeEvent(QCloseEvent * ev)
 	}
 
 
-#if 0
-	if (window_count == 1)
-#endif
-	{
-
-		// On the final window close - save latest state - if it's wanted...
+	/* On the final window close - save latest state - if it's wanted... */
+	if (window_count == 1) {
 		if (Preferences::get_restore_window_state()) {
 
 			const Qt::WindowStates states = this->windowState();
-
-
 
 			bool state_max = states.testFlag(Qt::WindowMaximized);
 			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
@@ -1660,7 +1654,8 @@ void Window::closeEvent(QCloseEvent * ev)
 			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->view_toolbar);
 
 			/* If supersized - no need to save the enlarged width+height values. */
-			if (! (state_fullscreen || state_max)) {
+			if (!(state_fullscreen || state_max)) {
+				qDebug() << "II: Window: Close Event: not saving window size";
 				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
 				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
@@ -1668,11 +1663,12 @@ void Window::closeEvent(QCloseEvent * ev)
 			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(window->hpaned)));
 #endif
 		}
-#ifdef K
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, window->draw_image_width);
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
-		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->save_viewport_as_png);
 
+		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, this->draw_image_width);
+		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, this->draw_image_height);
+		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, this->save_viewport_as_png);
+
+#ifdef K
 		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
 		gtk_accel_map_save(accel_file_full_path.toUtf8().constData());
 #endif
@@ -1761,7 +1757,15 @@ void Window::view_full_screen_cb(bool new_state)
 {
 	assert (new_state != this->view_full_screen);
 	if (new_state != this->view_full_screen) {
-		this->toggle_full_screen();
+
+		this->view_full_screen = !this->view_full_screen;
+		const Qt::WindowStates state = this->windowState();
+
+		if (this->view_full_screen) {
+			this->setWindowState(state | Qt::WindowFullScreen);
+		} else {
+			this->setWindowState(state & (~Qt::WindowFullScreen));
+		}
 	}
 }
 
@@ -1807,9 +1811,16 @@ void Window::draw_with_highlight_cb(bool new_state)
 
 void Window::view_side_panel_cb(bool new_state)
 {
-	assert (new_state != this->view_side_panel);
-	if (new_state != this->view_side_panel) {
-		this->toggle_side_panel();
+	if (this->view_side_panel != new_state) {
+		qDebug() << "II: Window: setting side panel visibility to" << new_state;
+
+		this->view_side_panel = new_state;
+		this->panel_dock->setVisible(this->view_side_panel);
+
+		/* We need to set the qaction because this slot function
+		   may be called like a regular function too. */
+		QAction * qa = this->panel_dock->toggleViewAction();
+		qa->setChecked(new_state);
 	}
 }
 
@@ -1818,10 +1829,8 @@ void Window::view_side_panel_cb(bool new_state)
 
 void Window::view_statusbar_cb(bool new_state)
 {
-	assert (new_state != this->view_statusbar);
-	if (new_state != this->view_statusbar) {
-		this->toggle_statusbar();
-	}
+	this->view_statusbar = new_state;
+	this->status_bar->setVisible(this->view_statusbar);
 }
 
 
@@ -1829,82 +1838,7 @@ void Window::view_statusbar_cb(bool new_state)
 
 void Window::view_main_menu_cb(bool new_state)
 {
-	assert (new_state != this->view_main_menu);
-	if (new_state != this->view_main_menu) {
-		this->toggle_main_menu();
-	}
-}
-
-
-
-void Window::toggle_full_screen()
-{
-	this->view_full_screen = !this->view_full_screen;
-	const Qt::WindowStates state = this->windowState();
-
-	if (this->view_full_screen) {
-		this->setWindowState(state | Qt::WindowFullScreen);
-	} else {
-		this->setWindowState(state & (~Qt::WindowFullScreen));
-	}
-}
-
-
-
-
-void Window::toggle_side_panel()
-{
-	this->view_side_panel = !this->view_side_panel;
-	QAction * qa = this->panel_dock->toggleViewAction();
-	qDebug() << "II: Window: setting panel dock visible:" << this->view_side_panel;
-	qa->setChecked(this->view_side_panel);
-	if (this->view_side_panel) {
-		this->panel_dock->show();
-	} else {
-		this->panel_dock->hide();
-	}
-}
-
-
-
-
-void Window::show_side_panel(bool visible)
-{
-	this->view_side_panel = visible;
-	QAction * qa = this->panel_dock->toggleViewAction();
-	qDebug() << "II: Window: setting panel dock visible:" << this->view_side_panel;
-	qa->setChecked(visible);
-	if (visible) {
-		this->panel_dock->show();
-	} else {
-		this->panel_dock->hide();
-	}
-}
-
-
-
-
-void Window::toggle_statusbar()
-{
-	this->view_statusbar = !this->view_statusbar;
-	if (this->view_statusbar) {
-		//gtk_widget_show(GTK_WIDGET(this->viking_vs));
-	} else {
-		//gtk_widget_hide(GTK_WIDGET(this->viking_vs));
-	}
-}
-
-
-
-
-void Window::toggle_main_menu()
-{
-	this->view_main_menu = !this->view_main_menu;
-	if (this->view_main_menu) {
-		//gtk_widget_show(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
-	} else {
-		//gtk_widget_hide(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
-	}
+	this->menu_bar->setVisible(new_state);
 }
 
 
@@ -1997,10 +1931,6 @@ void Window::display_tool_name(void)
 		this->status_bar->set_message(StatusBarField::TOOL, tool->get_description());
 	}
 }
-
-
-
-
 
 
 
@@ -2128,7 +2058,7 @@ void Window::open_file_cb(void)
 #else
 		if (!window->current_document_full_path.isEmpty() && newwindow) {
 #endif
-			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
+			window->open_window(gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
 		} else {
 #endif
 
@@ -2139,7 +2069,7 @@ void Window::open_file_cb(void)
 			while (iter != files.end()) {
 
 				QString file_name = *iter;
-				if (newwindow && check_file_magic_vik(file_name.toUtf8().data())) {
+				if (newwindow && VikFile::has_vik_file_magic(file_name)) {
 					/* Load first of many .vik files in current window. */
 					if (first_vik_file) {
 						this->open_file(file_name, true);
@@ -2610,27 +2540,24 @@ void Window::finish_new(void)
 
 
 
-void Window::open_window(void)
+void Window::open_window(const QString & file_full_paths)
 {
-	GSList *files = NULL;
+#if 0
+	const bool set_as_current_document = (file_full_paths.size() == 1); /* Only change current document if we are opening one file. */
 
-	bool set_as_current_document = (g_slist_length(files) == 1); /* Only change fn if one file. */
-	GSList *cur_file = files;
-	while (cur_file) {
+	for (int i = 0; i < file_full_paths.size(); i++) {
 		/* Only open a new window if a viking file. */
-		char *file_name = (char *) cur_file->data;
-		if (!this->current_document_full_path.isEmpty() && check_file_magic_vik(file_name)) {
+		const QString file_full_path = file_full_paths.at(i);
+		if (!this->current_document_full_path.isEmpty() && VikFile::has_vik_file_magic(file_full_path)) {
 			Window * new_window = Window::new_window();
 			if (new_window) {
-				new_window->open_file(file_name, true);
+				new_window->open_file(file_full_path, true);
 			}
 		} else {
-			this->open_file(file_name, set_as_current_document);
+			this->open_file(file_full_path, set_as_current_document);
 		}
-		free(file_name);
-		cur_file = g_slist_next(cur_file);
 	}
-	g_slist_free(files);
+#endif
 }
 
 
@@ -2790,15 +2717,19 @@ void Window::draw_viewport_to_image_file_cb(void)
 		return;
 	}
 
+	this->draw_image_width = dialog.width_spin->value();
+	this->draw_image_height = dialog.height_spin->value();
+	this->save_viewport_as_png = (dialog.output_format_radios->get_id_of_selected() == 0); /* FIXME: magic number. */
+
 	int active_z = dialog.zoom_combo->currentIndex();
 	double zoom = pow(2, active_z - 2);
 	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
 
 	this->save_viewport_to_image(file_full_path,
-				     this->draw_image_width = dialog.width_spin->value(),
-				     this->draw_image_height = dialog.height_spin->value(),
+				     this->draw_image_width,
+				     this->draw_image_height,
 				     zoom,
-				     this->save_viewport_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				     this->save_viewport_as_png,
 				     false);
 }
 
@@ -2818,16 +2749,20 @@ void Window::draw_viewport_to_image_dir_cb(void)
 		return;
 	}
 
+	this->draw_image_width = dialog.width_spin->value();
+	this->draw_image_height = dialog.height_spin->value();
+	this->save_viewport_as_png = (dialog.output_format_radios->get_id_of_selected() == 0); /* FIXME: magic number. */
+
 	int active_z = dialog.zoom_combo->currentIndex();
 	double zoom = pow(2, active_z - 2);
 	qDebug() << "II: Window: Viewport to image dir: zoom index:" << active_z << ", zoom value:" << zoom;
 
 	/* UTM mode ATM. */
 	this->save_viewport_to_dir(dir_full_path,
-				   this->draw_image_width = dialog.width_spin->value(),
-				   this->draw_image_height = dialog.height_spin->value(),
+				   this->draw_image_width,
+				   this->draw_image_height,
 				   zoom,
-				   this->save_viewport_as_png, // = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(png_radio)), // kamilTODO
+				   this->save_viewport_as_png,
 				   dialog.tiles_width_spin->value(),
 				   dialog.tiles_height_spin->value());
 }
@@ -3748,7 +3683,6 @@ Window * Window::new_window()
 #ifdef K
 	QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window_cb));
 	QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (new_window_cb));
-	QObject::connect(window, SIGNAL("openwindow"), NULL, SLOT (open_window));
 #endif
 
 	if (Preferences::get_restore_window_state()) {
@@ -3756,7 +3690,7 @@ Window * Window::new_window()
 		bool visibility;
 
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
-			window->show_side_panel(visibility);
+			window->view_side_panel_cb(visibility);
 		}
 
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
@@ -3930,25 +3864,24 @@ void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, 
 
 			// Convert string into GSList of individual entries for use with our open signal
 			char ** entries = g_strsplit(str, "\r\n", 0);
-			GSList * filenames = NULL;
+			QStringList file_full_path;
 			int entry_runner = 0;
 			char * entry = entries[entry_runner];
 			while (entry) {
 				if (strcmp(entry, "")) {
-					// Drag+Drop gives URIs. And so in particular, %20 in place of spaces in filenames
+					// Drag+Drop gives URIs. And so in particular, %20 in place of spaces in file_full_paths
 					//  thus need to convert the text into a plain string
 					char *filename = g_filename_from_uri(entry, NULL, NULL);
 					if (filename) {
-						filenames = g_slist_append(filenames, filename);
+						file_full_paths << filename;
 					}
 				}
 				entry_runner++;
 				entry = entries[entry_runner];
 			}
 
-			if (filenames) {
-				g_signal_emit(G_OBJECT (toolkit_window_from_widget(widget)), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
-				/* NB: GSList & contents are freed by main.open_window. */
+			if (!file_full_paths.empty()) {
+				this->open_window(file_full_paths);
 			}
 
 			success = true;
@@ -3978,10 +3911,8 @@ static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 		char * path = g_file_get_path(file);
 		g_object_unref(file);
 		if (window->filename) {
-			GSList *filenames = NULL;
-			filenames = g_slist_append(filenames, path);
-			g_signal_emit(window, window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
-			/* GSList & contents are freed by main.open_window. */
+			const QStringList file_full_paths = { path };
+			window->open_window(file_full_paths);
 		} else {
 			window->open_file(path, true);
 			free(path);

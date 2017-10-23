@@ -247,7 +247,7 @@ int main(int argc, char ** argv)
 			bool set_as_current_document = (i == 1);
 
 			/* Open any subsequent .vik files in their own window. */
-			if (i > 1 && check_file_magic_vik(argv[i])) {
+			if (i > 1 && VikFile::has_vik_file_magic(argv[i])) {
 				new_window = Window::new_window();
 				set_as_current_document = true;
 			}
