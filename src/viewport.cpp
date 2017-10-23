@@ -219,7 +219,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	update_centers();
 
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
-	this->do_draw_scale = true;
+	this->scale_visibility = true;
 
 	this->border_pen.setColor(QColor("black"));
 	this->border_pen.setWidth(2);
@@ -499,17 +499,17 @@ void Viewport::clear()
 /**
  * Enable/Disable display of scale.
  */
-void Viewport::set_draw_scale(bool draw_scale_)
+void Viewport::set_scale_visibility(bool new_state)
 {
-	do_draw_scale = draw_scale_;
+	this->scale_visibility = new_state;
 }
 
 
 
 
-bool Viewport::get_draw_scale()
+bool Viewport::get_scale_visibility()
 {
-	return do_draw_scale;
+	return this->scale_visibility;
 }
 
 
@@ -577,7 +577,7 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 
 void Viewport::draw_scale()
 {
-	if (!this->do_draw_scale) {
+	if (!this->scale_visibility) {
 		return;
 	}
 
@@ -761,17 +761,17 @@ void Viewport::draw_copyrights(void)
 /**
  * Enable/Disable display of center mark.
  */
-void Viewport::set_draw_centermark(bool draw_centermark_)
+void Viewport::set_center_mark_visibility(bool new_state)
 {
-	do_draw_centermark = draw_centermark_;
+	this->center_mark_visibility = new_state;
 }
 
 
 
 
-bool Viewport::get_draw_centermark()
+bool Viewport::get_center_mark_visibility()
 {
-	return do_draw_centermark;
+	return this->center_mark_visibility;
 }
 
 
@@ -779,9 +779,9 @@ bool Viewport::get_draw_centermark()
 
 void Viewport::draw_centermark()
 {
-	qDebug() << "II: Viewport: draw centermark:" << do_draw_centermark;
+	qDebug() << "II: Viewport: draw centermark:" << this->center_mark_visibility;
 
-	if (!do_draw_centermark) {
+	if (!this->center_mark_visibility) {
 		return;
 	}
 
@@ -827,17 +827,17 @@ void Viewport::draw_logo()
 
 
 
-void Viewport::set_draw_with_highlight(bool draw_with_highlight_)
+void Viewport::set_highlight_usage(bool new_state)
 {
-	this->do_draw_with_highlight = draw_with_highlight_;
+	this->highlight_usage = new_state;
 }
 
 
 
 
-bool Viewport::get_draw_with_highlight()
+bool Viewport::get_highlight_usage()
 {
-	return do_draw_with_highlight;
+	return this->highlight_usage;
 }
 
 

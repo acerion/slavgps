@@ -200,15 +200,15 @@ namespace SlavGPS {
 		void goto_next_location_cb(void);
 
 
-		void view_full_screen_cb(bool new_state);
+		void set_full_screen_state_cb(bool new_state);
 
-		void view_side_panel_cb(bool new_state);
-		void view_statusbar_cb(bool new_state);
-		void view_main_menu_cb(bool new_state);
+		void set_side_panel_visibility_cb(bool new_state);
+		void set_status_bar_visibility_cb(bool new_state);
+		void set_main_menu_visibility_cb(bool new_state);
 
-		void draw_with_highlight_cb(bool new_state);
-		void draw_scale_cb(bool new_state);
-		void draw_centermark_cb(bool new_state);
+		void set_highlight_usage_cb(bool new_state);
+		void set_scale_visibility_cb(bool new_state);
+		void set_center_mark_visibility_cb(bool new_state);
 
 
 		void zoom_cb(void);
@@ -360,27 +360,27 @@ namespace SlavGPS {
 		QCursor viewport_cursor;
 
 		/* Display various window items. */
-		bool view_full_screen = false;
+		bool full_screen_state = false;
 
-		bool draw_scale = true;
-		bool draw_centermark = true;
-		bool draw_with_highlight = true;
+		bool scale_visibility = true;
+		bool center_mark_visibility = true;
+		bool highlight_usage = true;
 
-		bool view_side_panel = true;
-		bool view_statusbar = true;
-		bool view_toolbar = true;
+		bool side_panel_visibility = true;
+		bool status_bar_visibility = true;
+		bool tool_bar_visibility = true;
 
 		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
 
-		QAction * qa_view_full_screen = NULL;
+		QAction * qa_view_full_screen_state = NULL;
 
-		QAction * qa_view_show_draw_scale = NULL;
-		QAction * qa_view_show_draw_centermark = NULL;
-		QAction * qa_view_show_draw_with_highlight = NULL;
-		QAction * qa_view_show_side_panel = NULL;
-		QAction * qa_view_show_statusbar = NULL;
-		QAction * qa_view_show_toolbar = NULL;
-		QAction * qa_view_show_main_menu = NULL;
+		QAction * qa_view_scale_visibility = NULL;
+		QAction * qa_view_center_mark_visibility = NULL;
+		QAction * qa_view_highlight_usage = NULL;
+		QAction * qa_view_side_panel_visibility = NULL;
+		QAction * qa_view_status_bar_visibility = NULL;
+		QAction * qa_view_tool_bar_visibility = NULL;
+		QAction * qa_view_main_menu_visibility = NULL;
 
 		QAction * qa_drawmode_expedia = NULL;
 		QAction * qa_drawmode_mercator = NULL;

@@ -283,7 +283,7 @@ Window::Window()
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
 #ifdef K
-				this->show_full_screen = true;
+				this->full_screen_state = true;
 				gtk_window_fullscreen(this);
 				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
 				if (check_box) {
@@ -741,82 +741,82 @@ void Window::create_actions(void)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
 		this->menu_view->addAction(qa);
 
-		this->qa_view_full_screen = new QAction("&Full Screen", this);
-		this->qa_view_full_screen->setShortcut(Qt::Key_F11);
-		this->qa_view_full_screen->setCheckable(true);
-		this->qa_view_full_screen->setChecked(this->view_full_screen);
-		this->qa_view_full_screen->setToolTip("Activate full screen mode");
-		connect(this->qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
+		this->qa_view_full_screen_state = new QAction("&Full Screen", this);
+		this->qa_view_full_screen_state->setShortcut(Qt::Key_F11);
+		this->qa_view_full_screen_state->setCheckable(true);
+		this->qa_view_full_screen_state->setChecked(this->full_screen_state);
+		this->qa_view_full_screen_state->setToolTip("Activate full screen mode");
+		connect(this->qa_view_full_screen_state, SIGNAL(triggered(bool)), this, SLOT(set_full_screen_state_cb(bool)));
 		/* TODO: icon: GTK_STOCK_FULLSCREEN */
 
 
-		this->menu_view->addAction(this->qa_view_full_screen);
+		this->menu_view->addAction(this->qa_view_full_screen_state);
 
 
 		QMenu * show_submenu = new QMenu("&Show", this);
 		this->menu_view->addMenu(show_submenu);
 
-		this->qa_view_show_draw_scale = new QAction("Show &Scale", this);
-		this->qa_view_show_draw_scale->setShortcut(Qt::SHIFT + Qt::Key_F5);
-		this->qa_view_show_draw_scale->setCheckable(true);
-		this->qa_view_show_draw_scale->setChecked(this->draw_scale);
-		this->qa_view_show_draw_scale->setToolTip("Show Scale");
-		connect(this->qa_view_show_draw_scale, SIGNAL(triggered(bool)), this, SLOT(draw_scale_cb(bool)));
+		this->qa_view_scale_visibility = new QAction("Show &Scale", this);
+		this->qa_view_scale_visibility->setShortcut(Qt::SHIFT + Qt::Key_F5);
+		this->qa_view_scale_visibility->setCheckable(true);
+		this->qa_view_scale_visibility->setChecked(this->scale_visibility);
+		this->qa_view_scale_visibility->setToolTip("Show Scale");
+		connect(this->qa_view_scale_visibility, SIGNAL(triggered(bool)), this, SLOT(set_scale_visibility_cb(bool)));
 
-		this->qa_view_show_draw_centermark = new QAction("Show &Center Mark", this);
-		this->qa_view_show_draw_centermark->setShortcut(Qt::Key_F6);
-		this->qa_view_show_draw_centermark->setCheckable(true);
-		this->qa_view_show_draw_centermark->setChecked(this->draw_centermark);
-		this->qa_view_show_draw_centermark->setToolTip("Show Center Mark");
-		connect(this->qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
+		this->qa_view_center_mark_visibility = new QAction("Show &Center Mark", this);
+		this->qa_view_center_mark_visibility->setShortcut(Qt::Key_F6);
+		this->qa_view_center_mark_visibility->setCheckable(true);
+		this->qa_view_center_mark_visibility->setChecked(this->center_mark_visibility);
+		this->qa_view_center_mark_visibility->setToolTip("Show Center Mark");
+		connect(this->qa_view_center_mark_visibility, SIGNAL(triggered(bool)), this, SLOT(set_center_mark_visibility_cb(bool)));
 
-		this->qa_view_show_draw_with_highlight = new QAction("Use &Highlighting", this);
-		this->qa_view_show_draw_with_highlight->setShortcut(Qt::Key_F7);
-		this->qa_view_show_draw_with_highlight->setCheckable(true);
-		this->qa_view_show_draw_with_highlight->setChecked(this->draw_with_highlight);
-		this->qa_view_show_draw_with_highlight->setToolTip("Use highlighting when drawing selected items");
-		connect(this->qa_view_show_draw_with_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_with_highlight_cb(bool)));
+		this->qa_view_highlight_usage = new QAction("Use &Highlighting", this);
+		this->qa_view_highlight_usage->setShortcut(Qt::Key_F7);
+		this->qa_view_highlight_usage->setCheckable(true);
+		this->qa_view_highlight_usage->setChecked(this->highlight_usage);
+		this->qa_view_highlight_usage->setToolTip("Use highlighting when drawing selected items");
+		connect(this->qa_view_highlight_usage, SIGNAL(triggered(bool)), this, SLOT(set_highlight_usage_cb(bool)));
 		/* TODO: icon: GTK_STOCK_UNDERLINE */
 
-		this->qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
-		this->qa_view_show_side_panel->setText("Show Side &Panel");
-		this->qa_view_show_side_panel->setShortcut(Qt::Key_F9);
-		this->qa_view_show_side_panel->setCheckable(true);
-		this->qa_view_show_side_panel->setChecked(this->view_side_panel);
-		this->qa_view_show_side_panel->setToolTip("Show Side Panel");
-		connect(this->qa_view_show_side_panel, SIGNAL(triggered(bool)), this, SLOT(view_side_panel_cb(bool)));
+		this->qa_view_side_panel_visibility = this->panel_dock->toggleViewAction(); /* Existing action! */
+		this->qa_view_side_panel_visibility->setText("Show Side &Panel");
+		this->qa_view_side_panel_visibility->setShortcut(Qt::Key_F9);
+		this->qa_view_side_panel_visibility->setCheckable(true);
+		this->qa_view_side_panel_visibility->setChecked(this->side_panel_visibility);
+		this->qa_view_side_panel_visibility->setToolTip("Show Side Panel");
+		connect(this->qa_view_side_panel_visibility, SIGNAL(triggered(bool)), this, SLOT(set_side_panel_visibility_cb(bool)));
 		/* TODO: icon: GTK_STOCK_INDEX */
 
-		this->qa_view_show_statusbar = new QAction("Show Status&bar", this);
-		this->qa_view_show_statusbar->setShortcut(Qt::Key_F12);
-		this->qa_view_show_statusbar->setCheckable(true);
-		this->qa_view_show_statusbar->setChecked(this->view_statusbar);
-		this->qa_view_show_statusbar->setToolTip("Show Statusbar");
-		connect(this->qa_view_show_statusbar, SIGNAL(triggered(bool)), this, SLOT(view_statusbar_cb(bool)));
+		this->qa_view_status_bar_visibility = new QAction("Show Status&bar", this);
+		this->qa_view_status_bar_visibility->setShortcut(Qt::Key_F12);
+		this->qa_view_status_bar_visibility->setCheckable(true);
+		this->qa_view_status_bar_visibility->setChecked(this->status_bar_visibility);
+		this->qa_view_status_bar_visibility->setToolTip("Show Statusbar");
+		connect(this->qa_view_status_bar_visibility, SIGNAL(triggered(bool)), this, SLOT(set_status_bar_visibility_cb(bool)));
 
-		this->qa_view_show_toolbar = this->toolbar->toggleViewAction(); /* Existing action! */
-		this->qa_view_show_toolbar->setText("Show &Toolbar");
-		this->qa_view_show_toolbar->setShortcut(Qt::Key_F3);
-		this->qa_view_show_toolbar->setCheckable(true);
-		this->qa_view_show_toolbar->setChecked(this->view_toolbar);
-		this->qa_view_show_toolbar->setToolTip("Show Toolbar");
+		this->qa_view_tool_bar_visibility = this->toolbar->toggleViewAction(); /* Existing action! */
+		this->qa_view_tool_bar_visibility->setText("Show &Toolbar");
+		this->qa_view_tool_bar_visibility->setShortcut(Qt::Key_F3);
+		this->qa_view_tool_bar_visibility->setCheckable(true);
+		this->qa_view_tool_bar_visibility->setChecked(this->tool_bar_visibility);
+		this->qa_view_tool_bar_visibility->setToolTip("Show Toolbar");
 		/* No signal connection needed, we have toggleViewAction(). */
 
-		this->qa_view_show_main_menu = new QAction("Show &Menu", this);
-		this->qa_view_show_main_menu->setShortcut(Qt::Key_F4);
-		this->qa_view_show_main_menu->setCheckable(true);
-		this->qa_view_show_main_menu->setChecked(true);
-		this->qa_view_show_main_menu->setToolTip("Show Menu");
-		connect(qa_view_show_main_menu, SIGNAL(triggered(bool)), this, SLOT(view_main_menu_cb(bool)));
+		this->qa_view_main_menu_visibility = new QAction("Show &Menu", this);
+		this->qa_view_main_menu_visibility->setShortcut(Qt::Key_F4);
+		this->qa_view_main_menu_visibility->setCheckable(true);
+		this->qa_view_main_menu_visibility->setChecked(true);
+		this->qa_view_main_menu_visibility->setToolTip("Show Menu");
+		connect(qa_view_main_menu_visibility, SIGNAL(triggered(bool)), this, SLOT(set_main_menu_visibility_cb(bool)));
 
 
-		show_submenu->addAction(this->qa_view_show_draw_scale);
-		show_submenu->addAction(this->qa_view_show_draw_centermark);
-		show_submenu->addAction(this->qa_view_show_draw_with_highlight);
-		show_submenu->addAction(this->qa_view_show_side_panel);
-		show_submenu->addAction(this->qa_view_show_statusbar);
-		show_submenu->addAction(this->qa_view_show_toolbar);
-		show_submenu->addAction(this->qa_view_show_main_menu);
+		show_submenu->addAction(this->qa_view_scale_visibility);
+		show_submenu->addAction(this->qa_view_center_mark_visibility);
+		show_submenu->addAction(this->qa_view_highlight_usage);
+		show_submenu->addAction(this->qa_view_side_panel_visibility);
+		show_submenu->addAction(this->qa_view_status_bar_visibility);
+		show_submenu->addAction(this->qa_view_tool_bar_visibility);
+		show_submenu->addAction(this->qa_view_main_menu_visibility);
 
 
 		this->menu_view->addSeparator();
@@ -1054,7 +1054,7 @@ void Window::draw_redraw()
 	this->items_tree->draw_all(this->viewport);
 
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
-	if (this->viewport->get_draw_with_highlight()) {
+	if (this->viewport->get_highlight_usage()) {
 		qDebug() << "II: Window:    selection: do draw with highlight";
 
 		/* If there is a layer or layer's sublayers or items
@@ -1649,9 +1649,9 @@ void Window::closeEvent(QCloseEvent * ev)
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
 			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->view_side_panel);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->view_statusbar);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->view_toolbar);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->side_panel_visibility);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar_visibility);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->tool_bar_visibility);
 
 			/* If supersized - no need to save the enlarged width+height values. */
 			if (!(state_fullscreen || state_max)) {
@@ -1753,15 +1753,13 @@ void Window::goto_next_location_cb(void)
 
 
 
-void Window::view_full_screen_cb(bool new_state)
+void Window::set_full_screen_state_cb(bool new_state)
 {
-	assert (new_state != this->view_full_screen);
-	if (new_state != this->view_full_screen) {
+	if (this->full_screen_state != new_state) {
+		this->full_screen_state = new_state;
 
-		this->view_full_screen = !this->view_full_screen;
 		const Qt::WindowStates state = this->windowState();
-
-		if (this->view_full_screen) {
+		if (this->full_screen_state) {
 			this->setWindowState(state | Qt::WindowFullScreen);
 		} else {
 			this->setWindowState(state & (~Qt::WindowFullScreen));
@@ -1772,50 +1770,48 @@ void Window::view_full_screen_cb(bool new_state)
 
 
 
-void Window::draw_scale_cb(bool new_state)
+void Window::set_scale_visibility_cb(bool new_state)
 {
-	assert (new_state != this->draw_scale);
-	if (new_state != this->draw_scale) {
-		this->viewport->set_draw_scale(new_state);
+	if (new_state != this->scale_visibility) {
+		this->scale_visibility = new_state;
+		this->viewport->set_scale_visibility(new_state);
 		this->draw_update();
-		this->draw_scale = !this->draw_scale;
 	}
 }
 
 
 
 
-void Window::draw_centermark_cb(bool new_state)
+void Window::set_center_mark_visibility_cb(bool new_state)
 {
-	assert (new_state != this->draw_centermark);
-	if (new_state != this->draw_centermark) {
-		this->viewport->set_draw_centermark(new_state);
+	if (new_state != this->center_mark_visibility) {
+		this->center_mark_visibility = new_state;
+		this->viewport->set_center_mark_visibility(new_state);
 		this->draw_update();
-		this->draw_centermark = !this->draw_centermark;
 	}
 }
 
 
 
-void Window::draw_with_highlight_cb(bool new_state)
+void Window::set_highlight_usage_cb(bool new_state)
 {
-	assert (new_state != this->draw_with_highlight);
-	if (new_state != this->draw_with_highlight) {
-		this->viewport->set_draw_with_highlight(new_state);
+	if (new_state != this->highlight_usage) {
+		this->highlight_usage = new_state;
+		this->viewport->set_highlight_usage(new_state);
 		this->draw_update();
-		this->draw_with_highlight = !this->draw_with_highlight;
+
 	}
 }
 
 
 
-void Window::view_side_panel_cb(bool new_state)
+void Window::set_side_panel_visibility_cb(bool new_state)
 {
-	if (this->view_side_panel != new_state) {
+	if (this->side_panel_visibility != new_state) {
 		qDebug() << "II: Window: setting side panel visibility to" << new_state;
 
-		this->view_side_panel = new_state;
-		this->panel_dock->setVisible(this->view_side_panel);
+		this->side_panel_visibility = new_state;
+		this->panel_dock->setVisible(this->side_panel_visibility);
 
 		/* We need to set the qaction because this slot function
 		   may be called like a regular function too. */
@@ -1827,16 +1823,16 @@ void Window::view_side_panel_cb(bool new_state)
 
 
 
-void Window::view_statusbar_cb(bool new_state)
+void Window::set_status_bar_visibility_cb(bool new_state)
 {
-	this->view_statusbar = new_state;
-	this->status_bar->setVisible(this->view_statusbar);
+	this->status_bar_visibility = new_state;
+	this->status_bar->setVisible(this->status_bar_visibility);
 }
 
 
 
 
-void Window::view_main_menu_cb(bool new_state)
+void Window::set_main_menu_visibility_cb(bool new_state)
 {
 	this->menu_bar->setVisible(new_state);
 }
@@ -2148,23 +2144,23 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 			this->items_tree->change_coord_mode(this->viewport->get_coord_mode());
 
 			/* Slightly long winded methods to align loaded viewport settings with the UI. */
-			bool vp_state_scale = this->viewport->get_draw_scale();
-			bool ui_state_scale = this->qa_view_show_draw_scale->isChecked();
+			bool vp_state_scale = this->viewport->get_scale_visibility();
+			bool ui_state_scale = this->qa_view_scale_visibility->isChecked();
 			if (vp_state_scale != ui_state_scale) {
-				this->viewport->set_draw_scale(!vp_state_scale);
-				this->draw_scale_cb(!vp_state_scale);
+				this->viewport->set_scale_visibility(!vp_state_scale);
+				this->set_scale_visibility_cb(!vp_state_scale);
 			}
-			bool vp_state_centermark = this->viewport->get_draw_centermark();
-			bool ui_state_centermark = this->qa_view_show_draw_centermark->isChecked();
+			bool vp_state_centermark = this->viewport->get_center_mark_visibility();
+			bool ui_state_centermark = this->qa_view_center_mark_visibility->isChecked();
 			if (vp_state_centermark != ui_state_centermark) {
-				this->viewport->set_draw_centermark(!vp_state_centermark);
-				this->draw_centermark_cb(!vp_state_centermark);
+				this->viewport->set_center_mark_visibility(!vp_state_centermark);
+				this->set_center_mark_visibility_cb(!vp_state_centermark);
 			}
-			bool vp_state_highlight = this->viewport->get_draw_with_highlight();
-			bool ui_state_highlight = this->qa_view_show_draw_with_highlight->isChecked();
+			bool vp_state_highlight = this->viewport->get_highlight_usage();
+			bool ui_state_highlight = this->qa_view_highlight_usage->isChecked();
 			if (vp_state_highlight != ui_state_highlight) {
-				this->viewport->set_draw_with_highlight(!vp_state_highlight);
-				this->draw_with_highlight_cb(!vp_state_highlight);
+				this->viewport->set_highlight_usage(!vp_state_highlight);
+				this->set_highlight_usage_cb(!vp_state_highlight);
 			}
 		}
 		/* No break, carry on to redraw. */
@@ -2801,13 +2797,13 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	   track, waypoint etc...). */
 
 	/* Remove some viewport overlays as these aren't useful in KMZ file. */
-	bool has_xhair = this->viewport->get_draw_centermark();
+	bool has_xhair = this->viewport->get_center_mark_visibility();
 	if (has_xhair) {
-		this->viewport->set_draw_centermark(false);
+		this->viewport->set_center_mark_visibility(false);
 	}
-	bool has_scale = this->viewport->get_draw_scale();
+	bool has_scale = this->viewport->get_scale_visibility();
 	if (has_scale) {
-		this->viewport->set_draw_scale(false);
+		this->viewport->set_scale_visibility(false);
 	}
 
 	this->save_viewport_to_image(file_full_path,
@@ -2818,11 +2814,11 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 				     true);
 
 	if (has_xhair) {
-		this->viewport->set_draw_centermark(true);
+		this->viewport->set_center_mark_visibility(true);
 	}
 
 	if (has_scale) {
-		this->viewport->set_draw_scale(true);
+		this->viewport->set_scale_visibility(true);
 	}
 
 	if (has_xhair || has_scale) {
@@ -3690,12 +3686,12 @@ Window * Window::new_window()
 		bool visibility;
 
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
-			window->view_side_panel_cb(visibility);
+			window->set_side_panel_visibility_cb(visibility);
 		}
 
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
 #ifdef K
-			window->view_statusbar_cb(visibility);
+			window->set_status_bar_visibility_cb(visibility);
 #endif
 		}
 
@@ -3706,7 +3702,7 @@ Window * Window::new_window()
 		}
 
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MENUBAR, &visibility)) {
-			window->view_main_menu_cb(visibility);
+			window->set_main_menu_visibility_cb(visibility);
 		}
 	}
 

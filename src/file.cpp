@@ -250,9 +250,9 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		viewport->get_xmpp(), viewport->get_ympp(), ll.lat, ll.lon,
 		modestring, viewport->get_background_color(),
 		viewport->get_highlight_color(),
-		viewport->get_draw_scale() ? "t" : "f",
-		viewport->get_draw_centermark() ? "t" : "f",
-		viewport->get_draw_with_highlight() ? "t" : "f");
+		viewport->get_scale_visibility() ? "t" : "f",
+		viewport->get_center_mark_visibility() ? "t" : "f",
+		viewport->get_highlight_usage() ? "t" : "f");
 
 	if (!aggregate->visible) {
 		fprintf(f, "visible=f\n");
@@ -536,11 +536,11 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
 				viewport->set_highlight_color(line+15);
 			} else if (stack->under == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
-				viewport->set_draw_scale(TEST_BOOLEAN(line+10));
+				viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {
-				viewport->set_draw_centermark(TEST_BOOLEAN(line+15));
+				viewport->set_center_mark_visibility(TEST_BOOLEAN(line+15));
 			} else if (stack->under == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
-				viewport->set_draw_with_highlight(TEST_BOOLEAN(line+14));
+				viewport->set_highlight_usage(TEST_BOOLEAN(line+14));
 
 			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
 				layer->set_name(QString(line+5));

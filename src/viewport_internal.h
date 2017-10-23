@@ -161,15 +161,18 @@ namespace SlavGPS {
 
 		/* Viewport features. */
 		void draw_scale();
-		void set_draw_scale(bool draw_scale);
-		bool get_draw_scale();
+		void set_scale_visibility(bool new_state);
+		bool get_scale_visibility();
+
 		void draw_copyrights();
 		void draw_centermark();
-		void set_draw_centermark(bool draw_centermark);
-		bool get_draw_centermark();
+		void set_center_mark_visibility(bool new_state);
+		bool get_center_mark_visibility();
 		void draw_logo();
-		void set_draw_with_highlight(bool draw_with_highlight);
-		bool get_draw_with_highlight();
+
+		void set_highlight_usage(bool new_state);
+		bool get_highlight_usage();
+
 
 
 		void clear();
@@ -217,9 +220,9 @@ namespace SlavGPS {
 
 
 		/* Whether or not to display OSD info. */
-		bool do_draw_scale = true;
-		bool do_draw_centermark = true;
-		bool do_draw_with_highlight = true;
+		bool scale_visibility = true;
+		bool center_mark_visibility = true;
+		bool highlight_usage = true;
 
 		QStringList copyrights;
 		std::list<QPixmap const *> logos;

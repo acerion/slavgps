@@ -1282,7 +1282,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
 	   This may seem slightly inefficient to test each time for every layer
 	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
-	if (viewport->get_draw_with_highlight()
+	if (viewport->get_highlight_usage()
 	    && g_tree->selected_tree_item && *g_tree->selected_tree_item == this) { /* TODO: use UID to compare tree items. */
 
 		return;

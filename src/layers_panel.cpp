@@ -683,7 +683,7 @@ void LayersPanel::change_coord_mode(CoordMode mode)
 
 void LayersPanel::set_visible(bool visible)
 {
-	this->window->view_side_panel_cb(visible);
+	this->window->set_side_panel_visibility_cb(visible);
 	return;
 }
 
