@@ -299,36 +299,47 @@ static bool preferences_load_from_file()
 
 
 
-
-void Preferences::set_param_value(param_id_t id, const SGVariant & value)
+bool Preferences::set_param_value(param_id_t id, const SGVariant & value)
 {
 	/* Don't change stored pointer values. */
 	if (registered_parameters[id]->type == SGVariantType::PTR) {
-		return;
+		return false;
 	}
 	if (registered_parameters[id]->type == SGVariantType::STRING_LIST) {
 		qDebug() << "EE: Preferences: Set Parameter Value: 'string list' not implemented";
+		return false;
 	}
-
 	if (value.type_id != registered_parameters[id]->type) {
 		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << registered_parameters[id]->name;
+		return false;
 	}
 
 	SGVariant * new_val = new SGVariant(value); /* New value to save under an existing name. */
+	/* FIXME: delete old value first? */
 	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_val;
 
 	if (registered_parameters[id]->type == SGVariantType::DOUBLE) {
 		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_val->d;
 	}
+
+	return true;
 }
 
 
 
 
-/* Allow preferences to be manipulated externally. */
-void SlavGPS::a_preferences_run_setparam(const SGVariant & value, Parameter * parameters)
+bool Preferences::set_param_value(const char * name, const SGVariant & value)
 {
-	//preferences.set_param_value(0, value, parameters);
+	param_id_t id = 0;
+	for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
+		if (0 == strcmp(iter->second->name, name)) {
+			preferences.set_param_value(iter->first, value);
+			qDebug() << "II: Preferences: Set Param Value: setting value of param" << name;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -351,7 +362,7 @@ SGVariant Preferences::get_param_value(param_id_t id)
 /**
  * Returns: true on success.
  */
-bool SlavGPS::a_preferences_save_to_file()
+bool Preferences::save_to_file(void)
 {
 	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
 
@@ -386,16 +397,15 @@ bool SlavGPS::a_preferences_save_to_file()
 
 
 
-void SlavGPS::preferences_show_window(QWidget * parent)
+void Preferences::show_window(QWidget * parent)
 {
 	// preferences.loaded = true;
 	// preferences_load_from_file();
 
 	PropertiesDialog dialog(QObject::tr("Preferences"), parent);
 	dialog.fill(&preferences);
-	int dialog_code = dialog.exec();
 
-	if (dialog_code == QDialog::Accepted) {
+	if (QDialog::Accepted == dialog.exec()) {
 		for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			if (iter->second->type == SGVariantType::DOUBLE) {
@@ -404,7 +414,7 @@ void SlavGPS::preferences_show_window(QWidget * parent)
 			qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name;
 			preferences.set_param_value(iter->first, param_value);
 		}
-		a_preferences_save_to_file();
+		Preferences::save_to_file();
 	}
 }
 

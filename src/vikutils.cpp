@@ -640,38 +640,24 @@ void SGUtils::set_auto_features_on_first_run(void)
 	}
 
 	if (auto_features) {
-#ifdef K
 		/* Set Maps to autodownload. */
 		/* Ensure the default is true. */
 		maps_layer_set_autodownload_default(true);
 		set_defaults = true;
 
-		/* Simplistic repeat of preference settings.
-		   Only the name & type are important for setting a preference via this 'external' way. */
 
 		/* Enable auto add map + Enable IP lookup. */
-		Parameter pref_add_map[] =        { { 0, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL }, };
-		Parameter pref_startup_method[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, NULL, WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL }, };
-
-		SGVariant vlp_data;
-
-		vlp_data = SGVariant((bool) true);
-		a_preferences_run_setparam(vlp_data, pref_add_map);
-
-		vlp_data = SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION);
-		a_preferences_run_setparam(vlp_data, pref_startup_method);
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariant((bool) true));
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION));
 
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
-		Parameter pref_startup_version_check[] = { { 0, PREFERENCES_NAMESPACE_STARTUP "check_version", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
-		vlp_data = SGVariant((bool) true);
-		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "check_version", SGVariant((bool) true));
 #endif
 
 		/* Ensure settings are saved for next time. */
-		a_preferences_save_to_file();
-#endif
+		Preferences::save_to_file();
 	}
 
 	/* Ensure defaults are saved if changed. */

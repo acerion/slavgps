@@ -174,7 +174,7 @@ namespace SlavGPS {
 
 
 		bool window_save();
-		void preferences_change_update(void);
+		void apply_new_preferences(void);
 
 
 		QAction * qa_tree_item_properties = NULL;
@@ -318,7 +318,7 @@ namespace SlavGPS {
 		void display_tool_name();
 		void update_recently_used_document(const QString & file_full_path);
 		void update_recent_files(QString const & path);
-		void open_window(const QString & file_full_paths);
+		void open_window(const QStringList & file_full_paths);
 
 		bool pan_move_flag = false;
 		int pan_x = -1;

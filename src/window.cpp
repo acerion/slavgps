@@ -1497,7 +1497,7 @@ void Window::menu_edit_delete_all_cb(void)
 {
 	/* Do nothing if empty. */
 	if (!this->items_tree->get_top_layer()->is_empty()) {
-		if (Dialog::yes_or_no(tr("Are you sure you wish to delete all layers?"), this)) {
+		if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
 			this->items_tree->clear();
 			this->set_current_document_full_path("");
 			this->draw_update();
@@ -1549,32 +1549,12 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	/* Simplistic repeat of preference setting
-	   Only the name & type are important for setting the preference via this 'external' way */
-	Parameter pref_lat[] = {
-		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_latitude",  SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBOX_DOUBLE, NULL, NULL, NULL, NULL },
-	};
-	Parameter pref_lon[] = {
-		{ 1, PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, NULL, WidgetType::SPINBOX_DOUBLE, NULL, NULL, NULL, NULL },
-	};
+	const struct LatLon current_center_ll = this->viewport->get_center()->get_latlon();
 
-
-	/* Get current center */
-	struct LatLon ll = this->viewport->get_center()->get_latlon();
-
-
-	/* Apply to preferences */
-	SGVariant vlp_data;
-
-	vlp_data = SGVariant((double) ll.lat);
-	a_preferences_run_setparam(vlp_data, pref_lat);
-
-	vlp_data = SGVariant((double) ll.lon);
-	a_preferences_run_setparam(vlp_data, pref_lon);
-
-
-	/* Remember to save */
-	a_preferences_save_to_file();
+	/* Push center coordinate values to Preferences */
+	Preferences::set_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude", SGVariant((double) current_center_ll.lat));
+	Preferences::set_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude", SGVariant((double) current_center_ll.lon));
+	Preferences::save_to_file();
 }
 
 
@@ -1582,28 +1562,30 @@ void Window::set_default_location_cb(void)
 
 void Window::preferences_cb(void) /* Slot. */
 {
-#if 0
-	bool wp_icon_size = Preferences::get_use_large_waypoint_icons();
-#endif
-	preferences_show_window(this);
-#if 0
+	const bool orig_wp_icon_size = Preferences::get_use_large_waypoint_icons();
+
+	Preferences::show_window(this);
+
 	/* Has the waypoint size setting changed? */
-	if (wp_icon_size != Preferences::get_use_large_waypoint_icons()) {
+	if (orig_wp_icon_size != Preferences::get_use_large_waypoint_icons()) {
+#ifdef K
 		/* Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed. */
 		clear_garmin_icon_syms();
+#endif
 
-		// Update all windows
-		for (auto i = window_list.begin(); i != window_list.end(); i++) {
-			(*)->preferences_change_update();
+		/* Update all windows. */
+		for (auto iter = window_list.begin(); iter != window_list.end(); iter++) {
+			(*iter)->apply_new_preferences();
 		}
 	}
 
-
 	/* Ensure TZ Lookup initialized. */
 	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
+#ifdef K
 		vu_setup_lat_lon_tz_lookup();
+#endif
 	}
-
+#ifdef K
 	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
 #endif
 }
@@ -1613,19 +1595,13 @@ void Window::preferences_cb(void) /* Slot. */
 
 void Window::closeEvent(QCloseEvent * ev)
 {
-#if 0
-#ifdef VIKING_PROMPT_IF_MODIFIED
-	if (window->contents_modified)
-#else
-	if (0)
-#endif
-#endif
-	{
-		QMessageBox::StandardButton reply = QMessageBox::question(this, "SlavGPS",
-									  QString("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
-										  "Do you want to save the changes?").arg("some file"), // window->get_current_document_file_name()
-									  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
-									  QMessageBox::Yes);
+	if (this->contents_modified) {
+		QMessageBox::StandardButton reply;
+		reply = QMessageBox::question(this, "SlavGPS",
+					      QString("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
+						      "Do you want to save the changes?").arg(this->get_current_document_file_name()),
+					      QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+					      QMessageBox::Yes);
 		if (reply == QMessageBox::No) {
 			ev->accept();
 		} else if (reply == QMessageBox::Yes) {
@@ -1660,7 +1636,7 @@ void Window::closeEvent(QCloseEvent * ev)
 				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
 #ifdef K
-			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(window->hpaned)));
+			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(this->hpaned)));
 #endif
 		}
 
@@ -2003,10 +1979,10 @@ void Window::open_file_cb(void)
 	//GSList *cur_file = NULL;
 
 
-	QFileDialog dialog(this, "Select a GPS data file to open");
+	QFileDialog file_selector(this, "Select a GPS data file to open");
 
 	if (last_folder_files_url.isValid()) {
-		dialog.setDirectoryUrl(last_folder_files_url);
+		file_selector.setDirectoryUrl(last_folder_files_url);
 	}
 
 	QStringList filter;
@@ -2037,56 +2013,50 @@ void Window::open_file_cb(void)
 	   One can always use the all option. */
 	filter << _("All (*)");
 
-	dialog.setNameFilters(filter);
+	file_selector.setNameFilters(filter);
 
-#ifdef K
-	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
-#endif
+	file_selector.setFileMode(QFileDialog::ExistingFiles); /* Zero or more existing files. */
 
+	int dialog_code = file_selector.exec();
+	if (dialog_code != QDialog::Accepted) {
+		return;
+	}
 
-	int dialog_code = dialog.exec();
-	if (dialog_code == QDialog::Accepted) {
-		last_folder_files_url = dialog.directoryUrl();
-#ifdef K
+	last_folder_files_url = file_selector.directoryUrl();
 
-#ifdef VIKING_PROMPT_IF_MODIFIED
-		if ((window->contents_modified || !window->current_document_full_path.isEmpty()) && newwindow) {
-#else
-		if (!window->current_document_full_path.isEmpty() && newwindow) {
-#endif
-			window->open_window(gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
-		} else {
-#endif
-
-			QStringList files = dialog.selectedFiles();
-			bool set_as_current_document = newwindow && (files.size() == 1); /* Only change current document path if one file. */
-			bool first_vik_file = true;
-			auto iter = files.begin();
-			while (iter != files.end()) {
-
-				QString file_name = *iter;
-				if (newwindow && VikFile::has_vik_file_magic(file_name)) {
-					/* Load first of many .vik files in current window. */
-					if (first_vik_file) {
-						this->open_file(file_name, true);
-						first_vik_file = false;
-					} else {
-						/* Load each subsequent .vik file in a separate window. */
-						Window * new_window = Window::new_window();
-						if (new_window) {
-							new_window->open_file(file_name, true);
-						}
-					}
-				} else {
-					/* Other file types. */
-					this->open_file(file_name, set_as_current_document);
-				}
-
-				iter++;
-			}
-#ifdef K
+	if ((this->contents_modified || !this->current_document_full_path.isEmpty()) && newwindow) {
+		const QStringList selection = file_selector.selectedFiles();
+		if (!selection.size()) {
+			return;
 		}
-#endif
+		this->open_window(selection);
+	} else {
+		QStringList selection = file_selector.selectedFiles();
+		bool set_as_current_document = newwindow && (selection.size() == 1); /* Only change current document path if one file. */
+		bool first_vik_file = true;
+		auto iter = selection.begin();
+		while (iter != selection.end()) {
+
+			const QString file_full_path = *iter;
+			if (newwindow && VikFile::has_vik_file_magic(file_full_path)) {
+				/* Load first of many .vik files in current window. */
+				if (first_vik_file) {
+					this->open_file(file_full_path, true);
+					first_vik_file = false;
+				} else {
+					/* Load each subsequent .vik file in a separate window. */
+					Window * new_window = Window::new_window();
+					if (new_window) {
+						new_window->open_file(file_full_path, true);
+					}
+				}
+			} else {
+				/* Other file types. */
+				this->open_file(file_full_path, set_as_current_document);
+			}
+
+			iter++;
+		}
 	}
 }
 
@@ -2536,9 +2506,8 @@ void Window::finish_new(void)
 
 
 
-void Window::open_window(const QString & file_full_paths)
+void Window::open_window(const QStringList & file_full_paths)
 {
-#if 0
 	const bool set_as_current_document = (file_full_paths.size() == 1); /* Only change current document if we are opening one file. */
 
 	for (int i = 0; i < file_full_paths.size(); i++) {
@@ -2553,7 +2522,6 @@ void Window::open_window(const QString & file_full_paths)
 			this->open_file(file_full_path, set_as_current_document);
 		}
 	}
-#endif
 }
 
 
@@ -3726,7 +3694,7 @@ void Window::menu_view_cache_info_cb(void)
 
 
 
-void Window::preferences_change_update(void)
+void Window::apply_new_preferences(void)
 {
 	/* Want to update all TRW layers. */
 	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
