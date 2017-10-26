@@ -80,8 +80,8 @@ using namespace SlavGPS;
 static unsigned int window_count = 0;
 static std::list<Window *> window_list;
 
-#define VIKING_WINDOW_WIDTH      1000
-#define VIKING_WINDOW_HEIGHT     800
+#define VIKING_WINDOW_WIDTH      400
+#define VIKING_WINDOW_HEIGHT     300
 #define DRAW_IMAGE_DEFAULT_WIDTH 1280
 #define DRAW_IMAGE_DEFAULT_HEIGHT 1024
 #define DRAW_IMAGE_DEFAULT_SAVE_AS_PNG true
@@ -226,11 +226,13 @@ Window::Window()
 
 	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
-	// Allow key presses to be processed anywhere
+	/* Allow key presses to be processed anywhere. */
 	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
 
+#if 0   /* I think that it's no longer necessary. */
 	/* Set initial button sensitivity. */
 	this->center_changed_cb();
+#endif
 
 	this->hpaned = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_tree, false, true);
@@ -250,46 +252,52 @@ Window::Window()
 	int width = VIKING_WINDOW_WIDTH;
 
 	if (Preferences::get_restore_window_state()) {
+
+		QSize available_size = qApp->desktop()->availableGeometry().size();
+		const int available_width = available_size.width();
+		const int available_height = available_size.height();
+
 		if (a_settings_get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
-			// Enforce a basic minimum size
-			if (height < 160) {
-				height = 160;
+			/* Enforce a basic minimum size. */
+			if (height < VIKING_WINDOW_HEIGHT) {
+				height = VIKING_WINDOW_HEIGHT;
 			}
 		} else {
-			// No setting - so use default
+			/* No setting, so use default. */
 			height = VIKING_WINDOW_HEIGHT;
+		}
+		if (height > available_height) {
+			height = available_height;
 		}
 
 		if (a_settings_get_integer(VIK_SETTINGS_WIN_WIDTH, &width)) {
-			// Enforce a basic minimum size
-			if (width < 320) {
-				width = 320;
+			/* Enforce a basic minimum size. */
+			if (width < VIKING_WINDOW_WIDTH) {
+				width = VIKING_WINDOW_WIDTH;
 			}
 		} else {
-			// No setting - so use default
+			/* No setting, so use default. */
 			width = VIKING_WINDOW_WIDTH;
 		}
+		if (width > available_width) {
+			width = available_width;
+		}
+
+		this->setGeometry(0, 0, width, height);
+
+
 
 		bool maxed;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
 			if (maxed) {
-#ifdef K
-				gtk_window_maximize(this);
-#endif
+				this->showMaximized();
 			}
 		}
 
 		bool full;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
-#ifdef K
-				this->full_screen_state = true;
-				gtk_window_fullscreen(this);
-				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
-				if (check_box) {
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
-				}
-#endif
+				this->set_full_screen_state_cb(true);
 			}
 		}
 
@@ -702,17 +710,19 @@ void Window::create_actions(void)
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_utm_cb(void)));
 		this->menu_view->addAction(qa);
 
-		qa = new QAction(tr("Go to the Pre&vious Location"), this);
-		qa->setToolTip("Go to the previous location");
-		qa->setIcon(QIcon::fromTheme("go-previous"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_previous_location_cb(void)));
-		this->menu_view->addAction(qa);
+		this->qa_previous_location = new QAction(tr("Go to the Pre&vious Location"), this);
+		this->qa_previous_location->setToolTip("Go to the previous location");
+		this->qa_previous_location->setIcon(QIcon::fromTheme("go-previous"));
+		this->qa_previous_location->setEnabled(false); /* At the beginning there is no "previous location" to go to. */
+		connect(this->qa_previous_location, SIGNAL(triggered(bool)), this, SLOT(goto_previous_location_cb(void)));
+		this->menu_view->addAction(this->qa_previous_location);
 
-		qa = new QAction(tr("Go to the &Next Location"), this);
-		qa->setToolTip("Go to the next location");
-		qa->setIcon(QIcon::fromTheme("go-next"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_next_location_cb(void)));
-		this->menu_view->addAction(qa);
+		this->qa_next_location = new QAction(tr("Go to the &Next Location"), this);
+		this->qa_next_location->setToolTip("Go to the next location");
+		this->qa_next_location->setIcon(QIcon::fromTheme("go-next"));
+		this->qa_next_location->setEnabled(false); /* At the beginning there is no "next location" to go to. */
+		connect(this->qa_next_location, SIGNAL(triggered(bool)), this, SLOT(goto_next_location_cb(void)));
+		this->menu_view->addAction(this->qa_next_location);
 
 
 		this->menu_view->addSeparator();
@@ -1154,32 +1164,15 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
 
 
 
-
-
-
-
-
-/**
- * center_changed_cb:
- */
 void Window::center_changed_cb(void) /* Slot. */
 {
 	qDebug() << "SLOT: Window: center changed";
-#if 0
-	// ATM Keep back always available, so when we pan - we can jump to the last requested position
-	/*
-	  GtkAction* action_back = gtk_action_group_get_action(window->action_group, "GoBack");
-	  if (action_back) {
-	  gtk_action_set_sensitive(action_back, vik_viewport_back_available(window->viewport));
-	  }
-	*/
-	GtkAction* action_forward = gtk_action_group_get_action(this->action_group, "GoForward");
-	if (action_forward) {
-		gtk_action_set_sensitive(action_forward, this->viewport->forward_available());
-	}
 
-	toolbar_action_set_sensitive(this->viking_vtb, "GoForward", this->viewport->forward_available());
-#endif
+	/* TODO: see if this comment should be implemented or not:
+	   "ATM Keep back always available, so when we pan - we can jump to the last requested position."
+	*/
+	this->qa_next_location->setEnabled(this->viewport->back_available());
+	this->qa_next_location->setEnabled(this->viewport->forward_available());
 }
 
 
@@ -1395,20 +1388,20 @@ void Window::pan_release(QMouseEvent * ev)
 	if (this->pan_move_flag == false) {
 		this->single_click_pending = !this->single_click_pending;
 		if (this->single_click_pending) {
-#if 0
-			// Store offset to use
+			/* Store offset to use. */
 			this->delayed_pan_x = this->pan_x;
 			this->delayed_pan_y = this->pan_y;
-			// Get double click time
-			GtkSettings *gs = gtk_widget_get_settings(this);
-			GValue dct = { 0 }; // = G_VALUE_INIT; // GLIB 2.30+ only
-			g_value_init(&dct, G_TYPE_INT);
-			g_object_get_property(G_OBJECT(gs), "gtk-double-click-time", &dct);
-			// Give chance for a double click to occur
-			int timer = g_value_get_int(&dct) + 50;
-			g_timeout_add(timer, (GSourceFunc) vik_window_pan_timeout, this);
-			do_draw = false;
+
+			/* Get double click time. */
+			int interval = qApp->doubleClickInterval() * 1.1;
+
+			/* Give chance for a double click to occur. Viking used +50 instead of *1.1. */
+			interval *= 1.1;
+
+#if 0
+			g_timeout_add(interval, (GSourceFunc) window_pan_timeout, this);
 #endif
+			do_draw = false;
 		} else {
 			this->viewport->set_center_screen(this->pan_x, this->pan_y);
 		}
@@ -1733,6 +1726,13 @@ void Window::set_full_screen_state_cb(bool new_state)
 {
 	if (this->full_screen_state != new_state) {
 		this->full_screen_state = new_state;
+
+#ifdef K
+		/* TODO: Since this slot can be called explicitly (as a regular method),
+		   shouldn't we keep related quaction/checkbox in sync here? */
+
+		this->qa_view_full_screen_state;
+#endif
 
 		const Qt::WindowStates state = this->windowState();
 		if (this->full_screen_state) {

@@ -387,6 +387,8 @@ namespace SlavGPS {
 		QAction * qa_drawmode_latlon = NULL;
 		QAction * qa_drawmode_utm = NULL;
 
+		QAction * qa_previous_location = NULL;
+		QAction * qa_next_location = NULL;
 
 		std::list<QString> recent_files;
 
