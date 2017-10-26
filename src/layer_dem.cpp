@@ -164,7 +164,7 @@ enum {
 
 
 
-static Parameter dem_layer_params[] = {
+static ParameterSpecification dem_layer_params[] = {
 	{ PARAM_FILES,      "files",    SGVariantType::STRING_LIST, PARAMETER_GROUP_GENERIC, N_("DEM Files:"),       WidgetType::FILELIST,        NULL,             NULL,             NULL, NULL },
 	{ PARAM_SOURCE,     "source",   SGVariantType::INT,         PARAMETER_GROUP_GENERIC, N_("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
 	{ PARAM_COLOR,      "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, N_("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },

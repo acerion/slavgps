@@ -95,7 +95,7 @@ SGFileTypeFilter file_type_xml[1] = { SGFileTypeFilter::XML };
 
 
 
-Parameter mapnik_layer_params[] = {
+ParameterSpecification mapnik_layer_params[] = {
 
 	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("CSS (MML) Config File:"), WidgetType::FILEENTRY,   file_type_css, file_default,         NULL, N_("CartoCSS configuration file") },
 	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("XML Config File:"),       WidgetType::FILEENTRY,   file_type_xml, file_default,         NULL, N_("Mapnik XML configuration file") },
@@ -203,7 +203,7 @@ static SGVariant fonts_default(void)
 
 
 
-static Parameter prefs[] = {
+static ParameterSpecification prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
 	{ 0, PREFERENCES_NAMESPACE_MAPNIK"plugins_directory",       SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("Plugins Directory:"),        WidgetType::FOLDERENTRY, NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
 	{ 1, PREFERENCES_NAMESPACE_MAPNIK"fonts_directory",         SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  N_("Fonts Directory:"),          WidgetType::FOLDERENTRY, NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },

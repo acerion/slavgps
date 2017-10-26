@@ -191,8 +191,8 @@ void Layer::preconfigure_interfaces(void)
 			continue;
 		}
 
-		for (Parameter * param_template = interface->parameters_c; param_template->name; param_template++) {
-			interface->parameters.insert(std::pair<param_id_t, Parameter *>(param_template->id, param_template));
+		for (ParameterSpecification * param_template = interface->parameters_c; param_template->name; param_template++) {
+			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_template->id, param_template));
 
 			/* Read and store default values of layer's parameters.
 			   First try to get program's internal/hardwired value.
@@ -226,7 +226,7 @@ static bool layer_defaults_register(LayerType layer_type)
 
 	/* Process each parameter. */
 	SGVariant value;
-	for (auto iter = layer_interface->parameters.begin(); iter != layer_interface->parameters.end(); iter++) {
+	for (auto iter = layer_interface->parameter_specifications.begin(); iter != layer_interface->parameter_specifications.end(); iter++) {
 		if (iter->second->group_id != PARAMETER_GROUP_HIDDEN) {
 			if (parameter_get_hardwired_value(value, *iter->second)) {
 				LayerDefaults::set(layer_type, iter->second, value);
@@ -240,7 +240,7 @@ static bool layer_defaults_register(LayerType layer_type)
 
 
 
-/* Frees old name. */
+
 void Layer::set_name(const QString & new_name)
 {
 	this->name = new_name;
@@ -411,7 +411,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 
 	/* Now the actual parameters. */
 	SGVariant param_value;
-	for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
+	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
 		qDebug() << "DD: Layer: Marshalling parameter" << iter->second->name;
 
 		param_value = this->get_param_value(iter->first, false);
@@ -475,7 +475,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 	free(s);
 
 	SGVariant param_value;
-	for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
+	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
 		qDebug() << "DD: Layer: Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type) {
 		case SGVariantType::STRING:
@@ -589,7 +589,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 		bool must_redraw = false;
 
-		for (auto iter = this->get_interface()->parameters.begin(); iter != this->get_interface()->parameters.end(); iter++) {
+		for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
@@ -660,7 +660,7 @@ void Layer::set_initial_parameter_values(void)
 
 	std::map<param_id_t, SGVariant> * defaults = &this->interface->parameter_default_values;
 
-	for (auto iter = this->interface->parameters.begin(); iter != this->interface->parameters.end(); iter++) {
+	for (auto iter = this->interface->parameter_specifications.begin(); iter != this->interface->parameter_specifications.end(); iter++) {
 		/* Ensure parameter is for use. */
 		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.

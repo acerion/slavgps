@@ -200,7 +200,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 	}
 
 	SGVariant param_value;
-	for (auto iter = ((Layer * ) layer)->get_interface()->parameters.begin(); iter != ((Layer * ) layer)->get_interface()->parameters.end(); iter++) { /* TODO: get rid of cast. */
+	for (auto iter = ((Layer * ) layer)->get_interface()->parameter_specifications.begin(); iter != ((Layer * ) layer)->get_interface()->parameter_specifications.end(); iter++) { /* TODO: get rid of cast. */
 
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
 		param_value = ((Layer * ) layer)->get_param_value(iter->first, true); /* TODO: get rid of cast. */
@@ -343,7 +343,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	uint16_t len;
 	long line_num = 0;
 
-	Parameter *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	ParameterSpecification *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
@@ -407,13 +407,13 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
 						params = Layer::get_interface(layer_type)->parameters_c;
-						params_count = Layer::get_interface(layer_type)->parameters.size();
+						params_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::construct_layer(layer_type, viewport);
 						stack->data = (void *) layer;
 						params = Layer::get_interface(layer_type)->parameters_c;
-						params_count = Layer::get_interface(layer_type)->parameters.size();
+						params_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {

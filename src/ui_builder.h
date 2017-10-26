@@ -106,7 +106,7 @@ namespace SlavGPS {
 	typedef struct ParameterExtra_e {
 		LayerConvertFunc convert_to_display;
 		LayerConvertFunc convert_to_internal;
-		void * extra_widget_data; /* Even more widget data, in addition to Parameter::widget_data. */
+		void * extra_widget_data; /* Even more widget data, in addition to ParameterSpecification::widget_data. */
 	} ParameterExtra;
 
 	typedef struct {
@@ -122,7 +122,7 @@ namespace SlavGPS {
 		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
 		ParameterExtra * extra;
 		const char *tooltip;
-	} Parameter;
+	} ParameterSpecification;
 
 	enum {
 		PARAMETER_GROUP_HIDDEN  = -2,  /* This parameter won't be displayed in UI. */
@@ -138,12 +138,12 @@ namespace SlavGPS {
 	} ParameterScale;
 
 
-	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, Parameter * params);
+	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * params);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
 	/* Frees data from last (if necessary). */
-	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, Parameter * params, uint16_t params_count);
+	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * params, uint16_t params_count);
 
-	bool parameter_get_hardwired_value(SGVariant & value, const Parameter & param);
+	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param);
 
 
 
@@ -166,15 +166,15 @@ namespace SlavGPS {
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, Parameter * parameters, const QString & default_name);
+		void fill(Waypoint * wp, ParameterSpecification * parameters, const QString & default_name);
 
-		SGVariant get_param_value(param_id_t id, Parameter * param);
+		SGVariant get_param_value(param_id_t id, ParameterSpecification * param);
 
 	private:
-		QWidget * new_widget(Parameter * param, const SGVariant & param_value);
+		QWidget * new_widget(ParameterSpecification * param, const SGVariant & param_value);
 
 		QFormLayout * insert_tab(QString const & label);
-		std::map<param_id_t, Parameter *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, Parameter *>::iterator & iter, std::map<param_id_t, Parameter *>::iterator & end);
+		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
 
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * ok = NULL;
@@ -192,7 +192,7 @@ namespace SlavGPS {
 
 	typedef struct {
 		void * layer;
-		Parameter * param;
+		ParameterSpecification * param;
 		int param_id;
 		GtkWidget ** widgets;
 		GtkWidget ** labels;
@@ -202,11 +202,11 @@ namespace SlavGPS {
 
 
 #ifdef K
-	GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data);
-	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, Parameter *param);
+	GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data);
+	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, ParameterSpecification *param);
 	int a_uibuilder_properties_factory(const char *dialog_name,
 					   Window * parent,
-					   Parameter *params,
+					   ParameterSpecification *params,
 					   uint16_t params_count,
 					   char **groups,
 					   uint8_t groups_count,
@@ -218,7 +218,7 @@ namespace SlavGPS {
 					   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
 	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
-	SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, Parameter *params,
+	SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, ParameterSpecification *params,
 					  uint16_t params_count, char **groups, uint8_t groups_count,
 					  SGVariant *params_defaults);
 #endif

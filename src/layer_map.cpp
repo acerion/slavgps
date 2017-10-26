@@ -222,7 +222,7 @@ enum {
 
 SGFileTypeFilter map_file_type[1] = { SGFileTypeFilter::MBTILES };
 
-Parameter maps_layer_params[] = {
+ParameterSpecification maps_layer_params[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
 	{ PARAM_MAPTYPE,       "mode",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Map Type:"),                            WidgetType::COMBOBOX,    &map_types,       id_default,           NULL, NULL },
 	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,             directory_default,    NULL, NULL },
@@ -314,7 +314,7 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 
-static Parameter prefs[] = {
+static ParameterSpecification prefs[] = {
 	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
 };
 

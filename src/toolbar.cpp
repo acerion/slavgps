@@ -149,7 +149,7 @@ typedef struct {
 
 static config_t extra_widget_data;
 
-static Parameter prefs[] = {
+static ParameterSpecification prefs[] = {
 	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
 	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
 	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },

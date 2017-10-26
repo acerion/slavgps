@@ -82,7 +82,7 @@ namespace SlavGPS {
 
 		/* Does given layer type have configurable properties that can be viewed and edited in dialog window?
 		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */
-		bool has_properties_dialog(void) { return this->parameters.size() != 0; };
+		bool has_properties_dialog(void) { return this->parameter_specifications.size() != 0; };
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given layer type. */
@@ -92,18 +92,19 @@ namespace SlavGPS {
 		/* Specification of parameters in each layer type is
 		   stored in 'parameters_c' C array.  During
 		   application startup, in Layer::preconfigure_interfaces(),
-		   pointers to these parameters in C array are stored
-		   in 'parameters' container. The parameters can be later
-		   accessed in C++-like fashion.
+		   pointers to these parameters in C array are stored in
+		   'parameter_specifications' container. The parameter
+		   specifications can be later accessed in C++-like
+		   fashion.
 
 		   Each layer type stores (here, in layer interface) a
 		   set of default values of parameters, to be used
 		   when user creates a new instance of layer of type X.
 
-		   Parameters can be combined into groups, they names
+		   Parameters can be combined into groups, the names
 		   of the groups are in parameter_groups. */
-		Parameter * parameters_c = NULL;
-		std::map<param_id_t, Parameter *> parameters;
+		ParameterSpecification * parameters_c = NULL;
+		std::map<param_id_t, ParameterSpecification *> parameter_specifications;
 		std::map<param_id_t, SGVariant>  parameter_default_values;
 		const char ** parameter_groups = NULL;
 

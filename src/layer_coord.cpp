@@ -57,7 +57,7 @@ enum {
 
 
 
-static Parameter coord_layer_params[] = {
+static ParameterSpecification coord_layer_params[] = {
 	{ PARAM_COLOR,          "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, N_("Color:"),          WidgetType::COLOR,          NULL,                  color_default,   NULL, NULL },
 	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
 	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },

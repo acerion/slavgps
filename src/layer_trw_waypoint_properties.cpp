@@ -51,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-Parameter wp_params[] = {
+ParameterSpecification wp_params[] = {
 	{ SG_WP_PARAM_NAME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LAT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LON,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },

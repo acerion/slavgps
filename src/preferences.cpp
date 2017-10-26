@@ -83,7 +83,7 @@ static std::vector<SGLabelID> params_time_ref_frame = {
 	SGLabelID("UTC",    2),
 };
 
-static Parameter general_prefs[] = {
+static ParameterSpecification general_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Degree format:"),            WidgetType::COMBOBOX,        &params_degree_formats, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Distance units:"),           WidgetType::COMBOBOX,        &params_units_distance, NULL, NULL, NULL },
 	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
@@ -115,7 +115,7 @@ static std::vector<SGLabelID> params_gpx_export_wpt_symbols = {
 	SGLabelID("Lowercase",  1),
 };
 
-static Parameter io_prefs[] = {
+static ParameterSpecification io_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("KML File Export Units:"), WidgetType::COMBOBOX, &params_kml_export_units,       NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Track Order:"),       WidgetType::COMBOBOX, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
 	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
@@ -123,13 +123,13 @@ static Parameter io_prefs[] = {
 };
 
 #ifndef WINDOWS
-static Parameter io_prefs_non_windows[] = {
+static ParameterSpecification io_prefs_non_windows[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "image_viewer", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
 	{ 1, NULL,                                    SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
 };
 #endif
 
-static Parameter io_prefs_external_gpx[] = {
+static ParameterSpecification io_prefs_external_gpx[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "external_gpx_1", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_IO "external_gpx_2", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
 	{ 2, NULL,                                      SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                          WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
@@ -142,7 +142,7 @@ static std::vector<SGLabelID> params_vik_fileref = {
 
 static ParameterScale scale_recent_files = { -1, 25, SGVariant((int32_t) 10), 1, 0 }; /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
 
-static Parameter prefs_advanced[] = {
+static ParameterSpecification prefs_advanced[] = {
 	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
 	{ 1, PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
 	{ 2, PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip",      SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
@@ -157,7 +157,7 @@ static std::vector<SGLabelID> params_startup_methods = {
 	SGLabelID("Auto Location",  3),
 };
 
-static Parameter startup_prefs[] = {
+static ParameterSpecification startup_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_STARTUP "restore_window_state",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Restore window size and layout") },
 	{ 1, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
 	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Startup Method:"),          WidgetType::COMBOBOX,    &params_startup_methods, NULL, NULL, NULL },
@@ -188,15 +188,15 @@ static Preferences preferences;
 
 
 /* How to get a value of parameter:
-   1. use id to get a parameter from registered_parameters, then
-   2. use parameter->name to look up parameter's value in registered_parameters_values.
+   1. use id to get a parameter from registered_parameter_specifications, then
+   2. use parameter->name to look up parameter's value in registered_parameter_values.
    You probably can skip right to point 2 if you know full name of parameter.
 
    How to set a value of parameter:
    1.
    2.
 */
-static std::map<param_id_t, Parameter *> registered_parameters; /* Parameter id -> Parameter. */
+static std::map<param_id_t, ParameterSpecification *> registered_parameter_specifications; /* Parameter id -> Parameter Specification. */
 static std::map<std::string, SGVariant *> registered_parameter_values; /* Parameter name -> Value of parameter. */
 
 
@@ -302,24 +302,24 @@ static bool preferences_load_from_file()
 bool Preferences::set_param_value(param_id_t id, const SGVariant & value)
 {
 	/* Don't change stored pointer values. */
-	if (registered_parameters[id]->type == SGVariantType::PTR) {
+	if (registered_parameter_specifications[id]->type == SGVariantType::PTR) {
 		return false;
 	}
-	if (registered_parameters[id]->type == SGVariantType::STRING_LIST) {
+	if (registered_parameter_specifications[id]->type == SGVariantType::STRING_LIST) {
 		qDebug() << "EE: Preferences: Set Parameter Value: 'string list' not implemented";
 		return false;
 	}
-	if (value.type_id != registered_parameters[id]->type) {
-		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << registered_parameters[id]->name;
+	if (value.type_id != registered_parameter_specifications[id]->type) {
+		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << registered_parameter_specifications[id]->name;
 		return false;
 	}
 
 	SGVariant * new_val = new SGVariant(value); /* New value to save under an existing name. */
 	/* FIXME: delete old value first? */
-	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_val;
+	registered_parameter_values.at(std::string(registered_parameter_specifications[id]->name)) = new_val;
 
-	if (registered_parameters[id]->type == SGVariantType::DOUBLE) {
-		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_val->d;
+	if (registered_parameter_specifications[id]->type == SGVariantType::DOUBLE) {
+		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameter_specifications[id]->name << new_val->d;
 	}
 
 	return true;
@@ -331,11 +331,10 @@ bool Preferences::set_param_value(param_id_t id, const SGVariant & value)
 bool Preferences::set_param_value(const char * name, const SGVariant & value)
 {
 	param_id_t id = 0;
-	for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
+	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
 		if (0 == strcmp(iter->second->name, name)) {
-			preferences.set_param_value(iter->first, value);
 			qDebug() << "II: Preferences: Set Param Value: setting value of param" << name;
-			return true;
+			return preferences.set_param_value(iter->first, value);
 		}
 	}
 
@@ -347,7 +346,7 @@ bool Preferences::set_param_value(const char * name, const SGVariant & value)
 
 SGVariant Preferences::get_param_value(param_id_t id)
 {
-	auto val = registered_parameter_values.find(std::string(registered_parameters[id]->name));
+	auto val = registered_parameter_values.find(std::string(registered_parameter_specifications[id]->name));
 	assert (val != registered_parameter_values.end());
 
 	if (val->second->type_id == SGVariantType::STRING_LIST) {
@@ -376,8 +375,8 @@ bool Preferences::save_to_file(void)
 		return false;
 	}
 
-	for (unsigned int i = 0; i < registered_parameters.size(); i++) {
-		Parameter * param = registered_parameters[i];
+	for (unsigned int i = 0; i < registered_parameter_specifications.size(); i++) {
+		ParameterSpecification * param = registered_parameter_specifications[i];
 		auto val_iter = registered_parameter_values.find(std::string(param->name));
 		if (val_iter != registered_parameter_values.end()) {
 			if (val_iter->second->type_id != SGVariantType::PTR) {
@@ -406,7 +405,7 @@ void Preferences::show_window(QWidget * parent)
 	dialog.fill(&preferences);
 
 	if (QDialog::Accepted == dialog.exec()) {
-		for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
+		for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			if (iter->second->type == SGVariantType::DOUBLE) {
 				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
@@ -421,7 +420,7 @@ void Preferences::show_window(QWidget * parent)
 
 
 
-void SlavGPS::Preferences::register_parameter(Parameter * parameter, const SGVariant & default_value, const char * group_key)
+void SlavGPS::Preferences::register_parameter(ParameterSpecification * parameter, const SGVariant & default_value, const char * group_key)
 {
 	static param_id_t param_id = 0;
 
@@ -431,7 +430,7 @@ void SlavGPS::Preferences::register_parameter(Parameter * parameter, const SGVar
 	}
 
 	/* Copy value. */
-        Parameter * new_parameter = new Parameter;
+        ParameterSpecification * new_parameter = new ParameterSpecification;
 	*new_parameter = *parameter;
 
 	if (default_value.type_id != parameter->type) {
@@ -442,7 +441,7 @@ void SlavGPS::Preferences::register_parameter(Parameter * parameter, const SGVar
 		new_parameter->group_id = preferences_group_key_to_group_id(QString(group_key));
 	}
 
-	registered_parameters.insert(std::pair<param_id_t, Parameter *>(param_id, new_parameter));
+	registered_parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_id, new_parameter));
 	registered_parameter_values.insert(std::pair<std::string, SGVariant *>(std::string(new_parameter->name), new_val));
 	param_id++;
 }
@@ -461,7 +460,7 @@ void Preferences::Preferences()
 
 void Preferences::uninit()
 {
-	registered_parameters.clear();
+	registered_parameter_specifications.clear();
 	registered_parameter_values.clear(); /* TODO: delete objects stored in the container as well? */
 }
 
@@ -490,17 +489,17 @@ SGVariant * SlavGPS::a_preferences_get(const char * key)
 
 
 
-std::map<param_id_t, Parameter *>::iterator Preferences::begin()
+std::map<param_id_t, ParameterSpecification *>::iterator Preferences::begin()
 {
-	return registered_parameters.begin();
+	return registered_parameter_specifications.begin();
 }
 
 
 
 
-std::map<param_id_t, Parameter *>::iterator Preferences::end()
+std::map<param_id_t, ParameterSpecification *>::iterator Preferences::end()
 {
-	return registered_parameters.end();
+	return registered_parameter_specifications.end();
 }
 
 

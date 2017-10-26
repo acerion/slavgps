@@ -152,7 +152,7 @@ void PropertiesDialog::fill(Layer * layer)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer" << layer->get_name();
 
-	for (auto iter = layer->get_interface()->parameters.begin(); iter != layer->get_interface()->parameters.end(); iter++) {
+	for (auto iter = layer->get_interface()->parameter_specifications.begin(); iter != layer->get_interface()->parameter_specifications.end(); iter++) {
 		param_id_t group_id = iter->second->group_id;
 
 		auto form_iter = this->forms.find(group_id);
@@ -198,7 +198,7 @@ void PropertiesDialog::fill(LayerInterface * interface)
 
 	std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
-	for (auto iter = interface->parameters.begin(); iter != interface->parameters.end(); iter++) {
+	for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
 		param_id_t group_id = iter->second->group_id;
 		if (group_id == PARAMETER_GROUP_HIDDEN) {
 			iter++;
@@ -231,7 +231,7 @@ void PropertiesDialog::fill(LayerInterface * interface)
 
 
 
-void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString & default_name)
+void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * parameters, const QString & default_name)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from waypoint";
 
@@ -239,7 +239,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString
 	QFormLayout * form = this->insert_tab(tr("Properties"));
 	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group_id, form));
 	SGVariant param_value; // = layer->get_param_value(i, false);
-	Parameter * param = NULL;
+	ParameterSpecification * param = NULL;
 	QWidget * widget = NULL;
 
 
@@ -320,7 +320,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters, const QString
 
 
 
-std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, Parameter *>::iterator & iter, std::map<param_id_t, Parameter *>::iterator & end)
+std::map<param_id_t, ParameterSpecification *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end)
 {
 	param_id_t i = 0;
 	param_id_t last_group_id = iter->second->group_id;
@@ -358,7 +358,7 @@ std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab
 
 
 
-QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & param_value)
+QWidget * PropertiesDialog::new_widget(ParameterSpecification * param, const SGVariant & param_value)
 {
 	/* Perform pre conversion if necessary. */
 	SGVariant var = param_value;
@@ -591,7 +591,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, const SGVariant & para
 
 
 
-SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
+SGVariant PropertiesDialog::get_param_value(param_id_t id, ParameterSpecification * param)
 {
 	SGVariant rv;
 
@@ -717,7 +717,7 @@ SGVariant PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 
 
 
-void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, Parameter * params)
+void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, ParameterSpecification * params)
 {
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
@@ -741,7 +741,7 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(SGVariant * param_table, Parameter *params, uint16_t params_count)
+void a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpecification *params, uint16_t params_count)
 {
 	int i;
 	/* May have to free strings, etc. */
@@ -760,7 +760,7 @@ void a_uibuilder_free_paramdatas(SGVariant * param_table, Parameter *params, uin
 
 
 
-bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const Parameter & param)
+bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param)
 {
 	SGVariant param_value;
 	if (param.widget_type == WidgetType::SPINBOX_DOUBLE
@@ -793,7 +793,7 @@ bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const Parameter &
 //static void draw_to_image_file_total_area_cb (QSpinBox * spinbutton, void * *pass_along)
 int a_uibuilder_properties_factory(const char * dialog_name,
 				   QWindow * parent,
-				   Parameter * params,
+				   ParameterSpecification * params,
 				   uint16_t params_count,
 				   char ** groups,
 				   uint8_t groups_count,
@@ -970,7 +970,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 
 
-SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, Parameter *params,
+SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, ParameterSpecification *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
 				       SGVariant *params_defaults)
 {
@@ -997,7 +997,7 @@ SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, Para
 
 
 
-GtkWidget *a_uibuilder_new_widget(Parameter *param, SGVariant data)
+GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data)
 {
 	/* Perform pre conversion if necessary. */
 	SGVariant var = data;

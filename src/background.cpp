@@ -257,7 +257,7 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 #ifdef HAVE_LIBMAPNIK
 ParameterScale scale_threads = { 1, 64, SGVariant((int32_t) 1), 1, 0 }; /* 64 threads should be enough for anyone...; TODO: verify the hardwired default value. */
 /* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
-static Parameter prefs_mapnik[] = {
+static ParameterSpecification prefs_mapnik[] = {
 	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
 };
 #endif

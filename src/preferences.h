@@ -61,7 +61,7 @@ namespace SlavGPS {
 		   so pref key is not copied. default param data IS copied. */
 		/* Group field (integer) will be overwritten. */
 		/* \param parameter should be persistent through the life of the preference. */
-		static void register_parameter(Parameter * parameter, const SGVariant & default_value, const char * group_key);
+		static void register_parameter(ParameterSpecification * parameter, const SGVariant & default_value, const char * group_key);
 
 		/* Set value of a single parameter - by internal id. */
 		static bool set_param_value(param_id_t id, const SGVariant & value);
@@ -70,8 +70,8 @@ namespace SlavGPS {
 		/* Get value of a single parameter - by internal id. */
 		SGVariant get_param_value(param_id_t id);
 
-		std::map<param_id_t, Parameter *>::iterator begin();
-		std::map<param_id_t, Parameter *>::iterator end();
+		std::map<param_id_t, ParameterSpecification *>::iterator begin();
+		std::map<param_id_t, ParameterSpecification *>::iterator end();
 
 		static bool get_restore_window_state(void);
 

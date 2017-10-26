@@ -85,7 +85,7 @@ enum {
 
 
 
-Parameter georef_layer_params[] = {
+ParameterSpecification georef_layer_params[] = {
 	{ PARAM_IMAGE, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
 	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
 	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
@@ -151,7 +151,7 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewpor
 
 
 
-static Parameter io_prefs[] = {
+static ParameterSpecification io_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 

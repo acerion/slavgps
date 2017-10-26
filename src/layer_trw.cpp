@@ -276,7 +276,7 @@ enum {
 };
 
 
-Parameter trw_layer_params[] = {
+ParameterSpecification trw_layer_params[] = {
 	{ PARAM_TRACKS_VISIBLE,        "tracks_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN,  "Tracks are visible",                   WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WAYPOINTS_VISIBLE,     "waypoints_visible", SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN,  "Waypoints are visible",                WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_ROUTES_VISIBLE,        "routes_visible",    SGVariantType::BOOLEAN, PARAMETER_GROUP_HIDDEN,  "Routes are visible",                   WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },

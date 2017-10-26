@@ -212,7 +212,7 @@ namespace SlavGPS {
 
 
 		/*** UI Building.        ***/
-		Parameter *      params;
+		ParameterSpecification *      params;
 		uint16_t         params_count;
 		SGVariant * params_defaults;
 		char **          params_groups;
