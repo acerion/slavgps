@@ -120,6 +120,11 @@ namespace SlavGPS {
 
 
 
+	typedef int16_t param_id_t; /* This shall be a signed type. */
+
+
+
+
 	typedef enum sort_order_e {
 		VL_SO_NONE = 0,
 		VL_SO_ALPHABETICAL_ASCENDING,

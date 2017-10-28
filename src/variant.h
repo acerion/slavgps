@@ -61,12 +61,13 @@ namespace SlavGPS {
 		SGVariant(const char * str, SGVariantType type_id); /* Construct value of given type using data from given string. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
-		SGVariant()                { type_id = SGVariantType::EMPTY; }
-		SGVariant(double d_)       { type_id = SGVariantType::DOUBLE; d = d_; }
-		SGVariant(uint32_t u_)     { type_id = SGVariantType::UINT; u = u_; }
-		SGVariant(int32_t i_)      { type_id = SGVariantType::INT; i = i_; }
+		SGVariant()                   { type_id = SGVariantType::EMPTY; }
+		SGVariant(double d_)          { type_id = SGVariantType::DOUBLE; d = d_; }
+		SGVariant(uint32_t u_)        { type_id = SGVariantType::UINT; u = u_; }
+		SGVariant(int32_t i_)         { type_id = SGVariantType::INT; i = i_; }
 		SGVariant(const QString & s_) { type_id = SGVariantType::STRING; s = s_; }
-		SGVariant(bool b_)         { type_id = SGVariantType::BOOLEAN; b = b_; }
+		SGVariant(const char * s_)    { type_id = SGVariantType::STRING; s = QString(s_); }
+		SGVariant(bool b_)            { type_id = SGVariantType::BOOLEAN; b = b_; }
 		SGVariant(int r_, int g_, int b_, int a_) { type_id = SGVariantType::COLOR; c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
 		SGVariant(const QColor & color);
 		SGVariant(const QStringList & sl_) { type_id = SGVariantType::STRING_LIST; sl = sl_; }
@@ -88,6 +89,7 @@ namespace SlavGPS {
 	};
 
 
+	QDebug operator<<(QDebug debug, const SGVariant & value);
 
 
 	SGVariant sg_variant_true(void);

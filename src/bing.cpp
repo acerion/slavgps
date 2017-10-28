@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "variant.h"
 #include "bing.h"
 #include "layer_map.h"
 #include "map_source_bing.h"

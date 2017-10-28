@@ -24,18 +24,24 @@
 
 
 
-#include <cstdint>
-#include <map>
-
 #include <QWidget>
 #include <QHash>
 
-#include "ui_builder.h"
+
+
+
+#include "globals.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class SGVariant;
+	class ParameterSpecification;
 
 
 
@@ -63,18 +69,15 @@ namespace SlavGPS {
 		/* \param param_spec should be persistent through the life of the preference. */
 		static void register_parameter(ParameterSpecification * param_spec, const SGVariant & default_param_value);
 
-		/* Set value of a single parameter - by internal id. */
-		static bool set_param_value(param_id_t id, const SGVariant & value);
-		/* Set value of a single parameter - by name. */
-		static bool set_param_value(const char * name, const SGVariant & value);
-		/* Get value of a single parameter - by internal id. */
-		static SGVariant get_param_value(param_id_t id);
-		/* Get value of a single parameter - by namespace/key pair. */
-		static const SGVariant * get_param_value(const char * key);
+		/* Set value of a single parameter. */
+		static bool set_param_value(const char * param_name, const SGVariant & param_value);
+		static bool set_param_value(const QString & param_name, const SGVariant & param_value);
+		/* Get value of a single parameter. */
+		static const SGVariant * get_param_value(const char * param_name);
 
 
-		std::map<param_id_t, ParameterSpecification *>::iterator begin();
-		std::map<param_id_t, ParameterSpecification *>::iterator end();
+		QHash<QString, ParameterSpecification *>::iterator begin();
+		QHash<QString, ParameterSpecification *>::iterator end();
 
 		static bool get_restore_window_state(void);
 

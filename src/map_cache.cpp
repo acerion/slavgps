@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <QDebug>
 
+#include "ui_builder.h"
 #include "globals.h"
 #include "map_cache.h"
 #include "preferences.h"

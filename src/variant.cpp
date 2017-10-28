@@ -126,3 +126,41 @@ void SGVariant::to_qcolor(QColor & color) const
 
 	color = QColor(this->c.r, this->c.g, this->c.b, this->c.a);
 }
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
+{
+	switch ((int) value.type_id) {
+	case (int) SGVariantType::EMPTY:
+		debug << "<empty type>";
+		break;
+	case (int) SGVariantType::DOUBLE:
+		debug << "double" << value.d;
+		break;
+	case (int) SGVariantType::UINT:
+		debug << "uint" << value.u;
+		break;
+	case (int) SGVariantType::INT:
+		debug << "int" << value.i;
+		break;
+	case (int) SGVariantType::STRING:
+		debug << "string" << value.s;
+		break;
+	case (int) SGVariantType::BOOLEAN:
+		debug << "bool" << value.b;
+		break;
+	case (int) SGVariantType::COLOR:
+		debug << "color" << value.c.r << value.c.g << value.c.b << value.c.a;
+		break;
+	case (int) SGVariantType::STRING_LIST:
+		debug << "slist" << value.sl;
+		break;
+	case (int) SGVariantType::PTR:
+		debug << "ptr" << QString("0x%1").arg((unsigned long) value.ptr);
+		break;
+	};
+
+	return debug;
+}

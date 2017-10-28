@@ -28,6 +28,7 @@
 
 #include <QDialog>
 
+#include "variant.h"
 #include "layer.h"
 #include "layer_interface.h"
 
@@ -43,6 +44,7 @@ namespace SlavGPS {
 	class Viewport;
 	class LayersPanel;
 	class Track;
+	class Waypoint;
 
 
 

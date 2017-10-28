@@ -24,17 +24,23 @@
 
 
 
-#include <cstdint>
-
 #include <QWidget>
 
-#include "ui_builder.h"
+
+
+
 #include "layer.h"
+#include "variant.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class ParameterSpecification;
 
 
 

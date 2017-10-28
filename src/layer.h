@@ -36,8 +36,6 @@
 #include "tree_view.h"
 #include "viewport.h"
 #include "globals.h"
-#include "ui_builder.h"
-#include "variant.h"
 
 
 
@@ -52,6 +50,8 @@ namespace SlavGPS {
 	class LayerTool;
 	class LayerInterface;
 	class LayersPanel;
+	class SGVariant;
+	class ParameterSpecification;
 
 
 

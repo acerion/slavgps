@@ -40,6 +40,7 @@
 #include <QString>
 #include <QTabWidget>
 #include <QVector>
+#include <QHash>
 
 #include "globals.h"
 #include "variant.h"
@@ -67,8 +68,6 @@ namespace SlavGPS {
 
 
 	typedef int GtkWidget; /* TODO: remove sooner or later. */
-
-	typedef int16_t param_id_t; /* This shall be a signed type. */
 
 
 
@@ -109,8 +108,8 @@ namespace SlavGPS {
 		void * extra_widget_data; /* Even more widget data, in addition to ParameterSpecification::widget_data. */
 	} ParameterExtra;
 
-	typedef struct {
-		// LayerType layer_type;
+	class ParameterSpecification {
+	public:
 		param_id_t id;
 		const char * name_space;
 		const char * name;
@@ -123,7 +122,7 @@ namespace SlavGPS {
 		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
 		ParameterExtra * extra;
 		const char *tooltip;
-	} ParameterSpecification;
+	};
 
 	enum {
 		PARAMETER_GROUP_HIDDEN  = -2,  /* This parameter won't be displayed in UI. */
@@ -169,7 +168,8 @@ namespace SlavGPS {
 		void fill(LayerInterface * interface);
 		void fill(Waypoint * wp, ParameterSpecification * param_specs, const QString & default_name);
 
-		SGVariant get_param_value(param_id_t id, ParameterSpecification * param_spec);
+		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification * param_spec);
+		SGVariant get_param_value(const QString & param_name, const ParameterSpecification * param_spec);
 
 	private:
 		QWidget * new_widget(ParameterSpecification * param_spec, const SGVariant & param_value);
@@ -177,12 +177,20 @@ namespace SlavGPS {
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
 
+		SGVariant get_param_value_from_widget(QWidget * widget, const ParameterSpecification * param_spec);
+
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * ok = NULL;
 		QPushButton * cancel = NULL;
 		QVBoxLayout * vbox = NULL;
 
+		/* Referencing parameters (and widgets that are
+		   related to the parameters) can be done through
+		   either parameter name (QString) or parameter id
+		   (param_id_t). */
+		QHash<QString, QWidget *> widgets2;
 		std::map<param_id_t, QWidget *> widgets;
+
 		std::map<param_id_t, QFormLayout *> forms;
 
 		QTabWidget * tabs = NULL;

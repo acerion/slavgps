@@ -6,6 +6,7 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    preferences.cpp \
     layer_trw_dialogs.cpp \
     routing.cpp \
     routing_engine.cpp \
@@ -127,7 +128,6 @@ SOURCES += main.cpp \
     download.cpp \
     curl_download.cpp \
     dialog.cpp \
-    preferences.cpp \
     settings.cpp \
     statusbar.cpp \
     modules.cpp \

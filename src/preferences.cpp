@@ -196,8 +196,8 @@ static Preferences preferences;
    1.
    2.
 */
-static std::map<param_id_t, ParameterSpecification *> registered_parameter_specifications; /* Parameter id -> Parameter Specification. */
-static std::map<std::string, SGVariant *> registered_parameter_values; /* Parameter name -> Value of parameter. */
+static QHash<QString, ParameterSpecification *> registered_parameter_specifications; /* Parameter name -> Parameter specification. */
+static QHash<QString, SGVariant *> registered_parameter_values; /* Parameter name -> Value of parameter. */
 
 
 
@@ -278,12 +278,12 @@ static bool preferences_load_from_file()
 
 			/* Otherwise change it (you know the type!).
 			   If it's a string list do some funky stuff ... yuck... not yet. */
-			if (old_val_iter->second->type_id == SGVariantType::STRING_LIST) {
+			if (old_val_iter.value()->type_id == SGVariantType::STRING_LIST) {
 				qDebug() << "EE: Preferences: Load from File: 'string list' not implemented";
 			}
 
-			SGVariant * new_val = new SGVariant(val, old_val_iter->second->type_id);
-			registered_parameter_values.at(std::string(key)) = new_val;
+			SGVariant * new_val = new SGVariant(val, old_val_iter.value()->type_id);
+			registered_parameter_values.insert(QString(key), new_val);
 
 			free(key);
 			free(val);
@@ -299,28 +299,34 @@ static bool preferences_load_from_file()
 
 
 
-bool Preferences::set_param_value(param_id_t id, const SGVariant & value)
+bool Preferences::set_param_value(const char * param_name, const SGVariant & param_value)
 {
-	/* Don't change stored pointer values. */
-	if (registered_parameter_specifications[id]->type == SGVariantType::PTR) {
+	auto iter = registered_parameter_specifications.find(QString(param_name));
+	if (iter == registered_parameter_specifications.end()) {
+		qDebug() << "EE: Preferences: Set Param Value: parameter" << param_name << "not found";
 		return false;
 	}
-	if (registered_parameter_specifications[id]->type == SGVariantType::STRING_LIST) {
+
+	ParameterSpecification * param_spec = *iter;
+
+	/* Don't change stored pointer values. */
+	if (param_spec->type == SGVariantType::PTR) {
+		return false;
+	}
+	if (param_spec->type == SGVariantType::STRING_LIST) {
 		qDebug() << "EE: Preferences: Set Parameter Value: 'string list' not implemented";
 		return false;
 	}
-	if (value.type_id != registered_parameter_specifications[id]->type) {
-		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << registered_parameter_specifications[id]->name;
+	if (param_value.type_id != param_spec->type) {
+		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << param_spec->name << (int) param_value.type_id << (int) param_spec->type;
 		return false;
 	}
 
-	SGVariant * new_val = new SGVariant(value); /* New value to save under an existing name. */
+	SGVariant * new_param_value = new SGVariant(param_value); /* New value to save under an existing name. */
 	/* FIXME: delete old value first? */
-	registered_parameter_values.at(std::string(registered_parameter_specifications[id]->name)) = new_val;
+	registered_parameter_values.insert(QString(param_spec->name), new_param_value);
 
-	if (registered_parameter_specifications[id]->type == SGVariantType::DOUBLE) {
-		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameter_specifications[id]->name << new_val->d;
-	}
+	qDebug() << "II: Preferences: saved parameter" << param_spec->name << " = " << *new_param_value;
 
 	return true;
 }
@@ -328,31 +334,9 @@ bool Preferences::set_param_value(param_id_t id, const SGVariant & value)
 
 
 
-bool Preferences::set_param_value(const char * name, const SGVariant & value)
+bool Preferences::set_param_value(const QString & param_name, const SGVariant & param_value)
 {
-	param_id_t id = 0;
-	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
-		if (0 == strcmp(iter->second->name, name)) {
-			qDebug() << "II: Preferences: Set Param Value: setting value of param" << name;
-			return preferences.set_param_value(iter->first, value);
-		}
-	}
-
-	return false;
-}
-
-
-
-
-SGVariant Preferences::get_param_value(param_id_t id)
-{
-	auto val = registered_parameter_values.find(std::string(registered_parameter_specifications[id]->name));
-	assert (val != registered_parameter_values.end());
-
-	if (val->second->type_id == SGVariantType::STRING_LIST) {
-		qDebug() << "EE: Preferences: Get Param Value: 'string list' not implemented in preferences";
-	}
-	return *val->second;
+	return Preferences::set_param_value(param_name.toUtf8().constData(), param_value);
 }
 
 
@@ -375,15 +359,15 @@ bool Preferences::save_to_file(void)
 		return false;
 	}
 
-	for (unsigned int i = 0; i < registered_parameter_specifications.size(); i++) {
-		ParameterSpecification * param_spec = registered_parameter_specifications[i];
-		auto val_iter = registered_parameter_values.find(std::string(param_spec->name));
+	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
+		ParameterSpecification * param_spec = *iter;
+		auto val_iter = registered_parameter_values.find(QString(param_spec->name));
 		if (val_iter != registered_parameter_values.end()) {
-			if (val_iter->second->type_id != SGVariantType::PTR) {
-				if (val_iter->second->type_id == SGVariantType::DOUBLE) {
-					qDebug() << "II: Preferences: saving to file" << param_spec->name << (double) val_iter->second->d;
-				}
-				file_write_layer_param(file, param_spec->name, val_iter->second->type_id, val_iter->second);
+
+			const SGVariant * value = val_iter.value();
+			if (value->type_id != SGVariantType::PTR) {
+				qDebug() << "II: Preferences: saving to file" << param_spec->name << " = " << *value;
+				file_write_layer_param(file, param_spec->name, value->type_id, value);
 			}
 		}
 	}
@@ -406,12 +390,13 @@ void Preferences::show_window(QWidget * parent)
 
 	if (QDialog::Accepted == dialog.exec()) {
 		for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
-			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
-			if (iter->second->type == SGVariantType::DOUBLE) {
-				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
-			}
-			qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name;
-			preferences.set_param_value(iter->first, param_value);
+			const QString param_name = iter.key();
+			const ParameterSpecification * param_spec = iter.value();
+
+			const SGVariant param_value = dialog.get_param_value(param_name, param_spec);
+
+			qDebug() << "II: Preferences: extracted from dialog parameter" << param_spec->name << " = " << param_value;
+			Preferences::set_param_value(param_name, param_value);
 		}
 		Preferences::save_to_file();
 	}
@@ -422,11 +407,14 @@ void Preferences::show_window(QWidget * parent)
 
 void SlavGPS::Preferences::register_parameter(ParameterSpecification * param_spec, const SGVariant & default_value)
 {
-	static param_id_t param_id = 0;
+	/* In the debug message print name and name space separately, to improve debugging. */
+	qDebug() << "II: Preferences: registering preference" << param_spec->name_space << param_spec->name << " = " << default_value;
+
+	const QString key = QString(param_spec->name_space) + "." + QString(param_spec->name);
 
 	/* All preferences should be registered before loading. */
 	if (preferences.loaded) {
-		qDebug() << "EE: Preferences: registering preference" << param_spec->name_space << param_spec->name << "after loading preferences from" << VIKING_PREFERENCES_FILE;
+		qDebug() << "EE: Preferences: registering preference" << key << "after loading preferences from" << VIKING_PREFERENCES_FILE;
 	}
 
 	/* Copy value. */
@@ -434,16 +422,15 @@ void SlavGPS::Preferences::register_parameter(ParameterSpecification * param_spe
 	*new_param_spec = *param_spec;
 
 	if (default_value.type_id != param_spec->type) {
-		qDebug() << "EE: Preferences: Register Parameter: mismatch of type id for parameter" << param_spec->name_space << param_spec->name;
+		qDebug() << "EE: Preferences: Register Parameter: mismatch of type id for parameter" << key << (int) default_value.type_id << (int) param_spec->type;
 	}
 	SGVariant * new_val = new SGVariant(default_value);
 	if (param_spec->name_space) {
 		new_param_spec->group_id = preferences_group_key_to_group_id(QString(param_spec->name_space));
 	}
 
-	registered_parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_id, new_param_spec));
-	registered_parameter_values.insert(std::pair<std::string, SGVariant *>(std::string(new_param_spec->name_space) + "." + std::string(new_param_spec->name), new_val));
-	param_id++;
+	registered_parameter_specifications.insert(key, new_param_spec);
+	registered_parameter_values.insert(key, new_val);
 }
 
 
@@ -467,29 +454,29 @@ void Preferences::uninit()
 
 
 
-const SGVariant * SlavGPS::Preferences::get_param_value(const char * key)
+const SGVariant * Preferences::get_param_value(const char * param_name)
 {
 	if (!preferences.loaded) {
-		qDebug() << "DD: Preferences: calling _get() for the first time (key is" << key << ")";
+		qDebug() << "DD: Preferences: calling _get() for the first time (param name is" << param_name << ")";
 
 		/* Since we can't load the file in Preferences::init() (no params registered yet),
-		   do it once before we get the first key. */
+		   do it once before we get the first param name. */
 		preferences_load_from_file();
 		preferences.loaded = true;
 	}
 
-	auto val_iter = registered_parameter_values.find(std::string(key));
+	auto val_iter = registered_parameter_values.find(QString(param_name));
 	if (val_iter == registered_parameter_values.end()) {
 		return NULL;
 	} else {
-		return val_iter->second;
+		return val_iter.value();
 	}
 }
 
 
 
 
-std::map<param_id_t, ParameterSpecification *>::iterator Preferences::begin()
+QHash<QString, ParameterSpecification *>::iterator Preferences::begin()
 {
 	return registered_parameter_specifications.begin();
 }
@@ -497,7 +484,7 @@ std::map<param_id_t, ParameterSpecification *>::iterator Preferences::begin()
 
 
 
-std::map<param_id_t, ParameterSpecification *>::iterator Preferences::end()
+QHash<QString, ParameterSpecification *>::iterator Preferences::end()
 {
 	return registered_parameter_specifications.end();
 }

@@ -26,6 +26,7 @@
 
 #include <cstdlib>
 
+#include "variant.h"
 #include "osm.h"
 #include "map_ids.h"
 #include "layer_map.h"

@@ -28,6 +28,7 @@
 #include <QPen>
 #include <QDebug>
 
+#include "ui_builder.h"
 #include "viewport_internal.h"
 #include "layer_coord.h"
 #include "util.h"
