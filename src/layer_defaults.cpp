@@ -49,7 +49,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 
 #if 0
-static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * params);
+static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec);
 static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 #endif
@@ -64,7 +64,7 @@ static bool layer_defaults_save_to_file(void);
 
 
 /* A list of the parameter types in use. */
-std::vector<ParameterSpecification *> default_parameters;
+std::vector<ParameterSpecification *> default_parameters_specifications;
 
 static QSettings * keyfile = NULL;
 static bool loaded;
@@ -190,13 +190,13 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 #if 0
 
 
-static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * params)
+static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	ParameterSpecification * layer_param = default_parameters.at(index + id);
+	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
 
-	write_parameter_value(value, layer_param->layer_type, layer_param->name, layer_param->type);
+	write_parameter_value(value, layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);
 }
 
 
@@ -206,9 +206,9 @@ static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool not
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	ParameterSpecification * layer_param = default_parameters.at(index + id);
+	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
 
-	return read_parameter_value(layer_param->layer_type, layer_param->name, layer_param->type);
+	return read_parameter_value(layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);
 }
 
 
@@ -225,18 +225,18 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 	/* Process each parameter. */
 	for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
-		const ParameterSpecification * param = iter->second;
-		if (param->group_id == PARAMETER_GROUP_HIDDEN) {
+		const ParameterSpecification * param_spec = iter->second;
+		if (param_spec->group_id == PARAMETER_GROUP_HIDDEN) {
 			continue;
 		}
 
 		bool success = false;
 		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
-		read_parameter_value(layer_type, param->name, param->type, &success);
+		read_parameter_value(layer_type, param_spec->name, param_spec->type, &success);
 		if (!success) {
 			SGVariant value;
-			if (parameter_get_hardwired_value(value, *param)) {
-				write_parameter_value(value, layer_type, param->name, param->type);
+			if (parameter_get_hardwired_value(value, *param_spec)) {
+				write_parameter_value(value, layer_type, param_spec->name, param_spec->type);
 			}
 		}
 	}
@@ -344,14 +344,14 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
    Call this function on to set the default value for the particular parameter.
 */
-void LayerDefaults::set(LayerType layer_type, ParameterSpecification * layer_param, const SGVariant & default_value)
+void LayerDefaults::set(LayerType layer_type, ParameterSpecification * layer_param_spec, const SGVariant & default_value)
 {
 	/* Copy value. */
 	ParameterSpecification * new_param = new ParameterSpecification;
-	*new_param = *layer_param;
-	default_parameters.push_back(new_param);
+	*new_param = *layer_param_spec;
+	default_parameters_specifications.push_back(new_param);
 
-	write_parameter_value(default_value, layer_type, layer_param->name, layer_param->type);
+	write_parameter_value(default_value, layer_type, layer_param_spec->name, layer_param_spec->type);
 }
 
 
@@ -380,7 +380,7 @@ void LayerDefaults::init(void)
 void LayerDefaults::uninit(void)
 {
 	delete keyfile;
-	default_parameters.clear();
+	default_parameters_specifications.clear();
 }
 
 

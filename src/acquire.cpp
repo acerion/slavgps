@@ -360,10 +360,10 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #endif
 	}
 	/* POSSIBILITY 2: UI BUILDER */
-	else if (source_interface_->params) {
+	else if (source_interface_->param_specs) {
 #ifdef K
 		param_table = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
-						    source_interface_->params, source_interface_->params_count,
+						    source_interface_->param_specs, source_interface_->param_specs_count,
 						    source_interface_->parameter_groups, source_interface_->params_groups_count,
 						    source_interface_->params_defaults);
 #endif
@@ -419,9 +419,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		gtk_widget_destroy(setup_dialog);
 		setup_dialog = NULL;
 #endif
-	} else if (source_interface_->params) {
+	} else if (source_interface_->param_specs) {
 #ifdef K
-		a_uibuilder_free_paramdatas(param_table, source_interface_->params, source_interface_->params_count);
+		a_uibuilder_free_paramdatas(param_table, source_interface_->param_specs, source_interface_->param_specs_count);
 #endif
 	}
 

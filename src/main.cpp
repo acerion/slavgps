@@ -169,9 +169,9 @@ int main(int argc, char ** argv)
 	/*
 	  First stage initialization.
 
-	  Should not use a_preferences_get() yet.
+	  Should not use Preferences::get_param_value() yet.
 
-	  Since the first time a_preferences_get() is called it loads
+	  Since the first time Preferences::get_param_value() is called it loads
 	  any preferences values from disk, but of course for
 	  preferences not registered yet it can't actually understand
 	  them so subsequent initial attempts to get those preferences
@@ -203,7 +203,7 @@ int main(int argc, char ** argv)
 	/*
 	  Second stage initialization.
 
-	  Can now use a_preferences_get()
+	  Can now use Preferences::get_param_value()
 	*/
 #endif
 	a_background_post_init();

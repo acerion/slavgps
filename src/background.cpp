@@ -51,6 +51,14 @@ using namespace SlavGPS;
 
 
 
+/* TODO: remove this second definition. */
+#ifndef PREFERENCES_NAMESPACE_MAPNIK
+#define PREFERENCES_NAMESPACE_MAPNIK "mapnik."
+#endif
+
+
+
+
 enum {
 	RoleBackgroundData = Qt::UserRole + 1
 };
@@ -256,9 +264,8 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 
 #ifdef HAVE_LIBMAPNIK
 ParameterScale scale_threads = { 1, 64, SGVariant((int32_t) 1), 1, 0 }; /* 64 threads should be enough for anyone...; TODO: verify the hardwired default value. */
-/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
 static ParameterSpecification prefs_mapnik[] = {
-	{ 0, "mapnik.background_max_threads_local_mapnik", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "background_max_threads_local_mapnik", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
 };
 #endif
 
@@ -272,9 +279,8 @@ void a_background_init()
 {
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	SGVariant tmp((int32_t) 1); /* Default to 1 thread due to potential crashing issues. */
-	/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
-	Preferences::register_parameter(&prefs_mapnik[0], tmp, "mapnik");
+	/* Default to 1 thread due to potential crashing issues. */
+	Preferences::register_parameter(&prefs_mapnik[0], SGVariant((int32_t) 1));
 #endif
 #endif
 }
@@ -306,8 +312,7 @@ void SlavGPS::a_background_post_init()
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	/* Implicit use of 'PREFERENCES_NAMESPACE_MAPNIK' to avoid dependency issues. */
-	unsigned int mapnik_threads = a_preferences_get("mapnik.background_max_threads_local_mapnik")->u;
+	unsigned int mapnik_threads = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".background_max_threads_local_mapnik")->u;
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif
 

@@ -85,7 +85,7 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
+	{ 0, PREFERENCES_NAMESPACE_IO, "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
 };
 
 
@@ -116,8 +116,7 @@ void Babel::get_gpsbabel_path_from_system(void)
 	/* The path may be empty string. */
 	this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 
-	SGVariant var = SGVariant(this->gpsbabel_path);
-	Preferences::register_parameter(&prefs[0], var, PREFERENCES_GROUP_KEY_IO);
+	Preferences::register_parameter(&prefs[0], SGVariant(this->gpsbabel_path));
 
 	if (this->gpsbabel_path.isEmpty()) {
 		qDebug() << "WW: Babel: gpsbabel not found in PATH";
@@ -146,7 +145,7 @@ void Babel::get_unbuffer_path_from_system(void)
 
 void Babel::get_gpsbabel_path_from_preferences(void)
 {
-	const QString gpsbabel_path_prefs = a_preferences_get(PREFERENCES_NAMESPACE_IO "gpsbabel")->s;
+	const QString gpsbabel_path_prefs = Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpsbabel")->s;
 	if (!gpsbabel_path_prefs.isEmpty()) {
 
 		/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */

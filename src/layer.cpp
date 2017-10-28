@@ -191,8 +191,8 @@ void Layer::preconfigure_interfaces(void)
 			continue;
 		}
 
-		for (ParameterSpecification * param_template = interface->parameters_c; param_template->name; param_template++) {
-			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_template->id, param_template));
+		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
+			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_spec->id, param_spec));
 
 			/* Read and store default values of layer's parameters.
 			   First try to get program's internal/hardwired value.
@@ -201,13 +201,13 @@ void Layer::preconfigure_interfaces(void)
 			SGVariant param_value;
 
 			/* param_value will be overwritten below by value from settings file. */
-			parameter_get_hardwired_value(param_value, *param_template);
+			parameter_get_hardwired_value(param_value, *param_spec);
 
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
 			/* kamilTODO: what if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
-			param_value = LayerDefaults::get(type, param_template->name, param_template->type);
-			interface->parameter_default_values[param_template->id] = param_value;
+			param_value = LayerDefaults::get(type, param_spec->name, param_spec->type);
+			interface->parameter_default_values[param_spec->id] = param_value;
 		}
 	}
 }

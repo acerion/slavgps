@@ -60,15 +60,18 @@ namespace SlavGPS {
 		/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
 		   so pref key is not copied. default param data IS copied. */
 		/* Group field (integer) will be overwritten. */
-		/* \param parameter should be persistent through the life of the preference. */
-		static void register_parameter(ParameterSpecification * parameter, const SGVariant & default_value, const char * group_key);
+		/* \param param_spec should be persistent through the life of the preference. */
+		static void register_parameter(ParameterSpecification * param_spec, const SGVariant & default_param_value);
 
 		/* Set value of a single parameter - by internal id. */
 		static bool set_param_value(param_id_t id, const SGVariant & value);
 		/* Set value of a single parameter - by name. */
 		static bool set_param_value(const char * name, const SGVariant & value);
 		/* Get value of a single parameter - by internal id. */
-		SGVariant get_param_value(param_id_t id);
+		static SGVariant get_param_value(param_id_t id);
+		/* Get value of a single parameter - by namespace/key pair. */
+		static const SGVariant * get_param_value(const char * key);
+
 
 		std::map<param_id_t, ParameterSpecification *>::iterator begin();
 		std::map<param_id_t, ParameterSpecification *>::iterator end();
@@ -108,11 +111,6 @@ namespace SlavGPS {
 		bool loaded = false; /* Have the preferences been loaded from file? */
 		QHash<param_id_t, QString> group_names; /* Group id -> group UI label. */
 	};
-
-
-
-
-	SGVariant * a_preferences_get(const char * key);
 
 
 

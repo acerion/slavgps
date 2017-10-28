@@ -49,7 +49,7 @@ using namespace SlavGPS;
 ParameterScale scale_simplify = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardwired default value. */
 
 ParameterSpecification bfilter_simplify_params[] = {
-	{ 0, "numberofpoints", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Max number of points:"), WidgetType::SPINBOX_INT, &scale_simplify, NULL, NULL, NULL },
+	{ 0, NULL, "numberofpoints", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Max number of points:"), WidgetType::SPINBOX_INT, &scale_simplify, NULL, NULL, NULL },
 };
 
 SGVariant bfilter_simplify_params_defaults[] = {
@@ -136,8 +136,8 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 static ParameterScale scale_compress = { 0.0, 1.000, SGVariant((double) 0.001), 0.001, 3 }; /* TODO: verify the hardwired default value. */
 
 ParameterSpecification bfilter_compress_params[] = {
-	// { 1, "compressmethod", SGVariantType::INT,   PARAMETER_GROUP_GENERIC, N_("Simplify Method:"), WidgetType::COMBOBOX,   compress_method,      NULL, NULL, NULL },
-	{ 0, "compressfactor", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Error Factor:"),    WidgetType::SPINBOX_DOUBLE, &scale_compress, NULL, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail.") },
+	// { 1, NULL, "compressmethod", SGVariantType::INT,   PARAMETER_GROUP_GENERIC, N_("Simplify Method:"), WidgetType::COMBOBOX,   compress_method,      NULL, NULL, NULL },
+	{ 0, NULL, "compressfactor", SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Error Factor:"),    WidgetType::SPINBOX_DOUBLE, &scale_compress, NULL, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail.") },
 };
 
 SGVariant bfilter_compress_params_defaults[] = {
@@ -279,7 +279,7 @@ SGVariant bfilter_manual_params_defaults[] = {
 };
 
 ParameterSpecification bfilter_manual_params[] = {
-	{ 0, "manual", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, NULL, N_("Manual filter command: e.g. 'swap'.") },
+	{ 0, NULL, "manual", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, NULL, N_("Manual filter command: e.g. 'swap'.") },
 };
 
 

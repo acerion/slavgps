@@ -150,11 +150,11 @@ typedef struct {
 static config_t extra_widget_data;
 
 static ParameterSpecification prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
-	{ 4, NULL,                                      SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
+	{ 0, TOOLBAR_PARAMS_NAMESPACE, "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
+	{ 4, NULL,                     NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -190,24 +190,20 @@ void a_toolbar_init(void)
 	Preferences::register_group(TOOLBAR_PARAMS_GROUP_KEY, QObject::tr("Toolbar"));
 
 	unsigned int i = 0;
-	SGVariant tmp;
-
-	tmp = SGVariant(false);
-	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
-
-	tmp = SGVariant((int32_t) 0);
-	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	Preferences::register_parameter(&prefs[i++], SGVariant(false));
+	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 0));
 
 #ifdef WINDOWS
-	tmp = SGVariant((int32_t) 1); /* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
+	/* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
+	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 1));
 #else
-	tmp = SGVariant((int32_t) 0);
+	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 0));
 #endif
-	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
-	tmp.ptr = (void *) toolbar_configure_cb;
-	tmp->type_id = SGVariantType::PTR; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
-	Preferences::register_parameter(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	SGVariant param_value;
+	param_value.ptr = (void *) toolbar_configure_cb;
+	param_value->type_id = SGVariantType::PTR; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
+	Preferences::register_parameter(&prefs[i++], param_value);
 
 	/* Signal data hash. */
 	signal_data = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
@@ -231,7 +227,7 @@ void a_toolbar_uninit(void)
 
 static bool prefs_get_append_to_menu(void)
 {
-	return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "append_to_menu")->b;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".append_to_menu")->b;
 }
 
 
@@ -239,7 +235,7 @@ static bool prefs_get_append_to_menu(void)
 
 static unsigned int prefs_get_icon_size(void)
 {
-	return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_size")->u;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_size")->u;
 }
 
 
@@ -247,7 +243,7 @@ static unsigned int prefs_get_icon_size(void)
 
 static unsigned int prefs_get_icon_style(void)
 {
-	return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_style")->u;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_style")->u;
 }
 
 

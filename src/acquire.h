@@ -211,12 +211,16 @@ namespace SlavGPS {
 		VikDataSourceOffFunc off_func;
 
 
+
 		/*** UI Building.        ***/
-		ParameterSpecification *      params;
-		uint16_t         params_count;
+
+		ParameterSpecification * param_specs;
+		uint16_t                 param_specs_count;
+
 		SGVariant * params_defaults;
-		char **          params_groups;
-		uint8_t          params_groups_count;
+
+		char ** params_groups;
+		uint8_t params_groups_count;
 
 	};
 

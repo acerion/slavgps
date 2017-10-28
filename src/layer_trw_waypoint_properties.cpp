@@ -51,16 +51,16 @@ using namespace SlavGPS;
 
 
 
-ParameterSpecification wp_params[] = {
-	{ SG_WP_PARAM_NAME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_COMMENT,  "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_DESC,     "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_IMAGE,    "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_SYMBOL,   "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+ParameterSpecification wp_param_specs[] = {
+	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	/* TODO: where is guard item? */
 };
 
@@ -421,7 +421,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
-	dialog.fill(wp, wp_params, default_name);
+	dialog.fill(wp, wp_param_specs, default_name);
 	int dialog_code = dialog.exec();
 
 	QString entered_name;
@@ -430,32 +430,32 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 
 		SGVariant param_value;
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_params[SG_WP_PARAM_NAME]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_param_specs[SG_WP_PARAM_NAME]);
 		entered_name = param_value.s;
 		wp->set_name(entered_name);
 
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_params[SG_WP_PARAM_LAT]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_param_specs[SG_WP_PARAM_LAT]);
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_params[SG_WP_PARAM_LON]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_param_specs[SG_WP_PARAM_LON]);
 
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_params[SG_WP_PARAM_TIME]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
 		wp->timestamp = param_value.u;
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_params[SG_WP_PARAM_ALT]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_param_specs[SG_WP_PARAM_ALT]);
 		//wp->alt = ;
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_params[SG_WP_PARAM_COMMENT]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_param_specs[SG_WP_PARAM_COMMENT]);
 		wp->set_comment(param_value.s);
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_params[SG_WP_PARAM_DESC]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_param_specs[SG_WP_PARAM_DESC]);
 		wp->set_description(param_value.s);
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_params[SG_WP_PARAM_IMAGE]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
 		wp->set_image(param_value.s);
 
-		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_params[SG_WP_PARAM_SYMBOL]);
+		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol_name(param_value.s);
 	}
 

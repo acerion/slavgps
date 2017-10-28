@@ -70,7 +70,7 @@ static std::mutex mc_mutex;
 static ParameterScale scale_cache_size = { 1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0 };
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, &scale_cache_size, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL, "mapcache_size", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, &scale_cache_size, NULL, NULL, NULL },
 };
 
 
@@ -97,7 +97,7 @@ static void cache_item_free(cache_item_t * ci)
 
 void SlavGPS::map_cache_init()
 {
-	Preferences::register_parameter(prefs, scale_cache_size.initial, PREFERENCES_GROUP_KEY_GENERAL);
+	Preferences::register_parameter(prefs, scale_cache_size.initial);
 }
 
 
@@ -188,7 +188,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 	cache_add(key, pixmap, extra);
 
 	/* TODO: that should be done on preference change only... */
-	max_cache_size = a_preferences_get(PREFERENCES_NAMESPACE_GENERAL "mapcache_size")->u * 1024 * 1024;
+	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size")->u * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();

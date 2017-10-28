@@ -49,8 +49,7 @@
 
 /* Params will be geocaching.username, geocaching.password
    We have to make sure these don't collide. */
-#define PREFERENCES_GROUP_KEY_GC "geocaching"
-#define PREFERENCES_NAMESPACE_GC "geocaching."
+#define PREFERENCES_NAMESPACE_GC "geocaching"
 
 
 
@@ -108,8 +107,8 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GC, "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GC, "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
 };
 
 
@@ -117,15 +116,10 @@ static ParameterSpecification prefs[] = {
 
 void a_datasource_gc_init()
 {
-	Preferences::register_group(PREFERENCES_GROUP_KEY_GC, QObject::tr("Geocaching"));
+	Preferences::register_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
-	SGVariant tmp;
-
-	tmp = SGVariant("username");
-	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_GC);
-
-	tmp = SGVariant("password");
-	Preferences::register_parameter(prefs+1, tmp, PREFERENCES_GROUP_KEY_GC);
+	Preferences::register_parameter(prefs + 0, SGVariant("username"));
+	Preferences::register_parameter(prefs + 1, SGVariant("password"));
 }
 
 
@@ -274,8 +268,8 @@ static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_
 	ProcessOptions * po = new ProcessOptions();
 
 	//char *safe_string = g_shell_quote (widgets->center_entry.text());
-	char *safe_user = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "username")->s.toUtf8().constData());
-	char *safe_pass = g_shell_quote(a_preferences_get(PREFERENCES_NAMESPACE_GC "password")->s.toUtf8().constData());
+	char *safe_user = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username")->s.toUtf8().constData());
+	char *safe_pass = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password")->s.toUtf8().constData());
 	char *slat, *slon;
 	double lat, lon;
 	if (2 != sscanf(widgets->center_entry.text(), "%lf,%lf", &lat, &lon)) {

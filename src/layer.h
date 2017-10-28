@@ -100,7 +100,7 @@ namespace SlavGPS {
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
-		void configure_interface(LayerInterface * intf, ParameterSpecification * parameters);
+		void configure_interface(LayerInterface * intf, ParameterSpecification * param_specs);
 		static void preconfigure_interfaces(void);
 
 		/* Rarely used, this is called after a read operation

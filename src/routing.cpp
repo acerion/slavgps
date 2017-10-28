@@ -56,8 +56,7 @@ using namespace SlavGPS;
 
 /* Params will be routing.default */
 /* We have to make sure these don't collide. */
-#define PREFERENCES_GROUP_KEY_ROUTING "routing"
-#define PREFERENCES_NAMESPACE_ROUTING "routing."
+#define PREFERENCES_NAMESPACE_ROUTING "routing"
 
 
 
@@ -69,7 +68,7 @@ static std::vector<QString> routing_engine_ids; /* These are string IDs. */
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, &routing_engine_combo_items, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING, "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Default engine:"), WidgetType::COMBOBOX, &routing_engine_combo_items, NULL, NULL, NULL },
 };
 
 
@@ -80,10 +79,8 @@ static ParameterSpecification prefs[] = {
  */
 void SlavGPS::routing_prefs_init()
 {
-	Preferences::register_group(PREFERENCES_GROUP_KEY_ROUTING, QObject::tr("Routing"));
-
-	SGVariant tmp((char *) NULL);
-	Preferences::register_parameter(prefs, tmp, PREFERENCES_GROUP_KEY_ROUTING);
+	Preferences::register_group(PREFERENCES_NAMESPACE_ROUTING, QObject::tr("Routing"));
+	Preferences::register_parameter(prefs, SGVariant((char *) NULL));
 }
 
 
@@ -123,7 +120,7 @@ RoutingEngine * vik_routing_find_engine(const QString & id)
  */
 RoutingEngine * SlavGPS::routing_default_engine(void)
 {
-	const QString id = a_preferences_get(PREFERENCES_NAMESPACE_ROUTING "default")->s;
+	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING ".default")->s;
 	RoutingEngine * engine = vik_routing_find_engine(id);
 	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */

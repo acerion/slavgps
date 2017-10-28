@@ -85,17 +85,17 @@ enum {
 
 
 
-ParameterSpecification georef_layer_params[] = {
-	{ PARAM_IMAGE, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CE,    "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CN,    "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_ME,    "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_MN,    "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CZ,    "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CL,    "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_AA,    "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+ParameterSpecification georef_layer_param_specs[] = {
+	{ PARAM_IMAGE, NULL, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CE,    NULL, "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CN,    NULL, "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_ME,    NULL, "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_MN,    NULL, "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CZ,    NULL, "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CL,    NULL, "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_AA,    NULL, "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, NULL, WidgetType::NONE, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,  NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,NULL, WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,  NULL, NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,NULL, WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -108,7 +108,7 @@ LayerGeorefInterface vik_georef_layer_interface;
 
 LayerGeorefInterface::LayerGeorefInterface()
 {
-	this->parameters_c = georef_layer_params;
+	this->parameters_c = georef_layer_param_specs;
 
 	this->fixed_layer_type_string = "GeoRef Map"; /* Non-translatable. */
 
@@ -152,7 +152,7 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewpor
 
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
+	{ 0, PREFERENCES_NAMESPACE_IO, "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 
 typedef struct {
@@ -164,8 +164,7 @@ typedef struct {
 
 void SlavGPS::vik_georef_layer_init(void)
 {
-	SGVariant tmp((bool) true);
-	Preferences::register_parameter(&io_prefs[0], tmp, PREFERENCES_GROUP_KEY_IO);
+	Preferences::register_parameter(&io_prefs[0], SGVariant((bool) true));
 }
 
 
@@ -625,9 +624,9 @@ static void georef_layer_export_params(georef_data_t * data)
  */
 static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 {
-#if 0
-	if (a_preferences_get(PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file")->b) {
+	if (Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file")->b) {
 		const QString filename = file_entry->get_filename();
+#if 0
 		double values[4];
 		if (filename && user_data) {
 
@@ -651,8 +650,9 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 			}
 			free(filew);
 		}
-	}
 #endif
+	}
+
 }
 
 

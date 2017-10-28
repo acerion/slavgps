@@ -112,10 +112,11 @@ namespace SlavGPS {
 	typedef struct {
 		// LayerType layer_type;
 		param_id_t id;
-		const char *name;
+		const char * name_space;
+		const char * name;
 		SGVariantType type;
 		param_id_t group_id; /* Every parameter belongs to a group of related parameters. Related parameters are put into the same tab in UI dialog. */
-		const char *title;
+		const char * title;
 		WidgetType widget_type;
 		void * widget_data;
 
@@ -138,12 +139,12 @@ namespace SlavGPS {
 	} ParameterScale;
 
 
-	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * params);
+	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
 	/* Frees data from last (if necessary). */
-	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * params, uint16_t params_count);
+	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * param_specs, uint16_t param_specs_count);
 
-	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param);
+	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec);
 
 
 
@@ -166,12 +167,12 @@ namespace SlavGPS {
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, ParameterSpecification * parameters, const QString & default_name);
+		void fill(Waypoint * wp, ParameterSpecification * param_specs, const QString & default_name);
 
-		SGVariant get_param_value(param_id_t id, ParameterSpecification * param);
+		SGVariant get_param_value(param_id_t id, ParameterSpecification * param_spec);
 
 	private:
-		QWidget * new_widget(ParameterSpecification * param, const SGVariant & param_value);
+		QWidget * new_widget(ParameterSpecification * param_spec, const SGVariant & param_value);
 
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
@@ -192,7 +193,7 @@ namespace SlavGPS {
 
 	typedef struct {
 		void * layer;
-		ParameterSpecification * param;
+		ParameterSpecification * param_spec;
 		int param_id;
 		GtkWidget ** widgets;
 		GtkWidget ** labels;

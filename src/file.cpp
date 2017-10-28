@@ -343,8 +343,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	uint16_t len;
 	long line_num = 0;
 
-	ParameterSpecification *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
-	uint8_t params_count = 0;
+	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	uint8_t param_specs_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
 	LayerAggregate * aggregate = top;
@@ -406,14 +406,14 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
-						params = Layer::get_interface(layer_type)->parameters_c;
-						params_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+						param_specs = Layer::get_interface(layer_type)->parameters_c;
+						param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::construct_layer(layer_type, viewport);
 						stack->data = (void *) layer;
-						params = Layer::get_interface(layer_type)->parameters_c;
-						params_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+						param_specs = Layer::get_interface(layer_type)->parameters_c;
+						param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
@@ -554,17 +554,17 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				/* Go though layer params. If len == eq_pos && starts_with jazz, set it. */
 				/* Also got to check for name and visible. */
 
-				if (! params) {
+				if (!param_specs) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: No options for this kind of layer\n", line_num);
 					continue;
 				}
 
-				for (i = 0; i < params_count; i++) {
-					if (strlen(params[i].name) == eq_pos && strncasecmp(line, params[i].name, eq_pos) == 0) {
+				for (i = 0; i < param_specs_count; i++) {
+					if (strlen(param_specs[i].name) == eq_pos && strncasecmp(line, param_specs[i].name, eq_pos) == 0) {
 
 						line += eq_pos+1;
-						if (params[i].type == SGVariantType::STRING_LIST) {
+						if (param_specs[i].type == SGVariantType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -572,7 +572,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							SGVariant new_val;
-							switch (params[i].type) {
+							switch (param_specs[i].type) {
 							case SGVariantType::DOUBLE:
 #ifdef K
 								new_val = SGVariant((double) strtod_i8n(line, NULL));
