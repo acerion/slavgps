@@ -69,7 +69,7 @@ namespace SlavGPS {
 	QString get_distance_string(double distance, DistanceUnit distance_unit);
 	double convert_distance_meters_to(double distance, DistanceUnit distance_unit);
 
-	QString vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
+	QString vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename);
 

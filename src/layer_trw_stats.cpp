@@ -318,7 +318,7 @@ TRWStatsDialog::~TRWStatsDialog()
 {
 	/* Save current invisible value for next time. */
 	bool do_invisible = this->checkbox->isChecked();
-	a_settings_set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
+	ApplicationState::set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
 
 
 	//free(this->stats_table);
@@ -355,7 +355,7 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QS
 
 	/* Get previous value (if any) from the settings. */
 	bool include_invisible;
-	if (!a_settings_get_boolean (VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible)) {
 		include_invisible = true;
 	}
 

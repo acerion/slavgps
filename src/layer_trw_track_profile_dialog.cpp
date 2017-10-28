@@ -2471,8 +2471,8 @@ Viewport * TrackProfileDialog::create_sd_viewport(void)
 void TrackProfileDialog::save_values(void)
 {
 	/* Session settings. */
-	a_settings_set_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, this->profile_width);
-	a_settings_set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, this->profile_height);
+	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, this->profile_width);
+	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, this->profile_height);
 
 	/* Just for this session. */
 	if (this->w_ed_show_dem) {
@@ -2715,14 +2715,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	int profile_size_value;
 	/* Ensure minimum values. */
 	this->profile_width = 600;
-	if (a_settings_get_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, &profile_size_value)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, &profile_size_value)) {
 		if (profile_size_value > this->profile_width) {
 			this->profile_width = profile_size_value;
 		}
 	}
 
 	this->profile_height = 300;
-	if (a_settings_get_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, &profile_size_value)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, &profile_size_value)) {
 		if (profile_size_value > this->profile_height) {
 			this->profile_height = profile_size_value;
 		}

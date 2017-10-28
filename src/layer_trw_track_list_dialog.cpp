@@ -314,7 +314,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format)
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format)
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
@@ -328,12 +328,12 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 #ifdef K
 #if GLIB_CHECK_VERSION(2,26,0)
 		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpoints.begin())->timestamp);
-		char * time = g_date_time_format(gdt, date_format);
+		char * time = g_date_time_format(gdt, date_format.toUtf8().constData());
 		g_strlcpy(time_buf, time, sizeof(time_buf));
 #else
 		GDate * gdate_start = g_date_new();
 		g_date_set_time_t(gdate_start, (*trk->trackpoints.begin())->timestamp);
-		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
+		g_date_strftime(time_buf, sizeof(time_buf), date_format.toUtf8().constData(), gdate_start);
 #endif
 #endif
 	}
@@ -567,15 +567,14 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 
-	char * date_format = NULL;
-	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
-		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
+	QString date_format;
+	if (!ApplicationState::get_string(VIK_SETTINGS_LIST_DATE_FORMAT, date_format)) {
+		date_format = TRACK_LIST_DATE_FORMAT;
 	}
 
 	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
 		this->add_row(*iter, distance_units, speed_units, height_units, date_format);
 	}
-	free(date_format);
 
 
 	/* Notice that we enable and perform sorting after adding all items in the for() loop. */

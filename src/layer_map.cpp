@@ -326,34 +326,34 @@ void layer_map_init(void)
 	Preferences::register_parameter(prefs, SGVariant(maps_layer_default_dir()));
 
 	int max_tiles = MAX_TILES;
-	if (a_settings_get_integer(VIK_SETTINGS_MAP_MAX_TILES, &max_tiles)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_MAX_TILES, &max_tiles)) {
 		MAX_TILES = max_tiles;
 	}
 
 	double gdtmp;
-	if (a_settings_get_double(VIK_SETTINGS_MAP_MIN_SHRINKFACTOR, &gdtmp)) {
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MIN_SHRINKFACTOR, &gdtmp)) {
 		MIN_SHRINKFACTOR = gdtmp;
 	}
 
-	if (a_settings_get_double(VIK_SETTINGS_MAP_MAX_SHRINKFACTOR, &gdtmp)) {
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MAX_SHRINKFACTOR, &gdtmp)) {
 		MAX_SHRINKFACTOR = gdtmp;
 	}
 
-	if (a_settings_get_double(VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR, &gdtmp)) {
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR, &gdtmp)) {
 		REAL_MIN_SHRINKFACTOR = gdtmp;
 	}
 
 	int gitmp = 0;
-	if (a_settings_get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &gitmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &gitmp)) {
 		SCALE_INC_UP = gitmp;
 	}
 
-	if (a_settings_get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &gitmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &gitmp)) {
 		SCALE_INC_DOWN = gitmp;
 	}
 
 	bool gbtmp = true;
-	if (a_settings_get_boolean(VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST, &gbtmp)) {
+	if (ApplicationState::get_boolean(VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST, &gbtmp)) {
 		SCALE_SMALLER_ZOOM_FIRST = gbtmp;
 	}
 
@@ -655,14 +655,14 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 
 			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
 			if (is_file_operation) {
-				a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
+				ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
 			} else {
 				MapSource * map = map_sources[this->map_index];
 				if (map->get_license() != NULL) {
 					/* Check if licence for this map type has been shown before. */
-					if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i)) {
+					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i)) {
 						maps_show_license(this->get_window(), map);
-						a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
+						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
 					}
 				}
 			}

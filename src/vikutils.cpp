@@ -81,7 +81,7 @@ static struct kdtree * kd = NULL;
  * thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control.
  */
-QString SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
+QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
 {
 	QString msg = "";
 	if (!tp) {
@@ -537,7 +537,7 @@ static void latest_version_thread(Window * window)
 	/* Update last checked time. */
 	GTimeVal time;
 	g_get_current_time(&time);
-	a_settings_set_string(VIK_SETTINGS_VERSION_CHECKED_DATE, g_time_val_to_iso8601(&time));
+	ApplicationState::set_string(VIK_SETTINGS_VERSION_CHECKED_DATE, g_time_val_to_iso8601(&time));
 }
 
 
@@ -565,7 +565,7 @@ void SGUtils::check_latest_version(Window * window)
 	bool do_check = false;
 
 	int check_period;
-	if (!a_settings_get_integer(VIK_SETTINGS_VERSION_CHECK_PERIOD, &check_period)) {
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VERSION_CHECK_PERIOD, &check_period)) {
 		check_period = 14;
 	}
 
@@ -575,11 +575,11 @@ void SGUtils::check_latest_version(Window * window)
 	GDate *gdate_last = g_date_new();
 	GDate *gdate_now = g_date_new();
 	GTimeVal time_last;
-	char *last_checked_date = NULL;
+	QString last_checked_date;
 
 	/* When no previous date available - set to do the version check. */
-	if (a_settings_get_string(VIK_SETTINGS_VERSION_CHECKED_DATE, &last_checked_date)) {
-		if (g_time_val_from_iso8601(last_checked_date, &time_last)) {
+	if (ApplicationState::get_string(VIK_SETTINGS_VERSION_CHECKED_DATE, last_checked_date)) {
+	if (g_time_val_from_iso8601(last_checked_date.toUtf8().constData(), &time_last)) {
 			g_date_set_time_val(gdate_last, &time_last);
 		} else {
 			do_check = true;
@@ -884,8 +884,9 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 	double pt[2] = { ll.lat, ll.lon };
 
 	double nearest;
-	if (!a_settings_get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest))
+	if (!ApplicationState::get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest)) {
 		nearest = 1.0;
+	}
 
 	struct kdres * presults = kd_nearest_range(kd, pt, nearest);
 	while (!kd_res_end(presults)) {

@@ -87,7 +87,7 @@ static void * datasource_bfilter_simplify_init(acq_vik_t *not_used)
 {
 	if (!bfilter_simplify_default_set) {
 		int tmp;
-		if (!a_settings_get_integer(VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
+		if (!ApplicationState::get_integer(VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
 			tmp = 100;
 		}
 
@@ -184,7 +184,7 @@ static void * datasource_bfilter_compress_init(acq_vik_t *not_used)
 {
 	if (!bfilter_compress_default_set) {
 		double tmp;
-		if (!a_settings_get_double (VIK_SETTINGS_BFILTER_COMPRESS, &tmp)) {
+		if (!ApplicationState::get_double (VIK_SETTINGS_BFILTER_COMPRESS, &tmp)) {
 			tmp = 0.001;
 		}
 

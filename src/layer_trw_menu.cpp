@@ -79,9 +79,7 @@ extern Tree * g_tree;
 
 
 extern bool g_have_astro_program;
-extern char * astro_program;
 extern bool g_have_diary_program;
-extern char *diary_program;
 extern bool have_geojson_export;
 
 

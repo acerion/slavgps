@@ -164,21 +164,21 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	double zoom_y = 4.0;
 
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
-		double lat, lon, dzoom;
-		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &lat)) {
-			ll.lat = lat;
+		double value;
+		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &value)) {
+			ll.lat = value;
 		}
 
-		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, &lon)) {
-			ll.lon = lon;
+		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, &value)) {
+			ll.lon = value;
 		}
 
-		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, &dzoom)) {
-			zoom_x = dzoom;
+		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, &value)) {
+			zoom_x = value;
 		}
 
-		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, &dzoom)) {
-			zoom_y = dzoom;
+		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, &value)) {
+			zoom_y = value;
 		}
 	}
 
@@ -201,12 +201,12 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	centers_iter = centers->begin();
 	centers_max = 20;
 	int tmp = centers_max;
-	if (a_settings_get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
 		centers_max = tmp;
 	}
 
 	centers_radius = 500;
-	if (a_settings_get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &tmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &tmp)) {
 		centers_radius = tmp;
 	}
 
@@ -239,10 +239,10 @@ Viewport::~Viewport()
 	qDebug() << "II: Viewport: ~Viewport called";
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		struct LatLon ll = this->center.get_latlon();
-		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
-		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
-		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->xmpp);
-		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->ympp);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->xmpp);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->ympp);
 	}
 
 	delete this->centers;

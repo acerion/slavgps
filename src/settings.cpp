@@ -16,27 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
- /*
-  * Sort of like the globals file, but values are automatically saved via program use.
-  * Some settings are *not* intended to have any GUI controls.
-  * Other settings be can used to set other GUI elements.
-  *
-  * ATM This is implemented using the simple (for me!) GKeyFile API - AKA an .ini file
-  *  One might wish to consider the more modern alternative such as:
-  *            http://developer.gnome.org/gio/2.26/GSettings.html
-  * Since these settings are 'internal' I have no problem with them *not* being supported
-  *  between various Viking versions, should one switch to different API/storage methods.
-  * Indeed even the internal settings themselves can be liable to change.
-  */
 
-#include <cstdlib>
-#include <cstdio>
 
-#include <glib.h>
+/*
+  Configuration of different aspects of application.  Some settings
+  are *not* intended to have any GUI controls. Other settings be can
+  used to set other GUI elements.
+*/
+
+
+
 
 #include <QDebug>
+#include <QSettings>
+
+
+
 
 #include "dir.h"
 #include "settings.h"
@@ -49,261 +45,178 @@ using namespace SlavGPS;
 
 
 
-static GKeyFile *keyfile;
+static QSettings * settings_file = NULL;
 
+
+
+
+/* ATM, can't see a point in having any more than one group for various settings. */
+const QString VIKING_SETTINGS_GROUP("viking/");
 #define VIKING_INI_FILE "viking.ini"
 
 
 
 
-static bool settings_load_from_file()
+void ApplicationState::init()
 {
-	GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
-
-	GError * error = NULL;
-
 	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_INI_FILE;
-
-	if (!g_key_file_load_from_file(keyfile, full_path.toUtf8().constData(), flags, &error)) {
-		qDebug() << "WW: Settings: failed to open Viking ini file" << full_path << ":" << error->message;
-		g_error_free(error);
-		return false;
-	}
-
-	return true;
-}
-
-
-
-
-void a_settings_init()
-{
-	keyfile = g_key_file_new();
-	settings_load_from_file();
+	settings_file = new QSettings(full_path, QSettings::IniFormat);
 }
 
 
 
 
 /**
- *  ATM: The only time settings are saved is on program exit.
- *  Could change this to occur on window exit or dialog exit or have memory hash of values...?
- */
-void a_settings_uninit()
+   ATM: The only time settings are saved is on program exit.
+   Could change this to occur on window exit or dialog exit or have memory hash of values...?
+*/
+void ApplicationState::uninit()
 {
-	GError * error = NULL;
-	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_INI_FILE;
-	size_t size;
+	settings_file->sync();
+	delete settings_file;
+}
 
-	char * keyfilestr = g_key_file_to_data(keyfile, &size, &error);
 
-	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
-		g_error_free(error);
-		goto tidy;
+
+
+bool ApplicationState::get_boolean(const char * name, bool * val)
+{
+	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
+	if (value.isNull()) {
+		qDebug() << "EE: ApplicationState: invalid boolean value read for key" << name;
+		return false;
+	} else {
+		*val = value.toBool();
+		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		return true;
 	}
+}
 
-	g_file_set_contents(full_path.toUtf8().constData(), keyfilestr, size, &error);
-	if (error) {
-		qDebug() << "WW: Settings: failed to access Viking ini file" << full_path << "during uninitalization:" << error->message;
-		g_error_free(error);
+
+
+
+void ApplicationState::set_boolean(const char * name, bool val)
+{
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
+}
+
+
+
+
+bool ApplicationState::get_string(const char * name, QString & val)
+{
+	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
+	if (value.isNull()) {
+		qDebug() << "EE: ApplicationState: invalid string value read for key" << name;
+		return false;
+	} else {
+		val = value.toString();
+		qDebug() << "II: ApplicationState: valid integer value read for key" << name << val;
+		return true;
 	}
-
-	g_key_file_free(keyfile);
- tidy:
-	free(keyfilestr);
 }
 
 
 
 
-/* ATM, can't see a point in having any more than one group for various settings. */
-#define VIKING_SETTINGS_GROUP "viking"
-
-
-
-
-static bool settings_get_boolean(const char * group, const char * name, bool * val)
+void ApplicationState::set_string(const char * name, const QString & val)
 {
-	GError * error = NULL;
-	bool success = true;
-	bool bb = g_key_file_get_boolean(keyfile, group, name, &error);
-	if (error) {
-		/* Only print on debug - as often may have requests for keys not in the file. */
-		fprintf(stderr, "DEBUG: %s\n", error->message);
-		g_error_free(error);
-		success = false;
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
+}
+
+
+
+
+bool ApplicationState::get_integer(const char * name, int * val)
+{
+	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
+	if (value.isNull()) {
+		qDebug() << "EE: ApplicationState: invalid integer value read for key" << name;
+		return false;
+	} else {
+		*val = value.toInt();
+		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		return true;
 	}
-	*val = bb;
-	return success;
 }
 
 
 
 
-bool a_settings_get_boolean(const char * name, bool * val)
+void ApplicationState::set_integer(const char * name, int val)
 {
-	return settings_get_boolean(VIKING_SETTINGS_GROUP, name, val);
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
 }
 
 
 
 
-void a_settings_set_boolean(const char * name, bool val)
+bool ApplicationState::get_double(const char * name, double * val)
 {
-	g_key_file_set_boolean(keyfile, VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-static bool settings_get_string(const char * group, const char * name, char ** val)
-{
-	GError * error = NULL;
-	bool success = true;
-	char * str = g_key_file_get_string(keyfile, group, name, &error);
-	if (error) {
-		/* Only print on debug - as often may have requests for keys not in the file. */
-		fprintf(stderr, "DEBUG: %s\n", error->message);
-		g_error_free(error);
-		success = false;
+	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
+	if (value.isNull()) {
+		qDebug() << "EE: ApplicationState: invalid double value read for key" << name;
+		return false;
+	} else {
+		*val = value.toDouble();
+		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		return true;
 	}
-	*val = str;
-	return success;
 }
 
 
 
 
-bool a_settings_get_string(const char * name, char ** val)
+void ApplicationState::set_double(const char * name, double val)
 {
-	return settings_get_string(VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-void a_settings_set_string(const char * name, const char * val)
-{
-	g_key_file_set_string(keyfile, VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-static bool settings_get_integer(const char * group, const char * name, int * val)
-{
-	GError * error = NULL;
-	bool success = true;
-	int ii = g_key_file_get_integer(keyfile, group, name, &error);
-	if (error) {
-		/* Only print on debug - as often may have requests for keys not in the file. */
-		fprintf(stderr, "DEBUG: %s\n", error->message);
-		g_error_free(error);
-		success = false;
-	}
-	*val = ii;
-	return success;
-}
-
-
-
-
-bool a_settings_get_integer(const char * name, int * val)
-{
-	return settings_get_integer(VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-void a_settings_set_integer(const char * name, int val)
-{
-	g_key_file_set_integer(keyfile, VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-static bool settings_get_double(const char * group, const char * name, double * val)
-{
-	GError * error = NULL;
-	bool success = true;
-	double dd = g_key_file_get_double(keyfile, group, name, &error);
-	if (error) {
-		/* Only print on debug - as often may have requests for keys not in the file. */
-		fprintf(stderr, "DEBUG: %s\n", error->message);
-		g_error_free(error);
-		success = false;
-	}
-	*val = dd;
-	return success;
-}
-
-
-
-
-bool a_settings_get_double(const char * name, double * val)
-{
-	return settings_get_double(VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-void a_settings_set_double(const char * name, double val)
-{
-	g_key_file_set_double(keyfile, VIKING_SETTINGS_GROUP, name, val);
-}
-
-
-
-
-static bool settings_get_integer_list(const char * group, const char * name, int ** vals, size_t * length)
-{
-	GError * error = NULL;
-	bool success = true;
-	int * ints = g_key_file_get_integer_list(keyfile, group, name, length, &error);
-	if (error) {
-		/* Only print on debug - as often may have requests for keys not in the file. */
-		fprintf(stderr, "DEBUG: %s\n", error->message);
-		g_error_free(error);
-		success = false;
-	}
-	*vals = ints;
-	return success;
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
 }
 
 
 
 
 /*
- * The returned list of integers should be freed when no longer needed.
- */
-static bool a_settings_get_integer_list(const char * name, int ** vals, size_t * length)
+  The returned list of integers should be freed when no longer needed.
+*/
+bool ApplicationState::get_integer_list(const char * name, int ** vals, size_t * length)
 {
-	return settings_get_integer_list(VIKING_SETTINGS_GROUP, name, vals, length);
+#ifdef K
+	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
+	if (value.isNull()) {
+		qDebug() << "EE: ApplicationState: invalid integer list value read for key" << name;
+		return false;
+	} else {
+		*vals = value.to();
+		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		return true;
+	}
+#else
+	return false;
+#endif
 }
 
 
 
 
-static void a_settings_set_integer_list(const char * name, int vals[], size_t length)
+void ApplicationState::set_integer_list(const char * name, int vals[], size_t length)
 {
-	g_key_file_set_integer_list(keyfile, VIKING_SETTINGS_GROUP, name, vals, length);
+#ifdef K
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
+#endif
 }
 
 
 
 
-bool a_settings_get_integer_list_contains(const char * name, int val)
+bool ApplicationState::get_integer_list_contains(const char * name, int val)
 {
 	int * vals = NULL;
 	size_t length;
 	/* Get current list and see if the value supplied is in the list. */
 	bool contains = false;
+
 	/* Get current list. */
-	if (a_settings_get_integer_list(name, &vals, &length)) {
+	if (ApplicationState::get_integer_list(name, &vals, &length)) {
 		/* See if it's not already there. */
 		size_t ii = 0;
 		if (vals && length) {
@@ -318,20 +231,21 @@ bool a_settings_get_integer_list_contains(const char * name, int val)
 			free(vals);
 		}
 	}
+
 	return contains;
 }
 
 
 
 
-void a_settings_set_integer_list_containing(const char * name, int val)
+void ApplicationState::set_integer_list_containing(const char * name, int val)
 {
 	int * vals = NULL;
 	size_t length = 0;
 	bool need_to_add = true;
 
 	/* Get current list. */
-	if (a_settings_get_integer_list(name, &vals, &length)) {
+	if (ApplicationState::get_integer_list(name, &vals, &length)) {
 		/* See if it's not already there. */
 		if (vals) {
 			size_t ii = 0;
@@ -355,7 +269,7 @@ void a_settings_set_integer_list_containing(const char * name, int val)
 		}
 		new_vals[length] = val; /* Set the new value. */
 		/* Apply. */
-		a_settings_set_integer_list(name, new_vals, new_length);
+		ApplicationState::set_integer_list(name, new_vals, new_length);
 		/* Free old array. */
 		free(vals);
 	}

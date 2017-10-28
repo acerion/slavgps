@@ -296,13 +296,13 @@ void SlavGPS::a_background_post_init()
 	/* Initialize thread pools. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
-	if (a_settings_get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {
 		max_threads = maxt;
 	}
 
 	thread_pool_remote = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
 
-	if (a_settings_get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL, &maxt)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL, &maxt)) {
 		max_threads = maxt;
 	} else {
 		unsigned int cpus = util_get_number_of_cpus();

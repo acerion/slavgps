@@ -1001,7 +1001,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* Remember setting the notebook page must be done after the widget is visible. */
 	int page_num = 0;
-	if (a_settings_get_integer (VIK_SETTINGS_GEOREF_TAB, &page_num)) {
+	if (ApplicationState::get_integer (VIK_SETTINGS_GEOREF_TAB, &page_num)) {
 		if (page_num < 0 || page_num > 1) {
 			page_num = 0;
 		}
@@ -1039,7 +1039,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 			this->scaled = ui_pixmap_set_alpha(this->scaled, this->alpha);
 		}
 
-		a_settings_set_integer (VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
+		ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
 
 		gtk_widget_destroy (GTK_WIDGET(dialog));
 		return true;

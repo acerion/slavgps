@@ -522,13 +522,13 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (last_active < 0) {
 		int find_entry = -1;
 		int wanted_entry = -1;
-		char *vis = NULL;
-		if (a_settings_get_string(VIK_SETTINGS_OSM_TRACE_VIS, &vis)) {
+		QString vis;
+		if (ApplicationState::get_string(VIK_SETTINGS_OSM_TRACE_VIS, vis)) {
 			/* Use setting. */
-			if (vis) {
+			if (!vis.isEmpty()) {
 				for (vis_t = OsmTraceVis; vis_t->apistr != NULL; vis_t++) {
 					find_entry++;
-					if (!strcmp(vis, vis_t->apistr)) {
+					if (vis == QString(vis_t->apistr)) {
 						wanted_entry = find_entry;
 					}
 				}
@@ -569,7 +569,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 		/* Save visibility value for default reuse. */
 		last_active = visibility_combo->currentIndex();
-		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
+		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
 		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);
 

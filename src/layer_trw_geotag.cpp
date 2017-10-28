@@ -254,15 +254,15 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 
 static void save_default_values(option_values_t default_values)
 {
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT, default_values.create_waypoints);
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS, default_values.overwrite_waypoints);
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF, default_values.write_exif);
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF, default_values.overwrite_gps_exif);
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME, default_values.no_change_mtime);
-	a_settings_set_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, default_values.interpolate_segments);
-	a_settings_set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET, default_values.time_offset);
-	a_settings_set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS, default_values.TimeZoneHours);
-	a_settings_set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS, default_values.TimeZoneMins);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT,      default_values.create_waypoints);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS,  default_values.overwrite_waypoints);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF,           default_values.write_exif);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF,   default_values.overwrite_gps_exif);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME,      default_values.no_change_mtime);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, default_values.interpolate_segments);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET,          default_values.time_offset);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS,    default_values.TimeZoneHours);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS,     default_values.TimeZoneMins);
 }
 
 
@@ -271,39 +271,39 @@ static void save_default_values(option_values_t default_values)
 static option_values_t get_default_values()
 {
 	option_values_t default_values;
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT, &default_values.create_waypoints)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT, &default_values.create_waypoints)) {
 		default_values.create_waypoints = true;
 	}
 
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS, &default_values.overwrite_waypoints)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS, &default_values.overwrite_waypoints)) {
 		default_values.overwrite_waypoints = true;
 	}
 
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF, &default_values.write_exif)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF, &default_values.write_exif)) {
 		default_values.write_exif = true;
 	}
 
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF, &default_values.overwrite_gps_exif)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF, &default_values.overwrite_gps_exif)) {
 		default_values.overwrite_gps_exif = false;
 	}
 
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME, &default_values.no_change_mtime)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME, &default_values.no_change_mtime)) {
 		default_values.no_change_mtime = true;
 	}
 
-	if (!a_settings_get_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, &default_values.interpolate_segments)) {
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, &default_values.interpolate_segments)) {
 		default_values.interpolate_segments = true;
 	}
 
-	if (!a_settings_get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET, &default_values.time_offset)) {
+	if (!ApplicationState::get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET, &default_values.time_offset)) {
 		default_values.time_offset = 0;
 	}
 
-	if (!a_settings_get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS, &default_values.TimeZoneHours)) {
+	if (!ApplicationState::get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS, &default_values.TimeZoneHours)) {
 		default_values.TimeZoneHours = 0;
 	}
 
-	if (!a_settings_get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS, &default_values.TimeZoneMins)) {
+	if (!ApplicationState::get_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS, &default_values.TimeZoneMins)) {
 		default_values.TimeZoneMins = 0;
 	}
 

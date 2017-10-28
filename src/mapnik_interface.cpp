@@ -210,7 +210,7 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 		if (mi->myMap->buffer_size() == 0) {
 			int buffer_size = (width + height / 4); /* e.g. 128 for a 256x256 image. */
 			int tmp;
-			if (a_settings_get_integer(VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp)) {
+			if (ApplicationState::get_integer(VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp)) {
 				buffer_size = tmp;
 			}
 

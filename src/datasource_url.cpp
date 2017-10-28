@@ -136,19 +136,19 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 {
 	URLData * widgets = (URLData *) user_data;
 	QLabel * label = new QLabel(QObject::tr("URL:"));
-#ifdef K
+
 
 	QLabel * type_label = new QLabel(QObject::tr("File type:"));
 
 	if (last_type_id < 0) {
 		find_entry = -1;
 		wanted_entry = -1;
-		char *type = NULL;
-		if (a_settings_get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, &type)) {
+		QString type;
+		if (ApplicationState::get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, type)) {
 			/* Use setting. */
-			if (type) {
+			if (!type.isEmpty()) {
 				for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-					find_type(iter->second, QString(type));
+					find_type(iter->second, type);
 				}
 			}
 		} else {
@@ -161,6 +161,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 		last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
+#ifdef K
 	if (a_babel_available()) {
 		widgets->type = new QComboBox();
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {

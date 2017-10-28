@@ -1339,7 +1339,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			char *device_off = g_strdup_printf("-i %s,%s", protocol.toUtf8().constData(), "power_off");
+			char *device_off = g_strdup_printf("-i %s,%s", protocol, "power_off");
 			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
@@ -1631,21 +1631,14 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 void LayerGPS::update_statusbar(Window * window_)
 {
-	char *statusbar_format_code = NULL;
-	bool need2free = false;
-	if (!a_settings_get_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, &statusbar_format_code)) {
+	QString statusbar_format_code;
+	if (!ApplicationState::get_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, statusbar_format_code)) {
 		/* Otherwise use default. */
-		statusbar_format_code = strdup("GSA");
-		need2free = true;
+		statusbar_format_code = "GSA";
 	}
 
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
 	window_->get_statusbar()->set_message(StatusBarField::INFO, msg);
-
-	if (need2free) {
-		free(statusbar_format_code);
-	}
-
 }
 
 

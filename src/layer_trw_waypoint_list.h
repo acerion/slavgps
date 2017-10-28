@@ -77,7 +77,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add_row(Waypoint * wp, HeightUnit height_units, const char * date_format);
+		void add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void add_menu_items(QMenu & menu, bool wp_has_image);
 		void add_copy_menu_items(QMenu & menu);

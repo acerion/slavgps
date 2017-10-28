@@ -391,7 +391,7 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * For each entry we copy the various individual waypoint properties into the table,
  * formatting & converting the internal values into something for display.
  */
-void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const char * date_format)
+void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format)
 {
 	/* Get start date. */
 	char time_buf[32] = { 0 };
@@ -400,12 +400,12 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const c
 #ifdef K
 #if GLIB_CHECK_VERSION(2,26,0)
 		GDateTime * gdt = g_date_time_new_from_unix_utc(wp->timestamp);
-		char * time = g_date_time_format(gdt, date_format);
+		char * time = g_date_time_format(gdt, date_format.toUtf8().constData());
 		g_strlcpy(time_buf, time, sizeof(time_buf));
 #else
 		GDate * gdate_start = g_date_new();
 		g_date_set_time_t(gdate_start, wp->timestamp);
-		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
+		g_date_strftime(time_buf, sizeof(time_buf), date_format.toUtf8().constData(), gdate_start);
 #endif
 #endif
 	}
@@ -565,15 +565,14 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 
 
 
-	char * date_format = NULL;
-	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
-		date_format = g_strdup(WAYPOINT_LIST_DATE_FORMAT);
+	QString date_format;
+	if (!ApplicationState::get_string(VIK_SETTINGS_LIST_DATE_FORMAT, date_format)) {
+		date_format = WAYPOINT_LIST_DATE_FORMAT;
 	}
 
 	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
 		this->add_row(*iter, height_units, date_format);
 	}
-	free(date_format);
 
 	/* TODO: add initial sorting by layer name or waypoint name. */
 #ifdef K

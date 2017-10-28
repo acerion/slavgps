@@ -352,7 +352,7 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 		/* This number can be configured via the settings if you really want to change it. */
 		double distance_diff;
-		if (!a_settings_get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
+		if (!ApplicationState::get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
 			distance_diff = 100.0; /* Metres. */
 		}
 

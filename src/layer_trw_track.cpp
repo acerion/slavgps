@@ -94,11 +94,11 @@ static std::mutex rt_uid_mutex;
 void Track::set_defaults()
 {
 	int tmp;
-	if (a_settings_get_integer(VIK_SETTINGS_TRACK_NAME_MODE, &tmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_TRACK_NAME_MODE, &tmp)) {
 		this->draw_name_mode = (TrackDrawNameMode) tmp;
 	}
 
-	if (a_settings_get_integer(VIK_SETTINGS_TRACK_NUM_DIST_LABELS, &tmp)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_TRACK_NUM_DIST_LABELS, &tmp)) {
 		max_number_dist_labels = (uint8_t) (TrackDrawNameMode) tmp; /* TODO: why such cast? */
 	}
 }

@@ -403,13 +403,13 @@ LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport *
 
 
 bool g_have_diary_program = false;
-char *diary_program = NULL;
+static QString diary_program;
 #define VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM "external_diary_program"
 
 bool have_geojson_export = false;
 
 bool g_have_astro_program = false;
-char *astro_program = NULL;
+static QString astro_program;
 #define VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM "external_astro_program"
 
 
@@ -417,23 +417,23 @@ char *astro_program = NULL;
 
 void SlavGPS::layer_trw_init(void)
 {
-	if (!a_settings_get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, &diary_program)) {
+	if (!ApplicationState::get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, diary_program)) {
 #ifdef WINDOWS
-		//diary_program = strdup("C:\\Program Files\\Rednotebook\\rednotebook.exe");
-		diary_program = strdup("C:/Progra~1/Rednotebook/rednotebook.exe");
+		//diary_program = "C:\\Program Files\\Rednotebook\\rednotebook.exe";
+		diary_program = "C:/Progra~1/Rednotebook/rednotebook.exe";
 #else
-		diary_program = strdup("rednotebook");
+		diary_program = "rednotebook";
 #endif
 	} else {
 		/* User specified so assume it works. */
 		g_have_diary_program = true;
 	}
 
-	if (g_find_program_in_path(diary_program)) {
+	if (g_find_program_in_path(diary_program.toUtf8().constData())) {
 		char *mystdout = NULL;
 		char *mystderr = NULL;
 		/* Needs RedNotebook 1.7.3+ for support of opening on a specified date. */
-		char *cmd = g_strconcat(diary_program, " --version", NULL); // "rednotebook --version"
+		char *cmd = g_strconcat(diary_program.toUtf8().constData(), " --version", NULL); // "rednotebook --version"
 		if (g_spawn_command_line_sync(cmd, &mystdout, &mystderr, NULL, NULL)) {
 			/* Annoyingly 1.7.1|2|3 versions of RedNotebook prints the version to stderr!! */
 			if (mystdout) {
@@ -476,18 +476,18 @@ void SlavGPS::layer_trw_init(void)
 #endif
 
 	/* Astronomy Domain. */
-	if (!a_settings_get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, &astro_program)) {
+	if (!ApplicationState::get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, astro_program)) {
 #ifdef WINDOWS
-		//astro_program = strdup("C:\\Program Files\\Stellarium\\stellarium.exe");
-		astro_program = strdup("C:/Progra~1/Stellarium/stellarium.exe");
+		//astro_program = "C:\\Program Files\\Stellarium\\stellarium.exe";
+		astro_program = "C:/Progra~1/Stellarium/stellarium.exe";
 #else
-		astro_program = strdup("stellarium");
+		astro_program = "stellarium";
 #endif
 	} else {
 		/* User specified so assume it works. */
 		g_have_astro_program = true;
 	}
-	if (g_find_program_in_path(astro_program)) {
+	if (g_find_program_in_path(astro_program.toUtf8().constData())) {
 		g_have_astro_program = true;
 	}
 }
@@ -1588,15 +1588,12 @@ QString LayerTRW::get_tooltip()
 */
 void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track)
 {
-	char * statusbar_format_code = NULL;
-	bool need2free = false;
-
 	Trackpoint * tp_prev = NULL;
 
-	if (!a_settings_get_string(VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT, &statusbar_format_code)) {
+	QString statusbar_format_code;
+	if (!ApplicationState::get_string(VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT, statusbar_format_code)) {
 		/* Otherwise use default. */
-		statusbar_format_code = strdup("KEATDN");
-		need2free = true;
+		statusbar_format_code = "KEATDN";
 	} else {
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
 		auto iter = std::prev(tp_iter);
@@ -1604,12 +1601,8 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
 	}
 
 	Trackpoint * tp = tp_iter == track->end() ? NULL : *tp_iter;
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), tp, tp_prev, track, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
-
-	if (need2free) {
-		free(statusbar_format_code);
-	}
 }
 
 
@@ -2185,7 +2178,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	}
 
 	/* Get info from reused datasource dialog widgets. */
-	char* protocol = datasource_gps_get_protocol(dgs);
+	QString protocol = datasource_gps_get_protocol(dgs);
 	QString port = datasource_gps_get_descriptor(dgs);
 	/* Don't free the above strings as they're references to values held elsewhere. */
 	bool do_tracks = datasource_gps_get_do_tracks(dgs);
@@ -3606,9 +3599,9 @@ void LayerTRW::insert_point_before_cb(void)
 void LayerTRW::diary_open(char const * date_str)
 {
 	GError *err = NULL;
-	char * cmd = g_strdup_printf("%s %s%s", diary_program, "--date=", date_str);
+	char * cmd = g_strdup_printf("%s %s%s", diary_program.toUtf8().constData(), "--date=", date_str);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-		Dialog::error(tr("Could not launch %1 to open file.").arg(QString(diary_program)), this->get_window());
+		Dialog::error(tr("Could not launch %1 to open file.").arg(diary_program), this->get_window());
 		g_error_free(err);
 	}
 	free(cmd);
@@ -3634,10 +3627,10 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 		return;
 	}
 	char *cmd = g_strdup_printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-				    astro_program, "-c", tmp, "--full-screen no", "--sky-date", date_str, "--sky-time", time_str, "--latitude", lat_str, "--longitude", lon_str, "--altitude", alt_str);
+				    astro_program.toUtf8().constData(), "-c", tmp, "--full-screen no", "--sky-date", date_str, "--sky-time", time_str, "--latitude", lat_str, "--longitude", lon_str, "--altitude", alt_str);
 	fprintf(stderr, "WARNING: %s\n", cmd);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-		Dialog::error(tr("Could not launch %1").arg(QString(astro_program)), this->get_window());
+		Dialog::error(tr("Could not launch %1").arg(astro_program), this->get_window());
 		fprintf(stderr, "WARNING: %s\n", err->message);
 		g_error_free(err);
 	}

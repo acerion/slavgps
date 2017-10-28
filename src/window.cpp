@@ -185,19 +185,19 @@ Window::Window()
 	this->set_current_document_full_path("");
 
 	int draw_image_width_;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width_)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width_)) {
 		this->draw_image_width = draw_image_width_;
 	} else {
 		this->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
 	}
 	int draw_image_height_;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height_)) {
+	if (ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height_)) {
 		this->draw_image_height = draw_image_height_;
 	} else {
 		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
 	}
 	bool save_viewport_as_png_;
-	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &save_viewport_as_png_)) {
+	if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &save_viewport_as_png_)) {
 		this->save_viewport_as_png = save_viewport_as_png_;
 	} else {
 		this->save_viewport_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
@@ -257,7 +257,7 @@ Window::Window()
 		const int available_width = available_size.width();
 		const int available_height = available_size.height();
 
-		if (a_settings_get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
+		if (ApplicationState::get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
 			/* Enforce a basic minimum size. */
 			if (height < VIKING_WINDOW_HEIGHT) {
 				height = VIKING_WINDOW_HEIGHT;
@@ -270,7 +270,7 @@ Window::Window()
 			height = available_height;
 		}
 
-		if (a_settings_get_integer(VIK_SETTINGS_WIN_WIDTH, &width)) {
+		if (ApplicationState::get_integer(VIK_SETTINGS_WIN_WIDTH, &width)) {
 			/* Enforce a basic minimum size. */
 			if (width < VIKING_WINDOW_WIDTH) {
 				width = VIKING_WINDOW_WIDTH;
@@ -288,21 +288,21 @@ Window::Window()
 
 
 		bool maxed;
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
 			if (maxed) {
 				this->showMaximized();
 			}
 		}
 
 		bool full;
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
 				this->set_full_screen_state_cb(true);
 			}
 		}
 
 		int position = -1; // Let GTK determine default positioning
-		if (!a_settings_get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
+		if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
 			position = -1;
 		}
 #ifdef K
@@ -1509,7 +1509,7 @@ void Window::menu_copy_centre_cb(void)
 	const Coord * coord = this->viewport->get_center();
 
 	bool full_format = false;
-	(void) a_settings_get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
+	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
 
 	if (full_format) {
 		/* Bells & Whistles - may include degrees, minutes and second symbols. */
@@ -1613,29 +1613,29 @@ void Window::closeEvent(QCloseEvent * ev)
 			const Qt::WindowStates states = this->windowState();
 
 			bool state_max = states.testFlag(Qt::WindowMaximized);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
 
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->side_panel_visibility);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar_visibility);
-			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->tool_bar_visibility);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->side_panel_visibility);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar_visibility);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->tool_bar_visibility);
 
 			/* If supersized - no need to save the enlarged width+height values. */
 			if (!(state_fullscreen || state_max)) {
 				qDebug() << "II: Window: Close Event: not saving window size";
-				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
-				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
+				ApplicationState::set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
+				ApplicationState::set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
 #ifdef K
-			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(this->hpaned)));
+			ApplicationState::set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(this->hpaned)));
 #endif
 		}
 
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, this->draw_image_width);
-		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, this->draw_image_height);
-		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, this->save_viewport_as_png);
+		ApplicationState::set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, this->draw_image_width);
+		ApplicationState::set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, this->draw_image_height);
+		ApplicationState::set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, this->save_viewport_as_png);
 
 #ifdef K
 		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
@@ -3653,23 +3653,23 @@ Window * Window::new_window()
 		/* These settings are applied after the show all as these options hide widgets. */
 		bool visibility;
 
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
 			window->set_side_panel_visibility_cb(visibility);
 		}
 
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
 #ifdef K
 			window->set_status_bar_visibility_cb(visibility);
 #endif
 		}
 
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &visibility)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &visibility)) {
 #ifdef K
 			gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
 #endif
 		}
 
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MENUBAR, &visibility)) {
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_MENUBAR, &visibility)) {
 			window->set_main_menu_visibility_cb(visibility);
 		}
 	}

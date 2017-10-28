@@ -18,47 +18,53 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_SETTINGS_H_
-#define _SG_SETTINGS_H_
+#ifndef _SG_APPLICATION_STATE_H_
+#define _SG_APPLICATION_STATE_H_
 
 
 
 
-#include <cstdint>
+#include <QString>
 
 
 
 
-void a_settings_init();
-
-void a_settings_uninit();
-
-bool a_settings_get_boolean(const char * name, bool * val);
-
-void a_settings_set_boolean(const char * name, bool val);
-
-bool a_settings_get_string(const char * name, char ** val);
-
-void a_settings_set_string(const char * name, const char * val);
-
-bool a_settings_get_integer(const char * name, int * val);
-
-void a_settings_set_integer(const char * name, int val);
-
-bool a_settings_get_double(const char * name, double * val);
-
-void a_settings_set_double(const char * name, double val);
-
-/*
-bool a_settings_get_integer_list(const char * name, int * vals, size_t * length);
-
-void a_settings_set_integer_list(const char * name, int vals[], size_t length);
-*/
-bool a_settings_get_integer_list_contains(const char * name, int val);
-
-void a_settings_set_integer_list_containing(const char * name, int val);
+namespace SlavGPS {
 
 
 
 
-#endif /* #ifndef _SG_SETTINGS_H_ */
+	class ApplicationState {
+	public:
+		static void init();
+		static void uninit();
+
+		static bool get_boolean(const char * name, bool * val);
+		static void set_boolean(const char * name, bool val);
+
+		static bool get_string(const char * name, QString & val);
+		static void set_string(const char * name, const QString & val);
+
+		static bool get_integer(const char * name, int * val);
+		static void set_integer(const char * name, int val);
+
+		static bool get_double(const char * name, double * val);
+		static void set_double(const char * name, double val);
+
+		static bool get_integer_list_contains(const char * name, int val);
+		static void set_integer_list_containing(const char * name, int val);
+
+	private:
+		static bool get_integer_list(const char * name, int ** vals, size_t * length);
+		static void set_integer_list(const char * name, int vals[], size_t length);
+	}; /* class ApplicationState */
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_APPLICATION_STATE_H_ */

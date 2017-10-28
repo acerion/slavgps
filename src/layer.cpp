@@ -305,7 +305,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 
 	} else if (layer_type == LayerType::TRW) {
 		layer = new LayerTRW();
-		(void) a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &use_default_properties);
+		(void) ApplicationState::get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &use_default_properties);
 		((LayerTRW *) layer)->set_coord_mode(viewport->get_coord_mode());
 	} else if (layer_type == LayerType::COORD) {
 		layer = new LayerCoord();

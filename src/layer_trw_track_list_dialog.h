@@ -75,7 +75,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format);
+		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void add_menu_items(QMenu & menu);
 		void add_copy_menu_item(QMenu & menu);

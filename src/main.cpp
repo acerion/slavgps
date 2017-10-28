@@ -164,7 +164,7 @@ int main(int argc, char ** argv)
 	/* Discover if this is the very first run. */
 	SGUtils::is_very_first_run();
 
-	a_settings_init();
+	ApplicationState::init();
 
 	/*
 	  First stage initialization.
@@ -275,7 +275,7 @@ int main(int argc, char ** argv)
 	DEMCache::uninit();
 	LayerDefaults::uninit();
 	Preferences::uninit();
-	a_settings_uninit();
+	ApplicationState::uninit();
 #if 0
 	modules_uninit();
 #endif
