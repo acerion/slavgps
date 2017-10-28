@@ -35,7 +35,7 @@
 
 
 #include "dir.h"
-#include "settings.h"
+#include "application_state.h"
 
 
 

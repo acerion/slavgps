@@ -27,7 +27,7 @@
 
 #include "acquire.h"
 #include "babel.h"
-#include "settings.h"
+#include "application_state.h"
 #include "util.h"
 
 

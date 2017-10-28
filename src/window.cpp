@@ -46,7 +46,7 @@
 #include "layer_map.h"
 #include "globals.h"
 #include "ui_builder.h"
-#include "settings.h"
+#include "application_state.h"
 #include "background.h"
 #include "dialog.h"
 #include "util.h"

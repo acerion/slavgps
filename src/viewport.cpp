@@ -52,7 +52,7 @@
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"
-#include "settings.h"
+#include "application_state.h"
 #include "dialog.h"
 
 

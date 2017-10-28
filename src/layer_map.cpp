@@ -59,7 +59,7 @@
 #include "widget_file_entry.h"
 #include "dialog.h"
 #include "file.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 #include "ui_builder.h"
 #include "util.h"

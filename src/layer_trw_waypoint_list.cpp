@@ -38,7 +38,7 @@
 #include "window.h"
 #include "viewport_internal.h"
 #include "util.h"
-#include "settings.h"
+#include "application_state.h"
 #include "preferences.h"
 #include "tree_view_internal.h"
 #include "dialog.h"

@@ -33,7 +33,7 @@
 #include <QStyledItemDelegate>
 
 #include "background.h"
-#include "settings.h"
+#include "application_state.h"
 #include "util.h"
 
 #include "ui_builder.h"

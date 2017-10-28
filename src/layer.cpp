@@ -47,7 +47,7 @@
 #include "tree_view_internal.h"
 #include "ui_builder.h"
 #include "vikutils.h"
-#include "settings.h"
+#include "application_state.h"
 
 
 

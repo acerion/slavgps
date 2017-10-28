@@ -42,7 +42,7 @@
 #include "gpx.h"
 #include "background.h"
 #include "preferences.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 #include "util.h"
 

@@ -45,7 +45,7 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "widget_file_entry.h"
 #include "dialog.h"
 #include "file.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 //#include "layers_panel.h"
 #include "util.h"

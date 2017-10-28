@@ -53,7 +53,7 @@
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
 #include "tree_view_internal.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "icons/icons.h"

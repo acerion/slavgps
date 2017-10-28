@@ -55,7 +55,7 @@
 //#include "dem_cache.h"
 #include "background.h"
 #include "util.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 #include "ui_builder.h"
 #include "layers_panel.h"

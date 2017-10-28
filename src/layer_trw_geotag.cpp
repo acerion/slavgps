@@ -41,7 +41,7 @@
 #include "background.h"
 #include "layer_trw_geotag.h"
 #include "fileutils.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"

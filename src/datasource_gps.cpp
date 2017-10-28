@@ -44,7 +44,7 @@
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
-#include "settings.h"
+#include "application_state.h"
 #include "util.h"
 
 

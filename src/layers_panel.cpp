@@ -29,7 +29,7 @@
 #include <QPushButton>
 
 #include "viewport_internal.h"
-#include "settings.h"
+#include "application_state.h"
 #include "layers_panel.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"

@@ -128,7 +128,7 @@ SOURCES += main.cpp \
     download.cpp \
     curl_download.cpp \
     dialog.cpp \
-    settings.cpp \
+    application_state.cpp \
     statusbar.cpp \
     modules.cpp \
     variant.cpp
@@ -246,7 +246,7 @@ HEADERS += window.h \
     curl_download.h \
     dialog.h \
     preferences.h \
-    settings.h \
+    application_state.h \
     statusbar.h \
     modules.h \
     acquire.h \

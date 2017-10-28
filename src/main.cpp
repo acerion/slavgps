@@ -37,7 +37,7 @@
 #include "download.h"
 #include "background.h"
 #include "preferences.h"
-#include "settings.h"
+#include "application_state.h"
 #include "babel.h"
 #include "modules.h"
 #include "vikutils.h"

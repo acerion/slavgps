@@ -40,7 +40,7 @@
 #include "coords.h"
 #include "coord.h"
 #include "dem_cache.h"
-#include "settings.h"
+#include "application_state.h"
 #include "util.h"
 #include "osm-traces.h"
 #include "layer_trw_track_internal.h"

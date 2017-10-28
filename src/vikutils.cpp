@@ -32,7 +32,7 @@
 #include "viewport_zoom.h"
 #include "vikutils.h"
 #include "util.h"
-#include "settings.h"
+#include "application_state.h"
 #include "misc/kdtree.h"
 #include "dir.h"
 #include "layer_map.h"

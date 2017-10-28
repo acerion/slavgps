@@ -33,7 +33,7 @@
 #include "layer_trw_track_list_dialog.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_properties_dialog.h"
-#include "settings.h"
+#include "application_state.h"
 #include "globals.h"
 #include "window.h"
 #include "vikutils.h"
