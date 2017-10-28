@@ -85,7 +85,7 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
+	{ 0, PREFERENCES_NAMESPACE_IO, "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
 };
 
 

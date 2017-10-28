@@ -74,6 +74,7 @@ namespace SlavGPS {
 		static bool set_param_value(const QString & param_name, const SGVariant & param_value);
 		/* Get value of a single parameter. */
 		static const SGVariant * get_param_value(const char * param_name);
+		static const SGVariant * get_param_value(const QString & param_name);
 
 
 		QHash<QString, ParameterSpecification *>::iterator begin();

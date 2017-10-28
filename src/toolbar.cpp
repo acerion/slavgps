@@ -150,11 +150,11 @@ typedef struct {
 static config_t extra_widget_data;
 
 static ParameterSpecification prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE, "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
-	{ 4, NULL,                     NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
+	{ 0, TOOLBAR_PARAMS_NAMESPACE, "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, QObject::tr("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
+	{ 4, NULL,                     NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */

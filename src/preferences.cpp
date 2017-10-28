@@ -84,16 +84,16 @@ static std::vector<SGLabelID> params_time_ref_frame = {
 };
 
 static ParameterSpecification general_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL, "degree_format",            SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Degree format:"),            WidgetType::COMBOBOX,        &params_degree_formats, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GENERAL, "units_distance",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Distance units:"),           WidgetType::COMBOBOX,        &params_units_distance, NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_GENERAL, "units_speed",              SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_GENERAL, "units_height",             SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Height units:"),             WidgetType::COMBOBOX,        &params_units_height,   NULL, NULL, NULL },
-	{ 4, PREFERENCES_NAMESPACE_GENERAL, "use_large_waypoint_icons", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                   NULL, NULL, NULL },
-	{ 5, PREFERENCES_NAMESPACE_GENERAL, "default_latitude",         SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  &scale_lat,             NULL, NULL, NULL },
-	{ 6, PREFERENCES_NAMESPACE_GENERAL, "default_longitude",        SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, N_("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  &scale_lon,             NULL, NULL, NULL },
-	{ 7, PREFERENCES_NAMESPACE_GENERAL, "time_reference_frame",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL, "degree_format",            SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::COMBOBOX,        &params_degree_formats, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GENERAL, "units_distance",           SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Distance units:"),           WidgetType::COMBOBOX,        &params_units_distance, NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_GENERAL, "units_speed",              SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::COMBOBOX,        &params_units_speed,    NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_GENERAL, "units_height",             SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::COMBOBOX,        &params_units_height,   NULL, NULL, NULL },
+	{ 4, PREFERENCES_NAMESPACE_GENERAL, "use_large_waypoint_icons", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Use large waypoint icons:"), WidgetType::CHECKBUTTON,     NULL,                   NULL, NULL, NULL },
+	{ 5, PREFERENCES_NAMESPACE_GENERAL, "default_latitude",         SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::SPINBOX_DOUBLE,  &scale_lat,             NULL, NULL, NULL },
+	{ 6, PREFERENCES_NAMESPACE_GENERAL, "default_longitude",        SGVariantType::DOUBLE,  PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::SPINBOX_DOUBLE,  &scale_lon,             NULL, NULL, NULL },
+	{ 7, PREFERENCES_NAMESPACE_GENERAL, "time_reference_frame",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::COMBOBOX,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
 
-	{ 8, NULL,                          NULL,                       SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                            WidgetType::NONE,            NULL,                   NULL, NULL, NULL },
+	{ 8, NULL,                          NULL,                       SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                              WidgetType::NONE,            NULL,                   NULL, NULL, NULL },
 };
 
 /* External/Export Options */
@@ -116,23 +116,23 @@ static std::vector<SGLabelID> params_gpx_export_wpt_symbols = {
 };
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "kml_export_units",         SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("KML File Export Units:"), WidgetType::COMBOBOX, &params_kml_export_units,       NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_IO, "gpx_export_track_sort",    SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Track Order:"),       WidgetType::COMBOBOX, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_IO, "gpx_export_wpt_sym_names", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("GPX Waypoint Symbols:"),  WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
-	{ 3, NULL,                     NULL,                       SGVariantType::EMPTY, PARAMETER_GROUP_GENERIC, NULL,                         WidgetType::NONE,     NULL,                           NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO, "kml_export_units",         SGVariantType::INT, PARAMETER_GROUP_GENERIC,    QObject::tr("KML File Export Units:"),  WidgetType::COMBOBOX, &params_kml_export_units,       NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_IO, "gpx_export_track_sort",    SGVariantType::INT, PARAMETER_GROUP_GENERIC,    QObject::tr("GPX Track Order:"),        WidgetType::COMBOBOX, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_IO, "gpx_export_wpt_sym_names", SGVariantType::INT, PARAMETER_GROUP_GENERIC,    QObject::tr("GPX Waypoint Symbols:"),   WidgetType::COMBOBOX, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
+	{ 3, NULL,                     NULL,                       SGVariantType::EMPTY, PARAMETER_GROUP_GENERIC,  QString(""),                            WidgetType::NONE,     NULL,                           NULL, NULL, NULL }, /* Guard. */
 };
 
 #ifndef WINDOWS
 static ParameterSpecification io_prefs_non_windows[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "image_viewer", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
-	{ 1, NULL,                     NULL,           SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO, "image_viewer", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("Image Viewer:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
+	{ 1, NULL,                     NULL,           SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
 };
 #endif
 
 static ParameterSpecification io_prefs_external_gpx[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "external_gpx_1", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_IO, "external_gpx_2", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, N_("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                     NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                          WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO, "external_gpx_1", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 1:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_IO, "external_gpx_2", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 2:"), WidgetType::FILEENTRY, NULL, NULL, NULL, NULL },
+	{ 2, NULL,                     NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                            WidgetType::NONE,      NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 static std::vector<SGLabelID> params_vik_fileref = {
@@ -143,11 +143,11 @@ static std::vector<SGLabelID> params_vik_fileref = {
 static ParameterScale scale_recent_files = { -1, 25, SGVariant((int32_t) 10), 1, 0 }; /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
-	{ 0, PREFERENCES_NAMESPACE_ADVANCED, "save_file_reference_mode",  SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
-	{ 1, PREFERENCES_NAMESPACE_ADVANCED, "ask_for_create_track_name", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_ADVANCED, "create_track_tooltip",      SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_ADVANCED, "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("The number of recent files:"),         WidgetType::SPINBOX_INT, &scale_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
-	{ 4, NULL,                           NULL,                        SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                                      WidgetType::NONE,        NULL,                 NULL, NULL, NULL },  /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_ADVANCED, "save_file_reference_mode",  SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::COMBOBOX,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
+	{ 1, PREFERENCES_NAMESPACE_ADVANCED, "ask_for_create_track_name", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Ask for Name before Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_ADVANCED, "create_track_tooltip",      SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Show Tooltip during Track Creation:"), WidgetType::CHECKBUTTON, NULL,                 NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_ADVANCED, "number_recent_files",       SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("The number of recent files:"),         WidgetType::SPINBOX_INT, &scale_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
+	{ 4, NULL,                           NULL,                        SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                                        WidgetType::NONE,        NULL,                 NULL, NULL, NULL },  /* Guard. */
 };
 
 static std::vector<SGLabelID> params_startup_methods = {
@@ -158,12 +158,12 @@ static std::vector<SGLabelID> params_startup_methods = {
 };
 
 static ParameterSpecification startup_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_STARTUP, "restore_window_state",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Restore window size and layout") },
-	{ 1, PREFERENCES_NAMESPACE_STARTUP, "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
-	{ 2, PREFERENCES_NAMESPACE_STARTUP, "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, N_("Startup Method:"),          WidgetType::COMBOBOX,    &params_startup_methods, NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_STARTUP, "startup_file",          SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, N_("Startup File:"),            WidgetType::FILEENTRY,   NULL,                    NULL, NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
-	{ 4, PREFERENCES_NAMESPACE_STARTUP, "check_version",         SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, N_("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
-	{ 5, NULL,                          NULL,                    SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, NULL,                           WidgetType::NONE,        NULL,                    NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_STARTUP, "restore_window_state",  SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Restore Window Setup:"),    WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Restore window size and layout") },
+	{ 1, PREFERENCES_NAMESPACE_STARTUP, "add_default_map_layer", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Add a Default Map Layer:"), WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
+	{ 2, PREFERENCES_NAMESPACE_STARTUP, "startup_method",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Startup Method:"),          WidgetType::COMBOBOX,    &params_startup_methods, NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_STARTUP, "startup_file",          SGVariantType::STRING,  PARAMETER_GROUP_GENERIC, QObject::tr("Startup File:"),            WidgetType::FILEENTRY,   NULL,                    NULL, NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
+	{ 4, PREFERENCES_NAMESPACE_STARTUP, "check_version",         SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Check For New Version:"),   WidgetType::CHECKBUTTON, NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
+	{ 5, NULL,                          NULL,                    SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                             WidgetType::NONE,        NULL,                    NULL, NULL, NULL }, /* Guard. */
 };
 /* End of Options static stuff. */
 
@@ -326,7 +326,7 @@ bool Preferences::set_param_value(const char * param_name, const SGVariant & par
 	/* FIXME: delete old value first? */
 	registered_parameter_values.insert(QString(param_spec->name), new_param_value);
 
-	qDebug() << "II: Preferences: saved parameter" << param_spec->name << " = " << *new_param_value;
+	qDebug() << "II: Preferences: saved parameter" << param_spec->name << "=" << *new_param_value;
 
 	return true;
 }
@@ -366,7 +366,7 @@ bool Preferences::save_to_file(void)
 
 			const SGVariant * value = val_iter.value();
 			if (value->type_id != SGVariantType::PTR) {
-				qDebug() << "II: Preferences: saving to file" << param_spec->name << " = " << *value;
+				qDebug() << "II: Preferences: saving to file" << param_spec->name << "=" << *value;
 				file_write_layer_param(file, param_spec->name, value->type_id, value);
 			}
 		}
@@ -395,7 +395,7 @@ void Preferences::show_window(QWidget * parent)
 
 			const SGVariant param_value = dialog.get_param_value(param_name, param_spec);
 
-			qDebug() << "II: Preferences: extracted from dialog parameter" << param_spec->name << " = " << param_value;
+			qDebug() << "II: Preferences: extracted from dialog parameter" << param_spec->name << "=" << param_value;
 			Preferences::set_param_value(param_name, param_value);
 		}
 		Preferences::save_to_file();
@@ -408,7 +408,7 @@ void Preferences::show_window(QWidget * parent)
 void SlavGPS::Preferences::register_parameter(ParameterSpecification * param_spec, const SGVariant & default_value)
 {
 	/* In the debug message print name and name space separately, to improve debugging. */
-	qDebug() << "II: Preferences: registering preference" << param_spec->name_space << param_spec->name << " = " << default_value;
+	qDebug() << "II: Preferences: registering preference" << param_spec->name_space << param_spec->name << "=" << default_value;
 
 	const QString key = QString(param_spec->name_space) + "." + QString(param_spec->name);
 
@@ -455,6 +455,28 @@ void Preferences::uninit()
 
 
 const SGVariant * Preferences::get_param_value(const char * param_name)
+{
+	if (!preferences.loaded) {
+		qDebug() << "DD: Preferences: calling _get() for the first time (param name is" << param_name << ")";
+
+		/* Since we can't load the file in Preferences::init() (no params registered yet),
+		   do it once before we get the first param name. */
+		preferences_load_from_file();
+		preferences.loaded = true;
+	}
+
+	auto val_iter = registered_parameter_values.find(QString(param_name));
+	if (val_iter == registered_parameter_values.end()) {
+		return NULL;
+	} else {
+		return val_iter.value();
+	}
+}
+
+
+
+
+const SGVariant * Preferences::get_param_value(const QString & param_name)
 {
 	if (!preferences.loaded) {
 		qDebug() << "DD: Preferences: calling _get() for the first time (param name is" << param_name << ")";

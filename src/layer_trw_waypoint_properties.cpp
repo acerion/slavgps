@@ -52,15 +52,15 @@ using namespace SlavGPS;
 
 
 ParameterSpecification wp_param_specs[] = {
-	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	/* TODO: where is guard item? */
 };
 

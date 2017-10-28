@@ -59,11 +59,11 @@ enum {
 
 
 static ParameterSpecification coord_layer_param_specs[] = {
-	{ PARAM_COLOR,          NULL, "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, N_("Color:"),          WidgetType::COLOR,          NULL,                  color_default,   NULL, NULL },
-	{ PARAM_MIN_INC,        NULL, "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
-	{ PARAM_LINE_THICKNESS, NULL, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, N_("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },
+	{ PARAM_COLOR,          NULL, "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, QObject::tr("Color:"),          WidgetType::COLOR,          NULL,                  color_default,   NULL, NULL },
+	{ PARAM_MIN_INC,        NULL, "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
+	{ PARAM_LINE_THICKNESS, NULL, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },
 
-	{ PARAM_MAX,            NULL, NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, NULL,                  WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL, NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
 };
 
 

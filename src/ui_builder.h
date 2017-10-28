@@ -90,6 +90,10 @@ namespace SlavGPS {
 		NONE
 	};
 
+	QString widget_type_get_label(WidgetType type_id);
+
+
+
 
 	/* Default value has to be returned via a function
 	   because certain types value are can not be statically allocated
@@ -115,13 +119,15 @@ namespace SlavGPS {
 		const char * name;
 		SGVariantType type;
 		param_id_t group_id; /* Every parameter belongs to a group of related parameters. Related parameters are put into the same tab in UI dialog. */
-		const char * title;
+		QString ui_label;
 		WidgetType widget_type;
 		void * widget_data;
 
 		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
 		ParameterExtra * extra;
-		const char *tooltip;
+		const char * tooltip;
+
+		ParameterSpecification & operator=(const ParameterSpecification & other);
 	};
 
 	enum {
@@ -172,7 +178,7 @@ namespace SlavGPS {
 		SGVariant get_param_value(const QString & param_name, const ParameterSpecification * param_spec);
 
 	private:
-		QWidget * new_widget(ParameterSpecification * param_spec, const SGVariant & param_value);
+		QWidget * new_widget(const ParameterSpecification * param_spec, const SGVariant & param_value);
 
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);

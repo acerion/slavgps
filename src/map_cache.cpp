@@ -71,7 +71,7 @@ static std::mutex mc_mutex;
 static ParameterScale scale_cache_size = { 1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0 };
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL, "mapcache_size", SGVariantType::INT, PARAMETER_GROUP_GENERIC, N_("Map cache memory size (MB):"), WidgetType::HSCALE, &scale_cache_size, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL, "mapcache_size", SGVariantType::INT, PARAMETER_GROUP_GENERIC, QObject::tr("Map cache memory size (MB):"), WidgetType::HSCALE, &scale_cache_size, NULL, NULL, NULL },
 };
 
 
