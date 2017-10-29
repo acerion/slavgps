@@ -52,7 +52,7 @@
 #include "util.h"
 #include "vikutils.h"
 #include "file.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "datasources.h"
 #include "goto.h"
 #include "print.h"

@@ -115,7 +115,7 @@ SOURCES += main.cpp \
     dem_cache.cpp \
     srtm_continent.cpp \
     compression.cpp \
-    fileutils.cpp \
+    file_utils.cpp \
     util.cpp \
     vikutils.cpp \
     measurements.cpp \
@@ -232,7 +232,7 @@ HEADERS += window.h \
     dem.h \
     dem_cache.h \
     compression.h \
-    fileutils.h \
+    file_utils.h \
     util.h \
     vikutils.h \
     measurements.h \

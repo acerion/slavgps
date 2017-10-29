@@ -25,7 +25,7 @@
 
 #include "jpg.h"
 #include "file.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "layer_trw.h"
 #include "window.h"
 #include "layer_aggregate.h"

@@ -38,7 +38,7 @@
 #include "babel_dialog.h"
 #include "layer_trw.h"
 #include "gpx.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "dialog.h"
 #include "util.h"
 #include "globals.h"

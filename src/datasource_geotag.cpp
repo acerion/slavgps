@@ -28,7 +28,7 @@
 
 #include "acquire.h"
 #include "geotag_exif.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "util.h"
 
 

@@ -55,7 +55,7 @@
 
 #include "file.h"
 #include "gpx.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "globals.h"
 #include "preferences.h"
 #include "babel.h"

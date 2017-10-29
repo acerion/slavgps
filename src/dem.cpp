@@ -48,7 +48,7 @@
 #include "compression.h"
 #include "dem.h"
 #include "coords.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "util.h"
 #include "vikutils.h"
 

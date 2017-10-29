@@ -40,7 +40,7 @@
 #include "thumbnails.h"
 #include "background.h"
 #include "layer_trw_geotag.h"
-#include "fileutils.h"
+#include "file_utils.h"
 #include "application_state.h"
 #include "globals.h"
 #include "layer_trw.h"
