@@ -24,6 +24,11 @@
 
 
 
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
@@ -34,8 +39,8 @@ namespace SlavGPS {
 
 
 
-	bool jpg_magic_check(char const * filename);
-	bool jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport);
+	bool jpg_magic_check(const QString & file_full_path);
+	bool jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path);
 
 
 

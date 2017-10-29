@@ -723,9 +723,8 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, Coord * coord_ul, Coord * coord_b
 
 	tp_mutex.unlock();
 
-	char * basename = g_path_get_basename(name_);
-	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(basename);
-	free(basename);
+	const QString base_name = FileUtils::get_base_name(name_);
+	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(base_name);
 	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
 #endif
 }

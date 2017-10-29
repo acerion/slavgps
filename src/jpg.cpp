@@ -58,13 +58,11 @@ extern Tree * g_tree;
 
 
 /**
- * @filename: The file
- *
- * Returns: Whether the file is a JPG.
- * Uses Magic library if available to determine the jpgness.
- * Otherwise uses a rudimentary extension name check.
- */
-bool SlavGPS::jpg_magic_check(char const * filename)
+   Returns: Whether the file is a JPG.
+   Uses Magic library if available to determine the jpgness.
+   Otherwise uses a rudimentary extension name check.
+*/
+bool SlavGPS::jpg_magic_check(const QString & file_full_path)
 {
 	bool is_jpg = false;
 #ifdef HAVE_MAGIC_H
@@ -78,7 +76,7 @@ bool SlavGPS::jpg_magic_check(char const * filename)
 		/* Use system default. */
 		magic_load(myt, NULL);
 #endif
-		char const * magic = magic_file(myt, filename);
+		char const * magic = magic_file(myt, file_full_path.toUtf8().constData());
 		fprintf(stderr, "DEBUG: %s:%s\n", __FUNCTION__, magic);
 		if (g_ascii_strncasecmp(magic, "image/jpeg", 10) == 0) {
 			is_jpg = true;
@@ -88,7 +86,7 @@ bool SlavGPS::jpg_magic_check(char const * filename)
 	} else
 #endif
 	{
-		is_jpg = a_file_check_ext(filename, ".jpg");
+		is_jpg = FileUtils::has_extension(file_full_path, ".jpg");
 	}
 
 
@@ -99,19 +97,19 @@ bool SlavGPS::jpg_magic_check(char const * filename)
 
 
 /**
- * Load a single JPG into a Trackwaypoint Layer as a waypoint.
- *
- * @top:      The Aggregate layer that a new TRW layer may be created in
- * @filename: The JPG filename
- * @viewport: The viewport
- *
- * Returns: Whether the loading was a success or not.
- *
- * If the JPG has geotag information then the waypoint will be created with the appropriate position.
- * Otherwise the waypoint will be positioned at the current screen center.
- * If a TRW layer is already selected the waypoint will be created in that layer.
- */
-bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
+   @brief Load a single JPG into a Trackwaypoint Layer as a waypoint.
+
+   @parent_layer: The Aggregate layer that a new TRW layer may be created in
+   @file_full_path: full path to JPG file
+   @viewport: The viewport
+
+   If the JPG has geotag information then the waypoint will be created with the appropriate position.
+   Otherwise the waypoint will be positioned at the current screen center.
+   If a TRW layer is already selected the waypoint will be created in that layer.
+
+   Returns: Whether the loading was a success or not.
+*/
+bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
@@ -124,31 +122,30 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 
 		trw = (LayerTRW *) new LayerTRW();
 		trw->set_coord_mode(viewport->get_coord_mode());
-		trw->set_name(file_basename(filename));
+		trw->set_name(FileUtils::get_base_name(file_full_path));
 		create_layer = true;
 	} else {
 		trw = (LayerTRW *) layer;
 	}
 
-	char * name = NULL;
+	QString waypoint_name;
 	Waypoint * wp = NULL;
 #ifdef K
 #ifdef VIK_CONFIG_GEOTAG
-	wp = a_geotag_create_waypoint_from_file(filename, viewport->get_coord_mode(), &name);
+	wp = a_geotag_create_waypoint_from_file(file_full_path, viewport->get_coord_mode(), waypoint_name);
 #endif
 #endif
 	if (wp) {
 		/* Create name if geotag method didn't return one. */
-		if (!name) {
-			name = strdup(file_basename(filename));
+		if (waypoint_name.isEmpty()) {
+			waypoint_name = FileUtils::get_base_name(file_full_path);
 		}
-		trw->filein_add_waypoint(wp, name);
-		free(name);
+		trw->filein_add_waypoint(wp, waypoint_name);
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		trw->filein_add_waypoint(wp, file_base_name(filename));
-		wp->set_image(filename);
+		trw->filein_add_waypoint(wp, file_base_name(file_full_path));
+		wp->set_image(file_full_path);
 		/* Simply set position to the current center. */
 		wp->coord = *(viewport->get_center());
 		auto_zoom = false;
@@ -157,7 +154,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 	/* Complete the setup. */
 	trw->post_read(viewport, true);
 	if (create_layer) {
-		top->add_layer(trw, false);
+		parent_layer->add_layer(trw, false);
 	}
 
 	if (auto_zoom) {

@@ -57,7 +57,7 @@ using namespace SlavGPS;
  * Probably for normal use case of not too large an area coverage (on a Garmin device) the projection is near enough...
  */
 /* Hopefully image_filename will not break the XML file tag structure. */
-static char * doc_kml_str(const char * name, const char * image_filename, double north, double south, double east, double west)
+static char * doc_kml_str(const QString & file_name, const char * image_filename, double north, double south, double east, double west)
 {
 	char *tmp_n = a_coords_dtostr(north);
 	char *tmp_s = a_coords_dtostr(south);
@@ -81,7 +81,7 @@ static char * doc_kml_str(const char * name, const char * image_filename, double
 		"  </LatLonBox>\n"
 		"</GroundOverlay>\n"
 		"</kml>\n",
-		name, image_filename, tmp_n, tmp_s, tmp_e, tmp_w);
+		file_name.toUtf8().constData(), image_filename, tmp_n, tmp_s, tmp_e, tmp_w);
 
 	free(tmp_n);
 	free(tmp_s);
@@ -135,7 +135,7 @@ typedef struct zip_source zip_source_t;
 	}
 
 	/* Generate KML file. */
-	char *dk = doc_kml_str(a_file_basename(filename), image_filename, north, south, east, west);
+	char *dk = doc_kml_str(FileUtils::get_base_name(filename), image_filename, north, south, east, west);
 	int dkl = strlen(dk);
 
 	/* KML must be named doc.kml in the kmz file. */

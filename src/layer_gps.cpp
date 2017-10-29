@@ -1339,7 +1339,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			char *device_off = g_strdup_printf("-i %s,%s", protocol, "power_off");
+			char *device_off = g_strdup_printf("-i %s,%s", protocol.toUtf8().constData(), "power_off");
 			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {

@@ -2075,7 +2075,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->loaded_type = a_file_load(agg, this->viewport, new_document_full_path.toUtf8().constData());
+	this->loaded_type = VikFile::load(agg, this->viewport, new_document_full_path);
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		Dialog::error(tr("The file you requested could not be opened."), this);
@@ -2196,7 +2196,7 @@ bool Window::menu_file_save_as_cb(void)
 
 	/* Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File. */
 	QString auto_save_name = this->get_current_document_file_name();
-	if (!a_file_check_ext(auto_save_name, ".vik")) {
+	if (!FileUtils::has_extension(auto_save_name, ".vik")) {
 		auto_save_name = auto_save_name + ".vik";
 	}
 
@@ -2342,7 +2342,7 @@ void Window::set_current_document_full_path(const QString & document_full_path)
 
 QString Window::get_current_document_file_name(void)
 {
-	return this->current_document_full_path.isEmpty() ? tr("Untitled") : file_basename(this->current_document_full_path.toUtf8().constData());
+	return this->current_document_full_path.isEmpty() ? tr("Untitled") : FileUtils::get_base_name(this->current_document_full_path);
 }
 
 
@@ -3581,7 +3581,7 @@ bool Window::window_save()
 	this->set_busy_cursor();
 	bool success = true;
 
-	if (a_file_save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path.toUtf8().constData())) {
+	if (VikFile::save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path)) {
 		this->update_recently_used_document(this->current_document_full_path);
 	} else {
 		Dialog::error(tr("The filename you requested could not be opened for writing."), this);

@@ -2,6 +2,8 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2012-2013, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +26,30 @@
 
 
 
+/*
+  Code that is independent from any data types specific to
+  Viking/SlavGPS, and is not tied to internals of Viking file format.
+
+  Otherwise see file.c
+*/
+
+
+
+
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
 
-
-	char const * file_basename(char const * filename);
+	class FileUtils {
+	public:
+		static QString get_base_name(const QString & file_name);
+		static bool has_extension(const QString & file_name, const char * file_extension);
+	};
 
 
 

@@ -742,7 +742,7 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 	/* Do. */
 	QString new_name;
-	if (ext != NULL && !a_file_check_ext(file_name, ext)) {
+	if (ext != NULL && !FileUtils::has_extension(file_name, ext)) {
 		new_name = file_name + ext;
 	} else {
 		/* Simply duplicate. */
@@ -755,29 +755,28 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 
 
-VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
+VikLoadType_t VikFile::load(LayerAggregate * top, Viewport * viewport, const QString & file_full_path)
 {
 	if (!viewport) {
 		return LOAD_TYPE_READ_FAILURE;
 	}
 
-	char * filename = (char *) filename_or_uri;
-	if (strncmp(filename, "file://", 7) == 0) {
-		/* Consider replacing this with:
-		   filename = g_filename_from_uri (entry, NULL, NULL);
-		   Since this doesn't support URIs properly (i.e. will failure if is it has %20 characters in it). */
-		filename = filename + 7;
-		fprintf(stderr, "DEBUG: Loading file %s from URI %s\n", filename, filename_or_uri);
+	QString full_path;
+	if (file_full_path.left(7) == "file://") {
+		full_path = file_full_path.right(file_full_path.size() - 7);
+	} else {
+		full_path = file_full_path;
 	}
-	FILE * f = fopen(filename, "r");
+	qDebug() << "DD: VikFile: load: reading from file" << full_path;
 
+	FILE * f = fopen(full_path.toUtf8().constData(), "r");
 	if (!f) {
 		return LOAD_TYPE_READ_FAILURE;
 	}
 
 	VikLoadType_t load_answer = LOAD_TYPE_OTHER_SUCCESS;
 
-	char * dirpath = g_path_get_dirname(filename);
+	char * dirpath = g_path_get_dirname(full_path.toUtf8().constData());
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (check_magic(f, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (file_read(top, f, dirpath, viewport)) {
@@ -785,8 +784,8 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		} else {
 			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
 		}
-	} else if (jpg_magic_check(filename)) {
-		if (!jpg_load_file(top, filename, viewport)) {
+	} else if (jpg_magic_check(full_path)) {
+		if (!jpg_load_file(top, viewport, full_path)) {
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
 	} else {
@@ -796,19 +795,19 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 
 		LayerTRW * layer = new LayerTRW();
 		layer->set_coord_mode(viewport->get_coord_mode());
-		layer->set_name(file_basename(filename));
+		layer->set_name(FileUtils::get_base_name(full_path));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
-		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		if (FileUtils::has_extension(full_path, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
-			ProcessOptions po((char *) "-i kml", filename, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+			ProcessOptions po((char *) "-i kml", full_path.toUtf8().constData(), NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
 		}
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
-		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			if (! (success = a_gpx_read_file(layer, f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
@@ -839,36 +838,37 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 
 
 
-bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
+bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
 {
-	FILE * f;
-
-	if (strncmp(filename, "file://", 7) == 0) {
-		filename = filename + 7;
+	QString full_path;
+	if (file_full_path.left(7) == "file://") {
+		full_path = file_full_path.right(file_full_path.size() - 7);
+	} else {
+		full_path = file_full_path;
 	}
+	qDebug() << "DD: VikFile: load: saving to file" << full_path;
 
-	f = fopen(filename, "w");
-
+	FILE * f = fopen(full_path.toUtf8().constData(), "w");
 	if (!f) {
 		return false;
 	}
 
 	/* Enable relative paths in .vik files to work. */
 	char * cwd = g_get_current_dir();
-	char * dir = g_path_get_dirname(filename);
+	char * dir = g_path_get_dirname(full_path.toUtf8().constData());
 	if (dir) {
 		if (g_chdir(dir)) {
-			fprintf(stderr, "WARNING: Could not change directory to %s\n", dir);
+			qDebug() << "WW: VikFile: save: could not change directory to" << dir;
 		}
 		free(dir);
 	}
 
-	file_write(top, f, viewport);
+	file_write(top_layer, f, viewport);
 
 	/* Restore previous working directory. */
 	if (cwd) {
 		if (g_chdir(cwd)) {
-			fprintf(stderr, "WARNING: Could not return to directory %s\n", cwd);
+			qDebug() << "WW: VikFile: save: could not return to directory" << dir;
 		}
 		free(cwd);
 	}
@@ -877,35 +877,6 @@ bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const 
 	f = NULL;
 
 	return true;
-}
-
-
-
-
-/* Example:
-   bool is_gpx = a_file_check_ext ("a/b/c.gpx", ".gpx");
-*/
-bool SlavGPS::a_file_check_ext(const QString & file_name, char const * fileext)
-{
-	if (file_name.isEmpty()) {
-		return false;
-	}
-
-	if (!fileext || fileext[0] != '.') {
-		return false;
-	}
-
-	char const * basename = file_basename(file_name.toUtf8().constData());
-	if (!basename) {
-		return false;
-	}
-
-	char const * dot = strrchr(basename, '.');
-	if (dot && !strcmp(dot, fileext)) {
-		return true;
-	}
-
-	return false;
 }
 
 

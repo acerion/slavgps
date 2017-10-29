@@ -75,11 +75,9 @@ namespace SlavGPS {
 
 
 
-	bool a_file_check_ext(const QString & file_name, char const * fileext);
-
 	QString append_file_ext(const QString & file_name, SGFileType file_type);
-	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
-	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
+
+
 
 	/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
 	bool a_file_export(LayerTRW * trw, const QString & file_path, SGFileType file_type, Track * trk, bool write_hidden);
@@ -99,6 +97,9 @@ namespace SlavGPS {
 
 	class VikFile {
 	public:
+		static bool save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+		static VikLoadType_t load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+
 		/* Function to determine if a filename is a 'viking' type file. */
 		static bool has_vik_file_magic(const QString & file_full_path);
 	};
