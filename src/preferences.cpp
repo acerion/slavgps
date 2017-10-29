@@ -318,15 +318,15 @@ bool Preferences::set_param_value(const char * param_name, const SGVariant & par
 		return false;
 	}
 	if (param_value.type_id != param_spec->type) {
-		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << param_spec->name << (int) param_value.type_id << (int) param_spec->type;
+		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << param_name << (int) param_value.type_id << (int) param_spec->type;
 		return false;
 	}
 
 	SGVariant * new_param_value = new SGVariant(param_value); /* New value to save under an existing name. */
 	/* FIXME: delete old value first? */
-	registered_parameter_values.insert(QString(param_spec->name), new_param_value);
+	registered_parameter_values.insert(QString(param_name), new_param_value);
 
-	qDebug() << "II: Preferences: saved parameter" << param_spec->name << "=" << *new_param_value;
+	qDebug() << "II: Preferences: set new value of parameter" << param_name << "=" << *new_param_value;
 
 	return true;
 }
@@ -359,15 +359,20 @@ bool Preferences::save_to_file(void)
 		return false;
 	}
 
+	qDebug() << "II: Preferences: saving to file" << full_path;
+
 	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
 		ParameterSpecification * param_spec = *iter;
-		auto val_iter = registered_parameter_values.find(QString(param_spec->name));
+
+		const QString param_name = QString(param_spec->name_space) + "." + QString(param_spec->name);
+
+		auto val_iter = registered_parameter_values.find(param_name);
 		if (val_iter != registered_parameter_values.end()) {
 
-			const SGVariant * value = val_iter.value();
-			if (value->type_id != SGVariantType::PTR) {
-				qDebug() << "II: Preferences: saving to file" << param_spec->name << "=" << *value;
-				file_write_layer_param(file, param_spec->name, value->type_id, value);
+			const SGVariant * param_value = val_iter.value();
+			if (param_value->type_id != SGVariantType::PTR) {
+				qDebug() << "II: Preferences: saving to file" << param_name << "=" << *param_value;
+				file_write_layer_param(file, param_name.toUtf8().constData(), param_value->type_id, param_value);
 			}
 		}
 	}
@@ -395,7 +400,7 @@ void Preferences::show_window(QWidget * parent)
 
 			const SGVariant param_value = dialog.get_param_value(param_name, param_spec);
 
-			qDebug() << "II: Preferences: extracted from dialog parameter" << param_spec->name << "=" << param_value;
+			qDebug() << "II: Preferences: extracted from dialog parameter" << param_name << "=" << param_value;
 			Preferences::set_param_value(param_name, param_value);
 		}
 		Preferences::save_to_file();
