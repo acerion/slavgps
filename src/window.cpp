@@ -2077,26 +2077,26 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	LayerAggregate * agg = this->items_tree->get_top_layer();
 	this->loaded_type = VikFile::load(agg, this->viewport, new_document_full_path);
 	switch (this->loaded_type) {
-	case LOAD_TYPE_READ_FAILURE:
+	case FileLoadResult::READ_FAILURE:
 		Dialog::error(tr("The file you requested could not be opened."), this);
 		break;
-	case LOAD_TYPE_GPSBABEL_FAILURE:
+	case FileLoadResult::GPSBABEL_FAILURE:
 		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
-	case LOAD_TYPE_GPX_FAILURE:
+	case FileLoadResult::GPX_FAILURE:
 		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_document_full_path), this);
 		break;
-	case LOAD_TYPE_UNSUPPORTED_FAILURE:
+	case FileLoadResult::UNSUPPORTED_FAILURE:
 		Dialog::error(tr("Unsupported file type for %1").arg(new_document_full_path), this);
 		break;
-	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
+	case FileLoadResult::VIK_FAILURE_NON_FATAL:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
 			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path.toUtf8().constData())));
 		}
 		/* No break, carry on to show any data. */
-	case LOAD_TYPE_VIK_SUCCESS:
+	case FileLoadResult::VIK_SUCCESS:
 		{
 
 			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
@@ -2134,10 +2134,10 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 			}
 		}
 		/* No break, carry on to redraw. */
-		//case LOAD_TYPE_OTHER_SUCCESS:
+		//case FileLoadResult::OTHER_SUCCESS:
 	default:
 		success = true;
-		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
+		/* When FileLoadResult::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = !restore_original_filename;
 		this->update_recently_used_document(new_document_full_path.toUtf8().constData());
 		this->update_recent_files(new_document_full_path);
@@ -2162,7 +2162,7 @@ bool Window::menu_file_save_cb(void)
 		return this->menu_file_save_as_cb();
 	} else {
 		this->contents_modified = false;
-		return this->window_save();
+		return this->save_current_document();
 	}
 }
 
@@ -2212,7 +2212,7 @@ bool Window::menu_file_save_as_cb(void)
 
 		if (0 != access(full_path.toUtf8().constData(), F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(full_path)), this)) {
 			this->set_current_document_full_path(full_path);
-			rv = this->window_save();
+			rv = this->save_current_document();
 			if (rv) {
 				this->contents_modified = false;
 				last_folder_files_url = file_selector.directoryUrl();
@@ -2492,7 +2492,7 @@ void Window::finish_new(void)
 	}
 
 	/* If not loaded any file, maybe try the location lookup. */
-	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
+	if (this->loaded_type == FileLoadResult::READ_FAILURE) {
 		if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
@@ -3440,16 +3440,16 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		const Layer * layer = *iter;
-		QString path = full_dir_path + QDir::separator() + layer->name + extension;
+		QString full_file_path = full_dir_path + QDir::separator() + layer->name + extension;
 
 		/* Some protection in attempting to write too many same named files.
 		   As this will get horribly slow... */
 		bool safe = false;
 		int ii = 2;
 		while (ii < 5000) {
-			if (0 == access(path.toUtf8().constData(), F_OK)) {
+			if (0 == access(full_file_path.toUtf8().constData(), F_OK)) {
 				/* Try rename. */
-				path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
+				full_file_path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
 			} else {
 				safe = true;
 				break;
@@ -3462,12 +3462,12 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = a_file_export_layer((LayerTRW *) layer, path, file_type, true);
+			bool this_success = VikFile::export_layer((LayerTRW *) layer, full_file_path, file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {
 				export_count++;
-				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(path));
+				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(full_file_path));
 #ifdef K
 				while (gtk_events_pending()) {
 					gtk_main_iteration();
@@ -3576,7 +3576,7 @@ bool Window::menu_file_save_and_exit_cb(void)
 
 
 
-bool Window::window_save()
+bool Window::save_current_document()
 {
 	this->set_busy_cursor();
 	bool success = true;

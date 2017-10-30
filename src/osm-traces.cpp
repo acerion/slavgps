@@ -342,7 +342,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 			filename = a_gpx_write_track_tmp_file(trk, &options);
 			trk->free();
 		} else {
-			filename = a_gpx_write_track_tmp_file (oti->trk, &options);
+			filename = a_gpx_write_track_tmp_file(oti->trk, &options);
 		}
 	} else {
 		/* Upload the whole LayerTRW. */

@@ -4628,19 +4628,19 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 
 
 
-int LayerTRW::read_file(FILE * f, char const * dirpath)
+int LayerTRW::read_file(FILE * file, char const * dirpath)
 {
-	return (int) a_gpspoint_read_file(this, f, dirpath);
+	return (int) a_gpspoint_read_file(file, this, dirpath);
 }
 
 
 
 
-void LayerTRW::write_file(FILE * f) const
+void LayerTRW::write_file(FILE * file) const
 {
-	fprintf(f, "\n\n~LayerData\n");
-	a_gpspoint_write_file(this, f);
-	fprintf(f, "~EndLayerData\n");
+	fprintf(file, "\n\n~LayerData\n");
+	a_gpspoint_write_file(file, this);
+	fprintf(file, "~EndLayerData\n");
 }
 
 

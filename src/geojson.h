@@ -39,7 +39,7 @@ namespace SlavGPS {
 
 
 
-	bool geojson_write_file(LayerTRW * trw, FILE * ff);
+	bool geojson_write_file(FILE * file, LayerTRW * trw);
 
 	char const * geojson_program_export(void);
 	char const * geojson_program_import(void);

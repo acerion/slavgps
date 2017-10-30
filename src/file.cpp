@@ -149,7 +149,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 
 
-void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & data)
+void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVariantType type, const SGVariant & data)
 {
 	/* String lists are handled differently. We get a QStringList (that shouldn't
 	   be freed) back for get_param and if it is empty we shouldn't write
@@ -157,32 +157,32 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVarian
 	   not an empty string list). */
 	if (type == SGVariantType::STRING_LIST) {
 		for (auto iter = data.sl.constBegin(); iter != data.sl.constEnd(); iter++) {
-			fprintf(f, "%s=", param_name);
-			fprintf(f, "%s\n", (*iter).toUtf8().constData());
+			fprintf(file, "%s=", param_name);
+			fprintf(file, "%s\n", (*iter).toUtf8().constData());
 		}
 	} else {
-		fprintf(f, "%s=", param_name);
+		fprintf(file, "%s=", param_name);
 		switch (type)	{
 		case SGVariantType::DOUBLE: {
 			// char buf[15]; /* Locale independent. */
-			// fprintf(f, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
-			fprintf(f, "%f\n", data.d);
+			// fprintf(file, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
+			fprintf(file, "%f\n", data.d);
 			break;
 		}
 		case SGVariantType::UINT:
-			fprintf(f, "%d\n", data.u);
+			fprintf(file, "%d\n", data.u);
 			break;
 		case SGVariantType::INT:
-			fprintf(f, "%d\n", data.i);
+			fprintf(file, "%d\n", data.i);
 			break;
 		case SGVariantType::BOOLEAN:
-			fprintf(f, "%c\n", data.b ? 't' : 'f');
+			fprintf(file, "%c\n", data.b ? 't' : 'f');
 			break;
 		case SGVariantType::STRING:
-			fprintf(f, "%s\n", data.s.isEmpty() ? "" : data.s.toUtf8().constData());
+			fprintf(file, "%s\n", data.s.isEmpty() ? "" : data.s.toUtf8().constData());
 			break;
 		case SGVariantType::COLOR:
-			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
+			fprintf(file, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
 			break;
 		default: break;
 		}
@@ -192,11 +192,11 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * param_name, SGVarian
 
 
 
-static void write_layer_params_and_data(Layer const * layer, FILE * f)
+static void write_layer_params_and_data(FILE * file, Layer const * layer)
 {
-	fprintf(f, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
+	fprintf(file, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
 	if (!layer->visible) {
-		fprintf(f, "visible=f\n");
+		fprintf(file, "visible=f\n");
 	}
 
 	SGVariant param_value;
@@ -204,10 +204,10 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
 		param_value = ((Layer * ) layer)->get_param_value(iter->first, true); /* TODO: get rid of cast. */
-		file_write_layer_param(f, iter->second->name, iter->second->type, param_value);
+		file_write_layer_param(file, iter->second->name, iter->second->type, param_value);
 	}
 
-	layer->write_file(f);
+	layer->write_file(file);
 
 	/* foreach param:
 	   write param, and get_value, etc.
@@ -218,9 +218,9 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 
 
 
-static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
+static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * viewport)
 {
-	LayerAggregate * aggregate = top;
+	LayerAggregate * aggregate = parent_layer;
 	char * modestring = NULL;
 
 	/* Crazhy CRAZHY. */
@@ -244,9 +244,9 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", (int) mode);
 	}
 
-	fprintf(f, "#VIKING GPS Data file " VIKING_URL "\n");
-	fprintf(f, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
-	fprintf(f, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
+	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
+	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
+	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
 		viewport->get_xmpp(), viewport->get_ympp(), ll.lat, ll.lon,
 		modestring, viewport->get_background_color(),
 		viewport->get_highlight_color(),
@@ -255,7 +255,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		viewport->get_highlight_usage() ? "t" : "f");
 
 	if (!aggregate->visible) {
-		fprintf(f, "visible=f\n");
+		fprintf(file, "visible=f\n");
 	}
 
 
@@ -267,8 +267,8 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
 		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTODO: remove cast. */
-		fprintf(f, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
-		write_layer_params_and_data(current, f);
+		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
+		write_layer_params_and_data(file, current);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
 			std::list<Layer const *> * children_ = ((LayerAggregate *) current)->get_children();
@@ -279,12 +279,12 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 			aggregates->data = (void *) children_;
 		} else {
 			((std::list<Layer const *> *) aggregates->data)->pop_front();
-			fprintf(f, "~EndLayer\n\n");
+			fprintf(file, "~EndLayer\n\n");
 			while (aggregates && (!aggregates->data)) {
 				pop(&aggregates);
 				if (aggregates) {
 					((std::list<Layer const *> *) aggregates->data)->pop_front();
-					fprintf(f, "~EndLayer\n\n");
+					fprintf(file, "~EndLayer\n\n");
 				}
 			}
 		}
@@ -335,31 +335,29 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
  *
  * TODO flow up line number(s) / error messages of problems encountered...
  */
-static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, Viewport * viewport)
+static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * dirpath, Viewport * viewport)
 {
-	struct LatLon ll = { 0.0, 0.0 };
+	struct LatLon latlon = { 0.0, 0.0 };
 	char buffer[4096];
-	char *line;
-	uint16_t len;
 	long line_num = 0;
 
 	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t param_specs_count = 0;
 
-	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
-	LayerAggregate * aggregate = top;
+	GHashTable * string_lists = g_hash_table_new(g_direct_hash, g_direct_equal);
+	LayerAggregate * aggregate = parent_layer;
 
 	bool successful_read = true;
 
-	Stack *stack = NULL;
+	Stack * stack = NULL;
 	push(&stack);
 	stack->under = NULL;
-	stack->data = (void *) top;
+	stack->data = (void *) parent_layer;
 
-	while (fgets (buffer, 4096, f))  {
+	while (fgets(buffer, sizeof (buffer), file))  {
 		line_num++;
 
-		line = buffer;
+		char * line = buffer;
 		while (*line == ' ' || *line =='\t') {
 			line++;
 		}
@@ -369,7 +367,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 		}
 
 
-		len = strlen(line);
+		size_t len = strlen(line);
 		if (len > 0 && line[len-1] == '\n') {
 			line[--len] = '\0';
 		}
@@ -441,13 +439,13 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
 				Layer * layer = (Layer *) stack->data;
-				int rv = layer->read_file(f, dirpath);
+				int rv = layer->read_file(file, dirpath);
 				if (rv == 0) {
 					successful_read = false;
 				} else if (rv > 0) {
 					/* Success, pass. */
 				} else { /* Simply skip layer data over. */
-					while (fgets(buffer, 4096, f)) {
+					while (fgets(buffer, sizeof (buffer), file)) {
 						line_num++;
 
 						line = buffer;
@@ -507,15 +505,15 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 #endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
 #ifdef K
-				ll.lat = strtod_i8n(line+4, NULL);
+				latlon.lat = strtod_i8n(line+4, NULL);
 #else
-				ll.lat = strtod(line+4, NULL);
+				latlon.lat = strtod(line+4, NULL);
 #endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
 #ifdef K
-				ll.lon = strtod_i8n(line+4, NULL);
+				latlon.lon = strtod_i8n(line+4, NULL);
 #else
-				ll.lon = strtod(line+4, NULL);
+				latlon.lon = strtod(line+4, NULL);
 #endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
 				viewport->set_drawmode(ViewportDrawMode::UTM);
@@ -643,8 +641,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 		pop(&stack);
 	}
 
-	if (ll.lat != 0.0 || ll.lon != 0.0) {
-		viewport->set_center_latlon(&ll, true);
+	if (latlon.lat != 0.0 || latlon.lon != 0.0) {
+		viewport->set_center_latlon(&latlon, true);
 	}
 
 	if ((!aggregate->visible) && aggregate->tree_view) {
@@ -755,10 +753,10 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 
 
-VikLoadType_t VikFile::load(LayerAggregate * top, Viewport * viewport, const QString & file_full_path)
+FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
 {
 	if (!viewport) {
-		return LOAD_TYPE_READ_FAILURE;
+		return FileLoadResult::READ_FAILURE;
 	}
 
 	QString full_path;
@@ -769,24 +767,24 @@ VikLoadType_t VikFile::load(LayerAggregate * top, Viewport * viewport, const QSt
 	}
 	qDebug() << "DD: VikFile: load: reading from file" << full_path;
 
-	FILE * f = fopen(full_path.toUtf8().constData(), "r");
-	if (!f) {
-		return LOAD_TYPE_READ_FAILURE;
+	FILE * file = fopen(full_path.toUtf8().constData(), "r");
+	if (!file) {
+		return FileLoadResult::READ_FAILURE;
 	}
 
-	VikLoadType_t load_answer = LOAD_TYPE_OTHER_SUCCESS;
+	FileLoadResult load_answer = FileLoadResult::OTHER_SUCCESS;
 
 	char * dirpath = g_path_get_dirname(full_path.toUtf8().constData());
 	/* Attempt loading the primary file type first - our internal .vik file: */
-	if (check_magic(f, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (file_read(top, f, dirpath, viewport)) {
-			load_answer = LOAD_TYPE_VIK_SUCCESS;
+	if (check_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
+		if (file_read(file, parent_layer, dirpath, viewport)) {
+			load_answer = FileLoadResult::VIK_SUCCESS;
 		} else {
-			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
+			load_answer = FileLoadResult::VIK_FAILURE_NON_FATAL;
 		}
 	} else if (jpg_magic_check(full_path)) {
-		if (!jpg_load_file(top, viewport, full_path)) {
-			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
+		if (!jpg_load_file(parent_layer, viewport, full_path)) {
+			load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
 		}
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
@@ -798,40 +796,40 @@ VikLoadType_t VikFile::load(LayerAggregate * top, Viewport * viewport, const QSt
 		layer->set_name(FileUtils::get_base_name(full_path));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
-		if (FileUtils::has_extension(full_path, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
 			ProcessOptions po((char *) "-i kml", full_path.toUtf8().constData(), NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
-				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
+				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
 		}
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
-		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			if (! (success = a_gpx_read_file(layer, f))) {
-				load_answer = LOAD_TYPE_GPX_FAILURE;
+		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+			if (! (success = a_gpx_read_file(file, layer))) {
+				load_answer = FileLoadResult::GPX_FAILURE;
 			}
 		} else {
 			/* Try final supported file type. */
-			if (! (success = a_gpspoint_read_file(layer, f, dirpath))) {
+			if (! (success = a_gpspoint_read_file(file, layer, dirpath))) {
 				/* Failure here means we don't know how to handle the file. */
-				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
+				load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
 			}
 		}
 		free(dirpath);
 
 		/* Clean up when we can't handle the file. */
-		if (! success) {
+		if (!success) {
 			/* free up layer. */
 			layer->unref();
 		} else {
 			/* Complete the setup from the successful load. */
 			layer->post_read(viewport, true);
-			top->add_layer(layer, false);
+			parent_layer->add_layer(layer, false);
 			layer->auto_set_view(viewport);
 		}
 	}
-	fclose(f);
+	fclose(file);
 	return load_answer;
 }
 
@@ -848,8 +846,8 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 	}
 	qDebug() << "DD: VikFile: load: saving to file" << full_path;
 
-	FILE * f = fopen(full_path.toUtf8().constData(), "w");
-	if (!f) {
+	FILE * file = fopen(full_path.toUtf8().constData(), "w");
+	if (!file) {
 		return false;
 	}
 
@@ -863,7 +861,7 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 		free(dir);
 	}
 
-	file_write(top_layer, f, viewport);
+	file_write(file, top_layer, viewport);
 
 	/* Restore previous working directory. */
 	if (cwd) {
@@ -873,8 +871,8 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 		free(cwd);
 	}
 
-	fclose(f);
-	f = NULL;
+	fclose(file);
+	file = NULL;
 
 	return true;
 }
@@ -882,11 +880,11 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 
 
 
-bool SlavGPS::a_file_export_track(Track * trk, const QString & file_path, SGFileType file_type, bool write_hidden)
+bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
-	FILE * f = fopen(file_path.toUtf8().constData(), "w");
-	if (!f) {
+	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
+	if (!file) {
 		return false;
 	}
 
@@ -894,24 +892,25 @@ bool SlavGPS::a_file_export_track(Track * trk, const QString & file_path, SGFile
 	case SGFileType::GPX:
 		/* trk defined so can set the option. */
 		options.is_route = trk->type_id == "sg.trw.route";
-		a_gpx_write_track_file(trk, f, &options);
-		fclose(f);
+		a_gpx_write_track_file(file, trk, &options);
+		fclose(file);
 		return true;
-		break;
 	default:
 		qDebug() << "EE: File: Export: unexpected file type for track" << (int) file_type;
-		fclose(f);
+		fclose(file);
 		return false;
 	}
 }
 
 
-/* Call it when 'trk' argument to 'a_file_export()' is NULL. */
-bool SlavGPS::a_file_export_layer(LayerTRW * trw, const QString & file_path, SGFileType file_type, bool write_hidden)
+
+
+/* Call it when @trk argument to VikFile::export() is NULL. */
+bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
-	FILE * f = fopen(file_path.toUtf8().constData(), "w");
-	if (!f) {
+	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
+	if (!file) {
 		return false;
 	}
 
@@ -919,29 +918,29 @@ bool SlavGPS::a_file_export_layer(LayerTRW * trw, const QString & file_path, SGF
 
 	switch (file_type) {
 	case SGFileType::GPSMAPPER:
-		gpsmapper_write_file(f, trw);
+		gpsmapper_write_file(file, trw);
 		break;
 	case SGFileType::GPX:
-		a_gpx_write_file(trw, f, &options);
+		a_gpx_write_file(file, trw, &options);
 		break;
 	case SGFileType::GPSPOINT:
-		a_gpspoint_write_file(trw, f);
+		a_gpspoint_write_file(file, trw);
 		break;
 	case SGFileType::GEOJSON:
-		result = geojson_write_file(trw, f);
+		result = geojson_write_file(file, trw);
 		break;
 	case SGFileType::KML:
-		fclose(f);
+		fclose(file);
 		switch (Preferences::get_kml_export_units()) {
 		case VIK_KML_EXPORT_UNITS_STATUTE:
-			return a_babel_convert_to(trw, NULL, "-o kml", file_path, NULL, NULL);
+			return a_babel_convert_to(trw, NULL, "-o kml", file_full_path, NULL, NULL);
 			break;
 		case VIK_KML_EXPORT_UNITS_NAUTICAL:
-			return a_babel_convert_to(trw, NULL, "-o kml,units=n", file_path, NULL, NULL);
+			return a_babel_convert_to(trw, NULL, "-o kml,units=n", file_full_path, NULL, NULL);
 			break;
 		default:
 			/* VIK_KML_EXPORT_UNITS_METRIC: */
-			return a_babel_convert_to(trw, NULL, "-o kml,units=m", file_path, NULL, NULL);
+			return a_babel_convert_to(trw, NULL, "-o kml,units=m", file_full_path, NULL, NULL);
 			break;
 		}
 		break;
@@ -949,14 +948,14 @@ bool SlavGPS::a_file_export_layer(LayerTRW * trw, const QString & file_path, SGF
 		qDebug() << "EE: File: Export: unexpected file type for non-track" << (int) file_type;
 	}
 
-	fclose(f);
+	fclose(file);
 	return result;
 }
 
 
 
 /**
- * @file_path: The path of the file to be written
+ * @file_full_path: The path of the file to be written
  * @file_type: Choose one of the supported file types for the export
  * @trk: If specified then only export this track rather than the whole layer
  * @write_hidden: Whether to write invisible items
@@ -964,19 +963,19 @@ bool SlavGPS::a_file_export_layer(LayerTRW * trw, const QString & file_path, SGF
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool SlavGPS::a_file_export(LayerTRW * trw, const QString & file_path, SGFileType file_type, Track * trk, bool write_hidden)
+bool VikFile::export_(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
 {
 	if (trk) {
-		return a_file_export_track(trk, file_path, file_type, write_hidden);
+		return VikFile::export_track(trk, file_full_path, file_type, write_hidden);
 	} else {
-		return a_file_export_layer(trw, file_path, file_type, write_hidden);
+		return VikFile::export_layer(trw, file_full_path, file_type, write_hidden);
 	}
 }
 
 
 
 
-bool SlavGPS::a_file_export_babel(LayerTRW * trw, const QString & output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
+bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
 {
 	const QString babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")
@@ -984,7 +983,7 @@ bool SlavGPS::a_file_export_babel(LayerTRW * trw, const QString & output_file_pa
 		.arg(waypoints ? "-w" : "")
 		.arg(output_file_type);
 
-	return a_babel_convert_to(trw, NULL, babel_args, output_file_path, NULL, NULL);
+	return a_babel_convert_to(trw, NULL, babel_args, full_output_file_path, NULL, NULL);
 }
 
 

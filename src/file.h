@@ -19,13 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_FILE_H_
-#define _SG_FILE_H_
+#ifndef _SG_VIK_FILE_H_
+#define _SG_VIK_FILE_H_
 
 
 
-#include <cstdio>
-#include <cstdint>
 
 #include "ui_builder.h"
 
@@ -63,28 +61,20 @@ namespace SlavGPS {
 		GEOJSON   = 5
 	};
 
-	typedef enum {
-		LOAD_TYPE_READ_FAILURE,
-		LOAD_TYPE_GPSBABEL_FAILURE,
-		LOAD_TYPE_GPX_FAILURE,
-		LOAD_TYPE_UNSUPPORTED_FAILURE,
-		LOAD_TYPE_VIK_FAILURE_NON_FATAL,
-		LOAD_TYPE_VIK_SUCCESS,
-		LOAD_TYPE_OTHER_SUCCESS,
-	} VikLoadType_t;
+	enum class FileLoadResult {
+		READ_FAILURE,
+		GPSBABEL_FAILURE,
+		GPX_FAILURE,
+		UNSUPPORTED_FAILURE,
+		VIK_FAILURE_NON_FATAL,
+		VIK_SUCCESS,
+		OTHER_SUCCESS,
+	};
 
 
 
 	QString append_file_ext(const QString & file_name, SGFileType file_type);
 
-
-
-	/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
-	bool a_file_export(LayerTRW * trw, const QString & file_path, SGFileType file_type, Track * trk, bool write_hidden);
-	bool a_file_export_track(Track * trk, const QString & file_path, SGFileType file_type, bool write_hidden);
-	bool a_file_export_layer(LayerTRW * trw, const QString & file_path, SGFileType file_type, bool write_hidden);
-
-	bool a_file_export_babel(LayerTRW * trw, const QString & output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints);
 
 	void file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & param_value);
 	char * file_realpath(char const * path, char * real);
@@ -98,11 +88,25 @@ namespace SlavGPS {
 	class VikFile {
 	public:
 		static bool save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
-		static VikLoadType_t load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+		static FileLoadResult load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
 
 		/* Function to determine if a filename is a 'viking' type file. */
 		static bool has_vik_file_magic(const QString & file_full_path);
+
+
+
+
+		/* Not exactly for exporting to Viking file. */
+
+		/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
+		static bool export_(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden);
+		static bool export_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden);
+		static bool export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden);
+
+		static bool export_with_babel(LayerTRW * trw, const QString & full_output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints);
 	};
+
+
 
 
 } /* namespace SlavGPS */
@@ -110,4 +114,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_FILE_H_ */
+#endif /* #ifndef _SG_VIK_FILE_H_ */

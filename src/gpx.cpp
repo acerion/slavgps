@@ -646,9 +646,9 @@ static void gpx_cdata(void * dta, const XML_Char * s, int len)
 
 /* Make like a "stack" of tag names like gpspoint's separated like /gpx/wpt/whatever. */
 
-bool SlavGPS::a_gpx_read_file(LayerTRW * trw, FILE * f)
+bool SlavGPS::a_gpx_read_file(FILE * file, LayerTRW * trw)
 {
-	assert (f != NULL && trw != NULL);
+	assert (file != NULL && trw != NULL);
 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	int done = 0;
@@ -669,8 +669,8 @@ bool SlavGPS::a_gpx_read_file(LayerTRW * trw, FILE * f)
 	unnamed_routes = 1;
 
 	while (!done) {
-		len = fread(buf, 1, sizeof(buf)-7, f);
-		done = feof(f) || !len;
+		len = fread(buf, 1, sizeof(buf)-7, file);
+		done = feof(file) || !len;
 		status = XML_Parse(parser, buf, len, done);
 	}
 
@@ -1186,17 +1186,17 @@ static int gpx_track_compare_name(const void * x, const void * y)
 
 
 
-void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
+void SlavGPS::a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * options)
 {
-	GpxWritingContext context = { options, f };
+	GpxWritingContext context = { options, file };
 
-	gpx_write_header(f);
+	gpx_write_header(file);
 
 	char *tmp;
 	const char *name = trw->get_name().toUtf8().constData();
 	if (name) {
 		tmp = entitize(name);
-		fprintf(f, "  <name>%s</name>\n", tmp);
+		fprintf(file, "  <name>%s</name>\n", tmp);
 		free(tmp);
 	}
 
@@ -1204,22 +1204,22 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 	if (md) {
 		if (!md->author.isEmpty()) {
 			tmp = entitize(md->author);
-			fprintf(f, "  <author>%s</author>\n", tmp);
+			fprintf(file, "  <author>%s</author>\n", tmp);
 			free(tmp);
 		}
 		if (!md->description.isEmpty()) {
 			tmp = entitize(md->description);
-			fprintf(f, "  <desc>%s</desc>\n", tmp);
+			fprintf(file, "  <desc>%s</desc>\n", tmp);
 			free(tmp);
 		}
 		if (!md->timestamp.isEmpty()) {
 			tmp = entitize(md->timestamp);
-			fprintf(f, "  <time>%s</time>\n", tmp);
+			fprintf(file, "  <time>%s</time>\n", tmp);
 			free(tmp);
 		}
 		if (!md->keywords.isEmpty()) {
 			tmp = entitize(md->keywords);
-			fprintf(f, "  <keywords>%s</keywords>\n", tmp);
+			fprintf(file, "  <keywords>%s</keywords>\n", tmp);
 			free(tmp);
 		}
 	}
@@ -1298,18 +1298,18 @@ void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * opt
 	g_list_free(gl);
 	g_list_free(glrte);
 
-	gpx_write_footer(f);
+	gpx_write_footer(file);
 }
 
 
 
 
-void SlavGPS::a_gpx_write_track_file(Track * trk, FILE * f, GpxWritingOptions * options)
+void SlavGPS::a_gpx_write_track_file(FILE * file, Track * trk, GpxWritingOptions * options)
 {
-	GpxWritingContext context = {options, f};
-	gpx_write_header(f);
+	GpxWritingContext context = { options, file };
+	gpx_write_header(file);
 	gpx_write_track(trk, &context);
-	gpx_write_footer(f);
+	gpx_write_footer(file);
 }
 
 
@@ -1331,15 +1331,14 @@ static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * op
 	}
 	fprintf(stderr, "DEBUG: %s: temporary file = %s\n", __FUNCTION__, tmp_filename);
 
-	FILE * ff = fdopen(fd, "w");
-
+	FILE * file = fdopen(fd, "w");
 	if (trk) {
-		a_gpx_write_track_file(trk, ff, options);
+		a_gpx_write_track_file(file, trk, options);
 	} else {
-		a_gpx_write_file(trw, ff, options);
+		a_gpx_write_file(file, trw, options);
 	}
 
-	fclose(ff);
+	fclose(file);
 
 	return tmp_filename;
 }

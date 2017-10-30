@@ -55,7 +55,7 @@ static void my_watch(GPid pid, int status, void * user_data)
 /**
  * Returns true if successfully written.
  */
-bool SlavGPS::geojson_write_file(LayerTRW * trw, FILE * ff)
+bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 {
 	bool result = false;
 
@@ -95,7 +95,7 @@ bool SlavGPS::geojson_write_file(LayerTRW * trw, FILE * ff)
 		setvbuf(fout, NULL, _IONBF, 0);
 
 		while (fgets(line, sizeof(line), fout)) {
-			fprintf(ff, "%s", line);
+			fprintf(file, "%s", line);
 		}
 
 		fclose(fout);

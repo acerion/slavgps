@@ -285,11 +285,11 @@ static void reset_line(void)
  * No obvious way to test for a 'gpspoint' file,
  * thus set a flag if any actual tag found during processing of the file.
  */
-bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
+bool SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dirpath)
 {
 	CoordMode coord_mode = trw->get_coord_mode();
 	char *tag_start, *tag_end;
-	assert (f != NULL && trw != NULL);
+	assert (file != NULL && trw != NULL);
 	line_type = 0;
 	line_timestamp = 0;
 	line_newsegment = false;
@@ -298,7 +298,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 	current_track = NULL;
 	bool have_read_something = false;
 
-	while (fgets(line_buffer, VIKING_LINE_SIZE, f)) {
+	while (fgets(line_buffer, VIKING_LINE_SIZE, file)) {
 		bool inside_quote = 0;
 		bool backslash = 0;
 
@@ -882,16 +882,16 @@ static void a_gpspoint_write_track(FILE * f, Tracks & tracks)
 
 
 
-void SlavGPS::a_gpspoint_write_file(LayerTRW const * trw, FILE *f)
+void SlavGPS::a_gpspoint_write_file(FILE * file, LayerTRW const * trw)
 {
 	Tracks & tracks = ((LayerTRW *) trw)->get_track_items();
 	Tracks & routes = ((LayerTRW *) trw)->get_route_items();
 	Waypoints & waypoints = ((LayerTRW *) trw)->get_waypoint_items();
 
-	fprintf(f, "type=\"waypointlist\"\n");
-	a_gpspoint_write_waypoints(f, waypoints);
+	fprintf(file, "type=\"waypointlist\"\n");
+	a_gpspoint_write_waypoints(file, waypoints);
 
-	fprintf(f, "type=\"waypointlistend\"\n");
-	a_gpspoint_write_track(f, tracks);
-	a_gpspoint_write_track(f, routes);
+	fprintf(file, "type=\"waypointlistend\"\n");
+	a_gpspoint_write_track(file, tracks);
+	a_gpspoint_write_track(file, routes);
 }

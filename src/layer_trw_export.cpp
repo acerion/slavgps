@@ -59,7 +59,7 @@ static QUrl last_folder_url;
 
 
 
-void LayerTRW::export_layer(const QString & title, const QString & default_file_name, Track * trk, SGFileType file_type)
+void LayerTRW::export_layer(const QString & title, const QString & default_file_full_path, Track * trk, SGFileType file_type)
 {
 	QFileDialog file_selector(this->get_window(), title);
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
@@ -69,7 +69,7 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 		file_selector.setDirectoryUrl(last_folder_url);
 	}
 
-	file_selector.selectFile(default_file_name);
+	file_selector.selectFile(default_file_full_path);
 
 	if (QDialog::Accepted == file_selector.exec()) {
 		const QString output_file_name = file_selector.selectedFiles().at(0);
@@ -78,7 +78,7 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 
 		this->get_window()->set_busy_cursor();
 		/* Don't Export invisible items - unless requested on this specific track. */
-		const bool success = a_file_export(this, output_file_name, file_type, trk, trk ? true : false);
+		const bool success = VikFile::export_(this, output_file_name, file_type, trk, trk ? true : false);
 		this->get_window()->clear_busy_cursor();
 
 		if (!success) {
@@ -116,7 +116,7 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 
 
 
-int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_name)
+int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_full_path)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (this->get_route_items().size()) {
@@ -141,17 +141,17 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 	}
 
 	/* Set possible name of the file. */
-	dialog->file_entry->file_selector->selectFile(default_file_name);
+	dialog->file_entry->file_selector->selectFile(default_file_full_path);
 
 	int rv = dialog->exec();
 	if (rv == QDialog::Accepted) {
 		const BabelFileType * file_type = dialog->get_file_type_selection();
-		const QString output_file_path = dialog->file_entry->get_filename();
+		const QString output_file_full_path = dialog->file_entry->get_filename();
 
 		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type name:" << file_type->name;
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type label:" << file_type->label;
-		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_path;
+		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_full_path;
 
 
 		this->get_window()->set_busy_cursor();
@@ -163,7 +163,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 			;
 		}
 
-		failed = !a_file_export_babel(this, QString(output_file_path), file_type->name, mode.tracks_write, mode.routes_write, mode.waypoints_write);
+		failed = !VikFile::export_with_babel(this, output_file_full_path, file_type->name, mode.tracks_write, mode.routes_write, mode.waypoints_write);
 
 		this->get_window()->clear_busy_cursor();
 

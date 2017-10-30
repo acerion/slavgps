@@ -54,9 +54,9 @@ namespace SlavGPS {
 
 
 
-	bool a_gpx_read_file(LayerTRW * trw, FILE *f );
-	void a_gpx_write_file(LayerTRW * trw, FILE *f, GpxWritingOptions * options);
-	void a_gpx_write_track_file(Track * trk, FILE *f, GpxWritingOptions * options);
+	bool a_gpx_read_file(FILE * file, LayerTRW * trw);
+	void a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * options);
+	void a_gpx_write_track_file(FILE * file, Track * trk, GpxWritingOptions * options);
 
 	char * a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options);
 	char * a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options);

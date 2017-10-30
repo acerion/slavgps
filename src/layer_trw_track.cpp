@@ -1941,7 +1941,7 @@ void Track::calculate_bounds()
 		}
 	}
 
-	qDebug() << QString("DD: Track: Bounds of track: '%1' is: %2,%3 to: %4,%5").arg(this->name).arg(topleft.lat).arg(topleft.lon).arg(bottomright.lat).arg(bottomright.lon);
+	qDebug() << "DD: Track: Bounds of track:" << this->name << "is" << topleft.lat << topleft.lon << "to" << bottomright.lat << bottomright.lon;
 
 	bbox.north = topleft.lat;
 	bbox.east = bottomright.lon;
@@ -3188,14 +3188,14 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 	file_selector.selectFile(default_file_name);
 
 	if (QDialog::Accepted == file_selector.exec()) {
-		const QString output_file_name = file_selector.selectedFiles().at(0);
+		const QString output_file_full_path = file_selector.selectedFiles().at(0);
 
 #ifdef K
 		last_folder_url = file_selector.directoryUrl();
 #endif
 
 		g_tree->tree_get_main_window()->set_busy_cursor();
-		const bool success = a_file_export_track(this, output_file_name, file_type, true);
+		const bool success = VikFile::export_track(this, output_file_full_path, file_type, true);
 		g_tree->tree_get_main_window()->clear_busy_cursor();
 
 		if (!success) {

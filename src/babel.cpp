@@ -290,19 +290,19 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
 		return true;
 	}
 
-	FILE * f = fopen(intermediate_file_path.toUtf8().constData(), "r");
-	if (!f) {
+	FILE * file = fopen(intermediate_file_path.toUtf8().constData(), "r");
+	if (!file) {
 		qDebug().nospace() << "EE: Babel: convert through intermediate file: can't open intermediate file '" << intermediate_file_path << "'";
 		return false;
 	}
 
-	bool read_success = a_gpx_read_file(trw, f);
+	bool read_success = a_gpx_read_file(file, trw);
 	if (!read_success) {
 		qDebug() << "EE: Babel: convert through intermediate file: failed to read intermediate gpx file" << intermediate_file_path;
 	}
 
-	fclose(f);
-	f = NULL;
+	fclose(file);
+	file = NULL;
 
 	return read_success;
 }
@@ -471,11 +471,11 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
-			FILE *f = fopen(name_src.toUtf8().constData(), "r");
-			if (f) {
-				ret = a_gpx_read_file(trw, f);
-				fclose(f);
-				f = NULL;
+			FILE * file = fopen(name_src.toUtf8().constData(), "r");
+			if (file) {
+				ret = a_gpx_read_file(file, trw);
+				fclose(file);
+				file = NULL;
 			}
 		}
 	}
@@ -529,11 +529,11 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 
 
 
-static bool babel_general_convert_to(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, Track * trk, const QString & name_src)
+static bool babel_general_convert_to(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, Track * trk, const QString & file_full_path)
 {
 	/* Now strips out invisible tracks and waypoints. */
-	if (!a_file_export(trw, name_src, SGFileType::GPX, trk, false)) {
-		qDebug() << "EE: Babel: Convert to: Error exporting to" << name_src;
+	if (!VikFile::export_(trw, file_full_path, SGFileType::GPX, trk, false)) {
+		qDebug() << "EE: Babel: Convert to: Error exporting to" << file_full_path;
 		return false;
 	}
 

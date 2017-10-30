@@ -173,7 +173,7 @@ namespace SlavGPS {
 		void clear_busy_cursor(void);
 
 
-		bool window_save();
+		bool save_current_document();
 		void apply_new_preferences(void);
 
 
@@ -350,7 +350,7 @@ namespace SlavGPS {
 
 		QString current_document_full_path;
 
-		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
+		FileLoadResult loaded_type = FileLoadResult::READ_FAILURE; /* AKA none. */
 
 		/* Tool management state. */
 		LayerType tool_layer_type;
