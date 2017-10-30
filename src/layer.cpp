@@ -714,7 +714,7 @@ void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * Gt
 
 
 
-int Layer::read_file(FILE * f, char const * dirpath)
+int Layer::read_layer_data(FILE * file, char const * dirpath)
 {
 	/* kamilFIXME: Magic number to indicate call of base class method. */
 	return -5;
@@ -723,7 +723,7 @@ int Layer::read_file(FILE * f, char const * dirpath)
 
 
 
-void Layer::write_file(FILE * f) const
+void Layer::write_layer_data(FILE * file) const
 {
 	return;
 }

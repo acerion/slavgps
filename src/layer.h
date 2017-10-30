@@ -142,8 +142,10 @@ namespace SlavGPS {
 		   iters in the tree view. */
 		virtual void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
-		virtual int read_file(FILE * f, char const * dirpath);
-		virtual void write_file(FILE * f) const;
+		/* Read layer-specific data from Vik file. */
+		virtual int read_layer_data(FILE * file, char const * dirpath);
+		/* Write layer-specific data to Vik file. */
+		virtual void write_layer_data(FILE * file) const;
 
 		virtual void add_menu_items(QMenu & menu);
 

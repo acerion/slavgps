@@ -207,7 +207,7 @@ static void write_layer_params_and_data(FILE * file, Layer const * layer)
 		file_write_layer_param(file, iter->second->name, iter->second->type, param_value);
 	}
 
-	layer->write_file(file);
+	layer->write_layer_data(file);
 
 	/* foreach param:
 	   write param, and get_value, etc.
@@ -382,10 +382,12 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 
 
 		if (line[0] == '~') {
-			line++; len--;
+			line++;
+			len--;
 			if (*line == '\0') {
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
+				qDebug() << "DD: File: Read: encountered begin of Layer:" << line;
 				LayerType parent_type = ((Layer *) stack->data)->type;
 				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE)
 							&& (parent_type != LayerType::GPS))) {
@@ -415,6 +417,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
+				qDebug() << "DD: File: Read: encountered end of Layer:" << line;
 				if (stack->under == NULL) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
@@ -438,14 +441,18 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					pop(&stack);
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
+				qDebug() << "DD: File: Read: encountered begin of LayerData:" << line;
 				Layer * layer = (Layer *) stack->data;
-				int rv = layer->read_file(file, dirpath);
+				int rv = layer->read_layer_data(file, dirpath);
 				if (rv == 0) {
+					qDebug() << "DD: File: Read: LayerData read unsuccessfully";
 					successful_read = false;
 				} else if (rv > 0) {
+					qDebug() << "DD: File: Read: LayerData read successfully";
 					/* Success, pass. */
 				} else { /* Simply skip layer data over. */
 					while (fgets(buffer, sizeof (buffer), file)) {
+						qDebug() << "DD: File: Read: skipping over layer data:" << QString(line).left(20);
 						line_num++;
 
 						line = buffer;
@@ -460,6 +467,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 						}
 
 						if (strcasecmp(line, "~EndLayerData") == 0) {
+							qDebug() << "DD: File: Read: encountered end of LayerData:" << line;
 							break;
 						}
 					}
@@ -559,10 +567,13 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 				}
 
 				for (i = 0; i < param_specs_count; i++) {
-					if (strlen(param_specs[i].name) == eq_pos && strncasecmp(line, param_specs[i].name, eq_pos) == 0) {
+
+					const ParameterSpecification * param_spec = &param_specs[i];
+
+					if (strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0) {
 
 						line += eq_pos+1;
-						if (param_specs[i].type == SGVariantType::STRING_LIST) {
+						if (param_spec->type == SGVariantType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -570,7 +581,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							SGVariant new_val;
-							switch (param_specs[i].type) {
+							switch (param_spec->type) {
 							case SGVariantType::DOUBLE:
 #ifdef K
 								new_val = SGVariant((double) strtod_i8n(line, NULL));
@@ -604,6 +615,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 								new_val = SGVariant(line);
 							}
 							Layer * l_a_y_e_r = (Layer *) stack->data;
+							qDebug() << "DD: File: Read: setting value of parameter" << param_spec->name << "of layer" << layer->name;
 							l_a_y_e_r->set_param_value(i, new_val, true);
 						}
 						found_match = true;

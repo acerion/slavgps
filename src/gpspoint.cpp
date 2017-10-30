@@ -890,8 +890,8 @@ void SlavGPS::a_gpspoint_write_file(FILE * file, LayerTRW const * trw)
 
 	fprintf(file, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(file, waypoints);
-
 	fprintf(file, "type=\"waypointlistend\"\n");
+
 	a_gpspoint_write_track(file, tracks);
 	a_gpspoint_write_track(file, routes);
 }

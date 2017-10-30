@@ -186,8 +186,8 @@ namespace SlavGPS {
 
 		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
-		int read_file(FILE * f, char const * dirpath);
-		void write_file(FILE * f) const;
+		int read_layer_data(FILE * file, char const * dirpath);
+		void write_layer_data(FILE * file) const;
 
 		void add_menu_items(QMenu & menu);
 
