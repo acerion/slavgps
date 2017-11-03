@@ -1384,19 +1384,24 @@ void LayerTRW::new_track_pens(void)
 
 void LayerTRW::add_children_to_tree(void)
 {
+	qDebug() << "DD: Layer TRW: Add Children to Tree";
+
 	if (this->tracks->items.size() > 0) {
+		qDebug() << "DD: Layer TRW: Add Children to Tree: Tracks";
 		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
 		this->tree_view->add_tree_item(this->index, this->tracks, tr("Tracks"));
 		this->tracks->add_children_to_tree();
 	}
 
 	if (this->routes->items.size() > 0) {
+		qDebug() << "DD: Layer TRW: Add Children to Tree: Routes";
 		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
 		this->tree_view->add_tree_item(this->index, this->routes, tr("Routes"));
 		this->routes->add_children_to_tree();
 	}
 
 	if (this->waypoints->items.size() > 0) {
+		qDebug() << "DD: Layer TRW: Add Children to Tree: Waypoints";
 		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
 		this->tree_view->add_tree_item(this->index, this->waypoints, tr("Waypoints"));
 		this->waypoints->add_children_to_tree();
@@ -2508,7 +2513,7 @@ QString LayerTRW::new_unique_element_name(const QString & item_type_id, const QS
 
 
 
-void LayerTRW::filein_add_waypoint(Waypoint * wp, const QString & wp_name)
+void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
@@ -2519,7 +2524,7 @@ void LayerTRW::filein_add_waypoint(Waypoint * wp, const QString & wp_name)
 
 
 
-void LayerTRW::filein_add_track(Track * incoming_track, const QString & incoming_track_name)
+void LayerTRW::add_track_from_file(Track * incoming_track, const QString & incoming_track_name)
 {
 	Track * curr_track = this->get_edited_track();
 

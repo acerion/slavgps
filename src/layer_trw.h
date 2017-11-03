@@ -260,10 +260,9 @@ namespace SlavGPS {
 		QString new_unique_element_name(const QString & type_id, const QString& old_name);
 
 
-		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
-		 * These copy the name, so you should free it if necessary. */
-		void filein_add_waypoint(Waypoint * wp, const QString & wp_name);
-		void filein_add_track(Track * trk, const QString & trk_name);
+		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
+		void add_waypoint_from_file(Waypoint * wp, const QString & wp_name);
+		void add_track_from_file(Track * trk, const QString & trk_name);
 
 
 

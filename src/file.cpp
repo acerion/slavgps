@@ -647,7 +647,9 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 	while (stack) {
 		if (stack->under && stack->under->data && stack->data){
 			Layer * layer = (Layer *) stack->data;
+			qDebug() << "DD: Read File: will call Aggregate Layer's add_layer()";
 			((LayerAggregate *) stack->under->data)->add_layer(layer, false);
+			qDebug() << "DD: Read File: will call child layer's post_read()";
 			layer->post_read(viewport, true);
 		}
 		pop(&stack);

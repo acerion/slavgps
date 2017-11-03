@@ -421,7 +421,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (!c_wp_name) {
 			c_wp_name = g_strdup_printf("VIKING_WP%04d", unnamed_waypoints++);
 		}
-		trw->filein_add_waypoint(c_wp, c_wp_name);
+		trw->add_waypoint_from_file(c_wp, c_wp_name);
 		free(c_wp_name);
 		c_wp = NULL;
 		c_wp_name = NULL;
@@ -436,7 +436,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (!c_tr_name) {
 			c_tr_name = g_strdup_printf("VIKING_RT%03d", unnamed_routes++);
 		}
-		trw->filein_add_track(c_tr, c_tr_name);
+		trw->add_track_from_file(c_tr, c_tr_name);
 		free(c_tr_name);
 		c_tr = NULL;
 		c_tr_name = NULL;

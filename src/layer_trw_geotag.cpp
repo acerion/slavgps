@@ -486,7 +486,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 				}
 
 				if (!updated_waypoint) {
-					options->trw->filein_add_waypoint(wp, file_name);
+					options->trw->add_waypoint_from_file(wp, file_name);
 				}
 
 				/* Mark for redraw. */
@@ -542,7 +542,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 					if (!file_name.size()) {
 						file_name = file_base_name(options->image);
 					}
-					options->trw->filein_add_waypoint(wp, file_name);
+					options->trw->add_waypoint_from_file(wp, file_name);
 				}
 
 				/* Mark for redraw. */
