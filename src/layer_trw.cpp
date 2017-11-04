@@ -1940,6 +1940,7 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 		this->add_waypoint(wp);
 		return true;
 	} else {
+		qDebug() << "II: LayerTRW:" << __FUNCTION__ << "empty name of new Waypoint, rejecting";
 		delete wp;
 		return false;
 	}

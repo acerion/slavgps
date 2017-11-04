@@ -23,10 +23,11 @@
 #include "config.h"
 #endif
 
-#include <cstdlib>
+#include <QDebug>
 
-#if 0
 #include "degrees_converters.h"
+#include "preferences.h"
+#if 0
 #include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
@@ -67,20 +68,118 @@ ParameterSpecification wp_param_specs[] = {
 
 
 
-#if 0
-static void update_time(GtkWidget * widget, Waypoint * wp)
+/**
+   Dialog displays \p default_name as name of waypoint.
+   For existing waypoints you should pass wp->name as value of this argument.
+   For new waypoints you should pass some auto-generated name as value of this argument.
+
+   Final name of the waypoint (accepted in the dialog) is returned. If
+   user rejected the dialog (e.g by pressing Cancel button), the
+   returned string is empty.
+*/
+QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
-	const QString msg = vu_get_time_string(&wp->timestamp, "%c", &wp->coord, NULL);
-	gtk_button_set_label(GTK_BUTTON(widget), msg);
+	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
+	dialog.fill(wp, wp_param_specs, default_name);
+
+	while (QDialog::Accepted == dialog.exec()) {
+
+		bool conversion_ok;
+		SGVariant param_value;
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_param_specs[SG_WP_PARAM_NAME]);
+		const QString entered_name = param_value.val_string;
+
+		if (entered_name.isEmpty()) { /* TODO: other checks (isalpha or whatever). */
+			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
+			continue;
+		}
+
+		/* We don't check for unique names: this allows generation of waypoints with the same name. */
+		wp->set_name(entered_name);
+
+
+		struct LatLon lat_lon;
+		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_param_specs[SG_WP_PARAM_LAT]);
+		lat_lon.lat = convert_dms_to_dec(param_value.val_string.toUtf8().constData());
+		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_param_specs[SG_WP_PARAM_LON]);
+		lat_lon.lon = convert_dms_to_dec(param_value.val_string.toUtf8().constData());
+		wp->coord = Coord(lat_lon, coord_mode);
+
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
+		wp->timestamp = param_value.val_string.toULong(&conversion_ok);
+		wp->has_timestamp = conversion_ok && wp->timestamp;
+
+
+		/* Always store Altitude in metres. */
+		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_param_specs[SG_WP_PARAM_ALT]);
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		switch (height_unit) {
+		case HeightUnit::METRES:
+			wp->altitude = param_value.val_string.toFloat();
+			break;
+		case HeightUnit::FEET:
+			wp->altitude = VIK_FEET_TO_METERS(param_value.val_string.toFloat());
+			break;
+		default:
+			wp->altitude = param_value.val_string.toFloat();
+			qDebug() << "EE: Waypoint Properties" << __FUNCTION__ << "unknown height unit" << (int) height_unit;
+		}
+
+
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_param_specs[SG_WP_PARAM_COMMENT]);
+		wp->set_comment(param_value.val_string);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_param_specs[SG_WP_PARAM_DESC]);
+		wp->set_description(param_value.val_string);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
+		wp->set_image(param_value.val_string);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
+		wp->set_symbol_name(param_value.val_string);
+#ifdef K
+		if (g_strcmp0(wp->source, sourceentry->text()))
+			wp->set_source(sourceentry->text());
+		if (g_strcmp0(wp->type, typeentry->text()))
+			wp->set_type(typeentry->text());
+		if (wp->image&& *(wp->image) && (!a_thumbnails_exists(wp->image)))
+			a_thumbnails_create (wp->image);
+
+		GtkTreeIter iter, first;
+		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
+		if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {
+			wp->set_symbol(NULL);
+		} else {
+			char *sym;
+			gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
+			wp->set_symbol(sym);
+			free(sym);
+		}
+#endif
+
+		if (is_new) {
+			return entered_name;
+		} else {
+			*updated = true;
+			/* See if name has been changed. */
+			if (default_name != entered_name) {
+				return entered_name;
+			} else {
+				return "";
+			}
+		}
+	}
+
+	return "";
 }
 
 
 
 
-static Waypoint * edit_wp;
-
-
-
+#if 0
 
 static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint * wp)
 {
@@ -107,7 +206,8 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
 
-	update_time(widget, edit_wp);
+	const QString msg = vu_get_time_string(&wp->timestamp, "%c", &wp->coord, NULL);
+	gtk_button_set_label(GTK_BUTTON(widget), msg);
 }
 
 
@@ -127,7 +227,7 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 	combo->setToolTip(sym);
 	free(sym);
 }
-#endif
+
 
 
 
@@ -138,94 +238,6 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 /* TODO: less on this side, like add track. */
 char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
-#if 0
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
-							 parent,
-							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							 GTK_STOCK_CANCEL,
-							 GTK_RESPONSE_REJECT,
-							 GTK_STOCK_OK,
-							 GTK_RESPONSE_ACCEPT,
-							 NULL);
-
-	GtkWidget *symbolentry;
-	SGFileEntry * imageentry = NULL;
-	GtkWidget *sourcelabel = NULL, *sourceentry = NULL;
-	GtkWidget *typelabel = NULL, *typeentry = NULL;
-	GtkWidget *timevaluebutton = NULL;
-	GtkWidget *hasGeotagCB = NULL;
-	GtkWidget *consistentGeotagCB = NULL;
-	GtkListStore *store;
-
-
-	struct LatLon ll = wp->coord.get_latlon();
-
-	QString alt;
-	const Qstring lat = QObject::tr("%1").arg(ll.lat);
-	const QString lon = QObject::tr("%1").arg(ll.lon);
-	vik_units_height_t height_units = a_vik_get_units_height();
-	switch (height_units) {
-	case VIK_UNITS_HEIGHT_METRES:
-		alt = QObject::tr("%1").arg(wp->altitude);
-		break;
-	case VIK_UNITS_HEIGHT_FEET:
-		alt = QObject::tr("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
-		break;
-	default:
-		alt = QObject::tr("%1").arg(wp->altitude);
-		qDebug() << "EE: Waypoint Properties: dialog: invalid height units:" << (int) height_units;
-	}
-
-	*updated = false;
-
-	QLabel * namelabel = new QLabel(QObject::tr("Name:"));
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), namelabel, false, false, 0);
-	/* Name is now always changeable. */
-	QLineEdit * nameentry = new QLineEdit();
-	if (default_name) {
-		nameentry->setText(default_name);
-	}
-	QObject::connect(nameentry, SIGNAL("activate"), dialog, SLOT (accept));
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
-
-
-
-	QLabel * latlabel = new QLabel(QObject::tr("Latitude:"));
-	QLineEdit * latentry = new QLineEdit(lat);
-
-	QLabel * lonlabel = new QLabel(QObject::tr("Longitude:"));
-	QLineEdit * lonentry = new QLineEdit(lon);
-
-	QLabel * altlabel = new QLabel(QObject::tr("Altitude:"));
-	QLineEdit * altentry = new QLineEdit(alt);
-
-
-
-
-	QLabel * commentlabel = NULL;
-	if (wp->comment && !strncmp(wp->comment, "http", 4)) {
-		commentlabel = gtk_link_button_new_with_label(wp->comment, _("Comment:"));
-	} else {
-		commentlabel = new QLabel(QObject::tr("Comment:"));
-	}
-	QLineEdit * commententry = new QLineEdit();
-
-	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
-	const QString cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
-	if (!cmt.isEmpty()) {
-		commententry->setText(cmt);
-	}
-
-	QLabel * descriptionlabel = NULL;
-	if (wp->description && !strncmp(wp->description, "http", 4)) {
-		descriptionlabel = gtk_link_button_new_with_label(wp->description, _("Description:"));
-	} else {
-		descriptionlabel = new QLabel(QObject::tr("Description:"));
-	}
-	QLineEdit * descriptionentry = new QLineEdit();
-
-	QLabel * imagelabel = new QLabel(QObject::tr("Image:"));
-	SGFileEntry * imageentry = new SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, QString & title, QWidget * parent); vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, NULL, NULL);
 
 	QLabel * symbollabel = NULL;
 	{
@@ -271,59 +283,24 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 		}
 	}
 
-	if (!is_new && wp->comment) {
-		commententry->setText(wp->comment);
-	}
-
-	if (!is_new && wp->description) {
-		descriptionentry->setText(wp->description);
-	}
-
-	if (!is_new && wp->image) {
-		imageentry->set_filename(wp->image);
 
 #ifdef VIK_CONFIG_GEOTAG
-		/* Geotag Info [readonly]. */
-		hasGeotagCB = gtk_check_button_new_with_label(_("Has Geotag"));
-		gtk_widget_set_sensitive(hasGeotagCB, false);
-		bool hasGeotag;
-		char *ignore = a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
-		free(ignore);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hasGeotagCB), hasGeotag);
+	/* Geotag Info [readonly]. */
+	hasGeotagCB = gtk_check_button_new_with_label(_("Has Geotag"));
+	gtk_widget_set_sensitive(hasGeotagCB, false);
+	bool hasGeotag;
+	char *ignore = a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
+	free(ignore);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hasGeotagCB), hasGeotag);
 
-		consistentGeotagCB = gtk_check_button_new_with_label(_("Consistent Position"));
-		gtk_widget_set_sensitive(consistentGeotagCB, false);
-		if (hasGeotag) {
-			struct LatLon ll = a_geotag_get_position(wp->image);
-			Coord coord(ll, coord_mode);
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), coord == wp->coord);
-		}
+	consistentGeotagCB = gtk_check_button_new_with_label(_("Consistent Position"));
+	gtk_widget_set_sensitive(consistentGeotagCB, false);
+	if (hasGeotag) {
+		struct LatLon ll = a_geotag_get_position(wp->image);
+		Coord coord(ll, coord_mode);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), coord == wp->coord);
+	}
 #endif
-	}
-
-	QLabel * timelabel = new QLabel(QObject::tr("Time:"));
-	timevaluebutton = gtk_button_new();
-	gtk_button_set_relief(GTK_BUTTON(timevaluebutton), GTK_RELIEF_NONE);
-
-	/* kamilFIXME: are we overwriting wp here? */
-	if (!edit_wp) {
-		edit_wp = new Waypoint();
-	}
-	edit_wp = new Waypoint(*wp);
-
-	/* TODO: Consider if there should be a remove time button... */
-
-	if (!is_new && wp->has_timestamp) {
-		update_time(timevaluebutton, wp);
-	} else {
-		GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU);
-		gtk_button_set_image(GTK_BUTTON(timevaluebutton), img);
-		/* Initially use current time or otherwise whatever the last value used was. */
-		if (edit_wp->timestamp == 0) {
-			time(&edit_wp->timestamp);
-		}
-	}
-	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 
 
 	if (hasGeotagCB) {
@@ -338,126 +315,6 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 		trw->dialog_shift(GTK_WINDOW(dialog), &wp->coord, false);
 	}
 
-	while (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (nameentry->text().length() == 0) {  /* TODO: other checks (isalpha or whatever). */
-			Dialog::info(tr("Please enter a name for the waypoint."), parent);
-		} else {
-			/* NB: No check for unique names - this allows generation of same named entries. */
-			char *entered_name = nameentry->text();
-
-			/* Do It. */
-			ll.lat = convert_dms_to_dec(latentry->text());
-			ll.lon = convert_dms_to_dec(lonentry->text());
-			wp->coord = Coord(ll, coord_mode);
-			/* Always store in metres. */
-			switch (height_units) {
-			case HeightUnit::METRES:
-				wp->altitude = atof(altentry->text());
-				break;
-			case HeightUnit::FEET:
-				wp->altitude = VIK_FEET_TO_METERS(atof(altentry->text()));
-				break;
-			default:
-				wp->altitude = atof(altentry->text());
-				fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
-			}
-			if (g_strcmp0(wp->comment, commententry->text()))
-				wp->set_comment(commententry->text());
-			if (g_strcmp0(wp->description, descriptionentry->text()))
-				wp->set_description(descriptionentry->text());
-			if (g_strcmp0(wp->image, imageentry->get_filename()))
-				wp->set_image(imageentry->get_filename());
-			if (g_strcmp0(wp->source, sourceentry->text()))
-				wp->set_source(sourceentry->text());
-			if (g_strcmp0(wp->type, typeentry->text()))
-				wp->set_type(typeentry->text());
-			if (wp->image&& *(wp->image) && (!a_thumbnails_exists(wp->image)))
-				a_thumbnails_create (wp->image);
-			if (edit_wp->timestamp) {
-				wp->timestamp = edit_wp->timestamp;
-				wp->has_timestamp = true;
-			}
-
-			GtkTreeIter iter, first;
-			gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
-			if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {
-				wp->set_symbol(NULL);
-			} else {
-				char *sym;
-				gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
-				wp->set_symbol(sym);
-				free(sym);
-			}
-
-			gtk_widget_destroy(dialog);
-			if (is_new) {
-				return entered_name;
-			} else {
-				*updated = true;
-				/* See if name has been changed. */
-				if (g_strcmp0(default_name, entered_name)) {
-					return entered_name;
-				} else {
-					return NULL;
-				}
-			}
-		}
-	}
-	gtk_widget_destroy(dialog);
-#endif
 	return NULL;
 }
-
-
-/**
-   Dialog displays \p default_name as name of waypoint.
-   For existing waypoints you should pass wp->name as value of this argument.
-   For new waypoints you should pass some auto-generated name as value of this argument.
-
-   Final name of the waypoint (accepted in the dialog) is returned. If
-   user rejected the dialog (e.g by pressing Cancel button), the
-   returned string is empty.
-*/
-QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
-{
-	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
-	dialog.fill(wp, wp_param_specs, default_name);
-	int dialog_code = dialog.exec();
-
-	QString entered_name;
-
-	if (dialog_code == QDialog::Accepted) {
-
-		SGVariant param_value;
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_param_specs[SG_WP_PARAM_NAME]);
-		entered_name = param_value.val_string;
-		wp->set_name(entered_name);
-
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_param_specs[SG_WP_PARAM_LAT]);
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_param_specs[SG_WP_PARAM_LON]);
-
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->timestamp = param_value.val_uint;
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_param_specs[SG_WP_PARAM_ALT]);
-		//wp->alt = ;
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_param_specs[SG_WP_PARAM_COMMENT]);
-		wp->set_comment(param_value.val_string);
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_param_specs[SG_WP_PARAM_DESC]);
-		wp->set_description(param_value.val_string);
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
-		wp->set_image(param_value.val_string);
-
-		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
-		wp->set_symbol_name(param_value.val_string);
-	}
-
-	return entered_name;
-}
+#endif

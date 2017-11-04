@@ -282,7 +282,7 @@ static bool preferences_load_from_file()
 				qDebug() << "EE: Preferences: Load from File: 'string list' not implemented";
 			}
 
-			SGVariant * new_val = new SGVariant(val, old_val_iter.value()->type_id);
+			SGVariant * new_val = new SGVariant(old_val_iter.value()->type_id, val);
 			registered_parameter_values.insert(QString(key), new_val);
 
 			free(key);

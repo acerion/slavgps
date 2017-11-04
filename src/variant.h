@@ -53,12 +53,15 @@ namespace SlavGPS {
 		PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
 	};
 
+	QDebug operator<<(QDebug debug, const SGVariantType type_id);
+
 
 
 
 	class SGVariant {
 	public:
-		SGVariant(const char * str, SGVariantType type_id); /* Construct value of given type using data from given string. */
+		SGVariant(SGVariantType type_id, const char * str);    /* Construct value of given type using data from given string. */
+		SGVariant(SGVariantType type_id, const QString & str); /* Construct value of given type using data from given string. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
 		SGVariant()                           { type_id = SGVariantType::EMPTY; }

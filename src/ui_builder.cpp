@@ -314,31 +314,18 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 	QWidget * widget = NULL;
 
 
-	struct LatLon ll = wp->coord.get_latlon();
-
-	/* FIXME: memory management. */
-	char * lat = g_strdup_printf("%f", ll.lat);
-	char * lon = g_strdup_printf("%f", ll.lon);
-	char * alt = NULL;
-
-	HeightUnit height_units = Preferences::get_unit_height();
-	switch (height_units) {
-	case HeightUnit::METRES:
-		alt = g_strdup_printf("%f", wp->altitude);
-		break;
-	case HeightUnit::FEET:
-		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
-		break;
-	default:
-		alt = g_strdup_printf("%f", wp->altitude);
-		fprintf(stderr, "CRITICAL: invalid height unit %d\n", (int) height_units);
-	}
 
 	param_spec = &param_specs[SG_WP_PARAM_NAME];
-	param_value = SGVariant(default_name);
+	param_value = SGVariant(default_name); /* TODO: This should be somehow taken from param_specs->default */
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
+
+
+
+	const struct LatLon lat_lon = wp->coord.get_latlon();
+	const QString lat = QString("%1").arg(lat_lon.lat);
+	const QString lon = QString("%1").arg(lat_lon.lon);
 
 	param_spec = &param_specs[SG_WP_PARAM_LAT];
 	param_value = SGVariant(lat);
@@ -346,17 +333,41 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
+
+
 	param_spec = &param_specs[SG_WP_PARAM_LON];
 	param_value = SGVariant(lon);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
+
+
+	/* TODO: Consider if there should be a remove time button... */
 	param_spec = &param_specs[SG_WP_PARAM_TIME];
 	param_value = SGVariant((uint32_t) wp->timestamp);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
+#ifdef K
+	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
+#endif
+
+
+
+	QString alt;
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	switch (height_unit) {
+	case HeightUnit::METRES:
+		alt = QString("%1").arg(wp->altitude);
+		break;
+	case HeightUnit::FEET:
+		alt = QString("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
+		break;
+	default:
+		alt = QString("%1").arg(wp->altitude);
+		qDebug() << "EE: Waypoint Properties: dialog: invalid height units:" << (int) height_unit;
+	}
 
 	param_spec = &param_specs[SG_WP_PARAM_ALT];
 	param_value = SGVariant(alt);
@@ -364,23 +375,41 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
+
+
+	/* TODO: comment may contain URL. Make the label or input field clickable. */
 	param_spec = &param_specs[SG_WP_PARAM_COMMENT];
 	param_value = SGVariant(wp->comment);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
+#ifdef K
+	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
+	const QString cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
+	if (!cmt.isEmpty()) {
+		commententry->setText(cmt);
+	}
+#endif
 
+
+
+	/* TODO: description may contain URL. Make the label or input field clickable. */
 	param_spec = &param_specs[SG_WP_PARAM_DESC];
 	param_value = SGVariant(wp->description);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
+
+
+	/* TODO: perhaps add file filter for image files? */
 	param_spec = &param_specs[SG_WP_PARAM_IMAGE];
 	param_value = SGVariant(wp->image);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
+
+
 
 	param_spec = &param_specs[SG_WP_PARAM_SYMBOL];
 	param_value = SGVariant(wp->symbol_name);
@@ -696,8 +725,6 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 {
 	SGVariant rv;
 
-	qDebug() << "II: UI Builder: saving value of widget" << widget_type_get_label(param_spec->widget_type) << ", label =" << param_spec->ui_label << ", value =" << rv;
-
 	switch (param_spec->widget_type) {
 	case WidgetType::COLOR:
 		rv = SGVariant(((SGColorButton *) widget)->get_color());
@@ -748,6 +775,9 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::ENTRY:
+		rv = SGVariant(param_spec->type, ((QLineEdit *) widget)->text());
+		break;
+
 	case WidgetType::PASSWORD:
 		rv = SGVariant(((QLineEdit *) widget)->text());
 		break;
@@ -788,6 +818,8 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	if (param_spec->extra && param_spec->extra->convert_to_internal) {
 		rv = param_spec->extra->convert_to_internal(rv);
 	}
+
+	qDebug() << "II: UI Builder:" << __FUNCTION__ << "widget type =" << widget_type_get_label(param_spec->widget_type) << ", label =" << param_spec->ui_label << ", saved value =" << rv << ", expected value type =" << param_spec->type;
 
 	return rv;
 }
