@@ -49,44 +49,30 @@ SGVariant::SGVariant(const char * str, SGVariantType type_id_)
 
 	switch (type_id_) {
 	case SGVariantType::DOUBLE:
-		this->d = strtod(str, NULL);
+		this->val_double = (double) strtod(str, NULL);
 		break;
 	case SGVariantType::UINT:
-		this->u = strtoul(str, NULL, 10);
+		this->val_uint = strtoul(str, NULL, 10);
 		break;
 	case SGVariantType::INT:
-		this->i = strtol(str, NULL, 10);
+		this->val_int = strtol(str, NULL, 10);
 		break;
 	case SGVariantType::BOOLEAN:
-		this->b = TEST_BOOLEAN(str);
+		this->val_bool = TEST_BOOLEAN(str);
 		break;
 	case SGVariantType::COLOR:
-		{
-			/* TODO: maybe we could use *this = SGVariant(color); ? */
-			const QColor color(str);
-			this->c.r = color.red();
-			this->c.g = color.green();
-			this->c.b = color.blue();
-			this->c.a = color.alpha();
-			break;
-		}
-	/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
+		this->val_color = QColor(str);
+		break;
+	case SGVariantType::STRING:
+		this->val_string = str;
+		break;
+	case SGVariantType::STRING_LIST:
+		this->val_string = str; /* TODO: improve this assignment of string list. */
+		break;
 	default:
-		this->s = str;
+		qDebug() << "EE: Variant: from string: unsupported type id" << (int) type_id;
 		break;
 	}
-}
-
-
-
-
-SGVariant::SGVariant(const QColor & color)
-{
-	this->c.r = color.red();
-	this->c.g = color.green();
-	this->c.b = color.blue();
-	this->c.a = color.alpha();
-	this->type_id = SGVariantType::COLOR;
 }
 
 
@@ -118,18 +104,6 @@ SGVariant SlavGPS::sg_variant_false(void)
 
 
 
-void SGVariant::to_qcolor(QColor & color) const
-{
-	if (this->type_id != SGVariantType::COLOR) {
-		qDebug() << "EE: Variant: To QColor: type of variant is not COLOR";
-	}
-
-	color = QColor(this->c.r, this->c.g, this->c.b, this->c.a);
-}
-
-
-
-
 QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 {
 	switch ((int) value.type_id) {
@@ -137,28 +111,28 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		debug << "<empty type>";
 		break;
 	case (int) SGVariantType::DOUBLE:
-		debug << "double" << value.d;
+		debug << "double" << value.val_double;
 		break;
 	case (int) SGVariantType::UINT:
-		debug << "uint" << value.u;
+		debug << "uint" << value.val_uint;
 		break;
 	case (int) SGVariantType::INT:
-		debug << "int" << value.i;
+		debug << "int" << value.val_int;
 		break;
 	case (int) SGVariantType::STRING:
-		debug << "string" << value.s;
+		debug << "string" << value.val_string;
 		break;
 	case (int) SGVariantType::BOOLEAN:
-		debug << "bool" << value.b;
+		debug << "bool" << value.val_bool;
 		break;
 	case (int) SGVariantType::COLOR:
-		debug << "color" << value.c.r << value.c.g << value.c.b << value.c.a;
+		debug << "color" << value.val_color.red() << value.val_color.green() << value.val_color.blue() << value.val_color.alpha();
 		break;
 	case (int) SGVariantType::STRING_LIST:
-		debug << "slist" << value.sl;
+		debug << "string list" << value.val_string_list;
 		break;
 	case (int) SGVariantType::PTR:
-		debug << "ptr" << QString("0x%1").arg((unsigned long) value.ptr);
+		debug << "pointer" << QString("0x%1").arg((qintptr) value.val_pointer);
 		break;
 	};
 

@@ -201,7 +201,7 @@ void a_toolbar_init(void)
 #endif
 
 	SGVariant param_value;
-	param_value.ptr = (void *) toolbar_configure_cb;
+	param_value.val_pointer = (void *) toolbar_configure_cb;
 	param_value->type_id = SGVariantType::PTR; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
 	Preferences::register_parameter(&prefs[i++], param_value);
 

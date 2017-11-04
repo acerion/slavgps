@@ -108,19 +108,16 @@ bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, boo
 {
 	switch (id) {
 	case PARAM_COLOR:
-		qDebug() << "II: Layer Coordinate: saving color" << param_value.c.r << param_value.c.g << param_value.c.b << param_value.c.a;
-		this->color.setRed(param_value.c.r);
-		this->color.setGreen(param_value.c.g);
-		this->color.setBlue(param_value.c.b);
-		this->color.setAlpha(param_value.c.a);
+		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving color" << param_value;
+		this->color = param_value.val_color;
 		break;
 	case PARAM_MIN_INC:
-		this->deg_inc = param_value.d / 60.0;
+		this->deg_inc = param_value.val_double / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		if (param_value.i >= scale_line_thickness.min && param_value.i <= scale_line_thickness.max) {
-			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value.i;
-			this->line_thickness = param_value.i;
+		if (param_value.val_int >= scale_line_thickness.min && param_value.val_int <= scale_line_thickness.max) {
+			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value;
+			this->line_thickness = param_value.val_int;
 		}
 		break;
 	default:
@@ -137,21 +134,19 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 	SGVariant rv;
 	switch (id) {
 	case PARAM_COLOR:
-		rv.c.r = this->color.red();
-		rv.c.g = this->color.green();
-		rv.c.b = this->color.blue();
-		rv.c.a = this->color.alpha();
-		qDebug() << "II: Layer Coordinate: returning color" << rv.c.r << rv.c.g << rv.c.b << rv.c.a;
+		rv = SGVariant(this->color);
 		break;
 	case PARAM_MIN_INC:
-		rv.d = this->deg_inc * 60.0;
+		rv = SGVariant((double) this->deg_inc * 60.0);
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv.i = this->line_thickness;
+		rv = SGVariant((int32_t) this->line_thickness);
 		break;
 	default:
+		qDebug() << "EE: Layer Coordinate:" << __FUNCTION__ << "unexpected param id" << id;
 		break;
 	}
+	qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "returning" << rv;
 	return rv;
 }
 

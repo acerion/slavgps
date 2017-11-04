@@ -431,7 +431,7 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 		SGVariant param_value;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_param_specs[SG_WP_PARAM_NAME]);
-		entered_name = param_value.s;
+		entered_name = param_value.val_string;
 		wp->set_name(entered_name);
 
 
@@ -441,22 +441,22 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->timestamp = param_value.u;
+		wp->timestamp = param_value.val_uint;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_param_specs[SG_WP_PARAM_ALT]);
 		//wp->alt = ;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_param_specs[SG_WP_PARAM_COMMENT]);
-		wp->set_comment(param_value.s);
+		wp->set_comment(param_value.val_string);
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_param_specs[SG_WP_PARAM_DESC]);
-		wp->set_description(param_value.s);
+		wp->set_description(param_value.val_string);
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
-		wp->set_image(param_value.s);
+		wp->set_image(param_value.val_string);
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
-		wp->set_symbol_name(param_value.s);
+		wp->set_symbol_name(param_value.val_string);
 	}
 
 	return entered_name;

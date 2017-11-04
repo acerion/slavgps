@@ -764,122 +764,122 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_TRACKS_VISIBLE:
-		this->tracks->visible = data.b;
+		this->tracks->visible = data.val_bool;
 		break;
 	case PARAM_WAYPOINTS_VISIBLE:
-		this->waypoints->visible = data.b;
+		this->waypoints->visible = data.val_bool;
 		break;
 	case PARAM_ROUTES_VISIBLE:
-		this->routes->visible = data.b;
+		this->routes->visible = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LABELS:
-		this->track_draw_labels = data.b;
+		this->track_draw_labels = data.val_bool;
 		break;
 	case PARAM_TRACK_LABEL_FONT_SIZE:
-		if (data.i < FS_NUM_SIZES) {
-			this->trk_label_font_size = (font_size_t) data.i;
+		if (data.val_int < FS_NUM_SIZES) {
+			this->trk_label_font_size = (font_size_t) data.val_int;
 		}
 		break;
 	case PARAM_TRACK_DRAWING_MODE:
-		this->track_drawing_mode = data.i;
+		this->track_drawing_mode = data.val_int;
 		break;
 	case PARAM_TRACK_COLOR_COMMON:
-		this->track_color_common = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
+		this->track_color_common = data.val_color;
 		this->new_track_pens();
 		break;
 	case PARAM_DRAW_TRACKPOINTS:
-		this->draw_trackpoints = data.b;
+		this->draw_trackpoints = data.val_bool;
 		break;
 	case PARAM_TRACKPOINT_SIZE:
-		if (data.i >= scale_trackpoint_size.min && data.i <= scale_trackpoint_size.max) {
-			this->trackpoint_size = data.i;
+		if (data.val_int >= scale_trackpoint_size.min && data.val_int <= scale_trackpoint_size.max) {
+			this->trackpoint_size = data.val_int;
 		}
 		break;
 	case PARAM_DE:
-		this->drawelevation = data.b;
+		this->drawelevation = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_STOPS:
-		this->draw_track_stops = data.b;
+		this->draw_track_stops = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LINES:
-		this->draw_track_lines = data.b;
+		this->draw_track_lines = data.val_bool;
 		break;
 	case PARAM_DD:
-		this->drawdirections = data.b;
+		this->drawdirections = data.val_bool;
 		break;
 	case PARAM_TRACK_DIRECTION_SIZE:
-		if (data.i >= scale_track_direction_size.min && data.i <= scale_track_direction_size.max) {
-			this->drawdirections_size = data.i;
+		if (data.val_int >= scale_track_direction_size.min && data.val_int <= scale_track_direction_size.max) {
+			this->drawdirections_size = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_MIN_STOP_LENGTH:
-		if (data.i >= scale_track_min_stop_length.min && data.i <= scale_track_min_stop_length.max) {
-			this->stop_length = data.i;
+		if (data.val_int >= scale_track_min_stop_length.min && data.val_int <= scale_track_min_stop_length.max) {
+			this->stop_length = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_ELEVATION_FACTOR:
-		if (data.i >= scale_track_elevation_factor.min && data.i <= scale_track_elevation_factor.max) {
-			this->elevation_factor = data.i;
+		if (data.val_int >= scale_track_elevation_factor.min && data.val_int <= scale_track_elevation_factor.max) {
+			this->elevation_factor = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_THICKNESS:
-		if (data.i >= scale_track_thickness.min && data.i <= scale_track_thickness.max) {
-			if (data.i != this->track_thickness) {
-				this->track_thickness = data.i;
+		if (data.val_int >= scale_track_thickness.min && data.val_int <= scale_track_thickness.max) {
+			if (data.val_int != this->track_thickness) {
+				this->track_thickness = data.val_int;
 				this->new_track_pens();
 			}
 		}
 		break;
 	case PARAM_TRACK_BG_THICKNESS:
-		if (data.i >= scale_track_bg_thickness.min && data.i <= scale_track_bg_thickness.max) {
-			if (data.i != this->track_bg_thickness) {
-				this->track_bg_thickness = data.i;
+		if (data.val_int >= scale_track_bg_thickness.min && data.val_int <= scale_track_bg_thickness.max) {
+			if (data.val_int != this->track_bg_thickness) {
+				this->track_bg_thickness = data.val_int;
 				this->new_track_pens();
 			}
 		}
 		break;
 
 	case PARAM_TRK_BG_COLOR:
-		data.to_qcolor(this->track_bg_color);
+		this->track_bg_color = data.val_color;
 		this->track_bg_pen.setColor(this->track_bg_color);
 		break;
 
 	case PARAM_TRACK_DRAW_SPEED_FACTOR:
-		if (data.d >= scale_track_draw_speed_factor.min && data.d <= scale_track_draw_speed_factor.max) {
-			this->track_draw_speed_factor = data.d;
+		if (data.val_double >= scale_track_draw_speed_factor.min && data.val_double <= scale_track_draw_speed_factor.max) {
+			this->track_draw_speed_factor = data.val_double;
 		}
 		break;
 	case PARAM_TRACK_SORT_ORDER:
-		if (data.i < VL_SO_LAST) {
-			this->track_sort_order = (sort_order_t) data.i;
+		if (data.val_int < VL_SO_LAST) {
+			this->track_sort_order = (sort_order_t) data.val_int;
 		}
 		break;
 	case PARAM_DLA:
-		this->drawlabels = data.b;
+		this->drawlabels = data.val_bool;
 		break;
 	case PARAM_WP_IMAGE_DRAW:
-		this->wp_image_draw = data.b;
+		this->wp_image_draw = data.val_bool;
 		break;
 	case PARAM_WP_IMAGE_SIZE:
-		if (data.i >= scale_wp_image_size.min && data.i <= scale_wp_image_size.max) {
-			if (data.i != this->wp_image_size) {
-				this->wp_image_size = data.i;
+		if (data.val_int >= scale_wp_image_size.min && data.val_int <= scale_wp_image_size.max) {
+			if (data.val_int != this->wp_image_size) {
+				this->wp_image_size = data.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
 		break;
 	case PARAM_WP_IMAGE_ALPHA:
-		if (data.i >= scale_wp_image_alpha.min && data.i <= scale_wp_image_alpha.max) {
-			if (data.i != this->wp_image_alpha) {
-				this->wp_image_alpha = data.i;
+		if (data.val_int >= scale_wp_image_alpha.min && data.val_int <= scale_wp_image_alpha.max) {
+			if (data.val_int != this->wp_image_alpha) {
+				this->wp_image_alpha = data.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
 		break;
 
 	case PARAM_WP_IMAGE_CACHE_SIZE:
-		if (data.i >= scale_wp_image_cache_size.min && data.i <= scale_wp_image_cache_size.max) {
-			this->wp_image_cache_size = data.i;
+		if (data.val_int >= scale_wp_image_cache_size.min && data.val_int <= scale_wp_image_cache_size.max) {
+			this->wp_image_cache_size = data.val_int;
 			while (this->wp_image_cache.size() > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
 				this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 			}
@@ -887,17 +887,17 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 
 	case PARAM_WP_MARKER_COLOR:
-		data.to_qcolor(this->wp_marker_color);
+		this->wp_marker_color = data.val_color;
 		this->wp_marker_pen.setColor(this->wp_marker_color);
 		break;
 
 	case PARAM_WP_LABEL_FG_COLOR:
-		data.to_qcolor(this->wp_label_fg_color);
+		this->wp_label_fg_color = data.val_color;
 		this->wp_label_fg_pen.setColor(this->wp_label_fg_color);
 		break;
 
 	case PARAM_WP_LABEL_BG_COLOR:
-		data.to_qcolor(this->wp_label_bg_color);
+		this->wp_label_bg_color = data.val_color;
 		this->wp_label_bg_pen.setColor(this->wp_label_bg_color);
 		break;
 
@@ -910,47 +910,47 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 #endif
 		break;
 	case PARAM_WP_MARKER_TYPE:
-		if (data.i < SYMBOL_NUM_SYMBOLS) {
-			this->wp_marker_type = data.i;
+		if (data.val_int < SYMBOL_NUM_SYMBOLS) {
+			this->wp_marker_type = data.val_int;
 		}
 		break;
 	case PARAM_WP_MARKER_SIZE:
-		if (data.i >= scale_wp_marker_size.min && data.i <= scale_wp_marker_size.max) {
-			this->wp_marker_size = data.i;
+		if (data.val_int >= scale_wp_marker_size.min && data.val_int <= scale_wp_marker_size.max) {
+			this->wp_marker_size = data.val_int;
 		}
 		break;
 	case PARAM_WPSYMS:
-		this->wp_draw_symbols = data.b;
+		this->wp_draw_symbols = data.val_bool;
 		break;
 	case PARAM_WP_LABEL_FONT_SIZE:
-		if (data.i < FS_NUM_SIZES) {
-			this->wp_label_font_size = (font_size_t) data.i;
+		if (data.val_int < FS_NUM_SIZES) {
+			this->wp_label_font_size = (font_size_t) data.val_int;
 		}
 		break;
 	case PARAM_WP_SORT_ORDER:
-		if (data.i < VL_SO_LAST) {
-			this->wp_sort_order = (sort_order_t) data.i;
+		if (data.val_int < VL_SO_LAST) {
+			this->wp_sort_order = (sort_order_t) data.val_int;
 		}
 		break;
 		// Metadata
 	case PARAM_MDDESC:
-		if (!data.s.isEmpty() && this->metadata) {
-			this->metadata->set_description(data.s);
+		if (!data.val_string.isEmpty() && this->metadata) {
+			this->metadata->set_description(data.val_string);
 		}
 		break;
 	case PARAM_MDAUTH:
-		if (!data.s.isEmpty() && this->metadata) {
-			this->metadata->set_author(data.s);
+		if (!data.val_string.isEmpty() && this->metadata) {
+			this->metadata->set_author(data.val_string);
 		}
 		break;
 	case PARAM_MDTIME:
-		if (!data.s.isEmpty() && this->metadata) {
-			this->metadata->set_timestamp(data.s);
+		if (!data.val_string.isEmpty() && this->metadata) {
+			this->metadata->set_timestamp(data.val_string);
 		}
 		break;
 	case PARAM_MDKEYS:
-		if (!data.s.isEmpty() && this->metadata) {
-			this->metadata->set_keywords(data.s);
+		if (!data.val_string.isEmpty() && this->metadata) {
+			this->metadata->set_keywords(data.val_string);
 		}
 		break;
 	default: break;
@@ -965,44 +965,45 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_TRACKS_VISIBLE:    rv.b = this->tracks->visible; break;
-	case PARAM_WAYPOINTS_VISIBLE: rv.b = this->waypoints->visible; break;
-	case PARAM_ROUTES_VISIBLE:    rv.b = this->routes->visible; break;
-	case PARAM_DRAW_TRACK_LABELS: rv.b = this->track_draw_labels; break;
-	case PARAM_TRACK_LABEL_FONT_SIZE: rv.i = this->trk_label_font_size; break;
-	case PARAM_TRACK_DRAWING_MODE: rv.i = this->track_drawing_mode; break;
-	case PARAM_TRACK_COLOR_COMMON: rv = SGVariant(this->track_color_common); break;
-	case PARAM_DRAW_TRACKPOINTS: rv.b = this->draw_trackpoints; break;
-	case PARAM_TRACKPOINT_SIZE: rv.i = this->trackpoint_size; break;
-	case PARAM_DE: rv.b = this->drawelevation; break;
-	case PARAM_TRACK_ELEVATION_FACTOR: rv.i = this->elevation_factor; break;
-	case PARAM_DRAW_TRACK_STOPS: rv.b = this->draw_track_stops; break;
-	case PARAM_TRACK_MIN_STOP_LENGTH: rv.i = this->stop_length; break;
-	case PARAM_DRAW_TRACK_LINES: rv.b = this->draw_track_lines; break;
-	case PARAM_DD: rv.b = this->drawdirections; break;
-	case PARAM_TRACK_DIRECTION_SIZE: rv.i = this->drawdirections_size; break;
-	case PARAM_TRACK_THICKNESS: rv.i = this->track_thickness; break;
-	case PARAM_TRACK_BG_THICKNESS: rv.i = this->track_bg_thickness; break;
-	case PARAM_DLA: rv.b = this->drawlabels; break;
-	case PARAM_TRK_BG_COLOR: rv = SGVariant(this->track_bg_color); break;
-	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv.d = this->track_draw_speed_factor; break;
-	case PARAM_TRACK_SORT_ORDER: rv.i = this->track_sort_order; break;
+	case PARAM_TRACKS_VISIBLE:          rv = SGVariant(this->tracks->visible);               break;
+	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints->visible);            break;
+	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes->visible);               break;
+	case PARAM_DRAW_TRACK_LABELS:       rv = SGVariant(this->track_draw_labels);             break;
+	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->trk_label_font_size); break;
+	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->track_drawing_mode);  break;
+	case PARAM_TRACK_COLOR_COMMON:      rv = SGVariant(this->track_color_common);            break;
+	case PARAM_DRAW_TRACKPOINTS:        rv = SGVariant(this->draw_trackpoints);              break;
+	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->trackpoint_size);     break;
+	case PARAM_DE:                      rv = SGVariant(this->drawelevation);                 break;
+	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->elevation_factor);    break;
+	case PARAM_DRAW_TRACK_STOPS:        rv = SGVariant(this->draw_track_stops);              break;
+	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->stop_length);         break;
+	case PARAM_DRAW_TRACK_LINES:        rv = SGVariant(this->draw_track_lines);              break;
+	case PARAM_DD:                      rv = SGVariant(this->drawdirections);                break;
+	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->drawdirections_size); break;
+	case PARAM_TRACK_THICKNESS:         rv = SGVariant((int32_t) this->track_thickness);     break;
+	case PARAM_TRACK_BG_THICKNESS:      rv = SGVariant((int32_t) this->track_bg_thickness);  break;
+	case PARAM_DLA:                     rv = SGVariant(this->drawlabels);                    break;
+	case PARAM_TRK_BG_COLOR:            rv = SGVariant(this->track_bg_color);                break;
+	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv = SGVariant(this->track_draw_speed_factor);       break;
+	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order);    break;
 
-	case PARAM_WP_IMAGE_DRAW: rv.b = this->wp_image_draw; break;
-	case PARAM_WP_IMAGE_SIZE: rv.i = this->wp_image_size; break;
-	case PARAM_WP_IMAGE_ALPHA: rv.i = this->wp_image_alpha; break;
-	case PARAM_WP_IMAGE_CACHE_SIZE: rv.i = this->wp_image_cache_size; break;
+	case PARAM_WP_IMAGE_DRAW:           rv = SGVariant(this->wp_image_draw);                 break;
+	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->wp_image_size);       break;
+	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->wp_image_alpha);      break;
+	case PARAM_WP_IMAGE_CACHE_SIZE:     rv = SGVariant((int32_t) this->wp_image_cache_size); break;
 
-	case PARAM_WP_MARKER_COLOR:   rv = SGVariant(this->wp_marker_color); break;
-	case PARAM_WP_LABEL_FG_COLOR: rv = SGVariant(this->wp_label_fg_color); break;
-	case PARAM_WP_LABEL_BG_COLOR: rv = SGVariant(this->wp_label_bg_color); break;
-	case PARAM_WPBA: rv.b = this->wpbgand; break;
-	case PARAM_WP_MARKER_TYPE: rv.i = this->wp_marker_type; break;
-	case PARAM_WP_MARKER_SIZE: rv.i = this->wp_marker_size; break;
-	case PARAM_WPSYMS: rv.b = this->wp_draw_symbols; break;
-	case PARAM_WP_LABEL_FONT_SIZE: rv.i = this->wp_label_font_size; break;
-	case PARAM_WP_SORT_ORDER: rv.i = this->wp_sort_order; break;
-		// Metadata
+	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->wp_marker_color);               break;
+	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->wp_label_fg_color);             break;
+	case PARAM_WP_LABEL_BG_COLOR:       rv = SGVariant(this->wp_label_bg_color);             break;
+	case PARAM_WPBA:                    rv = SGVariant(this->wpbgand);                       break;
+	case PARAM_WP_MARKER_TYPE:          rv = SGVariant((int32_t) this->wp_marker_type);      break;
+	case PARAM_WP_MARKER_SIZE:          rv = SGVariant((int32_t) this->wp_marker_size);      break;
+	case PARAM_WPSYMS:                  rv = SGVariant(this->wp_draw_symbols);               break;
+	case PARAM_WP_LABEL_FONT_SIZE:      rv = SGVariant((int32_t) this->wp_label_font_size);  break;
+	case PARAM_WP_SORT_ORDER:           rv = SGVariant((int32_t) this->wp_sort_order);       break;
+
+	/* Metadata. */
 	case PARAM_MDDESC:
 		if (this->metadata) {
 			rv = SGVariant(this->metadata->description);
@@ -1023,7 +1024,8 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 			rv = SGVariant(this->metadata->keywords);
 		}
 		break;
-	default: break;
+	default:
+		break;
 	}
 
 	return rv;

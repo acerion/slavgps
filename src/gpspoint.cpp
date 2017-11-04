@@ -943,15 +943,14 @@ static void a_gpspoint_write_track(FILE * file, Tracks & tracks)
 			fprintf(file, " xtype=\"%s\"", tmp);
 			free(tmp);
 		}
-#ifdef K
+
 		if (trk->has_color) {
-			fprintf(file, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
+			fprintf(file, " color=#%.2x%.2x%.2x", (int)(trk->color.red()),(int)(trk->color.green()),(int)(trk->color.blue()));
 		}
 
-		if (trk->draw_name_mode > 0) {
-			fprintf(file, " draw_name_mode=\"%d\"", trk->draw_name_mode);
+		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
+			fprintf(file, " draw_name_mode=\"%d\"", (int) trk->draw_name_mode);
 		}
-#endif
 
 		if (trk->max_number_dist_labels > 0) {
 			fprintf(file, " number_dist_labels=\"%d\"", trk->max_number_dist_labels);

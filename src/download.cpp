@@ -147,7 +147,7 @@ static std::mutex dem_files_mutex;
 
 
 /* Spin button scale. */
-static ParameterScale scale_age = { 1, 365, SGVariant((int32_t) VIK_CONFIG_DEFAULT_TILE_AGE / 86400), 1, 0 }; /* download_tile_age; hardwired default value in days. */
+static ParameterScale scale_age = { 1, 365, SGVariant((int32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)), 1, 0 }; /* download_tile_age; hardwired default value in days. */
 
 
 
@@ -155,7 +155,7 @@ static ParameterScale scale_age = { 1, 365, SGVariant((int32_t) VIK_CONFIG_DEFAU
 static SGVariant convert_to_display(SGVariant value)
 {
 	/* From seconds into days. */
-	return SGVariant((int32_t) (value.i / 86400));
+	return SGVariant((int32_t) (value.val_int / 86400));
 }
 
 
@@ -164,7 +164,7 @@ static SGVariant convert_to_display(SGVariant value)
 static SGVariant convert_to_internal(SGVariant value)
 {
 	/* From days into seconds. */
-	return SGVariant((int32_t) (86400 * value.i));
+	return SGVariant((int32_t) (86400 * value.val_int));
 }
 
 

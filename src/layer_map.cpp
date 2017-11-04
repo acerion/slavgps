@@ -164,7 +164,7 @@ static SGVariant directory_default(void)
 {
 	const SGVariant * pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir");
 	if (pref_value) {
-		return SGVariant(pref_value->s);
+		return SGVariant(pref_value->val_string); /* TODO: why we can't just return *pref_value? */
 	} else {
 		return SGVariant("");
 	}
@@ -460,10 +460,10 @@ MapTypeID LayerMap::get_default_map_type()
 {
 	/* TODO: verify that this function call works as expected. */
 	SGVariant var = LayerDefaults::get(LayerType::MAP, "mode", SGVariantType::INT); /* kamilTODO: get the default value from LayerInterface. */
-	if (var.i == 0) {
+	if (var.val_int == 0) {
 		var = id_default();
 	}
-	return (MapTypeID) var.i;
+	return (MapTypeID) var.val_int;
 }
 
 
@@ -555,7 +555,7 @@ void LayerMap::set_cache_dir(const QString & dir)
 	QString mydir = dir;
 	if (dir.isEmpty()) {
 		if (Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir")) {
-			mydir = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir")->s;
+			mydir = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir")->val_string;
 		}
 	}
 
@@ -636,18 +636,18 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
-		this->set_cache_dir(data.s);
+		this->set_cache_dir(data.val_string);
 		break;
 	case PARAM_CACHE_LAYOUT:
-		if ((MapsCacheLayout) data.i < MapsCacheLayout::NUM) {
-			this->cache_layout = (MapsCacheLayout) data.i;
+		if ((MapsCacheLayout) data.val_int < MapsCacheLayout::NUM) {
+			this->cache_layout = (MapsCacheLayout) data.val_int;
 		}
 		break;
 	case PARAM_FILE:
-		this->set_file(data.s);
+		this->set_file(data.val_string);
 		break;
 	case PARAM_MAPTYPE: {
-		int map_index_ = map_type_to_map_index((MapTypeID) data.i);
+		int map_index_ = map_type_to_map_index((MapTypeID) data.val_int);
 		if (map_index_ == -1) {
 			fprintf(stderr, _("WARNING: Unknown map type\n"));
 		} else {
@@ -655,14 +655,14 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 
 			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
 			if (is_file_operation) {
-				ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
+				ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int);
 			} else {
 				MapSource * map = map_sources[this->map_index];
 				if (map->get_license() != NULL) {
 					/* Check if licence for this map type has been shown before. */
-					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i)) {
+					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int)) {
 						maps_show_license(this->get_window(), map);
-						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.i);
+						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int);
 					}
 				}
 			}
@@ -670,21 +670,21 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 	}
 	case PARAM_ALPHA:
-		if (data.i >= scale_alpha.min && data.i <= scale_alpha.max) {
-			this->alpha = data.i;
+		if (data.val_int >= scale_alpha.min && data.val_int <= scale_alpha.max) {
+			this->alpha = data.val_int;
 		}
 		break;
 	case PARAM_AUTODOWNLOAD:
-		this->autodownload = data.b;
+		this->autodownload = data.val_bool;
 		break;
 	case PARAM_ONLYMISSING:
-		this->adl_only_missing = data.b;
+		this->adl_only_missing = data.val_bool;
 		break;
 	case PARAM_MAPZOOM:
-		if (data.i < params_mapzooms.size()) {
-			this->mapzoom_id = data.i;
-			this->xmapzoom = __mapzooms_x[data.i];
-			this->ymapzoom = __mapzooms_y[data.i];
+		if (data.val_int < params_mapzooms.size()) {
+			this->mapzoom_id = data.val_int;
+			this->xmapzoom = __mapzooms_x[data.val_int];
+			this->ymapzoom = __mapzooms_y[data.val_int];
 		} else {
 			fprintf(stderr, _("WARNING: Unknown Map Zoom\n"));
 		}
@@ -717,7 +717,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					rv.s = file_GetRelativeFilename(cwd, this->cache_dir);
+					rv = SGVariant(file_GetRelativeFilename(cwd, this->cache_dir));
 					set = true;
 				}
 			}
@@ -729,25 +729,25 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		break;
 	}
 	case PARAM_CACHE_LAYOUT:
-		rv.i = (int) this->cache_layout;
+		rv = SGVariant((int32_t) this->cache_layout);
 		break;
 	case PARAM_FILE:
 		rv = SGVariant(this->filename);
 		break;
 	case PARAM_MAPTYPE:
-		rv.i = map_index_to_map_type(this->map_index);
+		rv = SGVariant((int32_t) map_index_to_map_type(this->map_index));
 		break;
 	case PARAM_ALPHA:
-		rv.i = this->alpha;
+		rv = SGVariant((int32_t) this->alpha);
 		break;
 	case PARAM_AUTODOWNLOAD:
-		rv.u = this->autodownload;
+		rv = SGVariant(this->autodownload); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
 	case PARAM_ONLYMISSING:
-		rv.u = this->adl_only_missing;
+		rv = SGVariant(this->adl_only_missing); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
 	case PARAM_MAPZOOM:
-		rv.i = this->mapzoom_id;
+		rv = SGVariant((int32_t) this->mapzoom_id);
 		break;
 	default: break;
 	}

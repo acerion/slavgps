@@ -156,7 +156,7 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 	   anything at all (otherwise we'd read in a list with an empty string,
 	   not an empty string list). */
 	if (type == SGVariantType::STRING_LIST) {
-		for (auto iter = data.sl.constBegin(); iter != data.sl.constEnd(); iter++) {
+		for (auto iter = data.val_string_list.constBegin(); iter != data.val_string_list.constEnd(); iter++) {
 			fprintf(file, "%s=", param_name);
 			fprintf(file, "%s\n", (*iter).toUtf8().constData());
 		}
@@ -166,25 +166,31 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 		case SGVariantType::DOUBLE: {
 			// char buf[15]; /* Locale independent. */
 			// fprintf(file, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
-			fprintf(file, "%f\n", data.d);
+			fprintf(file, "%f\n", data.val_double);
 			break;
 		}
 		case SGVariantType::UINT:
-			fprintf(file, "%d\n", data.u);
+			fprintf(file, "%u\n", data.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
 			break;
+
 		case SGVariantType::INT:
-			fprintf(file, "%d\n", data.i);
+			fprintf(file, "%d\n", data.val_int);
 			break;
+
 		case SGVariantType::BOOLEAN:
-			fprintf(file, "%c\n", data.b ? 't' : 'f');
+			fprintf(file, "%c\n", data.val_bool ? 't' : 'f');
 			break;
+
 		case SGVariantType::STRING:
-			fprintf(file, "%s\n", data.s.isEmpty() ? "" : data.s.toUtf8().constData());
+			fprintf(file, "%s\n", data.val_string.isEmpty() ? "" : data.val_string.toUtf8().constData());
 			break;
+
 		case SGVariantType::COLOR:
-			fprintf(file, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
+			fprintf(file, "#%.2x%.2x%.2x\n", data.val_color.red(), data.val_color.green(), data.val_color.blue());
 			break;
-		default: break;
+
+		default:
+			break;
 		}
 	}
 }
@@ -603,20 +609,11 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 								new_val = SGVariant((bool) TEST_BOOLEAN(line));
 								break;
 
-							case SGVariantType::COLOR: {
-								QColor color;
-								color.setNamedColor(line);
-
-								if (!color.isValid()) {
-									new_val.c.r = new_val.c.g = new_val.c.b = 0; /* Fallback value: black. */
-									new_val.c.a = 128;
-								} else {
-									new_val.c.r = color.red();
-									new_val.c.g = color.green();
-									new_val.c.b = color.blue();
-									new_val.c.a = color.alpha();
+							case SGVariantType::COLOR:
+								new_val.val_color.setNamedColor(line);
+								if (!new_val.val_color.isValid()) {
+									new_val.val_color.setNamedColor("black"); /* Fallback value. */
 								}
-							}
 								break;
 
 							default:

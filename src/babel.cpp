@@ -145,7 +145,7 @@ void Babel::get_unbuffer_path_from_system(void)
 
 void Babel::get_gpsbabel_path_from_preferences(void)
 {
-	const QString gpsbabel_path_prefs = Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpsbabel")->s;
+	const QString gpsbabel_path_prefs = Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpsbabel")->val_string;
 	if (!gpsbabel_path_prefs.isEmpty()) {
 
 		/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */

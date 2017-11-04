@@ -164,19 +164,17 @@ static SGVariant plugins_default(void)
 	SGVariant data;
 
 #ifdef WINDOWS
-	data = SGVariant(strdup("input"));
+	data = SGVariant("input");
 #else
 	if (0 == access("/usr/lib/mapnik/input", F_OK)) {
 		/* Current Debian locations. */
-		data = SGVariant(strdup("/usr/lib/mapnik/input"));
-
+		data = SGVariant("/usr/lib/mapnik/input");
 	} else if (0 == access("/usr/lib/mapnik/3.0/input", F_OK)) {
-		data = SGVariant(strdup("/usr/lib/mapnik/3.0/input"));
-
+		data = SGVariant("/usr/lib/mapnik/3.0/input");
 	} else if (0 == access("/usr/lib/mapnik/2.2/input", F_OK)) {
-		data = SGVariant(strdup("/usr/lib/mapnik/2.2/input"));
+		data = SGVariant("/usr/lib/mapnik/2.2/input");
 	} else {
-		data = SGVariant(strdup(""));
+		data = SGVariant("");
 	}
 #endif
 	return data;
@@ -190,11 +188,11 @@ static SGVariant fonts_default(void)
 	/* Possibly should be string list to allow loading from multiple directories. */
 	SGVariant data;
 #ifdef WINDOWS
-	data = SGVariant(strdup("C:\\Windows\\Fonts"));
+	data = SGVariant("C:\\Windows\\Fonts");
 #elif defined __APPLE__
-	data = SGVariant(strdup("/Library/Fonts"));
+	data = SGVariant("/Library/Fonts");
 #else
-	data = SGVariant(strdup("/usr/share/fonts"));
+	data = SGVariant("/usr/share/fonts");
 #endif
 	return data;
 }
@@ -251,7 +249,7 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	/* Just storing keys only. */
 	requests = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after")->u;
+	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after")->val_uint;
 	GDateTime *now = g_date_time_new_now_local();
 	GDateTime *then = g_date_time_add_hours(now, -hours);
 	planet_import_time = g_date_time_to_unix(then);
@@ -287,7 +285,7 @@ void SlavGPS::layer_mapnik_init(void)
 	const SGVariant * rfd = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".recurse_fonts_directory");
 
 	if (pd && fd && rfd) {
-		mapnik_interface_initialize(pd->s.toUtf8().constData(), fd->s.toUtf8().constData(), rfd->b);
+		mapnik_interface_initialize(pd->val_string.toUtf8().constData(), fd->val_string.toUtf8().constData(), rfd->val_bool);
 	} else {
 		qDebug() << "EE: Layer Mapnik: Init: Unable to initialize mapnik interface from preferences";
 	}
@@ -337,7 +335,7 @@ Layer * LayerMapnikInterface::unmarshall(uint8_t * data, size_t data_len, Viewpo
 {
 	LayerMapnik * layer = new LayerMapnik();
 
-	layer->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
+	layer->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
 	layer->unmarshall_params(data, data_len);
@@ -352,23 +350,24 @@ bool LayerMapnik::set_param_value(uint16_t id, const SGVariant & data, bool is_f
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
-			this->set_file_css(data.s);
+			this->set_file_css(data.val_string);
 			break;
 		case PARAM_CONFIG_XML:
-			this->set_file_xml(data.s);
+			this->set_file_xml(data.val_string);
 			break;
 		case PARAM_ALPHA:
-			if (data.i >= scale_alpha.min && data.i <= scale_alpha.max) {
-				this->alpha = data.i;
+			if (data.val_int >= scale_alpha.min && data.val_int <= scale_alpha.max) {
+				this->alpha = data.val_int;
 			}
 			break;
 		case PARAM_USE_FILE_CACHE:
-			this->use_file_cache = data.b;
+			this->use_file_cache = data.val_bool;
 			break;
 		case PARAM_FILE_CACHE_DIR:
-			this->set_cache_dir(data.s);
+			this->set_cache_dir(data.val_string);
 			break;
-		default: break;
+		default:
+			break;
 	}
 	return true;
 }
@@ -387,7 +386,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					const QString cwd = QDir::currentPath();
 					if (!cwd.isEmpty()) {
-						param_value.s = file_GetRelativeFilename(cwd, this->filename_css);
+						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_css));
 						set = true;
 					}
 				}
@@ -404,7 +403,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					const QString cwd = QDir::currentPath();
 					if (!cwd.isEmpty()) {
-						param_value.s = file_GetRelativeFilename(cwd, this->filename_xml);
+						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_xml));
 						set = true;
 					}
 				}
@@ -415,15 +414,16 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 			break;
 		}
 		case PARAM_ALPHA:
-			param_value.i = this->alpha;
+			param_value = SGVariant((int32_t) this->alpha);
 			break;
 		case PARAM_USE_FILE_CACHE:
-			param_value.b = this->use_file_cache;
+			param_value = SGVariant(this->use_file_cache);
 			break;
 		case PARAM_FILE_CACHE_DIR:
 			param_value = SGVariant(this->file_cache_dir);
 			break;
-		default: break;
+		default:
+			break;
 	}
 	return param_value;
 }
@@ -443,7 +443,7 @@ bool LayerMapnik::carto_load(void)
 	GError *error = NULL;
 
 	const SGVariant * pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".carto");
-	const QString command = QString("%1 %2").arg(pref_value->s).arg(this->filename_css);
+	const QString command = QString("%1 %2").arg(pref_value->val_string).arg(this->filename_css);
 
 	bool answer = true;
 	//char *args[2]; args[0] = pref_value->s; args[1] = this->filename_css;
@@ -507,7 +507,7 @@ bool LayerMapnik::carto_load(void)
 	}
 
 	if (window_) {
-		const QString msg = tr("%1 completed in %.1f seconds").arg(pref_value->s).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
+		const QString msg = tr("%1 completed in %.1f seconds").arg(pref_value->val_string).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
 		window_->statusbar_update(StatusBarField::INFO, msg);
 		window_->clear_busy_cursor();
 	}
@@ -1196,7 +1196,7 @@ LayerMapnik::LayerMapnik()
 	this->interface = &vik_mapnik_layer_interface;
 
 	this->set_initial_parameter_values();
-	this->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
+	this->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = mapnik_interface_new();
 

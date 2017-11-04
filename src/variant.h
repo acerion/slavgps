@@ -61,31 +61,29 @@ namespace SlavGPS {
 		SGVariant(const char * str, SGVariantType type_id); /* Construct value of given type using data from given string. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
-		SGVariant()                   { type_id = SGVariantType::EMPTY; }
-		SGVariant(double d_)          { type_id = SGVariantType::DOUBLE; d = d_; }
-		SGVariant(uint32_t u_)        { type_id = SGVariantType::UINT; u = u_; }
-		SGVariant(int32_t i_)         { type_id = SGVariantType::INT; i = i_; }
-		SGVariant(const QString & s_) { type_id = SGVariantType::STRING; s = s_; }
-		SGVariant(const char * s_)    { type_id = SGVariantType::STRING; s = QString(s_); }
-		SGVariant(bool b_)            { type_id = SGVariantType::BOOLEAN; b = b_; }
-		SGVariant(int r_, int g_, int b_, int a_) { type_id = SGVariantType::COLOR; c.r = r_; c.g = g_; c.b = b_; c.a = a_; }
-		SGVariant(const QColor & color);
-		SGVariant(const QStringList & sl_) { type_id = SGVariantType::STRING_LIST; sl = sl_; }
+		SGVariant()                           { type_id = SGVariantType::EMPTY; }
+		SGVariant(double d)                   { type_id = SGVariantType::DOUBLE; val_double = d; }
+		SGVariant(uint32_t u)                 { type_id = SGVariantType::UINT; val_uint = u; }
+		SGVariant(int32_t i)                  { type_id = SGVariantType::INT; val_int = i; }
+		SGVariant(const QString & s)          { type_id = SGVariantType::STRING; val_string = s; }
+		SGVariant(const char * s)             { type_id = SGVariantType::STRING; val_string = QString(s); }
+		SGVariant(bool b)                     { type_id = SGVariantType::BOOLEAN; val_bool = b; }
+		SGVariant(int r, int g, int b, int a) { type_id = SGVariantType::COLOR; val_color = QColor(r, g, b, a); }
+		SGVariant(const QColor & color)       { type_id = SGVariantType::COLOR; val_color = color; }
+		SGVariant(const QStringList & sl)     { type_id = SGVariantType::STRING_LIST; val_string_list = sl; }
 
 		~SGVariant();
 
-		void to_qcolor(QColor & color) const;
-
 		SGVariantType type_id;
 
-		double d = 0.0;
-		uint32_t u = 0;
-		int32_t i = 0;
-		bool b = false;
-		QString s;
-		struct { int r; int g; int b; int a; } c;
-		QStringList sl;
-		void * ptr = NULL; /* For internal usage - don't save this value in a file! */
+		double val_double = 0.0;
+		uint32_t val_uint = 0;
+		int32_t val_int = 0;
+		bool val_bool = false;
+		QString val_string;
+		QColor val_color;
+		QStringList val_string_list;
+		void * val_pointer = NULL; /* For internal usage - don't save this value in a file! */
 	};
 
 

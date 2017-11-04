@@ -230,7 +230,7 @@ enum {
 static SGVariant moving_map_method_default(void)   { return SGVariant((int32_t) VEHICLE_POSITION_ON_SCREEN); }
 static SGVariant gpsd_host_default(void)           { return SGVariant("localhost"); }
 static SGVariant gpsd_port_default(void)           { return SGVariant(DEFAULT_GPSD_PORT); }
-static SGVariant gpsd_retry_interval_default(void) { return SGVariant(strdup("10")); }
+static SGVariant gpsd_retry_interval_default(void) { return SGVariant("10"); }
 
 #endif
 
@@ -427,19 +427,19 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
-		if (!data.s.isEmpty()) {
+		if (!data.val_string.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v1.4 stored protocol as an array index. */
 #ifdef K
-			int index_ = data.s[0] - '0';
-			if (data.s[0] != '\0' &&
-			    g_ascii_isdigit (data.s[0]) &&
-			    data.s[1] == '\0' &&
+			int index_ = data.val_string[0] - '0';
+			if (data.val_string[0] != '\0' &&
+			    g_ascii_isdigit (data.val_string[0]) &&
+			    data.val_string[1] == '\0' &&
 			    index_ < OLD_NUM_PROTOCOLS) {
 
 				/* It is a single digit: activate compatibility. */
 				this->protocol = protocols_args[index_].label; /* FIXME: memory leak. */
 			} else {
-				this->protocol = data.s;
+				this->protocol = data.val_string;
 			}
 #endif
 			qDebug() << "DD: Layer GPS: Protocol:" << this->protocol;
@@ -448,20 +448,20 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_PORT:
-		if (!data.s.isEmpty()) {
+		if (!data.val_string.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v0.9.91 stored serial_port as an array index. */
 #ifdef K
-			int index_ = data.s[0] - '0';
-			if (data.s[0] != '\0' &&
-			    g_ascii_isdigit(data.s[0]) &&
-			    data.s[1] == '\0' &&
+			int index_ = data.val_string[0] - '0';
+			if (data.val_string[0] != '\0' &&
+			    g_ascii_isdigit(data.val_string[0]) &&
+			    data.val_string[1] == '\0' &&
 			    index_ < old_params_ports.size()) {
 
 				/* It is a single digit: activate compatibility. */
 				this->serial_port = old_params_ports[index_].label;
 
 			} else {
-				this->serial_port = data.s;
+				this->serial_port = data.val_string;
 			}
 #endif
 			qDebug() << "DD: Layer GPS: Serial Port:" << this->serial_port;
@@ -470,48 +470,48 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		this->download_tracks = data.b;
+		this->download_tracks = data.val_bool;
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		this->upload_tracks = data.b;
+		this->upload_tracks = data.val_bool;
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		this->download_routes = data.b;
+		this->download_routes = data.val_bool;
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		this->upload_routes = data.b;
+		this->upload_routes = data.val_bool;
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		this->download_waypoints = data.b;
+		this->download_waypoints = data.val_bool;
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		this->upload_waypoints = data.b;
+		this->upload_waypoints = data.val_bool;
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
-		if (!data.s.isEmpty()) {
-			this->gpsd_host = data.s;
+		if (!data.val_string.isEmpty()) {
+			this->gpsd_host = data.val_string;
 		}
 		break;
 	case PARAM_GPSD_PORT:
-		if (!data.s.isEmpty()) {
-			this->gpsd_port = data.s;
+		if (!data.val_string.isEmpty()) {
+			this->gpsd_port = data.val_string;
 		}
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		this->gpsd_retry_interval = strtol(data.s.toUtf8().constData(), NULL, 10);
+		this->gpsd_retry_interval = strtol(data.val_string.toUtf8().constData(), NULL, 10);
 		break;
 	case PARAM_REALTIME_REC:
-		this->realtime_record = data.b;
+		this->realtime_record = data.val_bool;
 		break;
 	case PARAM_REALTIME_CENTER_START:
-		this->realtime_jump_to_start = data.b;
+		this->realtime_jump_to_start = data.val_bool;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		this->vehicle_position = data.i;
+		this->vehicle_position = data.val_int;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
-		this->realtime_update_statusbar = data.b;
+		this->realtime_update_statusbar = data.val_bool;
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
@@ -530,29 +530,27 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 	switch (id) {
 	case PARAM_PROTOCOL:
 		rv = SGVariant(this->protocol);
-		qDebug() << "DD: Layer GPS: Protocol:" << rv.s;
 		break;
 	case PARAM_PORT:
 		rv = SGVariant(this->serial_port);
-		qDebug() << "DD: Layer GPS: Serial Port:" << rv.s;
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		rv.b = this->download_tracks;
+		rv = SGVariant(this->download_tracks);
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		rv.b = this->upload_tracks;
+		rv = SGVariant(this->upload_tracks);
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		rv.b = this->download_routes;
+		rv = SGVariant(this->download_routes);
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		rv.b = this->upload_routes;
+		rv = SGVariant(this->upload_routes);
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		rv.b = this->download_waypoints;
+		rv = SGVariant(this->download_waypoints);
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		rv.b = this->upload_waypoints;
+		rv = SGVariant(this->upload_waypoints);
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
@@ -565,16 +563,16 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 		rv = SGVariant(QString("%1").arg(this->gpsd_retry_interval));
 		break;
 	case PARAM_REALTIME_REC:
-		rv.b = this->realtime_record;
+		rv = SGVariant(this->realtime_record);
 		break;
 	case PARAM_REALTIME_CENTER_START:
-		rv.b = this->realtime_jump_to_start;
+		rv = SGVariant(this->realtime_jump_to_start);
 		break;
 	case PARAM_VEHICLE_POSITION:
-		rv.i = this->vehicle_position;
+		rv = SGVariant(this->vehicle_position);
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
-		rv.u = this->realtime_update_statusbar;
+		rv = SGVariant(this->realtime_update_statusbar); /* kamilkamil: in viking code there is a mismatch of data types. */
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:

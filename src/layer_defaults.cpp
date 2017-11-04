@@ -74,7 +74,7 @@ static bool loaded;
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success)
+static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id, bool * success)
 {
 	SGVariant value;
 	QString group = Layer::get_type_id_string(layer_type);
@@ -89,44 +89,45 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 	}
 	*success = true;
 
-	switch (ptype) {
-	case SGVariantType::DOUBLE: {
+	switch (type_id) {
+	case SGVariantType::DOUBLE:
 		value = SGVariant((double) variant.toDouble());
 		break;
-	}
-	case SGVariantType::UINT: {
+
+	case SGVariantType::UINT:
 		value = SGVariant((uint32_t) variant.toULongLong());
 		break;
-	}
-	case SGVariantType::INT: {
+
+	case SGVariantType::INT:
 		value = SGVariant((int32_t) variant.toLongLong());
 		break;
-	}
-	case SGVariantType::BOOLEAN: {
+
+	case SGVariantType::BOOLEAN:
 		value = SGVariant((bool) variant.toBool());
 		break;
-	}
-	case SGVariantType::STRING: {
+
+	case SGVariantType::STRING:
 		value = SGVariant(variant.toString());
-		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
-	}
+
+	case SGVariantType::STRING_LIST:
 #ifdef K
-	case SGVariantType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value = SGVariant(str_to_glist(str)); /* TODO convert. */
-		break;
-	}
 #endif
-	case SGVariantType::COLOR: {
+		break;
+
+	case SGVariantType::COLOR:
 		value = SGVariant(variant.value<QColor>());
 		break;
-	}
+
 	default:
-		qDebug() << "EE: Layer Defaults: unhandled value type" << (int) ptype;
+		qDebug() << "EE: Layer Defaults:" << __FUNCTION__ << "unhandled value type" << (int) type_id;
 		*success = false;
 		break;
 	}
+
+	qDebug() << "II: Layer Defaults:" << __FUNCTION__ << "read value" << value;
 
 	return value;
 
@@ -157,24 +158,23 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 
 	switch (ptype) {
 	case SGVariantType::DOUBLE:
-		variant = QVariant((double) value.d);
+		variant = QVariant((double) value.val_double);
 		break;
 	case SGVariantType::UINT:
-		variant = QVariant((qulonglong) value.u);
+		variant = QVariant((qulonglong) value.val_uint);
 		break;
 	case SGVariantType::INT:
-		variant = QVariant((qlonglong) value.i);
+		variant = QVariant((qlonglong) value.val_int);
 		break;
 	case SGVariantType::BOOLEAN:
-		variant = QVariant((bool) value.b);
+		variant = QVariant((bool) value.val_bool);
 		break;
 	case SGVariantType::STRING:
-		variant = value.s;
+		variant = value.val_string;
 		break;
-	case SGVariantType::COLOR: {
-		variant = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
+	case SGVariantType::COLOR:
+		variant = value.val_color;
 		break;
-	}
 	default:
 		qDebug() << "EE: Layer Defaults: unhandled parameter type" << (int) ptype;
 		return;

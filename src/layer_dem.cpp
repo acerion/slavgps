@@ -390,39 +390,35 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 {
 	switch (id) {
 	case PARAM_COLOR:
-		this->base_color.setRed(param_value.c.r);
-		this->base_color.setGreen(param_value.c.g);
-		this->base_color.setBlue(param_value.c.b);
-		this->base_color.setAlpha(127);
-
+		this->base_color = param_value.val_color;
 		*this->colors[0] = this->base_color;
 
 		break;
 
 	case PARAM_SOURCE:
-		this->source = param_value.i;
+		this->source = param_value.val_int;
 		break;
 
 	case PARAM_TYPE:
-		this->dem_type = param_value.i;
+		this->dem_type = param_value.val_int;
 		break;
 
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
-			this->min_elev = VIK_FEET_TO_METERS(param_value.d);
+			this->min_elev = VIK_FEET_TO_METERS(param_value.val_double);
 		} else {
-			this->min_elev = param_value.d;
+			this->min_elev = param_value.val_double;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
-			this->max_elev = VIK_FEET_TO_METERS(param_value.d);
+			this->max_elev = VIK_FEET_TO_METERS(param_value.val_double);
 		} else {
-			this->max_elev = param_value.d;
+			this->max_elev = param_value.val_double;
 		}
 		break;
 	case PARAM_FILES: {
@@ -430,7 +426,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		DEMCache::unload_from_cache(this->files);
 
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
-		this->files = param_value.sl;
+		this->files = param_value.val_string_list;
 
 		qDebug() << "DD: Layer DEM: set param value: list of files:";
 		if (!this->files.empty()) {
@@ -471,48 +467,46 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 
 		/* Save in relative format if necessary. */
 		if (is_file_operation && Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-			dem_layer_convert_to_relative_filenaming(rv.sl, this->files);
+			dem_layer_convert_to_relative_filenaming(rv.val_string_list, this->files);
+			rv.type_id = SGVariantType::STRING_LIST; /* TODO: direct assignment of variant type - fix (hide) this. */
 		} else {
-			rv.sl = this->files;
+			rv = SGVariant(this->files);
 		}
-		rv.type_id = SGVariantType::STRING_LIST; /* TODO: direct assignment of variant type - fix (hide) this. */
 
 		break;
 
 	case PARAM_SOURCE:
-		rv.i = this->source;
+		rv = SGVariant((int32_t) this->source);
 		break;
 
 	case PARAM_TYPE:
-		rv.i = this->dem_type;
+		rv = SGVariant((int32_t) this->dem_type);
 		break;
 
 	case PARAM_COLOR:
-		rv.c.r = this->base_color.red();
-		rv.c.g = this->base_color.green();
-		rv.c.b = this->base_color.blue();
-		rv.c.a = this->base_color.alpha();
+		rv = SGVariant(this->base_color);
 		break;
 
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
-			rv.d = VIK_METERS_TO_FEET(this->min_elev);
+			rv = SGVariant((double) VIK_METERS_TO_FEET(this->min_elev));
 		} else {
-			rv.d = this->min_elev;
+			rv = SGVariant(this->min_elev);
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
-			rv.d = VIK_METERS_TO_FEET(this->max_elev);
+			rv = SGVariant(VIK_METERS_TO_FEET(this->max_elev));
 		} else {
-			rv.d = this->max_elev;
+			rv = SGVariant(this->max_elev);
 		}
 		break;
-	default: break;
+	default:
+		break;
 	}
 	return rv;
 }

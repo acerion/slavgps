@@ -120,7 +120,7 @@ RoutingEngine * vik_routing_find_engine(const QString & id)
  */
 RoutingEngine * SlavGPS::routing_default_engine(void)
 {
-	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING ".default")->s;
+	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING ".default")->val_string;
 	RoutingEngine * engine = vik_routing_find_engine(id);
 	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */

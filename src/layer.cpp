@@ -418,8 +418,8 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 		switch (iter->second->type) {
 		case SGVariantType::STRING:
 			/* Remember need braces as these are macro calls, not single statement functions! */
-			if (!param_value.s.isEmpty()) {
-				vlm_append(param_value.s.toUtf8().constData(), param_value.s.length());
+			if (!param_value.val_string.isEmpty()) {
+				vlm_append(param_value.val_string.toUtf8().constData(), param_value.val_string.length());
 			} else {
 				/* Need to insert empty string otherwise the unmarshall will get confused. */
 				vlm_append("", 0);
@@ -428,11 +428,11 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 			/* Print out the string list in the array. */
 		case SGVariantType::STRING_LIST: {
 			/* Write length of list (# of strings). */
-			const int listlen = param_value.sl.size();
+			const int listlen = param_value.val_string_list.size();
 			g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 			/* Write each string. */
-			for (auto l = param_value.sl.constBegin(); l != param_value.sl.constEnd(); l++) {
+			for (auto l = param_value.val_string_list.constBegin(); l != param_value.val_string_list.constEnd(); l++) {
 				QByteArray arr = (*l).toUtf8();
 				const char * s = arr.constData();
 				vlm_append(s, strlen(s));
@@ -495,7 +495,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
-				param_value.sl.push_back(s);
+				param_value.val_string_list.push_back(s);
 			}
 
 			this->set_param_value(iter->first, param_value, false);
@@ -741,8 +741,7 @@ void Layer::add_menu_items(QMenu & menu)
 
 SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	SGVariant param_value; /* Type ID will be ::EMPTY. */
-	return param_value;
+	 return SGVariant(); /* Type ID will be ::EMPTY. */
 }
 
 

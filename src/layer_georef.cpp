@@ -63,7 +63,7 @@ extern Tree * g_tree;
 /*
 static SGVariant image_default(void)
 {
-	return SGVariant(strdup(""));
+	return SGVariant("");
 }
 */
 
@@ -164,7 +164,7 @@ typedef struct {
 
 void SlavGPS::vik_georef_layer_init(void)
 {
-	Preferences::register_parameter(&io_prefs[0], SGVariant((bool) true));
+	Preferences::register_parameter(&io_prefs[0], SGVariant(true));
 }
 
 
@@ -194,37 +194,37 @@ Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewpo
 
 
 
-bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
+bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:
-		this->set_image(data.s);
+		this->set_image(param_value.val_string);
 		break;
 	case PARAM_CN:
-		this->corner.northing = data.d;
+		this->corner.northing = param_value.val_double;
 		break;
 	case PARAM_CE:
-		this->corner.easting = data.d;
+		this->corner.easting = param_value.val_double;
 		break;
 	case PARAM_MN:
-		this->mpp_northing = data.d;
+		this->mpp_northing = param_value.val_double;
 		break;
 	case PARAM_ME:
-		this->mpp_easting = data.d;
+		this->mpp_easting = param_value.val_double;
 		break;
 	case PARAM_CZ:
-		if (data.u <= 60) {
-			this->corner.zone = data.u;
+		if (param_value.val_uint <= 60) {
+			this->corner.zone = param_value.val_uint;
 		}
 		break;
 	case PARAM_CL:
-		if (data.u >= 65 || data.u <= 90) {
-			this->corner.letter = data.u;
+		if (param_value.val_uint >= 65 || param_value.val_uint <= 90) {
+			this->corner.letter = param_value.val_uint;
 		}
 		break;
 	case PARAM_AA:
-		if (data.u <= 255) {
-			this->alpha = data.u;
+		if (param_value.val_uint <= 255) {
+			this->alpha = param_value.val_uint;
 		}
 		break;
 	default:
@@ -264,7 +264,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					rv.s = file_GetRelativeFilename(cwd, this->image);
+					rv = SGVariant(file_GetRelativeFilename(cwd, this->image));
 					set = true;
 				}
 			}
@@ -275,25 +275,25 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 		break;
 	}
 	case PARAM_CN:
-		rv.d = this->corner.northing;
+		rv = SGVariant(this->corner.northing);
 		break;
 	case PARAM_CE:
-		rv.d = this->corner.easting;
+		rv = SGVariant(this->corner.easting);
 		break;
 	case PARAM_MN:
-		rv.d = this->mpp_northing;
+		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_ME:
-		rv.d = this->mpp_easting;
+		rv = SGVariant(this->mpp_easting);
 		break;
 	case PARAM_CZ:
-		rv.u = this->corner.zone;
+		rv = SGVariant((uint32_t) this->corner.zone); /* FIXME: why do we need to do cast here? */
 		break;
 	case PARAM_CL:
-		rv.u = this->corner.letter;
+		rv = SGVariant((uint32_t) this->corner.letter); /* FIXME: why do we need to do cast here? */
 		break;
 	case PARAM_AA:
-		rv.u = this->alpha;
+		rv = SGVariant((uint32_t) this->alpha); /* FIXME: why do we need to do cast here? */
 		break;
 	default:
 		break;
@@ -624,7 +624,7 @@ static void georef_layer_export_params(georef_data_t * data)
  */
 static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 {
-	if (Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file")->b) {
+	if (Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file")->val_bool) {
 		const QString filename = file_entry->get_filename();
 #if 0
 		double values[4];

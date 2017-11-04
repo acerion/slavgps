@@ -401,8 +401,8 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
-	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username")->s;
-	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password")->s;
+	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username")->val_string;
+	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password")->val_string;
 
 
 	if (osm_user != NULL && osm_user[0] != '\0') {

@@ -66,10 +66,10 @@ static ProcessOptions * datasource_bfilter_simplify_get_process_options(SGVarian
 
 	po->babel_args = "-i gpx";
 	po->input_file_name = QString(input_filename);
-	po->babel_filters = QString("-x simplify,count=%1").arg(paramdatas[0].i);
+	po->babel_filters = QString("-x simplify,count=%1").arg(paramdatas[0].val_int);
 
 	/* Store for subsequent default use. */
-	bfilter_simplify_params_defaults[0].i = paramdatas[0].i;
+	bfilter_simplify_params_defaults[0] = SGVariant(paramdatas[0].val_int); /* TODO: can't we do just " = paramdatas[0]"? */
 
 	return po;
 }
@@ -86,12 +86,12 @@ static bool bfilter_simplify_default_set = false;
 static void * datasource_bfilter_simplify_init(acq_vik_t *not_used)
 {
 	if (!bfilter_simplify_default_set) {
-		int tmp;
+		int32_t tmp;
 		if (!ApplicationState::get_integer(VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
 			tmp = 100;
 		}
 
-		bfilter_simplify_params_defaults[0].i = tmp;
+		bfilter_simplify_params_defaults[0] = SGVariant(tmp);
 		bfilter_simplify_default_set = true;
 	}
 
@@ -133,7 +133,7 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 
 
 
-static ParameterScale scale_compress = { 0.0, 1.000, SGVariant((double) 0.001), 0.001, 3 }; /* TODO: verify the hardwired default value. */
+static ParameterScale scale_compress = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardwired default value. */
 
 ParameterSpecification bfilter_compress_params[] = {
 	// { 1, NULL, "compressmethod", SGVariantType::INT,   PARAMETER_GROUP_GENERIC, QObject::tr("Simplify Method:"), WidgetType::COMBOBOX,   compress_method,      NULL, NULL, NULL },
@@ -141,7 +141,7 @@ ParameterSpecification bfilter_compress_params[] = {
 };
 
 SGVariant bfilter_compress_params_defaults[] = {
-	SGVariant((double) 0.001),
+	SGVariant(0.001),
 };
 
 
@@ -163,10 +163,10 @@ static ProcessOptions * datasource_bfilter_compress_get_process_options(SGVarian
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
 	po->babel_args = "-i gpx";
 	po->input_file_name = QString(input_filename);
-	po->babel_filters = QString(g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", paramdatas[0].d, units));
+	po->babel_filters = QString(g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", paramdatas[0].val_double, units)); /* FIXME: memory leak. */
 
 	/* Store for subsequent default use. */
-	bfilter_compress_params_defaults[0].d = paramdatas[0].d;
+	bfilter_compress_params_defaults[0] = SGVariant(paramdatas[0].val_double); /* TODO: can't we do just " = paramdatas[0]"? */
 
 	return po;
 }
@@ -184,11 +184,11 @@ static void * datasource_bfilter_compress_init(acq_vik_t *not_used)
 {
 	if (!bfilter_compress_default_set) {
 		double tmp;
-		if (!ApplicationState::get_double (VIK_SETTINGS_BFILTER_COMPRESS, &tmp)) {
+		if (!ApplicationState::get_double(VIK_SETTINGS_BFILTER_COMPRESS, &tmp)) {
 			tmp = 0.001;
 		}
 
-		bfilter_compress_params_defaults[0].d = tmp;
+		bfilter_compress_params_defaults[0] = SGVariant(tmp);
 		bfilter_compress_default_set = true;
 	}
 
@@ -291,7 +291,7 @@ static ProcessOptions * datasource_bfilter_manual_get_process_options(SGVariant 
 
 	po->babel_args = "-i gpx";
 	po->input_file_name = QString(input_filename);
-	po->babel_filters = QString("-x %1").arg(paramdatas[0].s);
+	po->babel_filters = QString("-x %1").arg(paramdatas[0].val_string);
 
 	return po;
 }
