@@ -2524,6 +2524,39 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 
 
 
+void LayerTRW::add_waypoint_to_data_structure(Waypoint * wp, const QString & wp_name)
+{
+	/* No more uniqueness of name forced when loading from a file.
+	   This now makes this function a little redunant as we just flow the parameters through. */
+	wp->set_name(wp_name);
+
+	wp->owning_layer = this;
+
+	this->waypoints->items.insert({{ wp->uid, wp }});
+
+	this->highest_wp_number_add_wp(wp->name);
+}
+
+
+
+
+void LayerTRW::add_track_to_data_structure(Track * trk)
+{
+	trk->owning_layer = this;
+	this->tracks->items.insert({{ trk->uid, trk }});
+}
+
+
+
+void LayerTRW::add_route_to_data_structure(Track * trk)
+{
+	trk->owning_layer = this;
+	this->routes->items.insert({{ trk->uid, trk }});
+}
+
+
+
+
 void LayerTRW::add_track_from_file(Track * incoming_track, const QString & incoming_track_name)
 {
 	Track * curr_track = this->get_edited_track();
@@ -2550,6 +2583,44 @@ void LayerTRW::add_track_from_file(Track * incoming_track, const QString & incom
 			this->add_route(incoming_track);
 		} else {
 			this->add_track(incoming_track);
+		}
+
+		if (this->route_finder_check_added_track) {
+			incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
+			this->route_finder_added_track = incoming_track;
+		}
+	}
+}
+
+
+
+
+void LayerTRW::add_track_from_file2(Track * incoming_track, const QString & incoming_track_name)
+{
+	Track * curr_track = this->get_edited_track();
+
+	if (this->route_finder_append && curr_track) {
+		incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
+
+		/* Enforce end of current track equal to start of tr. */
+		Trackpoint * cur_end = curr_track->get_tp_last();
+		Trackpoint * new_start = incoming_track->get_tp_first();
+		if (cur_end && new_start) {
+			if (cur_end->coord != new_start->coord) {
+				curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
+			}
+		}
+
+		curr_track->steal_and_append_trackpoints(incoming_track);
+		incoming_track->free();
+		this->route_finder_append = false; /* This means we have added it. */
+	} else {
+		incoming_track->set_name(incoming_track_name);
+		/* No more uniqueness of name forced when loading from a file. */
+		if (incoming_track->type_id == "sg.trw.route") {
+			this->add_route_to_data_structure(incoming_track);
+		} else {
+			this->add_track_to_data_structure(incoming_track);
 		}
 
 		if (this->route_finder_check_added_track) {

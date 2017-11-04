@@ -430,6 +430,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 						if (((Layer *) stack->under->data)->type == LayerType::AGGREGATE) {
 							Layer * layer = (Layer *) stack->data;
 							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
+							layer->add_children_to_tree();
 							layer->post_read(viewport, true);
 						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here? */
@@ -602,11 +603,20 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 								new_val = SGVariant((bool) TEST_BOOLEAN(line));
 								break;
 
-							case SGVariantType::COLOR:
-#ifdef K
-								memset(new_val.c, 0, sizeof (new_val.c)); /* default: black */
-								gdk_color_parse(line, &new_val.c);
-#endif
+							case SGVariantType::COLOR: {
+								QColor color;
+								color.setNamedColor(line);
+
+								if (!color.isValid()) {
+									new_val.c.r = new_val.c.g = new_val.c.b = 0; /* Fallback value: black. */
+									new_val.c.a = 128;
+								} else {
+									new_val.c.r = color.red();
+									new_val.c.g = color.green();
+									new_val.c.b = color.blue();
+									new_val.c.a = color.alpha();
+								}
+							}
 								break;
 
 							default:

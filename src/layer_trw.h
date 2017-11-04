@@ -262,7 +262,11 @@ namespace SlavGPS {
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
 		void add_waypoint_from_file(Waypoint * wp, const QString & wp_name);
+		void add_waypoint_to_data_structure(Waypoint * wp, const QString & wp_name);
+		void add_track_to_data_structure(Track * trk);
+		void add_route_to_data_structure(Track * trk);
 		void add_track_from_file(Track * trk, const QString & trk_name);
+		void add_track_from_file2(Track * trk, const QString & trk_name);
 
 
 

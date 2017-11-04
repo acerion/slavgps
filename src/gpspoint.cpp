@@ -397,7 +397,7 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 
 	wp->coord = Coord(this->line_latlon, coordinate_mode);
 
-	trw->add_waypoint_from_file(wp, this->line_name);
+	trw->add_waypoint_to_data_structure(wp, this->line_name);
 	free(this->line_name);
 	this->line_name = NULL;
 
@@ -468,11 +468,8 @@ Track * GPSPointParser::add_track(LayerTRW * trw)
 	}
 
 	if (this->line_color) {
-#ifdef K
-		if (gdk_color_parse(this->line_color, trk->color)) {
-			trk->has_color = true;
-		}
-#endif
+		trk->color.setNamedColor(this->line_color);
+		trk->has_color = trk->color.isValid();
 	}
 
 
@@ -480,7 +477,7 @@ Track * GPSPointParser::add_track(LayerTRW * trw)
 	trk->max_number_dist_labels = this->line_dist_label;
 
 	/* trk->trackpoints = NULL; */ /* kamilTODO: why it was here? */
-	trw->add_track_from_file(trk, this->line_name);
+	trw->add_track_from_file2(trk, this->line_name);
 	free(this->line_name);
 	this->line_name = NULL;
 
