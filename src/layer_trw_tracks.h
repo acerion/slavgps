@@ -148,10 +148,10 @@ namespace SlavGPS {
 
 
 
-		void list_trk_uids(GList ** l);
+		void list_trk_uids(std::list<sg_uid_t> & list);
 
-		std::list<sg_uid_t> * find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
-		GList * find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold);
+		std::list<sg_uid_t> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
+		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold);
 		std::list<QString> get_sorted_track_name_list();
 		std::list<QString> get_sorted_track_name_list_exclude_self(Track const * self);
 

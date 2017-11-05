@@ -150,7 +150,7 @@ namespace SlavGPS {
 		void apply_dem_data_common(bool skip_existing_elevations);
 
 
-		void list_wp_uids(GList ** l);
+		void list_wp_uids(std::list<sg_uid_t> & list);
 		std::list<QString> get_sorted_wp_name_list();
 		QString has_duplicate_waypoint_names();
 		void set_items_visibility(bool on_off);

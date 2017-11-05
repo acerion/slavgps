@@ -752,9 +752,6 @@ void LayerTRW::wp_image_cache_flush()
 	for (auto iter = this->wp_image_cache.begin(); iter != this->wp_image_cache.end(); iter++) {
 		delete *iter;
 	}
-#ifdef K
-	g_list_foreach(this->wp_image_cache->head, (GFunc) cached_pixmap_free, NULL);
-#endif
 }
 
 
@@ -2710,38 +2707,34 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *
 
 	TreeItem * sublayer = trw_src->tree_view->get_tree_item(src_item_index);
 
-#if 0
+
 	if (sublayer->name.isEmpty()) {
-		GList *items = NULL;
+		std::list<sg_uid_t> items;
 
 		if (sublayer->type_id == "sg.trw.tracks") {
-			trw_src->tracks.list_trk_uids(&items);
+			trw_src->tracks->list_trk_uids(items);
 		}
 		if (sublayer->type_id == "sg.trw.waypoints") {
-			trw_src->waypoints.list_wp_uids(&items);
+			trw_src->waypoints->list_wp_uids(items);
 		}
 		if (sublayer->type_id == "sg.trw.routes") {
-			trw_src->routes.list_trk_uids(&items);
+			trw_src->routes->list_trk_uids(items);
 		}
 
-		GList * iter = items;
-		while (iter) {
+		for (auto iter = items.begin(); iter != items.end(); iter++) {
 			if (sublayer->type_id == "sg.trw.tracks") {
-				trw_src->move_item(trw_dest, iter->data, "sg.trw.track");
+				trw_src->move_item(trw_dest, *iter, "sg.trw.track");
 			} else if (sublayer->type_id == "sg.trw.routes") {
-				trw_src->move_item(trw_dest, iter->data, "sg.trw.route");
+				trw_src->move_item(trw_dest, *iter, "sg.trw.route");
 			} else {
-				trw_src->move_item(trw_dest, iter->data, "sg.trw.waypoint");
+				trw_src->move_item(trw_dest, *iter, "sg.trw.waypoint");
 			}
-			iter = iter->next;
-		}
-		if (items) {
-			g_list_free(items);
 		}
 	} else {
+#ifdef K
 		trw_src->move_item(trw_dest, sublayer->name, sublayer->type_id);
-	}
 #endif
+	}
 }
 
 
@@ -3167,23 +3160,22 @@ void LayerTRW::merge_with_other_cb(void)
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
 	bool with_timestamps = track->get_tp_first()->has_timestamp;
-	std::list<sg_uid_t> * other_tracks = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, track);
+	std::list<sg_uid_t> other_tracks = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, track);
 
-	if (other_tracks->empty()) {
+	if (other_tracks.empty()) {
 		if (with_timestamps) {
 			Dialog::error(tr("Failed. No other tracks with timestamps in this layer found"), this->get_window());
 		} else {
 			Dialog::error(tr("Failed. No other tracks without timestamps in this layer found"), this->get_window());
 		}
-		delete other_tracks;
 		return;
 	}
-	other_tracks->reverse();
+	other_tracks.reverse();
 
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 	std::list<QString> other_tracks_names;
-	for (auto iter = other_tracks->begin(); iter != other_tracks->end(); iter++) {
+	for (auto iter = other_tracks.begin(); iter != other_tracks.end(); iter++) {
 		other_tracks_names.push_back(ght_tracks->items.at(*iter)->name);
 	}
 
@@ -3196,7 +3188,6 @@ void LayerTRW::merge_with_other_cb(void)
 								  tr("Merge with..."),
 								  headers,
 								  this->get_window());
-	delete other_tracks;
 
 	if (merge_list.empty()) {
 		qDebug() << "II: Layer TRW: merge track is empty";
@@ -3411,17 +3402,12 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-#ifdef K
-
-	std::list<sg_uid_t> * tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_track);
-	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
-
-	if (!tracks_with_timestamp) {
+	std::list<sg_uid_t> tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_track);
+	if (tracks_with_timestamp.empty()) {
 		Dialog::error(tr("Failed. No other track in this layer has timestamp"), this->get_window());
 		return;
 	}
-	g_list_free(tracks_with_timestamp);
-#endif
+
 	static uint32_t threshold_in_minutes = 1;
 	if (!a_dialog_time_threshold(tr("Merge Threshold..."),
 				     tr("Merge when time between tracks less than:"),
@@ -3429,10 +3415,9 @@ void LayerTRW::merge_by_timestamp_cb(void)
 				     this->get_window())) {
 		return;
 	}
-#ifdef K
+
 	/* Keep attempting to merge all tracks until no merges within the time specified is possible. */
 	bool attempt_merge = true;
-	GList *nearby_tracks = NULL;
 
 	while (attempt_merge) {
 
@@ -3444,20 +3429,15 @@ void LayerTRW::merge_by_timestamp_cb(void)
 			return;
 		}
 
-		if (nearby_tracks) {
-			g_list_free(nearby_tracks);
-			nearby_tracks = NULL;
-		}
-
 		/* Get a list of adjacent-in-time tracks. */
-		nearby_tracks = this->tracks->find_nearby_tracks_by_time(orig_track, (threshold_in_minutes * 60));
+		std::list<Track *> nearby_tracks = this->tracks->find_nearby_tracks_by_time(orig_track, (threshold_in_minutes * 60));
 
 		/* Merge them. */
 
-		for (GList *l = nearby_tracks; l; l = g_list_next(l)) {
-			/* remove trackpoints from merged track, delete track */
-			orig_track->steal_and_append_trackpoints(((Track *) l->data));
-			this->delete_track(((Track *) l->data));
+		for (auto iter = nearby_tracks.begin(); iter != nearby_tracks.end(); iter++) {
+			/* Remove trackpoints from merged track, delete track. */
+			orig_track->steal_and_append_trackpoints(*iter);
+			this->delete_track(*iter);
 
 			/* Tracks have changed, therefore retry again against all the remaining tracks. */
 			attempt_merge = true;
@@ -3466,10 +3446,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		orig_track->sort(Trackpoint::compare_timestamps);
 	}
 
-	g_list_free(nearby_tracks);
-
 	this->emit_layer_changed();
-#endif
 }
 
 

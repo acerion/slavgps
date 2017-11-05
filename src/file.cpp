@@ -313,13 +313,15 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 
 static void string_list_delete(void * key, void * l, void * user_data)
 {
+#ifdef K
 	/* 20071021 bugfix */
-	GList * iter = (GList *) l;
-	while (iter) {
-		free(iter->data);
-		iter = iter->next;
+	if (list) {
+		for (auto iter = list->begin(); iter != list->end(); iter++) {
+			free(*iter);
+		}
+		delete list;
 	}
-	g_list_free ((GList *) l);
+#endif
 }
 
 

@@ -141,7 +141,7 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 	GtkTreeIter iter;
 	GtkCellRenderer * renderer;
 	GtkWidget *view;
-	Geoname * geoname;
+
 	char * latlon_string;
 	int column_runner;
 
@@ -164,13 +164,11 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 	QLabel * label = new QLabel(msg);
 	GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-	GList *geoname_runner = geonames;
-	while (geoname_runner) {
-		geoname = (Geoname *) geoname_runner->data;
+	for (auto iter = geonames.begin(); iter != geonames.end(); iter++) {
+		Geoname * geoname = *iter;
 		latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
 		gtk_tree_store_set(store, &iter, 0, geoname->name, 1, geoname->feature, 2, latlon_string, -1);
-		geoname_runner = g_list_next(geoname_runner);
 		free(latlon_string);
 	}
 
@@ -227,15 +225,15 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 					   compare the name from the displayed view to every geoname entry to find the geoname this selection represents. */
 					char* name;
 					gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &name, -1);
+
 					/* I believe the name of these items to be always unique. */
-					geoname_runner = geonames;
-					while (geoname_runner) {
-						if (!strcmp(((Geoname *) geoname_runner->data)->name, name)) {
-							Geoname * copied = copy_geoname((Geoname *) geoname_runner->data);
+
+					for (auto iter = geonames.begin(); iter != geonames.end(); iter++) {
+						if (!strcmp((*iter)->name, name)) {
+							Geoname * copied = copy_geoname(*iter);
 							selected_geonames.push_front(copied);
 							break;
 						}
-						geoname_runner = g_list_next(geoname_runner);
 					}
 					free(name);
 				}

@@ -29,6 +29,9 @@
 
 #include <expat.h>
 
+#include "layer_trw.h"
+#include "layer_aggregate.h"
+#include "layers_panel.h"
 #include "viewport_internal.h"
 #include "gpx.h"
 #include "acquire.h"
@@ -218,7 +221,7 @@ static gpx_meta_data_t *new_gpx_meta_data_t()
 
 
 
-static void free_gpx_meta_data(gpx_meta_data_t *data, void * userdata)
+static void free_gpx_meta_data(gpx_meta_data_t *data)
 {
 	free(data->name);
 	free(data->vis);
@@ -229,10 +232,11 @@ static void free_gpx_meta_data(gpx_meta_data_t *data, void * userdata)
 
 
 
-static void free_gpx_meta_data_list(GList *list)
+static void free_gpx_meta_data_list(std::list<gpx_meta_data_t *> & list)
 {
-	g_list_foreach(list, (GFunc)free_gpx_meta_data, NULL);
-	g_list_free(list);
+	for (auto iter = list.begin(); iter != list.end(); iter++) {
+		free_gpx_meta_data(*iter);
+	}
 }
 
 
@@ -262,7 +266,7 @@ typedef struct {
 	GString *c_cdata;
 	xtag_type current_tag;
 	gpx_meta_data_t *current_gpx_meta_data;
-	GList *list_of_gpx_meta_data;
+	std::list<gpx_meta_data_t *> list_of_gpx_meta_data;
 } xml_data;
 
 
@@ -322,7 +326,7 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 	switch (xd->current_tag) {
 	case tt_gpx_file:
 		if (xd->current_gpx_meta_data) {
-			free_gpx_meta_data(xd->current_gpx_meta_data, NULL);
+			free_gpx_meta_data(xd->current_gpx_meta_data);
 		}
 		xd->current_gpx_meta_data = new_gpx_meta_data_t();
 
@@ -377,7 +381,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 		   Copy it so we can reference it. */
 		gpx_meta_data_t *current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
 		/* Stick in the list. */
-		xd->list_of_gpx_meta_data = g_list_prepend(xd->list_of_gpx_meta_data, current);
+		xd->list_of_gpx_meta_data.push_front(current);
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	}
@@ -450,7 +454,7 @@ static bool read_gpx_files_metadata_xml(char *tmpname, xml_data *xd)
 
 
 
-static GList * select_from_list(Window * parent, GList *list, const char *title, const char *msg)
+static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::list<gpx_meta_data_t *> & list, const char *title, const char *msg)
 {
 #ifdef K
 	GtkTreeIter iter;
@@ -475,9 +479,8 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 #endif
 	QLabel * label = new QLabel(msg);
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
-	GList *list_runner = list;
-	while (list_runner) {
-		gpx_meta_data_t *gpx_meta_data = (gpx_meta_data_t *)list_runner->data;
+	for (auto iter = list.begin(); iter != list.end(); iter++) {
+		gpx_meta_data_t * gpx_meta_data = *iter;
 		/* To keep display compact three digits of precision for lat/lon should be plenty. */
 		latlon_string = g_strdup_printf("(%.3f,%.3f)", gpx_meta_data->ll.lat, gpx_meta_data->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
@@ -489,7 +492,6 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 				   4, gpx_meta_data->vis,
 				   5, gpx_meta_data->in_current_view,
 				   -1);
-		list_runner = g_list_next(list_runner);
 		free(latlon_string);
 	}
 
@@ -552,7 +554,7 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 
 		/* Possibily not the fastest method but we don't have thousands of entries to process... */
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-		GList *selected = NULL;
+		std::list<gpx_meta_data_t *> * selected = new std::list<gpx_meta_data_t *>;
 
 		/* Because we don't store the full data in the gtk model, we have to scan & look it up. */
 		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
@@ -563,14 +565,12 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 					char* name;
 					gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &name, -1);
 					/* I believe the name of these items to be always unique. */
-					list_runner = list;
-					while (list_runner) {
-						if (!strcmp (((gpx_meta_data_t*)list_runner->data)->name, name)) {
-							gpx_meta_data_t *copied = copy_gpx_meta_data_t ((gpx_meta_data_t *) list_runner->data);
-							selected = g_list_prepend(selected, copied);
+					for (auto iter = list.begin(); iter != list.end(); iter++) {
+						if (!strcmp ((*iter)->name, name)) {
+							gpx_meta_data_t *copied = copy_gpx_meta_data_t(*iter);
+							selected->push_front(copied);
 							break;
 						}
-						list_runner = g_list_next(list_runner);
 					}
 					free(name);
 				}
@@ -578,7 +578,7 @@ static GList * select_from_list(Window * parent, GList *list, const char *title,
 			while (gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter));
 		}
 
-		if (selected) {
+		if (selected.size()) {
 			gtk_widget_destroy(dialog);
 			return selected;
 		}
@@ -615,15 +615,14 @@ static void none_found(Window * gw)
 /**
  * For each track - mark whether the start is in within the viewport.
  */
-static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList *gl)
+static void set_in_current_view_property(datasource_osm_my_traces_t *data, std::list<gpx_meta_data_t *> & list)
 {
 	LatLonBBox bbox;
 	/* get Viewport bounding box */
 	data->viewport->get_bbox(&bbox);
 
-	GList *iterator = gl;
-	while (iterator) {
-		gpx_meta_data_t* gmd = (gpx_meta_data_t*)iterator->data;
+	for (auto iter = list.begin(); iter != list.end(); iter++) {
+		gpx_meta_data_t* gmd = *iter;
 		/* Convert point position into a 'fake' bounding box.
 		   TODO - probably should have function to see if point is within bounding box
 		   rather than constructing this fake bounding box for the test. */
@@ -636,8 +635,6 @@ static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList
 		if (BBOX_INTERSECT (bbox, gmd_bbox)) {
 			gmd->in_current_view = true;
 		}
-
-		iterator = g_list_next(iterator);
 	}
 }
 
@@ -667,7 +664,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	xd->c_cdata = g_string_new ("");
 	xd->current_tag = tt_unknown;
 	xd->current_gpx_meta_data = new_gpx_meta_data_t();
-	xd->list_of_gpx_meta_data = NULL;
+	xd->list_of_gpx_meta_data.clear();
 
 	bool read_result = read_gpx_files_metadata_xml(tmpname, xd);
 	/* Test already downloaded metadata file: eg: */
@@ -683,7 +680,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		return false;
 	}
 
-	if (g_list_length (xd->list_of_gpx_meta_data) == 0) {
+	if (xd->list_of_gpx_meta_data.size() == 0) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread) {
 			none_found(acquiring->window);
 		}
@@ -691,17 +688,21 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		return false;
 	}
 
-	xd->list_of_gpx_meta_data = g_list_reverse(xd->list_of_gpx_meta_data);
+	xd->list_of_gpx_meta_data.reverse();
 
 	set_in_current_view_property((datasource_osm_my_traces_t *) acquiring->user_data, xd->list_of_gpx_meta_data);
-#ifdef K
+
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
+#ifdef K
 		gdk_threads_enter();
+#endif
 	}
 
-	GList *selected = select_from_list(acquiring->window->get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<gpx_meta_data_t *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
+#ifdef K
 		gdk_threads_leave();
+#endif
 	}
 
 	/* If non thread - show program is 'doing something...' */
@@ -720,68 +721,70 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	LayerTRW * vtl_last = trw;
 	bool got_something = false;
 
-	GList *selected_iterator = selected;
-	while (selected_iterator) {
+	if (selected) {
+		for (auto iter = selected->begin(); iter != selected->end(); iter++) {
 
-		LayerTRW * target_layer = NULL;
+			LayerTRW * target_layer = NULL;
 
-		if (create_new_layer) {
-			/* Have data but no layer - so create one. */
-			target_layer = new LayerTRW();
-			target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
-			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
-				target_layer->set_name(((gpx_meta_data_t *) selected_iterator->data)->name);
-			} else {
-				target_layer->set_name(QObject::tr("My OSM Traces"));
-			}
-		} else {
-			target_layer = trw;
-		}
-
-		bool convert_result = false;
-		int gpx_id = ((gpx_meta_data_t *) selected_iterator->data)->id;
-		if (gpx_id) {
-			char *url = g_strdup_printf(DS_OSM_TRACES_GPX_URL_FMT, gpx_id);
-
-			/* NB download type is GPX (or a compressed version). */
-			ProcessOptions my_po = *process_options;
-			my_po.url = url;
-			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &dl_options);
-			/* TODO investigate using a progress bar:
-			   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
-
-			got_something = got_something || convert_result;
-			if (!convert_result) {
-				/* Report errors to the status bar. */
-				acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
-			}
-			free(url);
-		}
-
-		if (convert_result) {
-			/* Can use the layer. */
-			acquiring->panel->get_top_layer()->add_layer(target_layer, true);
-			/* Move to area of the track. */
-			target_layer->post_read(acquiring->window->get_viewport(), true);
-			target_layer->auto_set_view(acquiring->window->get_viewport());
-			vtl_last = target_layer;
-		} else {
 			if (create_new_layer) {
-				/* Layer not needed as no data has been acquired. */
-				target_layer->unref();
+				/* Have data but no layer - so create one. */
+				target_layer = new LayerTRW();
+				target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
+				if ((*iter)->name) {
+					target_layer->set_name((*iter)->name);
+				} else {
+					target_layer->set_name(QObject::tr("My OSM Traces"));
+				}
+			} else {
+				target_layer = trw;
+			}
+
+			bool convert_result = false;
+			int gpx_id = (*iter)->id;
+			if (gpx_id) {
+				char *url = g_strdup_printf(DS_OSM_TRACES_GPX_URL_FMT, gpx_id);
+
+				/* NB download type is GPX (or a compressed version). */
+				ProcessOptions my_po = *process_options;
+				my_po.url = url;
+				convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &dl_options);
+				/* TODO investigate using a progress bar:
+				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
+
+				got_something = got_something || convert_result;
+				if (!convert_result) {
+					/* Report errors to the status bar. */
+					acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
+				}
+				free(url);
+			}
+
+			if (convert_result) {
+				/* Can use the layer. */
+				acquiring->panel->get_top_layer()->add_layer(target_layer, true);
+				/* Move to area of the track. */
+				target_layer->post_read(acquiring->window->get_viewport(), true);
+				target_layer->auto_set_view(acquiring->window->get_viewport());
+				vtl_last = target_layer;
+			} else {
+				if (create_new_layer) {
+					/* Layer not needed as no data has been acquired. */
+					target_layer->unref();
+				}
 			}
 		}
-
-		selected_iterator = g_list_next(selected_iterator);
 	}
 
 	/* Free memory. */
 	if (xd->current_gpx_meta_data) {
-		free_gpx_meta_data(xd->current_gpx_meta_data, NULL);
+		free_gpx_meta_data(xd->current_gpx_meta_data);
 	}
 	free(xd->current_gpx_meta_data);
 	free_gpx_meta_data_list(xd->list_of_gpx_meta_data);
-	free_gpx_meta_data_list(selected);
+	if (selected) {
+		free_gpx_meta_data_list(*selected);
+		delete selected;
+	}
 	free(xd);
 	free(user_pass);
 
@@ -803,7 +806,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	if (!vik_datasource_osm_my_traces_interface.is_thread) {
 		acquiring->window->clear_busy_cursor();
 	}
-#endif
+
 	return result;
 }
 

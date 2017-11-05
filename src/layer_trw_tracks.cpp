@@ -182,19 +182,19 @@ void LayerTRWTracks::find_maxmin(struct LatLon maxmin[2])
 
 
 
-void LayerTRWTracks::list_trk_uids(GList ** l)
+void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		*l = g_list_append(*l, (void *) ((long) i->first)); /* kamilTODO: i->first or i->second? */
+		list.push_back(i->first);
 	}
 }
 
 
 
 
-std::list<sg_uid_t> * LayerTRWTracks::find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude)
+std::list<sg_uid_t> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude)
 {
-	std::list<sg_uid_t> * result = new std::list<sg_uid_t>;
+	std::list<sg_uid_t> result;
 
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Trackpoint * p1, * p2;
@@ -219,10 +219,10 @@ std::list<sg_uid_t> * LayerTRWTracks::find_tracks_with_timestamp_type(bool with_
 			}
 		}
 
-		result->push_front(i->first);
+		result.push_front(i->first);
 	}
 
-	return result;
+	return result; /* I hope that Return Value Optimization works. */
 }
 
 
@@ -233,12 +233,12 @@ std::list<sg_uid_t> * LayerTRWTracks::find_tracks_with_timestamp_type(bool with_
  * If the original track orig_trk is close enough (threshold)
  * to given track, then the given track is added to returned list.
  */
-GList * LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold)
+std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold)
 {
-	GList * nearby_tracks = NULL;
+	std::list<Track *> result;
 
 	if (!orig_trk || orig_trk->empty()) {
-		return NULL;
+		return result;
 	}
 
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
@@ -277,10 +277,10 @@ GList * LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned in
 			}
 		}
 
-		nearby_tracks = g_list_prepend(nearby_tracks, i->second);
+		result.push_front(i->second);
 	}
 
-	return nearby_tracks;
+	return result; /* I hope that Return Value Optimization works. */
 }
 
 

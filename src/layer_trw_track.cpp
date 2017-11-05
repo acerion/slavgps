@@ -3500,7 +3500,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, doubl
 
 
 
-static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon *dist)
+static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, struct LatLon *dist)
 {
 	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
@@ -3510,10 +3510,10 @@ static GList * add_fillins(GList *list, Coord * from, Coord * to, struct LatLon 
 		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
 			break;
 		}
-		list = g_list_prepend(list, next);
+		list.push_front(next);
 	}
 
-	return list;
+	return;
 }
 
 
@@ -3547,13 +3547,11 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 	}
 
 	std::list<Rect *> * rects_to_download = this->get_rectangles(&wh);
-
-#ifdef K
-	GList * fillins = NULL;
+	std::list<Coord *> fillins;
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
 	/* Seems that ATM the function get_next_coord works only for LATLON. */
-	if (this->owning_layer->get_coord_mode() == CoordMode::LATLON) {
+	if (((LayerTRW *) this->owning_layer)->get_coord_mode() == CoordMode::LATLON) {
 
 		/* Fill-ins for far apart points. */
 		std::list<Rect *>::iterator cur_rect;
@@ -3566,33 +3564,28 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 			if ((wh.lon < ABS ((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
 			    || (wh.lat < ABS ((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
 
-				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
+				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
 			}
 		}
 	} else {
 		qDebug() << "WW: Track: 'download map' feature works only in Mercator mode";
 	}
 
-	if (fillins) {
-		Coord tl, br;
-		for (GList * fiter = fillins; fiter; fiter = fiter->next) {
-			Coord * cur_coord = (Coord *)(fiter->data);
-			cur_coord->set_area(&wh, &tl, &br);
-			Rect * rect = (Rect *) malloc(sizeof (Rect));
-			rect->tl = tl;
-			rect->br = br;
-			rect->center = *cur_coord;
-			rects_to_download->push_front(rect);
-		}
-	}
+	Coord tl, br;
+	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
+		Coord * cur_coord = *iter;
+		cur_coord->set_area(&wh, &tl, &br);
+		Rect * rect = (Rect *) malloc(sizeof (Rect));
+		rect->tl = tl;
+		rect->br = br;
+		rect->center = *cur_coord;
+		rects_to_download->push_front(rect);
 
-	if (fillins) {
-		for (GList * iter = fillins; iter; iter = iter->next) {
-			free(iter->data);
-		}
-		g_list_free(fillins);
-	}
+#ifdef K
+		/* TODO: do we need to do this? Can we do this? */
+		free(*iter);
 #endif
+	}
 
 	return rects_to_download;
 }
