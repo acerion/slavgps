@@ -48,7 +48,7 @@
 
 #include <QDebug>
 
-//#include "thumbnails.h"
+#include "thumbnails.h"
 #include "viewport_internal.h"
 #include "ui_util.h"
 #include "application_state.h"
@@ -897,9 +897,10 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 		pixmap = (*iter)->pixmap;
 	} else {
 		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image << "not found in cache";
+
+		const QString image = wp->image;
+		QPixmap * regularthumb = a_thumbnails_get(wp->image.toUtf8().constData());
 #ifdef K
-		char * image = wp->image;
-		QPixmap * regularthumb = a_thumbnails_get(wp->image);
 		if (!regularthumb) {
 			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
 			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */

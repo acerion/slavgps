@@ -49,6 +49,8 @@
 #include "viewport_internal.h"
 #include "tree_view_internal.h"
 #include "clipboard.h"
+#include "statusbar.h"
+#include "window.h"
 //#include "thumbnails.h"
 
 
@@ -490,9 +492,7 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 		if (!trk) {
 			/* Broken :( */
 			qDebug() << "EE: Layer TRW: can't retrieve track/route with duplicate name" << duplicate_name;
-#ifdef K
-			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making tracks/routes unique"));
-#endif
+			g_tree->tree_get_main_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making tracks/routes unique"));
 			return;
 		}
 

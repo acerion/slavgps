@@ -1,23 +1,26 @@
 /*
- *    Viking - GPS data editor
- *    Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- *    Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
- *    Based on:
- *    Copyright (C) 2003-2007, Leandro A. F. Pereira <leandro@linuxmag.com.br>
+ * Viking - GPS data editor
+ * Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
+ * Based on:
+ * Copyright (C) 2003-2007, Leandro A. F. Pereira <leandro@linuxmag.com.br>
  *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, version 2.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 2.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
+
+
+
  /*
   * Dependencies must be just on Glib
   * see ui_utils for thing that depend on Gtk
@@ -55,7 +58,7 @@
 
 
 
-unsigned int util_get_number_of_cpus()
+unsigned int SlavGPS::util_get_number_of_cpus()
 {
 #if GLIB_CHECK_VERSION (2, 36, 0)
 	return g_get_num_processors();
@@ -80,7 +83,7 @@ unsigned int util_get_number_of_cpus()
 
 
 
-char * uri_escape(char * str)
+char * SlavGPS::uri_escape(char * str)
 {
 	char * esc_str = (char *) malloc(3 * strlen(str));
 	char * dst = esc_str;
@@ -116,7 +119,7 @@ char * uri_escape(char * str)
  *   key = "GPS.parameter"
  *   val = "42"
  */
-bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val)
+bool SlavGPS::split_string_from_file_on_equals(char const * buf, char ** key, char ** val)
 {
 	/* comments, special characters in viking file format. */
 	if (buf == NULL || buf[0] == '\0' || buf[0] == '~' || buf[0] == '=' || buf[0] == '#') {
@@ -162,7 +165,7 @@ static std::list<char *> deletion_list;
  * Normally this is for files that get used asynchronously,
  * so we don't know when it's time to delete them - other than at this program's end.
  */
-void util_add_to_deletion_list(char const * filename)
+void SlavGPS::util_add_to_deletion_list(char const * filename)
 {
 	char * tmp = strdup(filename);
 	deletion_list.push_back(tmp);
@@ -175,7 +178,7 @@ void util_add_to_deletion_list(char const * filename)
  * Delete all the files in the deletion list.
  * This should only be called on program exit.
  */
-void util_remove_all_in_deletion_list(void)
+void SlavGPS::util_remove_all_in_deletion_list(void)
 {
 	for (auto iter = deletion_list.begin(); iter != deletion_list.end(); iter++) {
 		if (0 != remove(*iter)) {
@@ -233,7 +236,7 @@ char * util_str_remove_chars(char * string, char const * chars)
  * interpretation, rather than large volume items such as Bing
  * attributions.
  */
-int util_remove(char const * filename)
+int SlavGPS::util_remove(char const * filename)
 {
 	if (1 /* vik_debug && vik_verbose */) {
 		qDebug() << "WW: Util: Remove: not removing file" << filename;
@@ -254,7 +257,7 @@ int util_remove(char const * filename)
  *
  * @return the filename of the buffer that was written
  */
-char * util_write_tmp_file_from_bytes(const void * buffer, size_t count)
+char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count)
 {
 	GFileIOStream * gios;
 	GError * error = NULL;
@@ -301,20 +304,7 @@ char * util_write_tmp_file_from_bytes(const void * buffer, size_t count)
 
 
 
-void free_string(char ** s)
-{
-	if (s != NULL && (*s) != NULL) {
-		free(*s);
-		*s = NULL;
-	}
-
-	return;
-}
-
-
-
-
-void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size)
+void SlavGPS::minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size)
 {
 	*max = -1000;
 	*min = 20000;

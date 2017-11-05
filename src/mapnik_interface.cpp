@@ -118,7 +118,7 @@ void SlavGPS::mapnik_interface_free(MapnikInterface * mi)
 void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse)
 {
 #ifdef K
-	g_debug ("using mapnik version %s", MAPNIK_VERSION_STRING);
+	qDebug() << "DD: Mapnik Interface" << __FUNCTION__ << "using mapnik version" << MAPNIK_VERSION_STRING);
 	try {
 		if (plugins_dir) {
 #if MAPNIK_VERSION >= 200200

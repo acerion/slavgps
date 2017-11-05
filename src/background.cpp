@@ -275,7 +275,7 @@ static ParameterSpecification prefs_mapnik[] = {
 /**
  * Just setup any preferences.
  */
-void a_background_init()
+void SlavGPS::a_background_init()
 {
 #if 0
 #ifdef HAVE_LIBMAPNIK
@@ -335,7 +335,7 @@ void SlavGPS::a_background_post_init_window(QWidget * parent_widget)
 /**
  * Uninitialize background feature.
  */
-void a_background_uninit()
+void SlavGPS::a_background_uninit()
 {
 	stop_all_threads = true;
 	/* Wait until these threads stop. */
@@ -356,7 +356,7 @@ void a_background_uninit()
 
 
 
-void a_background_add_window(Window * window)
+void SlavGPS::a_background_add_window(Window * window)
 {
 	windows_to_update.push_front(window);
 }

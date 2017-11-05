@@ -214,10 +214,8 @@ Window::Window()
 	QObject::connect(this->viewport, SIGNAL("configure_event"), this, SLOT (window_configure_event));
 	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 
-#ifdef K
 	/* This signal appears to be already handled by Viewport::wheelEvent(). */
 	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
-#endif
 
 	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
 	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *));
@@ -243,10 +241,10 @@ Window::Window()
 
 	gtk_box_pack_end(GTK_BOX(this->main_vbox), GTK_WIDGET(this->viking_vs), false, true, 0);
 
+#endif
 	a_background_add_window(this);
 
 	window_list.push_front(this);
-#endif
 
 	int height = VIKING_WINDOW_HEIGHT;
 	int width = VIKING_WINDOW_WIDTH;
@@ -1569,9 +1567,7 @@ void Window::preferences_cb(void) /* Slot. */
 
 	/* Ensure TZ Lookup initialized. */
 	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
-#ifdef K
 		vu_setup_lat_lon_tz_lookup();
-#endif
 	}
 #ifdef K
 	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
@@ -2099,12 +2095,12 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 			if (set_as_current_document) {
 				this->set_current_document_full_path(new_document_full_path);
 			}
-#ifdef K
-			QAction * drawmode_action = this->grepget_drawmode_action(this->viewport->get_drawmode());
+
+			QAction * drawmode_action = this->get_drawmode_action(this->viewport->get_drawmode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
-			gtk_check_menu_item_set_active(drawmode_action, true);
+			drawmode_action->setChecked(true);
 			this->only_updating_coord_mode_ui = false;
-#endif
+
 
 			this->items_tree->change_coord_mode(this->viewport->get_coord_mode());
 
@@ -2910,7 +2906,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 
 	struct UTM utm;
 	struct UTM utm_orig = this->viewport->get_center()->utm;
-	const QString extension = save_as_png ? "png" : "jpg";
+	const char * extension = save_as_png ? "png" : "jpg";
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
@@ -2937,12 +2933,10 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 			/* Save buffer as file. */
 			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 			QPixmap * pixmap = this->viewport->get_pixmap();
-#ifdef K
 			if (!pixmap->save(file_full_path, extension)) {
 				qDebug() << "WW: Viewport: Save to Image Dir: Unable to write to file" << file_full_path;
 				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
 			}
-#endif
 
 #ifdef K
 			g_object_unref(G_OBJECT(pixmap));

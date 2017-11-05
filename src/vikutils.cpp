@@ -46,12 +46,12 @@
 #include "layers_panel.h"
 #include "layer_trw_track_internal.h"
 #include "clipboard.h"
+#include "dialog.h"
+#include "ui_util.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
-#include "ui_util.h"
-#include "dialog.h"
 #include "file.h"
 #endif
 
@@ -471,26 +471,25 @@ double SlavGPS::convert_distance_meters_to(double distance, DistanceUnit distanc
 }
 
 
-#ifdef K
 
 
-typedef struct {
-	Window * window; /* Layer needed for redrawing. */
-	char * version;     /* Image list. */
-} new_version_thread_data;
+struct new_version_thread_data {
+public:
+	Window * window = NULL;
+	QString version;
+} ;
 
 static bool new_version_available_message(new_version_thread_data * nvtd)
 {
 	/* Only a simple goto website option is offered.
 	   Trying to do an installation update is platform specific. */
-	if (Dialog::yes_or_no(tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(QString(nvtd->version)), nvtd->window)) {
+	if (Dialog::yes_or_no(QObject::tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(nvtd->version), nvtd->window)) {
 
 		/* NB 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
 		open_url("http://sourceforge.net/projects/viking/");
 	}
 
-	free(nvtd->version);
-	free(nvtd);
+	delete nvtd;
 	return false;
 }
 
@@ -512,6 +511,8 @@ static void latest_version_thread(Window * window)
 		return;
 	}
 
+#ifdef K
+
 	GMappedFile * mf = g_mapped_file_new(filename, false, NULL);
 	if (!mf) {
 		return;
@@ -525,9 +526,9 @@ static void latest_version_thread(Window * window)
 	fprintf(stderr, "DEBUG: The lastest version is: %s\n", text);
 
 	if (my_version < latest_version) {
-		new_version_thread_data *nvtd = (new_version_thread_data *) malloc(sizeof(new_version_thread_data));
+		new_version_thread_data * nvtd = new new_version_thread_data;
 		nvtd->window = window;
-		nvtd->version = g_strdup(text);
+		nvtd->version = QString(text);
 		gdk_threads_add_idle((GSourceFunc) new_version_available_message, nvtd);
 	} else {
 		fprintf(stderr, "DEBUG: Running the lastest version: %s\n", VIKING_VERSION);
@@ -539,6 +540,8 @@ static void latest_version_thread(Window * window)
 		free(filename);
 	}
 
+#endif
+
 	/* Update last checked time. */
 	GTimeVal time;
 	g_get_current_time(&time);
@@ -547,7 +550,7 @@ static void latest_version_thread(Window * window)
 
 
 
-#endif
+
 
 
 
@@ -584,7 +587,7 @@ void SGUtils::check_latest_version(Window * window)
 
 	/* When no previous date available - set to do the version check. */
 	if (ApplicationState::get_string(VIK_SETTINGS_VERSION_CHECKED_DATE, last_checked_date)) {
-	if (g_time_val_from_iso8601(last_checked_date.toUtf8().constData(), &time_last)) {
+		if (g_time_val_from_iso8601(last_checked_date.toUtf8().constData(), &time_last)) {
 			g_date_set_time_val(gdate_last, &time_last);
 		} else {
 			do_check = true;
@@ -630,18 +633,11 @@ void SGUtils::set_auto_features_on_first_run(void)
 	bool set_defaults = false;
 
 	if (SGUtils::is_very_first_run()) {
-#ifdef K
-		GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-		if (Dialog::yes_or_no(tr("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), GTK_WINDOW(win))) {
-
-			auto_features = true;
-		}
+		auto_features = Dialog::yes_or_no(QObject::tr("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), NULL);
 
 		/* Default to more standard cache layout for new users (well new installs at least). */
 		maps_layer_set_cache_default(MapsCacheLayout::OSM);
 		set_defaults = true;
-#endif
 	}
 
 	if (auto_features) {
@@ -717,7 +713,7 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 }
 
 
-#ifdef K
+
 
 /**
  * @dir: The directory from which to load the latlontz.txt file.
@@ -727,8 +723,8 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 static int load_ll_tz_dir(const char * dir)
 {
 	int inserted = 0;
-	const QString path = dir + QDir::separator() + "latlontz.txt";
-	if (0 != access(path.toUtf8().constData(), R_OK) == 0) {
+	const QString path = QString(dir) + QDir::separator() + "latlontz.txt";
+	if (0 != access(path.toUtf8().constData(), R_OK)) {
 		return inserted;
 	}
 
@@ -746,13 +742,13 @@ static int load_ll_tz_dir(const char * dir)
 		unsigned int nn = g_strv_length(components);
 		if (nn == 3) {
 			double pt[2] = { g_ascii_strtod(components[0], NULL), g_ascii_strtod(components[1], NULL) };
-			char *timezone = g_strchomp(components[2]);
-			if (kd_insert(kd, pt, timezone)) {
-				fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", timezone, line_num);
+			char * time_zone = g_strchomp(components[2]);
+			if (kd_insert(kd, pt, time_zone)) {
+				fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", time_zone, line_num);
 			} else {
 				inserted++;
 			}
-			/* NB Don't free timezone as it's part of the kdtree data now. */
+			/* NB Don't free time_zone as it's part of the kdtree data now. */
 			free(components[0]);
 			free(components[1]);
 		} else {
@@ -813,7 +809,6 @@ void SlavGPS::vu_finalize_lat_lon_tz_lookup()
 }
 
 
-#endif
 
 
 static double dist_sq(double * a1, double * a2, int dims)

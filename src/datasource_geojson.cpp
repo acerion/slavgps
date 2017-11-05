@@ -46,7 +46,7 @@ typedef struct {
 
 
 /* The last used directory. */
-static char * last_folder_uri = NULL;
+static QUrl last_directory_url;
 
 
 
@@ -104,14 +104,13 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	datasource_geojson_user_data_t * ud = (datasource_geojson_user_data_t *) user_data;
 
 #ifdef K
-
 	ud->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
 
 	/* Try to make it a nice size - otherwise seems to default to something impractically small. */
-	gtk_window_set_default_size(GTK_WINDOW (dialog) , 600, 300);
+	gtk_window_set_default_size(GTK_WINDOW (dialog), 600, 300);
 
-	if (last_folder_uri) {
-		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(ud->files), last_folder_uri);
+	if (last_directory_url.isValid()) {
+		ud->files->file_selector->setDirectoryUrl(last_directory_url);
 	}
 
 	GtkFileChooser * chooser = GTK_FILE_CHOOSER (ud->files);
@@ -153,8 +152,7 @@ ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_
 	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
 
 	/* Memorize the directory for later reuse. */
-	free(last_folder_uri);
-	last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(userdata->files));
+	last_directory_url = userdata->files->file_entry->file_selector->directoryUrl();
 
 	/* TODO Memorize the file filter for later reuse? */
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(userdata->files));

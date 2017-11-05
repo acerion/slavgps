@@ -133,7 +133,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	connect(this->toplayer, SIGNAL(layer_changed(void)), this, SLOT(emit_update_window_cb(void)));
 
 
-#ifndef SLAVGPS_QT
+#ifdef K
 	QObject::connect(this->tree_view, this, SIGNAL("button_press_event"), SLOT (button_press_cb));
 	QObject::connect(this->tree_view, this, SIGNAL("key_press_event"), SLOT (layers_key_press_cb));
 #endif
@@ -440,7 +440,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
-#ifndef SLAVGPS_QT
+#ifdef K
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
@@ -526,7 +526,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		     TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
-#ifndef SLAVGPS_QT
+#ifdef K
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
@@ -657,7 +657,7 @@ LayerAggregate * LayersPanel::get_top_layer()
 void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
-#ifndef SLAVGPS_QT
+#ifdef K
 		g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 #endif
 		this->toplayer->clear(); /* simply deletes all layers */

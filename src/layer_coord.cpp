@@ -268,7 +268,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		}
 	}
 #undef CLINE
-#ifndef SLAVGPS_QT
+#ifdef K
 	g_object_unref(dgc);
 	g_object_unref(sgc);
 	g_object_unref(mgc);

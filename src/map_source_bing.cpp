@@ -380,8 +380,8 @@ static int load_attributions_thread(BackgroundJob * bg_job)
 #ifdef K
 	bg_job->load_attributions();
 #endif
-	int result = a_background_thread_progress(bg_job, 1);
-	if (result != 0) {
+
+	if (0 != a_background_thread_progress(bg_job, 1)) {
 		return -1; /* Abort thread. */
 	}
 #ifdef K

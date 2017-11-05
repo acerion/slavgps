@@ -34,6 +34,7 @@
 #endif
 
 #include "tree_view.h"
+#include "tree_view_internal.h"
 #include "clipboard.h"
 #include "dialog.h"
 #include "layer_trw.h"
@@ -530,7 +531,7 @@ bool Clipboard::paste(LayersPanel * panel)
 static void clip_determine_viking_type(GtkClipboard * c, GtkSelectionData * sd, void * p)
 {
 #ifdef K
-	ClipboardDataType * vdct = (VikClipboardDataType *) p;
+	ClipboardDataType * vdct = (ClipboardDataType *) p;
 	/* Default value. */
 	*vdct = ClipboardDataType::NONE;
 

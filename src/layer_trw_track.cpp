@@ -3773,21 +3773,15 @@ void Track::refine_route_cb(void)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	/* Check size of the route */
-	int nb = this->get_tp_count();
-#ifdef K
+	const int nb = this->get_tp_count();
 	if (nb > 100) {
-		GtkWidget *dialog = gtk_message_dialog_new(main_window,
-							   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							   GTK_MESSAGE_WARNING,
-							   GTK_BUTTONS_OK_CANCEL,
-							   _("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?"),
-							   nb);
-		int response = gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy(dialog);
-		if (response != GTK_RESPONSE_OK) {
+		/* TODO: make the dialog a Warning dialog. */
+		if (!Dialog::yes_or_no(tr("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?").arg(nb))) {
 			return;
 		}
 	}
+
+#ifdef K
 	/* Select engine from dialog */
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
 							main_window,

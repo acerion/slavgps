@@ -1144,29 +1144,23 @@ void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
 
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::WAYPOINT);
 		std::free(sl_data);
-#endif
 	}
 
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::TRACK);
 		std::free(sl_data);
-#endif
 	}
 
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::ROUTE);
 		std::free(sl_data);
-#endif
 	}
 
 

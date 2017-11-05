@@ -50,11 +50,17 @@
 #include "widget_slider.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
+#include "goto.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+extern Tree * g_tree;
 
 
 
@@ -379,17 +385,19 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 	/* TODO: comment may contain URL. Make the label or input field clickable. */
 	param_spec = &param_specs[SG_WP_PARAM_COMMENT];
-	param_value = SGVariant(wp->comment);
+	param_value = SGVariant("");
+	if (wp->comment.isEmpty()) {
+		/* Put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
+		const QString last = a_vik_goto_get_search_string_for_this_location(g_tree->tree_get_main_window());
+		if (!last.isEmpty()) {
+			param_value = SGVariant(last);
+		}
+	} else {
+		param_value = SGVariant(wp->comment);
+	}
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
-#ifdef K
-	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
-	const QString cmt = a_vik_goto_get_search_string_for_this_location(trw->get_window());
-	if (!cmt.isEmpty()) {
-		commententry->setText(cmt);
-	}
-#endif
 
 
 

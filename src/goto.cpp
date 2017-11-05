@@ -86,7 +86,7 @@ void SlavGPS::vik_goto_unregister_all()
 
 QString SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 {
-	QString empty_string("");
+	const QString empty_string("");
 	if (!last_coord) {
 		return empty_string;
 	}

@@ -42,6 +42,7 @@
 #include "modules.h"
 #include "vikutils.h"
 #include "curl_download.h"
+#include "util.h"
 
 
 
@@ -194,9 +195,9 @@ int main(int argc, char ** argv)
 #endif
 	layer_map_init();
 	map_cache_init();
-#ifdef K
 	a_background_init();
 
+#ifdef K
 	a_toolbar_init();
 	routing_prefs_init();
 
@@ -208,7 +209,6 @@ int main(int argc, char ** argv)
 #endif
 	a_background_post_init();
 	Babel::post_init();
-#if 0
 
 	modules_post_init();
 
@@ -217,6 +217,7 @@ int main(int argc, char ** argv)
 		vu_setup_lat_lon_tz_lookup();
 	}
 
+#ifdef K
 	/* Set the icon. */
 	QPixmap * main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
 	gtk_window_set_default_icon(main_icon);
@@ -269,27 +270,24 @@ int main(int argc, char ** argv)
 	int rv = app.exec();
 
 	Babel::uninit();
-#if 0
+#ifdef K
 	a_toolbar_uninit();
-	a_background_uninit();
 #endif
+	a_background_uninit();
+
 	map_cache_uninit();
 	DEMCache::uninit();
 	LayerDefaults::uninit();
 	Preferences::uninit();
 	ApplicationState::uninit();
-#if 0
 	modules_uninit();
-#endif
 
 	CurlDownload::uninit();
 
-#if 0
 	vu_finalize_lat_lon_tz_lookup();
 
 	/* Clean up any temporary files. */
 	util_remove_all_in_deletion_list();
-#endif
 
 	delete first_window;
 

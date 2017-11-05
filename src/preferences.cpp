@@ -441,15 +441,6 @@ void SlavGPS::Preferences::register_parameter(ParameterSpecification * param_spe
 
 
 
-#ifdef K
-void Preferences::Preferences()
-{
-}
-#endif
-
-
-
-
 void Preferences::uninit()
 {
 	registered_parameter_specifications.clear();

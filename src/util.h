@@ -33,24 +33,32 @@
 
 
 
-unsigned int util_get_number_of_cpus(void);
+namespace SlavGPS {
 
-char * uri_escape(char * str);
 
-bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
 
-void util_add_to_deletion_list(char const * filename);
-void util_remove_all_in_deletion_list(void);
 
-char * util_str_remove_chars(char * string, char const * chars);
+	unsigned int util_get_number_of_cpus(void);
 
-int util_remove(char const * filename);
+	char * uri_escape(char * str);
 
-char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
+	bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
 
-void free_string(char ** s);
+	void util_add_to_deletion_list(char const * filename);
+	void util_remove_all_in_deletion_list(void);
 
-void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size);
+	char * util_str_remove_chars(char * string, char const * chars);
+
+	int util_remove(char const * filename);
+
+	char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
+
+	void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

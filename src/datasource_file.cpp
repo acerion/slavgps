@@ -48,7 +48,7 @@ using namespace SlavGPS;
 extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last used directory. */
-static QUrl last_folder_url;
+static QUrl last_directory_url;
 
 /* The last used item in file type combo. */
 static int last_combo_index;
@@ -112,10 +112,8 @@ static int datasource_file_internal_dialog(QWidget * parent)
 		data_source_file_dialog->build_ui();
 	}
 
-	if (last_folder_url.isValid()) {
-#ifdef K
-		data_source_file_dialog->file_entry->setDirectoryUrl(last_folder_url);
-#endif
+	if (last_directory_url.isValid()) {
+		data_source_file_dialog->file_entry->file_selector->setDirectoryUrl(last_directory_url);
 	}
 
 	data_source_file_dialog->file_entry->setFocus();
@@ -147,10 +145,8 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 {
 	ProcessOptions * po = new ProcessOptions();
 
-#ifdef K
 	/* Memorize the directory for later use. */
-	last_folder_url = data_source_file_dialog->file_entry->directoryUrl();
-#endif
+	last_directory_url = data_source_file_dialog->file_entry->file_selector->directoryUrl();
 
 #ifdef K
 	/* Memorize the file filter for later use. */

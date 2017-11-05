@@ -278,7 +278,7 @@ PKGCONFIG += glib-2.0 zlib gio-2.0
 # https://wiki.qt.io/Undocumented_QMake#Config_features
 CONFIG += object_parallel_to_source
 
-DEFINES += SLAVGPS_QT HAVE_CONFIG_H
+DEFINES += HAVE_CONFIG_H
 
 # Put moc_*.cpp files in a subdirectory.
 MOC_DIR = ./moc/

@@ -856,7 +856,7 @@ void Viewport::sync()
 void Viewport::pan_sync(int x_off, int y_off)
 {
 	qDebug() << "II: Viewport: Pan Sync";
-#ifndef SLAVGPS_QT
+#ifdef K
 	int x, y, wid, hei;
 
 	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
@@ -1905,7 +1905,7 @@ void Viewport::snapshot_save()
 {
 	qDebug() << "II: Viewport: save snapshot";
 	*this->snapshot_buffer = *this->scr_buffer;
-#ifndef SLAVGPS_QT
+#ifdef K
 	gdk_draw_drawable(this->snapshot_buffer, this->background_pen, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
@@ -1917,7 +1917,7 @@ void Viewport::snapshot_load()
 {
 	qDebug() << "II: Viewport: load snapshot";
 	*this->scr_buffer = *this->snapshot_buffer;
-#ifndef SLAVGPS_QT
+#ifdef K
 	gdk_draw_drawable(this->scr_buffer, this->background_pen, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }

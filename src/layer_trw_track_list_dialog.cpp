@@ -586,7 +586,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	/* TODO: The callback worked by exposing selected item in tree view. */
 	QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
 
-	/* TODOL Maybe add full menu of a Track class in the table view too. */
+	/* TODO: Maybe add full menu of a Track class in the table view too. */
 #endif
 }
 
