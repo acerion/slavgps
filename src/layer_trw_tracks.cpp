@@ -48,6 +48,7 @@
 #include "layer_trw_track_list_dialog.h"
 #include "viewport_internal.h"
 #include "tree_view_internal.h"
+#include "clipboard.h"
 //#include "thumbnails.h"
 
 
@@ -820,11 +821,9 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 
 
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
-#ifdef K
 	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
-	qa->setEnabled(a_clipboard_type() == VIK_CLIPBOARD_DATA_SUBLAYER);
-#endif
+	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
 
 	menu.addSeparator();
@@ -984,9 +983,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 void LayerTRWTracks::paste_sublayer_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
-#ifdef K
-	a_clipboard_paste(g_tree->tree_get_items_tree());
-#endif
+	Clipboard::paste(g_tree->tree_get_items_tree());
 }
 
 

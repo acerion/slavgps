@@ -130,10 +130,9 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 
 	QString waypoint_name;
 	Waypoint * wp = NULL;
-#ifdef K
+
 #ifdef VIK_CONFIG_GEOTAG
 	wp = a_geotag_create_waypoint_from_file(file_full_path, viewport->get_coord_mode(), waypoint_name);
-#endif
 #endif
 	if (wp) {
 		/* Create name if geotag method didn't return one. */

@@ -41,6 +41,7 @@
 #include "layers_panel.h"
 #include "dialog.h"
 #include "ui_util.h"
+#include "geotag_exif.h"
 
 
 
@@ -695,10 +696,8 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 #ifdef VIK_CONFIG_GEOTAG
 void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 {
-#ifdef K
 	/* Update directly - not changing the mtime. */
-	SlavGPS::a_geotag_write_exif_gps(this->image, this->coord, this->altitude, true);
-#endif
+	a_geotag_write_exif_gps(this->image, this->coord, this->altitude, true);
 }
 
 
@@ -706,10 +705,8 @@ void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 
 void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 {
-#ifdef K
 	/* Update directly. */
 	a_geotag_write_exif_gps(this->image, this->coord, this->altitude, false);
-#endif
 }
 
 

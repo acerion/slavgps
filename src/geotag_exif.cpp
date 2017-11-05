@@ -32,10 +32,14 @@
 #include "config.h"
 #endif
 
+#include <QDebug>
+
 #include <cstring>
 #include <cstdlib>
 #include <ctype.h>
 #include <cmath>
+
+
 
 #include "geotag_exif.h"
 #include "config.h"
@@ -43,11 +47,16 @@
 #include "file.h"
 #include "layer_trw_waypoint.h"
 
+
+
 #include <sys/stat.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
 
+
+
+#ifdef K
 #include <glib/gstdio.h>
 #ifdef HAVE_LIBGEXIV2
 #include <gexiv2/gexiv2.h>
@@ -56,6 +65,7 @@
 #include <libexif/exif-data.h>
 #include "libjpeg/jpeg-data.h"
 #endif
+#endif
 
 
 
@@ -63,6 +73,8 @@
 using namespace SlavGPS;
 
 
+
+#ifdef K
 
 
 #ifdef HAVE_LIBGEXIV2
@@ -227,7 +239,7 @@ static struct LatLon get_latlon(ExifData *ed)
 	return ll;
 }
 #endif
-
+#endif
 
 
 
@@ -241,6 +253,7 @@ struct LatLon SlavGPS::a_geotag_get_position(const char *filename)
 {
 	struct LatLon ll = { 0.0, 0.0 };
 
+#ifdef K
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
@@ -277,6 +290,7 @@ MyReturn0:
 #endif
 #endif
 
+#endif /* #ifdef K */
 	return ll;
 }
 
@@ -290,11 +304,12 @@ MyReturn0:
  *
  * Returns: An allocated Waypoint or NULL if Waypoint could not be generated (e.g. no EXIF info).
  */
-Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, CoordMode vcmode, QString & name)
+Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename, CoordMode vcmode, QString & name)
 {
 	/* Default return values (for failures). */
 	name = "";
 	Waypoint * wp = NULL;
+#ifdef K
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
@@ -400,6 +415,7 @@ MyReturn:
 #endif
 #endif
 
+#endif /* #ifdef K */
 	return wp;
 }
 
@@ -417,9 +433,9 @@ MyReturn:
  *
  * Here EXIF processing is used to get non position related information (i.e. just the comment).
  */
-Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord & coord, double alt, char **name, Waypoint *wp)
+Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord & coord, double alt, QString & name, Waypoint *wp)
 {
-	*name = NULL;
+	name = "";
 	if (wp == NULL) {
 		/* Need to create waypoint. */
 		wp = new Waypoint();
@@ -427,13 +443,15 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord & c
 	}
 	wp->coord = coord;
 	wp->altitude = alt;
+#ifdef K
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
 			wp->comment = geotag_get_exif_comment (gemd);
-			if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPTitle"))
-				*name = g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPTitle"));
+			if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPTitle")) {
+				name = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPTitle"));
+			}
 	}
 	gexiv2_metadata_free(gemd);
 #else
@@ -450,7 +468,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord & c
 		ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_TITLE);
 		if (ee) {
 			exif_entry_get_value(ee, str, 128);
-			*name = g_strdup(str);
+			name = QString(str);
 		}
 
 		/* Finished with EXIF. */
@@ -458,6 +476,8 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, Coord & c
 	}
 #endif
 #endif
+
+#endif /* #ifdef K */
 
 	wp->set_image(filename);
 
@@ -479,6 +499,8 @@ char* SlavGPS::a_geotag_get_exif_date_from_file(const char *filename, bool *has_
 {
 	char* datetime = NULL;
 	*has_GPS_info = false;
+
+#ifdef K
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
@@ -535,10 +557,15 @@ char* SlavGPS::a_geotag_get_exif_date_from_file(const char *filename, bool *has_
 	exif_data_free(ed);
 #endif
 #endif
+
+#endif /* #ifdef K */
+
 	return datetime;
 }
 
 
+
+#ifdef K
 #ifdef HAVE_LIBEXIF
 /**
    If the entry doesn't exist, create it.
@@ -775,7 +802,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 	}
 }
 #endif
-
+#endif /* #ifdef K */
 
 
 
@@ -786,18 +813,18 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
  *
  * Returns: A value indicating success: 0, or some other value for failure.
  */
-int SlavGPS::a_geotag_write_exif_gps(const char *filename, Coord & coord, double alt, bool no_change_mtime)
+int SlavGPS::a_geotag_write_exif_gps(const QString & filename, Coord & coord, double alt, bool no_change_mtime)
 {
 	int result = 0; /* OK so far... */
 
 	/* Save mtime for later use. */
 	struct stat stat_save;
 	if (no_change_mtime) {
-		if (stat(filename, &stat_save) != 0) {
-			fprintf(stderr, "WARNING: %s couldn't read: %s\n", __FUNCTION__, filename);
+		if (stat(filename.toUtf8().constData(), &stat_save) != 0) {
+			qDebug() << "WW: Geotag Exif" << __FUNCTION__ << "couldn't read file" << filename;
 		}
 	}
-
+#ifdef K
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
@@ -909,6 +936,6 @@ int SlavGPS::a_geotag_write_exif_gps(const char *filename, Coord & coord, double
 			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, filename);
 		}
 	}
-
+#endif /* #ifdef K */
 	return result;
 }

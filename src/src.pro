@@ -6,6 +6,8 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    geotag_exif.cpp \
+    clipboard.cpp \
     preferences.cpp \
     layer_trw_dialogs.cpp \
     routing.cpp \
@@ -135,6 +137,8 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    geotag_exif.h \
+    clipboard.h \
     routing.h \
     routing_engine.h \
     routing_engine_web.h \
@@ -255,9 +259,8 @@ HEADERS += window.h \
     variant.h
 
 
-# clipboard.cpp
+
 # garminsymbols.cpp
-# geotag_exif.cpp
 # toolbar.cpp
 
 # vikmaptype.cpp

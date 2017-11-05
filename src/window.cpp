@@ -1453,9 +1453,7 @@ void Window::menu_edit_cut_cb(void)
 
 void Window::menu_edit_copy_cb(void)
 {
-#ifdef K
-	a_clipboard_copy_selected(this->layers_tree);
-#endif
+	Clipboard::copy_selected(this->items_tree);
 }
 
 
@@ -1522,9 +1520,8 @@ void Window::menu_copy_centre_cb(void)
 	}
 
 	const QString message = QString("%1 %2").arg(first).arg(second);
-#ifdef K
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, message, NULL);
-#endif
+
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, message, NULL);
 }
 
 

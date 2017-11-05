@@ -16,12 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
 /*
  * Dependencies in this file can be on anything.
  * For functions with simple system dependencies put it in util.c
  */
+
+
+#include <QAbstractButton>
+
 #include <cmath>
 #include <cstdlib>
 #include <unistd.h>
@@ -40,13 +45,13 @@
 #include "layer_defaults.h"
 #include "layers_panel.h"
 #include "layer_trw_track_internal.h"
+#include "clipboard.h"
 #ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
 #include "ui_util.h"
 #include "dialog.h"
-#include "clipboard.h"
 #include "file.h"
 #endif
 
@@ -1031,16 +1036,21 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 
 
 
-#ifdef K
+
 
 
 /**
- * Copy the displayed text of a widget (should be a GtkButton ATM).
+ * Copy the displayed text of a widget (should be a QAbstractButton ATM).
  */
-static void vu_copy_label(GtkWidget * widget)
+static void vu_copy_label(QAbstractButton * button)
 {
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, gtk_button_get_label(GTK_BUTTON(widget)), NULL);
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, button->text(), NULL);
 }
+
+
+
+
+#ifdef K
 
 
 

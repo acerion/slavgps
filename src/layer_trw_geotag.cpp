@@ -45,6 +45,8 @@
 #include "globals.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
+#include "window.h"
+#include "statusbar.h"
 
 
 
@@ -416,7 +418,7 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
 	if (options->ov.write_exif) {
 		bool has_gps_exif = false;
-#ifdef K
+
 		char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
 		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
@@ -426,7 +428,6 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 			}
 		}
 		free(datetime);
-#endif
 	}
 }
 
@@ -452,9 +453,8 @@ static void trw_layer_geotag_process(GeotagJob * options)
 	}
 
 	bool has_gps_exif = false;
-#ifdef K
-	char* datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 
+	char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 	if (datetime) {
 
 		/* If image already has gps info - don't attempt to change it. */
@@ -480,7 +480,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 					Waypoint * current_wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
 					if (current_wp) {
 						/* Existing wp found, so set new position, comment and image. */
-						(void)a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
+						(void) a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
 						updated_waypoint = true;
 					}
 				}
@@ -509,7 +509,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 			trw_layer_geotag_track(options->trk, options);
 		} else {
 			/* Try all tracks. */
-			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_tracks();
+			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_track_items();
 			if (tracks.size() > 0) {
 				trw_layer_geotag_tracks(tracks, options);
 			}
@@ -530,6 +530,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 					Waypoint * wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
 					if (wp) {
 						/* Found, so set new position, comment and image. */
+						/* TODO: how do we use file_name modified by the function below? */
 						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
 						updated_waypoint = true;
 					}
@@ -538,6 +539,7 @@ static void trw_layer_geotag_process(GeotagJob * options)
 				if (!updated_waypoint) {
 					/* Create waypoint with found position. */
 					QString file_name;
+					/* TODO: how do we use file_name modified by the function below? */
 					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, NULL);
 					if (!file_name.size()) {
 						file_name = file_base_name(options->image);
@@ -558,7 +560,6 @@ static void trw_layer_geotag_process(GeotagJob * options)
 			}
 		}
 	}
-#endif
 }
 
 

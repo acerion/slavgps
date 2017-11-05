@@ -24,32 +24,33 @@
 
 
 
-#include <stdint.h>
-
-#include "layers_panel.h"
-
-
-
-
 namespace SlavGPS {
 
 
 
 
-	typedef enum {
-		VIK_CLIPBOARD_DATA_NONE = 0,
-		VIK_CLIPBOARD_DATA_LAYER,
-		VIK_CLIPBOARD_DATA_SUBLAYER,
-		VIK_CLIPBOARD_DATA_TEXT,
-	} VikClipboardDataType;
+	class LayersPanel;
 
 
 
 
-	void a_clipboard_copy(VikClipboardDataType  type, LayerType layer_type, const QString & type_id, unsigned int len, const char * text, uint8_t * data);
-	void a_clipboard_copy_selected(LayersPanel * panel);
-	bool a_clipboard_paste(LayersPanel * panel);
-	VikClipboardDataType a_clipboard_type();
+	enum class ClipboardDataType {
+		NONE = 0,
+		LAYER,
+		SUBLAYER,
+		TEXT,
+	};
+
+
+
+
+	class Clipboard {
+	public:
+		static void copy(ClipboardDataType  type, LayerType layer_type, const QString & type_id, unsigned int len, const QString & text, uint8_t * data);
+		static void copy_selected(LayersPanel * panel);
+		static bool paste(LayersPanel * panel);
+		static ClipboardDataType get_current_type();
+	};
 
 
 

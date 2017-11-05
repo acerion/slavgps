@@ -41,10 +41,7 @@
 #include "preferences.h"
 #include "tree_view_internal.h"
 #include "layer_aggregate.h"
-
-#ifdef K
 #include "clipboard.h"
-#endif
 
 
 
@@ -139,12 +136,14 @@ void TrackListDialog::track_view_cb(void)
 
 
 
-
-#ifdef K
 typedef struct {
 	bool has_layer_names;
-	GString * str;
+	QString str;
 } copy_data_t;
+
+
+
+#ifdef K
 
 
 
@@ -196,22 +195,18 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 
 void TrackListDialog::copy_selected_cb(void)
 {
+	copy_data_t cd;
 #ifdef K
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
 	unsigned int count = g_list_length(gl);
 	g_list_free(gl);
-	copy_data_t cd;
 	cd.has_layer_names = (count > TRK_LIST_COLS - 3);
-	// Or use gtk_tree_view_column_get_visible()?
-	cd.str = g_string_new(NULL);
+
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
-
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, cd.str->str, NULL);
-
-	g_string_free(cd.str, true);
 #endif
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, cd.str, NULL);
 }
 
 

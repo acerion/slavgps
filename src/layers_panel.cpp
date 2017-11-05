@@ -38,9 +38,7 @@
 #include "dialog.h"
 #include "globals.h"
 #include "util.h"
-#ifdef K
 #include "clipboard.h"
-#endif
 
 
 
@@ -448,7 +446,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
 			}
 
-			a_clipboard_copy_selected(this);
+			Clipboard::copy_selected(this);
 
 			if (parent_layer->type == LayerType::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
@@ -477,10 +475,9 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 		/* Nothing to do. */
 		return;
 	}
-#ifndef SLAVGPS_QT
-	/* NB clipboard contains layer vs sublayer logic, so don't need to do it here. */
-	a_clipboard_copy_selected(this);
-#endif
+
+	/* Clipboard contains layer vs sublayer logic, so don't need to do it here. */
+	Clipboard::copy_selected(this);
 }
 
 
@@ -493,11 +490,8 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 		/* Nothing to do. */
 		return false;
 	}
-	bool result = false;
-#ifndef SLAVGPS_QT
-	result = a_clipboard_paste(this);
-#endif
-	return result;
+
+	return Clipboard::paste(this);
 }
 
 

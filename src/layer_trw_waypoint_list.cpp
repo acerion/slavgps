@@ -42,10 +42,7 @@
 #include "preferences.h"
 #include "tree_view_internal.h"
 #include "dialog.h"
-
-#ifdef K
 #include "clipboard.h"
-#endif
 
 
 
@@ -182,13 +179,16 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 
 
 
-#ifdef K
 typedef struct {
 	bool has_layer_names;
 	bool include_positions;
-	GString * str;
+	QString str;
 } copy_data_t;
 
+
+
+
+#ifdef K
 
 
 
@@ -248,28 +248,27 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 	free(date);
 	free(comment);
 }
-
+#endif
 
 
 
 static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_positions)
 {
+	copy_data_t cd;
+#ifdef K
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
 	unsigned int count = g_list_length(gl);
 	g_list_free(gl);
-	copy_data_t cd;
 	cd.has_layer_names = (count > N_COLUMNS-3);
-	cd.str = g_string_new(NULL);
 	cd.include_positions = include_positions;
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
-
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, cd.str->str, NULL);
-
-	g_string_free(cd.str, true);
-}
 #endif
+
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, cd.str, NULL);
+}
+
 
 
 

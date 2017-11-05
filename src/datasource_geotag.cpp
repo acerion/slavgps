@@ -34,6 +34,7 @@
 #include "layer_trw.h"
 #include "window.h"
 #include "statusbar.h"
+#include "viewport_internal.h"
 
 
 
@@ -196,11 +197,8 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 	while (cur_file) {
 		char *filename = (char *) cur_file->data;
 		QString name;
-#ifdef K
-		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), &name);
-#else
-		Waypoint * wp = NULL;
-#endif
+
+		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
 			if (!name.size()) {

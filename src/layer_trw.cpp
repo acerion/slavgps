@@ -637,9 +637,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, &data_, &len);
 
 	if (data_) {
-#ifdef K
-		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, LayerType::TRW, item->type_id, len, item->name.toUtf8().constData(), data_);
-#endif
+		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, len, item->name, data_);
 	}
 }
 
