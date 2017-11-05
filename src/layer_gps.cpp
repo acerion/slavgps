@@ -798,13 +798,15 @@ static void gps_session_delete(GpsSession *sess)
 
 static void set_total_count(int cnt, GpsSession *sess)
 {
-#ifdef K
 	char s[128];
+#ifdef K
 	gdk_threads_enter();
+#endif
 	sess->mutex.lock();
 	if (sess->ok) {
 		const char *tmp_str;
 		if (sess->direction == GPSDirection::DOWN) {
+#ifdef K
 			switch (sess->progress_type) {
 			case GPSTransferType::WPT:
 				tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt); sess->total_count = cnt;
@@ -820,7 +822,9 @@ static void set_total_count(int cnt, GpsSession *sess)
 				break;
 			}
 			}
+#endif
 		} else {
+#ifdef K
 			switch (sess->progress_type) {
 			case GPSTransferType::WPT:
 				tmp_str = ngettext("Uploading %d waypoint...", "Uploading %d waypoints...", cnt);
@@ -832,14 +836,18 @@ static void set_total_count(int cnt, GpsSession *sess)
 				tmp_str = ngettext("Uploading %d routepoint...", "Uploading %d routepoints...", cnt);
 				break;
 			}
+#endif
 		}
 
 		snprintf(s, 128, tmp_str, cnt);
 		sess->progress_label->setText(s);
+#ifdef K
 		gtk_widget_show(sess->progress_label);
+#endif
 		sess->total_count = cnt;
 	}
 	sess->mutex.unlock();
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -849,15 +857,17 @@ static void set_total_count(int cnt, GpsSession *sess)
 
 static void set_current_count(int cnt, GpsSession *sess)
 {
-#ifdef K
 	char s[128];
 	const char *tmp_str;
 
+#ifdef K
 	gdk_threads_enter();
+#endif
 	sess->mutex.lock();
 	if (sess->ok) {
 		if (cnt < sess->total_count) {
 			if (sess->direction == GPSDirection::DOWN) {
+#ifdef K
 				switch (sess->progress_type) {
 				case GPSTransferType::WPT:
 					tmp_str = ngettext("Downloaded %d out of %d waypoint...", "Downloaded %d out of %d waypoints...", sess->total_count);
@@ -869,7 +879,9 @@ static void set_current_count(int cnt, GpsSession *sess)
 					tmp_str = ngettext("Downloaded %d out of %d routepoint...", "Downloaded %d out of %d routepoints...", sess->total_count);
 					break;
 				}
+#endif
 			} else {
+#ifdef K
 				switch (sess->progress_type) {
 				case GPSTransferType::WPT:
 					tmp_str = ngettext("Uploaded %d out of %d waypoint...", "Uploaded %d out of %d waypoints...", sess->total_count);
@@ -881,10 +893,12 @@ static void set_current_count(int cnt, GpsSession *sess)
 					tmp_str = ngettext("Uploaded %d out of %d routepoint...", "Uploaded %d out of %d routepoints...", sess->total_count);
 					break;
 				}
+#endif
 			}
 			snprintf(s, 128, tmp_str, cnt, sess->total_count);
 		} else {
 			if (sess->direction == GPSDirection::DOWN) {
+#ifdef K
 				switch (sess->progress_type) {
 				case GPSTransferType::WPT:
 					tmp_str = ngettext("Downloaded %d waypoint", "Downloaded %d waypoints", cnt);
@@ -896,7 +910,9 @@ static void set_current_count(int cnt, GpsSession *sess)
 					tmp_str = ngettext("Downloaded %d routepoint", "Downloaded %d routepoints", cnt);
 					break;
 				}
+#endif
 			} else {
+#ifdef K
 				switch (sess->progress_type) {
 				case GPSTransferType::WPT:
 					tmp_str = ngettext("Uploaded %d waypoint", "Uploaded %d waypoints", cnt);
@@ -908,12 +924,14 @@ static void set_current_count(int cnt, GpsSession *sess)
 					tmp_str = ngettext("Uploaded %d routepoint", "Uploaded %d routepoints", cnt);
 					break;
 				}
+#endif
 			}
 			snprintf(s, 128, tmp_str, cnt);
 		}
 		sess->progress_label->setText(s);
 	}
 	sess->mutex.unlock();
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -923,15 +941,17 @@ static void set_current_count(int cnt, GpsSession *sess)
 
 static void set_gps_info(const char *info, GpsSession *sess)
 {
-#ifdef K
 	char s[256];
+#ifdef K
 	gdk_threads_enter();
+#endif
 	sess->mutex.lock();
 	if (sess->ok) {
 		snprintf(s, 256, _("GPS Device: %s"), info);
 		sess->gps_label->setText(s);
 	}
 	sess->mutex.unlock();
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -990,31 +1010,38 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 
 static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSession * sess)
 {
-#ifdef K
 	char *line;
-
+#ifdef K
 	gdk_threads_enter();
+#endif
 	sess->mutex.lock();
 	if (!sess->ok) {
 		sess->mutex.unlock();
 		gps_session_delete(sess);
+#ifdef K
 		gdk_threads_leave();
 		g_thread_exit(NULL);
+#endif
 	}
 	sess->mutex.unlock();
+#ifdef K
 	gdk_threads_leave();
+#endif
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *)data;
-
+#ifdef K
 		gdk_threads_enter();
+#endif
 		sess->mutex.lock();
 		if (sess->ok) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
+#ifdef K
 		gdk_threads_leave();
+#endif
 
 		/* Tells us the type of items that will follow. */
 		if (strstr(line, "Xfer Wpt")) {
@@ -1052,7 +1079,6 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 	default:
 		break;
 	}
-#endif
 }
 
 
@@ -1060,32 +1086,40 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 
 static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSession * sess)
 {
-#ifdef K
 	char *line;
 	static int cnt = 0;
 
+#ifdef K
 	gdk_threads_enter();
+#endif
 	sess->mutex.lock();
 	if (!sess->ok) {
 		sess->mutex.unlock();
 		gps_session_delete(sess);
+#ifdef K
 		gdk_threads_leave();
 		g_thread_exit(NULL);
+#endif
 	}
 	sess->mutex.unlock();
+#ifdef K
 	gdk_threads_leave();
+#endif
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *)data;
-
+#ifdef K
 		gdk_threads_enter();
+#endif
 		sess->mutex.lock();
 		if (sess->ok) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
+#ifdef K
 		gdk_threads_leave();
+#endif
 
 		process_line_for_gps_info(line, sess);
 
@@ -1137,7 +1171,6 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 	default:
 		break;
 	}
-#endif
 }
 
 
@@ -1154,15 +1187,17 @@ static void gps_comm_thread(GpsSession *sess)
 		result = a_babel_convert_to(sess->trw, sess->trk, sess->babel_args, sess->port,
 					    (BabelCallback) gps_upload_progress_func, sess);
 	}
-#ifdef K
+
 	if (!result) {
 		sess->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
 	} else {
 		sess->mutex.lock();
 		if (sess->ok) {
 			sess->status_label->setText(QObject::tr("Done."));
+#ifdef K
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT, true);
 			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_REJECT, false);
+#endif
 
 			/* Do not change the view if we are following the current GPS position. */
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1190,6 +1225,7 @@ static void gps_comm_thread(GpsSession *sess)
 		sess->mutex.unlock();
 		gps_session_delete(sess);
 	}
+#ifdef K
 	g_thread_exit(NULL);
 #endif
 }

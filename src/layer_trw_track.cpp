@@ -79,6 +79,10 @@ static std::mutex rt_uid_mutex;
 
 
 
+/* The last used directories. */
+static QUrl last_directory_url;
+
+
 
 #define VIK_SETTINGS_TRACK_NAME_MODE "track_draw_name_mode"
 #define VIK_SETTINGS_TRACK_NUM_DIST_LABELS "track_number_dist_labels"
@@ -2831,13 +2835,11 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	layer_trw_sublayer_menu_all_add_external_tools(trw, menu, external_submenu);
 
 
-#ifdef K
 #ifdef VIK_CONFIG_GOOGLE
 	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route())) {
 		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("&View Google Directions"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (google_route_webpage_cb()));
 	}
-#endif
 #endif
 
 
@@ -3179,20 +3181,16 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
-#ifdef K
-	if (!last_folder_url.toString().isEmpty()) {
-		file_selector.setDirectoryUrl(last_folder_url);
+	if (last_directory_url.isValid()) {
+		file_selector.setDirectoryUrl(last_directory_url);
 	}
-#endif
 
 	file_selector.selectFile(default_file_name);
 
 	if (QDialog::Accepted == file_selector.exec()) {
 		const QString output_file_full_path = file_selector.selectedFiles().at(0);
 
-#ifdef K
-		last_folder_url = file_selector.directoryUrl();
-#endif
+		last_directory_url = file_selector.directoryUrl();
 
 		g_tree->tree_get_main_window()->set_busy_cursor();
 		const bool success = VikFile::export_track(this, output_file_full_path, file_type, true);

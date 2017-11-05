@@ -364,7 +364,7 @@ void a_background_add_window(Window * window)
 
 
 
-void a_background_remove_window(Window * window)
+void SlavGPS::a_background_remove_window(Window * window)
 {
 	windows_to_update.remove(window);
 }

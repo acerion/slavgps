@@ -161,7 +161,7 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 		last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
-#ifdef K
+
 	if (a_babel_available()) {
 		widgets->type = new QComboBox();
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
@@ -169,10 +169,13 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 		}
 		widgets->type->setCurrentIndex(last_type_id);
 	} else {
+#ifdef K
 		/* Only GPX (not using GPSbabel). */
 		widgets->type = new QLabel(QObject::tr("GPX"));
+#endif
 	}
 
+#ifdef K
 	/* Packing all widgets. */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(label);

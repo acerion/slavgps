@@ -398,10 +398,10 @@ static int load_attributions_thread(BackgroundJob * bg_job)
 
 void MapSourceBing::async_load_attributions()
 {
-#ifdef K
 	/* kamilFIXME: since object passed to a_background_thread() is of type BackgroundJob,
 	   and MapSourceBing does not inherit from BackgroundJob, we have a type error here. */
 	this->thread_fn = load_attributions_thread;
+#ifdef K
 	this->n_items = 1;
 
 	a_background_thread(this, ThreadPoolType::REMOTE, QString(QObject::tr("Bing attribution Loading")));

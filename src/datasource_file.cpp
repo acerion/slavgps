@@ -48,7 +48,10 @@ using namespace SlavGPS;
 extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last used directory. */
-static char * last_folder_uri = NULL;
+static QUrl last_folder_url;
+
+/* The last used item in file type combo. */
+static int last_combo_index;
 
 /* The last used file filter. */
 /* Nb: we use a complex strategy for this because the UI is rebuild each
@@ -109,6 +112,12 @@ static int datasource_file_internal_dialog(QWidget * parent)
 		data_source_file_dialog->build_ui();
 	}
 
+	if (last_folder_url.isValid()) {
+#ifdef K
+		data_source_file_dialog->file_entry->setDirectoryUrl(last_folder_url);
+#endif
+	}
+
 	data_source_file_dialog->file_entry->setFocus();
 
 	int rv = data_source_file_dialog->exec();
@@ -138,18 +147,20 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 {
 	ProcessOptions * po = new ProcessOptions();
 
-
 #ifdef K
 	/* Memorize the directory for later use. */
-	free(last_folder_uri);
-	last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry));
+	last_folder_url = data_source_file_dialog->file_entry->directoryUrl();
+#endif
 
+#ifdef K
 	/* Memorize the file filter for later use. */
 	GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry));
 	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
+#endif
 
-	/* Retrieve and memorize file format selected. */
-	last_type = data_source_file_dialog->file_types_combo->currentIndex();
+#ifdef K
+	/* Retrieve and memorize file format selected. TODO: apply this setting when creating dialog */
+	last_combo_index = data_source_file_dialog->file_types_combo->currentIndex();
 #endif
 
 	const QString selected = (data_source_file_dialog->get_file_type_selection())->name;

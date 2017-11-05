@@ -30,6 +30,10 @@
 #include "geotag_exif.h"
 #include "file_utils.h"
 #include "util.h"
+#include "vikutils.h"
+#include "layer_trw.h"
+#include "window.h"
+#include "statusbar.h"
 
 
 
@@ -191,9 +195,12 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 	GSList * cur_file = user_data->filelist;
 	while (cur_file) {
 		char *filename = (char *) cur_file->data;
-		const QString name;
+		QString name;
 #ifdef K
 		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), &name);
+#else
+		Waypoint * wp = NULL;
+#endif
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
 			if (!name.size()) {
@@ -203,7 +210,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 		} else {
 			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
 		}
-#endif
+
 		free(filename);
 		cur_file = g_slist_next(cur_file);
 	}

@@ -103,7 +103,6 @@ namespace SlavGPS {
 		Coord rerender_ul;
 		Coord rerender_br;
 		double rerender_zoom = 0;
-		GtkWidget * right_click_menu = NULL;
 	};
 
 

@@ -592,26 +592,6 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 
 
 
-static void none_found(Window * gw)
-{
-	GtkWidget *dialog = NULL;
-#ifdef K
-	dialog = gtk_dialog_new_with_buttons ("", gw, (GtkDialogFlags) 0, GTK_STOCK_OK, (GTK_RESPONSE_ACCEPT), NULL);
-	gtk_window_set_title(GTK_WINDOW(dialog), _("GPS Traces"));
-
-	QLabel * search_label = new QLabel(QObject::tr("None found!"));
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	gtk_widget_show_all(dialog);
-
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-#endif
-}
-
-
-
-
 /**
  * For each track - mark whether the start is in within the viewport.
  */
@@ -682,7 +662,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread) {
-			none_found(acquiring->window);
+			Dialog::info(QObject::tr("No GPS Traces found"), acquiring->window);
 		}
 		free(xd);
 		return false;

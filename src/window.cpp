@@ -337,18 +337,16 @@ Window::Window()
 
 Window::~Window()
 {
-#ifdef K
 	a_background_remove_window(this);
 
 	window_list.remove(this);
-
+#ifdef K
 	delete this->tb;
 
 	vik_toolbar_finalize(this->viking_vtb);
-
-	delete this->viewport;
-	delete this->layers_tree;
 #endif
+	delete this->viewport;
+	delete this->items_tree;
 }
 
 
@@ -2938,15 +2936,18 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 
 			/* Redraw all layers at current position and zoom. */
 			this->draw_redraw();
-#ifdef K
+
 			/* Save buffer as file. */
 			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 			QPixmap * pixmap = this->viewport->get_pixmap();
+#ifdef K
 			if (!pixmap->save(file_full_path, extension)) {
 				qDebug() << "WW: Viewport: Save to Image Dir: Unable to write to file" << file_full_path;
 				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
 			}
+#endif
 
+#ifdef K
 			g_object_unref(G_OBJECT(pixmap));
 #endif
 		}
@@ -3018,13 +3019,11 @@ QString Window::save_viewport_get_full_path(ViewportSaveMode mode)
 		result = file_selector.selectedFiles().at(0);
 		qDebug() << "II: Viewport: Save to Image: target file:" << result;
 
-#ifdef K
 		if (0 == access(result.toUtf8().constData(), F_OK)) {
 			if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this, "")) {
 				result.resize(0);
 			}
 		}
-#endif
 	}
 
 

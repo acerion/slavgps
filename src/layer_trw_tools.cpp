@@ -1561,17 +1561,18 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 	delete new_end;
 
 	trw->emit_layer_changed();
-#ifdef K
+
 	/* Remove last ' to:...' */
-	if (!track->comment_.isEmpty()) {
+	if (!track->comment.isEmpty()) {
+#ifdef K
 		char *last_to = strrchr(track->comment_, 't');
 		if (last_to && (last_to - track->comment_ > 1)) {
 			char *new_comment = g_strndup(track->comment_,
 						      last_to - track->comment_ - 1); /* FIXME: memory leak. */
 			track->set_comment(QString(new_comment));
 		}
-	}
 #endif
+	}
 }
 
 

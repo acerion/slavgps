@@ -110,11 +110,13 @@ static void * datasource_routing_init(acq_vik_t * avt)
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
 	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
-#ifdef K
+
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(QObject::tr("Engine:"));
+#ifdef K
 	widgets->engines_combo = routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
 	widgets->engines_combo->setCurrentIndex(last_engine);
+#endif
 
 	/* From and To entries. */
 	QLabel * from_label = new QLabel(QObject::tr("From:"));
@@ -127,7 +129,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	if (!last_to_str.isEmpty()) {
 		widgets->to_entry.setText(last_to_str);
 	}
-
+#ifdef K
 	/* Packing all these widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(engine_label);
@@ -153,16 +155,16 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 
 	/* Retrieve engine. */
 	last_engine = widgets->engines_combo->currentIndex();
-#ifdef K
+
 	RoutingEngine * engine = routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}
 
-	po->url = engine->get_url_from_directions(from, to);
+	po->url = engine->get_url_from_directions(from.toUtf8().constData(), to.toUtf8().constData());
 	po->input_file_type = g_strdup(engine->get_format());
 	dl_options = NULL; /* i.e. use the default download settings. */
-#endif
+
 
 	/* Save last selection. */
 	last_from_str = from;

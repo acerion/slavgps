@@ -706,9 +706,9 @@ void LayerGeoref::align_utm2ll()
 /* Align displayed Lat/Lon values with displayed UTM values. */
 void LayerGeoref::align_ll2utm()
 {
-#ifdef K
 	struct UTM corner;
-	const char *letter = this->cw.utm_letter_entry.text();
+#ifdef K
+	const char * letter = this->cw.utm_letter_entry.text();
 	if (*letter) {
 		corner.letter = toupper(*letter);
 	}

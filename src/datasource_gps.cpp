@@ -389,9 +389,11 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 	char *s = NULL;
 #ifdef K
 	gdk_threads_enter();
+#endif
 	if (acquiring->running) {
 		GPSData *gps_data = (GPSData *) acquiring->user_data;
 		const char *tmp_str;
+#ifdef K
 		switch (gps_data->progress_type) {
 		case GPSTransferType::WPT:
 			tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt);
@@ -410,11 +412,13 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 		}
 		}
 		s = g_strdup_printf(tmp_str, cnt);
-		gps_data->progress_label->setText(QObject::tr(s);
+		gps_data->progress_label->setText(QObject::tr(s));
 		gtk_widget_show(gps_data->progress_label);
+#endif
 	}
 	free(s);
 	s = NULL;
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -424,9 +428,10 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 
 static void set_current_count(int cnt, AcquireProcess * acquiring)
 {
-#ifdef K
 	char *s = NULL;
+#ifdef K
 	gdk_threads_enter();
+#endif
 	if (acquiring->running) {
 		GPSData *gps_data = (GPSData *) acquiring->user_data;
 
@@ -459,6 +464,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 	}
 	free(s);
 	s = NULL;
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -466,17 +472,15 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 
 
 
-static void set_gps_info(const char *info, AcquireProcess * acquiring)
+static void set_gps_info(const char * info, AcquireProcess * acquiring)
 {
 #ifdef K
-	char *s = NULL;
 	gdk_threads_enter();
+#endif
 	if (acquiring->running) {
-		s = g_strdup_printf(_("GPS Device: %s"), info);
-		((GPSData *) acquiring->user_data)->gps_label->setText(s);
+		((GPSData *) acquiring->user_data)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
 	}
-	free(s);
-	s = NULL;
+#ifdef K
 	gdk_threads_leave();
 #endif
 }
@@ -581,17 +585,6 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 
 
-void append_element(void * elem, void * user_data)
-{
-	const QString text = ((BabelDevice *) elem)->label;
-#ifdef K
-	((QComboBox *) user_data))->addItem(text);
-#endif
-}
-
-
-
-
 static int find_entry = -1;
 static int wanted_entry = -1;
 
@@ -607,18 +600,15 @@ static void find_protocol(BabelDevice * device, const QString & protocol)
 
 
 
-static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
+static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
 	GPSData * data = (GPSData *) user_data;
-#ifdef K
-	GtkTable *box, *data_type_box;
 
 	data->proto_l = new QLabel(QObject::tr("GPS Protocol:"));
 	data->proto_combo = new QComboBox();
 	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-		append_element(*iter, data->proto_combo);
+		data->proto_combo->addItem((*iter)->label);
 	}
-#endif
 
 	if (last_active < 0) {
 		find_entry = -1;
@@ -641,14 +631,13 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
-#ifdef K
-
 	data->proto_combo->setCurrentIndex(last_active);
+#ifdef K
 	g_object_ref(data->proto_combo);
-
+#endif
 	data->ser_l = new QLabel(QObject::tr("Serial Port:"));
 	data->ser_combo = new QComboBox();
-#endif
+
 
 	/* Value from the settings is promoted to the top. */
 	QString preferred_gps_port;
@@ -688,9 +677,11 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 		}
 	}
 
-#ifdef K
+
 	data->ser_combo->setCurrentIndex(0);
+#ifdef K
 	g_object_ref(data->ser_combo);
+#endif
 
 	data->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
 	data->off_request_b = new QCheckBox();
@@ -724,8 +715,9 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
 	}
 	data->get_waypoints_b->setChecked(get_waypoints);
 
-	box = GTK_TABLE(gtk_table_new(2, 4, false));
-	data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
+#ifdef K
+	GtkTable * box = GTK_TABLE(gtk_table_new(2, 4, false));
+	GtkTable * data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
 
 	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_l), 0, 1, 0, 1);
 	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_combo), 1, 2, 0, 1);

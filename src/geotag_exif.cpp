@@ -286,14 +286,14 @@ MyReturn0:
 /**
  * @filename: The image file to process
  * @vcmode:   The current location mode to use in the positioning of Waypoint
- * @name:     Returns a name for the Waypoint (can be NULL)
+ * @name:     Returns a name for the Waypoint (can be empty)
  *
  * Returns: An allocated Waypoint or NULL if Waypoint could not be generated (e.g. no EXIF info).
  */
-Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, CoordMode vcmode, char **name)
+Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, CoordMode vcmode, QString & name)
 {
 	/* Default return values (for failures). */
-	*name = NULL;
+	name = "";
 	Waypoint * wp = NULL;
 
 #ifdef HAVE_LIBGEXIV2
@@ -317,7 +317,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 			wp->altitude = alt;
 
 			if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPTitle")) {
-				*name = g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPTitle"));
+				name = Qstring(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPTitle"));
 			}
 			wp->comment = geotag_get_exif_comment(gemd);
 
@@ -378,7 +378,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const char *filename, Coo
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_TITLE);
 	if (ee) {
 		exif_entry_get_value(ee, str, 128);
-		*name = g_strdup(str);
+		name = QString(str);
 	}
 
 	/* Now create Waypoint with acquired information. */

@@ -117,7 +117,7 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
 		qDebug() << "DD: geoname" << (unsigned long) *iter;
 #ifdef K
-		//delete *iter;
+		delete *iter;
 #endif
 	}
 	qDebug() << "";

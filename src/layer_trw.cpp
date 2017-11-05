@@ -1144,28 +1144,33 @@ void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
 	g_byte_array_append(ba, pd, pl);
 	std::free(pd);
 
-#ifdef K
-	// Waypoints
+
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
+#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::WAYPOINT);
 		std::free(sl_data);
+#endif
 	}
 
-	// Tracks
-	for (auto i = this->tracks->begin(); i != this->tracks->end(); i++) {
+
+	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
+#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::TRACK);
 		std::free(sl_data);
+#endif
 	}
 
-	// Routes
-	for (auto i = this->routes->begin(); i != this->routes->end(); i++) {
+
+	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
+#ifdef K
 		i->second->marshall(&sl_data, &sl_len);
 		tlm_append(sl_data, sl_len, SublayerType::ROUTE);
 		std::free(sl_data);
-	}
 #endif
+	}
+
 
 #undef tlm_append
 
@@ -2638,7 +2643,6 @@ void LayerTRW::add_track_from_file2(Track * incoming_track, const QString & inco
  */
 void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QString & item_type_id)
 {
-#ifdef K
 	LayerTRW * trw_src = this;
 	/* When an item is moved the name is checked to see if it clashes with an existing name
 	   in the destination layer and if so then it is allocated a new name. */
@@ -2649,10 +2653,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	}
 
 	if (item_type_id == "sg.trw.track") {
-		Track * trk = this->tracks->at(sublayer_uid);
+		Track * trk = this->tracks->items.at(sublayer_uid);
 		Track * trk2 = new Track(*trk);
 
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name_);
+		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
 		trk2->set_name(uniq_name);
 		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
@@ -2665,10 +2669,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	}
 
 	if (item_type_id == "sg.trw.route") {
-		Track * trk = this->routes->at(sublayer_uid);
+		Track * trk = this->routes->items.at(sublayer_uid);
 		Track * trk2 = new Track(*trk);
 
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name_);
+		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
 		trk2->set_name(uniq_name);
 
 		trw_dest->add_route(trk2);
@@ -2680,7 +2684,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		Waypoint * wp = this->waypoints->items.at(sublayer_uid);
 		Waypoint * wp2 = new Waypoint(*wp);
 
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, wp->name_);
+		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, wp->name);
 		wp2->set_name(uniq_name);
 
 		trw_dest->add_waypoint(wp2);
@@ -2688,13 +2692,12 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		this->delete_waypoint(wp);
 
 		/* Recalculate bounds even if not renamed as maybe dragged between layers. */
-		trw_dest->waypoints.calculate_bounds();
-		trw_src->waypoints.calculate_bounds();
+		trw_dest->waypoints->calculate_bounds();
+		trw_src->waypoints->calculate_bounds();
 		/* Reset layer timestamps in case they have now changed. */
 		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
 		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
 	}
-#endif
 }
 
 

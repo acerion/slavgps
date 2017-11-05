@@ -56,6 +56,7 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "layer_mapnik.h"
 #include "widget_file_entry.h"
 #include "file.h"
+#include "file_utils.h"
 
 
 
@@ -720,13 +721,12 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, Coord * coord_ul, Coord * coord_b
 
 #ifdef K
 	g_hash_table_insert(requests, request, NULL);
-
+#endif
 	tp_mutex.unlock();
 
 	const QString base_name = FileUtils::get_base_name(name_);
 	const QString job_description = QString(tr("Mapnik Render %1:%2:%3 %4")).arg(zoom).arg(x).arg(y).arg(base_name);
 	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
-#endif
 }
 
 
@@ -739,13 +739,12 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, Coord * coord_ul, Coord * coord_b
 QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rerender_)
 {
 	*rerender_ = false;
-	QPixmap *pixmap = NULL;
+	QPixmap * pixmap = NULL;
 	char *filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul->x, ti_ul->y, ti_ul->scale);
 
 	struct stat stat_buf;
 	if (stat(filename, &stat_buf) == 0) {
 		/* Get from disk. */
-#ifdef K
 		pixmap = new QPixmap();
 		if (!pixmap->load(filename)) {
 			delete pixmap;
@@ -761,7 +760,6 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 		if (planet_import_time < stat_buf.st_mtime) {
 			*rerender_ = true;
 		}
-#endif
 	}
 	free(filename);
 
@@ -997,9 +995,6 @@ static void mapnik_layer_about(menu_array_values * values)
 
 void LayerMapnik::add_menu_items(QMenu & menu)
 {
-#ifdef K
-	LayersPanel * panel = (LayersPanel *) panel_;
-
 	static menu_array_values values = {
 		this,
 	};
@@ -1010,29 +1005,38 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	if (vik_debug) {
 		action = new QAction(QObject::tr("&Flush Memory Cache"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+#ifdef K
 		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_flush_memory));
-		menu->addAction(action);
+#endif
+		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("Re&fresh"), this);
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_reload));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	if ("" != this->filename_css) {
 		action = new QAction(QObject::tr("&Run Carto Command"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
+#ifdef K
 		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_carto));
-		menu->addAction(action);
+#endif
+		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("&Info"), this);
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_information));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&About"), this);
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_about));
-	menu->addAction(action);
 #endif
+	menu.addAction(action);
 }
 
 
@@ -1163,7 +1167,7 @@ bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 	if (ev->button() == Qt::RightButton) {
 		this->rerender_ul = tool->viewport->screen_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
 		this->rerender_zoom = tool->viewport->get_zoom();
-#ifdef K
+
 		if (!this->right_click_menu) {
 			QAction * action = NULL;
 			this->right_click_menu = new QMenu();
@@ -1171,16 +1175,15 @@ bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 			action = new QAction(QObject::tr("&Rerender Tile"), this);
 			action->setIcon(QIcon::fromTheme("GTK_STOCK_REFRESH"));
 			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_rerender_cb));
-			menu->addAction(action);
+			this->right_click_menu->addAction(action);
 
 			action = new QAction(QObject::tr("&Info"), this);
 			action->setIcon(QIcon::fromTheme("GTK_STOCK_INFO"));
 			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_tile_info_cb));
-			menu->addAction(action);
+			this->right_click_menu->addAction(action);
 		}
 
 		this->right_click_menu->exec(QCursor::pos());
-#endif
 	}
 
 	return false;
