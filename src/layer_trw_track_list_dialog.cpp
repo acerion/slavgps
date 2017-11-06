@@ -309,28 +309,20 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format)
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
 	trk_dist = convert_distance_meters_to(trk_dist, distance_unit);
 
 	/* Get start date. */
-	char time_buf[32];
-	time_buf[0] = '\0';
+	QString start_date;
 	if (!trk->empty()
 	    && (*trk->trackpoints.begin())->has_timestamp) {
-#ifdef K
-#if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpoints.begin())->timestamp);
-		char * time = g_date_time_format(gdt, date_format.toUtf8().constData());
-		g_strlcpy(time_buf, time, sizeof(time_buf));
-#else
-		GDate * gdate_start = g_date_new();
-		g_date_set_time_t(gdate_start, (*trk->trackpoints.begin())->timestamp);
-		g_date_strftime(time_buf, sizeof(time_buf), date_format.toUtf8().constData(), gdate_start);
-#endif
-#endif
+
+		QDateTime date_start;
+		date_start.setTime_t((*trk->trackpoints.begin())->timestamp);
+		start_date = date_start.toString(date_format);
 	}
 
 	LayerTRW * trw = trk->get_parent_layer_trw();
@@ -406,7 +398,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	items << item;
 
 	/* DATE_COLUMN */
-	item = new QStandardItem(QString(time_buf));
+	item = new QStandardItem(start_date);
 	item->setToolTip(tooltip);
 	items << item;
 

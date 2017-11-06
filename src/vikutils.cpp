@@ -543,9 +543,8 @@ static void latest_version_thread(Window * window)
 #endif
 
 	/* Update last checked time. */
-	GTimeVal time;
-	g_get_current_time(&time);
-	ApplicationState::set_string(VIK_SETTINGS_VERSION_CHECKED_DATE, g_time_val_to_iso8601(&time));
+	const QDateTime date_time_now = QDateTime::currentDateTime();
+	ApplicationState::set_string(VIK_SETTINGS_VERSION_CHECKED_DATE, date_time_now.toString(Qt::ISODate));
 }
 
 
@@ -577,48 +576,41 @@ void SGUtils::check_latest_version(Window * window)
 		check_period = 14;
 	}
 
-#ifdef K
-
-	/* Get last checked date... */
-	GDate *gdate_last = g_date_new();
-	GDate *gdate_now = g_date_new();
-	GTimeVal time_last;
-	QString last_checked_date;
-
-	/* When no previous date available - set to do the version check. */
-	if (ApplicationState::get_string(VIK_SETTINGS_VERSION_CHECKED_DATE, last_checked_date)) {
-		if (g_time_val_from_iso8601(last_checked_date.toUtf8().constData(), &time_last)) {
-			g_date_set_time_val(gdate_last, &time_last);
-		} else {
+	/* Get date of last checking of version. */
+	QDateTime date_last;
+	QString date_last_string;
+	if (ApplicationState::get_string(VIK_SETTINGS_VERSION_CHECKED_DATE, date_last_string)) {
+		date_last = QDateTime::fromString(date_last_string, Qt::ISODate);
+		if (!date_last.isValid()) {
+			/* Previous check date is invalid, so force performing check of version. */
 			do_check = true;
 		}
 	} else {
+		/* Previous check date is unavailable, so force performing check of version. */
 		do_check = true;
 	}
 
-	GTimeVal time_now;
-	g_get_current_time(&time_now);
-	g_date_set_time_val(gdate_now, &time_now);
 
 	if (!do_check) {
-		/* Dates available so do the comparison. */
-		g_date_add_days(gdate_last, check_period);
-		if (g_date_compare(gdate_last, gdate_now) < 0) {
+		/* Until now the check was not forced by unavailability or invalidity data.
+		   See if it will be forced by the fact that check_period elapsed. */
+		QDateTime date_now = QDateTime::currentDateTime();
+		date_last.addDays(check_period);
+		if (date_last.date() < date_now.date()) {
 			do_check = true;
 		}
 	}
 
-	g_date_free(gdate_last);
-	g_date_free(gdate_now);
-
 	if (do_check) {
+#ifdef K
 #if GLIB_CHECK_VERSION (2, 32, 0)
 		g_thread_try_new("latest_version_thread", (GThreadFunc)latest_version_thread, window, NULL);
 #else
 		g_thread_create((GThreadFunc)latest_version_thread, window, false, NULL);
 #endif
-	}
 #endif
+	}
+
 }
 
 

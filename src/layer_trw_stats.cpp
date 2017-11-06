@@ -25,6 +25,7 @@
 #include <cassert>
 #include <time.h>
 
+#include <QDateTime>
 #include <QDebug>
 
 #include "window.h"
@@ -113,32 +114,30 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	}
 
 
-#ifdef K
+
 	/* 1: Date Range */
 
 	/* Check for potential date range. */
 	/* Test if the same day by comparing the date string of the timestamp. */
-	GDate* gdate_start = g_date_new();
-	g_date_set_time_t (gdate_start, stats.start_time);
-	char time_start[32];
-	g_date_strftime(time_start, sizeof(time_start), "%x", gdate_start);
-	g_date_free(gdate_start);
+	QDateTime date_start;
+	date_start.setTime_t(stats.start_time);
+	/* Viking's C code used strftime()'s %x specifier: "The preferred date representation for current locale without the time". */
+	const QString time_start = date_start.toString(Qt::SystemLocaleLongDate);
 
-	GDate* gdate_end = g_date_new ();
-	g_date_set_time_t (gdate_end, stats.end_time);
-	char time_end[32];
-	g_date_strftime(time_end, sizeof(time_end), "%x", gdate_end);
-	g_date_free(gdate_end);
+	QDateTime date_end;
+	date_end.setTime_t(stats.end_time);
+	/* Viking's C code used strftime()'s %x specifier: "The preferred date representation for current locale without the time". */
+	const QString time_end = date_end.toString(Qt::SystemLocaleLongDate);
 
 	if (stats.start_time == stats.end_time) {
 		tmp_string = tr("No Data");
-	} else if (strncmp(time_start, time_end, 32)) {
+	} else if (time_start != time_end) {
 		tmp_string = tr("%1 --> %2").arg(time_start).arg(time_end);
 	} else {
 		tmp_string = time_start;
 	}
 	((QLabel *) grid->itemAtPosition(1, col)->widget())->setText(tmp_string);
-#endif
+
 
 
 	/* 2: Total Length */

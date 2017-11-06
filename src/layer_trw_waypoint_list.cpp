@@ -27,6 +27,7 @@
 #include <QMenu>
 #include <QDebug>
 #include <QHeaderView>
+#include <QDateTime>
 
 #include "layer.h"
 #include "layer_trw.h"
@@ -390,23 +391,14 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * For each entry we copy the various individual waypoint properties into the table,
  * formatting & converting the internal values into something for display.
  */
-void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format)
+void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
 {
 	/* Get start date. */
-	char time_buf[32] = { 0 };
+	QString start_date;
 	if (wp->has_timestamp) {
-
-#ifdef K
-#if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime * gdt = g_date_time_new_from_unix_utc(wp->timestamp);
-		char * time = g_date_time_format(gdt, date_format.toUtf8().constData());
-		g_strlcpy(time_buf, time, sizeof(time_buf));
-#else
-		GDate * gdate_start = g_date_new();
-		g_date_set_time_t(gdate_start, wp->timestamp);
-		g_date_strftime(time_buf, sizeof(time_buf), date_format.toUtf8().constData(), gdate_start);
-#endif
-#endif
+		QDateTime date_start;
+		date_start.setTime_t(wp->timestamp);
+		start_date = date_start.toString(date_format);
 	}
 
 	LayerTRW * trw = wp->get_parent_layer_trw();
@@ -448,7 +440,7 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const Q
 	items << item;
 
 	/* DATE_COLUMN */
-	item = new QStandardItem(QString(time_buf));
+	item = new QStandardItem(start_date);
 	item->setToolTip(tooltip);
 	items << item;
 

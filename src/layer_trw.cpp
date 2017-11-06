@@ -34,6 +34,8 @@
 #include <cctype>
 #include <cassert>
 
+#include <QDateTime>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -1507,7 +1509,7 @@ QString LayerTRW::get_tooltip()
 {
 	char tbuf1[64] = { 0 };
 	char tbuf2[64] = { 0 };
-	char tbuf3[64] = { 0 };
+	QString tracks_duration;
 	char tbuf4[10] = { 0 };
 
 	static char tmp_buf[128] = { 0 };
@@ -1518,21 +1520,19 @@ QString LayerTRW::get_tooltip()
 		tooltip_tracks tt = { 0.0, 0, 0, 0 };
 		trw_layer_tracks_tooltip(this->tracks->items, &tt);
 
-		GDate* gdate_start = g_date_new();
-		g_date_set_time_t(gdate_start, tt.start_time);
+		QDateTime date_start;
+		date_start.setTime_t(tt.start_time);
 
-		GDate* gdate_end = g_date_new();
-		g_date_set_time_t(gdate_end, tt.end_time);
+		QDateTime date_end;
+		date_end.setTime_t(tt.end_time);
 
-		if (g_date_compare(gdate_start, gdate_end)) {
+		if (date_start != date_end) { /* TODO: should we compare dates/times, or only dates? */
 			/* Dates differ so print range on separate line. */
-			g_date_strftime(tbuf1, sizeof(tbuf1), "%x", gdate_start);
-			g_date_strftime(tbuf2, sizeof(tbuf2), "%x", gdate_end);
-			snprintf(tbuf3, sizeof(tbuf3), "%s to %s\n", tbuf1, tbuf2);
+			tracks_duration = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 		} else {
 			/* Same date so just show it and keep rest of text on the same line - provided it's a valid time! */
 			if (tt.start_time != 0) {
-				g_date_strftime(tbuf3, sizeof(tbuf3), "%x: ", gdate_start);
+				tracks_duration = date_start.toString(Qt::SystemLocaleLongDate);
 			}
 		}
 
@@ -1552,7 +1552,7 @@ QString LayerTRW::get_tooltip()
 			}
 			snprintf(tbuf2, sizeof(tbuf2),
 				 _("\n%sTotal Length %.1f %s%s"),
-				 tbuf3, len_in_units, tbuf4, tbuf1);
+				 tracks_duration, len_in_units, tbuf4, tbuf1);
 		}
 
 		tbuf1[0] = '\0';
@@ -1572,8 +1572,6 @@ QString LayerTRW::get_tooltip()
 			 _("Tracks: %ld - Waypoints: %ld - Routes: %ld%s%s"),
 			 this->tracks->items.size(), this->waypoints->items.size(), this->routes->items.size(), tbuf2, tbuf1);
 
-		g_date_free(gdate_start);
-		g_date_free(gdate_end);
 	}
 	return QString(tmp_buf);
 }
@@ -4411,16 +4409,16 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 		}
 
 		if (need_to_set_time) {
-			GTimeVal timestamp;
-			timestamp.tv_usec = 0;
-			timestamp.tv_sec = this->get_timestamp();
-
-			/* No time found - so use 'now' for the metadata time. */
-			if (timestamp.tv_sec == 0) {
-				g_get_current_time(&timestamp);
+			QDateTime meta_time;
+			const time_t timestamp = this->get_timestamp();
+			if (timestamp == 0) {
+				/* No time found - so use 'now' for the metadata time. */
+				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
+			} else {
+				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO: replace with setSecsSinceEpoch() in future. */
 			}
 
-			this->metadata->timestamp = QString(g_time_val_to_iso8601(&timestamp));
+			this->metadata->timestamp = meta_time.toString(Qt::ISODate);
 		}
 	}
 }
