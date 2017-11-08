@@ -358,7 +358,7 @@ void TrackProfileDialog::draw_marks(Viewport * viewport,
 		qDebug() << "WW: Track Profile: NOT restoring saved image";
 	}
 
-#ifdef K
+#if 0 /* Unused code. Leaving as reference. */
 	/* ATM always save whole image - as anywhere could have changed. */
 	if (saved_img->img) {
 		gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_TOP + graph_height);

@@ -123,7 +123,7 @@ QPixmap * a_thumbnails_get_default()
 
 
 /* Filename must be absolute. you could have a function to make sure it exists and absolutize it. */
-void a_thumbnails_create(const char * filename)
+void SlavGPS::a_thumbnails_create(const char * filename)
 {
 	QPixmap * pixmap = a_thumbnails_get(filename);
 
@@ -311,11 +311,11 @@ QPixmap * SlavGPS::a_thumbnails_get(const char * pathname)
 
 
 	QPixmap * thumb = new QPixmap();
-#ifdef K
 	if (!thumb->load(thumb_path)) {
 		goto err;
 	}
 
+#ifdef K
 	/* Note that these don't need freeing... */
 	ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
 	if (!ssize) {
@@ -335,17 +335,20 @@ QPixmap * SlavGPS::a_thumbnails_get(const char * pathname)
 	if (info.st_mtime != atol(smtime) || info.st_size != atol(ssize)) {
 		goto err;
 	}
+#endif
 
 	goto out;
 err:
 	if (thumb) {
+#ifdef K
 		g_object_unref(G_OBJECT (thumb));
+#endif
 	}
 	thumb = NULL;
 out:
 	free(path);
 	free(thumb_path);
-#endif
+
 	return thumb;
 
 }

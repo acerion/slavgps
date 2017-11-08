@@ -480,11 +480,16 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 	if (source_interface_->is_thread) {
 		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
+
+
+			/* Consider using QThreadPool and QRunnable. */
 #if GLIB_CHECK_VERSION (2, 32, 0)
 			g_thread_try_new("get_from_anything", (GThreadFunc)get_from_anything, wi, NULL);
 #else
 			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
 #endif
+
+
 			gtk_dialog_run(GTK_DIALOG(setup_dialog));
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */

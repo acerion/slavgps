@@ -135,9 +135,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 
 	const QString cwd = QDir::currentPath();
 	if (!cwd.isEmpty()) {
-#ifdef K
-		gtk_file_chooser_set_current_folder(dialog, cwd);
-#endif
+		dialog->file_entry->file_selector->setDirectoryUrl(QUrl(cwd));
 	}
 
 	/* Set possible name of the file. */

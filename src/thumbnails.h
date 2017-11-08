@@ -24,8 +24,6 @@
 
 
 
-#include <cstdint>
-
 #include <QPixmap>
 
 

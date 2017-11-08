@@ -1905,7 +1905,8 @@ void Viewport::snapshot_save()
 {
 	qDebug() << "II: Viewport: save snapshot";
 	*this->snapshot_buffer = *this->scr_buffer;
-#ifdef K
+
+#if 0   /* Not used anymore. Keeping it for reference. */
 	gdk_draw_drawable(this->snapshot_buffer, this->background_pen, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
@@ -1917,7 +1918,8 @@ void Viewport::snapshot_load()
 {
 	qDebug() << "II: Viewport: load snapshot";
 	*this->scr_buffer = *this->snapshot_buffer;
-#ifdef K
+
+#if 0   /* Not used anymore. Keeping it for reference. */
 	gdk_draw_drawable(this->scr_buffer, this->background_pen, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }

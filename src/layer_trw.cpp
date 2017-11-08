@@ -65,6 +65,7 @@
 #include "util.h"
 #include "generic_tools.h"
 #include "toolbox.h"
+#include "thumbnails.h"
 
 
 #include "layer_gps.h"
@@ -81,7 +82,7 @@
 
 #ifdef K
 #include "garminsymbols.h"
-#include "thumbnails.h"
+
 #include "background.h"
 #include "gpx.h"
 #include "geojson.h"
@@ -1552,7 +1553,7 @@ QString LayerTRW::get_tooltip()
 			}
 			snprintf(tbuf2, sizeof(tbuf2),
 				 _("\n%sTotal Length %.1f %s%s"),
-				 tracks_duration, len_in_units, tbuf4, tbuf1);
+				 tracks_duration.toUtf8().constData(), len_in_units, tbuf4, tbuf1);
 		}
 
 		tbuf1[0] = '\0';
@@ -2159,10 +2160,9 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	GtkWidget *response_w = NULL;
-#ifdef K
+
 #if GTK_CHECK_VERSION (2, 20, 0)
 	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
 #endif
 
 	if (response_w) {
@@ -4113,53 +4113,109 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 
 /**
- * @vertical: The reposition strategy. If Vertical moves dialog vertically, otherwise moves it horizontally
- *
- * Try to reposition a dialog if it's over the specified coord
- *  so to not obscure the item of interest
- */
+   @vertical: The reposition strategy. If Vertical moves dialog vertically, otherwise moves it horizontally
+
+   Try to reposition a dialog if it's over the specified coord
+   so to not obscure the item of interest
+*/
 void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 {
 	Window * parent_window = this->get_window(); /* i.e. the main window. */
+	Viewport * viewport = g_tree->tree_get_main_viewport();
+
+	/* TODO: improve this code, it barely works. */
 
 	int win_pos_x = parent_window->x();
 	int win_pos_y = parent_window->y();
 	int win_size_x = parent_window->width();
 	int win_size_y = parent_window->height();
 
-	int dia_pos_x = dialog->x();
-	int dia_pos_y = dialog->y();
-	int dia_size_x = dialog->width();
-	int dia_size_y = dialog->height();
+	const QPoint global_dialog_pos = dialog->mapToGlobal(QPoint(0, 0));
+	int dialog_width = dialog->width();
+	int dialog_height = dialog->height();
+
+	/* Viewport's position relative to parent widget. */
+	int viewport_pos_x = viewport->x();
+	int viewport_pos_y = viewport->y();
 
 
 	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
-	if (dia_pos_x <= 2 || dia_pos_y <= 2) {
+	if (dialog_width <= 2 || dialog_height <= 2) {
 		qDebug() << "WW: Layer TRW: can't position dialog window";
 		return;
 	}
 
-	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	int vp_xx, vp_yy; /* In viewport pixels. */
-	viewport->coord_to_screen(coord, &vp_xx, &vp_yy);
+	int in_viewport_x, in_viewport_y; /* In viewport pixels. */
+	viewport->coord_to_screen(coord, &in_viewport_x, &in_viewport_y);
+	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(in_viewport_x, in_viewport_y));
 
-#ifdef K
-	/* Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position. */
+	if (global_coord_pos.x() < global_dialog_pos.x()) {
+		/* Point visible, on left side of dialog. */
+		return;
+	}
+	if (global_coord_pos.y() < global_dialog_pos.y()) {
+		/* Point visible, above dialog. */
+		return;
+	}
+	if (global_coord_pos.x() > (global_dialog_pos.x() + dialog_width)) {
+		/* Point visible, on right side of dialog. */
+		return;
+	}
+	if (global_coord_pos.y() > (global_dialog_pos.y() + dialog_height)) {
+		/* Point visible, below dialog. */
+		return;
+	}
 
+	const QPoint in_window_coord_pos = parent_window->mapFromGlobal(global_coord_pos);
+
+	if (vertical) {
+		/* Shift up or down. */
+		const int viewport_height = viewport->get_height();
+		if (in_viewport_y < viewport_height / 2) {
+			/* Point's coordinate is in upper half of viewport.
+			   Move dialog below the point. Don't change x coordinate of dialog. */
+			dialog->move(dialog->x(), in_window_coord_pos.y() + 10);
+		} else {
+			/* Point's coordinate is in lower half of viewport.
+			   Move dialog above the point. Don't change x coordinate of dialog. */
+			int dest_y = in_window_coord_pos.y() - dialog_height - 10;
+			if (dest_y < 0) {
+				/* TODO: rewrite it to check that dialog's title bar is still visible. */
+				dest_y = 0;
+			}
+			dialog->move(dialog->x(), dest_y);
+		}
+	} else {
+		/* Shift left or right. */
+		const int viewport_width = viewport->get_width();
+		if (in_viewport_x < viewport_width / 2) {
+			/* Point's coordinate is in left half of viewport.
+			   Move dialog to the right of point. Don't change y coordinate of dialog. */
+			dialog->move(400, dialog->y());
+		} else {
+			/* Point's coordinate is in right half of viewport.
+			   Move dialog to the left of point. Don't change y coordinate of dialog. */
+			dialog->move(0, dialog->y());
+		}
+	}
+
+#if 0
 	int dest_x = 0;
 	int dest_y = 0;
+
+	/* Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position. */
 	if (!gtk_widget_translate_coordinates(viewport->get_widget(), GTK_WIDGET(parent_window), 0, 0, &dest_x, &dest_y)) {
 		return;
 	}
 
 	/* Transform Viewport pixels into absolute pixels. */
-	int tmp_xx = vp_xx + dest_x + win_pos_x - 10;
-	int tmp_yy = vp_yy + dest_y + win_pos_y - 10;
+	int tmp_xx = in_viewport_x + dest_x + win_pos_x - 10;
+	int tmp_yy = in_viewport_y + dest_y + win_pos_y - 10;
 
 	/* Is dialog over the point (to within an  ^^ edge value). */
-	if ((tmp_xx > dia_pos_x) && (tmp_xx < (dia_pos_x + dia_size_x))
-	    && (tmp_yy > dia_pos_y) && (tmp_yy < (dia_pos_y + dia_size_y))) {
+	if ((tmp_xx > global_dialog_pos.x()) && (tmp_xx < (global_dialog_pos.x() + dialog_width))
+	    && (tmp_yy > global_dialog_pos.y()) && (tmp_yy < (global_dialog_pos.y() + dialog_height))) {
 
 		if (vertical) {
 			/* Shift up<->down. */
@@ -4168,14 +4224,14 @@ void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 			/* Consider the difference in viewport to the full window. */
 			int offset_y = dest_y;
 			/* Add difference between dialog and window sizes. */
-			offset_y += win_pos_y + (hh/2 - dia_size_y)/2;
+			offset_y += win_pos_y + (hh/2 - dialog_height)/2;
 
-			if (vp_yy > hh/2) {
+			if (in_viewport_y > hh/2) {
 				/* Point in bottom half, move window to top half. */
-				gtk_window_move(dialog, dia_pos_x, offset_y);
+				dialog->move(global_dialog_pos.x(), offset_y);
 			} else {
 				/* Point in top half, move dialog down. */
-				gtk_window_move(dialog, dia_pos_x, hh/2 + offset_y);
+				dialog->move(global_dialog_pos.x(), hh/2 + offset_y);
 			}
 		} else {
 			/* Shift left<->right. */
@@ -4184,14 +4240,14 @@ void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 			/* Consider the difference in viewport to the full window. */
 			int offset_x = dest_x;
 			/* Add difference between dialog and window sizes. */
-			offset_x += win_pos_x + (ww/2 - dia_size_x)/2;
+			offset_x += win_pos_x + (ww/2 - dialog_width)/2;
 
-			if (vp_xx > ww/2) {
+			if (in_viewport_x > ww/2) {
 				/* Point on right, move window to left. */
-				gtk_window_move(dialog, offset_x, dia_pos_y);
+				dialog->move(offset_x, global_dialog_pos.y());
 			} else {
 				/* Point on left, move right. */
-				gtk_window_move(dialog, ww/2 + offset_x, dia_pos_y);
+				dialog->move(ww/2 + offset_x, global_dialog_pos.y());
 			}
 		}
 	}
@@ -4239,23 +4295,22 @@ static int create_thumbnails_thread(BackgroundJob * bg_job);
 /* Structure for thumbnail creating data used in the background thread. */
 class ThumbnailCreator : public BackgroundJob {
 public:
-	ThumbnailCreator(LayerTRW * layer, QStringList * pics_);
-	~ThumbnailCreator();
+	ThumbnailCreator(LayerTRW * layer, const QStringList & pictures);
 
 	LayerTRW * layer = NULL;  /* Layer needed for redrawing. */
-	QStringList * pics = NULL;     /* Image list. */
+	QStringList pictures_list;
 };
 
 
 
 
-ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, QStringList * pics_)
+ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, const QStringList & pictures)
 {
 	this->thread_fn = create_thumbnails_thread;
-	this->n_items = pics_->size();
+	this->n_items = pictures.size();
 
-	layer = layer_;
-	pics = pics_;
+	this->layer = layer_;
+	this->pictures_list = pictures;
 }
 
 
@@ -4265,18 +4320,14 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 {
 	ThumbnailCreator * creator = (ThumbnailCreator *) bg_job;
 
-	unsigned int total = creator->pics->size();
-	unsigned int done = 0;
-	while (creator->pics) {
-#ifdef K
-		a_thumbnails_create((char *) creator->pics->data);
-		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
-		if (result != 0) {
+	const int n = creator->pictures_list.size();
+	for (int i = 0; i < n; i++) {
+		const QString path = creator->pictures_list.at(i);
+
+		a_thumbnails_create(path.toUtf8().constData());
+		if (0 != a_background_thread_progress(bg_job, (i + 1.0) / n)) {
 			return -1; /* Abort thread. */
 		}
-
-		creator->pics = creator->pics->next;
-#endif
 	}
 
 	/* Redraw to show the thumbnails as they are now created. */
@@ -4285,14 +4336,6 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 	}
 
 	return 0;
-}
-
-
-
-
-ThumbnailCreator::~ThumbnailCreator()
-{
-	delete this->pics;
 }
 
 
@@ -4312,8 +4355,10 @@ void LayerTRW::verify_thumbnails(void)
 	}
 
 	const QString job_description = QString(tr("Creating %1 Image Thumbnails...")).arg(len);
-	ThumbnailCreator * creator = new ThumbnailCreator(this, pics);
+	ThumbnailCreator * creator = new ThumbnailCreator(this, *pics);
 	a_background_thread(creator, ThreadPoolType::LOCAL, job_description);
+
+	delete pics; /* The list of pictures has been copied to Thumbnail creator, so it's safe to delete it here. */
 }
 
 

@@ -900,6 +900,7 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 
 		const QString image = wp->image;
 		QPixmap * regularthumb = a_thumbnails_get(wp->image.toUtf8().constData());
+
 #ifdef K
 		if (!regularthumb) {
 			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
@@ -910,7 +911,7 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 			if (this->trw->wp_image_size == 128) {
 				cp->pixmap = regularthumb;
 			} else {
-				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, this->trw->wp_image_size, this->trw->image_size);
+				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, this->trw->wp_image_size, this->trw->wp_image_size);
 				assert (cp->pixmap);
 				g_object_unref(G_OBJECT(regularthumb));
 			}
@@ -1016,7 +1017,8 @@ void TRWPainter::draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highli
 {
 	/* Could this be stored in the waypoint rather than recreating each pass? */
 
-#ifdef K
+#if 0
+	/* Unused. Leaving as reference. */
 	int label_x, label_y;
 	int label_width, label_height;
 	pango_layout_get_pixel_size(this->trw->wplabellayout, &label_width, &label_height);
@@ -1026,14 +1028,13 @@ void TRWPainter::draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highli
 	} else {
 		label_y = y - this->trw->wp_marker_size - label_height - 2;
 	}
-#else
+#endif
+
 	int label_x = x;
 	int label_y = y;
 	int label_width = 100;
 	int label_height = 50;
 	this->trw->wp_label_fg_pen = QPen(this->trw->wp_label_fg_color);
-#endif
-
 
 	if (/* this->highlight */ do_highlight) {
 

@@ -1348,11 +1348,14 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->total_count = -1;
 
 		/* Starting gps read/write thread. */
+
+		/* Consider using QThreadPool and QRunnable. */
 #if GLIB_CHECK_VERSION (2, 32, 0)
 		g_thread_try_new("gps_comm_thread", (GThreadFunc)gps_comm_thread, sess, NULL);
 #else
 		g_thread_create((GThreadFunc)gps_comm_thread, sess, false, NULL);
 #endif
+
 
 		gtk_dialog_set_default_response(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT);
 		gtk_dialog_run(GTK_DIALOG(sess->dialog));

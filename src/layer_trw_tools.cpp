@@ -892,11 +892,11 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		/* Display of the distance 'tooltip' during track creation is controlled by a preference. */
 		if (Preferences::get_create_track_tooltip()) {
-			QString str = distance_string(distance);
+			const QString distance_label = distance_string(distance);
 #ifdef K
 			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport), NULL);
 			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport)->font_desc);
-			pango_layout_set_text(pl, str, -1);
+			pango_layout_set_text(pl, distance_label, -1);
 			int wd, hd;
 			pango_layout_get_pixel_size(pl, &wd, &hd);
 
@@ -1565,11 +1565,11 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 	/* Remove last ' to:...' */
 	if (!track->comment.isEmpty()) {
 #ifdef K
-		char *last_to = strrchr(track->comment_, 't');
-		if (last_to && (last_to - track->comment_ > 1)) {
-			char *new_comment = g_strndup(track->comment_,
-						      last_to - track->comment_ - 1); /* FIXME: memory leak. */
-			track->set_comment(QString(new_comment));
+		char *last_to = strrchr(track->comment, 't');
+		if (last_to && (last_to - track->comment > 1)) {
+			char *new_comment = g_strndup(track->comment,
+						      last_to - track->comment - 1); /* FIXME: memory leak. */
+			track->set_comment(new_comment);
 		}
 #endif
 	}
