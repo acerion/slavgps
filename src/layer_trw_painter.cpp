@@ -899,11 +899,11 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image << "not found in cache";
 
 		const QString image = wp->image;
-		QPixmap * regularthumb = a_thumbnails_get(wp->image.toUtf8().constData());
+		QPixmap * regularthumb = Thumbnails::get_thumbnail(wp->image);
 
 #ifdef K
 		if (!regularthumb) {
-			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
+			regularthumb = Thumbnails::get_default_thumbnail(); /* cache one 'not yet loaded' for all thumbs not loaded */
 			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
 		}
 		if (regularthumb) {
@@ -935,7 +935,7 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 
 			pixmap = cp->pixmap;
 		} else {
-			pixmap = a_thumbnails_get_default(); /* thumbnail not yet loaded */
+			pixmap = Thumbnails::get_default_thumbnail(); /* thumbnail not yet loaded */
 		}
 #endif
 	}

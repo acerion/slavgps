@@ -67,11 +67,10 @@ namespace SlavGPS {
 
 	public:
 		SlavGPS::SGFileEntry * file_entry = NULL;
+		QComboBox * file_types_combo = NULL;
 
 	private:
 		QHBoxLayout * build_mode_selector(bool tracks, bool routes, bool waypoints);
-
-		QComboBox * file_types_combo = NULL;
 		QVBoxLayout * vbox = NULL;
 		QHBoxLayout * mode_box = NULL;
 		QDialogButtonBox * button_box = NULL;

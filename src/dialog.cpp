@@ -182,13 +182,12 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
 
 void Dialog::about(QWidget * parent)
 {
-#ifdef K
-	const char *program_name = PACKAGE_NAME;
-	const char *version = VIKING_VERSION;
-	const char *website = VIKING_URL;
-	const char *copyright = "2003-2008, Evan Battaglia\n2008-" THEYEAR", Viking's contributors";
-	const char *comments = _("GPS Data and Topo Analyzer, Explorer, and Manager.");
-	const char *license = _("This program is free software; you can redistribute it and/or modify "
+	const QString program_name = PACKAGE_NAME;
+	const QString version = VIKING_VERSION;
+	const QString website = VIKING_URL;
+	const QString copyright = QObject::tr("2003-2008, Evan Battaglia\n2008-" THEYEAR", Viking's contributors");
+	const QString comments = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.");
+	const QString license = QObject::tr("This program is free software; you can redistribute it and/or modify "
 				"it under the terms of the GNU General Public License as published by "
 				"the Free Software Foundation; either version 2 of the License, or "
 				"(at your option) any later version."
@@ -205,14 +204,17 @@ void Dialog::about(QWidget * parent)
 	/* Would be nice to use gtk_about_dialog_add_credit_section (), but that requires gtk 3.4. */
 	/* For now shove it in the 'artists' section so at least the information is easily visible. */
 	/* Something more advanced might have proper version information too... */
-	const char *libs[] = {
-		"Compiled in libraries:",
-		/* Default libs. */
-		"libglib-2.0",
-		"libgthread-2.0",
-		"libgtk+-2.0",
-		"libgio-2.0",
-		/* Potentially optional libs (but probably couldn't build without them). */
+	QStringList libs;
+	libs << QObject::tr("Compiled in libraries:");
+
+	/* Default libs. */
+	libs << "libglib-2.0" << "libgthread-2.0" << "libgtk+-2.0" << "libgio-2.0";
+
+	/* TODO: write own About dialog? */
+	QMessageBox::about(parent, QObject::tr("About Viking"), license);
+
+#ifdef K
+	/* Potentially optional libs (but probably couldn't build without them). */
 #ifdef HAVE_LIBM
 		"libm",
 #endif
@@ -253,8 +255,8 @@ void Dialog::about(QWidget * parent)
 #ifdef HAVE_LIBMAPNIK
 		"libmapnik",
 #endif
-		NULL
-	};
+
+
 	/* Newer versions of GTK 'just work', calling gtk_show_uri() on the URL or email and opens up the appropriate program.
 	   This is the old method: */
 	gtk_about_dialog_set_url_hook(about_url_hook, NULL, NULL);
@@ -275,7 +277,8 @@ void Dialog::about(QWidget * parent)
 			      "translator-credits", _("Translation is coordinated on http://launchpad.net/viking"),
 			      "artists", libs,
 			      NULL);
-#endif
+
+#endif /* #ifdef K */
 }
 
 

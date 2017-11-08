@@ -40,11 +40,6 @@ using namespace SlavGPS;
 
 
 
-/* Compatibility */
-#if ! GLIB_CHECK_VERSION(2,22,0)
-#define g_mapped_file_unref g_mapped_file_free
-#endif
-
 #define GOOGLE_GOTO_URL_FMT "http://maps.google.com/maps?q=%s&output=js"
 #define GOOGLE_GOTO_PATTERN_1 "{center:{lat:"
 #define GOOGLE_GOTO_PATTERN_2 ",lng:"
@@ -139,7 +134,7 @@ bool GotoToolGoogle::parse_file_for_latlon(char * file_name, struct LatLon * ll)
 	ll->lon = g_ascii_strtod(lon_buf, NULL);
 
  done:
-	g_mapped_file_unref(mf);
+	g_mapped_file_free(mf);
 	return (found);
 
 }

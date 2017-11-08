@@ -48,11 +48,7 @@
 #include "gpspoint.h"
 #include "gpsmapper.h"
 #include "geojson.h"
-#ifdef K
-#include "babel.h"
 #include "misc/strtod.h"
-#endif
-
 #include "file.h"
 #include "gpx.h"
 #include "file_utils.h"
@@ -63,6 +59,10 @@
 #include "layer_trw_track_internal.h"
 #include "util.h"
 #include "vikutils.h"
+
+#if 0
+#include "babel.h"
+#endif
 
 
 
@@ -509,29 +509,13 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 				}
 				/* However we'll still carry and attempt to read whatever we can. */
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
-#ifdef K
 				viewport->set_xmpp(strtod_i8n(line+5, NULL));
-#else
-				viewport->set_xmpp(strtod(line+5, NULL));
-#endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
-#ifdef K
 				viewport->set_ympp(strtod_i8n(line+5, NULL));
-#else
-				viewport->set_ympp(strtod(line+5, NULL));
-#endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
-#ifdef K
 				latlon.lat = strtod_i8n(line+4, NULL);
-#else
-				latlon.lat = strtod(line+4, NULL);
-#endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
-#ifdef K
 				latlon.lon = strtod_i8n(line+4, NULL);
-#else
-				latlon.lon = strtod(line+4, NULL);
-#endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
 				viewport->set_drawmode(ViewportDrawMode::UTM);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "expedia") == 0) {
@@ -592,11 +576,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 							SGVariant new_val;
 							switch (param_spec->type) {
 							case SGVariantType::DOUBLE:
-#ifdef K
 								new_val = SGVariant((double) strtod_i8n(line, NULL));
-#else
-								new_val = SGVariant((double) strtod(line, NULL));
-#endif
 								break;
 
 							case SGVariantType::UINT:

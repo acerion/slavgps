@@ -49,13 +49,6 @@ using namespace SlavGPS;
 
 
 
-#ifdef K
-/* Compatibility. */
-#if ! GLIB_CHECK_VERSION(2,22,0)
-#define g_mapped_file_unref g_mapped_file_free
-#endif
-#endif
-
 
 /**
  * See http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox
@@ -416,7 +409,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 	}
 	g_strfreev(found_entries);
 	found_places.reverse();
-	g_mapped_file_unref(mf);
+	g_mapped_file_free(mf);
 
 	return found_places; /* Hopefully Named Return Value Optimization will work here. */
 }

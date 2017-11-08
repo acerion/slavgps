@@ -34,11 +34,14 @@ namespace SlavGPS {
 
 
 
-	bool a_thumbnails_exists(const char * filename);
-	void a_thumbnails_create(const char * filename);
-	QPixmap * a_thumbnails_get(const char * filename);
-	QPixmap * a_thumbnails_get_default();
-	QPixmap * a_thumbnails_scale_pixbuf(QPixmap * src, int max_w, int max_h);
+	class Thumbnails {
+	public:
+		static bool thumbnail_exists(const QString & file_full_path);
+		static void generate_thumbnail(const QString & file_full_path);
+
+		static QPixmap * get_thumbnail(const QString & file_full_path);
+		static QPixmap * get_default_thumbnail();
+	};
 
 
 

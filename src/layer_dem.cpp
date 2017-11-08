@@ -985,11 +985,8 @@ LayerDEM::~LayerDEM()
 	free(this->gradients);
 
 
-#ifdef K
 	DEMCache::unload_from_cache(this->files);
 	this->files.clear();
-#endif
-
 }
 
 

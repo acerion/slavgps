@@ -68,9 +68,8 @@ using namespace SlavGPS;
 
 
 
-#ifdef K
+
 extern std::vector<BabelDevice *> a_babel_device_list;
-#endif
 extern Tree * g_tree;
 
 
@@ -635,50 +634,64 @@ void LayerGPS::change_coord_mode(CoordMode mode)
 
 void LayerGPS::add_menu_items(QMenu & menu)
 {
-#ifdef K
 	static gps_layer_data_t pass_along;
 	pass_along.layer = this;
+#ifdef K
 	pass_along.panel = (LayersPanel *) panel;
+#endif
 
 	QAction * action = NULL;
 
 	action = new QAction(QObject::tr("&Upload to GPS"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_UP"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_upload_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("Download from &GPS"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_DOWN"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_download_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	action = new QAction(this->realtime_tracking ? QObject::tr("_Stop Realtime Tracking") : QObject::tr("_Start Realtime Tracking"), this);
 	action->setIcon(this->realtime_tracking ? QIcon::fromTheme("GTK_STOCK_MEDIA_STOP") : QIcon::fromTheme("GTK_STOCK_MEDIA_PLAY"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_start_stop_tracking_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("Empty &Realtime"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_realtime_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
 	action = new QAction(QObject::tr("E&mpty Upload"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_upload_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&Empty Download"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_download_cb));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("Empty &All"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_all_cb));
-	menu->addAction(action);
 #endif
+	menu.addAction(action);
 }
 
 
@@ -725,7 +738,6 @@ LayerGPS::~LayerGPS()
 
 void LayerGPS::add_children_to_tree(void)
 {
-#if 1
 	/* TODO set to garmin by default.
 	   if (a_babel_device_list)
 	           device = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
@@ -745,7 +757,6 @@ void LayerGPS::add_children_to_tree(void)
 		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb));
 #endif
 	}
-#endif
 }
 
 
@@ -1061,10 +1072,10 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 
 		if (strstr(line, "RECORD")) {
 			if (strlen(line) > 20) {
-				int lsb, msb;
+				unsigned int lsb, msb;
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
-				int cnt = lsb + msb * 256;
+				unsigned int cnt = lsb + msb * 256;
 				set_total_count(cnt, sess);
 				sess->count = 0;
 			}
@@ -1087,7 +1098,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSession * sess)
 {
 	char *line;
-	static int cnt = 0;
+	static unsigned int cnt = 0;
 
 #ifdef K
 	gdk_threads_enter();
@@ -1127,7 +1138,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 
 
 			if (strlen(line) > 20) {
-				int lsb, msb;
+				unsigned int lsb, msb;
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
 				cnt = lsb + msb * 256;

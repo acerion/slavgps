@@ -91,10 +91,8 @@ void SlavGPS::layer_init(void)
 {
 	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
-#ifdef K
 		/* ATM ignore the returned value. */
 		layer_defaults_register(layer_type);
-#endif
 	}
 }
 
@@ -369,9 +367,9 @@ typedef struct {
 
 void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
 {
-#ifdef K
 	layer->marshall(data, data_len);
 	if (*data) {
+#ifdef K
 		header_t * header = (header_t *) malloc(*data_len + sizeof (*header));
 		header->layer_type = layer->type;
 		header->len = *data_len;
@@ -379,8 +377,8 @@ void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
 		free(*data);
 		*data = (uint8_t *) header;
 		*data_len = *data_len + sizeof (*header);
-	}
 #endif
+	}
 }
 
 

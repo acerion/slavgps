@@ -141,12 +141,15 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol_name(param_value.val_string);
 #ifdef K
-		if (g_strcmp0(wp->source, sourceentry->text()))
+		if (g_strcmp0(wp->source, sourceentry->text())) {
 			wp->set_source(sourceentry->text());
-		if (g_strcmp0(wp->type, typeentry->text()))
+		}
+		if (g_strcmp0(wp->type, typeentry->text())) {
 			wp->set_type(typeentry->text());
-		if (wp->image&& *(wp->image) && (!a_thumbnails_exists(wp->image)))
-			a_thumbnails_create (wp->image);
+		}
+		if (wp->image&& *(wp->image) && (!Thumbnails::thumbnail_exists(wp->image))) {
+			Thumbnails::generate_thumbnail(wp->image);
+		}
 
 		GtkTreeIter iter, first;
 		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);

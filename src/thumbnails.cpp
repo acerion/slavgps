@@ -90,14 +90,14 @@ using namespace SlavGPS;
 
 static char *md5_hash(const char * message);
 static QPixmap *save_thumbnail(const char * pathname, QPixmap * full);
-static QPixmap *child_create_thumbnail(const char * path);
+static QPixmap *child_create_thumbnail(const QString & file_full_path);
 
 
 
 
-bool a_thumbnails_exists(const char * filename)
+bool Thumbnails::thumbnail_exists(const QString & file_full_path)
 {
-	QPixmap * pixmap = a_thumbnails_get(filename);
+	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
 	if (pixmap) {
 #ifdef K
 		g_object_unref(G_OBJECT (pixmap));
@@ -110,7 +110,7 @@ bool a_thumbnails_exists(const char * filename)
 
 
 
-QPixmap * a_thumbnails_get_default()
+QPixmap * Thumbnails::get_default_thumbnail()
 {
 	QPixmap * pixmap = NULL;
 #ifdef K
@@ -122,13 +122,13 @@ QPixmap * a_thumbnails_get_default()
 
 
 
-/* Filename must be absolute. you could have a function to make sure it exists and absolutize it. */
-void SlavGPS::a_thumbnails_create(const char * filename)
+/* file_full_path must be absolute. you could have a function to make sure it exists and absolutize it. */
+void Thumbnails::generate_thumbnail(const QString & file_full_path)
 {
-	QPixmap * pixmap = a_thumbnails_get(filename);
+	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
 
 	if (!pixmap) {
-		pixmap = child_create_thumbnail(filename);
+		pixmap = child_create_thumbnail(file_full_path);
 	}
 
 	if (pixmap) {
@@ -167,10 +167,10 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 
 
 
-static QPixmap * child_create_thumbnail(const char * path)
+static QPixmap * child_create_thumbnail(const QString & file_full_path)
 {
 	QPixmap * image = new QPixmap();
-	if (!image->load(path)) {
+	if (!image->load(file_full_path)) {
 		delete image;
 		image = NULL;
 		return NULL;
@@ -182,7 +182,7 @@ static QPixmap * child_create_thumbnail(const char * path)
 	image = tmpbuf;
 
 	if (image) {
-		QPixmap * thumb = save_thumbnail(path, image);
+		QPixmap * thumb = save_thumbnail(file_full_path, image);
 		g_object_unref(G_OBJECT (image));
 		return thumb;
 	}
@@ -295,9 +295,9 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 
 
 
-QPixmap * SlavGPS::a_thumbnails_get(const char * pathname)
+QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 {
-	char * path = file_realpath_dup(pathname);
+	char * path = file_realpath_dup(file_full_path.toUtf8().constData());
 	char * uri = g_strconcat("file://", path, NULL);
 	char * md5 = md5_hash(uri);
 	free(uri);

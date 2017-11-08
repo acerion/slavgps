@@ -1088,7 +1088,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 
 void LayerGeoref::add_menu_items(QMenu & menu)
 {
-#ifdef K
+
 	static georef_data_t pass_along;
 	pass_along.layer = this;
 
@@ -1096,19 +1096,24 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 	action = new QAction(QObject::tr("&Zoom to Fit Map"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_ZOOM_FIT"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_zoom_to_fit));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&Goto Map Center"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_JUMP_TO"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_goto_center));
-	menu->addAction(action);
+#endif
+	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&Export to World File"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_HARDDISK"));
+#ifdef K
 	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_export_params));
-	menu->addAction(action);
 #endif
+	menu.addAction(action);
 }
 
 

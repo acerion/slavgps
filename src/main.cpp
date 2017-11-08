@@ -43,6 +43,7 @@
 #include "vikutils.h"
 #include "curl_download.h"
 #include "util.h"
+#include "version_check.h"
 
 
 
@@ -265,7 +266,7 @@ int main(int argc, char ** argv)
 
 
 
-	SGUtils::check_latest_version(first_window);
+	VersionCheck::run_check(first_window);
 
 	int rv = app.exec();
 

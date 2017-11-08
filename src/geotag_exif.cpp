@@ -56,7 +56,7 @@
 
 
 
-#ifdef K
+#if 0
 #include <glib/gstdio.h>
 #ifdef HAVE_LIBGEXIV2
 #include <gexiv2/gexiv2.h>

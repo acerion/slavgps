@@ -6,6 +6,7 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    version_check.cpp \
     geotag_exif.cpp \
     clipboard.cpp \
     preferences.cpp \
@@ -123,6 +124,7 @@ SOURCES += main.cpp \
     measurements.cpp \
     ui_util.cpp \
     misc/kdtree.c \
+    misc/strtod.c \
     file.cpp \
     dir.cpp \
     gpx.cpp \
@@ -137,6 +139,7 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    version_check.h \
     geotag_exif.h \
     clipboard.h \
     routing.h \
@@ -242,6 +245,7 @@ HEADERS += window.h \
     measurements.h \
     ui_util.h \
     misc/kdtree.h \
+    misc/strtod.h \
     file.h \
     dir.h \
     gpx.h \

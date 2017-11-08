@@ -50,8 +50,6 @@ extern std::map<int, BabelFileType *> a_babel_file_types;
 /* The last used directory. */
 static QUrl last_directory_url;
 
-/* The last used item in file type combo. */
-static int last_combo_index;
 
 /* The last used file filter. */
 /* Nb: we use a complex strategy for this because the UI is rebuild each
@@ -154,10 +152,6 @@ static ProcessOptions * datasource_file_get_process_options(void * unused, void 
 	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
 #endif
 
-#ifdef K
-	/* Retrieve and memorize file format selected. TODO: apply this setting when creating dialog */
-	last_combo_index = data_source_file_dialog->file_types_combo->currentIndex();
-#endif
 
 	const QString selected = (data_source_file_dialog->get_file_type_selection())->name;
 

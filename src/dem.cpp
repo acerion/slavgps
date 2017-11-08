@@ -60,11 +60,6 @@ using namespace SlavGPS;
 
 
 
-/* Compatibility */
-#if ! GLIB_CHECK_VERSION(2,22,0)
-#define g_mapped_file_unref g_mapped_file_free
-#endif
-
 #define DEM_BLOCK_SIZE 1024
 
 
@@ -460,7 +455,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 		unsigned long ucsize;
 
 		if ((unzip_mem = unzip_file(dem_file, &ucsize)) == NULL) {
-			g_mapped_file_unref(mf);
+			g_mapped_file_free(mf);
 			return false;
 		}
 
@@ -477,7 +472,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 		arcsec = 1;
 	} else {
 		qDebug() << "WW: DEM: Read SRTM HGT: file" << basename << "does not have right size";
-		g_mapped_file_unref(mf);
+		g_mapped_file_free(mf);
 		return false;
 	}
 
@@ -505,7 +500,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 	if (zip) {
 		free(dem_mem);
 	}
-	g_mapped_file_unref(mf);
+	g_mapped_file_free(mf);
 	return true;
 }
 #endif

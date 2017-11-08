@@ -4324,7 +4324,7 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 	for (int i = 0; i < n; i++) {
 		const QString path = creator->pictures_list.at(i);
 
-		a_thumbnails_create(path.toUtf8().constData());
+		Thumbnails::generate_thumbnail(path);
 		if (0 != a_background_thread_progress(bg_job, (i + 1.0) / n)) {
 			return -1; /* Abort thread. */
 		}
@@ -4354,7 +4354,7 @@ void LayerTRW::verify_thumbnails(void)
 		return;
 	}
 
-	const QString job_description = QString(tr("Creating %1 Image Thumbnails...")).arg(len);
+	const QString job_description = tr("Creating %1 Image Thumbnails...").arg(len);
 	ThumbnailCreator * creator = new ThumbnailCreator(this, *pics);
 	a_background_thread(creator, ThreadPoolType::LOCAL, job_description);
 

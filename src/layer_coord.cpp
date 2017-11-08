@@ -268,11 +268,6 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		}
 	}
 #undef CLINE
-#ifdef K
-	g_object_unref(dgc);
-	g_object_unref(sgc);
-	g_object_unref(mgc);
-#endif
 	return;
 }
 
