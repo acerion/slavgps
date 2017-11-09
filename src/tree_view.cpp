@@ -201,10 +201,15 @@ void TreeView::erase(TreeIndex const & index)
 
 
 
-void TreeView::set_tree_item_icon(TreeIndex const & item_index, QIcon const * icon)
+void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon)
 {
 	if (!item_index.isValid()) {
 		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
+		return;
+	}
+
+	if (icon.isNull()) {
+		/* Not an error. Perhaps there is no resource defined for an icon. */
 		return;
 	}
 
@@ -217,7 +222,7 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, QIcon const * ic
 		parent_item = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::ICON);
-	ch->setIcon(*icon);
+	ch->setIcon(icon);
 }
 
 

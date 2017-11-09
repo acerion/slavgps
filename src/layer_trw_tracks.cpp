@@ -649,8 +649,7 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 	if (trk->index.isValid()) {
 		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 		pixmap.fill(trk->color);
-		QIcon icon(pixmap);
-		this->tree_view->set_tree_item_icon(trk->index, &icon);
+		this->tree_view->set_tree_item_icon(trk->index, QIcon(pixmap));
 	}
 }
 
@@ -662,11 +661,11 @@ void LayerTRWTracks::add_children_to_tree(void)
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 
-		QIcon * icon = NULL;
+		QIcon icon;
 		if (trk->has_color) {
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 			pixmap.fill(trk->color);
-			icon = new QIcon(pixmap);
+			icon = QIcon(pixmap);
 		}
 
 		time_t timestamp = 0;
@@ -680,8 +679,6 @@ void LayerTRWTracks::add_children_to_tree(void)
 		this->tree_view->add_tree_item(this->index, trk, trk->name);
 		this->tree_view->set_tree_item_icon(trk->index, icon);
 		this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
-
-		delete icon;
 	}
 }
 

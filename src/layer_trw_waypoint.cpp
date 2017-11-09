@@ -33,7 +33,7 @@
 #include "layer_trw_geotag.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoint_properties.h"
-//#include "garminsymbols.h"
+#include "garminsymbols.h"
 #include "dem_cache.h"
 #include "util.h"
 #include "window.h"
@@ -185,14 +185,14 @@ void Waypoint::set_symbol_name(const QString & new_symbol_name)
 		this->symbol_name = "";
 		this->symbol_pixmap = NULL;
 	} else {
-#ifdef K
-		char const * hashed_symname = a_get_hashed_sym(new_symbol_name);
+		char const * hashed_symname = GarminSymbols::get_hashed_symbol_name(new_symbol_name.toUtf8().constData());
 		if (hashed_symname) {
-			new_symbol_name = hashed_symname;
+			this->symbol_name = QString(hashed_symname);
+		} else {
+			this->symbol_name = new_symbol_name;
 		}
-		this->symbol_name = new_symbol_name;
-		this->symbol_pixmap = a_get_wp_sym(symbol);
-#endif
+
+		this->symbol_pixmap = GarminSymbols::get_wp_symbol(this->symbol_name.toUtf8().constData());
 	}
 }
 
@@ -486,7 +486,7 @@ void Waypoint::properties_dialog_cb(void)
 	}
 
 	if (updated && this->index.isValid()) {
-		this->tree_view->set_tree_item_icon(this->index, get_wp_sym_small(this->symbol_name));
+		this->tree_view->set_tree_item_icon(this->index, get_wp_icon_small(this->symbol_name));
 	}
 
 	if (updated && parent_layer_->visible) {

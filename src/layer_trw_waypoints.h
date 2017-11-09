@@ -194,7 +194,7 @@ namespace SlavGPS {
 
 
 
-	QIcon * get_wp_sym_small(const QString & symbol_name);
+	QIcon get_wp_icon_small(const QString & symbol_name);
 
 
 

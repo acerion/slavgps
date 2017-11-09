@@ -29,11 +29,31 @@
 
 
 
-QPixmap * a_get_wp_sym(const char * sym);
-const char *a_get_hashed_sym(const char * sym);
-void a_populate_sym_list(GtkListStore * list);
-/* Use when preferences have changed to reload icons. */
-void clear_garmin_icon_syms(void);
+namespace SlavGPS {
+
+
+
+
+	typedef int GtkListStore;
+
+
+
+
+	class GarminSymbols {
+	public:
+		static QPixmap * get_wp_symbol(const char * symbol_name);
+		static const char * get_hashed_symbol_name(const char * sym);
+
+		static void populate_symbols_list(GtkListStore * list);
+
+		/* Use when preferences have changed to reload icons. */
+		static void clear_symbols(void);
+	};
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

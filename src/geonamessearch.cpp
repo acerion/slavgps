@@ -409,7 +409,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 	}
 	g_strfreev(found_entries);
 	found_places.reverse();
-	g_mapped_file_free(mf);
+	g_mapped_file_unref(mf);
 
 	return found_places; /* Hopefully Named Return Value Optimization will work here. */
 }

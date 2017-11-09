@@ -6,6 +6,7 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc
 
 SOURCES += main.cpp \
+    garminsymbols.cpp \
     version_check.cpp \
     geotag_exif.cpp \
     clipboard.cpp \
@@ -139,6 +140,7 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    garminsymbols.h \
     version_check.h \
     geotag_exif.h \
     clipboard.h \
@@ -264,7 +266,7 @@ HEADERS += window.h \
 
 
 
-# garminsymbols.cpp
+
 # toolbar.cpp
 
 # vikmaptype.cpp

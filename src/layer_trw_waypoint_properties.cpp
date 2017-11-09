@@ -255,7 +255,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 		QObject::connect(symbolentry, SIGNAL("changed"), store, SLOT (symbol_entry_changed_cb));
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, NULL, 1, NULL, 2, _("(none)"), -1);
-		a_populate_sym_list(store);
+		GarminSymbols::populate_symbols_list(store);
 
 		r = gtk_cell_renderer_pixbuf_new();
 		gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (symbolentry), r, false);

@@ -465,12 +465,9 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const Q
 
 	/* SYMBOL_COLUMN */
 	/* TODO: table should be sortable by this column. */
-#ifdef K
-	get_wp_sym_small(wp->symbol_);
-#endif
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	item->setIcon(QIcon::fromTheme("list-add"));
+	item->setIcon(get_wp_icon_small(wp->symbol_name));
 	item->setEditable(false);
 	items << item;
 

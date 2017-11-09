@@ -64,6 +64,7 @@
 #include "map_cache.h"
 #include "tree_view_internal.h"
 #include "measurements.h"
+#include "garminsymbols.h"
 
 
 
@@ -1554,10 +1555,8 @@ void Window::preferences_cb(void) /* Slot. */
 
 	/* Has the waypoint size setting changed? */
 	if (orig_wp_icon_size != Preferences::get_use_large_waypoint_icons()) {
-#ifdef K
 		/* Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed. */
-		clear_garmin_icon_syms();
-#endif
+		GarminSymbols::clear_symbols();
 
 		/* Update all windows. */
 		for (auto iter = window_list.begin(); iter != window_list.end(); iter++) {
