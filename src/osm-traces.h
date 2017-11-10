@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 	void osm_set_login(const char * user, const char * password);
 	char * osm_get_login();
-	void osm_login_widgets(QLineEdit * user_entry, QLineEdit * password_entry);
+	void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry);
 
 
 

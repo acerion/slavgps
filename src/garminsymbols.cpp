@@ -50,7 +50,7 @@ static struct {
 	const char * description;
 	GdkPixdata const * data;
 	GdkPixdata const * data_large;
-	QPixmap * icon;
+	QPixmap * pixmap;
 } garmin_syms[] = {
 #ifdef K
 	/* "symbol_name" are in 'Title Case' like in gpsbabel. This is needed for
@@ -400,34 +400,40 @@ static void init_icons()
 static QPixmap * get_wp_sym_from_index(int i)
 {
 	/* Ensure data exists to either directly load icon or scale from the other set. */
-	if (!garmin_syms[i].icon && (garmin_syms[i].data || garmin_syms[i].data_large)) {
+	if (!garmin_syms[i].pixmap && (garmin_syms[i].data || garmin_syms[i].data_large)) {
 		if (Preferences::get_use_large_waypoint_icons()) {
 			if (garmin_syms[i].data_large) {
-				/* Directly load icon. */
+				/* Directly load pixmap. */
 #ifdef K
-				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL);
+				garmin_syms[i].pixmap = QPixmap(garmin_syms[i].data_large);
 #endif
 			} else {
 				/* Up sample from small image. */
 #ifdef K
-				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL), 30, 30, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				/* TODO: simplify. */
+				const QPixmap pixmap(garmin_syms[i].data);
+				const QPixmap pixmap2 = pixmap.scaled(30, 30, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				garmin_syms[i].pixmap = new Pixmap(pixmap2);
 #endif
 			}
 		} else {
 			if (garmin_syms[i].data) {
 				/* Directly use small symbol. */
 #ifdef K
-				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL);
+				garmin_syms[i].pixmap = new QPixmap(garmin_syms[i].data);
 #endif
 			} else {
 				/* Down size large image. */
+				/* TODO: simplify. */
 #ifdef K
-				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL), 18, 18, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				const QPixmap pixmap(garmin_syms[i].data);
+				const QPixmap pixmap2 = pixmap.scaled(18, 18, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				garmin_syms[i].pixmap = new Pixmap(pixmap2);
 #endif
 			}
 		}
 	}
-	return garmin_syms[i].icon;
+	return garmin_syms[i].pixmap;
 }
 
 
@@ -502,11 +508,9 @@ void GarminSymbols::clear_symbols(void)
 	qDebug() << "DD: Garmin Symbols: clearing symbols table";
 
 	for (int i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
-		if (garmin_syms[i].icon) {
-#ifdef K
-			g_object_unref(garmin_syms[i].icon);
-#endif
-			garmin_syms[i].icon = NULL;
+		if (garmin_syms[i].pixmap) {
+			delete garmin_syms[i].pixmap;
+			garmin_syms[i].pixmap = NULL;
 		}
 	}
 }

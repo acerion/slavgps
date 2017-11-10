@@ -101,7 +101,7 @@ namespace SlavGPS {
 		void acquire(DatasourceMode mode, VikDataSourceInterface * source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function);
 		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
 
-		QLabel status;
+		QLabel * status = NULL;
 		Window * window = NULL;
 		LayersPanel * panel = NULL;
 		Viewport * viewport = NULL;

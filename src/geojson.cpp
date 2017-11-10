@@ -146,13 +146,13 @@ const char * SlavGPS::geojson_program_import(void)
 
 
 /**
- * @filename: The source GeoJSON file
+ * @file_full_path: The source GeoJSON file
  *
  * Returns: The name of newly created temporary GPX file.
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * SlavGPS::geojson_import_to_gpx(const char * filename)
+char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 {
 	char * gpx_filename = NULL;
 	GError * error = NULL;
@@ -172,7 +172,7 @@ char * SlavGPS::geojson_import_to_gpx(const char * filename)
 	char ** argv;
 	argv = (char **) malloc(3 * sizeof (char *));
 	argv[0] = g_strdup(geojson_program_import());
-	argv[1] = g_strdup(filename);
+	argv[1] = g_strdup(file_full_path.toUtf8().constData());
 	argv[2] = NULL;
 
 	FILE * gpxfile = fdopen(fd, "w");

@@ -128,9 +128,9 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
 #ifdef K
-
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, false, false, 0);
+#endif
 	data->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
@@ -139,6 +139,7 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 
 	osm_login_widgets(data->user_entry, data->password_entry);
 
+#ifdef K
 	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	box->addWidget(password_label);
@@ -157,14 +158,14 @@ static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user
 	ProcessOptions * po = new ProcessOptions();
 
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
-#ifdef K
+
 	/* Overwrite authentication info. */
-	osm_set_login(data->user_entry.text(), data->password_entry.text());
+	osm_set_login(data->user_entry.text().toUtf8().constData(), data->password_entry.text().toUtf8().constData());
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
 	dl_options = NULL;
-#endif
+
 	return po;
 }
 

@@ -28,6 +28,7 @@
 #include "geojson.h"
 #include "window.h"
 #include "util.h"
+#include "widget_file_entry.h"
 
 
 
@@ -38,8 +39,8 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GtkWidget * files;
-	GSList * filelist;  /* Files selected. */
+	SGFileEntry * file_entry = NULL;
+	QStringList filelist;  /* Files selected. */
 } datasource_geojson_user_data_t;
 
 
@@ -92,7 +93,7 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 static void * datasource_geojson_init(acq_vik_t * avt)
 {
 	datasource_geojson_user_data_t * user_data = (datasource_geojson_user_data_t *) malloc(sizeof (datasource_geojson_user_data_t));
-	user_data->filelist = NULL;
+	user_data->filelist.clear();
 	return user_data;
 }
 
@@ -104,16 +105,17 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	datasource_geojson_user_data_t * ud = (datasource_geojson_user_data_t *) user_data;
 
 #ifdef K
-	ud->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
+	ud->file_entry = new SGFileEntry;
 
 	/* Try to make it a nice size - otherwise seems to default to something impractically small. */
 	gtk_window_set_default_size(GTK_WINDOW (dialog), 600, 300);
+#endif
 
 	if (last_directory_url.isValid()) {
-		ud->files->file_selector->setDirectoryUrl(last_directory_url);
+		ud->file_entry->file_selector->setDirectoryUrl(last_directory_url);
 	}
-
-	GtkFileChooser * chooser = GTK_FILE_CHOOSER (ud->files);
+#ifdef K
+	GtkFileChooser * chooser = GTK_FILE_CHOOSER (ud->file_entry);
 
 	/* Add filters. */
 	GtkFileFilter * filter;
@@ -135,7 +137,7 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 	/* Packing all widgets. */
 	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(ud->files);
+	box->addWidget(ud->file_entry);
 
 	gtk_widget_show_all(dialog);
 #endif
@@ -149,14 +151,14 @@ ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_
 	ProcessOptions * po = new ProcessOptions();
 #ifdef K
 	/* Retrieve the files selected. */
-	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
-
+	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->file_entry)); /* Not reusable!! */
+#endif
 	/* Memorize the directory for later reuse. */
-	last_directory_url = userdata->files->file_entry->file_selector->directoryUrl();
+	last_directory_url = userdata->file_entry->file_selector->directoryUrl();
 
 	/* TODO Memorize the file filter for later reuse? */
-	//GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(userdata->files));
-#endif
+	//GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(userdata->file_entry));
+
 	/* Return some value so *thread* processing will continue. */
 	po->babel_args = "fake command"; /* Not really used, thus no translations. */
 
@@ -174,11 +176,10 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 	datasource_geojson_user_data_t * user_data = (datasource_geojson_user_data_t *) acquiring->user_data;
 
 	/* Process selected files. */
-	GSList * cur_file = user_data->filelist;
-	while (cur_file) {
-		char * filename = (char *) cur_file->data;
+	for (int i = 0; i < user_data->filelist.size(); i++) {
+		const QString file_full_path = user_data->filelist.at(i);
 
-		char * gpx_filename = geojson_import_to_gpx(filename);
+		char * gpx_filename = geojson_import_to_gpx(file_full_path);
 		if (gpx_filename) {
 			/* Important that this process is run in the main thread. */
 			acquiring->window->open_file(gpx_filename, false);
@@ -186,15 +187,11 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 			(void) remove(gpx_filename);
 			free(gpx_filename);
 		} else {
-			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(filename));
+			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));
 		}
-
-		free(filename);
-		cur_file = g_slist_next(cur_file);
 	}
 
-	/* Free memory. */
-	g_slist_free(user_data->filelist);
+	user_data->filelist.clear();
 
 	/* No failure. */
 	return true;

@@ -29,6 +29,11 @@
 
 
 
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
@@ -44,7 +49,7 @@ namespace SlavGPS {
 	char const * geojson_program_export(void);
 	char const * geojson_program_import(void);
 
-	char * geojson_import_to_gpx(char const * filename);
+	char * geojson_import_to_gpx(const QString & file_full_path);
 
 
 

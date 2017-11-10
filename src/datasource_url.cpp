@@ -193,22 +193,23 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
-#ifdef K
-	/* Retrieve the user entered value. */
-	char const * value = widgets->url.text();
 
+	/* Retrieve the user entered value. */
+	const QString & value = widgets->url.text();
+#ifdef K
 	if (GTK_IS_COMBO_BOX (widgets->type)) {
 		last_type_id = widgets->type->currentIndex();
 	}
+#endif
 
-	po->input_file_type = NULL; /* Default to gpx. */
+	po->input_file_type = ""; /* Default to gpx. */
 	if (a_babel_file_types.size()) {
-		po->input_file_type = g_strdup(a_babel_file_types.at(last_type_id)->name);
+		po->input_file_type = a_babel_file_types.at(last_type_id)->name;
 	}
 
-	po->url = g_strdup(value);
+	po->url = g_strdup(value.toUtf8().constData());
 
-#endif
+
 
 	/* Support .zip + bzip2 files directly. */
 	dl_options->convert_file = a_try_decompress_file;

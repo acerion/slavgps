@@ -35,6 +35,7 @@
 #include "window.h"
 #include "statusbar.h"
 #include "viewport_internal.h"
+#include "widget_file_entry.h"
 
 
 
@@ -45,15 +46,15 @@ using namespace SlavGPS;
 
 
 typedef struct {
-	GtkWidget * files;
-	GSList * filelist;  // Files selected
+	SGFileEntry * files;
+	QStringList filelist;  // Files selected
 } datasource_geotag_user_data_t;
 
 
 
 
 /* The last used directory. */
-static char * last_folder_uri = NULL;
+static QUrl last_directory_url;
 
 
 
@@ -101,7 +102,7 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 static void * datasource_geotag_init(acq_vik_t * avt)
 {
 	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) malloc(sizeof (datasource_geotag_user_data_t));
-	user_data->filelist = NULL;
+	user_data->filelist.clear();
 	return user_data;
 }
 
@@ -114,15 +115,15 @@ static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * v
 	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *) user_data;
 #ifdef K
 	/* The files selector. */
-	userdata->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
+	userdata->files = new SGFileEntry();
 
 	/* Try to make it a nice size - otherwise seems to default to something impractically small. */
 	gtk_window_set_default_size(GTK_WINDOW (dialog) , 600, 300);
-
-	if (last_folder_uri) {
-		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(userdata->files), last_folder_uri);
+#endif
+	if (last_directory_url.isValid()) {
+		userdata->files->file_selector->setDirectoryUrl(last_directory_url);
 	}
-
+#ifdef K
 	GtkFileChooser * chooser = GTK_FILE_CHOOSER (userdata->files);
 
 	/* Add filters. */
@@ -166,15 +167,14 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 #ifdef K
 	/* Retrieve the files selected. */
 	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
-
+#endif
 	/* Memorize the directory for later use. */
-	free(last_folder_uri);
-	last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(userdata->files));
-	last_folder_uri = g_strdup(last_folder_uri);
+	/* Memorize the directory for later reuse. */
+	last_directory_url = userdata->files->file_selector->directoryUrl();
 
 	/* TODO Memorize the file filter for later use... */
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
-#endif
+
 	/* Return some value so *thread* processing will continue */
 	po->babel_args = "fake command"; /* Not really used, thus no translations. */
 
@@ -193,28 +193,23 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
-	GSList * cur_file = user_data->filelist;
-	while (cur_file) {
-		char *filename = (char *) cur_file->data;
-		QString name;
+	for (int i = 0; i < user_data->filelist.size(); i++) {
+		const QString file_full_path = user_data->filelist.at(0);
 
-		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, acquiring->viewport->get_coord_mode(), name);
+		QString name;
+		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring->viewport->get_coord_mode(), name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
 			if (!name.size()) {
-				name = file_base_name(filename);
+				name = file_base_name(file_full_path);
 			}
 			trw->add_waypoint_from_file(wp, name);
 		} else {
-			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(filename));
+			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(file_full_path));
 		}
-
-		free(filename);
-		cur_file = g_slist_next(cur_file);
 	}
 
-	/* Free memory. */
-	g_slist_free(user_data->filelist);
+	user_data->filelist.clear();
 
 	/* No failure. */
 	return true;

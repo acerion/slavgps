@@ -114,13 +114,17 @@ static void progress_func(BabelProgressCode c, void * data, AcquireProcess * acq
 	if (acquiring->source_interface->is_thread) {
 #ifdef K
 		gdk_threads_enter();
+#endif
 		if (!acquiring->running) {
 			if (acquiring->source_interface->cleanup_func) {
 				acquiring->source_interface->cleanup_func(acquiring->user_data);
 			}
+#ifdef K
 			gdk_threads_leave();
 			g_thread_exit(NULL);
+#endif
 		}
+#ifdef K
 		gdk_threads_leave();
 #endif
 	}
@@ -148,7 +152,7 @@ static void on_complete_process(w_and_interface_t * wi)
 	    true
 #endif
 	    ) {
-		wi->acquiring->status.setText(QObject::tr("Done."));
+		wi->acquiring->status->setText(QObject::tr("Done."));
 		if (wi->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
@@ -157,7 +161,7 @@ static void on_complete_process(w_and_interface_t * wi)
 				Layer * layer = wi->trw;
 				wi->acquiring->panel->get_top_layer()->add_layer(layer, true);
 			} else {
-				wi->acquiring->status.setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
+				wi->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
 			}
 		}
 		if (wi->acquiring->source_interface->keep_dialog_open) {
@@ -235,16 +239,20 @@ static void get_from_anything(w_and_interface_t * wi)
 	if (wi->acquiring->running && !result) {
 #ifdef K
 		gdk_threads_enter();
-		wi->acquiring->status.setText(QObject::tr("Error: acquisition failed."));
+#endif
+		wi->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
 		if (wi->creating_new_layer) {
 			wi->trw->unref();
 		}
+#ifdef K
 		gdk_threads_leave();
 #endif
 	} else {
 #ifdef K
 		gdk_threads_enter();
+#endif
 		on_complete_process(wi);
+#ifdef K
 		gdk_threads_leave();
 #endif
 	}
@@ -437,18 +445,22 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT, false);
 	gtk_window_set_title(GTK_WINDOW(setup_dialog), _(source_interface_->window_title));
+#endif
 
 	this->dialog = setup_dialog;
 	this->running = true;
-	QLabel * status = new QLabel(QObject::tr("Working..."));
+	this->status = new QLabel(QObject::tr("Working..."));
+#ifdef K
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(setup_dialog))), status, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
+#endif
 	/* May not want to see the dialog at all. */
 	if (source_interface_->is_thread || source_interface_->keep_dialog_open) {
+#ifdef K
 		gtk_widget_show_all(setup_dialog);
-	}
-	this->status = status;
 #endif
+	}
+
 
 	if (source_interface_->add_progress_widgets_func) {
 		source_interface_->add_progress_widgets_func(setup_dialog, this->user_data);
@@ -477,20 +489,14 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		wi->trw->set_name(QObject::tr(source_interface_->layer_title));
 	}
 
-#ifdef K
 	if (source_interface_->is_thread) {
 		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
 
-
+#ifdef K
 			/* Consider using QThreadPool and QRunnable. */
-#if GLIB_CHECK_VERSION (2, 32, 0)
-			g_thread_try_new("get_from_anything", (GThreadFunc)get_from_anything, wi, NULL);
-#else
 			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
-#endif
-
-
 			gtk_dialog_run(GTK_DIALOG(setup_dialog));
+#endif
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */
 				this->running = false;
@@ -503,16 +509,19 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 				}
 
 				/* Thread finished by normal completion - free memory. */
+#ifdef K
 				free(w);
+#endif
 				free(wi);
 			}
 		} else {
 			/* This shouldn't happen... */
-			this->status.setText(QObject::tr("Unable to create command\nAcquire method failed."));
+			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
+#ifdef K
 			gtk_dialog_run(GTK_DIALOG (setup_dialog));
+#endif
 		}
 	} else {
-#endif
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		if (source_interface_->process_func) {
 			bool success = source_interface_->process_func(wi->trw, po, (BabelCallback) progress_func, this, dl_options);
@@ -524,26 +533,24 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		delete dl_options;
 
 		on_complete_process(wi);
-#ifdef K
+
 		/* Actually show it if necessary. */
-		if (wi->this->source_interface_->keep_dialog_open) {
+		if (wi->acquiring->source_interface->keep_dialog_open) {
+#ifdef K
 			gtk_dialog_run(GTK_DIALOG(setup_dialog));
-		}
 #endif
+		}
 
 		free(wi);
-#ifdef K
 	}
-#endif
 
 
 #ifdef K
 	gtk_widget_destroy(setup_dialog);
-
+#endif
 	if (cleanup_function) {
 		cleanup_function(source_interface_);
 	}
-#endif
 }
 
 

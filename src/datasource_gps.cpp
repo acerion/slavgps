@@ -324,8 +324,7 @@ bool SlavGPS::datasource_gps_get_off(void * user_data)
 
 static void datasource_gps_off(void * user_data, QString & babel_args, QString & file_path)
 {
-	char *ser = NULL;
-	GPSData *w = (GPSData *)user_data;
+	GPSData * w = (GPSData *) user_data;
 
 	if (gps_acquire_in_progress) {
 		babel_args = "";
@@ -355,10 +354,7 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 	}
 
 	babel_args = QString("-i %1").arg(device);
-#ifdef K
-	ser = w->ser_combo->currentText();
-#endif
-	file_path = QString(ser);
+	file_path = QString(w->ser_combo->currentText());
 }
 
 
@@ -503,9 +499,11 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 		line = (char *)data;
 #ifdef K
 		gdk_threads_enter();
+#endif
 		if (acquiring->running) {
 			acquiring->status->setText(QObject::tr("Status: Working..."));
 		}
+#ifdef K
 		gdk_threads_leave();
 #endif
 

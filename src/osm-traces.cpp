@@ -398,7 +398,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 
 
 
-void osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
+void SlavGPS::osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
 	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username")->val_string;

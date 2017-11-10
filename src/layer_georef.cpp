@@ -851,46 +851,49 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	gtk_box_pack_start (GTK_BOX(wfp_hbox), wfp_label, true, true, 0);
 	gtk_box_pack_start (GTK_BOX(wfp_hbox), wfp_button, false, false, 3);
+#endif
 
 	QLabel * ce_label = new QLabel(QObject::tr("Corner pixel easting:"));
-	cw.ce_spin.setMinimum(0.0);
-	cw.ce_spin.setMaximum(1500000.0);
-	cw.ce_spin.setSingleStep(1);
-	cw.ce_spin.setValue(4);
-	cw.ce_spin.setToolTip(QObject::tr("the UTM \"easting\" value of the upper-left corner pixel of the map"));
+	cw.ce_spin->setMinimum(0.0);
+	cw.ce_spin->setMaximum(1500000.0);
+	cw.ce_spin->setSingleStep(1);
+	cw.ce_spin->setValue(4);
+	cw.ce_spin->setToolTip(QObject::tr("the UTM \"easting\" value of the upper-left corner pixel of the map"));
 
 	QLabel * cn_label = new QLabel(QObject::tr("Corner pixel northing:"));
-	cw.cn_spin.setMinimum(0.0);
-	cw.cn_spin.setMaximum(9000000.0);
-	cw.cn_spin.setSingleStep(1);
-	cw.cn_spin.setValue(4);
-	cw.cn_spin.setToolTip(QObject::tr("the UTM \"northing\" value of the upper-left corner pixel of the map"));
+	cw.cn_spin->setMinimum(0.0);
+	cw.cn_spin->setMaximum(9000000.0);
+	cw.cn_spin->setSingleStep(1);
+	cw.cn_spin->setValue(4);
+	cw.cn_spin->setToolTip(QObject::tr("the UTM \"northing\" value of the upper-left corner pixel of the map"));
 
 	QLabel * xlabel = new QLabel(QObject::tr("X (easting) scale (mpp): "));
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing) scale (mpp): "));
 
-	cw.x_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.x_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.x_spin.setSingleStep(1);
-	cw.x_spin.setValue(4);
-	cw.x_spin.setToolTip(QObject::tr("the scale of the map in the X direction (meters per pixel)"));
+	cw.x_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.x_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	cw.x_spin->setSingleStep(1);
+	cw.x_spin->setValue(4);
+	cw.x_spin->setToolTip(QObject::tr("the scale of the map in the X direction (meters per pixel)"));
 
-	cw.y_spin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.y_spin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.y_spin.setSingleStep(1);
-	cw.y_spin.setValue(4);
-	cw.y_spin.setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
+	cw.y_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.y_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	cw.y_spin->setSingleStep(1);
+	cw.y_spin->setValue(4);
+	cw.y_spin->setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
+#ifdef K
 	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
 	cw.imageentry = new SGFileEntry(); vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
 
-	cw.ce_spin.setValue(this->corner.easting);
-	cw.cn_spin.setValue(this->corner.northing);
-	cw.x_spin.setValue(this->mpp_easting);
-	cw.y_spin.setValue(this->mpp_northing);
+	cw.ce_spin->setValue(this->corner.easting);
+	cw.cn_spin->setValue(this->corner.northing);
+	cw.x_spin->setValue(this->mpp_easting);
+	cw.y_spin->setValue(this->mpp_northing);
 	if (this->image) {
 		cw.imageentry->set_filename(this->image);
 	}
+
 
 	gtk_table_attach_defaults (GTK_TABLE(table), imagelabel, 0, 1, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table), cw.imageentry, 1, 2, 0, 1);
@@ -929,6 +932,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* Lat/Lon. */
 	GtkWidget *table_ll = gtk_table_new (5, 2, false);
+#endif
 
 	QLabel * lat_tl_label = new QLabel(QObject::tr("Upper left latitude:"));
 	cw.lat_tl_spin.setMinimum(-90.0);
@@ -954,6 +958,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	cw.lon_br_spin.setSingleStep(0.05);
 	cw.lon_br_spin.setValue(0.0);
 
+#ifdef K
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), lat_tl_label, 0, 1, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lat_tl_spin, 1, 2, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), lon_tl_label, 0, 1, 1, 2);
@@ -966,6 +971,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	GtkWidget *calc_mpp_button = gtk_button_new_with_label (_("Calculate MPP values from coordinates"));
 	calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
+#endif
 
 	Coord coord(this->corner, CoordMode::LATLON);
 	cw.lat_tl_spin.setValue(coord.ll.lat);
@@ -973,6 +979,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	cw.lat_br_spin.setValue(this->ll_br.lat);
 	cw.lon_br_spin.setValue(this->ll_br.lon);
 
+#ifdef K
 	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_utm), new QLabel(QObject::tr("UTM")));
 	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_ll), new QLabel(QObject::tr("Latitude/Longitude")));
 	dgbox->addWidget(cw.tabs);
@@ -1009,27 +1016,30 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	gtk_notebook_set_current_page (GTK_NOTEBOOK(cw.tabs), page_num);
 
 	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+#endif
 		this->align_coords();
 
-		this->corner.easting = cw.ce_spin.value();
-		this->corner.northing = cw.cn_spin.value();
+		this->corner.easting = cw.ce_spin->value();
+		this->corner.northing = cw.cn_spin->value();
 		this->corner.zone = cw.utm_zone_spin.value();
+#ifdef K
 		const char *letter = cw.utm_letter_entry.text();
 		if (*letter) {
 			this->corner.letter = toupper(*letter);
 		}
-		this->mpp_easting = cw.x_spin.value();
-		this->mpp_northing = cw.y_spin.value();
+#endif
+		this->mpp_easting = cw.x_spin->value();
+		this->mpp_northing = cw.y_spin->value();
 		this->ll_br = this->get_ll_br();
 		this->check_br_is_good_or_msg_user();
 		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 		if (!this->pixmap) {
-			if (g_strcmp0 (this->image, cw.imageentry->get_filename()) != 0) {
+			if (this->image != cw.imageentry->get_filename()) {
 				this->set_image(cw.imageentry->get_filename());
 				this->post_read(viewport, false);
 			}
 		}
-
+#ifdef K
 		this->alpha = (uint8_t) gtk_range_get_value (GTK_RANGE(alpha_scale));
 		if (this->pixmap && this->alpha < 255) {
 			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
