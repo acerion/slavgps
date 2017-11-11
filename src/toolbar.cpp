@@ -1324,7 +1324,7 @@ void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, Window * parent, Gtk
 	QObject::connect(tbw->store_used, SIGNAL("row-deleted"), tbw, SLOT (tb_editor_available_items_deleted_cb));
 
 	/* Run it. */
-	gtk_dialog_run(GTK_DIALOG(tbw->dialog));
+	tbw->dialog.exec();
 
 	gtk_widget_destroy(tbw->dialog);
 

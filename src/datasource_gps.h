@@ -21,9 +21,21 @@
 #ifndef _SG_DATASOURCE_GPS_H_
 #define _SG_DATASOURCE_GPS_H_
 
-#include <cstdint>
+
+
 
 #include <QString>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
+#include <QComboBox>
+#include <QDialog>
+#include <QLabel>
+#include <QCheckBox>
+#include <QGridLayout>
+
+
+
 
 #include "layer_gps.h"
 
@@ -35,17 +47,85 @@ namespace SlavGPS {
 
 
 
-	void * datasource_gps_setup(GtkWidget * dialog, GPSTransferType xfer, bool xfer_all);
-	void datasource_gps_clean_up(void * user_data);
+	class DatasourceGPSSetup : public QDialog {
+		Q_OBJECT
+	public:
+		DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
+		~DatasourceGPSSetup();
 
-	QString datasource_gps_get_protocol(void * user_data);
-	QString datasource_gps_get_descriptor(void * user_data);
+		QString get_protocol(void);
+		QString get_port(void);
+		bool get_do_tracks(void);
+		bool get_do_routes(void);
+		bool get_do_waypoints(void);
+		bool get_do_turn_off(void);
 
-	bool datasource_gps_get_do_tracks(void * user_data);
-	bool datasource_gps_get_do_routes(void * user_data);
-	bool datasource_gps_get_do_waypoints(void * user_data);
+	private slots:
 
-	bool datasource_gps_get_off(void * user_data);
+
+	public:
+		/* Setup dialog. */
+		QLabel * proto_label = NULL;
+		QComboBox * proto_combo = NULL;
+		QLabel * serial_port_label = NULL;
+		QComboBox * serial_port_combo = NULL;
+		QLabel * off_request_l = NULL;
+		QCheckBox * off_request_b = NULL;
+		QLabel * get_tracks_l = NULL;
+		QCheckBox * get_tracks_b = NULL;
+		QLabel * get_routes_l = NULL;
+		QCheckBox * get_routes_b = NULL;
+		QLabel * get_waypoints_l = NULL;
+		QCheckBox * get_waypoints_b = NULL;
+
+		/* State. */
+		int total_count = 0;
+		int count = 0;
+		/* Know which way xfer is so xfer setting types are only stored for download. */
+		GPSDirection direction;
+
+
+		QVBoxLayout * vbox = NULL;
+		QGridLayout * grid = NULL;
+		QDialogButtonBox * button_box = NULL;
+	private:
+
+	};
+
+
+
+	class DatasourceGPSProgress : public QDialog {
+		Q_OBJECT
+	public:
+		DatasourceGPSProgress(QWidget * parent = NULL);
+		~DatasourceGPSProgress();
+
+	private slots:
+
+	public:
+		/* Progress dialog. */
+		QLabel *gps_label = NULL;
+		QLabel *ver_label = NULL;
+		QLabel *id_label = NULL;
+		QLabel *wp_label = NULL;
+		QLabel *trk_label = NULL;
+		QLabel *rte_label = NULL;
+		QLabel *progress_label = NULL;
+		GPSTransferType progress_type;
+
+		/* State. */
+		int total_count = 0;
+		int count = 0;
+		/* Know which way xfer is so xfer setting types are only stored for download. */
+		GPSDirection direction;
+
+
+		QVBoxLayout * vbox = NULL;
+		QGridLayout * grid = NULL;
+		QDialogButtonBox * button_box = NULL;
+	private:
+
+	};
 
 
 

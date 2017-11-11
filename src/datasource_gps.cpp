@@ -71,7 +71,6 @@ static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel
 
 
 
-
 VikDataSourceInterface vik_datasource_gps_interface = {
 	N_("Acquire from GPS"),
 	N_("Acquired from GPS"),
@@ -106,42 +105,6 @@ VikDataSourceInterface vik_datasource_gps_interface = {
  * Definitions and routines for acquiring data from GPS.
  *********************************************************/
 
-/* Widgets in setup dialog specific to GPS. */
-/* Widgets in progress dialog specific to GPS. */
-/* Also counts needed for progress. */
-class GPSData {
-public:
-	/* Setup dialog. */
-	QLabel * proto_l = NULL;
-	QComboBox * proto_combo = NULL;
-	QLabel *ser_l = NULL;
-	QComboBox * ser_combo = NULL;
-	QLabel *off_request_l = NULL;
-	QCheckBox *off_request_b = NULL;
-	QLabel *get_tracks_l = NULL;
-	QCheckBox *get_tracks_b = NULL;
-	QLabel *get_routes_l = NULL;
-	QCheckBox *get_routes_b = NULL;
-	QLabel *get_waypoints_l = NULL;
-	QCheckBox *get_waypoints_b = NULL;
-
-	/* Progress dialog. */
-	QLabel *gps_label = NULL;
-	QLabel *ver_label = NULL;
-	QLabel *id_label = NULL;
-	QLabel *wp_label = NULL;
-	QLabel *trk_label = NULL;
-	QLabel *rte_label = NULL;
-	QLabel *progress_label = NULL;
-	GPSTransferType progress_type;
-
-	/* State. */
-	int total_count = 0;
-	int count = 0;
-	/* Know which way xfer is so xfer setting types are only stored for download. */
-	GPSDirection direction;
-} ;
-
 
 
 
@@ -157,23 +120,28 @@ public:
 
 static void * datasource_gps_init_func(acq_vik_t *avt)
 {
-	GPSData * gps_ud = new GPSData;
-	gps_ud->direction = GPSDirection::DOWN;
-	return gps_ud;
+	DatasourceGPSProgress * gps_dialog = new DatasourceGPSProgress(NULL);
+	gps_dialog->direction = GPSDirection::DOWN;
+	return gps_dialog;
+}
+
+
+
+
+DatasourceGPSSetup::~DatasourceGPSSetup()
+{
+	gps_acquire_in_progress = false;
 }
 
 
 
 
 /**
- * Method to get the communication protocol of the GPS device from the widget structure.
+   Method to get the communication protocol of the GPS device from the widget structure.
  */
-QString SlavGPS::datasource_gps_get_protocol(void * user_data)
+QString DatasourceGPSSetup::get_protocol(void)
 {
-	/* Uses the list of supported devices. */
-	GPSData *w = (GPSData *)user_data;
-
-	last_active = w->proto_combo->currentIndex();
+	last_active = this->proto_combo->currentIndex();
 
 	if (a_babel_device_list.size()) {
 		const QString protocol = a_babel_device_list[last_active]->name;
@@ -189,15 +157,13 @@ QString SlavGPS::datasource_gps_get_protocol(void * user_data)
 
 
 /**
- * Method to get the descriptor from the widget structure.
- * "Everything is a file".
- * Could actually be normal file or a serial port.
- */
-QString SlavGPS::datasource_gps_get_descriptor(void * user_data)
+   Method to get the descriptor from the widget structure.
+   "Everything is a file".
+   Could actually be normal file or a serial port.
+*/
+QString DatasourceGPSSetup::get_port(void)
 {
-	GPSData * data = (GPSData *) user_data;
-
-	const QString descriptor = data->ser_combo->currentText();
+	const QString descriptor = this->serial_port_combo->currentText();
 	ApplicationState::set_string(VIK_SETTINGS_GPS_PORT, descriptor);
 	return descriptor;
 }
@@ -206,14 +172,12 @@ QString SlavGPS::datasource_gps_get_descriptor(void * user_data)
 
 
 /**
- * Method to get the track handling behaviour from the widget structure.
- */
-bool SlavGPS::datasource_gps_get_do_tracks(void * user_data)
+   Method to get the track handling behaviour from the widget structure.
+*/
+bool DatasourceGPSSetup::get_do_tracks(void)
 {
-	GPSData * data = (GPSData *) user_data;
-
-	bool get_tracks = data->get_tracks_b->isChecked();
-	if (data->direction == GPSDirection::DOWN) {
+	bool get_tracks = this->get_tracks_b->isChecked();
+	if (this->direction == GPSDirection::DOWN) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
 	}
 	return get_tracks;
@@ -223,14 +187,12 @@ bool SlavGPS::datasource_gps_get_do_tracks(void * user_data)
 
 
 /**
- * Method to get the route handling behaviour from the widget structure.
- */
-bool SlavGPS::datasource_gps_get_do_routes(void * user_data)
+   Method to get the route handling behaviour from the widget structure.
+*/
+bool DatasourceGPSSetup::get_do_routes(void)
 {
-	GPSData * data = (GPSData *) user_data;
-
-	bool get_routes = data->get_routes_b->isChecked();
-	if (data->direction == GPSDirection::DOWN) {
+	bool get_routes = this->get_routes_b->isChecked();
+	if (this->direction == GPSDirection::DOWN) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
 	}
 	return get_routes;
@@ -240,14 +202,12 @@ bool SlavGPS::datasource_gps_get_do_routes(void * user_data)
 
 
 /**
- * Method to get the waypoint handling behaviour from the widget structure.
- */
-bool SlavGPS::datasource_gps_get_do_waypoints(void * user_data)
+   Method to get the waypoint handling behaviour from the widget structure.
+*/
+bool DatasourceGPSSetup::get_do_waypoints(void)
 {
-	GPSData * data = (GPSData *) user_data;
-
-	bool get_waypoints = data->get_waypoints_b->isChecked();
-	if (data->direction == GPSDirection::DOWN) {
+	bool get_waypoints = this->get_waypoints_b->isChecked();
+	if (this->direction == GPSDirection::DOWN) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
 	}
 	return get_waypoints;
@@ -256,13 +216,23 @@ bool SlavGPS::datasource_gps_get_do_waypoints(void * user_data)
 
 
 
+/**
+   Method to get the off behaviour from the widget structure.
+*/
+bool DatasourceGPSSetup::get_do_turn_off(void)
+{
+	bool power_off = this->off_request_b->isChecked();
+	ApplicationState::set_boolean(VIK_SETTINGS_GPS_POWER_OFF, power_off);
+	return power_off;
+}
+
+
+
+
 static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3)
 {
 	ProcessOptions * po = new ProcessOptions();
-
-	char *tracks = NULL;
-	char *routes = NULL;
-	char *waypoints = NULL;
+	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
 
 	if (gps_acquire_in_progress) {
 		po->babel_args = "";
@@ -271,33 +241,13 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 
 	gps_acquire_in_progress = true;
 
-	const QString device = datasource_gps_get_protocol(user_data);
-
-	if (datasource_gps_get_do_tracks (user_data)) {
-		tracks = (char *) "-t";
-	} else {
-		tracks = (char *) "";
-	}
-
-	if (datasource_gps_get_do_routes (user_data)) {
-		routes = (char *) "-r";
-	} else {
-		routes = (char *) "";
-	}
-
-	if (datasource_gps_get_do_waypoints (user_data)) {
-		waypoints = (char *) "-w";
-	} else {
-		waypoints = (char *) "";
-	}
+	const QString device = gps_dialog->get_protocol();
+	const char * tracks = gps_dialog->get_do_tracks() ? "-t" : "";
+	const char * routes = gps_dialog->get_do_routes() ? "-r" : "";
+	const char * waypoints = gps_dialog->get_do_waypoints() ? "-w" : "";
 
 	po->babel_args = QString("-D 9 %1 %2 %3 -i %4").arg(tracks).arg(routes).arg(waypoints).arg(device);
-	/* Device points to static content => no free. */
-	tracks = NULL;
-	routes = NULL;
-	waypoints = NULL;
-
-	po->input_file_name = datasource_gps_get_descriptor(user_data);
+	po->input_file_name = gps_dialog->get_port();
 
 	qDebug() << "DD: Datasource GPS: Get process options: using Babel args" << po->babel_args << "and input file" << po->input_file_name;
 
@@ -307,24 +257,9 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 
 
 
-/**
- * Method to get the off behaviour from the widget structure.
- */
-bool SlavGPS::datasource_gps_get_off(void * user_data)
-{
-	GPSData * data = (GPSData *) user_data;
-
-	bool power_off = data->off_request_b->isChecked();
-	ApplicationState::set_boolean(VIK_SETTINGS_GPS_POWER_OFF, power_off);
-	return power_off;
-}
-
-
-
-
 static void datasource_gps_off(void * user_data, QString & babel_args, QString & file_path)
 {
-	GPSData * w = (GPSData *) user_data;
+	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
 
 	if (gps_acquire_in_progress) {
 		babel_args = "";
@@ -332,7 +267,7 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 	}
 
 	/* See if we should turn off the device. */
-	if (!datasource_gps_get_off (user_data)){
+	if (!gps_dialog->get_do_turn_off()){
 		return;
 	}
 
@@ -340,7 +275,7 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 		return;
 	}
 
-	last_active = w->proto_combo->currentIndex();
+	last_active = gps_dialog->proto_combo->currentIndex();
 
 	QString device = a_babel_device_list[last_active]->name;
 	qDebug() << "II: Datasource GPS: GPS off: last active device:" << device;
@@ -354,7 +289,7 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 	}
 
 	babel_args = QString("-i %1").arg(device);
-	file_path = QString(w->ser_combo->currentText());
+	file_path = QString(gps_dialog->serial_port_combo->currentText());
 }
 
 
@@ -362,19 +297,7 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 
 static void datasource_gps_cleanup(void * user_data)
 {
-	delete ((GPSData *) user_data);
-	gps_acquire_in_progress = false;
-}
-
-
-
-
-/**
- * External method to tidy up.
- */
-void SlavGPS::datasource_gps_clean_up(void * user_data)
-{
-	datasource_gps_cleanup(user_data);
+	delete ((DatasourceGPSSetup *) user_data);
 }
 
 
@@ -387,29 +310,29 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		GPSData *gps_data = (GPSData *) acquiring->user_data;
+		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
 		const char *tmp_str;
 #ifdef K
-		switch (gps_data->progress_type) {
+		switch (gps_dialog->progress_type) {
 		case GPSTransferType::WPT:
 			tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt);
-			gps_data->total_count = cnt;
+			gps_dialog->total_count = cnt;
 			break;
 		case GPSTransferType::TRK:
 			tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt);
-			gps_data->total_count = cnt;
+			gps_dialog->total_count = cnt;
 			break;
 		default: {
 			/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints. */
 			int mycnt = (cnt / 2) + 1;
 			tmp_str = ngettext("Downloading %d routepoint...", "Downloading %d routepoints...", mycnt);
-			gps_data->total_count = mycnt;
+			gps_dialog->total_count = mycnt;
 			break;
 		}
 		}
 		s = g_strdup_printf(tmp_str, cnt);
-		gps_data->progress_label->setText(QObject::tr(s));
-		gtk_widget_show(gps_data->progress_label);
+		gps_dialog->progress_label->setText(QObject::tr(s));
+		gtk_widget_show(gps_dialog->progress_label);
 #endif
 	}
 	free(s);
@@ -429,22 +352,22 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		GPSData *gps_data = (GPSData *) acquiring->user_data;
+		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
 
-		if (cnt < gps_data->total_count) {
-			switch (gps_data->progress_type) {
+		if (cnt < gps_dialog->total_count) {
+			switch (gps_dialog->progress_type) {
 			case GPSTransferType::WPT:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "waypoints");
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "waypoints");
 				break;
 			case GPSTransferType::TRK:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "trackpoints");
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "trackpoints");
 				break;
 			default:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "routepoints");
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "routepoints");
 				break;
 			}
 		} else {
-			switch (gps_data->progress_type) {
+			switch (gps_dialog->progress_type) {
 			case GPSTransferType::WPT:
 				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "waypoints");
 				break;
@@ -456,7 +379,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 				break;
 			}
 		}
-		gps_data->progress_label->setText(s);
+		gps_dialog->progress_label->setText(s);
 	}
 	free(s);
 	s = NULL;
@@ -474,7 +397,7 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		((GPSData *) acquiring->user_data)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
+		((DatasourceGPSProgress *) acquiring->user_data)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
 	}
 #ifdef K
 	gdk_threads_leave();
@@ -492,7 +415,7 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
 	char *line;
-	GPSData *gps_data = (GPSData *) acquiring->user_data;
+	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
@@ -509,16 +432,16 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 		/* Tells us the type of items that will follow. */
 		if (strstr(line, "Xfer Wpt")) {
-			gps_data->progress_label = gps_data->wp_label;
-			gps_data->progress_type = GPSTransferType::WPT;
+			gps_dialog->progress_label = gps_dialog->wp_label;
+			gps_dialog->progress_type = GPSTransferType::WPT;
 		}
 		if (strstr(line, "Xfer Trk")) {
-			gps_data->progress_label = gps_data->trk_label;
-			gps_data->progress_type = GPSTransferType::TRK;
+			gps_dialog->progress_label = gps_dialog->trk_label;
+			gps_dialog->progress_type = GPSTransferType::TRK;
 		}
 		if (strstr(line, "Xfer Rte")) {
-			gps_data->progress_label = gps_data->rte_label;
-			gps_data->progress_type = GPSTransferType::RTE;
+			gps_dialog->progress_label = gps_dialog->rte_label;
+			gps_dialog->progress_type = GPSTransferType::RTE;
 		}
 
 		if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in process_line_for_gps_info() */
@@ -565,12 +488,12 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 				sscanf(line+20, "%x", &msb);
 				cnt = lsb + msb * 256;
 				set_total_count(cnt, acquiring);
-				gps_data->count = 0;
+				gps_dialog->count = 0;
 			}
 		}
 		if (strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
-			gps_data->count++;
-			set_current_count(gps_data->count, acquiring);
+			gps_dialog->count++;
+			set_current_count(gps_dialog->count, acquiring);
 		}
 		break;
 	case BABEL_DONE:
@@ -600,193 +523,217 @@ static void find_protocol(BabelDevice * device, const QString & protocol)
 
 static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-	GPSData * data = (GPSData *) user_data;
+	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
 
-	data->proto_l = new QLabel(QObject::tr("GPS Protocol:"));
-	data->proto_combo = new QComboBox();
-	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-		data->proto_combo->addItem((*iter)->label);
-	}
+	{
+		gps_dialog->proto_label = new QLabel(QObject::tr("GPS Protocol:"));
+		gps_dialog->proto_combo = new QComboBox();
+		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+			gps_dialog->proto_combo->addItem((*iter)->label);
+		}
 
-	if (last_active < 0) {
-		find_entry = -1;
-		wanted_entry = -1;
-		QString protocol;
-		if (ApplicationState::get_string (VIK_SETTINGS_GPS_PROTOCOL, protocol)) {
-			/* Use setting. */
-			if (!protocol.isEmpty()) {
+		if (last_active < 0) {
+			find_entry = -1;
+			wanted_entry = -1;
+			QString protocol;
+			if (ApplicationState::get_string (VIK_SETTINGS_GPS_PROTOCOL, protocol)) {
+				/* Use setting. */
+				if (!protocol.isEmpty()) {
+					for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+						find_protocol(*iter, protocol);
+					}
+				}
+			} else {
+				/* Attempt to maintain default to Garmin devices (assumed most popular/numerous device). */
 				for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-					find_protocol(*iter, protocol);
+					find_protocol(*iter, "garmin");
 				}
 			}
-		} else {
-			/* Attempt to maintain default to Garmin devices (assumed most popular/numerous device). */
-			for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-				find_protocol(*iter, "garmin");
-			}
+			/* If not found set it to the first entry, otherwise use the entry. */
+			last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 		}
-		/* If not found set it to the first entry, otherwise use the entry. */
-		last_active = (wanted_entry < 0) ? 0 : wanted_entry;
+
+		gps_dialog->proto_combo->setCurrentIndex(last_active);
+#ifdef K
+		g_object_ref(gps_dialog->proto_combo);
+#endif
+
+		gps_dialog->grid->addWidget(gps_dialog->proto_label, 0, 0);
+		gps_dialog->grid->addWidget(gps_dialog->proto_combo, 0, 1);
 	}
 
-	data->proto_combo->setCurrentIndex(last_active);
-#ifdef K
-	g_object_ref(data->proto_combo);
-#endif
-	data->ser_l = new QLabel(QObject::tr("Serial Port:"));
-	data->ser_combo = new QComboBox();
+	{
 
 
-	/* Value from the settings is promoted to the top. */
-	QString preferred_gps_port;
-	if (ApplicationState::get_string(VIK_SETTINGS_GPS_PORT, preferred_gps_port)) {
-		/* Use setting if available. */
-		if (!preferred_gps_port.isEmpty()) {
+		gps_dialog->serial_port_label = new QLabel(QObject::tr("Serial Port:"));
+		gps_dialog->serial_port_combo = new QComboBox();
+
+
+		/* Value from the settings is promoted to the top. */
+		QString preferred_gps_port;
+		if (ApplicationState::get_string(VIK_SETTINGS_GPS_PORT, preferred_gps_port)) {
+			/* Use setting if available. */
+			if (!preferred_gps_port.isEmpty()) {
 #ifndef WINDOWS
-			if (preferred_gps_port.left(6) == "/dev/tty") {
-				if (access(preferred_gps_port.toUtf8().constData(), R_OK) == 0) {
-					data->ser_combo->addItem(preferred_gps_port);
-				}
-			} else
+				if (preferred_gps_port.left(6) == "/dev/tty") {
+					if (access(preferred_gps_port.toUtf8().constData(), R_OK) == 0) {
+						gps_dialog->serial_port_combo->addItem(preferred_gps_port);
+					}
+				} else
 #endif
-				data->ser_combo->addItem(preferred_gps_port);
+					gps_dialog->serial_port_combo->addItem(preferred_gps_port);
+			}
 		}
-	}
 
-	/* Note avoid appending the port selected from the settings. */
-	/* Here just try to see if the device is available which gets passed onto gpsbabel.
-	   List USB devices first as these will generally only be present if autogenerated by udev or similar.
-	   User is still able to set their own free text entry. */
+		/* Note avoid appending the port selected from the settings. */
+		/* Here just try to see if the device is available which gets passed onto gpsbabel.
+		   List USB devices first as these will generally only be present if autogenerated by udev or similar.
+		   User is still able to set their own free text entry. */
 #ifdef WINDOWS
-	const QStringList gps_ports = { "com1", "usb:" };
+		const QStringList gps_ports = { "com1", "usb:" };
 #else
-	const QStringList gps_ports = { "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyS0", "/dev/ttyS0", "/dev/ttyS1" };
+		const QStringList gps_ports = { "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyS0", "/dev/ttyS0", "/dev/ttyS1" };
 #endif
-	for (int i = 0; i < gps_ports.size(); i++) {
-		const QString port = gps_ports.at(i);
+		for (int i = 0; i < gps_ports.size(); i++) {
+			const QString port = gps_ports.at(i);
 
-		if (!preferred_gps_port.isEmpty() && port == preferred_gps_port) {
-			/* This port has already been added as preferred port. */
-			continue;
+			if (!preferred_gps_port.isEmpty() && port == preferred_gps_port) {
+				/* This port has already been added as preferred port. */
+				continue;
+			}
+
+			if (access(port.toUtf8().constData(), R_OK) == 0) {
+				gps_dialog->serial_port_combo->addItem(port);
+			}
 		}
 
-		if (access(port.toUtf8().constData(), R_OK) == 0) {
-			data->ser_combo->addItem(port);
+
+		gps_dialog->serial_port_combo->setCurrentIndex(0);
+#ifdef K
+		g_object_ref(gps_dialog->serial_port_combo);
+#endif
+		gps_dialog->grid->addWidget(gps_dialog->serial_port_label, 1, 0);
+		gps_dialog->grid->addWidget(gps_dialog->serial_port_combo, 1, 1);
+	}
+
+
+	{
+		gps_dialog->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
+		gps_dialog->off_request_b = new QCheckBox();
+		bool power_off;
+		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_POWER_OFF, &power_off)) {
+			power_off = false;
 		}
+		gps_dialog->off_request_b->setChecked(power_off);
+
+		gps_dialog->grid->addWidget(gps_dialog->off_request_l, 2, 0);
+		gps_dialog->grid->addWidget(gps_dialog->off_request_b, 2, 1);
 	}
 
 
-	data->ser_combo->setCurrentIndex(0);
-#ifdef K
-	g_object_ref(data->ser_combo);
-#endif
+	{
+		gps_dialog->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
+		gps_dialog->get_tracks_b = new QCheckBox();
+		bool get_tracks;
+		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks)) {
+			get_tracks = true;
+		}
+		gps_dialog->get_tracks_b->setChecked(get_tracks);
 
-	data->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
-	data->off_request_b = new QCheckBox();
-	bool power_off;
-	if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_POWER_OFF, &power_off)) {
-		power_off = false;
+		gps_dialog->grid->addWidget(gps_dialog->get_tracks_l, 3, 0);
+		gps_dialog->grid->addWidget(gps_dialog->get_tracks_b, 3, 1);
 	}
-	data->off_request_b->setChecked(power_off);
 
-	data->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
-	data->get_tracks_b = new QCheckBox();
-	bool get_tracks;
-	if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks)) {
-		get_tracks = true;
+	{
+		gps_dialog->get_routes_l = new QLabel(QObject::tr("Routes:"));
+		gps_dialog->get_routes_b = new QCheckBox();
+		bool get_routes;
+		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_ROUTES, &get_routes)) {
+			get_routes = false;
+		}
+		gps_dialog->get_routes_b->setChecked(get_routes);
+
+		gps_dialog->grid->addWidget(gps_dialog->get_routes_l, 4, 0);
+		gps_dialog->grid->addWidget(gps_dialog->get_routes_b, 4, 1);
 	}
-	data->get_tracks_b->setChecked(get_tracks);
 
-	data->get_routes_l = new QLabel(QObject::tr("Routes:"));
-	data->get_routes_b = new QCheckBox();
-	bool get_routes;
-	if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_ROUTES, &get_routes)) {
-		get_routes = false;
+	{
+		gps_dialog->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
+		gps_dialog->get_waypoints_b = new QCheckBox();
+		bool get_waypoints;
+		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints)) {
+			get_waypoints = true;
+		}
+		gps_dialog->get_waypoints_b->setChecked(get_waypoints);
+
+		gps_dialog->grid->addWidget(gps_dialog->get_waypoints_l, 5, 0);
+		gps_dialog->grid->addWidget(gps_dialog->get_waypoints_b, 5, 1);
 	}
-	data->get_routes_b->setChecked(get_routes);
-
-	data->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
-	data->get_waypoints_b = new QCheckBox();
-	bool get_waypoints;
-	if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints)) {
-		get_waypoints = true;
-	}
-	data->get_waypoints_b->setChecked(get_waypoints);
-
-#ifdef K
-	GtkTable * box = GTK_TABLE(gtk_table_new(2, 4, false));
-	GtkTable * data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
-
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_l), 0, 1, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->proto_combo), 1, 2, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->ser_l), 0, 1, 1, 2);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->ser_combo), 1, 2, 1, 2);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_tracks_l), 0, 1, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_tracks_b), 1, 2, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_routes_l), 2, 3, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_routes_b), 3, 4, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_waypoints_l), 4, 5, 0, 1);
-	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(data->get_waypoints_b), 5, 6, 0, 1);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data_type_box), 0, 2, 2, 3);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->off_request_l), 0, 1, 3, 4);
-	gtk_table_attach_defaults(box, GTK_WIDGET(data->off_request_b), 1, 3, 3, 4);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5);
-
-	gtk_widget_show_all (dialog);
-#endif
 }
 
 
 
 
 /**
- * @dialog: The GTK dialog. The caller is responsible for managing the dialog creation/deletion.
- * @xfer: The default type of items enabled for transfer, others disabled.
- * @xfer_all: When specified all items are enabled for transfer.
- *
- * Returns: A void * to the private structure for GPS progress/information widgets.
- *          Pass this pointer back into the other exposed datasource_gps_X functions.
- */
-void * SlavGPS::datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_all)
+   @xfer: The default type of items enabled for transfer, others disabled
+   @xfer_all: When specified all items are enabled for transfer
+*/
+DatasourceGPSSetup::DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent)
 {
-	GPSData *w_gps = (GPSData *)datasource_gps_init_func(NULL);
-	w_gps->direction = GPSDirection::UP;
-	datasource_gps_add_setup_widgets(dialog, NULL, w_gps);
+	this->direction = GPSDirection::UP;
+	this->setWindowTitle(QObject::tr("GPS Upload"));
 
-	bool way = xfer_all;
-	bool trk = xfer_all;
-	bool rte = xfer_all;
+	this->vbox = new QVBoxLayout;
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	this->button_box->addButton(QDialogButtonBox::Cancel);
+	QObject::connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	this->vbox->addWidget(this->button_box);
+
+	datasource_gps_add_setup_widgets(NULL, NULL, this);
+
+
+	bool do_waypoints = xfer_all;
+	bool do_tracks = xfer_all;
+	bool do_routes = xfer_all;
 
 	/* Selectively turn bits on. */
 	if (!xfer_all) {
 		switch (xfer) {
 		case GPSTransferType::WPT:
-			way = true;
+			do_waypoints = true;
 			break;
 		case GPSTransferType::RTE:
-			rte = true;
+			do_routes = true;
 			break;
 		default:
-			trk = true;
+			do_tracks = true;
 			break;
 		}
 	}
-#ifdef K
+
 	/* Apply. */
-	w_gps->get_tracks_b->setChecked(trk);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_l), trk);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_b), trk);
+	this->get_tracks_b->setChecked(do_tracks);
+	this->get_tracks_l->setEnabled(do_tracks);
+	this->get_tracks_b->setEnabled(do_tracks);
 
-	w_gps->get_routes_b->setChecked(rte);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_l), rte);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_b), rte);
+	this->get_routes_b->setChecked(do_routes);
+	this->get_routes_l->setEnabled(do_routes);
+	this->get_routes_b->setEnabled(do_routes);
 
-	w_gps->get_waypoints_b->setChecked(way);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_l), way);
-	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_b), way);
-#endif
-
-	return (void *)w_gps;
+	this->get_waypoints_b->setChecked(do_waypoints);
+	this->get_waypoints_l->setEnabled(do_waypoints);
+	this->get_waypoints_b->setEnabled(do_waypoints);
 }
 
 
@@ -794,7 +741,7 @@ void * SlavGPS::datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bo
 
 void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
 {
-	GPSData * w_gps = (GPSData *) user_data;
+	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) user_data;
 
 	QLabel * gpslabel = new QLabel(QObject::tr("GPS device: N/A"));
 	QLabel * verlabel = new QLabel("");
@@ -811,12 +758,22 @@ void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
 
 	gtk_widget_show_all(dialog);
 
-	w_gps->gps_label = gpslabel;
-	w_gps->id_label = idlabel;
-	w_gps->ver_label = verlabel;
-	w_gps->progress_label = w_gps->wp_label = wplabel;
-	w_gps->trk_label = trklabel;
-	w_gps->rte_label = rtelabel;
-	w_gps->total_count = -1;
+	gps_dialog->gps_label = gpslabel;
+	gps_dialog->id_label = idlabel;
+	gps_dialog->ver_label = verlabel;
+	gps_dialog->progress_label = w_gps->wp_label = wplabel;
+	gps_dialog->trk_label = trklabel;
+	gps_dialog->rte_label = rtelabel;
+	gps_dialog->total_count = -1;
 #endif
+}
+
+
+
+DatasourceGPSProgress::DatasourceGPSProgress(QWidget * parent)
+{
+}
+
+DatasourceGPSProgress::~DatasourceGPSProgress()
+{
 }

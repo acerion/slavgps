@@ -3804,7 +3804,7 @@ void Track::refine_route_cb(void)
 
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */
 		last_engine = combo->currentIndex();
 		RoutingEngine *routing = routing_ui_selector_get_nth(combo, last_engine);

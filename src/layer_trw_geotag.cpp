@@ -655,15 +655,15 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 #ifdef K
 	/* Overwriting & file modification times are irrelevant if not going to write EXIF! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->write_exif_b))) {
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_b), true);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_l), true);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_b), true);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_l), true);
+		gtw->overwrite_gps_exif_b->setEnabled(true);
+		gtw->overwrite_gps_exif_l->setEnabled(true);
+		gtw->no_change_mtime_b->setEnabled(true);
+		gtw->no_change_mtime_l->setEnabled(true);
 	} else {
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_l), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->no_change_mtime_l), false);
+		gtw->overwrite_gps_exif_b->setEnabled(false);
+		gtw->overwrite_gps_exif_l->setEnabled(false);
+		gtw->no_change_mtime_b->setEnabled(false);
+		gtw->no_change_mtime_l->setEnabled(false);
 	}
 #endif
 }
@@ -676,11 +676,11 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 #ifdef K
 	/* Overwriting waypoints are irrelevant if not going to create them! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->create_waypoints_b))) {
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_b), true);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_l), true);
+		gtw->overwrite_waypoints_b->setEnabled(true);
+		gtw->overwrite_waypoints_l->setEnabled(true);
 	} else {
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_l), false);
+		gtw->overwrite_waypoints_b->setEnabled(false);
+		gtw->overwrite_waypoints_l->setEnabled(false);
 	}
 #endif
 }
@@ -791,16 +791,16 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	if (widgets->wp) {
 		track_string = tr("Using waypoint: %1").arg(wp->name);
 		/* Control sensitivities. */
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->create_waypoints_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(create_waypoints_l), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->overwrite_waypoints_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->overwrite_waypoints_l), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->interpolate_segments_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(interpolate_segments_l), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->time_offset_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(time_offset_l), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(widgets->time_zone_b), false);
-		gtk_widget_set_sensitive(GTK_WIDGET(time_zone_l), false);
+		widgets->create_waypoints_b->setEnabled(false);
+		create_waypoints_l->setEnabled(false);
+		widgets->overwrite_waypoints_b->setEnabled(false);
+		widgets->overwrite_waypoints_l->setEnabled(false);
+		widgets->interpolate_segments_b->setEnabled(false);
+		interpolate_segments_l->setEnabled(false);
+		widgets->time_offset_b->setEnabled(false);
+		time_offset_l->setEnabled(false);
+		widgets->time_zone_b->setEnabled(false);
+		time_zone_l->setEnabled(false);
 	} else if (widgets->trk) {
 		track_string = tr("Using track: %1").arg(trk->name);
 	} else {

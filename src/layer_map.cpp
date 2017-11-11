@@ -778,30 +778,30 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		LayerMap * layer = (LayerMap *) values->layer;
 		bool missing_sense = sensitive && layer->autodownload;
 		if (w1) {
-			gtk_widget_set_sensitive(w1, missing_sense);
+			w1->setEnabled(missing_sense);
 		}
 
 		if (w2) {
-			gtk_widget_set_sensitive(w2, missing_sense);
+			w2->setEnabled(missing_sense);
 		}
 
 		if (w3) {
-			gtk_widget_set_sensitive(w3, sensitive);
+			w3->setEnabled(sensitive);
 		}
 
 		if (w4) {
-			gtk_widget_set_sensitive(w4, sensitive);
+			w4->setEnabled(sensitive);
 		}
 
 		/* Cache type not applicable either. */
 		GtkWidget *w9 = ww1[PARAM_CACHE_LAYOUT];
 		GtkWidget *w10 = ww2[PARAM_CACHE_LAYOUT];
 		if (w9) {
-			gtk_widget_set_sensitive(w9, sensitive);
+			w9->setEnabled(sensitive);
 		}
 
 		if (w10) {
-			gtk_widget_set_sensitive(w10, sensitive);
+			w10->setEnabled(sensitive);
 		}
 
 		/* File only applicable for MBTiles type.
@@ -812,19 +812,19 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
 		GtkWidget *w8 = ww2[PARAM_CACHE_DIR];
 		if (w5) {
-			gtk_widget_set_sensitive(w5, sensitive);
+			w5->setEnabled(sensitive);
 		}
 
 		if (w6) {
-			gtk_widget_set_sensitive(w6, sensitive);
+			w6->setEnabled(sensitive);
 		}
 
 		if (w7) {
-			gtk_widget_set_sensitive(w7, !sensitive);
+			w7->setEnabled(!sensitive);
 		}
 
 		if (w8) {
-			gtk_widget_set_sensitive(w8, !sensitive);
+			w8->setEnabled(!sensitive);
 		}
 
 		break;
@@ -839,11 +839,11 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
 		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
 		if (w1) {
-			gtk_widget_set_sensitive(w1, var.b);
+			w1->setEnabled(var.b);
 		}
 
 		if (w2) {
-			gtk_widget_set_sensitive(w2, var.b);
+			w2->setEnabled(var.b);
 		}
 		break;
 	}

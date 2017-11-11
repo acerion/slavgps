@@ -548,7 +548,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	gtk_widget_show_all(dia);
 	gtk_widget_grab_focus(description_entry);
 
-	if (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {
+	if (dia.exec() == QDialog::Accepted GTK_RESPONSE_ACCEPT) {
 
 		/* Overwrite authentication info. */
 		osm_set_login(user_entry->text(), password_entry->text());

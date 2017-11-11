@@ -360,7 +360,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 			gtk_widget_grab_focus(response_w);
 		}
 
-		if (gtk_dialog_run(GTK_DIALOG(setup_dialog)) != GTK_RESPONSE_ACCEPT) {
+		if (setup_dialog.exec() != QDialog::Accepted) {
 			source_interface_->cleanup_func(this->user_data);
 			gtk_widget_destroy(setup_dialog);
 			return;
@@ -495,7 +495,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 			/* Consider using QThreadPool and QRunnable. */
 			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
-			gtk_dialog_run(GTK_DIALOG(setup_dialog));
+			setup_dialog.exec();
 #endif
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */
@@ -518,7 +518,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 			/* This shouldn't happen... */
 			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
 #ifdef K
-			gtk_dialog_run(GTK_DIALOG (setup_dialog));
+			setup_dialog.exec();
 #endif
 		}
 	} else {
@@ -537,7 +537,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		/* Actually show it if necessary. */
 		if (wi->acquiring->source_interface->keep_dialog_open) {
 #ifdef K
-			gtk_dialog_run(GTK_DIALOG(setup_dialog));
+			setup_dialog.exec();
 #endif
 		}
 

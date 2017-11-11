@@ -90,7 +90,7 @@
 
 #include "acquire.h"
 #include "datasources.h"
-#include "datasource_gps.h"
+
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
@@ -100,8 +100,8 @@
 
 #include "clipboard.h"
 #include "gpspoint.h"
-
 #include "widget_list_selection.h"
+#include "datasource_gps.h"
 
 
 
@@ -1050,12 +1050,12 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w4 = ww2[OFFSET + PARAM_WP_IMAGE_ALPHA];
 		GtkWidget *w5 = ww1[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
 		GtkWidget *w6 = ww2[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
-		if (w1) gtk_widget_set_sensitive(w1, var.b);
-		if (w2) gtk_widget_set_sensitive(w2, var.b);
-		if (w3) gtk_widget_set_sensitive(w3, var.b);
-		if (w4) gtk_widget_set_sensitive(w4, var.b);
-		if (w5) gtk_widget_set_sensitive(w5, var.b);
-		if (w6) gtk_widget_set_sensitive(w6, var.b);
+		if (w1) w1->setEnabled(var.b);
+		if (w2) w2->setEnabled(var.b);
+		if (w3) w3->setEnabled(var.b);
+		if (w4) w4->setEnabled(var.b);
+		if (w5) w5->setEnabled(var.b);
+		if (w6) w6->setEnabled(var.b);
 		break;
 	}
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
@@ -1072,14 +1072,14 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget *w6 = ww2[OFFSET + PARAM_WPBA];
 		GtkWidget *w7 = ww1[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
 		GtkWidget *w8 = ww2[OFFSET + PARAM_WP_LABEL_FONT_SIZE];
-		if (w1) gtk_widget_set_sensitive(w1, var.b);
-		if (w2) gtk_widget_set_sensitive(w2, var.b);
-		if (w3) gtk_widget_set_sensitive(w3, var.b);
-		if (w4) gtk_widget_set_sensitive(w4, var.b);
-		if (w5) gtk_widget_set_sensitive(w5, var.b);
-		if (w6) gtk_widget_set_sensitive(w6, var.b);
-		if (w7) gtk_widget_set_sensitive(w7, var.b);
-		if (w8) gtk_widget_set_sensitive(w8, var.b);
+		if (w1) w1->setEnabled(var.b);
+		if (w2) w2->setEnabled(var.b);
+		if (w3) w3->setEnabled(var.b);
+		if (w4) w4->setEnabled(var.b);
+		if (w5) w5->setEnabled(var.b);
+		if (w6) w6->setEnabled(var.b);
+		if (w7) w7->setEnabled(var.b);
+		if (w8) w8->setEnabled(var.b);
 		break;
 	}
 		// Alter sensitivity of all track colors according to the draw track mode.
@@ -1091,15 +1091,15 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_TRACK_COLOR_COMMON];
 		GtkWidget *w2 = ww2[OFFSET + PARAM_TRACK_COLOR_COMMON];
-		if (w1) gtk_widget_set_sensitive(w1, sensitive);
-		if (w2) gtk_widget_set_sensitive(w2, sensitive);
+		if (w1) w1->setEnabled(sensitive);
+		if (w2) w2->setEnabled(sensitive);
 		break;
 	}
 	case PARAM_MDTIME: {
 		// Force metadata->timestamp to be always read-only for now.
 		GtkWidget **ww = values->widgets;
 		GtkWidget *w1 = ww[OFFSET + PARAM_MDTIME];
-		if (w1) gtk_widget_set_sensitive(w1, false);
+		if (w1) w1->setEnabled(false);
 	}
 		// NB Since other track settings have been split across tabs,
 		// I don't think it's useful to set sensitivities on widgets you can't immediately see
@@ -2148,47 +2148,13 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 		return;
 	}
 
-#ifdef K
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("GPS Upload"),
-							this->get_window(),
-							GTK_DIALOG_DESTROY_WITH_PARENT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							NULL);
 
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
-
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
-
-	void * dgs = datasource_gps_setup(dialog, xfer_type, xfer_all);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		datasource_gps_clean_up(dgs);
-		gtk_widget_destroy(dialog);
+	DatasourceGPSSetup gps_upload_setup(xfer_type, xfer_all);
+	if (gps_upload_setup.exec() != QDialog::Accepted) {
 		return;
 	}
 
-	/* Get info from reused datasource dialog widgets. */
-	QString protocol = datasource_gps_get_protocol(dgs);
-	QString port = datasource_gps_get_descriptor(dgs);
-	/* Don't free the above strings as they're references to values held elsewhere. */
-	bool do_tracks = datasource_gps_get_do_tracks(dgs);
-	bool do_routes = datasource_gps_get_do_routes(dgs);
-	bool do_waypoints = datasource_gps_get_do_waypoints(dgs);
-	bool turn_off = datasource_gps_get_off(dgs);
-
-	gtk_widget_destroy(dialog);
-
-	/* When called from the viewport - work the corresponding layerspanel: */
+	/* When called from the viewport - work the corresponding layers panel: */
 	if (!panel) {
 		panel = g_tree->tree_get_items_tree();
 	}
@@ -2197,16 +2163,15 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	vik_gps_comm(this,
 		     trk,
 		     GPSDirection::UP,
-		     protocol,
-		     port,
+		     gps_upload_setup.get_protocol(),
+		     gps_upload_setup.get_port(),
 		     false,
 		     g_tree->tree_get_main_viewport(),
 		     panel,
-		     do_tracks,
-		     do_routes,
-		     do_waypoints,
-		     turn_off);
-#endif
+		     gps_upload_setup.get_do_tracks(),
+		     gps_upload_setup.get_do_routes(),
+		     gps_upload_setup.get_do_waypoints(),
+		     gps_upload_setup.get_do_turn_off());
 }
 
 

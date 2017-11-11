@@ -1369,7 +1369,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 
 		gtk_dialog_set_default_response(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT);
-		gtk_dialog_run(GTK_DIALOG(sess->dialog));
+		sess->dialog.exec();
 
 		gtk_widget_destroy(sess->dialog);
 #endif

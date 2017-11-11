@@ -156,7 +156,7 @@ static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * b
 	bool has_text = entry->text().length() > 0;
 #ifdef K
 	gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
-	gtk_widget_set_sensitive(button, has_text);
+	button->setEnabled(has_text);
 #endif
 }
 

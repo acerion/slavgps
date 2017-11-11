@@ -1044,8 +1044,8 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 		gtk_widget_show_all(dialog);
 
-		resp = gtk_dialog_run(GTK_DIALOG (dialog));
-		if (resp == GTK_RESPONSE_ACCEPT){
+		resp = dialog.exec();
+		if (resp == QDialog::Accepted){
 			for (i = 0, j = 0; i < params_count; i++) {
 				if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
 					if (setparam(pass_along1,

@@ -206,7 +206,7 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 		gtk_widget_grab_focus(response_w);
 	}
 
-	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+	while (dialog.exec() == QDialog::Accepted) {
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 		selected_geonames.erase(); /* TODO: Erase? Clear? Something else? */
 

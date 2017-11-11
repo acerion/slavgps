@@ -1015,7 +1015,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	}
 	gtk_notebook_set_current_page (GTK_NOTEBOOK(cw.tabs), page_num);
 
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+	if (dialog.exec() == QDialog::Accepted) {
 #endif
 		this->align_coords();
 

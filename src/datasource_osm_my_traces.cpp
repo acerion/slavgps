@@ -551,7 +551,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 		gtk_widget_grab_focus(response_w);
 	}
 
-	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+	while (dialog.exec() == QDialog::Accepted) {
 
 		/* Possibily not the fastest method but we don't have thousands of entries to process... */
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
