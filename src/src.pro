@@ -175,6 +175,8 @@ HEADERS += window.h \
     osm.h \
     osm-traces.h \
     datasource_gps.h \
+    datasource_routing.h \
+    datasource_osm.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \
     layer_trw_track_statistics.h \

@@ -1,7 +1,9 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2012, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +20,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DATASOURCE_H_
-#define _SG_DATASOURCE_H_
+#ifndef _SG_DATASOURCE_OSM_H_
+#define _SG_DATASOURCE_OSM_H_
 
 
 
 
-#include <QVBoxLayout>
-#include <QDialogButtonBox>
-#include <QDialog>
-#include <QGridLayout>
+#include <QSpinBox>
+
+
+
+#include "datasource.h"
 
 
 
@@ -37,25 +40,25 @@ namespace SlavGPS {
 
 
 
-	class ProcessOptions;
-	class DownloadOptions;
+	class Viewport;
 
 
 
 
-	class DataSourceDialog : public QDialog {
+	class DataSourceOSMDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceDialog(QWidget * parent = NULL);
-		~DataSourceDialog();
+		DataSourceOSMDialog(Viewport * viewport);
+		~DataSourceOSMDialog();
 
-		/* TODO: this should rather be in DataSourceSetupDialog. */
-		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(DownloadOptions & dl_options);
 
-	/* protected: */
-		QVBoxLayout * vbox = NULL;
-		QGridLayout * grid = NULL;
-		QDialogButtonBox * button_box = NULL;
+	public slots:
+		void accept_cb(void);
+
+	private:
+		QSpinBox spin_box;
+		Viewport * viewport = NULL;
 	};
 
 
@@ -66,4 +69,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DATASOURCE_H_ */
+#endif /* #ifndef _SG_DATASOURCE_ROUTING_H_ */

@@ -22,12 +22,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <cstring>
-#include <cstdlib>
 
 #include <QDebug>
-#include <glib/gprintf.h>
 
+#include "datasource_osm.h"
 #include "viewport_internal.h"
 #include "babel.h"
 #include "gpx.h"
@@ -51,20 +49,10 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	int last_page_number = 0;
-	Viewport * viewport = NULL;
-} datasource_osm_t;
+static int g_last_page_number = 0;
 
-
-
-static datasource_osm_t * datasource_osm = NULL;
-
-
-static void * datasource_osm_init(acq_vik_t * avt);
-static ProcessOptions * datasource_osm_get_process_options(datasource_osm_t * data, DownloadOptions * dl_options, char const * notused1, char const * notused2);
-static void datasource_osm_cleanup(void * data);
 static int datasource_osm_traces_internal_dialog(QWidget * parent);
+static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data);
 
 
 
@@ -78,16 +66,16 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)              datasource_osm_traces_internal_dialog,
-	(VikDataSourceInitFunc)		        datasource_osm_init,
-	(VikDataSourceCheckExistenceFunc)	NULL,
-	(DataSourceCreateSetupDialogFunc)       NULL,
-	(VikDataSourceGetProcessOptionsFunc)    datasource_osm_get_process_options,
-	(VikDataSourceProcessFunc)              a_babel_convert_from,
-	(VikDataSourceProgressFunc)		NULL,
-	(DataSourceCreateProgressDialogFunc)    NULL,
-	(VikDataSourceCleanupFunc)		datasource_osm_cleanup,
-	(DataSourceTurnOffFunc)                 NULL,
+	(DataSourceInternalDialog)            NULL,
+	(VikDataSourceInitFunc)		      NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     datasource_osm_traces_create_setup_dialog,
+	(VikDataSourceGetProcessOptionsFunc)  NULL,
+	(VikDataSourceProcessFunc)            a_babel_convert_from,
+	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
+	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
 	0,
@@ -99,34 +87,19 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 
 
 
-static void * datasource_osm_init(acq_vik_t * avt)
-{
-	datasource_osm = (datasource_osm_t *) malloc(sizeof (datasource_osm_t));
-	/* Keep reference to viewport. */
-	datasource_osm->viewport = avt->viewport;
-	datasource_osm->last_page_number = 0;
-	return datasource_osm;
-}
-
-
-
-
-static ProcessOptions * datasource_osm_get_process_options(datasource_osm_t * datasource, DownloadOptions * dl_options, char const * notused1, char const * notused2)
+ProcessOptions * DataSourceOSMDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	int page = 0;
-
 	LatLonBBoxStrings bbox_strings;
-	datasource->viewport->get_bbox_strings(bbox_strings);
+	this->viewport->get_bbox_strings(bbox_strings);
 
 	/* Retrieve the specified page number. */
-	//last_page_number = datasource->last_page_number;
-	page = datasource->last_page_number;
+	const int page = this->spin_box.value();
 
-	/* NB Download is of GPX type. */
+	/* Download is of GPX type. */
 	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.min_lon.toUtf8().constData(), bbox_strings.min_lat.toUtf8().constData(), bbox_strings.max_lon.toUtf8().constData(), bbox_strings.max_lat.toUtf8().constData(), page);
-	dl_options = NULL; /* i.e. use the default download settings. */
+	/* Don't modify dl_options, use the default download settings. */
 
 	qDebug() << "DD: Datasource OSM: URL =" << po->url;
 
@@ -136,29 +109,46 @@ static ProcessOptions * datasource_osm_get_process_options(datasource_osm_t * da
 
 
 
-static void datasource_osm_cleanup(void * data)
+/* See VikDataSourceInterface. */
+static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	free(data);
+	return new DataSourceOSMDialog(viewport);
 }
 
 
 
 
-/* See VikDataSourceInterface. */
-static int datasource_osm_traces_internal_dialog(QWidget * parent)
+
+DataSourceOSMDialog::DataSourceOSMDialog(Viewport * viewport_)
 {
-	bool ok = false;
-	int rv = Dialog::get_int(QString(vik_datasource_osm_interface.window_title),
-				 QObject::tr("Page number:"),
-				 datasource_osm->last_page_number, 0, 100, 1, &ok, parent);
+	/* Page selector. */
+	QLabel * label = new QLabel(tr("Page Number:"));
 
-	if (ok) {
-		datasource_osm->last_page_number = rv;
+	this->spin_box.setMinimum(0);
+	this->spin_box.setMaximum(100);
+	this->spin_box.setSingleStep(1);
+	this->spin_box.setValue(g_last_page_number);
 
-		qDebug() << "II: Datasource OSM Traces: dialog result: accepted, page number =" << datasource_osm->last_page_number;
-		return QDialog::Accepted;
-	} else {
-		qDebug() << "II: Datasource OSM Traces: dialog result: rejected";
-		return QDialog::Rejected;
-	}
+	this->grid->addWidget(label, 0, 0);
+	this->grid->addWidget(&this->spin_box, 0, 1);
+
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMDialog::accept_cb);
+
+	this->viewport = viewport;
+}
+
+
+
+
+DataSourceOSMDialog::~DataSourceOSMDialog()
+{
+}
+
+
+
+
+void DataSourceOSMDialog::accept_cb(void)
+{
+	g_last_page_number = this->spin_box.value();
+	qDebug() << "II: Datasource OSM Traces: dialog result: accepted, page number =" << g_last_page_number;
 }

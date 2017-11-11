@@ -62,3 +62,11 @@ DataSourceDialog::DataSourceDialog(QWidget * parent)
 DataSourceDialog::~DataSourceDialog()
 {
 }
+
+
+
+
+ProcessOptions * DataSourceDialog::get_process_options(DownloadOptions & dl_options)
+{
+	return NULL;
+}

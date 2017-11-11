@@ -67,10 +67,4 @@ namespace SlavGPS {
 
 
 
-// bool vik_routing_engine_supports_direction(RoutingEngine * self);
-// bool vik_routing_engine_supports_refine(RoutingEngine * self);
-
-
-
-
 #endif /* #ifndef _SG_ROUTING_ENGINE_H_ */

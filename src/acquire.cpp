@@ -319,14 +319,13 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 		/*
 		  Data interfaces that "use" this branch of code:
-		  vik_datasource_osm_interface;
+
 		  vik_datasource_file_interface;
 
 
 		  Data interfaces that don't "use" this branch of code (yet?):
 
 		  vik_datasource_geojson_interface;
-		  vik_datasource_routing_interface;
 		  vik_datasource_osm_my_traces_interface;
 		  vik_datasource_geotag_interface;
 		  vik_datasource_url_interface;
@@ -349,6 +348,8 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		/*
 		  Data interfaces that have "create_setup_dialog_func":
 		  vik_datasource_gps_interface;
+		  vik_datasource_routing_interface;
+		  vik_datasource_osm_interface;
 		*/
 
 		setup_dialog = source_interface_->create_setup_dialog_func(this->viewport, this->user_data);
@@ -379,15 +380,18 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* CREATE INPUT DATA & GET OPTIONS */
 	ProcessOptions * po = NULL;
 
-	if (source_interface_->inputtype == DatasourceInputtype::TRWLAYER) {
+
+	switch (source_interface_->inputtype) {
+
+	case DatasourceInputtype::TRWLAYER: {
 		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
-
 		po = source_interface_->get_process_options(pass_along_data, NULL, name_src, NULL);
-
 		util_add_to_deletion_list(name_src);
-
 		free(name_src);
-	} else if (source_interface_->inputtype == DatasourceInputtype::TRWLAYER_TRACK) {
+		}
+		break;
+
+	case DatasourceInputtype::TRWLAYER_TRACK: {
 		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
 		char * name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
 
@@ -398,17 +402,29 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 		free(name_src);
 		free(name_src_track);
-	} else if (source_interface_->inputtype == DatasourceInputtype::TRACK) {
-		char *name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
+		}
+		break;
 
+	case DatasourceInputtype::TRACK: {
+		char * name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
 		po = source_interface_->get_process_options(pass_along_data, NULL, NULL, name_src_track);
-
 		free(name_src_track);
-	} else if (source_interface_->get_process_options) {
-		po = source_interface_->get_process_options(pass_along_data, dl_options, NULL, NULL);
-	} else {
-		/* kamil: what now? */
-	}
+		}
+		break;
+
+	case DatasourceInputtype::NONE:
+		if (source_interface_ == &vik_datasource_routing_interface
+		    || source_interface_ == &vik_datasource_osm_interface) {
+			po = setup_dialog->get_process_options(*dl_options);
+		} else {
+			po = source_interface_->get_process_options(pass_along_data, dl_options, NULL, NULL);
+		}
+		break;
+
+	default:
+		qDebug() << "EE: Acquire: unsupported Datasource Input Type" << (int) source_interface_->inputtype;
+		break;
+	};
 
 	/* Get data for Off command. */
 	if (source_interface_->off_func) {

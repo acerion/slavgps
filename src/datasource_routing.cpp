@@ -24,14 +24,10 @@
 #include "config.h"
 #endif
 
-#include <cstring>
-#include <cstdlib>
-
 #include <QComboBox>
 #include <QLineEdit>
 
-#include <glib/gprintf.h>
-
+#include "datasource_routing.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
@@ -45,25 +41,12 @@ using namespace SlavGPS;
 
 
 
-class datasource_routing_widgets_t {
-public:
-	QComboBox * engines_combo;
-	QLineEdit from_entry;
-	QLineEdit to_entry;
-};
-
-
-
-
 /* Memory of previous selection */
 static int last_engine = 0;
 static QString last_from_str;
 static QString last_to_str;
 
-static void * datasource_routing_init(acq_vik_t * avt);
 static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
-static void datasource_routing_cleanup(void * data);
 
 
 
@@ -77,16 +60,16 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)              NULL,
-	(VikDataSourceInitFunc)		datasource_routing_init,
-	(VikDataSourceCheckExistenceFunc)	NULL,
+	(DataSourceInternalDialog)            NULL,
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_routing_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_routing_get_process_options,
+	(VikDataSourceGetProcessOptionsFunc)  NULL,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)		datasource_routing_cleanup,
-	(DataSourceTurnOffFunc)                 NULL,
+	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
 	0,
@@ -98,78 +81,71 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 
 
 
-static void * datasource_routing_init(acq_vik_t * avt)
+static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	datasource_routing_widgets_t * widgets = (datasource_routing_widgets_t *) malloc(sizeof (datasource_routing_widgets_t));
-	return widgets;
+	return new DataSourceRoutingDialog();
 }
 
 
 
 
-static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceRoutingDialog::DataSourceRoutingDialog()
 {
-	DataSourceDialog * setup_dialog = NULL;
-	GtkWidget * dialog;
-
-	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
-
 	/* Engine selector. */
-	QLabel * engine_label = new QLabel(QObject::tr("Engine:"));
+	QLabel * engine_label = new QLabel(tr("Engine:"));
 #ifdef K
-	widgets->engines_combo = routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
-	widgets->engines_combo->setCurrentIndex(last_engine);
+	this->engines_combo = routing_ui_selector_new(RoutingEngine::supports_refine(void), NULL);
+#else
+	this->engines_combo = routing_ui_selector_new(NULL, NULL);
 #endif
+	this->engines_combo->setCurrentIndex(last_engine);
 
 	/* From and To entries. */
-	QLabel * from_label = new QLabel(QObject::tr("From:"));
-	QLabel * to_label = new QLabel(QObject::tr("To:"));
+	QLabel * from_label = new QLabel(tr("From:"));
+	QLabel * to_label = new QLabel(tr("To:"));
 
 	if (!last_from_str.isEmpty()) {
-		widgets->from_entry.setText(last_from_str);
+		this->from_entry.setText(last_from_str);
 	}
 
 	if (!last_to_str.isEmpty()) {
-		widgets->to_entry.setText(last_to_str);
+		this->to_entry.setText(last_to_str);
 	}
-#ifdef K
-	/* Packing all these widgets. */
-	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(engine_label);
-	box->addWidget(widgets->engines_combo);
-	box->addWidget(from_label);
-	box->addWidget(&widgets->from_entry);
-	box->addWidget(to_label);
-	box->addWidget(&widgets->to_entry);
-	gtk_widget_show_all(dialog);
-#endif
 
-	return setup_dialog;
+
+	/* Packing all these widgets. */
+	this->grid->addWidget(engine_label, 0, 0);
+	this->grid->addWidget(this->engines_combo, 0, 1);
+
+	this->grid->addWidget(from_label, 1, 0);
+	this->grid->addWidget(&this->from_entry, 1, 1);
+
+	this->grid->addWidget(to_label, 2, 0);
+	this->grid->addWidget(&this->to_entry, 2, 1);
 }
 
 
 
 
-static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
+ProcessOptions * DataSourceRoutingDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
 	/* Retrieve directions. */
-	const QString from = widgets->from_entry.text();
-	const QString to = widgets->to_entry.text();
+	const QString from = this->from_entry.text();
+	const QString to = this->to_entry.text();
 
 	/* Retrieve engine. */
-	last_engine = widgets->engines_combo->currentIndex();
+	last_engine = this->engines_combo->currentIndex();
 
-	RoutingEngine * engine = routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
+	RoutingEngine * engine = routing_ui_selector_get_nth(this->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}
 
 	po->url = engine->get_url_from_directions(from.toUtf8().constData(), to.toUtf8().constData());
-	po->input_file_type = g_strdup(engine->get_format());
-	dl_options = NULL; /* i.e. use the default download settings. */
-
+	po->input_file_type = strdup(engine->get_format());
+	/* Don't modify dl_options, i.e. use the default download settings. */
 
 	/* Save last selection. */
 	last_from_str = from;
@@ -181,7 +157,6 @@ static ProcessOptions * datasource_routing_get_process_options(datasource_routin
 
 
 
-static void datasource_routing_cleanup(void * data)
+DataSourceRoutingDialog::~DataSourceRoutingDialog()
 {
-	free(data);
 }
