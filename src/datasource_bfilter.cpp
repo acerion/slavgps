@@ -116,7 +116,7 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_simplify_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	bfilter_simplify_params,
 	sizeof(bfilter_simplify_params)/sizeof(bfilter_simplify_params[0]),
@@ -216,7 +216,7 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_compress_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	bfilter_compress_params,
 	sizeof(bfilter_compress_params)/sizeof(bfilter_compress_params[0]),
@@ -261,7 +261,7 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_dup_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	NULL, 0, NULL, NULL, 0
 };
@@ -313,7 +313,7 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_manual_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	bfilter_manual_params,
 	sizeof(bfilter_manual_params)/sizeof(bfilter_manual_params[0]),
@@ -357,7 +357,7 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_polygon_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	NULL,
 	0,
@@ -400,7 +400,7 @@ VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
 	(VikDataSourceGetProcessOptionsFunc) datasource_bfilter_exclude_polygon_get_process_options,
 	(VikDataSourceProcessFunc)           a_babel_convert_from,
 	NULL, NULL, NULL,
-	(VikDataSourceOffFunc) NULL,
+	(DataSourceTurnOffFunc)              NULL,
 
 	NULL,
 	0,

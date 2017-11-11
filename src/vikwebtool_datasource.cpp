@@ -124,8 +124,11 @@ static void * datasource_init(acq_vik_t *avt)
 
 
 
-static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget *dialog;
+
 	datasource_t *widgets = (datasource_t *)user_data;
 	WebToolDatasource * ext_tool = widgets->web_tool_datasource;
 	char *label = g_strdup_printf("%s:", ext_tool->input_label);
@@ -150,6 +153,8 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 
 	free(label);
 #endif
+
+	return setup_dialog;
 }
 
 
@@ -235,13 +240,13 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		(DataSourceInternalDialog)            NULL,
 		(VikDataSourceInitFunc)               datasource_init,
 		(VikDataSourceCheckExistenceFunc)     NULL,
-		(VikDataSourceAddSetupWidgetsFunc)    (search ? datasource_add_setup_widgets : NULL),
+		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
 		(VikDataSourceGetProcessOptionsFunc)  datasource_get_process_options,
 		(VikDataSourceProcessFunc)            a_babel_convert_from,
 		(VikDataSourceProgressFunc)           NULL,
-		(VikDataSourceAddProgressWidgetsFunc) NULL,
+		(DataSourceCreateProgressDialogFunc)  NULL,
 		(VikDataSourceCleanupFunc)            cleanup,
-		(VikDataSourceOffFunc)                NULL,
+		(DataSourceTurnOffFunc)               NULL,
 		NULL,
 		0,
 		NULL,

@@ -65,7 +65,7 @@ static int last_type_id = -1;
 
 
 static void * datasource_url_init(acq_vik_t * avt);
-static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
 static void datasource_url_cleanup(void * data);
 
@@ -84,13 +84,13 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               datasource_url_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
-	(VikDataSourceAddSetupWidgetsFunc)    datasource_url_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)     datasource_url_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_url_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
-	(VikDataSourceAddProgressWidgetsFunc) NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
 	(VikDataSourceCleanupFunc)            datasource_url_cleanup,
-	(VikDataSourceOffFunc)                NULL,
+	(DataSourceTurnOffFunc)               NULL,
 	NULL,
 	0,
 	NULL,
@@ -132,8 +132,11 @@ static void find_type(BabelFileType * file_type, const QString & type_name)
 
 
 
-static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget * dialog;
+
 	URLData * widgets = (URLData *) user_data;
 	QLabel * label = new QLabel(QObject::tr("URL:"));
 
@@ -185,6 +188,8 @@ static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * view
 
 	gtk_widget_show_all(dialog);
 #endif
+
+	return setup_dialog;
 }
 
 

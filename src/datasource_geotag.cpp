@@ -60,7 +60,7 @@ static QUrl last_directory_url;
 
 
 static void * datasource_geotag_init(acq_vik_t * avt);
-static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3);
 static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, void * not_used);
 static void datasource_geotag_cleanup(void * user_data);
@@ -80,13 +80,13 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 	(DataSourceInternalDialog)                NULL,
 	(VikDataSourceInitFunc)		          datasource_geotag_init,
 	(VikDataSourceCheckExistenceFunc)	  NULL,
-	(VikDataSourceAddSetupWidgetsFunc)        datasource_geotag_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)         datasource_geotag_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)      datasource_geotag_get_process_options,
 	(VikDataSourceProcessFunc)                datasource_geotag_process,
 	(VikDataSourceProgressFunc)               NULL,
-	(VikDataSourceAddProgressWidgetsFunc)     NULL,
+	(DataSourceCreateProgressDialogFunc)      NULL,
 	(VikDataSourceCleanupFunc)                datasource_geotag_cleanup,
-	(VikDataSourceOffFunc)                    NULL,
+	(DataSourceTurnOffFunc)                   NULL,
 
 	NULL,
 	0,
@@ -110,8 +110,11 @@ static void * datasource_geotag_init(acq_vik_t * avt)
 
 
 /* See VikDataSourceInterface. */
-static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget * dialog;
+
 	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *) user_data;
 #ifdef K
 	/* The files selector. */
@@ -154,6 +157,7 @@ static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * v
 
 	gtk_widget_show_all(dialog);
 #endif
+	return setup_dialog;
 }
 
 

@@ -25,18 +25,14 @@
 
 
 #include <QString>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QDialogButtonBox>
 #include <QComboBox>
-#include <QDialog>
 #include <QLabel>
 #include <QCheckBox>
-#include <QGridLayout>
 
 
 
 
+#include "datasource.h"
 #include "layer_gps.h"
 
 
@@ -47,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class DatasourceGPSSetup : public QDialog {
+	class DatasourceGPSSetup : public DataSourceDialog {
 		Q_OBJECT
 	public:
 		DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
@@ -64,7 +60,6 @@ namespace SlavGPS {
 
 
 	public:
-		/* Setup dialog. */
 		QLabel * proto_label = NULL;
 		QComboBox * proto_combo = NULL;
 		QLabel * serial_port_label = NULL;
@@ -85,16 +80,13 @@ namespace SlavGPS {
 		GPSDirection direction;
 
 
-		QVBoxLayout * vbox = NULL;
-		QGridLayout * grid = NULL;
-		QDialogButtonBox * button_box = NULL;
 	private:
 
 	};
 
 
 
-	class DatasourceGPSProgress : public QDialog {
+	class DatasourceGPSProgress : public DataSourceDialog {
 		Q_OBJECT
 	public:
 		DatasourceGPSProgress(QWidget * parent = NULL);
@@ -103,7 +95,6 @@ namespace SlavGPS {
 	private slots:
 
 	public:
-		/* Progress dialog. */
 		QLabel *gps_label = NULL;
 		QLabel *ver_label = NULL;
 		QLabel *id_label = NULL;
@@ -118,11 +109,6 @@ namespace SlavGPS {
 		int count = 0;
 		/* Know which way xfer is so xfer setting types are only stored for download. */
 		GPSDirection direction;
-
-
-		QVBoxLayout * vbox = NULL;
-		QGridLayout * grid = NULL;
-		QDialogButtonBox * button_box = NULL;
 	private:
 
 	};

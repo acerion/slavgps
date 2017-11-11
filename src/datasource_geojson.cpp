@@ -53,7 +53,7 @@ static QUrl last_directory_url;
 
 
 static void * datasource_geojson_init(acq_vik_t * avt);
-static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_geojson_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geojson_get_process_options(datasource_geojson_user_data_t * user_data, void * not_used, char const * not_used2, char const * not_used3);
 static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 static void datasource_geojson_cleanup(void * data);
@@ -73,13 +73,13 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               datasource_geojson_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
-	(VikDataSourceAddSetupWidgetsFunc)    datasource_geojson_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)     datasource_geojson_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_geojson_get_process_options,
 	(VikDataSourceProcessFunc)            datasource_geojson_process,
 	(VikDataSourceProgressFunc)           NULL,
-	(VikDataSourceAddProgressWidgetsFunc) NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
 	(VikDataSourceCleanupFunc)            datasource_geojson_cleanup,
-	(VikDataSourceOffFunc)                NULL,
+	(DataSourceTurnOffFunc)               NULL,
 	NULL,
 	0,
 	NULL,
@@ -100,8 +100,10 @@ static void * datasource_geojson_init(acq_vik_t * avt)
 
 
 
-static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_geojson_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget * dialog;
 	datasource_geojson_user_data_t * ud = (datasource_geojson_user_data_t *) user_data;
 
 #ifdef K
@@ -141,6 +143,8 @@ static void datasource_geojson_add_setup_widgets(GtkWidget * dialog, Viewport * 
 
 	gtk_widget_show_all(dialog);
 #endif
+
+	return setup_dialog;
 }
 
 

@@ -66,7 +66,7 @@ typedef struct {
 
 
 static void * datasource_osm_my_traces_init(acq_vik_t *avt);
-static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
 static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 static void datasource_osm_my_traces_cleanup(void * data);
@@ -86,13 +86,13 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)	                datasource_osm_my_traces_init,
 	(VikDataSourceCheckExistenceFunc)       NULL,
-	(VikDataSourceAddSetupWidgetsFunc)      datasource_osm_my_traces_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)       datasource_osm_my_traces_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)    datasource_osm_my_traces_get_process_options,
 	(VikDataSourceProcessFunc)              datasource_osm_my_traces_process,
 	(VikDataSourceProgressFunc)             NULL,
-	(VikDataSourceAddProgressWidgetsFunc)   NULL,
+	(DataSourceCreateProgressDialogFunc)    NULL,
 	(VikDataSourceCleanupFunc)              datasource_osm_my_traces_cleanup,
-	(VikDataSourceOffFunc)                  NULL,
+	(DataSourceTurnOffFunc)                 NULL,
 
 	NULL,
 	0,
@@ -113,7 +113,7 @@ static void * datasource_osm_my_traces_init(acq_vik_t *avt)
 	/*
 	  if (vik_datasource_osm_my_traces_interface.is_thread) {
 	  vik_datasource_osm_my_traces_interface.progress_func = datasource_gps_progress;
-	  vik_datasource_osm_my_traces_interface.add_progress_widgets_func = datasource_gps_add_progress_widgets;
+	  vik_datasource_osm_my_traces_interface.create_progress_dialog_func = datasource_gps_add_progress_widgets;
 	  }
 	*/
 	return data;
@@ -122,8 +122,11 @@ static void * datasource_osm_my_traces_init(acq_vik_t *avt)
 
 
 
-static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget *dialog;
+
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
@@ -148,6 +151,8 @@ static void datasource_osm_my_traces_add_setup_widgets(GtkWidget *dialog, Viewpo
 #endif
 	/* Keep reference to viewport. */
 	data->viewport = viewport;
+
+	return setup_dialog;
 }
 
 

@@ -61,7 +61,7 @@ static QString last_from_str;
 static QString last_to_str;
 
 static void * datasource_routing_init(acq_vik_t * avt);
-static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
 static void datasource_routing_cleanup(void * data);
 
@@ -80,13 +80,13 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		datasource_routing_init,
 	(VikDataSourceCheckExistenceFunc)	NULL,
-	(VikDataSourceAddSetupWidgetsFunc)	datasource_routing_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)     datasource_routing_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_routing_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)		NULL,
-	(VikDataSourceAddProgressWidgetsFunc)	NULL,
+	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
 	(VikDataSourceCleanupFunc)		datasource_routing_cleanup,
-	(VikDataSourceOffFunc)                NULL,
+	(DataSourceTurnOffFunc)                 NULL,
 
 	NULL,
 	0,
@@ -107,8 +107,11 @@ static void * datasource_routing_init(acq_vik_t * avt)
 
 
 
-static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	DataSourceDialog * setup_dialog = NULL;
+	GtkWidget * dialog;
+
 	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
 
 	/* Engine selector. */
@@ -140,6 +143,8 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	box->addWidget(&widgets->to_entry);
 	gtk_widget_show_all(dialog);
 #endif
+
+	return setup_dialog;
 }
 
 

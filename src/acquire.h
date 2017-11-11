@@ -34,6 +34,7 @@
 
 #include "babel.h"
 #include "ui_builder.h"
+#include "datasource.h"
 
 
 
@@ -108,7 +109,7 @@ namespace SlavGPS {
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 
-		GtkWidget * dialog = NULL;
+		DataSourceDialog * dialog = NULL;
 		bool running = false;
 		VikDataSourceInterface * source_interface = NULL;
 		void * user_data = NULL;
@@ -131,11 +132,9 @@ namespace SlavGPS {
 	typedef char *(*VikDataSourceCheckExistenceFunc) ();
 
 	/**
-	 * VikDataSourceAddSetupWidgetsFunc:
-	 *
-	 * Create widgets to show in a setup dialog, set up state via user_data.
+	   Create a dialog for configuring/setting up access to data source
 	 */
-	typedef void (* VikDataSourceAddSetupWidgetsFunc) (GtkWidget * dialog, Viewport * viewport, void * user_data);
+	typedef DataSourceDialog * (* DataSourceCreateSetupDialogFunc)(Viewport * viewport, void * user_data);
 
 
 	typedef int (* DataSourceInternalDialog) (QWidget * parent);
@@ -168,15 +167,13 @@ namespace SlavGPS {
 	typedef void  (* VikDataSourceProgressFunc) (BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 	/**
-	 * VikDataSourceAddProgressWidgetsFunc:
-	 *
-	 * Creates widgets to show in a progress dialog, may set up state via user_data.
+	   Create a dialog for showing progress of accessing a data source
 	 */
-	typedef void  (*VikDataSourceAddProgressWidgetsFunc) ( GtkWidget *dialog, void * user_data );
+	typedef DataSourceDialog * (* DataSourceCreateProgressDialogFunc)(void * user_data);
 
 
 
-	typedef void (* VikDataSourceOffFunc) (void * user_data, QString & babel_args, QString & file_path);
+	typedef void (* DataSourceTurnOffFunc) (void * user_data, QString & babel_args, QString & file_path);
 
 	/**
 	 * VikDataSourceInterface:
@@ -197,7 +194,7 @@ namespace SlavGPS {
 		DataSourceInternalDialog internal_dialog;
 		VikDataSourceInitFunc init_func;
 		VikDataSourceCheckExistenceFunc check_existence_func;
-		VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
+		DataSourceCreateSetupDialogFunc create_setup_dialog_func;
 
 		/***                    ***/
 
@@ -206,9 +203,9 @@ namespace SlavGPS {
 		VikDataSourceProcessFunc process_func;
 
 		VikDataSourceProgressFunc progress_func;
-		VikDataSourceAddProgressWidgetsFunc add_progress_widgets_func;
+		DataSourceCreateProgressDialogFunc create_progress_dialog_func;
 		VikDataSourceCleanupFunc cleanup_func;
-		VikDataSourceOffFunc off_func;
+		DataSourceTurnOffFunc off_func;
 
 
 

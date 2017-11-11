@@ -46,6 +46,7 @@
 #include "acquire.h"
 #include "application_state.h"
 #include "util.h"
+#include "datasource.h"
 
 
 
@@ -65,10 +66,10 @@ static void * datasource_gps_init_func(acq_vik_t *avt);
 static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gps_cleanup(void * user_data);
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
-static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
-static void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data);
+static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data);
 static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel_args, QString & file_path);
-
+static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog);
 
 
 VikDataSourceInterface vik_datasource_gps_interface = {
@@ -83,13 +84,13 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		        datasource_gps_init_func,
 	(VikDataSourceCheckExistenceFunc)	NULL,
-	(VikDataSourceAddSetupWidgetsFunc)	datasource_gps_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)       datasource_gps_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)    datasource_gps_get_process_options,
 	(VikDataSourceProcessFunc)              a_babel_convert_from,
 	(VikDataSourceProgressFunc)		datasource_gps_progress,
-	(VikDataSourceAddProgressWidgetsFunc)	datasource_gps_add_progress_widgets,
+	(DataSourceCreateProgressDialogFunc)    datasource_gps_create_progress_dialog,
 	(VikDataSourceCleanupFunc)		datasource_gps_cleanup,
-	(VikDataSourceOffFunc)                  datasource_gps_off,
+	(DataSourceTurnOffFunc)                 datasource_gps_off,
 
 	NULL,
 	0,
@@ -520,16 +521,26 @@ static void find_protocol(BabelDevice * device, const QString & protocol)
 
 
 
-
-static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
+	/* This function will be created for downloading data from
+	   GPS, so build the dialog with all checkboxes available and
+	   checked - hence second argument to constructor is
+	   "true". */
+	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
+	return new DatasourceGPSSetup(xfer, true, NULL);
+}
 
+
+
+
+static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog)
+{
 	{
-		gps_dialog->proto_label = new QLabel(QObject::tr("GPS Protocol:"));
-		gps_dialog->proto_combo = new QComboBox();
+		setup_dialog->proto_label = new QLabel(QObject::tr("GPS Protocol:"));
+		setup_dialog->proto_combo = new QComboBox();
 		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-			gps_dialog->proto_combo->addItem((*iter)->label);
+			setup_dialog->proto_combo->addItem((*iter)->label);
 		}
 
 		if (last_active < 0) {
@@ -553,20 +564,20 @@ static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * view
 			last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 		}
 
-		gps_dialog->proto_combo->setCurrentIndex(last_active);
+		setup_dialog->proto_combo->setCurrentIndex(last_active);
 #ifdef K
-		g_object_ref(gps_dialog->proto_combo);
+		g_object_ref(setup_dialog->proto_combo);
 #endif
 
-		gps_dialog->grid->addWidget(gps_dialog->proto_label, 0, 0);
-		gps_dialog->grid->addWidget(gps_dialog->proto_combo, 0, 1);
+		setup_dialog->grid->addWidget(setup_dialog->proto_label, 0, 0);
+		setup_dialog->grid->addWidget(setup_dialog->proto_combo, 0, 1);
 	}
 
 	{
 
 
-		gps_dialog->serial_port_label = new QLabel(QObject::tr("Serial Port:"));
-		gps_dialog->serial_port_combo = new QComboBox();
+		setup_dialog->serial_port_label = new QLabel(QObject::tr("Serial Port:"));
+		setup_dialog->serial_port_combo = new QComboBox();
 
 
 		/* Value from the settings is promoted to the top. */
@@ -577,11 +588,11 @@ static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * view
 #ifndef WINDOWS
 				if (preferred_gps_port.left(6) == "/dev/tty") {
 					if (access(preferred_gps_port.toUtf8().constData(), R_OK) == 0) {
-						gps_dialog->serial_port_combo->addItem(preferred_gps_port);
+						setup_dialog->serial_port_combo->addItem(preferred_gps_port);
 					}
 				} else
 #endif
-					gps_dialog->serial_port_combo->addItem(preferred_gps_port);
+					setup_dialog->serial_port_combo->addItem(preferred_gps_port);
 			}
 		}
 
@@ -603,72 +614,74 @@ static void datasource_gps_add_setup_widgets(GtkWidget * dialog, Viewport * view
 			}
 
 			if (access(port.toUtf8().constData(), R_OK) == 0) {
-				gps_dialog->serial_port_combo->addItem(port);
+				setup_dialog->serial_port_combo->addItem(port);
 			}
 		}
 
 
-		gps_dialog->serial_port_combo->setCurrentIndex(0);
+		setup_dialog->serial_port_combo->setCurrentIndex(0);
 #ifdef K
-		g_object_ref(gps_dialog->serial_port_combo);
+		g_object_ref(setup_dialog->serial_port_combo);
 #endif
-		gps_dialog->grid->addWidget(gps_dialog->serial_port_label, 1, 0);
-		gps_dialog->grid->addWidget(gps_dialog->serial_port_combo, 1, 1);
+		setup_dialog->grid->addWidget(setup_dialog->serial_port_label, 1, 0);
+		setup_dialog->grid->addWidget(setup_dialog->serial_port_combo, 1, 1);
 	}
 
 
 	{
-		gps_dialog->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
-		gps_dialog->off_request_b = new QCheckBox();
+		setup_dialog->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
+		setup_dialog->off_request_b = new QCheckBox();
 		bool power_off;
 		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_POWER_OFF, &power_off)) {
 			power_off = false;
 		}
-		gps_dialog->off_request_b->setChecked(power_off);
+		setup_dialog->off_request_b->setChecked(power_off);
 
-		gps_dialog->grid->addWidget(gps_dialog->off_request_l, 2, 0);
-		gps_dialog->grid->addWidget(gps_dialog->off_request_b, 2, 1);
+		setup_dialog->grid->addWidget(setup_dialog->off_request_l, 2, 0);
+		setup_dialog->grid->addWidget(setup_dialog->off_request_b, 2, 1);
 	}
 
 
 	{
-		gps_dialog->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
-		gps_dialog->get_tracks_b = new QCheckBox();
+		setup_dialog->get_tracks_l = new QLabel(QObject::tr("Tracks:"));
+		setup_dialog->get_tracks_b = new QCheckBox();
 		bool get_tracks;
 		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks)) {
 			get_tracks = true;
 		}
-		gps_dialog->get_tracks_b->setChecked(get_tracks);
+		setup_dialog->get_tracks_b->setChecked(get_tracks);
 
-		gps_dialog->grid->addWidget(gps_dialog->get_tracks_l, 3, 0);
-		gps_dialog->grid->addWidget(gps_dialog->get_tracks_b, 3, 1);
+		setup_dialog->grid->addWidget(setup_dialog->get_tracks_l, 3, 0);
+		setup_dialog->grid->addWidget(setup_dialog->get_tracks_b, 3, 1);
 	}
 
 	{
-		gps_dialog->get_routes_l = new QLabel(QObject::tr("Routes:"));
-		gps_dialog->get_routes_b = new QCheckBox();
+		setup_dialog->get_routes_l = new QLabel(QObject::tr("Routes:"));
+		setup_dialog->get_routes_b = new QCheckBox();
 		bool get_routes;
 		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_ROUTES, &get_routes)) {
 			get_routes = false;
 		}
-		gps_dialog->get_routes_b->setChecked(get_routes);
+		setup_dialog->get_routes_b->setChecked(get_routes);
 
-		gps_dialog->grid->addWidget(gps_dialog->get_routes_l, 4, 0);
-		gps_dialog->grid->addWidget(gps_dialog->get_routes_b, 4, 1);
+		setup_dialog->grid->addWidget(setup_dialog->get_routes_l, 4, 0);
+		setup_dialog->grid->addWidget(setup_dialog->get_routes_b, 4, 1);
 	}
 
 	{
-		gps_dialog->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
-		gps_dialog->get_waypoints_b = new QCheckBox();
+		setup_dialog->get_waypoints_l = new QLabel(QObject::tr("Waypoints:"));
+		setup_dialog->get_waypoints_b = new QCheckBox();
 		bool get_waypoints;
 		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints)) {
 			get_waypoints = true;
 		}
-		gps_dialog->get_waypoints_b->setChecked(get_waypoints);
+		setup_dialog->get_waypoints_b->setChecked(get_waypoints);
 
-		gps_dialog->grid->addWidget(gps_dialog->get_waypoints_l, 5, 0);
-		gps_dialog->grid->addWidget(gps_dialog->get_waypoints_b, 5, 1);
+		setup_dialog->grid->addWidget(setup_dialog->get_waypoints_l, 5, 0);
+		setup_dialog->grid->addWidget(setup_dialog->get_waypoints_b, 5, 1);
 	}
+
+	return setup_dialog;
 }
 
 
@@ -683,25 +696,7 @@ DatasourceGPSSetup::DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWid
 	this->direction = GPSDirection::UP;
 	this->setWindowTitle(QObject::tr("GPS Upload"));
 
-	this->vbox = new QVBoxLayout;
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-
-	this->grid = new QGridLayout();
-	this->vbox->addLayout(this->grid);
-
-
-	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton(QDialogButtonBox::Ok);
-	this->button_box->addButton(QDialogButtonBox::Cancel);
-	QObject::connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-	this->vbox->addWidget(this->button_box);
-
-	datasource_gps_add_setup_widgets(NULL, NULL, this);
-
+	datasource_gps_setup_dialog_add_widgets(this);
 
 	bool do_waypoints = xfer_all;
 	bool do_tracks = xfer_all;
@@ -739,8 +734,9 @@ DatasourceGPSSetup::DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWid
 
 
 
-void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
+DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data)
 {
+	DataSourceDialog * progress_dialog = NULL;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) user_data;
 
 	QLabel * gpslabel = new QLabel(QObject::tr("GPS device: N/A"));
@@ -766,6 +762,8 @@ void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
 	gps_dialog->rte_label = rtelabel;
 	gps_dialog->total_count = -1;
 #endif
+
+	return progress_dialog;
 }
 
 

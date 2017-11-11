@@ -69,7 +69,7 @@ typedef struct {
 
 
 static void * datasource_gc_init(acq_vik_t *avt);
-static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
+static DataSourceDialog * datasource_gc_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets);
 static char *datasource_gc_check_existence();
@@ -94,13 +94,13 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		        datasource_gc_init,
 	(VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,
-	(VikDataSourceAddSetupWidgetsFunc)	datasource_gc_add_setup_widgets,
+	(DataSourceCreateSetupDialogFunc)       datasource_gc_create_setup_dialog,
 	(VikDataSourceGetProcessOptionsFunc)    datasource_gc_get_process_options,
 	(VikDataSourceProcessFunc)              a_babel_convert_from,
 	(VikDataSourceProgressFunc)		NULL,
-	(VikDataSourceAddProgressWidgetsFunc)	NULL,
+	(DataSourceCreateProgressDialogFunc)    NULL,
 	(VikDataSourceCleanupFunc)		datasource_gc_cleanup,
-	(VikDataSourceOffFunc)                  NULL,
+	(DataSourceTurnOffFunc)                 NULL,
 };
 
 
@@ -216,8 +216,11 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 
 
 
-static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_gc_create_setup_dialog(Viewport * viewport, void * user_data)
 {
+	GtkWidget * dialog;
+	DataSourceDialog * setup_dialog;
+
 	datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *)user_data;
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"));
@@ -258,6 +261,8 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	box->addWidget(miles_radius_label);
 	box->addWidget(widgets->miles_radius_spin);
 	gtk_widget_show_all(dialog);
+
+	return setup_dialog;
 }
 
 

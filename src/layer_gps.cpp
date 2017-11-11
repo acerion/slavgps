@@ -1335,7 +1335,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->dialog = gtk_dialog_new_with_buttons("", layer->get_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 		gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog),
 						    GTK_RESPONSE_ACCEPT, false);
-		gtk_window_set_title(GTK_WINDOW(sess->dialog), sess->window_title);
+		sess->dialog->setWindowTitle(sess->window_title);
 
 		sess->status_label = new QLabel(QObject::tr("Status: detecting gpsbabel"));
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->status_label, false, false, 5);

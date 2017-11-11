@@ -280,7 +280,7 @@ static void get_from_anything(w_and_interface_t * wi)
 void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * source_interface_, void * userdata, VikDataSourceCleanupFunc cleanup_function)
 {
 	/* For manual dialogs. */
-	GtkWidget * setup_dialog = NULL;
+	DataSourceDialog * setup_dialog = NULL;
 	QString babel_args_off;
 	QString file_path_off;
 	DownloadOptions * dl_options = new DownloadOptions;
@@ -320,16 +320,17 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		/*
 		  Data interfaces that "use" this branch of code:
 		  vik_datasource_osm_interface;
-		  vik_datasource_wikipedia_interface;
+		  vik_datasource_file_interface;
 
 
 		  Data interfaces that don't "use" this branch of code (yet?):
-		  vik_datasource_gps_interface;
+
 		  vik_datasource_geojson_interface;
 		  vik_datasource_routing_interface;
 		  vik_datasource_osm_my_traces_interface;
 		  vik_datasource_geotag_interface;
 		  vik_datasource_url_interface;
+		  vik_datasource_wikipedia_interface;
 		*/
 
 		int rv = source_interface_->internal_dialog(avt.window);
@@ -342,30 +343,23 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	} else
 
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
-	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
-	if (source_interface_->add_setup_widgets_func) {
-#ifdef K
-		setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	/* POSSIBILITY 1: create "setup" dialog. */
+	if (source_interface_->create_setup_dialog_func) {
 
-		gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
-		GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-		response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
-#endif
+		/*
+		  Data interfaces that have "create_setup_dialog_func":
+		  vik_datasource_gps_interface;
+		*/
 
-		source_interface_->add_setup_widgets_func(setup_dialog, this->viewport, this->user_data);
-		gtk_window_set_title(GTK_WINDOW(setup_dialog), _(source_interface_->window_title));
+		setup_dialog = source_interface_->create_setup_dialog_func(this->viewport, this->user_data);
+		setup_dialog->setWindowTitle(QObject::tr(source_interface_->window_title));
+		/* TODO: set focus on "OK/Accept" button. */
 
-		if (response_w) {
-			gtk_widget_grab_focus(response_w);
-		}
-
-		if (setup_dialog.exec() != QDialog::Accepted) {
+		if (setup_dialog->exec() != QDialog::Accepted) {
 			source_interface_->cleanup_func(this->user_data);
-			gtk_widget_destroy(setup_dialog);
+			delete setup_dialog;
 			return;
 		}
-#endif
 	}
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface_->param_specs) {
@@ -422,11 +416,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 
 	/* Cleanup for option dialogs. */
-	if (source_interface_->add_setup_widgets_func) {
-#ifdef K
-		gtk_widget_destroy(setup_dialog);
+	if (source_interface_->create_setup_dialog_func) {
+		delete setup_dialog;
 		setup_dialog = NULL;
-#endif
 	} else if (source_interface_->param_specs) {
 #ifdef K
 		a_uibuilder_free_paramdatas(param_table, source_interface_->param_specs, source_interface_->param_specs_count);
@@ -444,10 +436,10 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT, false);
-	gtk_window_set_title(GTK_WINDOW(setup_dialog), _(source_interface_->window_title));
+	setup_dialog->setWindowTitle(QObject::tr((source_interface_->window_title));
 #endif
 
-	this->dialog = setup_dialog;
+	this->dialog = setup_dialog; /* TODO: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(QObject::tr("Working..."));
 #ifdef K
@@ -462,8 +454,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 
 
-	if (source_interface_->add_progress_widgets_func) {
-		source_interface_->add_progress_widgets_func(setup_dialog, this->user_data);
+	DataSourceDialog * progress_dialog = NULL;
+	if (source_interface_->create_progress_dialog_func) {
+		progress_dialog = source_interface_->create_progress_dialog_func(this->user_data);
 	}
 
 
@@ -495,8 +488,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 			/* Consider using QThreadPool and QRunnable. */
 			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
-			setup_dialog.exec();
 #endif
+			progress_dialog->exec();
+
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */
 				this->running = false;
@@ -517,9 +511,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		} else {
 			/* This shouldn't happen... */
 			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
-#ifdef K
-			setup_dialog.exec();
-#endif
+			progress_dialog->exec();
 		}
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
@@ -536,18 +528,16 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 		/* Actually show it if necessary. */
 		if (wi->acquiring->source_interface->keep_dialog_open) {
-#ifdef K
-			setup_dialog.exec();
-#endif
+			progress_dialog->exec();
 		}
 
 		free(wi);
 	}
 
 
-#ifdef K
-	gtk_widget_destroy(setup_dialog);
-#endif
+	delete progress_dialog;
+	delete setup_dialog;
+
 	if (cleanup_function) {
 		cleanup_function(source_interface_);
 	}
