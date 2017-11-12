@@ -1206,8 +1206,8 @@ static void gps_comm_thread(GpsSession *sess)
 		if (sess->ok) {
 			sess->status_label->setText(QObject::tr("Done."));
 #ifdef K
-			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT, true);
-			gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog), GTK_RESPONSE_REJECT, false);
+			sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+			sess->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 #endif
 
 			/* Do not change the view if we are following the current GPS position. */
@@ -1333,8 +1333,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	if (do_tracks || do_waypoints || do_routes) {
 #ifdef K
 		sess->dialog = gtk_dialog_new_with_buttons("", layer->get_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-		gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog),
-						    GTK_RESPONSE_ACCEPT, false);
+		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 		sess->dialog->setWindowTitle(sess->window_title);
 
 		sess->status_label = new QLabel(QObject::tr("Status: detecting gpsbabel"));
@@ -1387,13 +1386,12 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			char *device_off = g_strdup_printf("-i %s,%s", protocol.toUtf8().constData(), "power_off");
-			ProcessOptions po(device_off, port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+			const QString device_off = QString("-i %1,%2").arg(protocol).arg("power_off");
+			ProcessOptions po(device_off, port, NULL, NULL);
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}
-			free(device_off);
 		}
 		sess->mutex.unlock();
 		gps_session_delete(sess);

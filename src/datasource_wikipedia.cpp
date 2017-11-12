@@ -47,8 +47,8 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	false,
-	false, /* Not even using the dialog. */
-	false, /* Own method for getting data - does not fit encapsulation with current thread logic. */
+	false, /* false = don't keep dialog open after success. Not even using the dialog. */
+	false, /* false = don't run as thread. Own method for getting data - does not fit encapsulation with current thread logic. */
 
 	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,

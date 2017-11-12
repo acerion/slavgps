@@ -178,10 +178,8 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	}
 #endif
 
-	const QString url = web_tool_datasource->get_url_at_current_position(data->viewport);
-	qDebug() << "DD: Web Tool Datasource: url =" << url;
-
-	po->url = g_strdup(url.toUtf8().constData());
+	po->url = web_tool_datasource->get_url_at_current_position(data->viewport);
+	qDebug() << "DD: Web Tool Datasource: url =" << po->url;
 
 	/* Only use first section of the file_type string.
 	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
@@ -234,8 +232,8 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		DatasourceMode::ADDTOLAYER,
 		DatasourceInputtype::NONE,
 		false, /* Maintain current view - rather than setting it to the acquired points. */
-		true,
-		true,
+		true,  /* true = keep dialog open after success. */
+		true,  /* true = run as thread. */
 
 		(VikDataSourceInitFunc)               datasource_init,
 		(VikDataSourceCheckExistenceFunc)     NULL,

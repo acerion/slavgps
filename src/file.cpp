@@ -801,7 +801,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
-			ProcessOptions po((char *) "-i kml", full_path.toUtf8().constData(), NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+			ProcessOptions po("-i kml", full_path, NULL, NULL);
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}

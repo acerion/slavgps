@@ -72,8 +72,8 @@ VikDataSourceInterface vik_datasource_file_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
-	true,
-	true,
+	true,  /* true = keep dialog open after success. */
+	true,  /* true = run as thread. */
 
 	(VikDataSourceInitFunc)	                NULL,
 	(VikDataSourceCheckExistenceFunc)       NULL,

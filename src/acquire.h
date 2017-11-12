@@ -109,7 +109,7 @@ namespace SlavGPS {
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 
-		DataSourceDialog * dialog = NULL;
+		DataSourceDialog * dialog_ = NULL;
 		bool running = false;
 		VikDataSourceInterface * source_interface = NULL;
 		void * user_data = NULL;

@@ -57,8 +57,8 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
-	true,
-	true,
+	true,  /* true = keep dialog open after success. */
+	true,  /* true = run as thread. */
 
 	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
@@ -143,7 +143,7 @@ ProcessOptions * DataSourceRoutingDialog::get_process_options(DownloadOptions & 
 	}
 
 	po->url = engine->get_url_from_directions(from.toUtf8().constData(), to.toUtf8().constData());
-	po->input_file_type = strdup(engine->get_format());
+	po->input_file_type = QString(engine->get_format());
 	/* Don't modify dl_options, i.e. use the default download settings. */
 
 	/* Save last selection. */

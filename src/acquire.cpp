@@ -27,6 +27,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <QRunnable>
+
 #include <glib/gprintf.h>
 
 #include "window.h"
@@ -45,6 +47,31 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+/* Passed along to worker thread. */
+typedef struct {
+	AcquireProcess * acquiring = NULL;
+	ProcessOptions * po = NULL;
+	bool creating_new_layer = false;
+	LayerTRW * trw = NULL;
+	DownloadOptions * dl_options = NULL;
+} AcquireGetterParams;
+
+
+
+
+/* Remember that by default QRunnable is auto-deleted on thread exit. */
+class AcquireGetter : public QRunnable {
+public:
+	AcquireGetter(AcquireGetterParams & getter_params) : params(getter_params) {}
+	void run(); /* Re-implementation of QRunnable::get(). */
+
+	AcquireGetterParams params;
+};
+
 
 
 
@@ -95,16 +122,6 @@ static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, Dat
 
 /********************************************************/
 
-/* Passed along to worker thread. */
-typedef struct {
-	AcquireProcess * acquiring;
-	ProcessOptions * po;
-	bool creating_new_layer;
-	LayerTRW * trw;
-	DownloadOptions * dl_options;
-} w_and_interface_t;
-
-
 
 static AcquireProcess * g_acquiring = NULL;
 
@@ -150,51 +167,52 @@ static void progress_func(BabelProgressCode c, void * data, AcquireProcess * acq
  *  . Update dialog info
  *  . Update main dsisplay
  */
-static void on_complete_process(w_and_interface_t * wi)
+static void on_complete_process(AcquireGetterParams & getter_params)
 {
 	if (
 #ifdef K
-	    wi->acquiring->running
+	    getter_params.acquiring->running
 #else
 	    true
 #endif
 	    ) {
-		wi->acquiring->status->setText(QObject::tr("Done."));
-		if (wi->creating_new_layer) {
+		getter_params.acquiring->status->setText(QObject::tr("Done."));
+		if (getter_params.creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
-			if (! wi->trw->is_empty()) {
-				wi->trw->post_read(wi->acquiring->viewport, true);
-				Layer * layer = wi->trw;
-				wi->acquiring->panel->get_top_layer()->add_layer(layer, true);
+			if (!getter_params.trw->is_empty()) {
+				getter_params.trw->post_read(getter_params.acquiring->viewport, true);
+				Layer * layer = getter_params.trw;
+				getter_params.acquiring->panel->get_top_layer()->add_layer(layer, true);
 			} else {
-				wi->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
+				getter_params.acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
 			}
 		}
-		if (wi->acquiring->source_interface->keep_dialog_open) {
-#ifdef K
-			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->acquiring->dialog), GTK_RESPONSE_ACCEPT, true);
-			gtk_dialog_set_response_sensitive(GTK_DIALOG(wi->acquiring->dialog), GTK_RESPONSE_REJECT, false);
-#endif
-		} else {
-#ifdef K
-			gtk_dialog_response(GTK_DIALOG(wi->acquiring->dialog), GTK_RESPONSE_ACCEPT);
-#endif
+
+		if (getter_params.acquiring->dialog_) {
+			if (getter_params.acquiring->source_interface->keep_dialog_open) {
+				/* Only allow dialog's validation when format selection is done. */
+				getter_params.acquiring->dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+				getter_params.acquiring->dialog_->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+			} else {
+				/* Call 'accept()' slot to close the dialog. */
+				getter_params.acquiring->dialog_->accept();
+			}
 		}
 
 		/* Main display update. */
-		if (wi->trw) {
-			wi->trw->post_read(wi->acquiring->viewport, true);
+		if (getter_params.trw) {
+			getter_params.trw->post_read(getter_params.acquiring->viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
-			if (wi->acquiring->source_interface->autoview) {
-				wi->trw->auto_set_view(wi->acquiring->viewport);
+			if (getter_params.acquiring->source_interface->autoview) {
+				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
 			}
-			wi->acquiring->panel->emit_update_window_cb();
+			getter_params.acquiring->panel->emit_update_window_cb();
 		}
 	} else {
 		/* Cancelled. */
-		if (wi->creating_new_layer) {
-			wi->trw->unref();
+		if (getter_params.creating_new_layer) {
+			getter_params.trw->unref();
 		}
 	}
 }
@@ -230,52 +248,36 @@ ProcessOptions::~ProcessOptions()
 
 
 
-/* This routine is the worker thread.  there is only one simultaneous download allowed. */
-static void get_from_anything(w_and_interface_t * wi)
+/* This routine is the worker thread. There is only one simultaneous download allowed. */
+/* Re-implementation of QRunnable::run() */
+void AcquireGetter::run(void)
 {
 	bool result = true;
 
-	VikDataSourceInterface * source_interface = wi->acquiring->source_interface;
+	VikDataSourceInterface * source_interface = this->params.acquiring->source_interface;
 
 	if (source_interface->process_func) {
-		result = source_interface->process_func(wi->trw, wi->po, (BabelCallback) progress_func, wi->acquiring, wi->dl_options);
+		result = source_interface->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
 	}
-	delete wi->po;
-	delete wi->dl_options;
+	delete this->params.po;
+	delete this->params.dl_options;
 
-	if (wi->acquiring->running && !result) {
-#ifdef K
-		gdk_threads_enter();
-#endif
-		wi->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
-		if (wi->creating_new_layer) {
-			wi->trw->unref();
+	if (this->params.acquiring->running && !result) {
+		this->params.acquiring->status->setText(QObject::tr("Error: acquisition failed."));
+		if (this->params.creating_new_layer) {
+			this->params.trw->unref();
 		}
-#ifdef K
-		gdk_threads_leave();
-#endif
 	} else {
-#ifdef K
-		gdk_threads_enter();
-#endif
-		on_complete_process(wi);
-#ifdef K
-		gdk_threads_leave();
-#endif
+		on_complete_process(this->params);
 	}
 
 	if (source_interface->cleanup_func) {
-		source_interface->cleanup_func(wi->acquiring->user_data);
+		source_interface->cleanup_func(this->params.acquiring->user_data);
 	}
 
-	if (wi->acquiring->running) {
-		wi->acquiring->running = false;
-	} else {
-		free(wi);
-		wi = NULL;
+	if (this->params.acquiring->running) {
+		this->params.acquiring->running = false;
 	}
-
-	g_thread_exit(NULL);
 }
 
 
@@ -290,6 +292,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	DataSourceDialog * setup_dialog = NULL;
 	DownloadOptions * dl_options = new DownloadOptions;
 
+	this->source_interface = source_interface_;
+	VikDataSourceInterface * interface = source_interface;
+
 	acq_vik_t avt;
 	avt.panel = this->panel;
 	avt.viewport = this->viewport;
@@ -300,15 +305,15 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	SGVariant * param_table = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
-	if (source_interface_->init_func) {
-		this->user_data = source_interface_->init_func(&avt);
+	if (interface->init_func) {
+		this->user_data = interface->init_func(&avt);
 	} else {
 		this->user_data = NULL;
 	}
 	void * pass_along_data = this->user_data;
 
-	if (source_interface_->check_existence_func) {
-		char *error_str = source_interface_->check_existence_func();
+	if (interface->check_existence_func) {
+		char *error_str = interface->check_existence_func();
 		if (error_str) {
 			Dialog::error(error_str, this->window);
 			free(error_str);
@@ -321,7 +326,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: create "setup" dialog. */
-	if (source_interface_->create_setup_dialog_func) {
+	if (interface->create_setup_dialog_func) {
 
 		/*
 		  Data interfaces that have "create_setup_dialog_func":
@@ -338,25 +343,25 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		  vik_datasource_wikipedia_interface;
 		*/
 
-		setup_dialog = source_interface_->create_setup_dialog_func(this->viewport, this->user_data);
-		setup_dialog->setWindowTitle(QObject::tr(source_interface_->window_title));
+		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->user_data);
+		setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
 		/* TODO: set focus on "OK/Accept" button. */
 
 		if (setup_dialog->exec() != QDialog::Accepted) {
-			if (source_interface_->cleanup_func) {
-				source_interface_->cleanup_func(this->user_data);
+			if (interface->cleanup_func) {
+				interface->cleanup_func(this->user_data);
 			}
 			delete setup_dialog;
 			return;
 		}
 	}
 	/* POSSIBILITY 2: UI BUILDER */
-	else if (source_interface_->param_specs) {
+	else if (interface->param_specs) {
 #ifdef K
-		param_table = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
-						     source_interface_->param_specs, source_interface_->param_specs_count,
-						     source_interface_->parameter_groups, source_interface_->params_groups_count,
-						     source_interface_->params_defaults);
+		param_table = a_uibuilder_run_dialog(interface->window_title, this->window,
+						     interface->param_specs, interface->param_specs_count,
+						     interface->parameter_groups, interface->params_groups_count,
+						     interface->params_defaults);
 #endif
 		if (param_table) {
 			pass_along_data = param_table;
@@ -366,35 +371,34 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 
 	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, source_interface_, pass_along_data);
+	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, interface, pass_along_data);
 
 
 
 	/* Cleanup for option dialogs. */
-	if (source_interface_->create_setup_dialog_func) {
+	if (interface->create_setup_dialog_func) {
 		delete setup_dialog;
 		setup_dialog = NULL;
-	} else if (source_interface_->param_specs) {
+	} else if (interface->param_specs) {
 #ifdef K
-		a_uibuilder_free_paramdatas(param_table, source_interface_->param_specs, source_interface_->param_specs_count);
+		a_uibuilder_free_paramdatas(param_table, interface->param_specs, interface->param_specs_count);
 #endif
 	}
 
-	w_and_interface_t * wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
-	wi->acquiring = this;
-	wi->acquiring->source_interface = source_interface_;
-	wi->po = po;
-	wi->dl_options = dl_options;
-	wi->trw = this->trw;
-	wi->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
+	AcquireGetterParams getter_params;
+	getter_params.acquiring = this;
+	getter_params.po = po;
+	getter_params.dl_options = dl_options;
+	getter_params.trw = this->trw;
+	getter_params.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 #ifdef K
 	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	gtk_dialog_set_response_sensitive(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT, false);
-	setup_dialog->setWindowTitle(QObject::tr((source_interface_->window_title));
+	setup_dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
+	setup_dialog->setWindowTitle(QObject::tr((interface->window_title));
 #endif
 
-	this->dialog = setup_dialog; /* TODO: setup or progress dialog? */
+	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(QObject::tr("Working..."));
 #ifdef K
@@ -402,7 +406,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
 #endif
 	/* May not want to see the dialog at all. */
-	if (source_interface_->is_thread || source_interface_->keep_dialog_open) {
+	if (interface->is_thread || interface->keep_dialog_open) {
 #ifdef K
 		gtk_widget_show_all(setup_dialog);
 #endif
@@ -410,41 +414,46 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 	DataSourceDialog * progress_dialog = NULL;
-	if (source_interface_->create_progress_dialog_func) {
-		progress_dialog = source_interface_->create_progress_dialog_func(this->user_data);
+	if (interface->create_progress_dialog_func) {
+		progress_dialog = interface->create_progress_dialog_func(this->user_data);
 	}
 
 
 	if (mode == DatasourceMode::ADDTOLAYER) {
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			wi->trw = (LayerTRW *) selected_layer;
-			wi->creating_new_layer = false;
+			getter_params.trw = (LayerTRW *) selected_layer;
+			getter_params.creating_new_layer = false;
 		}
 	} else if (mode == DatasourceMode::CREATENEWLAYER) {
-		wi->creating_new_layer = true;
+		getter_params.creating_new_layer = true;
 	} else if (mode == DatasourceMode::MANUAL_LAYER_MANAGEMENT) {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		wi->creating_new_layer = false;
+		getter_params.creating_new_layer = false;
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			wi->trw = (LayerTRW *) selected_layer;
+			getter_params.trw = (LayerTRW *) selected_layer;
 		}
 	}
-	if (wi->creating_new_layer) {
-		wi->trw = new LayerTRW();
-		wi->trw->set_coord_mode(this->viewport->get_coord_mode());
-		wi->trw->set_name(QObject::tr(source_interface_->layer_title));
+	if (getter_params.creating_new_layer) {
+		getter_params.trw = new LayerTRW();
+		getter_params.trw->set_coord_mode(this->viewport->get_coord_mode());
+		getter_params.trw->set_name(QObject::tr(interface->layer_title));
+
+		/* We need to have that layer when completing acquisition
+		   process: we need to do few operations on it. */
+		this->trw = getter_params.trw;
 	}
 
-	if (source_interface_->is_thread) {
+	if (interface->is_thread) {
 		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
 
-#ifdef K
-			/* Consider using QThreadPool and QRunnable. */
-			g_thread_create((GThreadFunc)get_from_anything, wi, false, NULL);
-#endif
-			progress_dialog->exec();
+			AcquireGetter getter(getter_params);
+			getter.run();
+
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
 
 			if (this->running) {
 				/* Cancel and mark for thread to finish. */
@@ -452,10 +461,10 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 				/* NB Thread will free memory. */
 			} else {
 				/* Get data for Off command. */
-				if (source_interface_->off_func) {
+				if (interface->off_func) {
 					QString babel_args_off;
 					QString file_path_off;
-					source_interface_->off_func(pass_along_data, babel_args_off, file_path_off);
+					interface->off_func(pass_along_data, babel_args_off, file_path_off);
 
 					if (!babel_args_off.isEmpty()) {
 						/* Turn off. */
@@ -468,17 +477,18 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 				free(w);
 #endif
-				free(wi);
 			}
 		} else {
 			/* This shouldn't happen... */
 			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
-			progress_dialog->exec();
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
 		}
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
-		if (source_interface_->process_func) {
-			bool success = source_interface_->process_func(wi->trw, po, (BabelCallback) progress_func, this, dl_options);
+		if (interface->process_func) {
+			bool success = interface->process_func(getter_params.trw, po, (BabelCallback) progress_func, this, dl_options);
 			if (!success) {
 				Dialog::error(tr("Error: acquisition failed."), this->window);
 			}
@@ -486,14 +496,14 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		delete po;
 		delete dl_options;
 
-		on_complete_process(wi);
+		on_complete_process(getter_params);
 
 		/* Actually show it if necessary. */
-		if (wi->acquiring->source_interface->keep_dialog_open) {
-			progress_dialog->exec();
+		if (interface->keep_dialog_open) {
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
 		}
-
-		free(wi);
 	}
 
 
@@ -501,7 +511,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	delete setup_dialog;
 
 	if (cleanup_function) {
-		cleanup_function(source_interface_);
+		cleanup_function(interface);
 	}
 }
 
@@ -586,6 +596,10 @@ void SlavGPS::a_acquire(Window * window, LayersPanel * panel, Viewport * viewpor
 	g_acquiring->trk = NULL;
 
 	g_acquiring->acquire(mode, source_interface, userdata, cleanup_function);
+
+	if (g_acquiring->trw) {
+		g_acquiring->trw->add_children_to_tree();
+	}
 }
 
 

@@ -1385,6 +1385,11 @@ void LayerTRW::add_children_to_tree(void)
 {
 	qDebug() << "DD: Layer TRW: Add Children to Tree";
 
+	if (!this->tree_view) {
+		qDebug() << "EE: Layer TRW: Add Children to Tree: layer not connected to tree";
+		return;
+	}
+
 	if (this->tracks->items.size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Tracks";
 		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
@@ -1997,6 +2002,8 @@ void LayerTRW::acquire(VikDataSourceInterface *datasource)
 		mode = DatasourceMode::ADDTOLAYER;
 	}
 	a_acquire(window_, panel, viewport, mode, datasource, NULL, NULL);
+
+	/* TODO: when this function is really called? */
 }
 
 

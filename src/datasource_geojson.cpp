@@ -67,8 +67,8 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
-	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
-	false, /* Not thread method - open each file in the main loop. */
+	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	false, /* false = don't run as thread. Open each file in the main loop. */
 
 	(VikDataSourceInitFunc)               datasource_geojson_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,

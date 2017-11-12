@@ -88,8 +88,8 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true, /* Yes automatically update the display - otherwise we won't see the geocache waypoints! */
-	true,
-	true,
+	true,  /* true = keep dialog open after success. */
+	true,  /* true = run as thread. */
 
 	(VikDataSourceInitFunc)		        datasource_gc_init,
 	(VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,

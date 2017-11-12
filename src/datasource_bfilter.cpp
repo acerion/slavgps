@@ -107,11 +107,12 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
-	false, /* Keep dialog open after success. */
-	true,
+	false, /* false = don't keep dialog open after success. */
+	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)              datasource_bfilter_simplify_init,
-	NULL, NULL,
+	(VikDataSourceInitFunc)               datasource_bfilter_simplify_init,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_simplify_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
@@ -208,11 +209,12 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
-	false, /* Close the dialog after successful operation. */
-	true,
+	false, /* false = don't keep dialog open after successful operation. */
+	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)              datasource_bfilter_compress_init,
-	NULL, NULL,
+	(VikDataSourceInitFunc)               datasource_bfilter_compress_init,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_compress_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
@@ -255,11 +257,12 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
-	false, /* Keep dialog open after success. */
-	true,
+	false, /* false = don't keep dialog open after success. */
+	true,  /* true = run as thread.*/
 
-
-	NULL, NULL, NULL,
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_dup_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
@@ -309,10 +312,12 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
-	false, /* Keep dialog open after success. */
-	true,
+	false, /* false = don't keep dialog open after success. */
+	true,  /* true = run as thread. */
 
-	NULL, NULL, NULL,
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_manual_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
@@ -354,10 +359,12 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
-	false, /* Keep dialog open after success. */
-	true,
+	false, /* false = don't keep dialog open after success. */
+	true,  /* true = run as thread. */
 
-	NULL, NULL, NULL,
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_polygon_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
@@ -398,10 +405,12 @@ VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
 	DatasourceMode::CREATENEWLAYER,
 	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
-	false, /* Keep dialog open after success. */
-	true,
+	false, /* false = don't keep dialog open after success. */
+	true,  /* true = run as thread. */
 
-	NULL, NULL, NULL,
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceCreateSetupDialogFunc)     NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_exclude_polygon_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,

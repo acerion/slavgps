@@ -65,8 +65,8 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
-	true,
-	true,
+	true,  /* true = keep dialog open after success. */
+	true,  /* true = run as thread. */
 
 	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
@@ -176,9 +176,6 @@ ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_o
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	/* Retrieve the user entered value. */
-	const QString & value = this->url_input.text();
-
 	/* TODO: handle situation when there is only one item in the combo (i.e. GPX). */
 
 	g_last_type_id = this->type_combo.currentIndex();
@@ -188,7 +185,7 @@ ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_o
 		po->input_file_type = a_babel_file_types.at(g_last_type_id)->name;
 	}
 
-	po->url = g_strdup(value.toUtf8().constData());
+	po->url = this->url_input.text();
 
 	/* Support .zip + bzip2 files directly. */
 	dl_options.convert_file = a_try_decompress_file;

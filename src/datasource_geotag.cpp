@@ -74,8 +74,8 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 	DatasourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
-	false, /* We should be able to see the data on the screen so no point in keeping the dialog open. */
-	true,
+	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	true,  /* true = run as thread. */
 
 	(VikDataSourceInitFunc)		          datasource_geotag_init,
 	(VikDataSourceCheckExistenceFunc)	  NULL,
@@ -97,7 +97,6 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 
 
 
-/* See VikDataSourceInterface. */
 static void * datasource_geotag_init(acq_vik_t * avt)
 {
 	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) malloc(sizeof (datasource_geotag_user_data_t));
@@ -108,7 +107,6 @@ static void * datasource_geotag_init(acq_vik_t * avt)
 
 
 
-/* See VikDataSourceInterface. */
 static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	DataSourceDialog * setup_dialog = NULL;
@@ -221,7 +219,6 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 
 
 
-/* See VikDataSourceInterface. */
 static void datasource_geotag_cleanup(void * user_data)
 {
 	free(user_data);

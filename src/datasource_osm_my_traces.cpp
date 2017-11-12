@@ -80,8 +80,8 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 	DatasourceMode::MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
 	DatasourceInputtype::NONE,
 	true,
-	true,
-	false, /* Don't use thread method. */
+	true,  /* true = keep dialog open after success. */
+	false, /* false = don't run as thread. */
 
 	(VikDataSourceInitFunc)	                datasource_osm_my_traces_init,
 	(VikDataSourceCheckExistenceFunc)       NULL,
