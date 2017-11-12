@@ -22,9 +22,7 @@
 #include <vector>
 #include <cstdlib>
 
-#include <QComboBox>
-#include <QLineEdit>
-
+#include "datasource_url.h"
 #include "acquire.h"
 #include "babel.h"
 #include "application_state.h"
@@ -47,27 +45,16 @@ using namespace SlavGPS;
 
 
 
-class URLData {
-public:
-	QLineEdit url;
-	QComboBox * type = NULL;
-};
-
-
-
-
 extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last file format selected. */
-static int last_type_id = -1;
+static int g_last_type_id = -1;
 
 
 
 
-static void * datasource_url_init(acq_vik_t * avt);
 static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3);
-static void datasource_url_cleanup(void * data);
+static ProcessOptions * datasource_url_get_process_options(DownloadOptions & dl_options, char const * not_used2, char const * not_used3);
 
 
 
@@ -81,15 +68,14 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)            NULL,
-	(VikDataSourceInitFunc)               datasource_url_init,
+	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_url_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_url_get_process_options,
+	(VikDataSourceGetProcessOptionsFunc)  NULL,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
 	(VikDataSourceProgressFunc)           NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            datasource_url_cleanup,
+	(VikDataSourceCleanupFunc)            NULL,
 	(DataSourceTurnOffFunc)               NULL,
 	NULL,
 	0,
@@ -97,15 +83,6 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	NULL,
 	0
 };
-
-
-
-
-static void * datasource_url_init(acq_vik_t * avt)
-{
-	URLData * widgets = new URLData;
-	return widgets;
-}
 
 
 
@@ -134,16 +111,18 @@ static void find_type(BabelFileType * file_type, const QString & type_name)
 
 static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	DataSourceDialog * setup_dialog = NULL;
-	GtkWidget * dialog;
-
-	URLData * widgets = (URLData *) user_data;
-	QLabel * label = new QLabel(QObject::tr("URL:"));
+	return new DataSourceURLDialog();
+}
 
 
-	QLabel * type_label = new QLabel(QObject::tr("File type:"));
 
-	if (last_type_id < 0) {
+
+DataSourceURLDialog::DataSourceURLDialog()
+{
+	QLabel * url_label = new QLabel(QObject::tr("URL:"));
+	QLabel * type_combo_label = new QLabel(QObject::tr("File type:"));
+
+	if (g_last_type_id < 0) {
 		find_entry = -1;
 		wanted_entry = -1;
 		QString type;
@@ -161,73 +140,60 @@ static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport
 			}
 		}
 		/* If not found set it to the first entry, otherwise use the entry. */
-		last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
+		g_last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
 
 	if (a_babel_available()) {
-		widgets->type = new QComboBox();
 		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-			widgets->type->addItem(iter->second->label);
+			this->type_combo.addItem(iter->second->label);
 		}
-		widgets->type->setCurrentIndex(last_type_id);
+		if (g_last_type_id >= 0) {
+			this->type_combo.setCurrentIndex(g_last_type_id);
+		}
 	} else {
-#ifdef K
 		/* Only GPX (not using GPSbabel). */
-		widgets->type = new QLabel(QObject::tr("GPX"));
-#endif
+		this->type_combo.addItem(QObject::tr("GPX"));
 	}
 
-#ifdef K
-	/* Packing all widgets. */
-	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(label);
-	box->addWidget(&widgets->url);
-	box->addWidget(type_label);
-	box->addWidget(widgets->type);
-
-	gtk_widget_show_all(dialog);
-#endif
-
-	return setup_dialog;
+	this->grid->addWidget(url_label, 0, 0);
+	this->grid->addWidget(&this->url_input, 1, 0);
+	this->grid->addWidget(type_combo_label, 2, 0);
+	this->grid->addWidget(&this->type_combo, 3, 0);
 }
 
 
 
 
-static ProcessOptions * datasource_url_get_process_options(URLData * widgets, DownloadOptions * dl_options, char const * not_used2, char const * not_used3)
+DataSourceURLDialog::~DataSourceURLDialog()
+{
+}
+
+
+
+
+ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
 	/* Retrieve the user entered value. */
-	const QString & value = widgets->url.text();
-#ifdef K
-	if (GTK_IS_COMBO_BOX (widgets->type)) {
-		last_type_id = widgets->type->currentIndex();
-	}
-#endif
+	const QString & value = this->url_input.text();
+
+	/* TODO: handle situation when there is only one item in the combo (i.e. GPX). */
+
+	g_last_type_id = this->type_combo.currentIndex();
 
 	po->input_file_type = ""; /* Default to gpx. */
 	if (a_babel_file_types.size()) {
-		po->input_file_type = a_babel_file_types.at(last_type_id)->name;
+		po->input_file_type = a_babel_file_types.at(g_last_type_id)->name;
 	}
 
 	po->url = g_strdup(value.toUtf8().constData());
 
-
-
 	/* Support .zip + bzip2 files directly. */
-	dl_options->convert_file = a_try_decompress_file;
-	dl_options->follow_location = 5;
+	dl_options.convert_file = a_try_decompress_file;
+	dl_options.follow_location = 5;
 
 	return po;
 
-}
-
-
-
-
-static void datasource_url_cleanup(void * data)
-{
-	delete ((URLData *) data);
 }

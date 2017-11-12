@@ -62,9 +62,6 @@ static bool gps_acquire_in_progress = false;
 
 static int last_active = -1;
 
-static void * datasource_gps_init_func(acq_vik_t *avt);
-static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3);
-static void datasource_gps_cleanup(void * user_data);
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data);
 static DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data);
@@ -81,15 +78,14 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)              NULL,
-	(VikDataSourceInitFunc)		        datasource_gps_init_func,
+	(VikDataSourceInitFunc)		        NULL,
 	(VikDataSourceCheckExistenceFunc)	NULL,
 	(DataSourceCreateSetupDialogFunc)       datasource_gps_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)    datasource_gps_get_process_options,
+	(VikDataSourceGetProcessOptionsFunc)    NULL,
 	(VikDataSourceProcessFunc)              a_babel_convert_from,
 	(VikDataSourceProgressFunc)		datasource_gps_progress,
 	(DataSourceCreateProgressDialogFunc)    datasource_gps_create_progress_dialog,
-	(VikDataSourceCleanupFunc)		datasource_gps_cleanup,
+	(VikDataSourceCleanupFunc)		NULL,
 	(DataSourceTurnOffFunc)                 datasource_gps_off,
 
 	NULL,
@@ -115,16 +111,6 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 #define VIK_SETTINGS_GPS_PROTOCOL "gps_protocol"
 #define VIK_SETTINGS_GPS_PORT "gps_port"
 #define VIK_SETTINGS_GPS_POWER_OFF "gps_power_off"
-
-
-
-
-static void * datasource_gps_init_func(acq_vik_t *avt)
-{
-	DatasourceGPSProgress * gps_dialog = new DatasourceGPSProgress(NULL);
-	gps_dialog->direction = GPSDirection::DOWN;
-	return gps_dialog;
-}
 
 
 
@@ -230,10 +216,9 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-static ProcessOptions * datasource_gps_get_process_options(void * user_data, void * not_used, const char *not_used2, const char *not_used3)
+ProcessOptions * DatasourceGPSSetup::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
-	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
 
 	if (gps_acquire_in_progress) {
 		po->babel_args = "";
@@ -242,13 +227,13 @@ static ProcessOptions * datasource_gps_get_process_options(void * user_data, voi
 
 	gps_acquire_in_progress = true;
 
-	const QString device = gps_dialog->get_protocol();
-	const char * tracks = gps_dialog->get_do_tracks() ? "-t" : "";
-	const char * routes = gps_dialog->get_do_routes() ? "-r" : "";
-	const char * waypoints = gps_dialog->get_do_waypoints() ? "-w" : "";
+	const QString device = this->get_protocol();
+	const char * tracks = this->get_do_tracks() ? "-t" : "";
+	const char * routes = this->get_do_routes() ? "-r" : "";
+	const char * waypoints = this->get_do_waypoints() ? "-w" : "";
 
 	po->babel_args = QString("-D 9 %1 %2 %3 -i %4").arg(tracks).arg(routes).arg(waypoints).arg(device);
-	po->input_file_name = gps_dialog->get_port();
+	po->input_file_name = this->get_port();
 
 	qDebug() << "DD: Datasource GPS: Get process options: using Babel args" << po->babel_args << "and input file" << po->input_file_name;
 
@@ -291,14 +276,6 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 
 	babel_args = QString("-i %1").arg(device);
 	file_path = QString(gps_dialog->serial_port_combo->currentText());
-}
-
-
-
-
-static void datasource_gps_cleanup(void * user_data)
-{
-	delete ((DatasourceGPSSetup *) user_data);
 }
 
 

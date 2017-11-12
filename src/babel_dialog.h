@@ -33,6 +33,7 @@
 #include <QComboBox>
 
 #include "babel.h"
+#include "datasource.h"
 
 
 
@@ -47,9 +48,10 @@ namespace SlavGPS {
 
 
 
-	class BabelDialog : public QDialog {
+	class BabelDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
+		BabelDialog();
 		BabelDialog(QString const & title, QWidget * parent = NULL);
 		~BabelDialog();
 
@@ -71,9 +73,7 @@ namespace SlavGPS {
 
 	private:
 		QHBoxLayout * build_mode_selector(bool tracks, bool routes, bool waypoints);
-		QVBoxLayout * vbox = NULL;
 		QHBoxLayout * mode_box = NULL;
-		QDialogButtonBox * button_box = NULL;
 
 		bool do_import = true; /* The dialog may be used to perform export of TRW data, or import of TRW data. */
 	};

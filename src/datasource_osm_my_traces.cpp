@@ -83,7 +83,6 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 	true,
 	false, /* Don't use thread method. */
 
-	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)	                datasource_osm_my_traces_init,
 	(VikDataSourceCheckExistenceFunc)       NULL,
 	(DataSourceCreateSetupDialogFunc)       datasource_osm_my_traces_create_setup_dialog,

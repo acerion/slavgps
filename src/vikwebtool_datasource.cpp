@@ -237,7 +237,6 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		true,
 		true,
 
-		(DataSourceInternalDialog)            NULL,
 		(VikDataSourceInitFunc)               datasource_init,
 		(VikDataSourceCheckExistenceFunc)     NULL,
 		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),

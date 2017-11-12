@@ -56,6 +56,8 @@ extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
 extern VikDataSourceInterface vik_datasource_geotag_interface;
 extern VikDataSourceInterface vik_datasource_wikipedia_interface;
 extern VikDataSourceInterface vik_datasource_url_interface;
+extern VikDataSourceInterface vik_datasource_file_interface;
+
 
 
 
@@ -85,6 +87,11 @@ const VikDataSourceInterface * filters[] = {
 const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
 
 Track * filter_track = NULL;
+
+
+static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, VikDataSourceInterface * interface, void * pass_along_data);
+
+
 
 /********************************************************/
 
@@ -281,8 +288,6 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 {
 	/* For manual dialogs. */
 	DataSourceDialog * setup_dialog = NULL;
-	QString babel_args_off;
-	QString file_path_off;
 	DownloadOptions * dl_options = new DownloadOptions;
 
 	acq_vik_t avt;
@@ -292,7 +297,6 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	avt.userdata = userdata;
 
 	/* For UI builder. */
-	void * pass_along_data;
 	SGVariant * param_table = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
@@ -301,7 +305,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	} else {
 		this->user_data = NULL;
 	}
-	pass_along_data = this->user_data;
+	void * pass_along_data = this->user_data;
 
 	if (source_interface_->check_existence_func) {
 		char *error_str = source_interface_->check_existence_func();
@@ -315,41 +319,23 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
 
 
-	if (source_interface_->internal_dialog) {
-
-		/*
-		  Data interfaces that "use" this branch of code:
-
-		  vik_datasource_file_interface;
-
-
-		  Data interfaces that don't "use" this branch of code (yet?):
-
-		  vik_datasource_geojson_interface;
-		  vik_datasource_osm_my_traces_interface;
-		  vik_datasource_geotag_interface;
-		  vik_datasource_url_interface;
-		  vik_datasource_wikipedia_interface;
-		*/
-
-		int rv = source_interface_->internal_dialog(avt.window);
-		if (rv != QDialog::Accepted) {
-			if (source_interface_->cleanup_func) {
-				source_interface_->cleanup_func(this->user_data);
-			}
-			return;
-		}
-	} else
-
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: create "setup" dialog. */
 	if (source_interface_->create_setup_dialog_func) {
 
 		/*
 		  Data interfaces that have "create_setup_dialog_func":
+		  vik_datasource_file_interface;
 		  vik_datasource_gps_interface;
 		  vik_datasource_routing_interface;
 		  vik_datasource_osm_interface;
+		  vik_datasource_url_interface;
+
+		  Data interfaces that don't "use" this branch of code (yet?):
+		  vik_datasource_geojson_interface;
+		  vik_datasource_osm_my_traces_interface;
+		  vik_datasource_geotag_interface;
+		  vik_datasource_wikipedia_interface;
 		*/
 
 		setup_dialog = source_interface_->create_setup_dialog_func(this->viewport, this->user_data);
@@ -357,7 +343,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 		/* TODO: set focus on "OK/Accept" button. */
 
 		if (setup_dialog->exec() != QDialog::Accepted) {
-			source_interface_->cleanup_func(this->user_data);
+			if (source_interface_->cleanup_func) {
+				source_interface_->cleanup_func(this->user_data);
+			}
 			delete setup_dialog;
 			return;
 		}
@@ -366,9 +354,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	else if (source_interface_->param_specs) {
 #ifdef K
 		param_table = a_uibuilder_run_dialog(source_interface_->window_title, this->window,
-						    source_interface_->param_specs, source_interface_->param_specs_count,
-						    source_interface_->parameter_groups, source_interface_->params_groups_count,
-						    source_interface_->params_defaults);
+						     source_interface_->param_specs, source_interface_->param_specs_count,
+						     source_interface_->parameter_groups, source_interface_->params_groups_count,
+						     source_interface_->params_defaults);
 #endif
 		if (param_table) {
 			pass_along_data = param_table;
@@ -378,58 +366,9 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 
 	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions * po = NULL;
+	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, source_interface_, pass_along_data);
 
 
-	switch (source_interface_->inputtype) {
-
-	case DatasourceInputtype::TRWLAYER: {
-		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
-		po = source_interface_->get_process_options(pass_along_data, NULL, name_src, NULL);
-		util_add_to_deletion_list(name_src);
-		free(name_src);
-		}
-		break;
-
-	case DatasourceInputtype::TRWLAYER_TRACK: {
-		char * name_src = a_gpx_write_tmp_file(this->trw, NULL);
-		char * name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
-
-		po = source_interface_->get_process_options(pass_along_data, NULL, name_src, name_src_track);
-
-		util_add_to_deletion_list(name_src);
-		util_add_to_deletion_list(name_src_track);
-
-		free(name_src);
-		free(name_src_track);
-		}
-		break;
-
-	case DatasourceInputtype::TRACK: {
-		char * name_src_track = a_gpx_write_track_tmp_file(this->trk, NULL);
-		po = source_interface_->get_process_options(pass_along_data, NULL, NULL, name_src_track);
-		free(name_src_track);
-		}
-		break;
-
-	case DatasourceInputtype::NONE:
-		if (source_interface_ == &vik_datasource_routing_interface
-		    || source_interface_ == &vik_datasource_osm_interface) {
-			po = setup_dialog->get_process_options(*dl_options);
-		} else {
-			po = source_interface_->get_process_options(pass_along_data, dl_options, NULL, NULL);
-		}
-		break;
-
-	default:
-		qDebug() << "EE: Acquire: unsupported Datasource Input Type" << (int) source_interface_->inputtype;
-		break;
-	};
-
-	/* Get data for Off command. */
-	if (source_interface_->off_func) {
-		source_interface_->off_func(pass_along_data, babel_args_off, file_path_off);
-	}
 
 	/* Cleanup for option dialogs. */
 	if (source_interface_->create_setup_dialog_func) {
@@ -512,10 +451,17 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 				this->running = false;
 				/* NB Thread will free memory. */
 			} else {
-				if (!babel_args_off.isEmpty()) {
-					/* Turn off. */
-					ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
-					a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
+				/* Get data for Off command. */
+				if (source_interface_->off_func) {
+					QString babel_args_off;
+					QString file_path_off;
+					source_interface_->off_func(pass_along_data, babel_args_off, file_path_off);
+
+					if (!babel_args_off.isEmpty()) {
+						/* Turn off. */
+						ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
+						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
+					}
 				}
 
 				/* Thread finished by normal completion - free memory. */
@@ -559,6 +505,64 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 }
 
+
+
+
+ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, VikDataSourceInterface * interface, void * pass_along_data)
+{
+	ProcessOptions * po = NULL;
+
+	switch (interface->inputtype) {
+
+	case DatasourceInputtype::TRWLAYER: {
+		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
+		po = interface->get_process_options(pass_along_data, NULL, name_src, NULL);
+		util_add_to_deletion_list(name_src);
+		free(name_src);
+		}
+		break;
+
+	case DatasourceInputtype::TRWLAYER_TRACK: {
+		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
+		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+
+		po = interface->get_process_options(pass_along_data, NULL, name_src, name_src_track);
+
+		util_add_to_deletion_list(name_src);
+		util_add_to_deletion_list(name_src_track);
+
+		free(name_src);
+		free(name_src_track);
+		}
+		break;
+
+	case DatasourceInputtype::TRACK: {
+		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+		po = interface->get_process_options(pass_along_data, NULL, NULL, name_src_track);
+		free(name_src_track);
+		}
+		break;
+
+	case DatasourceInputtype::NONE:
+		if (interface == &vik_datasource_routing_interface
+		    || interface == &vik_datasource_file_interface
+		    || interface == &vik_datasource_osm_interface
+		    || interface == &vik_datasource_gps_interface
+		    || interface == &vik_datasource_url_interface) {
+
+			po = setup_dialog->get_process_options(*dl_options);
+		} else {
+			po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
+		}
+		break;
+
+	default:
+		qDebug() << "EE: Acquire: unsupported Datasource Input Type" << (int) interface->inputtype;
+		break;
+	};
+
+	return po;
+}
 
 
 

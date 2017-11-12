@@ -110,7 +110,6 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 	false, /* Keep dialog open after success. */
 	true,
 
-	(DataSourceInternalDialog)           NULL,
 	(VikDataSourceInitFunc)              datasource_bfilter_simplify_init,
 	NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_simplify_get_process_options,
@@ -212,7 +211,6 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 	false, /* Close the dialog after successful operation. */
 	true,
 
-	(DataSourceInternalDialog)           NULL,
 	(VikDataSourceInitFunc)              datasource_bfilter_compress_init,
 	NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_compress_get_process_options,
@@ -260,7 +258,7 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 	false, /* Keep dialog open after success. */
 	true,
 
-	NULL,
+
 	NULL, NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_dup_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
@@ -314,7 +312,6 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 	false, /* Keep dialog open after success. */
 	true,
 
-	NULL,
 	NULL, NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_manual_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
@@ -360,7 +357,6 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 	false, /* Keep dialog open after success. */
 	true,
 
-	NULL,
 	NULL, NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_polygon_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,
@@ -405,7 +401,6 @@ VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
 	false, /* Keep dialog open after success. */
 	true,
 
-	NULL,
 	NULL, NULL, NULL,
 	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_exclude_polygon_get_process_options,
 	(VikDataSourceProcessFunc)            a_babel_convert_from,

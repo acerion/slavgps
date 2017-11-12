@@ -219,7 +219,7 @@ void BabelDialog::get_write_mode(BabelMode & mode)
 
 
 
-BabelDialog::BabelDialog(QString const & title, QWidget * parent_) : QDialog(parent_)
+BabelDialog::BabelDialog(QString const & title, QWidget * parent_)
 {
 	this->setWindowTitle(title);
 }
@@ -240,14 +240,8 @@ void BabelDialog::build_ui(const BabelMode * mode)
 {
 	qDebug() << "II: Babel Dialog: building dialog UI";
 
-	this->vbox = new QVBoxLayout;
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-
-	QLabel * label = new QLabel("File");
-	this->vbox->addWidget(label);
+	QLabel * label = new QLabel("File:");
+	this->grid->addWidget(label, 0, 0);
 
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
@@ -314,11 +308,11 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 	free(pattern);
 #endif
-	this->vbox->addWidget(this->file_entry);
+	this->grid->addWidget(this->file_entry, 1, 0);
 
 
 	label = new QLabel("File type:");
-	this->vbox->addWidget(label);
+	this->grid->addWidget(label, 2, 0);
 
 
 #ifdef K
@@ -337,35 +331,40 @@ void BabelDialog::build_ui(const BabelMode * mode)
 		const BabelMode read_mode = { 1, 0, 1, 0, 1, 0 };
 		this->file_types_combo = build_file_type_selector(read_mode);
 	}
-	this->vbox->addWidget(this->file_types_combo);
+	this->grid->addWidget(this->file_types_combo, 3, 0);
+
 
 	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
 	this->file_types_combo->setCurrentIndex(last_type);
 
-
+#define DO_DEBUG 0
+#if DO_DEBUG
+	BabelMode mode2;
+	mode2.tracks_write = true;
+	mode2.routes_write = true;
+	mode2.waypoints_write = true;
+	if (mode2.tracks_write || mode2.routes_write || mode2.waypoints_write) {
+#else
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
-
+#endif
 		/* These checkboxes are only for "export" mode (at least for now). */
 
 		QFrame * line = new QFrame();
 		line->setFrameShape(QFrame::HLine);
 		line->setFrameShadow(QFrame::Sunken);
-		this->vbox->addWidget(line);
+		this->grid->addWidget(line, 4, 0);
+
 
 		label = new QLabel(tr("Export these items:"));
-		this->vbox->addWidget(label);
-
+		this->grid->addWidget(label, 5, 0);
+#if DO_DEBUG
+		this->mode_box = this->build_mode_selector(mode2.tracks_write, mode2.routes_write, mode2.waypoints_write);
+#else
 		this->mode_box = this->build_mode_selector(mode->tracks_write, mode->routes_write, mode->waypoints_write);
-		this->vbox->addLayout(this->mode_box);
+#endif
+		this->grid->addLayout(this->mode_box, 6, 0);
 	}
-
-
-	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton(QDialogButtonBox::Ok);
-	this->button_box->addButton(QDialogButtonBox::Cancel);
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-	this->vbox->addWidget(this->button_box);
+#undef DO_DEBUG
 
 
 	/* Manually call the callback to set state of OK button. */

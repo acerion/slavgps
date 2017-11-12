@@ -91,7 +91,6 @@ VikDataSourceInterface vik_datasource_gc_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)              NULL,
 	(VikDataSourceInitFunc)		        datasource_gc_init,
 	(VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,
 	(DataSourceCreateSetupDialogFunc)       datasource_gc_create_setup_dialog,

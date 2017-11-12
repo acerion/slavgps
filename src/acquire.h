@@ -137,8 +137,6 @@ namespace SlavGPS {
 	typedef DataSourceDialog * (* DataSourceCreateSetupDialogFunc)(Viewport * viewport, void * user_data);
 
 
-	typedef int (* DataSourceInternalDialog) (QWidget * parent);
-
 	/**
 	 * VikDataSourceGetProcessOptionsFunc:
 	 * @user_data: provided by #VikDataSourceInterface.init_func or dialog with params
@@ -191,7 +189,6 @@ namespace SlavGPS {
 		bool is_thread;
 
 		/*** Manual UI Building. ***/
-		DataSourceInternalDialog internal_dialog;
 		VikDataSourceInitFunc init_func;
 		VikDataSourceCheckExistenceFunc check_existence_func;
 		DataSourceCreateSetupDialogFunc create_setup_dialog_func;

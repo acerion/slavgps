@@ -51,7 +51,6 @@ using namespace SlavGPS;
 
 static int g_last_page_number = 0;
 
-static int datasource_osm_traces_internal_dialog(QWidget * parent);
 static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data);
 
 
@@ -66,7 +65,6 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)		      NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_osm_traces_create_setup_dialog,

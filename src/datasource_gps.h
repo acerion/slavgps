@@ -49,6 +49,8 @@ namespace SlavGPS {
 		DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
 		~DatasourceGPSSetup();
 
+		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+
 		QString get_protocol(void);
 		QString get_port(void);
 		bool get_do_tracks(void);

@@ -60,7 +60,6 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 	true,
 	true,
 
-	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_routing_create_setup_dialog,

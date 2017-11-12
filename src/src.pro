@@ -177,6 +177,8 @@ HEADERS += window.h \
     datasource_gps.h \
     datasource_routing.h \
     datasource_osm.h \
+    datasource_url.h \
+    datasource_file.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \
     layer_trw_track_statistics.h \

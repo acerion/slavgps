@@ -50,7 +50,6 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	false, /* Not even using the dialog. */
 	false, /* Own method for getting data - does not fit encapsulation with current thread logic. */
 
-	(DataSourceInternalDialog)            NULL,
 	(VikDataSourceInitFunc)               NULL,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
