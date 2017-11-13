@@ -52,12 +52,8 @@ namespace SlavGPS {
 
 
 
-	typedef int GtkWidget; /* TODO: remove sooner or later. */
 
-
-
-
-	typedef struct _VikDataSourceInterface VikDataSourceInterface;
+	typedef struct _DataSourceInterface DataSourceInterface;
 
 	typedef struct {
 		Window * window;
@@ -66,40 +62,22 @@ namespace SlavGPS {
 		void * userdata;
 	} acq_vik_t;
 
-	enum class DatasourceInputtype {
-		NONE = 0,
-		TRWLAYER,
-		TRACK,
-		TRWLAYER_TRACK
-	} ;
 
-	enum class DatasourceMode {
-		/* Generally Datasources shouldn't use these and let the HCI decide between the create or add to layer options. */
-		CREATENEWLAYER,
-		ADDTOLAYER,
-		AUTO_LAYER_MANAGEMENT,
-		MANUAL_LAYER_MANAGEMENT,
-	};
-	/* TODO: replace track/layer? */
 
 
 	/**
-	 * Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
-	 */
-	typedef void (* VikDataSourceCleanupFunc) (void * user_data);
+	   Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
+	*/
+	typedef void (* DataSourceCleanupFunc)(void * user_data);
 
 
 	/**
-	 * Global data structure used to expose the progress dialog to the worker thread.
-	 */
+	   Global data structure used to expose the progress dialog to the worker thread.
+	*/
 	class AcquireProcess : public QObject {
 		Q_OBJECT
-	public slots:
-		void acquire_trwlayer_cb(void);
-
-
 	public:
-		void acquire(DatasourceMode mode, VikDataSourceInterface * source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function);
+		void acquire(DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function);
 		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
 
 		QLabel * status = NULL;
@@ -111,134 +89,111 @@ namespace SlavGPS {
 
 		DataSourceDialog * dialog_ = NULL;
 		bool running = false;
-		VikDataSourceInterface * source_interface = NULL;
+		DataSourceInterface * source_interface = NULL;
 		void * user_data = NULL;
+
+	public slots:
+		void acquire_trwlayer_cb(void);
 	};
 
 
 
-	/**
-	 * VikDataSourceInitFunc:
-	 *
-	 * Returns: pointer to state if OK, otherwise %NULL.
-	 */
-	typedef void * (*VikDataSourceInitFunc) (acq_vik_t * avt);
 
 	/**
-	 * VikDataSourceCheckExistenceFunc:
-	 *
-	 * Returns: %NULL if OK, otherwise returns an error message.
-	 */
-	typedef char *(*VikDataSourceCheckExistenceFunc) ();
+	   Returns: pointer to state if OK, otherwise %NULL.
+	*/
+	typedef void * (* DataSourceInitFunc)(acq_vik_t * avt);
+
+	/**
+	   Returns: %NULL if OK, otherwise returns an error message.
+	*/
+	typedef char * (* DataSourceCheckExistenceFunc)();
 
 	/**
 	   Create a dialog for configuring/setting up access to data source
-	 */
+	*/
 	typedef DataSourceDialog * (* DataSourceCreateSetupDialogFunc)(Viewport * viewport, void * user_data);
 
+	/**
+	   @user_data: provided by #DataSourceInterface.init_func or dialog with params
+	   @download_options: optional options for downloads from URLs for #DataSourceInterface.process_func
+	   @input_file_name:
+	   @input_track_file_name:
+
+	   Set both to %NULL to signal refusal (ie already downloading).
+	   @return process options: main options controlling the behaviour of #DataSourceInterface.process_func
+	*/
+	typedef ProcessOptions * (* DataSourceGetProcessOptionsFunc)(void * user_data, void * download_options, const char * input_file_name, const char * input_track_file_name);
 
 	/**
-	 * VikDataSourceGetProcessOptionsFunc:
-	 * @user_data: provided by #VikDataSourceInterface.init_func or dialog with params
-	 * @download_options: optional options for downloads from URLs for #VikDataSourceInterface.process_func
-	 * @input_file_name:
-	 * @input_track_file_name:
-	 *
-	 * Set both to %NULL to signal refusal (ie already downloading).
-	 @return process options: main options controlling the behaviour of #VikDataSourceInterface.process_func
-	 */
-	typedef ProcessOptions * (* VikDataSourceGetProcessOptionsFunc) (void * user_data, void * download_options, const char * input_file_name, const char * input_track_file_name);
+	  @trw:
+	  @process_options: options to control the behaviour of this function (see #ProcessOptions)
+	  @status_cb: the #DataSourceInterface.progress_func
+	  @acquiring: the widgets and data used by #DataSourceInterface.progress_func
+	  @download_options: Optional options used if downloads from URLs is used.
 
-	/**
-	 * VikDataSourceProcessFunc:
-	 * @vtl:
-	 * @process_options: options to control the behaviour of this function (see #ProcessOptions)
-	 * @status_cb: the #VikDataSourceInterface.progress_func
-	 * @acquiring: the widgets and data used by #VikDataSourceInterface.progress_func
-	 * @download_options: Optional options used if downloads from URLs is used.
-	 *
-	 * The actual function to do stuff - must report success/failure.
-	 */
-	typedef bool (* VikDataSourceProcessFunc) (void * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, void * download_options);
+	  The actual function to do stuff - must report success/failure.
+	*/
+	typedef bool (* DataSourceProcessFunc)(void * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, void * download_options);
 
 	/* Same as BabelCallback. */
-	typedef void  (* VikDataSourceProgressFunc) (BabelProgressCode c, void * data, AcquireProcess * acquiring);
+	typedef void  (* DataSourceProgressFunc)(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 	/**
 	   Create a dialog for showing progress of accessing a data source
-	 */
+	*/
 	typedef DataSourceDialog * (* DataSourceCreateProgressDialogFunc)(void * user_data);
 
 
 
 	typedef void (* DataSourceTurnOffFunc) (void * user_data, QString & babel_args, QString & file_path);
 
-	/**
-	 * VikDataSourceInterface:
-	 *
-	 * Main interface.
-	 */
-	struct _VikDataSourceInterface {
-		const char * window_title;
-		const char * layer_title;
-		DatasourceMode mode;
+	struct _DataSourceInterface {
+		QString window_title;
+		QString layer_title;
+		DataSourceMode mode;
 		DatasourceInputtype inputtype;
 		bool autoview;
 		bool keep_dialog_open; /* ... when done. */
 
 		bool is_thread;
 
-		/*** Manual UI Building. ***/
-		VikDataSourceInitFunc init_func;
-		VikDataSourceCheckExistenceFunc check_existence_func;
+		DataSourceInitFunc init_func;
+		DataSourceCheckExistenceFunc check_existence_func;
 		DataSourceCreateSetupDialogFunc create_setup_dialog_func;
-
-		/***                    ***/
-
-		VikDataSourceGetProcessOptionsFunc get_process_options;
-
-		VikDataSourceProcessFunc process_func;
-
-		VikDataSourceProgressFunc progress_func;
+		DataSourceGetProcessOptionsFunc get_process_options;
+		DataSourceProcessFunc process_func;
+		DataSourceProgressFunc progress_func;
 		DataSourceCreateProgressDialogFunc create_progress_dialog_func;
-		VikDataSourceCleanupFunc cleanup_func;
+		DataSourceCleanupFunc cleanup_func;
 		DataSourceTurnOffFunc off_func;
-
-
-
-		/*** UI Building.        ***/
 
 		ParameterSpecification * param_specs;
 		uint16_t                 param_specs_count;
-
 		SGVariant * params_defaults;
-
 		char ** params_groups;
 		uint8_t params_groups_count;
-
 	};
 
-	/**********************************/
-
-	void a_acquire(Window * window,
-		       LayersPanel * panel,
-		       Viewport * viewport,
-		       DatasourceMode mode,
-		       VikDataSourceInterface *source_interface,
-		       void * userdata,
-		       VikDataSourceCleanupFunc cleanup_function);
-
-	QMenu * a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
-
-	QMenu * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
-
-	QMenu * a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk);
-
-	void a_acquire_set_filter_track(Track * trk);
 
 
-	void acquire_init(void);
-	void acquire_uninit(void);
+
+	class Acquire {
+	public:
+		static void init(void);
+		static void uninit(void);
+
+		static void acquire_from_source(Window * window, LayersPanel * panel, Viewport * viewport, DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function);
+
+
+		static QMenu * create_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
+		static QMenu * create_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
+		static QMenu * create_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk);
+
+		static void set_filter_track(Track * trk);
+	};
+
+
 
 
 } /* namespace SlavGPS */

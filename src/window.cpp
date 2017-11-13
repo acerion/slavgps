@@ -95,24 +95,24 @@ Tree * g_tree = NULL;
 
 
 
-extern VikDataSourceInterface vik_datasource_gps_interface;
-extern VikDataSourceInterface vik_datasource_file_interface;
-extern VikDataSourceInterface vik_datasource_routing_interface;
+extern DataSourceInterface datasource_gps_interface;
+extern DataSourceInterface datasource_file_interface;
+extern DataSourceInterface datasource_routing_interface;
 #ifdef VIK_CONFIG_OPENSTREETMAP
-extern VikDataSourceInterface vik_datasource_osm_interface;
-extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
+extern DataSourceInterface datasource_osm_interface;
+extern DataSourceInterface datasource_osm_my_traces_interface;
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
-extern VikDataSourceInterface vik_datasource_gc_interface;
+extern DataSourceInterface datasource_gc_interface;
 #endif
 #ifdef VIK_CONFIG_GEOTAG
-extern VikDataSourceInterface vik_datasource_geotag_interface;
+extern DataSourceInterface datasource_geotag_interface;
 #endif
 #ifdef VIK_CONFIG_GEONAMES
-extern VikDataSourceInterface vik_datasource_wikipedia_interface;
+extern DataSourceInterface datasource_wikipedia_interface;
 #endif
-extern VikDataSourceInterface vik_datasource_url_interface;
-extern VikDataSourceInterface vik_datasource_geojson_interface;
+extern DataSourceInterface datasource_url_interface;
+extern DataSourceInterface datasource_geojson_interface;
 
 
 
@@ -2558,13 +2558,13 @@ void Window::help_about_cb(void) /* Slot. */
 
 
 
-void Window::my_acquire(VikDataSourceInterface * datasource)
+void Window::acquire_handler(DataSourceInterface * source_interface)
 {
-	DatasourceMode mode = datasource->mode;
-	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DatasourceMode::CREATENEWLAYER;
+	DataSourceMode mode = source_interface->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
-	a_acquire(this, this->items_tree, this->viewport, mode, datasource, NULL, NULL);
+	Acquire::acquire_from_source(this, this->items_tree, this->viewport, mode, source_interface, NULL, NULL);
 }
 
 
@@ -2572,7 +2572,7 @@ void Window::my_acquire(VikDataSourceInterface * datasource)
 
 void Window::acquire_from_gps_cb(void)
 {
-	this->my_acquire(&vik_datasource_gps_interface);
+	this->acquire_handler(&datasource_gps_interface);
 }
 
 
@@ -2580,7 +2580,7 @@ void Window::acquire_from_gps_cb(void)
 
 void Window::acquire_from_file_cb(void)
 {
-	this->my_acquire(&vik_datasource_file_interface);
+	this->acquire_handler(&datasource_file_interface);
 }
 
 
@@ -2588,7 +2588,7 @@ void Window::acquire_from_file_cb(void)
 
 void Window::acquire_from_geojson_cb(void)
 {
-	this->my_acquire(&vik_datasource_geojson_interface);
+	this->acquire_handler(&datasource_geojson_interface);
 }
 
 
@@ -2596,7 +2596,7 @@ void Window::acquire_from_geojson_cb(void)
 
 void Window::acquire_from_routing_cb(void)
 {
-	this->my_acquire(&vik_datasource_routing_interface);
+	this->acquire_handler(&datasource_routing_interface);
 }
 
 
@@ -2605,7 +2605,7 @@ void Window::acquire_from_routing_cb(void)
 #ifdef VIK_CONFIG_OPENSTREETMAP
 void Window::acquire_from_osm_cb(void)
 {
-	this->my_acquire(&vik_datasource_osm_interface);
+	this->acquire_handler(&datasource_osm_interface);
 }
 
 
@@ -2613,7 +2613,7 @@ void Window::acquire_from_osm_cb(void)
 
 void Window::acquire_from_my_osm_cb(void)
 {
-	this->my_acquire(&vik_datasource_osm_my_traces_interface);
+	this->acquire_handler(&datasource_osm_my_traces_interface);
 }
 #endif
 
@@ -2623,7 +2623,7 @@ void Window::acquire_from_my_osm_cb(void)
 #ifdef VIK_CONFIG_GEOCACHES
 void Window::acquire_from_gc_cb(void)
 {
-	this->my_acquire(&vik_datasource_gc_interface);
+	this->acquire_handler(&datasource_gc_interface);
 }
 #endif
 
@@ -2633,7 +2633,7 @@ void Window::acquire_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void Window::acquire_from_geotag_cb(void)
 {
-	this->my_acquire(&vik_datasource_geotag_interface);
+	this->acquire_handler(&datasource_geotag_interface);
 }
 #endif
 
@@ -2643,7 +2643,7 @@ void Window::acquire_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void Window::acquire_from_wikipedia_cb(void)
 {
-	this->my_acquire(&vik_datasource_wikipedia_interface);
+	this->acquire_handler(&datasource_wikipedia_interface);
 }
 #endif
 
@@ -2652,7 +2652,7 @@ void Window::acquire_from_wikipedia_cb(void)
 
 void Window::acquire_from_url_cb(void)
 {
-	this->my_acquire(&vik_datasource_url_interface);
+	this->acquire_handler(&datasource_url_interface);
 }
 
 

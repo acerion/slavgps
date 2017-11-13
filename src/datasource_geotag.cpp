@@ -62,30 +62,30 @@ static QUrl last_directory_url;
 static void * datasource_geotag_init(acq_vik_t * avt);
 static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3);
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, void * not_used);
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used);
 static void datasource_geotag_cleanup(void * user_data);
 
 
 
 
-VikDataSourceInterface vik_datasource_geotag_interface = {
+DataSourceInterface datasource_geotag_interface = {
 	N_("Create Waypoints from Geotagged Images"),
 	N_("Geotagged Images"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)		          datasource_geotag_init,
-	(VikDataSourceCheckExistenceFunc)	  NULL,
-	(DataSourceCreateSetupDialogFunc)         datasource_geotag_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)      datasource_geotag_get_process_options,
-	(VikDataSourceProcessFunc)                datasource_geotag_process,
-	(VikDataSourceProgressFunc)               NULL,
-	(DataSourceCreateProgressDialogFunc)      NULL,
-	(VikDataSourceCleanupFunc)                datasource_geotag_cleanup,
-	(DataSourceTurnOffFunc)                   NULL,
+	(DataSourceInitFunc)		      datasource_geotag_init,
+	(DataSourceCheckExistenceFunc)        NULL,
+	(DataSourceCreateSetupDialogFunc)     datasource_geotag_create_setup_dialog,
+	(DataSourceGetProcessOptionsFunc)     datasource_geotag_get_process_options,
+	(DataSourceProcessFunc)               datasource_geotag_process,
+	(DataSourceProgressFunc)              NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
+	(DataSourceCleanupFunc)               datasource_geotag_cleanup,
+	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
 	0,
@@ -188,7 +188,7 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, void * not_used)
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used)
 {
 	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) acquiring->user_data;
 

@@ -74,24 +74,24 @@ static void datasource_osm_my_traces_cleanup(void * data);
 
 
 
-VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
+DataSourceInterface datasource_osm_my_traces_interface = {
 	N_("OSM My Traces"),
 	N_("OSM My Traces"),
-	DatasourceMode::MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
+	DataSourceMode::MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	false, /* false = don't run as thread. */
 
-	(VikDataSourceInitFunc)	                datasource_osm_my_traces_init,
-	(VikDataSourceCheckExistenceFunc)       NULL,
-	(DataSourceCreateSetupDialogFunc)       datasource_osm_my_traces_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)    datasource_osm_my_traces_get_process_options,
-	(VikDataSourceProcessFunc)              datasource_osm_my_traces_process,
-	(VikDataSourceProgressFunc)             NULL,
-	(DataSourceCreateProgressDialogFunc)    NULL,
-	(VikDataSourceCleanupFunc)              datasource_osm_my_traces_cleanup,
-	(DataSourceTurnOffFunc)                 NULL,
+	(DataSourceInitFunc)	              datasource_osm_my_traces_init,
+	(DataSourceCheckExistenceFunc)        NULL,
+	(DataSourceCreateSetupDialogFunc)     datasource_osm_my_traces_create_setup_dialog,
+	(DataSourceGetProcessOptionsFunc)     datasource_osm_my_traces_get_process_options,
+	(DataSourceProcessFunc)               datasource_osm_my_traces_process,
+	(DataSourceProgressFunc)              NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
+	(DataSourceCleanupFunc)               datasource_osm_my_traces_cleanup,
+	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
 	0,
@@ -110,9 +110,9 @@ static void * datasource_osm_my_traces_init(acq_vik_t *avt)
 	   Haven't been able to get the thread method to work reliably (or get progress feedback).
 	   So thread version is disabled ATM. */
 	/*
-	  if (vik_datasource_osm_my_traces_interface.is_thread) {
-	  vik_datasource_osm_my_traces_interface.progress_func = datasource_gps_progress;
-	  vik_datasource_osm_my_traces_interface.create_progress_dialog_func = datasource_gps_add_progress_widgets;
+	  if (datasource_osm_my_traces_interface.is_thread) {
+	  datasource_osm_my_traces_interface.progress_func = datasource_gps_progress;
+	  datasource_osm_my_traces_interface.create_progress_dialog_func = datasource_gps_add_progress_widgets;
 	  }
 	*/
 	return data;
@@ -666,7 +666,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
-		if (!vik_datasource_osm_my_traces_interface.is_thread) {
+		if (!datasource_osm_my_traces_interface.is_thread) {
 			Dialog::info(QObject::tr("No GPS Traces found"), acquiring->window);
 		}
 		free(xd);
@@ -677,21 +677,21 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	set_in_current_view_property((datasource_osm_my_traces_t *) acquiring->user_data, xd->list_of_gpx_meta_data);
 
-	if (vik_datasource_osm_my_traces_interface.is_thread) {
+	if (datasource_osm_my_traces_interface.is_thread) {
 #ifdef K
 		gdk_threads_enter();
 #endif
 	}
 
 	std::list<gpx_meta_data_t *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
-	if (vik_datasource_osm_my_traces_interface.is_thread) {
+	if (datasource_osm_my_traces_interface.is_thread) {
 #ifdef K
 		gdk_threads_leave();
 #endif
 	}
 
 	/* If non thread - show program is 'doing something...' */
-	if (!vik_datasource_osm_my_traces_interface.is_thread) {
+	if (!datasource_osm_my_traces_interface.is_thread) {
 		acquiring->window->set_busy_cursor();
 	}
 
@@ -788,7 +788,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		result = true;
 	}
 
-	if (!vik_datasource_osm_my_traces_interface.is_thread) {
+	if (!datasource_osm_my_traces_interface.is_thread) {
 		acquiring->window->clear_busy_cursor();
 	}
 

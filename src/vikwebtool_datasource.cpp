@@ -220,29 +220,29 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 {
 	bool search = this->webtool_needs_user_string();
 
-	/* Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request). */
+	/* Use DataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request). */
 
-	/* Can now create a 'VikDataSourceInterface' on the fly... */
-	VikDataSourceInterface *vik_datasource_interface = (VikDataSourceInterface *) malloc(sizeof(VikDataSourceInterface));
+	/* Can now create a 'DataSourceInterface' on the fly... */
+	DataSourceInterface * datasource_interface = (DataSourceInterface *) malloc(sizeof(DataSourceInterface));
 
 	/* An 'easy' way of assigning values. */
-	VikDataSourceInterface data = {
-		strdup(this->get_label().toUtf8().constData()), /* FIXME: memory leak. */
-		strdup(this->get_label().toUtf8().constData()), /* FIXME: memory leak. */
-		DatasourceMode::ADDTOLAYER,
+	DataSourceInterface data = {
+		this->get_label(),
+		this->get_label(),
+		DataSourceMode::ADD_TO_LAYER,
 		DatasourceInputtype::NONE,
 		false, /* Maintain current view - rather than setting it to the acquired points. */
 		true,  /* true = keep dialog open after success. */
 		true,  /* true = run as thread. */
 
-		(VikDataSourceInitFunc)               datasource_init,
-		(VikDataSourceCheckExistenceFunc)     NULL,
+		(DataSourceInitFunc)                  datasource_init,
+		(DataSourceCheckExistenceFunc)        NULL,
 		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
-		(VikDataSourceGetProcessOptionsFunc)  datasource_get_process_options,
-		(VikDataSourceProcessFunc)            a_babel_convert_from,
-		(VikDataSourceProgressFunc)           NULL,
+		(DataSourceGetProcessOptionsFunc)     datasource_get_process_options,
+		(DataSourceProcessFunc)               a_babel_convert_from,
+		(DataSourceProgressFunc)              NULL,
 		(DataSourceCreateProgressDialogFunc)  NULL,
-		(VikDataSourceCleanupFunc)            cleanup,
+		(DataSourceCleanupFunc)               cleanup,
 		(DataSourceTurnOffFunc)               NULL,
 		NULL,
 		0,
@@ -250,9 +250,9 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		NULL,
 		0
 	};
-	memcpy(vik_datasource_interface, &data, sizeof(VikDataSourceInterface));
+	memcpy(datasource_interface, &data, sizeof(DataSourceInterface));
 
-	a_acquire(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
+	Acquire::acquire_from_source(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport(), data.mode, datasource_interface, this, cleanup);
 }
 
 

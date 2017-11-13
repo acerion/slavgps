@@ -61,23 +61,23 @@ static void datasource_geojson_cleanup(void * data);
 
 
 
-VikDataSourceInterface vik_datasource_geojson_interface = {
+DataSourceInterface datasource_geojson_interface = {
 	N_("Acquire from GeoJSON"),
 	N_("GeoJSON"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
 	false, /* false = don't run as thread. Open each file in the main loop. */
 
-	(VikDataSourceInitFunc)               datasource_geojson_init,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  datasource_geojson_init,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_geojson_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_geojson_get_process_options,
-	(VikDataSourceProcessFunc)            datasource_geojson_process,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_geojson_get_process_options,
+	(DataSourceProcessFunc)               datasource_geojson_process,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            datasource_geojson_cleanup,
+	(DataSourceCleanupFunc)               datasource_geojson_cleanup,
 	(DataSourceTurnOffFunc)               NULL,
 	NULL,
 	0,

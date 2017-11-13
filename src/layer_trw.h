@@ -66,8 +66,8 @@ namespace SlavGPS {
 
 
 
-	struct _VikDataSourceInterface;
-	typedef struct _VikDataSourceInterface VikDataSourceInterface;
+	struct _DataSourceInterface;
+	typedef struct _DataSourceInterface DataSourceInterface;
 
 
 	/* To be removed. */
@@ -319,7 +319,9 @@ namespace SlavGPS {
 		void sort_all();
 
 
-		void acquire(VikDataSourceInterface *datasource);
+		/* General handler of acquire requests.
+		   Called by all acquire_from_X_cb() with specific data source. */
+		void acquire_handler(DataSourceInterface * source_interface);
 
 
 		void set_coord_mode(CoordMode mode);

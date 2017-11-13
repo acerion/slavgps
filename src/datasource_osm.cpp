@@ -56,23 +56,23 @@ static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * v
 
 
 
-VikDataSourceInterface vik_datasource_osm_interface = {
+DataSourceInterface datasource_osm_interface = {
 	N_("OSM traces"),
 	N_("OSM traces"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)		      NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)		      NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_osm_traces_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  NULL,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
@@ -107,7 +107,6 @@ ProcessOptions * DataSourceOSMDialog::get_process_options(DownloadOptions & dl_o
 
 
 
-/* See VikDataSourceInterface. */
 static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceOSMDialog(viewport);

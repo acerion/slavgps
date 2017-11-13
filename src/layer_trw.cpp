@@ -125,24 +125,24 @@ using namespace SlavGPS;
 
 extern Tree * g_tree;
 
-extern VikDataSourceInterface vik_datasource_gps_interface;
-extern VikDataSourceInterface vik_datasource_file_interface;
-extern VikDataSourceInterface vik_datasource_routing_interface;
+extern DataSourceInterface datasource_gps_interface;
+extern DataSourceInterface datasource_file_interface;
+extern DataSourceInterface datasource_routing_interface;
 #ifdef VIK_CONFIG_OPENSTREETMAP
-extern VikDataSourceInterface vik_datasource_osm_interface;
-extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
+extern DataSourceInterface datasource_osm_interface;
+extern DataSourceInterface datasource_osm_my_traces_interface;
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
-extern VikDataSourceInterface vik_datasource_gc_interface;
+extern DataSourceInterface datasource_gc_interface;
 #endif
 #ifdef VIK_CONFIG_GEOTAG
-extern VikDataSourceInterface vik_datasource_geotag_interface;
+extern DataSourceInterface datasource_geotag_interface;
 #endif
 #ifdef VIK_CONFIG_GEONAMES
-extern VikDataSourceInterface vik_datasource_wikipedia_interface;
+extern DataSourceInterface datasource_wikipedia_interface;
 #endif
-extern VikDataSourceInterface vik_datasource_url_interface;
-extern VikDataSourceInterface vik_datasource_geojson_interface;
+extern DataSourceInterface datasource_url_interface;
+extern DataSourceInterface datasource_geojson_interface;
 
 
 
@@ -1990,20 +1990,18 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
-
-void LayerTRW::acquire(VikDataSourceInterface *datasource)
+/* TODO: when this function is really called? */
+void LayerTRW::acquire_handler(DataSourceInterface * source_interface)
 {
-	Window * window_ = this->get_window();
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	Window * window = this->get_window();
+	LayersPanel * items_tree = g_tree->tree_get_items_tree();
 	Viewport * viewport =  g_tree->tree_get_main_viewport();
 
-	DatasourceMode mode = datasource->mode;
-	if (mode == DatasourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DatasourceMode::ADDTOLAYER;
+	DataSourceMode mode = source_interface->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::ADD_TO_LAYER;
 	}
-	a_acquire(window_, panel, viewport, mode, datasource, NULL, NULL);
-
-	/* TODO: when this function is really called? */
+	Acquire::acquire_from_source(window, items_tree, viewport, mode, source_interface, NULL, NULL);
 }
 
 
@@ -2014,7 +2012,7 @@ void LayerTRW::acquire(VikDataSourceInterface *datasource)
  */
 void LayerTRW::acquire_from_gps_cb(void)
 {
-	this->acquire(&vik_datasource_gps_interface);
+	this->acquire_handler(&datasource_gps_interface);
 }
 
 
@@ -2025,7 +2023,7 @@ void LayerTRW::acquire_from_gps_cb(void)
  */
 void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_routing_interface);
+	this->acquire_handler(&datasource_routing_interface);
 }
 
 
@@ -2036,7 +2034,7 @@ void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_url_interface);
+	this->acquire_handler(&datasource_url_interface);
 }
 
 
@@ -2048,7 +2046,7 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_osm_interface);
+	this->acquire_handler(&datasource_osm_interface);
 }
 
 
@@ -2059,7 +2057,7 @@ void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_osm_my_traces_interface);
+	this->acquire_handler(&datasource_osm_my_traces_interface);
 }
 #endif
 
@@ -2072,7 +2070,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_gc_interface);
+	this->acquire_handler(&datasource_gc_interface);
 }
 #endif
 
@@ -2085,7 +2083,7 @@ void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_geotag_interface);
+	this->acquire_handler(&datasource_geotag_interface);
 
 	/* Re-verify thumbnails as they may have changed. */
 	this->has_verified_thumbnails = false;
@@ -2101,7 +2099,7 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
-	this->acquire(&vik_datasource_file_interface);
+	this->acquire_handler(&datasource_file_interface);
 }
 
 

@@ -32,10 +32,10 @@
 #include <QDebug>
 
 #include "datasource_file.h"
+#include "acquire.h"
 #include "babel.h"
 #include "gpx.h"
 #include "babel_dialog.h"
-#include "acquire.h"
 #include "util.h"
 #include "widget_file_entry.h"
 
@@ -66,24 +66,24 @@ static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, vo
 
 
 
-VikDataSourceInterface vik_datasource_file_interface = {
+DataSourceInterface datasource_file_interface = {
 	N_("Import file with GPSBabel"),
 	N_("Imported file"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)	                NULL,
-	(VikDataSourceCheckExistenceFunc)       NULL,
-	(DataSourceCreateSetupDialogFunc)       datasource_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)    NULL,
-	(VikDataSourceProcessFunc)              a_babel_convert_from,
-	(VikDataSourceProgressFunc)             NULL,
-	(DataSourceCreateProgressDialogFunc)    NULL,
-	(VikDataSourceCleanupFunc)              NULL,
-	(DataSourceTurnOffFunc)                 NULL,
+	(DataSourceInitFunc)	              NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
+	(DataSourceCreateSetupDialogFunc)     datasource_create_setup_dialog,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
+	(DataSourceCleanupFunc)               NULL,
+	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
 	0,

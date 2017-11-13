@@ -82,24 +82,24 @@ static char *datasource_gc_check_existence();
 
 
 
-VikDataSourceInterface vik_datasource_gc_interface = {
+DataSourceInterface datasource_gc_interface = {
 	N_("Download Geocaches"),
 	N_("Geocaching.com Caches"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true, /* Yes automatically update the display - otherwise we won't see the geocache waypoints! */
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)		        datasource_gc_init,
-	(VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,
-	(DataSourceCreateSetupDialogFunc)       datasource_gc_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)    datasource_gc_get_process_options,
-	(VikDataSourceProcessFunc)              a_babel_convert_from,
-	(VikDataSourceProgressFunc)		NULL,
-	(DataSourceCreateProgressDialogFunc)    NULL,
-	(VikDataSourceCleanupFunc)		datasource_gc_cleanup,
-	(DataSourceTurnOffFunc)                 NULL,
+	(DataSourceInitFunc)		      datasource_gc_init,
+	(DataSourceCheckExistenceFunc)        datasource_gc_check_existence,
+	(DataSourceCreateSetupDialogFunc)     datasource_gc_create_setup_dialog,
+	(DataSourceGetProcessOptionsFunc)     datasource_gc_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
+	(DataSourceCreateProgressDialogFunc)  NULL,
+	(DataSourceCleanupFunc)               datasource_gc_cleanup,
+	(DataSourceTurnOffFunc)               NULL,
 };
 
 

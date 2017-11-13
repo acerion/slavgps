@@ -229,7 +229,7 @@ int main(int argc, char ** argv)
 	QResource::registerResource("icons.rcc");
 	Layer::preconfigure_interfaces();
 
-	acquire_init();
+	Acquire::init();
 
 	/* Ask for confirmation of default settings on first run. */
 	SGUtils::set_auto_features_on_first_run();

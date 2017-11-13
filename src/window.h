@@ -83,8 +83,8 @@ namespace SlavGPS {
 
 
 
-	struct _VikDataSourceInterface;
-	typedef struct _VikDataSourceInterface VikDataSourceInterface;
+	struct _DataSourceInterface;
+	typedef struct _DataSourceInterface DataSourceInterface;
 
 
 
@@ -228,7 +228,12 @@ namespace SlavGPS {
 
 		void show_centers_cb();
 
-		void my_acquire(VikDataSourceInterface * datasource);
+
+
+		/* General handler of acquire requests.
+		   Called by all acquire_from_X_cb() with specific data source. */
+		void acquire_handler(DataSourceInterface * source_interface);
+
 		void acquire_from_gps_cb(void);
 		void acquire_from_file_cb(void);
 		void acquire_from_geojson_cb(void);

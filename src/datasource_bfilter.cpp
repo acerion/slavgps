@@ -101,23 +101,23 @@ static void * datasource_bfilter_simplify_init(acq_vik_t *not_used)
 
 
 
-VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
+DataSourceInterface datasource_bfilter_simplify_interface = {
 	N_("Simplify All Tracks..."),
 	N_("Simplified Tracks"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* false = don't keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               datasource_bfilter_simplify_init,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  datasource_bfilter_simplify_init,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_simplify_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_simplify_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	bfilter_simplify_params,
@@ -203,23 +203,23 @@ static void * datasource_bfilter_compress_init(acq_vik_t *not_used)
 /**
  * Allow 'compressing' tracks/routes using the Simplify by Error Factor method.
  */
-VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
+DataSourceInterface datasource_bfilter_compress_interface = {
 	N_("Compress Tracks..."),
 	N_("Compressed Tracks"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* false = don't keep dialog open after successful operation. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               datasource_bfilter_compress_init,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  datasource_bfilter_compress_init,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_compress_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_compress_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	bfilter_compress_params,
@@ -251,23 +251,23 @@ static ProcessOptions * datasource_bfilter_dup_get_process_options(SGVariant * p
 
 
 
-VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
+DataSourceInterface datasource_bfilter_dup_interface = {
 	N_("Remove Duplicate Waypoints"),
 	N_("Remove Duplicate Waypoints"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* false = don't keep dialog open after success. */
 	true,  /* true = run as thread.*/
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_dup_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_dup_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL, 0, NULL, NULL, 0
@@ -306,23 +306,23 @@ static ProcessOptions * datasource_bfilter_manual_get_process_options(SGVariant 
 
 
 
-VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
+DataSourceInterface datasource_bfilter_manual_interface = {
 	N_("Manual filter"),
 	N_("Manual filter"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER,
 	true,
 	false, /* false = don't keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_manual_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_manual_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	bfilter_manual_params,
@@ -353,23 +353,23 @@ static ProcessOptions * datasource_bfilter_polygon_get_process_options(SGVariant
 
 
 
-VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
+DataSourceInterface datasource_bfilter_polygon_interface = {
 	N_("Waypoints Inside This"),
 	N_("Polygonized Layer"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
 	false, /* false = don't keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_polygon_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_polygon_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
@@ -399,23 +399,23 @@ static ProcessOptions * datasource_bfilter_exclude_polygon_get_process_options(S
 
 
 
-VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
+DataSourceInterface datasource_bfilter_exclude_polygon_interface = {
 	N_("Waypoints Outside This"),
 	N_("Polygonzied Layer"),
-	DatasourceMode::CREATENEWLAYER,
+	DataSourceMode::CREATE_NEW_LAYER,
 	DatasourceInputtype::TRWLAYER_TRACK,
 	true,
 	false, /* false = don't keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_bfilter_exclude_polygon_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_exclude_polygon_get_process_options,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,

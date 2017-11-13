@@ -36,28 +36,28 @@ using namespace SlavGPS;
 
 
 
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring);
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
 
 
 
 
-VikDataSourceInterface vik_datasource_wikipedia_interface = {
+DataSourceInterface datasource_wikipedia_interface = {
 	N_("Create Waypoints from Wikipedia Articles"),
 	N_("Wikipedia Waypoints"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	false,
 	false, /* false = don't keep dialog open after success. Not even using the dialog. */
 	false, /* false = don't run as thread. Own method for getting data - does not fit encapsulation with current thread logic. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
-	(VikDataSourceGetProcessOptionsFunc)  NULL,
-	(VikDataSourceProcessFunc)            datasource_wikipedia_process,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               datasource_wikipedia_process,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
@@ -73,7 +73,7 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 /**
  * Process selected files and try to generate waypoints storing them in the given trw.
  */
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring)
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	if (!trw) {
 		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";

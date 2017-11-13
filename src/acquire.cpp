@@ -17,26 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
+
+
 
 #include <QRunnable>
 
-#include <glib/gprintf.h>
 
+
+
+#include "acquire.h"
 #include "window.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"
 #include "babel.h"
 #include "gpx.h"
-#include "acquire.h"
 #include "dialog.h"
 #include "util.h"
 #include "layer_aggregate.h"
@@ -75,39 +78,39 @@ public:
 
 
 
-extern VikDataSourceInterface vik_datasource_gps_interface;
-extern VikDataSourceInterface vik_datasource_geojson_interface;
-extern VikDataSourceInterface vik_datasource_routing_interface;
-extern VikDataSourceInterface vik_datasource_osm_interface;
-extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
-extern VikDataSourceInterface vik_datasource_geotag_interface;
-extern VikDataSourceInterface vik_datasource_wikipedia_interface;
-extern VikDataSourceInterface vik_datasource_url_interface;
-extern VikDataSourceInterface vik_datasource_file_interface;
+extern DataSourceInterface datasource_gps_interface;
+extern DataSourceInterface datasource_geojson_interface;
+extern DataSourceInterface datasource_routing_interface;
+extern DataSourceInterface datasource_osm_interface;
+extern DataSourceInterface datasource_osm_my_traces_interface;
+extern DataSourceInterface datasource_geotag_interface;
+extern DataSourceInterface datasource_wikipedia_interface;
+extern DataSourceInterface datasource_url_interface;
+extern DataSourceInterface datasource_file_interface;
 
 
 
 
 /************************ FILTER LIST *******************/
-// extern VikDataSourceInterface vik_datasource_gps_interface;
+// extern DataSourceInterface datasource_gps_interface;
 /*** Input is LayerTRW. ***/
-extern VikDataSourceInterface vik_datasource_bfilter_simplify_interface;
-extern VikDataSourceInterface vik_datasource_bfilter_compress_interface;
-extern VikDataSourceInterface vik_datasource_bfilter_dup_interface;
-extern VikDataSourceInterface vik_datasource_bfilter_manual_interface;
+extern DataSourceInterface datasource_bfilter_simplify_interface;
+extern DataSourceInterface datasource_bfilter_compress_interface;
+extern DataSourceInterface datasource_bfilter_dup_interface;
+extern DataSourceInterface datasource_bfilter_manual_interface;
 
 /*** Input is a track and a LayerTRW. ***/
-extern VikDataSourceInterface vik_datasource_bfilter_polygon_interface;
-extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
+extern DataSourceInterface datasource_bfilter_polygon_interface;
+extern DataSourceInterface datasource_bfilter_exclude_polygon_interface;
 
 /*** Input is a track. ***/
-const VikDataSourceInterface * filters[] = {
-	&vik_datasource_bfilter_simplify_interface,
-	&vik_datasource_bfilter_compress_interface,
-	&vik_datasource_bfilter_dup_interface,
-	&vik_datasource_bfilter_manual_interface,
-	&vik_datasource_bfilter_polygon_interface,
-	&vik_datasource_bfilter_exclude_polygon_interface,
+const DataSourceInterface * filters[] = {
+	&datasource_bfilter_simplify_interface,
+	&datasource_bfilter_compress_interface,
+	&datasource_bfilter_dup_interface,
+	&datasource_bfilter_manual_interface,
+	&datasource_bfilter_polygon_interface,
+	&datasource_bfilter_exclude_polygon_interface,
 
 };
 
@@ -116,7 +119,7 @@ const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
 Track * filter_track = NULL;
 
 
-static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, VikDataSourceInterface * interface, void * pass_along_data);
+static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data);
 
 
 
@@ -219,9 +222,12 @@ static void on_complete_process(AcquireGetterParams & getter_params)
 
 
 
+
 ProcessOptions::ProcessOptions()
 {
 }
+
+
 
 
 ProcessOptions::ProcessOptions(const QString & babel_args_, const QString & input_file_name_, const QString & input_file_type_, const QString & url_)
@@ -241,6 +247,8 @@ ProcessOptions::ProcessOptions(const QString & babel_args_, const QString & inpu
 }
 
 
+
+
 ProcessOptions::~ProcessOptions()
 {
 }
@@ -254,7 +262,7 @@ void AcquireGetter::run(void)
 {
 	bool result = true;
 
-	VikDataSourceInterface * source_interface = this->params.acquiring->source_interface;
+	DataSourceInterface * source_interface = this->params.acquiring->source_interface;
 
 	if (source_interface->process_func) {
 		result = source_interface->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
@@ -286,14 +294,14 @@ void AcquireGetter::run(void)
 /* Depending on type of filter, often only trw or track will be given.
  * The other can be NULL.
  */
-void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * source_interface_, void * userdata, VikDataSourceCleanupFunc cleanup_function)
+void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_interface_, void * userdata, DataSourceCleanupFunc cleanup_function)
 {
 	/* For manual dialogs. */
 	DataSourceDialog * setup_dialog = NULL;
 	DownloadOptions * dl_options = new DownloadOptions;
 
 	this->source_interface = source_interface_;
-	VikDataSourceInterface * interface = source_interface;
+	DataSourceInterface * interface = source_interface;
 
 	acq_vik_t avt;
 	avt.panel = this->panel;
@@ -330,21 +338,21 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 		/*
 		  Data interfaces that have "create_setup_dialog_func":
-		  vik_datasource_file_interface;
-		  vik_datasource_gps_interface;
-		  vik_datasource_routing_interface;
-		  vik_datasource_osm_interface;
-		  vik_datasource_url_interface;
+		  datasource_file_interface;
+		  datasource_gps_interface;
+		  datasource_routing_interface;
+		  datasource_osm_interface;
+		  datasource_url_interface;
 
 		  Data interfaces that don't "use" this branch of code (yet?):
-		  vik_datasource_geojson_interface;
-		  vik_datasource_osm_my_traces_interface;
-		  vik_datasource_geotag_interface;
-		  vik_datasource_wikipedia_interface;
+		  datasource_geojson_interface;
+		  datasource_osm_my_traces_interface;
+		  datasource_geotag_interface;
+		  datasource_wikipedia_interface;
 		*/
 
 		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->user_data);
-		setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
+		setup_dialog->setWindowTitle(QObject::tr(interface->window_title.toUtf8().constData()));
 		/* TODO: set focus on "OK/Accept" button. */
 
 		if (setup_dialog->exec() != QDialog::Accepted) {
@@ -375,14 +383,12 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 
-	/* Cleanup for option dialogs. */
+	/* Cleanup for setup dialog. */
 	if (interface->create_setup_dialog_func) {
 		delete setup_dialog;
 		setup_dialog = NULL;
 	} else if (interface->param_specs) {
-#ifdef K
 		a_uibuilder_free_paramdatas(param_table, interface->param_specs, interface->param_specs_count);
-#endif
 	}
 
 	AcquireGetterParams getter_params;
@@ -395,12 +401,12 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 #ifdef K
 	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	setup_dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
-	setup_dialog->setWindowTitle(QObject::tr((interface->window_title));
+	setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
 #endif
 
 	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
 	this->running = true;
-	this->status = new QLabel(QObject::tr("Working..."));
+	this->status = new QLabel(tr("Working..."));
 #ifdef K
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(setup_dialog))), status, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
@@ -419,26 +425,43 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 	}
 
 
-	if (mode == DatasourceMode::ADDTOLAYER) {
+	switch (mode) {
+	case DataSourceMode::CREATE_NEW_LAYER:
+		getter_params.creating_new_layer = true;
+		break;
+
+	case DataSourceMode::ADD_TO_LAYER: {
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
 			getter_params.trw = (LayerTRW *) selected_layer;
 			getter_params.creating_new_layer = false;
 		}
-	} else if (mode == DatasourceMode::CREATENEWLAYER) {
-		getter_params.creating_new_layer = true;
-	} else if (mode == DatasourceMode::MANUAL_LAYER_MANAGEMENT) {
+		}
+		break;
+
+	case DataSourceMode::AUTO_LAYER_MANAGEMENT:
+		/* NOOP */
+		break;
+
+	case DataSourceMode::MANUAL_LAYER_MANAGEMENT: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		getter_params.creating_new_layer = false;
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
 			getter_params.trw = (LayerTRW *) selected_layer;
 		}
-	}
+		}
+		break;
+	default:
+		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
+		break;
+	};
+
+
 	if (getter_params.creating_new_layer) {
 		getter_params.trw = new LayerTRW();
 		getter_params.trw->set_coord_mode(this->viewport->get_coord_mode());
-		getter_params.trw->set_name(QObject::tr(interface->layer_title));
+		getter_params.trw->set_name(QObject::tr(interface->layer_title.toUtf8().constData()));
 
 		/* We need to have that layer when completing acquisition
 		   process: we need to do few operations on it. */
@@ -472,11 +495,6 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
 					}
 				}
-
-				/* Thread finished by normal completion - free memory. */
-#ifdef K
-				free(w);
-#endif
 			}
 		} else {
 			/* This shouldn't happen... */
@@ -518,7 +536,7 @@ void AcquireProcess::acquire(DatasourceMode mode, VikDataSourceInterface * sourc
 
 
 
-ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, VikDataSourceInterface * interface, void * pass_along_data)
+ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data)
 {
 	ProcessOptions * po = NULL;
 
@@ -554,11 +572,11 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		break;
 
 	case DatasourceInputtype::NONE:
-		if (interface == &vik_datasource_routing_interface
-		    || interface == &vik_datasource_file_interface
-		    || interface == &vik_datasource_osm_interface
-		    || interface == &vik_datasource_gps_interface
-		    || interface == &vik_datasource_url_interface) {
+		if (interface == &datasource_routing_interface
+		    || interface == &datasource_file_interface
+		    || interface == &datasource_osm_interface
+		    || interface == &datasource_gps_interface
+		    || interface == &datasource_url_interface) {
 
 			po = setup_dialog->get_process_options(*dl_options);
 		} else {
@@ -576,18 +594,19 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 
 
 
+
 /**
  * @window: The #Window to work with
  * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
  * @viewport: The #Viewport defining the current view
  * @mode: How layers should be managed
- * @source_interface: The #VikDataSourceInterface determining how and what actions to take
- * @userdata: External data to be passed into the #VikDataSourceInterface
- * @cleanup_function: The function to dispose the #VikDataSourceInterface if necessary
+ * @source_interface: The #DataSourceInterface determining how and what actions to take
+ * @userdata: External data to be passed into the #DataSourceInterface
+ * @cleanup_function: The function to dispose the #DataSourceInterface if necessary
  *
- * Process the given VikDataSourceInterface for sources with no input data.
+ * Process the given DataSourceInterface for sources with no input data.
  */
-void SlavGPS::a_acquire(Window * window, LayersPanel * panel, Viewport * viewport, DatasourceMode mode, VikDataSourceInterface *source_interface, void * userdata, VikDataSourceCleanupFunc cleanup_function)
+void Acquire::acquire_from_source(Window * window, LayersPanel * panel, Viewport * viewport, DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function)
 {
 	g_acquiring->window = window;
 	g_acquiring->panel = panel;
@@ -610,7 +629,7 @@ void AcquireProcess::acquire_trwlayer_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	int idx = qa->data().toInt();
 
-	VikDataSourceInterface * iface = (VikDataSourceInterface *) filters[idx];
+	DataSourceInterface * iface = (DataSourceInterface *) filters[idx];
 
 	this->acquire(iface->mode, iface, NULL, NULL);
 }
@@ -628,7 +647,7 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DatasourceInpu
 				menu = new QMenu(submenu_label);
 			}
 
-			QAction * action = new QAction(QString(filters[i]->window_title), this);
+			QAction * action = new QAction(filters[i]->window_title, this);
 			action->setData(i);
 			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (acquire_trwlayer_cb(void)));
 			menu->addAction(action);
@@ -646,7 +665,7 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DatasourceInpu
  *
  * Returns: %NULL if no filters.
  */
-QMenu * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * Acquire::create_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	g_acquiring->window = window;
 	g_acquiring->panel = panel;
@@ -665,7 +684,7 @@ QMenu * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, V
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * Acquire::create_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
@@ -689,7 +708,7 @@ QMenu * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * pa
  *
  * Returns: %NULL if no applicable filters
  */
-QMenu * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
+QMenu * Acquire::create_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
 	g_acquiring->window = window;
 	g_acquiring->panel = panel;
@@ -706,7 +725,7 @@ QMenu * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, View
 /**
  * Sets application-wide track to use with filter. references the track.
  */
-void SlavGPS::a_acquire_set_filter_track(Track * trk)
+void Acquire::set_filter_track(Track * trk)
 {
 	if (filter_track) {
 		filter_track->free();
@@ -719,7 +738,7 @@ void SlavGPS::a_acquire_set_filter_track(Track * trk)
 
 
 
-void SlavGPS::acquire_init(void)
+void Acquire::init(void)
 {
 	g_acquiring = new AcquireProcess();
 }
@@ -727,7 +746,7 @@ void SlavGPS::acquire_init(void)
 
 
 
-void SlavGPS::acquire_uninit(void)
+void Acquire::uninit(void)
 {
 	delete g_acquiring;
 }

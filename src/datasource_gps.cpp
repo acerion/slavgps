@@ -69,24 +69,24 @@ static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel
 static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog);
 
 
-VikDataSourceInterface vik_datasource_gps_interface = {
+DataSourceInterface datasource_gps_interface = {
 	N_("Acquire from GPS"),
 	N_("Acquired from GPS"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)		        NULL,
-	(VikDataSourceCheckExistenceFunc)	NULL,
-	(DataSourceCreateSetupDialogFunc)       datasource_gps_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)    NULL,
-	(VikDataSourceProcessFunc)              a_babel_convert_from,
-	(VikDataSourceProgressFunc)		datasource_gps_progress,
-	(DataSourceCreateProgressDialogFunc)    datasource_gps_create_progress_dialog,
-	(VikDataSourceCleanupFunc)		NULL,
-	(DataSourceTurnOffFunc)                 datasource_gps_off,
+	(DataSourceInitFunc)		      NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
+	(DataSourceCreateSetupDialogFunc)     datasource_gps_create_setup_dialog,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              datasource_gps_progress,
+	(DataSourceCreateProgressDialogFunc)  datasource_gps_create_progress_dialog,
+	(DataSourceCleanupFunc)               NULL,
+	(DataSourceTurnOffFunc)               datasource_gps_off,
 
 	NULL,
 	0,

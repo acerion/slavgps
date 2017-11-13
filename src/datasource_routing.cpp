@@ -51,23 +51,23 @@ static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * view
 
 
 
-VikDataSourceInterface vik_datasource_routing_interface = {
+DataSourceInterface datasource_routing_interface = {
 	N_("Directions"),
 	N_("Directions"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_routing_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  NULL,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,

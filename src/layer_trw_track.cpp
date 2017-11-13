@@ -2516,10 +2516,10 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 
 	/* ATM This function is only available via the layers panel, due to needing a panel. */
 	if (g_tree->tree_get_items_tree()) {
-		QMenu * submenu = a_acquire_track_menu(g_tree->tree_get_main_window(),
-						       g_tree->tree_get_items_tree(),
-						       g_tree->tree_get_main_viewport(),
-						       this);
+		QMenu * submenu = Acquire::create_track_menu(g_tree->tree_get_main_window(),
+							     g_tree->tree_get_items_tree(),
+							     g_tree->tree_get_main_viewport(),
+							     this);
 		if (submenu) {
 			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */
 			menu.addMenu(submenu);
@@ -3619,7 +3619,7 @@ void Track::google_route_webpage_cb(void)
 #ifndef WINDOWS
 void Track::track_use_with_filter_cb(void)
 {
-	a_acquire_set_filter_track(this);
+	Acquire::set_filter_track(this);
 }
 #endif
 

@@ -859,7 +859,7 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpecification * param_specs, uint16_t param_specs_count)
+void SlavGPS::a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpecification * param_specs, uint16_t param_specs_count)
 {
 	int i;
 	/* May have to free strings, etc. */

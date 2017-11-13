@@ -59,23 +59,23 @@ static ProcessOptions * datasource_url_get_process_options(DownloadOptions & dl_
 
 
 
-VikDataSourceInterface vik_datasource_url_interface = {
+DataSourceInterface datasource_url_interface = {
 	N_("Acquire from URL"),
 	N_("URL"),
-	DatasourceMode::AUTO_LAYER_MANAGEMENT,
+	DataSourceMode::AUTO_LAYER_MANAGEMENT,
 	DatasourceInputtype::NONE,
 	true,
 	true,  /* true = keep dialog open after success. */
 	true,  /* true = run as thread. */
 
-	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)     NULL,
+	(DataSourceInitFunc)                  NULL,
+	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_url_create_setup_dialog,
-	(VikDataSourceGetProcessOptionsFunc)  NULL,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
-	(VikDataSourceProgressFunc)           NULL,
+	(DataSourceGetProcessOptionsFunc)     NULL,
+	(DataSourceProcessFunc)               a_babel_convert_from,
+	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(VikDataSourceCleanupFunc)            NULL,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 	NULL,
 	0,
