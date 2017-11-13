@@ -29,6 +29,7 @@
 
 #include <expat.h>
 
+#include "datasource_osm_my_traces.h"
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layers_panel.h"
@@ -50,26 +51,17 @@ using namespace SlavGPS;
 
 
 /**
- * See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
- */
+   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
+*/
 #define DS_OSM_TRACES_GPX_URL_FMT "api.openstreetmap.org/api/0.6/gpx/%d/data"
 #define DS_OSM_TRACES_GPX_FILES "api.openstreetmap.org/api/0.6/user/gpx_files"
 
-typedef struct {
-	QLineEdit user_entry;
-	QLineEdit password_entry;
-	/* NB actual user and password values are stored in oms-traces.c. */
-	Viewport * viewport;
-} datasource_osm_my_traces_t;
 
 
 
-
-static void * datasource_osm_my_traces_init(acq_vik_t *avt);
 static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
+static ProcessOptions * get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
 static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
-static void datasource_osm_my_traces_cleanup(void * data);
 
 
 
@@ -83,14 +75,14 @@ DataSourceInterface datasource_osm_my_traces_interface = {
 	true,  /* true = keep dialog open after success. */
 	false, /* false = don't run as thread. */
 
-	(DataSourceInitFunc)	              datasource_osm_my_traces_init,
+	(DataSourceInitFunc)	              NULL,
 	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_osm_my_traces_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     datasource_osm_my_traces_get_process_options,
+	(DataSourceGetProcessOptionsFunc)     NULL,
 	(DataSourceProcessFunc)               datasource_osm_my_traces_process,
 	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               datasource_osm_my_traces_cleanup,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
@@ -103,53 +95,39 @@ DataSourceInterface datasource_osm_my_traces_interface = {
 
 
 
-static void * datasource_osm_my_traces_init(acq_vik_t *avt)
-{
-	datasource_osm_my_traces_t * data = (datasource_osm_my_traces_t *) malloc(sizeof (datasource_osm_my_traces_t));
-	/* Reuse GPS functions.
-	   Haven't been able to get the thread method to work reliably (or get progress feedback).
-	   So thread version is disabled ATM. */
-	/*
-	  if (datasource_osm_my_traces_interface.is_thread) {
-	  datasource_osm_my_traces_interface.progress_func = datasource_gps_progress;
-	  datasource_osm_my_traces_interface.create_progress_dialog_func = datasource_gps_add_progress_widgets;
-	  }
-	*/
-	return data;
-}
+/* Comment from constructor function from viking: */
+/* Reuse GPS functions.
+   Haven't been able to get the thread method to work reliably (or get progress feedback).
+   So thread version is disabled ATM. */
+/*
+  if (datasource_osm_my_traces_interface.is_thread) {
+  datasource_osm_my_traces_interface.progress_func = datasource_gps_progress;
+  datasource_osm_my_traces_interface.create_progress_dialog_func = datasource_gps_add_progress_widgets;
+  }
+*/
 
 
 
 
 static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	DataSourceDialog * setup_dialog = NULL;
-	GtkWidget *dialog;
+	DataSourceMyOSMDialog * setup_dialog = new DataSourceMyOSMDialog();
 
-	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
+	/* Keep reference to viewport. */
+	setup_dialog->viewport = viewport;
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
-#ifdef K
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, false, false, 0);
-#endif
-	data->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
+	setup_dialog->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
+	setup_dialog->grid->addWidget(user_label, 0, 0);
+	setup_dialog->grid->addWidget(&setup_dialog->user_entry, 0, 1);
+
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
+	setup_dialog->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
+	setup_dialog->grid->addWidget(password_label, 1, 0);
+	setup_dialog->grid->addWidget(&setup_dialog->password_entry, 1, 1);
 
-	data->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
-
-	osm_login_widgets(data->user_entry, data->password_entry);
-
-#ifdef K
-	/* Packing all widgets. */
-	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(password_label);
-	box->addWidget(&data->password_entry);
-	gtk_widget_show_all(dialog);
-#endif
-	/* Keep reference to viewport. */
-	data->viewport = viewport;
+	osm_fill_credentials_widgets(setup_dialog->user_entry, setup_dialog->password_entry);
 
 	return setup_dialog;
 }
@@ -157,18 +135,16 @@ static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport 
 
 
 
-static ProcessOptions * datasource_osm_my_traces_get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2)
+ProcessOptions * DataSourceMyOSMDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
-
 	/* Overwrite authentication info. */
-	osm_set_login(data->user_entry.text().toUtf8().constData(), data->password_entry.text().toUtf8().constData());
+	osm_save_current_credentials(this->user_entry.text(), this->password_entry.text());
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
-	dl_options = NULL;
+	/* dl_options = NULL; */
 
 	return po;
 }
@@ -189,7 +165,7 @@ typedef struct {
 	const char *tag_name;            /* xpath-ish tag name. */
 } xtag_mapping;
 
-typedef struct {
+typedef struct _gpx_meta_data_t {
 	unsigned int id;
 	char *name;
 	char *vis;
@@ -206,11 +182,9 @@ typedef struct {
 
 
 
-static gpx_meta_data_t *new_gpx_meta_data_t()
+static gpx_meta_data_t * new_gpx_meta_data_t()
 {
-	gpx_meta_data_t *ret;
-
-	ret = (gpx_meta_data_t *)malloc(sizeof(gpx_meta_data_t));
+	gpx_meta_data_t * ret = (gpx_meta_data_t *) malloc(sizeof (gpx_meta_data_t));
 	ret->id = 0;
 	ret->name = NULL;
 	ret->vis  = NULL;
@@ -226,7 +200,7 @@ static gpx_meta_data_t *new_gpx_meta_data_t()
 
 
 
-static void free_gpx_meta_data(gpx_meta_data_t *data)
+static void free_gpx_meta_data(gpx_meta_data_t * data)
 {
 	free(data->name);
 	free(data->vis);
@@ -247,9 +221,9 @@ static void free_gpx_meta_data_list(std::list<gpx_meta_data_t *> & list)
 
 
 
-static gpx_meta_data_t *copy_gpx_meta_data_t(gpx_meta_data_t *src)
+static gpx_meta_data_t * copy_gpx_meta_data_t(gpx_meta_data_t * src)
 {
-	gpx_meta_data_t *dest = new_gpx_meta_data_t();
+	gpx_meta_data_t * dest = new_gpx_meta_data_t();
 
 	dest->id = src->id;
 	dest->name = g_strdup(src->name);
@@ -270,7 +244,7 @@ typedef struct {
 	//GString *xpath;
 	GString *c_cdata;
 	xtag_type current_tag;
-	gpx_meta_data_t *current_gpx_meta_data;
+	gpx_meta_data_t * current_gpx_meta_data;
 	std::list<gpx_meta_data_t *> list_of_gpx_meta_data;
 } xml_data;
 
@@ -303,7 +277,7 @@ static xtag_mapping xtag_path_map[] = {
 
 
 
-static xtag_type get_tag (const char *t)
+static xtag_type get_tag(const char *t)
 {
 	xtag_mapping *tm;
 	for (tm = xtag_path_map; tm->tag_type != 0; tm++) {
@@ -384,7 +358,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 	case tt_gpx_file: {
 		/* End of the individual file metadata, thus save what we have read in to the list.
 		   Copy it so we can reference it. */
-		gpx_meta_data_t *current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
+		gpx_meta_data_t * current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
 		/* Stick in the list. */
 		xd->list_of_gpx_meta_data.push_front(current);
 		g_string_erase(xd->c_cdata, 0, -1);
@@ -572,7 +546,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 					/* I believe the name of these items to be always unique. */
 					for (auto iter = list.begin(); iter != list.end(); iter++) {
 						if (!strcmp ((*iter)->name, name)) {
-							gpx_meta_data_t *copied = copy_gpx_meta_data_t(*iter);
+							gpx_meta_data_t * copied = copy_gpx_meta_data_t(*iter);
 							selected->push_front(copied);
 							break;
 						}
@@ -598,16 +572,16 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 
 
 /**
- * For each track - mark whether the start is in within the viewport.
- */
-static void set_in_current_view_property(datasource_osm_my_traces_t *data, std::list<gpx_meta_data_t *> & list)
+   For each track - mark whether the start is in within the viewport.
+*/
+void DataSourceMyOSMDialog::set_in_current_view_property(std::list<struct _gpx_meta_data_t *> & list)
 {
 	LatLonBBox bbox;
 	/* get Viewport bounding box */
-	data->viewport->get_bbox(&bbox);
+	this->viewport->get_bbox(&bbox);
 
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		gpx_meta_data_t* gmd = *iter;
+		gpx_meta_data_t * gmd = *iter;
 		/* Convert point position into a 'fake' bounding box.
 		   TODO - probably should have function to see if point is within bounding box
 		   rather than constructing this fake bounding box for the test. */
@@ -632,12 +606,10 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	bool result = false;
 
-	char *user_pass = osm_get_login();
-
 	/* Support .zip + bzip2 files directly. */
 	DownloadOptions dl_options(2); /* Allow a couple of redirects. */
 	dl_options.convert_file = a_try_decompress_file;
-	dl_options.user_pass = user_pass;
+	dl_options.user_pass = osm_get_current_credentials();
 
 	char * tmpname = Download::get_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &dl_options);
 	if (!tmpname) {
@@ -675,7 +647,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	xd->list_of_gpx_meta_data.reverse();
 
-	set_in_current_view_property((datasource_osm_my_traces_t *) acquiring->user_data, xd->list_of_gpx_meta_data);
+	((DataSourceMyOSMDialog *) acquiring->user_data)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
 	if (datasource_osm_my_traces_interface.is_thread) {
 #ifdef K
@@ -771,7 +743,6 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		delete selected;
 	}
 	free(xd);
-	free(user_pass);
 
 	/* Would prefer to keep the update in acquire.c,
 	   however since we may create the layer - need to do the update here. */
@@ -793,9 +764,4 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	}
 
 	return result;
-}
-
-static void datasource_osm_my_traces_cleanup(void * data)
-{
-	free(data);
 }

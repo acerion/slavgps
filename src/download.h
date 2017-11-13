@@ -88,7 +88,7 @@ namespace SlavGPS {
 		VikFileContentCheckerFunc check_file = NULL;
 
 		/* If need to authenticate on download. Format: 'username:password' */
-		char * user_pass = NULL;
+		QString user_pass;
 
 		/* File manipulation if necessary such as
 		   uncompressing the downloaded file. */

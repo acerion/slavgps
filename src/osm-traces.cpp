@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <time.h>
 
+#include <QDebug>
+
 #include <curl/curl.h>
 #include <curl/easy.h>
 
@@ -62,14 +64,14 @@ using namespace SlavGPS;
 static int last_active = -1;
 
 /**
- * Login to use for OSM uploading.
- */
-static char *osm_user = NULL;
+   Login to use for OSM uploading.
+*/
+static QString osm_user;
 
 /**
- * Password to use for OSM uploading.
- */
-static char *osm_password = NULL;
+   Password to use for OSM uploading.
+*/
+static QString osm_password;
 
 /**
  * Mutex to protect auth. token
@@ -173,29 +175,23 @@ static const char *get_default_user()
 
 
 
-void SlavGPS::osm_set_login(const char *user, const char *password)
+void SlavGPS::osm_save_current_credentials(const QString & user, const QString & password)
 {
 	login_mutex.lock();
 
-	free(osm_user);
-	osm_user = NULL;
-
-	free(osm_password);
-	osm_password = NULL;
-
-	osm_user = g_strdup(user);
-	osm_password = g_strdup(password);
+	osm_user = user;
+	osm_password = password;
 
 	login_mutex.unlock();
 }
 
 
 
-char * SlavGPS::osm_get_login()
+QString SlavGPS::osm_get_current_credentials()
 {
-	char * user_pass = NULL;
+	QString user_pass;
 	login_mutex.lock();
-	user_pass = g_strdup_printf("%s:%s", osm_user, osm_password);
+	user_pass = QString("%1:%2").arg(osm_user).arg(osm_password);
 	login_mutex.unlock();
 	return user_pass;
 }
@@ -229,8 +225,8 @@ void SlavGPS::osm_traces_uninit()
  *   == 0 : OK
  *   > 0  : HTTP error
   */
-static int osm_traces_upload_file(const char *user,
-				  const char *password,
+static int osm_traces_upload_file(const QString & user,
+				  const QString & password,
 				  const char *file,
 				  const char *filename,
 				  const char *description,
@@ -246,12 +242,12 @@ static int osm_traces_upload_file(const char *user,
 
 	char *base_url = (char *) "http://www.openstreetmap.org/api/0.6/gpx/create";
 
-	char *user_pass = osm_get_login();
+	/* TODO: why do we pass user and password to this function if we create user_pass here? */
+	char * user_pass = g_strdup(osm_get_current_credentials().toUtf8().constData());
 
 	int result = 0; /* Default to it worked! */
 
-	fprintf(stderr, "DEBUG: %s: %s %s %s %s %s %s\n", __FUNCTION__,
-		user, password, file, filename, description, tags);
+	qDebug() << "DD: OSM Traces:" << __FUNCTION__ << user << password << file << filename << description << tags;
 
 	/* Init CURL. */
 	curl = curl_easy_init();
@@ -307,7 +303,8 @@ static int osm_traces_upload_file(const char *user,
 	}
 
 	/* Memory. */
-	free(user_pass); user_pass = NULL;
+	free(user_pass);
+	user_pass = NULL;
 
 	curl_formfree(post);
 	curl_easy_cleanup(curl);
@@ -398,23 +395,23 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 
 
 
-void SlavGPS::osm_login_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
+void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
 	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username")->val_string;
 	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password")->val_string;
 
 
-	if (osm_user != NULL && osm_user[0] != '\0') {
-		user_entry.setText(QString(osm_user));
+	if (!osm_user.isEmpty()) {
+		user_entry.setText(osm_user);
 	} else if (!pref_user.isEmpty()) {
 		user_entry.setText(pref_user);
 	} else if (default_user != NULL) {
 		user_entry.setText(QString(default_user));
 	}
 
-	if (osm_password != NULL && osm_password[0] != '\0') {
-		password_entry.setText(QString(osm_password));
+	if (!osm_password.isEmpty()) {
+		password_entry.setText(osm_password);
 	} else if (!pref_password.isEmpty()) {
 		password_entry.setText(pref_password);
 	}
@@ -462,7 +459,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	password_entry->setToolTip(QObject::tr("The password used to login\n"
 					       "<small>Enter the password you use to login into www.openstreetmap.org.</small>"));
 
-	osm_login_widgets(user_entry, password_entry);
+	osm_fill_credentials_widgets(user_entry, password_entry);
 
 	QLabel * name_label = new QLabel(QObject::tr("File's name:"));
 	QLineEdit * name_entry = new QLineEdit();
@@ -551,7 +548,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (dia.exec() == QDialog::Accepted GTK_RESPONSE_ACCEPT) {
 
 		/* Overwrite authentication info. */
-		osm_set_login(user_entry->text(), password_entry->text());
+		osm_save_current_credentials(user_entry->text(), password_entry->text());
 
 		/* Storing data for the future thread. */
 		OsmTracesInfo * info = new OsmTracesInfo(trw, trk);

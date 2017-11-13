@@ -134,7 +134,7 @@ bool GotoToolGoogle::parse_file_for_latlon(char * file_name, struct LatLon * ll)
 	ll->lon = g_ascii_strtod(lon_buf, NULL);
 
  done:
-	g_mapped_file_free(mf);
+	g_mapped_file_unref(mf);
 	return (found);
 
 }

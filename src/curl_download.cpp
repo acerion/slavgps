@@ -127,7 +127,7 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 {
 	struct curl_slist * curl_send_headers = NULL;
 
-	qDebug().nospace() << "DD: Curl Download: Download URL '" << full_url << "'";
+	qDebug() << "DD: Curl Download: Download URL" << full_url;
 
 	CURL * curl = handle ? handle : curl_easy_init();
 	if (!curl) {
@@ -137,12 +137,14 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	}
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
-	if (dl_options != NULL && dl_options->user_pass) {
+	if (dl_options != NULL && !dl_options->user_pass.isEmpty()) {
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-		curl_easy_setopt(curl, CURLOPT_USERPWD, dl_options->user_pass);
+		/* "Strings passed to libcurl as 'char *' arguments, are copied by the library;" */
+		curl_easy_setopt(curl, CURLOPT_USERPWD, dl_options->user_pass.toUtf8().constData());
 	}
-	const QByteArray url = full_url.toUtf8();
-	curl_easy_setopt(curl, CURLOPT_URL, url.constData());
+
+	/* "Strings passed to libcurl as 'char *' arguments, are copied by the library;" */
+	curl_easy_setopt(curl, CURLOPT_URL, full_url.toUtf8().constData());
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);

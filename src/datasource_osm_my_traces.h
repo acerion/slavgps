@@ -1,7 +1,7 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2012-2015, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_OSM_TRACES_H_
-#define _SG_OSM_TRACES_H_
+
+
+
+#ifndef _SG_DATASOURCE_OSM_MY_TRACES_H_
+#define _SG_DATASOURCE_OSM_MY_TRACES_H_
 
 
 
 
-#include <QString>
+#include <list>
+
+
+
+
 #include <QLineEdit>
+
+
+
+
+#include "datasource.h"
+
+
+
+
+typedef struct _gpx_meta_data_t gpx_meta_data_t;
 
 
 
@@ -35,19 +52,25 @@ namespace SlavGPS {
 
 
 
-	class LayerTRW;
-	class Track;
+
+	class Viewport;
 
 
 
 
-	void osm_traces_init();
-	void osm_traces_uninit();
-	void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk);
+	class DataSourceMyOSMDialog : public DataSourceDialog {
+	public:
+		DataSourceMyOSMDialog() {};
 
-	void osm_save_current_credentials(const QString & user, const QString & password);
-	QString osm_get_current_credentials();
-	void osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry);
+		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		void set_in_current_view_property(std::list<gpx_meta_data_t *> & list);
+
+		/* Actual user and password values are stored in oms-traces.c. */
+		QLineEdit user_entry;
+		QLineEdit password_entry;
+
+		Viewport * viewport = NULL;
+	};
 
 
 
@@ -57,4 +80,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_OSM_TRACES_H_ */
+#endif /* #ifndef _SG_DATASOURCE_OSM_MY_TRACES_H_ */

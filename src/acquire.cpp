@@ -343,10 +343,10 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 		  datasource_routing_interface;
 		  datasource_osm_interface;
 		  datasource_url_interface;
+		  datasource_osm_my_traces_interface;
 
 		  Data interfaces that don't "use" this branch of code (yet?):
 		  datasource_geojson_interface;
-		  datasource_osm_my_traces_interface;
 		  datasource_geotag_interface;
 		  datasource_wikipedia_interface;
 		*/
