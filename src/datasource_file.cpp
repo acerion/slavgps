@@ -129,7 +129,6 @@ ProcessOptions * DataSourceFileDialog::get_process_options(DownloadOptions & dl_
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	/* Memorize the directory for later use. */
 	last_directory_url = this->file_entry->file_selector->directoryUrl();
 
 #ifdef K

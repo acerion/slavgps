@@ -756,10 +756,7 @@ void Babel::uninit()
  */
 bool SlavGPS::a_babel_available()
 {
-	return true;
-#ifdef K
 	return !a_babel_device_list.empty();
-#endif
 }
 
 

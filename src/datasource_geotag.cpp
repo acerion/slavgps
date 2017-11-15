@@ -21,11 +21,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <cstring>
-#include <cstdlib>
 
-#include <glib/gprintf.h>
-
+#include "datasource.h"
 #include "acquire.h"
 #include "geotag_exif.h"
 #include "file_utils.h"
@@ -45,10 +42,15 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	SGFileEntry * files;
-	QStringList filelist;  // Files selected
-} datasource_geotag_user_data_t;
+class DataSourceGeoTagDialog : public DataSourceDialog {
+public:
+	DataSourceGeoTagDialog();
+
+	ProcessOptions * get_process_options(DownloadOptions & dl_options);
+
+	SGFileEntry * file_entry = NULL;
+	QStringList selected_files;
+};
 
 
 
@@ -59,11 +61,8 @@ static QUrl last_directory_url;
 
 
 
-static void * datasource_geotag_init(acq_vik_t * avt);
 static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3);
 static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used);
-static void datasource_geotag_cleanup(void * user_data);
 
 
 
@@ -77,14 +76,14 @@ DataSourceInterface datasource_geotag_interface = {
 	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
 	true,  /* true = run as thread. */
 
-	(DataSourceInitFunc)		      datasource_geotag_init,
+	(DataSourceInitFunc)		      NULL,
 	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_geotag_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     datasource_geotag_get_process_options,
+	(DataSourceGetProcessOptionsFunc)     NULL,
 	(DataSourceProcessFunc)               datasource_geotag_process,
 	(DataSourceProgressFunc)              NULL,
 	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               datasource_geotag_cleanup,
+	(DataSourceCleanupFunc)               NULL,
 	(DataSourceTurnOffFunc)               NULL,
 
 	NULL,
@@ -97,84 +96,53 @@ DataSourceInterface datasource_geotag_interface = {
 
 
 
-static void * datasource_geotag_init(acq_vik_t * avt)
+static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) malloc(sizeof (datasource_geotag_user_data_t));
-	user_data->filelist.clear();
-	return user_data;
+	return new DataSourceGeoTagDialog;
 }
 
 
 
 
-static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceGeoTagDialog::DataSourceGeoTagDialog()
 {
-	DataSourceDialog * setup_dialog = NULL;
-	GtkWidget * dialog;
+	/* QFileDialog::ExistingFiles: allow selecting more than one.
+	   By default the file selector is created with AcceptMode::AcceptOpen. */
+	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFiles, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
 
-	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *) user_data;
-#ifdef K
-	/* The files selector. */
-	userdata->files = new SGFileEntry();
-
-	/* Try to make it a nice size - otherwise seems to default to something impractically small. */
-	gtk_window_set_default_size(GTK_WINDOW (dialog) , 600, 300);
-#endif
 	if (last_directory_url.isValid()) {
-		userdata->files->file_selector->setDirectoryUrl(last_directory_url);
+		this->file_entry->file_selector->setDirectoryUrl(last_directory_url);
 	}
-#ifdef K
-	GtkFileChooser * chooser = GTK_FILE_CHOOSER (userdata->files);
 
-	/* Add filters. */
-	GtkFileFilter *filter;
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("All"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(chooser, filter);
+	const QString filter1 = QObject::tr("JPG (*.jpeg *.jpg)"); /* TODO: improve this filter: mime: "image/jpeg" */
+	const QString filter2 = QObject::tr("All (*)");
+	const QStringList filter = { filter1, filter2 };
+	this->file_entry->file_selector->setNameFilters(filter);
+	this->file_entry->file_selector->selectNameFilter(filter1); /* Default to jpeg. */
 
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("JPG"));
-	gtk_file_filter_add_mime_type(filter, "image/jpeg");
-	gtk_file_chooser_add_filter(chooser, filter);
+	this->setMinimumWidth(400); /* TODO: perhaps this value should be #defined somewhere. */
 
-	/* Default to jpgs. */
-	gtk_file_chooser_set_filter(chooser, filter);
-
-	/* Allow selecting more than one. */
-	gtk_file_chooser_set_select_multiple(chooser, true);
-
-	/* Could add code to setup a default symbol (see dialog.c for symbol usage).
+	/* TODO: Comment from Viking:
+	   Could add code to setup a default symbol (see dialog.c for symbol usage).
 	   Store in user_data type and then apply when creating the waypoints.
 	   However not much point since these will have images associated with them! */
 
-	/* Packing all widgets. */
-	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(userdata->files);
-
-	gtk_widget_show_all(dialog);
-#endif
-	return setup_dialog;
+	this->grid->addWidget(this->file_entry, 0, 0);
 }
 
 
 
 
-static ProcessOptions * datasource_geotag_get_process_options(void * user_data, void * not_used, char const * not_used2, char const * not_used3)
+ProcessOptions * DataSourceGeoTagDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *)user_data;
-#ifdef K
-	/* Retrieve the files selected. */
-	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); /* Not reusable!! */
-#endif
-	/* Memorize the directory for later use. */
-	/* Memorize the directory for later reuse. */
-	last_directory_url = userdata->files->file_selector->directoryUrl();
+	this->selected_files = this->file_entry->file_selector->selectedFiles();
+
+	last_directory_url = this->file_entry->file_selector->directoryUrl();
 
 	/* TODO Memorize the file filter for later use... */
-	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
+	//GtkFileFilter *filter = gtk_file_chooser_get_filter(this->file_entry);
 
 	/* Return some value so *thread* processing will continue */
 	po->babel_args = "fake command"; /* Not really used, thus no translations. */
@@ -186,16 +154,16 @@ static ProcessOptions * datasource_geotag_get_process_options(void * user_data, 
 
 
 /**
- * Process selected files and try to generate waypoints storing them in the given trw.
- */
+   Process selected files and try to generate waypoints storing them in the given trw.
+*/
 static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used)
 {
-	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) acquiring->user_data;
+	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->user_data;
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
-	for (int i = 0; i < user_data->filelist.size(); i++) {
-		const QString file_full_path = user_data->filelist.at(0);
+	for (int i = 0; i < user_data->selected_files.size(); i++) {
+		const QString file_full_path = user_data->selected_files.at(0);
 
 		QString name;
 		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring->viewport->get_coord_mode(), name);
@@ -210,16 +178,8 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 		}
 	}
 
-	user_data->filelist.clear();
+	user_data->selected_files.clear();
 
 	/* No failure. */
 	return true;
-}
-
-
-
-
-static void datasource_geotag_cleanup(void * user_data)
-{
-	free(user_data);
 }

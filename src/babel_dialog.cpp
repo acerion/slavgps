@@ -303,7 +303,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	gtk_file_chooser_add_filter(this->file_entry, filter);
 	if (last_file_type == file_type) {
 		/* Previous selection used this filter. */
-		gtk_file_chooser_set_filter(this->file_entry, filter);
+		this->file_entry->selectNameFilter(filter);
 	}
 
 	free(pattern);
@@ -320,7 +320,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
 	if (last_file_type == NULL) {
 		/* No previously selected filter or 'All files' selected. */
-		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
+		data_source_file_dialog->file_entry->selectNameFilter(all_filter);
 	}
 #endif
 	/* The file format selector. */
@@ -416,7 +416,7 @@ void BabelDialog::add_file_type_filter(BabelFileType * file_type)
 	gtk_file_chooser_add_filter(this->file_entry, filter);
 	if (last_file_type == file_type) {
 		/* Previous selection used this filter. */
-		gtk_file_chooser_set_filter(this->file_entry, filter);
+		this->file_entry->selectNameFilter(filter);
 	}
 
 	free(pattern);
