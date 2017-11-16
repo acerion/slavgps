@@ -28,6 +28,7 @@
 
 #include <QDebug>
 
+#include "window.h"
 #include "viewport_internal.h"
 #include "viewport_utils.h"
 #include "dialog.h"

@@ -33,6 +33,7 @@
 #include <QDebug>
 #include <QLineEdit>
 
+#include "window.h"
 #include "goto_tool.h"
 #include "goto.h"
 #include "dialog.h"
@@ -150,14 +151,59 @@ static int get_last_provider_index(void)
 
 
 
-typedef int GParamSpec;
-static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * button)
+void GotoDialog::text_changed_cb(const QString & text)
 {
-	bool has_text = entry->text().length() > 0;
-#ifdef K
-	gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
-	button->setEnabled(has_text);
-#endif
+	QPushButton * ok_button = this->button_box->button(QDialogButtonBox::Ok);
+	ok_button->setEnabled(!text.isEmpty());
+}
+
+
+
+
+GotoDialog::GotoDialog(QWidget * parent) : BasicDialog(parent)
+{
+	this->setWindowTitle(tr("goto"));
+
+	QLabel * tool_label = new QLabel(tr("goto provider:"), this);
+	this->grid->addWidget(tool_label, 0, 0);
+
+
+	int i = 0;
+	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
+		GotoTool * goto_tool = *iter;
+		QString label(goto_tool->get_label());
+		this->providers_combo.addItem(label, i);
+		i++;
+	}
+	last_goto_idx = get_last_provider_index();
+	this->providers_combo.setCurrentIndex(last_goto_idx);
+	this->grid->addWidget(&this->providers_combo, 1, 0);
+
+
+	QLabel * prompt_label = new QLabel(tr("Enter address or location name:"), this);
+	this->grid->addWidget(prompt_label, 2, 0);
+
+
+	QObject::connect(&this->input_field, SIGNAL (returnPressed(void)), this, SLOT(accept()));
+	QObject::connect(&this->input_field, SIGNAL (textChanged(const QString &)), this, SLOT (text_changed_cb(const QString &)));
+	if (!last_location.isEmpty()) {
+		/* Notice that this may be not a *successful* location. */
+		this->input_field.setText(last_location);
+	}
+	/* Set initial 'enabled = X' state of button. */
+	this->text_changed_cb(last_location);
+	this->grid->addWidget(&this->input_field, 3, 0);
+
+
+	/* Ensure the text field has focus so we can start typing straight away. */
+	this->input_field.setFocus(Qt::OtherFocusReason);
+}
+
+
+
+
+GotoDialog::~GotoDialog()
+{
 }
 
 
@@ -165,8 +211,6 @@ static void text_changed_cb(QLineEdit * entry, GParamSpec * pspec, GtkWidget * b
 
 /**
    @brief Get name of a location to go to
-
-   Returned pointer is owned by caller.
 
    @return NULL on errors
    @return NULL if empty string has been entered
@@ -176,62 +220,8 @@ QString goto_location_dialog(Window * window)
 {
 	QString empty_string("");
 
-	QDialog dialog(window);
-	dialog.setWindowTitle(QObject::tr("goto"));
 
-	QVBoxLayout vbox;
-	QLayout * old = dialog.layout();
-	delete old;
-	dialog.setLayout(&vbox);
-
-
-	QLabel tool_label(QObject::tr("goto provider:"));
-	vbox.addWidget(&tool_label);
-
-
-	QComboBox providers_combo;
-	int i = 0;
-	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
-		GotoTool * goto_tool = *iter;
-		QString label(goto_tool->get_label());
-		providers_combo.addItem(label, i);
-		i++;
-	}
-	last_goto_idx = get_last_provider_index();
-	providers_combo.setCurrentIndex(last_goto_idx);
-	vbox.addWidget(&providers_combo);
-
-
-	QLabel prompt_label(QObject::tr("Enter address or location name:"));
-	vbox.addWidget(&prompt_label);
-
-
-	QLineEdit input_field;
-	QObject::connect(&input_field, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	if (!last_location.isEmpty()) {
-		/* Notice that this may be not a *successful* location. */
-		input_field.setText(last_location);
-	}
-#ifdef K
-#if GTK_CHECK_VERSION (2,20,0)
-	GtkWidget *ok_button = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	text_changed_cb(GTK_ENTRY(goto_entry), NULL, ok_button);
-	QObject::connect(goto_entry, SIGNAL("notify::text"), ok_button, SLOT (text_changed_cb));
-#endif
-#endif
-	vbox.addWidget(&input_field);
-
-
-	QDialogButtonBox button_box;
-	button_box.addButton(QDialogButtonBox::Ok);
-	button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-	vbox.addWidget(&button_box);
-
-
-	/* Ensure the text field has focus so we can start typing straight away. */
-	input_field.setFocus(Qt::OtherFocusReason);
+	GotoDialog dialog;
 
 
 	if (dialog.exec() != QDialog::Accepted) {
@@ -240,12 +230,12 @@ QString goto_location_dialog(Window * window)
 
 
 	/* TODO check if list is empty. */
-	last_goto_idx = providers_combo.currentIndex();
+	last_goto_idx = dialog.providers_combo.currentIndex();
 	char * provider = goto_tools[last_goto_idx]->get_label();
 	ApplicationState::set_string(VIK_SETTINGS_GOTO_PROVIDER, QString(provider));
-	const QString location = input_field.text();
+	const QString location = dialog.input_field.text();
 	if (location.isEmpty()) {
-		qDebug() << "EE: goto: can't get string" << input_field.text();
+		qDebug() << "EE: goto: can't get string" << dialog.input_field.text();
 		return empty_string;
 	}
 

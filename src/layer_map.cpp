@@ -44,6 +44,7 @@
 #include <QDebug>
 #include <QDir>
 
+#include "window.h"
 #include "map_source.h"
 #include "map_source_slippy.h"
 #include "vikutils.h"

@@ -25,8 +25,11 @@
 
 
 
-#include <cstdint>
+#include <QString>
+#include <QComboBox>
+#include <QLineEdit>
 
+#include "dialog.h"
 #include "goto_tool.h"
 
 
@@ -52,6 +55,21 @@ namespace SlavGPS {
 	void goto_location(Window * window, Viewport * viewport);
 	void goto_latlon(Window * window, Viewport * viewport);
 	void goto_utm(Window * window, Viewport * viewport);
+
+
+
+	class GotoDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		GotoDialog(QWidget * parent = NULL);
+		~GotoDialog();
+
+		QComboBox providers_combo;
+		QLineEdit input_field;
+
+	private slots:
+		void text_changed_cb(const QString & text);
+	};
 
 
 

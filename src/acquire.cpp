@@ -577,11 +577,15 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		    || interface == &datasource_file_interface
 		    || interface == &datasource_osm_interface
 		    || interface == &datasource_gps_interface
+		    || interface == &datasource_geojson_interface
+		    || interface == &datasource_geotag_interface
 		    || interface == &datasource_url_interface) {
 
 			po = setup_dialog->get_process_options(*dl_options);
 		} else {
-			po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
+			if (interface->get_process_options) {
+				po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
+			}
 		}
 		break;
 

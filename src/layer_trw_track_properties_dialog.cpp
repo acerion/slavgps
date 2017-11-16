@@ -35,6 +35,7 @@
 
 #include <QDebug>
 
+#include "window.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_properties_dialog.h"
 #include "layer_trw.h"

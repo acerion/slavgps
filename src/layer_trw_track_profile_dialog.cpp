@@ -33,6 +33,7 @@
 
 #include <QDebug>
 
+#include "window.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_profile_dialog.h"

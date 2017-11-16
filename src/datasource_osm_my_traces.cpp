@@ -29,6 +29,7 @@
 
 #include <expat.h>
 
+#include "window.h"
 #include "datasource_osm_my_traces.h"
 #include "layer_trw.h"
 #include "layer_aggregate.h"
@@ -451,11 +452,10 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 							NULL);
 	/* When something is selected then OK. */
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
+
 	/* Default to not apply - as initially nothing is selected! */
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
-#endif
+	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
+
 	QLabel * label = new QLabel(msg);
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
@@ -525,8 +525,8 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 	gtk_widget_set_size_request (dialog, -1, 400) ;
 	gtk_widget_show_all (dialog);
 
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
+	if (cancel_button) {
+		gtk_widget_grab_focus(cancel_button);
 	}
 
 	while (dialog.exec() == QDialog::Accepted) {

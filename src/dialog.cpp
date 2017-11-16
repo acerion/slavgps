@@ -311,3 +311,32 @@ void Dialog::license(const char * map, const char * license, const char * url, Q
 		}
 	} while (response != QMessageBox::Cancel && response != QMessageBox::Ok);
 }
+
+
+
+
+BasicDialog::BasicDialog(QWidget * parent)
+{
+	this->vbox = new QVBoxLayout;
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	this->button_box->addButton(QDialogButtonBox::Cancel);
+	QObject::connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	this->vbox->addWidget(this->button_box);
+}
+
+
+
+BasicDialog::~BasicDialog()
+{
+}

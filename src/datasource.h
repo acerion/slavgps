@@ -24,10 +24,7 @@
 
 
 
-#include <QVBoxLayout>
-#include <QDialogButtonBox>
-#include <QDialog>
-#include <QGridLayout>
+#include "dialog.h"
 
 
 
@@ -65,19 +62,10 @@ namespace SlavGPS {
 
 
 
-	class DataSourceDialog : public QDialog {
+	class DataSourceDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		DataSourceDialog(QWidget * parent = NULL);
-		~DataSourceDialog();
-
-		/* TODO: this should rather be in DataSourceSetupDialog. */
-		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
-
-	/* protected: */
-		QVBoxLayout * vbox = NULL;
-		QGridLayout * grid = NULL;
-		QDialogButtonBox * button_box = NULL;
+		ProcessOptions * get_process_options(DownloadOptions & dl_options);
 	};
 
 

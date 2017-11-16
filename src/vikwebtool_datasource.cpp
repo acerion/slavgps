@@ -35,6 +35,7 @@
 
 #include <glib.h>
 
+#include "window.h"
 #include "viewport_internal.h"
 #include "vikwebtool_datasource.h"
 #include "globals.h"
@@ -42,6 +43,7 @@
 #include "map_utils.h"
 #include "dialog.h"
 #include "util.h"
+#include "tree_view.h"
 
 
 

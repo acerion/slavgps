@@ -28,6 +28,7 @@
 
 #include <QPushButton>
 
+#include "window.h"
 #include "viewport_internal.h"
 #include "application_state.h"
 #include "layers_panel.h"

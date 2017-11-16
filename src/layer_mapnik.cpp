@@ -36,6 +36,7 @@
 #include <QDebug>
 #include <QDir>
 
+#include "window.h"
 #include "vikutils.h"
 #include "map_ids.h"
 #include "map_utils.h"

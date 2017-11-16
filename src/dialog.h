@@ -34,13 +34,12 @@
 #include <QDialogButtonBox>
 #include <QGridLayout>
 #include <QCheckBox>
+#include <QDialog>
+
 
 #include "globals.h"
 #include "coords.h"
-#include "window.h"
 #include "ui_util.h"
-#include "widget_radio_group.h"
-
 
 
 
@@ -60,6 +59,21 @@ namespace SlavGPS {
 		static void license(const char * map, const char * license, const char * url, QWidget * parent);
 
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
+	};
+
+
+
+
+	class BasicDialog : public QDialog {
+		Q_OBJECT
+	public:
+		BasicDialog(QWidget * parent = NULL);
+		~BasicDialog();
+
+	/* protected: */
+		QVBoxLayout * vbox = NULL;
+		QGridLayout * grid = NULL;
+		QDialogButtonBox * button_box = NULL;
 	};
 
 

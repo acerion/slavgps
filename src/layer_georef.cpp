@@ -35,6 +35,7 @@
 #include <QDebug>
 #include <QDir>
 
+#include "window.h"
 #include "vikutils.h"
 #include "ui_util.h"
 #include "preferences.h"
@@ -836,8 +837,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* Default to reject as user really needs to specify map file first. */
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
-	GtkWidget *response_w = NULL;
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
+	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
 	GtkWidget *table, *wfp_hbox, *wfp_button;
 	changeable_widgets cw;
 
@@ -1000,8 +1000,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	QObject::connect(wfp_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
 
-	if (response_w) {
-		gtk_widget_grab_focus (response_w);
+	if (cancel_button) {
+		gtk_widget_grab_focus(cancel_button);
 	}
 
 	gtk_widget_show_all (dialog);

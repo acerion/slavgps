@@ -23,16 +23,9 @@
 #include "config.h"
 #endif
 
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-
 #include <QDebug>
 
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gprintf.h>
-
+#include "window.h"
 #include "dialog.h"
 #include "geonamessearch.h"
 #include "download.h"
@@ -75,20 +68,6 @@ using namespace SlavGPS;
 
 
 
-#if 0
-static found_geoname * new_found_geoname()
-{
-	found_geoname * ret = (found_geoname *)malloc(sizeof(found_geoname));
-	ret->ll.lat = 0.0;
-	ret->ll.lon = 0.0;
-	ret->elevation = VIK_DEFAULT_ALTITUDE;
-	return ret;
-}
-#endif
-
-
-
-
 static Geoname * copy_geoname(Geoname * src)
 {
 	Geoname * dest = new Geoname();
@@ -108,13 +87,11 @@ static Geoname * copy_geoname(Geoname * src)
 static void free_geoname_list(std::list<Geoname *> & found_places)
 {
 	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
-		qDebug() << "DD: geoname" << (unsigned long) *iter;
-#ifdef K
+		qDebug() << "DD: deallocating geoname" << (*iter)->name;
 		delete *iter;
-#endif
 	}
-	qDebug() << "";
 }
+
 
 
 
@@ -130,118 +107,11 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 	headers2 << QObject::tr("Name") << QObject::tr("Feature") << QObject::tr("Lat/Lon");
 
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames, multiple_selection, title, headers2, parent);
-#ifdef K
-	GtkTreeIter iter;
-	GtkCellRenderer * renderer;
-	GtkWidget *view;
 
-	char * latlon_string;
-	int column_runner;
-
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	/* When something is selected then OK. */
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	/* Default to not apply - as initially nothing is selected! */
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
-#endif
-
-	QLabel * label = new QLabel(msg);
-	GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
-
-	for (auto iter = geonames.begin(); iter != geonames.end(); iter++) {
-		Geoname * geoname = *iter;
-		latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
-		gtk_tree_store_append(store, &iter, NULL);
-		gtk_tree_store_set(store, &iter, 0, geoname->name, 1, geoname->feature, 2, latlon_string, -1);
-		free(latlon_string);
+	if (!selected_geonames.size()) {
+		Dialog::error(QObject::tr("Nothing was selected"), parent);
 	}
 
-	view = gtk_tree_view_new();
-	renderer = gtk_cell_renderer_text_new();
-	column_runner = 0;
-	GtkTreeViewColumn *column;
-	/* NB could allow columns to be shifted around by doing this after each new
-	   gtk_tree_view_column_set_reorderable(column, true);
-	   However I don't think is that useful, so I haven't put it in. */
-	column = gtk_tree_view_column_new_with_attributes(_("Name"), renderer, "text", column_runner, NULL);
-	gtk_tree_view_column_set_sort_column_id(column, column_runner);
-	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
-
-	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes(_("Feature"), renderer, "text", column_runner, NULL);
-	gtk_tree_view_column_set_sort_column_id(column, column_runner);
-	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
-
-	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes(_("Lat/Lon"), renderer, "text", column_runner, NULL);
-	gtk_tree_view_column_set_sort_column_id(column, column_runner);
-	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
-
-	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)),
-				    multiple_selection_allowed ? GTK_SELECTION_MULTIPLE : GTK_SELECTION_BROWSE);
-	g_object_unref(store);
-
-	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
-
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
-
-	/* Ensure a reasonable number of items are shown, but let the width be automatically sized. */
-	gtk_widget_set_size_request(dialog, -1, 400) ;
-	gtk_widget_show_all(dialog);
-
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
-
-	while (dialog.exec() == QDialog::Accepted) {
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-		selected_geonames.erase(); /* TODO: Erase? Clear? Something else? */
-
-		/* Possibily not the fastest method but we don't have thousands of entries to process... */
-		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
-			do {
-				if (gtk_tree_selection_iter_is_selected(selection, &iter)) {
-					/* For every selected item,
-					   compare the name from the displayed view to every geoname entry to find the geoname this selection represents. */
-					char* name;
-					gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &name, -1);
-
-					/* I believe the name of these items to be always unique. */
-
-					for (auto iter = geonames.begin(); iter != geonames.end(); iter++) {
-						if (!strcmp((*iter)->name, name)) {
-							Geoname * copied = copy_geoname(*iter);
-							selected_geonames.push_front(copied);
-							break;
-						}
-					}
-					free(name);
-				}
-			}
-			while (gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter));
-		}
-
-		if (selected_geonames.size()) {
-			gtk_widget_destroy(dialog);
-			return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
-		}
-		Dialog::error(tr("Nothing was selected"), parent);
-	}
-	gtk_widget_destroy(dialog);
-#endif
 	return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
 }
 
@@ -487,11 +357,13 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 	}
 
 	free_geoname_list(wiki_places);
-	/* TODO: 'selected' contains pointer to geonames that were
+#if 0
+	/* 'selected' contains pointer to geonames that were
 	   present on 'wiki_places'.  Freeing 'wiki_places' freed also
 	   pointers stored in 'selected', so there is no need to call
 	   free_geoname_list(selected). */
 	free_geoname_list(selected);
+#endif
 
 	return;
 }

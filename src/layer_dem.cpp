@@ -40,6 +40,7 @@
 #include <QHash>
 #include <QDir>
 
+#include "window.h"
 #include "background.h"
 #include "layer_map.h"
 #include "layer_dem.h"

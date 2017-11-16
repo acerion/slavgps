@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cassert>
 
+#include "window.h"
 #include "variant.h"
 #include "layer_aggregate.h"
 #include "layer_trw.h"
