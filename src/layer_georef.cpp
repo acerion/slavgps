@@ -836,7 +836,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 							NULL);
 
 	/* Default to reject as user really needs to specify map file first. */
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
+	dialog->button_box->button(QDialogButtonBox::Discard)->setDefault(true);
 	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
 	GtkWidget *table, *wfp_hbox, *wfp_button;
 	changeable_widgets cw;
@@ -1001,7 +1001,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	QObject::connect(wfp_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
 
 	if (cancel_button) {
-		gtk_widget_grab_focus(cancel_button);
+		cancel_button->setFocus();
 	}
 
 	gtk_widget_show_all (dialog);

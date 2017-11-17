@@ -403,15 +403,19 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	setup_dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 	setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
+	setup_dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 #endif
 
 	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(tr("Working..."));
+
 #ifdef K
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(setup_dialog))), status, false, false, 5);
-	gtk_dialog_set_default_response(GTK_DIALOG(setup_dialog), GTK_RESPONSE_ACCEPT);
 #endif
+
+
+
 	/* May not want to see the dialog at all. */
 	if (interface->is_thread || interface->keep_dialog_open) {
 #ifdef K

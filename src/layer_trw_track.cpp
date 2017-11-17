@@ -3802,7 +3802,7 @@ void Track::refine_route_cb(void)
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
 
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */

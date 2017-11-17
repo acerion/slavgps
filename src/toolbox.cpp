@@ -484,7 +484,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 
 	if (ToolStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
 #if 0
-		gtk_widget_grab_focus(this->window->viewport);
+		this->window->viewport->setFocus();
 #endif
 	}
 

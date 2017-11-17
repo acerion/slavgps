@@ -289,19 +289,19 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 
 #ifdef VIK_CONFIG_GEOTAG
 	/* Geotag Info [readonly]. */
-	hasGeotagCB = gtk_check_button_new_with_label(_("Has Geotag"));
+	hasGeotagCB = new QCheckBox(QObject::tr("Has Geotag"));
 	hasGeotagCB->setEnabled(false);
 	bool hasGeotag;
 	char *ignore = a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
 	free(ignore);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hasGeotagCB), hasGeotag);
+	hasGeotagCB->setChecked(hasGeotag);
 
-	consistentGeotagCB = gtk_check_button_new_with_label(_("Consistent Position"));
+	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));
 	consistentGeotagCB->setEnabled(false);
 	if (hasGeotag) {
 		struct LatLon ll = a_geotag_get_position(wp->image);
 		Coord coord(ll, coord_mode);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(consistentGeotagCB), coord == wp->coord);
+		consistentGeotagCB->setChecked(coord == wp->coord);
 	}
 #endif
 

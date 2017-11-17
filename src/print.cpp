@@ -389,12 +389,10 @@ static void page_setup_cb(GtkWidget * widget, CustomWidgetInfo *info)
 
 
 
-static void full_page_toggled_cb(GtkWidget *widget, CustomWidgetInfo * info)
+static void full_page_toggled_cb(QCheckBox * checkbox, CustomWidgetInfo * info)
 {
-	bool active = false;
-#ifdef K
-	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-#endif
+	const bool active = checkbox->isChecked();
+
 	info->print_data->use_full_page = active;
 	update_page_setup(info);
 	info->preview->set_use_full_page(active);
@@ -616,7 +614,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
 	QComboBox * combo = new QComboBox();
 	for (center = center_modes; center->name; center++) {
-		vik_combo_box_text_append(combo, _(center->name));
+		combo->addItem(QObject::tr(center->name));
 	}
 	combo->setCurrentIndex(PrintCenterMode::BOTH);
 	hbox->addWidget(combo);
@@ -626,10 +624,9 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	info->center_combo = combo;
 
 	/* ignore page margins */
-	button = gtk_check_button_new_with_mnemonic(_("Ignore Page _Margins"));
+	button = new QCheckBox(QObject::tr("Ignore Page _Margins"));
 
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button),
-				     print_data->use_full_page);
+	button->setChecked(print_data->use_full_page);
 	main_vbox->addWidget(button);
 	QObject::connect(button, SIGNAL("toggled"), info, SLOT (full_page_toggled_cb));
 	gtk_widget_show(button);

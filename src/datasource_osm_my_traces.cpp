@@ -451,7 +451,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 							GTK_RESPONSE_ACCEPT,
 							NULL);
 	/* When something is selected then OK. */
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	/* Default to not apply - as initially nothing is selected! */
 	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
@@ -526,7 +526,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 	gtk_widget_show_all (dialog);
 
 	if (cancel_button) {
-		gtk_widget_grab_focus(cancel_button);
+		cancel_button->setFocus();
 	}
 
 	while (dialog.exec() == QDialog::Accepted) {

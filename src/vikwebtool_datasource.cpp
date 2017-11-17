@@ -149,9 +149,9 @@ static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, vo
 	box->addWidget(user_string_label);
 	box->addWidget(&widgets->user_string);
 	gtk_widget_show_all(dialog);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 	/* NB presently the focus is overridden later on by the acquire.c code. */
-	gtk_widget_grab_focus(widgets->user_string);
+	widgets->user_string->setFocus();
 
 	free(label);
 #endif

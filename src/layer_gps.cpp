@@ -1367,7 +1367,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 #endif
 
 
-		gtk_dialog_set_default_response(GTK_DIALOG(sess->dialog), GTK_RESPONSE_ACCEPT);
+		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 		sess->dialog.exec();
 
 		gtk_widget_destroy(sess->dialog);

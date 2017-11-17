@@ -3331,7 +3331,7 @@ void Window::configure_event_cb()
 void Window::draw_click_cb(QMouseEvent * ev)
 {
 #ifdef K
-	gtk_widget_grab_focus(window->viewport);
+	window->viewport->setFocus();
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
@@ -3381,7 +3381,7 @@ static bool window_pan_timeout(Window * window)
 void Window::draw_release_cb(QMouseEvent * ev)
 {
 #ifdef K
-	gtk_widget_grab_focus(window->viewport);
+	window->viewport->setFocus();
 
 	if (event->button() == Qt::MiddleButton) {  /* move / pan */
 		if (window->tb->active_tool->pan_handler) {

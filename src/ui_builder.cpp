@@ -945,7 +945,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 								(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 								GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
 								GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
-		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+		dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 		QPushButton * ok_button = dialog->button_box.button(QDialogButtonBox::Ok);
 
@@ -1038,7 +1038,7 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		}
 
 		if (ok_button) {
-			gtk_widget_grab_focus(ok_button);
+			ok_button->setFocus();
 		}
 
 		gtk_widget_show_all(dialog);
@@ -1130,7 +1130,7 @@ GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data)
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
 			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
+				rv->addItem(*(pstr++));
 			}
 
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
@@ -1150,11 +1150,11 @@ GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data)
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
 			if (var.s) {
-				vik_combo_box_text_append(rv, var.s);
+				rv->adItem(var.s);
 			}
 
 			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
+				rv->addItem(*(pstr++));
 			}
 
 			if (var.s) {
@@ -1165,7 +1165,7 @@ GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data)
 			char **pstr = (char **) param->widget_data;
 			rv = new QComboBox();
 			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
+				rv->addItem(*(pstr++));
 			}
 			if (var.s) {
 				/* Set the effective default value. */

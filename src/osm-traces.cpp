@@ -110,9 +110,9 @@ public:
 	OsmTracesInfo(LayerTRW * trw_, Track * trk_);
 	~OsmTracesInfo();
 
-	char * name = NULL;
-	char * description = NULL;
-	char * tags = NULL;
+	QString name;
+	QString description;
+	QString tags;
 	bool anonymize_times = false; /* ATM only available on a single track. */
 	const OsmTraceVis_t * vistype = NULL;
 	LayerTRW * trw = NULL;
@@ -146,14 +146,6 @@ OsmTracesInfo::OsmTracesInfo(LayerTRW * trw_, Track * trk_)
 OsmTracesInfo::~OsmTracesInfo()
 {
 	/* Fields have been g_strdup'ed. */
-	free(this->name);
-	this->name = NULL;
-
-	free(this->description);
-	this->description = NULL;
-
-	free(this->tags);
-	this->tags = NULL;
 
 	this->trw->unref();
 	this->trw = NULL;
@@ -288,17 +280,17 @@ static int osm_traces_upload_file(const QString & user,
 		long code;
 		res = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 		if (res == CURLE_OK){
-			fprintf(stderr, "DEBUG: received valid curl response: %ld\n", code);
+			qDebug() << "DD: OSM Traces: received valid curl response:" << code;
 			if (code != 200) {
-				fprintf(stderr, _("WARNING: failed to upload data: HTTP response is %ld\n"), code);
+				qDebug() << "WW: OSM Traces: failed to upload data: HTTP response is" << code;
 				result = code;
 			}
 		} else {
-			fprintf(stderr, _("CRITICAL: curl_easy_getinfo failed: %d\n"), res);
+			qDebug() << "EE: OSM Traces: curl_easy_getinfo failed:" << res;
 			result = -1;
 		}
 	} else {
-		fprintf(stderr, _("WARNING: curl request failed: %s\n"), curl_error_buffer);
+		qDebug() << "WW: OSM Traces: curl request failed:" << curl_error_buffer;
 		result = -2;
 	}
 
@@ -351,8 +343,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 	}
 
 	/* Finally, upload it. */
-	int ans = osm_traces_upload_file(osm_user, osm_password, filename,
-					 oti->name, oti->description, oti->tags, oti->vistype);
+	int ans = osm_traces_upload_file(osm_user, osm_password, filename, oti->name.toUtf8().constData(), oti->description.toUtf8().constData(), oti->tags.toUtf8().constData(), oti->vistype);
 
 	/* Show result in statusbar or failure in dialog for user feedback. */
 
@@ -387,7 +378,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 	/* Removing temporary file. */
 	int ret = g_unlink(filename);
 	if (ret != 0) {
-		fprintf(stderr, _("CRITICAL: failed to unlink temporary file: %s\n"), strerror(errno));
+		qDebug() << "EE: OSM Traces: failed to unlink temporary file:" << strerror(errno);
 	}
 	return ret;
 }
@@ -430,89 +421,103 @@ void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & p
  */
 void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 {
-#ifdef K
-	GtkWidget *dia = gtk_dialog_new_with_buttons(_("OSM upload"),
-						     trw->get_window(),
-						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-						     GTK_STOCK_CANCEL,
-						     GTK_RESPONSE_REJECT,
-						     GTK_STOCK_OK,
-						     GTK_RESPONSE_ACCEPT,
-						     NULL);
+	BasicDialog dialog(trw->get_window());
+	dialog.setWindowTitle(QObject::tr("OSM upload"));
 
-	const char *name = NULL;
+
+	int row = 0;
+	QCheckBox * anonymize_checkbutton = NULL;
 	QComboBox * visibility_combo = NULL;
-	GtkWidget *anonymize_checkbutton = NULL;
-	const OsmTraceVis_t *vis_t;
+	const OsmTraceVis_t * vis_t = NULL;
 
-	QLabel  * user_label = new QLabel(QObject::tr("Email:"));
-	QLineEdit * user_entry = new QLineEdit();
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), user_entry, false, false, 0);
+
+	QLabel  * user_label = new QLabel(QObject::tr("Email:"), &dialog);
+	QLineEdit * user_entry = new QLineEdit(&dialog);
 	user_entry->setToolTip(QObject::tr("The email used as login\n"
 					   "<small>Enter the email you use to login into www.openstreetmap.org.</small>"));
+	dialog.grid->addWidget(user_label, row, 0);
+	dialog.grid->addWidget(user_entry, row, 1);
+	row++;
 
-	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	QLineEdit * password_entry = new QLineEdit();
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), password_entry, false, false, 0);
+
+
+	QLabel * password_label = new QLabel(QObject::tr("Password:"), &dialog);
+	QLineEdit * password_entry = new QLineEdit(&dialog);
 	password_entry->setToolTip(QObject::tr("The password used to login\n"
 					       "<small>Enter the password you use to login into www.openstreetmap.org.</small>"));
+	dialog.grid->addWidget(password_label, row, 0);
+	dialog.grid->addWidget(password_entry, row, 1);
+	row++;
 
-	osm_fill_credentials_widgets(user_entry, password_entry);
 
-	QLabel * name_label = new QLabel(QObject::tr("File's name:"));
-	QLineEdit * name_entry = new QLineEdit();
-	if (trk != NULL) {
-		name = trk->name;
-	} else {
-		name = trw->get_name();
-	}
+
+	osm_fill_credentials_widgets(*user_entry, *password_entry);
+
+
+
+	QLabel * name_label = new QLabel(QObject::tr("File's name:"), &dialog);
+	QLineEdit * name_entry = new QLineEdit(&dialog);
+	const QString name = trk ? trk->name : trw->get_name();
+
 	name_entry->setText(name);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_entry, false, false, 0);
 	name_entry->setToolTip(QObject::tr("The name of the file on OSM\n"
 					   "<small>This is the name of the file created on the server."
 					   "This is not the name of the local file.</small>"));
+	dialog.grid->addWidget(name_label, row, 0);
+	dialog.grid->addWidget(name_entry, row, 1);
+	row++;
+
+
 
 	QLabel * description_label = new QLabel(QObject::tr("Description:"));
 	QLineEdit * description_entry = new QLineEdit();
-	const char *description = NULL;
+	QString description;
 	if (trk != NULL) {
 		description = trk->description;
 	} else {
 		TRWMetadata * md = trw->get_metadata();
 		description = md ? md->description : NULL;
 	}
-	if (description) {
+	if (!description.isEmpty()) {
 		description_entry->setText(description);
 	}
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), description_entry, false, false, 0);
+
 	description_entry->setToolTip(QObject::tr("The description of the trace"));
+	dialog.grid->addWidget(description_label, row, 0);
+	dialog.grid->addWidget(description_entry, row, 1);
+	row++;
+
+
 
 	if (trk != NULL) {
 		QLabel * label = new QLabel(QObject::tr("Anonymize Times:"));
-		anonymize_checkbutton = gtk_check_button_new();
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), label, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), anonymize_checkbutton, false, false, 0);
+		anonymize_checkbutton = new QCheckBox();
 		anonymize_checkbutton->setToolTip(QObject::tr("Anonymize times of the trace.\n"
 							      "<small>You may choose to make the trace identifiable, yet mask the actual real time values</small>"));
+		dialog.grid->addWidget(label, row, 0);
+		dialog.grid->addWidget(anonymize_checkbutton, row, 1);
+		row++;
 	}
+
+
 
 	QLabel * tags_label = new QLabel(QObject::tr("Tags:"));
-	GtkWidget * tags_entry = new QLineEdit();
+	QLineEdit * tags_entry = new QLineEdit();
 	TRWMetadata * md = trw->get_metadata();
-	if (md && md->keywords) {
+	if (md && !md->keywords.isEmpty()) {
 		tags_entry->setText(md->keywords);
 	}
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_entry, false, false, 0);
 	tags_entry->setToolTip(QObject::tr("The tags associated to the trace"));
+	dialog.grid->addWidget(tags_label, row, 0);
+	dialog.grid->addWidget(tags_entry, row, 1);
+	row++;
 
+
+
+	QLabel * visibility_label = new QLabel(QObject::tr("Visibility:"));
 	visibility_combo = new QComboBox();
 	for (vis_t = OsmTraceVis; vis_t->combostr != NULL; vis_t++) {
-		vik_combo_box_text_append(visibility_combo, vis_t->combostr);
+		visibility_combo->addItem(vis_t->combostr);
 	}
 
 	/* Set identifiable by default or use the settings for the value. */
@@ -537,15 +542,18 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		}
 	}
 	visibility_combo->setCurrentIndex(last_active);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), visibility_combo, false, false, 0);
+	dialog.grid->addWidget(visibility_label, row, 0);
+	dialog.grid->addWidget(visibility_combo, row, 1);
+	row++;
+
+
 
 	/* User should think about it first... */
-	gtk_dialog_set_default_response(GTK_DIALOG(dia), GTK_RESPONSE_REJECT);
+	dialog.button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
 
-	gtk_widget_show_all(dia);
-	gtk_widget_grab_focus(description_entry);
+	description_entry->setFocus();
 
-	if (dia.exec() == QDialog::Accepted GTK_RESPONSE_ACCEPT) {
+	if (dialog.exec() == QDialog::Accepted) {
 
 		/* Overwrite authentication info. */
 		osm_save_current_credentials(user_entry->text(), password_entry->text());
@@ -559,7 +567,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		info->vistype     = &OsmTraceVis[visibility_combo->currentIndex()];
 
 		if (trk != NULL && anonymize_checkbutton != NULL) {
-			info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
+			info->anonymize_times = anonymize_checkbutton->isChecked();
 		} else {
 			info->anonymize_times = false;
 		}
@@ -568,10 +576,8 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		last_active = visibility_combo->currentIndex();
 		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
-		const QString job_description = QString(tr("Uploading %1 to OSM")).arg(info->name);
+		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
 
 		a_background_thread(info, ThreadPoolType::REMOTE, job_description);
 	}
-	gtk_widget_destroy(dia);
-#endif
 }

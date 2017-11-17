@@ -259,7 +259,7 @@ static void fill_engine_box(void * data, QComboBox * user_data)
 	if (ok) {
 		/* Add item in widget. */
 		const char *label = engine->get_label();
-		vik_combo_box_text_append(combo, label);
+		combo->addItem(label);
 		/* Save engine in internal list. */
 		GList *engines = (GList*) g_object_get_data(combo , "engines");
 		engines = g_list_append(engines, engine);

@@ -56,7 +56,23 @@ using namespace SlavGPS;
 
 
 
+typedef struct {
+	bool create_waypoints;
+	bool overwrite_waypoints;
+	bool write_exif;
+	bool overwrite_gps_exif;
+	bool no_change_mtime;
+	bool interpolate_segments;
+	int time_offset;
+	int TimeZoneHours;
+	int TimeZoneMins;
+} option_values_t;
+
+
+
+
 static int trw_layer_geotag_thread(BackgroundJob * job);
+static void save_default_values(option_values_t default_values);
 
 
 
@@ -152,21 +168,6 @@ static void geotag_widgets_free(GeoTagWidgets *widgets)
 
 
 
-typedef struct {
-	bool create_waypoints;
-	bool overwrite_waypoints;
-	bool write_exif;
-	bool overwrite_gps_exif;
-	bool no_change_mtime;
-	bool interpolate_segments;
-	int time_offset;
-	int TimeZoneHours;
-	int TimeZoneMins;
-} option_values_t;
-
-
-
-
 class GeotagJob : public BackgroundJob {
 public:
 	GeotagJob(GeoTagWidgets * widgets);
@@ -197,15 +198,15 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->trw = widgets->trw;
 	this->wp = widgets->wp;
 	this->trk = widgets->trk;
-#ifdef K
+
 	/* Values extracted from the widgets: */
-	this->ov.create_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b));
-	this->ov.overwrite_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b));
-	this->ov.write_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->write_exif_b));
-	this->ov.overwrite_gps_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_gps_exif_b));
-	this->ov.no_change_mtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->no_change_mtime_b));
-	this->ov.interpolate_segments = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b));
-#endif
+	this->ov.create_waypoints = widgets->create_waypoints_b->isChecked();
+	this->ov.overwrite_waypoints = widgets->overwrite_waypoints_b->isChecked();
+	this->ov.write_exif = widgets->write_exif_b->isChecked();
+	this->ov.overwrite_gps_exif = widgets->overwrite_gps_exif_b->isChecked();
+	this->ov.no_change_mtime = widgets->no_change_mtime_b->isChecked();
+	this->ov.interpolate_segments = widgets->interpolate_segments_b->isChecked();
+
 	this->ov.TimeZoneHours = 0;
 	this->ov.TimeZoneMins = 0;
 #ifdef K
@@ -223,7 +224,8 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 		/* No colon. Just parse. */
 		this->ov.TimeZoneHours = atoi(TZString);
 	}
-	this->ov.time_offset = atoi(widgets->time_offset_b.text());
+#endif
+	this->ov.time_offset = atoi(widgets->time_offset_b.text().toUtf8().constData());
 
 	this->redraw = false;
 
@@ -231,11 +233,14 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	save_default_values(this->ov);
 
 	this->files->clear();
-	std::list<char *> * a_list = vik_file_list_get_files(widgets->files);
-	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
+	const QStringList a_list = widgets->files->get_list();
 
-	this->n_items = options->files->size();;
+#ifdef K
+	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
 #endif
+
+	this->n_items = this->files->size();
+
 }
 
 
@@ -652,9 +657,8 @@ static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidge
  */
 static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
-#ifdef K
 	/* Overwriting & file modification times are irrelevant if not going to write EXIF! */
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->write_exif_b))) {
+	if (gtw->write_exif_b->isChecked()) {
 		gtw->overwrite_gps_exif_b->setEnabled(true);
 		gtw->overwrite_gps_exif_l->setEnabled(true);
 		gtw->no_change_mtime_b->setEnabled(true);
@@ -665,7 +669,6 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 		gtw->no_change_mtime_b->setEnabled(false);
 		gtw->no_change_mtime_l->setEnabled(false);
 	}
-#endif
 }
 
 
@@ -673,16 +676,14 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 
 static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
-#ifdef K
 	/* Overwriting waypoints are irrelevant if not going to create them! */
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->create_waypoints_b))) {
+	if (gtw->create_waypoints_b->isChecked()) {
 		gtw->overwrite_waypoints_b->setEnabled(true);
 		gtw->overwrite_waypoints_l->setEnabled(true);
 	} else {
 		gtw->overwrite_waypoints_b->setEnabled(false);
 		gtw->overwrite_waypoints_l->setEnabled(false);
 	}
-#endif
 }
 
 
@@ -714,15 +715,15 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	widgets->trw = trw;
 	widgets->wp = wp;
 	widgets->trk = trk;
-	widgets->create_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new());
+	widgets->create_waypoints_b = new QCheckBox();
 	widgets->overwrite_waypoints_l = new QLabel(QObject::tr("Overwrite Existing Waypoints:"));
-	widgets->overwrite_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->write_exif_b = GTK_CHECK_BUTTON (gtk_check_button_new());
+	widgets->overwrite_waypoints_b = new QCheckBox();
+	widgets->write_exif_b = new QCheckBox();
 	widgets->overwrite_gps_exif_l = new QLabel(QObject::tr("Overwrite Existing GPS Information:"));
-	widgets->overwrite_gps_exif_b = GTK_CHECK_BUTTON (gtk_check_button_new());
+	widgets->overwrite_gps_exif_b = new QCheckBox();
 	widgets->no_change_mtime_l = new QLabel(QObject::tr("Keep File Modification Timestamp:"));
-	widgets->no_change_mtime_b = GTK_CHECK_BUTTON (gtk_check_button_new());
-	widgets->interpolate_segments_b = GTK_CHECK_BUTTON (gtk_check_button_new());
+	widgets->no_change_mtime_b = new QCheckBox();
+	widgets->interpolate_segments_b = new QCheckBox();
 
 	gtk_entry_set_width_chars(widgets->time_zone_b, 7);
 	gtk_entry_set_width_chars(widgets->time_offset_b, 7);
@@ -730,12 +731,13 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	/* Defaults. */
 	option_values_t default_values = get_default_values();
 
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b), default_values.create_waypoints);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b), default_values.overwrite_waypoints);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->write_exif_b), default_values.write_exif);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->overwrite_gps_exif_b), default_values.overwrite_gps_exif);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->no_change_mtime_b), default_values.no_change_mtime);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->interpolate_segments_b), default_values.interpolate_segments);
+	widgets->create_waypoints_b->setChecked(default_values.create_waypoints);
+	widgets->overwrite_waypoints_b->setChecked(default_values.overwrite_waypoints);
+	widgets->write_exif_b->setChecked(default_values.write_exif);
+	widgets->overwrite_gps_exif_b->setChecked(default_values.overwrite_gps_exif);
+	widgets->no_change_mtime_b->setChecked(default_values.no_change_mtime);
+	widgets->interpolate_segments_b->setChecked(default_values.interpolate_segments);
+
 	char tmp_string[7];
 	snprintf(tmp_string, 7, "%+02d:%02d", default_values.TimeZoneHours, abs(default_values.TimeZoneMins));
 	widgets->time_zone_b.seText(tmp_string);
@@ -822,7 +824,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 
 	QObject::connect(widgets->dialog, SIGNAL("response"), widgets, SLOT (trw_layer_geotag_response_cb));
 
-	gtk_dialog_set_default_response(GTK_DIALOG(widgets->dialog), GTK_RESPONSE_REJECT);
+	widgets->dialog->button_box->button(QDialogButtonBox::Discard)->setDefault(true);
 
 	gtk_widget_show_all(widgets->dialog);
 #endif

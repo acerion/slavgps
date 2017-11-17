@@ -246,10 +246,6 @@ void ViewportToImageDialog::build_ui(ViewportSaveMode mode)
 
 	this->calculate_total_area_cb(); /* Set correct size info now. */
 
-#ifdef K
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
-
 
 	this->button_box = new QDialogButtonBox();
 	this->button_box->addButton("&Ok", QDialogButtonBox::AcceptRole);
@@ -257,6 +253,8 @@ void ViewportToImageDialog::build_ui(ViewportSaveMode mode)
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &ViewportToImageDialog::accept_cb);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 	this->vbox->addWidget(this->button_box);
+
+	this->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	this->accept();
 }

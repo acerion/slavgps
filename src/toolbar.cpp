@@ -1168,7 +1168,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent,
 	                                     GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
 	gtk_widget_set_name(dialog, "VikingDialog");
 	gtk_window_set_default_size(GTK_WINDOW(dialog), -1, 400);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_CLOSE);
+	dialog->button_box->button(QDialogButtonBox::Close)->setDefault(true);
 
 	tbw->store_available = gtk_list_store_new(TB_EDITOR_COLS_MAX,
 						  G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
