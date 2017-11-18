@@ -71,7 +71,7 @@ namespace SlavGPS {
 
 	QString vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 
-	char * vu_get_canonical_filename(Layer * layer, const char * filename);
+	char * vu_get_canonical_filename(Layer * layer, const char * filename, const char * reference_file_full_path);
 
 	QString vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * gtz);
 

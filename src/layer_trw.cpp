@@ -80,17 +80,14 @@
 #include "osm-traces.h"
 #endif
 
-#ifdef K
+#if 0
 #include "garminsymbols.h"
-
 #include "background.h"
 #include "gpx.h"
 #include "geojson.h"
 #include "babel.h"
-
 #include "acquire.h"
 #include "datasources.h"
-
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"

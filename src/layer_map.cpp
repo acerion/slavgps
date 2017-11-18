@@ -560,7 +560,7 @@ void LayerMap::set_cache_dir(const QString & dir)
 		}
 	}
 
-	char * canonical_dir = vu_get_canonical_filename(this, mydir.toUtf8().constData());
+	char * canonical_dir = vu_get_canonical_filename(this, mydir.toUtf8().constData(), this->get_window()->get_current_document_full_path().toUtf8().constData());
 
 	/* Ensure cache_dir always ends with a separator. */
 	unsigned int len = strlen(canonical_dir);

@@ -32,6 +32,7 @@
 
 #include <QDebug>
 #include <QLineEdit>
+#include <QHash>
 
 #include <glib.h>
 
@@ -63,60 +64,28 @@ extern Tree * g_tree;
 
 
 
-static GHashTable *last_user_strings = NULL;
+static QHash<QString, QString> last_user_strings;
 
 
 
 
-typedef struct {
-	WebToolDatasource * web_tool_datasource;
-	Window * window;
-	Viewport * viewport;
-	QLineEdit user_string;
-} datasource_t;
-
-
-
-
-static void ensure_last_user_strings_hash()
+static QString get_last_user_string(const WebToolDatasource * web_tool_datasource)
 {
-	if (last_user_strings == NULL) {
-		last_user_strings = g_hash_table_new_full(g_str_hash,
-							  g_str_equal,
-							  g_free,
-							  g_free);
+	const QString tool_label = web_tool_datasource->get_label();
+	auto iter = last_user_strings.find(tool_label);
+	if (iter == last_user_strings.end()) {
+		return "";
+	} else {
+		return *iter;
 	}
 }
 
 
 
 
-static char * get_last_user_string(const datasource_t *source)
+static void * datasource_init(acq_vik_t * avt)
 {
-	ensure_last_user_strings_hash();
-	QString label = source->web_tool_datasource->get_label();
-	char *last_str = (char *) g_hash_table_lookup(last_user_strings, label.toUtf8().constData());
-	return last_str;
-}
-
-
-
-
-static void set_last_user_string(const datasource_t *source, const char *s)
-{
-	QString label = source->web_tool_datasource->get_label();
-	ensure_last_user_strings_hash();
-	g_hash_table_insert(last_user_strings,
-			    label.toUtf8().data(),
-			    g_strdup(s));
-}
-
-
-
-
-static void * datasource_init(acq_vik_t *avt)
-{
-	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
+	DataSourceWebToolDialog * data = (DataSourceWebToolDialog *) malloc(sizeof (*data));
 	data->web_tool_datasource = (WebToolDatasource *) avt->userdata;
 	data->window = avt->window;
 	data->viewport = avt->viewport;
@@ -128,59 +97,52 @@ static void * datasource_init(acq_vik_t *avt)
 
 static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	DataSourceDialog * setup_dialog = NULL;
-	GtkWidget *dialog;
-
-	datasource_t *widgets = (datasource_t *)user_data;
-	WebToolDatasource * ext_tool = widgets->web_tool_datasource;
-	char *label = g_strdup_printf("%s:", ext_tool->input_label);
-	QLabel * user_string_label = new QLabel(label);
-#ifdef K
-	char *last_str = get_last_user_string(widgets);
-	if (last_str) {
-		widgets->user_string.setText(last_str);
-	}
-
-	/* 'ok' when press return in the entry. */
-	QObject::connect(&widgets->user_string, SIGNAL("activate"), dialog, SLOT (accept));
-
-	/* Packing all widgets. */
-	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	box->addWidget(user_string_label);
-	box->addWidget(&widgets->user_string);
-	gtk_widget_show_all(dialog);
-	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
-	/* NB presently the focus is overridden later on by the acquire.c code. */
-	widgets->user_string->setFocus();
-
-	free(label);
-#endif
-
-	return setup_dialog;
+	return new DataSourceWebToolDialog;
 }
 
 
 
 
-static ProcessOptions * datasource_get_process_options(void * user_data, DownloadOptions * dl_options, const char * unused1, const char * unused2)
+DataSourceWebToolDialog::DataSourceWebToolDialog()
+{
+	const WebToolDatasource * web_tool = this->web_tool_datasource;
+
+	QLabel * user_string_label = new QLabel(QString("%1:").arg(web_tool->input_field_label_text), this);
+
+	this->input_field.setText(get_last_user_string(this->web_tool_datasource));
+
+#ifdef K
+	/* 'ok' when press return in the entry. */
+	QObject::connect(&this->input_field, SIGNAL("activate"), dialog, SLOT (accept));
+#endif
+
+
+	this->grid->addWidget(user_string_label, 0, 0);
+	this->grid->addWidget(&this->input_field, 0, 1);
+
+	this->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
+	/* NB presently the focus is overridden later on by the acquire.c code. */
+	this->input_field.setFocus();
+}
+
+
+
+
+ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & dl_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	datasource_t *data = (datasource_t*) user_data;
+	if (this->web_tool_datasource->webtool_needs_user_string()) {
+		this->web_tool_datasource->user_string = this->input_field.text();
 
-	WebToolDatasource * web_tool_datasource = (WebToolDatasource *) data->web_tool_datasource;
-
-#ifdef K
-	if (web_tool_datasource->webtool_needs_user_string()) {
-		web_tool_datasource->user_string = data->user_string.text();
-
-		if (web_tool_datasource->user_string[0] != '\0') {
-			set_last_user_string(data, web_tool_datasource->user_string);
+		if (this->web_tool_datasource->user_string[0] != '\0') {
+			const QString tool_label = this->web_tool_datasource->get_label();
+			last_user_strings.insert(tool_label, this->web_tool_datasource->user_string);
 		}
 	}
-#endif
 
-	po->url = web_tool_datasource->get_url_at_current_position(data->viewport);
+
+	po->url = this->web_tool_datasource->get_url_at_current_position(this->viewport);
 	qDebug() << "DD: Web Tool Datasource: url =" << po->url;
 
 	/* Only use first section of the file_type string.
@@ -188,8 +150,8 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	   since it won't be in the right order for the overall GPSBabel command.
 	   So prevent any potentially dangerous behaviour. */
 	char **parts = NULL;
-	if (web_tool_datasource->file_type) {
-		parts = g_strsplit(web_tool_datasource->file_type, " ", 0);
+	if (this->web_tool_datasource->file_type) {
+		parts = g_strsplit(this->web_tool_datasource->file_type, " ", 0);
 	}
 
 	if (parts) {
@@ -200,8 +162,7 @@ static ProcessOptions * datasource_get_process_options(void * user_data, Downloa
 	g_strfreev(parts);
 
 
-	dl_options = NULL;
-	po->babel_filters = web_tool_datasource->babel_filter_args;
+	po->babel_filters = this->web_tool_datasource->babel_filter_args;
 
 	return po;
 
@@ -240,7 +201,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		(DataSourceInitFunc)                  datasource_init,
 		(DataSourceCheckExistenceFunc)        NULL,
 		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
-		(DataSourceGetProcessOptionsFunc)     datasource_get_process_options,
+		(DataSourceGetProcessOptionsFunc)     NULL,
 		(DataSourceProcessFunc)               a_babel_convert_from,
 		(DataSourceProgressFunc)              NULL,
 		(DataSourceCreateProgressDialogFunc)  NULL,
@@ -265,22 +226,22 @@ WebToolDatasource::WebToolDatasource()
 	qDebug() << "II: Web Tool Datasource created";
 
 	this->url_format_code = strdup("LRBT");
-	this->input_label = strdup(_("Search Term"));
+	this->input_field_label_text = tr("Search Term");
 }
 #endif
 
 
 
-WebToolDatasource::WebToolDatasource(const QString & new_label,
+WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 				     const QString & new_url_format,
 				     const QString & new_url_format_code,
 				     const char * new_file_type,
 				     const char * new_babel_filter_args,
-				     const char * new_input_label) : WebTool(new_label)
+				     const QString & new_input_field_label_text) : WebTool(new_tool_name)
 {
-	qDebug() << "II: Web Tool Datasource created with label" << new_label;
+	qDebug() << "II: Web Tool Datasource created with tool name" << new_tool_name;
 
-	this->label = new_label;
+	this->label = new_tool_name;
 	this->q_url_format = new_url_format;
 	this->url_format_code = new_url_format_code;
 
@@ -290,8 +251,8 @@ WebToolDatasource::WebToolDatasource(const QString & new_label,
 	if (new_babel_filter_args) {
 		this->babel_filter_args = strdup(new_babel_filter_args);
 	}
-	if (new_input_label) {
-		this->input_label = strdup(new_input_label);
+	if (!new_input_field_label_text.isEmpty()) {
+		this->input_field_label_text = new_input_field_label_text;
 	}
 }
 
@@ -310,16 +271,6 @@ WebToolDatasource::~WebToolDatasource()
 	if (this->babel_filter_args) {
 		free(this->babel_filter_args);
 		this->babel_filter_args = NULL;
-	}
-
-	if (this->input_label) {
-		free(this->input_label);
-		this->input_label = NULL;
-	}
-
-	if (this->user_string) {
-		free(this->user_string);
-		this->user_string = NULL;
 	}
 }
 

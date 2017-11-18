@@ -30,9 +30,9 @@ using namespace SlavGPS;
 
 
 
-ExternalTool::ExternalTool(const QString & new_label)
+ExternalTool::ExternalTool(const QString & new_tool_name)
 {
-	this->label = new_label;
+	this->label = new_tool_name;
 
 	qDebug() << "II: External Tool: new external tool" << this->label;
 }
@@ -42,13 +42,13 @@ ExternalTool::ExternalTool(const QString & new_label)
 
 ExternalTool::~ExternalTool()
 {
-	qDebug() << "II: External Toll: delete external tool" << this->label;
+	qDebug() << "II: External Tool: delete external tool" << this->label;
 }
 
 
 
 
-const QString & ExternalTool::get_label(void)
+const QString & ExternalTool::get_label(void) const
 {
 	return this->label;
 }

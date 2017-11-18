@@ -45,13 +45,13 @@ namespace SlavGPS {
 	class ExternalTool : public QObject {
 		Q_OBJECT
 	public:
-		ExternalTool(const QString & new_label);
+		ExternalTool(const QString & new_tool_name);
 		~ExternalTool();
 
 		void set_window(Window * a_window);
 		void set_coord(const Coord * a_coord);
 
-		const QString & get_label(void);
+		const QString & get_label(void) const;
 
 		virtual void run_at_current_position(Window * a_window) = 0;
 		virtual void run_at_position(Window * a_window, const Coord * a_coord) = 0;

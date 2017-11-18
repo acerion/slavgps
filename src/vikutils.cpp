@@ -526,9 +526,9 @@ void SGUtils::set_auto_features_on_first_run(void)
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to.
  * Then resolve the full path to get the normal canonical filename.
  */
-char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
+char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename, const char * reference_file_full_path)
 {
-	char * canonical = NULL;
+	gchar *canonical = NULL;
 	if (!filename) {
 		return NULL;
 	}
@@ -536,16 +536,15 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 	if (g_path_is_absolute(filename)) {
 		canonical = g_strdup(filename);
 	} else {
-		const QString vw_full_path = layer->get_window()->get_current_document_full_path();
-#ifdef K
+		const char * vw_filename = reference_file_full_path;
 		char * dirpath = NULL;
-		if (vw_full_path.isEmpty()) {
-			dirpath = g_get_current_dir(); /* Fallback - if here then probably can't create the correct path. */
+		if (vw_filename) {
+			dirpath = g_path_get_dirname(vw_filename);
 		} else {
-			dirpath = g_path_get_dirname(vw_full_path);
+			dirpath = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
 		}
 
-		char *full = NULL;
+		char * full = NULL;
 		if (g_path_is_absolute(dirpath)) {
 			full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, filename, NULL);
 		} else {
@@ -555,7 +554,6 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 		canonical = file_realpath_dup(full); // resolved
 		free(full);
 		free(dirpath);
-#endif
 	}
 
 	return canonical;

@@ -435,7 +435,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 #endif
 		this->scaled = NULL;
 	}
-#ifdef K
+
 	this->pixmap = new QPixmap();
 	if (!pixmap->load(this->image)) {
 		delete pixmap;
@@ -451,7 +451,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
 		}
 	}
-#endif
+
 	/* Should find length and width here too. */
 }
 
@@ -470,7 +470,7 @@ void LayerGeoref::set_image(const QString & image_)
 	if (image_ != "") {
 		this->image = image_;
 	} else {
-		this->image = QString(vu_get_canonical_filename(this, image_.toUtf8().constData()));
+		this->image = QString(vu_get_canonical_filename(this, image_.toUtf8().constData(), this->get_window()->get_current_document_full_path().toUtf8().constData()));
 	}
 }
 
