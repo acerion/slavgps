@@ -283,38 +283,36 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 
 static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 {
-	char *s = NULL;
 #ifdef K
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
-		const char *tmp_str;
-#ifdef K
+		QString msg;
+
 		switch (gps_dialog->progress_type) {
 		case GPSTransferType::WPT:
-			tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt);
+			msg = QObject::tr("Downloading %n waypoints...", "", cnt);
 			gps_dialog->total_count = cnt;
 			break;
 		case GPSTransferType::TRK:
-			tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt);
+			msg = QObject::tr("Downloading %n trackpoints...", "", cnt);
 			gps_dialog->total_count = cnt;
 			break;
 		default: {
 			/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints. */
 			int mycnt = (cnt / 2) + 1;
-			tmp_str = ngettext("Downloading %d routepoint...", "Downloading %d routepoints...", mycnt);
+			msg = QObject::tr("Downloading %n routepoints...", "", mycnt);
 			gps_dialog->total_count = mycnt;
 			break;
 		}
 		}
-		s = g_strdup_printf(tmp_str, cnt);
-		gps_dialog->progress_label->setText(QObject::tr(s));
+		gps_dialog->progress_label->setText(msg);
+#ifdef K
 		gtk_widget_show(gps_dialog->progress_label);
 #endif
 	}
-	free(s);
-	s = NULL;
+
 #ifdef K
 	gdk_threads_leave();
 #endif

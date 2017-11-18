@@ -40,11 +40,17 @@
 #include "layer_trw.h"
 #include "globals.h"
 #include "layers_panel.h"
+#include "window.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+extern Tree * g_tree;
 
 
 
@@ -288,16 +294,16 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
 	Layer * selected = panel->get_selected_layer();
 
 	Coord coord(*ll, CoordMode::LATLON);
-#ifdef K
+
 
 	if (selected && selected->type == LayerType::TRW) {
 		((LayerTRW *) selected)->new_waypoint(selected->get_window(), &coord);
 		((LayerTRW *) selected)->get_waypoints_node().calculate_bounds();
 		selected->emit_layer_changed();
 	} else {
-		Dialog::error(tr("In order to paste a waypoint, please select an appropriate layer to paste into."), panel->get_window());
+		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), g_tree->tree_get_main_window());
 	}
-#endif
+
 }
 
 
@@ -307,22 +313,19 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 {
 	LayersPanel * panel = (LayersPanel *) p;
 
-#ifdef K
-
 	fprintf(stderr, "DEBUG: got text: %s\n", text);
 
 	Layer * selected = panel->get_selected_layer();
 
 	if (selected && selected->tree_view->is_editing_in_progress()) {
-		GtkTreeIter iter;
-		if (selected->tree_view->get_selected_iter(&iter)) {
-			/* Try to sanitize input: */
-			char *name = g_strescape(text, NULL);
 
-			selected->set_name(name);
-			selected->tree_view->set_tree_item_name(&iter, name);
-			free(name);
-		}
+		/* Try to sanitize input: */
+		char *name = g_strescape(text, NULL);
+
+		selected->set_name(name);
+		selected->tree_view->set_tree_item_name(selected->index, name);
+		free(name);
+
 		return;
 	}
 
@@ -330,7 +333,6 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 	if (clip_parse_latlon(text, &coord)) {
 		clip_add_wp(panel, &coord);
 	}
-#endif
 }
 
 
@@ -434,7 +436,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
  */
 void Clipboard::copy_selected(LayersPanel * panel)
 {
-#ifdef K
+
 	Layer * selected = panel->get_selected_layer();
 	TreeIndex index;
 	ClipboardDataType type = ClipboardDataType::NONE;
@@ -443,36 +445,37 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	uint8_t *data = NULL;
 	unsigned int len = 0;
 
-	if (!selected) {
+	if (!selected || !selected->index.isValid()) {
 		return;
 	}
 
-	if (!selected->tree_view->get_selected_iter(index)) {
-		return;
-	}
 	layer_type = selected->type;
+
+	QString name = selected->name; /* TODO: look at how viking gets name in this function. */
 
 	/* Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited. */
 	if (selected->tree_view->is_editing_in_progress()) {
 		type = ClipboardDataType::TEXT;
+
 		/* I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item.
 		   At least this is better than copying the layer data - which is even further away from what the user would be expecting... */
 		len = 0;
 	} else {
-		TreeItem * item = selected->tree_view->get_tree_item(index);
+		TreeItem * item = selected->tree_view->get_tree_item(selected->index);
 		if (item->tree_item_type == TreeItemType::SUBLAYER) {
 			type = ClipboardDataType::SUBLAYER;
 			selected->copy_sublayer(item, &data, &len);
 		} else {
 			int ilen;
 			type = ClipboardDataType::LAYER;
+#ifdef K
 			Layer::marshall(selected, &data, &ilen);
+#endif
 			len = ilen;
 		}
 	}
 
-	Clipboard::copy(type, layer_type, type_id, len, item->name, data);
-#endif
+	Clipboard::copy(type, layer_type, type_id, len, name, data);
 }
 
 

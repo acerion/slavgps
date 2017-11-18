@@ -825,19 +825,15 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 /* Returns true if OK was pressed. */
 bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 {
-#ifdef K
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Layer Properties"),
-							window_,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
 
-	/* Default to reject as user really needs to specify map file first. */
-	dialog->button_box->button(QDialogButtonBox::Discard)->setDefault(true);
-	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
+	BasicDialog dialog(window_);
+	dialog.setWindowTitle(QObject::tr("Layer Properties"));
+
+
+	dialog.button_box->button(QDialogButtonBox::Discard)->setDefault(true);
+	QPushButton * cancel_button = dialog.button_box->button(QDialogButtonBox::Cancel);
+
+#ifdef K
 	GtkWidget *table, *wfp_hbox, *wfp_button;
 	changeable_widgets cw;
 
@@ -882,19 +878,20 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	cw.y_spin->setValue(4);
 	cw.y_spin->setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
 
-#ifdef K
+
 	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
-	cw.imageentry = new SGFileEntry(); vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
+	cw.imageentry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, QObject::tr("Select image file"), window_);
+	// vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
 
 	cw.ce_spin->setValue(this->corner.easting);
 	cw.cn_spin->setValue(this->corner.northing);
 	cw.x_spin->setValue(this->mpp_easting);
 	cw.y_spin->setValue(this->mpp_northing);
-	if (this->image) {
+	if (!this->image.isEmpty()) {
 		cw.imageentry->set_filename(this->image);
 	}
 
-
+#ifdef K
 	gtk_table_attach_defaults (GTK_TABLE(table), imagelabel, 0, 1, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table), cw.imageentry, 1, 2, 0, 1);
 	gtk_table_attach_defaults (GTK_TABLE(table), wfp_hbox, 0, 2, 1, 2);
@@ -1014,9 +1011,9 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		}
 	}
 	gtk_notebook_set_current_page (GTK_NOTEBOOK(cw.tabs), page_num);
-
-	if (dialog.exec() == QDialog::Accepted) {
 #endif
+	if (dialog.exec() == QDialog::Accepted) {
+
 		this->align_coords();
 
 		this->corner.easting = cw.ce_spin->value();
@@ -1050,12 +1047,10 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		}
 
 		ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
-
-		gtk_widget_destroy (GTK_WIDGET(dialog));
+#endif
 		return true;
 	}
-	gtk_widget_destroy (GTK_WIDGET(dialog));
-#endif
+
 	return false;
 }
 

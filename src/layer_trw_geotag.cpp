@@ -127,7 +127,7 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 
 
 typedef struct {
-	GtkWidget *dialog = NULL;
+	BasicDialog * dialog = NULL;
 	SGFileList *files = NULL;
 	LayerTRW * trw = NULL;      /* To pass on. */
 	Waypoint * wp = NULL;       /* Use specified waypoint or otherwise the track(s) if NULL. */
@@ -697,15 +697,12 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
  */
 void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint * wp, Track * trk)
 {
-#ifdef K
-	GeoTagWidgets *widgets = geotag_widgets_new();
+	GeoTagWidgets * widgets = geotag_widgets_new();
 
-	widgets->dialog = gtk_dialog_new_with_buttons(_("Geotag Images"),
-						      parent,
-						      GTK_DIALOG_DESTROY_WITH_PARENT,
-						      GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-						      GTK_STOCK_OK,     GTK_RESPONSE_ACCEPT,
-						      NULL);
+	widgets->dialog = new BasicDialog(parent);
+	widgets->dialog->setWindowTitle(QObject::tr("Geotag Images"));
+
+#ifdef K
 
 	GtkFileFilter *filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("JPG"));

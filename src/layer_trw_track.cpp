@@ -35,8 +35,6 @@
 #include <glib.h>
 #include <time.h>
 
-#include <libintl.h>
-
 #include "coords.h"
 #include "coord.h"
 #include "dem_cache.h"
@@ -54,6 +52,7 @@
 #include "dialog.h"
 #include "layers_panel.h"
 #include "tree_view_internal.h"
+#include "routing.h"
 
 
 
@@ -3033,12 +3032,10 @@ void Track::profile_dialog_cb(void)
  */
 void Track::smooth_it(bool flat)
 {
-	unsigned long changed_ = this->smooth_missing_elevation_data(flat);
+	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
-	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
-	snprintf(str, 64, tmp_str, changed_);
-	Dialog::info(str, g_tree->tree_get_main_window());
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
 
@@ -3132,13 +3129,11 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 		return;
 	}
 
-	unsigned long changed_ = this->apply_dem_data(skip_existing_elevations);
+	unsigned long n_changed = this->apply_dem_data(skip_existing_elevations);
 
 	/* Inform user how much was changed. */
-	char str[64];
-	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed_);
-	snprintf(str, 64, tmp_str, changed_);
-	Dialog::info(str, g_tree->tree_get_main_window());
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
 
@@ -3781,28 +3776,28 @@ void Track::refine_route_cb(void)
 		}
 	}
 
-#ifdef K
+
 	/* Select engine from dialog */
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
-							main_window,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
+	BasicDialog dialog(main_window);
+	dialog.setWindowTitle(QObject::tr("Refine Route with Routing Engine..."));
+
 	QLabel * label = new QLabel(QObject::tr("Select routing engine"));
+
+	QComboBox * combo = NULL;
+
+#ifdef K
 	gtk_widget_show_all(label);
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
 
-	QComboBox * combo = routing_ui_selector_new(RoutingEngine::supports_refine(), NULL);
+	combo = routing_ui_selector_new(RoutingEngine::supports_refine(), NULL);
 	combo->setCurrentIndex(last_engine);
 	gtk_widget_show_all(combo);
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
+#endif
 
-	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
+	dialog.button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */
@@ -3832,8 +3827,6 @@ void Track::refine_route_cb(void)
 		/* Restore cursor */
 		main_window->clear_busy_cursor();
 	}
-	gtk_widget_destroy(dialog);
-#endif
 }
 
 

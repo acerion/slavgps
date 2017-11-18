@@ -3026,12 +3026,10 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 /**
  * Commonal helper function.
  */
-void LayerTRW::wp_changed_message(int changed_)
+void LayerTRW::wp_changed_message(int n_changed)
 {
-	char str[64];
-	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed_);
-	snprintf(str, 64, tmp_str, changed_);
-	Dialog::info(str, this->get_window());
+	const QString msg = QObject::tr("%n waypoints changed", "", n_changed);
+	Dialog::info(msg, this->get_window());
 }
 
 
@@ -3335,13 +3333,11 @@ void LayerTRW::merge_by_segment_cb(void)
 		return;
 	}
 
-	unsigned int segments = track->merge_segments();
-	/* NB currently no need to redraw as segments not actually shown on the display.
-	   However inform the user of what happened: */
-	char str[64];
-	const char *tmp_str = ngettext("%d segment merged", "%d segments merged", segments);
-	snprintf(str, 64, tmp_str, segments);
-	Dialog::info(str, this->get_window());
+	/* Currently no need to redraw as segments not actually shown on the display.
+	   However inform the user of what happened. */
+	const unsigned int n_segments = track->merge_segments();
+	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO: verify that "%n" format correctly handles unsigned int. */
+	Dialog::info(msg, this->get_window());
 }
 
 
@@ -3526,16 +3522,14 @@ void LayerTRW::delete_points_same_position_cb(void)
 		return;
 	}
 
-	unsigned long removed = track->remove_dup_points();
+	unsigned long n_removed = track->remove_dup_points();
 
 	/* Track has been updated so update tps: */
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	char str[64];
-	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
-	snprintf(str, 64, tmp_str, removed);
-	Dialog::info(str, this->get_window());
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed();
 }
@@ -3554,16 +3548,14 @@ void LayerTRW::delete_points_same_time_cb(void)
 		return;
 	}
 
-	unsigned long removed = track->remove_same_time_points();
+	unsigned long n_removed = track->remove_same_time_points();
 
 	/* Track has been updated so update tps: */
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	char str[64];
-	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
-	snprintf(str, 64, tmp_str, removed);
-	Dialog::info(str, this->get_window());
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed();
 }

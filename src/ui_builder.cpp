@@ -940,11 +940,8 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 		return 0; /* TODO -- should be one? */
 	} else {
 		/* Create widgets and titles; place in table. */
-		GtkWidget *dialog = gtk_dialog_new_with_buttons(dialog_name,
-								parent,
-								(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-								GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-								GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
+		BasicDialog * dialog = new BasicDialog(parent);
+		dialog->setWindowTitle(dialog_name);
 		dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 		QPushButton * ok_button = dialog->button_box.button(QDialogButtonBox::Ok);

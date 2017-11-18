@@ -400,8 +400,8 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	getter_params.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 #ifdef K
-	setup_dialog = gtk_dialog_new_with_buttons("", this->window, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-	setup_dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
+	setup_dialog = new BasicDialog(this->window);
+	setup_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 	setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
 	setup_dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 #endif

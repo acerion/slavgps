@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -73,22 +72,6 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 extern Tree * g_tree;
 
 
-
-typedef struct {
-	LayerGPS * layer;
-	LayersPanel * panel;
-} gps_layer_data_t;
-
-static void gps_upload_cb(gps_layer_data_t * data);
-static void gps_download_cb(gps_layer_data_t * data);
-static void gps_empty_upload_cb(gps_layer_data_t * data);
-static void gps_empty_download_cb(gps_layer_data_t * data);
-static void gps_empty_all_cb(gps_layer_data_t * data);
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-static void gps_empty_realtime_cb(gps_layer_data_t * data);
-static void gps_start_stop_tracking_cb(gps_layer_data_t * data);
-
-#endif
 
 /* Shouldn't need to use these much any more as the protocol is now saved as a string.
    They are kept for compatibility loading old .vik files */
@@ -154,7 +137,7 @@ typedef struct {
 	Track * trk = NULL;
 	QString babel_args;
 	char * window_title = NULL;
-	GtkWidget * dialog = NULL;
+	BasicDialog * dialog = NULL;
 	QLabel * status_label = NULL;
 	QLabel * gps_label = NULL;
 	QLabel * ver_label = NULL;
@@ -634,63 +617,50 @@ void LayerGPS::change_coord_mode(CoordMode mode)
 
 void LayerGPS::add_menu_items(QMenu & menu)
 {
-	static gps_layer_data_t pass_along;
-	pass_along.layer = this;
-#ifdef K
-	pass_along.panel = (LayersPanel *) panel;
-#endif
-
 	QAction * action = NULL;
+
 
 	action = new QAction(QObject::tr("&Upload to GPS"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_UP"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_upload_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_upload_cb(void)));
 	menu.addAction(action);
+
 
 	action = new QAction(QObject::tr("Download from &GPS"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_DOWN"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_download_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_download_cb(void)));
 	menu.addAction(action);
+
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	action = new QAction(this->realtime_tracking ? QObject::tr("_Stop Realtime Tracking") : QObject::tr("_Start Realtime Tracking"), this);
 	action->setIcon(this->realtime_tracking ? QIcon::fromTheme("GTK_STOCK_MEDIA_STOP") : QIcon::fromTheme("GTK_STOCK_MEDIA_PLAY"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_start_stop_tracking_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_start_stop_tracking_cb()));
 	menu.addAction(action);
+
 
 	action = new QAction(QObject::tr("Empty &Realtime"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_realtime_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_realtime_cb(void)));
 	menu.addAction(action);
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
+
 	action = new QAction(QObject::tr("E&mpty Upload"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_upload_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_upload_cb(void)));
 	menu.addAction(action);
+
 
 	action = new QAction(QObject::tr("&Empty Download"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_download_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_download_cb(void)));
 	menu.addAction(action);
+
 
 	action = new QAction(QObject::tr("Empty &All"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (gps_empty_all_cb));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_all_cb()));
 	menu.addAction(action);
 }
 
@@ -707,29 +677,6 @@ LayerGPS::~LayerGPS()
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	this->rt_gpsd_disconnect();
-	if (this->realtime_track_pen != NULL) {
-#ifdef K
-		g_object_unref(this->realtime_track_pen);
-#endif
-	}
-
-	if (this->realtime_track_bg_pen != NULL) {
-#ifdef K
-		g_object_unref(this->realtime_track_bg_pen);
-#endif
-	}
-
-	if (this->realtime_track_pt1_pen != NULL) {
-#ifdef K
-		g_object_unref(this->realtime_track_pt1_pen);
-#endif
-	}
-
-	if (this->realtime_track_pt2_pen != NULL) {
-#ifdef K
-		g_object_unref(this->realtime_track_pt2_pen);
-#endif
-	}
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 }
 
@@ -809,49 +756,45 @@ static void gps_session_delete(GpsSession *sess)
 
 static void set_total_count(int cnt, GpsSession *sess)
 {
-	char s[128];
 #ifdef K
 	gdk_threads_enter();
 #endif
 	sess->mutex.lock();
 	if (sess->ok) {
-		const char *tmp_str;
+		QString msg;
 		if (sess->direction == GPSDirection::DOWN) {
-#ifdef K
 			switch (sess->progress_type) {
 			case GPSTransferType::WPT:
-				tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt); sess->total_count = cnt;
+				msg = QObject::tr("Downloading %n waypoints...", "", cnt);
+				sess->total_count = cnt;
 				break;
 			case GPSTransferType::TRK:
-				tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt); sess->total_count = cnt;
+				msg = QObject::tr("Downloading %n trackpoints...", "", cnt);
+				sess->total_count = cnt;
 				break;
 			default: {
 				/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints. */
 				int mycnt = (cnt / 2) + 1;
-				tmp_str = ngettext("Downloading %d routepoint...", "Downloading %d routepoints...", mycnt);
+				msg = QObject::tr("Downloading %n routepoints...", "", mycnt);
 				sess->total_count = mycnt;
 				break;
 			}
 			}
-#endif
 		} else {
-#ifdef K
 			switch (sess->progress_type) {
 			case GPSTransferType::WPT:
-				tmp_str = ngettext("Uploading %d waypoint...", "Uploading %d waypoints...", cnt);
+				msg = QObject::tr("Uploading %n waypoints...", "", cnt);
 				break;
 			case GPSTransferType::TRK:
-				tmp_str = ngettext("Uploading %d trackpoint...", "Uploading %d trackpoints...", cnt);
+				msg = QObject::tr("Uploading %n trackpoints...", "", cnt);
 				break;
 			default:
-				tmp_str = ngettext("Uploading %d routepoint...", "Uploading %d routepoints...", cnt);
+				msg = QObject::tr("Uploading %n routepoints...", "", cnt);
 				break;
 			}
-#endif
 		}
 
-		snprintf(s, 128, tmp_str, cnt);
-		sess->progress_label->setText(s);
+		sess->progress_label->setText(msg);
 #ifdef K
 		gtk_widget_show(sess->progress_label);
 #endif
@@ -868,79 +811,77 @@ static void set_total_count(int cnt, GpsSession *sess)
 
 static void set_current_count(int cnt, GpsSession *sess)
 {
-	char s[128];
-	const char *tmp_str;
-
 #ifdef K
 	gdk_threads_enter();
 #endif
 	sess->mutex.lock();
-	if (sess->ok) {
-		if (cnt < sess->total_count) {
-			if (sess->direction == GPSDirection::DOWN) {
+	if (!sess->ok) {
+		sess->mutex.unlock();
 #ifdef K
-				switch (sess->progress_type) {
-				case GPSTransferType::WPT:
-					tmp_str = ngettext("Downloaded %d out of %d waypoint...", "Downloaded %d out of %d waypoints...", sess->total_count);
-					break;
-				case GPSTransferType::TRK:
-					tmp_str = ngettext("Downloaded %d out of %d trackpoint...", "Downloaded %d out of %d trackpoints...", sess->total_count);
-					break;
-				default:
-					tmp_str = ngettext("Downloaded %d out of %d routepoint...", "Downloaded %d out of %d routepoints...", sess->total_count);
-					break;
-				}
+		gdk_threads_leave();
 #endif
-			} else {
-#ifdef K
-				switch (sess->progress_type) {
-				case GPSTransferType::WPT:
-					tmp_str = ngettext("Uploaded %d out of %d waypoint...", "Uploaded %d out of %d waypoints...", sess->total_count);
-					break;
-				case GPSTransferType::TRK:
-					tmp_str = ngettext("Uploaded %d out of %d trackpoint...", "Uploaded %d out of %d trackpoints...", sess->total_count);
-					break;
-				default:
-					tmp_str = ngettext("Uploaded %d out of %d routepoint...", "Uploaded %d out of %d routepoints...", sess->total_count);
-					break;
-				}
-#endif
-			}
-			snprintf(s, 128, tmp_str, cnt, sess->total_count);
-		} else {
-			if (sess->direction == GPSDirection::DOWN) {
-#ifdef K
-				switch (sess->progress_type) {
-				case GPSTransferType::WPT:
-					tmp_str = ngettext("Downloaded %d waypoint", "Downloaded %d waypoints", cnt);
-					break;
-				case GPSTransferType::TRK:
-					tmp_str = ngettext("Downloaded %d trackpoint", "Downloaded %d trackpoints", cnt);
-					break;
-				default:
-					tmp_str = ngettext("Downloaded %d routepoint", "Downloaded %d routepoints", cnt);
-					break;
-				}
-#endif
-			} else {
-#ifdef K
-				switch (sess->progress_type) {
-				case GPSTransferType::WPT:
-					tmp_str = ngettext("Uploaded %d waypoint", "Uploaded %d waypoints", cnt);
-					break;
-				case GPSTransferType::TRK:
-					tmp_str = ngettext("Uploaded %d trackpoint", "Uploaded %d trackpoints", cnt);
-					break;
-				default:
-					tmp_str = ngettext("Uploaded %d routepoint", "Uploaded %d routepoints", cnt);
-					break;
-				}
-#endif
-			}
-			snprintf(s, 128, tmp_str, cnt);
-		}
-		sess->progress_label->setText(s);
+		return;
 	}
+
+	QString msg;
+
+	if (cnt < sess->total_count) {
+		QString fmt;
+		if (sess->direction == GPSDirection::DOWN) {
+			switch (sess->progress_type) {
+			case GPSTransferType::WPT:
+				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", sess->total_count);
+				break;
+			case GPSTransferType::TRK:
+				fmt = QObject::tr("Downloaded %1 out of %2 trackpoints...", "", sess->total_count);
+				break;
+			default:
+				fmt = QObject::tr("Downloaded %1 out of %2 routepoints...", "", sess->total_count);
+				break;
+			}
+		} else {
+			switch (sess->progress_type) {
+			case GPSTransferType::WPT:
+				fmt = QObject::tr("Uploaded %1 out of %2 waypoints...", "", sess->total_count);
+					break;
+			case GPSTransferType::TRK:
+				fmt = QObject::tr("Uploaded %1 out of %2 trackpoints...", "", sess->total_count);
+				break;
+			default:
+				fmt = QObject::tr("Uploaded %1 out of %2 routepoints...", "", sess->total_count);
+				break;
+			}
+		}
+		msg = QString(fmt).arg(cnt).arg(sess->total_count);
+	} else {
+		if (sess->direction == GPSDirection::DOWN) {
+			switch (sess->progress_type) {
+			case GPSTransferType::WPT:
+				msg = QObject::tr("Downloaded %n waypoints", "", cnt);
+				break;
+			case GPSTransferType::TRK:
+				msg = QObject::tr("Downloaded %n trackpoints", "", cnt);
+				break;
+			default:
+				msg = QObject::tr("Downloaded %n routepoints", "", cnt);
+				break;
+			}
+		} else {
+			switch (sess->progress_type) {
+				case GPSTransferType::WPT:
+					msg = QObject::tr("Uploaded %n waypoints", "", cnt);
+					break;
+				case GPSTransferType::TRK:
+					msg = QObject::tr("Uploaded %n trackpoints", "", cnt);
+					break;
+				default:
+					msg = QObject::tr("Uploaded %n routepoints", "", cnt);
+					break;
+			}
+		}
+	}
+	sess->progress_label->setText(msg);
+
 	sess->mutex.unlock();
 #ifdef K
 	gdk_threads_leave();
@@ -952,14 +893,12 @@ static void set_current_count(int cnt, GpsSession *sess)
 
 static void set_gps_info(const char *info, GpsSession *sess)
 {
-	char s[256];
 #ifdef K
 	gdk_threads_enter();
 #endif
 	sess->mutex.lock();
 	if (sess->ok) {
-		snprintf(s, 256, _("GPS Device: %s"), info);
-		sess->gps_label->setText(s);
+		sess->gps_label->setText(QObject::tr("GPS Device: %1").arg(info));
 	}
 	sess->mutex.unlock();
 #ifdef K
@@ -1205,10 +1144,8 @@ static void gps_comm_thread(GpsSession *sess)
 		sess->mutex.lock();
 		if (sess->ok) {
 			sess->status_label->setText(QObject::tr("Done."));
-#ifdef K
 			sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
 			sess->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
-#endif
 
 			/* Do not change the view if we are following the current GPS position. */
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1331,13 +1268,15 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 	/* Only create dialog if we're going to do some transferring. */
 	if (do_tracks || do_waypoints || do_routes) {
-#ifdef K
-		sess->dialog = gtk_dialog_new_with_buttons("", layer->get_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+
+		sess->dialog = new BasicDialog(layer->get_window());
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 		sess->dialog->setWindowTitle(sess->window_title);
 
+
 		sess->status_label = new QLabel(QObject::tr("Status: detecting gpsbabel"));
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->status_label, false, false, 5);
+#ifdef K
+		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->status_label, false, false, 5);
 		gtk_widget_show_all(sess->status_label);
 
 		sess->gps_label = new QLabel(QObject::tr("GPS device: N/A"));
@@ -1347,10 +1286,10 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->trk_label = new QLabel("");
 		sess->rte_label = new QLabel("");
 
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->gps_label, false, false, 5);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->wp_label, false, false, 5);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->trk_label, false, false, 5);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(sess->dialog))), sess->rte_label, false, false, 5);
+		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->gps_label, false, false, 5);
+		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->wp_label, false, false, 5);
+		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->trk_label, false, false, 5);
+		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->rte_label, false, false, 5);
 
 		gtk_widget_show_all(sess->dialog);
 
@@ -1366,12 +1305,13 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		g_thread_create((GThreadFunc)gps_comm_thread, sess, false, NULL);
 #endif
 
+#endif
 
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
-		sess->dialog.exec();
+		sess->dialog->exec();
 
-		gtk_widget_destroy(sess->dialog);
-#endif
+		delete sess->dialog;
+
 	} else {
 		if (!turn_off) {
 			Dialog::info(QObject::tr("No GPS items selected for transfer."), layer->get_window());
@@ -1403,63 +1343,59 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 
 
-static void gps_upload_cb(gps_layer_data_t * data)
+void LayerGPS::gps_upload_cb(void)
 {
-	LayersPanel * panel = data->panel;
-	LayerGPS * layer = data->layer;
-
-	Viewport * viewport = layer->get_window()->get_viewport();
-	LayerTRW * trw = layer->trw_children[TRW_UPLOAD];
+	LayersPanel * panel = g_tree->tree_get_items_tree();
+	Viewport * viewport = this->get_window()->get_viewport();
+	LayerTRW * trw = this->trw_children[TRW_UPLOAD];
 
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
 			      GPSDirection::UP,
-			      layer->protocol,
-			      layer->serial_port,
+			      this->protocol,
+			      this->serial_port,
 			      false,
 			      viewport,
 			      panel,
-			      layer->upload_tracks,
-			      layer->upload_routes,
-			      layer->upload_waypoints,
+			      this->upload_tracks,
+			      this->upload_routes,
+			      this->upload_waypoints,
 			      false);
 }
 
 
 
 
-static void gps_download_cb(gps_layer_data_t * data)
+void LayerGPS::gps_download_cb(void) /* Slot. */
 {
-	LayerGPS * layer = data->layer;
-
-	Viewport * viewport = layer->get_window()->get_viewport();
-	LayerTRW * trw = layer->trw_children[TRW_DOWNLOAD];
+	Viewport * viewport = this->get_window()->get_viewport();
+	LayerTRW * trw = this->trw_children[TRW_DOWNLOAD];
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
 			      GPSDirection::DOWN,
-			      layer->protocol,
-			      layer->serial_port,
-			      layer->realtime_tracking,
+			      this->protocol,
+			      this->serial_port,
+			      this->realtime_tracking,
 			      viewport,
 			      NULL,
-			      layer->download_tracks,
-			      layer->download_routes,
-			      layer->download_waypoints,
+			      this->download_tracks,
+			      this->download_routes,
+			      this->download_waypoints,
 			      false);
 #else
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
 			      GPSDirection::DOWN,
-			      layer->protocol,
-			      layer->serial_port,
+			      this->protocol,
+			      this->serial_port,
 			      false,
 			      viewport,
 			      NULL,
-			      layer->download_tracks,
-			      layer->download_routes,
-			      layer->download_waypoints,
+			      this->download_tracks,
+			      this->download_routes,
+			      this->download_waypoints,
 			      false);
 #endif
 }
@@ -1467,80 +1403,68 @@ static void gps_download_cb(gps_layer_data_t * data)
 
 
 
-static void gps_empty_upload_cb(gps_layer_data_t * data)
+void LayerGPS::gps_empty_upload_cb(void)
 {
-	LayerGPS * layer = data->layer;
-	LayersPanel * panel = data->panel;
-
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Upload data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
-	layer->trw_children[TRW_UPLOAD]->delete_all_waypoints();
-	layer->trw_children[TRW_UPLOAD]->delete_all_tracks();
-	layer->trw_children[TRW_UPLOAD]->delete_all_routes();
+	this->trw_children[TRW_UPLOAD]->delete_all_waypoints();
+	this->trw_children[TRW_UPLOAD]->delete_all_tracks();
+	this->trw_children[TRW_UPLOAD]->delete_all_routes();
 }
 
 
 
 
-static void gps_empty_download_cb(gps_layer_data_t * data)
+void LayerGPS::gps_empty_download_cb(void)
 {
-	LayerGPS * layer = data->layer;
-	LayersPanel * panel = data->panel;
-
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Download data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_routes();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_routes();
 }
 
 
 
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-static void gps_empty_realtime_cb(gps_layer_data_t * data)
+void LayerGPS::gps_empty_realtime_cb(void)
 {
-	LayerGPS * layer = data->layer;
-	LayersPanel * panel = data->panel;
-
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
-	layer->trw_children[TRW_REALTIME]->delete_all_waypoints();
-	layer->trw_children[TRW_REALTIME]->delete_all_tracks();
+	this->trw_children[TRW_REALTIME]->delete_all_waypoints();
+	this->trw_children[TRW_REALTIME]->delete_all_tracks();
 }
 #endif
 
 
 
 
-static void gps_empty_all_cb(gps_layer_data_t * data)
+void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
-	LayerGPS * layer = data->layer;
-	LayersPanel * panel = data->panel;
-
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete All GPS data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete All GPS data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
-	layer->trw_children[TRW_UPLOAD]->delete_all_waypoints();
-	layer->trw_children[TRW_UPLOAD]->delete_all_tracks();
-	layer->trw_children[TRW_UPLOAD]->delete_all_routes();
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
-	layer->trw_children[TRW_DOWNLOAD]->delete_all_routes();
+	this->trw_children[TRW_UPLOAD]->delete_all_waypoints();
+	this->trw_children[TRW_UPLOAD]->delete_all_tracks();
+	this->trw_children[TRW_UPLOAD]->delete_all_routes();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
+	this->trw_children[TRW_DOWNLOAD]->delete_all_routes();
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	layer->trw_children[TRW_REALTIME]->delete_all_waypoints();
-	layer->trw_children[TRW_REALTIME]->delete_all_tracks();
+	this->trw_children[TRW_REALTIME]->delete_all_waypoints();
+	this->trw_children[TRW_REALTIME]->delete_all_tracks();
 #endif
 }
 
@@ -1595,11 +1519,11 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 		QPoint trian_bg[3] = { QPoint(ptbg_x, pt_y), QPoint(side1bg_x, side1bg_y), QPoint(side2bg_x, side2bg_y) };
 
 		//QPen const & pen, QPoint const * points, int npoints, bool filled
-#ifdef K
+
 		viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
 		viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
-		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen, x-2, y-2, 4, 4);
-#endif
+		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), x-2, y-2, 4, 4);
+
 		//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 	}
 }
@@ -1953,26 +1877,24 @@ void LayerGPS::rt_gpsd_disconnect()
 
 
 
-static void gps_start_stop_tracking_cb(gps_layer_data_t * data)
+void LayerGPS::gps_start_stop_tracking_cb(void)
 {
-	LayerGPS * layer = data->layer;
-
-	layer->realtime_tracking = (layer->realtime_tracking == false);
+	this->realtime_tracking = (this->realtime_tracking == false);
 
 	/* Make sure we are still in the boat with libgps. */
 	assert ((((int) GPSFixMode::FIX_2D) == MODE_2D) && (((int) GPSFixMode::FIX_3D) == MODE_3D));
 
-	if (layer->realtime_tracking) {
-		layer->first_realtime_trackpoint = true;
-		if (!layer->rt_gpsd_connect(true)) {
-			layer->first_realtime_trackpoint = false;
-			layer->realtime_tracking = false;
-			layer->tp = NULL;
+	if (this->realtime_tracking) {
+		this->first_realtime_trackpoint = true;
+		if (!this->rt_gpsd_connect(true)) {
+			this->first_realtime_trackpoint = false;
+			this->realtime_tracking = false;
+			this->tp = NULL;
 		}
 	} else {  /* Stop realtime tracking. */
-		layer->first_realtime_trackpoint = false;
-		layer->tp = NULL;
-		layer->rt_gpsd_disconnect();
+		this->first_realtime_trackpoint = false;
+		this->tp = NULL;
+		this->rt_gpsd_disconnect();
 	}
 }
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
@@ -1987,13 +1909,20 @@ LayerGPS::LayerGPS()
 	this->interface = &vik_gps_layer_interface;
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-#ifdef K
-	this->realtime_track_pen = viewport->new_pen("#203070", 2);
-	this->realtime_track_bg_pen = viewport->new_pen("grey", 2);
-	this->realtime_track_pt1_pen = viewport->new_pen("red", 2);
-	this->realtime_track_pt2_pen = viewport->new_pen("green", 2);
+	this->realtime_track_pen.setColor(QColor("#203070"));
+	this->realtime_track_pen.setWidth(2);
+
+	this->realtime_track_bg_pen.setColor(QColor("grey"));
+	this->realtime_track_bg_pen.setWidth(2);
+
+	this->realtime_track_pt1_pen.setColor(QColor("red"));
+	this->realtime_track_pt1_pen.setWidth(2);
+
+	this->realtime_track_pt2_pen.setColor(QColor("green"));
+	this->realtime_track_pt2_pen.setWidth(2);
+
 	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
-#endif
+
 	this->gpsd_host = ""; //strdup("host"); TODO
 	this->gpsd_port = ""; //strdup("port"); TODO
 

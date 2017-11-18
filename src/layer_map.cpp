@@ -1625,7 +1625,7 @@ public:
 	std::mutex mutex;
 };
 
-static char * redownload_mode_message(int redownload_mode, int mapstoget, const QString & label);
+static QString redownload_mode_message(int redownload_mode, int mapstoget, const QString & label);
 static void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
 static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
 
@@ -1839,12 +1839,11 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord * ul, cons
 		mdj->mapcoord.y = 0;
 
 		if (mdj->mapstoget) {
-			char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
+			const QString job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
 
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
 			mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
-			a_background_thread(mdj, ThreadPoolType::REMOTE, QString(job_description));
-			free(job_description);
+			a_background_thread(mdj, ThreadPoolType::REMOTE, job_description);
 		} else {
 			delete mdj;
 		}
@@ -1879,13 +1878,12 @@ void LayerMap::download_section_sub(const Coord * ul, const Coord * br, double z
 	mdj->mapcoord.y = 0;
 
 	if (mdj->mapstoget) {
-		char * job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
+		const QString job_description = redownload_mode_message(redownload_mode, mdj->mapstoget, LAYER_MAP_NTH_LABEL(this->map_index));
 
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->n_items = mdj->mapstoget; /* kamilTODO: Hide in constructor or in mdj_calculate_mapstoget(). */
 
-		a_background_thread(mdj, ThreadPoolType::REMOTE, QString(job_description));
-		free(job_description);
+		a_background_thread(mdj, ThreadPoolType::REMOTE, job_description);
 	} else {
 		delete mdj;
 	}
@@ -2638,21 +2636,20 @@ MapDownloadJob::~MapDownloadJob()
 
 
 
-char * redownload_mode_message(int redownload_mode, int mapstoget, const QString & label)
+QString redownload_mode_message(int redownload_mode, int mapstoget, const QString & label)
 {
-	char * format = NULL;
+	QString fmt;
 	if (redownload_mode) {
 		if (redownload_mode == REDOWNLOAD_BAD) {
-			format = ngettext("Redownloading up to %d %s map...", "Redownloading up to %d %s maps...", mapstoget);
+			fmt = QObject::tr("Redownloading up to %n %s maps...", "", mapstoget);
 		} else {
-			format = ngettext("Redownloading %d %s map...", "Redownloading %d %s maps...", mapstoget);
+			fmt = QObject::tr("Redownloading %n %s maps...", "", mapstoget);
 		}
 	} else {
-		format = ngettext("Downloading %d %s map...", "Downloading %d %s maps...", mapstoget);
+		fmt = QObject::tr("Downloading %n %s maps...", "", mapstoget);
 	}
 
-	char * result = g_strdup_printf(format, mapstoget, label.toUtf8().constData());
-	return result;
+	return QString(fmt).arg(label);
 }
 
 

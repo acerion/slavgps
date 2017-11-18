@@ -118,6 +118,7 @@ namespace SlavGPS {
 
 
 	class LayerGPS : public Layer {
+		Q_OBJECT
 	public:
 		LayerGPS();
 		~LayerGPS();
@@ -163,11 +164,14 @@ namespace SlavGPS {
 		GIOChannel * realtime_io_channel = NULL;
 		unsigned int realtime_io_watch_id = 0;
 		unsigned int realtime_retry_timer = 0;
-		QPen * realtime_track_pen = NULL;
-		QPen * realtime_track_bg_pen = NULL;
-		QPen * realtime_track_pt_pen = NULL;
-		QPen * realtime_track_pt1_pen = NULL;
-		QPen * realtime_track_pt2_pen = NULL;
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+		QPen realtime_track_pen;
+		QPen realtime_track_bg_pen;
+		QPen realtime_track_pt_pen;
+		QPen realtime_track_pt1_pen;
+		QPen realtime_track_pt2_pen;
+#endif
 
 		/* Params. */
 		QString gpsd_host;
@@ -189,6 +193,18 @@ namespace SlavGPS {
 		bool upload_tracks;
 		bool upload_routes;
 		bool upload_waypoints;
+
+	public slots:
+		void gps_upload_cb(void);
+		void gps_download_cb(void);
+		void gps_empty_download_cb(void);
+		void gps_empty_all_cb(void);
+		void gps_empty_upload_cb(void);
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+		void gps_start_stop_tracking_cb(void);
+		void gps_empty_realtime_cb(void);
+#endif
 	};
 
 

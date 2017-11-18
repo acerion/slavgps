@@ -24,7 +24,7 @@
 
 #include <QDebug>
 
-#ifdef K
+#if 0
 #include <gdk-pixbuf/gdk-pixdata.h>
 #endif
 

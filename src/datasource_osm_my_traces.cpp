@@ -436,32 +436,24 @@ static bool read_gpx_files_metadata_xml(char *tmpname, xml_data *xd)
 
 static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::list<gpx_meta_data_t *> & list, const char *title, const char *msg)
 {
-#ifdef K
-	GtkTreeIter iter;
-	GtkCellRenderer *renderer;
-	GtkWidget *view;
-	char *latlon_string;
-	int column_runner;
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
+	BasicDialog * dialog = new BasicDialog(parent);
+
+	dialog->setWindowTitle(title);
 	/* When something is selected then OK. */
 	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	/* Default to not apply - as initially nothing is selected! */
-	QPushButton * cancel_button = dialog->button_box.button(QDialogButtonBox::Cancel);
+	QPushButton * cancel_button = dialog->button_box->button(QDialogButtonBox::Cancel);
 
 	QLabel * label = new QLabel(msg);
+
+#ifdef K
+
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
 		gpx_meta_data_t * gpx_meta_data = *iter;
 		/* To keep display compact three digits of precision for lat/lon should be plenty. */
-		latlon_string = g_strdup_printf("(%.3f,%.3f)", gpx_meta_data->ll.lat, gpx_meta_data->ll.lon);
+		char * latlon_string = g_strdup_printf("(%.3f,%.3f)", gpx_meta_data->ll.lat, gpx_meta_data->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
 		gtk_tree_store_set(store, &iter,
 				   0, gpx_meta_data->name,
@@ -473,6 +465,11 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 				   -1);
 		free(latlon_string);
 	}
+
+	GtkTreeIter iter;
+	GtkCellRenderer *renderer;
+	GtkWidget *view;
+	int column_runner;
 
 	view = gtk_tree_view_new();
 	renderer = gtk_cell_renderer_text_new();
@@ -563,8 +560,10 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 		}
 		Dialog::error(tr("Nothing was selected"), parent);
 	}
-	gtk_widget_destroy (dialog);
 #endif
+
+	delete dialog;
+
 	return NULL;
 }
 
