@@ -952,6 +952,7 @@ LayerDEM::LayerDEM()
 	this->colors[0] = new QColor("#0000FF");
 
 	this->set_initial_parameter_values();
+	this->set_name(Layer::get_type_ui_label(this->type));
 
 	/* TODO: share ->colors[] between layers. */
 	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {

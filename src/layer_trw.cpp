@@ -1029,7 +1029,7 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 
-void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * values)
+void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * values)
 {
 	// This '-3' is to account for the first few parameters not in the properties
 	const int OFFSET = -3;
@@ -1038,7 +1038,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_WP_IMAGE_DRAW: {
 		// Get new value
-		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_IMAGE_SIZE];
@@ -1058,7 +1058,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
 	case PARAM_DLA: {
 		// Get new value
-		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WP_LABEL_FG_COLOR];
@@ -1082,7 +1082,7 @@ void LayerTRWInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		// Alter sensitivity of all track colors according to the draw track mode.
 	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
-		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		bool sensitive = (var.i == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
@@ -4717,6 +4717,7 @@ LayerTRW::LayerTRW() : Layer()
 	memset(&coord_mode, 0, sizeof (CoordMode));
 
 	this->set_initial_parameter_values();
+	this->set_name(Layer::get_type_ui_label(this->type));
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */
@@ -4726,8 +4727,6 @@ LayerTRW::LayerTRW() : Layer()
 	this->draw_sync_done = true;
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
-
-	this->set_name(Layer::get_type_ui_label(this->type));
 
 
 #ifdef K

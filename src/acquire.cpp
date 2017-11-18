@@ -320,14 +320,15 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	}
 	void * pass_along_data = this->user_data;
 
+
 	if (interface->check_existence_func) {
-		char *error_str = interface->check_existence_func();
-		if (error_str) {
-			Dialog::error(error_str, this->window);
-			free(error_str);
+		QString error_msg;
+		if (!interface->check_existence_func(error_msg)) {
+			Dialog::error(error_msg, this->window);
 			return;
 		}
 	}
+
 
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
 

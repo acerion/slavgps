@@ -174,6 +174,7 @@ HEADERS += window.h \
     thumbnails.h \
     osm.h \
     osm-traces.h \
+    datasource_gc.h \
     datasource_gps.h \
     datasource_routing.h \
     datasource_osm.h \

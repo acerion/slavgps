@@ -1309,6 +1309,7 @@ LayerGeoref::LayerGeoref()
 	/* Since GeoRef layer doesn't use uibuilder initializing this
 	   way won't do anything yet... */
 	this->set_initial_parameter_values();
+	this->set_name(Layer::get_type_ui_label(this->type));
 
 	this->ll_br.lat = 0.0;
 	this->ll_br.lon = 0.0;

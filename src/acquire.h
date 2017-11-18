@@ -105,9 +105,9 @@ namespace SlavGPS {
 	typedef void * (* DataSourceInitFunc)(acq_vik_t * avt);
 
 	/**
-	   Returns: %NULL if OK, otherwise returns an error message.
+	   Returns: true on success, false on failure; on failure error message is returned through function's argument.
 	*/
-	typedef char * (* DataSourceCheckExistenceFunc)();
+	typedef bool (* DataSourceCheckExistenceFunc)(QString & error_msg);
 
 	/**
 	   Create a dialog for configuring/setting up access to data source

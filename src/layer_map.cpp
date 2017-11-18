@@ -758,13 +758,13 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 #ifdef K
-void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * values)
+void LayerMapInterface::change_param(void * gtk_widget, ui_change_values * values)
 {
 	switch (values->param_id) {
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
 	case PARAM_MAPTYPE: {
 		/* Get new value. */
-		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
 		bool sensitive = (MAP_ID_OSM_ON_DISK != var.i &&
 				  MAP_ID_MBTILES != var.i &&
@@ -834,7 +834,7 @@ void LayerMapInterface::change_param(GtkWidget * widget, ui_change_values * valu
 		/* Alter sensitivity of 'download only missing' widgets according to the autodownload setting. */
 	case PARAM_AUTODOWNLOAD: {
 		/* Get new value. */
-		SGVariant var = a_uibuilder_widget_get_value(widget, values->param);
+		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
@@ -2664,4 +2664,5 @@ LayerMap::LayerMap()
 	this->interface = &vik_map_layer_interface;
 
 	this->set_initial_parameter_values();
+	this->set_name(Layer::get_type_ui_label(this->type));
 }

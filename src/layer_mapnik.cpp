@@ -1200,6 +1200,8 @@ LayerMapnik::LayerMapnik()
 	this->interface = &vik_mapnik_layer_interface;
 
 	this->set_initial_parameter_values();
+	this->set_name(Layer::get_type_ui_label(this->type));
+
 	this->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = mapnik_interface_new();

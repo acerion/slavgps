@@ -378,6 +378,5 @@ LayerCoord::LayerCoord()
 	this->interface = &vik_coord_layer_interface;
 
 	this->set_initial_parameter_values();
-
 	this->set_name(Layer::get_type_ui_label());
 }

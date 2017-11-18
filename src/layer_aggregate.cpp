@@ -950,8 +950,9 @@ LayerAggregate::LayerAggregate()
 
 	this->type = LayerType::AGGREGATE;
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
-	this->interface = &vik_aggregate_layer_interface;
 
+	this->interface = &vik_aggregate_layer_interface;
 	this->set_name(Layer::get_type_ui_label(this->type));
+
 	this->children = new std::list<Layer *>;
 }
