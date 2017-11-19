@@ -31,17 +31,12 @@
 
 #include <QDialog>
 #include <QInputDialog>
-#include <QObject>
-#include <QHeaderView>
 #include <QDebug>
 
 #include "dialog.h"
-#include "viewport.h"
 #include "ui_util.h"
 #include "date_time_dialog.h"
 #include "degrees_converters.h"
-#include "authors.h"
-#include "documenters.h"
 #include "globals.h"
 
 
@@ -135,24 +130,6 @@ int Dialog::get_int(const QString & title, const QString & label, int default_nu
 
 
 
-#ifdef K
-static void about_url_hook(const char * url, void * data)
-{
-	open_url(url);
-}
-
-
-
-
-static void about_email_hook(GtkAboutDialog *about, const char * email,  void * data)
-{
-	new_email(GTK_WINDOW(about), email);
-}
-#endif
-
-
-
-
 /**
    Creates a dialog with list of text.
    Mostly useful for longer messages that have several lines of information.
@@ -176,111 +153,6 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
 
 	box.exec();
 }
-
-
-
-
-void Dialog::about(QWidget * parent)
-{
-	const QString program_name = PACKAGE_NAME;
-	const QString version = VIKING_VERSION;
-	const QString website = VIKING_URL;
-	const QString copyright = QObject::tr("2003-2008, Evan Battaglia\n2008-" THEYEAR", Viking's contributors");
-	const QString comments = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.");
-	const QString license = QObject::tr("This program is free software; you can redistribute it and/or modify "
-				"it under the terms of the GNU General Public License as published by "
-				"the Free Software Foundation; either version 2 of the License, or "
-				"(at your option) any later version."
-				"\n\n"
-				"This program is distributed in the hope that it will be useful, "
-				"but WITHOUT ANY WARRANTY; without even the implied warranty of "
-				"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the "
-				"GNU General Public License for more details."
-				"\n\n"
-				"You should have received a copy of the GNU General Public License "
-				"along with this program; if not, write to the Free Software "
-				"Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA");
-
-	/* Would be nice to use gtk_about_dialog_add_credit_section (), but that requires gtk 3.4. */
-	/* For now shove it in the 'artists' section so at least the information is easily visible. */
-	/* Something more advanced might have proper version information too... */
-	QStringList libs;
-	libs << QObject::tr("Compiled in libraries:");
-
-	/* Default libs. */
-	libs << "libglib-2.0" << "libgthread-2.0" << "libgtk+-2.0" << "libgio-2.0";
-
-	/* TODO: write own About dialog? */
-	QMessageBox::about(parent, QObject::tr("About Viking"), license);
-
-#ifdef K
-	/* Potentially optional libs (but probably couldn't build without them). */
-#ifdef HAVE_LIBM
-		"libm",
-#endif
-#ifdef HAVE_LIBZ
-		"libz",
-#endif
-#ifdef HAVE_LIBCURL
-		"libcurl",
-#endif
-#ifdef HAVE_EXPAT_H
-		"libexpat",
-#endif
-		/* Actually optional libs. */
-#ifdef HAVE_LIBGPS
-		"libgps",
-#endif
-#ifdef HAVE_LIBGEXIV2
-		"libgexiv2",
-#endif
-#ifdef HAVE_LIBEXIF
-		"libexif",
-#endif
-#ifdef HAVE_LIBX11
-		"libX11",
-#endif
-#ifdef HAVE_LIBMAGIC
-		"libmagic",
-#endif
-#ifdef HAVE_LIBBZ2
-		"libbz2",
-#endif
-#ifdef HAVE_LIBZIP
-		"libzip",
-#endif
-#ifdef HAVE_LIBSQLITE3
-		"libsqlite3",
-#endif
-#ifdef HAVE_LIBMAPNIK
-		"libmapnik",
-#endif
-
-
-	/* Newer versions of GTK 'just work', calling gtk_show_uri() on the URL or email and opens up the appropriate program.
-	   This is the old method: */
-	gtk_about_dialog_set_url_hook(about_url_hook, NULL, NULL);
-	gtk_about_dialog_set_email_hook(about_email_hook, NULL, NULL);
-
-	gtk_show_about_dialog(parent,
-			      /* TODO do not set program-name and correctly set info for g_get_application_name. */
-			      "program-name", program_name,
-			      "version", version,
-			      "website", website,
-			      "comments", comments,
-			      "copyright", copyright,
-			      "license", license,
-			      "wrap-license", true,
-			      /* Logo automatically retrieved via gtk_window_get_default_icon_list. */
-			      "authors", AUTHORS,
-			      "documenters", DOCUMENTERS,
-			      "translator-credits", _("Translation is coordinated on http://launchpad.net/viking"),
-			      "artists", libs,
-			      NULL);
-
-#endif /* #ifdef K */
-}
-
 
 
 
@@ -330,13 +202,42 @@ BasicDialog::BasicDialog(QWidget * parent)
 	this->button_box = new QDialogButtonBox();
 	this->button_box->addButton(QDialogButtonBox::Ok);
 	this->button_box->addButton(QDialogButtonBox::Cancel);
-	QObject::connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 	this->vbox->addWidget(this->button_box);
 }
 
 
 
+
 BasicDialog::~BasicDialog()
+{
+}
+
+
+
+
+BasicMessage::BasicMessage(QWidget * parent)
+{
+	this->vbox = new QVBoxLayout;
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	this->vbox->addWidget(this->button_box);
+}
+
+
+
+
+BasicMessage::~BasicMessage()
 {
 }

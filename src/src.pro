@@ -134,6 +134,7 @@ SOURCES += main.cpp \
     download.cpp \
     curl_download.cpp \
     dialog.cpp \
+    dialog_about.cpp \
     application_state.cpp \
     statusbar.cpp \
     modules.cpp \

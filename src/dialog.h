@@ -64,11 +64,29 @@ namespace SlavGPS {
 
 
 
+	/* Dialog with "OK" and "Cancel" buttons, allowing a basic decision to be taken by user. */
 	class BasicDialog : public QDialog {
 		Q_OBJECT
 	public:
 		BasicDialog(QWidget * parent = NULL);
 		~BasicDialog();
+
+	/* protected: */
+		QVBoxLayout * vbox = NULL;
+		QGridLayout * grid = NULL;
+		QDialogButtonBox * button_box = NULL;
+	};
+
+
+
+
+	/* Dialog with "OK" button, only for presenting data.
+	   Single button doesn't provide means to user to make decision. */
+	class BasicMessage : public QDialog {
+		Q_OBJECT
+	public:
+		BasicMessage(QWidget * parent = NULL);
+		~BasicMessage();
 
 	/* protected: */
 		QVBoxLayout * vbox = NULL;
