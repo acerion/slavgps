@@ -39,6 +39,8 @@ renaming functions and defining LatLon and UTM structs.
 #include "config.h"
 #endif
 
+#include <QLocale>
+
 #include <glib.h>
 #include <cstdint>
 #include <cstdio>
@@ -54,6 +56,7 @@ renaming functions and defining LatLon and UTM structs.
 #endif
 
 
+#include "measurements.h"
 #include "coords.h"
 #ifdef HAVE_VIKING
 #include "globals.h"
@@ -68,6 +71,24 @@ renaming functions and defining LatLon and UTM structs.
 
 
 using namespace SlavGPS;
+
+
+
+
+QString LatLon::lat_to_string_raw(const LatLon & lat_lon)
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(lat_lon.lat, 'f', SG_PRECISION_LATITUDE);
+}
+
+
+
+
+QString LatLon::lon_to_string_raw(const LatLon & lat_lon)
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(lat_lon.lon, 'f', SG_PRECISION_LONGITUDE);
+}
 
 
 

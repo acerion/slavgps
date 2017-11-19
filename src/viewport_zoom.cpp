@@ -64,14 +64,14 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
+	int row = 0;
 
-	this->vbox = new QVBoxLayout();
+	QLabel * main_label = new QLabel(QObject::tr("Zoom factor (in meters per pixel):"), this);
+	this->grid->addWidget(main_label, row, 0, 1, 2); /* Row span = 1, Column span = 2. */
+	row++;
 
 
-	this->main_label.setText(QObject::tr("Zoom factor (in meters per pixel):"));
-	this->xlabel.setText(QObject::tr("X (easting): "));
-	this->ylabel.setText(QObject::tr("Y (northing): "));
-
+	QLabel * xlabel = new QLabel(QObject::tr("X (easting):"), this);
 
 	/* TODO: add some kind of validation and indication for values out of range. */
 	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
@@ -80,6 +80,12 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
 	this->xspin.setValue(*xmpp);
 
+	this->grid->addWidget(xlabel, row, 0);
+	this->grid->addWidget(&this->xspin, row, 1);
+	row++;
+
+
+	QLabel * ylabel = new QLabel(QObject::tr("Y (northing):"), this);
 
 	/* TODO: add some kind of validation and indication for values out of range. */
 	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
@@ -88,38 +94,21 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
 	this->yspin.setValue(*ympp);
 
-
-	this->grid = new QGridLayout();
-	this->grid->addWidget(&this->xlabel, 0, 0);
-	this->grid->addWidget(&this->xspin, 0, 1);
-	this->grid->addWidget(&this->ylabel, 1, 0);
-	this->grid->addWidget(&this->yspin, 1, 1);
+	this->grid->addWidget(ylabel, row, 0);
+	this->grid->addWidget(&this->yspin, row, 1);
+	row++;
 
 
 	this->checkbox.setText(QObject::tr("X and Y zoom factors must be equal"));
 	if (*xmpp == *ympp) {
 		this->checkbox.setChecked(true);
 	}
+	this->grid->addWidget(&this->checkbox, row, 0, 1, 2); /* Row span = 1, Column span = 2. */
+	row++;
 
-
-	this->vbox->addWidget(&this->main_label);
-	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(&this->checkbox);
-	this->vbox->addWidget(&this->button_box);
 
 	QObject::connect(&this->xspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
 	QObject::connect(&this->yspin, SIGNAL (valueChanged(double)), this, SLOT (spin_changed_cb(double)));
-
-
-	this->button_box.addButton(QDialogButtonBox::Ok);
-	this->button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
 }
 
 

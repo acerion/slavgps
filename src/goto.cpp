@@ -61,7 +61,7 @@ std::vector<GotoTool *> goto_tools;
 
 
 
-static bool goto_latlon_dialog(Window * parent, struct LatLon * ll, const struct LatLon * old);
+static bool goto_latlon_dialog(Window * parent, LatLon & new_lat_lon, const LatLon & initial_lat_lon);
 static bool goto_utm_dialog(Window * parent, struct UTM * utm, const struct UTM * old);
 static QString goto_location_dialog(Window * window);
 
@@ -477,11 +477,11 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 {
 	Coord new_center;
 
-	struct LatLon ll;
-	struct LatLon llold = viewport->get_center()->get_latlon();
+	LatLon new_lat_lon;
+	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
 
-	if (goto_latlon_dialog(window, &ll, &llold)) {
-		new_center = Coord(ll, viewport->get_coord_mode());
+	if (goto_latlon_dialog(window, new_lat_lon, initial_lat_lon)) {
+		new_center = Coord(new_lat_lon, viewport->get_coord_mode());
 	} else {
 		return;
 	}
@@ -493,49 +493,30 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 
 
 
-bool goto_latlon_dialog(SlavGPS::Window * parent, struct LatLon * ll, const struct LatLon * old)
+bool goto_latlon_dialog(SlavGPS::Window * parent, LatLon & new_lat_lon, const LatLon & initial_lat_lon)
 {
-	char buffer[64] = { 0 };
-
-
-	QDialog dialog(parent);
+	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
 
 
-	QVBoxLayout vbox;
-	QLayout * old_layout = dialog.layout();
-	delete old_layout;
-	dialog.setLayout(&vbox);
-
-
 	QLabel lat_label(QObject::tr("Latitude:"));
-	vbox.addWidget(&lat_label);
+	dialog.grid->addWidget(&lat_label, 0, 0);
 
 
 	QLineEdit lat_input;
 	QObject::connect(&lat_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", old->lat);
-	lat_input.setText(buffer);
-	vbox.addWidget(&lat_input);
+	lat_input.setText(LatLon::lat_to_string_raw(initial_lat_lon));
+	dialog.grid->addWidget(&lat_input, 0, 1);
 
 
 	QLabel lon_label(QObject::tr("Longitude:"));
-	vbox.addWidget(&lon_label);
+	dialog.grid->addWidget(&lon_label, 1, 0);
 
 
 	QLineEdit lon_input;
 	QObject::connect(&lon_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", old->lon);
-	lon_input.setText(buffer);
-	vbox.addWidget(&lon_input);
-
-
-	QDialogButtonBox button_box;
-	button_box.addButton(QDialogButtonBox::Ok);
-	button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-	vbox.addWidget(&button_box);
+	lon_input.setText(LatLon::lon_to_string_raw(initial_lat_lon));
+	dialog.grid->addWidget(&lon_input, 1, 1);
 
 
 	/* Ensure the first text field has focus so we can start typing straight away. */
@@ -544,8 +525,8 @@ bool goto_latlon_dialog(SlavGPS::Window * parent, struct LatLon * ll, const stru
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* kamilTODO: what's going on here? Why we use these functions? */
-		ll->lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
-		ll->lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
+		new_lat_lon.lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
+		new_lat_lon.lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
 		return true;
 	} else {
 		return false;
@@ -581,40 +562,34 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 	char buffer[64] = { 0 };
 
 
-	QDialog dialog(parent);
+	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to UTM"));
 
 
-	QVBoxLayout vbox;
-	QLayout * old_layout = dialog.layout();
-	delete old_layout;
-	dialog.setLayout(&vbox);
-
-
 	QLabel northing_label(QObject::tr("Northing:"));
-	vbox.addWidget(&northing_label);
+	dialog.grid->addWidget(&northing_label, 0, 0);
 
 
 	QLineEdit northing_input;
 	QObject::connect(&northing_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
 	snprintf(buffer, sizeof (buffer), "%f", old->northing);
 	northing_input.setText(buffer);
-	vbox.addWidget(&northing_input);
+	dialog.grid->addWidget(&northing_input, 0, 1);
 
 
 	QLabel easting_label(QObject::tr("Easting:"));
-	vbox.addWidget(&easting_label);
+	dialog.grid->addWidget(&easting_label, 1, 0);
 
 
 	QLineEdit easting_input;
 	QObject::connect(&easting_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
 	snprintf(buffer, sizeof (buffer), "%f", old->easting);
 	easting_input.setText(buffer);
-	vbox.addWidget(&easting_input);
+	dialog.grid->addWidget(&easting_input, 1, 1);
 
 
 	QLabel zone_label(QObject::tr("Zone:"));
-	vbox.addWidget(&zone_label);
+	dialog.grid->addWidget(&zone_label, 2, 0);
 
 
 	QSpinBox zone_spinbox;
@@ -623,11 +598,11 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 	zone_spinbox.setMaximum(60);
 	zone_spinbox.setSingleStep(1);
 	zone_spinbox.setValue(old->zone);
-	vbox.addWidget(&zone_spinbox);
+	dialog.grid->addWidget(&zone_spinbox, 2, 1);
 
 
 	QLabel letter_label(QObject::tr("Letter:"));
-	vbox.addWidget(&letter_label);
+	dialog.grid->addWidget(&letter_label, 3, 0);
 
 
 	QLineEdit letter_input;
@@ -637,15 +612,7 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 	letter_input.setText(buffer);
 	letter_input.setMaxLength(1);
 	letter_input.setInputMask("A");
-	vbox.addWidget(&letter_input);
-
-
-	QDialogButtonBox button_box;
-	button_box.addButton(QDialogButtonBox::Ok);
-	button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-	vbox.addWidget(&button_box);
+	dialog.grid->addWidget(&letter_input, 3, 1);
 
 
 	/* Ensure the first text field has focus so we can start typing straight away. */

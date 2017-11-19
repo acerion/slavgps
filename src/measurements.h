@@ -38,6 +38,8 @@ namespace SlavGPS {
 #define SG_PRECISION_DISTANCE   2
 #define SG_PRECISION_SPEED      2
 #define SG_PRECISION_COURSE     1
+#define SG_PRECISION_LATITUDE   6
+#define SG_PRECISION_LONGITUDE  6
 
 
 

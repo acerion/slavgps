@@ -37,6 +37,33 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
+
+#include <QString>
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	class LatLon {
+	public:
+		double lat;
+		double lon;
+
+		/* Convert to string with DegreeFormat::RAW format. */
+		static QString lat_to_string_raw(const LatLon & lat_lon);
+		static QString lon_to_string_raw(const LatLon & lat_lon);
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,18 +76,14 @@ struct UTM {
   char letter;
 };
 
-struct LatLon {
-	double lat;
-	double lon;
-};
 
 int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );
 
-void a_coords_latlon_to_utm(struct UTM * utm, const struct LatLon * ll);
-void a_coords_utm_to_latlon(struct LatLon * ll, const struct UTM * utm);
+void a_coords_latlon_to_utm(struct UTM * utm, const struct SlavGPS::LatLon * ll);
+void a_coords_utm_to_latlon(struct SlavGPS::LatLon * ll, const struct UTM * utm);
 
 double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 );
-double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2 );
+double a_coords_latlon_diff ( const struct SlavGPS::LatLon *ll1, const struct SlavGPS::LatLon *ll2 );
 
 /**
  * Convert a double to a string WITHOUT LOCALE.
@@ -77,7 +100,7 @@ char *a_coords_dtostr ( double d );
  *
  * Use the prefered representation.
  */
-void a_coords_latlon_to_string ( const struct LatLon *latlon, char **lat, char **lon );
+void a_coords_latlon_to_string ( const struct SlavGPS::LatLon *latlon, char **lat, char **lon );
 
 #ifdef __cplusplus
 }

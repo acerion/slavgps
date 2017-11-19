@@ -36,6 +36,11 @@
 
 
 
+#include "dialog.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -50,7 +55,7 @@ namespace SlavGPS {
 
 
 
-	class ViewportZoomDialog : public QDialog {
+	class ViewportZoomDialog : public BasicDialog {
 		Q_OBJECT
 	public:
 		ViewportZoomDialog() {};
@@ -63,17 +68,8 @@ namespace SlavGPS {
 		void spin_changed_cb(double new_value);
 
 	private:
-		QDialogButtonBox button_box;
-		QVBoxLayout * vbox = NULL;
-
-		QLabel main_label;
-		QLabel xlabel;
-		QLabel ylabel;
-
 		QDoubleSpinBox xspin;
 		QDoubleSpinBox yspin;
-
-		QGridLayout * grid = NULL;
 
 		QCheckBox checkbox;
 	};
