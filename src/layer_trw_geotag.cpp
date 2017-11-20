@@ -34,6 +34,7 @@
 #include <glib.h>
 
 #include <QCheckBox>
+#include <QLineEdit>
 
 #include "widget_file_list.h"
 #include "geotag_exif.h"

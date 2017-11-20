@@ -48,6 +48,7 @@
 #include "layer_trw_waypoint_list.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_list_dialog.h"
+#include "layer_trw_trackpoint_properties.h"
 #include "layer_map.h"
 #include "tree_view_internal.h"
 #include "vikutils.h"

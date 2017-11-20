@@ -43,6 +43,11 @@
 
 
 
+#include "date_time_dialog.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -87,7 +92,9 @@ namespace SlavGPS {
 		void sync_alt_to_tp_cb(void);
 		void sync_timestamp_to_tp_cb(void);
 		bool set_name_cb(void);
-		void datetime_clicked_cb(void);
+
+		void set_timestamp_cb(time_t timestamp);
+		void clear_timestamp_cb(void);
 
 	private:
 		void update_times(Trackpoint * tp);
@@ -117,7 +124,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * alt = NULL;
 		QLabel * course = NULL;
 		QSpinBox * timestamp = NULL;
-		QPushButton * datetime = NULL;
+		SGDateTimeButton * date_time_button = NULL;
 
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;

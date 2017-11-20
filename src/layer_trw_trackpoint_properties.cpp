@@ -60,11 +60,10 @@ void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
 	if (tp->has_timestamp) {
 		this->timestamp->setValue(tp->timestamp);
-		const QString msg = vu_get_time_string(&tp->timestamp, "%c", &tp->coord, NULL);
-		this->datetime->setText(msg);
+		this->date_time_button->set_label(tp->timestamp, "%c", &tp->coord, NULL);
 	} else {
 		this->timestamp->setValue(0);
-		this->datetime->setText("");
+		this->date_time_button->clear_label();
 	}
 }
 
@@ -140,54 +139,48 @@ void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
 
 
 
-static time_t last_edit_time = 0;
-
-void PropertiesDialogTP::datetime_clicked_cb(void)
+/* Set timestamp of current trackpoint. */
+void PropertiesDialogTP::set_timestamp_cb(time_t timestamp_value)
 {
+	qDebug() << "SLOT: Layer TRW Trackpoint Properties: 'Set Timestamp' slot" << timestamp_value;
+
 	if (!this->cur_tp) {
 		return;
 	}
 	if (this->sync_to_tp_block) {
+		/* TODO: indicate to user that operation has failed. */
 		return;
-	}
-
-#ifdef K
-	if (event->button() == Qt::RightButton) {
-		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
-		if (this->datetime->icon().isNull()) {
-			vu_copy_label_menu(widget, event->button());
-		}
-		return;
-	} else if (event->button() == Qt::MiddleButton) {
-		return;
-	}
-#endif
-
-	if (this->cur_tp->has_timestamp) {
-		last_edit_time = this->cur_tp->timestamp;
-	} else if (last_edit_time == 0) {
-		time(&last_edit_time);
-	} else {
-	        /* Use last_edit_time that was set previously. */
-	}
-
-	time_t new_timestamp = 0;
-	if (!date_time_dialog(tr("Edit Date/Time"), last_edit_time, new_timestamp, this)) {
-		/* The dialog was cancelled? */
-		return;
-	} else {
-		last_edit_time = new_timestamp;
-		this->cur_tp->timestamp = new_timestamp;
-		this->cur_tp->has_timestamp = true;
 	}
 
 	/* TODO: consider warning about unsorted times? */
 
-	/* Clear the previous 'Add' icon as now a time is set. */
-	if (!this->datetime->icon().isNull()) {
-		this->datetime->setIcon(QIcon());
+	/* TODO: consider saving given timestamp and somehow passing
+	   it to date/time dialog next time a timestamp needs to be
+	   set on non-initialized tp ("last edit time"). */
+
+	this->cur_tp->timestamp = timestamp_value;
+	this->cur_tp->has_timestamp = true;
+	this->update_times(this->cur_tp);
+}
+
+
+
+
+/* Clear timestamp of current trackpoint. */
+void PropertiesDialogTP::clear_timestamp_cb(void)
+{
+	qDebug() << "SLOT: Layer TRW Trackpoint Properties: 'Clear Timestamp' slot";
+
+	if (!this->cur_tp) {
+		return;
+	}
+	if (this->sync_to_tp_block) {
+		/* TODO: indicate to user that operation has failed. */
+		return;
 	}
 
+	this->cur_tp->timestamp = 0;
+	this->cur_tp->has_timestamp = false;
 	this->update_times(this->cur_tp);
 }
 
@@ -217,7 +210,7 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
 
-	this->datetime->setText("");
+	this->date_time_button->setText("");
 
 	this->course->setText("");
 
@@ -225,7 +218,7 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->lon->setEnabled(false);
 	this->alt->setEnabled(false);
 	this->timestamp->setEnabled(false);
-	this->datetime->setEnabled(false);
+	this->date_time_button->setEnabled(false);
 
 	/* Only keep Close button enabled. */
 	this->button_insert_tp_after->setEnabled(false);
@@ -288,15 +281,14 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->alt->setEnabled(true);
 	this->timestamp->setEnabled(tp->has_timestamp);
 
-	this->datetime->setEnabled(tp->has_timestamp);
+	this->date_time_button->setEnabled(tp->has_timestamp);
 	/* Enable adding timestamps - but not on routepoints. */
 	if (!tp->has_timestamp && !is_route) {
-		this->datetime->setEnabled(true);
-		this->datetime->setIcon(QIcon::fromTheme("list-add"));
+		this->date_time_button->setEnabled(true);
 	} else {
 		this->set_dialog_title(track->name);
-		if (!this->datetime->icon().isNull()) {
-			this->datetime->setIcon(QIcon());
+		if (!this->date_time_button->icon().isNull()) {
+			this->date_time_button->setIcon(QIcon());
 		}
 	}
 
@@ -511,12 +503,11 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	connect(this->timestamp, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
 
 
-	this->datetime = new QPushButton(this);
-	left_form->addRow(QString("Time:"), this->datetime);
-#ifdef K
-	gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
-#endif
-	connect(this->datetime, SIGNAL (released(void)), this, SLOT (datetime_clicked_cb(void)));
+	this->date_time_button = new SGDateTimeButton(this);
+	left_form->addRow(QString("Time:"), this->date_time_button);
+	//connect(this->date_time_button, SIGNAL (released(void)), this, SLOT (date_time_button_clicked_cb(void)));
+	connect(this->date_time_button, SIGNAL (clear_timestamp_signal(void)), this, SLOT (clear_timestamp_cb(void)));
+	connect(this->date_time_button, SIGNAL (set_timestamp_signal(time_t)), this, SLOT (set_timestamp_cb(time_t)));
 
 
 	this->diff_dist = new QLabel("", this);

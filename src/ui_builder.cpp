@@ -664,7 +664,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::DATETIME: {
-			SGDateTime * widget_ = new SGDateTime(param_value.val_uint, this);
+			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.val_uint, this);
 
 			widget = widget_;
 		}
@@ -816,7 +816,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		}
 		break;
 	case WidgetType::DATETIME:
-		rv = SGVariant((uint32_t) ((SGDateTime *) widget)->value());
+		rv = SGVariant((uint32_t) ((SGDateTimeButton *) widget)->get_value());
 		break;
 	default:
 		break;

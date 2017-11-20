@@ -45,7 +45,6 @@
 #include "layer_trw_tracks.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"
-#include "layer_trw_trackpoint_properties.h"
 #include "viewport.h"
 #include "file.h"
 
@@ -62,6 +61,7 @@ namespace SlavGPS {
 	class Track;
 	class TrackpointSearch;
 	class WaypointSearch;
+	class PropertiesDialogTP;
 
 
 

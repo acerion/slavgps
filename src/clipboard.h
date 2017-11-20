@@ -24,6 +24,11 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 

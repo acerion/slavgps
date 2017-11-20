@@ -25,8 +25,6 @@
  */
 
 
-#include <QAbstractButton>
-
 #include <cmath>
 #include <cstdlib>
 #include <unistd.h>
@@ -220,9 +218,9 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			QString time_string;
 			if (tp->has_timestamp) {
 				/* Compact date time format. */
-				time_string = vu_get_time_string(&tp->timestamp, "%x %X", &tp->coord, NULL);
+				time_string = SGUtils::get_time_string(tp->timestamp, "%x %X", &tp->coord, NULL);
 			} else {
-				time_string = strdup("--");
+				time_string = "--";
 			}
 			values[i] = QObject::tr("%1Time %2").arg(separator).arg(time_string);
 			break;
@@ -768,16 +766,20 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
  *
  * Returns: A string of the time according to the time display property.
  */
-QString SlavGPS::vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * tz)
+QString SGUtils::get_time_string(time_t time, const char * format, const Coord * coord, const char * tz)
 {
 	if (!format) {
 		return NULL;
 	}
+
+	qDebug() << "DD: Get Time String for timestamp" << time;
+
+
 	char * str = NULL;
 	switch (Preferences::get_time_ref_frame()) {
 		case VIK_TIME_REF_UTC:
 			str = (char *) malloc(64);
-			strftime(str, 64, format, gmtime(time)); /* Always 'GMT'. */
+			strftime(str, 64, format, gmtime(&time)); /* Always 'GMT'. */
 			break;
 		case VIK_TIME_REF_WORLD:
 			if (coord && !tz) {
@@ -785,24 +787,24 @@ QString SlavGPS::vu_get_time_string(time_t * time, const char * format, const Co
 				char * mytz = vu_get_tz_at_location(coord);
 				if (mytz) {
 					GTimeZone * gtz = g_time_zone_new(mytz);
-					str = time_string_tz(time, format, gtz);
+					str = time_string_tz(&time, format, gtz);
 					g_time_zone_unref(gtz);
 				} else {
 					/* No results (e.g. could be in the middle of a sea).
 					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
 					struct LatLon ll = coord->get_latlon();
-					str = time_string_adjusted(time, round (ll.lon / 15.0) * 3600);
+					str = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
 				}
 			} else {
 				/* Use specified timezone. */
 				GTimeZone *gtz = g_time_zone_new(tz);
-				str = time_string_tz(time, format, gtz);
+				str = time_string_tz(&time, format, gtz);
 				g_time_zone_unref(gtz);
 			}
 			break;
 		default: /* VIK_TIME_REF_LOCALE */
 			str = (char *) malloc(64);
-			strftime(str, 64, format, localtime(time));
+			strftime(str, 64, format, localtime(&time));
 			break;
 	}
 
@@ -882,35 +884,18 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 
 
 /**
- * Copy the displayed text of a widget (should be a QAbstractButton ATM).
- */
-static void vu_copy_label(QAbstractButton * button)
-{
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, button->text(), NULL);
-}
-
-
-
-
-#ifdef K
-
-
-
-
-/**
- * Generate a single entry menu to allow copying the displayed text of a widget (should be a GtkButton ATM).
- */
-void SlavGPS::vu_copy_label_menu(GtkWidget * widget, unsigned int button)
+   Generate a single entry menu to allow copying the displayed text of a button.
+*/
+void SGUtils::copy_label_menu(QAbstractButton * button)
 {
 	QMenu menu;
-	action = new QAction(QObject::tr("&Copy"), this);
-	QObject::connect(action, SIGNAL (triggered(bool)), widget, SLOT (vu_copy_label));
+	QAction * action = new QAction(QObject::tr("&Copy"), &menu);
+	QObject::connect(action, SIGNAL (triggered(bool)), button, SLOT (vu_copy_label));
 	menu.addAction(action);
 	menu.exec(QCursor::pos());
 }
 
 
-#endif
 
 
 /**

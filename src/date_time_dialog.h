@@ -31,6 +31,12 @@
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QMouseEvent>
+
+
+
+
+#include "coord.h"
 
 
 
@@ -47,11 +53,13 @@ namespace SlavGPS {
 
 
 	class SGDateTimeDialog : public QDialog {
+
+	friend class SGDateTimeButton;
+
 	public:
-		SGDateTimeDialog(QWidget * parent, QDateTime const & date_time);
+		SGDateTimeDialog(QDateTime const & date_time, bool show_clock, QWidget * parent = NULL);
 		~SGDateTimeDialog();
 		time_t get_timestamp();
-		void show_clock(bool show);
 
 	private:
 		QVBoxLayout * vbox = NULL;
@@ -63,19 +71,33 @@ namespace SlavGPS {
 
 
 
-	class SGDateTime : public QPushButton {
+	class SGDateTimeButton : public QPushButton {
 		Q_OBJECT
 	public:
-		SGDateTime(time_t date_time, QWidget * parent);
-		~SGDateTime();
-		time_t value(void);
+		SGDateTimeButton(QWidget * parent_widget);
+		SGDateTimeButton(time_t date_time, QWidget * parent);
+		~SGDateTimeButton();
+		time_t get_value(void);
+
+		void set_label(time_t timestamp_value, const char * format, const Coord * coord, const char * tz);
+		void clear_label(void);
+
+	protected:
+		/* Reimplemented from QAbstractButton */
+		virtual void mousePressEvent(QMouseEvent * ev);
 
 	private slots:
 		void open_dialog_cb(void);
+		void copy_formatted_time_string_cb(void);
+		void clear_time_cb(void);
 
 	private:
 		SGDateTimeDialog * dialog = NULL;
 		time_t timestamp = 0;
+
+	signals:
+		void set_timestamp_signal(time_t timestamp);
+		void clear_timestamp_signal();
 	};
 
 

@@ -27,6 +27,7 @@
 
 #include <QString>
 #include <QTemporaryFile>
+#include <QAbstractButton>
 
 #include "map_ids.h"
 #include "preferences.h"
@@ -73,15 +74,13 @@ namespace SlavGPS {
 
 	char * vu_get_canonical_filename(Layer * layer, const char * filename, const char * reference_file_full_path);
 
-	QString vu_get_time_string(time_t * time, const char * format, const Coord * coord, const char * gtz);
+
 
 	char * vu_get_tz_at_location(const Coord * coord);
 
 	void vu_setup_lat_lon_tz_lookup();
 	void vu_finalize_lat_lon_tz_lookup();
 
-
-	void vu_copy_label_menu(GtkWidget *widget, unsigned int button);
 
 	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2]);
 	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position);
@@ -101,6 +100,8 @@ namespace SlavGPS {
 		static void set_auto_features_on_first_run(void);
 		static void command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
 		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
+		static void copy_label_menu(QAbstractButton * button);
+		static QString get_time_string(time_t time, const char * format, const Coord * coord, const char * gtz);
 	};
 
 

@@ -27,6 +27,7 @@
 
 #include <QHeaderView>
 #include <QDebug>
+#include <QDateTime>
 
 #include "layer.h"
 #include "layer_trw.h"

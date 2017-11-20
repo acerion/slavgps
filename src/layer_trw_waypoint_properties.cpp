@@ -186,13 +186,14 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 
 static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint * wp)
 {
-	if (event->button == MouseButton::RIGHT) {
+	if (event->button() == Qt::RightButton) {
 		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
-		if (!gtk_button_get_image(GTK_BUTTON(widget))) {
-			vu_copy_label_menu(widget, event->button);
+		if (button->icon().isNull()) {
+			/* Button's icon has been replaced with text representing a time. Copy the time string. */
+			SGUtils::copy_label_menu(button);
 		}
 		return;
-	} else if (event->button == MouseButton::MIDDLE) {
+	} else if (event->button() == Qt::MiddleButton) {
 		return;
 	}
 
@@ -209,7 +210,7 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
 
-	const QString msg = vu_get_time_string(&wp->timestamp, "%c", &wp->coord, NULL);
+	const QString msg = SGUtils::get_time_string(wp->timestamp, "%c", &wp->coord, NULL);
 	gtk_button_set_label(GTK_BUTTON(widget), msg);
 }
 

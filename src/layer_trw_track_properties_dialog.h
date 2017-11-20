@@ -34,6 +34,10 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QFormLayout>
+#include <QLineEdit>
+
+
+
 
 #include "widget_color_button.h"
 
