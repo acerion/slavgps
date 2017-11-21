@@ -50,6 +50,7 @@ namespace SlavGPS {
 		BOOLEAN,
 		COLOR,
 		STRING_LIST,  /* SGVariant stores a copy of string list. */
+		TIMESTAMP,
 		PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
 	};
 
@@ -62,6 +63,7 @@ namespace SlavGPS {
 	public:
 		SGVariant(SGVariantType type_id, const char * str);    /* Construct value of given type using data from given string. */
 		SGVariant(SGVariantType type_id, const QString & str); /* Construct value of given type using data from given string. */
+		SGVariant(SGVariantType type_id, time_t timestamp);    /* For constructing values of type SGVariantType::TIMESTAMP. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
 		SGVariant()                           { type_id = SGVariantType::EMPTY; }
@@ -74,6 +76,8 @@ namespace SlavGPS {
 		SGVariant(int r, int g, int b, int a) { type_id = SGVariantType::COLOR; val_color = QColor(r, g, b, a); }
 		SGVariant(const QColor & color)       { type_id = SGVariantType::COLOR; val_color = color; }
 		SGVariant(const QStringList & sl)     { type_id = SGVariantType::STRING_LIST; val_string_list = sl; }
+		/* Notice that there is no separate one-argument constructor for TIMESTAMP data type.
+		   It would be too similar to SGVariant(uint32_t u). Use SGVariant(SGVariantType, time_t) instead. */
 
 		~SGVariant();
 
@@ -86,6 +90,7 @@ namespace SlavGPS {
 		QString val_string;
 		QColor val_color;
 		QStringList val_string_list;
+		time_t val_timestamp;
 		void * val_pointer = NULL; /* For internal usage - don't save this value in a file! */
 	};
 

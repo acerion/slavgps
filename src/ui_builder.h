@@ -177,6 +177,13 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification * param_spec);
 		SGVariant get_param_value(const QString & param_name, const ParameterSpecification * param_spec);
 
+		/* Referencing parameters (and widgets that are
+		   related to the parameters) can be done through
+		   either parameter name (QString) or parameter id
+		   (param_id_t). */
+		QHash<QString, QWidget *> widgets2;
+		std::map<param_id_t, QWidget *> widgets;
+
 	private:
 		QWidget * new_widget(const ParameterSpecification * param_spec, const SGVariant & param_value);
 
@@ -189,13 +196,6 @@ namespace SlavGPS {
 		QPushButton * ok = NULL;
 		QPushButton * cancel = NULL;
 		QVBoxLayout * vbox = NULL;
-
-		/* Referencing parameters (and widgets that are
-		   related to the parameters) can be done through
-		   either parameter name (QString) or parameter id
-		   (param_id_t). */
-		QHash<QString, QWidget *> widgets2;
-		std::map<param_id_t, QWidget *> widgets;
 
 		std::map<param_id_t, QFormLayout *> forms;
 

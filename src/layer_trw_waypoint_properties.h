@@ -26,6 +26,7 @@
 #include <QWidget>
 
 #include "coord.h"
+#include "ui_builder.h"
 
 
 
@@ -36,6 +37,7 @@ namespace SlavGPS {
 
 
 	class Waypoint;
+	class SGDateTimeButton;
 
 
 
@@ -55,7 +57,23 @@ namespace SlavGPS {
 
 
 
-	QString waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated);
+	QString waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, bool is_new, bool * updated, QWidget * parent = NULL);
+
+
+
+
+	class PropertiesDialogWaypoint : public PropertiesDialog {
+		Q_OBJECT
+	public:
+		PropertiesDialogWaypoint(Waypoint * wp, QString const & title = "Properties", QWidget * parent = NULL);
+
+		Waypoint * wp = NULL; /* Reference. */
+		SGDateTimeButton * date_time_button = NULL; /* Reference. */
+
+	public slots:
+		void set_timestamp_cb(time_t timestamp);
+		void clear_timestamp_cb(void);
+	};
 
 
 

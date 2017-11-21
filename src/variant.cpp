@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+#include <cassert>
+
 #include <QDebug>
 
 #include "variant.h"
@@ -69,6 +72,9 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::STRING_LIST:
 		this->val_string = str; /* TODO: improve this assignment of string list. */
 		break;
+	case SGVariantType::TIMESTAMP:
+		this->val_timestamp = (time_t) strtoul(str, NULL, 10);
+		break;
 	default:
 		qDebug() << "EE: Variant: from string: unsupported type id" << (int) this->type_id;
 		break;
@@ -104,10 +110,23 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	case SGVariantType::STRING_LIST:
 		this->val_string = str; /* TODO: improve this assignment of string list. */
 		break;
+	case SGVariantType::TIMESTAMP:
+		this->val_timestamp = (time_t) str.toULong();
+		break;
 	default:
 		qDebug() << "EE: Variant: from string: unsupported type id" << (int) this->type_id;
 		break;
 	}
+}
+
+
+
+
+SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
+{
+	assert (type_id_ == SGVariantType::TIMESTAMP);
+	this->type_id = SGVariantType::TIMESTAMP;
+	this->val_timestamp = timestamp;
 }
 
 
@@ -167,6 +186,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::STRING_LIST:
 		debug << value.val_string_list;
 		break;
+	case SGVariantType::TIMESTAMP:
+		debug << value.val_timestamp;
+		break;
 	case SGVariantType::PTR:
 		debug << QString("0x%1").arg((qintptr) value.val_pointer);
 		break;
@@ -207,6 +229,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 		break;
 	case SGVariantType::STRING_LIST:
 		debug << "string list";
+		break;
+	case SGVariantType::TIMESTAMP:
+		debug << "timestamp";
 		break;
 	case SGVariantType::PTR:
 		debug << "pointer";

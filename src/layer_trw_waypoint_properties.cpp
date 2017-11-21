@@ -56,7 +56,7 @@ ParameterSpecification wp_param_specs[] = {
 	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::TIMESTAMP,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),      WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
@@ -77,14 +77,17 @@ ParameterSpecification wp_param_specs[] = {
    user rejected the dialog (e.g by pressing Cancel button), the
    returned string is empty.
 */
-QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
+QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, bool is_new, bool * updated, QWidget * parent)
 {
-	PropertiesDialog dialog(QObject::tr("Waypoint Properties"), parent);
+	PropertiesDialogWaypoint dialog(wp, QObject::tr("Waypoint Properties"), parent);
 	dialog.fill(wp, wp_param_specs, default_name);
+
+	dialog.date_time_button = (SGDateTimeButton *) dialog.widgets[SG_WP_PARAM_TIME];
+	QObject::connect(dialog.date_time_button, SIGNAL (clear_timestamp_signal(void)), &dialog, SLOT (clear_timestamp_cb(void)));
+	QObject::connect(dialog.date_time_button, SIGNAL (set_timestamp_signal(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
 
 	while (QDialog::Accepted == dialog.exec()) {
 
-		bool conversion_ok;
 		SGVariant param_value;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_param_specs[SG_WP_PARAM_NAME]);
@@ -108,8 +111,8 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->timestamp = param_value.val_string.toULong(&conversion_ok);
-		wp->has_timestamp = conversion_ok && wp->timestamp;
+		wp->timestamp = param_value.val_timestamp;
+		wp->has_timestamp = wp->timestamp != 0; /* TODO: zero value may still be a valid time stamp. */
 
 
 		/* Always store Altitude in metres. */
@@ -177,6 +180,30 @@ QString SlavGPS::waypoint_properties_dialog(QWidget * parent, const QString & de
 	}
 
 	return "";
+}
+
+
+
+
+PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const & title, QWidget * parent) : PropertiesDialog(title, parent)
+{
+	this->wp = wp_;
+}
+
+
+
+
+void PropertiesDialogWaypoint::set_timestamp_cb(time_t timestamp)
+{
+	this->date_time_button->set_label(timestamp, "%c", &this->wp->coord, NULL);
+}
+
+
+
+
+void PropertiesDialogWaypoint::clear_timestamp_cb(void)
+{
+	this->date_time_button->clear_label();
 }
 
 

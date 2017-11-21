@@ -351,7 +351,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 	/* TODO: Consider if there should be a remove time button... */
 	param_spec = &param_specs[SG_WP_PARAM_TIME];
-	param_value = SGVariant((uint32_t) wp->timestamp);
+	param_value = SGVariant(SGVariantType::TIMESTAMP, wp->timestamp);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
@@ -663,9 +663,13 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		}
 		break;
 
-	case WidgetType::DATETIME: {
-			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.val_uint, this);
-
+	case WidgetType::DATETIME:
+		/* TODO: zero timestamp may still be a valid timestamp. */
+		if (param_value.val_timestamp != 0) {
+			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.val_timestamp, this);
+			widget = widget_;
+		} else {
+			SGDateTimeButton * widget_ = new SGDateTimeButton(this);
 			widget = widget_;
 		}
 		break;
@@ -816,7 +820,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		}
 		break;
 	case WidgetType::DATETIME:
-		rv = SGVariant((uint32_t) ((SGDateTimeButton *) widget)->get_value());
+		rv = SGVariant(SGVariantType::TIMESTAMP, ((SGDateTimeButton *) widget)->get_value());
 		break;
 	default:
 		break;

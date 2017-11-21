@@ -119,7 +119,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	this->accept();
 
 	bool updated = false;
-	const QString new_name = waypoint_properties_dialog(trw->get_window(), wp->name, wp, trw->get_coord_mode(), false, &updated);
+	const QString new_name = waypoint_properties_dialog(wp, wp->name, trw->get_coord_mode(), false, &updated, g_tree->tree_get_main_window());
 	if (new_name.size()) {
 		trw->get_waypoints_node().rename_waypoint(wp, new_name);
 	}

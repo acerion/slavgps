@@ -1928,7 +1928,7 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	const QString returned_name = waypoint_properties_dialog(parent_window, default_name, wp, this->coord_mode, true, &updated);
+	const QString returned_name = waypoint_properties_dialog(wp, default_name, this->coord_mode, true, &updated, parent_window);
 
 	if (returned_name.size()) {
 		wp->visible = true;

@@ -480,7 +480,7 @@ void Waypoint::properties_dialog_cb(void)
 	bool updated = false;
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	const QString new_name = waypoint_properties_dialog(g_tree->tree_get_main_window(), this->name, this, parent_layer_->coord_mode, false, &updated);
+	const QString new_name = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, false, &updated, g_tree->tree_get_main_window());
 	if (new_name.size()) {
 		parent_layer_->waypoints->rename_waypoint(this, new_name);
 	}

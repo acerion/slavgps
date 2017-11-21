@@ -513,7 +513,11 @@ QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 		*wp_pixmap = wp_pixmap->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 
-	return QIcon(*wp_pixmap);
+	if (wp_pixmap) {
+		return QIcon(*wp_pixmap);
+	} else {
+		return QIcon();
+	}
 }
 
 
