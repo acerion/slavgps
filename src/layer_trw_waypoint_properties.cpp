@@ -54,10 +54,10 @@ using namespace SlavGPS;
 
 ParameterSpecification wp_param_specs[] = {
 	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::TIMESTAMP,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),      WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::LATITUDE,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),   WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::LONGITUDE,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::TIMESTAMP,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),       WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::ALTITUDE,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),   WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::STRING,  PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
@@ -104,14 +104,14 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 
 		struct LatLon lat_lon;
 		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_param_specs[SG_WP_PARAM_LAT]);
-		lat_lon.lat = convert_dms_to_dec(param_value.val_string.toUtf8().constData());
+		lat_lon.lat = param_value.get_latitude();
 		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_param_specs[SG_WP_PARAM_LON]);
-		lat_lon.lon = convert_dms_to_dec(param_value.val_string.toUtf8().constData());
+		lat_lon.lon = param_value.get_longitude();
 		wp->coord = Coord(lat_lon, coord_mode);
 
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->timestamp = param_value.val_timestamp;
+		wp->timestamp = param_value.get_timestamp();
 		wp->has_timestamp = wp->timestamp != 0; /* TODO: zero value may still be a valid time stamp. */
 
 
@@ -120,13 +120,13 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		const HeightUnit height_unit = Preferences::get_unit_height();
 		switch (height_unit) {
 		case HeightUnit::METRES:
-			wp->altitude = param_value.val_string.toFloat();
+			wp->altitude = param_value.get_altitude();
 			break;
 		case HeightUnit::FEET:
-			wp->altitude = VIK_FEET_TO_METERS(param_value.val_string.toFloat());
+			wp->altitude = VIK_FEET_TO_METERS(param_value.get_altitude());
 			break;
 		default:
-			wp->altitude = param_value.val_string.toFloat();
+			wp->altitude = param_value.get_altitude();
 			qDebug() << "EE: Waypoint Properties" << __FUNCTION__ << "unknown height unit" << (int) height_unit;
 		}
 
@@ -210,56 +210,6 @@ void PropertiesDialogWaypoint::clear_timestamp_cb(void)
 
 
 #if 0
-
-static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint * wp)
-{
-	if (event->button() == Qt::RightButton) {
-		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
-		if (button->icon().isNull()) {
-			/* Button's icon has been replaced with text representing a time. Copy the time string. */
-			SGUtils::copy_label_menu(button);
-		}
-		return;
-	} else if (event->button() == Qt::MiddleButton) {
-		return;
-	}
-
-	time_t new_timestamp = 0;
-	if (!date_time_dialog(QObject::tr("Date/Time Edit"), wp->timestamp, new_timestamp, parent)) {
-		/* The dialog was cancelled. */
-		return;
-	} else {
-		edit_wp->timestamp = new_timestamp;
-	}
-
-	/* Clear the previous 'Add' image as now a time is set. */
-	if (gtk_button_get_image(GTK_BUTTON(widget))) {
-		gtk_button_set_image(GTK_BUTTON(widget), NULL);
-	}
-
-	const QString msg = SGUtils::get_time_string(wp->timestamp, "%c", &wp->coord, NULL);
-	gtk_button_set_label(GTK_BUTTON(widget), msg);
-}
-
-
-
-
-static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
-{
-	GtkTreeIter iter;
-	char * sym;
-
-	if (!gtk_combo_box_get_active_iter(combo, &iter)) {
-		return;
-	}
-
-	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
-	/* Note: symm is NULL when "(none)" is select (first cell is empty). */
-	combo->setToolTip(sym);
-	free(sym);
-}
-
-
 
 
 /* Specify if a new waypoint or not. */

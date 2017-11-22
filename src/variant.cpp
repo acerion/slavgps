@@ -25,6 +25,7 @@
 
 #include "variant.h"
 #include "vikutils.h"
+#include "measurements.h"
 
 
 
@@ -34,12 +35,17 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX   " SGVariant"
+
+
+
+
 SGVariant::SGVariant(const SGVariant & val)
 {
 	*this = val;
 
 	if (val.type_id == SGVariantType::EMPTY) {
-		qDebug() << "EE: SG Variant: passed value with empty type to copy constructor";
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with empty type to copy constructor";
 	}
 }
 
@@ -75,8 +81,13 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::TIMESTAMP:
 		this->val_timestamp = (time_t) strtoul(str, NULL, 10);
 		break;
+	case SGVariantType::LATITUDE:
+	case SGVariantType::LONGITUDE:
+	case SGVariantType::ALTITUDE:
+		this->val_lat_lon_alt = strtod(str, NULL);
+		break;
 	default:
-		qDebug() << "EE: Variant: from string: unsupported type id" << (int) this->type_id;
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -113,8 +124,13 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	case SGVariantType::TIMESTAMP:
 		this->val_timestamp = (time_t) str.toULong();
 		break;
+	case SGVariantType::LATITUDE:
+	case SGVariantType::LONGITUDE:
+	case SGVariantType::ALTITUDE:
+		this->val_lat_lon_alt = str.toDouble();
+		break;
 	default:
-		qDebug() << "EE: Variant: from string: unsupported type id" << (int) this->type_id;
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -125,8 +141,18 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
 {
 	assert (type_id_ == SGVariantType::TIMESTAMP);
-	this->type_id = SGVariantType::TIMESTAMP;
+	this->type_id = type_id_;
 	this->val_timestamp = timestamp;
+}
+
+
+
+
+SGVariant::SGVariant(SGVariantType type_id_, double d)
+{
+	assert (type_id_ == SGVariantType::LATITUDE || type_id_ == SGVariantType::LONGITUDE || type_id_ == SGVariantType::ALTITUDE);
+	this->type_id = type_id_;
+	this->val_lat_lon_alt = d;
 }
 
 
@@ -135,7 +161,7 @@ SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
 SGVariant::~SGVariant()
 {
 	if (this->type_id == SGVariantType::EMPTY) {
-		qDebug() << "EE: SG Variant: passed value with type id empty to destructor";
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with type id empty to destructor";
 	}
 }
 
@@ -186,14 +212,26 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::STRING_LIST:
 		debug << value.val_string_list;
 		break;
-	case SGVariantType::TIMESTAMP:
-		debug << value.val_timestamp;
-		break;
 	case SGVariantType::PTR:
 		debug << QString("0x%1").arg((qintptr) value.val_pointer);
 		break;
+	case SGVariantType::TIMESTAMP:
+		debug << value.get_timestamp();
+		break;
+	case SGVariantType::LATITUDE:
+		/* This is for debug, so we don't apply any format specifiers. */
+		debug << value.get_latitude();
+		break;
+	case SGVariantType::LONGITUDE:
+		/* This is for debug, so we don't apply any format specifiers. */
+		debug << value.get_longitude();
+		break;
+	case SGVariantType::ALTITUDE:
+		/* This is for debug, so we don't apply any format specifiers. */
+		debug << value.get_altitude();
+		break;
 	default:
-		debug << "EE: SGVariant<<: unsupported type" << (int) value.type_id;
+		debug << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) value.type_id;
 		break;
 	};
 
@@ -230,16 +268,114 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 	case SGVariantType::STRING_LIST:
 		debug << "string list";
 		break;
-	case SGVariantType::TIMESTAMP:
-		debug << "timestamp";
-		break;
 	case SGVariantType::PTR:
 		debug << "pointer";
 		break;
+	case SGVariantType::TIMESTAMP:
+		debug << "timestamp";
+		break;
+	case SGVariantType::LATITUDE:
+		debug << "latitude";
+		break;
+	case SGVariantType::LONGITUDE:
+		debug << "longitude";
+		break;
+	case SGVariantType::ALTITUDE:
+		debug << "altitude";
+		break;
 	default:
-		debug << "EE: SGVariantType<<: unsupported type" << (int) type_id;
+		debug << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) type_id;
 		break;
 	};
 
 	return debug;
+}
+
+
+
+
+time_t SGVariant::get_timestamp() const
+{
+	return this->val_timestamp;
+}
+
+
+
+
+double SGVariant::get_latitude() const
+{
+	assert (this->type_id == SGVariantType::LATITUDE);
+
+	return this->val_lat_lon_alt;
+}
+
+
+
+
+double SGVariant::get_longitude() const
+{
+	assert (this->type_id == SGVariantType::LONGITUDE);
+	return this->val_lat_lon_alt;
+}
+
+
+
+
+double SGVariant::get_altitude() const
+{
+	assert (this->type_id == SGVariantType::ALTITUDE);
+	return this->val_lat_lon_alt;
+}
+
+
+
+
+QString SGVariant::to_string() const
+{
+	static QLocale c_locale = QLocale::c();
+
+	switch (this->type_id) {
+	case SGVariantType::EMPTY:
+		return QString("<empty value>");
+
+	case SGVariantType::DOUBLE:
+		return QString("%1").arg(this->val_double, 0, 'f', 20);
+
+	case SGVariantType::UINT:
+		return QString("%1").arg(this->val_uint);
+
+	case SGVariantType::INT:
+		return QString("%1").arg(this->val_int);
+
+	case SGVariantType::STRING:
+		return this->val_string;
+
+	case SGVariantType::BOOLEAN:
+		return QString("%1").arg(this->val_bool);
+
+	case SGVariantType::COLOR:
+		return QString("%1 %2 %3 %4").arg(this->val_color.red()).arg(this->val_color.green()).arg(this->val_color.blue()).arg(this->val_color.alpha());
+
+	case SGVariantType::STRING_LIST:
+		return this->val_string_list.join(" / ");
+
+	case SGVariantType::PTR:
+		return QString("0x%1").arg((qintptr) this->val_pointer);
+
+	case SGVariantType::TIMESTAMP:
+		return QString("%1").arg(this->get_timestamp());
+
+	case SGVariantType::LATITUDE:
+		return c_locale.toString(this->get_latitude(), 'f', SG_PRECISION_LATITUDE);
+
+	case SGVariantType::LONGITUDE:
+		return c_locale.toString(this->get_longitude(), 'f', SG_PRECISION_LONGITUDE);
+
+	case SGVariantType::ALTITUDE:
+		return c_locale.toString(this->get_altitude(), 'f', SG_PRECISION_ALTITUDE);
+
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
+		return QString("");
+	};
 }

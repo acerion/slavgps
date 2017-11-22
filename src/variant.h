@@ -50,8 +50,13 @@ namespace SlavGPS {
 		BOOLEAN,
 		COLOR,
 		STRING_LIST,  /* SGVariant stores a copy of string list. */
-		TIMESTAMP,
 		PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
+
+		/* These types are more abstract, closer to application domain than to machine language. */
+		TIMESTAMP,
+		LATITUDE,
+		LONGITUDE,
+		ALTITUDE
 	};
 
 	QDebug operator<<(QDebug debug, const SGVariantType type_id);
@@ -64,6 +69,7 @@ namespace SlavGPS {
 		SGVariant(SGVariantType type_id, const char * str);    /* Construct value of given type using data from given string. */
 		SGVariant(SGVariantType type_id, const QString & str); /* Construct value of given type using data from given string. */
 		SGVariant(SGVariantType type_id, time_t timestamp);    /* For constructing values of type SGVariantType::TIMESTAMP. */
+		SGVariant(SGVariantType type_id, double d);            /* For constructing values of type SGVariantType::LATITUDE/LONGITUDE/ALTITUDE. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
 		SGVariant()                           { type_id = SGVariantType::EMPTY; }
@@ -81,8 +87,15 @@ namespace SlavGPS {
 
 		~SGVariant();
 
-		SGVariantType type_id;
+		time_t get_timestamp() const;
+		double get_latitude() const;
+		double get_longitude() const;
+		double get_altitude() const;
 
+		QString to_string() const;
+
+
+		SGVariantType type_id;
 		double val_double = 0.0;
 		uint32_t val_uint = 0;
 		int32_t val_int = 0;
@@ -90,8 +103,11 @@ namespace SlavGPS {
 		QString val_string;
 		QColor val_color;
 		QStringList val_string_list;
-		time_t val_timestamp;
 		void * val_pointer = NULL; /* For internal usage - don't save this value in a file! */
+
+	private:
+		time_t val_timestamp;    /* SGVariantType::TIMESTAMP */
+		double val_lat_lon_alt;  /* SGVariantType::LATITUDE/LONGITUDE/ALTITUDE */
 	};
 
 

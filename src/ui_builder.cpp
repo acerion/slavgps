@@ -330,20 +330,18 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 
 	const struct LatLon lat_lon = wp->coord.get_latlon();
-	const QString lat = QString("%1").arg(lat_lon.lat);
-	const QString lon = QString("%1").arg(lat_lon.lon);
+
+
 
 	param_spec = &param_specs[SG_WP_PARAM_LAT];
-	param_value = SGVariant(lat);
-	widget = this->new_widget(param_spec, param_value);
+	widget = this->new_widget(param_spec, SGVariant(SGVariantType::LATITUDE, lat_lon.lat));
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	param_spec = &param_specs[SG_WP_PARAM_LON];
-	param_value = SGVariant(lon);
-	widget = this->new_widget(param_spec, param_value);
+	widget = this->new_widget(param_spec, SGVariant(SGVariantType::LONGITUDE, lat_lon.lon));
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
@@ -351,8 +349,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 	/* TODO: Consider if there should be a remove time button... */
 	param_spec = &param_specs[SG_WP_PARAM_TIME];
-	param_value = SGVariant(SGVariantType::TIMESTAMP, wp->timestamp);
-	widget = this->new_widget(param_spec, param_value);
+	widget = this->new_widget(param_spec, SGVariant(SGVariantType::TIMESTAMP, wp->timestamp));
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 #ifdef K
@@ -517,7 +514,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 			} else if (param_spec->type == SGVariantType::STRING) {
 				/* TODO: implement. */
 			} else {
-				qDebug() << "EE: UI Builder: set: unsupported parameter type for combobox:" << (int) param_spec->type;
+				qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << (int) param_spec->type;
 			}
 
 			i++;
@@ -577,15 +574,9 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::ENTRY:
-		if (param_spec->type == SGVariantType::STRING) {
-			QLineEdit * widget_ = new QLineEdit;
-			if (!value.val_string.isEmpty()) {
-				widget_->insert(value.val_string);
-			}
-
-			widget = widget_;
-		}
+		widget = new QLineEdit(value.to_string());
 		break;
+
 	case WidgetType::PASSWORD:
 		if (param_spec->type == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit();
@@ -665,8 +656,8 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 
 	case WidgetType::DATETIME:
 		/* TODO: zero timestamp may still be a valid timestamp. */
-		if (param_value.val_timestamp != 0) {
-			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.val_timestamp, this);
+		if (param_value.get_timestamp() != 0) {
+			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.get_timestamp(), this);
 			widget = widget_;
 		} else {
 			SGDateTimeButton * widget_ = new SGDateTimeButton(this);
@@ -766,7 +757,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			}
 #endif
 		} else {
-			qDebug() << "EE: UI Builder: saving value of widget" << widget_type_get_label(param_spec->widget_type) << ", unsupported parameter type for combobox:" << (int) param_spec->type;
+			qDebug() << "EE: UI Builder: saving value of widget" << widget_type_get_label(param_spec->widget_type) << ", unsupported parameter spec type for combobox:" << (int) param_spec->type;
 		}
 
 		break;
