@@ -387,9 +387,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
-	bool rv = false;
-
-	rv = true;
+	bool context_menu_in_items_tree = false;
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
 	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this, SLOT (properties_dialog_cb()));
@@ -415,7 +413,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	if (g_tree->tree_get_items_tree()) {
-		rv = true;
+		context_menu_in_items_tree = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
@@ -456,7 +454,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	}
 
 
-	return rv;
+	return context_menu_in_items_tree;
 }
 
 

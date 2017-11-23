@@ -479,56 +479,105 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		return ToolStatus::IGNORED;
 	}
 
+	/* Does this tool have a waypoint, on which it can operate? */
+	Waypoint * our_waypoint = NULL;
+
 	Waypoint * current_wp = trw->get_edited_wp();
 
 	if (current_wp && current_wp->visible) {
-		/* First check if current WP is within area (other may be 'closer', but we want to move the current). */
+		/* Some waypoint has already been activated before the
+		   click happened, e.g. by selecting it in items tree.
+
+		   First check if that waypoint is close enough to
+		   click coordinates to keep that waypoint as selected.
+
+		   Other waypoints (not selected) may be even closer
+		   to click coordinates, but the pre-selected waypoint
+		   has priority. */
+
 		int x, y;
 		this->viewport->coord_to_screen(&current_wp->coord, &x, &y);
 
 		if (abs(x - ev->x()) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - ev->y()) <= WAYPOINT_SIZE_APPROX) {
 
-			if (ev->button() == Qt::RightButton) {
-				trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
-			} else {
-				this->perform_selection(ev->x(), ev->y());
-			}
-			return ToolStatus::ACK;
-		}
-	}
-
-	WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->wp_image_draw);
-	trw->get_waypoints_node().search_closest_wp(&wp_search);
-
-	if (current_wp && (current_wp == wp_search.closest_wp)) {
-		if (ev->button() == Qt::RightButton) {
-			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
-		} else {
+			/* A waypoint has been selected in some way
+			   (e.g. by selecting it in items tree), and
+			   now it is also selected by this tool. */
 			this->perform_selection(ev->x(), ev->y());
+
+			/* Global "edited waypoint" now became tool's edited waypoint. */
+			our_waypoint = current_wp;
 		}
-		return ToolStatus::IGNORED;
-	} else if (wp_search.closest_wp) {
-		if (ev->button() == Qt::RightButton) {
-			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
-		} else {
-			trw->waypoint_rightclick = false;
-		}
-
-		trw->tree_view->select_and_expose(wp_search.closest_wp->index);
-
-		trw->set_edited_wp(wp_search.closest_wp);
-
-		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
-		trw->emit_layer_changed();
-		return ToolStatus::ACK;
 	}
 
-	trw->reset_edited_wp();
-	trw->waypoint_rightclick = false;
-	trw->emit_layer_changed();
+	if (!our_waypoint) {
+		/* Either there is no globally selected waypoint, or it
+		   was too far from click. Either way the tool doesn't
+		   have any waypoint to operate on - yet. Try to find
+		   one close to click coordinates. */
 
-	return ToolStatus::IGNORED;
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->wp_image_draw);
+		trw->get_waypoints_node().search_closest_wp(&wp_search);
+
+		if (wp_search.closest_wp) {
+
+			/* We have right-clicked a waypoint. Make it
+			   globally-selected waypoint, and waypoint
+			   selected by this tool.
+
+			   TODO: do we need to verify that
+			   wp_search.closest_wp != current_wp? */
+
+			trw->tree_view->select_and_expose(wp_search.closest_wp->index);
+			trw->set_edited_wp(wp_search.closest_wp);
+
+			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
+			trw->emit_layer_changed();
+
+			this->perform_selection(ev->x(), ev->y());
+
+		        our_waypoint = wp_search.closest_wp;
+		}
+	}
+
+	if (!our_waypoint) {
+		/* No luck. No waypoint to operate on.
+
+		   We have clicked on some empty space, so make sure
+		   that no waypoint in this layer is globally
+		   selected, no waypoint is selected by this tool, and
+		   no waypoint is drawn as selected. */
+
+		trw->reset_edited_wp();
+
+		this->perform_release();
+
+		/* TODO: do we need to emit this signal every time a right-click fails? */
+		trw->emit_layer_changed();
+
+		return ToolStatus::IGNORED;
+	}
+
+	/* Finally, a waypoint that this tool can operate on. Not too much operation, though. */
+	switch (ev->button()) {
+	case Qt::RightButton: {
+		QMenu menu;
+		our_waypoint->add_context_menu_items(menu, false);
+		menu.exec(QCursor::pos());
+		}
+		break;
+	case Qt::LeftButton:
+		/* All that was supposed to happen on left-mouse click
+		   has already happened when a waypoint was selected
+		   either globally, or for this tool. */
+		break;
+	default:
+		/* TODO: what should happen here? */
+		break;
+	}
+
+	return ToolStatus::ACK;
 }
 
 
@@ -572,10 +621,13 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	}
 
 	if (!this->layer_edit_info->holding) {
+		/* ::handle_mouse_press() probably never happened. */
 		return ToolStatus::IGNORED;
 	}
 
-	if (ev->button() == Qt::LeftButton) {
+
+	switch (ev->button()) {
+	case Qt::LeftButton: {
 		Coord new_coord = this->viewport->screen_to_coord(ev->x(), ev->y());
 
 		/* See if the coordinates of the release position should be snapped to existing nearby Trackpoint or Waypoint. */
@@ -588,18 +640,11 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 		trw->get_waypoints_node().calculate_bounds();
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
-
-	} else if (ev->button() == Qt::RightButton && trw->waypoint_rightclick) {
-		Waypoint * wp = trw->get_edited_wp();  /* Waypoint that is currently being selected/edited. */
-		if (wp) {
-			QMenu menu;
-			wp->add_context_menu_items(menu, false);
-			menu.exec(QCursor::pos());
 		}
-		trw->waypoint_rightclick = false;
 
-		return ToolStatus::IGNORED;
-	} else {
+	case Qt::RightButton:
+	default:
+		this->perform_release();
 		return ToolStatus::IGNORED;
 	}
 }

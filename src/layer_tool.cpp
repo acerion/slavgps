@@ -28,6 +28,11 @@
 
 
 
+#include <QDebug>
+
+
+
+
 #include "layer.h"
 #include "layer_tool.h"
 #include "viewport_internal.h"
@@ -122,6 +127,7 @@ void LayerTool::perform_selection(int x, int y)
 
 	/* We have clicked on an item, and we are holding it.
 	   We will hold it during move, until we release it. */
+	qDebug() << "----------------------------" << __FUNCTION__ << "holding = true";
 	this->layer_edit_info->holding = true;
 
 	/* We have just clicked the item, we aren't moving the cursor yet. */
@@ -175,6 +181,7 @@ void LayerTool::perform_release(void)
 	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->oldx - 3, this->layer_edit_info->oldy - 3, 6, 6);
 #endif
 
+	qDebug() << "----------------------------" << __FUNCTION__ << "holding = false";
 	this->layer_edit_info->holding = false;
 	this->layer_edit_info->moving = false;
 }

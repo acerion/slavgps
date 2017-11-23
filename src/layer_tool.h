@@ -80,6 +80,8 @@ namespace SlavGPS {
 		QPen pen;
 		int oldx = 0;
 		int oldy = 0;
+
+		bool item_is_right_clicked = false;
 	};
 
 

@@ -396,10 +396,7 @@ namespace SlavGPS {
 		bool get_route_creation_in_progress() const;
 		void reset_route_creation_in_progress();
 
-
 		bool moving_wp = false;
-		bool waypoint_rightclick = false;
-
 
 		PropertiesDialogTP * tpwin = NULL;
 
