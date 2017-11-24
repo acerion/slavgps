@@ -40,6 +40,7 @@ renaming functions and defining LatLon and UTM structs.
 #endif
 
 #include <QLocale>
+#include <QDebug>
 
 #include <glib.h>
 #include <cstdint>
@@ -71,6 +72,11 @@ renaming functions and defining LatLon and UTM structs.
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX " Coords"
 
 
 
@@ -287,39 +293,41 @@ void a_coords_utm_to_latlon(struct LatLon * latlon, const struct UTM * utm)
 
     }
 
-void a_coords_latlon_to_string ( const struct LatLon *latlon,
-				 char **lat,
-				 char **lon )
+
+
+
+void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 {
-	if (!latlon) {
-		return;
-	}
-
 #ifdef HAVE_VIKING
-  DegreeFormat format = Preferences::get_degree_format();
+	DegreeFormat format = Preferences::get_degree_format();
 
-  switch (format) {
-  case DegreeFormat::DDD:
-    *lat = convert_lat_dec_to_ddd ( latlon->lat );
-    *lon = convert_lon_dec_to_ddd ( latlon->lon );
-    break;
-  case DegreeFormat::DMM:
-    *lat = convert_lat_dec_to_dmm ( latlon->lat );
-    *lon = convert_lon_dec_to_dmm ( latlon->lon );
-    break;
-  case DegreeFormat::DMS:
-    *lat = convert_lat_dec_to_dms ( latlon->lat );
-    *lon = convert_lon_dec_to_dms ( latlon->lon );
-    break;
-  case DegreeFormat::RAW:
-    *lat = g_strdup_printf ( "%.6f", latlon->lat );
-    *lon = g_strdup_printf ( "%.6f", latlon->lon );
-    break;
-  default:
-    fprintf(stderr, "CRITICAL: Houston, we've had a problem. format=%d\n", (int) format);
-  }
+	switch (format) {
+	case DegreeFormat::DDD:
+		/* FIXME: memory leak. */
+		lat = convert_lat_dec_to_ddd(lat_lon.lat);
+		lon = convert_lon_dec_to_ddd(lat_lon.lon);
+		break;
+	case DegreeFormat::DMM:
+		/* FIXME: memory leak. */
+		lat = convert_lat_dec_to_dmm(lat_lon.lat);
+		lon = convert_lon_dec_to_dmm(lat_lon.lon);
+		break;
+	case DegreeFormat::DMS:
+		/* FIXME: memory leak. */
+		lat = convert_lat_dec_to_dms(lat_lon.lat);
+		lon = convert_lon_dec_to_dms(lat_lon.lon);
+		break;
+	case DegreeFormat::RAW:
+		lat = LatLon::lat_to_string_raw(lat_lon);
+		lon = LatLon::lon_to_string_raw(lat_lon);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unknown degree format %d" << (int) format;
+		break;
+	}
 #else
-  *lat = convert_lat_dec_to_ddd ( latlon->lat );
-  *lon = convert_lon_dec_to_ddd ( latlon->lon );
+	/* TODO: memory leak. */
+	lat = convert_lat_dec_to_ddd(lat_lon.lat);
+	lon = convert_lon_dec_to_ddd(lat_lon.lon);
 #endif
 }

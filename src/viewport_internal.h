@@ -97,8 +97,11 @@ namespace SlavGPS {
 		bool go_forward();
 		bool back_available(); // const
 		bool forward_available();
-		void show_centers(Window * parent);
-		void print_centers(char * label);
+
+		std::list<QString> get_centers_list(void) const;
+		void show_centers(Window * parent) const;
+		void print_centers(const QString & label) const;
+
 
 
 		/* Viewport position. */

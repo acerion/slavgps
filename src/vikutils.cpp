@@ -247,10 +247,10 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 				double diste = trk->get_length_including_gaps();
 				double dist = diste - distd;
 
-				DistanceUnit distance_unit = Preferences::get_unit_distance();
-				const QString dist_unit_str = get_distance_unit_string(distance_unit);
+				const DistanceUnit distance_unit = Preferences::get_unit_distance();
+				const QString distance_unit_string = get_distance_unit_string(distance_unit);
 				dist = convert_distance_meters_to(dist, distance_unit);
-				values[i] = QObject::tr("%1To End %2%3").arg(separator).arg(dist, 0, 'f', 2).arg(dist_unit_str);
+				values[i] = QObject::tr("%1To End %2%3").arg(separator).arg(dist, 0, 'f', 2).arg(distance_unit_string);
 			}
 			break;
 		}
@@ -260,22 +260,22 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 				/* Distance from start (along the track). */
 				double distd = trk->get_length_to_trackpoint(tp);
 
-				DistanceUnit distance_unit = Preferences::get_unit_distance();
-				QString dist_unit_str = get_distance_unit_string(distance_unit);
+				const DistanceUnit distance_unit = Preferences::get_unit_distance();
+				const QString distance_unit_string = get_distance_unit_string(distance_unit);
 				distd = convert_distance_meters_to(distd, distance_unit);
-				values[i] = QObject::tr("%1Distance along %2%3").arg(separator).arg(distd, 0, 'f', 2).arg(dist_unit_str);
+				values[i] = QObject::tr("%1Distance along %2%3").arg(separator).arg(distd, 0, 'f', 2).arg(distance_unit_string);
 			}
 			break;
 		}
 
 		case 'L': {
-			/* Location (Lat/Long). */
-			char * lat = NULL, * lon = NULL;
-			struct LatLon ll = tp->coord.get_latlon();
-			a_coords_latlon_to_string(&ll, &lat, &lon);
+			/* Location (Latitude/Longitude). */
+			const LatLon lat_lon = tp->coord.get_latlon();
+			QString lat;
+			QString lon;
+			LatLon::to_strings(lat_lon, lat, lon);
+
 			values[i] = QObject::tr("%1%2 %3").arg(separator).arg(lat).arg(lon);
-			free(lat);
-			free(lon);
 			break;
 		}
 
@@ -378,27 +378,6 @@ QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
 	}
 
 	return result;
-}
-
-
-
-
-bool SlavGPS::get_distance_unit_string(char * buf, size_t size, DistanceUnit distance_unit)
-{
-	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
-		snprintf(buf, size, "%s", _("km"));
-		return true;
-	case DistanceUnit::MILES:
-		snprintf(buf, size, "%s", _("miles"));
-		return true;
-	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(buf, size, "%s", _("NM"));
-		return true;
-	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
-		return false;
-	}
 }
 
 

@@ -1511,11 +1511,11 @@ void Window::menu_copy_centre_cb(void)
 		coord->to_strings(first, second);
 	} else {
 		/* Simple x.xx y.yy format. */
-		struct LatLon ll;
-		struct UTM utm;
-		a_coords_utm_to_latlon(&ll, &utm);
-		first = QString("%1").arg(ll.lat, 0, 'f', 6); /* "%.6f" */
-		second = QString("%1").arg(ll.lon, 0, 'f', 6);
+		struct LatLon lat_lon;
+		struct UTM utm = coord->get_utm();;
+		a_coords_utm_to_latlon(&lat_lon, &utm);
+		first = LatLon::lat_to_string_raw(lat_lon);
+		second = LatLon::lon_to_string_raw(lat_lon);
 	}
 
 	const QString message = QString("%1 %2").arg(first).arg(second);

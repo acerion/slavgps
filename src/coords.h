@@ -56,6 +56,11 @@ namespace SlavGPS {
 		/* Convert to string with DegreeFormat::RAW format. */
 		static QString lat_to_string_raw(const LatLon & lat_lon);
 		static QString lon_to_string_raw(const LatLon & lat_lon);
+
+		/**
+		   Convert a LatLon to strings using preferred representation
+		*/
+		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
 	};
 
 
@@ -94,13 +99,6 @@ double a_coords_latlon_diff ( const struct SlavGPS::LatLon *ll1, const struct Sl
  * The returned value must be freed by g_free.
  */
 char *a_coords_dtostr ( double d );
-
-/**
- * Convert a LatLon to strings.
- *
- * Use the prefered representation.
- */
-void a_coords_latlon_to_string ( const struct SlavGPS::LatLon *latlon, char **lat, char **lon );
 
 #ifdef __cplusplus
 }

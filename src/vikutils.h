@@ -65,7 +65,6 @@ namespace SlavGPS {
 	double convert_speed_mps_to(double speed, SpeedUnit speed_units);
 	QString get_speed_string(double speed, SpeedUnit speed_unit);
 
-	bool get_distance_unit_string(char * buf, size_t size, DistanceUnit distance_unit);
 	QString get_distance_unit_string(DistanceUnit distance_unit);
 	QString get_distance_string(double distance, DistanceUnit distance_unit);
 	double convert_distance_meters_to(double distance, DistanceUnit distance_unit);

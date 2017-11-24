@@ -262,19 +262,8 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
 
 	} else if (this->mode == CoordMode::LATLON) {
-		char * first = NULL;
-		char * second = NULL;
-		a_coords_latlon_to_string(&this->ll, &first, &second);
+		LatLon::to_strings(this->ll, str1, str2);
 
-		str1 = QString(first);
-		str2 = QString(second);
-
-		if (first) {
-			free(first);
-		}
-		if (second) {
-			free(second);
-		}
 	} else {
 		qDebug() << "EE: Coord: to strings: unrecognized coord mode" << (int) this->mode;
 

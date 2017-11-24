@@ -242,18 +242,18 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			/* Construct the name based on the distance value. */
 
 			QString dist_label;
-			const QString unit_string = get_distance_unit_string(distance_unit);
+			const QString distance_unit_string = get_distance_unit_string(distance_unit);
 
 			/* Convert for display. */
 			dist_i = convert_distance_meters_to(dist_i, distance_unit);
 
 			/* Make the precision of the output related to the unit size. TODO: don't we have utility function for that? */
 			if (index == 0) {
-				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(unit_string);
+				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(distance_unit_string);
 			} else if (index == 1) {
-				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 1).arg(unit_string);
+				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 1).arg(distance_unit_string);
 			} else {
-				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(unit_string); /* TODO single vs plurals. */
+				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(distance_unit_string); /* TODO single vs plurals. */
 			}
 
 

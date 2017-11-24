@@ -1072,7 +1072,7 @@ void Viewport::update_centers()
 	centers_iter++;
 	assert (std::next(centers_iter) == centers->end());
 
-	this->print_centers((char *) "update_centers");
+	this->print_centers("Viewport::update_centers()");
 
 	// qDebug() << "SIGNAL: Viewport: emitting updated_center()";
 	emit this->updated_center();
@@ -1081,35 +1081,46 @@ void Viewport::update_centers()
 
 
 
-/**
- * Show the list of forward/backward positions.
- * ATM only for debug usage.
- */
-void Viewport::show_centers(Window * parent_window)
+std::list<QString> Viewport::get_centers_list(void) const
 {
-	std::list<QString> texts;
-	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
-		char * lat = NULL;
-		char * lon = NULL;
-		struct LatLon ll = (*iter)->get_latlon();
-		a_coords_latlon_to_string(&ll, &lat, &lon);
+	std::list<QString> result;
+
+	for (auto iter = this->centers->begin(); iter != this->centers->end(); iter++) {
+
+		const LatLon lat_lon = (*iter)->get_latlon();
+		QString lat;
+		QString lon;
+		LatLon::to_strings(lat_lon, lat, lon);
+
 		QString extra;
-		/* Put the separating space in 'extra'. */
-		if (iter == next(centers_iter)) {
-			extra = QString(" [Back]");
-		} else if (iter == prev(centers_iter)) {
-			extra = QString(" [Forward]");
+		if (iter == prev(centers_iter)) {
+			extra = tr("[Back]");
+		} else if (iter == next(centers_iter)) {
+			extra = tr("[Forward]");
+		} else if (iter == centers_iter) {
+			extra = tr("[Current]");
 		} else {
-			;
+			; /* NOOP */
 		}
 
-		texts.push_back(QString("%1 %2%3").arg(lat).arg(lon).arg(extra));
-		free(lat);
-		free(lon);
+		result.push_back(tr("%1 %2%3").arg(lat).arg(lon).arg(extra));
 	}
 
-	/* No i18n as this is just for debug.
-	   Using this function the dialog allows sorting of the list which isn't appropriate here
+	return result;
+}
+
+
+
+
+/**
+   Show the list of forward/backward positions.
+   ATM only for debug usage.
+*/
+void Viewport::show_centers(Window * parent_window) const
+{
+	const std::list<QString> texts = this->get_centers_list();
+
+	/* Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
 	const QStringList headers = { tr("Back/Forward Locations") };
 	std::list<QString> result = a_dialog_select_from_list(texts,
@@ -1117,6 +1128,8 @@ void Viewport::show_centers(Window * parent_window)
 							      tr("Back/Forward Locations"),
 							      headers,
 							      parent_window);
+
+	/* TODO: why do we need result here? */
 
 	for (auto iter = result.begin(); iter != result.end(); iter++) {
 		qDebug() << "DD: Viewport: history center item:" << *iter;
@@ -1126,27 +1139,12 @@ void Viewport::show_centers(Window * parent_window)
 
 
 
-void Viewport::print_centers(char * label)
+void Viewport::print_centers(const QString & label) const
 {
-	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
-		char *lat = NULL, *lon = NULL;
-		struct LatLon ll = (*iter)->get_latlon();
-		a_coords_latlon_to_string(&ll, &lat, &lon);
-		char * extra = NULL;
-		if (iter == prev(centers_iter)) {
-			extra = (char *) "[Back]";
-		} else if (iter == next(centers_iter)) {
-			extra = (char *) "[Forward]";
-		} else if (iter == centers_iter) {
-			extra = (char *) "[Current]";
-		} else {
-			extra = (char *) "";
-		}
+	const std::list<QString> texts = this->get_centers_list();
 
-		qDebug() << "II: Viewport: centers" << label << lat << lon << extra;
-
-		free(lat);
-		free(lon);
+	for (auto iter = texts.begin(); iter != texts.end(); iter++) {
+		qDebug() << "II: Viewport: centers:" << label << *iter;
 	}
 
 	return;
@@ -2330,7 +2328,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
  * Utility function to get positional strings for the given location
  * lat and lon strings will get allocated and so need to be freed after use
  */
-void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
+void Viewport::get_location_strings(struct UTM utm, QString & lat, QString & lon)
 {
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
@@ -2341,9 +2339,9 @@ void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
 		*lon = (char *) malloc(16*sizeof(char));
 		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
 	} else {
-		struct LatLon ll;
-		a_coords_utm_to_latlon(&ll, &utm);
-		a_coords_latlon_to_string(&ll, lat, lon);
+		struct LatLon lat_lon;
+		a_coords_utm_to_latlon(&lat_lon, &utm);
+		LatLon::to_strings(lat_lon, lat, lon);
 	}
 }
 #endif

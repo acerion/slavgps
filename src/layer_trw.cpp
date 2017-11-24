@@ -1511,12 +1511,7 @@ static void trw_layer_tracks_tooltip(Tracks & tracks, tooltip_tracks * tt)
 */
 QString LayerTRW::get_tooltip()
 {
-	char tbuf1[64] = { 0 };
-	char tbuf2[64] = { 0 };
-	QString tracks_duration;
-	char tbuf4[10] = { 0 };
-
-	static char tmp_buf[128] = { 0 };
+	static QString msg;
 
 	/* For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.] */
 
@@ -1530,54 +1525,65 @@ QString LayerTRW::get_tooltip()
 		QDateTime date_end;
 		date_end.setTime_t(tt.end_time);
 
+		QString duration_string;
+
 		if (date_start != date_end) { /* TODO: should we compare dates/times, or only dates? */
 			/* Dates differ so print range on separate line. */
-			tracks_duration = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
+			duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 		} else {
 			/* Same date so just show it and keep rest of text on the same line - provided it's a valid time! */
 			if (tt.start_time != 0) {
-				tracks_duration = date_start.toString(Qt::SystemLocaleLongDate);
+				duration_string = date_start.toString(Qt::SystemLocaleLongDate);
 			}
 		}
 
-		tbuf2[0] = '\0';
+
+		QString len_duration;
+
 		if (tt.length > 0.0) {
 			/* Setup info dependent on distance units. */
-			DistanceUnit distance_unit = Preferences::get_unit_distance();
-			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
-			double len_in_units = convert_distance_meters_to(tt.length, distance_unit);
+			const DistanceUnit distance_unit = Preferences::get_unit_distance();
+			const QString distance_unit_string = get_distance_unit_string(distance_unit);
+			const double distance_in_units = convert_distance_meters_to(tt.length, distance_unit);
 
 			/* Timing information if available. */
-			tbuf1[0] = '\0';
+
 			if (tt.duration > 0) {
-				snprintf(tbuf1, sizeof(tbuf1),
-					 _(" in %d:%02d hrs:mins"),
-					 (int)(tt.duration/3600), (int)round(tt.duration/60.0)%60);
+				len_duration = QObject::tr("\n%1Total Length %2 %3 in %4 %5")
+					.arg(duration_string)
+					.arg(distance_in_units, 0, 'f', 1)
+					.arg(distance_unit_string)
+					.arg((int)(tt.duration/3600))
+					.arg((int) round(tt.duration / 60.0) % 60, 2, 10, (QChar) '0');
+			} else {
+				len_duration = QObject::tr("\n%1Total Length %2 %3")
+					.arg(duration_string)
+					.arg(distance_in_units, 0, 'f', 1).arg(distance_unit_string);
 			}
-			snprintf(tbuf2, sizeof(tbuf2),
-				 _("\n%sTotal Length %.1f %s%s"),
-				 tracks_duration.toUtf8().constData(), len_in_units, tbuf4, tbuf1);
+
 		}
 
-		tbuf1[0] = '\0';
+		QString route_length;
 		double rlength = 0.0;
 		trw_layer_routes_tooltip(this->routes->items, &rlength);
 		if (rlength > 0.0) {
-
 			/* Setup info dependent on distance units. */
-			DistanceUnit distance_unit = Preferences::get_unit_distance();
-			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
-			double len_in_units = convert_distance_meters_to(rlength, distance_unit);
-			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
+			const DistanceUnit distance_unit = Preferences::get_unit_distance();
+			const QString distance_unit_string = get_distance_unit_string(distance_unit);
+			const double distance_in_units = convert_distance_meters_to(rlength, distance_unit);
+			route_length = QObject::tr("\nTotal route length %.1f %s").arg(distance_in_units).arg(distance_unit_string);
 		}
 
 		/* Put together all the elements to form compact tooltip text. */
-		snprintf(tmp_buf, sizeof(tmp_buf),
-			 _("Tracks: %ld - Waypoints: %ld - Routes: %ld%s%s"),
-			 this->tracks->items.size(), this->waypoints->items.size(), this->routes->items.size(), tbuf2, tbuf1);
+		msg = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3 %4 %5")
+			.arg(this->tracks->items.size())
+			.arg(this->waypoints->items.size())
+			.arg(this->routes->items.size())
+			.arg(len_duration)
+			.arg(route_length);
 
 	}
-	return QString(tmp_buf);
+	return msg;
 }
 
 
@@ -1629,10 +1635,10 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	/* Position part.
 	   Position is put last, as this bit is most likely not to be seen if the display is not big enough,
 	   one can easily use the current pointer position to see this if needed. */
-	char * lat = NULL;
-	char * lon = NULL;
-	static struct LatLon ll = wp->coord.get_latlon();
-	a_coords_latlon_to_string(&ll, &lat, &lon);
+	const LatLon lat_lon = wp->coord.get_latlon();
+	QString lat;
+	QString lon;
+	LatLon::to_strings(lat_lon, lat, lon);
 
 	/* Combine parts to make overall message. */
 	QString msg;
@@ -1643,8 +1649,6 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 		msg = tr("%1 | %2 %3").arg(tmp_buf1).arg(lat).arg(lon);
 	}
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
-	free(lat);
-	free(lon);
 }
 
 
