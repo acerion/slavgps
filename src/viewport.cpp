@@ -253,23 +253,9 @@ Viewport::~Viewport()
 
 
 
-/* Returns pointer to internal static storage, changes next time function called, use quickly. */
-char const * Viewport::get_background_color()
+void Viewport::set_background_color(const QString & color_name)
 {
-	static char color[8];
-	snprintf(color, sizeof (color), "#%.2x%.2x%.2x",
-		 (int) (this->background_color.red() / 256),
-		 (int) (this->background_color.green() / 256),
-		 (int) (this->background_color.blue() / 256));
-	return color;
-}
-
-
-
-
-void Viewport::set_background_color(char const * colorname)
-{
-	this->background_color.setNamedColor(colorname);
+	this->background_color.setNamedColor(color_name);
 	this->background_pen.setColor(this->background_color);
 }
 
@@ -293,23 +279,9 @@ const QColor & Viewport::get_highlight_color(void) const
 
 
 
-/* Returns pointer to internal static storage, changes next time function called, use quickly. */
-const char * Viewport::get_highlight_color()
+void Viewport::set_highlight_color(const QString & color_name)
 {
-	static char color[8];
-	snprintf(color, sizeof(color), "#%.2x%.2x%.2x",
-		 (int) (highlight_color.red() / 256),
-		 (int) (highlight_color.green() / 256),
-		 (int) (highlight_color.blue() / 256));
-	return color;
-}
-
-
-
-
-void Viewport::set_highlight_color(char const * colorname)
-{
-	this->highlight_color.setNamedColor(colorname);
+	this->highlight_color.setNamedColor(color_name);
 	this->highlight_pen.setColor(this->highlight_color);
 }
 
@@ -339,33 +311,6 @@ void Viewport::set_highlight_thickness(int w)
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
 	// GDK_JOIN_ROUND
-}
-
-
-
-
-QPen * Viewport::new_pen(char const * colorname, int w)
-{
-	QPen * pen = new QPen(colorname);
-	pen->setWidth(w);
-	// GDK_LINE_SOLID
-	// GDK_CAP_ROUND
-	// GDK_JOIN_ROUND
-
-	return pen;
-}
-
-
-
-QPen * Viewport::new_pen(const QColor & color, int w)
-{
-	QPen * pen = new QPen(color);
-	pen->setWidth(w);
-	// GDK_LINE_SOLID
-	// GDK_CAP_ROUND
-	// GDK_JOIN_ROUND
-
-	return pen;
 }
 
 
@@ -463,13 +408,13 @@ bool Viewport::configure()
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 	/* TODO trigger. */
 
-	this->background_pen.setColor(DEFAULT_BACKGROUND_COLOR);
+	this->background_pen.setColor(QString(DEFAULT_BACKGROUND_COLOR));
 	this->background_pen.setWidth(1);
-	this->set_background_color(DEFAULT_BACKGROUND_COLOR);
+	this->set_background_color(QString(DEFAULT_BACKGROUND_COLOR));
 
 	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
 	this->highlight_pen.setWidth(1);
-	this->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
+	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 
 	qDebug() << "SIGNAL: Viewport: sending \"reconfigured\" from" << this->type_string << __FUNCTION__;
 	emit this->reconfigured(this);

@@ -28,6 +28,8 @@
 #include <QString>
 #include <QTemporaryFile>
 #include <QAbstractButton>
+#include <QColor>
+#include <QPen>
 
 #include "map_ids.h"
 #include "preferences.h"
@@ -101,6 +103,10 @@ namespace SlavGPS {
 		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
 		static void copy_label_menu(QAbstractButton * button);
 		static QString get_time_string(time_t time, const char * format, const Coord * coord, const char * gtz);
+
+
+		static void color_to_string(char * buffer, size_t buffer_size, const QColor & color);
+		static QPen new_pen(const QColor & color, int width);
 	};
 
 

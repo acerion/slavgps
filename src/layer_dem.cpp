@@ -290,13 +290,13 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 	LayerDEM * layer = new LayerDEM();
 
 	/* TODO: share ->colors[] between layers. */
-	layer->colors[0] = new QColor(layer->base_color);
+	layer->colors[0] = QColor(layer->base_color);
 	for (unsigned int i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
-		layer->colors[i] = new QColor(dem_height_colors[i]);
+		layer->colors[i] = QColor(dem_height_colors[i]);
 	}
 
 	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		layer->gradients[i] = new QColor(dem_gradient_colors[i]);
+		layer->gradients[i] = QColor(dem_gradient_colors[i]);
 	}
 
 	layer->unmarshall_params(data, data_len);
@@ -392,8 +392,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 	switch (id) {
 	case PARAM_COLOR:
 		this->base_color = param_value.val_color;
-		*this->colors[0] = this->base_color;
-
+		this->colors[0] = this->base_color;
 		break;
 
 	case PARAM_SOURCE:
@@ -707,7 +706,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 					int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
 					//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(*this->gradients[idx], box_x, box_y, box_width, box_height);
+					viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 				} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 					int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
@@ -715,7 +714,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 						idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
 					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(*this->colors[idx], box_x, box_y, box_width, box_height);
+					viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 				} else {
 					; /* No other dem type to process. */
 				}
@@ -814,7 +813,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
 					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(*this->colors[idx], a - 1, b - 1, 2, 2);
+					viewport->fill_rectangle(this->colors[idx], a - 1, b - 1, 2, 2);
 				}
 			} /* for y= */
 		} /* for x= */
@@ -945,11 +944,11 @@ LayerDEM::LayerDEM()
 
 	this->dem_type = 0;
 
-	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
-	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
+	this->colors = (QColor *) malloc(sizeof(QColor) * DEM_N_HEIGHT_COLORS);
+	this->gradients = (QColor *) malloc(sizeof(QColor) * DEM_N_GRADIENT_COLORS);
 
 	/* Ensure the base color is available so the default color can be applied. */
-	this->colors[0] = new QColor("#0000FF");
+	this->colors[0] = QColor("#0000FF");
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
@@ -957,12 +956,12 @@ LayerDEM::LayerDEM()
 	/* TODO: share ->colors[] between layers. */
 	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i > 0) {
-			this->colors[i] = new QColor(dem_height_colors[i]);
+			this->colors[i] = QColor(dem_height_colors[i]);
 		}
 	}
 
 	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		this->gradients[i] = new QColor(dem_gradient_colors[i]);
+		this->gradients[i] = QColor(dem_gradient_colors[i]);
 	}
 }
 
@@ -972,20 +971,14 @@ LayerDEM::LayerDEM()
 LayerDEM::~LayerDEM()
 {
 	if (this->colors) {
-		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-			delete this->colors[i];
-		}
+		free(this->colors);
+		this->colors = NULL;
 	}
-	free(this->colors);
-
 
 	if (this->gradients) {
-		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			delete this->gradients[i];
-		}
+		free(this->gradients);
+		this->gradients = NULL;
 	}
-	free(this->gradients);
-
 
 	DEMCache::unload_from_cache(this->files);
 	this->files.clear();

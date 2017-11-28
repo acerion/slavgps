@@ -171,18 +171,18 @@ void LayerCoord::draw(Viewport * viewport)
 
 void LayerCoord::draw_latlon(Viewport * viewport)
 {
-	QPen dgc(this->color);
-	dgc.setWidth(this->line_thickness);
-	QPen mgc(this->color);
-	mgc.setWidth(MAX(this->line_thickness / 2, 1));
-	QPen sgc(this->color);
-	sgc.setWidth(MAX(this->line_thickness / 5, 1));
+	QPen degrees_pen(this->color);
+	degrees_pen.setWidth(this->line_thickness);
+	QPen minutes_pen(this->color);
+	minutes_pen.setWidth(MAX(this->line_thickness / 2, 1));
+	QPen seconds_pen(this->color);
+	seconds_pen.setWidth(MAX(this->line_thickness / 5, 1));
 
 	int x1, y1, x2, y2;
-#define CLINE(gc, c1, c2) {						\
-		viewport->coord_to_screen((c1), &x1, &y1);		\
-		viewport->coord_to_screen((c2), &x2, &y2);		\
-		viewport->draw_line((gc), x1 + 1, y1 + 1, x2, y2);	\
+#define CLINE(pen, coord_begin, coord_end) {				\
+		viewport->coord_to_screen((coord_begin), &x1, &y1);	\
+		viewport->coord_to_screen((coord_end), &x2, &y2);	\
+		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
 	}
 
 
@@ -215,7 +215,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					ul.ll.lon = j / 3600.0;
 					bl.ll.lon = j / 3600.0;
 					if ((int) j % smod == 0) {
-						CLINE(sgc, &ul, &bl);
+						CLINE(seconds_pen, &ul, &bl);
 					}
 				}
 			}
@@ -223,13 +223,13 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				ul.ll.lon = i / 60.0;
 				bl.ll.lon = i / 60.0;
 				if ((int) i % mmod == 0) {
-					CLINE(mgc, &ul, &bl);
+					CLINE(minutes_pen, &ul, &bl);
 				}
 			}
 			if ((int) i % 60 == 0) {
 				ul.ll.lon = i / 60.0;
 				bl.ll.lon = i / 60.0;
-				CLINE(dgc, &ul, &bl);
+				CLINE(degrees_pen, &ul, &bl);
 			}
 		}
 	}
@@ -249,7 +249,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					ul.ll.lat = j / 3600.0;
 					ur.ll.lat = j / 3600.0;
 					if ((int) j % smod == 0) {
-						CLINE(sgc, &ul, &ur);
+						CLINE(seconds_pen, &ul, &ur);
 					}
 				}
 			}
@@ -257,13 +257,13 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				ul.ll.lat = i / 60.0;
 				ur.ll.lat = i / 60.0;
 				if ((int) i % mmod == 0) {
-					CLINE(mgc, &ul, &ur);
+					CLINE(minutes_pen, &ul, &ur);
 				}
 			}
 			if ((int) i % 60 == 0) {
 				ul.ll.lat = i / 60.0;
 				ur.ll.lat = i / 60.0;
-				CLINE(dgc, &ul, &ur);
+				CLINE(degrees_pen, &ul, &ur);
 			}
 		}
 	}

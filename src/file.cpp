@@ -250,12 +250,19 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", (int) mode);
 	}
 
+	char bg_color_string[8] = { 0 };
+	SGUtils::color_to_string(bg_color_string, sizeof (bg_color_string), viewport->get_background_color());
+
+	char hl_color_string[8] = { 0 };
+	SGUtils::color_to_string(hl_color_string, sizeof (hl_color_string), viewport->get_highlight_color());
+
 	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
 		viewport->get_xmpp(), viewport->get_ympp(), ll.lat, ll.lon,
-		modestring, viewport->get_background_color(),
-		viewport->get_highlight_color(),
+		modestring,
+		bg_color_string,
+		hl_color_string,
 		viewport->get_scale_visibility() ? "t" : "f",
 		viewport->get_center_mark_visibility() ? "t" : "f",
 		viewport->get_highlight_usage() ? "t" : "f");
@@ -531,9 +538,9 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "latlon") == 0) {
 				viewport->set_drawmode(ViewportDrawMode::LATLON);
 			} else if (stack->under == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
-				viewport->set_background_color(line+6);
+				viewport->set_background_color(QString(line+6));
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
-				viewport->set_highlight_color(line+15);
+				viewport->set_highlight_color(QString(line+15));
 			} else if (stack->under == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
 				viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {

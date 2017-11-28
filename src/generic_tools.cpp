@@ -99,11 +99,6 @@ LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * view
 void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance)
 {
 	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
-#if 0
-	PangoLayout *pl;
-	QPen * lab_pen = this->viewport->new_pen("#cccccc", 1);
-	QPen * thick_pen = gdk_gc_new(d);
-#endif
 
 	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	double dx = (x2 - x1) / len * 10;
@@ -200,7 +195,8 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 		painter.drawText(x1-5, y1-CR-3*dist-8, "N");
 	}
 #if 1
-	// fill_rectangle(d, lab_pen, (x)-2, (y)-1, (w)+4, (h)+1);
+	// QPen label_pen = SGUtils::new_pen(QColor("#cccccc"), 1);
+	// fill_rectangle(d, label_pen, (x)-2, (y)-1, (w)+4, (h)+1);
 	// draw_rectangle(d, gc, (x)-2, (y)-1, (w)+4, (h)+1);
 	#define LABEL(x, y, w, h, text) {				\
 		painter.drawText((x), (y), text); }
@@ -297,11 +293,6 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 
 #undef LABEL
 
-#if 0
-	g_object_unref(G_OBJECT (pl));
-	g_object_unref(G_OBJECT (lab_pen));
-	g_object_unref(G_OBJECT (thick_pen));
-#endif
 }
 
 

@@ -1035,3 +1035,29 @@ bool SGUtils::create_temporary_file(QTemporaryFile & file, const QString & name_
 
 	return true;
 }
+
+
+
+
+void SGUtils::color_to_string(char * buffer, size_t buffer_size, const QColor & color)
+{
+	snprintf(buffer, sizeof (buffer), "#%.2x%.2x%.2x", (int) (color.red() / 256), (int) (color.green() / 256), (int) (color.blue() / 256));
+
+}
+
+
+
+QPen SGUtils::new_pen(const QColor & color, int width)
+{
+	QPen pen(color);
+	pen.setWidth(width);
+
+#ifdef K
+	/* TODO: apply these attributes to a pen. */
+	//GDK_LINE_SOLID
+	//GDK_CAP_ROUND
+	//GDK_JOIN_ROUND
+#endif
+
+	return pen;
+}

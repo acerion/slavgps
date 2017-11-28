@@ -78,9 +78,11 @@ namespace SlavGPS {
 
 		static void weak_ref_cb(void * ptr, void * dead_vdl);
 
-		QPen pen;
-		QColor ** colors = NULL;
-		QColor ** gradients = NULL;
+		/* Table of colors. */
+		QColor * colors = NULL;
+		/* Table of gradients. */
+		QColor * gradients = NULL;
+
 		QStringList files;
 		double min_elev = 0;
 		double max_elev = 0;

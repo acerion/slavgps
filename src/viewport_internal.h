@@ -142,20 +142,20 @@ namespace SlavGPS {
 		void add_logo(QPixmap const * logo);
 
 
-		void set_highlight_color(char const * color);
-		char const * get_highlight_color();
-		const QColor & get_highlight_color(void) const;
-		void set_highlight_color(const QColor & color);
+
 		QPen get_highlight_pen();
 		void set_highlight_thickness(int thickness);
+
+		void set_highlight_color(const QString & color_name);
+		void set_highlight_color(const QColor & color);
+		const QColor & get_highlight_color(void) const;
 
 
 
 		/* Color/graphics context management. */
-		void set_background_color(char const * color);
-		const char * get_background_color();
-		const QColor & get_background_color(void) const;
 		void set_background_color(const QColor & color);
+		void set_background_color(const QString & color_name);
+		const QColor & get_background_color(void) const;
 
 
 		double calculate_utm_zone_width(); // private
@@ -187,9 +187,6 @@ namespace SlavGPS {
 		ViewportDrawMode get_drawmode();
 		/* Do not forget to update Viewport::get_drawmode_name() if you modify ViewportDrawMode. */
 
-
-		QPen * new_pen(char const * colorname, int width);
-		QPen * new_pen(const QColor & color, int width);
 
 
 		/* Viewport buffer management/drawing to screen. */

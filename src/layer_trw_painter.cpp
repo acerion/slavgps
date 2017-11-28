@@ -280,13 +280,7 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 
 QColor TRWPainter::get_fg_color(const Track * trk) const
 {
-	QColor fg_color;
-	if (this->trw->track_drawing_mode == DRAWMODE_BY_TRACK) {
-		fg_color = trk->color;
-	} else {
-		fg_color = this->trw->track_color_common;
-	}
-	return fg_color;
+	return this->trw->track_drawing_mode == DRAWMODE_BY_TRACK ? trk->color : this->trw->track_color_common;
 }
 
 
@@ -296,13 +290,7 @@ QColor TRWPainter::get_fg_color(const Track * trk) const
    same as the highlight color. */
 QColor TRWPainter::get_bg_color(bool do_highlight) const
 {
-	QColor bg_color;
-	if (do_highlight) {
-		bg_color = this->viewport->get_highlight_color();
-	} else {
-		bg_color = this->trw->track_bg_color;
-	}
-	return bg_color;
+	return do_highlight ? this->viewport->get_highlight_color() : this->trw->track_bg_color;
 }
 
 
@@ -1044,7 +1032,7 @@ void TRWPainter::draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highli
 		QRectF bounding_rect(label_x + 3, label_y - 3, 300, -30);
 		this->viewport->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->trw->wp_label_font_size)),
 					  this->trw->wp_label_fg_pen,
-					  QColor("pink"), /* this->viewport->get_highlight_pen().color() */
+					  QColor("pink"), /* TODO: this->viewport->get_highlight_pen().color() */
 					  bounding_rect,
 					  Qt::AlignBottom | Qt::AlignLeft,
 					  wp->name,

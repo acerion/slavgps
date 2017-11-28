@@ -951,12 +951,11 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 			yd = ev->y - hd;
 
 			/* Create a background block to make the text easier to read over the background map. */
-			QPen * background_block_pen = tool->viewport->new_pen("#cccccc", 1);
+			QPen background_block_pen = SGUtils::new_pen(QColor("#cccccc"), 1);
 			fill_rectangle(pixmap, background_block_pen, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, trw->current_trk_new_point_pen, xd, yd, pl);
 
 			g_object_unref(G_OBJECT (pl));
-			g_object_unref(G_OBJECT (background_block_pen));
 #endif
 		}
 
