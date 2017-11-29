@@ -65,7 +65,7 @@ namespace SlavGPS {
 	class DataSourceDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
 	};
 
 
