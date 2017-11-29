@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-//#include <cmath>
 #include <cstdlib>
 #include <ctime>
 
@@ -49,6 +48,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX "Trackpoint Properties: "
 
 
 
@@ -237,7 +241,7 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->pdop->setText("");
 	this->sat->setText("");
 
-	this->setWindowTitle(QString("Trackpoint"));
+	this->setWindowTitle(tr("Trackpoint"));
 }
 
 
@@ -252,10 +256,6 @@ void PropertiesDialogTP::reset_dialog_data(void)
  */
 void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route)
 {
-	static char tmp_str[64];
-	static QString tmp_string;
-	static struct LatLon ll;
-
 	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
@@ -294,9 +294,10 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 
-	ll = tp->coord.get_latlon();
-	this->lat->setValue(ll.lat);
-	this->lon->setValue(ll.lon);
+	const LatLon lat_lon = tp->coord.get_latlon();
+	this->lat->setValue(lat_lon.lat);
+	this->lon->setValue(lat_lon.lon);
+
 
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
@@ -308,9 +309,11 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		this->alt->setValue(VIK_METERS_TO_FEET(tp->altitude));
 		break;
 	default:
+		qDebug() << "EE:" PREFIX "invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
 		this->alt->setValue(tp->altitude);
-		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
+		break;
 	}
+
 
 	this->update_times(tp);
 
@@ -318,20 +321,15 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 
 	if (this->cur_tp) {
-
-		tmp_string = Measurements::get_distance_string_short(Coord::distance(tp->coord, this->cur_tp->coord));
-		this->diff_dist->setText(tmp_string);
-
+		this->diff_dist->setText(Measurements::get_distance_string_short(Coord::distance(tp->coord, this->cur_tp->coord)));
 
 		if (tp->has_timestamp && this->cur_tp->has_timestamp) {
-			tmp_string = tr("%1 s").arg((long) (tp->timestamp - this->cur_tp->timestamp));
-			this->diff_time->setText(tmp_string);
+			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp - this->cur_tp->timestamp)));
 			if (tp->timestamp == this->cur_tp->timestamp) {
-				this->diff_speed->setText(QString("--"));
+				this->diff_speed->setText("--");
 			} else {
-				double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
-				tmp_string = Measurements::get_speed_string(tmp_speed);
-				this->diff_speed->setText(tmp_string);
+				const double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
+				this->diff_speed->setText(Measurements::get_speed_string(tmp_speed));
 			}
 		} else {
 			this->diff_time->setText("");
@@ -340,28 +338,13 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	}
 
 
-	tmp_string = Measurements::get_course_string(tp->course);
-	this->course->setText(QString(tmp_string));
+	this->course->setText(Measurements::get_course_string(tp->course));
+	this->speed->setText(Measurements::get_speed_string(tp->speed));
+	this->hdop->setText(Measurements::get_distance_string(tp->hdop, 5));
+	this->pdop->setText(Measurements::get_distance_string(tp->pdop * 1.0936133, 5));
+	this->vdop->setText(Measurements::get_altitude_string(tp->vdop, 5));
+	this->sat->setText(tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode));
 
-
-	tmp_string = Measurements::get_speed_string(tp->speed);
-	this->speed->setText(tmp_string);
-
-
-	tmp_string = Measurements::get_distance_string(tp->hdop, 5);
-	this->hdop->setText(tmp_string);
-
-
-	tmp_string = Measurements::get_distance_string(tp->pdop * 1.0936133, 5);
-	this->pdop->setText(tmp_string);
-
-
-	tmp_string = Measurements::get_altitude_string(tp->vdop, 5);
-	this->vdop->setText(tmp_string);
-
-
-	tmp_string = tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode);
-	this->sat->setText(QString(tmp_string));
 
 	this->cur_tp = tp;
 }
@@ -371,7 +354,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 void PropertiesDialogTP::set_dialog_title(const QString & track_name)
 {
-	const QString title = QString("%1: %2").arg(track_name).arg(QString("Trackpoint"));
+	const QString title = tr("%1: %2").arg(track_name).arg(tr("Trackpoint"));
 	this->setWindowTitle(title);
 }
 
@@ -387,20 +370,20 @@ PropertiesDialogTP::PropertiesDialogTP()
 
 PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent_widget)
 {
-	this->setWindowTitle(QString("Trackpoint"));
+	this->setWindowTitle(tr("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
 	this->parent = parent_widget;
 
-	this->button_close_dialog = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
-	this->button_insert_tp_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
+	this->button_close_dialog = this->button_box->addButton(tr("&Close"), QDialogButtonBox::ActionRole);
+	this->button_insert_tp_after = this->button_box->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
 	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
-	this->button_delete_current_tp = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
+	this->button_delete_current_tp = this->button_box->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
 	this->button_delete_current_tp->setIcon(QIcon::fromTheme("list-delete"));
-	this->button_split_track = this->button_box->addButton("Split Here", QDialogButtonBox::ActionRole);
-	this->button_go_back = this->button_box->addButton("&Back", QDialogButtonBox::ActionRole);
+	this->button_split_track = this->button_box->addButton(tr("Split Here"), QDialogButtonBox::ActionRole);
+	this->button_go_back = this->button_box->addButton(tr("&Back"), QDialogButtonBox::ActionRole);
 	this->button_go_back->setIcon(QIcon::fromTheme("go-previous"));
-	this->button_go_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
+	this->button_go_forward = this->button_box->addButton(tr("&Forward"), QDialogButtonBox::ActionRole);
 	this->button_go_forward->setIcon(QIcon::fromTheme("go-next"));
 
 
@@ -421,29 +404,11 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->signal_mapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
 
 
-	this->vbox = new QVBoxLayout; /* Main track info. */
-	this->hbox = new QHBoxLayout; /* Diff info. */
-
-	QFormLayout * left_form = NULL;
-	QFormLayout * right_form = NULL;
-	QLayout * old_layout = NULL;
-
-	left_form = new QFormLayout();
-	this->left_area = new QWidget();
-	old_layout = this->left_area->layout();
-	delete old_layout;
-	this->left_area->setLayout(left_form);
-
-	right_form = new QFormLayout();
-	this->right_area = new QWidget();
-	old_layout = this->right_area->layout();
-	delete old_layout;
-	this->right_area->setLayout(right_form);
+	this->vbox = new QVBoxLayout;
 
 
-	this->hbox->addWidget(this->left_area);
-	this->hbox->addWidget(this->right_area);
-	this->vbox->addLayout(this->hbox);
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
 	this->vbox->addWidget(this->button_box);
 
 
@@ -453,7 +418,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 
 	this->trkpt_name = new QLineEdit("", this);
-	left_form->addRow(QString("Name:"), this->trkpt_name);
+	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
+	this->grid->addWidget(this->trkpt_name, 0, 1);
 #ifdef K
 	connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
 #endif
@@ -466,7 +432,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lat->setMaximum(90);
 	this->lat->setSingleStep(0.00005);
 	this->lat->setValue(0);
-	left_form->addRow(QString("Latitude:"), this->lat);
+	this->grid->addWidget(new QLabel(tr("Latitude:")), 1, 0);
+	this->grid->addWidget(this->lat, 1, 1);
 	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
 
 
@@ -476,79 +443,99 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lon->setMaximum(180);
 	this->lon->setSingleStep(0.00005);
 	this->lon->setValue(0);
-	left_form->addRow(QString("Longitude:"), this->lon);
+	this->grid->addWidget(new QLabel(tr("Longitude:")), 2, 0);
+	this->grid->addWidget(this->lon, 2, 1);
 	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
 
 
 	this->alt = new QDoubleSpinBox(this);
-	this->alt->setDecimals(2);
-	this->alt->setMinimum(VIK_VAL_MIN_ALT);
-	this->alt->setMaximum(VIK_VAL_MAX_ALT);
-	this->alt->setSingleStep(10);
+	this->alt->setDecimals(SG_ALTITUDE_PRECISION);
+	this->alt->setMinimum(SG_ALTITUDE_RANGE_MIN);
+	this->alt->setMaximum(SG_ALTITUDE_RANGE_MAX);
+	this->alt->setSingleStep(1);
 	this->alt->setValue(0);
-	left_form->addRow(QString("Altitude:"), this->alt);
+	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
+	this->grid->addWidget(this->alt, 3, 1);
 	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_alt_to_tp_cb(void)));
 
 
 	this->course = new QLabel("", this);
 	this->course->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	left_form->addRow(QString("Course:"), this->course);
+	this->grid->addWidget(new QLabel(tr("Course:")), 4, 0);
+	this->grid->addWidget(this->course, 4, 1);
 
 
 	this->timestamp = new QSpinBox(this);
 	this->timestamp->setMinimum(0);
 	this->timestamp->setMaximum(2147483647); /* pow(2,31)-1 limit input to ~2038 for now. */ /* TODO: improve this initialization. */
 	this->timestamp->setSingleStep(1);
-	left_form->addRow(QString("Timestamp:"), this->timestamp);
+	this->grid->addWidget(new QLabel(tr("Timestamp:")), 5, 0);
+	this->grid->addWidget(this->timestamp, 5, 1);
 	connect(this->timestamp, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
 
 
 	this->date_time_button = new SGDateTimeButton(this);
-	left_form->addRow(QString("Time:"), this->date_time_button);
+	this->grid->addWidget(new QLabel(tr("Time:")), 6, 0);
+	this->grid->addWidget(this->date_time_button, 6, 1);
 	//connect(this->date_time_button, SIGNAL (released(void)), this, SLOT (date_time_button_clicked_cb(void)));
 	connect(this->date_time_button, SIGNAL (clear_timestamp_signal(void)), this, SLOT (clear_timestamp_cb(void)));
 	connect(this->date_time_button, SIGNAL (set_timestamp_signal(time_t)), this, SLOT (set_timestamp_cb(time_t)));
 
 
+
+
+
 	this->diff_dist = new QLabel("", this);
 	this->diff_dist->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("Distance Difference:"), this->diff_dist);
+	this->grid->addWidget(new QLabel(tr("Distance Difference:")), 0, 3);
+	this->grid->addWidget(this->diff_dist, 0, 4);
 
 
 	this->diff_time = new QLabel("", this);
 	this->diff_time->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("Time Difference:"), this->diff_time);
+	this->grid->addWidget(new QLabel(tr("Time Difference:")), 1, 3);
+	this->grid->addWidget(this->diff_time, 1, 4);
 
 
 	this->diff_speed = new QLabel("", this);
 	this->diff_speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("\"Speed\" Between:"), this->diff_speed);
+	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), 2, 3);
+	this->grid->addWidget(this->diff_speed, 2, 4);
 
 
 	this->speed = new QLabel("", this);
 	this->speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("Speed:"), this->speed);
+	this->grid->addWidget(new QLabel(tr("Speed:")), 3, 3);
+	this->grid->addWidget(this->speed, 3, 4);
 
 
 	this->vdop = new QLabel("", this);
 	this->vdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("VDOP:"), this->vdop);
+	this->grid->addWidget(new QLabel(tr("VDOP:")), 4, 3);
+	this->grid->addWidget(this->vdop, 4, 4);
 
 
 	this->hdop = new QLabel("", this);
 	this->hdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("HDOP:"), this->hdop);
+	this->grid->addWidget(new QLabel(tr("HDOP:")), 5, 3);
+	this->grid->addWidget(this->hdop, 5, 4);
 
 
 	this->pdop = new QLabel("", this);
 	this->pdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("PDOP:"), this->pdop);
+	this->grid->addWidget(new QLabel(tr("PDOP:")), 6, 3);
+	this->grid->addWidget(this->pdop, 6, 4);
 
 
 	this->sat = new QLabel("", this);
 	this->sat->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	right_form->addRow(QString("SAT/FIX:"), this->sat);
+	this->grid->addWidget(new QLabel(tr("SAT/FIX:")), 7, 3);
+	this->grid->addWidget(this->sat, 7, 4);
+
+
+	this->grid->addWidget(new QLabel("  "), 0, 2); /* Spacer item. */
 }
+
 
 
 

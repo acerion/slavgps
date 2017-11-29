@@ -47,13 +47,6 @@
 
 
 
-/* cf with vik_track_get_minmax_alt internals. */
-#define VIK_VAL_MIN_ALT 25000.0
-#define VIK_VAL_MAX_ALT -5000.0
-
-
-
-
 namespace SlavGPS {
 
 

@@ -34,7 +34,11 @@ namespace SlavGPS {
 
 
 
-#define SG_PRECISION_ALTITUDE   5
+#define SG_PRECISION_ALTITUDE      5
+#define SG_ALTITUDE_PRECISION      2
+#define SG_ALTITUDE_RANGE_MIN  -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
+#define SG_ALTITUDE_RANGE_MAX  25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
+
 #define SG_PRECISION_DISTANCE   2
 #define SG_PRECISION_SPEED      2
 #define SG_PRECISION_COURSE     1

@@ -32,13 +32,13 @@
 #include <QFormLayout>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QDoubleSpinBox>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QSignalMapper>
 #include <QDateTimeEdit>
+#include <QGridLayout>
 
 
 
@@ -112,11 +112,8 @@ namespace SlavGPS {
 		QPushButton * button_go_back = NULL;
 		QPushButton * button_go_forward = NULL;
 
+		QGridLayout * grid = NULL;
 		QVBoxLayout * vbox = NULL;
-		QHBoxLayout * hbox = NULL;
-
-		QWidget * left_area = NULL;
-		QWidget * right_area = NULL;
 
 		QLineEdit * trkpt_name = NULL;
 		QDoubleSpinBox * lat = NULL;
