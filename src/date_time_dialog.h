@@ -96,8 +96,8 @@ namespace SlavGPS {
 		time_t timestamp = 0;
 
 	signals:
-		void set_timestamp_signal(time_t timestamp);
-		void clear_timestamp_signal();
+		void value_is_set(time_t timestamp);
+		void value_is_reset();
 	};
 
 

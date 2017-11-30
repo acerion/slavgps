@@ -63,11 +63,9 @@ using namespace SlavGPS;
 void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
 	if (tp->has_timestamp) {
-		this->timestamp->setValue(tp->timestamp);
-		this->date_time_button->set_label(tp->timestamp, "%c", &tp->coord, NULL);
+		this->timestamp_widget->set_timestamp(tp->timestamp, &tp->coord);
 	} else {
-		this->timestamp->setValue(0);
-		this->date_time_button->clear_label();
+		this->timestamp_widget->reset_timestamp();
 	}
 }
 
@@ -136,7 +134,7 @@ void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
 		return;
 	}
 
-	this->cur_tp->timestamp = this->timestamp->value();
+	this->cur_tp->timestamp = this->timestamp_widget->get_timestamp();
 	this->update_times(this->cur_tp);
 }
 
@@ -164,7 +162,6 @@ void PropertiesDialogTP::set_timestamp_cb(time_t timestamp_value)
 
 	this->cur_tp->timestamp = timestamp_value;
 	this->cur_tp->has_timestamp = true;
-	this->update_times(this->cur_tp);
 }
 
 
@@ -185,7 +182,6 @@ void PropertiesDialogTP::clear_timestamp_cb(void)
 
 	this->cur_tp->timestamp = 0;
 	this->cur_tp->has_timestamp = false;
-	this->update_times(this->cur_tp);
 }
 
 
@@ -214,15 +210,14 @@ void PropertiesDialogTP::reset_dialog_data(void)
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
 
-	this->date_time_button->setText("");
+	this->timestamp_widget->reset_timestamp();
 
 	this->course->setText("");
 
 	this->lat->setEnabled(false);
 	this->lon->setEnabled(false);
 	this->alt->setEnabled(false);
-	this->timestamp->setEnabled(false);
-	this->date_time_button->setEnabled(false);
+	this->timestamp_widget->setEnabled(false);
 
 	/* Only keep Close button enabled. */
 	this->button_insert_tp_after->setEnabled(false);
@@ -279,18 +274,21 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->lat->setEnabled(true);
 	this->lon->setEnabled(true);
 	this->alt->setEnabled(true);
-	this->timestamp->setEnabled(tp->has_timestamp);
+	this->timestamp_widget->setEnabled(tp->has_timestamp);
 
-	this->date_time_button->setEnabled(tp->has_timestamp);
 	/* Enable adding timestamps - but not on routepoints. */
+#ifdef K
 	if (!tp->has_timestamp && !is_route) {
-		this->date_time_button->setEnabled(true);
+		this->timestamp_widget->timestamp_button->setEnabled(true);
 	} else {
 		this->set_dialog_title(track->name);
-		if (!this->date_time_button->icon().isNull()) {
-			this->date_time_button->setIcon(QIcon());
+#if 0
+		if (!this->timestamp_widget->timestamp_button->icon().isNull()) {
+			this->timestamp_widget->timestamp_button->setIcon(QIcon());
 		}
+#endif
 	}
+#endif
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 
@@ -465,21 +463,11 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->grid->addWidget(this->course, 4, 1);
 
 
-	this->timestamp = new QSpinBox(this);
-	this->timestamp->setMinimum(0);
-	this->timestamp->setMaximum(2147483647); /* pow(2,31)-1 limit input to ~2038 for now. */ /* TODO: improve this initialization. */
-	this->timestamp->setSingleStep(1);
-	this->grid->addWidget(new QLabel(tr("Timestamp:")), 5, 0);
-	this->grid->addWidget(this->timestamp, 5, 1);
-	connect(this->timestamp, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
-
-
-	this->date_time_button = new SGDateTimeButton(this);
-	this->grid->addWidget(new QLabel(tr("Time:")), 6, 0);
-	this->grid->addWidget(this->date_time_button, 6, 1);
-	//connect(this->date_time_button, SIGNAL (released(void)), this, SLOT (date_time_button_clicked_cb(void)));
-	connect(this->date_time_button, SIGNAL (clear_timestamp_signal(void)), this, SLOT (clear_timestamp_cb(void)));
-	connect(this->date_time_button, SIGNAL (set_timestamp_signal(time_t)), this, SLOT (set_timestamp_cb(time_t)));
+	this->timestamp_widget = new SGTimestampWidget();
+	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
+	// TODO: connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_to_tp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (set_timestamp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (clear_timestamp_cb(void)));
 
 
 

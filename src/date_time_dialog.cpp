@@ -175,8 +175,8 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 		this->timestamp = this->dialog->get_timestamp();
 		qDebug() << "II: DateTime: returning timestamp" << this->timestamp;
 
-		qDebug() << "SIGNAL: Date Time Dialog: emitting 'Set Timestamp' signal" << this->timestamp;
-		emit this->set_timestamp_signal(this->timestamp);
+		qDebug() << "SIGNAL: Date Time Dialog: will emit 'Value is Set' signal" << this->timestamp;
+		emit this->value_is_set(this->timestamp);
 	} else {
 		qDebug() << "II: DateTime: returning zero";
 		this->timestamp = 0;
@@ -257,8 +257,8 @@ void SGDateTimeButton::clear_time_cb(void)
 	/* Inform client code that uses the button that "clear time"
 	   has been selected from context menu for the button, and
 	   that calendar and clock have been reset. */
-	qDebug() << "SIGNAL: Date Time Button: will emit 'Clear Timestamp' signal";
-	emit this->clear_timestamp_signal();
+	qDebug() << "SIGNAL: Date Time Button: will emit 'Value is Reset' signal";
+	emit this->value_is_reset();
 }
 
 

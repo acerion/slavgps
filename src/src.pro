@@ -115,6 +115,7 @@ SOURCES += main.cpp \
     widget_radio_group.cpp \
     widget_list_selection.cpp \
     widget_slider.cpp \
+    widget_timestamp.cpp \
     date_time_dialog.cpp \
     dem.cpp \
     dem_cache.cpp \
@@ -246,6 +247,7 @@ HEADERS += window.h \
     widget_radio_group.h \
     widget_list_selection.h \
     widget_slider.h \
+    widget_timestamp.h \
     date_time_dialog.h \
     dem.h \
     dem_cache.h \

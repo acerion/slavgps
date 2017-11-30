@@ -83,8 +83,8 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 	dialog.fill(wp, wp_param_specs, default_name);
 
 	dialog.date_time_button = (SGDateTimeButton *) dialog.widgets[SG_WP_PARAM_TIME];
-	QObject::connect(dialog.date_time_button, SIGNAL (clear_timestamp_signal(void)), &dialog, SLOT (clear_timestamp_cb(void)));
-	QObject::connect(dialog.date_time_button, SIGNAL (set_timestamp_signal(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
+	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
+	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
 
 	while (QDialog::Accepted == dialog.exec()) {
 

@@ -37,13 +37,12 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QSignalMapper>
-#include <QDateTimeEdit>
 #include <QGridLayout>
 
 
 
 
-#include "date_time_dialog.h"
+#include "widget_timestamp.h"
 
 
 
@@ -120,8 +119,8 @@ namespace SlavGPS {
 		QDoubleSpinBox * lon = NULL;
 		QDoubleSpinBox * alt = NULL;
 		QLabel * course = NULL;
-		QSpinBox * timestamp = NULL;
-		SGDateTimeButton * date_time_button = NULL;
+
+		SGTimestampWidget * timestamp_widget = NULL;
 
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;
