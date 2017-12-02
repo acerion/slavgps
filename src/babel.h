@@ -26,6 +26,9 @@
 
 
 
+#include <map>
+#include <vector>
+
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
@@ -106,12 +109,12 @@ namespace SlavGPS {
 	*/
 	class BabelDevice {
 	public:
-		BabelDevice(const char * mode, const QString & name, const QString & label);
+		BabelDevice(const QString & new_mode, const QString & new_identifier, const QString & new_label);
 		~BabelDevice();
 
 		BabelMode mode;
-		QString name;  /* gpsbabel's identifier of the device. */
-		QString label; /* Human readable label. */
+		QString identifier;  /* gpsbabel's identifier of the device. */
+		QString label;       /* Human readable label. */
 	};
 
 
@@ -122,13 +125,13 @@ namespace SlavGPS {
 	*/
 	class BabelFileType {
 	public:
-		BabelFileType(const char * mode, const QString & name, const QString & ext, const QString & label);
+		BabelFileType(const QString & new_mode, const QString & new_identifier, const QString & new_extension, const QString & new_label);
 		~BabelFileType();
 
 		BabelMode mode;
-		QString name;  /* gpsbabel's identifier of the format. */
-		QString ext;   /* File's extension for this format. */
-		QString label; /* Human readable label. */
+		QString identifier;  /* gpsbabel's identifier of the format. */
+		QString extension;   /* File's extension for this format. */
+		QString label;       /* Human readable label. */
 	};
 
 
@@ -164,6 +167,12 @@ namespace SlavGPS {
 		QString unbuffer_path; /* Path to unbuffer. */
 
 		bool is_detected = false; /* Has gpsbabel been detected in the system and is available for operation? */
+
+		/* Collection of file types supported by gpsbabel. */
+		static std::map<int, BabelFileType *> file_types;
+
+		/* List of devices supported by gpsbabel. */
+		static std::vector<BabelDevice *> devices;
 	};
 
 

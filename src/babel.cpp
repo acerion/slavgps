@@ -34,7 +34,6 @@
 #include "config.h"
 #endif
 
-#include <map>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -70,16 +69,13 @@ using namespace SlavGPS;
 #define BASH_LOCATION "/bin/bash"
 
 
-/**
-   Collection of file types supported by gpsbabel.
-*/
-std::map<int, BabelFileType *> a_babel_file_types;
-static int file_type_id = 0;
 
-/**
- * List of device supported by gpsbabel.
- */
-extern std::vector<BabelDevice *> a_babel_device_list;
+
+/* Definitions of static members from Babel class. */
+std::map<int, BabelFileType *> Babel::file_types;
+std::vector<BabelDevice *> Babel::devices;
+
+static int file_type_id = 0;
 
 
 
@@ -91,7 +87,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-static Babel babel;
+Babel babel;
 
 
 
@@ -601,14 +597,14 @@ bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & ba
 
 
 
-static void set_mode(BabelMode * mode, const char * smode)
+static void set_mode(BabelMode * mode, const QString & mode_string)
 {
-	mode->waypoints_read  = smode[0] == 'r';
-	mode->waypoints_write = smode[1] == 'w';
-	mode->tracks_read     = smode[2] == 'r';
-	mode->tracks_write    = smode[3] == 'w';
-	mode->routes_read     = smode[4] == 'r';
-	mode->routes_write    = smode[5] == 'w';
+	mode->waypoints_read  = mode_string.at(0) == 'r';
+	mode->waypoints_write = mode_string.at(1) == 'w';
+	mode->tracks_read     = mode_string.at(2) == 'r';
+	mode->tracks_write    = mode_string.at(3) == 'w';
+	mode->routes_read     = mode_string.at(4) == 'r';
+	mode->routes_write    = mode_string.at(5) == 'w';
 }
 
 
@@ -643,7 +639,7 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 		    && tokens[4] != NULL) {
 
 			BabelDevice * device = new BabelDevice(tokens[1], tokens[2], tokens[4]);
-			a_babel_device_list.push_back(device);
+			Babel::devices.push_back(device);
 
 
 		} else {
@@ -656,7 +652,7 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 		    && tokens[4] != NULL) {
 
 			BabelFileType * file_type = new BabelFileType(tokens[1], tokens[2], tokens[3], tokens[4]);
-			a_babel_file_types.insert({{ file_type_id, file_type }});
+			Babel::file_types.insert({{ file_type_id, file_type }});
 
 			file_type_id++;
 		} else {
@@ -729,19 +725,19 @@ void Babel::post_init()
 */
 void Babel::uninit()
 {
-	if (a_babel_file_types.size()) {
-		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+	if (Babel::file_types.size()) {
+		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
 			/* kamilFIXME: how should we do this? How to destroy BabelFileType? */
 			// delete (*iter);
-			a_babel_file_types.erase(iter);
+			Babel::file_types.erase(iter);
 		}
 	}
 
-	if (a_babel_device_list.size()) {
-		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+	if (Babel::devices.size()) {
+		for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
 			/* kamilFIXME: how should we do this? How to destroy BabelDevice? */
 			// delete (*iter);
-			a_babel_device_list.erase(iter);
+			Babel::devices.erase(iter);
 		}
 	}
 }
@@ -756,7 +752,7 @@ void Babel::uninit()
  */
 bool SlavGPS::a_babel_available()
 {
-	return !a_babel_device_list.empty();
+	return !Babel::devices.empty();
 }
 
 
@@ -893,18 +889,18 @@ void BabelConverter::read_stdout_cb()
 
 
 
-BabelFileType::BabelFileType(const char * mode_, const QString & name_, const QString & ext_, const QString & label_)
+BabelFileType::BabelFileType(const QString & new_mode, const QString & new_identifier, const QString & new_extension, const QString & new_label)
 {
-	set_mode(&this->mode, mode_);
-	this->name = name_;
-	this->ext = ext_;
-	this->label = label_;
+	set_mode(&this->mode, new_mode);
+	this->identifier = new_identifier;
+	this->extension = new_extension;
+	this->label = new_label;
 
 #if 1
 	qDebug() << "II: Babel: gpsbabel file type #"
 		 << file_type_id
 		 << ": "
-		 << this->name
+		 << this->identifier
 		 << " "
 		 << this->mode.waypoints_read
 		 << this->mode.waypoints_write
@@ -922,21 +918,21 @@ BabelFileType::BabelFileType(const char * mode_, const QString & name_, const QS
 
 BabelFileType::~BabelFileType()
 {
-	qDebug() << "DD: Babel: delete BabelFileType" << this->name << "/" << this->label;
+	qDebug() << "DD: Babel: delete BabelFileType" << this->identifier << "/" << this->label;
 }
 
 
 
 
-BabelDevice::BabelDevice(const char * mode_, const QString & name_, const QString & label_)
+BabelDevice::BabelDevice(const QString & new_mode, const QString & new_identifier, const QString & new_label)
 {
-	set_mode(&this->mode, mode_);
-	this->name = name_;
-	this->label = label_.left(50); /* Limit really long label text. */
+	set_mode(&this->mode, new_mode);
+	this->identifier = new_identifier;
+	this->label = new_label.left(50); /* Limit really long label text. */
 
 #if 1
 	qDebug() << "DD: Babel: new gpsbabel device:"
-		 << this->name
+		 << this->identifier
 		 << this->mode.waypoints_read
 		 << this->mode.waypoints_write
 		 << this->mode.tracks_read
@@ -952,5 +948,5 @@ BabelDevice::BabelDevice(const char * mode_, const QString & name_, const QStrin
 
 BabelDevice::~BabelDevice()
 {
-	qDebug() << "DD: Babel: freeing device" << this->name << "/" << this->label;
+	qDebug() << "DD: Babel: freeing device" << this->identifier << "/" << this->label;
 }

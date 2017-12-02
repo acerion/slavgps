@@ -61,7 +61,11 @@ using namespace SlavGPS;
 #define PREFERENCES_NAMESPACE_OSM_TRACES "osm_traces"
 
 #define VIK_SETTINGS_OSM_TRACE_VIS "osm_trace_visibility"
-static int last_active = -1;
+
+#define INVALID_ENTRY_INDEX -1
+
+/* Index of the last visibility selected. */
+static int g_last_visibility_index = -1;
 
 /**
    Login to use for OSM uploading.
@@ -98,7 +102,7 @@ static const OsmTraceVis_t OsmTraceVis[] = {
 
 
 static int osm_traces_upload_thread(BackgroundJob * bg_job);
-
+static int find_initial_visibility_index(void);
 
 
 
@@ -428,7 +432,6 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	int row = 0;
 	QCheckBox * anonymize_checkbutton = NULL;
 	QComboBox * visibility_combo = NULL;
-	const OsmTraceVis_t * vis_t = NULL;
 
 
 	QLabel  * user_label = new QLabel(QObject::tr("Email:"), &dialog);
@@ -516,32 +519,16 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 	QLabel * visibility_label = new QLabel(QObject::tr("Visibility:"));
 	visibility_combo = new QComboBox();
-	for (vis_t = OsmTraceVis; vis_t->combostr != NULL; vis_t++) {
-		visibility_combo->addItem(vis_t->combostr);
+	for (const OsmTraceVis_t * vis = OsmTraceVis; vis->combostr != NULL; vis++) {
+		visibility_combo->addItem(vis->combostr);
 	}
 
-	/* Set identifiable by default or use the settings for the value. */
-	if (last_active < 0) {
-		int find_entry = -1;
-		int wanted_entry = -1;
-		QString vis;
-		if (ApplicationState::get_string(VIK_SETTINGS_OSM_TRACE_VIS, vis)) {
-			/* Use setting. */
-			if (!vis.isEmpty()) {
-				for (vis_t = OsmTraceVis; vis_t->apistr != NULL; vis_t++) {
-					find_entry++;
-					if (vis == QString(vis_t->apistr)) {
-						wanted_entry = find_entry;
-					}
-				}
-			}
-			/* If not found set it to the first entry, otherwise use the entry. */
-			last_active = (wanted_entry < 0) ? 0 : wanted_entry;
-		} else {
-			last_active = 0;
-		}
+	if (g_last_visibility_index == INVALID_ENTRY_INDEX) {
+		g_last_visibility_index = find_initial_visibility_index();
 	}
-	visibility_combo->setCurrentIndex(last_active);
+	/* After this the index is valid. */
+
+	visibility_combo->setCurrentIndex(g_last_visibility_index);
 	dialog.grid->addWidget(visibility_label, row, 0);
 	dialog.grid->addWidget(visibility_combo, row, 1);
 	row++;
@@ -573,11 +560,44 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		}
 
 		/* Save visibility value for default reuse. */
-		last_active = visibility_combo->currentIndex();
-		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
+		g_last_visibility_index = visibility_combo->currentIndex();
+		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[g_last_visibility_index].apistr);
 
 		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
 
 		a_background_thread(info, ThreadPoolType::REMOTE, job_description);
 	}
+}
+
+
+
+
+int find_initial_visibility_index(void)
+{
+	QString visibility;
+	if (ApplicationState::get_string(VIK_SETTINGS_OSM_TRACE_VIS, visibility)) {
+		/* Use setting. */
+	} else {
+		/* Default to this value if necessary. */
+		visibility = "identifiable";
+	}
+
+	int entry_index = INVALID_ENTRY_INDEX;
+	bool found = false;
+	if (!visibility.isEmpty()) {
+		for (const OsmTraceVis_t * vis = OsmTraceVis; vis->apistr != NULL; vis++) {
+			entry_index++;
+			if (QString(vis->apistr) == visibility) {
+				found = true;
+				break;
+			}
+		}
+	}
+
+	if (!found) {
+		/* First entry in OsmTraceVis. */
+		entry_index = 0;
+	}
+
+	return entry_index;
 }

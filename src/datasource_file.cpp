@@ -27,8 +27,6 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib/gprintf.h>
-
 #include <QDebug>
 
 #include "datasource_file.h"
@@ -46,7 +44,6 @@ using namespace SlavGPS;
 
 
 
-extern std::map<int, BabelFileType *> a_babel_file_types;
 
 /* The last used directory. */
 static QUrl last_directory_url;
@@ -138,7 +135,7 @@ ProcessOptions * DataSourceFileDialog::get_process_options(DownloadOptions & dl_
 #endif
 
 
-	const QString selected = this->get_file_type_selection()->name;
+	const QString selected = this->get_file_type_selection()->identifier;
 
 	/* Generate the process options. */
 	po->babel_args = QString("-i %1").arg(selected);
@@ -157,7 +154,7 @@ void DataSourceFileDialog::accept_cb(void)
 	const BabelFileType * file_type = this->get_file_type_selection();
 
 	qDebug() << "II: Datasource File: dialog result: accepted";
-	qDebug() << "II: Datasource File: selected format type name: '" << file_type->name  << "'";
+	qDebug() << "II: Datasource File: selected format type identifier: '" << file_type->identifier  << "'";
 	qDebug() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
 	qDebug() << "II: Datasource File: selected file path: '" << this->file_entry->get_filename() << "'";
 }

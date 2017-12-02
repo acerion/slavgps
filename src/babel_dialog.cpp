@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #include <QCheckBox>
 #include <QDebug>
 #include <QLabel>
@@ -27,18 +30,14 @@
 
 
 
+
 using namespace SlavGPS;
 
 
 
 
-extern std::map<int, BabelFileType *> a_babel_file_types;
-
-
-
-
 /* The last file format selected. */
-static int last_type = 0;
+static int g_last_file_type_index = 0;
 
 
 
@@ -46,17 +45,26 @@ static int last_type = 0;
 /**
    \brief Create a list of gpsbabel file types
 
-   \param mode: the mode to filter the file types
+   \param input_mode: the mode to filter the file types
 
    \return list of file types
 */
-QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
+QComboBox * BabelDialog::build_file_type_selector(const BabelMode * operating_mode)
 {
+	BabelMode mode;
+	if (operating_mode) {
+		mode = *operating_mode;
+	} else {
+		/* The dialog is in "import" mode. Propose any readable file. */
+		BabelMode read_mode = { 1, 0, 1, 0, 1, 0 };
+		mode = read_mode;
+	}
+
 	QComboBox * combo = new QComboBox();
 
 	/* Add a first label to invite user to select a file type.
 	   user data == -1 distinguishes this entry. This entry can be also recognized by index == 0. */
-	combo->addItem("Select a file type", -1);
+	combo->addItem(tr("Select a file type"), -1);
 
 	/* Add all known and compatible file types */
 	if (mode.tracks_read
@@ -69,7 +77,7 @@ QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 		/* Run a function on all file types with any kind of read method
 		   (which is almost all but not quite - e.g. with GPSBabel v1.4.4
 		   - PalmDoc is write only waypoints). */
-		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
 
 			BabelFileType * file_type = iter->second;
 			/* Call function when any read mode found. */
@@ -82,7 +90,7 @@ QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 		}
 	} else {
 		/* Run a function on all file types supporting a given mode. */
-		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
+		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
 			BabelFileType * file_type = iter->second;
 			/* Check compatibility of modes. */
 			bool compat = true;
@@ -117,16 +125,16 @@ QComboBox * BabelDialog::build_file_type_selector(const BabelMode & mode)
 */
 BabelFileType * BabelDialog::get_file_type_selection(void)
 {
-	/* ID that was used in combo->addItem(<file type>, id);
+	/* File type ID that was used in combo->addItem(<file type>, id);
 	   A special item has been added with id == -1.
 	   All other items have been added with id >= 0. */
-	int i = this->file_types_combo->currentData().toInt();
-	if (i == -1) {
+	const int id = this->file_types_combo->currentData().toInt();
+	if (id == -1) {
 		qDebug() << "II: Babel Dialog: selected file type: NONE";
 		return NULL;
 	} else {
-		BabelFileType * file_type = a_babel_file_types.at(i);
-		qDebug().nospace() << "II: Babel Dialog: selected file type: '" << file_type->name << "', '" << file_type->label << "'";
+		BabelFileType * file_type = Babel::file_types.at(id);
+		qDebug() << "II: Babel Dialog: selected file type:" << file_type->identifier << ", " << file_type->label;
 		return file_type;
 	}
 }
@@ -240,8 +248,10 @@ void BabelDialog::build_ui(const BabelMode * mode)
 {
 	qDebug() << "II: Babel Dialog: building dialog UI";
 
-	QLabel * label = new QLabel("File:");
-	this->grid->addWidget(label, 0, 0);
+
+
+	this->grid->addWidget(new QLabel(tr("File:")), 0, 0);
+
 
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
@@ -250,92 +260,32 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	} else {
 		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
 	}
+	this->grid->addWidget(this->file_entry, 1, 0);
 
-
-	/*
-	if (filename) {
-		QString filename(filename);
+#ifdef K
+	/* We don't do this because we don't have filename here. */
+	if (!filename.isEmpty()) {
 		this->file_entry->set_filename(filename);
 	}
 
-	if (last_folder_uri) {
-		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(widgets->file), last_folder_uri);
-	}
-
-	*/
-
-
-	/* Add filters. */
-	QStringList filter;
-	filter << tr("All files (*)");
-
-	this->file_entry->file_selector->setNameFilters(filter);
-
-	for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-
-		QString a = QString((iter->second)->label) + "(" + QString((iter->second)->ext) + ")";
-		//qDebug() << "II: Babel Dialog: adding file filter " << a;
-		filter << a;
-
-		const QString ext = (iter->second)->ext;
-		if (ext.isEmpty()) {
-			/* No file extension => no filter. */
-			continue;
-		}
-		//char * pattern = g_strdup_printf("*.%s", ext);
-
-#ifdef K
-		GtkFileFilter * filter = gtk_file_filter_new();
-		gtk_file_filter_add_pattern(filter, pattern);
-		if (strstr(label, pattern+1)) {
-			gtk_file_filter_set_name(filter, label);
-		} else {
-			/* Ensure displayed label contains file pattern. */
-			/* NB: we skip the '*' in the pattern. */
-			char * name = g_strdup_printf("%s (%s)", label, pattern+1);
-			gtk_file_filter_set_name(filter, name);
-			free(name);
-#endif
-	}
-
-#ifdef K
-	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
-	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_type == file_type) {
-		/* Previous selection used this filter. */
-		this->file_entry->selectNameFilter(filter);
-	}
-
-	free(pattern);
-#endif
-	this->grid->addWidget(this->file_entry, 1, 0);
-
-
-	label = new QLabel("File type:");
-	this->grid->addWidget(label, 2, 0);
-
-
-#ifdef K
-	GtkFileFilter *all_filter = gtk_file_filter_new();
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(data_source_file_dialog->file_entry), all_filter);
-	if (last_file_type == NULL) {
-		/* No previously selected filter or 'All files' selected. */
-		data_source_file_dialog->file_entry->selectNameFilter(all_filter);
+	/* We don't do this because last_directory_url is kept by classes inheriting from this class. */
+	if (last_directory_url.isValid()) {
+		this->file_entry->file_selector->setDirectoryUrl(last_directory_url);
 	}
 #endif
-	/* The file format selector. */
-	if (mode) {
-		this->file_types_combo = build_file_type_selector(*mode);
-	} else {
-		/* The dialog is in "import" mode. Propose any readable file. */
-		const BabelMode read_mode = { 1, 0, 1, 0, 1, 0 };
-		this->file_types_combo = build_file_type_selector(read_mode);
-	}
+
+
+
+	this->grid->addWidget(new QLabel(tr("File type:")), 2, 0);
+
+
+
+	this->file_types_combo = this->build_file_type_selector(mode);
+	this->file_types_combo->setCurrentIndex(g_last_file_type_index);
 	this->grid->addWidget(this->file_types_combo, 3, 0);
-
-
 	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
-	this->file_types_combo->setCurrentIndex(last_type);
+
+
 
 #define DO_DEBUG 0
 #if DO_DEBUG
@@ -355,8 +305,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 		this->grid->addWidget(line, 4, 0);
 
 
-		label = new QLabel(tr("Export these items:"));
-		this->grid->addWidget(label, 5, 0);
+		this->grid->addWidget(new QLabel(tr("Export these items:")), 5, 0);
 #if DO_DEBUG
 		this->mode_box = this->build_mode_selector(mode2.tracks_write, mode2.routes_write, mode2.waypoints_write);
 #else
@@ -368,12 +317,15 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	/* Manually call the callback to set state of OK button. */
-	this->file_type_changed_cb(last_type);
+	this->file_type_changed_cb(g_last_file_type_index);
 
 
 	/* Blinky cursor in input field will be visible and will bring
 	   user's eyes to widget that has a focus. */
 	this->file_entry->setFocus();
+
+
+	connect(this->button_box, SIGNAL (accepted(void)), this, SLOT (on_accept_cb(void)));
 }
 
 
@@ -386,6 +338,39 @@ void BabelDialog::file_type_changed_cb(int index)
 	/* Only allow dialog's validation when format selection is done. */
 	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);
 	button->setEnabled(index != 0); /* Index is zero. User Data is -1. */
+
+
+
+	/* Update file type filters in file selection dialog according
+	   to currently selected babel file type. */
+	QStringList filters;
+	filters << tr("All files (*)");
+
+	BabelFileType * selection = this->get_file_type_selection();
+	if (selection) {
+		if (!selection->extension.isEmpty()) {
+
+			QString filter = QString(selection->label + " (*." + QString(selection->extension) + ")");
+			qDebug() << "II: Babel Dialog: adding file filter " << filter;
+			filters << filter;
+		}
+	}
+
+	this->file_entry->file_selector->setNameFilters(filters);
+}
+
+
+
+
+void BabelDialog::on_accept_cb(void)
+{
+	g_last_file_type_index = this->file_types_combo->currentIndex();
+	if (g_last_file_type_index != 0) {
+		const BabelFileType * file_type = Babel::file_types.at(g_last_file_type_index);
+		qDebug() << "SLOT: Babel Dialog: On Accept: selected file type:" << g_last_file_type_index << file_type->identifier << file_type->label;
+	} else {
+		qDebug() << "SLOT: Babel Dialog: On Accept: last file type index =" << g_last_file_type_index;
+	}
 }
 
 
@@ -393,11 +378,11 @@ void BabelDialog::file_type_changed_cb(int index)
 
 void BabelDialog::add_file_type_filter(BabelFileType * file_type)
 {
-	if (file_type->ext.isEmpty()) {
+	if (file_type->extension.isEmpty()) {
 		/* No file extension => no filter. */
 		return;
 	}
-	const QString pattern = QString("*.%1").arg(file_type->ext);
+	const QString pattern = QString("*.%1").arg(file_type->extension);
 
 #ifdef K
 	GtkFileFilter * filter = gtk_file_filter_new();

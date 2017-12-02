@@ -147,7 +147,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		const QString output_file_full_path = dialog->file_entry->get_filename();
 
 		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
-		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type name:" << file_type->name;
+		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type identifier:" << file_type->identifier;
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type label:" << file_type->label;
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_full_path;
 
@@ -161,7 +161,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 			;
 		}
 
-		failed = !VikFile::export_with_babel(this, output_file_full_path, file_type->name, mode.tracks_write, mode.routes_write, mode.waypoints_write);
+		failed = !VikFile::export_with_babel(this, output_file_full_path, file_type->identifier, mode.tracks_write, mode.routes_write, mode.waypoints_write);
 
 		this->get_window()->clear_busy_cursor();
 

@@ -68,8 +68,8 @@ using namespace SlavGPS;
 
 
 
-extern std::vector<BabelDevice *> a_babel_device_list;
 extern Tree * g_tree;
+
 
 
 
@@ -315,9 +315,9 @@ void SlavGPS::layer_gps_init(void)
 	int new_proto = 0;
 #ifdef K
 	/* +1 for luck (i.e the NULL terminator) */
-	char **new_protocols = (char **) g_malloc_n(1 + a_babel_device_list.size(), sizeof(void *));
+	char **new_protocols = (char **) g_malloc_n(1 + Babel::devices.size(), sizeof(void *));
 
-	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+	for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
 		/* Should be using label property but use name for now
 		   thus don't need to mess around converting label to name later on. */
 		new_protocols[new_proto++] = (*iter)->name;
@@ -686,8 +686,8 @@ LayerGPS::~LayerGPS()
 void LayerGPS::add_children_to_tree(void)
 {
 	/* TODO set to garmin by default.
-	   if (a_babel_device_list)
-	           device = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
+	   if (Babel::devices)
+	           device = ((BabelDevice*)g_list_nth_data(Babel::devices, last_active))->name;
 	   Need to access uibuild widgets somehow.... */
 
 	for (int ix = 0; ix < NUM_TRW; ix++) {

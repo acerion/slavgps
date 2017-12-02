@@ -45,16 +45,17 @@ using namespace SlavGPS;
 
 
 
-extern std::map<int, BabelFileType *> a_babel_file_types;
+#define INVALID_ENTRY_INDEX -1
 
-/* The last file format selected. */
-static int g_last_type_id = -1;
+/* Index of the last file format selected. */
+static int g_last_file_type_index = INVALID_ENTRY_INDEX;
 
 
 
 
 static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data);
 static ProcessOptions * datasource_url_get_process_options(DownloadOptions & dl_options, char const * not_used2, char const * not_used3);
+static int find_initial_file_type_index(void);
 
 
 
@@ -87,23 +88,6 @@ DataSourceInterface datasource_url_interface = {
 
 
 
-static int find_entry = -1;
-static int wanted_entry = -1;
-
-
-
-
-static void find_type(BabelFileType * file_type, const QString & type_name)
-{
-	find_entry++;
-	if (file_type->name == type_name) {
-		wanted_entry = find_entry;
-	}
-}
-
-
-
-
 #define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
 
 
@@ -119,47 +103,25 @@ static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport
 
 DataSourceURLDialog::DataSourceURLDialog()
 {
-	QLabel * url_label = new QLabel(QObject::tr("URL:"));
-	QLabel * type_combo_label = new QLabel(QObject::tr("File type:"));
-
-	if (g_last_type_id < 0) {
-		find_entry = -1;
-		wanted_entry = -1;
-		QString type;
-		if (ApplicationState::get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, type)) {
-			/* Use setting. */
-			if (!type.isEmpty()) {
-				for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-					find_type(iter->second, type);
-				}
-			}
-		} else {
-			/* Default to GPX if possible. */
-			for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-				find_type(iter->second, "gpx");
-			}
-		}
-		/* If not found set it to the first entry, otherwise use the entry. */
-		g_last_type_id = (wanted_entry < 0) ? 0 : wanted_entry;
+	if (g_last_file_type_index == INVALID_ENTRY_INDEX) {
+		g_last_file_type_index = find_initial_file_type_index();
 	}
-
+	/* After this the index is valid. */
 
 	if (a_babel_available()) {
-		for (auto iter = a_babel_file_types.begin(); iter != a_babel_file_types.end(); iter++) {
-			this->type_combo.addItem(iter->second->label);
+		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
+			this->file_type_combo.addItem(iter->second->label);
 		}
-		if (g_last_type_id >= 0) {
-			this->type_combo.setCurrentIndex(g_last_type_id);
-		}
+		this->file_type_combo.setCurrentIndex(g_last_file_type_index);
 	} else {
 		/* Only GPX (not using GPSbabel). */
-		this->type_combo.addItem(QObject::tr("GPX"));
+		this->file_type_combo.addItem(QObject::tr("GPX"));
 	}
 
-	this->grid->addWidget(url_label, 0, 0);
+	this->grid->addWidget(new QLabel(QObject::tr("URL:")), 0, 0);
 	this->grid->addWidget(&this->url_input, 1, 0);
-	this->grid->addWidget(type_combo_label, 2, 0);
-	this->grid->addWidget(&this->type_combo, 3, 0);
+	this->grid->addWidget(new QLabel(QObject::tr("File type:")), 2, 0);
+	this->grid->addWidget(&this->file_type_combo, 3, 0);
 }
 
 
@@ -178,11 +140,11 @@ ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_o
 
 	/* TODO: handle situation when there is only one item in the combo (i.e. GPX). */
 
-	g_last_type_id = this->type_combo.currentIndex();
+	g_last_file_type_index = this->file_type_combo.currentIndex();
 
 	po->input_file_type = ""; /* Default to gpx. */
-	if (a_babel_file_types.size()) {
-		po->input_file_type = a_babel_file_types.at(g_last_type_id)->name;
+	if (Babel::file_types.size()) {
+		po->input_file_type = Babel::file_types.at(g_last_file_type_index)->identifier;
 	}
 
 	po->url = this->url_input.text();
@@ -193,4 +155,37 @@ ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_o
 
 	return po;
 
+}
+
+
+
+
+int find_initial_file_type_index(void)
+{
+	QString type_identifier;
+	if (ApplicationState::get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, type_identifier)) {
+		/* Use setting. */
+	} else {
+		/* Default to this value if necessary. */
+		type_identifier = "gpx";
+	}
+
+	int entry_index = INVALID_ENTRY_INDEX;
+	bool found = false;
+	if (!type_identifier.isEmpty()) {
+		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
+			entry_index++;
+			if (iter->second->identifier == type_identifier) {
+				found = true;
+				break;
+			}
+		}
+	}
+
+	if (!found) {
+		/* First entry in Babel::file_types. */
+		entry_index = 0;
+	}
+
+	return entry_index;
 }

@@ -59,19 +59,20 @@ namespace SlavGPS {
 
 		void get_write_mode(BabelMode & mode);
 
-		QComboBox * build_file_type_selector(const BabelMode & mode);
 		BabelFileType * get_file_type_selection(void);
 
 		void add_file_type_filter(BabelFileType * babel_file_type);
 
 	private slots:
 		void file_type_changed_cb(int index);
+		void on_accept_cb(void);
 
 	public:
-		SlavGPS::SGFileEntry * file_entry = NULL;
+		SGFileEntry * file_entry = NULL;
 		QComboBox * file_types_combo = NULL;
 
 	private:
+		QComboBox * build_file_type_selector(const BabelMode * operating_mode);
 		QHBoxLayout * build_mode_selector(bool tracks, bool routes, bool waypoints);
 		QHBoxLayout * mode_box = NULL;
 

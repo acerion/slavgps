@@ -56,17 +56,21 @@ using namespace SlavGPS;
 
 
 
-std::vector<BabelDevice *> a_babel_device_list;
-
 static bool gps_acquire_in_progress = false;
 
-static int last_active = -1;
+#define INVALID_ENTRY_INDEX -1
+
+/* Index of the last device selected. */
+static int g_last_device_index = INVALID_ENTRY_INDEX;
 
 static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data);
 static DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data);
 static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel_args, QString & file_path);
 static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog);
+static int find_initial_device_index(void);
+
+
 
 
 DataSourceInterface datasource_gps_interface = {
@@ -128,10 +132,10 @@ DatasourceGPSSetup::~DatasourceGPSSetup()
  */
 QString DatasourceGPSSetup::get_protocol(void)
 {
-	last_active = this->proto_combo->currentIndex();
+	g_last_device_index = this->proto_combo->currentIndex();
 
-	if (a_babel_device_list.size()) {
-		const QString protocol = a_babel_device_list[last_active]->name;
+	if (Babel::devices.size()) {
+		const QString protocol = Babel::devices[g_last_device_index]->identifier;
 		qDebug() << "II: Datasource GPS: get protocol: " << protocol;
 		ApplicationState::set_string(VIK_SETTINGS_GPS_PROTOCOL, protocol);
 		return protocol;
@@ -257,13 +261,13 @@ static void datasource_gps_off(void * user_data, QString & babel_args, QString &
 		return;
 	}
 
-	if (a_babel_device_list.empty()) {
+	if (Babel::devices.empty()) {
 		return;
 	}
 
-	last_active = gps_dialog->proto_combo->currentIndex();
+	g_last_device_index = gps_dialog->proto_combo->currentIndex();
 
-	QString device = a_babel_device_list[last_active]->name;
+	QString device = Babel::devices[g_last_device_index]->identifier;
 	qDebug() << "II: Datasource GPS: GPS off: last active device:" << device;
 
 	if (device == "garmin") {
@@ -482,18 +486,6 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 
 
-static int find_entry = -1;
-static int wanted_entry = -1;
-
-static void find_protocol(BabelDevice * device, const QString & protocol)
-{
-	find_entry++;
-
-	if (device->name == protocol) {
-		wanted_entry = find_entry;
-	}
-}
-
 
 
 static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data)
@@ -512,46 +504,28 @@ static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport
 static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog)
 {
 	{
-		setup_dialog->proto_label = new QLabel(QObject::tr("GPS Protocol:"));
 		setup_dialog->proto_combo = new QComboBox();
-		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+		for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
 			setup_dialog->proto_combo->addItem((*iter)->label);
 		}
 
-		if (last_active < 0) {
-			find_entry = -1;
-			wanted_entry = -1;
-			QString protocol;
-			if (ApplicationState::get_string (VIK_SETTINGS_GPS_PROTOCOL, protocol)) {
-				/* Use setting. */
-				if (!protocol.isEmpty()) {
-					for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-						find_protocol(*iter, protocol);
-					}
-				}
-			} else {
-				/* Attempt to maintain default to Garmin devices (assumed most popular/numerous device). */
-				for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-					find_protocol(*iter, "garmin");
-				}
-			}
-			/* If not found set it to the first entry, otherwise use the entry. */
-			last_active = (wanted_entry < 0) ? 0 : wanted_entry;
+		if (g_last_device_index == INVALID_ENTRY_INDEX) {
+			g_last_device_index = find_initial_device_index();
 		}
+		/* After this the index is valid. */
 
-		setup_dialog->proto_combo->setCurrentIndex(last_active);
+		setup_dialog->proto_combo->setCurrentIndex(g_last_device_index);
 #ifdef K
 		g_object_ref(setup_dialog->proto_combo);
 #endif
 
-		setup_dialog->grid->addWidget(setup_dialog->proto_label, 0, 0);
+		setup_dialog->grid->addWidget(new QLabel(QObject::tr("GPS Protocol:")), 0, 0);
 		setup_dialog->grid->addWidget(setup_dialog->proto_combo, 0, 1);
 	}
 
 	{
 
 
-		setup_dialog->serial_port_label = new QLabel(QObject::tr("Serial Port:"));
 		setup_dialog->serial_port_combo = new QComboBox();
 
 
@@ -598,13 +572,12 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
 #ifdef K
 		g_object_ref(setup_dialog->serial_port_combo);
 #endif
-		setup_dialog->grid->addWidget(setup_dialog->serial_port_label, 1, 0);
+		setup_dialog->grid->addWidget(new QLabel(QObject::tr("Serial Port:")), 1, 0);
 		setup_dialog->grid->addWidget(setup_dialog->serial_port_combo, 1, 1);
 	}
 
 
 	{
-		setup_dialog->off_request_l = new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
 		setup_dialog->off_request_b = new QCheckBox();
 		bool power_off;
 		if (!ApplicationState::get_boolean(VIK_SETTINGS_GPS_POWER_OFF, &power_off)) {
@@ -612,7 +585,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
 		}
 		setup_dialog->off_request_b->setChecked(power_off);
 
-		setup_dialog->grid->addWidget(setup_dialog->off_request_l, 2, 0);
+		setup_dialog->grid->addWidget(new QLabel(QObject::tr("Turn Off After Transfer\n(Garmin/NAViLink Only)")), 2, 0);
 		setup_dialog->grid->addWidget(setup_dialog->off_request_b, 2, 1);
 	}
 
@@ -749,4 +722,37 @@ DatasourceGPSProgress::DatasourceGPSProgress(QWidget * parent)
 
 DatasourceGPSProgress::~DatasourceGPSProgress()
 {
+}
+
+
+
+
+int find_initial_device_index(void)
+{
+	QString protocol;
+	if (ApplicationState::get_string (VIK_SETTINGS_GPS_PROTOCOL, protocol)) {
+		/* Use setting. */
+	} else {
+		/* Attempt to maintain default to Garmin devices (assumed most popular/numerous device). */
+		protocol = "garmin";
+	}
+
+	int entry_index = INVALID_ENTRY_INDEX;
+	bool found = false;
+	if (!protocol.isEmpty()) {
+		for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
+			entry_index++;
+			if ((*iter)->identifier == protocol) {
+				found = true;
+				break;
+			}
+		}
+	}
+
+	if (!found) {
+		/* First entry in Babel::devices. */
+		entry_index = 0;
+	}
+
+	return entry_index;
 }

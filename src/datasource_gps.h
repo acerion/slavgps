@@ -62,12 +62,10 @@ namespace SlavGPS {
 
 
 	public:
-		QLabel * proto_label = NULL;
 		QComboBox * proto_combo = NULL;
-		QLabel * serial_port_label = NULL;
 		QComboBox * serial_port_combo = NULL;
-		QLabel * off_request_l = NULL;
 		QCheckBox * off_request_b = NULL;
+
 		QLabel * get_tracks_l = NULL;
 		QCheckBox * get_tracks_b = NULL;
 		QLabel * get_routes_l = NULL;

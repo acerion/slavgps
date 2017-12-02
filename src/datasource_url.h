@@ -50,7 +50,7 @@ namespace SlavGPS {
 
 	private:
 		QLineEdit url_input;
-		QComboBox type_combo;
+		QComboBox file_type_combo;
 	};
 
 
