@@ -430,7 +430,8 @@ void SlavGPS::layer_trw_init(void)
 		g_have_diary_program = true;
 	}
 
-	if (g_find_program_in_path(diary_program.toUtf8().constData())) {
+
+	if (!QStandardPaths::findExecutable(diary_program).isEmpty()) {
 		char *mystdout = NULL;
 		char *mystderr = NULL;
 		/* Needs RedNotebook 1.7.3+ for support of opening on a specified date. */
@@ -471,7 +472,7 @@ void SlavGPS::layer_trw_init(void)
 		free(cmd);
 	}
 #ifdef K
-	if (g_find_program_in_path(geojson_program_export())) {
+	if (!QStandardPaths::findExecutable(geojson_program_export()).isEmpty()) {
 		have_geojson_export = true;
 	}
 #endif
@@ -488,7 +489,7 @@ void SlavGPS::layer_trw_init(void)
 		/* User specified so assume it works. */
 		g_have_astro_program = true;
 	}
-	if (g_find_program_in_path(astro_program.toUtf8().constData())) {
+	if (!QStandardPaths::findExecutable(astro_program).isEmpty()) {
 		g_have_astro_program = true;
 	}
 }

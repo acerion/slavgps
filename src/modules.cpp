@@ -314,7 +314,7 @@ void SlavGPS::modules_init()
 
 /**
  * Secondary stage initialization.
- * Can now use a_get_preferences() and a_babel_available().
+ * Can now use a_get_preferences() and Babel::is_available().
  */
 void SlavGPS::modules_post_init()
 {

@@ -108,7 +108,7 @@ DataSourceURLDialog::DataSourceURLDialog()
 	}
 	/* After this the index is valid. */
 
-	if (a_babel_available()) {
+	if (Babel::is_available()) {
 		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
 			this->file_type_combo.addItem(iter->second->label);
 		}

@@ -140,33 +140,34 @@ namespace SlavGPS {
 	/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 	bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * user_data, DownloadOptions * dl_options);
 
-	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_path, BabelCallback cb, void * user_data);
+	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelCallback cb, void * cb_data);
 
-	bool a_babel_available();
 
 
 
 	class Babel {
 	public:
-		Babel();
-		~Babel();
+		Babel() {};
+		~Babel() {};
 
 		static void init();
 		static void post_init();
 		static void uninit();
 
+		static bool is_available(void);
+		bool is_detected = false; /* Has gpsbabel been detected in the system and is available for operation? */
+
 		void get_unbuffer_path_from_system(void);
 		void get_gpsbabel_path_from_system(void);
 		void get_gpsbabel_path_from_preferences(void);
 
-		bool general_convert(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data);
 		bool set_program_name(QString & program, QStringList & args);
 		bool convert_through_intermediate_file(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path);
 
 		QString gpsbabel_path; /* Path to gpsbabel. */
 		QString unbuffer_path; /* Path to unbuffer. */
 
-		bool is_detected = false; /* Has gpsbabel been detected in the system and is available for operation? */
+
 
 		/* Collection of file types supported by gpsbabel. */
 		static std::map<int, BabelFileType *> file_types;

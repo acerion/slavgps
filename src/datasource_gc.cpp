@@ -37,6 +37,7 @@
 #include <cstdlib>
 
 #include <QDebug>
+#include <QStandardPaths>
 
 #include "babel.h"
 #include "gpx.h"
@@ -127,20 +128,11 @@ void a_datasource_gc_init()
 
 static bool datasource_gc_check_existence(QString error_msg)
 {
-	bool OK1 = false;
-	bool OK2 = false;
+	const QString location1 = QStandardPaths::findExecutable(GC_PROGRAM1);
+	const bool OK1 = !location1.isEmpty();
 
-	char * location1 = g_find_program_in_path(GC_PROGRAM1);
-	if (location1) {
-		free(location1);
-		OK1 = true;
-	}
-
-	char * location2 = g_find_program_in_path(GC_PROGRAM2);
-	if (location2) {
-		free(location2);
-		OK2 = true;
-	}
+	const QString location2 = QStandardPaths::findExecutable(GC_PROGRAM2);
+	const bool OK2 = !location2.isEmpty();
 
 	if (OK1 && OK2) {
 		return true;
