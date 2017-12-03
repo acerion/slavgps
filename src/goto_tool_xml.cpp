@@ -201,7 +201,7 @@ char * GotoToolXML::get_url_format()
 
 
 
-bool GotoToolXML::parse_file_for_latlon(char *filename, struct LatLon *ll_)
+bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon *ll_)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;

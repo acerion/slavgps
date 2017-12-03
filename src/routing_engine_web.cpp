@@ -192,7 +192,7 @@ const DownloadOptions * RoutingEngineWeb::get_download_options(void) const
 
 
 
-static char * substitute_latlon(const char * fmt, struct LatLon ll)
+static char * substitute_latlon(const char * fmt, LatLon ll)
 {
 	QString string_lat;
 	QString string_lon;
@@ -205,7 +205,7 @@ static char * substitute_latlon(const char * fmt, struct LatLon ll)
 
 
 
-char * RoutingEngineWeb::get_url_for_coords(struct LatLon start, struct LatLon end)
+char * RoutingEngineWeb::get_url_for_coords(LatLon start, LatLon end)
 {
 	if (!this->url_base || !this->url_start_ll_fmt || !this->url_stop_ll_fmt) {
 		return NULL;
@@ -225,7 +225,7 @@ char * RoutingEngineWeb::get_url_for_coords(struct LatLon start, struct LatLon e
 
 
 
-bool RoutingEngineWeb::find(LayerTRW * trw, struct LatLon start, struct LatLon end)
+bool RoutingEngineWeb::find(LayerTRW * trw, LatLon start, LatLon end)
 {
 	char * uri = this->get_url_for_coords(start, end);
 
@@ -297,7 +297,7 @@ static void _append_stringified_coords(void * data, void * user_data)
 	struct _append_ctx *ctx = (struct _append_ctx*)user_data;
 
 	/* Stringify coordinate. */
-	struct LatLon position = tp->coord.get_latlon();
+	LatLon position = tp->coord.get_latlon();
 	char * string = substitute_latlon(ctx->engine->url_via_ll_fmt, position);
 
 	/* Append. */
@@ -337,7 +337,7 @@ char * RoutingEngineWeb::get_url_for_track(Track * trk)
 	free(urlParts[1]);
 
 	Trackpoint * tp = *trk->trackpoints.begin();
-	struct LatLon position = tp->coord.get_latlon();
+	LatLon position = tp->coord.get_latlon();
 	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, position);
 
 	free(urlParts[len-2]);

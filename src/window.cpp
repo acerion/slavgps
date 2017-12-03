@@ -1511,7 +1511,7 @@ void Window::menu_copy_centre_cb(void)
 		coord->to_strings(first, second);
 	} else {
 		/* Simple x.xx y.yy format. */
-		struct LatLon lat_lon;
+		LatLon lat_lon;
 		struct UTM utm = coord->get_utm();;
 		a_coords_utm_to_latlon(&lat_lon, &utm);
 		first = LatLon::lat_to_string_raw(lat_lon);
@@ -1536,7 +1536,7 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	const struct LatLon current_center_ll = this->viewport->get_center()->get_latlon();
+	const LatLon current_center_ll = this->viewport->get_center()->get_latlon();
 
 	/* Push center coordinate values to Preferences */
 	Preferences::set_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude", SGVariant((double) current_center_ll.lat));
@@ -1639,7 +1639,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	struct LatLon ll;
+	LatLon ll;
 	ll.lat = Preferences::get_default_lat();
 	ll.lon = Preferences::get_default_lon();
 	this->viewport->set_center_latlon(&ll, true);
@@ -2413,7 +2413,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 {
 	LocatorJob * locator = (LocatorJob *) bg_job;
 
-	struct LatLon ll;
+	LatLon ll;
 	char * name = NULL;
 	int ans = a_vik_goto_where_am_i(locator->window->viewport, &ll, &name);
 

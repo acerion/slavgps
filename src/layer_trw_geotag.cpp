@@ -383,10 +383,10 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
 			scale = ((double)options->PhotoTime - (double)tp->timestamp) / scale;
 
-			struct LatLon ll_result;
+			LatLon ll_result;
 
-			struct LatLon ll1 = tp->coord.get_latlon();
-			struct LatLon ll2 = tp_next->coord.get_latlon();
+			LatLon ll1 = tp->coord.get_latlon();
+			LatLon ll2 = tp_next->coord.get_latlon();
 
 			ll_result.lat = ll1.lat + ((ll2.lat - ll1.lat) * scale);
 

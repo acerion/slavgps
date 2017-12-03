@@ -182,7 +182,7 @@ static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom,
 
 
 
-void expedia_xy_to_latlon_middle(int alti, int x, int y, struct LatLon * ll)
+void expedia_xy_to_latlon_middle(int alti, int x, int y, LatLon * ll)
 {
 	ll->lon = (((double) x) / expedia_altis_freq(alti)) - 180;
 	ll->lat = (((double) y) / expedia_altis_freq(alti)) - 90;
@@ -203,7 +203,7 @@ static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
 
 static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, void * handle)
 {
-	struct LatLon ll;
+	LatLon ll;
 	expedia_xy_to_latlon_middle(src->scale, src->x, src->y, &ll);
 
 	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src->scale) / (src->scale);

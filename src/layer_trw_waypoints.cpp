@@ -139,7 +139,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_date(char const * date)
 
 
 
-void LayerTRWWaypoints::find_maxmin(struct LatLon maxmin[2])
+void LayerTRWWaypoints::find_maxmin(LatLon maxmin[2])
 {
 	if (this->items.size() > 1) { /* kamil TODO this condition may have to be improved. */
 		maxmin[0].lat = this->bbox.north;
@@ -448,8 +448,8 @@ void LayerTRWWaypoints::reset_waypoint_icon(Waypoint * wp)
  */
 void LayerTRWWaypoints::calculate_bounds()
 {
-	struct LatLon topleft = { 0.0, 0.0 };
-	struct LatLon bottomright = { 0.0, 0.0 };
+	LatLon topleft = { 0.0, 0.0 };
+	LatLon bottomright = { 0.0, 0.0 };
 
 
 	auto i = this->items.begin();
@@ -472,7 +472,7 @@ void LayerTRWWaypoints::calculate_bounds()
 			wp = i->second;
 
 			/* See if this point increases the bounds. */
-			struct LatLon ll = wp->coord.get_latlon();
+			LatLon ll = wp->coord.get_latlon();
 
 			if (ll.lat > topleft.lat) {
 				topleft.lat = ll.lat;
@@ -701,7 +701,7 @@ void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
+		LatLon maxmin[2] = { {0,0}, {0,0} };
 		maxmin[0].lat = this->bbox.north;
 		maxmin[1].lat = this->bbox.south;
 		maxmin[0].lon = this->bbox.east;

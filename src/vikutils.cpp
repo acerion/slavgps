@@ -704,7 +704,7 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 		return tz;
 	}
 
-	struct LatLon ll = coord->get_latlon();
+	LatLon ll = coord->get_latlon();
 	double pt[2] = { ll.lat, ll.lon };
 
 	double nearest;
@@ -771,7 +771,7 @@ QString SGUtils::get_time_string(time_t time, const char * format, const Coord *
 				} else {
 					/* No results (e.g. could be in the middle of a sea).
 					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-					struct LatLon ll = coord->get_latlon();
+					LatLon ll = coord->get_latlon();
 					str = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
 				}
 			} else {
@@ -809,7 +809,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 	Viewport * viewport = window->get_viewport();
 
 	if (latitude != 0.0 || longitude != 0.0) {
-		struct LatLon ll;
+		LatLon ll;
 		ll.lat = latitude;
 		ll.lon = longitude;
 		viewport->set_center_latlon(&ll, true);
@@ -880,7 +880,7 @@ void SGUtils::copy_label_menu(QAbstractButton * button)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2])
+void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, LatLon maxmin[2])
 {
 	vu_zoom_to_show_latlons_common(mode, viewport, maxmin, 1.0, true);
 	return;
@@ -892,25 +892,25 @@ void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, struc
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position)
+void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, LatLon maxmin[2], double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
 	/* This method is not particularly fast - but should work well enough. */
-	struct LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
+	LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
 
 	const Coord coord(average, mode);
 	viewport->set_center_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
-	struct LatLon minmin;
+	LatLon minmin;
 	if (maxmin[0].lat < maxmin[1].lat) {
 		minmin.lat = maxmin[0].lat;
 	} else {
 		minmin.lat = maxmin[1].lat;
 	}
 
-	struct LatLon maxmax;
+	LatLon maxmax;
 	if (maxmin[0].lon > maxmin[1].lon) {
 		maxmax.lon = maxmin[0].lon;
 	} else {

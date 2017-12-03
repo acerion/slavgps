@@ -52,7 +52,7 @@ namespace SlavGPS {
 
 		QString name;
 		QString feature;
-		struct LatLon ll = { 0.0, 0.0 };
+		LatLon ll = { 0.0, 0.0 };
 		double elevation = VIK_DEFAULT_ALTITUDE;
 		QString comment;
 		QString desc;
@@ -62,7 +62,7 @@ namespace SlavGPS {
 
 
 	/* Finding Wikipedia entries within a certain box. */
-	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2]);
+	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, LatLon maxmin[2]);
 
 
 

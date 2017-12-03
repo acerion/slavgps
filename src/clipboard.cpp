@@ -175,7 +175,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
  *
  * Returns: true if coordinates are set.
  */
-static bool clip_parse_latlon(const char * text, struct LatLon * coord)
+static bool clip_parse_latlon(const char * text, LatLon * coord)
 {
 	int latdeg, londeg, latmi, lonmi;
 	double lats, lons;
@@ -289,7 +289,7 @@ static bool clip_parse_latlon(const char * text, struct LatLon * coord)
 
 
 
-static void clip_add_wp(LayersPanel * panel, struct LatLon * ll)
+static void clip_add_wp(LayersPanel * panel, LatLon * ll)
 {
 	Layer * selected = panel->get_selected_layer();
 
@@ -329,7 +329,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 		return;
 	}
 
-	struct LatLon coord;
+	LatLon coord;
 	if (clip_parse_latlon(text, &coord)) {
 		clip_add_wp(panel, &coord);
 	}
@@ -346,7 +346,7 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 	GError *err = NULL;
 	char *s, *span;
 	int tag = 0;
-	struct LatLon coord;
+	LatLon coord;
 
 	if (gtk_selection_data_get_length(sd) == -1) {
 		return;

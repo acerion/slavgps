@@ -223,7 +223,7 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 
 	Waypoint * wp;
         gtk_tree_model_get(model, iter, WAYPOINT_COLUMN, &wp, -1);
-	struct LatLon ll;
+	LatLon ll;
 	if (wp) {
 		ll = wp->coord.get_latlon();
 	}

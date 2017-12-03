@@ -194,10 +194,10 @@ static double Rational2Double(unsigned char *data, int offset, ExifByteOrder ord
 
 
 
-static struct LatLon get_latlon(ExifData *ed)
+static LatLon get_latlon(ExifData *ed)
 {
-	struct LatLon ll = { 0.0, 0.0 };
-	const struct LatLon ll0 = { 0.0, 0.0 };
+	LatLon ll = { 0.0, 0.0 };
+	const LatLon ll0 = { 0.0, 0.0 };
 
 	char str[128];
 	ExifEntry *ee;
@@ -249,9 +249,9 @@ static struct LatLon get_latlon(ExifData *ed)
  * Returns: The position in LatLon format.
  * It will be 0,0 if some kind of failure occurs.
  */
-struct LatLon SlavGPS::a_geotag_get_position(const char *filename)
+LatLon SlavGPS::a_geotag_get_position(const char *filename)
 {
-	struct LatLon ll = { 0.0, 0.0 };
+	LatLon ll = { 0.0, 0.0 };
 
 #ifdef K
 #ifdef HAVE_LIBGEXIV2
@@ -318,7 +318,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 		double lon;
 		double alt;
 		if (gexiv2_metadata_get_gps_info(gemd, &lon, &lat, &alt)) {
-			struct LatLon ll;
+			LatLon ll;
 			ll.lat = lat;
 			ll.lon = lon;
 
@@ -354,7 +354,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 		return wp;
 	}
 
-	struct LatLon ll;
+	LatLon ll;
 
 	char str[128];
 	ExifEntry *ee;
@@ -828,7 +828,7 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, Coord & coord, do
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
-		struct LatLon ll = coord.get_latlon();
+		LatLon ll = coord.get_latlon();
 		if (!gexiv2_metadata_set_gps_info(gemd, ll.lon, ll.lat, alt)) {
 			result = 1; /* Failed. */
 		} else {
@@ -884,7 +884,7 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, Coord & coord, do
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_MAP_DATUM, EXIF_IFD_GPS);
 	convert_to_entry("WGS-84", 0.0, ee, exif_data_get_byte_order(ed));
 
-	struct LatLon ll = coord.get_latlon();
+	LatLon ll = coord.get_latlon();
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LATITUDE_REF, EXIF_IFD_GPS);
 	/* N or S. */

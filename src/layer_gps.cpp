@@ -1476,15 +1476,15 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
 	Coord nw = viewport->screen_to_coord(-20, -20);
 	Coord se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
-	struct LatLon lnw = nw.get_latlon();
-	struct LatLon lse = se.get_latlon();
+	LatLon lnw = nw.get_latlon();
+	LatLon lse = se.get_latlon();
 	if (this->realtime_fix.fix.latitude > lse.lat &&
 	     this->realtime_fix.fix.latitude < lnw.lat &&
 	     this->realtime_fix.fix.longitude > lnw.lon &&
 	     this->realtime_fix.fix.longitude < lse.lon &&
 	     !std::isnan(this->realtime_fix.fix.track)) {
 
-		struct LatLon ll;
+		LatLon ll;
 		ll.lat = this->realtime_fix.fix.latitude;
 		ll.lon = this->realtime_fix.fix.longitude;
 		Coord gps(ll, viewport->get_coord_mode());
@@ -1533,7 +1533,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 {
-	struct LatLon ll;
+	LatLon ll;
 
 	/* Note that fix.time is a double, but it should not affect
 	   the precision for most GPS. */
@@ -1634,7 +1634,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
 		layer->realtime_fix.dirty = true;
 
-		struct LatLon ll;
+		LatLon ll;
 		ll.lat = layer->realtime_fix.fix.latitude;
 		ll.lon = layer->realtime_fix.fix.longitude;
 

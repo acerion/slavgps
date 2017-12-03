@@ -142,7 +142,7 @@ RoutingEngine::~RoutingEngine()
  *
  * Returns: indicates success or not.
  */
-bool RoutingEngine::find(LayerTRW * trw, struct LatLon start, struct LatLon end)
+bool RoutingEngine::find(LayerTRW * trw, LatLon start, LatLon end)
 {
 	return false;
 }

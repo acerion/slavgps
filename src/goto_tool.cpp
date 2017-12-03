@@ -126,7 +126,7 @@ int GotoTool::get_coord(Viewport * viewport, char * srch_str, Coord * coord)
 	}
 
 	fprintf(stderr, "DEBUG: %s: %s\n", __FILE__, tmpname);
-	struct LatLon ll;
+	LatLon ll;
 	if (!this->parse_file_for_latlon(tmpname, &ll)) {
 		ret = -1;
 		goto done;

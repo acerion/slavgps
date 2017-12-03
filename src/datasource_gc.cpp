@@ -162,7 +162,7 @@ void DataSourceGCDialog::draw_circle_cb(void)
 	if (2 == sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
 
 		int x, y;
-		struct LatLon lat_lon = { .lat = lat, .lon = lon };
+		LatLon lat_lon = { .lat = lat, .lon = lon };
 
 		const Coord coord(lat_lon, this->viewport->get_coord_mode());
 		this->viewport->coord_to_screen(&coord, &x, &y);
@@ -228,7 +228,7 @@ DataSourceGCDialog::DataSourceGCDialog()
 	this->miles_radius_spin.setSingleStep(1);
 	this->miles_radius_spin.setValue(5);
 
-	struct LatLon lat_lon = viewport->get_center()->get_latlon();
+	LatLon lat_lon = viewport->get_center()->get_latlon();
 	this->center_entry.setText(QString("%1,%2").arg(lat_lon.lat).arg(lat_lon.lon));
 
 

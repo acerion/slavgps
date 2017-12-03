@@ -110,7 +110,7 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 
 static void write_waypoints(FILE * f, Waypoints & waypoints)
 {
-	static struct LatLon ll;
+	static LatLon ll;
 
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
@@ -131,7 +131,7 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 
 static void write_trackpoint(Trackpoint * tp, FILE * f)
 {
-	static struct LatLon ll = tp->coord.get_latlon();
+	static LatLon ll = tp->coord.get_latlon();
 	char * s_lat = a_coords_dtostr(ll.lat);
 	char * s_lon = a_coords_dtostr(ll.lon);
 	fprintf(f, "(%s,%s),", s_lat, s_lon);

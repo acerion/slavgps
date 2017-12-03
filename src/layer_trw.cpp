@@ -575,7 +575,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
 {
 	Track * trk = this->tracks->find_track_by_date(date_str);
 	if (trk && select) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
+		LatLon maxmin[2] = { {0,0}, {0,0} };
 		trk->find_maxmin(maxmin);
 		this->zoom_to_show_latlons(viewport, maxmin);
 		this->tree_view->select_and_expose(trk->index);
@@ -1744,7 +1744,7 @@ bool LayerTRW::get_waypoints_visibility()
 
 
 
-void LayerTRW::find_maxmin(struct LatLon maxmin[2])
+void LayerTRW::find_maxmin(LatLon maxmin[2])
 {
 	/* Continually reuse maxmin to find the latest maximum and minimum values.
 	   First set to waypoints bounds. */
@@ -1760,12 +1760,12 @@ void LayerTRW::find_maxmin(struct LatLon maxmin[2])
 bool LayerTRW::find_center(Coord * dest)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. like I don't have more important things to worry about... */
-	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 	this->find_maxmin(maxmin);
 	if (maxmin[0].lat == 0.0 && maxmin[0].lon == 0.0 && maxmin[1].lat == 0.0 && maxmin[1].lon == 0.0) {
 		return false;
 	} else {
-		struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
+		LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
 		*dest = Coord(average, this->coord_mode);
 		return true;
 	}
@@ -1788,7 +1788,7 @@ void LayerTRW::centerize_cb(void)
 
 
 
-void LayerTRW::zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2])
+void LayerTRW::zoom_to_show_latlons(Viewport * viewport, LatLon maxmin[2])
 {
 	vu_zoom_to_show_latlons(coord_mode, viewport, maxmin);
 }
@@ -1799,7 +1799,7 @@ void LayerTRW::zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2]
 bool LayerTRW::auto_set_view(Viewport * viewport)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
-	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 	this->find_maxmin(maxmin);
 	if (maxmin[0].lat == 0.0 && maxmin[0].lon == 0.0 && maxmin[1].lat == 0.0 && maxmin[1].lon == 0.0) {
 		return false;
@@ -1952,7 +1952,7 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function: */
@@ -1968,7 +1968,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	this->find_maxmin(maxmin);
 
@@ -3944,7 +3944,7 @@ void LayerTRW::tpwin_update_dialog_data()
 	Track * track = this->get_edited_track();
 	if (track) {
 		/* Notional center of a track is simply an average of the bounding box extremities. */
-		struct LatLon ll_center = { (track->bbox.north + track->bbox.south)/2, (track->bbox.east + track->bbox.west)/2 };
+		LatLon ll_center = { (track->bbox.north + track->bbox.south)/2, (track->bbox.east + track->bbox.west)/2 };
 		Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->selected_tp.iter, track->type_id == "sg.trw.route");
 	}

@@ -102,7 +102,7 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		wp->set_name(entered_name);
 
 
-		struct LatLon lat_lon;
+		LatLon lat_lon;
 		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_param_specs[SG_WP_PARAM_LAT]);
 		lat_lon.lat = param_value.get_latitude();
 		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_param_specs[SG_WP_PARAM_LON]);
@@ -277,7 +277,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));
 	consistentGeotagCB->setEnabled(false);
 	if (hasGeotag) {
-		struct LatLon ll = a_geotag_get_position(wp->image);
+		LatLon ll = a_geotag_get_position(wp->image);
 		Coord coord(ll, coord_mode);
 		consistentGeotagCB->setChecked(coord == wp->coord);
 	}

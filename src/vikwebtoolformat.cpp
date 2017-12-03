@@ -78,13 +78,13 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
-	struct LatLon ll = a_viewport->get_center()->get_latlon();
+	LatLon ll = a_viewport->get_center()->get_latlon();
 
 	QString center_lat;
 	QString center_lon;
 	CoordUtils::to_strings(center_lat, center_lon, ll);
 
-	struct LatLon llpt;
+	LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
 	if (a_coord) {

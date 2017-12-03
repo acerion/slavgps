@@ -49,13 +49,13 @@ namespace SlavGPS {
 	class Coord {
 	public:
 		Coord() {};
-		Coord(const struct LatLon & ll, CoordMode mode);
+		Coord(const LatLon & lat_lon, CoordMode mode);
 		Coord(const struct UTM & utm, CoordMode mode);
 
-		struct LatLon get_latlon(void) const;
+		LatLon get_latlon(void) const;
 		struct UTM get_utm(void) const;
 
-		void set_area(const struct LatLon * wh, Coord * coord_tl, Coord * coord_br) const;
+		void set_area(const LatLon * wh, Coord * coord_tl, Coord * coord_br) const;
 		bool is_inside(const Coord * coord_tl, const Coord * coord_br) const;
 
 		void change_mode(CoordMode new_mode);
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		bool operator!=(const Coord & coord) const;
 
 
-		struct LatLon ll = { 0, 0 };
+		LatLon ll = { 0, 0 };
 		struct UTM utm = { 0, 0, 0, 0 };
 		CoordMode mode = CoordMode::UTM;
 	};
@@ -80,7 +80,7 @@ namespace SlavGPS {
 	class CoordUtils {
 	public:
 		static void to_string(QString & result, double d);
-		static void to_strings(QString & lat, QString & lon, const struct LatLon & ll);
+		static void to_strings(QString & lat, QString & lon, const LatLon & lat_lon);
 		static void to_strings(LatLonBBoxStrings & bbox_strings, const LatLonBBox & bbox);
 	};
 

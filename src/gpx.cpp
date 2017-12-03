@@ -235,7 +235,7 @@ char * c_tr_name = NULL;
 
 /* Temporary things so we don't have to create them lots of times. */
 const char * c_slat, * c_slon;
-struct LatLon c_ll;
+LatLon c_ll;
 
 /* Specialty flags / etc. */
 bool f_tr_newseg;
@@ -868,7 +868,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 
 	FILE *f = context->file;
 	char *tmp;
-	static struct LatLon ll = wp->coord.get_latlon();
+	static LatLon ll = wp->coord.get_latlon();
 	char * s_lat = a_coords_dtostr(ll.lat);
 	char * s_lon = a_coords_dtostr(ll.lon);
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
@@ -961,7 +961,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 
 	char *s_alt, *s_dop;
 	char *time_iso8601;
-	static struct LatLon ll = tp->coord.get_latlon();
+	static LatLon ll = tp->coord.get_latlon();
 
 	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {

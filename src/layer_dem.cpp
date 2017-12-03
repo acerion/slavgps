@@ -80,7 +80,7 @@ public:
 
 class DEMDownloadJob : public BackgroundJob {
 public:
-	DEMDownloadJob(const QString & dest_file_path, const struct LatLon & ll, LayerDEM * layer);
+	DEMDownloadJob(const QString & dest_file_path, const LatLon & ll, LayerDEM * layer);
 	~DEMDownloadJob();
 
 	QString dest_file_path;
@@ -589,7 +589,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 			this->max_elev = this->min_elev + 1;
 		}
 
-		struct LatLon counter;
+		LatLon counter;
 		unsigned int x;
 		for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
 			/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
@@ -629,7 +629,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				/* Calculate bounding box for drawing. */
 				int box_x, box_y, box_width, box_height;
-				struct LatLon box_c;
+				LatLon box_c;
 				box_c = counter;
 				box_c.lat += (nscale_deg * skip_factor)/2;
 				box_c.lon -= (escale_deg * skip_factor)/2;
@@ -994,7 +994,7 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const struct LatLon & ll, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const LatLon & ll, LayerDEM * layer_dem)
 {
 	this->thread_fn = dem_download_thread;
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
@@ -1369,7 +1369,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	QMenu * menu = (QMenu *) qa->parentWidget();
 
-	struct LatLon ll;
+	LatLon ll;
 
 	QVariant variant;
 	variant = menu->property("lat");
@@ -1427,7 +1427,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	const Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
-	const struct LatLon ll = coord.get_latlon();
+	const LatLon ll = coord.get_latlon();
 
 	qDebug() << "II: Layer DEM: Download Tool: Release: received event, processing (coord" << ll.lat << ll.lon << ")";
 

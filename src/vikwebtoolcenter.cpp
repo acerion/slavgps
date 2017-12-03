@@ -70,7 +70,7 @@ WebToolCenter::~WebToolCenter()
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	uint8_t zoom_level = 17;
-	struct LatLon ll;
+	LatLon ll;
 
 	/* Coords.
 	   Use the provided position otherwise use center of the viewport. */

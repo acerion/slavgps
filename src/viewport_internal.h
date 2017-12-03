@@ -111,7 +111,7 @@ namespace SlavGPS {
 		char leftmost_zone();
 		char rightmost_zone();
 		void set_center_utm(const struct UTM * utm, bool save_position);
-		void set_center_latlon(const struct LatLon * ll, bool save_position);
+		void set_center_latlon(const LatLon * lat_lon, bool save_position);
 		void corners_for_zonen(int zone, Coord * ul, Coord * br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 		void get_bbox(LatLonBBox * bbox);

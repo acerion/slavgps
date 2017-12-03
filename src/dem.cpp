@@ -658,8 +658,8 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 				   int16_t * elevs, int16_t * dists)
 {
 	int cols[4], rows[4];
-	struct LatLon ll[4];
-	struct LatLon pos;
+	LatLon ll[4];
+	LatLon pos;
 
 	if (east > this->max_east || east < this->min_east ||
 	    north > this->max_north || north < this->min_north) {
@@ -793,7 +793,8 @@ void DEM::east_north_to_xy(double east, double north, unsigned int * col, unsign
 
 bool DEM::overlap(LatLonBBox * bbox)
 {
-	struct LatLon dem_northeast, dem_southwest;
+	LatLon dem_northeast;
+	LatLon dem_southwest;
 
 	/* get min, max lat/lon of DEM data */
 	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {

@@ -230,7 +230,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	char * modestring = NULL;
 
 	/* Crazhy CRAZHY. */
-	struct LatLon ll = viewport->get_center()->get_latlon();
+	LatLon ll = viewport->get_center()->get_latlon();
 
 	ViewportDrawMode mode = viewport->get_drawmode();
 	switch (mode) {
@@ -352,7 +352,7 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
  */
 static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * dirpath, Viewport * viewport)
 {
-	struct LatLon latlon = { 0.0, 0.0 };
+	LatLon latlon = { 0.0, 0.0 };
 	char buffer[4096];
 	long line_num = 0;
 

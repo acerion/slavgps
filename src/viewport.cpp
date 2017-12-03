@@ -118,7 +118,7 @@ void Viewport::init_drawing_area()
 double Viewport::calculate_utm_zone_width()
 {
 	if (coord_mode == CoordMode::UTM) {
-		struct LatLon ll;
+		LatLon ll;
 
 		/* Get latitude of screen bottom. */
 		struct UTM utm = this->center.utm;
@@ -157,7 +157,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 
 
 	struct UTM utm;
-	struct LatLon ll;
+	LatLon ll;
 	ll.lat = Preferences::get_default_lat();
 	ll.lon = Preferences::get_default_lon();
 	double zoom_x = 4.0;
@@ -238,7 +238,7 @@ Viewport::~Viewport()
 {
 	qDebug() << "II: Viewport: ~Viewport called";
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
-		struct LatLon ll = this->center.get_latlon();
+		LatLon ll = this->center.get_latlon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->xmpp);
@@ -946,7 +946,7 @@ void Viewport::utm_zone_check()
 {
 	if (coord_mode == CoordMode::UTM) {
 		struct UTM utm;
-		struct LatLon ll;
+		LatLon ll;
 		a_coords_utm_to_latlon(&ll, &center.utm);
 		a_coords_latlon_to_utm(&utm, &ll);
 		if (utm.zone != center.utm.zone) {
@@ -1193,7 +1193,7 @@ bool Viewport::forward_available()
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_latlon(const struct LatLon * ll, bool save_position)
+void Viewport::set_center_latlon(const LatLon * ll, bool save_position)
 {
 	this->center = Coord(*ll, coord_mode);
 	if (save_position) {
@@ -1407,8 +1407,8 @@ void Viewport::coord_to_screen(const Coord * coord, int * pos_x, int * pos_y)
 			(utm_center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
 		*pos_y = (this->size_height_2) - ((utm->northing - utm_center->northing) / this->ympp);
 	} else if (this->coord_mode == CoordMode::LATLON) {
-		const struct LatLon * ll_center = &this->center.ll;
-		const struct LatLon * ll = &coord->ll;
+		const LatLon * ll_center = &this->center.ll;
+		const LatLon * ll = &coord->ll;
 		double xx,yy;
 		if (this->drawmode == ViewportDrawMode::LATLON) {
 			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - ll_center->lon));
@@ -2033,7 +2033,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		int tx, ty;
 
 		Coord test = this->screen_to_coord(x1, y1);
-		struct LatLon ll = test.get_latlon();
+		LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&u, &ll);
 
@@ -2284,7 +2284,7 @@ void Viewport::get_location_strings(struct UTM utm, QString & lat, QString & lon
 		*lon = (char *) malloc(16*sizeof(char));
 		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
 	} else {
-		struct LatLon lat_lon;
+		LatLon lat_lon;
 		a_coords_utm_to_latlon(&lat_lon, &utm);
 		LatLon::to_strings(lat_lon, lat, lon);
 	}

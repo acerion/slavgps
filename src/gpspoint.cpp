@@ -86,7 +86,7 @@ public:
 	Trackpoint * add_trackpoint(CoordMode coordinate_mode);
 
 	int line_type = GPSPOINT_TYPE_NONE;
-	struct LatLon line_latlon;
+	LatLon line_latlon;
 	char * line_name = NULL;
 	char * line_comment = NULL;
 	char * line_description = NULL;
@@ -750,7 +750,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			continue;
 		}
 
-		static struct LatLon ll = wp->coord.get_latlon();
+		static LatLon ll = wp->coord.get_latlon();
 		char * s_lat = a_coords_dtostr(ll.lat);
 		char * s_lon = a_coords_dtostr(ll.lon);
 		char * tmp_name = slashdup(wp->name);
@@ -828,7 +828,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info)
 {
-	static struct LatLon ll = tp->coord.get_latlon();
+	static LatLon ll = tp->coord.get_latlon();
 
 	FILE * file = write_info->f;
 

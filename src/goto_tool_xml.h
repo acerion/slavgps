@@ -46,7 +46,7 @@ namespace SlavGPS {
 		~GotoToolXML();
 
 		char * get_url_format();
-		bool parse_file_for_latlon(char * filename, struct LatLon * ll);
+		bool parse_file_for_latlon(char * filename, LatLon * lat_lon);
 
 
 		void set_url_format(char const * new_format);
@@ -63,7 +63,7 @@ namespace SlavGPS {
 		char * lon_path = NULL;   /* XPath of the longitude. */
 		char * lon_attr = NULL;   /* XML attribute of the longitude. */
 
-		struct LatLon ll;
+		LatLon ll;
 
 	}; /* class GotoToolXML */
 

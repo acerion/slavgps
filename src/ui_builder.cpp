@@ -329,7 +329,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 
 
-	const struct LatLon lat_lon = wp->coord.get_latlon();
+	const LatLon lat_lon = wp->coord.get_latlon();
 
 
 

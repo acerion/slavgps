@@ -65,7 +65,7 @@ GotoToolGoogle::~GotoToolGoogle()
 
 
 
-bool GotoToolGoogle::parse_file_for_latlon(char * file_name, struct LatLon * ll)
+bool GotoToolGoogle::parse_file_for_latlon(char * file_name, LatLon * ll)
 {
 	char * s = NULL;
 	char lat_buf[32] = { 0 };

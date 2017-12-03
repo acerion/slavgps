@@ -80,7 +80,7 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, Ba
 		return false;
 	}
 
-	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	/* Note the order is max part first then min part - thus reverse order of use in min_max function:. */
 	acquiring->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);

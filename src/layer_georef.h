@@ -106,8 +106,8 @@ namespace SlavGPS {
 
 		void create_image_file();
 		void set_image(const QString & image);
-		struct LatLon get_ll_tl();
-		struct LatLon get_ll_br();
+		LatLon get_ll_tl();
+		LatLon get_ll_br();
 		void align_utm2ll();
 		void align_ll2utm();
 		void align_coords();
@@ -131,7 +131,7 @@ namespace SlavGPS {
 		struct UTM corner; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
-		struct LatLon ll_br = { 0.0, 0.0 }; /* Bottom Right. */
+		LatLon ll_br = { 0.0, 0.0 }; /* Bottom Right. */
 		unsigned int width = 0;
 		unsigned int height = 0;
 

@@ -124,7 +124,7 @@ void TrackListDialog::track_view_cb(void)
 	Viewport * viewport = trw->get_window()->get_viewport();
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
-	struct LatLon maxmin[2];
+	LatLon maxmin[2];
 	maxmin[0].lat = trk->bbox.north;
 	maxmin[1].lat = trk->bbox.south;
 	maxmin[0].lon = trk->bbox.east;

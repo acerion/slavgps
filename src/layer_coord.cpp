@@ -283,7 +283,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	const struct UTM center = viewport->get_center()->get_utm();
 	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
 	uint16_t width = viewport->get_width(), height = viewport->get_height();
-	struct LatLon ll, ll2, min, max;
+	LatLon ll, ll2, min, max;
 
 	struct UTM utm = center;
 	utm.northing = center.northing - (ympp * height / 2);
@@ -299,7 +299,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		  Find corner coords in lat/lon.
 		  Start at whichever is less: top or bottom left lon. Go to whichever more: top or bottom right lon.
 		*/
-		struct LatLon topleft, topright, bottomleft, bottomright;
+		LatLon topleft, topright, bottomleft, bottomright;
 		struct UTM temp_utm;
 		temp_utm = center;
 		temp_utm.easting -= (width/2)*xmpp;

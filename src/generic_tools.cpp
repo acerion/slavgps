@@ -713,7 +713,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 			/* From the extend of the bounds pick the best zoom level
 			   c.f. trw_layer_zoom_to_show_latlons().
 			   Maybe refactor... */
-			struct LatLon maxmin[2];
+			LatLon maxmin[2];
 			maxmin[0] = start_coord.get_latlon();
 			maxmin[1] = cursor_coord.get_latlon();
 

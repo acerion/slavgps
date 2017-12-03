@@ -171,7 +171,7 @@ typedef struct _gpx_meta_data_t {
 	char *name;
 	char *vis;
 	char *desc;
-	struct LatLon ll;
+	LatLon ll;
 	bool in_current_view; /* Is the track LatLon start within the current viewport.
 				 This is useful in deciding whether to download a track or not. */
 	/* ATM Only used for display - may want to convert to a time_t for other usage. */

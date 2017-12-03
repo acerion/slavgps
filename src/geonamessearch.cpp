@@ -287,7 +287,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 
 
 
-void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
+void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, LatLon maxmin[2])
 {
 	QString north;
 	QString south;

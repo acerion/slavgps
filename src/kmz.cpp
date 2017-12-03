@@ -471,7 +471,7 @@ typedef struct zip_file zip_file_t;
 		if (pixmap) {
 			/* Some simple detection of broken position values ?? */
 			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
-			struct LatLon ll_tl, ll_br;
+			LatLon ll_tl, ll_br;
 			ll_tl.lat = north;
 			ll_tl.lon = west;
 			ll_br.lat = south;

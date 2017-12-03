@@ -308,13 +308,13 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 /**
  * Return mpp for the given coords, coord mode and image size.
  */
-static void georef_layer_mpp_from_coords(CoordMode mode, struct LatLon ll_tl, struct LatLon ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
+static void georef_layer_mpp_from_coords(CoordMode mode, LatLon ll_tl, LatLon ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
 {
-	struct LatLon ll_tr;
+	LatLon ll_tr;
 	ll_tr.lat = ll_tl.lat;
 	ll_tr.lon = ll_br.lon;
 
-	struct LatLon ll_bl;
+	LatLon ll_bl;
 	ll_bl.lat = ll_br.lat;
 	ll_bl.lon = ll_tl.lon;
 
@@ -659,9 +659,9 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 
 
 
-struct LatLon LayerGeoref::get_ll_tl()
+LatLon LayerGeoref::get_ll_tl()
 {
-	struct LatLon ll_result;
+	LatLon ll_result;
 	ll_result.lat = this->cw.lat_tl_spin.value();
 	ll_result.lon = this->cw.lon_tl_spin.value();
 	return ll_result;
@@ -670,9 +670,9 @@ struct LatLon LayerGeoref::get_ll_tl()
 
 
 
-struct LatLon LayerGeoref::get_ll_br()
+LatLon LayerGeoref::get_ll_br()
 {
-	struct LatLon ll_result;
+	LatLon ll_result;
 	ll_result.lat = this->cw.lat_br_spin.value();
 	ll_result.lon = this->cw.lon_br_spin.value();
 	return ll_result;
@@ -684,7 +684,7 @@ struct LatLon LayerGeoref::get_ll_br()
 /* Align displayed UTM values with displayed Lat/Lon values. */
 void LayerGeoref::align_utm2ll()
 {
-	struct LatLon ll_tl = this->get_ll_tl();
+	LatLon ll_tl = this->get_ll_tl();
 
 	struct UTM utm;
 	a_coords_latlon_to_utm(&utm, &ll_tl);
@@ -718,7 +718,7 @@ void LayerGeoref::align_ll2utm()
 	corner.easting = this->cw.ce_spin->value();
 	corner.northing = this->cw.cn_spin->value();
 
-	struct LatLon ll;
+	LatLon ll;
 	a_coords_utm_to_latlon(&ll, &corner);
 	this->cw.lat_tl_spin.setValue(ll.lat);
 	this->cw.lon_tl_spin.setValue(ll.lon);
@@ -768,7 +768,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 		return;
 	}
 
-	struct LatLon ll_tl = this->get_ll_tl();
+	LatLon ll_tl = this->get_ll_tl();
 	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
 		Dialog::warning(tr("Lower right corner values may not be consistent with upper right values"), this->get_window());
 	}
@@ -1243,9 +1243,9 @@ bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatLon ll_br)
+static void goto_center_ll(Viewport * viewport, LatLon ll_tl, LatLon ll_br)
 {
-	struct LatLon ll_center;
+	LatLon ll_center;
 	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
 	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
@@ -1273,8 +1273,8 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 		if (grl->width > 0 && grl->height > 0) {
 
-			struct LatLon ll_tl = coord_tl->get_latlon();
-			struct LatLon ll_br = coord_br->get_latlon();
+			LatLon ll_tl = coord_tl->get_latlon();
+			LatLon ll_br = coord_br->get_latlon();
 
 			CoordMode mode = viewport->get_coord_mode();
 
@@ -1285,7 +1285,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 			goto_center_ll(viewport, ll_tl, ll_br);
 			/* Set best zoom level. */
-			struct LatLon maxmin[2] = { ll_tl, ll_br };
+			LatLon maxmin[2] = { ll_tl, ll_br };
 			vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, maxmin);
 
 			return grl;

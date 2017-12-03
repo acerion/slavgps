@@ -235,13 +235,13 @@ namespace SlavGPS {
 		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
 
 
-		void find_maxmin(struct LatLon maxmin[2]);
+		void find_maxmin(LatLon maxmin[2]);
 		bool find_center(Coord * dest);
 
 		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
-		void zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2]);
+		void zoom_to_show_latlons(Viewport * viewport, LatLon maxmin[2]);
 		bool auto_set_view(Viewport * viewport);
 
 

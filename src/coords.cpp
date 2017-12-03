@@ -131,7 +131,7 @@ int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 )
 
 double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
 {
-  static struct LatLon tmp1, tmp2;
+  static LatLon tmp1, tmp2;
   if ( utm1->zone == utm2->zone ) {
     return sqrt ( pow ( utm1->easting - utm2->easting, 2 ) + pow ( utm1->northing - utm2->northing, 2 ) );
   } else {
@@ -141,9 +141,9 @@ double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
   }
 }
 
-double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2 )
+double a_coords_latlon_diff ( const LatLon *ll1, const LatLon *ll2 )
 {
-  static struct LatLon tmp1, tmp2;
+  static LatLon tmp1, tmp2;
   double tmp3;
   tmp1.lat = ll1->lat * PIOVER180;
   tmp1.lon = ll1->lon * PIOVER180;
@@ -154,7 +154,7 @@ double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2
   return std::isnan(tmp3)?0:tmp3;
 }
 
-void a_coords_latlon_to_utm(struct UTM * utm, const struct LatLon * ll)
+void a_coords_latlon_to_utm(struct UTM * utm, const LatLon * ll)
     {
     double latitude;
     double longitude;
@@ -244,7 +244,7 @@ static char coords_utm_letter( double latitude )
 
 
 
-void a_coords_utm_to_latlon(struct LatLon * latlon, const struct UTM * utm)
+void a_coords_utm_to_latlon(LatLon * latlon, const struct UTM * utm)
     {
     double northing, easting;
     int zone;

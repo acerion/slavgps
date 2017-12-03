@@ -175,7 +175,7 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 
 
 
-void LayerTRWTracks::find_maxmin(struct LatLon maxmin[2])
+void LayerTRWTracks::find_maxmin(LatLon maxmin[2])
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->find_maxmin(maxmin);
@@ -858,7 +858,7 @@ void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
 	const unsigned int n_items = this->items.size();
 
 	if (0 < n_items) {
-		struct LatLon maxmin[2] = { {0,0}, {0,0} };
+		LatLon maxmin[2] = { {0,0}, {0,0} };
 		this->find_maxmin(maxmin);
 		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 

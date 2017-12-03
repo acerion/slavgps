@@ -73,8 +73,8 @@ Coord Coord::copy_change_mode(CoordMode new_mode) const
 
 static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
-	struct LatLon a = coord1.get_latlon();
-	struct LatLon b = coord2.get_latlon();
+	LatLon a = coord1.get_latlon();
+	LatLon b = coord2.get_latlon();
 	return a_coords_latlon_diff(&a, &b);
 }
 
@@ -97,7 +97,7 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 
 
 
-Coord::Coord(const struct LatLon & ll_, CoordMode mode_)
+Coord::Coord(const LatLon & ll_, CoordMode mode_)
 {
 	if (mode_ == CoordMode::LATLON) {
 		this->ll = ll_;
@@ -123,9 +123,9 @@ Coord::Coord(const struct UTM & utm_, CoordMode mode_)
 
 
 
-struct LatLon Coord::get_latlon(void) const
+LatLon Coord::get_latlon(void) const
 {
-	struct LatLon dest = { 0, 0 };
+	LatLon dest = { 0, 0 };
 	if (this->mode == CoordMode::LATLON) {
 		dest = this->ll;
 	} else {
@@ -175,7 +175,7 @@ bool Coord::operator!=(const Coord & coord) const
 
 
 
-static void get_north_west(struct LatLon * center, struct LatLon * dist, struct LatLon * nw)
+static void get_north_west(LatLon * center, LatLon * dist, LatLon * nw)
 {
 	nw->lat = center->lat + dist->lat;
 	nw->lon = center->lon - dist->lon;
@@ -192,7 +192,7 @@ static void get_north_west(struct LatLon * center, struct LatLon * dist, struct 
 
 
 
-static void get_south_east(struct LatLon * center, struct LatLon * dist, struct LatLon * se)
+static void get_south_east(LatLon * center, LatLon * dist, LatLon * se)
 {
 	se->lat = center->lat - dist->lat;
 	se->lon = center->lon + dist->lon;
@@ -209,15 +209,15 @@ static void get_south_east(struct LatLon * center, struct LatLon * dist, struct 
 
 
 
-void Coord::set_area(const struct LatLon * wh, Coord * coord_tl, Coord * coord_br) const
+void Coord::set_area(const LatLon * wh, Coord * coord_tl, Coord * coord_br) const
 {
-	struct LatLon ll_nw, ll_se;
-	struct LatLon dist;
+	LatLon ll_nw, ll_se;
+	LatLon dist;
 
 	dist.lat = wh->lat / 2;
 	dist.lon = wh->lon / 2;
 
-	struct LatLon center = this->get_latlon();
+	LatLon center = this->get_latlon();
 	get_north_west(&center, &dist, &ll_nw);
 	get_south_east(&center, &dist, &ll_se);
 
@@ -233,9 +233,9 @@ void Coord::set_area(const struct LatLon * wh, Coord * coord_tl, Coord * coord_b
 
 bool Coord::is_inside(const Coord * tl, const Coord * br) const
 {
-	struct LatLon ll_ = this->get_latlon();
-	struct LatLon tl_ll = tl->get_latlon();
-	struct LatLon br_ll = br->get_latlon();
+	LatLon ll_ = this->get_latlon();
+	LatLon tl_ll = tl->get_latlon();
+	LatLon br_ll = br->get_latlon();
 
 	if ((ll_.lat > tl_ll.lat) || (ll_.lon < tl_ll.lon)) {
 		return false;
@@ -306,7 +306,7 @@ void CoordUtils::to_string(QString & result, double d)
   Strings will have a non-localized, regular dot as a separator
   between integer part and fractional part.
 */
-void CoordUtils::to_strings(QString & lat, QString & lon, const struct LatLon & ll)
+void CoordUtils::to_strings(QString & lat, QString & lon, const LatLon & ll)
 {
 	static QLocale c_locale = QLocale::c();
 

@@ -1648,10 +1648,10 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 	Coord coord;
 	map->tile_to_center_coord(mc, &coord);
 
-	struct LatLon tl;
+	LatLon tl;
 	tl.lat = map->get_lat_max();
 	tl.lon = map->get_lon_min();
-	struct LatLon br;
+	LatLon br;
 	br.lat = map->get_lat_min();
 	br.lon = map->get_lon_max();
 
@@ -2404,8 +2404,8 @@ void LayerMap::download_all_cb(void)
 	/* Find out new current positions. */
 	double min_lat, max_lat, min_lon, max_lon;
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-	struct LatLon ll_ul = { max_lat, min_lon };
-	struct LatLon ll_br = { min_lat, max_lon };
+	LatLon ll_ul = { max_lat, min_lon };
+	LatLon ll_br = { min_lat, max_lon };
 	const Coord coord_ul(ll_ul, viewport->get_coord_mode());
 	const Coord coord_br(ll_br, viewport->get_coord_mode());
 

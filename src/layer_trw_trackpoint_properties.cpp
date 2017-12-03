@@ -81,7 +81,7 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 		return;
 	}
 
-	struct LatLon ll;
+	LatLon ll;
 	ll.lat = this->lat->value();
 	ll.lon = this->lon->value();
 	Coord coord(ll, this->cur_tp->coord.mode);

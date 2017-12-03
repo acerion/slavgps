@@ -353,11 +353,11 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode)
 {
-	struct LatLon ll_a = tp_a.coord.get_latlon();
-	struct LatLon ll_b = tp_b.coord.get_latlon();
+	LatLon ll_a = tp_a.coord.get_latlon();
+	LatLon ll_b = tp_b.coord.get_latlon();
 
 	/* Main positional interpolation. */
-	struct LatLon ll_new = { (ll_a.lat + ll_b.lat) / 2, (ll_a.lon + ll_b.lon) / 2 };
+	LatLon ll_new = { (ll_a.lat + ll_b.lat) / 2, (ll_a.lon + ll_b.lon) / 2 };
 	this->coord = Coord(ll_new, coord_mode);
 
 	/* Now other properties that can be interpolated. */
@@ -411,7 +411,7 @@ void Track::recalculate_bounds_last_tp()
 	Trackpoint * tp = *std::prev(this->trackpoints.end());
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
-		struct LatLon ll = tp->coord.get_latlon();
+		LatLon ll = tp->coord.get_latlon();
 		if (ll.lat > bbox.north) {
 			bbox.north = ll.lat;
 		}
@@ -1913,7 +1913,8 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
  */
 void Track::calculate_bounds()
 {
-	struct LatLon topleft, bottomright;
+	LatLon topleft;
+	LatLon bottomright;
 
 	/* Set bounds to first point. */
 	auto iter = this->trackpoints.begin();
@@ -1926,7 +1927,7 @@ void Track::calculate_bounds()
 
 		/* See if this trackpoint increases the track bounds. */
 
-		struct LatLon ll = (*iter)->coord.get_latlon();
+		LatLon ll = (*iter)->coord.get_latlon();
 
 		if (ll.lat > topleft.lat) {
 			topleft.lat = ll.lat;
@@ -2471,7 +2472,7 @@ bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 
 
 
-void Track::find_maxmin(struct LatLon maxmin[2])
+void Track::find_maxmin(LatLon maxmin[2])
 {
 	if (this->bbox.north > maxmin[0].lat || maxmin[0].lat == 0.0) {
 		maxmin[0].lat = this->bbox.north;
@@ -2889,7 +2890,8 @@ void Track::goto_center_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
+	LatLon average;
+	LatLon maxmin[2] = { {0,0}, {0,0} };
 	this->find_maxmin(maxmin);
 	average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 	average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
@@ -3069,7 +3071,7 @@ void Track::rezoom_to_show_full_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	struct LatLon maxmin[2] = { {0,0}, {0,0} };
+	LatLon maxmin[2] = { {0,0}, {0,0} };
 	this->find_maxmin(maxmin);
 	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 
@@ -3248,7 +3250,7 @@ void Track::open_astro_cb(void)
 		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&tp->timestamp));
 		char time_buf[20];
 		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&tp->timestamp));
-		struct LatLon ll = tp->coord.get_latlon();
+		LatLon ll = tp->coord.get_latlon();
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
 		char alt_buf[20];
@@ -3461,7 +3463,7 @@ void Track::geotagging_track_cb(void)
 
 
 
-static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, double gradient)
+static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradient)
 {
 	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
 	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
@@ -3494,7 +3496,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, struct LatLon *dist, doubl
 
 
 
-static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, struct LatLon *dist)
+static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, LatLon *dist)
 {
 	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
@@ -3513,7 +3515,7 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, str
 
 
 
-static int get_download_area_width(double zoom_level, struct LatLon * wh) /* kamilFIXME: viewport is unused, why? */
+static int get_download_area_width(double zoom_level, LatLon * wh) /* kamilFIXME: viewport is unused, why? */
 {
 	/* TODO: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
@@ -3535,7 +3537,7 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		return NULL;
 	}
 
-	struct LatLon wh;
+	LatLon wh;
 	if (get_download_area_width(zoom_level, &wh)) {
 		return NULL;
 	}

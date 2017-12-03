@@ -331,7 +331,7 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of location found. Free this string after use.
  */
-int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
+int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 {
 	*name = NULL;
 
