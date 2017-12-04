@@ -201,7 +201,7 @@ char * GotoToolXML::get_url_format()
 
 
 
-bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon *ll_)
+bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon & lat_lon)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
@@ -265,9 +265,7 @@ bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon *ll_)
 	xml_context = NULL;
 	fclose (file);
 
-	if (ll_ != NULL) {
-		*ll_ = this->ll;
-	}
+	lat_lon = this->ll;
 
 	if (std::isnan(this->ll.lat) || std::isnan(this->ll.lat)) {
 		/* At least one coordinate not found */

@@ -651,8 +651,8 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 		pop(&stack);
 	}
 
-	if (latlon.lat != 0.0 || latlon.lon != 0.0) {
-		viewport->set_center_latlon(&latlon, true);
+	if (latlon.lat != 0.0 || latlon.lon != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
+		viewport->set_center_latlon(latlon, true);
 	}
 
 	if ((!aggregate->visible) && aggregate->tree_view) {

@@ -127,7 +127,7 @@ double Viewport::calculate_utm_zone_width()
 
 		/* Boundary. */
 		ll.lon = (utm.zone - 1) * 6 - 180 ;
-		a_coords_latlon_to_utm(&utm, &ll);
+		a_coords_latlon_to_utm(&utm, ll);
 		return fabs(utm.easting - EASTING_OFFSET) * 2;
 	} else {
 		return 0.0;
@@ -182,7 +182,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 		}
 	}
 
-	a_coords_latlon_to_utm(&utm, &ll);
+	a_coords_latlon_to_utm(&utm, ll);
 
 	xmpp = zoom_x;
 	ympp = zoom_y;
@@ -948,7 +948,7 @@ void Viewport::utm_zone_check()
 		struct UTM utm;
 		LatLon ll;
 		a_coords_utm_to_latlon(&ll, &center.utm);
-		a_coords_latlon_to_utm(&utm, &ll);
+		a_coords_latlon_to_utm(&utm, ll);
 		if (utm.zone != center.utm.zone) {
 			this->center.utm = utm;
 		}
@@ -1189,13 +1189,13 @@ bool Viewport::forward_available()
 
 
 /**
- * @ll:            The new center position in Lat/Lon format
+ * @lat_lon:       The new center position in Lat/Lon format
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_latlon(const LatLon * ll, bool save_position)
+void Viewport::set_center_latlon(const LatLon & lat_lon, bool save_position)
 {
-	this->center = Coord(*ll, coord_mode);
+	this->center = Coord(lat_lon, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -2035,7 +2035,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		Coord test = this->screen_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
-		a_coords_latlon_to_utm(&u, &ll);
+		a_coords_latlon_to_utm(&u, ll);
 
 		test = Coord(u, CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);

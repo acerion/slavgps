@@ -168,14 +168,14 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 
 /**
  * @text: text containing LatLon data.
- * @coord: computed coordinates.
+ * @lat_lon: computed coordinates.
  *
  * Utility func to handle pasted text:
  * search for N dd.dddddd W dd.dddddd, N dd° dd.dddd W dd° dd.ddddd and so forth.
  *
  * Returns: true if coordinates are set.
  */
-static bool clip_parse_latlon(const char * text, LatLon * coord)
+static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
 {
 	int latdeg, londeg, latmi, lonmi;
 	double lats, lons;
@@ -278,8 +278,8 @@ static bool clip_parse_latlon(const char * text, LatLon * coord)
 
 	/* Did we get to the end without actually finding a coordinate? */
 	if (i<len && lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
-		coord->lat = lat;
-		coord->lon = lon;
+		lat_lon.lat = lat;
+		lat_lon.lon = lon;
 		return true;
 	}
 #endif
@@ -289,11 +289,11 @@ static bool clip_parse_latlon(const char * text, LatLon * coord)
 
 
 
-static void clip_add_wp(LayersPanel * panel, LatLon * ll)
+static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 {
 	Layer * selected = panel->get_selected_layer();
 
-	Coord coord(*ll, CoordMode::LATLON);
+	Coord coord(lat_lon, CoordMode::LATLON);
 
 
 	if (selected && selected->type == LayerType::TRW) {
@@ -329,9 +329,9 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 		return;
 	}
 
-	LatLon coord;
-	if (clip_parse_latlon(text, &coord)) {
-		clip_add_wp(panel, &coord);
+	LatLon lat_lon;
+	if (clip_parse_latlon(text, lat_lon)) {
+		clip_add_wp(panel, lat_lon);
 	}
 }
 
@@ -346,7 +346,6 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 	GError *err = NULL;
 	char *s, *span;
 	int tag = 0;
-	LatLon coord;
 
 	if (gtk_selection_data_get_length(sd) == -1) {
 		return;
@@ -377,8 +376,10 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 			}
 		}
 	}
-	if (clip_parse_latlon(span, &coord)) {
-		clip_add_wp(panel, &coord);
+
+	LatLon lat_lon;
+	if (clip_parse_latlon(span, lat_lon)) {
+		clip_add_wp(panel, lat_lon);
 	}
 
 	free(s);

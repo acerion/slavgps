@@ -41,7 +41,7 @@ namespace SlavGPS {
 
 
 	/* Default. */
-	bool routing_default_find(LayerTRW * trw, LatLon start, LatLon end);
+	bool routing_default_find(LayerTRW * trw, const LatLon & start, const LatLon & end);
 
 	/* Routing engines management. */
 	void routing_prefs_init();

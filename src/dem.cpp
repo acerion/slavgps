@@ -696,7 +696,7 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == DEM_INVALID_ELEVATION) {
 			return false;
 		}
-		dists[i] = a_coords_latlon_diff(&pos, &ll[i]);
+		dists[i] = a_coords_latlon_diff(pos, ll[i]);
 	}
 
 #if 0  /* debug */

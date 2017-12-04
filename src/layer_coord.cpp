@@ -339,9 +339,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	ll.lon = ll2.lon = lon;
 
 	for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
-		a_coords_latlon_to_utm(&utm, &ll);
+		a_coords_latlon_to_utm(&utm, ll);
 		int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
-		a_coords_latlon_to_utm(&utm, &ll2);
+		a_coords_latlon_to_utm(&utm, ll2);
 		int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 		viewport->draw_line(pen, x1, height, x2, 0);
 	}
@@ -360,9 +360,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	ll.lat = ll2.lat = lon;
 
 	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
-		a_coords_latlon_to_utm(&utm, &ll);
+		a_coords_latlon_to_utm(&utm, ll);
 		int x1 = (height / 2) - ((utm.northing - center.northing) / ympp);
-		a_coords_latlon_to_utm(&utm, &ll2);
+		a_coords_latlon_to_utm(&utm, ll2);
 		int x2 = (height / 2) - ((utm.northing - center.northing) / ympp);
 		viewport->draw_line(pen, width, x2, 0, x1);
 	}

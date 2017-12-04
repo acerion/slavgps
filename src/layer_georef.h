@@ -131,7 +131,7 @@ namespace SlavGPS {
 		struct UTM corner; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
-		LatLon ll_br = { 0.0, 0.0 }; /* Bottom Right. */
+		LatLon ll_br; /* Bottom Right. */
 		unsigned int width = 0;
 		unsigned int height = 0;
 

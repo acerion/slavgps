@@ -137,24 +137,24 @@ double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
   } else {
     a_coords_utm_to_latlon(&tmp1, utm1);
     a_coords_utm_to_latlon(&tmp2, utm2);
-    return a_coords_latlon_diff ( &tmp1, &tmp2 );
+    return a_coords_latlon_diff(tmp1, tmp2);
   }
 }
 
-double a_coords_latlon_diff ( const LatLon *ll1, const LatLon *ll2 )
+double a_coords_latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 {
   static LatLon tmp1, tmp2;
   double tmp3;
-  tmp1.lat = ll1->lat * PIOVER180;
-  tmp1.lon = ll1->lon * PIOVER180;
-  tmp2.lat = ll2->lat * PIOVER180;
-  tmp2.lon = ll2->lon * PIOVER180;
+  tmp1.lat = lat_lon_1.lat * PIOVER180;
+  tmp1.lon = lat_lon_1.lon * PIOVER180;
+  tmp2.lat = lat_lon_2.lat * PIOVER180;
+  tmp2.lon = lat_lon_2.lon * PIOVER180;
   tmp3 = EquatorialRadius * acos(sin(tmp1.lat)*sin(tmp2.lat)+cos(tmp1.lat)*cos(tmp2.lat)*cos(tmp1.lon-tmp2.lon));
   // For very small differences we can sometimes get NaN returned
   return std::isnan(tmp3)?0:tmp3;
 }
 
-void a_coords_latlon_to_utm(struct UTM * utm, const LatLon * ll)
+void a_coords_latlon_to_utm(struct UTM * utm, const LatLon & lat_lon)
     {
     double latitude;
     double longitude;
@@ -165,8 +165,8 @@ void a_coords_latlon_to_utm(struct UTM * utm, const LatLon * ll)
     int zone;
     double northing, easting;
 
-    latitude = ll->lat;
-    longitude = ll->lon;
+    latitude = lat_lon.lat;
+    longitude = lat_lon.lon;
 
     /* We want the longitude within -180..180. */
     if ( longitude < -180.0 )

@@ -192,11 +192,11 @@ const DownloadOptions * RoutingEngineWeb::get_download_options(void) const
 
 
 
-static char * substitute_latlon(const char * fmt, LatLon ll)
+static char * substitute_latlon(const char * fmt, const LatLon & lat_lon)
 {
 	QString string_lat;
 	QString string_lon;
-	CoordUtils::to_strings(string_lat, string_lon, ll);
+	CoordUtils::to_strings(string_lat, string_lon, lat_lon);
 
 	char * substituted = g_strdup_printf(fmt, string_lat.toUtf8().constData(), string_lon.toUtf8().constData());
 	return substituted;
@@ -205,7 +205,7 @@ static char * substitute_latlon(const char * fmt, LatLon ll)
 
 
 
-char * RoutingEngineWeb::get_url_for_coords(LatLon start, LatLon end)
+char * RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon & end)
 {
 	if (!this->url_base || !this->url_start_ll_fmt || !this->url_stop_ll_fmt) {
 		return NULL;
@@ -225,7 +225,7 @@ char * RoutingEngineWeb::get_url_for_coords(LatLon start, LatLon end)
 
 
 
-bool RoutingEngineWeb::find(LayerTRW * trw, LatLon start, LatLon end)
+bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
 	char * uri = this->get_url_for_coords(start, end);
 
@@ -297,8 +297,7 @@ static void _append_stringified_coords(void * data, void * user_data)
 	struct _append_ctx *ctx = (struct _append_ctx*)user_data;
 
 	/* Stringify coordinate. */
-	LatLon position = tp->coord.get_latlon();
-	char * string = substitute_latlon(ctx->engine->url_via_ll_fmt, position);
+	char * string = substitute_latlon(ctx->engine->url_via_ll_fmt, tp->coord.get_latlon());
 
 	/* Append. */
 	ctx->urlParts[ctx->nb] = string;
@@ -337,14 +336,12 @@ char * RoutingEngineWeb::get_url_for_track(Track * trk)
 	free(urlParts[1]);
 
 	Trackpoint * tp = *trk->trackpoints.begin();
-	LatLon position = tp->coord.get_latlon();
-	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, position);
+	urlParts[1] = substitute_latlon(this->url_start_ll_fmt, tp->coord.get_latlon());
 
 	free(urlParts[len-2]);
 
 	tp = *std::prev(trk->trackpoints.end());
-	position = tp->coord.get_latlon();
-	urlParts[len-2] = substitute_latlon(this->url_stop_ll_fmt, position);
+	urlParts[len-2] = substitute_latlon(this->url_stop_ll_fmt, tp->coord.get_latlon());
 
 	/* Concat. */
 	url = g_strjoinv(NULL, urlParts);

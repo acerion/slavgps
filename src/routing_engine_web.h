@@ -49,8 +49,8 @@ namespace SlavGPS {
 
 
 		const DownloadOptions * get_download_options(void) const;
-		char * get_url_for_coords(LatLon start, LatLon end);
-		bool find(LayerTRW * trw, LatLon start, LatLon end);
+		char * get_url_for_coords(const LatLon & start, const LatLon & end);
+		bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
 		char * get_url_from_directions(const char * start, const char * end);
 		bool supports_direction(void);
 		char * get_url_for_track(Track * trk);

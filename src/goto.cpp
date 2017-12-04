@@ -331,7 +331,7 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of location found. Free this string after use.
  */
-int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
+int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char **name)
 {
 	*name = NULL;
 
@@ -341,8 +341,8 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 		return 0;
 	}
 
-	ll->lat = 0.0;
-	ll->lon = 0.0;
+	lat_lon.lat = 0.0;
+	lat_lon.lon = 0.0;
 
 	GMappedFile *mf;
 	if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
@@ -400,7 +400,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 			*ss++ = *pat++;
 		}
 		*ss = '\0';
-		ll->lat = g_ascii_strtod(lat_buf, NULL);
+		lat_lon.lat = g_ascii_strtod(lat_buf, NULL);
 	}
 
 	if ((pat = g_strstr_len(text, len, HOSTIP_LONGITUDE_PATTERN))) {
@@ -416,12 +416,12 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 			*ss++ = *pat++;
 		}
 		*ss = '\0';
-		ll->lon = g_ascii_strtod(lon_buf, NULL);
+		lat_lon.lon = g_ascii_strtod(lon_buf, NULL);
 	}
 
 	int result = 0;
-	if (ll->lat != 0.0 && ll->lon != 0.0) {
-		if (ll->lat > -90.0 && ll->lat < 90.0 && ll->lon > -180.0 && ll->lon < 180.0) {
+	if (lat_lon.lat != 0.0 && lat_lon.lon != 0.0) {
+		if (lat_lon.lat > -90.0 && lat_lon.lat < 90.0 && lat_lon.lon > -180.0 && lat_lon.lon < 180.0) {
 			// Found a 'sensible' & 'precise' location
 			result = 1;
 			*name = strdup(_("Locality")); //Albeit maybe not known by an actual name!
@@ -441,7 +441,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 				Coord new_center;
 				if (vik_goto_location(viewport, city, &new_center)) {
 					/* Got something. */
-					*ll = new_center.get_latlon();
+					lat_lon = new_center.get_latlon();
 					result = 2;
 					*name = city;
 					goto tidy;
@@ -456,7 +456,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon *ll, char **name)
 				Coord new_center;
 				if (vik_goto_location(viewport, country, &new_center)) {
 					/* Finally got something. */
-					*ll = new_center.get_latlon();
+					lat_lon = new_center.get_latlon();
 					result = 3;
 					*name = country;
 					goto tidy;

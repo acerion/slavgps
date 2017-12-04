@@ -35,13 +35,18 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Coord: "
+
+
+
+
 void Coord::change_mode(CoordMode new_mode)
 {
 	if (this->mode != new_mode) {
 		if (new_mode == CoordMode::LATLON) {
 			a_coords_utm_to_latlon(&this->ll, &this->utm);
 		} else {
-			a_coords_latlon_to_utm(&this->utm, &this->ll);
+			a_coords_latlon_to_utm(&this->utm, this->ll);
 		}
 		this->mode = new_mode;
 	}
@@ -60,7 +65,7 @@ Coord Coord::copy_change_mode(CoordMode new_mode) const
 		if (new_mode == CoordMode::LATLON) {
 			a_coords_utm_to_latlon(&dest.ll, &this->utm);
 		} else {
-			a_coords_latlon_to_utm(&dest.utm, &this->ll);
+			a_coords_latlon_to_utm(&dest.utm, this->ll);
 		}
 		dest.mode = new_mode;
 	}
@@ -73,9 +78,9 @@ Coord Coord::copy_change_mode(CoordMode new_mode) const
 
 static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
-	LatLon a = coord1.get_latlon();
-	LatLon b = coord2.get_latlon();
-	return a_coords_latlon_diff(&a, &b);
+	const LatLon a = coord1.get_latlon();
+	const LatLon b = coord2.get_latlon();
+	return a_coords_latlon_diff(a, b);
 }
 
 
@@ -90,21 +95,28 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 	if (coord1.mode == CoordMode::UTM) {
 		return a_coords_utm_diff(&coord1.utm, &coord2.utm);
 	} else {
-		return a_coords_latlon_diff(&coord1.ll, &coord2.ll);
+		return a_coords_latlon_diff(coord1.ll, coord2.ll);
 	}
 }
 
 
 
 
-Coord::Coord(const LatLon & ll_, CoordMode mode_)
+Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 {
-	if (mode_ == CoordMode::LATLON) {
-		this->ll = ll_;
-	} else {
-		a_coords_latlon_to_utm(&this->utm, &ll_);
+	switch (new_mode) {
+	case CoordMode::UTM:
+		a_coords_latlon_to_utm(&this->utm, new_lat_lon);
+		break;
+	case CoordMode::LATLON:
+		this->ll = new_lat_lon;
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unexpected CoordMode" << (int) mode;
+		break;
 	}
-	this->mode = mode_;
+
+	this->mode = new_mode;
 }
 
 
@@ -125,13 +137,21 @@ Coord::Coord(const struct UTM & utm_, CoordMode mode_)
 
 LatLon Coord::get_latlon(void) const
 {
-	LatLon dest = { 0, 0 };
-	if (this->mode == CoordMode::LATLON) {
-		dest = this->ll;
-	} else {
-		a_coords_utm_to_latlon(&dest, &this->utm);
+	LatLon ret;
+
+	switch (this->mode) {
+	case CoordMode::LATLON:
+		ret = this->ll;
+		break;
+	case CoordMode::UTM:
+		a_coords_utm_to_latlon(&ret, &this->utm);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unexpected CoordMode" << (int) this->mode;
+		break;
 	}
-	return dest; /* Let's hope that Named Return Value Optimisation works. */
+
+	return ret; /* Let's hope that Named Return Value Optimisation works. */
 }
 
 
@@ -143,7 +163,7 @@ struct UTM Coord::get_utm(void) const
 	if (this->mode == CoordMode::UTM) {
 		dest = this->utm;
 	} else {
-		a_coords_latlon_to_utm(&dest, &this->ll);
+		a_coords_latlon_to_utm(&dest, this->ll);
 	}
 	return dest; /* Let's hope that Named Return Value Optimisation works. */
 }
@@ -175,56 +195,57 @@ bool Coord::operator!=(const Coord & coord) const
 
 
 
-static void get_north_west(LatLon * center, LatLon * dist, LatLon * nw)
+static LatLon get_north_west_corner(const LatLon & center, const LatLon & distance_from_center)
 {
-	nw->lat = center->lat + dist->lat;
-	nw->lon = center->lon - dist->lon;
-	if (nw->lon < -180) {
-		nw->lon += 360.0;
+	LatLon ret;
+
+	ret.lat = center.lat + distance_from_center.lat;
+	ret.lon = center.lon - distance_from_center.lon;
+	if (ret.lon < -180) {
+		ret.lon += 360.0;
 	}
 
-	if (nw->lat > 90.0) {  /* Over north pole. */
-		nw->lat = 180 - nw->lat;
-		nw->lon = nw->lon - 180;
+	if (ret.lat > 90.0) {  /* Over north pole. */
+		ret.lat = 180 - ret.lat;
+		ret.lon = ret.lon - 180;
 	}
+
+	return ret;
 }
 
 
 
 
-static void get_south_east(LatLon * center, LatLon * dist, LatLon * se)
+static LatLon get_south_east_corner(const LatLon & center, const LatLon & distance_from_center)
 {
-	se->lat = center->lat - dist->lat;
-	se->lon = center->lon + dist->lon;
-	if (se->lon > 180.0) {
-		se->lon -= 360.0;
+	LatLon ret;
+
+	ret.lat = center.lat - distance_from_center.lat;
+	ret.lon = center.lon + distance_from_center.lon;
+	if (ret.lon > 180.0) {
+		ret.lon -= 360.0;
 	}
 
-	if (se->lat < -90.0) {  /* Over south pole. */
-		se->lat += 180;
-		se->lon = se->lon - 180;
+	if (ret.lat < -90.0) {  /* Over south pole. */
+		ret.lat += 180;
+		ret.lon = ret.lon - 180;
 	}
+
+	return ret;
 }
 
 
 
 
-void Coord::set_area(const LatLon * wh, Coord * coord_tl, Coord * coord_br) const
+void Coord::get_area_coordinates(const LatLon * area_span, Coord * coord_tl, Coord * coord_br) const
 {
-	LatLon ll_nw, ll_se;
-	LatLon dist;
+	const LatLon center = this->get_latlon();
+	const LatLon distance_from_center(area_span->lat / 2, area_span->lon / 2);
 
-	dist.lat = wh->lat / 2;
-	dist.lon = wh->lon / 2;
-
-	LatLon center = this->get_latlon();
-	get_north_west(&center, &dist, &ll_nw);
-	get_south_east(&center, &dist, &ll_se);
-
-	coord_tl->ll = ll_nw;
+	coord_tl->ll = get_north_west_corner(center, distance_from_center);
 	coord_tl->mode = CoordMode::LATLON;
 
-	coord_br->ll = ll_se;
+	coord_br->ll = get_south_east_corner(center, distance_from_center);
 	coord_br->mode = CoordMode::LATLON;
 }
 
@@ -233,15 +254,15 @@ void Coord::set_area(const LatLon * wh, Coord * coord_tl, Coord * coord_br) cons
 
 bool Coord::is_inside(const Coord * tl, const Coord * br) const
 {
-	LatLon ll_ = this->get_latlon();
-	LatLon tl_ll = tl->get_latlon();
-	LatLon br_ll = br->get_latlon();
+	const LatLon this_lat_lon = this->get_latlon();
+	const LatLon tl_ll = tl->get_latlon();
+	const LatLon br_ll = br->get_latlon();
 
-	if ((ll_.lat > tl_ll.lat) || (ll_.lon < tl_ll.lon)) {
+	if ((this_lat_lon.lat > tl_ll.lat) || (this_lat_lon.lon < tl_ll.lon)) {
 		return false;
 	}
 
-	if ((ll_.lat < br_ll.lat) || (ll_.lon > br_ll.lon)) {
+	if ((this_lat_lon.lat < br_ll.lat) || (this_lat_lon.lon > br_ll.lon)) {
 		return false;
 	}
 	return true;
@@ -306,13 +327,13 @@ void CoordUtils::to_string(QString & result, double d)
   Strings will have a non-localized, regular dot as a separator
   between integer part and fractional part.
 */
-void CoordUtils::to_strings(QString & lat, QString & lon, const LatLon & ll)
+void CoordUtils::to_strings(QString & lat, QString & lon, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
 
 	/* TODO: adjust parameters of toString() to do the conversion without loss of precision. */
-	lat = c_locale.toString(ll.lat);
-	lon = c_locale.toString(ll.lon);
+	lat = c_locale.toString(lat_lon.lat);
+	lon = c_locale.toString(lat_lon.lon);
 
 	return;
 }

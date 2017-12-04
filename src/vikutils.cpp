@@ -808,11 +808,8 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 
 	Viewport * viewport = window->get_viewport();
 
-	if (latitude != 0.0 || longitude != 0.0) {
-		LatLon ll;
-		ll.lat = latitude;
-		ll.lon = longitude;
-		viewport->set_center_latlon(&ll, true);
+	if (latitude != 0.0 || longitude != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
+		viewport->set_center_latlon(LatLon(latitude, longitude), true);
 	}
 
 	if (zoom_osm_level >= 0) {

@@ -112,6 +112,7 @@ const DownloadOptions * GotoTool::get_download_options(void) const
 int GotoTool::get_coord(Viewport * viewport, char * srch_str, Coord * coord)
 {
 	int ret = 0;  /* OK */
+	LatLon lat_lon;
 
 	fprintf(stderr, "DEBUG: %s: raw goto: %s\n", __FUNCTION__, srch_str);
 	char * escaped_srch_str = uri_escape(srch_str);
@@ -126,12 +127,12 @@ int GotoTool::get_coord(Viewport * viewport, char * srch_str, Coord * coord)
 	}
 
 	fprintf(stderr, "DEBUG: %s: %s\n", __FILE__, tmpname);
-	LatLon ll;
-	if (!this->parse_file_for_latlon(tmpname, &ll)) {
+
+	if (!this->parse_file_for_latlon(tmpname, lat_lon)) {
 		ret = -1;
 		goto done;
 	}
-	*coord = Coord(ll, viewport->get_coord_mode());
+	*coord = Coord(lat_lon, viewport->get_coord_mode());
 
  done:
 	(void) util_remove(tmpname);

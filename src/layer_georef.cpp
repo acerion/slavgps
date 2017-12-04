@@ -332,10 +332,10 @@ static void georef_layer_mpp_from_coords(CoordMode mode, LatLon ll_tl, LatLon ll
 		}
 	}
 
-	double diffx = a_coords_latlon_diff(&ll_tl, &ll_tr);
+	double diffx = a_coords_latlon_diff(ll_tl, ll_tr);
 	*xmpp = (diffx / width) / factor;
 
-	double diffy = a_coords_latlon_diff(&ll_tl, &ll_bl);
+	double diffy = a_coords_latlon_diff(ll_tl, ll_bl);
 	*ympp =(diffy / height) / factor;
 }
 
@@ -687,7 +687,7 @@ void LayerGeoref::align_utm2ll()
 	LatLon ll_tl = this->get_ll_tl();
 
 	struct UTM utm;
-	a_coords_latlon_to_utm(&utm, &ll_tl);
+	a_coords_latlon_to_utm(&utm, ll_tl);
 
 	this->cw.ce_spin->setValue(utm.easting);
 	this->cw.cn_spin->setValue(utm.northing);

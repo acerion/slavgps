@@ -138,7 +138,7 @@ RoutingEngine * SlavGPS::routing_default_engine(void)
  *
  * Return indicates success or not.
  */
-bool SlavGPS::routing_default_find(LayerTRW * trw, LatLon start, LatLon end)
+bool SlavGPS::routing_default_find(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
 	/* The engine. */
 	RoutingEngine * engine = routing_default_engine();

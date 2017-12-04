@@ -48,7 +48,7 @@ namespace SlavGPS {
 		RoutingEngine();
 		~RoutingEngine();
 
-		virtual bool find(LayerTRW * trw, LatLon start, LatLon end);
+		virtual bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
 		virtual char * get_url_from_directions(const char * start, const char * end);
 		virtual bool supports_direction(void);
 		virtual bool refine(LayerTRW * trw, Track * trk);

@@ -50,6 +50,8 @@ namespace SlavGPS {
 
 	class LatLon {
 	public:
+		LatLon(double new_lat = 0, double new_lon = 0) : lat(new_lat), lon(new_lon) {};
+
 		double lat;
 		double lon;
 
@@ -84,11 +86,11 @@ struct UTM {
 
 int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );
 
-void a_coords_latlon_to_utm(struct UTM * utm, const struct SlavGPS::LatLon * ll);
-void a_coords_utm_to_latlon(struct SlavGPS::LatLon * ll, const struct UTM * utm);
+void a_coords_latlon_to_utm(struct UTM * utm, const SlavGPS::LatLon & lat_lon);
+void a_coords_utm_to_latlon(SlavGPS::LatLon * lat_lon, const struct UTM * utm);
 
 double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 );
-double a_coords_latlon_diff ( const struct SlavGPS::LatLon *ll1, const struct SlavGPS::LatLon *ll2 );
+double a_coords_latlon_diff(const SlavGPS::LatLon & lat_lon_1, const SlavGPS::LatLon & lat_lon_2);
 
 /**
  * Convert a double to a string WITHOUT LOCALE.

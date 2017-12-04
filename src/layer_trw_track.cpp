@@ -2421,7 +2421,7 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 	while (iter != this->trackpoints.end()) {
 		Coord * cur_coord = &(*iter)->coord;
 		if (new_map) {
-			cur_coord->set_area(wh, &tl, &br);
+			cur_coord->get_area_coordinates(wh, &tl, &br);
 			Rect * rect = (Rect *) malloc(sizeof (Rect));
 			rect->tl = tl;
 			rect->br = br;
@@ -3570,7 +3570,7 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 	Coord tl, br;
 	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
 		Coord * cur_coord = *iter;
-		cur_coord->set_area(&wh, &tl, &br);
+		cur_coord->get_area_coordinates(&wh, &tl, &br);
 		Rect * rect = (Rect *) malloc(sizeof (Rect));
 		rect->tl = tl;
 		rect->br = br;

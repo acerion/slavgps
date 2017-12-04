@@ -65,7 +65,7 @@ GotoToolGoogle::~GotoToolGoogle()
 
 
 
-bool GotoToolGoogle::parse_file_for_latlon(char * file_name, LatLon * ll)
+bool GotoToolGoogle::parse_file_for_latlon(char * file_name, LatLon & lat_lon)
 {
 	char * s = NULL;
 	char lat_buf[32] = { 0 };
@@ -130,8 +130,8 @@ bool GotoToolGoogle::parse_file_for_latlon(char * file_name, LatLon * ll)
 		goto done;
 	}
 
-	ll->lat = g_ascii_strtod(lat_buf, NULL);
-	ll->lon = g_ascii_strtod(lon_buf, NULL);
+	lat_lon.lat = g_ascii_strtod(lat_buf, NULL);
+	lat_lon.lon = g_ascii_strtod(lon_buf, NULL);
 
  done:
 	g_mapped_file_unref(mf);

@@ -1639,10 +1639,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	LatLon ll;
-	ll.lat = Preferences::get_default_lat();
-	ll.lon = Preferences::get_default_lon();
-	this->viewport->set_center_latlon(&ll, true);
+	this->viewport->set_center_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
 	this->items_tree->emit_update_window_cb();
 }
 
@@ -2415,7 +2412,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 
 	LatLon ll;
 	char * name = NULL;
-	int ans = a_vik_goto_where_am_i(locator->window->viewport, &ll, &name);
+	int ans = a_vik_goto_where_am_i(locator->window->viewport, ll, &name);
 
 	int result = a_background_thread_progress(bg_job, 1.0);
 	if (result != 0) {
@@ -2436,7 +2433,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		}
 
 		locator->window->viewport->set_zoom(zoom);
-		locator->window->viewport->set_center_latlon(&ll, false);
+		locator->window->viewport->set_center_latlon(ll, false);
 
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
 		free(name);
