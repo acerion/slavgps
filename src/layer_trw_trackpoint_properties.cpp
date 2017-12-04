@@ -81,10 +81,8 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 		return;
 	}
 
-	LatLon ll;
-	ll.lat = this->lat->value();
-	ll.lon = this->lon->value();
-	Coord coord(ll, this->cur_tp->coord.mode);
+
+	const Coord coord(LatLon(this->lat->value(), this->lon->value()), this->cur_tp->coord.mode);
 
 	/* Don't redraw unless we really have to. */
 	if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */

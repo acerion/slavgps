@@ -284,7 +284,7 @@ WebToolDatasource::~WebToolDatasource()
 QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 {
 	/* Center values. */
-	LatLon ll = a_viewport->get_center()->get_latlon();
+	const LatLon ll = a_viewport->get_center()->get_latlon();
 
 	QString center_lat;
 	QString center_lon;

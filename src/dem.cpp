@@ -659,7 +659,6 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 {
 	int cols[4], rows[4];
 	LatLon ll[4];
-	LatLon pos;
 
 	if (east > this->max_east || east < this->min_east ||
 	    north > this->max_north || north < this->min_north) {
@@ -667,8 +666,7 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 		return false;  /* got nothing */
 	}
 
-	pos.lon = east / 3600;
-	pos.lat = north / 3600;
+	const LatLon pos(north / 3600, east / 3600);
 
 	/* order of the data: sw, nw, ne, se */
 	/* sw */

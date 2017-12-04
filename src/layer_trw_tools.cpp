@@ -912,7 +912,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		/* Now add distance to where the pointer is. */
 		Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
-		LatLon ll = coord.get_latlon();
+		LatLon ll = coord.get_latlon(); /* kamilFIXME: unused variable. */
 		double last_step = Coord::distance(coord, last_tpt->coord);
 		distance = distance + last_step;
 
@@ -1644,8 +1644,8 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		   || ((ev->modifiers() & Qt::ControlModifier) && track)) {
 
 		Trackpoint * tp_start = track->get_tp_last();
-		LatLon start = tp_start->coord.get_latlon();
-		LatLon end = tmp.get_latlon();
+		const LatLon start = tp_start->coord.get_latlon();
+		const LatLon end = tmp.get_latlon();
 
 		trw->route_finder_started = true;
 		trw->route_finder_append = true;  /* Merge tracks. Keep started true. */

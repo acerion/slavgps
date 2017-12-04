@@ -471,13 +471,9 @@ typedef struct zip_file zip_file_t;
 		if (pixmap) {
 			/* Some simple detection of broken position values ?? */
 			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
-			LatLon ll_tl, ll_br;
-			ll_tl.lat = north;
-			ll_tl.lon = west;
-			ll_br.lat = south;
-			ll_br.lon = east;
-			const Coord coord_tl(ll_tl, viewport->get_coord_mode());
-			const Coord coord_br(ll_br, viewport->get_coord_mode());
+
+			const Coord coord_tl(LatLon(north, west), viewport->get_coord_mode());
+			const Coord coord_br(LatLon(south, east), viewport->get_coord_mode());
 
 			Layer * grl = georef_layer_create(viewport, QString(name), pixmap, &coord_tl, &coord_br);
 			if (grl) {

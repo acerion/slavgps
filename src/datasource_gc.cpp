@@ -162,9 +162,8 @@ void DataSourceGCDialog::draw_circle_cb(void)
 	if (2 == sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
 
 		int x, y;
-		LatLon lat_lon = { .lat = lat, .lon = lon };
 
-		const Coord coord(lat_lon, this->viewport->get_coord_mode());
+		const Coord coord(LatLon(lat, lon), this->viewport->get_coord_mode());
 		this->viewport->coord_to_screen(&coord, &x, &y);
 		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (this->viewport->get_width() + 1000) &&
@@ -228,7 +227,7 @@ DataSourceGCDialog::DataSourceGCDialog()
 	this->miles_radius_spin.setSingleStep(1);
 	this->miles_radius_spin.setValue(5);
 
-	LatLon lat_lon = viewport->get_center()->get_latlon();
+	const LatLon lat_lon = viewport->get_center()->get_latlon();
 	this->center_entry.setText(QString("%1,%2").arg(lat_lon.lat).arg(lat_lon.lon));
 
 

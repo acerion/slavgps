@@ -1476,21 +1476,18 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
 	Coord nw = viewport->screen_to_coord(-20, -20);
 	Coord se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
-	LatLon lnw = nw.get_latlon();
-	LatLon lse = se.get_latlon();
+	const LatLon lnw = nw.get_latlon();
+	const LatLon lse = se.get_latlon();
+
 	if (this->realtime_fix.fix.latitude > lse.lat &&
 	     this->realtime_fix.fix.latitude < lnw.lat &&
 	     this->realtime_fix.fix.longitude > lnw.lon &&
 	     this->realtime_fix.fix.longitude < lse.lon &&
 	     !std::isnan(this->realtime_fix.fix.track)) {
 
-		LatLon ll;
-		ll.lat = this->realtime_fix.fix.latitude;
-		ll.lon = this->realtime_fix.fix.longitude;
-		Coord gps(ll, viewport->get_coord_mode());
-
+		const Coord gps_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude), viewport->get_coord_mode());
 		int x, y;
-		viewport->coord_to_screen(&gps, &x, &y);
+		viewport->coord_to_screen(&gps_coord, &x, &y);
 
 		double heading_cos = cos(DEG2RAD(this->realtime_fix.fix.track));
 		double heading_sin = sin(DEG2RAD(this->realtime_fix.fix.track));
@@ -1533,8 +1530,6 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 {
-	LatLon ll;
-
 	/* Note that fix.time is a double, but it should not affect
 	   the precision for most GPS. */
 	time_t cur_timestamp = this->realtime_fix.fix.time;
@@ -1580,9 +1575,8 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			tp_->nsats = this->realtime_fix.satellites_used;
 			tp_->fix_mode = (GPSFixMode) this->realtime_fix.fix.mode;
 
-			ll.lat = this->realtime_fix.fix.latitude;
-			ll.lon = this->realtime_fix.fix.longitude;
-			tp_->coord = Coord(ll, this->trw_children[TRW_REALTIME]->get_coord_mode());
+			tp_->coord = Coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude),
+					   this->trw_children[TRW_REALTIME]->get_coord_mode());
 
 			this->realtime_track->add_trackpoint(tp_, true); /* Ensure bounds is recalculated. */
 			this->realtime_fix.dirty = false;
@@ -1634,11 +1628,8 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
 		layer->realtime_fix.dirty = true;
 
-		LatLon ll;
-		ll.lat = layer->realtime_fix.fix.latitude;
-		ll.lon = layer->realtime_fix.fix.longitude;
-
-		Coord vehicle_coord(ll, layer->trw_children[TRW_REALTIME]->get_coord_mode());
+		const Coord vehicle_coord(LatLon(layer->realtime_fix.fix.latitude, layer->realtime_fix.fix.longitude),
+					  layer->trw_children[TRW_REALTIME]->get_coord_mode());
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {

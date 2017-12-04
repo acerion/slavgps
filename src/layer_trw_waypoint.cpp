@@ -569,7 +569,7 @@ void Waypoint::open_astro_cb(void)
 		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&this->timestamp));
 		char time_buf[20];
 		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&this->timestamp));
-		LatLon ll = this->coord.get_latlon();
+		const LatLon ll = this->coord.get_latlon();
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
 		char alt_buf[20];

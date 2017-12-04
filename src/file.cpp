@@ -230,7 +230,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	char * modestring = NULL;
 
 	/* Crazhy CRAZHY. */
-	LatLon ll = viewport->get_center()->get_latlon();
+	const LatLon lat_lon = viewport->get_center()->get_latlon();
 
 	ViewportDrawMode mode = viewport->get_drawmode();
 	switch (mode) {
@@ -259,7 +259,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
-		viewport->get_xmpp(), viewport->get_ympp(), ll.lat, ll.lon,
+		viewport->get_xmpp(), viewport->get_ympp(), lat_lon.lat, lat_lon.lon,
 		modestring,
 		bg_color_string,
 		hl_color_string,
@@ -352,7 +352,7 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
  */
 static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * dirpath, Viewport * viewport)
 {
-	LatLon latlon = { 0.0, 0.0 };
+	LatLon latlon;
 	char buffer[4096];
 	long line_num = 0;
 

@@ -771,7 +771,7 @@ QString SGUtils::get_time_string(time_t time, const char * format, const Coord *
 				} else {
 					/* No results (e.g. could be in the middle of a sea).
 					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-					LatLon ll = coord->get_latlon();
+					const LatLon ll = coord->get_latlon();
 					str = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
 				}
 			} else {
@@ -894,9 +894,8 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
 	/* This method is not particularly fast - but should work well enough. */
-	LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
 
-	const Coord coord(average, mode);
+	const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), mode);
 	viewport->set_center_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */

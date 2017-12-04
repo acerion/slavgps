@@ -157,9 +157,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 
 
 	struct UTM utm;
-	LatLon ll;
-	ll.lat = Preferences::get_default_lat();
-	ll.lon = Preferences::get_default_lon();
+	LatLon ll(Preferences::get_default_lat(), Preferences::get_default_lon());
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
 
@@ -238,9 +236,9 @@ Viewport::~Viewport()
 {
 	qDebug() << "II: Viewport: ~Viewport called";
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
-		LatLon ll = this->center.get_latlon();
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
+		const LatLon lat_lon = this->center.get_latlon();
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->xmpp);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->ympp);
 	}
@@ -946,9 +944,9 @@ void Viewport::utm_zone_check()
 {
 	if (coord_mode == CoordMode::UTM) {
 		struct UTM utm;
-		LatLon ll;
-		a_coords_utm_to_latlon(&ll, &center.utm);
-		a_coords_latlon_to_utm(&utm, ll);
+		LatLon lat_lon;
+		a_coords_utm_to_latlon(&lat_lon, &center.utm);
+		a_coords_latlon_to_utm(&utm, lat_lon);
 		if (utm.zone != center.utm.zone) {
 			this->center.utm = utm;
 		}

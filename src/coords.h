@@ -63,6 +63,8 @@ namespace SlavGPS {
 		   Convert a LatLon to strings using preferred representation
 		*/
 		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
+
+		static LatLon get_average(const LatLon & a, const LatLon & b) { return LatLon((a.lat + b.lat) / 2, (a.lon + b.lon) / 2); };
 	};
 
 

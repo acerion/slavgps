@@ -196,8 +196,8 @@ static double Rational2Double(unsigned char *data, int offset, ExifByteOrder ord
 
 static LatLon get_latlon(ExifData *ed)
 {
-	LatLon ll = { 0.0, 0.0 };
-	const LatLon ll0 = { 0.0, 0.0 };
+	LatLon ll;
+	const LatLon ll0(0.0, 0.0); /* Passing explicitly 0.0/0.0 to stress meaning of the variable. */
 
 	char str[128];
 	ExifEntry *ee;
@@ -251,7 +251,7 @@ static LatLon get_latlon(ExifData *ed)
  */
 LatLon SlavGPS::a_geotag_get_position(const char *filename)
 {
-	LatLon ll = { 0.0, 0.0 };
+	LatLon lat_lon;
 
 #ifdef K
 #ifdef HAVE_LIBGEXIV2
@@ -261,8 +261,8 @@ LatLon SlavGPS::a_geotag_get_position(const char *filename)
 		double lon;
 		double alt;
 		if (gexiv2_metadata_get_gps_info(gemd, &lon, &lat, &alt)) {
-			ll.lat = lat;
-			ll.lon = lon;
+			lat_lon.lat = lat;
+			lat_lon.lon = lon;
 		}
 	}
 	gexiv2_metadata_free(gemd);
@@ -273,7 +273,7 @@ LatLon SlavGPS::a_geotag_get_position(const char *filename)
 
 	/* Detect EXIF load failure. */
 	if (!ed) {
-		return ll;
+		return lat_lon;
 	}
 
 	ExifEntry *ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_VERSION_ID);
@@ -282,7 +282,7 @@ LatLon SlavGPS::a_geotag_get_position(const char *filename)
 		goto MyReturn0;
 	}
 
-	ll = get_latlon(ed);
+	lat_lon = get_latlon(ed);
 
 MyReturn0:
 	/* Finished with EXIF. */
@@ -291,7 +291,7 @@ MyReturn0:
 #endif
 
 #endif /* #ifdef K */
-	return ll;
+	return lat_lon;
 }
 
 
@@ -318,16 +318,13 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 		double lon;
 		double alt;
 		if (gexiv2_metadata_get_gps_info(gemd, &lon, &lat, &alt)) {
-			LatLon ll;
-			ll.lat = lat;
-			ll.lon = lon;
 
 			/* Now create Waypoint with acquired information. */
 			wp = new Waypoint();
 			wp->visible = true;
 			/* Set info from exif values. */
 			/* Location. */
-			wp->coord = Coord(ll, vcmode);
+			wp->coord = Coord(LatLon(lat, lon), vcmode);
 			/* Altitude. */
 			wp->altitude = alt;
 
@@ -354,7 +351,6 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 		return wp;
 	}
 
-	LatLon ll;
 
 	char str[128];
 	ExifEntry *ee;
@@ -369,11 +365,12 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 	//	goto MyReturn;
 	//}
 
-	ll = get_latlon(ed);
+	const LatLon lat_lon = get_latlon(ed);
 
 	/* Hopefully won't have valid images at 0,0! */
-	if (ll.lat == 0.0 && ll.lon == 0.0)
+	if (lat_lon.lat == 0.0 && lat_lon.lon == 0.0) {
 		goto MyReturn;
+	}
 
 	/* Not worried if none of the other fields exist, as can default the values to something. */
 	double alt = VIK_DEFAULT_ALTITUDE;
@@ -401,7 +398,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 	wp->visible = true;
 	/* Set info from exif values. */
 	/* Location. */
-	wp->coord = Coord(ll, vcmode);
+	wp->coord = Coord(lat_lon, vcmode);
 	/* Altitude. */
 	wp->altitude = alt;
 
@@ -828,8 +825,8 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, Coord & coord, do
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
-		LatLon ll = coord.get_latlon();
-		if (!gexiv2_metadata_set_gps_info(gemd, ll.lon, ll.lat, alt)) {
+		const LatLon lat_lon = coord.get_latlon();
+		if (!gexiv2_metadata_set_gps_info(gemd, lat_lon.lon, lat_lon.lat, alt)) {
 			result = 1; /* Failed. */
 		} else {
 			GError *error = NULL;
@@ -884,21 +881,21 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, Coord & coord, do
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_MAP_DATUM, EXIF_IFD_GPS);
 	convert_to_entry("WGS-84", 0.0, ee, exif_data_get_byte_order(ed));
 
-	LatLon ll = coord.get_latlon();
+	const LatLon lat_lon = coord.get_latlon();
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LATITUDE_REF, EXIF_IFD_GPS);
 	/* N or S. */
-	convert_to_entry(ll.lat < 0.0 ? "S" : "N", 0.0, ee, exif_data_get_byte_order(ed));
+	convert_to_entry(lat_lon.lat < 0.0 ? "S" : "N", 0.0, ee, exif_data_get_byte_order(ed));
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LATITUDE, EXIF_IFD_GPS);
-	convert_to_entry(NULL, ll.lat, ee, exif_data_get_byte_order(ed));
+	convert_to_entry(NULL, lat_lon.lat, ee, exif_data_get_byte_order(ed));
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LONGITUDE_REF, EXIF_IFD_GPS);
 	/* E or W. */
-	convert_to_entry(ll.lon < 0.0 ? "W" : "E", 0.0, ee, exif_data_get_byte_order(ed));
+	convert_to_entry(lat_lon.lon < 0.0 ? "W" : "E", 0.0, ee, exif_data_get_byte_order(ed));
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_LONGITUDE, EXIF_IFD_GPS);
-	convert_to_entry(NULL, ll.lon, ee, exif_data_get_byte_order(ed));
+	convert_to_entry(NULL, lat_lon.lon, ee, exif_data_get_byte_order(ed));
 
 	ee = my_exif_create_value(ed, EXIF_TAG_GPS_VERSION_ID, EXIF_IFD_GPS);
 	//convert_to_entry("2 0 0 0", 0.0, ee, exif_data_get_byte_order(ed));

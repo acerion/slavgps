@@ -448,8 +448,8 @@ void LayerTRWWaypoints::reset_waypoint_icon(Waypoint * wp)
  */
 void LayerTRWWaypoints::calculate_bounds()
 {
-	LatLon topleft = { 0.0, 0.0 };
-	LatLon bottomright = { 0.0, 0.0 };
+	LatLon topleft;
+	LatLon bottomright;
 
 
 	auto i = this->items.begin();
@@ -472,7 +472,7 @@ void LayerTRWWaypoints::calculate_bounds()
 			wp = i->second;
 
 			/* See if this point increases the bounds. */
-			LatLon ll = wp->coord.get_latlon();
+			const LatLon ll = wp->coord.get_latlon();
 
 			if (ll.lat > topleft.lat) {
 				topleft.lat = ll.lat;
@@ -701,10 +701,10 @@ void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		LatLon maxmin[2] = { {0,0}, {0,0} };
+		LatLon maxmin[2];
 		maxmin[0].lat = this->bbox.north;
-		maxmin[1].lat = this->bbox.south;
 		maxmin[0].lon = this->bbox.east;
+		maxmin[1].lat = this->bbox.south;
 		maxmin[1].lon = this->bbox.west;
 		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(viewport, maxmin);
 	} else {

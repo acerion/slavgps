@@ -182,10 +182,14 @@ static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom,
 
 
 
-void expedia_xy_to_latlon_middle(int alti, int x, int y, LatLon * ll)
+LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 {
-	ll->lon = (((double) x) / expedia_altis_freq(alti)) - 180;
-	ll->lat = (((double) y) / expedia_altis_freq(alti)) - 90;
+	LatLon lat_lon;
+
+	lat_lon.lon = (((double) x) / expedia_altis_freq(alti)) - 180;
+	lat_lon.lat = (((double) y) / expedia_altis_freq(alti)) - 90;
+
+	return lat_lon;
 }
 
 
@@ -203,17 +207,17 @@ static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
 
 static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, void * handle)
 {
-	LatLon ll;
-	expedia_xy_to_latlon_middle(src->scale, src->x, src->y, &ll);
+	const LatLon lat_lon = expedia_xy_to_latlon_middle(src->scale, src->x, src->y);
 
 	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src->scale) / (src->scale);
-	int width = height * cos(ll.lat * DEGREES_TO_RADS);
+	int width = height * cos(lat_lon.lat * DEGREES_TO_RADS);
 
 	height += 2 * REAL_HEIGHT_BUFFER;
 	width  += 2 * REAL_WIDTH_BUFFER;
 
+	/* kamilFIXME: "char" is not a correct data type for uri. */
 	char uri = g_strdup_printf("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
-				   ll.lat, ll.lon, (ll.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
+				   lat_lon.lat, lat_lon.lon, (lat_lon.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
 
 	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, QString(uri), dest_file_path, &expedia_options, NULL);
 	if (res == DownloadResult::SUCCESS) {

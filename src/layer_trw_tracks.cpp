@@ -858,7 +858,7 @@ void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
 	const unsigned int n_items = this->items.size();
 
 	if (0 < n_items) {
-		LatLon maxmin[2] = { {0,0}, {0,0} };
+		LatLon maxmin[2];
 		this->find_maxmin(maxmin);
 		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 

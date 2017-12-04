@@ -353,12 +353,11 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode)
 {
-	LatLon ll_a = tp_a.coord.get_latlon();
-	LatLon ll_b = tp_b.coord.get_latlon();
+	const LatLon ll_a = tp_a.coord.get_latlon();
+	const LatLon ll_b = tp_b.coord.get_latlon();
 
 	/* Main positional interpolation. */
-	LatLon ll_new = { (ll_a.lat + ll_b.lat) / 2, (ll_a.lon + ll_b.lon) / 2 };
-	this->coord = Coord(ll_new, coord_mode);
+	this->coord = Coord(LatLon::get_average(ll_a, ll_b), coord_mode);
 
 	/* Now other properties that can be interpolated. */
 	this->altitude = (tp_a.altitude + tp_b.altitude) / 2;
@@ -411,7 +410,7 @@ void Track::recalculate_bounds_last_tp()
 	Trackpoint * tp = *std::prev(this->trackpoints.end());
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
-		LatLon ll = tp->coord.get_latlon();
+		const LatLon ll = tp->coord.get_latlon();
 		if (ll.lat > bbox.north) {
 			bbox.north = ll.lat;
 		}
@@ -1927,7 +1926,7 @@ void Track::calculate_bounds()
 
 		/* See if this trackpoint increases the track bounds. */
 
-		LatLon ll = (*iter)->coord.get_latlon();
+		const LatLon ll = (*iter)->coord.get_latlon();
 
 		if (ll.lat > topleft.lat) {
 			topleft.lat = ll.lat;
@@ -2890,13 +2889,10 @@ void Track::goto_center_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	LatLon average;
-	LatLon maxmin[2] = { {0,0}, {0,0} };
+	LatLon maxmin[2];
 	this->find_maxmin(maxmin);
-	average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
-	average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
 
-	Coord coord(average, parent_layer_->coord_mode);
+	const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), parent_layer_->coord_mode);
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, coord);
 }
@@ -3071,7 +3067,7 @@ void Track::rezoom_to_show_full_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	LatLon maxmin[2] = { {0,0}, {0,0} };
+	LatLon maxmin[2];
 	this->find_maxmin(maxmin);
 	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
 
@@ -3250,7 +3246,7 @@ void Track::open_astro_cb(void)
 		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&tp->timestamp));
 		char time_buf[20];
 		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&tp->timestamp));
-		LatLon ll = tp->coord.get_latlon();
+		const LatLon ll = tp->coord.get_latlon();
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
 		char alt_buf[20];

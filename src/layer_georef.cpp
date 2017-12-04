@@ -308,15 +308,10 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 /**
  * Return mpp for the given coords, coord mode and image size.
  */
-static void georef_layer_mpp_from_coords(CoordMode mode, LatLon ll_tl, LatLon ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
+static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, const LatLon & ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
 {
-	LatLon ll_tr;
-	ll_tr.lat = ll_tl.lat;
-	ll_tr.lon = ll_br.lon;
-
-	LatLon ll_bl;
-	ll_bl.lat = ll_br.lat;
-	ll_bl.lon = ll_tl.lon;
+	const LatLon ll_tr(ll_tl.lat, ll_br.lon);
+	const LatLon ll_bl(ll_br.lat, ll_tl.lon);
 
 	/* UTM mode should be exact MPP. */
 	double factor = 1.0;
@@ -1243,7 +1238,7 @@ bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-static void goto_center_ll(Viewport * viewport, LatLon ll_tl, LatLon ll_br)
+static void goto_center_ll(Viewport * viewport, const LatLon & ll_tl, const LatLon & ll_br)
 {
 	LatLon ll_center;
 	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
@@ -1273,8 +1268,8 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 		if (grl->width > 0 && grl->height > 0) {
 
-			LatLon ll_tl = coord_tl->get_latlon();
-			LatLon ll_br = coord_br->get_latlon();
+			const LatLon ll_tl = coord_tl->get_latlon();
+			const LatLon ll_br = coord_br->get_latlon();
 
 			CoordMode mode = viewport->get_coord_mode();
 

@@ -80,7 +80,7 @@ public:
 
 class DEMDownloadJob : public BackgroundJob {
 public:
-	DEMDownloadJob(const QString & dest_file_path, const LatLon & ll, LayerDEM * layer);
+	DEMDownloadJob(const QString & dest_file_path, const LatLon & lat_lon, LayerDEM * layer);
 	~DEMDownloadJob();
 
 	QString dest_file_path;
@@ -994,14 +994,14 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const LatLon & ll, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const LatLon & lat_lon, LayerDEM * layer_dem)
 {
 	this->thread_fn = dem_download_thread;
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
 
 	this->dest_file_path = dest_file_path_;
-	this->lat = ll.lat;
-	this->lon = ll.lon;
+	this->lat = lat_lon.lat;
+	this->lon = lat_lon.lon;
 	this->layer = layer_dem;
 	this->source = layer_dem->source;
 	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
@@ -1369,17 +1369,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	QMenu * menu = (QMenu *) qa->parentWidget();
 
-	LatLon ll;
-
-	QVariant variant;
-	variant = menu->property("lat");
-	ll.lat = variant.toDouble();
-	variant = menu->property("lon");
-	ll.lon = variant.toDouble();
-
+	const LatLon ll(menu->property("lat").toDouble(), menu->property("lon").toDouble());
 	qDebug() << "II: Layer DEM: will display file info for coordinates" << ll.lat << ll.lon;
-
-
 
 	int intlat = (int) floor(ll.lat);
 	int intlon = (int) floor(ll.lon);

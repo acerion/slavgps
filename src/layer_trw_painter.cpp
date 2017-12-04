@@ -257,15 +257,15 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			}
 
 
-			LatLon ll_current = tp_current->coord.get_latlon();
-			LatLon ll_next = tp_next->coord.get_latlon();
+			const LatLon ll_current = tp_current->coord.get_latlon();
+			const LatLon ll_next = tp_next->coord.get_latlon();
 
 			/* Positional interpolation.
 			   Using a simple ratio - may not be perfectly correct due to lat/long projections
 			   but should be good enough over the small scale that I anticipate usage on. */
-			LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
-						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
-			Coord coord(ll_new, this->trw->coord_mode);
+			const LatLon ll_new(ll_current.lat + (ll_next.lat - ll_current.lat) * ratio,
+					    ll_current.lon + (ll_next.lon - ll_current.lon) * ratio);
+			const Coord coord(ll_new, this->trw->coord_mode);
 
 			const QColor fg_color = this->get_fg_color(trk);
 			const QColor bg_color = this->get_bg_color(do_highlight);
@@ -308,11 +308,11 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
 	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
-		LatLon average, maxmin[2] = { {0,0}, {0,0} };
+
+		LatLon maxmin[2];
 		trk->find_maxmin(maxmin);
-		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
-		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		Coord coord(average, this->trw->coord_mode);
+
+		const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), this->trw->coord_mode);
 
 		this->draw_track_label(ename, fg_color, bg_color, &coord);
 	}

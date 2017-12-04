@@ -277,8 +277,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));
 	consistentGeotagCB->setEnabled(false);
 	if (hasGeotag) {
-		LatLon ll = a_geotag_get_position(wp->image);
-		Coord coord(ll, coord_mode);
+		Coord coord(a_geotag_get_position(wp->image), coord_mode);
 		consistentGeotagCB->setChecked(coord == wp->coord);
 	}
 #endif
