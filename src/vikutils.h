@@ -83,8 +83,8 @@ namespace SlavGPS {
 	void vu_finalize_lat_lon_tz_lookup();
 
 
-	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, LatLon maxmin[2]);
-	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, LatLon maxmin[2], double zoom, bool save_position);
+	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max);
+	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max, double zoom, bool save_position);
 
 
 	/* Allow comparing versions. */

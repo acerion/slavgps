@@ -287,16 +287,16 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 
 
 
-void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, LatLon maxmin[2])
+void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const LatLonMinMax & min_max)
 {
 	QString north;
 	QString south;
 	QString east;
 	QString west;
-	CoordUtils::to_string(north, maxmin[0].lat);
-	CoordUtils::to_string(south, maxmin[1].lat);
-	CoordUtils::to_string(east, maxmin[0].lon);
-	CoordUtils::to_string(west, maxmin[1].lon);
+	CoordUtils::to_string(north, min_max.max.lat);
+	CoordUtils::to_string(south, min_max.min.lat);
+	CoordUtils::to_string(east, min_max.max.lon);
+	CoordUtils::to_string(west, min_max.min.lon);
 
 	/* Encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
 	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);

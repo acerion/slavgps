@@ -175,10 +175,10 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 
 
 
-void LayerTRWTracks::find_maxmin(LatLon maxmin[2])
+void LayerTRWTracks::find_maxmin(LatLonMinMax & min_max)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->find_maxmin(maxmin);
+		i->second->find_maxmin(min_max);
 	}
 }
 
@@ -858,9 +858,9 @@ void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
 	const unsigned int n_items = this->items.size();
 
 	if (0 < n_items) {
-		LatLon maxmin[2];
-		this->find_maxmin(maxmin);
-		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
+		LatLonMinMax min_max;
+		this->find_maxmin(min_max);
+		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
 
 		qDebug() << "SIGNAL: Layer TRW Tracks: re-zooming to show all items (" << n_items << "items)";
 		g_tree->emit_update_window();

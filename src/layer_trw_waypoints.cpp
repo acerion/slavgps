@@ -139,13 +139,10 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_date(char const * date)
 
 
 
-void LayerTRWWaypoints::find_maxmin(LatLon maxmin[2])
+void LayerTRWWaypoints::find_maxmin(LatLonMinMax & min_max)
 {
 	if (this->items.size() > 1) { /* kamil TODO this condition may have to be improved. */
-		maxmin[0].lat = this->bbox.north;
-		maxmin[1].lat = this->bbox.south;
-		maxmin[0].lon = this->bbox.east;
-		maxmin[1].lon = this->bbox.west;
+		min_max = LatLonMinMax(this->bbox);
 	}
 }
 
@@ -701,12 +698,7 @@ void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		LatLon maxmin[2];
-		maxmin[0].lat = this->bbox.north;
-		maxmin[0].lon = this->bbox.east;
-		maxmin[1].lat = this->bbox.south;
-		maxmin[1].lon = this->bbox.west;
-		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(viewport, maxmin);
+		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(viewport, LatLonMinMax(this->bbox));
 	} else {
 		return; /* Zero items. */
 	}

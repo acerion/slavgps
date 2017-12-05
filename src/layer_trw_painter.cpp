@@ -309,10 +309,10 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
 	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
 
-		LatLon maxmin[2];
-		trk->find_maxmin(maxmin);
+		LatLonMinMax min_max;
+		trk->find_maxmin(min_max);
 
-		const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), this->trw->coord_mode);
+		const Coord coord(LatLonMinMax::get_average(min_max), this->trw->coord_mode);
 
 		this->draw_track_label(ename, fg_color, bg_color, &coord);
 	}

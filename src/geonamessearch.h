@@ -62,7 +62,7 @@ namespace SlavGPS {
 
 
 	/* Finding Wikipedia entries within a certain box. */
-	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, LatLon maxmin[2]);
+	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const LatLonMinMax & min_max);
 
 
 

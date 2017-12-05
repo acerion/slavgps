@@ -711,13 +711,10 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
 
 			/* From the extend of the bounds pick the best zoom level
-			   c.f. trw_layer_zoom_to_show_latlons().
+			   c.f. LayerTRW::zoom_to_show_latlons().
 			   Maybe refactor... */
-			LatLon maxmin[2];
-			maxmin[0] = start_coord.get_latlon();
-			maxmin[1] = cursor_coord.get_latlon();
-
-			vu_zoom_to_show_latlons_common(this->viewport->get_coord_mode(), this->viewport, maxmin, SG_VIEWPORT_ZOOM_MIN, false);
+			const LatLonMinMax min_max(cursor_coord.get_latlon(), start_coord.get_latlon());
+			vu_zoom_to_show_latlons_common(this->viewport->get_coord_mode(), this->viewport, min_max, SG_VIEWPORT_ZOOM_MIN, false);
 			redraw_viewport = true;
 		}
 	} else {

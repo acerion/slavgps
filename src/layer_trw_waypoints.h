@@ -130,7 +130,7 @@ namespace SlavGPS {
 		void add_children_to_tree(void);
 
 
-		void find_maxmin(LatLon maxmin[2]);
+		void find_maxmin(LatLonMinMax & min_max);
 		void uniquify(sort_order_t sort_order);
 		QString new_unique_element_name(const QString & old_name);
 

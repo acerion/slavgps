@@ -134,7 +134,7 @@ namespace SlavGPS {
 		Track * find_track_by_name(const QString & trk_name);
 		Track * find_track_by_date(char const * date_str);
 
-		void find_maxmin(LatLon maxmin[2]);
+		void find_maxmin(LatLonMinMax & min_max);
 		void uniquify(sort_order_t sort_order);
 		QString new_unique_element_name(const QString & old_name);
 

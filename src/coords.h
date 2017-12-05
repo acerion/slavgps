@@ -43,6 +43,11 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
+#include "bbox.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -64,7 +69,22 @@ namespace SlavGPS {
 		*/
 		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
 
-		static LatLon get_average(const LatLon & a, const LatLon & b) { return LatLon((a.lat + b.lat) / 2, (a.lon + b.lon) / 2); };
+		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
+	};
+
+
+
+
+	class LatLonMinMax {
+	public:
+		LatLonMinMax() {};
+		LatLonMinMax(const LatLon & new_min, const LatLon & new_max) : min(new_min), max(new_max) {};
+		LatLonMinMax(const LatLonBBox & bbox);
+
+		static LatLon get_average(const LatLonMinMax & min_max) { return LatLon::get_average(min_max.max, min_max.min); };
+
+		LatLon min;
+		LatLon max;
 	};
 
 

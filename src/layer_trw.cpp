@@ -575,9 +575,9 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
 {
 	Track * trk = this->tracks->find_track_by_date(date_str);
 	if (trk && select) {
-		LatLon maxmin[2];
-		trk->find_maxmin(maxmin);
-		this->zoom_to_show_latlons(viewport, maxmin);
+		LatLonMinMax min_max;
+		trk->find_maxmin(min_max);
+		this->zoom_to_show_latlons(viewport, min_max);
 		this->tree_view->select_and_expose(trk->index);
 		this->emit_layer_changed();
 	}
@@ -1744,14 +1744,14 @@ bool LayerTRW::get_waypoints_visibility()
 
 
 
-void LayerTRW::find_maxmin(LatLon maxmin[2])
+void LayerTRW::find_maxmin(LatLonMinMax & min_max)
 {
-	/* Continually reuse maxmin to find the latest maximum and minimum values.
+	/* Continually reuse min_max to find the latest maximum and minimum values.
 	   First set to waypoints bounds. */
 
-	this->waypoints->find_maxmin(maxmin);
-	this->tracks->find_maxmin(maxmin);
-	this->routes->find_maxmin(maxmin);
+	this->waypoints->find_maxmin(min_max);
+	this->tracks->find_maxmin(min_max);
+	this->routes->find_maxmin(min_max);
 }
 
 
@@ -1760,13 +1760,13 @@ void LayerTRW::find_maxmin(LatLon maxmin[2])
 bool LayerTRW::find_center(Coord * dest)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. like I don't have more important things to worry about... */
-	LatLon maxmin[2];
-	this->find_maxmin(maxmin);
-	if (maxmin[0].lat == 0.0 && maxmin[0].lon == 0.0 && maxmin[1].lat == 0.0 && maxmin[1].lon == 0.0) {
+	LatLonMinMax min_max;
+	this->find_maxmin(min_max);
+
+	if (min_max.max.lat == 0.0 && min_max.max.lon == 0.0 && min_max.min.lat == 0.0 && min_max.min.lon == 0.0) {
 		return false;
 	} else {
-		const LatLon average((maxmin[0].lat + maxmin[1].lat) / 2, (maxmin[0].lon + maxmin[1].lon) / 2);
-		*dest = Coord(average, this->coord_mode);
+		*dest = Coord(LatLonMinMax::get_average(min_max), this->coord_mode);
 		return true;
 	}
 }
@@ -1788,9 +1788,9 @@ void LayerTRW::centerize_cb(void)
 
 
 
-void LayerTRW::zoom_to_show_latlons(Viewport * viewport, LatLon maxmin[2])
+void LayerTRW::zoom_to_show_latlons(Viewport * viewport, const LatLonMinMax & min_max)
 {
-	vu_zoom_to_show_latlons(coord_mode, viewport, maxmin);
+	vu_zoom_to_show_latlons(this->coord_mode, viewport, min_max);
 }
 
 
@@ -1799,12 +1799,12 @@ void LayerTRW::zoom_to_show_latlons(Viewport * viewport, LatLon maxmin[2])
 bool LayerTRW::auto_set_view(Viewport * viewport)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
-	LatLon maxmin[2];
-	this->find_maxmin(maxmin);
-	if (maxmin[0].lat == 0.0 && maxmin[0].lon == 0.0 && maxmin[1].lat == 0.0 && maxmin[1].lon == 0.0) {
+	LatLonMinMax min_max;
+	this->find_maxmin(min_max);
+	if (min_max.max.lat == 0.0 && min_max.max.lon == 0.0 && min_max.min.lat == 0.0 && min_max.min.lon == 0.0) {
 		return false;
 	} else {
-		this->zoom_to_show_latlons(viewport, maxmin);
+		this->zoom_to_show_latlons(viewport, min_max);
 		return true;
 	}
 }
@@ -1952,13 +1952,12 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
 
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	LatLon maxmin[2];
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	/* Note the order is max part first then min part - thus reverse order of use in min_max function: */
-	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
+	LatLonMinMax min_max;
+	viewport->get_min_max_lat_lon(&min_max.min.lat, &min_max.max.lat, &min_max.min.lon, &min_max.max.lon);
 
-	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
+	a_geonames_wikipedia_box(this->get_window(), this, min_max);
 	this->waypoints->calculate_bounds();
 	g_tree->emit_update_window();
 }
@@ -1968,11 +1967,10 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	LatLon maxmin[2];
+	LatLonMinMax min_max;
+	this->find_maxmin(min_max);
 
-	this->find_maxmin(maxmin);
-
-	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
+	a_geonames_wikipedia_box(this->get_window(), this, min_max);
 	this->waypoints->calculate_bounds();
 	g_tree->emit_update_window();
 }

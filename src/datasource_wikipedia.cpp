@@ -80,12 +80,10 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, Ba
 		return false;
 	}
 
-	LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
+	LatLonMinMax min_max;
+	acquiring->viewport->get_min_max_lat_lon(&min_max.min.lat, &min_max.max.lat, &min_max.min.lon, &min_max.max.lon);
 
-	/* Note the order is max part first then min part - thus reverse order of use in min_max function:. */
-	acquiring->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
-
-	a_geonames_wikipedia_box(acquiring->window, trw, maxmin);
+	a_geonames_wikipedia_box(acquiring->window, trw, min_max);
 
 	return true;
 }

@@ -877,9 +877,9 @@ void SGUtils::copy_label_menu(QAbstractButton * button)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, LatLon maxmin[2])
+void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max)
 {
-	vu_zoom_to_show_latlons_common(mode, viewport, maxmin, 1.0, true);
+	vu_zoom_to_show_latlons_common(mode, viewport, min_max, 1.0, true);
 	return;
 }
 
@@ -889,28 +889,28 @@ void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, LatLo
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, LatLon maxmin[2], double zoom, bool save_position)
+void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max, double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
 	/* This method is not particularly fast - but should work well enough. */
 
-	const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), mode);
+	const Coord coord(LatLonMinMax::get_average(min_max), mode);
 	viewport->set_center_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
 	LatLon minmin;
-	if (maxmin[0].lat < maxmin[1].lat) {
-		minmin.lat = maxmin[0].lat;
+	if (min_max.max.lat < min_max.min.lat) {
+		minmin.lat = min_max.max.lat;
 	} else {
-		minmin.lat = maxmin[1].lat;
+		minmin.lat = min_max.min.lat;
 	}
 
 	LatLon maxmax;
-	if (maxmin[0].lon > maxmin[1].lon) {
-		maxmax.lon = maxmin[0].lon;
+	if (min_max.max.lon > min_max.min.lon) {
+		maxmax.lon = min_max.max.lon;
 	} else {
-		maxmax.lon = maxmin[1].lon;
+		maxmax.lon = min_max.min.lon;
 	}
 
 	/* Never zoom in too far - generally not that useful, as too close! */

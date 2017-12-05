@@ -1280,8 +1280,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 			goto_center_ll(viewport, ll_tl, ll_br);
 			/* Set best zoom level. */
-			LatLon maxmin[2] = { ll_tl, ll_br };
-			vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, maxmin);
+			vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, LatLonMinMax(ll_br, ll_tl));
 
 			return grl;
 		}

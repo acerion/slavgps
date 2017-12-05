@@ -2471,22 +2471,22 @@ bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 
 
 
-void Track::find_maxmin(LatLon maxmin[2])
+void Track::find_maxmin(LatLonMinMax & min_max)
 {
-	if (this->bbox.north > maxmin[0].lat || maxmin[0].lat == 0.0) {
-		maxmin[0].lat = this->bbox.north;
+	if (this->bbox.north > min_max.max.lat || min_max.max.lat == 0.0) {
+		min_max.max.lat = this->bbox.north;
 	}
 
-	if (this->bbox.south < maxmin[1].lat || maxmin[1].lat == 0.0) {
-		maxmin[1].lat = this->bbox.south;
+	if (this->bbox.south < min_max.min.lat || min_max.min.lat == 0.0) {
+		min_max.min.lat = this->bbox.south;
 	}
 
-	if (this->bbox.east > maxmin[0].lon || maxmin[0].lon == 0.0) {
-		maxmin[0].lon = this->bbox.east;
+	if (this->bbox.east > min_max.max.lon || min_max.max.lon == 0.0) {
+		min_max.max.lon = this->bbox.east;
 	}
 
-	if (this->bbox.west < maxmin[1].lon || maxmin[1].lon == 0.0) {
-		maxmin[1].lon = this->bbox.west;
+	if (this->bbox.west < min_max.min.lon || min_max.min.lon == 0.0) {
+		min_max.min.lon = this->bbox.west;
 	}
 }
 
@@ -2889,10 +2889,10 @@ void Track::goto_center_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	LatLon maxmin[2];
-	this->find_maxmin(maxmin);
+	LatLonMinMax min_max;
+	this->find_maxmin(min_max);
 
-	const Coord coord(LatLon::get_average(maxmin[0], maxmin[1]), parent_layer_->coord_mode);
+	const Coord coord(LatLonMinMax::get_average(min_max), parent_layer_->coord_mode);
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 	parent_layer_->goto_coord(viewport, coord);
 }
@@ -3067,9 +3067,9 @@ void Track::rezoom_to_show_full_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	LatLon maxmin[2];
-	this->find_maxmin(maxmin);
-	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), maxmin);
+	LatLonMinMax min_max;
+	this->find_maxmin(min_max);
+	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
 
 	g_tree->emit_update_window();
 }
