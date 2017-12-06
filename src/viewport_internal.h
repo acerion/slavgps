@@ -107,10 +107,10 @@ namespace SlavGPS {
 		/* Viewport position. */
 		void set_center_coord(const Coord & coord, bool save_position);
 		void set_center_screen(int x, int y);
-		void center_for_zonen(struct UTM *center, int zone);
+		void center_for_zonen(UTM * center, int zone);
 		char leftmost_zone();
 		char rightmost_zone();
-		void set_center_utm(const struct UTM * utm, bool save_position);
+		void set_center_utm(const UTM & utm, bool save_position);
 		void set_center_latlon(const LatLon & lat_lon, bool save_position);
 		void corners_for_zonen(int zone, Coord * ul, Coord * br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);

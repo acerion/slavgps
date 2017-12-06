@@ -53,6 +53,11 @@ namespace SlavGPS {
 
 
 
+	class UTM;
+
+
+
+
 	class LatLon {
 	public:
 		LatLon(double new_lat = 0, double new_lon = 0) : lat(new_lat), lon(new_lon) {};
@@ -70,6 +75,8 @@ namespace SlavGPS {
 		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
 
 		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
+
+		static UTM to_utm(const LatLon & lat_lon);
 	};
 
 
@@ -90,6 +97,21 @@ namespace SlavGPS {
 
 
 
+	class UTM {
+	public:
+		static bool is_equal(const UTM & utm1, const UTM & utm2);
+		static LatLon to_latlon(const UTM & utm);
+
+		double northing = 0;
+		double easting = 0;
+		char zone = 0;
+		char letter = 0;
+	};
+
+
+
+
+
 } /* namespace SlavGPS */
 
 
@@ -98,20 +120,9 @@ extern "C" {
 #endif
 
 
-struct UTM {
-  double northing;
-  double easting;
-  char zone;
-  char letter;
-};
 
 
-int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );
-
-void a_coords_latlon_to_utm(struct UTM * utm, const SlavGPS::LatLon & lat_lon);
-void a_coords_utm_to_latlon(SlavGPS::LatLon * lat_lon, const struct UTM * utm);
-
-double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 );
+double a_coords_utm_diff(const SlavGPS::UTM * utm1, const SlavGPS::UTM * utm2);
 double a_coords_latlon_diff(const SlavGPS::LatLon & lat_lon_1, const SlavGPS::LatLon & lat_lon_2);
 
 /**

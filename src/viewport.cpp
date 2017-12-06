@@ -63,6 +63,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Viewport: "
+
+
+
+
 #define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
 #define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
 /* Default highlight in orange. */
@@ -117,19 +122,25 @@ void Viewport::init_drawing_area()
 
 double Viewport::calculate_utm_zone_width()
 {
-	if (coord_mode == CoordMode::UTM) {
-		LatLon ll;
+	switch (this->coord_mode) {
+	case CoordMode::UTM: {
 
 		/* Get latitude of screen bottom. */
-		struct UTM utm = this->center.utm;
+		UTM utm = this->center.utm;
 		utm.northing -= this->size_height * ympp / 2;
-		a_coords_utm_to_latlon(&ll, &utm);
+		LatLon ll = UTM::to_latlon(utm);
 
 		/* Boundary. */
 		ll.lon = (utm.zone - 1) * 6 - 180 ;
-		a_coords_latlon_to_utm(&utm, ll);
+		utm = LatLon::to_utm(ll);
 		return fabs(utm.easting - EASTING_OFFSET) * 2;
-	} else {
+	}
+
+	case CoordMode::LATLON:
+		return 0.0;
+
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected coord mode" << (int) this->coord_mode;
 		return 0.0;
 	}
 }
@@ -156,7 +167,6 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	//this->setMaximumSize(2700, 2700);
 
 
-	struct UTM utm;
 	LatLon ll(Preferences::get_default_lat(), Preferences::get_default_lon());
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
@@ -180,7 +190,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 		}
 	}
 
-	a_coords_latlon_to_utm(&utm, ll);
+	const UTM utm = LatLon::to_utm(ll);
 
 	xmpp = zoom_x;
 	ympp = zoom_y;
@@ -943,10 +953,7 @@ const Coord * Viewport::get_center() const
 void Viewport::utm_zone_check()
 {
 	if (coord_mode == CoordMode::UTM) {
-		struct UTM utm;
-		LatLon lat_lon;
-		a_coords_utm_to_latlon(&lat_lon, &center.utm);
-		a_coords_latlon_to_utm(&utm, lat_lon);
+		const UTM utm = LatLon::to_utm(UTM::to_latlon(center.utm));
 		if (utm.zone != center.utm.zone) {
 			this->center.utm = utm;
 		}
@@ -1211,9 +1218,9 @@ void Viewport::set_center_latlon(const LatLon & lat_lon, bool save_position)
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_utm(const struct UTM * utm, bool save_position)
+void Viewport::set_center_utm(const UTM & utm, bool save_position)
 {
-	this->center = Coord(*utm, coord_mode);
+	this->center = Coord(utm, coord_mode);
 	if (save_position) {
 		this->update_centers();
 	}
@@ -1265,7 +1272,7 @@ void Viewport::corners_for_zonen(int zone, Coord * ul, Coord * br)
 
 
 
-void Viewport::center_for_zonen(struct UTM * center_utm, int zone)
+void Viewport::center_for_zonen(UTM * center_utm, int zone)
 {
 	if (coord_mode == CoordMode::UTM) {
 		*center_utm = this->center.utm;
@@ -1394,8 +1401,8 @@ void Viewport::coord_to_screen(const Coord * coord, int * pos_x, int * pos_y)
 	}
 
 	if (this->coord_mode == CoordMode::UTM) {
-		const struct UTM * utm_center = &this->center.utm;
-		const struct UTM * utm = &coord->utm;
+		const UTM * utm_center = &this->center.utm;
+		const UTM * utm = &coord->utm;
 		if (utm_center->zone != utm->zone && this->one_utm_zone){
 			*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 			return;
@@ -1806,7 +1813,7 @@ bool Viewport::is_one_zone()
 
 void Viewport::set_drawmode(ViewportDrawMode drawmode_)
 {
-	drawmode = drawmode_;
+	this->drawmode = drawmode_;
 	if (drawmode_ == ViewportDrawMode::UTM) {
 		this->set_coord_mode(CoordMode::UTM);
 	} else {
@@ -2027,15 +2034,13 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 	*angle = atan2(dy, dx) + M_PI_2;
 
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
-		struct UTM u;
 		int tx, ty;
 
 		Coord test = this->screen_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
-		a_coords_latlon_to_utm(&u, ll);
 
-		test = Coord(u, CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
+		test = Coord(LatLon::to_utm(ll), CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);
@@ -2271,7 +2276,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
  * Utility function to get positional strings for the given location
  * lat and lon strings will get allocated and so need to be freed after use
  */
-void Viewport::get_location_strings(struct UTM utm, QString & lat, QString & lon)
+void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 {
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
@@ -2282,8 +2287,7 @@ void Viewport::get_location_strings(struct UTM utm, QString & lat, QString & lon
 		*lon = (char *) malloc(16*sizeof(char));
 		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
 	} else {
-		LatLon lat_lon;
-		a_coords_utm_to_latlon(&lat_lon, &utm);
+		const LatLon lat_lon = UTM::to_latlon(utm);
 		LatLon::to_strings(lat_lon, lat, lon);
 	}
 }

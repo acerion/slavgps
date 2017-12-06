@@ -241,7 +241,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 		lat = ll_tmp.lat * 3600;
 		lon = ll_tmp.lon * 3600;
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		static struct UTM utm_tmp;
+		static UTM utm_tmp;
 		if (utm_tmp.zone != dem->utm_zone) {
 			return false;
 		}
@@ -328,7 +328,7 @@ GList * a_dems_list_copy(GList * dems)
 
 int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coord * coord)
 {
-	static struct UTM utm_tmp;
+	static UTM utm_tmp;
 	LatLon ll_tmp;
 	auto iter = file_paths->begin();
 	DEM * dem;

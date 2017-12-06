@@ -79,6 +79,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " File: "
+
+
+
+
 #define VIK_MAGIC "#VIK"
 #define GPX_MAGIC "<?xm"
 #define VIK_MAGIC_LEN 4
@@ -227,27 +232,29 @@ static void write_layer_params_and_data(FILE * file, Layer const * layer)
 static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * viewport)
 {
 	LayerAggregate * aggregate = parent_layer;
-	char * modestring = NULL;
+	QString modestring;
 
 	/* Crazhy CRAZHY. */
 	const LatLon lat_lon = viewport->get_center()->get_latlon();
 
-	ViewportDrawMode mode = viewport->get_drawmode();
+	const ViewportDrawMode mode = viewport->get_drawmode();
+	/* TODO: move this switch to separate function. */
 	switch (mode) {
 	case ViewportDrawMode::UTM:
-		modestring = (char *) "utm";
+		modestring = "utm";
 		break;
 	case ViewportDrawMode::EXPEDIA:
-		modestring = (char *) "expedia";
+		modestring = "expedia";
 		break;
 	case ViewportDrawMode::MERCATOR:
-		modestring = (char *) "mercator";
+		modestring = "mercator";
 		break;
 	case ViewportDrawMode::LATLON:
-		modestring = (char *) "latlon";
+		modestring = "latlon";
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", (int) mode);
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected mode" << (int) mode;
+		break;
 	}
 
 	char bg_color_string[8] = { 0 };
@@ -260,7 +267,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
 		viewport->get_xmpp(), viewport->get_ympp(), lat_lon.lat, lat_lon.lon,
-		modestring,
+		modestring.toUtf8().constData(),
 		bg_color_string,
 		hl_color_string,
 		viewport->get_scale_visibility() ? "t" : "f",

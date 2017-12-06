@@ -50,10 +50,10 @@ namespace SlavGPS {
 	public:
 		Coord() {};
 		Coord(const LatLon & new_lat_lon, CoordMode new_mode);
-		Coord(const struct UTM & new_utm, CoordMode new_mode);
+		Coord(const UTM & new_utm, CoordMode new_mode);
 
 		LatLon get_latlon(void) const;
-		struct UTM get_utm(void) const;
+		UTM get_utm(void) const;
 
 		/* Get top-left and bottom-right coordinates of rectangle that has
 		   dimensions (width/height) specified by area_span, and is centered at this coord's center. */
@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 
 		LatLon ll;
-		struct UTM utm = { 0, 0, 0, 0 };
+		UTM utm;
 		CoordMode mode = CoordMode::UTM;
 	};
 

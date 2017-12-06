@@ -5,7 +5,7 @@ http://acme.com/software/coords/
 I (Evan Battaglia <viking@greentorch.org>) have only made some small changes such as
 renaming functions and defining LatLon and UTM structs.
 2004-02-10 -- I also added a function of my own -- a_coords_utm_diff() -- that I felt belonged in coords.c
-2004-02-21 -- I also added a_coords_utm_equal().
+2004-02-21 -- I also added UTM::is_equal().
 2005-11-23 -- Added a_coords_dtostr() for lack of a better place.
 
 */
@@ -124,19 +124,25 @@ char *a_coords_dtostr ( double d )
 
 static char coords_utm_letter( double latitude );
 
-int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 )
+
+
+
+bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 {
-  return ( utm1->easting == utm2->easting && utm1->northing == utm2->northing && utm1->zone == utm2->zone );
+	return (utm1.easting == utm2.easting && utm1.northing == utm2.northing && utm1.zone == utm2.zone);
 }
 
-double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
+
+
+
+double a_coords_utm_diff(const UTM * utm1, const UTM * utm2)
 {
   static LatLon tmp1, tmp2;
   if ( utm1->zone == utm2->zone ) {
     return sqrt ( pow ( utm1->easting - utm2->easting, 2 ) + pow ( utm1->northing - utm2->northing, 2 ) );
   } else {
-    a_coords_utm_to_latlon(&tmp1, utm1);
-    a_coords_utm_to_latlon(&tmp2, utm2);
+	  tmp1 = UTM::to_latlon(*utm1);
+	  tmp2 = UTM::to_latlon(*utm2);
     return a_coords_latlon_diff(tmp1, tmp2);
   }
 }
@@ -154,8 +160,8 @@ double a_coords_latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
   return std::isnan(tmp3)?0:tmp3;
 }
 
-void a_coords_latlon_to_utm(struct UTM * utm, const LatLon & lat_lon)
-    {
+UTM LatLon::to_utm(const LatLon & lat_lon)
+{
     double latitude;
     double longitude;
     double lat_rad, long_rad;
@@ -204,13 +210,15 @@ void a_coords_latlon_to_utm(struct UTM * utm, const LatLon & lat_lon)
     if ( latitude < 0.0 )
 	northing += 10000000.0;  /* 1e7 meter offset for southern hemisphere */
 
-    utm->northing = northing;
-    utm->easting = easting;
-    utm->zone = zone;
-    utm->letter = coords_utm_letter( latitude );
-
     /* All done. */
-    }
+
+    UTM utm;
+    utm.northing = northing;
+    utm.easting = easting;
+    utm.zone = zone;
+    utm.letter = coords_utm_letter( latitude );
+    return utm;
+}
 
 
 static char coords_utm_letter( double latitude )
@@ -244,8 +252,8 @@ static char coords_utm_letter( double latitude )
 
 
 
-void a_coords_utm_to_latlon(LatLon * latlon, const struct UTM * utm)
-    {
+LatLon UTM::to_latlon(const UTM & utm)
+{
     double northing, easting;
     int zone;
     char letter[100];
@@ -257,10 +265,10 @@ void a_coords_utm_to_latlon(LatLon * latlon, const struct UTM * utm)
     double mu, phi1_rad;
     double latitude, longitude;
 
-    northing = utm->northing;
-    easting = utm->easting;
-    zone = utm->zone;
-    letter[0] = utm->letter;
+    northing = utm.northing;
+    easting = utm.easting;
+    zone = utm.zone;
+    letter[0] = utm.letter;
 
     /* Now convert. */
     x = easting - 500000.0;	/* remove 500000 meter offset */
@@ -288,10 +296,8 @@ void a_coords_utm_to_latlon(LatLon * latlon, const struct UTM * utm)
 
     /* Show results. */
 
-    latlon->lat = latitude;
-    latlon->lon = longitude;
-
-    }
+    return LatLon(latitude, longitude);
+}
 
 
 

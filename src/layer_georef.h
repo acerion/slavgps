@@ -128,7 +128,7 @@ namespace SlavGPS {
 		QPixmap * pixmap = NULL;
 		uint8_t alpha = 255;
 
-		struct UTM corner; /* Top Left. */
+		UTM corner; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
 		LatLon ll_br; /* Bottom Right. */

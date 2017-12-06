@@ -155,6 +155,8 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 
 void LayerCoord::draw(Viewport * viewport)
 {
+	/* TODO: are these conditions optimal? Shouldn't we use switch() or if/else instead? */
+
 	if (viewport->get_coord_mode() != CoordMode::UTM) {
 		this->draw_latlon(viewport);
 	}
@@ -280,37 +282,41 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	QPen pen(this->color);
 	pen.setWidth(this->line_thickness);
 
-	const struct UTM center = viewport->get_center()->get_utm();
-	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
+	const UTM center = viewport->get_center()->get_utm();
+	double xmpp = viewport->get_xmpp();
+	double ympp = viewport->get_ympp();
 	uint16_t width = viewport->get_width(), height = viewport->get_height();
 	LatLon ll, ll2, min, max;
 
-	struct UTM utm = center;
+	UTM utm = center;
 	utm.northing = center.northing - (ympp * height / 2);
 
-	a_coords_utm_to_latlon(&ll, &utm);
+	ll = UTM::to_latlon(utm);
 
 	utm.northing = center.northing + (ympp * height / 2);
 
-	a_coords_utm_to_latlon(&ll2, &utm);
+	ll2 = UTM::to_latlon(utm);
 
 	{
 		/*
 		  Find corner coords in lat/lon.
 		  Start at whichever is less: top or bottom left lon. Go to whichever more: top or bottom right lon.
 		*/
-		LatLon topleft, topright, bottomleft, bottomright;
-		struct UTM temp_utm;
+		UTM temp_utm;
 		temp_utm = center;
 		temp_utm.easting -= (width/2)*xmpp;
 		temp_utm.northing += (height/2)*ympp;
-		a_coords_utm_to_latlon(&topleft, &temp_utm);
+		const LatLon topleft = UTM::to_latlon(temp_utm);
+
 		temp_utm.easting += (width*xmpp);
-		a_coords_utm_to_latlon(&topright, &temp_utm);
+		const LatLon topright = UTM::to_latlon(temp_utm);
+
 		temp_utm.northing -= (height*ympp);
-		a_coords_utm_to_latlon(&bottomright, &temp_utm);
+		const LatLon bottomright = UTM::to_latlon(temp_utm);
+
 		temp_utm.easting -= (width*xmpp);
-		a_coords_utm_to_latlon(&bottomleft, &temp_utm);
+		const LatLon bottomleft = UTM::to_latlon(temp_utm);
+
 		min.lon = (topleft.lon < bottomleft.lon) ? topleft.lon : bottomleft.lon;
 		max.lon = (topright.lon > bottomright.lon) ? topright.lon : bottomright.lon;
 		min.lat = (bottomleft.lat < bottomright.lat) ? bottomleft.lat : bottomright.lat;
@@ -339,9 +345,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	ll.lon = ll2.lon = lon;
 
 	for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
-		a_coords_latlon_to_utm(&utm, ll);
+		utm = LatLon::to_utm(ll);
 		int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
-		a_coords_latlon_to_utm(&utm, ll2);
+		utm = LatLon::to_utm(ll2);
 		int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 		viewport->draw_line(pen, x1, height, x2, 0);
 	}
@@ -349,20 +355,20 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	utm = center;
 	utm.easting = center.easting - (xmpp * width / 2);
 
-	a_coords_utm_to_latlon(&ll, &utm);
+	ll = UTM::to_latlon(utm);
 
 	utm.easting = center.easting + (xmpp * width / 2);
 
-	a_coords_utm_to_latlon(&ll2, &utm);
+	ll2 = UTM::to_latlon(utm);
 
 	/* Really lat, just reusing a variable. */
 	lon = ((double) ((long) ((min.lat)/ this->deg_inc))) * this->deg_inc;
 	ll.lat = ll2.lat = lon;
 
 	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
-		a_coords_latlon_to_utm(&utm, ll);
+		utm = LatLon::to_utm(ll);
 		int x1 = (height / 2) - ((utm.northing - center.northing) / ympp);
-		a_coords_latlon_to_utm(&utm, ll2);
+		utm = LatLon::to_utm(ll2);
 		int x2 = (height / 2) - ((utm.northing - center.northing) / ympp);
 		viewport->draw_line(pen, width, x2, 0, x1);
 	}

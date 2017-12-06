@@ -800,17 +800,22 @@ bool DEM::overlap(LatLonBBox * bbox)
 		dem_northeast.lon = this->max_east / 3600.0;
 		dem_southwest.lat = this->min_north / 3600.0;
 		dem_southwest.lon = this->min_east / 3600.0;
+
 	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		struct UTM dem_northeast_utm, dem_southwest_utm;
+		UTM dem_northeast_utm;
 		dem_northeast_utm.northing = this->max_north;
 		dem_northeast_utm.easting = this->max_east;
+		dem_northeast_utm.zone = this->utm_zone;
+		dem_northeast_utm.letter = this->utm_letter;
+
+		UTM dem_southwest_utm;
 		dem_southwest_utm.northing = this->min_north;
 		dem_southwest_utm.easting = this->min_east;
-		dem_northeast_utm.zone = dem_southwest_utm.zone = this->utm_zone;
-		dem_northeast_utm.letter = dem_southwest_utm.letter = this->utm_letter;
+		dem_southwest_utm.zone = this->utm_zone;
+		dem_southwest_utm.letter = this->utm_letter;
 
-		a_coords_utm_to_latlon(&dem_northeast, &dem_northeast_utm);
-		a_coords_utm_to_latlon(&dem_southwest, &dem_southwest_utm);
+		dem_northeast = UTM::to_latlon(dem_northeast_utm);
+		dem_southwest = UTM::to_latlon(dem_southwest_utm);
 	} else {
 		// Unknown horiz_units - this shouldn't normally happen
 		// Thus can't work out positions to use

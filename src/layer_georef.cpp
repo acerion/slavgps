@@ -60,6 +60,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Layer Georef: "
+
+
+
+
 extern Tree * g_tree;
 /*
 static SGVariant image_default(void)
@@ -679,10 +684,7 @@ LatLon LayerGeoref::get_ll_br()
 /* Align displayed UTM values with displayed Lat/Lon values. */
 void LayerGeoref::align_utm2ll()
 {
-	LatLon ll_tl = this->get_ll_tl();
-
-	struct UTM utm;
-	a_coords_latlon_to_utm(&utm, ll_tl);
+	const UTM utm = LatLon::to_utm(this->get_ll_tl());
 
 	this->cw.ce_spin->setValue(utm.easting);
 	this->cw.cn_spin->setValue(utm.northing);
@@ -702,19 +704,19 @@ void LayerGeoref::align_utm2ll()
 /* Align displayed Lat/Lon values with displayed UTM values. */
 void LayerGeoref::align_ll2utm()
 {
-	struct UTM corner;
-#ifdef K
-	const char * letter = this->cw.utm_letter_entry.text();
-	if (*letter) {
-		corner.letter = toupper(*letter);
+	UTM corner;
+
+	const QString letter = this->cw.utm_letter_entry.text();
+	if (1 == letter.size()) {
+		corner.letter = letter.at(0).toUpper().toLatin1();
+		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "UTM letter conversion" << letter << "->" << corner.letter;
 	}
-#endif
+
 	corner.zone = this->cw.utm_zone_spin.value();
 	corner.easting = this->cw.ce_spin->value();
 	corner.northing = this->cw.cn_spin->value();
 
-	LatLon ll;
-	a_coords_utm_to_latlon(&ll, &corner);
+	const LatLon ll = UTM::to_latlon(corner);
 	this->cw.lat_tl_spin.setValue(ll.lat);
 	this->cw.lon_tl_spin.setValue(ll.lon);
 }
@@ -1072,7 +1074,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	struct UTM utm = viewport->get_center()->get_utm();
+	UTM utm = viewport->get_center()->get_utm();
 
 	utm.easting = layer->corner.easting + (layer->width * layer->mpp_easting / 2); /* Only an approximation. */
 	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);

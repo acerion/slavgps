@@ -61,8 +61,8 @@ std::vector<GotoTool *> goto_tools;
 
 
 
-static bool goto_latlon_dialog(Window * parent, LatLon & new_lat_lon, const LatLon & initial_lat_lon);
-static bool goto_utm_dialog(Window * parent, struct UTM * utm, const struct UTM * old);
+static bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent);
+static bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent);
 static QString goto_location_dialog(Window * window);
 
 
@@ -473,19 +473,18 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char *
 }
 
 
+
+
 void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 {
-	Coord new_center;
-
 	LatLon new_lat_lon;
 	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
 
-	if (goto_latlon_dialog(window, new_lat_lon, initial_lat_lon)) {
-		new_center = Coord(new_lat_lon, viewport->get_coord_mode());
-	} else {
+	if (!goto_latlon_dialog(new_lat_lon, initial_lat_lon, window)) {
 		return;
 	}
 
+	const Coord new_center = Coord(new_lat_lon, viewport->get_coord_mode());
 	viewport->set_center_coord(new_center, true);
 
 	return;
@@ -493,7 +492,7 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 
 
 
-bool goto_latlon_dialog(SlavGPS::Window * parent, LatLon & new_lat_lon, const LatLon & initial_lat_lon)
+bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent)
 {
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
@@ -538,17 +537,14 @@ bool goto_latlon_dialog(SlavGPS::Window * parent, LatLon & new_lat_lon, const La
 
 void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 {
-	Coord new_center;
+	UTM new_utm;
+	const UTM initial_utm = viewport->get_center()->get_utm();
 
-	struct UTM utm;
-	struct UTM utmold = viewport->get_center()->get_utm();
-
-	if (goto_utm_dialog(window, &utm, &utmold)) {
-		new_center = Coord(utm, viewport->get_coord_mode());
-	} else {
+	if (!goto_utm_dialog(new_utm, initial_utm, window)) {
 		return;
 	}
 
+	const Coord new_center = Coord(new_utm, viewport->get_coord_mode());
 	viewport->set_center_coord(new_center, true);
 
 	return;
@@ -557,7 +553,7 @@ void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 
 
 
-bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UTM * old)
+bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 {
 	char buffer[64] = { 0 };
 
@@ -572,7 +568,7 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 
 	QLineEdit northing_input;
 	QObject::connect(&northing_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", old->northing);
+	snprintf(buffer, sizeof (buffer), "%f", initial_utm.northing);
 	northing_input.setText(buffer);
 	dialog.grid->addWidget(&northing_input, 0, 1);
 
@@ -583,7 +579,7 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 
 	QLineEdit easting_input;
 	QObject::connect(&easting_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", old->easting);
+	snprintf(buffer, sizeof (buffer), "%f", initial_utm.easting);
 	easting_input.setText(buffer);
 	dialog.grid->addWidget(&easting_input, 1, 1);
 
@@ -597,7 +593,7 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 	zone_spinbox.setMinimum(1);
 	zone_spinbox.setMaximum(60);
 	zone_spinbox.setSingleStep(1);
-	zone_spinbox.setValue(old->zone);
+	zone_spinbox.setValue(initial_utm.zone);
 	dialog.grid->addWidget(&zone_spinbox, 2, 1);
 
 
@@ -607,7 +603,7 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 
 	QLineEdit letter_input;
 	QObject::connect(&letter_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	buffer[0] = old->letter;
+	buffer[0] = initial_utm.letter;
 	buffer[1] = '\0';
 	letter_input.setText(buffer);
 	letter_input.setMaxLength(1);
@@ -620,12 +616,12 @@ bool goto_utm_dialog(SlavGPS::Window * parent, struct UTM * utm, const struct UT
 
 
 	if (dialog.exec() == QDialog::Accepted) {
-		utm->northing = atof(northing_input.text().toUtf8().constData()); /* kamilTODO: why atof()? */
-		utm->easting = atof(easting_input.text().toUtf8().constData());
-		utm->zone = zone_spinbox.value();
+		new_utm.northing = atof(northing_input.text().toUtf8().constData()); /* kamilTODO: why atof()? */
+		new_utm.easting = atof(easting_input.text().toUtf8().constData());
+		new_utm.zone = zone_spinbox.value();
 		const char * letter = letter_input.text().toUtf8().constData();
 		if (*letter) {
-			utm->letter = toupper(*letter);
+			new_utm.letter = toupper(*letter);
 		}
 		return true;
 	} else {

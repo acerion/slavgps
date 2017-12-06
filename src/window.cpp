@@ -1511,9 +1511,7 @@ void Window::menu_copy_centre_cb(void)
 		coord->to_strings(first, second);
 	} else {
 		/* Simple x.xx y.yy format. */
-		LatLon lat_lon;
-		struct UTM utm = coord->get_utm();;
-		a_coords_utm_to_latlon(&lat_lon, &utm);
+		const LatLon lat_lon = UTM::to_latlon(coord->get_utm());
 		first = LatLon::lat_to_string_raw(lat_lon);
 		second = LatLon::lon_to_string_raw(lat_lon);
 	}
@@ -2900,8 +2898,8 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 		}
 	}
 
-	struct UTM utm;
-	struct UTM utm_orig = this->viewport->get_center()->utm;
+	UTM utm;
+	UTM utm_orig = this->viewport->get_center()->utm;
 	const char * extension = save_as_png ? "png" : "jpg";
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
@@ -2921,7 +2919,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 			}
 
 			/* TODO: move to correct place. */
-			this->viewport->set_center_utm(&utm, false);
+			this->viewport->set_center_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
 			this->draw_redraw();
@@ -2940,7 +2938,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 		}
 	}
 
-	this->viewport->set_center_utm(&utm_orig, false);
+	this->viewport->set_center_utm(utm_orig, false);
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->configure();

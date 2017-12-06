@@ -772,7 +772,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 		/* TODO: why start_x and start_y are -1 -- rounding error from above? */
 
-		struct UTM counter;
+		UTM counter;
 		counter.zone = dem->utm_zone;
 		counter.letter = dem->utm_letter;
 

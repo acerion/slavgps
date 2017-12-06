@@ -44,9 +44,9 @@ void Coord::change_mode(CoordMode new_mode)
 {
 	if (this->mode != new_mode) {
 		if (new_mode == CoordMode::LATLON) {
-			a_coords_utm_to_latlon(&this->ll, &this->utm);
+			this->ll = UTM::to_latlon(this->utm);
 		} else {
-			a_coords_latlon_to_utm(&this->utm, this->ll);
+			this->utm = LatLon::to_utm(this->ll);
 		}
 		this->mode = new_mode;
 	}
@@ -63,9 +63,9 @@ Coord Coord::copy_change_mode(CoordMode new_mode) const
 		dest = *this; /* kamilFIXME: verify this assignment of objects. */
 	} else {
 		if (new_mode == CoordMode::LATLON) {
-			a_coords_utm_to_latlon(&dest.ll, &this->utm);
+			dest.ll = UTM::to_latlon(this->utm);
 		} else {
-			a_coords_latlon_to_utm(&dest.utm, this->ll);
+			dest.utm = LatLon::to_utm(this->ll);
 		}
 		dest.mode = new_mode;
 	}
@@ -92,10 +92,16 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 		return distance_safe(coord1, coord2);
 	}
 
-	if (coord1.mode == CoordMode::UTM) {
+	switch (coord1.mode) {
+	case CoordMode::UTM:
 		return a_coords_utm_diff(&coord1.utm, &coord2.utm);
-	} else {
+
+	case CoordMode::LATLON:
 		return a_coords_latlon_diff(coord1.ll, coord2.ll);
+
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) coord1.mode;
+		return 0.0;
 	}
 }
 
@@ -106,13 +112,13 @@ Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 {
 	switch (new_mode) {
 	case CoordMode::UTM:
-		a_coords_latlon_to_utm(&this->utm, new_lat_lon);
+		this->utm = LatLon::to_utm(new_lat_lon);
 		break;
 	case CoordMode::LATLON:
 		this->ll = new_lat_lon;
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unexpected CoordMode" << (int) mode;
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) new_mode;
 		break;
 	}
 
@@ -122,14 +128,20 @@ Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 
 
 
-Coord::Coord(const struct UTM & utm_, CoordMode mode_)
+Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 {
-	if (mode_ == CoordMode::UTM) {
-		this->utm = utm_;
-	} else {
-		a_coords_utm_to_latlon(&this->ll, &utm);
+	switch (new_mode) {
+	case CoordMode::UTM:
+		this->utm = new_utm;
+		break;
+	case CoordMode::LATLON:
+		this->ll = UTM::to_latlon(new_utm);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) new_mode;
 	}
-	this->mode = mode_;
+
+	this->mode = new_mode;
 }
 
 
@@ -144,10 +156,10 @@ LatLon Coord::get_latlon(void) const
 		ret = this->ll;
 		break;
 	case CoordMode::UTM:
-		a_coords_utm_to_latlon(&ret, &this->utm);
+		ret = UTM::to_latlon(this->utm);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unexpected CoordMode" << (int) this->mode;
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
 		break;
 	}
 
@@ -157,15 +169,23 @@ LatLon Coord::get_latlon(void) const
 
 
 
-struct UTM Coord::get_utm(void) const
+UTM Coord::get_utm(void) const
 {
-	struct UTM dest;
-	if (this->mode == CoordMode::UTM) {
-		dest = this->utm;
-	} else {
-		a_coords_latlon_to_utm(&dest, this->ll);
+	UTM ret;
+
+	switch (this->mode) {
+	case CoordMode::UTM:
+		ret = this->utm;
+		break;
+	case CoordMode::LATLON:
+		ret = LatLon::to_utm(this->ll);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
+		break;
 	}
-	return dest; /* Let's hope that Named Return Value Optimisation works. */
+
+	return ret; /* Let's hope that Named Return Value Optimisation works. */
 }
 
 
@@ -177,10 +197,16 @@ bool Coord::operator==(const Coord & coord) const
 		return false;
 	}
 
-	if (this->mode == CoordMode::LATLON) {
+	switch (this->mode) {
+	case CoordMode::UTM:
+		return UTM::is_equal(this->utm, coord.utm);
+
+	case CoordMode::LATLON:
 		return this->ll.lat == coord.ll.lat && this->ll.lon == coord.ll.lon;
-	} else { /* CoordMode::UTM */
-		return this->utm.zone == coord.utm.zone && this->utm.northing == coord.utm.northing && this->utm.easting == coord.utm.easting;
+
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
+		return false;
 	}
 }
 
@@ -273,7 +299,8 @@ bool Coord::is_inside(const Coord * tl, const Coord * br) const
 
 void Coord::to_strings(QString & str1, QString & str2) const
 {
-	if (this->mode == CoordMode::UTM) {
+	switch (this->mode) {
+	case CoordMode::UTM:
 		/* First string will contain "zone + N/S", second
 		   string will contain easting and northing of a UTM
 		   format:
@@ -281,13 +308,14 @@ void Coord::to_strings(QString & str1, QString & str2) const
 
 		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.letter); /* Zone is stored in a char but is an actual number. */
 		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
-
-	} else if (this->mode == CoordMode::LATLON) {
+		break;
+	case CoordMode::LATLON:
 		LatLon::to_strings(this->ll, str1, str2);
+		break;
 
-	} else {
-		qDebug() << "EE: Coord: to strings: unrecognized coord mode" << (int) this->mode;
-
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unrecognized coord mode" << (int) this->mode;
+		break;
 	}
 
 	return;
