@@ -105,8 +105,8 @@ TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
-		Coord upperleft = this->viewport->screen_to_coord(-500, -500);
-		Coord bottomright = this->viewport->screen_to_coord(this->width + 500, this->height + 500);
+		const Coord upperleft = this->viewport->screen_to_coord(-500, -500);
+		const Coord bottomright = this->viewport->screen_to_coord(this->width + 500, this->height + 500);
 		this->ce1 = upperleft.ll.lon;
 		this->ce2 = bottomright.ll.lon;
 		this->cn1 = bottomright.ll.lat;
@@ -165,7 +165,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord)
 {
 	int label_x, label_y;
-	this->viewport->coord_to_screen(coord, &label_x, &label_y);
+	this->viewport->coord_to_screen(*coord, &label_x, &label_y);
 
 	//int width, height;
 	//pango_layout_get_pixel_size(this->trw->tracklabellayout, &width, &height);
@@ -330,8 +330,8 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (!tp_begin) {
 		return;
 	}
-	Coord begin_coord = tp_begin->coord;
-	Coord end_coord = tp_end->coord;
+	const Coord begin_coord = tp_begin->coord;
+	const Coord end_coord = tp_end->coord;
 
 	bool done_start_end = false;
 
@@ -347,9 +347,9 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 		if (Coord::distance(begin_coord, end_coord) < distance_diff) {
 			/* Start and end 'close' together so only draw one label at an average location. */
 			int x1, x2, y1, y2;
-			this->viewport->coord_to_screen(&begin_coord, &x1, &y1);
-			this->viewport->coord_to_screen(&end_coord, &x2, &y2);
-			Coord av_coord = this->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
+			this->viewport->coord_to_screen(begin_coord, &x1, &y1);
+			this->viewport->coord_to_screen(end_coord, &x2, &y2);
+			const Coord av_coord = this->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
 
 			QString name = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start/end"));
 			this->draw_track_label(name, fg_color, bg_color, &av_coord);
@@ -520,7 +520,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	uint8_t tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 	int x, y;
-	this->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
+	this->viewport->coord_to_screen((*iter)->coord, &x, &y);
 
 	/* Draw the first point as something a bit different from the normal points.
 	   ATM it's slightly bigger and a triangle. */
@@ -587,7 +587,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			//fprintf(stderr, "first branch ----\n");
 
-			this->viewport->coord_to_screen(&(tp->coord), &x, &y);
+			this->viewport->coord_to_screen(tp->coord, &x, &y);
 
 			/* The concept of drawing stops is that if the next trackpoint has a
 			   timestamp far into the future, we draw a circle of 6x trackpoint
@@ -634,7 +634,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				}
 
 				if (!use_prev_xy) {
-					this->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
+					this->viewport->coord_to_screen(prev_tp->coord, &prev_x, &prev_y);
 				}
 
 				this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
@@ -662,7 +662,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			if (use_prev_xy && this->trw->draw_track_lines && (!tp->newsegment)) {
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
-					this->viewport->coord_to_screen(&(tp->coord), &x, &y);
+					this->viewport->coord_to_screen(tp->coord, &x, &y);
 
 					if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
 						main_pen = this->trw->track_pens[track_section_color_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
@@ -675,7 +675,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
-						this->viewport->coord_to_screen(&(prev_tp->coord), &x, &y);
+						this->viewport->coord_to_screen(prev_tp->coord, &x, &y);
 						draw_utm_skip_insignia(this->viewport, main_pen, x, y);
 					}
 				}
@@ -709,7 +709,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 	auto iter = trk->trackpoints.begin();
 	int x, y;
-	this->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
+	this->viewport->coord_to_screen((*iter)->coord, &x, &y);
 
 	int prev_x = x;
 	int prev_y = y;
@@ -749,7 +749,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 		if (first_condition || second_condition) {
 
-			this->viewport->coord_to_screen(&(tp->coord), &x, &y);
+			this->viewport->coord_to_screen(tp->coord, &x, &y);
 
 			if (use_prev_xy && x == prev_x && y == prev_y) {
 				/* Points are the same in display coordinates, don't
@@ -760,7 +760,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 			if (!tp->newsegment && this->trw->draw_track_lines) {
 				if (!use_prev_xy) {
-					this->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
+					this->viewport->coord_to_screen(prev_tp->coord, &prev_x, &prev_y);
 				}
 				this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
 			}
@@ -772,7 +772,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		} else {
 			if (use_prev_xy && this->trw->draw_track_lines && !tp->newsegment) {
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
-					this->viewport->coord_to_screen(&tp->coord, &x, &y);
+					this->viewport->coord_to_screen(tp->coord, &x, &y);
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x || y != prev_y) {
@@ -781,7 +781,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
-						this->viewport->coord_to_screen(&prev_tp->coord, &x, &y);
+						this->viewport->coord_to_screen(prev_tp->coord, &x, &y);
 						draw_utm_skip_insignia(this->viewport, main_pen, x, y);
 					}
 				}
@@ -846,7 +846,7 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 	}
 
 	int x, y;
-	this->viewport->coord_to_screen(&wp->coord, &x, &y);
+	this->viewport->coord_to_screen(wp->coord, &x, &y);
 
 	if (this->trw->wp_image_draw && !wp->image.isEmpty() && this->draw_waypoint_image(wp, x, y, do_highlight)) {
 		return;

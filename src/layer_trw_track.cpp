@@ -332,7 +332,8 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 {
 	this->name = tp.name;
 
-	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (Coord)); /* kamilTODO: review this copy of coord */
+	this->coord = tp.coord;
+
 	this->newsegment = tp.newsegment;
 	this->has_timestamp = tp.has_timestamp;
 	this->timestamp = tp.timestamp;
@@ -2415,15 +2416,16 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 	std::list<Rect *> * rectangles = new std::list<Rect *>;
 
 	bool new_map = true;
-	Coord tl, br;
+	Coord coord_tl;
+	Coord coord_br;
 	auto iter = this->trackpoints.begin();
 	while (iter != this->trackpoints.end()) {
 		Coord * cur_coord = &(*iter)->coord;
 		if (new_map) {
-			cur_coord->get_area_coordinates(wh, &tl, &br);
-			Rect * rect = (Rect *) malloc(sizeof (Rect));
-			rect->tl = tl;
-			rect->br = br;
+			cur_coord->get_area_coordinates(wh, &coord_tl, &coord_br);
+			Rect * rect = new Rect;
+			rect->tl = coord_tl;
+			rect->br = coord_br;
 			rect->center = *cur_coord;
 			rectangles->push_front(rect);
 			new_map = false;
@@ -3563,13 +3565,14 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		qDebug() << "WW: Track: 'download map' feature works only in Mercator mode";
 	}
 
-	Coord tl, br;
+	Coord coord_tl;
+	Coord coord_br;
 	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
 		Coord * cur_coord = *iter;
-		cur_coord->get_area_coordinates(&wh, &tl, &br);
-		Rect * rect = (Rect *) malloc(sizeof (Rect));
-		rect->tl = tl;
-		rect->br = br;
+		cur_coord->get_area_coordinates(&wh, &coord_tl, &coord_br);
+		Rect * rect = new Rect;
+		rect->tl = coord_tl;
+		rect->br = coord_br;
 		rect->center = *cur_coord;
 		rects_to_download->push_front(rect);
 

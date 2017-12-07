@@ -126,7 +126,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, La
 	this->get_nearby_snap_coordinates(new_coord, ev, viewport);
 
 	int x, y;
-	viewport->coord_to_screen(&new_coord, &x, &y);
+	viewport->coord_to_screen(new_coord, &x, &y);
 
 	/* The selected item is being moved to new position. */
 	tool->perform_move(x, y);
@@ -496,7 +496,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		   has priority. */
 
 		int x, y;
-		this->viewport->coord_to_screen(&current_wp->coord, &x, &y);
+		this->viewport->coord_to_screen(current_wp->coord, &x, &y);
 
 		if (abs(x - ev->x()) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - ev->y()) <= WAYPOINT_SIZE_APPROX) {
@@ -601,7 +601,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 	trw->get_nearby_snap_coordinates(new_coord, ev, viewport);
 
 	int x, y;
-	this->viewport->coord_to_screen(&new_coord, &x, &y);
+	this->viewport->coord_to_screen(new_coord, &x, &y);
 
 	/* Selected item is being moved to new position. */
 	this->perform_move(x, y);
@@ -895,7 +895,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		int x1, y1;
 
-		tool->viewport->coord_to_screen(&last_tpt->coord, &x1, &y1);
+		tool->viewport->coord_to_screen(last_tpt->coord, &x1, &y1);
 
 		/* FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
 		   otherwise using Viewport::draw_* functions puts the data into the base pixmap,
@@ -911,9 +911,9 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		double distance = track->get_length();
 
 		/* Now add distance to where the pointer is. */
-		Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
-		LatLon ll = coord.get_latlon(); /* kamilFIXME: unused variable. */
-		double last_step = Coord::distance(coord, last_tpt->coord);
+		const Coord screen_coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
+		LatLon ll = screen_coord.get_latlon(); /* kamilFIXME: unused variable. */
+		double last_step = Coord::distance(screen_coord, last_tpt->coord);
 		distance = distance + last_step;
 
 		/* Get elevation data. */
@@ -921,7 +921,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 		/* Adjust elevation data (if available) for the current pointer position. */
-		double elev_new = (double) DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
+		double elev_new = (double) DEMCache::get_elev_by_coord(&screen_coord, DemInterpolation::BEST);
 		if (elev_new != DEM_INVALID_ELEVATION) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
 				/* Adjust elevation of last track point. */
@@ -1362,8 +1362,8 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 		return ToolStatus::IGNORED;
 	}
 
-	Coord coord = this->viewport->screen_to_coord(ev->x(), ev->y());
-	if (trw->new_waypoint(trw->get_window(), &coord)) {
+	const Coord coord = this->viewport->screen_to_coord(ev->x(), ev->y());
+	if (trw->new_waypoint(trw->get_window(), coord)) {
 		trw->get_waypoints_node().calculate_bounds();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
@@ -1431,7 +1431,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		Trackpoint * tp = *track->selected_tp.iter;
 
 		int x, y;
-		this->viewport->coord_to_screen(&tp->coord, &x, &y);
+		this->viewport->coord_to_screen(tp->coord, &x, &y);
 
 		if (track->visible
 		    && abs(x - ev->x()) < TRACKPOINT_SIZE_APPROX
@@ -1497,7 +1497,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 
 	// trw->selected_tp.tp->coord = new_coord;
 	int x, y;
-	this->viewport->coord_to_screen(&new_coord, &x, &y);
+	this->viewport->coord_to_screen(new_coord, &x, &y);
 
 	/* Selected item is being moved to new position. */
 	this->perform_move(x, y);

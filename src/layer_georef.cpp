@@ -353,8 +353,8 @@ void LayerGeoref::draw(Viewport * viewport)
 		const int width_ = viewport->get_width();
 		const int height_ = viewport->get_height();
 		int x, y;
-		Coord corner_coord(this->corner, viewport->get_coord_mode());
-		viewport->coord_to_screen(&corner_coord, &x, &y);
+		const Coord corner_coord(this->corner, viewport->get_coord_mode());
+		viewport->coord_to_screen(corner_coord, &x, &y);
 
 		/* Mark to scale the pixmap if it doesn't match our dimensions. */
 		bool scale = false;
@@ -967,7 +967,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
 #endif
 
-	Coord coord(this->corner, CoordMode::LATLON);
+	const Coord coord(this->corner, CoordMode::LATLON);
 	cw.lat_tl_spin.setValue(coord.ll.lat);
 	cw.lon_tl_spin.setValue(coord.ll.lon);
 	cw.lat_br_spin.setValue(this->ll_br.lat);
@@ -1079,8 +1079,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	utm.easting = layer->corner.easting + (layer->width * layer->mpp_easting / 2); /* Only an approximation. */
 	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);
 
-	Coord coord(utm, viewport->get_coord_mode());
-	viewport->set_center_coord(coord, true);
+	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
 
 	g_tree->emit_update_window();
 }
@@ -1242,27 +1241,23 @@ bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 static void goto_center_ll(Viewport * viewport, const LatLon & ll_tl, const LatLon & ll_br)
 {
-	LatLon ll_center;
-	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
-	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
-
-	Coord new_center(ll_center, viewport->get_coord_mode());
-	viewport->set_center_coord(new_center, true);
+	const LatLon ll_center = LatLon::get_average(ll_tl, ll_br);
+	const Coord new_center(ll_center, viewport->get_coord_mode());
+	viewport->set_center_from_coord(new_center, true);
 }
 
 
 
 
-LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord * coord_tl, const Coord * coord_br)
+LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord & coord_tl, const Coord & coord_br)
 {
-
 	LayerGeoref * grl = new LayerGeoref();
 	grl->configure_from_viewport(viewport);
 	grl->set_name(name);
 	grl->pixmap = pixmap;
 
-	grl->corner = coord_tl->get_utm();
-	grl->ll_br = coord_br->get_latlon();
+	grl->corner = coord_tl.get_utm();
+	grl->ll_br = coord_br.get_latlon();
 
 	if (grl->pixmap) {
 		grl->width = grl->pixmap->width();
@@ -1270,10 +1265,9 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 		if (grl->width > 0 && grl->height > 0) {
 
-			const LatLon ll_tl = coord_tl->get_latlon();
-			const LatLon ll_br = coord_br->get_latlon();
-
-			CoordMode mode = viewport->get_coord_mode();
+			const LatLon ll_tl = coord_tl.get_latlon();
+			const LatLon ll_br = coord_br.get_latlon();
+			const CoordMode mode = viewport->get_coord_mode();
 
 			double xmpp, ympp;
 			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, grl->width, grl->height, &xmpp, &ympp);

@@ -77,8 +77,8 @@ namespace SlavGPS {
 		double get_lon_max();
 		const char * get_file_extension();
 
-		virtual bool coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
-		virtual void tile_to_center_coord(TileInfo * src, Coord * dest);
+		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
+		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
 
 		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, void * handle);
 		void * download_handle_init();

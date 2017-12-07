@@ -487,7 +487,7 @@ const char * MapSource::get_file_extension()
 
 
 
-bool MapSource::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo * dest)
 {
 	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;
@@ -496,7 +496,7 @@ bool MapSource::coord_to_tile(const Coord * src, double xzoom, double yzoom, Til
 
 
 
-void MapSource::tile_to_center_coord(TileInfo * src, Coord * dest)
+void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 {
 	fprintf(stderr, "MapSource::tile_to_center_coord\n");
 	return;

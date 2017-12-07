@@ -84,14 +84,13 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
-		void draw_section(Viewport * viewport, Coord * ul, Coord * br);
+		void draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br);
 		QString get_tooltip();
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		QString get_map_label(void) const;
-		int how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
 
 		void set_cache_dir(const QString & dir);
 		void mkdir_if_default_dir();
@@ -101,11 +100,10 @@ namespace SlavGPS {
 		MapTypeID get_map_type();
 		static MapTypeID get_default_map_type(void);
 
+		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, int redownload_mode);
 		void download(Viewport * viewport, bool only_new);
-		void download_section(const Coord * ul, const Coord * br, double zoom);
-		void download_section_sub(const Coord * ul, const Coord * br, double zoom, int redownload_mode);
+		void download_section(const Coord & coord_ul, const Coord & coord_br, double zoom);
 
-		void start_download_thread(Viewport * viewport, const Coord * ul, const Coord * br, int redownload_mode);
 		void download_onscreen_maps(int redownload_mode);
 
 		static void weak_ref_cb(void * ptr, void * dead_vml);
@@ -144,6 +142,10 @@ namespace SlavGPS {
 #ifdef HAVE_SQLITE3_H
 		sqlite3 * mbtiles = NULL;
 #endif
+
+	private:
+		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
+		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 
 	public slots:
 		void download_all_cb(void);

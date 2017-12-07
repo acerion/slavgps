@@ -147,7 +147,7 @@ namespace SlavGPS {
 
 
 
-	LayerGeoref * georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord * coord_tr, const Coord * coord_br);
+	LayerGeoref * georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord & coord_tr, const Coord & coord_br);
 
 
 

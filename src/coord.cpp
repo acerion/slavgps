@@ -147,6 +147,16 @@ Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 
 
 
+Coord::Coord(const Coord& coord)
+{
+	this->ll = coord.ll;
+	this->utm = coord.utm;
+	this->mode = coord.mode;
+}
+
+
+
+
 LatLon Coord::get_latlon(void) const
 {
 	LatLon ret;

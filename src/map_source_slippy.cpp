@@ -162,18 +162,18 @@ bool MapSourceSlippy::supports_download_only_new()
 
 
 
-bool MapSourceSlippy::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
 {
-	bool result = map_utils_vikcoord_to_iTMS(src, xzoom, yzoom, dest);
+	bool result = map_utils_coord_to_iTMS(src_coord, xzoom, yzoom, dest);
 	return result;
 }
 
 
 
 
-void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord * dest)
+void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 {
-	map_utils_iTMS_to_center_vikcoord(src, dest);
+	dest_coord = map_utils_iTMS_to_center_coord(src);
 }
 
 

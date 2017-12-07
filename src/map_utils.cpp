@@ -123,9 +123,9 @@ uint8_t SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
  *
  * Returns: whether the conversion was performed
  */
-bool SlavGPS::map_utils_vikcoord_to_iTMS(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
+bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
 {
-	if (src->mode != CoordMode::LATLON) {
+	if (src_coord.mode != CoordMode::LATLON) {
 		return false;
 	}
 
@@ -138,8 +138,8 @@ bool SlavGPS::map_utils_vikcoord_to_iTMS(const Coord * src, double xzoom, double
 		return false;
 	}
 
-	dest->x = (src->ll.lon + 180) / 360 * VIK_GZ(17) / xzoom;
-	dest->y = (180 - MERCLAT(src->ll.lat)) / 360 * VIK_GZ(17) / xzoom;
+	dest->x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(17) / xzoom;
+	dest->y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(17) / xzoom;
 	dest->z = 0;
 
 	return true;
@@ -149,17 +149,21 @@ bool SlavGPS::map_utils_vikcoord_to_iTMS(const Coord * src, double xzoom, double
 
 
 /* Internal convenience function. */
-static void _to_vikcoord_with_offset(const TileInfo * src, Coord * dest, double offset)
+static Coord _to_vikcoord_with_offset(const TileInfo * src, double offset)
 {
+	Coord dest_coord;
+
 	double socalled_mpp;
 	if (src->scale >= 0) {
 		socalled_mpp = VIK_GZ(src->scale);
 	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
-	dest->mode = CoordMode::LATLON;
-	dest->ll.lon = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
-	dest->ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
+	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.ll.lon = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
+	dest_coord.ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
+
+	return dest_coord;
 }
 
 
@@ -174,9 +178,9 @@ static void _to_vikcoord_with_offset(const TileInfo * src, Coord * dest, double 
  *
  * Returns: whether the conversion was performed
  */
-void SlavGPS::map_utils_iTMS_to_center_vikcoord(const TileInfo * src, Coord * dest)
+Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo * src)
 {
-	_to_vikcoord_with_offset(src, dest, 0.5);
+	return _to_vikcoord_with_offset(src, 0.5);
 }
 
 
@@ -191,7 +195,7 @@ void SlavGPS::map_utils_iTMS_to_center_vikcoord(const TileInfo * src, Coord * de
  *
  * Returns: whether the conversion was performed
  */
-void SlavGPS::map_utils_iTMS_to_vikcoord(const TileInfo * src, Coord * dest)
+Coord SlavGPS::map_utils_iTMS_to_coord(const TileInfo * src)
 {
-	_to_vikcoord_with_offset(src, dest, 0.0);
+	return _to_vikcoord_with_offset(src, 0.0);
 }

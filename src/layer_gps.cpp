@@ -1474,10 +1474,10 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
-	Coord nw = viewport->screen_to_coord(-20, -20);
-	Coord se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
-	const LatLon lnw = nw.get_latlon();
-	const LatLon lse = se.get_latlon();
+	const Coord coord_nw = viewport->screen_to_coord(-20, -20);
+	const Coord coord_se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
+	const LatLon lnw = coord_nw.get_latlon();
+	const LatLon lse = coord_se.get_latlon();
 
 	if (this->realtime_fix.fix.latitude > lse.lat &&
 	     this->realtime_fix.fix.latitude < lnw.lat &&
@@ -1487,7 +1487,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 		const Coord gps_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude), viewport->get_coord_mode());
 		int x, y;
-		viewport->coord_to_screen(&gps_coord, &x, &y);
+		viewport->coord_to_screen(gps_coord, &x, &y);
 
 		double heading_cos = cos(DEG2RAD(this->realtime_fix.fix.track));
 		double heading_sin = sin(DEG2RAD(this->realtime_fix.fix.track));
@@ -1633,7 +1633,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {
-			viewport->set_center_coord(vehicle_coord, false);
+			viewport->set_center_from_coord(vehicle_coord, false);
 			update_all = true;
 		} else if (layer->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
 			const int hdiv = 6;
@@ -1643,7 +1643,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 			int height = viewport->get_height();
 			int vx, vy;
 
-			viewport->coord_to_screen(&vehicle_coord, &vx, &vy);
+			viewport->coord_to_screen(vehicle_coord, &vx, &vy);
 			update_all = true;
 			if (vx < (width/hdiv)) {
 				viewport->set_center_screen(vx - width/2 + width/hdiv + px, vy);

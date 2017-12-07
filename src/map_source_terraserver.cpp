@@ -79,9 +79,9 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const Coord * src, double xmpp, double ympp, TileInfo * dest)
+bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest)
 {
-	if (src->mode != CoordMode::UTM) {
+	if (src_coord.mode != CoordMode::UTM) {
 		return false;
 	}
 
@@ -94,9 +94,9 @@ bool MapSourceTerraserver::coord_to_tile(const Coord * src, double xmpp, double 
 		return false;
 	}
 
-	dest->x = (int)(((int)(src->utm.easting))/(200*xmpp));
-	dest->y = (int)(((int)(src->utm.northing))/(200*xmpp));
-	dest->z = src->utm.zone;
+	dest->x = (int)(((int)(src_coord.utm.easting))/(200*xmpp));
+	dest->y = (int)(((int)(src_coord.utm.northing))/(200*xmpp));
+	dest->z = src_coord.utm.zone;
 	return true;
 }
 
@@ -119,14 +119,14 @@ bool MapSourceTerraserver::is_mbtiles(void)
 
 
 
-void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord * dest)
+void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 {
 	/* FIXME: slowdown here! */
 	double mpp = scale_to_mpp (src->scale);
-	dest->mode = CoordMode::UTM;
-	dest->utm.zone = src->z;
-	dest->utm.easting = ((src->x * 200) + 100) * mpp;
-	dest->utm.northing = ((src->y * 200) + 100) * mpp;
+	dest_coord.mode = CoordMode::UTM;
+	dest_coord.utm.zone = src->z;
+	dest_coord.utm.easting = ((src->x * 200) + 100) * mpp;
+	dest_coord.utm.northing = ((src->y * 200) + 100) * mpp;
 }
 
 

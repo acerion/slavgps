@@ -42,13 +42,13 @@ namespace SlavGPS {
 
 	Waypoint * a_geotag_create_waypoint_from_file(const QString & filename, CoordMode vcmode, QString & name);
 
-	Waypoint * a_geotag_waypoint_positioned(const char * filename, Coord & coord, double alt, QString & name, Waypoint * wp);
+	Waypoint * a_geotag_waypoint_positioned(const char * filename, const Coord & coord, double alt, QString & name, Waypoint * wp);
 
 	char * a_geotag_get_exif_date_from_file(const char * filename, bool * has_GPS_info);
 
 	LatLon a_geotag_get_position(const char * filename);
 
-	int a_geotag_write_exif_gps(const QString & filename, Coord & coord, double alt, bool no_change_mtime);
+	int a_geotag_write_exif_gps(const QString & filename, const Coord & coord, double alt, bool no_change_mtime);
 
 
 

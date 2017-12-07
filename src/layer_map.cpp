@@ -1357,7 +1357,7 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 
 
 
-void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
+void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
@@ -1390,8 +1390,8 @@ void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 	/* coord -> ID */
 	TileInfo ulm, brm;
 	MapSource *map = (MapSource *) map_sources[this->map_index];
-	if (map->coord_to_tile(ul, xzoom, yzoom, &ulm) &&
-	     map->coord_to_tile(br, xzoom, yzoom, &brm)) {
+	if (map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm) &&
+	     map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		/* Loop & draw. */
 		//int x, y;
@@ -1420,10 +1420,10 @@ void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 			fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
 			if (!this->adl_only_missing && map->supports_download_only_new()) {
 				/* Try to download newer tiles. */
-				this->start_download_thread(viewport, ul, br, REDOWNLOAD_NEW);
+				this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NEW);
 			} else {
 				/* Download only missing tiles. */
-				this->start_download_thread(viewport, ul, br, REDOWNLOAD_NONE);
+				this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NONE);
 			}
 		}
 
@@ -1437,8 +1437,8 @@ void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 						int width = pixmap->width();
 						int height = pixmap->height();
 
-						map->tile_to_center_coord(&ulm, &coord);
-						viewport->coord_to_screen(&coord, &xx, &yy);
+						map->tile_to_center_coord(&ulm, coord);
+						viewport->coord_to_screen(coord, &xx, &yy);
 						xx -= (width/2);
 						yy -= (height/2);
 
@@ -1462,8 +1462,8 @@ void LayerMap::draw_section(Viewport * viewport, Coord * ul, Coord * br)
 			int xend = (xinc == 1) ? (xmax+1) : (xmin-1);
 			int yend = (yinc == 1) ? (ymax+1) : (ymin-1);
 
-			map->tile_to_center_coord(&ulm, &coord);
-			viewport->coord_to_screen(&coord, &xx_tmp, &yy_tmp);
+			map->tile_to_center_coord(&ulm, coord);
+			viewport->coord_to_screen(coord, &xx_tmp, &yy_tmp);
 			xx = xx_tmp; yy = yy_tmp;
 			/* Above trick so xx,yy doubles. this is so shrinkfactors aren't rounded off
 			   e.g. if tile size 128, shrinkfactor 0.333. */
@@ -1577,16 +1577,17 @@ void LayerMap::draw(Viewport * viewport)
 			/* UTM multi-zone stuff by Kit Transue. */
 			char leftmost_zone = viewport->leftmost_zone();
 			char rightmost_zone = viewport->rightmost_zone();
-			Coord ul, br;
+			Coord coord_ul;
+			Coord coord_br;
 			for (char i = leftmost_zone; i <= rightmost_zone; ++i) {
-				viewport->corners_for_zonen(i, &ul, &br);
-				this->draw_section(viewport, &ul, &br);
+				viewport->corners_for_zonen(i, coord_ul, coord_br);
+				this->draw_section(viewport, coord_ul, coord_br);
 			}
 		} else {
-			Coord ul = viewport->screen_to_coord(0, 0);
-			Coord br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+			const Coord coord_ul = viewport->screen_to_coord(0, 0);
+			const Coord coord_br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
-			this->draw_section(viewport, &ul, &br);
+			this->draw_section(viewport, coord_ul, coord_br);
 		}
 	}
 }
@@ -1645,13 +1646,13 @@ void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 
 static bool is_in_area(MapSource * map, TileInfo * mc)
 {
-	Coord coord;
-	map->tile_to_center_coord(mc, &coord);
+	Coord center_coord;
+	map->tile_to_center_coord(mc, center_coord);
 
 	const Coord coord_tl(LatLon(map->get_lat_max(), map->get_lon_min()), CoordMode::LATLON);
 	const Coord coord_br(LatLon(map->get_lat_min(), map->get_lon_max()), CoordMode::LATLON);
 
-	return coord.is_inside(&coord_tl, &coord_br);
+	return center_coord.is_inside(&coord_tl, &coord_br);
 }
 
 
@@ -1804,7 +1805,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 
 
-void LayerMap::start_download_thread(Viewport * viewport, const Coord * ul, const Coord * br, int redownload_mode)
+void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, int redownload_mode)
 {
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
@@ -1816,8 +1817,8 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord * ul, cons
 		return;
 	}
 
-	if (map->coord_to_tile(ul, xzoom, yzoom, &ulm)
-	     && map->coord_to_tile(br, xzoom, yzoom, &brm)) {
+	if (map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	     && map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, redownload_mode);
 
@@ -1846,7 +1847,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord * ul, cons
 
 
 
-void LayerMap::download_section_sub(const Coord * ul, const Coord * br, double zoom, int redownload_mode)
+void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -1856,8 +1857,8 @@ void LayerMap::download_section_sub(const Coord * ul, const Coord * br, double z
 		return;
 	}
 
-	if (!map->coord_to_tile(ul, zoom, zoom, &ulm)
-	    || !map->coord_to_tile(br, zoom, zoom, &brm)) {
+	if (!map->coord_to_tile(coord_ul, zoom, zoom, &ulm)
+	    || !map->coord_to_tile(coord_br, zoom, zoom, &brm)) {
 		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
 		return;
 	}
@@ -1892,9 +1893,9 @@ void LayerMap::download_section_sub(const Coord * ul, const Coord * br, double z
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMap::download_section(const Coord * ul, const Coord * br, double zoom)
+void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, double zoom)
 {
-	this->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
+	this->download_section_sub(coord_ul, coord_br, zoom, REDOWNLOAD_NONE);
 }
 
 
@@ -1902,7 +1903,7 @@ void LayerMap::download_section(const Coord * ul, const Coord * br, double zoom)
 
 void LayerMap::redownload_bad_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_BAD);
+	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, REDOWNLOAD_BAD);
 }
 
 
@@ -1910,7 +1911,7 @@ void LayerMap::redownload_bad_cb(void)
 
 void LayerMap::redownload_all_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_ALL);
+	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, REDOWNLOAD_ALL);
 }
 
 
@@ -1918,7 +1919,7 @@ void LayerMap::redownload_all_cb(void)
 
 void LayerMap::redownload_new_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, &this->redownload_ul, &this->redownload_br, REDOWNLOAD_NEW);
+	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, REDOWNLOAD_NEW);
 }
 
 
@@ -1935,7 +1936,7 @@ void LayerMap::tile_info_cb(void)
 	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_ympp();
 	TileInfo ulm;
 
-	if (!map->coord_to_tile(&this->redownload_ul, xzoom, yzoom, &ulm)) {
+	if (!map->coord_to_tile(this->redownload_ul, xzoom, yzoom, &ulm)) {
 		return;
 	}
 
@@ -2042,9 +2043,9 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
-			Coord ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
-			Coord br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
-			layer->start_download_thread(this->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
+			const Coord coord_ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
+			const Coord coord_br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
+			layer->start_download_thread(this->viewport, coord_ul, coord_br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return ToolStatus::ACK;
 		} else {
@@ -2119,7 +2120,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 
 	MapSource *map = map_sources[layer->map_index];
 	if (map->get_drawmode() == this->viewport->get_drawmode()
-	    && map->coord_to_tile(this->viewport->get_center(),
+	    && map->coord_to_tile(*this->viewport->get_center(),
 				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_xmpp(),
 				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
 				  &tmp)) {
@@ -2144,15 +2145,15 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 
 	TileInfo ulm, brm;
 
-	Coord ul = viewport->screen_to_coord(0, 0);
-	Coord br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+	const Coord coord_ul = viewport->screen_to_coord(0, 0);
+	const Coord coord_br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
 
 	MapSource *map = map_sources[this->map_index];
 	if (map->get_drawmode() == vp_drawmode
-	    && map->coord_to_tile(&ul, xzoom, yzoom, &ulm)
-	    && map->coord_to_tile(&br, xzoom, yzoom, &brm)) {
+	    && map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	    && map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
-		this->start_download_thread(viewport, &ul, &br, redownload_mode);
+		this->start_download_thread(viewport, coord_ul, coord_br, redownload_mode);
 
 	} else if (map->get_drawmode() != vp_drawmode) {
 		const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
@@ -2207,7 +2208,7 @@ void LayerMap::about_cb(void)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMap::how_many_maps(const Coord * ul, const Coord * br, double zoom, int redownload_mode)
+int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -2216,8 +2217,8 @@ int LayerMap::how_many_maps(const Coord * ul, const Coord * br, double zoom, int
 		return 0;
 	}
 
-	if (!map->coord_to_tile(ul, zoom, zoom, &ulm)
-	    || !map->coord_to_tile(br, zoom, zoom, &brm)) {
+	if (!map->coord_to_tile(coord_ul, zoom, zoom, &ulm)
+	    || !map->coord_to_tile(coord_br, zoom, zoom, &brm)) {
 		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
 		return 0;
 	}
@@ -2406,7 +2407,7 @@ void LayerMap::download_all_cb(void)
 	   With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		map_count = map_count + this->how_many_maps(&coord_ul, &coord_br, zoom_vals[zz], selected_download_method);
+		map_count = map_count + this->how_many_maps(coord_ul, coord_br, zoom_vals[zz], selected_download_method);
 	}
 
 	fprintf(stderr, "DEBUG: Layer Map: download request map count %d for method %d", map_count, selected_download_method);
@@ -2431,7 +2432,7 @@ void LayerMap::download_all_cb(void)
 
 	/* Get Maps - call for each zoom level (in reverse). */
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		this->download_section_sub(&coord_ul, &coord_br, zoom_vals[zz], selected_download_method);
+		this->download_section_sub(coord_ul, coord_br, zoom_vals[zz], selected_download_method);
 	}
 }
 

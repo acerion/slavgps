@@ -246,7 +246,7 @@ namespace SlavGPS {
 
 
 
-		bool new_waypoint(Window * parent, const Coord * def_coord);
+		bool new_waypoint(Window * parent, const Coord & default_coord);
 		Track * new_track_create_common(const QString & new_name);
 		Track * new_route_create_common(const QString & new_name);
 
@@ -340,7 +340,7 @@ namespace SlavGPS {
 		void tpwin_update_dialog_data();
 
 
-		void dialog_shift(QDialog * dialog, Coord * coord, bool vertical);
+		void dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical);
 
 
 		int32_t get_property_track_thickness();

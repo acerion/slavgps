@@ -217,7 +217,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					ul.ll.lon = j / 3600.0;
 					bl.ll.lon = j / 3600.0;
 					if ((int) j % smod == 0) {
-						CLINE(seconds_pen, &ul, &bl);
+						CLINE(seconds_pen, ul, bl);
 					}
 				}
 			}
@@ -225,13 +225,13 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				ul.ll.lon = i / 60.0;
 				bl.ll.lon = i / 60.0;
 				if ((int) i % mmod == 0) {
-					CLINE(minutes_pen, &ul, &bl);
+					CLINE(minutes_pen, ul, bl);
 				}
 			}
 			if ((int) i % 60 == 0) {
 				ul.ll.lon = i / 60.0;
 				bl.ll.lon = i / 60.0;
-				CLINE(degrees_pen, &ul, &bl);
+				CLINE(degrees_pen, ul, bl);
 			}
 		}
 	}
@@ -251,7 +251,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					ul.ll.lat = j / 3600.0;
 					ur.ll.lat = j / 3600.0;
 					if ((int) j % smod == 0) {
-						CLINE(seconds_pen, &ul, &ur);
+						CLINE(seconds_pen, ul, ur);
 					}
 				}
 			}
@@ -259,13 +259,13 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				ul.ll.lat = i / 60.0;
 				ur.ll.lat = i / 60.0;
 				if ((int) i % mmod == 0) {
-					CLINE(minutes_pen, &ul, &ur);
+					CLINE(minutes_pen, ul, ur);
 				}
 			}
 			if ((int) i % 60 == 0) {
 				ul.ll.lat = i / 60.0;
 				ur.ll.lat = i / 60.0;
-				CLINE(degrees_pen, &ul, &ur);
+				CLINE(degrees_pen, ul, ur);
 			}
 		}
 	}

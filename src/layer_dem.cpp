@@ -634,7 +634,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c.lat += (nscale_deg * skip_factor)/2;
 				box_c.lon -= (escale_deg * skip_factor)/2;
 				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen(&tmp, &box_x, &box_y);
+				viewport->coord_to_screen(tmp, &box_x, &box_y);
 				/* Catch box at borders. */
 				if (box_x < 0) {
 					box_x = 0;
@@ -647,7 +647,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c.lat -= nscale_deg * skip_factor;
 				box_c.lon += escale_deg * skip_factor;
 				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen(&tmp, &box_width, &box_height);
+				viewport->coord_to_screen(tmp, &box_width, &box_height);
 				box_width -= box_x;
 				box_height -= box_y;
 				/* Catch box at borders. */
@@ -806,7 +806,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				{
 					int a, b;
 					tmp = Coord(counter, viewport->get_coord_mode());
-					viewport->coord_to_screen(&tmp, &a, &b);
+					viewport->coord_to_screen(tmp, &a, &b);
 
 					int idx = 0; /* Default index for color of 'sea'. */
 					if (elev > 0) {
@@ -831,8 +831,8 @@ void draw_loaded_dem_box(Viewport * viewport)
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
 
-	viewport->coord_to_screen(&demne, &x1, &y1);
-	viewport->coord_to_screen(&demsw, &x2, &y2);
+	viewport->coord_to_screen(demne, &x1, &y1);
+	viewport->coord_to_screen(demsw, &x2, &y2);
 
 	if (x1 > viewport->get_width()) {
 		x1 = viewport->get_width();
@@ -1120,8 +1120,8 @@ static void srtm_draw_existence(Viewport * viewport)
 			ne.ll.lon = lon + 1;
 			ne.mode = CoordMode::LATLON;
 
-			viewport->coord_to_screen(&sw, &x1, &y1);
-			viewport->coord_to_screen(&ne, &x2, &y2);
+			viewport->coord_to_screen(sw, &x1, &y1);
+			viewport->coord_to_screen(ne, &x2, &y2);
 
 			if (x1 < 0) {
 				x1 = 0;
@@ -1216,8 +1216,8 @@ static void dem24k_draw_existence(Viewport * viewport)
 				ne.ll.lon = j;
 				ne.mode = CoordMode::LATLON;
 
-				viewport->coord_to_screen(&sw, &x1, &y1);
-				viewport->coord_to_screen(&ne, &x2, &y2);
+				viewport->coord_to_screen(sw, &x1, &y1);
+				viewport->coord_to_screen(ne, &x2, &y2);
 
 				if (x1 < 0) {
 					x1 = 0;

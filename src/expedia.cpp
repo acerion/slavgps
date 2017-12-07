@@ -46,8 +46,8 @@
 
 
 
-static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
-static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest);
+static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
+static void expedia_tile_to_center_coord(TileInfo * src, Coord & dest_coord);
 static DownloadResult expedia_download(TileInfo * src, char const * dest_fn, void * handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
@@ -157,9 +157,9 @@ void expedia_snip(char const * file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
+static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert (src->mode == CoordMode::LATLON);
+	assert (src_coord.mode == CoordMode::LATLON);
 
 	if (xzoom != yzoom) {
 		return false;
@@ -168,8 +168,8 @@ static bool expedia_coord_to_tile(const Coord * src, double xzoom, double yzoom,
 	int alti = expedia_zoom_to_alti(xzoom);
 	if (alti != -1) {
 		dest->scale = alti;
-		dest->x = (int) (((src->ll.lon + 180) * expedia_altis_freq(alti))+0.5);
-		dest->y = (int) (((src->ll.lat + 90) * expedia_altis_freq(alti))+0.5);
+		dest->x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);
+		dest->y = (int) (((src_coord.ll.lat + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
 
 		/* Just to space out tiles on the filesystem. */
@@ -195,11 +195,11 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 
 
 
-static void expedia_tile_to_center_coord(TileInfo * src, Coord * dest)
+static void expedia_tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 {
-	dest->mode = CoordMode::LATLON;
-	dest->ll.lon = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
-	dest->ll.lat = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
+	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.ll.lon = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
+	dest_coord.ll.lat = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
 }
 
 

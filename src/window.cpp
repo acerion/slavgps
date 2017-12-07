@@ -1037,7 +1037,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 void Window::draw_redraw()
 {
-	Coord old_center = this->trigger_center;
+	const Coord old_center = this->trigger_center;
 	this->trigger_center = *(this->viewport->get_center());
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;

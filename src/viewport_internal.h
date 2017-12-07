@@ -105,14 +105,14 @@ namespace SlavGPS {
 
 
 		/* Viewport position. */
-		void set_center_coord(const Coord & coord, bool save_position);
+		void set_center_from_coord(const Coord & coord, bool save_position);
 		void set_center_screen(int x, int y);
 		void center_for_zonen(UTM * center, int zone);
 		char leftmost_zone();
 		char rightmost_zone();
 		void set_center_utm(const UTM & utm, bool save_position);
 		void set_center_latlon(const LatLon & lat_lon, bool save_position);
-		void corners_for_zonen(int zone, Coord * ul, Coord * br);
+		void corners_for_zonen(int zone, Coord & coord_ul, Coord & coord_br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 		void get_bbox(LatLonBBox * bbox);
 		void get_bbox_strings(LatLonBBoxStrings & bbox_strings);
@@ -122,7 +122,7 @@ namespace SlavGPS {
 
 		/* Coordinate transformations. */
 		Coord screen_to_coord(int x, int y);
-		void coord_to_screen(const Coord * coord, int * x, int * y);
+		void coord_to_screen(const Coord & coord, int * x, int * y);
 
 		/* Viewport scale. */
 		void set_xmpp(double new_xmpp);

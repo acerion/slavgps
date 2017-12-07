@@ -475,7 +475,7 @@ typedef struct zip_file zip_file_t;
 			const Coord coord_tl(LatLon(north, west), viewport->get_coord_mode());
 			const Coord coord_br(LatLon(south, east), viewport->get_coord_mode());
 
-			Layer * grl = georef_layer_create(viewport, QString(name), pixmap, &coord_tl, &coord_br);
+			Layer * grl = georef_layer_create(viewport, QString(name), pixmap, coord_tl, coord_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
 				top->add_layer(grl, false);

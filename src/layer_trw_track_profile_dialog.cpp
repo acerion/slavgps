@@ -324,8 +324,7 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 	}
 
 	if (tp) {
-		Coord coord = tp->coord;
-		main_viewport->set_center_coord(coord, true);
+		main_viewport->set_center_from_coord(tp->coord, true);
 		trw->emit_layer_changed();
 	}
 	return tp;

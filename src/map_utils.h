@@ -46,11 +46,11 @@ namespace SlavGPS {
 
 	uint8_t map_utils_mpp_to_zoom_level(double mpp);
 
-	bool map_utils_vikcoord_to_iTMS(const Coord * src, double xzoom, double yzoom, TileInfo * dest);
+	bool map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 
-	void map_utils_iTMS_to_center_vikcoord(const TileInfo * src, Coord * dest);
+	Coord map_utils_iTMS_to_center_coord(const TileInfo * src);
 
-	void map_utils_iTMS_to_vikcoord(const TileInfo * src, Coord * dest);
+	Coord map_utils_iTMS_to_coord(const TileInfo * src);
 
 
 

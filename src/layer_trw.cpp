@@ -592,7 +592,7 @@ bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport,
 {
 	Waypoint * wp = this->waypoints->find_waypoint_by_date(date_str);
 	if (wp && select) {
-		viewport->set_center_coord(wp->coord, true);
+		viewport->set_center_from_coord(wp->coord, true);
 		this->tree_view->select_and_expose(wp->index);
 		this->emit_layer_changed();
 	}
@@ -1910,7 +1910,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			g_tree->tree_get_main_viewport()->set_center_coord(wp->coord, true);
+			g_tree->tree_get_main_viewport()->set_center_from_coord(wp->coord, true);
 			g_tree->emit_update_window();
 			this->tree_view->select_and_expose(wp->index);
 
@@ -1923,12 +1923,12 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(Window * parent_window, const Coord * def_coord)
+bool LayerTRW::new_waypoint(Window * parent_window, const Coord & default_coord)
 {
 	const QString default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
 	bool updated;
-	wp->coord = *def_coord;
+	wp->coord = default_coord;
 
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
@@ -2187,7 +2187,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center())) {
+	if (this->new_waypoint(this->get_window(), *g_tree->tree_get_main_viewport()->get_center())) {
 		this->waypoints->calculate_bounds();
 		if (this->visible) {
 			g_tree->emit_update_window();
@@ -2978,7 +2978,7 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 void LayerTRW::goto_coord(Viewport * viewport, const Coord & coord)
 {
 	if (viewport) {
-		viewport->set_center_coord(coord, true);
+		viewport->set_center_from_coord(coord, true);
 		this->emit_layer_changed();
 	}
 }
@@ -4081,7 +4081,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
    Try to reposition a dialog if it's over the specified coord
    so to not obscure the item of interest
 */
-void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
+void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical)
 {
 	Window * parent_window = this->get_window(); /* i.e. the main window. */
 	Viewport * viewport = g_tree->tree_get_main_viewport();
@@ -4110,7 +4110,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, Coord * coord, bool vertical)
 
 
 	int in_viewport_x, in_viewport_y; /* In viewport pixels. */
-	viewport->coord_to_screen(coord, &in_viewport_x, &in_viewport_y);
+	viewport->coord_to_screen(exposed_coord, &in_viewport_x, &in_viewport_y);
 	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(in_viewport_x, in_viewport_y));
 
 	if (global_coord_pos.x() < global_dialog_pos.x()) {
@@ -4240,7 +4240,7 @@ void LayerTRW::trackpoint_properties_show()
 		Trackpoint * tp = *track->selected_tp.iter;
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		this->dialog_shift(this->tpwin, &tp->coord, true);
+		this->dialog_shift(this->tpwin, tp->coord, true);
 
 		this->tpwin_update_dialog_data();
 	}
@@ -4504,7 +4504,7 @@ void vik_track_download_map(Track * trk, LayerMap * layer_map, double zoom_level
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		layer_map->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
+		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, zoom_level);
 	}
 
 	if (rects_to_download) {
@@ -4718,7 +4718,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->routes->owning_layer = this;
 	this->waypoints->owning_layer = this;
 
-	memset(&coord_mode, 0, sizeof (CoordMode));
+	memset(&coord_mode, 0, sizeof (CoordMode)); /* TODO: change it into some assignment? */
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));

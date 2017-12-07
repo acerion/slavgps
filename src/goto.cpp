@@ -293,7 +293,7 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 				last_coord = new Coord();
 				*last_coord = location_coord; /* kamilTODO: review this assignment. */
 				last_successful_location = last_location;
-				viewport->set_center_coord(location_coord, true);
+				viewport->set_center_from_coord(location_coord, true);
 				more = false;
 			} else if (ans == -1) {
 				if (!prompt_try_again(window, QObject::tr("I don't know that location. Do you want another goto?"))) {
@@ -485,7 +485,7 @@ void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
 	}
 
 	const Coord new_center = Coord(new_lat_lon, viewport->get_coord_mode());
-	viewport->set_center_coord(new_center, true);
+	viewport->set_center_from_coord(new_center, true);
 
 	return;
 }
@@ -545,7 +545,7 @@ void SlavGPS::goto_utm(Window * window, Viewport * viewport)
 	}
 
 	const Coord new_center = Coord(new_utm, viewport->get_coord_mode());
-	viewport->set_center_coord(new_center, true);
+	viewport->set_center_from_coord(new_center, true);
 
 	return;
 }

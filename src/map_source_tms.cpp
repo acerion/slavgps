@@ -117,9 +117,9 @@ bool MapSourceTms::supports_download_only_new()
 
 
 
-bool MapSourceTms::coord_to_tile(const Coord * src, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert (src->mode == CoordMode::LATLON);
+	assert (src_coord.mode == CoordMode::LATLON);
 
 	if (xzoom != yzoom) {
 		return false;
@@ -133,21 +133,21 @@ bool MapSourceTms::coord_to_tile(const Coord * src, double xzoom, double yzoom, 
 	/* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
 		xzoom, yzoom, VIK_GZ(17) / xzoom / 2);
-	dest->x = floor((src->ll.lon + 180) / 180 * VIK_GZ(17) / xzoom / 2);
+	dest->x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(17) / xzoom / 2);
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest->y = floor((180 - (src->ll.lat + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
+	dest->y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
 	dest->z = 0;
 	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
-		src->ll.lon, src->ll.lat, dest->x, dest->y);
+		src_coord.ll.lon, src_coord.ll.lat, dest->x, dest->y);
 	return true;
 }
 
 
 
 
-void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord * dest)
+void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {
@@ -155,14 +155,14 @@ void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord * dest)
 	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
-	dest->mode = CoordMode::LATLON;
-	dest->ll.lon = (src->x + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.ll.lon = (src->x + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest->ll.lat = -((src->y + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	dest_coord.ll.lat = -((src->y + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
-		src->x, src->y, dest->ll.lon, dest->ll.lat);
+		src->x, src->y, dest_coord.ll.lon, dest_coord.ll.lat);
 }
 
 

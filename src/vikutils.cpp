@@ -896,7 +896,7 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 	/* This method is not particularly fast - but should work well enough. */
 
 	const Coord coord(LatLonMinMax::get_average(min_max), mode);
-	viewport->set_center_coord(coord, save_position);
+	viewport->set_center_from_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
 	LatLon minmin;
