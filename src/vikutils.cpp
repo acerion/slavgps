@@ -809,7 +809,7 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 	Viewport * viewport = window->get_viewport();
 
 	if (latitude != 0.0 || longitude != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
-		viewport->set_center_latlon(LatLon(latitude, longitude), true);
+		viewport->set_center_from_latlon(LatLon(latitude, longitude), true);
 	}
 
 	if (zoom_osm_level >= 0) {
@@ -1037,7 +1037,7 @@ bool SGUtils::create_temporary_file(QTemporaryFile & file, const QString & name_
 
 void SGUtils::color_to_string(char * buffer, size_t buffer_size, const QColor & color)
 {
-	snprintf(buffer, sizeof (buffer), "#%.2x%.2x%.2x", (int) (color.red() / 256), (int) (color.green() / 256), (int) (color.blue() / 256));
+	snprintf(buffer, buffer_size, "#%.2x%.2x%.2x", (int) (color.red() / 256), (int) (color.green() / 256), (int) (color.blue() / 256));
 
 }
 

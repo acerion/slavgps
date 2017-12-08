@@ -1438,7 +1438,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 						int height = pixmap->height();
 
 						map->tile_to_center_coord(&ulm, coord);
-						viewport->coord_to_screen(coord, &xx, &yy);
+						viewport->coord_to_screen_pos(coord, &xx, &yy);
 						xx -= (width/2);
 						yy -= (height/2);
 
@@ -1463,7 +1463,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			int yend = (yinc == 1) ? (ymax+1) : (ymin-1);
 
 			map->tile_to_center_coord(&ulm, coord);
-			viewport->coord_to_screen(coord, &xx_tmp, &yy_tmp);
+			viewport->coord_to_screen_pos(coord, &xx_tmp, &yy_tmp);
 			xx = xx_tmp; yy = yy_tmp;
 			/* Above trick so xx,yy doubles. this is so shrinkfactors aren't rounded off
 			   e.g. if tile size 128, shrinkfactor 0.333. */
@@ -1575,17 +1575,17 @@ void LayerMap::draw(Viewport * viewport)
 		/* Get corner coords. */
 		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->is_one_zone()) {
 			/* UTM multi-zone stuff by Kit Transue. */
-			char leftmost_zone = viewport->leftmost_zone();
-			char rightmost_zone = viewport->rightmost_zone();
+			const char leftmost_zone = viewport->get_leftmost_zone();
+			const char rightmost_zone = viewport->get_rightmost_zone();
 			Coord coord_ul;
 			Coord coord_br;
-			for (char i = leftmost_zone; i <= rightmost_zone; ++i) {
-				viewport->corners_for_zonen(i, coord_ul, coord_br);
+			for (char zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
+				viewport->get_corners_for_zone(coord_ul, coord_br, zone);
 				this->draw_section(viewport, coord_ul, coord_br);
 			}
 		} else {
-			const Coord coord_ul = viewport->screen_to_coord(0, 0);
-			const Coord coord_br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+			const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
+			const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
 			this->draw_section(viewport, coord_ul, coord_br);
 		}
@@ -2043,14 +2043,14 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
-			const Coord coord_ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
-			const Coord coord_br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
+			const Coord coord_ul = this->viewport->screen_pos_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
+			const Coord coord_br = this->viewport->screen_pos_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 			layer->start_download_thread(this->viewport, coord_ul, coord_br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return ToolStatus::ACK;
 		} else {
-			layer->redownload_ul = this->viewport->screen_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
-			layer->redownload_br = this->viewport->screen_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
+			layer->redownload_ul = this->viewport->screen_pos_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
+			layer->redownload_br = this->viewport->screen_pos_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 
 			layer->redownload_viewport = this->viewport;
 
@@ -2145,8 +2145,8 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 
 	TileInfo ulm, brm;
 
-	const Coord coord_ul = viewport->screen_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
+	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
 	MapSource *map = map_sources[this->map_index];
 	if (map->get_drawmode() == vp_drawmode

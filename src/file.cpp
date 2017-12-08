@@ -659,7 +659,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 	}
 
 	if (latlon.lat != 0.0 || latlon.lon != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
-		viewport->set_center_latlon(latlon, true);
+		viewport->set_center_from_latlon(latlon, true);
 	}
 
 	if ((!aggregate->visible) && aggregate->tree_view) {

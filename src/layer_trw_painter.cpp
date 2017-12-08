@@ -105,8 +105,8 @@ TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
-		const Coord upperleft = this->viewport->screen_to_coord(-500, -500);
-		const Coord bottomright = this->viewport->screen_to_coord(this->width + 500, this->height + 500);
+		const Coord upperleft = this->viewport->screen_pos_to_coord(-500, -500);
+		const Coord bottomright = this->viewport->screen_pos_to_coord(this->width + 500, this->height + 500);
 		this->ce1 = upperleft.ll.lon;
 		this->ce2 = bottomright.ll.lon;
 		this->cn1 = bottomright.ll.lat;
@@ -164,19 +164,18 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 
 void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord)
 {
-	int label_x, label_y;
-	this->viewport->coord_to_screen(*coord, &label_x, &label_y);
+	const ScreenPos label_pos = this->viewport->coord_to_screen_pos(*coord);
 
 	//int width, height;
 	//pango_layout_get_pixel_size(this->trw->tracklabellayout, &width, &height);
-	//this->viewport->draw_layout(this->trw->track_bg_gc, label_x-width/2, label_y-height/2, this->trw->tracklabellayout);
+	//this->viewport->draw_layout(this->trw->track_bg_gc, label_pos.x - width/2, label_pos.y - height/2, this->trw->tracklabellayout);
 
 	QPen pen;
 	pen.setColor(fg_color);
 	this->viewport->draw_text(QFont("Helvetica", pango_font_size_to_point_font_size(this->trw->trk_label_font_size)),
 				  pen,
-				  label_x,
-				  label_y,
+				  label_pos.x,
+				  label_pos.y,
 				  text);
 }
 
@@ -346,10 +345,9 @@ void TRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 		if (Coord::distance(begin_coord, end_coord) < distance_diff) {
 			/* Start and end 'close' together so only draw one label at an average location. */
-			int x1, x2, y1, y2;
-			this->viewport->coord_to_screen(begin_coord, &x1, &y1);
-			this->viewport->coord_to_screen(end_coord, &x2, &y2);
-			const Coord av_coord = this->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2);
+			const ScreenPos begin_pos = this->viewport->coord_to_screen_pos(begin_coord);
+			const ScreenPos end_pos = this->viewport->coord_to_screen_pos(end_coord);
+			const Coord av_coord = this->viewport->screen_pos_to_coord(ScreenPos::get_average(begin_pos, end_pos));
 
 			QString name = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start/end"));
 			this->draw_track_label(name, fg_color, bg_color, &av_coord);
@@ -407,25 +405,25 @@ void TRWPainter::draw_track_point_names(Track * trk, bool do_highlight)
 
 
 
-void TRWPainter::draw_track_draw_midarrow(int x, int y, int oldx, int oldy, QPen & main_pen)
+void TRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const ScreenPos & end, QPen & pen)
 {
-	int midx = (oldx + x) / 2;
-	int midy = (oldy + y) / 2;
+	int midx = (begin.x + end.x) / 2;
+	int midy = (begin.y + end.y) / 2;
 
-	double len = sqrt(((midx - oldx) * (midx - oldx)) + ((midy - oldy) * (midy - oldy)));
+	double len = sqrt(((midx - begin.x) * (midx - begin.x)) + ((midy - begin.y) * (midy - begin.y)));
 	/* Avoid divide by zero and ensure at least 1 pixel big. */
 	if (len > 1) {
-		double dx = (oldx - midx) / len;
-		double dy = (oldy - midy) / len;
-		this->viewport->draw_line(main_pen, midx, midy, midx + (dx * this->cc + dy * this->ss), midy + (dy * this->cc - dx * this->ss));
-		this->viewport->draw_line(main_pen, midx, midy, midx + (dx * this->cc - dy * this->ss), midy + (dy * this->cc + dx * this->ss));
+		double dx = (begin.x - midx) / len;
+		double dy = (begin.y - midy) / len;
+		this->viewport->draw_line(pen, midx, midy, midx + (dx * this->cc + dy * this->ss), midy + (dy * this->cc - dx * this->ss));
+		this->viewport->draw_line(pen, midx, midy, midx + (dx * this->cc - dy * this->ss), midy + (dy * this->cc + dx * this->ss));
 	}
 }
 
 
 
 
-void TRWPainter::draw_track_draw_something(int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
+void TRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
 {
 #define FIXALTITUDE(what) \
 	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * this->trw->elevation_factor / this->xmpp)
@@ -433,17 +431,17 @@ void TRWPainter::draw_track_draw_something(int x, int y, int oldx, int oldy, QPe
 
 	QPoint points[4];
 
-	points[0] = QPoint(oldx, oldy);
-	points[1] = QPoint(oldx, oldy - FIXALTITUDE (tp));
-	points[2] = QPoint(x, y - FIXALTITUDE (tp_next));
-	points[3] = QPoint(x, y);
+	points[0] = QPoint(begin.x, begin.y);
+	points[1] = QPoint(begin.x, begin.y - FIXALTITUDE (tp));
+	points[2] = QPoint(end.x, end.y - FIXALTITUDE (tp_next));
+	points[3] = QPoint(end.x, end.y);
 
 	QPen tmp_pen;
 #ifndef K
 	tmp_pen.setColor("green");
 	tmp_pen.setWidth(1);
 #else
-	if (((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0)) {
+	if (((begin.x - x) > 0 && (begin.y - y) > 0) || ((begin.x - x) < 0 && (begin.y - y) < 0)) {
 		tmp_pen = gtk_widget_get_style(this->viewport)->light_gc[3];
 	} else {
 		tmp_pen = gtk_widget_get_style(this->viewport)->dark_gc[0];
@@ -451,7 +449,7 @@ void TRWPainter::draw_track_draw_something(int x, int y, int oldx, int oldy, QPe
 #endif
 	this->viewport->draw_polygon(tmp_pen, points, 4, true);
 
-	this->viewport->draw_line(main_pen, oldx, oldy - FIXALTITUDE (tp), x, y - FIXALTITUDE (tp_next));
+	this->viewport->draw_line(pen, begin.x, begin.y - FIXALTITUDE (tp), end.x, end.y - FIXALTITUDE (tp_next));
 }
 
 
@@ -519,14 +517,13 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	Track * selected_track = this->trw->get_edited_track();
 	uint8_t tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
-	int x, y;
-	this->viewport->coord_to_screen((*iter)->coord, &x, &y);
+	ScreenPos curr_pos = this->viewport->coord_to_screen_pos((*iter)->coord);
 
 	/* Draw the first point as something a bit different from the normal points.
 	   ATM it's slightly bigger and a triangle. */
 
 	if (draw_trackpoints) {
-		QPoint trian[3] = { QPoint(x, y-(3*tp_size)), QPoint(x-(2*tp_size), y+(2*tp_size)), QPoint(x+(2*tp_size), y+(2*tp_size)) };
+		QPoint trian[3] = { QPoint(curr_pos.x, curr_pos.y-(3*tp_size)), QPoint(curr_pos.x-(2*tp_size), curr_pos.y+(2*tp_size)), QPoint(curr_pos.x+(2*tp_size), curr_pos.y+(2*tp_size)) };
 		this->viewport->draw_polygon(main_pen, trian, 3, true);
 	}
 
@@ -542,9 +539,8 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		high_speed = average_speed + (average_speed*(this->trw->track_draw_speed_factor/100.0));
 	}
 
-	int prev_x = x;
-	int prev_y = y;
-	bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
+	ScreenPos prev_pos = curr_pos;
+	bool use_prev_pos = true; /* prev_pos contains valid coordinates of previous point. */
 
 	iter++; /* Because first Trackpoint has been drawn above. */
 
@@ -562,7 +558,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
 			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
 
-			use_prev_xy = false;
+			use_prev_pos = false;
 			continue;
 		}
 
@@ -587,7 +583,7 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			//fprintf(stderr, "first branch ----\n");
 
-			this->viewport->coord_to_screen(tp->coord, &x, &y);
+			curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
 			/* The concept of drawing stops is that if the next trackpoint has a
 			   timestamp far into the future, we draw a circle of 6x trackpoint
@@ -599,10 +595,10 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->trw->stop_length) {
 
-				this->viewport->draw_arc(this->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
+				this->viewport->draw_arc(this->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], curr_pos.x-(3*tp_size), curr_pos.y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
 			}
 
-			if (use_prev_xy && x == prev_x && y == prev_y) {
+			if (use_prev_pos && curr_pos == prev_pos) {
 				/* Points are the same in display coordinates, don't
 				   draw, skip drawing part. Notice that we do
 				   this after drawing stops. */
@@ -619,10 +615,10 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (draw_trackpoints) {
 				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
-					this->viewport->fill_rectangle(main_pen.color(), x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
+					this->viewport->fill_rectangle(main_pen.color(), curr_pos.x-tp_size, curr_pos.y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
-					this->viewport->draw_arc(main_pen, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360, true);
+					this->viewport->draw_arc(main_pen, curr_pos.x-(2*tp_size), curr_pos.y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360, true);
 				}
 			}
 
@@ -630,57 +626,56 @@ void TRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 				/* UTM only: zone check. */
 				if (draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && tp->coord.utm.zone != this->center->utm.zone) {
-					draw_utm_skip_insignia(this->viewport, main_pen, x, y);
+					draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 				}
 
-				if (!use_prev_xy) {
-					this->viewport->coord_to_screen(prev_tp->coord, &prev_x, &prev_y);
+				if (!use_prev_pos) {
+					prev_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
 				}
 
-				this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+				this->viewport->draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
 
 				if (this->trw->drawelevation
 				    && std::next(iter) != trk->trackpoints.end()
 				    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
-					this->draw_track_draw_something(x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
+					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
 				}
 			}
 
 			if (!tp->newsegment && this->trw->drawdirections) {
 				/* Draw an arrow at the mid point to show the direction of the track.
 				   Code is a rework from vikwindow::draw_ruler(). */
-				this->draw_track_draw_midarrow(x, y, prev_x, prev_y, main_pen);
+				this->draw_track_draw_midarrow(prev_pos, curr_pos, main_pen);
 			}
 
 		skip:
-			prev_x = x;
-			prev_y = y;
-			use_prev_xy = true;
+			prev_pos = curr_pos;
+			use_prev_pos = true;
 
 		} else {
 
-			if (use_prev_xy && this->trw->draw_track_lines && (!tp->newsegment)) {
+			if (use_prev_pos && this->trw->draw_track_lines && (!tp->newsegment)) {
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
-					this->viewport->coord_to_screen(tp->coord, &x, &y);
+					curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
 					if (!do_highlight && (this->trw->track_drawing_mode == DRAWMODE_BY_SPEED)) {
 						main_pen = this->trw->track_pens[track_section_color_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (x != prev_x || y != prev_y) {
-						this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
+						this->viewport->draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
-						this->viewport->coord_to_screen(prev_tp->coord, &x, &y);
-						draw_utm_skip_insignia(this->viewport, main_pen, x, y);
+					if (curr_pos.x != prev_pos.x && curr_pos.y != prev_pos.y) { /* kamilFIXME: is && a correct condition? */
+						curr_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
+						draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 					}
 				}
 			}
-			use_prev_xy = false;
+			use_prev_pos = false;
 		}
 	}
 }
@@ -708,12 +703,10 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 	}
 
 	auto iter = trk->trackpoints.begin();
-	int x, y;
-	this->viewport->coord_to_screen((*iter)->coord, &x, &y);
 
-	int prev_x = x;
-	int prev_y = y;
-	bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
+	ScreenPos curr_pos = this->viewport->coord_to_screen_pos((*iter)->coord);
+	ScreenPos prev_pos = curr_pos;
+	bool use_prev_pos = true; /* prev_pos contains valid coordinates of previous point. */
 
 	iter++; /* Because first Trackpoint has been drawn above. */
 
@@ -728,7 +721,7 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
 			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
 
-			use_prev_xy = false;
+			use_prev_pos = false;
 			continue;
 		}
 
@@ -749,9 +742,9 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 		if (first_condition || second_condition) {
 
-			this->viewport->coord_to_screen(tp->coord, &x, &y);
+			curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
-			if (use_prev_xy && x == prev_x && y == prev_y) {
+			if (use_prev_pos && curr_pos == prev_pos) {
 				/* Points are the same in display coordinates, don't
 				   draw, skip drawing part. Notice that we do
 				   this after drawing stops. */
@@ -759,34 +752,33 @@ void TRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 			}
 
 			if (!tp->newsegment && this->trw->draw_track_lines) {
-				if (!use_prev_xy) {
-					this->viewport->coord_to_screen(prev_tp->coord, &prev_x, &prev_y);
+				if (!use_prev_pos) {
+					prev_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
 				}
-				this->viewport->draw_line(this->trw->track_bg_pen, prev_x, prev_y, x, y);
+				this->viewport->draw_line(this->trw->track_bg_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
 			}
 		skip:
-			prev_x = x;
-			prev_y = y;
-			use_prev_xy = true;
+			prev_pos = curr_pos;
+			use_prev_pos = true;
 
 		} else {
-			if (use_prev_xy && this->trw->draw_track_lines && !tp->newsegment) {
+			if (use_prev_pos && this->trw->draw_track_lines && !tp->newsegment) {
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->center->utm.zone) {
-					this->viewport->coord_to_screen(tp->coord, &x, &y);
+					curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (x != prev_x || y != prev_y) {
-						this->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
+						this->viewport->draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
-						this->viewport->coord_to_screen(prev_tp->coord, &x, &y);
-						draw_utm_skip_insignia(this->viewport, main_pen, x, y);
+					if (curr_pos.x != prev_pos.x && curr_pos.y != prev_pos.y) { /* kamilFIXME: is && a correct condition? */
+						curr_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
+						draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 					}
 				}
 			}
-			use_prev_xy = false;
+			use_prev_pos = false;
 		}
 	}
 }
@@ -845,18 +837,17 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 		return;
 	}
 
-	int x, y;
-	this->viewport->coord_to_screen(wp->coord, &x, &y);
+	const ScreenPos wp_screen_pos = this->viewport->coord_to_screen_pos(wp->coord);
 
-	if (this->trw->wp_image_draw && !wp->image.isEmpty() && this->draw_waypoint_image(wp, x, y, do_highlight)) {
+	if (this->trw->wp_image_draw && !wp->image.isEmpty() && this->draw_waypoint_image(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight)) {
 		return;
 	} else {
 		/* Draw appropriate symbol - either symbol image or simple types. */
-		this->draw_waypoint_symbol(wp, x, y);
+		this->draw_waypoint_symbol(wp, wp_screen_pos.x, wp_screen_pos.y);
 	}
 
 	if (this->trw->drawlabels) {
-		this->draw_waypoint_label(wp, x, y, do_highlight);
+		this->draw_waypoint_label(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight);
 	}
 }
 

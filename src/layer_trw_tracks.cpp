@@ -421,7 +421,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
 			int x, y;
-			search->viewport->coord_to_screen((*iter)->coord, &x, &y);
+			search->viewport->coord_to_screen_pos((*iter)->coord, &x, &y);
 
 			const int dist_x = abs(x - search->x);
 			const int dist_y = abs(y - search->y);

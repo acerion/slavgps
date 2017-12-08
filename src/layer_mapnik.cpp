@@ -825,12 +825,12 @@ void LayerMapnik::draw(Viewport * viewport)
 		}
 	}
 
-#if 0 /* kamilTODO: this code would be overwritten in screen_to_coord() */
+#if 0 /* kamilTODO: this code would be overwritten in screen_pos_to_coord() */
 	ul.mode = CoordMode::LATLON;
 	br.mode = CoordMode::LATLON;
 #endif
-	const Coord coord_ul = viewport->screen_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
+	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
@@ -859,7 +859,7 @@ void LayerMapnik::draw(Viewport * viewport)
 
 				if (pixmap) {
 					const Coord coord = map_utils_iTMS_to_coord(&ti_ul);
-					viewport->coord_to_screen(coord, &xx, &yy);
+					viewport->coord_to_screen_pos(coord, &xx, &yy);
 					viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 #ifdef K
 					g_object_unref(pixmap);
@@ -879,7 +879,7 @@ void LayerMapnik::draw(Viewport * viewport)
 			ti_ul.x = xmin; ti_ul.y = ymin;
 
 			const Coord coord = map_utils_iTMS_to_center_coord(&ti_ul);
-			viewport->coord_to_screen(coord, &xx, &yy);
+			viewport->coord_to_screen_pos(coord, &xx, &yy);
 			xx = xx - (this->tile_size_x/2);
 			yy = yy - (this->tile_size_x/2); // Yes use X ATM
 			for (int x = xmin; x <= xmax; x++) {
@@ -1164,7 +1164,7 @@ ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEve
 bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
-		this->rerender_ul = tool->viewport->screen_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
+		this->rerender_ul = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
 		this->rerender_zoom = tool->viewport->get_zoom();
 
 		if (!this->right_click_menu) {

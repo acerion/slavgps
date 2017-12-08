@@ -121,7 +121,7 @@ static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
 
 
 
-void LayerTool::perform_selection(int x, int y)
+void LayerTool::perform_selection(const ScreenPos & screen_pos)
 {
 	assert (this->layer_edit_info);
 
@@ -136,18 +136,17 @@ void LayerTool::perform_selection(int x, int y)
 #ifdef K
 	/* What was this supposed to do? */
 	//gdk_gc_set_function(this->layer_edit_info->pen, GDK_INVERT);
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, x - 3, y - 3, 6, 6);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, screen_pos.x - 3, screen_pos.y - 3, 6, 6);
 	this->viewport->sync();
 #endif
 
-	this->layer_edit_info->oldx = x;
-	this->layer_edit_info->oldy = y;
+	this->layer_edit_info->old_screen_pos = screen_pos;
 }
 
 
 
 
-void LayerTool::perform_move(int x, int y)
+void LayerTool::perform_move(const ScreenPos & new_pos)
 {
 	assert (this->layer_edit_info);
 
@@ -156,12 +155,11 @@ void LayerTool::perform_move(int x, int y)
 
 #ifdef K
 	/* What was this supposed to do? */
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->oldx - 3, this->layer_edit_info->oldy - 3, 6, 6);
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, x - 3, y - 3, 6, 6);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->old_screen_pos.x - 3, this->layer_edit_info->old_screen_pos.y - 3, 6, 6);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, new_pos.x - 3, new_pos.y - 3, 6, 6);
 #endif
 
-	this->layer_edit_info->oldx = x;
-	this->layer_edit_info->oldy = y;
+	this->layer_edit_info->old_screen_pos = new_pos;
 
 	if (tool_sync_done) {
 		this->viewport->sync();
@@ -178,7 +176,7 @@ void LayerTool::perform_release(void)
 
 #ifdef K
 	/* What was this supposed to do? */
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->oldx - 3, this->layer_edit_info->oldy - 3, 6, 6);
+	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->old_screen_pos.x - 3, this->layer_edit_info->old_screen_pos.y - 3, 6, 6);
 #endif
 
 	qDebug() << "----------------------------" << __FUNCTION__ << "holding = false";

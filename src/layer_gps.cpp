@@ -1474,8 +1474,8 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
-	const Coord coord_nw = viewport->screen_to_coord(-20, -20);
-	const Coord coord_se = viewport->screen_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
+	const Coord coord_nw = viewport->screen_pos_to_coord(-20, -20);
+	const Coord coord_se = viewport->screen_pos_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
 	const LatLon lnw = coord_nw.get_latlon();
 	const LatLon lse = coord_se.get_latlon();
 
@@ -1486,16 +1486,15 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 	     !std::isnan(this->realtime_fix.fix.track)) {
 
 		const Coord gps_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude), viewport->get_coord_mode());
-		int x, y;
-		viewport->coord_to_screen(gps_coord, &x, &y);
+		const ScreenPos screen_pos = viewport->coord_to_screen_pos(gps_coord);
 
 		double heading_cos = cos(DEG2RAD(this->realtime_fix.fix.track));
 		double heading_sin = sin(DEG2RAD(this->realtime_fix.fix.track));
 
-		int half_back_y = y + 8 * heading_cos;
-		int half_back_x = x - 8 * heading_sin;
-		int half_back_bg_y = y + 10 * heading_cos;
-		int half_back_bg_x = x -10 * heading_sin;
+		int half_back_y = screen_pos.y + 8 * heading_cos;
+		int half_back_x = screen_pos.x - 8 * heading_sin;
+		int half_back_bg_y = screen_pos.y + 10 * heading_cos;
+		int half_back_bg_x = screen_pos.x - 10 * heading_sin;
 
 		int pt_y = half_back_y - 24 * heading_cos;
 		int pt_x = half_back_x + 24 * heading_sin;
@@ -1519,7 +1518,7 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 
 		viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
 		viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
-		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), x-2, y-2, 4, 4);
+		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
 
 		//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 	}
@@ -1643,16 +1642,16 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 			int height = viewport->get_height();
 			int vx, vy;
 
-			viewport->coord_to_screen(vehicle_coord, &vx, &vy);
+			viewport->coord_to_screen_pos(vehicle_coord, &vx, &vy);
 			update_all = true;
 			if (vx < (width/hdiv)) {
-				viewport->set_center_screen(vx - width/2 + width/hdiv + px, vy);
+				viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
 			} else if (vx > (width - width/hdiv)) {
-				viewport->set_center_screen(vx + width/2 - width/hdiv - px, vy);
+				viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
 			} else if (vy < (height/vdiv)) {
-				viewport->set_center_screen(vx, vy - height/2 + height/vdiv + px);
+				viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
 			} else if (vy > (height - height/vdiv)) {
-				viewport->set_center_screen(vx, vy + height/2 - height/vdiv - px);
+				viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
 			} else {
 				update_all = false;
 			}

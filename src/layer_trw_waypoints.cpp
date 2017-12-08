@@ -235,7 +235,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 		}
 
 		int x, y;
-		search->viewport->coord_to_screen(wp->coord, &x, &y);
+		search->viewport->coord_to_screen_pos(wp->coord, &x, &y);
 
 		/* If waypoint has an image then use the image size to select. */
 		if (search->draw_images && !wp->image.isEmpty()) {
@@ -282,7 +282,7 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 		Waypoint * wp = i->second;
 		if (!wp->image.isEmpty() && wp->visible) {
 			int x, y;
-			viewport->coord_to_screen(wp->coord, &x, &y);
+			viewport->coord_to_screen_pos(wp->coord, &x, &y);
 			int slackx = wp->image_width / 2;
 			int slacky = wp->image_height / 2;
 			if (x <= event_x + slackx && x >= event_x - slackx

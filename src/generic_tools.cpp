@@ -337,7 +337,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 		QString msg;
 
-		const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 
 		QString lat;
 		QString lon;
@@ -381,7 +381,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		this->start_coord = cursor_coord;
 	} else {
-		this->viewport->set_center_screen(event->x(), event->y());
+		this->viewport->set_center_from_screen_pos(event->x(), event->y());
 		this->window->draw_update_cb();
 	}
 
@@ -400,11 +400,9 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 		return ToolStatus::ACK;
 	}
 
-	const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 
-	int start_x;
-	int start_y;
-	this->viewport->coord_to_screen(this->start_coord, &start_x, &start_y);
+	const ScreenPos start_pos = this->viewport->coord_to_screen_pos(this->start_coord);
 
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	//marked_pixmap.fill(QColor("transparent"));
@@ -412,7 +410,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	QPainter painter(&marked_pixmap);
 	//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-	this->draw(painter, start_x, start_y, event->x(), event->y(), Coord::distance(cursor_coord, this->start_coord));
+	this->draw(painter, start_pos.x, start_pos.y, event->x(), event->y(), Coord::distance(cursor_coord, this->start_coord));
 	this->viewport->set_pixmap(marked_pixmap);
 	this->viewport->update();
 
@@ -541,13 +539,13 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   the same). */
 
 		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_screen(center_x, center_y);
+			this->viewport->set_center_from_screen_pos(center_x, center_y);
 			this->viewport->zoom_in();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_screen(center_x, center_y);
+			this->viewport->set_center_from_screen_pos(center_x, center_y);
 			this->viewport->zoom_out();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
@@ -562,13 +560,13 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   zoom). */
 
 		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_screen(event->x(), event->y());
+			this->viewport->set_center_from_screen_pos(event->x(), event->y());
 			this->viewport->zoom_in();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_screen(event->x(), event->y());
+			this->viewport->set_center_from_screen_pos(event->x(), event->y());
 			this->viewport->zoom_out();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
@@ -598,18 +596,18 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 		int x, y;
 		if (event->button() == Qt::LeftButton) {
-			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 			this->viewport->zoom_in();
-			this->viewport->coord_to_screen(cursor_coord, &x, &y);
-			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
+			this->viewport->coord_to_screen_pos(cursor_coord, &x, &y);
+			this->viewport->set_center_from_screen_pos(center_x + (x - event->x()), center_y + (y - event->y()));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 			this->viewport->zoom_out();
-			this->viewport->coord_to_screen(cursor_coord, &x, &y);
-			this->viewport->set_center_screen(center_x + (x - event->x()), center_y + (y - event->y()));
+			this->viewport->coord_to_screen_pos(cursor_coord, &x, &y);
+			this->viewport->set_center_from_screen_pos(center_x + (x - event->x()), center_y + (y - event->y()));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
@@ -707,8 +705,8 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 		   moved the mouse at all. */
 		if (modifiers == Qt::ShiftModifier && (abs(event->x() - this->ztr_start_x) >= 5) && (abs(event->y() - this->ztr_start_y) >= 5)) {
 
-			const Coord start_coord = this->viewport->screen_to_coord(this->ztr_start_x, this->ztr_start_y);
-			const Coord cursor_coord = this->viewport->screen_to_coord(event->x(), event->y());
+			const Coord start_coord = this->viewport->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 
 			/* From the extend of the bounds pick the best zoom level
 			   c.f. LayerTRW::zoom_to_show_latlons().
@@ -725,12 +723,12 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 			/* Zoom in/out by three if possible. */
 
 			if (event->button() == Qt::LeftButton) {
-				this->viewport->set_center_screen(event->x(), event->y());
+				this->viewport->set_center_from_screen_pos(event->x(), event->y());
 				this->viewport->zoom_in();
 				this->viewport->zoom_in();
 				this->viewport->zoom_in();
 			} else { /* Qt::RightButton */
-				this->viewport->set_center_screen(event->x(), event->y());
+				this->viewport->set_center_from_screen_pos(event->x(), event->y());
 				this->viewport->zoom_out();
 				this->viewport->zoom_out();
 				this->viewport->zoom_out();

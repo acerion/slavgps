@@ -1365,8 +1365,8 @@ void Window::pan_move(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan move";
 	if (this->pan_x != -1) {
-		this->viewport->set_center_screen(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
-						  this->viewport->get_height() / 2 - ev->y() + this->pan_y);
+		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
+							   this->viewport->get_height() / 2 - ev->y() + this->pan_y);
 		this->pan_move_flag = true;
 		this->pan_x = ev->x();
 		this->pan_y = ev->y();
@@ -1400,11 +1400,11 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->viewport->set_center_screen(this->pan_x, this->pan_y);
+			this->viewport->set_center_from_screen_pos(this->pan_x, this->pan_y);
 		}
 	} else {
-		this->viewport->set_center_screen(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
-						  this->viewport->get_height() / 2 - ev->y() + this->pan_y);
+		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
+							   this->viewport->get_height() / 2 - ev->y() + this->pan_y);
 	}
 
 	this->pan_off();
@@ -1637,7 +1637,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	this->viewport->set_center_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
+	this->viewport->set_center_from_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
 	this->items_tree->emit_update_window_cb();
 }
 
@@ -2431,7 +2431,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		}
 
 		locator->window->viewport->set_zoom(zoom);
-		locator->window->viewport->set_center_latlon(ll, false);
+		locator->window->viewport->set_center_from_latlon(ll, false);
 
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
 		free(name);
@@ -2919,7 +2919,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 			}
 
 			/* TODO: move to correct place. */
-			this->viewport->set_center_utm(utm, false);
+			this->viewport->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
 			this->draw_redraw();
@@ -2938,7 +2938,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 		}
 	}
 
-	this->viewport->set_center_utm(utm_orig, false);
+	this->viewport->set_center_from_utm(utm_orig, false);
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->configure();
@@ -3260,16 +3260,16 @@ void Window::menu_view_pan_cb(void)
 
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_screen(v->get_width() / 2, 0);
+		v->set_center_from_screen_pos(v->get_width() / 2, 0);
 		break;
 	case PAN_EAST:
-		v->set_center_screen(v->get_width(), v->get_height() / 2);
+		v->set_center_from_screen_pos(v->get_width(), v->get_height() / 2);
 		break;
 	case PAN_SOUTH:
-		v->set_center_screen(v->get_width() / 2, v->get_height());
+		v->set_center_from_screen_pos(v->get_width() / 2, v->get_height());
 		break;
 	case PAN_WEST:
-		v->set_center_screen(0, v->get_height() / 2);
+		v->set_center_from_screen_pos(0, v->get_height() / 2);
 		break;
 	default:
 		qDebug() << "EE: Window: unknown direction" << direction << "in" << __FUNCTION__ << __LINE__;
@@ -3361,7 +3361,7 @@ static bool window_pan_timeout(Window * window)
 	/* Set panning origin. */
 	window->pan_move_flag = false;
 	window->single_click_pending = false;
-	window->viewport->set_center_screen(window->delayed_pan_x, window->delayed_pan_y);
+	window->viewport->set_center_from_screen_pos(window->delayed_pan_x, window->delayed_pan_y);
 	window->draw_update();
 
 	/* Really turn off the pan moving!! */

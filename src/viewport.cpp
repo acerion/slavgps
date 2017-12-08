@@ -539,8 +539,8 @@ void Viewport::draw_scale()
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
 	int MAXIMUM_WIDTH = this->size_width * RELATIVE_WIDTH;
 
-	const Coord left = this->screen_to_coord(0,                                  this->size_height / 2);
-	const Coord right = this->screen_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2);
+	const Coord left =  this->screen_pos_to_coord(0,                                 this->size_height / 2);
+	const Coord right = this->screen_pos_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2);
 
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
@@ -960,7 +960,7 @@ void Viewport::utm_zone_check()
 
 		/* Misc. stuff so we don't have to check later. */
 		utm_zone_width = this->calculate_utm_zone_width();
-		one_utm_zone = (this->rightmost_zone() == this->leftmost_zone());
+		one_utm_zone = (this->get_rightmost_zone() == this->get_leftmost_zone());
 	}
 }
 
@@ -1198,7 +1198,7 @@ bool Viewport::forward_available()
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_latlon(const LatLon & lat_lon, bool save_position)
+void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
 {
 	this->center = Coord(lat_lon, coord_mode);
 	if (save_position) {
@@ -1218,7 +1218,7 @@ void Viewport::set_center_latlon(const LatLon & lat_lon, bool save_position)
  * @save_position: Whether this new position should be saved into the history of positions
  *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
  */
-void Viewport::set_center_utm(const UTM & utm, bool save_position)
+void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
 {
 	this->center = Coord(utm, coord_mode);
 	if (save_position) {
@@ -1252,14 +1252,14 @@ void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 
 
 
-void Viewport::corners_for_zonen(int zone, Coord & coord_ul, Coord & coord_br)
+void Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
 {
 	if (coord_mode != CoordMode::UTM) {
 		return;
 	}
 
 	/* Get center, then just offset. */
-	this->center_for_zonen(&coord_ul.utm, zone);
+	this->get_center_for_zone(&coord_ul.utm, zone);
 	coord_ul.mode = CoordMode::UTM;
 
 	/* Both coordinates will be now at center. */
@@ -1276,7 +1276,7 @@ void Viewport::corners_for_zonen(int zone, Coord & coord_ul, Coord & coord_br)
 
 
 
-void Viewport::center_for_zonen(UTM * center_utm, int zone)
+void Viewport::get_center_for_zone(UTM * center_utm, int zone)
 {
 	if (coord_mode == CoordMode::UTM) {
 		*center_utm = this->center.utm;
@@ -1288,10 +1288,10 @@ void Viewport::center_for_zonen(UTM * center_utm, int zone)
 
 
 
-char Viewport::leftmost_zone()
+char Viewport::get_leftmost_zone(void) const
 {
 	if (coord_mode == CoordMode::UTM) {
-		const Coord coord = this->screen_to_coord(0, 0);
+		const Coord coord = this->screen_pos_to_coord(0, 0);
 		return coord.utm.zone;
 	}
 	return '\0';
@@ -1300,10 +1300,10 @@ char Viewport::leftmost_zone()
 
 
 
-char Viewport::rightmost_zone()
+char Viewport::get_rightmost_zone(void) const
 {
 	if (coord_mode == CoordMode::UTM) {
-		const Coord coord = this->screen_to_coord(this->size_width, 0);
+		const Coord coord = this->screen_pos_to_coord(this->size_width, 0);
 		return coord.utm.zone;
 	}
 	return '\0';
@@ -1312,7 +1312,7 @@ char Viewport::rightmost_zone()
 
 
 
-void Viewport::set_center_screen(int x1, int y1)
+void Viewport::set_center_from_screen_pos(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
@@ -1320,7 +1320,7 @@ void Viewport::set_center_screen(int x1, int y1)
 		center.utm.northing += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
-		const Coord coord = this->screen_to_coord(x1, y1);
+		const Coord coord = this->screen_pos_to_coord(x1, y1);
 		this->set_center_from_coord(coord, false);
 	}
 }
@@ -1344,7 +1344,7 @@ int Viewport::get_height()
 
 
 
-Coord Viewport::screen_to_coord(int pos_x, int pos_y)
+Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;
 
@@ -1388,17 +1388,25 @@ Coord Viewport::screen_to_coord(int pos_x, int pos_y)
 
 
 
+Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
+{
+	return this->screen_pos_to_coord(pos.x, pos.y);
+}
+
+
+
+
 /*
  * Since this function is used for every drawn trackpoint - it can get called a lot.
  * Thus x & y position factors are calculated once on zoom changes,
  * avoiding the need to do it here all the time.
  * For good measure the half width and height values are also pre calculated too.
  */
-void Viewport::coord_to_screen(const Coord & coord_in, int * pos_x, int * pos_y)
+void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y)
 {
 	Coord coord;
 	if (coord_in.mode != this->coord_mode) {
-		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen()! This should never happen!";
+		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen_pos()! This should never happen!";
 		coord = coord_in.copy_change_mode(this->coord_mode); /* kamilTODO: what's going on here? Why this special case even exists? */
 	} else {
 		coord = coord_in;
@@ -1430,6 +1438,22 @@ void Viewport::coord_to_screen(const Coord & coord_in, int * pos_x, int * pos_y)
 			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(ll_center->lat) - MERCLAT(ll->lat)));
 		}
 	}
+}
+
+
+
+
+/*
+ * Since this function is used for every drawn trackpoint - it can get called a lot.
+ * Thus x & y position factors are calculated once on zoom changes,
+ * avoiding the need to do it here all the time.
+ * For good measure the half width and height values are also pre calculated too.
+ */
+ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in)
+{
+	ScreenPos pos;
+	this->coord_to_screen_pos(coord_in, &pos.x, &pos.y);
+	return pos;
 }
 
 
@@ -1905,10 +1929,10 @@ const QString Viewport::get_drawmode_name(ViewportDrawMode mode)
 
 void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
 {
-	Coord tleft = this->screen_to_coord(0,                 0);
-	Coord tright = this->screen_to_coord(this->size_width, 0);
-	Coord bleft = this->screen_to_coord(0,                 this->size_height);
-	Coord bright = this->screen_to_coord(this->size_width, this->size_height);
+	Coord tleft =  this->screen_pos_to_coord(0,                 0);
+	Coord tright = this->screen_pos_to_coord(this->size_width, 0);
+	Coord bleft =  this->screen_pos_to_coord(0,                 this->size_height);
+	Coord bright = this->screen_pos_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
 	tright.change_mode(CoordMode::LATLON);
@@ -1926,10 +1950,10 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 
 void Viewport::get_bbox(LatLonBBox * bbox)
 {
-	Coord tleft = this->screen_to_coord(0,                 0);
-	Coord tright = this->screen_to_coord(this->size_width, 0);
-	Coord bleft = this->screen_to_coord(0,                 this->size_height);
-	Coord bright = this->screen_to_coord(this->size_width, this->size_height);
+	Coord tleft =  this->screen_pos_to_coord(0,                 0);
+	Coord tright = this->screen_pos_to_coord(this->size_width, 0);
+	Coord bleft =  this->screen_pos_to_coord(0,                 this->size_height);
+	Coord bright = this->screen_pos_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
 	tright.change_mode(CoordMode::LATLON);
@@ -2040,12 +2064,12 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 		int tx, ty;
 
-		Coord test = this->screen_to_coord(x1, y1);
+		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
-		this->coord_to_screen(test, &tx, &ty);
+		this->coord_to_screen_pos(test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);
 		*angle -= *baseangle;
@@ -2179,16 +2203,16 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 	if (modifiers == Qt::ControlModifier) {
 		/* Control == pan up & down. */
 		if (scroll_up) {
-			this->set_center_screen(w / 2, h / 3);
+			this->set_center_from_screen_pos(w / 2, h / 3);
 		} else {
-			this->set_center_screen(w / 2, h * 2 / 3);
+			this->set_center_from_screen_pos(w / 2, h * 2 / 3);
 		}
 	} else if (modifiers == Qt::ShiftModifier) {
 		/* Shift == pan left & right. */
 		if (scroll_up) {
-			this->set_center_screen(w / 3, h / 2);
+			this->set_center_from_screen_pos(w / 3, h / 2);
 		} else {
-			this->set_center_screen(w * 2 / 3, h / 2);
+			this->set_center_from_screen_pos(w * 2 / 3, h / 2);
 		}
 	} else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
 		/* This zoom is on the center position. */
@@ -2202,15 +2226,15 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		int pos_x, pos_y;
 		int center_x = w / 2;
 		int center_y = h / 2;
-		const Coord orig_coord = this->screen_to_coord(ev->x(), ev->y());
+		const Coord orig_coord = this->screen_pos_to_coord(ev->x(), ev->y());
 		if (scroll_up) {
 			this->zoom_in();
 		} else {
 			this->zoom_out();
 		}
-		this->coord_to_screen(orig_coord, &pos_x, &pos_y);
-		this->set_center_screen(center_x + (pos_x - ev->x()),
-					center_y + (pos_y - ev->y()));
+		this->coord_to_screen_pos(orig_coord, &pos_x, &pos_y);
+		this->set_center_from_screen_pos(center_x + (pos_x - ev->x()),
+						 center_y + (pos_y - ev->y()));
 	}
 
 	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
@@ -2235,7 +2259,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	/* Get coordinates in viewport's coordinates mode. Get them as strings, just for presentation purposes. */
 	static Coord coord;
-	coord = this->screen_to_coord(pos_x, pos_y);
+	coord = this->screen_pos_to_coord(pos_x, pos_y);
 	QString first;
 	QString second;
 	coord.to_strings(first, second);
@@ -2363,4 +2387,28 @@ bool Viewport::print_cb(QPrinter * printer)
 	painter.drawRect(new_rect);
 
 	return true;
+}
+
+
+
+
+ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
+{
+	return ScreenPos((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2);
+}
+
+
+
+
+bool ScreenPos::is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit)
+{
+	return (abs(pos1.x - pos2.x) < limit) && (abs(pos1.y - pos2.y) < limit);
+}
+
+
+
+
+bool ScreenPos::operator==(const ScreenPos & pos) const
+{
+	return (this->x == pos.x) && (this->y == pos.y);
 }

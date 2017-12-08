@@ -634,7 +634,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c.lat += (nscale_deg * skip_factor)/2;
 				box_c.lon -= (escale_deg * skip_factor)/2;
 				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen(tmp, &box_x, &box_y);
+				viewport->coord_to_screen_pos(tmp, &box_x, &box_y);
 				/* Catch box at borders. */
 				if (box_x < 0) {
 					box_x = 0;
@@ -647,7 +647,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c.lat -= nscale_deg * skip_factor;
 				box_c.lon += escale_deg * skip_factor;
 				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen(tmp, &box_width, &box_height);
+				viewport->coord_to_screen_pos(tmp, &box_width, &box_height);
 				box_width -= box_x;
 				box_height -= box_y;
 				/* Catch box at borders. */
@@ -726,10 +726,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
 
-		Coord tleft = viewport->screen_to_coord(0,                      0);
-		Coord tright = viewport->screen_to_coord(viewport->get_width(), 0);
-		Coord bleft = viewport->screen_to_coord(0,                      viewport->get_height());
-		Coord bright = viewport->screen_to_coord(viewport->get_width(), viewport->get_height());
+		Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
+		Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
+		Coord bleft =  viewport->screen_pos_to_coord(0,                     viewport->get_height());
+		Coord bright = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
 		tleft.change_mode(CoordMode::UTM);
 		tright.change_mode(CoordMode::UTM);
@@ -804,16 +804,15 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 
 				{
-					int a, b;
 					tmp = Coord(counter, viewport->get_coord_mode());
-					viewport->coord_to_screen(tmp, &a, &b);
+					const ScreenPos pos = viewport->coord_to_screen_pos(tmp);
 
 					int idx = 0; /* Default index for color of 'sea'. */
 					if (elev > 0) {
 						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
 					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(this->colors[idx], a - 1, b - 1, 2, 2);
+					viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
 				}
 			} /* for y= */
 		} /* for x= */
@@ -827,32 +826,31 @@ void draw_loaded_dem_box(Viewport * viewport)
 {
 #if 0
 	/* For getting values of dem_northeast and dem_southwest see vik_dem_overlap(). */
-	int x1, y1, x2, y2;
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
 
-	viewport->coord_to_screen(demne, &x1, &y1);
-	viewport->coord_to_screen(demsw, &x2, &y2);
+	const ScreenPos sp_ne = viewport->coord_to_screen_pos(demne);
+	const ScreenPos sp_sw = viewport->coord_to_screen_pos(demsw);
 
-	if (x1 > viewport->get_width()) {
-		x1 = viewport->get_width();
+	if (sp_ne.x > viewport->get_width()) {
+		sp_ne.x = viewport->get_width();
 	}
 
-	if (y2 > viewport->get_height()) {
-		y2 = viewport->get_height();
+	if (sp_sw.y > viewport->get_height()) {
+		sp_sw.y = viewport->get_height();
 	}
 
-	if (x2 < 0) {
-		x2 = 0;
+	if (sp_sw.x < 0) {
+		sp_sw.x = 0;
 	}
 
-	if (y1 < 0) {
-		y1 = 0;
+	if (sp_ne.y < 0) {
+		sp_ne.y = 0;
 	}
 
 	qDebug() << "II: Layer DEM: drawing loaded DEM box";
 #if 0
-	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc, x2, y1, x1-x2, y2-y1);
+	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 #endif
 #endif
 	return;
@@ -1109,30 +1107,30 @@ static void srtm_draw_existence(Viewport * viewport)
 				continue;
 			}
 
-			Coord ne, sw;
-			int x1, y1, x2, y2;
+			Coord coord_ne;
+			Coord coord_sw;
 
-			sw.ll.lat = lat;
-			sw.ll.lon = lon;
-			sw.mode = CoordMode::LATLON;
+			coord_sw.ll.lat = lat;
+			coord_sw.ll.lon = lon;
+			coord_sw.mode = CoordMode::LATLON;
 
-			ne.ll.lat = lat + 1;
-			ne.ll.lon = lon + 1;
-			ne.mode = CoordMode::LATLON;
+			coord_ne.ll.lat = lat + 1;
+			coord_ne.ll.lon = lon + 1;
+			coord_ne.mode = CoordMode::LATLON;
 
-			viewport->coord_to_screen(sw, &x1, &y1);
-			viewport->coord_to_screen(ne, &x2, &y2);
+			ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
+			ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
 
-			if (x1 < 0) {
-				x1 = 0;
+			if (sp_sw.x < 0) {
+				sp_sw.x = 0;
 			}
 
-			if (y2 < 0) {
-				y2 = 0;
+			if (sp_ne.y < 0) {
+				sp_ne.y = 0;
 			}
 
 			//qDebug() << "II: Layer DEM: drawing existence rectangle for" << buf;
-			viewport->draw_rectangle(pen, x1, y2, x2 - x1, y1 - y2);
+			viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 		}
 	}
 }
@@ -1205,30 +1203,30 @@ static void dem24k_draw_existence(Viewport * viewport)
 				.arg(floor(j*8)/8, 0, 'f', 3, '0'); /* "%.03f" */
 
 			if (0 == access(buf.toUtf8().constData(), F_OK)) {
-				Coord ne, sw;
-				int x1, y1, x2, y2;
+				Coord coord_ne;
+				Coord coord_sw;
 
-				sw.ll.lat = i;
-				sw.ll.lon = j-0.125;
-				sw.mode = CoordMode::LATLON;
+				coord_sw.ll.lat = i;
+				coord_sw.ll.lon = j-0.125;
+				coord_sw.mode = CoordMode::LATLON;
 
-				ne.ll.lat = i+0.125;
-				ne.ll.lon = j;
-				ne.mode = CoordMode::LATLON;
+				coord_ne.ll.lat = i+0.125;
+				coord_ne.ll.lon = j;
+				coord_ne.mode = CoordMode::LATLON;
 
-				viewport->coord_to_screen(sw, &x1, &y1);
-				viewport->coord_to_screen(ne, &x2, &y2);
+				const ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
+				const ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
 
-				if (x1 < 0) {
-					x1 = 0;
+				if (sp_sw.x < 0) {
+					sp_sw.x = 0;
 				}
 
-				if (y2 < 0) {
-					y2 = 0;
+				if (sp_ne.y < 0) {
+					sp_ne.y = 0;
 				}
 
 				qDebug() << "DD: Layer DEM: drawing rectangle";
-				viewport->draw_rectangle(viewport->black_gc, x1, y2, x2 - x1, y1 - y2);
+				viewport->draw_rectangle(viewport->black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 			}
 		}
 	}
@@ -1417,7 +1415,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 /* Mouse button released when "Download Tool" for DEM layer is active. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
-	const Coord coord = tool->viewport->screen_to_coord(ev->x(), ev->y());
+	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon ll = coord.get_latlon();
 
 	qDebug() << "II: Layer DEM: Download Tool: Release: received event, processing (coord" << ll.lat << ll.lon << ")";

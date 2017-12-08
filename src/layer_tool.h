@@ -24,27 +24,14 @@
 
 
 
-//#include <cstdio>
-//#include <cstdint>
-//#include <map>
-
-//#include <QObject>
-//#include <QTreeWidgetItem>
-//#include <QPersistentModelIndex>
-//#include <QIcon>
 #include <QAction>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QCursor>
-//#include <QMenu>
 #include <QString>
-//#include <QPixmap>
-//#include <QPen>
 
-//#include "tree_view.h"
-//#include "viewport.h"
+#include "viewport_internal.h"
 #include "globals.h"
-//#include "vikutils.h"
 
 
 
@@ -78,8 +65,8 @@ namespace SlavGPS {
 		bool moving = false;
 		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
 		QPen pen;
-		int oldx = 0;
-		int oldy = 0;
+
+		ScreenPos old_screen_pos;
 
 		bool item_is_right_clicked = false;
 	};
@@ -132,11 +119,11 @@ namespace SlavGPS {
 		   You want to call this method in response to click event of a tool, when some item of a layer has been selected.
 		   The generic Layer Tool itself doesn't actually select any selections
 		   inside of a layer, but it still does some useful, generic stuff. */
-		void perform_selection(int x, int y);
+		void perform_selection(const ScreenPos & screen_pos);
 
 		/* Selected item belonging to a layer is being moved to new position x/y.
 		   Call this method only when there is an item (in a layer) that is selected. */
-		void perform_move(int x, int y);
+		void perform_move(const ScreenPos & new_screen_pos);
 
 		/* Selected item belonging to a layer has been released.
 		   Call this method only when there was an item that was being selected. */

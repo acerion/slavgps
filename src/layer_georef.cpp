@@ -354,7 +354,7 @@ void LayerGeoref::draw(Viewport * viewport)
 		const int height_ = viewport->get_height();
 		int x, y;
 		const Coord corner_coord(this->corner, viewport->get_coord_mode());
-		viewport->coord_to_screen(corner_coord, &x, &y);
+		viewport->coord_to_screen_pos(corner_coord, &x, &y);
 
 		/* Mark to scale the pixmap if it doesn't match our dimensions. */
 		bool scale = false;

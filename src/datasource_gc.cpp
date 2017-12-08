@@ -164,7 +164,7 @@ void DataSourceGCDialog::draw_circle_cb(void)
 		int x, y;
 
 		const Coord coord(LatLon(lat, lon), this->viewport->get_coord_mode());
-		this->viewport->coord_to_screen(coord, &x, &y);
+		this->viewport->coord_to_screen_pos(coord, &x, &y);
 		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (this->viewport->get_width() + 1000) &&
 		    y < (this->viewport->get_width() + 1000)) {
@@ -173,8 +173,8 @@ void DataSourceGCDialog::draw_circle_cb(void)
 			this->circle_y = y;
 
 			/* Determine miles per pixel. */
-			const Coord coord1 = this->viewport->screen_to_coord(0, this->viewport->get_height()/2);
-			const Coord coord2 = this->viewport->screen_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
+			const Coord coord1 = this->viewport->screen_pos_to_coord(0, this->viewport->get_height()/2);
+			const Coord coord2 = this->viewport->screen_pos_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
 			double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
 
 			/* This is approximate. */

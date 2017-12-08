@@ -182,8 +182,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	int x1, y1, x2, y2;
 #define CLINE(pen, coord_begin, coord_end) {				\
-		viewport->coord_to_screen((coord_begin), &x1, &y1);	\
-		viewport->coord_to_screen((coord_end), &x2, &y2);	\
+		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
+		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
 		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
 	}
 
@@ -195,9 +195,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Vertical lines. */
 	{
-		Coord ul = viewport->screen_to_coord(0,                     0);
-		Coord ur = viewport->screen_to_coord(viewport->get_width(), 0);
-		Coord bl = viewport->screen_to_coord(0,                     viewport->get_height());
+		Coord ul = viewport->screen_pos_to_coord(0,                     0);
+		Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
+		Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
 
 		const double min = ul.ll.lon;
 		const double max = ur.ll.lon;
@@ -238,9 +238,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 	/* Horizontal lines. */
 	{
-		Coord ul = viewport->screen_to_coord(0,                     0);
-		Coord ur = viewport->screen_to_coord(viewport->get_width(), 0);
-		Coord bl = viewport->screen_to_coord(0,                     viewport->get_height());
+		Coord ul = viewport->screen_pos_to_coord(0,                     0);
+		Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
+		Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
 
 		const double min = bl.ll.lat;
 		const double max = ul.ll.lat;

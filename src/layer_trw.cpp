@@ -4110,7 +4110,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 
 
 	int in_viewport_x, in_viewport_y; /* In viewport pixels. */
-	viewport->coord_to_screen(exposed_coord, &in_viewport_x, &in_viewport_y);
+	viewport->coord_to_screen_pos(exposed_coord, &in_viewport_x, &in_viewport_y);
 	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(in_viewport_x, in_viewport_y));
 
 	if (global_coord_pos.x() < global_dialog_pos.x()) {

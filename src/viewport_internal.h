@@ -52,6 +52,22 @@ namespace SlavGPS {
 
 
 
+	class ScreenPos {
+	public:
+		ScreenPos() {};
+		ScreenPos(int new_x, int new_y) : x(new_x), y(new_y) {};
+		int x = 0;
+		int y = 0;
+
+		bool operator==(const ScreenPos & pos) const;
+
+		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
+		static bool is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit);
+	};
+
+
+
+
 	class Viewport : public QWidget {
 	Q_OBJECT
 
@@ -106,13 +122,18 @@ namespace SlavGPS {
 
 		/* Viewport position. */
 		void set_center_from_coord(const Coord & coord, bool save_position);
-		void set_center_screen(int x, int y);
-		void center_for_zonen(UTM * center, int zone);
-		char leftmost_zone();
-		char rightmost_zone();
-		void set_center_utm(const UTM & utm, bool save_position);
-		void set_center_latlon(const LatLon & lat_lon, bool save_position);
-		void corners_for_zonen(int zone, Coord & coord_ul, Coord & coord_br);
+		void set_center_from_utm(const UTM & utm, bool save_position);
+		void set_center_from_latlon(const LatLon & lat_lon, bool save_position);
+
+		void set_center_from_screen_pos(int x, int y);
+
+		void get_center_for_zone(UTM * center, int zone);
+		void get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
+
+		char get_leftmost_zone(void) const;
+		char get_rightmost_zone(void) const;
+
+
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 		void get_bbox(LatLonBBox * bbox);
 		void get_bbox_strings(LatLonBBoxStrings & bbox_strings);
@@ -121,8 +142,10 @@ namespace SlavGPS {
 		int get_height();
 
 		/* Coordinate transformations. */
-		Coord screen_to_coord(int x, int y);
-		void coord_to_screen(const Coord & coord, int * x, int * y);
+		Coord screen_pos_to_coord(int x, int y) const;
+		Coord screen_pos_to_coord(const ScreenPos & pos) const;
+		void coord_to_screen_pos(const Coord & coord, int * x, int * y);
+		ScreenPos coord_to_screen_pos(const Coord & coord);
 
 		/* Viewport scale. */
 		void set_xmpp(double new_xmpp);
