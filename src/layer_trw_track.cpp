@@ -2453,7 +2453,7 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 
 
 /* kamilFIXME: this assumes that there are any trackpoints on the list. */
-CoordMode Track::get_coord_mode()
+CoordMode Track::get_coord_mode(void) const
 {
 	assert (!this->trackpoints.empty());
 

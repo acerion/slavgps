@@ -109,7 +109,7 @@ uint16_t VikMapType::get_tilesize_y()
 
 
 
-ViewportDrawMode VikMapType::get_drawmode()
+ViewportDrawMode VikMapType::get_drawmode(const) void
 {
-	return (ViewportDrawMode) map_type.drawmode;
+	return (ViewportDrawMode) this->map_type.drawmode;
 }

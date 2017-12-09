@@ -49,12 +49,27 @@ namespace SlavGPS {
 
 
 
+	class Viewport;
+
+
+
+
 	/* Drawmode management. */
 	enum class ViewportDrawMode {
 		UTM = 0,
 		EXPEDIA,
 		MERCATOR,
 		LATLON
+	};
+
+
+
+
+	class ViewportDrawModes {
+	public:
+		static QString get_name(ViewportDrawMode mode);
+		static QString get_id_string(ViewportDrawMode mode);
+		static bool set_draw_mode_from_file(Viewport * viewport, const char * line);
 	};
 
 
@@ -73,7 +88,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+
 	void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright);
 
 

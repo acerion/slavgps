@@ -61,7 +61,7 @@ namespace SlavGPS {
 		const char * get_label();
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
-		ViewportDrawMode get_drawmode();
+		ViewportDrawMode get_drawmode(void) const;
 
 		virtual bool is_direct_file_access();
 		virtual bool is_mbtiles();

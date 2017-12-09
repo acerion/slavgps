@@ -217,8 +217,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 		return false;
 	}
 
-	LatLonBBox viewport_bbox;
-	viewport->get_bbox(&viewport_bbox);
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 

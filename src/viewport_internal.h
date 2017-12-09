@@ -103,10 +103,8 @@ namespace SlavGPS {
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
-		CoordMode get_coord_mode(); // const
-		const Coord * get_center() const;
-		void set_coord_mode(CoordMode mode_);
-
+		CoordMode get_coord_mode(void) const;
+		void set_coord_mode(CoordMode mode);
 
 
 		bool go_back();
@@ -114,6 +112,8 @@ namespace SlavGPS {
 		bool back_available(); // const
 		bool forward_available();
 
+
+		const Coord * get_center() const;
 		std::list<QString> get_centers_list(void) const;
 		void show_centers(Window * parent) const;
 		void print_centers(const QString & label) const;
@@ -135,8 +135,8 @@ namespace SlavGPS {
 
 
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
-		void get_bbox(LatLonBBox * bbox);
-		void get_bbox_strings(LatLonBBoxStrings & bbox_strings);
+		LatLonBBox get_bbox(void) const;
+		LatLonBBoxStrings get_bbox_strings(void) const;
 
 		int get_width();
 		int get_height();
@@ -183,6 +183,7 @@ namespace SlavGPS {
 
 		double calculate_utm_zone_width(); // private
 		void utm_zone_check(); // private
+		bool is_one_zone(void) const;
 
 
 		/* Viewport features. */
@@ -204,11 +205,8 @@ namespace SlavGPS {
 		void clear();
 
 
-		bool is_one_zone();
-		const QString get_drawmode_name(ViewportDrawMode mode);
 		void set_drawmode(ViewportDrawMode drawmode);
-		ViewportDrawMode get_drawmode();
-		/* Do not forget to update Viewport::get_drawmode_name() if you modify ViewportDrawMode. */
+		ViewportDrawMode get_drawmode(void) const;
 
 
 

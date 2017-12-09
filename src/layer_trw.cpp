@@ -4109,9 +4109,8 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 	}
 
 
-	int in_viewport_x, in_viewport_y; /* In viewport pixels. */
-	viewport->coord_to_screen_pos(exposed_coord, &in_viewport_x, &in_viewport_y);
-	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(in_viewport_x, in_viewport_y));
+	const ScreenPos exposed_pos = viewport->coord_to_screen_pos(exposed_coord); /* In viewport pixels. */
+	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(exposed_pos.x, exposed_pos.y));
 
 	if (global_coord_pos.x() < global_dialog_pos.x()) {
 		/* Point visible, on left side of dialog. */
@@ -4135,7 +4134,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 	if (vertical) {
 		/* Shift up or down. */
 		const int viewport_height = viewport->get_height();
-		if (in_viewport_y < viewport_height / 2) {
+		if (exposed_pos.y < viewport_height / 2) {
 			/* Point's coordinate is in upper half of viewport.
 			   Move dialog below the point. Don't change x coordinate of dialog. */
 			dialog->move(dialog->x(), in_window_coord_pos.y() + 10);
@@ -4152,7 +4151,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 	} else {
 		/* Shift left or right. */
 		const int viewport_width = viewport->get_width();
-		if (in_viewport_x < viewport_width / 2) {
+		if (exposed_pos.x < viewport_width / 2) {
 			/* Point's coordinate is in left half of viewport.
 			   Move dialog to the right of point. Don't change y coordinate of dialog. */
 			dialog->move(400, dialog->y());
@@ -4173,8 +4172,8 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 	}
 
 	/* Transform Viewport pixels into absolute pixels. */
-	int tmp_xx = in_viewport_x + dest_x + win_pos_x - 10;
-	int tmp_yy = in_viewport_y + dest_y + win_pos_y - 10;
+	int tmp_xx = exposed_pos.x + dest_x + win_pos_x - 10;
+	int tmp_yy = exposed_pos.y + dest_y + win_pos_y - 10;
 
 	/* Is dialog over the point (to within an  ^^ edge value). */
 	if ((tmp_xx > global_dialog_pos.x()) && (tmp_xx < (global_dialog_pos.x() + dialog_width))
@@ -4189,7 +4188,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 			/* Add difference between dialog and window sizes. */
 			offset_y += win_pos_y + (hh/2 - dialog_height)/2;
 
-			if (in_viewport_y > hh/2) {
+			if (exposed_pos.y > hh/2) {
 				/* Point in bottom half, move window to top half. */
 				dialog->move(global_dialog_pos.x(), offset_y);
 			} else {
@@ -4205,7 +4204,7 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 			/* Add difference between dialog and window sizes. */
 			offset_x += win_pos_x + (ww/2 - dialog_width)/2;
 
-			if (in_viewport_x > ww/2) {
+			if (exposed_pos.x > ww/2) {
 				/* Point on right, move window to left. */
 				dialog->move(offset_x, global_dialog_pos.y());
 			} else {
@@ -4434,7 +4433,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 
 
 
-CoordMode LayerTRW::get_coord_mode()
+CoordMode LayerTRW::get_coord_mode(void) const
 {
 	return this->coord_mode;
 }
@@ -4775,9 +4774,9 @@ LayerTRW::~LayerTRW()
 
 
 /* To be called right after constructor. */
-void LayerTRW::set_coord_mode(CoordMode mode)
+void LayerTRW::set_coord_mode(CoordMode new_mode)
 {
-	this->coord_mode = mode;
+	this->coord_mode = new_mode;
 }
 
 

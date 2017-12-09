@@ -1933,9 +1933,9 @@ LayerGPS::LayerGPS()
 
 
 /* To be called right after constructor. */
-void LayerGPS::set_coord_mode(CoordMode mode)
+void LayerGPS::set_coord_mode(CoordMode new_mode)
 {
 	for (int i = 0; i < NUM_TRW; i++) {
-		this->trw_children[i]->set_coord_mode(mode);
+		this->trw_children[i]->set_coord_mode(new_mode);
 	}
 }

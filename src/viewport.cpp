@@ -1712,9 +1712,9 @@ void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints
 
 
 
-CoordMode Viewport::get_coord_mode()
+CoordMode Viewport::get_coord_mode(void) const
 {
-	return coord_mode;
+	return this->coord_mode;
 }
 
 
@@ -1831,7 +1831,7 @@ double calcR(double lat)
 
 
 
-bool Viewport::is_one_zone()
+bool Viewport::is_one_zone(void) const
 {
 	return coord_mode == CoordMode::UTM && one_utm_zone;
 }
@@ -1839,10 +1839,11 @@ bool Viewport::is_one_zone()
 
 
 
-void Viewport::set_drawmode(ViewportDrawMode drawmode_)
+void Viewport::set_drawmode(ViewportDrawMode new_drawmode)
 {
-	this->drawmode = drawmode_;
-	if (drawmode_ == ViewportDrawMode::UTM) {
+	this->drawmode = new_drawmode;
+
+	if (new_drawmode == ViewportDrawMode::UTM) {
 		this->set_coord_mode(CoordMode::UTM);
 	} else {
 		this->set_coord_mode(CoordMode::LATLON);
@@ -1852,9 +1853,9 @@ void Viewport::set_drawmode(ViewportDrawMode drawmode_)
 
 
 
-ViewportDrawMode Viewport::get_drawmode()
+ViewportDrawMode Viewport::get_drawmode(void) const
 {
-	return drawmode;
+	return this->drawmode;
 }
 
 
@@ -1919,14 +1920,6 @@ bool Viewport::get_half_drawn()
 
 
 
-const QString Viewport::get_drawmode_name(ViewportDrawMode mode)
-{
-	return this->get_window()->get_drawmode_action(mode)->text();
-}
-
-
-
-
 void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
 {
 	Coord tleft =  this->screen_pos_to_coord(0,                 0);
@@ -1948,11 +1941,11 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 
 
 
-void Viewport::get_bbox(LatLonBBox * bbox)
+LatLonBBox Viewport::get_bbox(void) const
 {
-	Coord tleft =  this->screen_pos_to_coord(0,                 0);
+	Coord tleft =  this->screen_pos_to_coord(0,                0);
 	Coord tright = this->screen_pos_to_coord(this->size_width, 0);
-	Coord bleft =  this->screen_pos_to_coord(0,                 this->size_height);
+	Coord bleft =  this->screen_pos_to_coord(0,                this->size_height);
 	Coord bright = this->screen_pos_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
@@ -1960,24 +1953,23 @@ void Viewport::get_bbox(LatLonBBox * bbox)
 	bleft.change_mode(CoordMode::LATLON);
 	bright.change_mode(CoordMode::LATLON);
 
-	bbox->north = MAX(tleft.ll.lat, tright.ll.lat);
-	bbox->south = MIN(bleft.ll.lat, bright.ll.lat);
-	bbox->east  = MAX(tright.ll.lon, bright.ll.lon);
-	bbox->west  = MIN(tleft.ll.lon, bleft.ll.lon);
+	LatLonBBox bbox;
+	bbox.north = MAX(tleft.ll.lat, tright.ll.lat);
+	bbox.south = MIN(bleft.ll.lat, bright.ll.lat);
+	bbox.east  = MAX(tright.ll.lon, bright.ll.lon);
+	bbox.west  = MIN(tleft.ll.lon, bleft.ll.lon);
+
+	return bbox;
 }
 
 
 
 
-void Viewport::get_bbox_strings(LatLonBBoxStrings & bbox_strings)
+LatLonBBoxStrings Viewport::get_bbox_strings(void) const
 {
-	LatLonBBox bbox;
-	/* Get Viewport bounding box. */
-	this->get_bbox(&bbox);
-
-	CoordUtils::to_strings(bbox_strings, bbox);
-
-	return;
+	LatLonBBoxStrings bbox_strings;
+	CoordUtils::to_strings(bbox_strings, this->get_bbox());
+	return bbox_strings;
 }
 
 
@@ -2062,16 +2054,15 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 	*angle = atan2(dy, dx) + M_PI_2;
 
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
-		int tx, ty;
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
-		this->coord_to_screen_pos(test, &tx, &ty);
+		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
-		*baseangle = M_PI - atan2(tx - x1, ty - y1);
+		*baseangle = M_PI - atan2(test_pos.x - x1, test_pos.y - y1);
 		*angle -= *baseangle;
 	}
 
@@ -2223,18 +2214,19 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		}
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
-		int pos_x, pos_y;
 		int center_x = w / 2;
 		int center_y = h / 2;
 		const Coord orig_coord = this->screen_pos_to_coord(ev->x(), ev->y());
+		const ScreenPos orig_pos = this->coord_to_screen_pos(orig_coord);
+
 		if (scroll_up) {
 			this->zoom_in();
 		} else {
 			this->zoom_out();
 		}
-		this->coord_to_screen_pos(orig_coord, &pos_x, &pos_y);
-		this->set_center_from_screen_pos(center_x + (pos_x - ev->x()),
-						 center_y + (pos_y - ev->y()));
+
+		this->set_center_from_screen_pos(center_x + (orig_pos.x - ev->x()),
+						 center_y + (orig_pos.y - ev->y()));
 	}
 
 	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
@@ -2411,4 +2403,85 @@ bool ScreenPos::is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, 
 bool ScreenPos::operator==(const ScreenPos & pos) const
 {
 	return (this->x == pos.x) && (this->y == pos.y);
+}
+
+
+
+
+QString ViewportDrawModes::get_name(ViewportDrawMode mode)
+{
+	switch (mode) {
+	case ViewportDrawMode::UTM:
+		return QObject::tr("&UTM Mode");
+	case ViewportDrawMode::EXPEDIA:
+		return QObject::tr("&Expedia Mode");
+	case ViewportDrawMode::MERCATOR:
+		return QObject::tr("&Mercator Mode");
+	case ViewportDrawMode::LATLON:
+		return QObject::tr("&Lat/Lon Mode");
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		return "";
+	}
+}
+
+
+
+QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
+{
+	QString mode_id_string;
+
+	switch (mode) {
+	case ViewportDrawMode::UTM:
+		mode_id_string = "utm";
+		break;
+	case ViewportDrawMode::EXPEDIA:
+		mode_id_string = "expedia";
+		break;
+	case ViewportDrawMode::MERCATOR:
+		mode_id_string = "mercator";
+		break;
+	case ViewportDrawMode::LATLON:
+		mode_id_string = "latlon";
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		break;
+	}
+
+	return mode_id_string;
+}
+
+
+
+
+bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char * line)
+{
+	bool success = true;
+
+	if (0 == strcasecmp(line, "utm")) {
+		viewport->set_drawmode(ViewportDrawMode::UTM);
+
+	} else if (0 == strcasecmp(line, "expedia")) {
+		viewport->set_drawmode(ViewportDrawMode::EXPEDIA);
+
+	} else if (0 == strcasecmp(line, "google")) {
+		success = false;
+		qDebug() << "WW:" PREFIX << QObject::tr("Read file: draw mode 'google' no longer supported");
+
+	} else if (0 == strcasecmp(line, "kh")) {
+		success = false;
+		qDebug() << "WW:" PREFIX << QObject::tr("Read file: draw mode 'kh' no more supported");
+
+	} else if (0 == strcasecmp(line, "mercator")) {
+		viewport->set_drawmode(ViewportDrawMode::MERCATOR);
+
+	} else if (0 == strcasecmp(line, "latlon")) {
+		viewport->set_drawmode(ViewportDrawMode::LATLON);
+	} else {
+		qDebug() << "EE:" PREFIX << QObject::tr("Read file: unexpected draw mode") << line;
+		success = false;
+	}
+
+	return success;
 }

@@ -301,7 +301,7 @@ bool SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dir
 {
 	assert (file != NULL && trw != NULL);
 
-	CoordMode coord_mode = trw->get_coord_mode();
+	const CoordMode coord_mode = trw->get_coord_mode();
 
 	GPSPointParser point_parser;
 	current_track = NULL;

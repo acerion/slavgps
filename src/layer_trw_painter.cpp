@@ -115,7 +115,7 @@ TRWPainter::TRWPainter(LayerTRW * a_trw, Viewport * a_viewport)
 		;
 	}
 
-	this->viewport->get_bbox(&this->bbox);
+	this->bbox = this->viewport->get_bbox();
 }
 
 

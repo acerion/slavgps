@@ -234,8 +234,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 			continue;
 		}
 
-		int x, y;
-		search->viewport->coord_to_screen_pos(wp->coord, &x, &y);
+		const ScreenPos wp_pos = search->viewport->coord_to_screen_pos(wp->coord);
 
 		/* If waypoint has an image then use the image size to select. */
 		if (search->draw_images && !wp->image.isEmpty()) {
@@ -243,25 +242,25 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 			int slackx = wp->image_width / 2;
 			int slacky = wp->image_height / 2;
 
-			if (x <= search->x + slackx && x >= search->x - slackx
-			    && y <= search->y + slacky && y >= search->y - slacky) {
+			if (wp_pos.x <= search->x + slackx && wp_pos.x >= search->x - slackx
+			    && wp_pos.y <= search->y + slacky && wp_pos.y >= search->y - slacky) {
 
 				search->closest_wp = wp;
-				search->closest_x = x;
-				search->closest_y = y;
+				search->closest_x = wp_pos.x;
+				search->closest_y = wp_pos.y;
 			}
 		} else {
-			const int dist_x = abs(x - search->x);
-			const int dist_y = abs(y - search->y);
+			const int dist_x = abs(wp_pos.x - search->x);
+			const int dist_y = abs(wp_pos.y - search->y);
 
 			if (dist_x <= WAYPOINT_SIZE_APPROX && dist_y <= WAYPOINT_SIZE_APPROX
 			    && ((!search->closest_wp)
 				/* Was the old waypoint we already found closer than this one? */
-				|| dist_x + dist_y < abs(x - search->closest_x) + abs(y - search->closest_y))) {
+				|| dist_x + dist_y < abs(wp_pos.x - search->closest_x) + abs(wp_pos.y - search->closest_y))) {
 
 				search->closest_wp = wp;
-				search->closest_x = x;
-				search->closest_y = y;
+				search->closest_x = wp_pos.x;
+				search->closest_y = wp_pos.y;
 			}
 		}
 
@@ -281,12 +280,11 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 
 		Waypoint * wp = i->second;
 		if (!wp->image.isEmpty() && wp->visible) {
-			int x, y;
-			viewport->coord_to_screen_pos(wp->coord, &x, &y);
+			const ScreenPos wp_pos = viewport->coord_to_screen_pos(wp->coord);
 			int slackx = wp->image_width / 2;
 			int slacky = wp->image_height / 2;
-			if (x <= event_x + slackx && x >= event_x - slackx
-			    && y <= event_y + slacky && y >= event_y - slacky) {
+			if (wp_pos.x <= event_x + slackx && wp_pos.x >= event_x - slackx
+			    && wp_pos.y <= event_y + slacky && wp_pos.y >= event_y - slacky) {
 
 				found = wp->image; /* We've found a match. However continue searching
 						      since we want to find the last match -- that
@@ -824,8 +822,7 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool hl_is_allowed, 
 		&& (hl_is_required /* Parent code requires us to do highlight. */
 		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
 
-	LatLonBBox viewport_bbox;
-	viewport->get_bbox(&viewport_bbox);
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
 		for (auto i = this->items.begin(); i != this->items.end(); i++) {

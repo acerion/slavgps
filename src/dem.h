@@ -85,7 +85,7 @@ namespace SlavGPS {
 		bool get_ref_points_elev_dist(double east, double north, /* in seconds */
 					      int16_t * elevs, int16_t * dists);
 
-		bool overlap(LatLonBBox * bbox);
+		bool overlap(const LatLonBBox & other_bbox);
 
 		unsigned int n_columns;
 		std::vector<DEMColumn *> columns;

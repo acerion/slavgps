@@ -420,22 +420,21 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
-			int x, y;
-			search->viewport->coord_to_screen_pos((*iter)->coord, &x, &y);
+			const ScreenPos tp_pos = search->viewport->coord_to_screen_pos((*iter)->coord);
 
-			const int dist_x = abs(x - search->x);
-			const int dist_y = abs(y - search->y);
+			const int dist_x = abs(tp_pos.x - search->x);
+			const int dist_y = abs(tp_pos.y - search->y);
 
 			if (dist_x <= TRACKPOINT_SIZE_APPROX && dist_y <= TRACKPOINT_SIZE_APPROX
 			    && ((!search->closest_tp)
 				/* Was the old trackpoint we already found closer than this one? */
-				|| dist_x + dist_y < abs(x - search->closest_x) + abs(y - search->closest_y))) {
+				|| dist_x + dist_y < abs(tp_pos.x - search->closest_x) + abs(tp_pos.y - search->closest_y))) {
 
 				search->closest_track = i->second;
 				search->closest_tp = *iter;
 				search->closest_tp_iter = iter;
-				search->closest_x = x;
-				search->closest_y = y;
+				search->closest_x = tp_pos.x;
+				search->closest_y = tp_pos.y;
 			}
 
 		}
@@ -961,8 +960,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 
 
 #ifdef K
-	LatLonBBox viewport_bbox;
-	viewport->get_bbox(&viewport_bbox);
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
 #endif
@@ -1027,5 +1025,5 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * viewport_)
 	this->x = ev_x;
 	this->y = ev_y;
 	this->viewport = viewport_;
-	this->viewport->get_bbox(&this->bbox);
+	this->bbox = this->viewport->get_bbox();
 }

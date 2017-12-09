@@ -232,30 +232,11 @@ static void write_layer_params_and_data(FILE * file, Layer const * layer)
 static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * viewport)
 {
 	LayerAggregate * aggregate = parent_layer;
-	QString modestring;
 
 	/* Crazhy CRAZHY. */
 	const LatLon lat_lon = viewport->get_center()->get_latlon();
 
-	const ViewportDrawMode mode = viewport->get_drawmode();
-	/* TODO: move this switch to separate function. */
-	switch (mode) {
-	case ViewportDrawMode::UTM:
-		modestring = "utm";
-		break;
-	case ViewportDrawMode::EXPEDIA:
-		modestring = "expedia";
-		break;
-	case ViewportDrawMode::MERCATOR:
-		modestring = "mercator";
-		break;
-	case ViewportDrawMode::LATLON:
-		modestring = "latlon";
-		break;
-	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected mode" << (int) mode;
-		break;
-	}
+	const QString mode_id_string = ViewportDrawModes::get_id_string(viewport->get_drawmode());
 
 	char bg_color_string[8] = { 0 };
 	SGUtils::color_to_string(bg_color_string, sizeof (bg_color_string), viewport->get_background_color());
@@ -267,7 +248,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
 		viewport->get_xmpp(), viewport->get_ympp(), lat_lon.lat, lat_lon.lon,
-		modestring.toUtf8().constData(),
+		mode_id_string.toUtf8().constData(),
 		bg_color_string,
 		hl_color_string,
 		viewport->get_scale_visibility() ? "t" : "f",
@@ -530,20 +511,12 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 				latlon.lat = strtod_i8n(line+4, NULL);
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
 				latlon.lon = strtod_i8n(line+4, NULL);
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
-				viewport->set_drawmode(ViewportDrawMode::UTM);
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "expedia") == 0) {
-				viewport->set_drawmode(ViewportDrawMode::EXPEDIA);
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "google") == 0) {
-				successful_read = false;
-				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "google");
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "kh") == 0) {
-				successful_read = false;
-				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "kh");
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "mercator") == 0) {
-				viewport->set_drawmode(ViewportDrawMode::MERCATOR);
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "latlon") == 0) {
-				viewport->set_drawmode(ViewportDrawMode::LATLON);
+
+			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0) {
+				if (!ViewportDrawModes::set_draw_mode_from_file(viewport, line + 5)) {
+					successful_read = false;
+				}
+
 			} else if (stack->under == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
 				viewport->set_background_color(QString(line+6));
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {

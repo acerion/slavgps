@@ -789,7 +789,7 @@ void DEM::east_north_to_xy(double east, double north, unsigned int * col, unsign
 
 
 
-bool DEM::overlap(LatLonBBox * bbox)
+bool DEM::overlap(const LatLonBBox & other_bbox)
 {
 	LatLon dem_northeast;
 	LatLon dem_southwest;
@@ -824,14 +824,14 @@ bool DEM::overlap(LatLonBBox * bbox)
 
 	/* I wish we could use BBOX_INTERSECT() here. */
 
-	if ((bbox->north > dem_northeast.lat && bbox->south > dem_northeast.lat) ||
-	    (bbox->north < dem_southwest.lat && bbox->south < dem_southwest.lat)) {
+	if ((other_bbox.north > dem_northeast.lat && other_bbox.south > dem_northeast.lat) ||
+	    (other_bbox.north < dem_southwest.lat && other_bbox.south < dem_southwest.lat)) {
 
 		qDebug() << "DD: DEM: Overlap: false 1";
 		return false;
 
-	} else if ((bbox->east > dem_northeast.lon && bbox->west > dem_northeast.lon) ||
-		   (bbox->east < dem_southwest.lon && bbox->west < dem_southwest.lon)) {
+	} else if ((other_bbox.east > dem_northeast.lon && other_bbox.west > dem_northeast.lon) ||
+		   (other_bbox.east < dem_southwest.lon && other_bbox.west < dem_southwest.lon)) {
 
 		qDebug() << "DD: DEM: Overlap: false 2";
 		return false;

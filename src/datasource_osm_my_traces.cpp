@@ -575,9 +575,8 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 */
 void DataSourceMyOSMDialog::set_in_current_view_property(std::list<struct _gpx_meta_data_t *> & list)
 {
-	LatLonBBox bbox;
-	/* get Viewport bounding box */
-	this->viewport->get_bbox(&bbox);
+	/* Get Viewport bounding box. */
+	const LatLonBBox bbox = this->viewport->get_bbox();
 
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
 		gpx_meta_data_t * gmd = *iter;

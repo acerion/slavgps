@@ -238,9 +238,9 @@ void MapSource::set_tilesize_y(uint16_t tilesize_y_)
 
 
 
-void MapSource::set_drawmode(ViewportDrawMode drawmode_)
+void MapSource::set_drawmode(ViewportDrawMode new_drawmode)
 {
-	drawmode = drawmode_;
+	this->drawmode = new_drawmode;
 }
 
 
@@ -364,9 +364,9 @@ uint16_t MapSource::get_tilesize_y()
 
 
 
-ViewportDrawMode MapSource::get_drawmode()
+ViewportDrawMode MapSource::get_drawmode(void) const
 {
-	return drawmode;
+	return this->drawmode;
 }
 
 

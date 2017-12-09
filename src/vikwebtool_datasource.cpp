@@ -311,8 +311,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 
 	std::vector<QString> values;
 
-	LatLonBBoxStrings bbox_strings;
-	a_viewport->get_bbox_strings(bbox_strings);
+	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox_strings();
 
 	for (int i = 0; i < len; i++) {
 		switch (this->url_format_code[i].toUpper().toLatin1()) {

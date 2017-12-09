@@ -161,21 +161,22 @@ void DataSourceGCDialog::draw_circle_cb(void)
 	/* Split up lat,lon into lat and lon. */
 	if (2 == sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
 
-		int x, y;
-
 		const Coord coord(LatLon(lat, lon), this->viewport->get_coord_mode());
-		this->viewport->coord_to_screen_pos(coord, &x, &y);
-		/* TODO: real calculation. */
-		if (x > -1000 && y > -1000 && x < (this->viewport->get_width() + 1000) &&
-		    y < (this->viewport->get_width() + 1000)) {
+		const ScreenPos circle_pos = this->viewport->coord_to_screen_pos(coord);
 
-			this->circle_x = x;
-			this->circle_y = y;
+		/* TODO: real calculation. */
+		if (circle_pos.x > -1000
+		    && circle_pos.y > -1000
+		    && circle_pos.x < (this->viewport->get_width() + 1000)
+		    && circle_pos.y < (this->viewport->get_width() + 1000)) {
+
+			this->circle_x = circle_pos.x;
+			this->circle_y = circle_pos.y;
 
 			/* Determine miles per pixel. */
 			const Coord coord1 = this->viewport->screen_pos_to_coord(0, this->viewport->get_height()/2);
 			const Coord coord2 = this->viewport->screen_pos_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
-			double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
+			const double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
 
 			/* This is approximate. */
 			this->circle_width = this->miles_radius_spin.value()

@@ -535,9 +535,8 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	   current viewport overlap, so that we know whether we should draw it in
 	   viewport or not. We do this check every time a viewport has been changed
 	   (moved or re-zoomed). */
-	LatLonBBox viewport_bbox;
-	viewport->get_bbox(&viewport_bbox);
-	if (!dem->overlap(&viewport_bbox)) {
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	if (!dem->overlap(viewport_bbox)) {
 		qDebug() << "Dem: no overlap, skipping";
 		return;
 	}
@@ -1088,8 +1087,7 @@ static void srtm_draw_existence(Viewport * viewport)
 {
 	QString cache_file_path;
 
-	LatLonBBox bbox;
-	viewport->get_bbox(&bbox);
+	const LatLonBBox bbox = viewport->get_bbox();
 	QPen pen("black");
 
 

@@ -645,7 +645,7 @@ void Window::create_actions(void)
 
 		/* kamilFIXME: select initial value in the group based on... */
 
-		this->qa_drawmode_utm = new QAction(tr("&UTM Mode"), this);
+		this->qa_drawmode_utm = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::UTM), this);
 		this->qa_drawmode_utm->setData(QVariant((int) ViewportDrawMode::UTM));
 		this->qa_drawmode_utm->setCheckable(true);
 		this->qa_drawmode_utm->setChecked(true);
@@ -653,20 +653,20 @@ void Window::create_actions(void)
 		this->menu_view->addAction(this->qa_drawmode_utm);
 
 #ifdef VIK_CONFIG_EXPEDIA
-		this->qa_drawmode_expedia = new QAction(tr("&Expedia Mode"), this);
+		this->qa_drawmode_expedia = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::EXPEDIA), this);
 		this->qa_drawmode_expedia->setData(QVariant((int) ViewportDrawMode::EXPEDIA));
 		this->qa_drawmode_expedia->setCheckable(true);
 		group->addAction(this->qa_drawmode_expedia);
 		this->menu_view->addAction(this->qa_drawmode_expedia);
 #endif
 
-		this->qa_drawmode_mercator = new QAction(tr("&Mercator Mode"), this);
+		this->qa_drawmode_mercator = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::MERCATOR), this);
 		this->qa_drawmode_mercator->setData(QVariant((int) ViewportDrawMode::MERCATOR));
 		this->qa_drawmode_mercator->setCheckable(true);
 		group->addAction(this->qa_drawmode_mercator);
 		this->menu_view->addAction(this->qa_drawmode_mercator);
 
-		this->qa_drawmode_latlon = new QAction(tr("&Lat/Lon Mode"), this);
+		this->qa_drawmode_latlon = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::LATLON), this);
 		this->qa_drawmode_latlon->setData(QVariant((int) ViewportDrawMode::LATLON));
 		this->qa_drawmode_latlon->setCheckable(true);
 		group->addAction(this->qa_drawmode_latlon);
@@ -3181,9 +3181,9 @@ void Window::change_coord_mode_cb(QAction * qa)
 		return;
 	}
 
-	ViewportDrawMode olddrawmode = this->viewport->get_drawmode();
+	const ViewportDrawMode olddrawmode = this->viewport->get_drawmode();
 	if (olddrawmode != drawmode) {
-		/* this takes care of coord mode too */
+		/* This takes care of coord mode too. */
 		this->viewport->set_drawmode(drawmode);
 		if (drawmode == ViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);

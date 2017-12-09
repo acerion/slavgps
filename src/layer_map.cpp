@@ -891,11 +891,8 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		ViewportDrawMode vp_drawmode;
-		vp_drawmode = viewport->get_drawmode();
-
-		if (map->get_drawmode() != vp_drawmode) {
-			const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
+		if (map->get_drawmode() != viewport->get_drawmode()) {
+			const QString drawmode_name = ViewportDrawModes::get_name(map->get_drawmode());
 			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
 			Dialog::warning(msg, viewport->get_window());
 		}
@@ -1561,8 +1558,7 @@ void LayerMap::draw(Viewport * viewport)
 
 		/* Copyright. */
 		double level = viewport->get_zoom();
-		LatLonBBox bbox;
-		viewport->get_bbox(&bbox);
+		const LatLonBBox bbox = viewport->get_bbox();
 #ifdef K /* linkage problem. */
 		map_sources[this->map_index]->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
 #endif
@@ -2138,7 +2134,6 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 void LayerMap::download_onscreen_maps(int redownload_mode)
 {
 	Viewport * viewport = this->get_window()->get_viewport();
-	ViewportDrawMode vp_drawmode = viewport->get_drawmode();
 
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
@@ -2149,14 +2144,18 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
 	MapSource *map = map_sources[this->map_index];
-	if (map->get_drawmode() == vp_drawmode
+
+	const ViewportDrawMode map_draw_mode = map->get_drawmode();
+	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
+
+	if (map_draw_mode == vp_draw_mode
 	    && map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
 	    && map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, redownload_mode);
 
-	} else if (map->get_drawmode() != vp_drawmode) {
-		const QString drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
+	} else if (map_draw_mode != vp_draw_mode) {
+		const QString drawmode_name = ViewportDrawModes::get_name(map_draw_mode);
 		const QString err = QString(QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.")).arg(drawmode_name);
 		Dialog::error(err, this->get_window());
 	} else {

@@ -352,9 +352,9 @@ void LayerGeoref::draw(Viewport * viewport)
 
 		const int width_ = viewport->get_width();
 		const int height_ = viewport->get_height();
-		int x, y;
+
 		const Coord corner_coord(this->corner, viewport->get_coord_mode());
-		viewport->coord_to_screen_pos(corner_coord, &x, &y);
+		const ScreenPos corner_pos = viewport->coord_to_screen_pos(corner_coord);
 
 		/* Mark to scale the pixmap if it doesn't match our dimensions. */
 		bool scale = false;
@@ -365,7 +365,10 @@ void LayerGeoref::draw(Viewport * viewport)
 		}
 
 		/* If image not in viewport bounds - no need to draw it (or bother with any scaling). */
-		if ((x < 0 || x < width_) && (y < 0 || y < height_) && x+layer_width > 0 && y+layer_height > 0) {
+		if ((corner_pos.x < 0 || corner_pos.x < width_)
+		    && (corner_pos.y < 0 || corner_pos.y < height_)
+		    && corner_pos.x + layer_width > 0
+		    && corner_pos.y + layer_height > 0) {
 
 			if (scale) {
 				/* Rescale if necessary. */
@@ -387,7 +390,7 @@ void LayerGeoref::draw(Viewport * viewport)
 					this->scaled_height = layer_height;
 				}
 			}
-			viewport->draw_pixmap(*pixmap_, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
+			viewport->draw_pixmap(*pixmap_, 0, 0, corner_pos.x, corner_pos.y, layer_width, layer_height); /* todo: draw only what we need to. */
 		}
 	}
 }
