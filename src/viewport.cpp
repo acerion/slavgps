@@ -77,11 +77,11 @@ using namespace SlavGPS;
 
 #define MERCATOR_FACTOR(x) ((65536.0 / 180 / (x)) * 256.0)
 
-#define VIK_SETTINGS_VIEW_LAST_LATITUDE "viewport_last_latitude"
-#define VIK_SETTINGS_VIEW_LAST_LONGITUDE "viewport_last_longitude"
-#define VIK_SETTINGS_VIEW_LAST_ZOOM_X "viewport_last_zoom_xpp"
-#define VIK_SETTINGS_VIEW_LAST_ZOOM_Y "viewport_last_zoom_ypp"
-#define VIK_SETTINGS_VIEW_HISTORY_SIZE "viewport_history_size"
+#define VIK_SETTINGS_VIEW_LAST_LATITUDE     "viewport_last_latitude"
+#define VIK_SETTINGS_VIEW_LAST_LONGITUDE    "viewport_last_longitude"
+#define VIK_SETTINGS_VIEW_LAST_ZOOM_X       "viewport_last_zoom_xpp"
+#define VIK_SETTINGS_VIEW_LAST_ZOOM_Y       "viewport_last_zoom_ypp"
+#define VIK_SETTINGS_VIEW_HISTORY_SIZE      "viewport_history_size"
 #define VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST "viewport_history_diff_dist"
 
 
@@ -90,9 +90,9 @@ using namespace SlavGPS;
 static double EASTING_OFFSET = 500000.0;
 static int PAD = 10;
 
-static bool calcxy(double *x, double *y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
-static bool calcxy_rev(double *lg, double *lt, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
-double calcR(double lat);
+static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
+static bool calcxy_rev(double * longitude, double * latitude, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
+static double calcR(double lat);
 
 static double Radius[181];
 static void viewport_init_ra();
@@ -120,7 +120,7 @@ void Viewport::init_drawing_area()
 
 
 
-double Viewport::calculate_utm_zone_width()
+double Viewport::calculate_utm_zone_width(void) const
 {
 	switch (this->coord_mode) {
 	case CoordMode::UTM: {
@@ -156,7 +156,7 @@ const QColor & Viewport::get_background_color(void) const
 
 
 
-Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
+Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 {
 	this->window = parent_window;
 
@@ -192,30 +192,29 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 
 	const UTM utm = LatLon::to_utm(ll);
 
-	xmpp = zoom_x;
-	ympp = zoom_y;
-	xmfactor = MERCATOR_FACTOR(xmpp);
-	ymfactor = MERCATOR_FACTOR(ympp);
-	coord_mode = CoordMode::LATLON;
-	drawmode = ViewportDrawMode::MERCATOR;
-	center.mode = CoordMode::LATLON;
-	center.ll.lat = ll.lat;
-	center.ll.lon = ll.lon;
-	center.utm.zone = (int) utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
-	center.utm.letter = utm.letter;
-	utm_zone_width = 0.0;
+	this->xmpp = zoom_x;
+	this->ympp = zoom_y;
+	this->xmfactor = MERCATOR_FACTOR(this->xmpp);
+	this->ymfactor = MERCATOR_FACTOR(this->ympp);
 
-	centers = new std::list<Coord *>;
-	centers_iter = centers->begin();
-	centers_max = 20;
-	int tmp = centers_max;
-	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
-		centers_max = tmp;
+	this->coord_mode = CoordMode::LATLON;
+	this->drawmode = ViewportDrawMode::MERCATOR;
+
+	this->center.mode = CoordMode::LATLON;
+	this->center.ll.lat = ll.lat;
+	this->center.ll.lon = ll.lon;
+	this->center.utm.zone = (int) utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
+	this->center.utm.letter = utm.letter;
+
+	this->utm_zone_width = 0.0;
+
+	this->centers = new std::list<Coord *>;
+	this->centers_iter = centers->begin();
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->centers_max)) {
+		this->centers_max = 20;
 	}
-
-	centers_radius = 500;
-	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &tmp)) {
-		centers_radius = tmp;
+	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &this->centers_radius)) {
+		this->centers_radius = 500;
 	}
 
 	this->init_drawing_area();
@@ -224,7 +223,7 @@ Viewport::Viewport(Window * parent_window) : QWidget((QWidget *) parent_window)
 	this->setMouseTracking(true);
 
 	/* Initiate center history. */
-	update_centers();
+	this->update_centers();
 
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 	this->scale_visibility = true;
@@ -305,9 +304,9 @@ void Viewport::set_highlight_color(const QColor & color)
 
 
 
-QPen Viewport::get_highlight_pen()
+QPen Viewport::get_highlight_pen(void) const
 {
-	return highlight_pen;
+	return this->highlight_pen;
 }
 
 
@@ -324,10 +323,10 @@ void Viewport::set_highlight_thickness(int w)
 
 
 
-void Viewport::configure_manually(int width_, unsigned int height_)
+void Viewport::configure_manually(int new_width, int new_height)
 {
-	this->size_width = width_;
-	this->size_height = height_;
+	this->size_width = new_width;
+	this->size_height = new_height;
 
 	this->size_width_2 = this->size_width / 2;
 	this->size_height_2 = this->size_height / 2;
@@ -356,7 +355,7 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 
 
 
-QPixmap * Viewport::get_pixmap()
+QPixmap * Viewport::get_pixmap(void) const
 {
 	return this->scr_buffer;
 }
@@ -393,11 +392,11 @@ bool Viewport::configure()
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		qDebug() << "II: deleting old scr_buffer" << __FUNCTION__ << __LINE__;
+		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
 		delete this->scr_buffer;
 	}
 
-	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height << __FUNCTION__ << __LINE__;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
@@ -409,10 +408,10 @@ bool Viewport::configure()
 
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
-		qDebug() << "DD: Viewport: deleting old snapshot buffer";
+		qDebug() << "DD:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << "II: Viewport creating new snapshot buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 	/* TODO trigger. */
 
@@ -424,7 +423,7 @@ bool Viewport::configure()
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 
-	qDebug() << "SIGNAL: Viewport: sending \"reconfigured\" from" << this->type_string << __FUNCTION__;
+	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"reconfigured\" from" << this->type_string;
 	emit this->reconfigured(this);
 
 	return false;
@@ -434,11 +433,11 @@ bool Viewport::configure()
 
 
 /**
- * Clear the whole viewport.
- */
-void Viewport::clear()
+   \brief Clear the whole viewport
+*/
+void Viewport::clear(void)
 {
-	qDebug() << "II: Viewport: clear whole viewport" << this->type_string << __FUNCTION__ << __LINE__;
+	qDebug() << "II:" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string;
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
@@ -450,8 +449,8 @@ void Viewport::clear()
 
 
 /**
- * Enable/Disable display of scale.
- */
+   \brief Enable/Disable display of scale
+*/
 void Viewport::set_scale_visibility(bool new_state)
 {
 	this->scale_visibility = new_state;
@@ -460,7 +459,7 @@ void Viewport::set_scale_visibility(bool new_state)
 
 
 
-bool Viewport::get_scale_visibility()
+bool Viewport::get_scale_visibility(void) const
 {
 	return this->scale_visibility;
 }
@@ -468,7 +467,7 @@ bool Viewport::get_scale_visibility()
 
 
 /* Return length of scale bar, in pixels. */
-int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
+static int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 {
 	double ratio = *base_distance / *scale_unit;
 	//fprintf(stderr, "%s:%d: %d / %d / %d\n", __FUNCTION__, __LINE__, (int) *base_distance, (int) *scale_unit, maximum_width);
@@ -528,7 +527,7 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 
 
 
-void Viewport::draw_scale()
+void Viewport::draw_scale(void)
 {
 	if (!this->scale_visibility) {
 		return;
@@ -675,8 +674,7 @@ void Viewport::draw_copyrights(void)
 
 	/* Compute copyrights string. */
 
-	unsigned int len = this->copyrights.size();
-	for (unsigned int i = 0 ; i < len ; i++) {
+	for (int i = 0; i < this->copyrights.size(); i++) {
 
 		if (free_space < 0) {
 			break;
@@ -764,16 +762,16 @@ void Viewport::draw_centermark()
 
 
 
-void Viewport::draw_logo()
+void Viewport::draw_logos(void)
 {
-	int x_size = this->size_width - PAD;
-	int y_size = PAD;
+	int x_pos = this->size_width - PAD;
+	int y_pos = PAD;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
 		QPixmap const * logo = *iter;
-		int w_size = logo->width();
-		int h_size = logo->height();
-		this->draw_pixmap(*logo, 0, 0, x_size - w_size, y_size, w_size, h_size);
-		x_size = x_size - w_size - PAD;
+		const int logo_width = logo->width();
+		const int logo_height = logo->height();
+		this->draw_pixmap(*logo, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
+		x_pos = x_pos - logo_width - PAD;
 	}
 }
 
@@ -788,7 +786,7 @@ void Viewport::set_highlight_usage(bool new_state)
 
 
 
-bool Viewport::get_highlight_usage()
+bool Viewport::get_highlight_usage(void) const
 {
 	return this->highlight_usage;
 }
@@ -796,9 +794,9 @@ bool Viewport::get_highlight_usage()
 
 
 
-void Viewport::sync()
+void Viewport::sync(void)
 {
-	qDebug() << "II: Viewport: ->sync() (will call ->render())" << __FUNCTION__ << __LINE__;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "sync (will call ->render())";
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 	this->render(this->scr_buffer);
 }
@@ -950,7 +948,7 @@ const Coord * Viewport::get_center() const
 
 
 /* Called every time we update coordinates/zoom. */
-void Viewport::utm_zone_check()
+void Viewport::utm_zone_check(void)
 {
 	if (coord_mode == CoordMode::UTM) {
 		const UTM utm = LatLon::to_utm(UTM::to_latlon(center.utm));
@@ -959,7 +957,7 @@ void Viewport::utm_zone_check()
 		}
 
 		/* Misc. stuff so we don't have to check later. */
-		utm_zone_width = this->calculate_utm_zone_width();
+		this->utm_zone_width = this->calculate_utm_zone_width();
 		one_utm_zone = (this->get_rightmost_zone() == this->get_leftmost_zone());
 	}
 }
@@ -968,8 +966,8 @@ void Viewport::utm_zone_check()
 
 
 /**
- * Free an individual center position in the history list.
- */
+   \brief Free an individual center position in the history list
+*/
 void Viewport::free_center(std::list<Coord *>::iterator iter)
 {
 	Coord * coord = *iter;
@@ -977,13 +975,13 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
 		delete coord;
 	}
 
-	if (iter == centers_iter) {
-		centers_iter = centers->erase(iter);
-		if (centers_iter == centers->end()) {
+	if (iter == this->centers_iter) {
+		this->centers_iter = centers->erase(iter);
+		if (this->centers_iter == centers->end()) {
 			if (centers->empty()) {
-				centers_iter = centers->begin();
+				this->centers_iter = this->centers->begin();
 			} else {
-				centers_iter--;
+				this->centers_iter--;
 			}
 		}
 	} else {
@@ -995,15 +993,15 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
 
 
 /**
- * Store the current center position into the history list
- * and emit a signal to notify clients the list has been updated.
- */
-void Viewport::update_centers()
+   Store the current center position into the history list
+   and emit a signal to notify clients the list has been updated.
+*/
+void Viewport::update_centers(void)
 {
 	Coord * new_center = new Coord();
 	*new_center = center; /* kamilFIXME: review this assignment of object. */
 
-	if (centers_iter == prev(centers->end())) {
+	if (this->centers_iter == prev(this->centers->end())) {
 		/* We are at most recent element of history. */
 		if (centers->size() == centers_max) {
 			/* List is full, so drop the oldest value to make room for the new one. */
@@ -1012,19 +1010,19 @@ void Viewport::update_centers()
 	} else {
 		/* We are somewhere in the middle of history list, possibly at the beginning.
 		   Every center visited after current one must be discarded. */
-		centers->erase(next(centers_iter), centers->end());
-		assert (std::next(centers_iter) == centers->end());
+		this->centers->erase(next(this->centers_iter), this->centers->end());
+		assert (std::next(this->centers_iter) == this->centers->end());
 	}
 
 	/* Store new position. */
 	/* push_back() puts at the end. By convention end == newest. */
-	centers->push_back(new_center);
-	centers_iter++;
-	assert (std::next(centers_iter) == centers->end());
+	this->centers->push_back(new_center);
+	this->centers_iter++;
+	assert (std::next(this->centers_iter) == this->centers->end());
 
 	this->print_centers("Viewport::update_centers()");
 
-	// qDebug() << "SIGNAL: Viewport: emitting updated_center()";
+	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "emitting updated_center()";
 	emit this->updated_center();
 }
 
@@ -1105,37 +1103,38 @@ void Viewport::print_centers(const QString & label) const
 
 
 /**
- * Returns: true on success.
- */
-bool Viewport::go_back()
+   @return true on success
+   @return false otherwise
+*/
+bool Viewport::go_back(void)
 {
 	/* See if the current position is different from the last saved center position within a certain radius. */
-	Coord * last_center = *centers_iter; /* kamilTODO: add check of validity of iterator? */
+	Coord * last_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator? */
 	if (last_center) {
 		/* Consider an exclusion size (should it zoom level dependent, rather than a fixed value?).
 		   When still near to the last saved position we'll jump over it to the one before. */
-		if (Coord::distance(*last_center, this->center) > centers_radius) {
+		if (Coord::distance(*last_center, this->center) > this->centers_radius) {
 
-			if (centers_iter == prev(centers->end())) {
+			if (this->centers_iter == prev(this->centers->end())) {
 				/* Only when we haven't already moved back in the list.
 				   Remember where this request came from (alternatively we could insert in the list on every back attempt). */
-				update_centers();
+				this->update_centers();
 			}
 
 		}
 		/* 'Go back' if possible.
 		   NB if we inserted a position above, then this will then move to the last saved position.
 		   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
-		if (back_available()) {
-			centers_iter--;
+		if (this->back_available()) {
+			this->centers_iter--;
 		}
 	} else {
 		return false;
 	}
 
-	Coord * new_center = *centers_iter; /* kamilTODO: add check of validity of iterator. */
+	Coord * new_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator. */
 	if (new_center) {
-		set_center_from_coord(*new_center, false);
+		this->set_center_from_coord(*new_center, false);
 		return true;
 	}
 	return false;
@@ -1145,24 +1144,25 @@ bool Viewport::go_back()
 
 
 /**
- * Move forward in the position history.
- *
- * Returns: true on success.
- */
-bool Viewport::go_forward()
+   \brief Move forward in the position history.
+
+   @return true on success
+   @return false otherwise
+*/
+bool Viewport::go_forward(void)
 {
-	if (centers_iter == prev(centers->end())) {
+	if (!this->forward_available()) {
 		/* Already at the latest center. */
 		return false;
 	}
 
-	centers_iter++;
-	Coord * new_center = *centers_iter; /* kamilTODO: add check of validity of iterator. */
+	this->centers_iter++;
+	Coord * new_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator. */
 	if (new_center) {
-		set_center_from_coord(*new_center, false);
+		this->set_center_from_coord(*new_center, false);
 		return true;
 	} else {
-		centers_iter = prev(centers->end());
+		this->centers_iter = prev(this->centers->end());
 	}
 
 	return false;
@@ -1172,32 +1172,34 @@ bool Viewport::go_forward()
 
 
 /**
- * Returns: true when a previous position in the history is available.
- */
-bool Viewport::back_available()
+   @return true when a previous position in the history is available
+   @return false otherwise
+*/
+bool Viewport::back_available(void) const
 {
-	return (centers->size() > 1 && centers_iter != centers->begin());
+	return (this->centers->size() > 1 && this->centers_iter != this->centers->begin());
 }
 
 
 
 
 /**
- * Returns: true when a next position in the history is available.
- */
-bool Viewport::forward_available()
+   @return true when a next position in the history is available
+   @return false otherwise
+*/
+bool Viewport::forward_available(void) const
 {
-	return (centers->size() > 1 && centers_iter != prev(centers->end()));
+	return (this->centers->size() > 1 && this->centers_iter != prev(this->centers->end()));
 }
 
 
 
 
 /**
- * @lat_lon:       The new center position in Lat/Lon format
- * @save_position: Whether this new position should be saved into the history of positions
- *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
- */
+   @lat_lon:       The new center position in Lat/Lon format
+   @save_position: Whether this new position should be saved into the history of positions
+                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
+*/
 void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
 {
 	this->center = Coord(lat_lon, coord_mode);
@@ -1214,10 +1216,10 @@ void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position
 
 
 /**
- * @utm:           The new center position in UTM format
- * @save_position: Whether this new position should be saved into the history of positions
- *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
- */
+   @utm:           The new center position in UTM format
+   @save_position: Whether this new position should be saved into the history of positions
+                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
+*/
 void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
 {
 	this->center = Coord(utm, coord_mode);
@@ -1234,10 +1236,10 @@ void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
 
 
 /**
- * @coord:         The new center position in a Coord type
- * @save_position: Whether this new position should be saved into the history of positions
- *                 Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
- */
+   @coord:         The new center position in a Coord type
+   @save_position: Whether this new position should be saved into the history of positions
+                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
+*/
 void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 {
 	this->center = coord;
@@ -1254,12 +1256,12 @@ void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 
 void Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
 {
-	if (coord_mode != CoordMode::UTM) {
+	if (this->coord_mode != CoordMode::UTM) {
 		return;
 	}
 
 	/* Get center, then just offset. */
-	this->get_center_for_zone(&coord_ul.utm, zone);
+	this->get_center_for_zone(coord_ul.utm, zone);
 	coord_ul.mode = CoordMode::UTM;
 
 	/* Both coordinates will be now at center. */
@@ -1276,13 +1278,15 @@ void Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone
 
 
 
-void Viewport::get_center_for_zone(UTM * center_utm, int zone)
+void Viewport::get_center_for_zone(UTM & center_utm, int zone)
 {
-	if (coord_mode == CoordMode::UTM) {
-		*center_utm = this->center.utm;
-		center_utm->easting -= (zone - center_utm->zone) * utm_zone_width;
-		center_utm->zone = zone;
+	if (this->coord_mode != CoordMode::UTM) {
+		return;
 	}
+
+	center_utm = this->center.utm;
+	center_utm.easting -= (zone - center_utm.zone) * this->utm_zone_width;
+	center_utm.zone = zone;
 }
 
 
@@ -1290,11 +1294,12 @@ void Viewport::get_center_for_zone(UTM * center_utm, int zone)
 
 char Viewport::get_leftmost_zone(void) const
 {
-	if (coord_mode == CoordMode::UTM) {
-		const Coord coord = this->screen_pos_to_coord(0, 0);
-		return coord.utm.zone;
+	if (coord_mode != CoordMode::UTM) {
+		return '\0';
 	}
-	return '\0';
+
+	const Coord coord = this->screen_pos_to_coord(0, 0);
+	return coord.utm.zone;
 }
 
 
@@ -1302,11 +1307,12 @@ char Viewport::get_leftmost_zone(void) const
 
 char Viewport::get_rightmost_zone(void) const
 {
-	if (coord_mode == CoordMode::UTM) {
-		const Coord coord = this->screen_pos_to_coord(this->size_width, 0);
-		return coord.utm.zone;
+	if (coord_mode != CoordMode::UTM) {
+		return '\0';
 	}
-	return '\0';
+
+	const Coord coord = this->screen_pos_to_coord(this->size_width, 0);
+	return coord.utm.zone;
 }
 
 
@@ -1316,8 +1322,8 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
-		center.utm.easting += xmpp * (x1 - (this->size_width / 2));
-		center.utm.northing += ympp * ((this->size_height / 2) - y1);
+		this->center.utm.easting += xmpp * (x1 - (this->size_width / 2));
+		this->center.utm.northing += ympp * ((this->size_height / 2) - y1);
 		this->utm_zone_check();
 	} else {
 		const Coord coord = this->screen_pos_to_coord(x1, y1);
@@ -1328,7 +1334,15 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 
 
 
-int Viewport::get_width()
+void Viewport::set_center_from_screen_pos(const ScreenPos & pos)
+{
+	this->set_center_from_screen_pos(pos.x, pos.y);
+}
+
+
+
+
+int Viewport::get_width(void) const
 {
 	return this->size_width;
 }
@@ -1336,7 +1350,7 @@ int Viewport::get_width()
 
 
 
-int Viewport::get_height()
+int Viewport::get_height(void) const
 {
 	return this->size_height;
 }
@@ -1355,10 +1369,10 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.utm.letter = this->center.utm.letter;
 		coord.utm.easting = ((pos_x - (this->size_width_2)) * xmpp) + this->center.utm.easting;
 
-		int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / utm_zone_width + 0.5);
+		int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
 
 		coord.utm.zone += zone_delta;
-		coord.utm.easting -= zone_delta * utm_zone_width;
+		coord.utm.easting -= zone_delta * this->utm_zone_width;
 		coord.utm.northing = (((this->size_height_2) - pos_y) * ympp) + this->center.utm.northing;
 
 	} else if (this->coord_mode == CoordMode::LATLON) {
@@ -1397,11 +1411,12 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
 
 
 /*
- * Since this function is used for every drawn trackpoint - it can get called a lot.
- * Thus x & y position factors are calculated once on zoom changes,
- * avoiding the need to do it here all the time.
- * For good measure the half width and height values are also pre calculated too.
- */
+  Since this function is used for every drawn trackpoint - it can get called a lot.
+  Thus x & y position factors are calculated once on zoom changes,
+  avoiding the need to do it here all the time.
+
+  For good measure the half width and height values are also pre calculated too. TODO: do we really do that here?
+*/
 void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y)
 {
 	Coord coord;
@@ -1426,13 +1441,14 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 	} else if (this->coord_mode == CoordMode::LATLON) {
 		const LatLon * ll_center = &this->center.ll;
 		const LatLon * ll = &coord.ll;
-		double xx,yy;
 		if (this->drawmode == ViewportDrawMode::LATLON) {
 			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - ll_center->lon));
 			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (ll_center->lat - ll->lat));
 		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
-			calcxy (&xx, &yy, ll_center->lon, ll_center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
-			*pos_x = xx; *pos_y = yy;
+			double xx,yy;
+			calcxy(&xx, &yy, ll_center->lon, ll_center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
+			*pos_x = xx;
+			*pos_y = yy;
 		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
 			*pos_x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - ll_center->lon));
 			*pos_y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(ll_center->lat) - MERCLAT(ll->lat)));
@@ -1443,12 +1459,6 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 
 
 
-/*
- * Since this function is used for every drawn trackpoint - it can get called a lot.
- * Thus x & y position factors are calculated once on zoom changes,
- * avoiding the need to do it here all the time.
- * For good measure the half width and height values are also pre calculated too.
- */
 ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in)
 {
 	ScreenPos pos;
@@ -1524,34 +1534,40 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 
 
 
-void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
+void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
-	//fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d)\n", x1, y1, x2, y2);
-	if (! ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
-	       || (x1 > this->size_width && x2 > this->size_width)
-	       || (y1 > this->size_height && y2 > this->size_height))) {
+	//fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d)\n", begin_x, begin_y, end_x, end_y);
 
-		/*** Clipping, yeah! ***/
-		Viewport::clip_line(&x1, &y1, &x2, &y2);
-
-		QPainter painter(this->scr_buffer);
-		painter.setPen(pen);
-		painter.drawLine(this->margin_left + x1, this->margin_top + y1,
-				 this->margin_left + x2, this->margin_top + y2);
+	if ((begin_x < 0 && end_x < 0) || (begin_y < 0 && end_y < 0)) {
+		return;
 	}
+	if (begin_x > this->size_width && end_x > this->size_width) {
+		return;
+	}
+	if (begin_y > this->size_height && end_y > this->size_height) {
+		return;
+	}
+
+	/*** Clipping, yeah! ***/
+	Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
+
+	QPainter painter(this->scr_buffer);
+	painter.setPen(pen);
+	painter.drawLine(this->margin_left + begin_x, this->margin_top + begin_y,
+			 this->margin_left + end_x, this->margin_top + end_y);
 }
 
 
 
 
-void Viewport::draw_rectangle(const QPen & pen, int pos_x, int pos_y, int rect_width, int rect_height)
+void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (pos_x > -32 && pos_x < this->size_width + 32 && pos_y > -32 && pos_y < this->size_height + 32) {
+	if (upper_left_x > -32 && upper_left_x < this->size_width + 32 && upper_left_y > -32 && upper_left_y < this->size_height + 32) {
 
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-		painter.drawRect(pos_x, pos_y, rect_width, rect_height);
+		painter.drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
 	}
 }
 
@@ -1691,11 +1707,11 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int des
 
 
 
-void Viewport::draw_arc(QPen const & pen, int pos_x, int pos_y, int size_w, int size_h, int angle1, int angle2, bool filled)
+void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int angle1, int angle2, bool filled)
 {
 	QPainter painter(this->scr_buffer);
 	painter.setPen(pen);
-	painter.drawArc(pos_x, pos_y, size_w, size_h, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
+	painter.drawArc(center_x, center_y, size_w, size_h, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
 }
 
 
@@ -1730,7 +1746,7 @@ void Viewport::set_coord_mode(CoordMode new_mode)
 
 
 /* Thanks GPSDrive. */
-static bool calcxy_rev(double * lg, double * lt, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+static bool calcxy_rev(double * longitude, double * latitude, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
 {
 	double Ra = Radius[90+(int)zero_lat];
 
@@ -1750,8 +1766,8 @@ static bool calcxy_rev(double * lg, double * lt, int x, int y, double zero_long,
 		px / (Ra *
 		      cos (DEG2RAD(lat)));
 
-	*lt = lat;
-	*lg = lon;
+	*latitude = lat;
+	*longitude = lon;
 	return (true);
 }
 
@@ -1759,7 +1775,7 @@ static bool calcxy_rev(double * lg, double * lt, int x, int y, double zero_long,
 
 
 /* Thanks GPSDrive. */
-static bool calcxy(double * x, double * y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
 {
 	int mapSizeX = 2 * mapSizeX2;
 	int mapSizeY = 2 * mapSizeY2;
@@ -1768,16 +1784,15 @@ static bool calcxy(double * x, double * y, double lg, double lt, double zero_lon
 	//    lg *= rad2deg; // FIXME, optimize equations
 	//    lt *= rad2deg;
 	double Ra = Radius[90 + (int) lt];
-	*x = Ra *
-		cos (DEG2RAD(lt)) * (lg - zero_long);
-	*y = Ra * (lt - zero_lat);
+	*pos_x = Ra * cos (DEG2RAD(lt)) * (lg - zero_long);
+	*pos_y = Ra * (lt - zero_lat);
 	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lg - zero_long)))));
-	*y = *y + dif / 1.85;
-	*x = *x / pixelfact_x;
-	*y = *y / pixelfact_y;
-	*x = mapSizeX2 - *x;
-	*y += mapSizeY2;
-	if ((*x < 0)||(*x >= mapSizeX)||(*y < 0)||(*y >= mapSizeY)) {
+	*pos_y = *pos_y + dif / 1.85;
+	*pos_x = *pos_x / pixelfact_x;
+	*pos_y = *pos_y / pixelfact_y;
+	*pos_x = mapSizeX2 - *pos_x;
+	*pos_y += mapSizeY2;
+	if ((*pos_x < 0)||(*pos_x >= mapSizeX)||(*pos_y < 0)||(*pos_y >= mapSizeY)) {
 		return false;
 	}
 	return true;
@@ -1870,7 +1885,7 @@ void Viewport::set_trigger(Layer * trg)
 
 
 
-Layer * Viewport::get_trigger()
+Layer * Viewport::get_trigger(void) const
 {
 	return this->trigger;
 }
@@ -1878,7 +1893,7 @@ Layer * Viewport::get_trigger()
 
 
 
-void Viewport::snapshot_save()
+void Viewport::snapshot_save(void)
 {
 	qDebug() << "II: Viewport: save snapshot";
 	*this->snapshot_buffer = *this->scr_buffer;
@@ -1891,7 +1906,7 @@ void Viewport::snapshot_save()
 
 
 
-void Viewport::snapshot_load()
+void Viewport::snapshot_load(void)
 {
 	qDebug() << "II: Viewport: load snapshot";
 	*this->scr_buffer = *this->snapshot_buffer;
@@ -1904,15 +1919,15 @@ void Viewport::snapshot_load()
 
 
 
-void Viewport::set_half_drawn(bool half_drawn_)
+void Viewport::set_half_drawn(bool new_half_drawn)
 {
-	half_drawn = half_drawn_;
+	this->half_drawn = new_half_drawn;
 }
 
 
 
 
-bool Viewport::get_half_drawn()
+bool Viewport::get_half_drawn(void) const
 {
 	return this->half_drawn;
 }
@@ -1920,11 +1935,13 @@ bool Viewport::get_half_drawn()
 
 
 
-void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
+LatLonMinMax Viewport::get_min_max_lat_lon(void) const
 {
-	Coord tleft =  this->screen_pos_to_coord(0,                 0);
+	LatLonMinMax min_max;
+
+	Coord tleft =  this->screen_pos_to_coord(0,                0);
 	Coord tright = this->screen_pos_to_coord(this->size_width, 0);
-	Coord bleft =  this->screen_pos_to_coord(0,                 this->size_height);
+	Coord bleft =  this->screen_pos_to_coord(0,                this->size_height);
 	Coord bright = this->screen_pos_to_coord(this->size_width, this->size_height);
 
 	tleft.change_mode(CoordMode::LATLON);
@@ -1932,10 +1949,12 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 	bleft.change_mode(CoordMode::LATLON);
 	bright.change_mode(CoordMode::LATLON);
 
-	*max_lat = MAX(tleft.ll.lat, tright.ll.lat);
-	*min_lat = MIN(bleft.ll.lat, bright.ll.lat);
-	*max_lon = MAX(tright.ll.lon, bright.ll.lon);
-	*min_lon = MIN(tleft.ll.lon, bleft.ll.lon);
+	min_max.max.lat = MAX(tleft.ll.lat, tright.ll.lat);
+	min_max.min.lat = MIN(bleft.ll.lat, bright.ll.lat);
+	min_max.max.lon = MAX(tright.ll.lon, bright.ll.lon);
+	min_max.min.lon = MIN(tleft.ll.lon, bleft.ll.lon);
+
+	return min_max;
 }
 
 
@@ -1984,10 +2003,10 @@ void Viewport::reset_copyrights()
 
 
 /**
- * @copyright: new copyright to display.
- *
- * Add a copyright to display on viewport.
- */
+   \brief Add a copyright to display on viewport
+
+   @copyright: new copyright to display.
+*/
 void Viewport::add_copyright(QString const & copyright)
 {
 	/* kamilTODO: make sure that this code is executed. */

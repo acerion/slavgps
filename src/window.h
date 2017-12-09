@@ -36,6 +36,7 @@
 #include "file.h"
 #include "acquire.h"
 #include "viewport.h"
+#include "viewport_internal.h"
 #include "viewport_utils.h"
 #include "layer_trw_track.h"
 #include "layer_trw_waypoints.h"
@@ -79,6 +80,7 @@ namespace SlavGPS {
 	class Toolbox;
 	class Viewport;
 	class LayersPanel;
+	class ScreenPos;
 
 
 
@@ -152,8 +154,8 @@ namespace SlavGPS {
 		void finish_new(void);
 
 		QString save_viewport_get_full_path(ViewportSaveMode mode);
-		void save_viewport_to_image(const QString & file_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz);
-		bool save_viewport_to_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, bool save_as_png, bool save_kmz);
+		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);
@@ -180,8 +182,8 @@ namespace SlavGPS {
 		QAction * qa_tree_item_properties = NULL;
 
 
-		unsigned int draw_image_width;
-		unsigned int draw_image_height;
+		int draw_image_width;
+		int draw_image_height;
 		bool save_viewport_as_png = false;
 
 	public slots:
@@ -326,10 +328,8 @@ namespace SlavGPS {
 		void open_window(const QStringList & file_full_paths);
 
 		bool pan_move_flag = false;
-		int pan_x = -1;
-		int pan_y = -1;
-		int delayed_pan_x; /* Temporary storage. */
-		int delayed_pan_y; /* Temporary storage. */
+		ScreenPos pan_pos;
+		ScreenPos delayed_pan_pos; /* Temporary storage. */
 		bool single_click_pending = false;
 
 

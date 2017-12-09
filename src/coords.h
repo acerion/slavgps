@@ -82,6 +82,12 @@ namespace SlavGPS {
 
 
 
+	/*
+	  north = min_max.max.lat
+	  east = min_max.max.lon
+	  south = min_max.min.lat
+	  west = min_max.min.lon
+	*/
 	class LatLonMinMax {
 	public:
 		LatLonMinMax() {};

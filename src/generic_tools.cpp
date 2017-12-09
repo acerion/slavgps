@@ -333,11 +333,13 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 {
 	qDebug() << "DD: Generic Tool Ruler: ->handle_mouse_click() called";
 
+	const ScreenPos event_pos(event->x(), event->y());
+
 	if (event->button() == Qt::LeftButton) {
 
 		QString msg;
 
-		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
+		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
 		QString lat;
 		QString lon;
@@ -381,7 +383,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		this->start_coord = cursor_coord;
 	} else {
-		this->viewport->set_center_from_screen_pos(event->x(), event->y());
+		this->viewport->set_center_from_screen_pos(event_pos);
 		this->window->draw_update_cb();
 	}
 
@@ -523,8 +525,8 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 	const unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
 
-	int center_x = this->viewport->get_width() / 2;
-	int center_y = this->viewport->get_height() / 2;
+	const ScreenPos center_pos(this->viewport->get_width() / 2, this->viewport->get_height() / 2);
+	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */
 	bool redraw_viewport = false;
@@ -539,13 +541,13 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   the same). */
 
 		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_from_screen_pos(center_x, center_y);
+			this->viewport->set_center_from_screen_pos(center_pos);
 			this->viewport->zoom_in();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_from_screen_pos(center_x, center_y);
+			this->viewport->set_center_from_screen_pos(center_pos);
 			this->viewport->zoom_out();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
@@ -560,13 +562,13 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 		   zoom). */
 
 		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_from_screen_pos(event->x(), event->y());
+			this->viewport->set_center_from_screen_pos(event_pos);
 			this->viewport->zoom_in();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 
 		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_from_screen_pos(event->x(), event->y());
+			this->viewport->set_center_from_screen_pos(event_pos);
 			this->viewport->zoom_out();
 			this->window->contents_modified = true;
 			redraw_viewport = true;
@@ -581,8 +583,8 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 		if (event->button() == Qt::LeftButton) {
 			this->ztr_is_active = true;
-			this->ztr_start_x = event->x();
-			this->ztr_start_y = event->y();
+			this->ztr_start_x = event_pos.x;
+			this->ztr_start_y = event_pos.y;
 			this->ztr_orig_viewport_pixmap = *this->viewport->get_pixmap();
 		}
 
@@ -591,28 +593,36 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 	} else {
 		/* Clicked coordinate will be put after zoom at the same
 		   position in viewport as before zoom.  Before zoom
-		   the location was under cursor, and after zoom it
+		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
 
 		switch (event->button()) {
 		case Qt::LeftButton: {
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
-			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
+
+			/* Here we use event position before zooming in. */
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
 			this->viewport->zoom_in();
 
-			this->viewport->set_center_from_screen_pos(center_x + (orig_pos.x - event->x()), center_y + (orig_pos.y - event->y()));
+			/* Position of event calculated in modified (zoomed in) viewport. */
+			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
+
+			this->viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 			break;
 		}
 		case Qt::RightButton: {
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
-			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
+
+			/* Here we use event position before zooming out. */
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
 			this->viewport->zoom_out();
 
-			this->viewport->set_center_from_screen_pos(center_x + (orig_pos.x - event->x()), center_y + (orig_pos.y - event->y()));
+			/* Position of event calculated in modified (zoomed out) viewport. */
+			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
+
+			this->viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 			this->window->contents_modified = true;
 			redraw_viewport = true;
 			break;
@@ -702,6 +712,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	}
 
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
+	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */
 	bool redraw_viewport = false;
@@ -710,10 +721,10 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 		/* Ensure that we haven't just released mouse button
 		   on the exact same position i.e. probably haven't
 		   moved the mouse at all. */
-		if (modifiers == Qt::ShiftModifier && (abs(event->x() - this->ztr_start_x) >= 5) && (abs(event->y() - this->ztr_start_y) >= 5)) {
+		if (modifiers == Qt::ShiftModifier && (abs(event_pos.x - this->ztr_start_x) >= 5) && (abs(event_pos.y - this->ztr_start_y) >= 5)) {
 
 			const Coord start_coord = this->viewport->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
+			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
 			/* From the extend of the bounds pick the best zoom level
 			   c.f. LayerTRW::zoom_to_show_latlons().
@@ -730,12 +741,12 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 			/* Zoom in/out by three if possible. */
 
 			if (event->button() == Qt::LeftButton) {
-				this->viewport->set_center_from_screen_pos(event->x(), event->y());
+				this->viewport->set_center_from_screen_pos(event_pos);
 				this->viewport->zoom_in();
 				this->viewport->zoom_in();
 				this->viewport->zoom_in();
 			} else { /* Qt::RightButton */
-				this->viewport->set_center_from_screen_pos(event->x(), event->y());
+				this->viewport->set_center_from_screen_pos(event_pos);
 				this->viewport->zoom_out();
 				this->viewport->zoom_out();
 				this->viewport->zoom_out();

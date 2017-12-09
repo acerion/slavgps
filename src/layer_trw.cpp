@@ -1954,10 +1954,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	LatLonMinMax min_max;
-	viewport->get_min_max_lat_lon(&min_max.min.lat, &min_max.max.lat, &min_max.min.lon, &min_max.max.lon);
-
-	a_geonames_wikipedia_box(this->get_window(), this, min_max);
+	a_geonames_wikipedia_box(this->get_window(), this, viewport->get_min_max_lat_lon());
 	this->waypoints->calculate_bounds();
 	g_tree->emit_update_window();
 }

@@ -76,7 +76,7 @@ namespace SlavGPS {
 		~Viewport();
 
 		bool configure();
-		void configure_manually(int width, unsigned int height); /* For off-screen viewports. */
+		void configure_manually(int width, int height); /* For off-screen viewports. */
 
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
@@ -90,8 +90,8 @@ namespace SlavGPS {
 
 
 		/* Drawing primitives. */
-		void draw_line(QPen const & pen, int x1, int y1, int x2, int y2);
-		void draw_rectangle(QPen const & pen, int x, int y, int width, int height);
+		void draw_line(QPen const & pen, int begin_x, int begin_y, int end_x, int end_y);
+		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
 		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
@@ -107,10 +107,10 @@ namespace SlavGPS {
 		void set_coord_mode(CoordMode mode);
 
 
-		bool go_back();
-		bool go_forward();
-		bool back_available(); // const
-		bool forward_available();
+		bool go_back(void);
+		bool go_forward(void);
+		bool back_available(void) const;
+		bool forward_available(void) const;
 
 
 		const Coord * get_center() const;
@@ -126,20 +126,21 @@ namespace SlavGPS {
 		void set_center_from_latlon(const LatLon & lat_lon, bool save_position);
 
 		void set_center_from_screen_pos(int x, int y);
+		void set_center_from_screen_pos(const ScreenPos & pos);
 
-		void get_center_for_zone(UTM * center, int zone);
+		void get_center_for_zone(UTM & center, int zone);
 		void get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
 
 		char get_leftmost_zone(void) const;
 		char get_rightmost_zone(void) const;
 
 
-		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
+		LatLonMinMax get_min_max_lat_lon(void) const;
 		LatLonBBox get_bbox(void) const;
 		LatLonBBoxStrings get_bbox_strings(void) const;
 
-		int get_width();
-		int get_height();
+		int get_width(void) const;
+		int get_height(void) const;
 
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;
@@ -166,7 +167,7 @@ namespace SlavGPS {
 
 
 
-		QPen get_highlight_pen();
+		QPen get_highlight_pen(void) const;
 		void set_highlight_thickness(int thickness);
 
 		void set_highlight_color(const QString & color_name);
@@ -181,28 +182,26 @@ namespace SlavGPS {
 		const QColor & get_background_color(void) const;
 
 
-		double calculate_utm_zone_width(); // private
-		void utm_zone_check(); // private
 		bool is_one_zone(void) const;
 
 
 		/* Viewport features. */
-		void draw_scale();
+		void draw_scale(void);
 		void set_scale_visibility(bool new_state);
-		bool get_scale_visibility();
+		bool get_scale_visibility(void) const;
 
 		void draw_copyrights();
 		void draw_centermark();
 		void set_center_mark_visibility(bool new_state);
 		bool get_center_mark_visibility();
-		void draw_logo();
+		void draw_logos(void);
 
 		void set_highlight_usage(bool new_state);
-		bool get_highlight_usage();
+		bool get_highlight_usage(void) const;
 
 
 
-		void clear();
+		void clear(void);
 
 
 		void set_drawmode(ViewportDrawMode drawmode);
@@ -211,9 +210,9 @@ namespace SlavGPS {
 
 
 		/* Viewport buffer management/drawing to screen. */
-		QPixmap * get_pixmap();   /* Get pointer to drawing buffer. */
+		QPixmap * get_pixmap(void) const;   /* Get pointer to drawing buffer. */
 		void set_pixmap(QPixmap & pixmap);
-		void sync();              /* Draw buffer to window. */
+		void sync(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
 
@@ -229,13 +228,13 @@ namespace SlavGPS {
 
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);
-		Layer * get_trigger();
+		Layer * get_trigger(void) const;
 
-		void snapshot_save();
-		void snapshot_load();
+		void snapshot_save(void);
+		void snapshot_load(void);
 
 		void set_half_drawn(bool half_drawn);
-		bool get_half_drawn();
+		bool get_half_drawn(void) const;
 
 		Window * get_window(void);
 
@@ -261,17 +260,18 @@ namespace SlavGPS {
 		std::list<Coord *> * centers;  /* The history of requested positions. */
 		std::list<Coord *>::iterator centers_iter; /* Current position within the history list. */
 
-		unsigned int centers_max;      /* configurable maximum size of the history list. */
-		unsigned int centers_radius;   /* Metres. */
+		int centers_max;      /* configurable maximum size of the history list. */
+		int centers_radius;   /* Metres. */
 
 		QPixmap * scr_buffer = NULL;
+
 		int size_width = 0;
 		int size_height = 0;
 		/* Half of the normal width and height. */
 		int size_width_2 = 0;
 		int size_height_2 = 0;
 
-		void update_centers();
+		void update_centers(void);
 
 
 		double utm_zone_width;
@@ -317,6 +317,10 @@ namespace SlavGPS {
 
 		void draw_scale_helper_scale(const QPen & pen, int scale_len, int h);
 		QString draw_scale_helper_value(DistanceUnit distance_unit, double scale_unit);
+
+		double calculate_utm_zone_width(void) const;
+		void utm_zone_check(void);
+
 
 		Window * window = NULL;
 

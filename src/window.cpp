@@ -181,26 +181,22 @@ Window::Window()
 
 	connect(g_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
 
+	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
+
 
 
 	this->set_current_document_full_path("");
 
-	int draw_image_width_;
-	if (ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width_)) {
-		this->draw_image_width = draw_image_width_;
-	} else {
+
+	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &this->draw_image_width)) {
 		this->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
 	}
-	int draw_image_height_;
-	if (ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height_)) {
-		this->draw_image_height = draw_image_height_;
-	} else {
+
+	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &this->draw_image_height)) {
 		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
 	}
-	bool save_viewport_as_png_;
-	if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &save_viewport_as_png_)) {
-		this->save_viewport_as_png = save_viewport_as_png_;
-	} else {
+
+	if (!ApplicationState::get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &this->save_viewport_as_png)) {
 		this->save_viewport_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
 	}
 
@@ -1084,7 +1080,7 @@ void Window::draw_redraw()
 	this->viewport->draw_scale();
 	this->viewport->draw_copyrights();
 	this->viewport->draw_centermark();
-	this->viewport->draw_logo();
+	this->viewport->draw_logos();
 
 	this->viewport->set_half_drawn(false); /* Just in case. */
 }
@@ -1166,8 +1162,7 @@ void Window::center_changed_cb(void) /* Slot. */
 	qDebug() << "SLOT: Window: center changed";
 
 	/* TODO: see if this comment should be implemented or not:
-	   "ATM Keep back always available, so when we pan - we can jump to the last requested position."
-	*/
+	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
 	this->qa_next_location->setEnabled(this->viewport->back_available());
 	this->qa_next_location->setEnabled(this->viewport->forward_available());
 }
@@ -1354,8 +1349,7 @@ void Window::pan_click(QMouseEvent * ev)
 	qDebug() << "II: Window: pan click";
 	/* Set panning origin. */
 	this->pan_move_flag = false;
-	this->pan_x = ev->x();
-	this->pan_y = ev->y();
+	this->pan_pos = ScreenPos(ev->x(), ev->y());
 }
 
 
@@ -1364,12 +1358,11 @@ void Window::pan_click(QMouseEvent * ev)
 void Window::pan_move(QMouseEvent * ev)
 {
 	qDebug() << "II: Window: pan move";
-	if (this->pan_x != -1) {
-		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
-							   this->viewport->get_height() / 2 - ev->y() + this->pan_y);
+	if (this->pan_pos.x != -1) {
+		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
+							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 		this->pan_move_flag = true;
-		this->pan_x = ev->x();
-		this->pan_y = ev->y();
+		this->pan_pos = ScreenPos(ev->x(), ev->y());
 		this->draw_update();
 	}
 }
@@ -1386,8 +1379,7 @@ void Window::pan_release(QMouseEvent * ev)
 		this->single_click_pending = !this->single_click_pending;
 		if (this->single_click_pending) {
 			/* Store offset to use. */
-			this->delayed_pan_x = this->pan_x;
-			this->delayed_pan_y = this->pan_y;
+			this->delayed_pan_pos = this->pan_pos;
 
 			/* Get double click time. */
 			int interval = qApp->doubleClickInterval() * 1.1;
@@ -1400,11 +1392,11 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->viewport->set_center_from_screen_pos(this->pan_x, this->pan_y);
+			this->viewport->set_center_from_screen_pos(this->pan_pos);
 		}
 	} else {
-		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_x,
-							   this->viewport->get_height() / 2 - ev->y() + this->pan_y);
+		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
+							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 	}
 
 	this->pan_off();
@@ -1419,8 +1411,8 @@ void Window::pan_release(QMouseEvent * ev)
 void Window::pan_off(void)
 {
 	this->pan_move_flag = false;
-	this->pan_x = -1;
-	this->pan_y = -1;
+	this->pan_pos.x = -1;
+	this->pan_pos.y = -1;
 }
 
 
@@ -2791,7 +2783,7 @@ void Window::print_cb(void)
 
 
 
-void Window::save_viewport_to_image(const QString & file_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, bool save_kmz)
+void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, bool save_as_png, bool save_kmz)
 {
 	/* More efficient way: stuff draws directly to pixbuf (fork viewport). TODO: verify this comment. */
 
@@ -2815,17 +2807,17 @@ void Window::save_viewport_to_image(const QString & file_full_path, unsigned int
 	this->viewport->set_zoom(zoom);
 
 	/* Set expected width and height. */
-	this->viewport->configure_manually(w, h);
+	this->viewport->configure_manually(image_width, image_height);
 
 	/* Redraw all layers at current position and zoom. */
 	this->draw_redraw();
 
 	/* Save buffer as file. */
 	QPixmap * pixmap = this->viewport->get_pixmap();
-	//QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+	//QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, image_width, image_height);
 
 	if (!pixmap) {
-		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", w, h);
+		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", image_width, image_height);
 
 		this->status_bar->set_message(StatusBarField::INFO, QString(""));
 		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
@@ -2841,8 +2833,12 @@ void Window::save_viewport_to_image(const QString & file_full_path, unsigned int
 	bool success = true;
 
 	if (save_kmz) {
-		double north, east, south, west;
-		this->viewport->get_min_max_lat_lon(&south, &north, &west, &east);
+
+		const LatLonMinMax min_max = this->viewport->get_min_max_lat_lon();
+		const double north = min_max.max.lat;
+		const double east = min_max.max.lon;
+		const double south = min_max.min.lat;
+		const double west = min_max.min.lon;
 #ifdef K
 		ans = kmz_save_file(pixmap, file_full_path, north, east, south, west);
 #endif
@@ -2874,7 +2870,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, unsigned int
 
 
 
-bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
 {
 	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
@@ -2888,7 +2884,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 	this->viewport->set_zoom(zoom);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->configure_manually(w, h);
+	this->viewport->configure_manually(image_width, image_height);
 
 	QDir dir(dir_full_path);
 	if (!dir.exists()) {
@@ -2907,15 +2903,15 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
-				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (w*zoom);
+				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (image_width * zoom);
 			} else {
-				utm.easting += ((double)x - (((double)tiles_w)+1)/2) * (w*zoom);
+				utm.easting += ((double)x - (((double)tiles_w)+1)/2) * (image_width * zoom);
 			}
 
 			if (tiles_h & 0x1) {/* odd */
-				utm.northing -= ((double)y - ceil(((double)tiles_h)/2)) * (h*zoom);
+				utm.northing -= ((double)y - ceil(((double)tiles_h)/2)) * (image_height * zoom);
 			} else { /* even */
-				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (h*zoom);
+				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * zoom);
 			}
 
 			/* TODO: move to correct place. */
@@ -2925,7 +2921,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, unsigned int w,
 			this->draw_redraw();
 
 			/* Save buffer as file. */
-			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, image_width, image_height);
 			QPixmap * pixmap = this->viewport->get_pixmap();
 			if (!pixmap->save(file_full_path, extension)) {
 				qDebug() << "WW: Viewport: Save to Image Dir: Unable to write to file" << file_full_path;
@@ -3361,11 +3357,11 @@ static bool window_pan_timeout(Window * window)
 	/* Set panning origin. */
 	window->pan_move_flag = false;
 	window->single_click_pending = false;
-	window->viewport->set_center_from_screen_pos(window->delayed_pan_x, window->delayed_pan_y);
+	window->viewport->set_center_from_screen_pos(window->delayed_pan_pos);
 	window->draw_update();
 
 	/* Really turn off the pan moving!! */
-	window->pan_x = window->pan_y = -1;
+	window->pan_off();
 #endif
 	return false;
 }

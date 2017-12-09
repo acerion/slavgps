@@ -80,10 +80,7 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, Ba
 		return false;
 	}
 
-	LatLonMinMax min_max;
-	acquiring->viewport->get_min_max_lat_lon(&min_max.min.lat, &min_max.max.lat, &min_max.min.lon, &min_max.max.lon);
-
-	a_geonames_wikipedia_box(acquiring->window, trw, min_max);
+	a_geonames_wikipedia_box(acquiring->window, trw, acquiring->viewport->get_min_max_lat_lon());
 
 	return true;
 }

@@ -2395,11 +2395,9 @@ void LayerMap::download_all_cb(void)
 	}
 
 	/* Find out new current positions. */
-	double min_lat, max_lat, min_lon, max_lon;
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-
-	const Coord coord_ul(LatLon(max_lat, min_lon), viewport->get_coord_mode());
-	const Coord coord_br(LatLon(min_lat, max_lon), viewport->get_coord_mode());
+	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
+	const Coord coord_ul(LatLon(min_max.max.lat, min_max.min.lon), viewport->get_coord_mode());
+	const Coord coord_br(LatLon(min_max.min.lat, min_max.max.lon), viewport->get_coord_mode());
 
 	/* Get Maps Count - call for each zoom level (in reverse).
 	   With REDOWNLOAD_NEW this is a possible maximum.

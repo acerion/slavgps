@@ -2262,8 +2262,8 @@ bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
  */
 Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max_alt)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->altitudes = this->trk->make_elevation_map(initial_width);
@@ -2297,8 +2297,8 @@ Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max
  */
 Viewport * TrackProfileDialog::create_gd_viewport(void)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->gradients = this->trk->make_gradient_map(initial_width);
@@ -2327,8 +2327,8 @@ Viewport * TrackProfileDialog::create_gd_viewport(void)
  */
 Viewport * TrackProfileDialog::create_st_viewport(void)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->speeds = this->trk->make_speed_map(initial_width);
@@ -2378,8 +2378,8 @@ Viewport * TrackProfileDialog::create_st_viewport(void)
  */
 Viewport * TrackProfileDialog::create_dt_viewport(void)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->distances = this->trk->make_distance_map(initial_width);
@@ -2408,8 +2408,8 @@ Viewport * TrackProfileDialog::create_dt_viewport(void)
  */
 Viewport * TrackProfileDialog::create_et_viewport(void)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->ats = this->trk->make_elevation_time_map(initial_width);
@@ -2437,8 +2437,8 @@ Viewport * TrackProfileDialog::create_et_viewport(void)
  */
 Viewport * TrackProfileDialog::create_sd_viewport(void)
 {
-	int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
+	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	/* First allocation. */
 	this->speeds_dist = this->trk->make_speed_dist_map(initial_width); // kamilFIXME

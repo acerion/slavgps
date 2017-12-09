@@ -528,8 +528,7 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 
 void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 {
-	double max_lat, max_lon, min_lat, min_lon;
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
+	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
 
 	/* If given DEM is loaded into application, we want to know whether the DEM and
 	   current viewport overlap, so that we know whether we should draw it in
@@ -561,10 +560,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		double nscale_deg = dem->north_scale / ((double) 3600);
 		double escale_deg = dem->east_scale / ((double) 3600);
 
-		double max_lat_as = max_lat * 3600;
-		double min_lat_as = min_lat * 3600;
-		double max_lon_as = max_lon * 3600;
-		double min_lon_as = min_lon * 3600;
+		double max_lat_as = min_max.max.lat * 3600;
+		double min_lat_as = min_max.min.lat * 3600;
+		double max_lon_as = min_max.max.lon * 3600;
+		double min_lon_as = min_max.min.lon * 3600;
 
 		double start_lat_as = MAX(min_lat_as, dem->min_north);
 		double end_lat_as   = MIN(max_lat_as, dem->max_north);
@@ -1172,21 +1171,17 @@ static char * dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 /* TODO: generalize. */
 static void dem24k_draw_existence(Viewport * viewport)
 {
-	double max_lat, max_lon, min_lat, min_lon;
-	QString buf;
-	double i, j;
+	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
 
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-
-	for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
+	for (double i = floor(min_max.lat.min * 8)/8; i <= floor(min_max.lat.max * 8)/8; i+=0.125) {
 		/* Check lat dir first -- faster. */
-		buf = QString("%1dem24k/%2/").arg(map_cache_dir()).arg((int) i);
+		QString buf = QString("%1dem24k/%2/").arg(map_cache_dir()).arg((int) i);
 
 		if (0 != access(buf.toUtf8().constData(), F_OK)) {
 			continue;
 		}
 
-		for (j = floor(min_lon*8)/8; j <= floor(max_lon*8)/8; j+=0.125) {
+		for (double j = floor(min_max.lon.min * 8)/8; j <= floor(min_max.lon.max * 8)/8; j+=0.125) {
 			/* Check lon dir first -- faster. */
 			buf = QString("%1dem24k/%2/%3/").arg(map_cache_dir()).arg((int) i).arg((int) j);
 			if (0 != access(buf.toUtf8().constData(), F_OK)) {
