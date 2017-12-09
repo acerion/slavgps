@@ -80,6 +80,7 @@ SOURCES += main.cpp \
     generic_tools.cpp \
     viewport.cpp \
     viewport_utils.cpp \
+    viewport_decorations.cpp \
     viewport_zoom.cpp \
     coord.cpp \
     coords.cpp \
@@ -207,6 +208,7 @@ HEADERS += window.h \
     viewport.h \
     viewport_internal.h \
     viewport_utils.h \
+    viewport_decorations.h \
     viewport_zoom.h \
     coord.h \
     coords.h \

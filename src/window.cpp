@@ -1077,10 +1077,7 @@ void Window::draw_redraw()
 	}
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
-	this->viewport->draw_scale();
-	this->viewport->draw_copyrights();
-	this->viewport->draw_centermark();
-	this->viewport->draw_logos();
+	this->viewport->draw_decorations();
 
 	this->viewport->set_half_drawn(false); /* Just in case. */
 }

@@ -75,6 +75,22 @@ namespace SlavGPS {
 
 
 
+	class ScreenPos {
+	public:
+		ScreenPos() {};
+		ScreenPos(int new_x, int new_y) : x(new_x), y(new_y) {};
+		int x = 0;
+		int y = 0;
+
+		bool operator==(const ScreenPos & pos) const;
+
+		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
+		static bool is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit);
+	};
+
+
+
+
 	enum {
 		SG_TEXT_OFFSET_NONE = 0x00,
 		SG_TEXT_OFFSET_LEFT = 0x01,

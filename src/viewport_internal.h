@@ -34,6 +34,8 @@
 #include <QPrinter>
 
 #include "viewport.h"
+#include "viewport_utils.h"
+#include "viewport_decorations.h"
 #include "coord.h"
 #include "bbox.h"
 #include "globals.h"
@@ -48,22 +50,6 @@ namespace SlavGPS {
 
 	class Window;
 	class Layer;
-
-
-
-
-	class ScreenPos {
-	public:
-		ScreenPos() {};
-		ScreenPos(int new_x, int new_y) : x(new_x), y(new_y) {};
-		int x = 0;
-		int y = 0;
-
-		bool operator==(const ScreenPos & pos) const;
-
-		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
-		static bool is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit);
-	};
 
 
 
@@ -159,10 +145,7 @@ namespace SlavGPS {
 		void zoom_out();
 
 
-		void reset_copyrights();
 		void add_copyright(QString const & copyright);
-
-		void reset_logos();
 		void add_logo(QPixmap const * logo);
 
 
@@ -185,16 +168,12 @@ namespace SlavGPS {
 		bool is_one_zone(void) const;
 
 
-		/* Viewport features. */
-		void draw_scale(void);
+		void draw_decorations(void);
+		void set_center_mark_visibility(bool new_state);
+		bool get_center_mark_visibility(void) const;
 		void set_scale_visibility(bool new_state);
 		bool get_scale_visibility(void) const;
 
-		void draw_copyrights();
-		void draw_centermark();
-		void set_center_mark_visibility(bool new_state);
-		bool get_center_mark_visibility();
-		void draw_logos(void);
 
 		void set_highlight_usage(bool new_state);
 		bool get_highlight_usage(void) const;
@@ -236,16 +215,13 @@ namespace SlavGPS {
 		void set_half_drawn(bool half_drawn);
 		bool get_half_drawn(void) const;
 
-		Window * get_window(void);
+		Window * get_window(void) const;
 
 
 		/* Whether or not to display OSD info. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;
 		bool highlight_usage = true;
-
-		QStringList copyrights;
-		std::list<QPixmap const *> logos;
 
 
 		double xmpp, ympp;
@@ -281,10 +257,6 @@ namespace SlavGPS {
 		ViewportDrawMode drawmode;
 
 
-		/* For scale and center mark. */
-		QPen pen_marks_bg;
-		QPen pen_marks_fg;
-
 		QPen background_pen;
 		QColor background_color;
 
@@ -315,14 +287,12 @@ namespace SlavGPS {
 		void free_center(std::list<Coord *>::iterator iter);
 		void init_drawing_area(void);
 
-		void draw_scale_helper_scale(const QPen & pen, int scale_len, int h);
-		QString draw_scale_helper_value(DistanceUnit distance_unit, double scale_unit);
-
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
 
 
 		Window * window = NULL;
+		ViewportDecorations decorations;
 
 	signals:
 		void updated_center(void);

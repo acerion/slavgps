@@ -88,7 +88,6 @@ using namespace SlavGPS;
 
 
 static double EASTING_OFFSET = 500000.0;
-static int PAD = 10;
 
 static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
 static bool calcxy_rev(double * longitude, double * latitude, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
@@ -400,12 +399,6 @@ bool Viewport::configure()
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
-	this->pen_marks_fg.setColor(QColor("grey"));
-	this->pen_marks_fg.setWidth(2);
-	this->pen_marks_bg.setColor(QColor("pink"));
-	this->pen_marks_bg.setWidth(6);
-
-
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
 		qDebug() << "DD:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
@@ -441,10 +434,54 @@ void Viewport::clear(void)
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
-	this->reset_copyrights();
-	this->reset_logos();
+	this->decorations.reset_data();
+
 }
 
+
+
+
+void Viewport::draw_decorations(void)
+{
+	this->decorations.draw(this);
+
+	return;
+}
+
+
+
+
+/**
+   \brief Enable/Disable display of center mark
+*/
+void Viewport::set_center_mark_visibility(bool new_state)
+{
+	this->center_mark_visibility = new_state;
+}
+
+
+
+
+bool Viewport::get_center_mark_visibility() const
+{
+	return this->center_mark_visibility;
+}
+
+
+
+
+void Viewport::set_highlight_usage(bool new_state)
+{
+	this->highlight_usage = new_state;
+}
+
+
+
+
+bool Viewport::get_highlight_usage(void) const
+{
+	return this->highlight_usage;
+}
 
 
 
@@ -462,333 +499,6 @@ void Viewport::set_scale_visibility(bool new_state)
 bool Viewport::get_scale_visibility(void) const
 {
 	return this->scale_visibility;
-}
-
-
-
-/* Return length of scale bar, in pixels. */
-static int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
-{
-	double ratio = *base_distance / *scale_unit;
-	//fprintf(stderr, "%s:%d: %d / %d / %d\n", __FUNCTION__, __LINE__, (int) *base_distance, (int) *scale_unit, maximum_width);
-
-	int n = 0;
-	if (ratio > 1) {
-		n = (int) floor(log10(ratio));
-	} else {
-		n = (int) floor(log10(1.0 / ratio));
-	}
-
-	//fprintf(stderr, "%s:%d: ratio = %f, n = %d\n", __FUNCTION__, __LINE__, ratio, n);
-
-	*scale_unit = pow(10.0, n); /* scale_unit is still a unit (1 km, 10 miles, 100 km, etc. ), only 10^n times larger. */
-	ratio = *base_distance / *scale_unit;
-	double len = maximum_width / ratio; /* [px] */
-
-
-	//fprintf(stderr, "%s:%d: len = %f\n", __FUNCTION__, __LINE__, len);
-	/* I don't want the scale unit to be always 10^n.
-
-	   Let's say that at this point we have a scale of length 10km
-	   = 344 px. Let's see what actually happens as we zoom out:
-	   zoom  0: 10 km / 344 px
-	   zoom -1: 10 km / 172 px
-	   zoom -2: 10 km /  86 px
-	   zoom -3: 10 km /  43 px
-
-	   At zoom -3 the scale is small and not very useful. With the code
-	   below enabled we get:
-
-	   zoom  0: 10 km / 345 px
-	   zoom -1: 20 km / 345 px
-	   zoom -2: 20 km / 172 px
-	   zoom -3: 50 km / 216 px
-
-	   We can see that the scale doesn't become very short, and keeps being usable. */
-
-	if (maximum_width / len > 5) {
-		*scale_unit *= 5;
-		ratio = *base_distance / *scale_unit;
-		len = maximum_width / ratio;
-
-	} else if (maximum_width / len > 2) {
-		*scale_unit *= 2;
-		ratio = *base_distance / *scale_unit;
-		len = maximum_width / ratio;
-
-	} else {
-		;
-	}
-	//fprintf(stderr, "rescale unit len = %g\n", len);
-
-	return (int) len;
-}
-
-
-
-
-void Viewport::draw_scale(void)
-{
-	if (!this->scale_visibility) {
-		return;
-	}
-
-	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
-	int HEIGHT = 20;            /* Height of scale in pixels. */
-	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
-	int MAXIMUM_WIDTH = this->size_width * RELATIVE_WIDTH;
-
-	const Coord left =  this->screen_pos_to_coord(0,                                 this->size_height / 2);
-	const Coord right = this->screen_pos_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2);
-
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
-		base_distance = Coord::distance(left, right); /* In meters. */
-		break;
-	case DistanceUnit::MILES:
-		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
-		base_distance = VIK_METERS_TO_MILES (Coord::distance(left, right)) * 10.0;
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
-		base_distance = VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(left, right)) * 10.0;
-		break;
-	default:
-		base_distance = 1; /* Keep the compiler happy. */
-		qDebug() << "EE: Viewport: failed to get correct units of distance, got" << (int) distance_unit;
-	}
-
-	/* At this point "base_distance" is a distance between "left" and "right" in physical units.
-	   But a scale can't have an arbitrary length (e.g. 3.07 miles, or 23.2 km),
-	   it should be something like 1.00 mile or 10.00 km - a unit. */
-	double scale_unit = 1; /* [km, miles, nautical miles] */
-
-	//fprintf(stderr, "%s:%d: base_distance = %g, scale_unit = %g, MAXIMUM_WIDTH = %d\n", __FUNCTION__, __LINE__, base_distance, scale_unit, MAXIMUM_WIDTH);
-	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
-	//fprintf(stderr, "resolved len = %d\n", len);
-
-
-	const QPen & pen_fg = this->pen_marks_fg;
-	const QPen & pen_bg = this->pen_marks_bg;
-
-	this->draw_scale_helper_scale(pen_bg, len, HEIGHT); /* Bright background. */
-	this->draw_scale_helper_scale(pen_fg, len, HEIGHT); /* Darker scale on the bright background. */
-
-	const QString scale_value = this->draw_scale_helper_value(distance_unit, scale_unit);
-
-
-	QPointF scale_start(PAD, this->size_height - PAD); /* Bottom-left corner of scale. */
-	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
-	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
-	this->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
-	/* TODO: we need to draw background of the text in some color,
-	   so that it's more visible on a map that will be present in the background. */
-
-#if 1
-	/* Debug. */
-	QPainter painter(this->scr_buffer);
-	painter.setPen(QColor("red"));
-	painter.drawEllipse(scale_start, 3, 3);
-	painter.setPen(QColor("blue"));
-	painter.drawEllipse(value_start, 3, 3);
-#endif
-
-	this->repaint();
-}
-
-
-
-
-void Viewport::draw_scale_helper_scale(const QPen & pen, int scale_len, int h)
-{
-	/* Black scale. */
-	this->draw_line(pen, PAD,             this->size_height - PAD, PAD + scale_len, this->size_height - PAD);
-	this->draw_line(pen, PAD,             this->size_height - PAD, PAD,             this->size_height - PAD - h);
-	this->draw_line(pen, PAD + scale_len, this->size_height - PAD, PAD + scale_len, this->size_height - PAD - h);
-
-	int y1 = this->size_height - PAD;
-	for (int i = 1; i < 10; i++) {
-		int x1 = PAD + i * scale_len / 10;
-		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
-		this->draw_line(pen, x1, y1, x1, y1 - diff);
-	}
-}
-
-
-
-
-QString Viewport::draw_scale_helper_value(DistanceUnit distance_unit, double scale_unit)
-{
-	QString scale_value;
-
-	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
-		if (scale_unit >= 1000) {
-			scale_value = tr("y%1 km").arg((int) scale_unit / 1000);
-		} else {
-			scale_value = tr("y%1 m").arg((int) scale_unit);
-		}
-		break;
-	case DistanceUnit::MILES:
-		/* Handle units in 0.1 miles. */
-		if (scale_unit < 10.0) {
-			scale_value = tr("%1 miles").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
-		} else if ((int) scale_unit == 10.0) {
-			scale_value = tr("1 mile");
-		} else {
-			scale_value = tr("%1 miles").arg((int) (scale_unit / 10.0));
-		}
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		/* Handle units in 0.1 NM. */
-		if (scale_unit < 10.0) {
-			scale_value = tr("%1 NM").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
-		} else if ((int) scale_unit == 10.0) {
-			scale_value = tr("1 NM");
-		} else {
-			scale_value = tr("%1 NMs").arg((int) (scale_unit / 10.0));
-		}
-		break;
-	default:
-		qDebug() << "EE: Viewport: failed to get correct units of distance, got" << (int) distance_unit;
-	}
-
-	return scale_value;
-}
-
-
-
-
-void Viewport::draw_copyrights(void)
-{
-	/* TODO: how to ensure that these 128 chars fit into bounding rectangle used below? */
-#define MAX_COPYRIGHTS_LEN 128
-	QString result;
-	int free_space = MAX_COPYRIGHTS_LEN;
-
-#if 1
-	this->copyrights << "test copyright 1";
-	this->copyrights << "another test copyright";
-#endif
-
-	/* Compute copyrights string. */
-
-	for (int i = 0; i < this->copyrights.size(); i++) {
-
-		if (free_space < 0) {
-			break;
-		}
-
-		QString const & copyright = copyrights[i];
-
-		/* Only use part of this copyright that fits in the available space left,
-		   remembering 1 character is left available for the appended space. */
-
-		result.append(copyright.left(free_space));
-		free_space -= copyright.size();
-
-		result.append(" ");
-		free_space--;
-	}
-
-	/* Copyright text will be in bottom-right corner. */
-	/* Use no more than half of width of viewport. */
-	int x_size = 0.5 * this->size_width;
-	int y_size = 0.7 * this->size_height;
-	int w_size = this->size_width - x_size - PAD;
-	int h_size = this->size_height - y_size - PAD;
-
-	QPointF box_start = QPointF(this->size_width - PAD, this->size_height - PAD); /* Anchor in bottom-right corner. */
-	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w_size, -h_size);
-	this->draw_text(QFont("Helvetica", 12), this->pen_marks_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, result, 0);
-
-#undef MAX_COPYRIGHTS_LEN
-}
-
-
-
-
-/**
- * Enable/Disable display of center mark.
- */
-void Viewport::set_center_mark_visibility(bool new_state)
-{
-	this->center_mark_visibility = new_state;
-}
-
-
-
-
-bool Viewport::get_center_mark_visibility()
-{
-	return this->center_mark_visibility;
-}
-
-
-
-
-void Viewport::draw_centermark()
-{
-	qDebug() << "II: Viewport: draw centermark:" << this->center_mark_visibility;
-
-	if (!this->center_mark_visibility) {
-		return;
-	}
-
-	const int len = 30;
-	const int gap = 4;
-	int center_x = this->size_width / 2;
-	int center_y = this->size_height / 2;
-
-	const QPen & pen_fg = this->pen_marks_fg;
-	const QPen & pen_bg = this->pen_marks_bg;
-
-	/* White background. */
-	this->draw_line(pen_bg, center_x - len, center_y,       center_x - gap, center_y);
-	this->draw_line(pen_bg, center_x + gap, center_y,       center_x + len, center_y);
-	this->draw_line(pen_bg, center_x,       center_y - len, center_x,       center_y - gap);
-	this->draw_line(pen_bg, center_x,       center_y + gap, center_x,       center_y + len);
-
-	/* Black foreground. */
-	this->draw_line(pen_fg, center_x - len, center_y,        center_x - gap, center_y);
-	this->draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
-	this->draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
-	this->draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
-
-	this->update();
-}
-
-
-
-
-void Viewport::draw_logos(void)
-{
-	int x_pos = this->size_width - PAD;
-	int y_pos = PAD;
-	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
-		QPixmap const * logo = *iter;
-		const int logo_width = logo->width();
-		const int logo_height = logo->height();
-		this->draw_pixmap(*logo, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
-		x_pos = x_pos - logo_width - PAD;
-	}
-}
-
-
-
-
-void Viewport::set_highlight_usage(bool new_state)
-{
-	this->highlight_usage = new_state;
-}
-
-
-
-
-bool Viewport::get_highlight_usage(void) const
-{
-	return this->highlight_usage;
 }
 
 
@@ -1717,7 +1427,6 @@ void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w
 
 
 
-
 void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled) /* TODO: handle 'filled' arg. */
 {
 	QPainter painter(this->scr_buffer);
@@ -1994,14 +1703,6 @@ LatLonBBoxStrings Viewport::get_bbox_strings(void) const
 
 
 
-void Viewport::reset_copyrights()
-{
-	this->copyrights.clear();
-}
-
-
-
-
 /**
    \brief Add a copyright to display on viewport
 
@@ -2010,28 +1711,20 @@ void Viewport::reset_copyrights()
 void Viewport::add_copyright(QString const & copyright)
 {
 	/* kamilTODO: make sure that this code is executed. */
-	if (!this->copyrights.contains(copyright)) {
-		this->copyrights.push_front(copyright);
+	if (!this->decorations.copyrights.contains(copyright)) {
+		this->decorations.copyrights.push_front(copyright);
 	}
 }
 
 
 
 
+#ifdef K
 void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright)
 {
 	viewport->add_copyright(copyright);
 }
-
-
-
-
-void Viewport::reset_logos()
-{
-	/* Do not free pointers, they are owned by someone else.
-	   TODO: this is potentially a source of problems - if owner deletes pointer, it becomes invalid in viewport, right?. */
-	logos.clear();
-}
+#endif
 
 
 
@@ -2043,9 +1736,9 @@ void Viewport::add_logo(QPixmap const * logo)
 		return;
 	}
 
-	auto iter = std::find(this->logos.begin(), this->logos.end(), logo); /* TODO: how does comparison of pointers work? */
-	if (iter == this->logos.end()) {
-		logos.push_front(logo);
+	auto iter = std::find(this->decorations.logos.begin(), this->decorations.logos.end(), logo); /* TODO: how does comparison of pointers work? */
+	if (iter == this->decorations.logos.end()) {
+		this->decorations.logos.push_front(logo);
 	}
 
 	return;
@@ -2097,7 +1790,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 
 
-Window * Viewport::get_window(void)
+Window * Viewport::get_window(void) const
 {
 	return this->window;
 }
@@ -2107,7 +1800,7 @@ Window * Viewport::get_window(void)
 
 void Viewport::paintEvent(QPaintEvent * ev)
 {
-	qDebug() << "II: Viewport: paintEvent()" << __FUNCTION__ << __LINE__;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__;
 
 	QPainter painter(this);
 
@@ -2115,7 +1808,7 @@ void Viewport::paintEvent(QPaintEvent * ev)
 
 	painter.setPen(Qt::blue);
 	painter.setFont(QFont("Arial", 30));
-	painter.drawText(this->rect(), Qt::AlignCenter, "Qt");
+	painter.drawText(this->rect(), Qt::AlignCenter, "SlavGPS");
 
 	return;
 }
@@ -2232,6 +1925,8 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 			this->zoom_out();
 		}
 	} else {
+		/* TODO: see also code in GenericToolZoom::handle_mouse_click() */
+
 		/* Make sure mouse is still over the same point on the map when we zoom. */
 		int center_x = w / 2;
 		int center_y = h / 2;

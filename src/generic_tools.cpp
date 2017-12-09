@@ -599,6 +599,8 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 		switch (event->button()) {
 		case Qt::LeftButton: {
 
+			/* TODO: see also code in Viewport::wheelEvent() */
+
 			/* Here we use event position before zooming in. */
 			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
@@ -613,6 +615,8 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 			break;
 		}
 		case Qt::RightButton: {
+
+			/* TODO: see also code in Viewport::wheelEvent() */
 
 			/* Here we use event position before zooming out. */
 			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
