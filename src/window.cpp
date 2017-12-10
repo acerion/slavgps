@@ -170,7 +170,7 @@ Window::Window()
 
 
 	/* Own signals. */
-	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
+	connect(this->viewport, SIGNAL(center_updated(void)), this, SLOT(center_changed_cb(void)));
 	connect(this->items_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
 
 	g_tree = new Tree();
@@ -208,7 +208,7 @@ Window::Window()
 
 	// Signals from GTK
 	QObject::connect(this->viewport, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
-	QObject::connect(this->viewport, SIGNAL("configure_event"), this, SLOT (window_configure_event));
+	QObject::connect(this->viewport, SIGNAL("drawing_area_reconfigured"), this, SLOT (window_configure_event));
 	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 
 	/* This signal appears to be already handled by Viewport::wheelEvent(). */

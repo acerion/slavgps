@@ -89,7 +89,7 @@ namespace SlavGPS {
 		void checkbutton_toggle_cb(void);
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
-		bool configure_event_cb(Viewport * viewport);
+		bool paint_to_viewport_cb(Viewport * viewport);
 
 
 		void track_ed_move_cb(Viewport * viewport, QMouseEvent * event);

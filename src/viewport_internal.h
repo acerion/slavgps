@@ -104,7 +104,7 @@ namespace SlavGPS {
 		std::list<QString> get_centers_list(void) const;
 		void show_centers(Window * parent) const;
 		void print_centers(const QString & label) const;
-		void update_centers(void);
+
 
 
 
@@ -230,8 +230,8 @@ namespace SlavGPS {
 
 		/* centers_iter++ means moving forward in history. Thus prev(centers->end()) is the newest item.
 		   centers_iter-- means moving backward in history. Thus centers->begin() is the oldest item (in the beginning of history). */
-		std::list<Coord *> * centers;  /* The history of requested positions. */
-		std::list<Coord *>::iterator centers_iter; /* Current position within the history list. */
+		std::list<Coord> * centers;  /* The history of requested positions. */
+		std::list<Coord>::iterator centers_iter; /* Current position within the history list. */
 
 		int centers_max;      /* configurable maximum size of the history list. */
 		int centers_radius;   /* Metres. */
@@ -245,8 +245,8 @@ namespace SlavGPS {
 		int size_height_2 = 0;
 
 
-		double utm_zone_width;
-		bool one_utm_zone;
+		double utm_zone_width = 0.0;
+		bool is_one_utm_zone;
 
 		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
 		ViewportDrawMode drawmode;
@@ -281,21 +281,25 @@ namespace SlavGPS {
 		int margin_right = 0;
 
 	private:
-		void free_center(std::list<Coord *>::iterator iter);
+		void free_center(std::list<Coord>::iterator iter);
 		void init_drawing_area(void);
 
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
+
+		/* Store the current center position into the history list
+		   and emit a signal to notify clients the list has been updated. */
+		void save_current_center(void);
 
 
 		Window * window = NULL;
 		ViewportDecorations decorations;
 
 	signals:
-		void updated_center(void);
 		void cursor_moved(Viewport * viewport, QMouseEvent * event);
 		void button_released(Viewport * viewport, QMouseEvent * event);
-		void reconfigured(Viewport * viewport);
+		void center_updated(void);
+		void drawing_area_reconfigured(Viewport * viewport);
 
 
 	public slots:

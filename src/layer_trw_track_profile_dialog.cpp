@@ -55,6 +55,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__
+
+
+
+
 enum {
 	SG_TRACK_PROFILE_CANCEL,
 	SG_TRACK_PROFILE_SPLIT_AT_MARKER,
@@ -2212,9 +2217,9 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 /**
  * Configure/Resize the profile & speed/time images.
  */
-bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
+bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 {
-	qDebug() << "SLOT: Track Profile: received \"reconfigured\" signal from" << viewport->type_string;
+	qDebug() << "SLOT:" PREFIX << "reacting to signal from viewport" << viewport->type_string;
 
 #ifdef K
 	if (widgets->configure_dialog) {
@@ -2756,7 +2761,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_ed_show_gps_speed, show_alt_gps_speed);
 		connect(this->w_ed_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_ed_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_ed, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_ed, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Elevation-distance"));
 	}
 
@@ -2771,7 +2776,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_gd_show_gps_speed, show_gradient_gps_speed,
 							 NULL, false);
 		connect(this->w_gd_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_gd, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_gd, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Gradient-distance"));
 	}
 
@@ -2787,7 +2792,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_st_show_gps_speed, show_gps_speed,
 							 NULL, false);
 		connect(this->w_st_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_st, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_st, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Speed-time"));
 	}
 
@@ -2803,7 +2808,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_dt_show_speed, show_dist_speed,
 							 NULL, false);
 		connect(this->w_dt_show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_dt, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_dt, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Distance-time"));
 	}
 
@@ -2821,7 +2826,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_et_show_speed, show_elev_speed);
 		connect(this->w_et_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_et_show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_et, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_et, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Elevation-time"));
 	}
 
@@ -2836,7 +2841,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 							 this->w_sd_show_gps_speed, show_sd_gps_speed,
 							 NULL, false);
 		connect(this->w_sd_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		connect(this->viewport_sd, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
+		connect(this->viewport_sd, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT(paint_to_viewport_cb(Viewport *)));
 		this->tabs->addTab(page, tr("Speed-distance"));
 	}
 

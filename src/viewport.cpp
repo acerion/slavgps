@@ -164,25 +164,32 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 {
 	this->window = parent_window;
 
+
+
 	this->installEventFilter(this);
 
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setMinimumSize(200, 300);
 	//this->setMaximumSize(2700, 2700);
 
+	/* We want to constantly update cursor position in
+	   status bar. For this we need cursor tracking in viewport. */
+	this->setMouseTracking(true);
 
-	LatLon ll(Preferences::get_default_lat(), Preferences::get_default_lon());
+
+
+	LatLon initial_lat_lon(Preferences::get_default_lat(), Preferences::get_default_lon());
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
 
 	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		double value;
 		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &value)) {
-			ll.lat = value;
+			initial_lat_lon.lat = value;
 		}
 
 		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, &value)) {
-			ll.lon = value;
+			initial_lat_lon.lon = value;
 		}
 
 		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, &value)) {
@@ -194,26 +201,20 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 		}
 	}
 
-	const UTM utm = LatLon::to_utm(ll);
-
 	this->xmpp = zoom_x;
 	this->ympp = zoom_y;
 	this->xmfactor = MERCATOR_FACTOR(this->xmpp);
 	this->ymfactor = MERCATOR_FACTOR(this->ympp);
 
+
+
 	this->coord_mode = CoordMode::LATLON;
 	this->drawmode = ViewportDrawMode::MERCATOR;
 
-	this->center.mode = CoordMode::LATLON;
-	this->center.ll.lat = ll.lat;
-	this->center.ll.lon = ll.lon;
-	this->center.utm.zone = (int) utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
-	this->center.utm.letter = utm.letter;
 
-	this->utm_zone_width = 0.0;
 
-	this->centers = new std::list<Coord *>;
-	this->centers_iter = centers->begin();
+	this->centers = new std::list<Coord>;
+	this->centers_iter = this->centers->begin();
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->centers_max)) {
 		this->centers_max = 20;
 	}
@@ -221,13 +222,21 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 		this->centers_radius = 500;
 	}
 
+
+
+	this->center.mode = CoordMode::LATLON;
+	this->center.ll.lat = initial_lat_lon.lat;
+	this->center.ll.lon = initial_lat_lon.lon;
+	const UTM initial_utm = LatLon::to_utm(initial_lat_lon);
+	this->center.utm.zone = initial_utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
+	this->center.utm.letter = initial_utm.letter;
+	this->save_current_center();
+
+
+
 	this->init_drawing_area();
 
-	/* We want to constantly update cursor position in status bar. For this we need cursor tracking in viewport. */
-	this->setMouseTracking(true);
 
-	/* Initiate center history. */
-	this->update_centers();
 
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 	this->scale_visibility = true;
@@ -366,8 +375,8 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 
-	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"reconfigured\" from" << this->type_string;
-	emit this->reconfigured(this);
+	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"drawing area reconfigured\" from" << this->type_string;
+	emit this->drawing_area_reconfigured(this);
 }
 
 
@@ -636,15 +645,15 @@ const Coord * Viewport::get_center() const
 /* Called every time we update coordinates/zoom. */
 void Viewport::utm_zone_check(void)
 {
-	if (coord_mode == CoordMode::UTM) {
+	if (this->coord_mode == CoordMode::UTM) {
 		const UTM utm = LatLon::to_utm(UTM::to_latlon(center.utm));
-		if (utm.zone != center.utm.zone) {
+		if (utm.zone != this->center.utm.zone) {
 			this->center.utm = utm;
 		}
 
 		/* Misc. stuff so we don't have to check later. */
 		this->utm_zone_width = this->calculate_utm_zone_width();
-		one_utm_zone = (this->get_rightmost_zone() == this->get_leftmost_zone());
+		this->is_one_utm_zone = (this->get_rightmost_zone() == this->get_leftmost_zone());
 	}
 }
 
@@ -652,18 +661,16 @@ void Viewport::utm_zone_check(void)
 
 
 /**
-   \brief Free an individual center position in the history list
+   \brief Remove an individual center position from the history list
 */
-void Viewport::free_center(std::list<Coord *>::iterator iter)
+void Viewport::free_center(std::list<Coord>::iterator iter)
 {
-	Coord * coord = *iter;
-	if (coord) {
-		delete coord;
-	}
-
 	if (iter == this->centers_iter) {
-		this->centers_iter = centers->erase(iter);
-		if (this->centers_iter == centers->end()) {
+		this->centers_iter = this->centers->erase(iter);
+
+		if (this->centers_iter == this->centers->end()) {
+			/* We have removed last element on the list. */
+
 			if (centers->empty()) {
 				this->centers_iter = this->centers->begin();
 			} else {
@@ -671,25 +678,18 @@ void Viewport::free_center(std::list<Coord *>::iterator iter)
 			}
 		}
 	} else {
-		centers->erase(iter);
+		this->centers->erase(iter);
 	}
 }
 
 
 
 
-/**
-   Store the current center position into the history list
-   and emit a signal to notify clients the list has been updated.
-*/
-void Viewport::update_centers(void)
+void Viewport::save_current_center(void)
 {
-	Coord * new_center = new Coord();
-	*new_center = center; /* kamilFIXME: review this assignment of object. */
-
 	if (this->centers_iter == prev(this->centers->end())) {
 		/* We are at most recent element of history. */
-		if (centers->size() == (unsigned) this->centers_max) {
+		if (this->centers->size() == (unsigned) this->centers_max) {
 			/* List is full, so drop the oldest value to make room for the new one. */
 			this->free_center(this->centers->begin());
 		}
@@ -702,14 +702,14 @@ void Viewport::update_centers(void)
 
 	/* Store new position. */
 	/* push_back() puts at the end. By convention end == newest. */
-	this->centers->push_back(new_center);
+	this->centers->push_back(this->center);
 	this->centers_iter++;
 	assert (std::next(this->centers_iter) == this->centers->end());
 
-	this->print_centers("Viewport::update_centers()");
+	this->print_centers("Viewport::save_current_center()");
 
-	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "emitting updated_center()";
-	emit this->updated_center();
+	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "emitting center_updated()";
+	emit this->center_updated();
 }
 
 
@@ -721,17 +721,17 @@ std::list<QString> Viewport::get_centers_list(void) const
 
 	for (auto iter = this->centers->begin(); iter != this->centers->end(); iter++) {
 
-		const LatLon lat_lon = (*iter)->get_latlon();
+		const LatLon lat_lon = (*iter).get_latlon();
 		QString lat;
 		QString lon;
 		LatLon::to_strings(lat_lon, lat, lon);
 
 		QString extra;
-		if (iter == prev(centers_iter)) {
+		if (iter == prev(this->centers_iter)) {
 			extra = tr("[Back]");
-		} else if (iter == next(centers_iter)) {
+		} else if (iter == next(this->centers_iter)) {
 			extra = tr("[Forward]");
-		} else if (iter == centers_iter) {
+		} else if (iter == this->centers_iter) {
 			extra = tr("[Current]");
 		} else {
 			; /* NOOP */
@@ -747,7 +747,8 @@ std::list<QString> Viewport::get_centers_list(void) const
 
 
 /**
-   Show the list of forward/backward positions.
+   \brief Show the list of forward/back positions
+
    ATM only for debug usage.
 */
 void Viewport::show_centers(Window * parent_window) const
@@ -789,48 +790,43 @@ void Viewport::print_centers(const QString & label) const
 
 
 /**
+   \brief Move back in the position history
+
    @return true on success
    @return false otherwise
 */
 bool Viewport::go_back(void)
 {
-	/* See if the current position is different from the last saved center position within a certain radius. */
-	Coord * last_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator? */
-	if (last_center) {
-		/* Consider an exclusion size (should it zoom level dependent, rather than a fixed value?).
-		   When still near to the last saved position we'll jump over it to the one before. */
-		if (Coord::distance(*last_center, this->center) > this->centers_radius) {
+	/* See if the current position is different from the
+	   last saved center position within a certain radius. */
+	if (Coord::distance(*this->centers_iter, this->center) > this->centers_radius) {
 
-			if (this->centers_iter == prev(this->centers->end())) {
-				/* Only when we haven't already moved back in the list.
-				   Remember where this request came from (alternatively we could insert in the list on every back attempt). */
-				this->update_centers();
-			}
+		if (this->centers_iter == prev(this->centers->end())) {
+			/* Only when we haven't already moved back in the list.
+			   Remember where this request came from (alternatively we could insert in the list on every back attempt). */
+			this->save_current_center();
+		}
+	}
 
-		}
-		/* 'Go back' if possible.
-		   NB if we inserted a position above, then this will then move to the last saved position.
-		   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
-		if (this->back_available()) {
-			this->centers_iter--;
-		}
-	} else {
+	if (!this->back_available()) {
+		/* Already at the oldest center. */
 		return false;
 	}
 
-	Coord * new_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator. */
-	if (new_center) {
-		this->set_center_from_coord(*new_center, false);
-		return true;
-	}
-	return false;
+	/* If we inserted a position above, then this will then move to the last saved position.
+	   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
+
+	this->centers_iter--;
+	/* kamilTODO: add check of validity of iterator. */
+	this->set_center_from_coord(*this->centers_iter, false);
+	return true;
 }
 
 
 
 
 /**
-   \brief Move forward in the position history.
+   \brief Move forward in the position history
 
    @return true on success
    @return false otherwise
@@ -843,15 +839,9 @@ bool Viewport::go_forward(void)
 	}
 
 	this->centers_iter++;
-	Coord * new_center = *this->centers_iter; /* kamilTODO: add check of validity of iterator. */
-	if (new_center) {
-		this->set_center_from_coord(*new_center, false);
-		return true;
-	} else {
-		this->centers_iter = prev(this->centers->end());
-	}
-
-	return false;
+	/* kamilTODO: add check of validity of iterator. */
+	this->set_center_from_coord(*this->centers_iter, false);
+	return true;
 }
 
 
@@ -888,12 +878,12 @@ bool Viewport::forward_available(void) const
 */
 void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
 {
-	this->center = Coord(lat_lon, coord_mode);
+	this->center = Coord(lat_lon, this->coord_mode);
 	if (save_position) {
-		this->update_centers();
+		this->save_current_center();
 	}
 
-	if (coord_mode == CoordMode::UTM) {
+	if (this->coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -908,12 +898,12 @@ void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position
 */
 void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
 {
-	this->center = Coord(utm, coord_mode);
+	this->center = Coord(utm, this->coord_mode);
 	if (save_position) {
-		this->update_centers();
+		this->save_current_center();
 	}
 
-	if (coord_mode == CoordMode::UTM) {
+	if (this->coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -930,8 +920,9 @@ void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 {
 	this->center = coord;
 	if (save_position) {
-		this->update_centers();
+		this->save_current_center();
 	}
+
 	if (this->coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
@@ -1116,7 +1107,7 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 	if (this->coord_mode == CoordMode::UTM) {
 		const UTM * utm_center = &this->center.utm;
 		const UTM * utm = &coord.utm;
-		if (utm_center->zone != utm->zone && this->one_utm_zone){
+		if (utm_center->zone != utm->zone && this->is_one_utm_zone){
 			*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 			return;
 		}
@@ -1533,7 +1524,7 @@ double calcR(double lat)
 
 bool Viewport::is_one_zone(void) const
 {
-	return coord_mode == CoordMode::UTM && one_utm_zone;
+	return coord_mode == CoordMode::UTM && this->is_one_utm_zone;
 }
 
 
@@ -1834,6 +1825,8 @@ void Viewport::mouseMoveEvent(QMouseEvent * ev)
 
 	ev->accept();
 }
+
+
 
 
 void Viewport::mouseReleaseEvent(QMouseEvent * ev)
