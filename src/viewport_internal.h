@@ -61,8 +61,9 @@ namespace SlavGPS {
 		Viewport(Window * parent);
 		~Viewport();
 
-		bool configure();
-		void configure_manually(int width, int height); /* For off-screen viewports. */
+		/* If a viewport widget already has some non-zero geometry,
+		   you can call this method without arguments. */
+		void reconfigure_drawing_area(int width = 0, int height = 0);
 
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
@@ -103,6 +104,7 @@ namespace SlavGPS {
 		std::list<QString> get_centers_list(void) const;
 		void show_centers(Window * parent) const;
 		void print_centers(const QString & label) const;
+		void update_centers(void);
 
 
 
@@ -123,7 +125,6 @@ namespace SlavGPS {
 
 		LatLonMinMax get_min_max_lat_lon(void) const;
 		LatLonBBox get_bbox(void) const;
-		LatLonBBoxStrings get_bbox_strings(void) const;
 
 		int get_width(void) const;
 		int get_height(void) const;
@@ -215,14 +216,10 @@ namespace SlavGPS {
 		void set_half_drawn(bool half_drawn);
 		bool get_half_drawn(void) const;
 
-		Window * get_window(void) const;
 
-
-		/* Whether or not to display OSD info. */
+		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;
-		bool highlight_usage = true;
-
 
 		double xmpp, ympp;
 		double xmfactor, ymfactor;
@@ -247,8 +244,6 @@ namespace SlavGPS {
 		int size_width_2 = 0;
 		int size_height_2 = 0;
 
-		void update_centers(void);
-
 
 		double utm_zone_width;
 		bool one_utm_zone;
@@ -262,6 +257,8 @@ namespace SlavGPS {
 
 		QPen highlight_pen;
 		QColor highlight_color;
+
+		bool highlight_usage = true;
 
 		/* The border around main area of viewport. It's specified by margin sizes. */
 		QPen border_pen;
@@ -302,7 +299,7 @@ namespace SlavGPS {
 
 
 	public slots:
-		bool configure_cb(void);
+		bool reconfigure_drawing_area_cb(void);
 		bool print_cb(QPrinter *);
 
 	protected:

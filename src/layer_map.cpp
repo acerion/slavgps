@@ -894,7 +894,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 		if (map->get_drawmode() != viewport->get_drawmode()) {
 			const QString drawmode_name = ViewportDrawModes::get_name(map->get_drawmode());
 			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
-			Dialog::warning(msg, viewport->get_window());
+			Dialog::warning(msg, this->get_window());
 		}
 	}
 
@@ -910,7 +910,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->filename), viewport->get_window());
+			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->filename), this->get_window());
 			this->mbtiles = NULL;
 		}
 	}
@@ -1253,7 +1253,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 {
 	const Coord * center = viewport->get_center();
 
-	if (viewport->get_window()->get_pan_move()) {
+	if (layer->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
 		return false;
 	}

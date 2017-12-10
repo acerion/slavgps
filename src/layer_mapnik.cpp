@@ -951,7 +951,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	}
 	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml.toUtf8().constData(), lmk->tile_size_x, lmk->tile_size_x);
 	if (ans) {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), viewport->get_window());
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), lmk->get_window());
 		free(ans);
 	} else {
 		lmk->draw(viewport);

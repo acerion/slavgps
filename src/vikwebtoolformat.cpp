@@ -115,7 +115,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	std::vector<QString> values;
 
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox_strings();
+	const LatLonBBoxStrings bbox_strings = LatLonBBox::to_strings(a_viewport->get_bbox());
 
 	for (int i = 0; i < len; i++) {
 		switch (this->url_format_code[i].toUpper().toLatin1()) {

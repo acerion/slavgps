@@ -2277,7 +2277,7 @@ Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max
 	strcpy(viewport->type_string, "Viewport, elevation-distance");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
@@ -2311,7 +2311,7 @@ Viewport * TrackProfileDialog::create_gd_viewport(void)
 	strcpy(viewport->type_string, "Viewport, gradient-distance");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_gd_move_cb(Viewport *, QMouseEvent *)));
@@ -2362,7 +2362,7 @@ Viewport * TrackProfileDialog::create_st_viewport(void)
 	strcpy(viewport->type_string, "Viewport, speed-time");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_st_move_cb(Viewport *, QMouseEvent *)));
@@ -2391,7 +2391,7 @@ Viewport * TrackProfileDialog::create_dt_viewport(void)
 	strcpy(viewport->type_string, "Viewport, distance-time");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
@@ -2421,7 +2421,7 @@ Viewport * TrackProfileDialog::create_et_viewport(void)
 	strcpy(viewport->type_string, "Viewport, elevation-time");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
@@ -2450,7 +2450,7 @@ Viewport * TrackProfileDialog::create_sd_viewport(void)
 	strcpy(viewport->type_string, "Viewport, speed-distance");
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
-	viewport->configure_manually(initial_width, initial_height);
+	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
 	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));

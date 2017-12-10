@@ -21,63 +21,20 @@
 
 
 
-#ifndef _SG_BOUNDING_BOX_H_
-#define _SG_BOUNDING_BOX_H_
+#include "bbox.h"
+#include "coord.h"
 
 
 
 
-#include <QString>
+using namespace SlavGPS;
 
 
 
 
-namespace SlavGPS {
-
-
-
-
-	class LatLonBBoxStrings {
-	public:
-		QString min_lon;
-		QString max_lon;
-		QString min_lat;
-		QString max_lat;
-	};
-
-
-
-
-	class LatLonBBox  {
-	public:
-		double north; /* max_lat */
-		double south; /* min_lat */
-		double east;  /* max_lon */
-		double west;  /* min_lon */
-
-		static LatLonBBoxStrings to_strings(const LatLonBBox & bbox);
-	};
-
-
-
-
-} /* namespace SlavGPS */
-
-
-
-
-/**
- * +--------+
- * |a       |
- * |     +--+----+
- * |     |  |    |
- * +-----+--+    |
- *       |      b|
- *       +-------+
- */
-#define BBOX_INTERSECT(a,b) ((a).south < (b).north && (a).north > (b).south && (a).east > (b).west && (a).west < (b).east)
-
-
-
-
-#endif /* #ifndef _SG_BOUNDING_BOX_H_ */
+LatLonBBoxStrings LatLonBBox::to_strings(const LatLonBBox & bbox)
+{
+	LatLonBBoxStrings bbox_strings;
+	CoordUtils::to_strings(bbox_strings, bbox);
+	return bbox_strings;
+}

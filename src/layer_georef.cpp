@@ -412,7 +412,7 @@ LayerGeoref::~LayerGeoref()
 
 bool LayerGeoref::properties_dialog(Viewport * viewport)
 {
-	return this->dialog(viewport, viewport->get_window());
+	return this->dialog(viewport, this->get_window());
 }
 
 

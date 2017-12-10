@@ -39,6 +39,7 @@ SOURCES += main.cpp \
     kmz.cpp \
     gpspoint.cpp \
     thumbnails.cpp \
+    bbox.cpp \
     osm.cpp \
     osm-traces.cpp \
     datasource_bfilter.cpp \

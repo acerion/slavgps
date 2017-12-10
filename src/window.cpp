@@ -1018,7 +1018,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	if (layer) {
 		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
 
-		this->viewport->configure();
+		this->viewport->reconfigure_drawing_area();
 		qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
 		layer->draw(this->viewport);
 
@@ -2804,7 +2804,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	this->viewport->set_zoom(zoom);
 
 	/* Set expected width and height. */
-	this->viewport->configure_manually(image_width, image_height);
+	this->viewport->reconfigure_drawing_area(image_width, image_height);
 
 	/* Redraw all layers at current position and zoom. */
 	this->draw_redraw();
@@ -2821,7 +2821,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 		this->viewport->set_xmpp(old_xmpp);
 		this->viewport->set_ympp(old_ympp);
-		this->viewport->configure();
+		this->viewport->reconfigure_drawing_area();
 		this->draw_update();
 
 		return;
@@ -2860,7 +2860,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
-	this->viewport->configure();
+	this->viewport->reconfigure_drawing_area();
 	this->draw_update();
 }
 
@@ -2881,7 +2881,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	this->viewport->set_zoom(zoom);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->configure_manually(image_width, image_height);
+	this->viewport->reconfigure_drawing_area(image_width, image_height);
 
 	QDir dir(dir_full_path);
 	if (!dir.exists()) {
@@ -2934,7 +2934,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	this->viewport->set_center_from_utm(utm_orig, false);
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
-	this->viewport->configure();
+	this->viewport->reconfigure_drawing_area();
 	this->draw_update();
 
 	return true;

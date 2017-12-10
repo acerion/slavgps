@@ -87,6 +87,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 static double EASTING_OFFSET = 500000.0;
 
 static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
@@ -110,7 +115,7 @@ void SlavGPS::viewport_init(void)
 
 void Viewport::init_drawing_area()
 {
-	//connect(this, SIGNAL(resizeEvent(QResizeEvent *)), this, SLOT(configure_cb(void)));
+	//connect(this, SIGNAL(resizeEvent(QResizeEvent *)), this, SLOT(reconfigure_drawing_area_cb(void)));
 	//this->qpainter = new QPainter(this);
 
 	this->setFocusPolicy(Qt::ClickFocus);
@@ -235,6 +240,14 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 
 	this->grid_pen.setColor(QColor("dimgray"));
 	this->grid_pen.setWidth(1);
+
+	this->background_pen.setColor(QString(DEFAULT_BACKGROUND_COLOR));
+	this->background_pen.setWidth(1);
+	this->set_background_color(QString(DEFAULT_BACKGROUND_COLOR));
+
+	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
+	this->highlight_pen.setWidth(1);
+	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 }
 
 
@@ -322,32 +335,38 @@ void Viewport::set_highlight_thickness(int w)
 
 
 
-void Viewport::configure_manually(int new_width, int new_height)
+void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 {
-	this->size_width = new_width;
-	this->size_height = new_height;
+	if (new_width == 0 && new_height == 0) {
+		const QRect geom = this->geometry();
+		this->size_width = geom.width();
+		this->size_height = geom.height();
+	} else {
+		this->size_width = new_width;
+		this->size_height = new_height;
+	}
 
 	this->size_width_2 = this->size_width / 2;
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		qDebug() << "II: Viewport: deleting old scr_buffer";
+		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
 		delete this->scr_buffer;
 	}
 
-	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		qDebug() << "DD: Viewport: deleting old snapshot buffer";
+		qDebug() << "DD:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << "II: Viewport creating new snapshot buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 
-	qDebug() << "SIGNAL: Viewport: sending \"reconfigured\" from" << this->type_string <<  __FUNCTION__;
+	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"reconfigured\" from" << this->type_string;
 	emit this->reconfigured(this);
 }
 
@@ -372,54 +391,11 @@ void Viewport::set_pixmap(QPixmap & pixmap)
 
 
 
-bool Viewport::configure_cb(void)
+bool Viewport::reconfigure_drawing_area_cb(void)
 {
-	qDebug() << "II: Viewport: handling signal \"configure event\"";
-	return this->configure();
-}
-
-
-
-
-bool Viewport::configure()
-{
-	const QRect geom = this->geometry();
-	this->size_width = geom.width();
-	this->size_height = geom.height();
-
-	this->size_width_2 = this->size_width / 2;
-	this->size_height_2 = this->size_height / 2;
-
-	if (this->scr_buffer) {
-		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
-		delete this->scr_buffer;
-	}
-
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
-	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
-	this->scr_buffer->fill();
-
-	/* TODO trigger: only if enabled! */
-	if (this->snapshot_buffer) {
-		qDebug() << "DD:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
-		delete this->snapshot_buffer;
-	}
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
-	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
-	/* TODO trigger. */
-
-	this->background_pen.setColor(QString(DEFAULT_BACKGROUND_COLOR));
-	this->background_pen.setWidth(1);
-	this->set_background_color(QString(DEFAULT_BACKGROUND_COLOR));
-
-	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
-	this->highlight_pen.setWidth(1);
-	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
-
-	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"reconfigured\" from" << this->type_string;
-	emit this->reconfigured(this);
-
-	return false;
+	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << __LINE__;
+	this->reconfigure_drawing_area();
+	return true;
 }
 
 
@@ -713,9 +689,9 @@ void Viewport::update_centers(void)
 
 	if (this->centers_iter == prev(this->centers->end())) {
 		/* We are at most recent element of history. */
-		if (centers->size() == centers_max) {
+		if (centers->size() == (unsigned) this->centers_max) {
 			/* List is full, so drop the oldest value to make room for the new one. */
-			this->free_center(centers->begin());
+			this->free_center(this->centers->begin());
 		}
 	} else {
 		/* We are somewhere in the middle of history list, possibly at the beginning.
@@ -1693,16 +1669,6 @@ LatLonBBox Viewport::get_bbox(void) const
 
 
 
-LatLonBBoxStrings Viewport::get_bbox_strings(void) const
-{
-	LatLonBBoxStrings bbox_strings;
-	CoordUtils::to_strings(bbox_strings, this->get_bbox());
-	return bbox_strings;
-}
-
-
-
-
 /**
    \brief Add a copyright to display on viewport
 
@@ -1790,14 +1756,6 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 
 
-Window * Viewport::get_window(void) const
-{
-	return this->window;
-}
-
-
-
-
 void Viewport::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__;
@@ -1819,8 +1777,8 @@ void Viewport::paintEvent(QPaintEvent * ev)
 void Viewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << "II: Viewport: resize event";
-	this->configure();
-	this->get_window()->draw_redraw();
+	this->reconfigure_drawing_area();
+	g_tree->tree_get_main_window()->draw_redraw();
 	//this->draw_scale();
 
 	return;

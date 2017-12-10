@@ -43,6 +43,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 void ViewportToImageDialog::get_size_from_viewport_cb(void) /* Slot */
 {
 	int active = this->zoom_combo->currentIndex();
@@ -210,7 +215,7 @@ void ViewportToImageDialog::build_ui(ViewportSaveMode mode)
 		this->output_format_radios = new SGRadioGroup(tr("Output format"), &items, this);
 		this->vbox->addWidget(this->output_format_radios);
 
-		if (!this->viewport->get_window()->save_viewport_as_png) {
+		if (!g_tree->tree_get_main_window()->save_viewport_as_png) {
 			this->output_format_radios->set_id_of_selected(1); /* '1' corresponds to '1' in code preparing items above. */
 		}
 	}
