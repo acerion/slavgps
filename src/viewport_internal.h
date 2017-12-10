@@ -87,6 +87,8 @@ namespace SlavGPS {
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
 
+		void draw_simple_crosshair(const ScreenPos & pos);
+
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
@@ -191,7 +193,7 @@ namespace SlavGPS {
 
 		/* Viewport buffer management/drawing to screen. */
 		QPixmap * get_pixmap(void) const;   /* Get pointer to drawing buffer. */
-		void set_pixmap(QPixmap & pixmap);
+		void set_pixmap(const QPixmap & pixmap);
 		void sync(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 

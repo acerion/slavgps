@@ -39,6 +39,7 @@
 #include <QDialogButtonBox>
 
 #include "globals.h"
+#include "viewport.h"
 
 
 
@@ -116,15 +117,6 @@ namespace SlavGPS {
 		Viewport * create_et_viewport(void);
 		Viewport * create_sd_viewport(void);
 
-		void draw_marks(Viewport * viewport,
-				double selected_pos_x,
-				double selected_pos_y,
-				double current_pos_x,
-				double current_pox_y,
-				PropSaved * saved_img,
-				unsigned int graph_width,
-				unsigned int graph_height);
-
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
 
 
@@ -170,7 +162,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img);
+		void draw_single_graph(Viewport * viewport, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, const PropSaved & saved_img);
 
 
 		Window * parent = NULL;
@@ -282,6 +274,9 @@ namespace SlavGPS {
 		QFont labels_font;
 
 		QSignalMapper * signal_mapper = NULL;
+
+	private:
+		void draw_marks(Viewport * viewport, const ScreenPos & selected_pos, const ScreenPos & current_pos, const PropSaved & saved_img);
 	};
 
 

@@ -390,7 +390,7 @@ QPixmap * Viewport::get_pixmap(void) const
 
 
 
-void Viewport::set_pixmap(QPixmap & pixmap)
+void Viewport::set_pixmap(const QPixmap & pixmap)
 {
 	QPainter painter(this->scr_buffer);
 	/* TODO: Add some comparison of pixmap size and buffer size to verify that both have the same size and that pixmap can be safely used. */
@@ -2044,6 +2044,24 @@ bool Viewport::print_cb(QPrinter * printer)
 	painter.drawRect(new_rect);
 
 	return true;
+}
+
+
+
+
+void Viewport::draw_simple_crosshair(const ScreenPos & pos)
+{
+	const int graph_width = this->width() - this->margin_left - this->margin_right;
+	const int graph_height = this->height() - this->margin_top - this->margin_bottom;
+
+	this->draw_line(this->marker_pen,
+			pos.x, 0,
+			pos.x, 0 + graph_height);
+
+	this->draw_line(this->marker_pen,
+			0,               graph_height - pos.y,
+			0 + graph_width, graph_height - pos.y);
+
 }
 
 
