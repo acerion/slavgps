@@ -72,35 +72,35 @@ enum {
 
 
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double chunksa[] = {2.0, 5.0, 10.0, 15.0, 20.0,
-				 25.0, 40.0, 50.0, 75.0, 100.0,
-				 150.0, 200.0, 250.0, 375.0, 500.0,
-				 750.0, 1000.0, 2000.0, 5000.0, 10000.0, 100000.0};
+static const double altitude_interval_values[] = {2.0, 5.0, 10.0, 15.0, 20.0,
+						  25.0, 40.0, 50.0, 75.0, 100.0,
+						  150.0, 200.0, 250.0, 375.0, 500.0,
+						  750.0, 1000.0, 2000.0, 5000.0, 10000.0, 100000.0};
 
 /* (Hopefully!) Human friendly gradient grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double chunksg[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-				 12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 75.0,
-				 100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-				  750.0, 1000.0, 10000.0, 100000.0};
+static const double gradient_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
+						  12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 75.0,
+						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
+						  750.0, 1000.0, 10000.0, 100000.0};
 /* Normally gradients should range up to couple hundred precent at most,
    however there are possibilities of having points with no altitude after a point with a big altitude
   (such as places with invalid DEM values in otherwise mountainous regions) - thus giving huge negative gradients. */
 
 /* (Hopefully!) Human friendly grid sizes - note no fixed 'ratio' just numbers that look nice... */
 /* As need to cover walking speeds - have many low numbers (but also may go up to airplane speeds!). */
-static const double chunkss[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-				 15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
-				 100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-				 750.0, 1000.0, 10000.0};
+static const double speed_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
+					       15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
+					       100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
+					       750.0, 1000.0, 10000.0};
 
 /* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double chunksd[] = {0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-				 15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
-				 100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-				 750.0, 1000.0, 10000.0};
+static const double distance_interval_values[] = {0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
+						  15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
+						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
+						  750.0, 1000.0, 10000.0};
 
-/* Time chunks in seconds. */
-static const time_t chunkst[] = {
+/* Time intervals in seconds. */
+static const time_t time_interval_values[] = {
 	60,     /* 1 minute. */
 	120,    /* 2 minutes. */
 	300,    /* 5 minutes. */
@@ -190,59 +190,64 @@ TrackProfileDialog::~TrackProfileDialog()
 #define GRAPH_MARGIN_RIGHT 40 // 1
 #define GRAPH_MARGIN_TOP 20
 #define GRAPH_MARGIN_BOTTOM 30 // 1
-#define LINES 5
-#define GRAPH_VERTICAL_LINE_S LINES
-#define GRAPH_HORIZONTAL_LINE_S LINES
+#define GRAPH_INTERVALS 5
+#define GRAPH_VERTICAL_INTERVALS GRAPH_INTERVALS
+#define GRAPH_HORIZONTAL_INTERVALS GRAPH_INTERVALS
 
 
 
 
 /**
- * Returns via pointers:
- * - the new minimum value to be used for the graph
- * - the index in to the chunk sizes array (ci = Chunk Index)
- */
-static void get_new_min_and_chunk_index(double mina, double maxa, const double * chunks, size_t chunky, double * new_min, int * ci)
+   Returns via pointers:
+   - the new minimum value to be used for the graph
+   - the index to the interval sizes array
+*/
+static void get_new_min_and_interval_index(double mina, double maxa, const double * intervals, int n_interval_values, double * new_min, int * index)
 {
-	/* Get unitized chunk. */
-	/* Find suitable chunk index. */
-	*ci = 0;
-	double diff_chunk = (maxa - mina) / LINES;
+	double interval = 0.0;
+	int ind = 0;
 
+	/* Find suitable interval index. */
+	const double interval_upper_limit = (maxa - mina) / GRAPH_INTERVALS;
 	/* Loop through to find best match. */
-	while (diff_chunk > chunks[*ci]) {
-		(*ci)++;
+	while (interval_upper_limit > intervals[ind]) {
+		ind++;
 		/* Last Resort Check */
-		if (*ci == chunky) {
+		if (ind == n_interval_values) {
 			/* Use previous value and exit loop. */
-			(*ci)--;
+			ind--;
 			break;
 		}
 	}
 
+
 	/* Ensure adjusted minimum .. maximum covers mina->maxa. */
 
-	/* Now work out adjusted minimum point to the nearest lowest chunk divisor value.
+	/* Now work out adjusted minimum point to the nearest lowest interval divisor value.
 	   When negative ensure logic uses lowest value. */
+	interval = intervals[ind];
 	if (mina < 0) {
-		*new_min = (double) ((int)((mina - chunks[*ci]) / chunks[*ci]) * chunks[*ci]);
+		*new_min = (double) ((int)((mina - interval) / interval) * interval);
 	} else {
-		*new_min = (double) ((int)(mina / chunks[*ci]) * chunks[*ci]);
+		*new_min = (double) ((int)(mina / interval) * interval);
 	}
 
 	/* Range not big enough - as new minimum has lowered. */
-	if ((*new_min + (chunks[*ci] * LINES) < maxa)) {
-		/* Next chunk should cover it. */
-		if (*ci < chunky-1) {
-			(*ci)++;
+	if ((*new_min + (intervals[ind] * GRAPH_INTERVALS) < maxa)) {
+		/* Next interval should cover it. */
+		if (ind < n_interval_values - 1) {
+			ind++;
 			/* Remember to adjust the minimum too... */
+			interval = intervals[ind];
 			if (mina < 0) {
-				*new_min = (double) ((int)((mina - chunks[*ci]) / chunks[*ci]) * chunks[*ci]);
+				*new_min = (double) ((int)((mina - interval) / interval) * interval);
 			} else {
-				*new_min = (double) ((int)(mina / chunks[*ci]) * chunks[*ci]);
+				*new_min = (double) ((int)(mina / interval) * interval);
 			}
 		}
 	}
+
+	*index = ind;
 }
 
 
@@ -251,14 +256,14 @@ static void get_new_min_and_chunk_index(double mina, double maxa, const double *
 static unsigned int get_time_chunk_index(time_t duration)
 {
 	/* Grid split. */
-	time_t myduration = duration / LINES;
+	time_t myduration = duration / GRAPH_INTERVALS;
 
 	/* Search nearest chunk index. */
 	unsigned int ci = 0;
-	unsigned int last_chunk = G_N_ELEMENTS(chunkst);
+	unsigned int last_chunk = G_N_ELEMENTS(time_interval_values);
 
 	/* Loop through to find best match. */
-	while (myduration > chunkst[ci]) {
+	while (myduration > time_interval_values[ci]) {
 		ci++;
 		/* Last Resort Check. */
 		if (ci == last_chunk) {
@@ -276,17 +281,17 @@ static unsigned int get_time_chunk_index(time_t duration)
 
 
 
-static unsigned int get_distance_chunk_index(double length)
+static int get_distance_interval_index(double length)
 {
 	/* Grid split. */
-	double mylength = length / LINES;
+	double mylength = length / GRAPH_INTERVALS;
 
 	/* Search nearest chunk index. */
-	unsigned int ci = 0;
-	unsigned int last_chunk = G_N_ELEMENTS(chunksd);
+	int ci = 0;
+	int last_chunk = G_N_ELEMENTS(distance_interval_values);
 
 	/* Loop through to find best match. */
-	while (mylength > chunksd[ci]) {
+	while (mylength > distance_interval_values[ci]) {
 		ci++;
 		/* Last Resort Check. */
 		if (ci == last_chunk) {
@@ -342,7 +347,9 @@ static Trackpoint * set_center_at_graph_position(int event_x,
    Draw two pairs of horizontal and vertical lines intersecting at given position.
 
    One pair is for position of selected trackpoint.
-   The other pair is for position of current trackpoint (trackpoint corresponding to current cursor position).
+   The other pair is for current position of cursor.
+
+   Both "pos" arguments should indicate position in viewport's canvas (the greater region) not viewport's graph area (the narrower region).
 */
 void TrackProfileDialog::draw_marks(Viewport * viewport, const ScreenPos & selected_pos, const ScreenPos & current_pos, const PropSaved & saved_img)
 {
@@ -446,7 +453,7 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 */
 void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * ev, TrackProfileType graph_type)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
 
 	bool is_time_graph = (graph_type == SG_TRACK_PROFILE_TYPE_ST
 			      || graph_type == SG_TRACK_PROFILE_TYPE_DT
@@ -526,13 +533,14 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 			continue;
 		}
 
-		//graph_width = graph_viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-		const int graph_height = graph_viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+		//graph_width = graph_viewport->get_graph_width();
+		const int graph_height = graph_viewport->get_graph_height();
 
 		double selected_pos_x = pc * graph_width;
 		double selected_pos_y = -1.0; /* TODO: get real value. */
 		this->draw_marks(graph_viewport,
-				 ScreenPos(selected_pos_x, selected_pos_y),
+				 /* Make sure that positions are canvas positions, not graph positions. */
+				 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
 				 ScreenPos(-1.0, -1.0), /* Don't draw current position on clicks. */
 				 *graph_saved_img);
 	}
@@ -609,7 +617,7 @@ double TrackProfileDialog::get_pos_y_ed(double pos_x, int width_size, int height
 		ix--;
 	}
 
-	return height_size * (this->altitudes[ix] - this->draw_min_altitude) / (chunksa[this->cia] * LINES);
+	return height_size * (this->altitudes[ix] - this->draw_min_altitude) / (altitude_interval_values[this->cia] * GRAPH_INTERVALS);
 }
 
 
@@ -626,7 +634,7 @@ double TrackProfileDialog::get_pos_y_gd(double pos_x, int width_size, int height
 		ix--;
 	}
 
-	return height_size * (this->gradients[ix] - this->draw_min_gradient) / (chunksg[this->cig] * LINES);
+	return height_size * (this->gradients[ix] - this->draw_min_gradient) / (gradient_interval_values[this->cig] * GRAPH_INTERVALS);
 }
 
 
@@ -642,7 +650,7 @@ double TrackProfileDialog::get_pos_y_st(double pos_x, int width_size, int height
 	if (ix == width_size) {
 		ix--;
 	}
-	return height_size * (this->speeds[ix] - this->draw_min_speed) / (chunkss[this->cis] * LINES);
+	return height_size * (this->speeds[ix] - this->draw_min_speed) / (speed_interval_values[this->cis] * GRAPH_INTERVALS);
 }
 
 
@@ -659,7 +667,7 @@ double TrackProfileDialog::get_pos_y_dt(double pos_x, int width_size, int height
 		ix--;
 	}
 	/* Min distance is always 0, so no need to subtract that from distances[ix]. */
-	return height_size * (this->distances[ix]) / (chunksd[this->cid] * LINES);
+	return height_size * (this->distances[ix]) / (distance_interval_values[this->cid] * GRAPH_INTERVALS);
 }
 
 
@@ -675,7 +683,7 @@ double TrackProfileDialog::get_pos_y_et(double pos_x, int width_size, int height
 	if (ix == width_size) {
 		ix--;
 	}
-	return height_size * (this->ats[ix] - this->draw_min_altitude_time) / (chunksa[this->ciat] * LINES);
+	return height_size * (this->ats[ix] - this->draw_min_altitude_time) / (altitude_interval_values[this->ciat] * GRAPH_INTERVALS);
 }
 
 
@@ -691,7 +699,7 @@ double TrackProfileDialog::get_pos_y_sd(double pos_x, int width_size, int height
 	if (ix == width_size) {
 		ix--;
 	}
-	return height_size * (this->speeds_dist[ix] - this->draw_min_speed) / (chunkss[this->cisd] * LINES);
+	return height_size * (this->speeds_dist[ix] - this->draw_min_speed) / (speed_interval_values[this->cisd] * GRAPH_INTERVALS);
 }
 
 
@@ -699,8 +707,8 @@ double TrackProfileDialog::get_pos_y_sd(double pos_x, int width_size, int height
 
 void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->altitudes == NULL) {
 		return;
@@ -735,8 +743,9 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_ed);
 
 }
@@ -746,8 +755,8 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->gradients == NULL) {
 		return;
@@ -782,8 +791,9 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_gd);
 }
 
@@ -866,8 +876,8 @@ void gradient_label_update(QLabel * label, double gradient)
 
 void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->speeds == NULL) {
 		return;
@@ -906,8 +916,9 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_st);
 }
 
@@ -919,8 +930,8 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
  */
 void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->distances == NULL) {
 		return;
@@ -958,8 +969,9 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_dt);
 }
 
@@ -971,8 +983,8 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
  */
 void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->ats == NULL) {
 		return;
@@ -1010,8 +1022,9 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_et);
 }
 
@@ -1020,8 +1033,8 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 	if (this->speeds_dist == NULL) {
 		return;
@@ -1056,8 +1069,9 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	this->draw_marks(viewport,
-			 ScreenPos(selected_pos_x, selected_pos_y),
-			 ScreenPos(current_pos_x, current_pos_y),
+			 /* Make sure that positions are canvas positions, not graph positions. */
+			 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+			 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 			 this->saved_img_sd);
 }
 
@@ -1066,12 +1080,14 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * ev)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_left = GRAPH_MARGIN_LEFT;
 	const int graph_top = GRAPH_MARGIN_TOP;
 
 	QPoint position = viewport->mapFromGlobal(QCursor::pos());
+
+	qDebug() << "II:" PREFIX << "x =" << ev->x() << "y =" << ev->y();
 
 #if 0   /* Verbose debug. */
 	qDebug() << "II:" PREFIX << "difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
@@ -1188,7 +1204,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	}
 
 	double dist = 0;
-	int achunk = chunksa[cia] * LINES;
+	int achunk = altitude_interval_values[cia] * GRAPH_INTERVALS;
 
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
@@ -1229,12 +1245,12 @@ static void draw_dem_alt_speed_dist(Track * trk,
  */
 void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, char * ss, int i)
 {
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_left = GRAPH_MARGIN_LEFT;
 	const int graph_top = GRAPH_MARGIN_TOP;
 
-	float delta_y = 1.0 * graph_height / LINES;
+	float delta_y = 1.0 * graph_height / GRAPH_INTERVALS;
 	float pos_y = graph_height - delta_y * i;
 
 	QString text(ss);
@@ -1256,8 +1272,8 @@ void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, char * ss, in
  */
 void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	char buf[64] = { 0 };
@@ -1296,7 +1312,7 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
 		break;
 	}
 
-	float delta_x = 1.0 * graph_width / LINES; /* TODO: this needs to be fixed. */
+	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
 
 	QString text(buf);
 	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
@@ -1318,8 +1334,8 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
  */
 void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit)
 {
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	const QString distance_unit_string = get_distance_unit_string(distance_unit);
@@ -1332,7 +1348,7 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 	}
 
 
-	float delta_x = 1.0 * graph_width / LINES; /* TODO: this needs to be fixed. */
+	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
 
 	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
@@ -1350,16 +1366,17 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit)
 {
 	/* Set to display units from length in metres. */
-	double length = this->track_length_inc_gaps;
-	length = convert_distance_meters_to(length, distance_unit);
+	double full_distance = this->track_length_inc_gaps;
+	full_distance = convert_distance_meters_to(full_distance, distance_unit);
 
-	unsigned int index = get_distance_chunk_index(length);
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	double dist_per_pixel = length / graph_width;
+	const int index = get_distance_interval_index(full_distance);
+	const double distance_interval = distance_interval_values[index];
+	const int graph_width = viewport->get_graph_width();
+	double dist_per_pixel = full_distance / graph_width;
 
-	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
-		double distance_value = chunksd[index] * i;
-		unsigned int grid_x = (unsigned int) (chunksd[index] * i / dist_per_pixel);
+	for (unsigned int i = 1; distance_interval * i <= full_distance; i++) {
+		double distance_value = distance_interval * i;
+		unsigned int grid_x = (unsigned int) (distance_interval * i / dist_per_pixel);
 		this->draw_vertical_grid_distance(viewport, index, grid_x, distance_value, distance_unit);
 	}
 }
@@ -1377,9 +1394,9 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 		free(this->altitudes);
 	}
 
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
 	this->altitudes = trk_->make_elevation_map(graph_width);
 	if (this->altitudes == NULL) {
@@ -1398,7 +1415,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->altitudes, &this->min_altitude, &this->max_altitude, true, graph_width);
 
-	get_new_min_and_chunk_index(this->min_altitude, this->max_altitude, chunksa, G_N_ELEMENTS(chunksa), &this->draw_min_altitude, &this->cia);
+	get_new_min_and_interval_index(this->min_altitude, this->max_altitude, altitude_interval_values, G_N_ELEMENTS(altitude_interval_values), &this->draw_min_altitude, &this->cia);
 
 	/* Assign locally. */
 	double mina = this->draw_min_altitude;
@@ -1417,22 +1434,22 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 		} else {
 			viewport->draw_line(this->main_pen,
 					    i, graph_height,
-					    i, graph_height - graph_height * (this->altitudes[i] - mina) / (chunksa[this->cia] * LINES));
+					    i, graph_height - graph_height * (this->altitudes[i] - mina) / (altitude_interval_values[this->cia] * GRAPH_INTERVALS));
 		}
 	}
 
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 
 		switch (height_units) {
 		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(mina + (LINES - i) * chunksa[this->cia]));
+			sprintf(s, "%8dm", (int)(mina + (GRAPH_INTERVALS - i) * altitude_interval_values[this->cia]));
 			break;
 		case HeightUnit::FEET:
 			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(mina + (LINES - i) * chunksa[this->cia]));
+			sprintf(s, "%8dft", (int)(mina + (GRAPH_INTERVALS - i) * altitude_interval_values[this->cia]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1531,9 +1548,9 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 		free(this->gradients);
 	}
 
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
 	this->gradients = trk_->make_gradient_map(graph_width);
 
@@ -1543,7 +1560,7 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->gradients, &this->min_gradient, &this->max_gradient, true, graph_width);
 
-	get_new_min_and_chunk_index(this->min_gradient, this->max_gradient, chunksg, G_N_ELEMENTS(chunksg), &this->draw_min_gradient, &this->cig);
+	get_new_min_and_interval_index(this->min_gradient, this->max_gradient, gradient_interval_values, G_N_ELEMENTS(gradient_interval_values), &this->draw_min_gradient, &this->cig);
 
 	/* Assign locally. */
 	double mina = this->draw_min_gradient;
@@ -1556,14 +1573,14 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 	for (int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
-				    i, graph_height - graph_height * (this->gradients[i] - mina) / (chunksg[this->cig] * LINES));
+				    i, graph_height - graph_height * (this->gradients[i] - mina) / (gradient_interval_values[this->cig] * GRAPH_INTERVALS));
 	}
 
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
-		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
+		sprintf(s, "%8d%%", (int)(mina + (GRAPH_INTERVALS - i)*gradient_interval_values[this->cig]));
 		this->draw_horizontal_grid(viewport, s, i);
 	}
 	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
@@ -1604,17 +1621,18 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 void TrackProfileDialog::draw_time_lines(Viewport * viewport)
 {
 	unsigned int index = get_time_chunk_index(this->duration);
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const time_t time_interval = time_interval_values[index];
+	const int graph_width = viewport->get_graph_width();
 	double time_per_pixel = (double)(this->duration) / graph_width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if (this->duration > chunkst[G_N_ELEMENTS(chunkst)-1] * LINES * LINES) {
+	if (this->duration > time_interval_values[G_N_ELEMENTS(time_interval_values)-1] * GRAPH_INTERVALS * GRAPH_INTERVALS) {
 		return;
 	}
 
-	for (unsigned int i = 1; chunkst[index] * i <= this->duration; i++) {
-		unsigned int grid_x = (unsigned int) (chunkst[index] * i / time_per_pixel);
-		unsigned int time_value = chunkst[index] * i;
+	for (unsigned int i = 1; time_interval * i <= this->duration; i++) {
+		unsigned int grid_x = (unsigned int) (time_interval * i / time_per_pixel);
+		unsigned int time_value = time_interval * i;
 		this->draw_vertical_grid_time(viewport, index, grid_x, time_value);
 	}
 }
@@ -1632,9 +1650,9 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 		free(this->speeds);
 	}
 
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	this->speeds = trk_->make_speed_map(graph_width);
@@ -1659,8 +1677,8 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 		this->min_speed = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	/* Find suitable chunk index. */
-	get_new_min_and_chunk_index(this->min_speed, this->max_speed, chunkss, G_N_ELEMENTS(chunkss), &this->draw_min_speed, &this->cis);
+	/* Find suitable interval index. */
+	get_new_min_and_interval_index(this->min_speed, this->max_speed, speed_interval_values, G_N_ELEMENTS(speed_interval_values), &this->draw_min_speed, &this->cis);
 
 	/* Assign locally. */
 	double mins = this->draw_min_speed;
@@ -1673,27 +1691,27 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 	for (int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
-				    i, graph_height - graph_height * (this->speeds[i] - mins) / (chunkss[this->cis] * LINES));
+				    i, graph_height - graph_height * (this->speeds[i] - mins) / (speed_interval_values[this->cis] * GRAPH_INTERVALS));
 	}
 
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
 		switch (speed_units) {
 		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (LINES - i) * chunkss[this->cis]));
+			sprintf(s, "%8dkm/h", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
 			break;
 		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (LINES - i) * chunkss[this->cis]));
+			sprintf(s, "%8dmph", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
 			break;
 		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (LINES - i) * chunkss[this->cis]));
+			sprintf(s, "%8dm/s", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
 			break;
 		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (LINES - i) * chunkss[this->cis]));
+			sprintf(s, "%8dknots", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1721,7 +1739,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 			gps_speed = convert_speed_mps_to(gps_speed, speed_units);
 
 			int pos_x = graph_left + graph_width * ((*iter)->timestamp - beg_time) / dur;
-			int pos_y = graph_bottom - graph_height * (gps_speed - mins) / (chunkss[this->cis] * LINES);
+			int pos_y = graph_bottom - graph_height * (gps_speed - mins) / (speed_interval_values[this->cis] * GRAPH_INTERVALS);
 			viewport->fill_rectangle(QColor("red"), pos_x - 2, pos_y - 2, 4, 4);
 		}
 	}
@@ -1749,9 +1767,9 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 		free(this->distances);
 	}
 
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	this->distances = trk_->make_distance_map(graph_width);
@@ -1776,9 +1794,9 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 	   mind = 0.0; - Thus not used. */
 	double maxd = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);
 
-	/* Find suitable chunk index. */
+	/* Find suitable interval index. */
 	double dummy = 0.0; /* Expect this to remain the same! (not that it's used). */
-	get_new_min_and_chunk_index(0, maxd, chunksd, G_N_ELEMENTS(chunksd), &dummy, &this->cid);
+	get_new_min_and_interval_index(0, maxd, distance_interval_values, G_N_ELEMENTS(distance_interval_values), &dummy, &this->cid);
 
 	/* Reset before redrawing. */
 	viewport->clear();
@@ -1788,23 +1806,23 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 	for (int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
-				    i, graph_height - graph_height * (this->distances[i]) / (chunksd[this->cid] * LINES));
+				    i, graph_height - graph_height * (this->distances[i]) / (distance_interval_values[this->cid] * GRAPH_INTERVALS));
 	}
 
 
 	/* Draw grid on top of graph of values.. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 
 		switch (distance_unit) {
 		case DistanceUnit::MILES:
-			sprintf(s, _("%.1f miles"), ((LINES - i) * chunksd[this->cid]));
+			sprintf(s, _("%.1f miles"), ((GRAPH_INTERVALS - i) * distance_interval_values[this->cid]));
 			break;
 		case DistanceUnit::NAUTICAL_MILES:
-			sprintf(s, _("%.1f NM"), ((LINES - i) * chunksd[this->cid]));
+			sprintf(s, _("%.1f NM"), ((GRAPH_INTERVALS - i) * distance_interval_values[this->cid]));
 			break;
 		default:
-			sprintf(s, _("%.1f km"), ((LINES - i) * chunksd[this->cid]));
+			sprintf(s, _("%.1f km"), ((GRAPH_INTERVALS - i) * distance_interval_values[this->cid]));
 			break;
 		}
 
@@ -1844,9 +1862,9 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
  */
 void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	/* Free previous allocation. */
@@ -1871,7 +1889,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->ats, &this->min_altitude, &this->max_altitude, true, graph_width);
 
-	get_new_min_and_chunk_index(this->min_altitude, this->max_altitude, chunksa, G_N_ELEMENTS(chunksa), &this->draw_min_altitude_time, &this->ciat);
+	get_new_min_and_interval_index(this->min_altitude, this->max_altitude, altitude_interval_values, G_N_ELEMENTS(altitude_interval_values), &this->draw_min_altitude_time, &this->ciat);
 
 	/* Assign locally. */
 	double mina = this->draw_min_altitude_time;
@@ -1890,21 +1908,21 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 	for (int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
-				    i, graph_height - graph_height * (this->ats[i] - mina) / (chunksa[this->ciat] * LINES));
+				    i, graph_height - graph_height * (this->ats[i] - mina) / (altitude_interval_values[this->ciat] * GRAPH_INTERVALS));
 	}
 
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 
 		switch (height_units) {
 		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(mina + (LINES - i) * chunksa[this->ciat]));
+			sprintf(s, "%8dm", (int)(mina + (GRAPH_INTERVALS - i) * altitude_interval_values[this->ciat]));
 			break;
 		case HeightUnit::FEET:
 			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(mina + (LINES - i) * chunksa[this->ciat]));
+			sprintf(s, "%8dft", (int)(mina + (GRAPH_INTERVALS - i) * altitude_interval_values[this->ciat]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1920,7 +1938,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 	if (this->w_et_show_dem->checkState())  {
 		QPen dem_alt_pen(QColor("green"));
 
-		int achunk = chunksa[this->ciat] * LINES;
+		int achunk = altitude_interval_values[this->ciat] * GRAPH_INTERVALS;
 
 		for (int i = 0; i < graph_width; i++) {
 			/* This could be slow doing this each time... */
@@ -1982,9 +2000,9 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 		free(this->speeds_dist);
 	}
 
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 	const int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	const int graph_left = GRAPH_MARGIN_LEFT;
 
 	this->speeds_dist = trk_->make_speed_dist_map(graph_width);
@@ -2004,8 +2022,8 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 		this->min_speed = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	/* Find suitable chunk index. */
-	get_new_min_and_chunk_index(this->min_speed, this->max_speed_dist, chunkss, G_N_ELEMENTS(chunkss), &this->draw_min_speed, &this->cisd);
+	/* Find suitable interval index. */
+	get_new_min_and_interval_index(this->min_speed, this->max_speed_dist, speed_interval_values, G_N_ELEMENTS(speed_interval_values), &this->draw_min_speed, &this->cisd);
 
 	/* Assign locally. */
 	double mins = this->draw_min_speed;
@@ -2018,27 +2036,27 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 	for (int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
-				    i, graph_height - graph_height * (this->speeds_dist[i] - mins) / (chunkss[this->cisd] * LINES));
+				    i, graph_height - graph_height * (this->speeds_dist[i] - mins) / (speed_interval_values[this->cisd] * GRAPH_INTERVALS));
 	}
 
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= LINES; i++) {
+	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
 		switch (speed_units) {
 		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (LINES - i)*chunkss[this->cisd]));
+			sprintf(s, "%8dkm/h", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
 			break;
 		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (LINES - i)*chunkss[this->cisd]));
+			sprintf(s, "%8dmph", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
 			break;
 		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (LINES - i)*chunkss[this->cisd]));
+			sprintf(s, "%8dm/s", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
 			break;
 		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (LINES - i)*chunkss[this->cisd]));
+			sprintf(s, "%8dknots", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -2067,7 +2085,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 
 			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			int pos_x = graph_left + (graph_width * dist_tp / dist);
-			int pos_y = graph_bottom - graph_height * (gps_speed - mins)/(chunkss[this->cisd] * LINES);
+			int pos_y = graph_bottom - graph_height * (gps_speed - mins)/(speed_interval_values[this->cisd] * GRAPH_INTERVALS);
 			viewport->fill_rectangle(gps_speed_pen.color(), pos_x - 2, pos_y - 2, 4, 4);
 		}
 	}
@@ -2138,8 +2156,8 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 
 void TrackProfileDialog::draw_single_graph(Viewport * viewport, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, const PropSaved & saved_img)
 {
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	const int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	const int graph_width = viewport->get_graph_width();
+	const int graph_height = viewport->get_graph_height();
 
 
 	(this->*draw_graph)(viewport, this->trk);
@@ -2176,8 +2194,9 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, void (TrackProfi
 		}
 
 		this->draw_marks(viewport,
-				 ScreenPos(selected_pos_x, selected_pos_y),
-				 ScreenPos(current_pos_x, current_pos_y),
+				 /* Make sure that positions are canvas positions, not graph positions. */
+				 ScreenPos(selected_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - selected_pos_y),
+				 ScreenPos(current_pos_x + GRAPH_MARGIN_LEFT, GRAPH_MARGIN_TOP + graph_height - current_pos_y),
 				 saved_img);
 	}
 }
@@ -2259,7 +2278,7 @@ Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
 
 	/* TODO: move it outside of this function. */
-	const int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	const int graph_width = viewport->get_graph_width();
 	minmax_array(this->altitudes, min_alt, max_alt, true, graph_width);
 
 	return viewport;

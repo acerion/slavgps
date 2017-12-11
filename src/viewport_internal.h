@@ -128,8 +128,13 @@ namespace SlavGPS {
 		LatLonMinMax get_min_max_lat_lon(void) const;
 		LatLonBBox get_bbox(void) const;
 
+
 		int get_width(void) const;
 		int get_height(void) const;
+
+		int get_graph_width(void) const;
+		int get_graph_height(void) const;
+
 
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;
