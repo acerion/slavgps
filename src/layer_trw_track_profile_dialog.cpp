@@ -71,6 +71,32 @@ enum {
 
 
 
+template <class T>
+class Intervals
+{
+public:
+	Intervals(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
+	int get_interval_index(T min, T max, int n_intervals);
+	T get_interval_value(int index);
+	void get_new_min_and_interval_index(T min, T max, T * new_min, int * index, int n_intervals);
+
+	const T * values = NULL;
+	int n_values = 0;
+};
+
+
+
+
+static Intervals <time_t> * time_intervals;
+static Intervals <double> * distance_intervals;
+static Intervals <double> * altitude_intervals;
+static Intervals <double> * gradient_intervals;
+static Intervals <double> * speed_intervals;
+
+
+
+
+
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
 static const double altitude_interval_values[] = {2.0, 5.0, 10.0, 15.0, 20.0,
 						  25.0, 40.0, 50.0, 75.0, 100.0,
@@ -142,6 +168,8 @@ static void speed_label_update(QLabel * label, double value);
 static void dist_dist_label_update(QLabel * label, double distance);
 static void gradient_label_update(QLabel * label, double gradient);
 
+QString get_speed_grid_label(SpeedUnit speed_unit, int value);
+
 
 
 
@@ -178,6 +206,13 @@ TrackProfileDialog::~TrackProfileDialog()
 	delete this->viewport_dt;
 	delete this->viewport_et;
 	delete this->viewport_sd;
+
+	delete time_intervals;
+	delete distance_intervals;
+	delete altitude_intervals;
+	delete gradient_intervals;
+	delete speed_intervals;
+
 }
 
 
@@ -197,113 +232,101 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
+int get_double_interval_index(double min, double max, const double * interval_values, int n_interval_values)
+{
+	const double interval_upper_limit = (max - min) / GRAPH_INTERVALS;
+
+	/* Search for index of nearest interval. */
+	int index = 0;
+	while (interval_upper_limit > interval_values[index]) {
+		index++;
+		/* Last Resort Check */
+		if (index == n_interval_values) {
+			/* Back off and exit loop. */
+			index--;
+			break;
+		}
+	}
+
+	return index;
+}
+
+
+
+
+template <class T>
+int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
+{
+	const T interval_upper_limit = (max - min) / n_intervals;
+
+	/* Search for index of nearest interval. */
+	int index = 0;
+	while (interval_upper_limit > this->values[index]) {
+		index++;
+		/* Last Resort Check */
+		if (index == this->n_values) {
+			/* Return the last valid value. */
+			index--;
+			return index;
+		}
+	}
+
+	if (index != 0) {
+		index--;
+	}
+
+	return index;
+}
+
+
+
+
+template <class T>
+T Intervals<T>::get_interval_value(int index)
+{
+	return this->values[index];
+}
+
+
+
+
 /**
    Returns via pointers:
    - the new minimum value to be used for the graph
    - the index to the interval sizes array
 */
-static void get_new_min_and_interval_index(double mina, double maxa, const double * intervals, int n_interval_values, double * new_min, int * index)
+template <class T>
+void Intervals<T>::get_new_min_and_interval_index(T min, T max, T * new_min, int * index, int n_intervals)
 {
-	double interval = 0.0;
-	int ind = 0;
+	int ind = this->get_interval_index(min, max, n_intervals);
 
-	/* Find suitable interval index. */
-	const double interval_upper_limit = (maxa - mina) / GRAPH_INTERVALS;
-	/* Loop through to find best match. */
-	while (interval_upper_limit > intervals[ind]) {
-		ind++;
-		/* Last Resort Check */
-		if (ind == n_interval_values) {
-			/* Use previous value and exit loop. */
-			ind--;
-			break;
-		}
-	}
-
-
-	/* Ensure adjusted minimum .. maximum covers mina->maxa. */
+	/* Ensure adjusted minimum .. maximum covers min->max. */
 
 	/* Now work out adjusted minimum point to the nearest lowest interval divisor value.
 	   When negative ensure logic uses lowest value. */
-	interval = intervals[ind];
-	if (mina < 0) {
-		*new_min = (double) ((int)((mina - interval) / interval) * interval);
+	T interval = this->values[ind];
+	if (min < 0) {
+		*new_min = (double) ((int)((min - interval) / interval) * interval);
 	} else {
-		*new_min = (double) ((int)(mina / interval) * interval);
+		*new_min = (double) ((int)(min / interval) * interval);
 	}
 
 	/* Range not big enough - as new minimum has lowered. */
-	if ((*new_min + (intervals[ind] * GRAPH_INTERVALS) < maxa)) {
+	if ((*new_min + (this->values[ind] * n_intervals) < max)) {
 		/* Next interval should cover it. */
-		if (ind < n_interval_values - 1) {
+		if (ind < this->n_values - 1) {
 			ind++;
 			/* Remember to adjust the minimum too... */
-			interval = intervals[ind];
-			if (mina < 0) {
-				*new_min = (double) ((int)((mina - interval) / interval) * interval);
+			interval = this->values[ind];
+			if (min < 0) {
+				*new_min = (double) ((int)((min - interval) / interval) * interval);
 			} else {
-				*new_min = (double) ((int)(mina / interval) * interval);
+				*new_min = (double) ((int)(min / interval) * interval);
 			}
 		}
 	}
 
 	*index = ind;
-}
-
-
-
-
-static unsigned int get_time_chunk_index(time_t duration)
-{
-	/* Grid split. */
-	time_t myduration = duration / GRAPH_INTERVALS;
-
-	/* Search nearest chunk index. */
-	unsigned int ci = 0;
-	unsigned int last_chunk = G_N_ELEMENTS(time_interval_values);
-
-	/* Loop through to find best match. */
-	while (myduration > time_interval_values[ci]) {
-		ci++;
-		/* Last Resort Check. */
-		if (ci == last_chunk) {
-			break;
-		}
-	}
-	/* Use previous value. */
-	if (ci != 0) {
-		ci--;
-	}
-
-	return ci;
-}
-
-
-
-
-static int get_distance_interval_index(double length)
-{
-	/* Grid split. */
-	double mylength = length / GRAPH_INTERVALS;
-
-	/* Search nearest chunk index. */
-	int ci = 0;
-	int last_chunk = G_N_ELEMENTS(distance_interval_values);
-
-	/* Loop through to find best match. */
-	while (mylength > distance_interval_values[ci]) {
-		ci++;
-		/* Last Resort Check. */
-		if (ci == last_chunk) {
-			break;
-		}
-	}
-	/* Use previous value. */
-	if (ci != 0) {
-		ci--;
-	}
-
-	return ci;
 }
 
 
@@ -838,8 +861,8 @@ void speed_label_update(QLabel * label, double value)
 	static char tmp_buf[20];
 	/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 	   No conversions needed as already in appropriate units. */
-	SpeedUnit speed_units = Preferences::get_unit_speed();
-	switch (speed_units) {
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	switch (speed_unit) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), value);
 		break;
@@ -1243,7 +1266,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, char * ss, int i)
+void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, const QString & label, int i)
 {
 	const int graph_width = viewport->get_graph_width();
 	const int graph_height = viewport->get_graph_height();
@@ -1253,10 +1276,9 @@ void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, char * ss, in
 	float delta_y = 1.0 * graph_height / GRAPH_INTERVALS;
 	float pos_y = graph_height - delta_y * i;
 
-	QString text(ss);
 	QPointF text_anchor(0, graph_top + graph_height - pos_y);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph_left - 10, delta_y - 3);
-	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, text, SG_TEXT_OFFSET_UP);
+	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 
 
 	viewport->draw_line(viewport->grid_pen,
@@ -1369,8 +1391,9 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
 	double full_distance = this->track_length_inc_gaps;
 	full_distance = convert_distance_meters_to(full_distance, distance_unit);
 
-	const int index = get_distance_interval_index(full_distance);
-	const double distance_interval = distance_interval_values[index];
+	const int index = distance_intervals->get_interval_index(0, full_distance, GRAPH_INTERVALS);
+	const double distance_interval = distance_intervals->get_interval_value(index);
+
 	const int graph_width = viewport->get_graph_width();
 	double dist_per_pixel = full_distance / graph_width;
 
@@ -1415,7 +1438,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->altitudes, &this->min_altitude, &this->max_altitude, true, graph_width);
 
-	get_new_min_and_interval_index(this->min_altitude, this->max_altitude, altitude_interval_values, G_N_ELEMENTS(altitude_interval_values), &this->draw_min_altitude, &this->cia);
+        altitude_intervals->get_new_min_and_interval_index(this->min_altitude, this->max_altitude, &this->draw_min_altitude, &this->cia, GRAPH_INTERVALS);
 
 	/* Assign locally. */
 	double mina = this->draw_min_altitude;
@@ -1456,7 +1479,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk_)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 		}
 
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
@@ -1560,7 +1583,7 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->gradients, &this->min_gradient, &this->max_gradient, true, graph_width);
 
-	get_new_min_and_interval_index(this->min_gradient, this->max_gradient, gradient_interval_values, G_N_ELEMENTS(gradient_interval_values), &this->draw_min_gradient, &this->cig);
+	gradient_intervals->get_new_min_and_interval_index(this->min_gradient, this->max_gradient, &this->draw_min_gradient, &this->cig, GRAPH_INTERVALS);
 
 	/* Assign locally. */
 	double mina = this->draw_min_gradient;
@@ -1581,7 +1604,7 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
 		char s[32];
 		sprintf(s, "%8d%%", (int)(mina + (GRAPH_INTERVALS - i)*gradient_interval_values[this->cig]));
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
@@ -1620,8 +1643,9 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk_)
 
 void TrackProfileDialog::draw_time_lines(Viewport * viewport)
 {
-	unsigned int index = get_time_chunk_index(this->duration);
-	const time_t time_interval = time_interval_values[index];
+	const int index = time_intervals->get_interval_index(0, this->duration, GRAPH_INTERVALS);
+	const time_t time_interval = time_intervals->get_interval_value(index);
+
 	const int graph_width = viewport->get_graph_width();
 	double time_per_pixel = (double)(this->duration) / graph_width;
 
@@ -1667,9 +1691,9 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 	}
 
 	/* Convert into appropriate units. */
-	SpeedUnit speed_units = Preferences::get_unit_speed();
+	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph_width; i++) {
-		this->speeds[i] = convert_speed_mps_to(this->speeds[i], speed_units);
+		this->speeds[i] = convert_speed_mps_to(this->speeds[i], speed_unit);
 	}
 
 	minmax_array(this->speeds, &this->min_speed, &this->max_speed, false, graph_width);
@@ -1678,7 +1702,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 	}
 
 	/* Find suitable interval index. */
-	get_new_min_and_interval_index(this->min_speed, this->max_speed, speed_interval_values, G_N_ELEMENTS(speed_interval_values), &this->draw_min_speed, &this->cis);
+	speed_intervals->get_new_min_and_interval_index(this->min_speed, this->max_speed, &this->draw_min_speed, &this->cis, GRAPH_INTERVALS);
 
 	/* Assign locally. */
 	double mins = this->draw_min_speed;
@@ -1697,28 +1721,11 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 
 	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
-		switch (speed_units) {
-		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
-			break;
-		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
-			break;
-		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
-			break;
-		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]));
-			break;
-		default:
-			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", (int) speed_units);
-		}
+		const int value = (int) (mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cis]);
+		const QString s = get_speed_grid_label(speed_unit, value);
 
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_time_lines(viewport);
 
@@ -1736,7 +1743,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, speed_units);
+			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
 
 			int pos_x = graph_left + graph_width * ((*iter)->timestamp - beg_time) / dur;
 			int pos_y = graph_bottom - graph_height * (gps_speed - mins) / (speed_interval_values[this->cis] * GRAPH_INTERVALS);
@@ -1796,7 +1803,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 
 	/* Find suitable interval index. */
 	double dummy = 0.0; /* Expect this to remain the same! (not that it's used). */
-	get_new_min_and_interval_index(0, maxd, distance_interval_values, G_N_ELEMENTS(distance_interval_values), &dummy, &this->cid);
+	distance_intervals->get_new_min_and_interval_index(0, maxd, &dummy, &this->cid, GRAPH_INTERVALS);
 
 	/* Reset before redrawing. */
 	viewport->clear();
@@ -1826,7 +1833,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk_)
 			break;
 		}
 
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_time_lines(viewport);
 
@@ -1889,7 +1896,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 
 	minmax_array(this->ats, &this->min_altitude, &this->max_altitude, true, graph_width);
 
-	get_new_min_and_interval_index(this->min_altitude, this->max_altitude, altitude_interval_values, G_N_ELEMENTS(altitude_interval_values), &this->draw_min_altitude_time, &this->ciat);
+	altitude_intervals->get_new_min_and_interval_index(this->min_altitude, this->max_altitude, &this->draw_min_altitude_time, &this->ciat, GRAPH_INTERVALS);
 
 	/* Assign locally. */
 	double mina = this->draw_min_altitude_time;
@@ -1929,7 +1936,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk_)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
 		}
 
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_time_lines(viewport);
 
@@ -2011,9 +2018,9 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 	}
 
 	/* Convert into appropriate units. */
-	SpeedUnit speed_units = Preferences::get_unit_speed();
+	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph_width; i++) {
-		this->speeds_dist[i] = convert_speed_mps_to(this->speeds_dist[i], speed_units);
+		this->speeds_dist[i] = convert_speed_mps_to(this->speeds_dist[i], speed_unit);
 	}
 
 	/* OK to reuse min_speed here. */
@@ -2023,7 +2030,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 	}
 
 	/* Find suitable interval index. */
-	get_new_min_and_interval_index(this->min_speed, this->max_speed_dist, speed_interval_values, G_N_ELEMENTS(speed_interval_values), &this->draw_min_speed, &this->cisd);
+	speed_intervals->get_new_min_and_interval_index(this->min_speed, this->max_speed_dist, &this->draw_min_speed, &this->cisd, GRAPH_INTERVALS);
 
 	/* Assign locally. */
 	double mins = this->draw_min_speed;
@@ -2042,28 +2049,11 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 
 	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
-		switch (speed_units) {
-		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
-			break;
-		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
-			break;
-		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
-			break;
-		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (GRAPH_INTERVALS - i)*speed_interval_values[this->cisd]));
-			break;
-		default:
-			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", (int) speed_units);
-		}
+		const int value = (int) (mins + (GRAPH_INTERVALS - i) * speed_interval_values[this->cisd]);
+		const QString s = get_speed_grid_label(speed_unit, value);
 
-		this->draw_horizontal_grid(viewport, s, i);
+		this->draw_horizontal_grid(viewport, QString(s), i);
 	}
 	this->draw_distance_divisions(viewport, Preferences::get_unit_distance());
 
@@ -2081,7 +2071,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, speed_units);
+			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
 
 			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			int pos_x = graph_left + (graph_width * dist_tp / dist);
@@ -2699,6 +2689,13 @@ void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent) : QDialog(a_parent)
 {
+	time_intervals = new Intervals<time_t>(time_interval_values, sizeof (time_interval_values) / sizeof (time_interval_values[0]));
+	distance_intervals = new Intervals<double>(distance_interval_values, sizeof (distance_interval_values) / sizeof (distance_interval_values[0]));
+	altitude_intervals = new Intervals<double>(altitude_interval_values, sizeof (altitude_interval_values) / sizeof (altitude_interval_values[0]));
+	gradient_intervals = new Intervals<double>(gradient_interval_values, sizeof (gradient_interval_values) / sizeof (gradient_interval_values[0]));
+	speed_intervals = new Intervals<double>(speed_interval_values, sizeof (speed_interval_values) / sizeof (speed_interval_values[0]));
+
+
 	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
 	this->trw = (LayerTRW *) a_trk->owning_layer;
@@ -2880,4 +2877,33 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 	this->labels_font.setFamily("Helvetica");
 	this->labels_font.setPointSize(11);
+}
+
+
+
+QString get_speed_grid_label(SpeedUnit speed_unit, int value)
+{
+	QString result;
+	const int width = 8;
+
+	switch (speed_unit) {
+	case SpeedUnit::KILOMETRES_PER_HOUR:
+		result = QObject::tr("%1 km/h").arg(value, width);
+		break;
+	case SpeedUnit::MILES_PER_HOUR:
+		result = QObject::tr("%1 mph").arg(value, width);
+		break;
+	case SpeedUnit::METRES_PER_SECOND:
+		result = QObject::tr("%1 m/s").arg(value, width);
+		break;
+	case SpeedUnit::KNOTS:
+		result = QObject::tr("%1 knots").arg(value, width);
+		break;
+	default:
+		result = QObject::tr("--");
+		qDebug() << "EE:" PREFIX << "unrecognized speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return result;
 }

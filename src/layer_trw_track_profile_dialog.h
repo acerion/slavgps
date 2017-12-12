@@ -156,7 +156,7 @@ namespace SlavGPS {
 
 		void draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit);
 		void draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value);
-		void draw_horizontal_grid(Viewport * viewport, char * ss, int i);
+		void draw_horizontal_grid(Viewport * viewport, const QString & label, int i);
 		void draw_time_lines(Viewport * viewport);
 		void draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit);
 
