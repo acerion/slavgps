@@ -54,6 +54,7 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
+	class ProfileGraph;
 
 
 
@@ -75,6 +76,9 @@ namespace SlavGPS {
 		SG_TRACK_PROFILE_TYPE_SD, /* sd = speed-distance. */
 		SG_TRACK_PROFILE_TYPE_END,
 	} TrackProfileType;
+
+
+
 
 
 
@@ -117,7 +121,7 @@ namespace SlavGPS {
 		Viewport * create_et_viewport(void);
 		Viewport * create_sd_viewport(void);
 
-		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
+		void track_graph_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
 
 
 
@@ -162,7 +166,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(Viewport * viewport, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, const PropSaved & saved_img);
+		void draw_single_graph(ProfileGraph * graph);
 
 
 		Window * parent = NULL;
@@ -218,19 +222,13 @@ namespace SlavGPS {
 		double   track_length;
 		double   track_length_inc_gaps;
 
-		PropSaved saved_img_ed;
-		PropSaved saved_img_gd;
-		PropSaved saved_img_st;
-		PropSaved saved_img_dt;
-		PropSaved saved_img_et;
-		PropSaved saved_img_sd;
 
-		Viewport * viewport_ed = NULL;
-		Viewport * viewport_gd = NULL;
-		Viewport * viewport_st = NULL;
-		Viewport * viewport_dt = NULL;
-		Viewport * viewport_et = NULL;
-		Viewport * viewport_sd = NULL;
+		ProfileGraph * graph_ed = NULL;
+		ProfileGraph * graph_gd = NULL;
+		ProfileGraph * graph_st = NULL;
+		ProfileGraph * graph_dt = NULL;
+		ProfileGraph * graph_et = NULL;
+		ProfileGraph * graph_sd = NULL;
 
 		double   * altitudes = NULL;
 		double   * ats = NULL; /* Altitudes in time. */
@@ -276,8 +274,26 @@ namespace SlavGPS {
 		QSignalMapper * signal_mapper = NULL;
 
 	private:
-		void draw_marks(Viewport * viewport, const ScreenPos & selected_pos, const ScreenPos & current_pos, const PropSaved & saved_img);
+		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
 	};
+
+
+
+
+	class ProfileGraph {
+	public:
+		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int));
+		~ProfileGraph();
+
+		TrackProfileType type = SG_TRACK_PROFILE_TYPE_END;
+		Viewport * viewport = NULL;
+		PropSaved saved_img;
+		bool is_time_graph = false;
+
+		void (TrackProfileDialog::*draw_graph_fn)(Viewport *, Track *) = NULL;
+		double (TrackProfileDialog::*get_pos_y_fn)(double, int, int) = NULL;
+	};
+
 
 
 
