@@ -126,20 +126,12 @@ namespace SlavGPS {
 
 
 		/* "Draw" functions. */
-		void draw_ed(Viewport * viewport, Track * trk, ProfileGraph * graph);
-		void draw_gd(Viewport * viewport, Track * trk, ProfileGraph * graph);
-		void draw_st(Viewport * viewport, Track * trk, ProfileGraph * graph);
-		void draw_dt(Viewport * viewport, Track * trk, ProfileGraph * graph);
-		void draw_et(Viewport * viewport, Track * trk, ProfileGraph * graph);
-		void draw_sd(Viewport * viewport, Track * trk, ProfileGraph * graph);
-
-		/* "get_pos_y" functions. */
-		double get_pos_y_ed(double pos_x, ProfileGraph * graph);
-		double get_pos_y_gd(double pos_x, ProfileGraph * graph);
-		double get_pos_y_st(double pos_x, ProfileGraph * graph);
-		double get_pos_y_dt(double pos_x, ProfileGraph * graph);
-		double get_pos_y_et(double pos_x, ProfileGraph * graph);
-		double get_pos_y_sd(double pos_x, ProfileGraph * graph);
+		void draw_ed(ProfileGraph * graph, Track * trk);
+		void draw_gd(ProfileGraph * graph, Track * trk);
+		void draw_st(ProfileGraph * graph, Track * trk);
+		void draw_dt(ProfileGraph * graph, Track * trk);
+		void draw_et(ProfileGraph * graph, Track * trk);
+		void draw_sd(ProfileGraph * graph, Track * trk);
 
 
 
@@ -166,7 +158,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(ProfileGraph * graph);
+		void draw_single_graph(ProfileGraph * graph, const double * interval_values);
 
 
 		Window * parent = NULL;
@@ -231,43 +223,7 @@ namespace SlavGPS {
 		ProfileGraph * graph_sd = NULL;
 
 
-
-
-		/* cia & ciat are normally same value but sometimes not due to differing methods of altitude array creation.
-		   thus also have draw_min_altitude for each altitude graph type. */
-
-		double * graph_values_altitude = NULL;
-		//int cia = 0; /* Chunk size Index into Altitudes. */
-
-		double * graph_values_at = NULL; /* Altitudes in time. */
-		//int ciat = 0; /* Chunk size Index into Altitudes / Time. */
-
-		double * graph_values_gradient = NULL;
-		//int cig; /* Chunk size Index into Gradients. */
-
-		double * graph_values_speed = NULL;
-		//int cis = 0; /* Chunk size Index into Speeds. */
-
-		double * graph_values_sd = NULL;
-		//int cisd = 0; /* Chunk size Index into Speed/Distance. */
-
-		double * graph_values_distance = NULL;
-		//int cid = 0; /* Chunk size Index into Distance. */
-
-		double   min_altitude = 0.0;
-		double   max_altitude = 0.0;
-		double   draw_min_altitude = 0.0;
-		double   draw_min_altitude_time = 0.0;
-
-		double   min_gradient = 0.0;
-		double   max_gradient = 0.0;
-		double   draw_min_gradient = 0.0;
-
-
-		double   min_speed = 0.0;
 		double   max_speed = 0.0;
-		double   draw_min_speed = 0.0;
-		double   max_speed_dist = 0.0;
 
 
 
@@ -297,21 +253,29 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *, ProfileGraph *), double (TrackProfileDialog::*get_pos_y)(double, ProfileGraph *));
+		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *));
 		~ProfileGraph();
+
+		double get_pos_y(double pos_x, const double * interval_values);
+		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
 
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_END;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
 		bool is_time_graph = false;
 
-		void (TrackProfileDialog::*draw_graph_fn)(Viewport *, Track *, ProfileGraph *) = NULL;
-		double (TrackProfileDialog::*get_pos_y_fn)(double, ProfileGraph *) = NULL;
+		void (TrackProfileDialog::*draw_graph_fn)(ProfileGraph *, Track *) = NULL;
 
 		int width = 0;
 		int height = 0;
 
-		int interval_index = 0;
+		double y_interval = 0.0;
+
+		double y_range_min = 0.0;
+		double y_range_max = 0.0;
+		double y_range_min_drawable = 0.0;
+
+		double * y_values = NULL;
 	};
 
 
