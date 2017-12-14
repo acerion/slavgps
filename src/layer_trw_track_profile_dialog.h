@@ -114,12 +114,7 @@ namespace SlavGPS {
 
 	public:
 
-		Viewport * create_ed_viewport(double * min_alt, double * max_alt);
-		Viewport * create_gd_viewport(void);
-		Viewport * create_st_viewport(void);
-		Viewport * create_dt_viewport(void);
-		Viewport * create_et_viewport(void);
-		Viewport * create_sd_viewport(void);
+		Viewport * create_viewport(const char * debug_label);
 
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
 
@@ -150,11 +145,13 @@ namespace SlavGPS {
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
 
+
+		void draw_horizontal_grid_line(Viewport * viewport, const QString & label, int i);
+
+		void draw_time_grid(Viewport * viewport, int n_intervals);
+		void draw_distance_grid(Viewport * viewport, DistanceUnit distance_unit, int n_intervals);
 		void draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit);
 		void draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value);
-		void draw_horizontal_grid(Viewport * viewport, const QString & label, int i);
-		void draw_time_lines(Viewport * viewport);
-		void draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit);
 
 		void save_values(void);
 
@@ -253,11 +250,14 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *));
+		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), double * (*y_values_creator)(Track *, int));
 		~ProfileGraph();
 
 		double get_pos_y(double pos_x, const double * interval_values);
 		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
+
+		bool regenerate_y_values(Track * trk);
+		void regenerate_sizes(void);
 
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_END;
 		Viewport * viewport = NULL;
@@ -268,6 +268,11 @@ namespace SlavGPS {
 
 		int width = 0;
 		int height = 0;
+		int bottom_edge = 0;
+		int left_edge = 0;
+
+		/* Number of intervals on y-axis. */
+		int n_intervals_y = 0;
 
 		double y_interval = 0.0;
 
@@ -276,6 +281,7 @@ namespace SlavGPS {
 		double y_range_min_drawable = 0.0;
 
 		double * y_values = NULL;
+		double * (*y_values_creator_fn)(Track *, int);
 	};
 
 

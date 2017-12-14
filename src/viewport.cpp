@@ -1051,6 +1051,38 @@ int Viewport::get_graph_height(void) const
 
 
 
+int Viewport::get_graph_top_edge(void) const
+{
+	return this->margin_top;
+}
+
+
+
+
+int Viewport::get_graph_bottom_edge(void) const
+{
+	return this->height() - this->margin_bottom;
+}
+
+
+
+
+int Viewport::get_graph_left_edge(void) const
+{
+	return this->margin_left;
+}
+
+
+
+
+int Viewport::get_graph_right_edge(void) const
+{
+	return this->width() - this->margin_right;
+}
+
+
+
+
 Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;

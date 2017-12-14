@@ -895,7 +895,7 @@ time_t Track::get_duration(bool segment_gaps) const
 
 
 
-/* Code extracted from make_speed_map() and similar functions. */
+/* Code extracted from make_values_vector_speed_time() and similar functions. */
 double Track::get_duration() const
 {
 	if (this->trackpoints.empty()) {
@@ -1026,7 +1026,7 @@ void Track::convert(CoordMode dest_mode)
 
 /* I understood this when I wrote it ... maybe ... Basically it eats up the
  * proper amounts of length on the track and averages elevation over that. */
-double * Track::make_elevation_map(uint16_t num_chunks) const
+double * Track::make_values_vector_altitude_distance(uint16_t num_chunks) const
 {
 	assert (num_chunks < 16000);
 	if (this->trackpoints.size() < 2) {
@@ -1190,7 +1190,7 @@ bool Track::get_total_elevation_gain(double * up, double * down) const
 
 
 
-double * Track::make_gradient_map(const uint16_t num_chunks) const
+double * Track::make_values_vector_gradient_distance(const uint16_t num_chunks) const
 {
 	assert (num_chunks < 16000);
 
@@ -1202,7 +1202,7 @@ double * Track::make_gradient_map(const uint16_t num_chunks) const
 		return NULL;
 	}
 
-	double * altitudes = this->make_elevation_map(num_chunks);
+	double * altitudes = this->make_values_vector_altitude_distance(num_chunks);
 	if (altitudes == NULL) {
 		return NULL;
 	}
@@ -1230,7 +1230,7 @@ double * Track::make_gradient_map(const uint16_t num_chunks) const
 
 
 /* By Alex Foobarian. */
-double * Track::make_speed_map(const uint16_t num_chunks) const
+double * Track::make_values_vector_speed_time(const uint16_t num_chunks) const
 {
 	assert (num_chunks < 16000);
 
@@ -1290,9 +1290,9 @@ double * Track::make_speed_map(const uint16_t num_chunks) const
 
 
 /**
- * Make a distance/time map, heavily based on the vik_track_make_speed_map method.
+ * Make a distance/time map, heavily based on the Track::make_values_vector_speed_time() method.
  */
-double * Track::make_distance_map(const uint16_t num_chunks) const
+double * Track::make_values_vector_distance_time(const uint16_t num_chunks) const
 {
 	double duration = this->get_duration();
 	if (duration < 0) {
@@ -1355,7 +1355,7 @@ double * Track::make_distance_map(const uint16_t num_chunks) const
  * NB Somehow the elevation/distance applies some kind of smoothing algorithm,
  * but I don't think any one understands it any more (I certainly don't ATM).
  */
-double * Track::make_elevation_time_map(const uint16_t num_chunks) const
+double * Track::make_values_vector_altitude_time(const uint16_t num_chunks) const
 {
 	if (this->trackpoints.size() < 2) {
 		return NULL;
@@ -1431,7 +1431,7 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks) const
 /**
  * Make a speed/distance map.
  */
-double * Track::make_speed_dist_map(const uint16_t num_chunks) const
+double * Track::make_values_vector_speed_distance(const uint16_t num_chunks) const
 {
 	double total_length = this->get_length_including_gaps();
 	if (total_length <= 0) {
@@ -1463,7 +1463,7 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks) const
 	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
 	int tp_index = 0; /* Index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
-		/* Similar to the make_speed_map, but instead of using a time chunk, use a distance chunk. */
+		/* Similar to the make_values_vector_speed_time(), but instead of using a time chunk, use a distance chunk. */
 		if (s[0] + i * chunk_size >= s[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;

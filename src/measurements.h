@@ -33,27 +33,39 @@ namespace SlavGPS {
 
 
 
-
-#define SG_PRECISION_ALTITUDE      5
+#define SG_PRECISION_ALTITUDE           2
+#define SG_PRECISION_ALTITUDE_WIDE      5
 #define SG_ALTITUDE_PRECISION      2
 #define SG_ALTITUDE_RANGE_MIN  -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
 #define SG_ALTITUDE_RANGE_MAX  25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
+
 
 #define SG_PRECISION_DISTANCE   2
 #define SG_PRECISION_SPEED      2
 #define SG_PRECISION_COURSE     1
 #define SG_PRECISION_LATITUDE   6
 #define SG_PRECISION_LONGITUDE  6
+#define SG_PRECISION_GRADIENT   2
 
 
 
 
 	class Measurements {
 	public:
+		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
 		static QString get_altitude_string(double value, int precision = SG_PRECISION_ALTITUDE);
+		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
+		static QString get_altitude_string_recalculate(double value, int precision = SG_PRECISION_ALTITUDE);
+
 		static QString get_distance_string_short(double value, int precision = SG_PRECISION_DISTANCE);
 		static QString get_distance_string(double value, int precision = SG_PRECISION_DISTANCE);
+
+		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
+		static QString get_speed_string_dont_recalculate(double value, int precision = SG_PRECISION_SPEED);
+		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
 		static QString get_speed_string(double value, int precision = SG_PRECISION_SPEED);
+
+
 		static QString get_course_string(double value, int precision = SG_PRECISION_COURSE);
 
 		static QString get_file_size_string(size_t file_size);

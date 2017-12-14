@@ -45,6 +45,7 @@
 #include "application_state.h"
 #include "globals.h"
 #include "preferences.h"
+#include "measurements.h"
 
 
 
@@ -53,6 +54,9 @@ using namespace SlavGPS;
 
 
 
+
+#define VIK_SETTINGS_TRACK_PROFILE_WIDTH "track_profile_display_width"
+#define VIK_SETTINGS_TRACK_PROFILE_HEIGHT "track_profile_display_height"
 
 #define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__
 
@@ -166,7 +170,9 @@ static void speed_label_update(QLabel * label, double value);
 static void dist_dist_label_update(QLabel * label, double distance);
 static void gradient_label_update(QLabel * label, double gradient);
 
-QString get_speed_grid_label(SpeedUnit speed_unit, int value);
+static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
+static QString get_elevation_grid_label(HeightUnit height_unit, double value);
+static QString get_distance_grid_label(DistanceUnit distance_unit, double value);
 
 
 
@@ -198,8 +204,41 @@ TrackProfileDialog::~TrackProfileDialog()
 #define GRAPH_MARGIN_TOP 20
 #define GRAPH_MARGIN_BOTTOM 30 // 1
 #define GRAPH_INTERVALS 5
-#define GRAPH_VERTICAL_INTERVALS GRAPH_INTERVALS
-#define GRAPH_HORIZONTAL_INTERVALS GRAPH_INTERVALS
+#define GRAPH_Y_INTERVALS GRAPH_INTERVALS
+#define GRAPH_X_INTERVALS GRAPH_INTERVALS
+
+
+
+
+double * y_values_creator_ed(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_altitude_distance(graph_width);
+}
+
+double * y_values_creator_gd(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_gradient_distance(graph_width);
+}
+
+double * y_values_creator_st(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_speed_time(graph_width);
+}
+
+double * y_values_creator_dt(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_distance_time(graph_width);
+}
+
+double * y_values_creator_et(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_altitude_time(graph_width);
+}
+
+double * y_values_creator_sd(Track * trk, int graph_width)
+{
+	return trk->make_values_vector_speed_distance(graph_width);
+}
 
 
 
@@ -546,7 +585,7 @@ double ProfileGraph::get_pos_y(double pos_x, const double * interval_values)
 		ix--;
 	}
 
-	return this->height * (this->y_values[ix] - this->y_range_min_drawable) / (this->y_interval * GRAPH_INTERVALS);
+	return this->height * (this->y_values[ix] - this->y_range_min_drawable) / (this->y_interval * GRAPH_Y_INTERVALS);
 }
 
 
@@ -666,7 +705,7 @@ void real_time_label_update(QLabel * label, Trackpoint * tp)
 	if (tp->has_timestamp) {
 		/* Alternatively could use %c format but I prefer a slightly more compact form here.
 		   The full date can of course be seen on the Statistics tab. */
-		strftime(tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&(tp->timestamp)));
+		strftime(tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&tp->timestamp));
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	}
@@ -680,27 +719,9 @@ void real_time_label_update(QLabel * label, Trackpoint * tp)
 
 void speed_label_update(QLabel * label, double value)
 {
-	static char tmp_buf[20];
 	/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 	   No conversions needed as already in appropriate units. */
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	switch (speed_unit) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), value);
-		break;
-	case SpeedUnit::MILES_PER_HOUR:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), value);
-		break;
-	case SpeedUnit::KNOTS:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), value);
-		break;
-	default:
-		/* SpeedUnit::METRES_PER_SECOND */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), value);
-		break;
-	}
-	label->setText(QString(tmp_buf));
-
+	label->setText(Measurements::get_speed_string_dont_recalculate(value));
 	return;
 }
 
@@ -709,10 +730,7 @@ void speed_label_update(QLabel * label, double value)
 
 void gradient_label_update(QLabel * label, double gradient)
 {
-	static char tmp_buf[20];
-	snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int) gradient);
-	label->setText(QString(tmp_buf));
-
+	label->setText(QObject::tr("%1").arg((int) gradient));
 	return;
 }
 
@@ -923,8 +941,8 @@ int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * ev)
 {
 	const int graph_width = viewport->get_graph_width();
 	const int graph_height = viewport->get_graph_height();
-	const int graph_left = GRAPH_MARGIN_LEFT;
-	const int graph_top = GRAPH_MARGIN_TOP;
+	const int graph_left_edge = viewport->get_graph_left_edge();
+	const int graph_top_edge = viewport->get_graph_top_edge();
 
 	QPoint position = viewport->mapFromGlobal(QCursor::pos());
 
@@ -942,18 +960,18 @@ int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * ev)
 	const int mouse_y = ev->y();
 #endif
 
-	if (mouse_x < graph_left || mouse_x > graph_left + graph_width) {
+	if (mouse_x < graph_left_edge || mouse_x > graph_left_edge + graph_width) {
 		/* Cursor outside of chart area. */
 		return -1;
 	}
-	if (mouse_y < graph_top || mouse_y > graph_top + graph_height) {
+	if (mouse_y < graph_top_edge || mouse_y > graph_top_edge + graph_height) {
 		/* Cursor outside of chart area. */
 		return -1;
 	}
 
-	int x = mouse_x - graph_left;
+	int x = mouse_x - graph_left_edge;
 	if (x < 0) {
-		qDebug() << "EE: Track Profile: condition 1 for mouse movement failed:" << x << mouse_x << graph_left;
+		qDebug() << "EE: Track Profile: condition 1 for mouse movement failed:" << x << mouse_x << graph_left_edge;
 		x = 0;
 	}
 
@@ -981,13 +999,8 @@ void distance_label_update(QLabel * label, double meters_from_start)
 
 void elevation_label_update(QLabel * label, Trackpoint * tp)
 {
-	static char tmp_buf[20];
-	if (Preferences::get_unit_height() == HeightUnit::FEET) {
-		snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
-	} else {
-		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
-	}
-	label->setText(QString(tmp_buf));
+	/* Recalculate value into target unit. */
+	label->setText(Measurements::get_altitude_string(tp->altitude, 0));
 
 	return;
 }
@@ -1022,19 +1035,7 @@ void dist_dist_label_update(QLabel * label, double distance)
  * Draws DEM points and a respresentative speed on the supplied pixmap
  * (which is the elevations graph).
  */
-static void draw_dem_alt_speed_dist(Track * trk,
-				    Viewport * viewport,
-				    QPen & alt_pen,
-				    QPen & speed_pen,
-				    double alt_offset,
-				    double max_speed_in,
-				    double y_interval,
-				    int graph_width,
-				    int graph_height,
-				    int graph_bottom,
-				    int margin,
-				    bool do_dem,
-				    bool do_speed)
+static void draw_dem_alt_speed_dist(Track * trk, ProfileGraph * graph, QPen & alt_pen, QPen & speed_pen, double max_speed_in, bool do_dem, bool do_speed)
 {
 	double max_speed = 0;
 	double total_length = trk->get_length_including_gaps();
@@ -1045,12 +1046,12 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	}
 
 	double dist = 0;
-	int achunk = y_interval * GRAPH_INTERVALS;
+	int achunk = graph->y_interval * graph->n_intervals_y;
 
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
 		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		int x = (graph_width * dist) / total_length + margin;
+		int x = (graph->width * dist) / total_length + graph->left_edge;
 		if (do_dem) {
 			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
 			if (elev != DEM_INVALID_ELEVATION) {
@@ -1061,18 +1062,18 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				/* No conversion needed if already in metres. */
 
 				/* offset is in current height units. */
-				elev -= alt_offset;
+				elev -= graph->y_range_min_drawable;
 
 				/* consider chunk size. */
-				int y_alt = graph_bottom - ((graph_height * elev)/achunk);
-				viewport->fill_rectangle(alt_pen.color(), x - 2, y_alt - 2, 4, 4);
+				int y_alt = graph->bottom_edge - ((graph->height * elev)/achunk);
+				graph->viewport->fill_rectangle(alt_pen.color(), x - 2, y_alt - 2, 4, 4);
 			}
 		}
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!std::isnan((*iter)->speed)) {
-				int y_speed = graph_bottom - (graph_height * (*iter)->speed) / max_speed;
-				viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
+				int y_speed = graph->bottom_edge - (graph->height * (*iter)->speed) / max_speed;
+				graph->viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1084,18 +1085,18 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, const QString & label, int i)
+void TrackProfileDialog::draw_horizontal_grid_line(Viewport * viewport, const QString & label, int i)
 {
 	const int graph_width = viewport->get_graph_width();
 	const int graph_height = viewport->get_graph_height();
-	const int graph_left = GRAPH_MARGIN_LEFT;
-	const int graph_top = GRAPH_MARGIN_TOP;
+	const int graph_left_edge = viewport->get_graph_left_edge();
+	const int graph_top_edge = viewport->get_graph_top_edge();
 
-	float delta_y = 1.0 * graph_height / GRAPH_INTERVALS;
+	float delta_y = 1.0 * graph_height / GRAPH_Y_INTERVALS;
 	float pos_y = graph_height - delta_y * i;
 
-	QPointF text_anchor(0, graph_top + graph_height - pos_y);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph_left - 10, delta_y - 3);
+	QPointF text_anchor(0, graph_top_edge + graph_height - pos_y);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph_left_edge - 10, delta_y - 3);
 	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 
 
@@ -1114,7 +1115,7 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
 {
 	const int graph_width = viewport->get_graph_width();
 	const int graph_height = viewport->get_graph_height();
-	const int graph_left = GRAPH_MARGIN_LEFT;
+	const int graph_left_edge = viewport->get_graph_left_edge();
 
 	char buf[64] = { 0 };
 
@@ -1155,7 +1156,7 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
 	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
 
 	QString text(buf);
-	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
+	QPointF text_anchor(graph_left_edge + grid_x, GRAPH_MARGIN_TOP + graph_height);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
 	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
 
@@ -1176,7 +1177,7 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 {
 	const int graph_width = viewport->get_graph_width();
 	const int graph_height = viewport->get_graph_height();
-	const int graph_left = GRAPH_MARGIN_LEFT;
+	const int graph_left_edge = viewport->get_graph_left_edge();
 
 	const QString distance_unit_string = get_distance_unit_string(distance_unit);
 
@@ -1190,7 +1191,7 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 
 	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
 
-	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
+	QPointF text_anchor(graph_left_edge + grid_x, GRAPH_MARGIN_TOP + graph_height);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
 	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
 
@@ -1203,13 +1204,13 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 
 
 
-void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit)
+void TrackProfileDialog::draw_distance_grid(Viewport * viewport, DistanceUnit distance_unit, int n_intervals)
 {
 	/* Set to display units from length in metres. */
 	double full_distance = this->track_length_inc_gaps;
 	full_distance = convert_distance_meters_to(full_distance, distance_unit);
 
-	const int index = distance_intervals->get_interval_index(0, full_distance, GRAPH_INTERVALS);
+	const int index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
 	const double distance_interval = distance_intervals->get_interval_value(index);
 
 	const int graph_width = viewport->get_graph_width();
@@ -1230,23 +1231,14 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
  */
 void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 {
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-
-	graph->y_values = trk_->make_elevation_map(graph->width);
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_units = Preferences::get_unit_height();
-	if (height_units == HeightUnit::FEET) {
+	HeightUnit height_unit = Preferences::get_unit_height();
+	if (height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
 			graph->y_values[i] = VIK_METERS_TO_FEET(graph->y_values[i]);
@@ -1256,8 +1248,10 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-        graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+        graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
 
 
 	/* Reset before redrawing. */
@@ -1269,36 +1263,23 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		if (graph->y_values[i] == VIK_DEFAULT_ALTITUDE) {
 			graph->viewport->draw_line(no_alt_info_pen,
-					    i, 0,
-					    i, 0 + graph->height);
+						   i, 0,
+						   i, 0 + graph->height);
 		} else {
 			graph->viewport->draw_line(this->main_pen,
 						   i, graph->height,
-						   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS));
+						   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 		}
 	}
-
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-
-		switch (height_units) {
-		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		case HeightUnit::FEET:
-			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		default:
-			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
-		}
-
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = get_elevation_grid_label(height_unit, value);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_distance_divisions(graph->viewport, Preferences::get_unit_distance());
+	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_ed_show_dem->checkState()
@@ -1312,17 +1293,8 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 			this->max_speed = trk_->get_max_speed();
 		}
 
-		draw_dem_alt_speed_dist(trk_,
-					graph->viewport,
-					dem_alt_pen,
-					gps_speed_pen,
-					graph->y_range_min_drawable,
+		draw_dem_alt_speed_dist(trk_, graph, dem_alt_pen, gps_speed_pen,
 					this->max_speed,
-					graph->y_interval,
-					graph->width,
-					graph->height,
-					graph_bottom,
-					GRAPH_MARGIN_LEFT,
 					this->w_ed_show_dem->checkState(),
 					this->w_ed_show_gps_speed->checkState());
 	}
@@ -1344,17 +1316,10 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
  * Draws representative speed on the supplied pixmap
  * (which is the gradients graph).
  */
-static void draw_speed_dist(Track * trk_,
-			    Viewport * viewport,
-			    QPen & speed_pen,
-			    double max_speed_in,
-			    const int graph_width,
-			    const int graph_height,
-			    const int graph_bottom,
-			    bool do_speed)
+static void draw_speed_dist(Track * trk, ProfileGraph * graph, QPen & speed_pen, double max_speed_in, const int graph_bottom_edge, bool do_speed)
 {
 	double max_speed = 0;
-	double total_length = trk_->get_length_including_gaps();
+	double total_length = trk->get_length_including_gaps();
 
 	/* Calculate the max speed factor. */
 	if (do_speed) {
@@ -1362,14 +1327,14 @@ static void draw_speed_dist(Track * trk_,
 	}
 
 	double dist = 0;
-	for (auto iter = std::next(trk_->trackpoints.begin()); iter != trk_->trackpoints.end(); iter++) {
+	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		int x = (graph_width * dist) / total_length + GRAPH_MARGIN_LEFT;
+		int x = (graph->width * dist) / total_length + GRAPH_MARGIN_LEFT;
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!std::isnan((*iter)->speed)) {
-				int y_speed = graph_bottom - (graph_height * (*iter)->speed) / max_speed;
-				viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
+				int y_speed = graph_bottom_edge - (graph->height * (*iter)->speed) / max_speed;
+				graph->viewport->fill_rectangle(speed_pen.color(), x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1383,25 +1348,17 @@ static void draw_speed_dist(Track * trk_,
  */
 void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 {
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-
-	graph->y_values = trk_->make_gradient_map(graph->width);
-
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
 
 
 	/* Reset before redrawing. */
@@ -1412,17 +1369,17 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS));
+					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
-
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-		sprintf(s, "%8d%%", (int)(graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval));
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_distance_divisions(graph->viewport, Preferences::get_unit_distance());
+	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_gd_show_gps_speed->checkState()) {
@@ -1435,12 +1392,10 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 		}
 
 		draw_speed_dist(trk_,
-				graph->viewport,
+				graph,
 				gps_speed_pen,
 				this->max_speed,
-				graph->width,
-				graph->height,
-				graph_bottom,
+				graph->bottom_edge,
 				this->w_gd_show_gps_speed->checkState());
 	}
 
@@ -1457,16 +1412,16 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 
 
 
-void TrackProfileDialog::draw_time_lines(Viewport * viewport)
+void TrackProfileDialog::draw_time_grid(Viewport * viewport, int n_intervals)
 {
-	const int index = time_intervals->get_interval_index(0, this->duration, GRAPH_INTERVALS);
+	const int index = time_intervals->get_interval_index(0, this->duration, n_intervals);
 	const time_t time_interval = time_intervals->get_interval_value(index);
 
 	const int graph_width = viewport->get_graph_width();
 	double time_per_pixel = (double)(this->duration) / graph_width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if (this->duration > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * GRAPH_INTERVALS * GRAPH_INTERVALS) {
+	if (this->duration > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
 		return;
 	}
 
@@ -1485,18 +1440,8 @@ void TrackProfileDialog::draw_time_lines(Viewport * viewport)
  */
 void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 {
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_left = GRAPH_MARGIN_LEFT;
-
-	graph->y_values = trk_->make_speed_map(graph->width);
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
@@ -1517,8 +1462,10 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
 
 
 	/* Reset before redrawing. */
@@ -1529,19 +1476,17 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS));
+					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
-
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
-		const int value = (int) (graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval);
-		const QString s = get_speed_grid_label(speed_unit, value);
-
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = get_speed_grid_label(speed_unit, value);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_time_lines(graph->viewport);
+	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
 
 
 	if (this->w_st_show_gps_speed->checkState()) {
@@ -1559,8 +1504,8 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 
 			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
 
-			int pos_x = graph_left + graph->width * ((*iter)->timestamp - beg_time) / dur;
-			int pos_y = graph_bottom - graph->height * (gps_speed - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS);
+			int pos_x = graph->left_edge + graph->width * ((*iter)->timestamp - beg_time) / dur;
+			int pos_y = graph->bottom_edge - graph->height * (gps_speed - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y);
 			graph->viewport->fill_rectangle(QColor("red"), pos_x - 2, pos_y - 2, 4, 4);
 		}
 	}
@@ -1583,18 +1528,8 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
  */
 void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 {
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_left = GRAPH_MARGIN_LEFT;
-
-	graph->y_values = trk_->make_distance_map(graph->width);
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
@@ -1611,10 +1546,13 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	}
 
 	graph->y_range_min = 0;
-	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);;
+	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);
 
-	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
+
 
 	/* Reset before redrawing. */
 	graph->viewport->clear();
@@ -1624,29 +1562,17 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->y_values[i]) / (graph->y_interval * GRAPH_INTERVALS));
+					   i, graph->height - graph->height * (graph->y_values[i]) / (graph->y_interval * graph->n_intervals_y));
 	}
 
-
-	/* Draw grid on top of graph of values.. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-
-		switch (distance_unit) {
-		case DistanceUnit::MILES:
-			sprintf(s, _("%.1f miles"), ((GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		case DistanceUnit::NAUTICAL_MILES:
-			sprintf(s, _("%.1f NM"), ((GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		default:
-			sprintf(s, _("%.1f km"), ((GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		}
-
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	/* Draw grid on top of graph of values. */
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = get_distance_grid_label(distance_unit, value);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_time_lines(graph->viewport);
+	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
 
 
 	/* Show speed indicator. */
@@ -1657,8 +1583,8 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 
 		/* This is just an indicator - no actual values can be inferred by user. */
 		for (int i = 0; i < graph->width; i++) {
-			int y_speed = graph_bottom - (graph->height * graph->y_values[i]) / max_speed_;
-			graph->viewport->fill_rectangle(QColor("red"), graph_left + i - 2, y_speed - 2, 4, 4);
+			int y_speed = graph->bottom_edge - (graph->height * graph->y_values[i]) / max_speed_;
+			graph->viewport->fill_rectangle(QColor("red"), graph->left_edge + i - 2, y_speed - 2, 4, 4);
 		}
 	}
 
@@ -1680,24 +1606,14 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
  */
 void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 {
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_left = GRAPH_MARGIN_LEFT;
-
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->y_values = trk_->make_elevation_time_map(graph->width);
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_units = Preferences::get_unit_height();
-	if (height_units == HeightUnit::FEET) {
+	HeightUnit height_unit = Preferences::get_unit_height();
+	if (height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
 			graph->y_values[i] = VIK_METERS_TO_FEET(graph->y_values[i]);
@@ -1707,8 +1623,10 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
 
 
 	this->duration = this->trk->get_duration(true);
@@ -1725,37 +1643,24 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS));
+					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
-
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		char s[32];
-
-		switch (height_units) {
-		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		case HeightUnit::FEET:
-			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval));
-			break;
-		default:
-			sprintf(s, "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", (int) height_units);
-		}
-
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = get_elevation_grid_label(height_unit, value);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_time_lines(graph->viewport);
+	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
 
 
 	/* Show DEMS. */
 	if (this->w_et_show_dem->checkState())  {
 		QPen dem_alt_pen(QColor("green"));
 
-		int achunk = graph->y_interval * GRAPH_INTERVALS;
+		int achunk = graph->y_interval * graph->n_intervals_y;
 
 		for (int i = 0; i < graph->width; i++) {
 			/* This could be slow doing this each time... */
@@ -1773,8 +1678,8 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 					elev -= graph->y_range_min_drawable;
 
 					/* Consider chunk size. */
-					int y_alt = graph_bottom - ((graph->height * elev)/achunk);
-					graph->viewport->fill_rectangle(dem_alt_pen.color(), graph_left + i - 2, y_alt - 2, 4, 4);
+					int y_alt = graph->bottom_edge - ((graph->height * elev)/achunk);
+					graph->viewport->fill_rectangle(dem_alt_pen.color(), graph->left_edge + i - 2, y_alt - 2, 4, 4);
 				}
 			}
 		}
@@ -1789,8 +1694,8 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 		double max_speed_ = this->max_speed * 110 / 100;
 
 		for (int i = 0; i < graph->width; i++) {
-			int y_speed = graph_bottom - (graph->height * graph->y_values[i]) / max_speed_;
-			graph->viewport->fill_rectangle(elev_speed_pen.color(), graph_left + i - 2, y_speed - 2, 4, 4);
+			int y_speed = graph->bottom_edge - (graph->height * graph->y_values[i]) / max_speed_;
+			graph->viewport->fill_rectangle(elev_speed_pen.color(), graph->left_edge + i - 2, y_speed - 2, 4, 4);
 		}
 	}
 
@@ -1812,18 +1717,8 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
  */
 void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 {
-	/* Free previous allocation. */
-	if (graph->y_values) {
-		free(graph->y_values);
-	}
-
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-	const int graph_bottom = graph->viewport->height() - GRAPH_MARGIN_BOTTOM;
-	const int graph_left = GRAPH_MARGIN_LEFT;
-
-	graph->y_values = trk_->make_speed_dist_map(graph->width);
-	if (graph->y_values == NULL) {
+	graph->regenerate_sizes();
+	if (!graph->regenerate_y_values(trk_)) {
 		return;
 	}
 
@@ -1833,14 +1728,15 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 		graph->y_values[i] = convert_speed_mps_to(graph->y_values[i], speed_unit);
 	}
 
-	/* OK to reuse min_speed here. */
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, false, graph->width);
 	if (graph->y_range_min < 0.0) {
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, GRAPH_INTERVALS);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, GRAPH_INTERVALS);
+	graph->n_intervals_y = GRAPH_INTERVALS;
+
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
 
 
 	/* Reset before redrawing. */
@@ -1851,19 +1747,17 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * GRAPH_INTERVALS));
+					   i, graph->height - graph->height * (graph->y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
-
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= GRAPH_INTERVALS; i++) {
-		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
-		const int value = (int) (graph->y_range_min_drawable + (GRAPH_INTERVALS - i) * graph->y_interval);
-		const QString s = get_speed_grid_label(speed_unit, value);
-
-		this->draw_horizontal_grid(graph->viewport, QString(s), i);
+	for (int i = 0; i <= graph->n_intervals_y; i++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
+		const QString label = get_speed_grid_label(speed_unit, value);
+		this->draw_horizontal_grid_line(graph->viewport, label, i);
 	}
-	this->draw_distance_divisions(graph->viewport, Preferences::get_unit_distance());
+	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_sd_show_gps_speed->checkState()) {
@@ -1882,8 +1776,8 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
 
 			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			int pos_x = graph_left + (graph->width * dist_tp / dist);
-			int pos_y = graph_bottom - graph->height * (gps_speed - graph->y_range_min_drawable)/(graph->y_interval * GRAPH_INTERVALS);
+			int pos_x = graph->left_edge + (graph->width * dist_tp / dist);
+			int pos_y = graph->bottom_edge - graph->height * (gps_speed - graph->y_range_min_drawable)/(graph->y_interval * graph->n_intervals_y);
 			graph->viewport->fill_rectangle(gps_speed_pen.color(), pos_x - 2, pos_y - 2, 4, 4);
 		}
 	}
@@ -2053,212 +1947,21 @@ bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 
 
 /**
- * Create elevation-distance viewport.
- */
-Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max_alt)
-{
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
-
-	/* First allocation. */
-	this->graph_ed->y_values = this->trk->make_elevation_map(initial_width);
-
-	if (this->graph_ed->y_values == NULL) {
-		*min_alt = *max_alt = VIK_DEFAULT_ALTITUDE;
-		return NULL;
-	}
-
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, elevation-distance");
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
-
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
-
-	/* TODO: move it outside of this function. */
-	const int graph_width = viewport->get_graph_width();
-	minmax_array(this->graph_ed->y_values, min_alt, max_alt, true, graph_width);
-
-	return viewport;
-}
-
-
-
-
-/**
- * Create gradient-distance viewport.
- */
-Viewport * TrackProfileDialog::create_gd_viewport(void)
-{
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
-
-	/* First allocation. */
-	this->graph_gd->y_values = this->trk->make_gradient_map(initial_width);
-
-	if (this->graph_gd->y_values == NULL) {
-		return NULL;
-	}
-
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, gradient-distance");
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
-
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_gd_move_cb(Viewport *, QMouseEvent *)));
-
-	return viewport;
-}
-
-
-
-
-/**
- * Create speed-time viewport.
- */
-Viewport * TrackProfileDialog::create_st_viewport(void)
-{
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
-
-	/* First allocation. */
-	this->graph_st->y_values = this->trk->make_speed_map(initial_width);
-	if (this->graph_st->y_values == NULL) {
-		return NULL;
-	}
-
-#if 0
-	/* XXX this can go out, it's just a helpful dev tool. */
-	{
-		GdkGC **colors[8] = { gtk_widget_get_style(window)->bg_gc,
-				      gtk_widget_get_style(window)->fg_gc,
-				      gtk_widget_get_style(window)->light_gc,
-				      gtk_widget_get_style(window)->dark_gc,
-				      gtk_widget_get_style(window)->mid_gc,
-				      gtk_widget_get_style(window)->text_gc,
-				      gtk_widget_get_style(window)->base_gc,
-				      gtk_widget_get_style(window)->text_aa_gc };
-		for (i = 0; i < 5; i++) {
-			for (int j = 0; j < 8; j++) {
-				fill_rectangle(GDK_DRAWABLE(pix), colors[j][i],
-					       i*20, j*20, 20, 20);
-				draw_rectangle(GDK_DRAWABLE(pix), black_pen,
-					       i*20, j*20, 20, 20);
-			}
-		}
-	}
-#endif
-
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, speed-time");
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
-
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_st_move_cb(Viewport *, QMouseEvent *)));
-
-	return viewport;
-}
-
-
-
-
-/**
  * Create distance-time viewport.
  */
-Viewport * TrackProfileDialog::create_dt_viewport(void)
+Viewport * TrackProfileDialog::create_viewport(const char * debug_label)
 {
 	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
 	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
-	/* First allocation. */
-	this->graph_dt->y_values = this->trk->make_distance_map(initial_width);
-	if (this->graph_dt->y_values == NULL) {
-		return NULL;
-	}
-
 	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, distance-time");
+	strcpy(viewport->type_string, debug_label);
 	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	viewport->resize(initial_width, initial_height);
 	viewport->reconfigure_drawing_area(initial_width, initial_height);
 
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
-	//QObject::connect(widget, SIGNAL("destroy"), this, SLOT (g_free));
-
 	return viewport;
 }
-
-
-
-
-/**
- * Create elevation-time viewport.
- */
-Viewport * TrackProfileDialog::create_et_viewport(void)
-{
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
-
-	/* First allocation. */
-	this->graph_et->y_values = this->trk->make_elevation_time_map(initial_width);
-	if (this->graph_et->y_values == NULL) {
-		return NULL;
-	}
-
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, elevation-time");
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
-
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
-
-	return viewport;
-}
-
-
-
-
-/**
- * Create speed-distance viewport.
- */
-Viewport * TrackProfileDialog::create_sd_viewport(void)
-{
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
-
-	/* First allocation. */
-	this->graph_sd->y_values = this->trk->make_speed_dist_map(initial_width); // kamilFIXME
-	if (this->graph_sd->y_values == NULL) {
-		return NULL;
-	}
-
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, "Viewport, speed-distance");
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
-
-	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
-	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));
-
-	return viewport;
-}
-
-
-
-
-
-#define VIK_SETTINGS_TRACK_PROFILE_WIDTH "track_profile_display_width"
-#define VIK_SETTINGS_TRACK_PROFILE_HEIGHT "track_profile_display_height"
 
 
 
@@ -2531,21 +2234,42 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 
-	this->graph_ed = new ProfileGraph(false, &TrackProfileDialog::draw_ed);
-	this->graph_gd = new ProfileGraph(false, &TrackProfileDialog::draw_gd);
-	this->graph_st = new ProfileGraph(true, &TrackProfileDialog::draw_st);
-	this->graph_dt = new ProfileGraph(true, &TrackProfileDialog::draw_dt);
-	this->graph_et = new ProfileGraph(true, &TrackProfileDialog::draw_et);
-	this->graph_sd = new ProfileGraph(false, &TrackProfileDialog::draw_sd);
+	this->graph_ed = new ProfileGraph(false, &TrackProfileDialog::draw_ed, y_values_creator_ed);
+	this->graph_gd = new ProfileGraph(false, &TrackProfileDialog::draw_gd, y_values_creator_gd);
+	this->graph_st = new ProfileGraph(true, &TrackProfileDialog::draw_st, y_values_creator_st);
+	this->graph_dt = new ProfileGraph(true, &TrackProfileDialog::draw_dt, y_values_creator_dt);
+	this->graph_et = new ProfileGraph(true, &TrackProfileDialog::draw_et, y_values_creator_et);
+	this->graph_sd = new ProfileGraph(false, &TrackProfileDialog::draw_sd, y_values_creator_sd);
+
+	this->graph_ed->viewport = this->create_viewport("Viewport, elevation-distance");
+	this->graph_gd->viewport = this->create_viewport("Viewport, gradient-distance");
+	this->graph_st->viewport = this->create_viewport("Viewport, speed-time");
+	this->graph_dt->viewport = this->create_viewport("Viewport, distance-time");
+	this->graph_et->viewport = this->create_viewport("Viewport, elevation-time");
+	this->graph_sd->viewport = this->create_viewport("Viewport, speed-distance");
+
+	connect(this->graph_ed->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_ed->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
+
+	connect(this->graph_gd->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_gd->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_gd_move_cb(Viewport *, QMouseEvent *)));
+
+	connect(this->graph_st->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_st->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_st_move_cb(Viewport *, QMouseEvent *)));
+
+	connect(this->graph_dt->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_dt->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
+
+	connect(this->graph_et->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_et->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
+
+	connect(this->graph_sd->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
+	connect(this->graph_sd->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));
 
 
-	double min_alt, max_alt;
-	this->graph_ed->viewport = this->create_ed_viewport(&min_alt, &max_alt);
-	this->graph_gd->viewport = this->create_gd_viewport();
-	this->graph_st->viewport = this->create_st_viewport();
-	this->graph_dt->viewport = this->create_dt_viewport();
-	this->graph_et->viewport = this->create_et_viewport();
-	this->graph_sd->viewport = this->create_sd_viewport();
+
+
+
 	this->tabs = new QTabWidget();
 	this->tabs->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -2699,23 +2423,23 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 
 
-QString get_speed_grid_label(SpeedUnit speed_unit, int value)
+
+QString get_speed_grid_label(SpeedUnit speed_unit, double value)
 {
 	QString result;
-	const int width = 8;
 
 	switch (speed_unit) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
-		result = QObject::tr("%1 km/h").arg(value, width);
+		result = QObject::tr("%1 km/h").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MILES_PER_HOUR:
-		result = QObject::tr("%1 mph").arg(value, width);
+		result = QObject::tr("%1 mph").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::METRES_PER_SECOND:
-		result = QObject::tr("%1 m/s").arg(value, width);
+		result = QObject::tr("%1 m/s").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::KNOTS:
-		result = QObject::tr("%1 knots").arg(value, width);
+		result = QObject::tr("%1 knots").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
 		result = QObject::tr("--");
@@ -2729,10 +2453,64 @@ QString get_speed_grid_label(SpeedUnit speed_unit, int value)
 
 
 
-ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *))
+QString get_elevation_grid_label(HeightUnit height_unit, double value)
+{
+	QString result;
+
+	switch (height_unit) {
+	case HeightUnit::METRES:
+		result = QObject::tr("%1 m").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case HeightUnit::FEET:
+		result = QObject::tr("%1 ft").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		result = QObject::tr("--");
+		qDebug() << "EE:" PREFIX << "unrecognized height unit" << (int) height_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+QString get_distance_grid_label(DistanceUnit distance_unit, double value)
+{
+	QString result;
+
+	/* TODO: why those grid labels display value after comma,
+	   while grid labels for speed and elevation don't display
+	   values after comma? */
+
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		result = QObject::tr("%1 km").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::MILES:
+		result = QObject::tr("%1 miles").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::NAUTICAL_MILES:
+		result = QObject::tr("%1 NM").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	default:
+		result = QObject::tr("--");
+		qDebug() << "EE:" PREFIX << "unrecognized distance unit" << (int) distance_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), double * (*y_values_creator)(Track *, int))
 {
 	this->is_time_graph = time_graph;
 	this->draw_graph_fn = draw_graph;
+	this->y_values_creator_fn = y_values_creator;
 }
 
 
@@ -2745,5 +2523,35 @@ ProfileGraph::~ProfileGraph()
 	if (this->y_values) {
 		free(this->y_values);
 	}
+}
 
+
+
+
+bool ProfileGraph::regenerate_y_values(Track * trk)
+{
+	/* Free previous allocation. */
+	if (this->y_values) {
+		free(this->y_values);
+	}
+
+	/* Ask a track to generate a vector of values representing some parameter
+	   of a track as a function of either time or distance. */
+	this->y_values = this->y_values_creator_fn(trk, this->width);
+	if (this->y_values == NULL) {
+		return false;
+	}
+
+	return true;
+}
+
+
+
+
+void ProfileGraph::regenerate_sizes(void)
+{
+	this->width = this->viewport->get_graph_width();
+	this->height = this->viewport->get_graph_height();
+	this->bottom_edge = this->viewport->get_graph_bottom_edge();
+	this->left_edge = this->viewport->get_graph_left_edge();
 }

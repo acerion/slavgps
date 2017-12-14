@@ -61,6 +61,30 @@ QString Measurements::get_altitude_string(double value, int precision)
 
 
 
+QString Measurements::get_altitude_string_recalculate(double value, int precision)
+{
+	const HeightUnit unit = Preferences::get_unit_height();
+
+	QString buffer;
+
+	switch (unit) {
+	case HeightUnit::METRES:
+		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
+		break;
+	case HeightUnit::FEET:
+		buffer = QObject::tr("%1 feet").arg(VIK_METERS_TO_FEET(value), 0, 'f', precision);
+		break;
+	default:
+		buffer = "???";
+		qDebug() << "EE: Measurements: invalid altitude unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+	}
+
+	return buffer;
+}
+
+
+
+
 QString Measurements::get_distance_string(double value, int precision)
 {
 	const DistanceUnit unit = Preferences::get_unit_distance();
@@ -134,6 +158,40 @@ QString Measurements::get_speed_string(double value, int precision)
 		break;
 	case SpeedUnit::KNOTS:
 		buffer = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', precision);
+		break;
+	case SpeedUnit::METRES_PER_SECOND:
+		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		break;
+	default:
+		buffer = "???";
+		qDebug() << "EE: Measurements: invalid speed unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+	}
+
+	return buffer;
+}
+
+
+
+
+QString Measurements::get_speed_string_dont_recalculate(double value, int precision)
+{
+	if (std::isnan(value)) {
+		return "--";
+	}
+
+	const SpeedUnit unit = Preferences::get_unit_speed();
+
+	QString buffer;
+
+	switch (unit) {
+	case SpeedUnit::KILOMETRES_PER_HOUR:
+		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::MILES_PER_HOUR:
+		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::KNOTS:
+		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
 		break;
 	case SpeedUnit::METRES_PER_SECOND:
 		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);

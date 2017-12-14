@@ -134,6 +134,11 @@ namespace SlavGPS {
 
 		int get_graph_width(void) const;
 		int get_graph_height(void) const;
+		int get_graph_top_edge(void) const;
+		int get_graph_bottom_edge(void) const;
+		int get_graph_left_edge(void) const;
+		int get_graph_right_edge(void) const;
+
 
 
 		/* Coordinate transformations. */

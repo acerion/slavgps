@@ -341,7 +341,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 
 	double max_alt = 0.0;
 	/* TODO - make this a function to get min / max values? */
-	double * altitudes = trk->make_elevation_map(500);
+	double * altitudes = trk->make_values_vector_altitude_distance(500);
 	if (altitudes) {
 		max_alt = -1000;
 		for (unsigned int i = 0; i < 500; i++) {

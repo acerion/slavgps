@@ -176,7 +176,7 @@ namespace SlavGPS {
 		double get_average_speed_moving(int stop_length_seconds) const;
 
 		void convert(CoordMode dest_mode);
-		double * make_elevation_map(uint16_t num_chunks) const;
+
 		bool get_total_elevation_gain(double * up, double * down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
@@ -187,12 +187,15 @@ namespace SlavGPS {
 		Trackpoint * get_tp_first() const;
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
-		double * make_gradient_map(uint16_t num_chunks) const;
-		double * make_speed_map(uint16_t num_chunks) const;
-		double * make_distance_map(uint16_t num_chunks) const;
-		double * make_elevation_time_map(uint16_t num_chunks) const;
-		double * make_speed_dist_map(uint16_t num_chunks) const;
 		bool get_minmax_alt(double * min_alt, double * max_alt) const;
+
+		double * make_values_vector_altitude_distance(uint16_t num_chunks) const;
+		double * make_values_vector_gradient_distance(uint16_t num_chunks) const;
+		double * make_values_vector_speed_time(uint16_t num_chunks) const;
+		double * make_values_vector_distance_time(uint16_t num_chunks) const;
+		double * make_values_vector_altitude_time(uint16_t num_chunks) const;
+		double * make_values_vector_speed_distance(uint16_t num_chunks) const;
+
 
 		void marshall(uint8_t ** data, size_t * data_len);
 		static Track * unmarshall(uint8_t * data, size_t data_len);
