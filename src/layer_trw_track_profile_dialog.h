@@ -146,12 +146,11 @@ namespace SlavGPS {
 					    bool checkbutton2_default);
 
 
-		void draw_horizontal_grid_line(Viewport * viewport, const QString & label, int i);
+		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int i);
+		void draw_vertical_grid_line(ProfileGraph * graph, const QString & label, int grid_x);
 
-		void draw_time_grid(Viewport * viewport, int n_intervals);
-		void draw_distance_grid(Viewport * viewport, DistanceUnit distance_unit, int n_intervals);
-		void draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit);
-		void draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value);
+		void draw_time_grid(ProfileGraph * graph, int n_intervals);
+		void draw_distance_grid(ProfileGraph * graph, DistanceUnit distance_unit, int n_intervals);
 
 		void save_values(void);
 

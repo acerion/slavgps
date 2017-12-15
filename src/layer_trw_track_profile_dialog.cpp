@@ -173,6 +173,8 @@ static void gradient_label_update(QLabel * label, double gradient);
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
 static QString get_elevation_grid_label(HeightUnit height_unit, double value);
 static QString get_distance_grid_label(DistanceUnit distance_unit, double value);
+static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
+static QString get_time_grid_label(int interval_index, int value);
 
 
 
@@ -1085,141 +1087,55 @@ static void draw_dem_alt_speed_dist(Track * trk, ProfileGraph * graph, QPen & al
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_horizontal_grid_line(Viewport * viewport, const QString & label, int i)
+void TrackProfileDialog::draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int i)
 {
-	const int graph_width = viewport->get_graph_width();
-	const int graph_height = viewport->get_graph_height();
-	const int graph_left_edge = viewport->get_graph_left_edge();
-	const int graph_top_edge = viewport->get_graph_top_edge();
+	float delta_y = 1.0 * graph->height / GRAPH_Y_INTERVALS;
+	float pos_y = graph->height - delta_y * i;
 
-	float delta_y = 1.0 * graph_height / GRAPH_Y_INTERVALS;
-	float pos_y = graph_height - delta_y * i;
+	QPointF text_anchor(0, graph->viewport->get_graph_top_edge() + graph->height - pos_y);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph->left_edge - 10, delta_y - 3);
+	graph->viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 
-	QPointF text_anchor(0, graph_top_edge + graph_height - pos_y);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph_left_edge - 10, delta_y - 3);
-	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
-
-
-	viewport->draw_line(viewport->grid_pen,
-			    0,               pos_y,
-			    0 + graph_width, pos_y);
+	graph->viewport->draw_line(graph->viewport->grid_pen,
+				   0,                pos_y,
+				   0 + graph->width, pos_y);
 }
 
 
 
 
-/**
- * A common way to draw the grid with x axis labels for time graphs
- */
-void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value)
+void TrackProfileDialog::draw_vertical_grid_line(ProfileGraph * graph, const QString & label, int grid_x)
 {
-	const int graph_width = viewport->get_graph_width();
-	const int graph_height = viewport->get_graph_height();
-	const int graph_left_edge = viewport->get_graph_left_edge();
+	float delta_x = 1.0 * graph->width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
 
-	char buf[64] = { 0 };
-
-	switch (index) {
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-		/* Minutes. */
-		sprintf(buf, "%d %s", time_value / 60, _("mins"));
-		break;
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-		/* Hours. */
-		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60), _("h"));
-		break;
-	case 8:
-	case 9:
-	case 10:
-		/* Days. */
-		sprintf(buf, "%.1f %s", (double) time_value / (60 *60 * 24), _("d"));
-		break;
-	case 11:
-	case 12:
-		/* Weeks. */
-		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60 * 24 * 7), _("w"));
-		break;
-	case 13:
-		/* Months. */
-		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60 * 24 * 28), _("M"));
-		break;
-	default:
-		break;
-	}
-
-	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
-
-	QString text(buf);
-	QPointF text_anchor(graph_left_edge + grid_x, GRAPH_MARGIN_TOP + graph_height);
+	const QPointF text_anchor(graph->left_edge + grid_x, GRAPH_MARGIN_TOP + graph->height);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
-	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
+	graph->viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 
-
-	viewport->draw_line(viewport->grid_pen,
-			    grid_x, 0,
-			    grid_x, 0 + graph_height);
-
+	graph->viewport->draw_line(graph->viewport->grid_pen,
+				   grid_x, 0,
+				   grid_x, 0 + graph->height);
 }
 
 
 
-
-/**
- * A common way to draw the grid with x axis labels for distance graphs.
- */
-void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit)
-{
-	const int graph_width = viewport->get_graph_width();
-	const int graph_height = viewport->get_graph_height();
-	const int graph_left_edge = viewport->get_graph_left_edge();
-
-	const QString distance_unit_string = get_distance_unit_string(distance_unit);
-
-	QString text;
-	if (index > 4) {
-		text = QObject::tr("%1 %2").arg((unsigned int) distance_value).arg(distance_unit_string);
-	} else {
-		text = QObject::tr("%1 %2").arg(distance_value, 0, 'f', 1).arg(distance_unit_string);
-	}
-
-
-	float delta_x = 1.0 * graph_width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
-
-	QPointF text_anchor(graph_left_edge + grid_x, GRAPH_MARGIN_TOP + graph_height);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
-	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
-
-
-	viewport->draw_line(viewport->grid_pen,
-			    grid_x, 0,
-			    grid_x, 0 + graph_height);
-}
-
-
-
-
-void TrackProfileDialog::draw_distance_grid(Viewport * viewport, DistanceUnit distance_unit, int n_intervals)
+void TrackProfileDialog::draw_distance_grid(ProfileGraph * graph, DistanceUnit distance_unit, int n_intervals)
 {
 	/* Set to display units from length in metres. */
 	double full_distance = this->track_length_inc_gaps;
 	full_distance = convert_distance_meters_to(full_distance, distance_unit);
 
-	const int index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
-	const double distance_interval = distance_intervals->get_interval_value(index);
+	const int interval_index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
+	const double distance_interval = distance_intervals->get_interval_value(interval_index);
 
-	const int graph_width = viewport->get_graph_width();
-	double dist_per_pixel = full_distance / graph_width;
+	double dist_per_pixel = full_distance / graph->width;
 
 	for (unsigned int i = 1; distance_interval * i <= full_distance; i++) {
-		double distance_value = distance_interval * i;
-		unsigned int grid_x = (unsigned int) (distance_interval * i / dist_per_pixel);
-		this->draw_vertical_grid_distance(viewport, index, grid_x, distance_value, distance_unit);
+		const double distance_value = distance_interval * i;
+		const int grid_x = (int) (distance_interval * i / dist_per_pixel);
+
+		const QString label = get_distance_grid_label_2(distance_unit, interval_index, distance_value);
+		this->draw_vertical_grid_line(graph, label, grid_x);
 	}
 }
 
@@ -1277,9 +1193,9 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = get_elevation_grid_label(height_unit, value);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_ed_show_dem->checkState()
@@ -1377,9 +1293,9 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_gd_show_gps_speed->checkState()) {
@@ -1412,13 +1328,12 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 
 
 
-void TrackProfileDialog::draw_time_grid(Viewport * viewport, int n_intervals)
+void TrackProfileDialog::draw_time_grid(ProfileGraph * graph, int n_intervals)
 {
-	const int index = time_intervals->get_interval_index(0, this->duration, n_intervals);
-	const time_t time_interval = time_intervals->get_interval_value(index);
+	const int interval_index = time_intervals->get_interval_index(0, this->duration, n_intervals);
+	const time_t time_interval = time_intervals->get_interval_value(interval_index);
 
-	const int graph_width = viewport->get_graph_width();
-	double time_per_pixel = (double)(this->duration) / graph_width;
+	double time_per_pixel = (double)(this->duration) / graph->width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
 	if (this->duration > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
@@ -1426,9 +1341,11 @@ void TrackProfileDialog::draw_time_grid(Viewport * viewport, int n_intervals)
 	}
 
 	for (unsigned int i = 1; time_interval * i <= this->duration; i++) {
-		unsigned int grid_x = (unsigned int) (time_interval * i / time_per_pixel);
-		unsigned int time_value = time_interval * i;
-		this->draw_vertical_grid_time(viewport, index, grid_x, time_value);
+		const int grid_x = (int) (time_interval * i / time_per_pixel);
+		const int time_value = time_interval * i;
+
+		const QString label = get_time_grid_label(interval_index, time_value);
+		this->draw_vertical_grid_line(graph, label, grid_x);
 	}
 }
 
@@ -1484,9 +1401,9 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = get_speed_grid_label(speed_unit, value);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
 
 
 	if (this->w_st_show_gps_speed->checkState()) {
@@ -1570,9 +1487,9 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = get_distance_grid_label(distance_unit, value);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
 
 
 	/* Show speed indicator. */
@@ -1651,9 +1568,9 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = get_elevation_grid_label(height_unit, value);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_time_grid(graph->viewport, GRAPH_X_INTERVALS);
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
 
 
 	/* Show DEMS. */
@@ -1755,9 +1672,9 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
 		const QString label = get_speed_grid_label(speed_unit, value);
-		this->draw_horizontal_grid_line(graph->viewport, label, i);
+		this->draw_grid_horizontal_line(graph, label, i);
 	}
-	this->draw_distance_grid(graph->viewport, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 
 
 	if (this->w_sd_show_gps_speed->checkState()) {
@@ -2497,6 +2414,69 @@ QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 	default:
 		result = QObject::tr("--");
 		qDebug() << "EE:" PREFIX << "unrecognized distance unit" << (int) distance_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value)
+{
+	/* TODO: improve localization of the strings: don't use get_distance_unit_string() */
+	const QString distance_unit_string = get_distance_unit_string(distance_unit);
+
+	QString label;
+	if (interval_index > 4) {
+		label = QObject::tr("%1 %2").arg((unsigned int) value).arg(distance_unit_string);
+	} else {
+		label = QObject::tr("%1 %2").arg(value, 0, 'f', SG_PRECISION_DISTANCE).arg(distance_unit_string);
+	}
+
+	return label;
+}
+
+
+
+
+QString get_time_grid_label(int interval_index, int value)
+{
+	QString result;
+
+	switch (interval_index) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+		/* Minutes. */
+		result = QObject::tr("%1 %m").arg((int) (value / 60));
+		break;
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+		/* Hours. */
+		result = QObject::tr("%1 h").arg(((double) (value / (60 * 60))), 0, 'f', 1);
+		break;
+	case 8:
+	case 9:
+	case 10:
+		/* Days. */
+		result = QObject::tr("%1 d").arg(((double) value / (60 *60 * 24)), 0, 'f', 1);
+		break;
+	case 11:
+	case 12:
+		/* Weeks. */
+		result = QObject::tr("%1 w").arg(((double) value / (60 * 60 * 24 * 7)), 0, 'f', 1);
+		break;
+	case 13:
+		/* Months. */
+		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected time interval index" << interval_index;
 		break;
 	}
 
