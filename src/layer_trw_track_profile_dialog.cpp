@@ -205,9 +205,8 @@ TrackProfileDialog::~TrackProfileDialog()
 #define GRAPH_MARGIN_RIGHT 40 // 1
 #define GRAPH_MARGIN_TOP 20
 #define GRAPH_MARGIN_BOTTOM 30 // 1
-#define GRAPH_INTERVALS 5
-#define GRAPH_Y_INTERVALS GRAPH_INTERVALS
-#define GRAPH_X_INTERVALS GRAPH_INTERVALS
+#define GRAPH_X_INTERVALS 5
+#define GRAPH_Y_INTERVALS 5
 
 
 
@@ -587,7 +586,7 @@ double ProfileGraph::get_pos_y(double pos_x, const double * interval_values)
 		ix--;
 	}
 
-	return this->height * (this->y_values[ix] - this->y_range_min_drawable) / (this->y_interval * GRAPH_Y_INTERVALS);
+	return this->height * (this->y_values[ix] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y);
 }
 
 
@@ -1087,13 +1086,12 @@ static void draw_dem_alt_speed_dist(Track * trk, ProfileGraph * graph, QPen & al
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int i)
+void TrackProfileDialog::draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y)
 {
-	float delta_y = 1.0 * graph->height / GRAPH_Y_INTERVALS;
-	float pos_y = graph->height - delta_y * i;
+	const float y_interval_px = 1.0 * graph->height / graph->n_intervals_y;
 
 	QPointF text_anchor(0, graph->viewport->get_graph_top_edge() + graph->height - pos_y);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph->left_edge - 10, delta_y - 3);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph->left_edge - 10, y_interval_px - 3);
 	graph->viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 
 	graph->viewport->draw_line(graph->viewport->grid_pen,
@@ -1104,17 +1102,17 @@ void TrackProfileDialog::draw_grid_horizontal_line(ProfileGraph * graph, const Q
 
 
 
-void TrackProfileDialog::draw_vertical_grid_line(ProfileGraph * graph, const QString & label, int grid_x)
+void TrackProfileDialog::draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x)
 {
-	float delta_x = 1.0 * graph->width / GRAPH_INTERVALS; /* TODO: this needs to be fixed. */
+	float x_interval_px = 1.0 * graph->width / GRAPH_X_INTERVALS; /* TODO: this needs to be fixed. */
 
-	const QPointF text_anchor(graph->left_edge + grid_x, GRAPH_MARGIN_TOP + graph->height);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
+	const QPointF text_anchor(graph->left_edge + pos_x, GRAPH_MARGIN_TOP + graph->height);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), x_interval_px - 3, GRAPH_MARGIN_BOTTOM - 10);
 	graph->viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 
 	graph->viewport->draw_line(graph->viewport->grid_pen,
-				   grid_x, 0,
-				   grid_x, 0 + graph->height);
+				   pos_x, 0,
+				   pos_x, 0 + graph->height);
 }
 
 
@@ -1128,14 +1126,16 @@ void TrackProfileDialog::draw_distance_grid(ProfileGraph * graph, DistanceUnit d
 	const int interval_index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
 	const double distance_interval = distance_intervals->get_interval_value(interval_index);
 
-	double dist_per_pixel = full_distance / graph->width;
+	//double dist_per_pixel = full_distance / graph->width;
 
-	for (unsigned int i = 1; distance_interval * i <= full_distance; i++) {
-		const double distance_value = distance_interval * i;
-		const int grid_x = (int) (distance_interval * i / dist_per_pixel);
+	const double per_interval_value = distance_interval * graph->width / full_distance;
+	for (int interval_idx = 1; distance_interval * interval_idx <= full_distance; interval_idx++) {
 
+		const double distance_value = distance_interval * interval_idx;
 		const QString label = get_distance_grid_label_2(distance_unit, interval_index, distance_value);
-		this->draw_vertical_grid_line(graph, label, grid_x);
+
+		const int pos_x = (int) (interval_idx * per_interval_value);
+		this->draw_grid_vertical_line(graph, label, pos_x);
 	}
 }
 
@@ -1164,7 +1164,7 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
         graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
@@ -1189,13 +1189,7 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = get_elevation_grid_label(height_unit, value);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_ed_grid(graph, height_unit);
 
 
 	if (this->w_ed_show_dem->checkState()
@@ -1216,7 +1210,7 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1271,7 +1265,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
 	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
@@ -1289,13 +1283,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_gd_grid(graph);
 
 
 	if (this->w_gd_show_gps_speed->checkState()) {
@@ -1316,7 +1304,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1333,19 +1321,21 @@ void TrackProfileDialog::draw_time_grid(ProfileGraph * graph, int n_intervals)
 	const int interval_index = time_intervals->get_interval_index(0, this->duration, n_intervals);
 	const time_t time_interval = time_intervals->get_interval_value(interval_index);
 
-	double time_per_pixel = (double)(this->duration) / graph->width;
+	//double time_per_pixel = (double)(1.0 * this->duration) / graph->width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
 	if (this->duration > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
 		return;
 	}
 
-	for (unsigned int i = 1; time_interval * i <= this->duration; i++) {
-		const int grid_x = (int) (time_interval * i / time_per_pixel);
-		const int time_value = time_interval * i;
+	const double per_interval_value = time_interval * graph->width / (1.0 * this->duration);
+	for (int interval_idx = 1; time_interval * interval_idx <= this->duration; interval_idx++) {
 
+		const int time_value = time_interval * interval_idx;
 		const QString label = get_time_grid_label(interval_index, time_value);
-		this->draw_vertical_grid_line(graph, label, grid_x);
+
+		const int pos_x = (int) (interval_idx * per_interval_value);
+		this->draw_grid_vertical_line(graph, label, pos_x);
 	}
 }
 
@@ -1379,7 +1369,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
 	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
@@ -1397,13 +1387,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = get_speed_grid_label(speed_unit, value);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+	this->draw_st_grid(graph, speed_unit);
 
 
 	if (this->w_st_show_gps_speed->checkState()) {
@@ -1428,7 +1412,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1465,7 +1449,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	graph->y_range_min = 0;
 	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
 	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
@@ -1483,13 +1467,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = get_distance_grid_label(distance_unit, value);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+	this->draw_dt_grid(graph, distance_unit);
 
 
 	/* Show speed indicator. */
@@ -1506,7 +1484,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1540,7 +1518,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 
 	minmax_array(graph->y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
 	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
@@ -1564,13 +1542,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = get_elevation_grid_label(height_unit, value);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+	this->draw_et_grid(graph, height_unit);
 
 
 	/* Show DEMS. */
@@ -1617,7 +1589,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1650,7 +1622,7 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	graph->n_intervals_y = GRAPH_INTERVALS;
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
 	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
 	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
@@ -1668,13 +1640,7 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	for (int i = 0; i <= graph->n_intervals_y; i++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + (graph->n_intervals_y - i) * graph->y_interval;
-		const QString label = get_speed_grid_label(speed_unit, value);
-		this->draw_grid_horizontal_line(graph, label, i);
-	}
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+	this->draw_sd_grid(graph, speed_unit);
 
 
 	if (this->w_sd_show_gps_speed->checkState()) {
@@ -1700,7 +1666,7 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	}
 
 
-	graph->viewport->draw_border();
+	//graph->viewport->draw_border();
 	graph->viewport->update();
 
 	/* The pixmap = margin + graph area. */
@@ -2534,4 +2500,112 @@ void ProfileGraph::regenerate_sizes(void)
 	this->height = this->viewport->get_graph_height();
 	this->bottom_edge = this->viewport->get_graph_bottom_edge();
 	this->left_edge = this->viewport->get_graph_left_edge();
+}
+
+
+
+
+void TrackProfileDialog::draw_st_grid(ProfileGraph * graph, SpeedUnit speed_unit)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_speed_grid_label(speed_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+}
+
+
+
+
+void TrackProfileDialog::draw_dt_grid(ProfileGraph * graph, DistanceUnit distance_unit)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_distance_grid_label(distance_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+}
+
+
+
+
+void TrackProfileDialog::draw_et_grid(ProfileGraph * graph, HeightUnit height_unit)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_elevation_grid_label(height_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
+}
+
+
+
+
+void TrackProfileDialog::draw_sd_grid(ProfileGraph * graph, SpeedUnit speed_unit)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_speed_grid_label(speed_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+}
+
+
+
+
+void TrackProfileDialog::draw_ed_grid(ProfileGraph * graph, HeightUnit height_unit)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_elevation_grid_label(height_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+}
+
+
+
+
+void TrackProfileDialog::draw_gd_grid(ProfileGraph * graph)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+
+	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
 }
