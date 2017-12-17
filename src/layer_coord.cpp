@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <cmath>
-#include <cstdlib>
 
 #include <QPen>
 #include <QDebug>
@@ -32,6 +32,11 @@
 #include "viewport_internal.h"
 #include "layer_coord.h"
 #include "util.h"
+
+
+
+/* FIXME: this constant is duplicated. */
+#define DEGREE_SYMBOL "\302\260"
 
 
 
@@ -45,11 +50,15 @@ static ParameterScale scale_minutes_width  = { 0.05,  60.0,            SGVariant
 static ParameterScale scale_line_thickness = {    1,    15,    SGVariant((int32_t) 3),    1,     0 }; /* PARAM_LINE_THICKNESS */
 
 
-static SGVariant color_default(void) { return SGVariant(255, 0, 0, 100); }
+static SGVariant color_default_deg(void) { return SGVariant(QColor("blue")); }
+static SGVariant color_default_min(void) { return SGVariant(QColor("black")); }
+static SGVariant color_default_sec(void) { return SGVariant(QColor("blue")); }
 
 
 enum {
-	PARAM_COLOR = 0,
+	PARAM_COLOR_DEG = 0,
+	PARAM_COLOR_MIN,
+	PARAM_COLOR_SEC,
 	PARAM_MIN_INC,
 	PARAM_LINE_THICKNESS,
 	PARAM_MAX
@@ -59,11 +68,13 @@ enum {
 
 
 static ParameterSpecification coord_layer_param_specs[] = {
-	{ PARAM_COLOR,          NULL, "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, QObject::tr("Color:"),          WidgetType::COLOR,          NULL,                  color_default,   NULL, NULL },
-	{ PARAM_MIN_INC,        NULL, "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,            NULL, NULL },
-	{ PARAM_LINE_THICKNESS, NULL, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"), WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,            NULL, NULL },
+	{ PARAM_COLOR_DEG,      NULL, "color",          SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of degrees/UTM lines:"),  WidgetType::COLOR,          NULL,                  color_default_deg,  NULL, NULL },
+	{ PARAM_COLOR_MIN,      NULL, "color_min",      SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of minutes lines:"),      WidgetType::COLOR,          NULL,                  color_default_min,  NULL, NULL },
+	{ PARAM_COLOR_SEC,      NULL, "color_sec",      SGVariantType::COLOR,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of seconds lines:"),      WidgetType::COLOR,          NULL,                  color_default_sec,  NULL, NULL },
+	{ PARAM_MIN_INC,        NULL, "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),               WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,               NULL, NULL },
+	{ PARAM_LINE_THICKNESS, NULL, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"),              WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,               NULL, NULL },
 
-	{ PARAM_MAX,            NULL, NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,           NULL,                  NULL,            NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL, NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                                 WidgetType::NONE,           NULL,                  NULL,               NULL, NULL }, /* Guard. */
 };
 
 
@@ -107,9 +118,17 @@ Layer * LayerCoordInterface::unmarshall(uint8_t * data, size_t data_len, Viewpor
 bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (id) {
-	case PARAM_COLOR:
-		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving color" << param_value;
-		this->color = param_value.val_color;
+	case PARAM_COLOR_DEG:
+		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving degrees color" << param_value;
+		this->color_deg = param_value.val_color;
+		break;
+	case PARAM_COLOR_MIN:
+		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving minutes color" << param_value;
+		this->color_min = param_value.val_color;
+		break;
+	case PARAM_COLOR_SEC:
+		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving seconds color" << param_value;
+		this->color_sec = param_value.val_color;
 		break;
 	case PARAM_MIN_INC:
 		this->deg_inc = param_value.val_double / 60.0;
@@ -133,8 +152,14 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_COLOR:
-		rv = SGVariant(this->color);
+	case PARAM_COLOR_DEG:
+		rv = SGVariant(this->color_deg);
+		break;
+	case PARAM_COLOR_MIN:
+		rv = SGVariant(this->color_min);
+		break;
+	case PARAM_COLOR_SEC:
+		rv = SGVariant(this->color_sec);
 		break;
 	case PARAM_MIN_INC:
 		rv = SGVariant((double) this->deg_inc * 60.0);
@@ -171,105 +196,237 @@ void LayerCoord::draw(Viewport * viewport)
 
 
 
+/* We may want to draw only every N-th lat/lon line.
+   Otherwise the non-skipped lines would be drawn too closely,
+   completely obscuring other layers. */
+
+
+int get_modulo_degrees(double width_in_degrees)
+{
+	if (width_in_degrees > 120) {
+		return 6;
+	} else if (width_in_degrees > 60) {
+		return 3;
+	} else {
+		return 1;
+	}
+}
+
+int get_modulo_minutes(double width_in_minutes)
+{
+	if (width_in_minutes > 120) {
+		return 6;
+	} else if (width_in_minutes > 60) {
+		return 3;
+	} else {
+		return 1;
+	}
+}
+
+int get_modulo_seconds(double width_in_seconds)
+{
+	if (width_in_seconds > 120) {
+		return 6;
+	} else if (width_in_seconds > 60) {
+		return 3;
+	} else {
+		return 1;
+	}
+}
+
+
+
+
 void LayerCoord::draw_latlon(Viewport * viewport)
 {
-	QPen degrees_pen(this->color);
+	QPen degrees_pen(this->color_deg);
 	degrees_pen.setWidth(this->line_thickness);
-	QPen minutes_pen(this->color);
+	QPen minutes_pen(this->color_min);
 	minutes_pen.setWidth(MAX(this->line_thickness / 2, 1));
-	QPen seconds_pen(this->color);
+	QPen seconds_pen(this->color_sec);
 	seconds_pen.setWidth(MAX(this->line_thickness / 5, 1));
 
+	QPen text_pen(QColor("black"));
+	QFont text_font("Helvetica", 10);
+
+	bool draw_labels = true;
+
+
 	int x1, y1, x2, y2;
-#define CLINE(pen, coord_begin, coord_end) {				\
+
+#define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
 		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
 		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
 		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
 	}
 
+#define DRAW_LONGITUDE_LINE(pen, coord_begin, coord_end, text) {	\
+		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
+		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
+		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
+		viewport->draw_text(text_font, text_pen, x1, y1 + 15, text); \
+	}
 
-	bool minutes = false;
-	bool seconds = false;
-	int smod = 1;
-	int mmod = 1;
+#define DRAW_LATITUDE_LINE(pen, coord_begin, coord_end, text) {		\
+		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
+		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
+		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
+		viewport->draw_text(text_font, text_pen, x1, y1, text); \
+	}
+
+
+	const Coord ul = viewport->screen_pos_to_coord(0,                     0);
+	const Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
+	const Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
+
+	const double minimum_lon = ul.ll.lon;
+	const double maximum_lon = ur.ll.lon;
+	const double minimum_lat = bl.ll.lat;
+	const double maximum_lat = ul.ll.lat;
+
+	const double width_degrees = fabs(minimum_lon - maximum_lon);
+	const double width_minutes = 60.0 * width_degrees;
+	const double width_seconds = 60.0 * width_minutes;
+
+	const bool zoom_level_allows_for_seconds = width_seconds < 4 * 60;
+	const int modulo_seconds = get_modulo_seconds(width_seconds);
+
+	const bool zoom_level_allows_for_minutes = width_minutes < 4 * 60;
+	const int modulo_minutes = get_modulo_minutes(width_minutes);
+
+	const bool zoom_level_allows_for_degrees = true;
+	const int modulo_degrees = get_modulo_degrees(width_degrees);
+
+
+#if 1   /* Debug. */
+	qDebug() << "-----------------color" << "seconds:" << seconds_pen.color().name() << ", minutes:" << minutes_pen.color().name() << "degrees:" << degrees_pen.color().name();
+	qDebug() << "-----------------width" << width_seconds << "seconds," << width_minutes << "minutes," << width_degrees << "degrees, lat/lon:" << minimum_lon << maximum_lon;
+	qDebug() << "--------------- modulo" << modulo_seconds << modulo_minutes << modulo_degrees;
+	qDebug() << "------------------zoom" << zoom_level_allows_for_seconds << zoom_level_allows_for_minutes << zoom_level_allows_for_degrees;
+#endif
+
 
 	/* Vertical lines. */
 	{
-		Coord ul = viewport->screen_pos_to_coord(0,                     0);
-		Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
-		Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
+		Coord ul_local = ul;
+		Coord bl_local = bl;
 
-		const double min = ul.ll.lon;
-		const double max = ur.ll.lon;
+		const int minutes_start = (int) floor(minimum_lon * 60);
+		const int minutes_end = (int) ceil(maximum_lon * 60);
 
-		if (60 * fabs(min - max) < 4) {
-			seconds = true;
-			smod = MIN(6, (int) ceil(3600 * fabs(min - max) / 30.0));
-		}
-		if (fabs(min - max) < 4) {
-			minutes = true;
-			mmod = MIN(6, (int) ceil(60 * fabs(min - max) / 30.0));
-		}
+		for (int minute = minutes_start; minute < minutes_end; minute++) {
+			if (zoom_level_allows_for_seconds && modulo_seconds) {
+				const int seconds_begin = minute * 60 + 1;
+				const int seconds_end = (minute + 1) * 60;
+				for (int second = seconds_begin; second < seconds_end; second++) {
+					if (second % modulo_seconds == 0) {
+						/* Seconds -> degrees. */
+						ul_local.ll.lon = second / 3600.0;
+						bl_local.ll.lon = second / 3600.0;
 
-		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
-			if (smod && seconds) {
-				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
-					ul.ll.lon = j / 3600.0;
-					bl.ll.lon = j / 3600.0;
-					if ((int) j % smod == 0) {
-						CLINE(seconds_pen, ul, bl);
+						if (draw_labels) {
+							DRAW_LONGITUDE_LINE(seconds_pen, ul_local, bl_local, QString("%1''").arg(second % 60));
+						} else {
+							DRAW_COORDINATE_LINE(seconds_pen, ul_local, bl_local);
+						}
 					}
 				}
 			}
-			if (mmod && minutes) {
-				ul.ll.lon = i / 60.0;
-				bl.ll.lon = i / 60.0;
-				if ((int) i % mmod == 0) {
-					CLINE(minutes_pen, ul, bl);
+
+			if (zoom_level_allows_for_minutes && modulo_minutes) {
+				if (minute % modulo_minutes == 0) {
+					/* Minutes -> degrees. */
+					ul_local.ll.lon = minute / 60.0;
+					bl_local.ll.lon = minute / 60.0;
+
+					if (draw_labels) {
+						DRAW_LONGITUDE_LINE(minutes_pen, ul_local, bl_local, QString("%1'").arg(minute % 60));
+					} else {
+						DRAW_COORDINATE_LINE(minutes_pen, ul_local, bl_local);
+					}
 				}
 			}
-			if ((int) i % 60 == 0) {
-				ul.ll.lon = i / 60.0;
-				bl.ll.lon = i / 60.0;
-				CLINE(degrees_pen, ul, bl);
+
+			if (zoom_level_allows_for_degrees && modulo_degrees) {
+				const bool is_degree = minute % 60 == 0; /* We want to draw degrees and every 60-th minute is a degree. */
+				const double degree = minute / 60.0;
+				if (is_degree && (((int) degree) % modulo_degrees == 0)) {
+
+					ul_local.ll.lon = degree;
+					bl_local.ll.lon = degree;
+
+					if (draw_labels) {
+						DRAW_LONGITUDE_LINE(degrees_pen, ul_local, bl_local, QString("%1%2").arg((int) degree).arg(DEGREE_SYMBOL));
+					} else {
+						DRAW_COORDINATE_LINE(degrees_pen, ul_local, bl_local);
+					}
+				}
 			}
 		}
 	}
+
 
 	/* Horizontal lines. */
 	{
-		Coord ul = viewport->screen_pos_to_coord(0,                     0);
-		Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
-		Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
+		Coord ul_local = ul;
+		Coord ur_local = ur;
 
-		const double min = bl.ll.lat;
-		const double max = ul.ll.lat;
+		const int minutes_start = (int) floor(minimum_lat * 60);
+		const int minutes_end = (int) ceil(maximum_lat * 60);
 
-		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
-			if (smod && seconds) {
-				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
-					ul.ll.lat = j / 3600.0;
-					ur.ll.lat = j / 3600.0;
-					if ((int) j % smod == 0) {
-						CLINE(seconds_pen, ul, ur);
+		for (int minute = minutes_start; minute < minutes_end; minute++) {
+			if (zoom_level_allows_for_seconds && modulo_seconds) {
+				const int seconds_begin = minute * 60 + 1;
+				const int seconds_end = (minute + 1) * 60;
+				for (int second = seconds_begin; second < seconds_end; second++) {
+					if (second % modulo_seconds == 0) {
+						/* Seconds -> degrees. */
+						ul_local.ll.lat = second / 3600.0;
+						ur_local.ll.lat = second / 3600.0;
+
+						if (draw_labels) {
+							DRAW_LATITUDE_LINE(seconds_pen, ul_local, ur_local, QString("%1''").arg(second % 60));
+						} else {
+							DRAW_COORDINATE_LINE(seconds_pen, ul_local, ur_local);
+						}
 					}
 				}
 			}
-			if (mmod && minutes) {
-				ul.ll.lat = i / 60.0;
-				ur.ll.lat = i / 60.0;
-				if ((int) i % mmod == 0) {
-					CLINE(minutes_pen, ul, ur);
+
+			if (zoom_level_allows_for_minutes && modulo_minutes) {
+				if (minute % modulo_minutes == 0) {
+					/* Minutes -> degrees. */
+					ul_local.ll.lat = minute / 60.0;
+					ur_local.ll.lat = minute / 60.0;
+
+					if (draw_labels) {
+						DRAW_LATITUDE_LINE(minutes_pen, ul_local, ur_local, QString("%1'").arg(minute % 60));
+					} else {
+						DRAW_COORDINATE_LINE(minutes_pen, ul_local, ur_local);
+					}
 				}
 			}
-			if ((int) i % 60 == 0) {
-				ul.ll.lat = i / 60.0;
-				ur.ll.lat = i / 60.0;
-				CLINE(degrees_pen, ul, ur);
+			if (zoom_level_allows_for_degrees && modulo_degrees) {
+				const bool is_degree = minute % 60 == 0; /* We want to draw degrees and every 60-th minute is a degree. */
+				const double degree = minute / 60.0;
+				if (is_degree && (((int) degree) % modulo_degrees == 0)) {
+
+					/* Minutes -> degrees. */
+					ul_local.ll.lat = degree;
+					ur_local.ll.lat = degree;
+
+					if (draw_labels) {
+						DRAW_LATITUDE_LINE(degrees_pen, ul_local, ur_local, QString("%1%2").arg((int) degree).arg(DEGREE_SYMBOL));
+					} else {
+						DRAW_COORDINATE_LINE(degrees_pen, ul_local, ur_local);
+					}
+				}
 			}
 		}
 	}
-#undef CLINE
+#undef DRAW_COORDINATE_LINE
+#undef DRAW_LATITUDE_LINE
+#undef DRAW_LONGITUDE_LINE
 	return;
 }
 
@@ -279,7 +436,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 void LayerCoord::draw_utm(Viewport * viewport)
 {
-	QPen pen(this->color);
+	QPen pen(this->color_deg);
 	pen.setWidth(this->line_thickness);
 
 	const UTM center = viewport->get_center()->get_utm();

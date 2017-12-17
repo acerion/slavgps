@@ -63,7 +63,9 @@ namespace SlavGPS {
 		void draw_latlon(Viewport * viewport);
 		void draw_utm(Viewport * viewport);
 
-		QColor color;           /* Color of coordinate lines. */
+		QColor color_deg;       /* Color of "degrees" coordinate lines. */
+		QColor color_min;       /* Color of "minutes" coordinate lines. */
+		QColor color_sec;       /* Color of "seconds" coordinate lines. */
 		int32_t line_thickness; /* Base thickness of coordinate lines. */
 
 		double deg_inc;
