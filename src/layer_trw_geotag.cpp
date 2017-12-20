@@ -638,7 +638,7 @@ static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidge
 		GeotagJob * options = new GeotagJob(GeoTagWidgets * widgets);
 		int len = options->files->size();
 
-		const QString job_description = QString(tr("Geotagging %1 Images...")).arg(len);
+		const QString job_description = QObject::tr("Geotagging %1 Images...").arg(len);
 
 		/* Processing lots of files can take time - so run a background effort. */
 		a_background_thread(options, ThreadPoolType::LOCAL, job_description);

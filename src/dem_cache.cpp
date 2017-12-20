@@ -180,10 +180,10 @@ DEM * DEMCache::get(const QString & file_path)
    We need to know that they weren't referenced though when we
    do the DEMCache::unload_from_cache().
 
-   \return -1 on errors
-   \return 0 otherwise
+   \return false on errors
+   \return true otherwise
 */
-int DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * bg_job)
+bool DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * bg_job)
 {
 	auto iter = file_paths.begin();
 	unsigned int dem_count = 0;
@@ -202,12 +202,12 @@ int DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * bg
 			/* Progress also detects abort request via the returned value. */
 			int result = a_background_thread_progress(bg_job, ((double) dem_count) / dem_total);
 			if (result != 0) {
-				return -1; /* Abort thread. */
+				return false; /* Abort thread. */
 			}
 #endif
 		}
 	}
-	return 0;
+	return true;
 }
 
 

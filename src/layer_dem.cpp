@@ -65,6 +65,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX "Layer DEM" << __FUNCTION__ << __LINE__
+
+
+
+
 /* Structure for DEM data used in background thread. */
 class DemLoadJob : public BackgroundJob {
 public:
@@ -329,20 +334,17 @@ static int dem_load_list_thread(BackgroundJob * bg_job)
 
 	QStringList dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
 
-	if (DEMCache::load_files_into_cache(dem_filenames, load_job)) {
+	if (!DEMCache::load_files_into_cache(dem_filenames, load_job)) {
 		/* Thread cancelled. */
 		result = -1;
 	}
 
 	/* ATM as each file is processed the screen is not updated (no mechanism exposed to DEMCache::load_files_into_cache()).
 	   Thus force draw only at the end, as loading is complete/aborted. */
-	//gdk_threads_enter();
-	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
 	if (load_job->layer) {
-		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' B";
+		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' after loading list of files";
 		load_job->layer->emit_layer_changed(); /* NB update from background thread. */
 	}
-	//gdk_threads_leave();
 
 	return result;
 }
@@ -440,7 +442,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		if (!this->files.empty()) {
 			/* Thread Load. */
 			DemLoadJob * load_job = new DemLoadJob(this);
-			a_background_thread(load_job, ThreadPoolType::LOCAL, _("DEM Loading"));
+			a_background_thread(load_job, ThreadPoolType::LOCAL, QObject::tr("DEM Loading"));
 		}
 
 		break;
@@ -536,285 +538,315 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	   (moved or re-zoomed). */
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
 	if (!dem->overlap(viewport_bbox)) {
-		qDebug() << "Dem: no overlap, skipping";
+		qDebug() << "II:" PREFIX << "no overlap, skipping";
 		return;
 	}
 
-	/* Boxes to show where we have DEM instead of actually drawing the DEM.
-	 * useful if we want to see what areas we have coverage for (if we want
-	 * to get elevation data for a track) but don't want to cover the map.
+	/*
+	  Boxes to show where we have DEM instead of actually drawing
+	  the DEM.  useful if we want to see what areas we have
+	  coverage for (if we want to get elevation data for a track)
+	  but don't want to cover the map.
 	 */
 
-	/* Draw a box if a DEM is loaded. in future I'd like to add an option for this
-	 * this is useful if we want to see what areas we have dem for but don't want to
-	 * cover the map (or maybe we just need translucent DEM?). */
+	/*
+	  Draw a box if a DEM is loaded. in future I'd like to add an
+	  option for this this is useful if we want to see what areas
+	  we have dem for but don't want to cover the map (or maybe
+	  we just need translucent DEM?).
+	*/
 #if 0
 	draw_loaded_dem_box(viewport);
 #endif
 
-	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+	switch (dem->horiz_units) {
+	case VIK_DEM_HORIZ_LL_ARCSECONDS:
+		this->draw_dem_ll(viewport, dem, min_max);
+		break;
+	case VIK_DEM_HORIZ_UTM_METERS:
+		this->draw_dem_utm(viewport, dem);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected DEM horiz units" << (int) dem->horiz_units;
+		break;
+	}
 
-		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
+	return;
+}
 
-		double nscale_deg = dem->north_scale / ((double) 3600);
-		double escale_deg = dem->east_scale / ((double) 3600);
 
-		double max_lat_as = min_max.max.lat * 3600;
-		double min_lat_as = min_max.min.lat * 3600;
-		double max_lon_as = min_max.max.lon * 3600;
-		double min_lon_as = min_max.min.lon * 3600;
 
-		double start_lat_as = MAX(min_lat_as, dem->min_north);
-		double end_lat_as   = MIN(max_lat_as, dem->max_north);
-		double start_lon_as = MAX(min_lon_as, dem->min_east);
-		double end_lon_as   = MIN(max_lon_as, dem->max_east);
 
-		double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
-		double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
-		double start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
-		double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
+void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & min_max)
+{
+	Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 
-		unsigned int start_x, start_y;
-		dem->east_north_to_xy(start_lon_as, start_lat_as, &start_x, &start_y);
-		unsigned int gradient_skip_factor = 1;
-		if (this->dem_type == DEM_TYPE_GRADIENT) {
-			gradient_skip_factor = skip_factor;
+	unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
+
+	double nscale_deg = dem->north_scale / ((double) 3600);
+	double escale_deg = dem->east_scale / ((double) 3600);
+
+	double max_lat_as = min_max.max.lat * 3600;
+	double min_lat_as = min_max.min.lat * 3600;
+	double max_lon_as = min_max.max.lon * 3600;
+	double min_lon_as = min_max.min.lon * 3600;
+
+	double start_lat_as = MAX(min_lat_as, dem->min_north);
+	double end_lat_as   = MIN(max_lat_as, dem->max_north);
+	double start_lon_as = MAX(min_lon_as, dem->min_east);
+	double end_lon_as   = MIN(max_lon_as, dem->max_east);
+
+	double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
+	double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
+	double start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
+	double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
+
+	unsigned int start_x, start_y;
+	dem->east_north_to_xy(start_lon_as, start_lat_as, &start_x, &start_y);
+	unsigned int gradient_skip_factor = 1;
+	if (this->dem_type == DEM_TYPE_GRADIENT) {
+		gradient_skip_factor = skip_factor;
+	}
+
+	/* Verify sane elev interval. */
+	if (this->max_elev <= this->min_elev) {
+		this->max_elev = this->min_elev + 1;
+	}
+
+	LatLon counter;
+	unsigned int x;
+	for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
+		/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
+		   the leftmost column does also get drawn, if the center point is out of viewport. */
+		if (x >= dem->n_columns) {
+			break;
 		}
 
-		/* Verify sane elev interval. */
-		if (this->max_elev <= this->min_elev) {
-			this->max_elev = this->min_elev + 1;
+		/* Get previous and next column. Catch out-of-bound. */
+		DEMColumn *column, *prevcolumn, *nextcolumn;
+		{
+			column = dem->columns[x];
+
+			int32_t new_x = x - gradient_skip_factor;
+			if (new_x < 1) {
+				new_x = x + 1;
+			}
+			prevcolumn = dem->columns[new_x];
+
+			new_x = x + gradient_skip_factor;
+			if (new_x >= dem->n_columns) {
+				new_x = x - 1;
+			}
+			nextcolumn = dem->columns[new_x];
 		}
 
-		LatLon counter;
-		unsigned int x;
-		for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
-			/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
-			   the leftmost column does also get drawn, if the center point is out of viewport. */
-			if (x >= dem->n_columns) {
+		unsigned int y;
+		for (y = start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
+			if (y > column->n_points) {
 				break;
 			}
 
-			/* Get previous and next column. Catch out-of-bound. */
-			DEMColumn *column, *prevcolumn, *nextcolumn;
-			{
-				column = dem->columns[x];
-
-				int32_t new_x = x - gradient_skip_factor;
-				if (new_x < 1) {
-					new_x = x + 1;
-				}
-				prevcolumn = dem->columns[new_x];
-
-				new_x = x + gradient_skip_factor;
-				if (new_x >= dem->n_columns) {
-					new_x = x - 1;
-				}
-				nextcolumn = dem->columns[new_x];
+			int16_t elev = column->points[y];
+			if (elev == DEM_INVALID_ELEVATION) {
+				continue; /* Don't draw it. */
 			}
 
-			unsigned int y;
-			for (y = start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
-				if (y > column->n_points) {
-					break;
-				}
+			/* Calculate bounding box for drawing. */
+			int box_x, box_y, box_width, box_height;
+			LatLon box_c;
+			box_c = counter;
+			box_c.lat += (nscale_deg * skip_factor)/2;
+			box_c.lon -= (escale_deg * skip_factor)/2;
+			tmp = Coord(box_c, viewport->get_coord_mode());
+			viewport->coord_to_screen_pos(tmp, &box_x, &box_y);
+			/* Catch box at borders. */
+			if (box_x < 0) {
+				box_x = 0;
+			}
 
-				int16_t elev = column->points[y];
-				if (elev == DEM_INVALID_ELEVATION) {
-					continue; /* Don't draw it. */
-				}
+			if (box_y < 0) {
+				box_y = 0;
+			}
 
-				/* Calculate bounding box for drawing. */
-				int box_x, box_y, box_width, box_height;
-				LatLon box_c;
-				box_c = counter;
-				box_c.lat += (nscale_deg * skip_factor)/2;
-				box_c.lon -= (escale_deg * skip_factor)/2;
-				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen_pos(tmp, &box_x, &box_y);
-				/* Catch box at borders. */
-				if (box_x < 0) {
-					box_x = 0;
-				}
-
-				if (box_y < 0) {
-					box_y = 0;
-				}
-
-				box_c.lat -= nscale_deg * skip_factor;
-				box_c.lon += escale_deg * skip_factor;
-				tmp = Coord(box_c, viewport->get_coord_mode());
-				viewport->coord_to_screen_pos(tmp, &box_width, &box_height);
-				box_width -= box_x;
-				box_height -= box_y;
-				/* Catch box at borders. */
-				if (box_width < 0 || box_height < 0) {
-					/* Skip this as is out of the viewport (e.g. zoomed in so this point is way off screen). */
-					continue;
-				}
-
-				bool below_minimum = false;
-				if (this->dem_type == DEM_TYPE_HEIGHT) {
-					if (elev < this->min_elev) {
-						/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
-						elev = ceil(this->min_elev);
-						below_minimum = true;
-					}
-					if (elev > this->max_elev) {
-						elev = this->max_elev;
-					}
-				}
-
-				if (this->dem_type == DEM_TYPE_GRADIENT) {
-					/* Calculate and sum gradient in all directions. */
-					int16_t change = 0;
-					int32_t new_y;
-
-					/* Calculate gradient from height points all around the current one. */
-					new_y = y - gradient_skip_factor;
-					if (new_y < 0) {
-						new_y = y;
-					}
-					change += get_height_difference(elev, prevcolumn->points[new_y]);
-					change += get_height_difference(elev, column->points[new_y]);
-					change += get_height_difference(elev, nextcolumn->points[new_y]);
-
-					change += get_height_difference(elev, prevcolumn->points[y]);
-					change += get_height_difference(elev, nextcolumn->points[y]);
-
-					new_y = y + gradient_skip_factor;
-					if (new_y >= column->n_points) {
-						new_y = y;
-					}
-					change += get_height_difference(elev, prevcolumn->points[new_y]);
-					change += get_height_difference(elev, column->points[new_y]);
-					change += get_height_difference(elev, nextcolumn->points[new_y]);
-
-					change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); /* FIXME: better calc. */
-
-					if (change < this->min_elev) {
-						/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
-						change = ceil(this->min_elev);
-					}
-
-					if (change > this->max_elev) {
-						change = this->max_elev;
-					}
-
-					int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
-					//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
-
-				} else if (this->dem_type == DEM_TYPE_HEIGHT) {
-					int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
-					if (elev > 0 && !below_minimum) {
-						idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
-					}
-					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
-				} else {
-					; /* No other dem type to process. */
-				}
-			} /* for y= */
-		} /* for x= */
-	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-
-		Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-
-		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
-
-		Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
-		Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
-		Coord bleft =  viewport->screen_pos_to_coord(0,                     viewport->get_height());
-		Coord bright = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
-
-		tleft.change_mode(CoordMode::UTM);
-		tright.change_mode(CoordMode::UTM);
-		bleft.change_mode(CoordMode::UTM);
-		bright.change_mode(CoordMode::UTM);
-
-		double max_nor = MAX(tleft.utm.northing, tright.utm.northing);
-		double min_nor = MIN(bleft.utm.northing, bright.utm.northing);
-		double max_eas = MAX(bright.utm.easting, tright.utm.easting);
-		double min_eas = MIN(bleft.utm.easting, tleft.utm.easting);
-
-		double start_eas, end_eas;
-		double start_nor = MAX(min_nor, dem->min_north);
-		double end_nor   = MIN(max_nor, dem->max_north);
-		if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
-		    && (tleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
-
-			start_eas = MAX(min_eas, dem->min_east);
-		} else {
-			start_eas = dem->min_east;
-		}
-
-		if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
-		    && (tright.utm.letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bright.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
-
-			end_eas = MIN(max_eas, dem->max_east);
-		} else {
-			end_eas = dem->max_east;
-		}
-
-		start_nor = floor(start_nor / dem->north_scale) * dem->north_scale;
-		end_nor   = ceil(end_nor / dem->north_scale) * dem->north_scale;
-		start_eas = floor(start_eas / dem->east_scale) * dem->east_scale;
-		end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
-
-		unsigned int start_x, start_y;
-		dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
-
-		/* TODO: why start_x and start_y are -1 -- rounding error from above? */
-
-		UTM counter;
-		counter.zone = dem->utm_zone;
-		counter.letter = dem->utm_letter;
-
-		unsigned int x;
-		for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
-			if (x <= 0 || x >= dem->n_columns) { /* kamilTODO: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
+			box_c.lat -= nscale_deg * skip_factor;
+			box_c.lon += escale_deg * skip_factor;
+			tmp = Coord(box_c, viewport->get_coord_mode());
+			viewport->coord_to_screen_pos(tmp, &box_width, &box_height);
+			box_width -= box_x;
+			box_height -= box_y;
+			/* Catch box at borders. */
+			if (box_width < 0 || box_height < 0) {
+				/* Skip this as is out of the viewport (e.g. zoomed in so this point is way off screen). */
 				continue;
 			}
 
-			DEMColumn * column = dem->columns[x];
-			unsigned int y;
-			for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
-				if (y > column->n_points) {
-					continue;
-				}
-
-				int16_t elev = column->points[y];
-				if (elev == DEM_INVALID_ELEVATION) {
-					continue; /* don't draw it */
-				}
-
-
+			bool below_minimum = false;
+			if (this->dem_type == DEM_TYPE_HEIGHT) {
 				if (elev < this->min_elev) {
-					elev = this->min_elev;
+					/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
+					elev = ceil(this->min_elev);
+					below_minimum = true;
 				}
 				if (elev > this->max_elev) {
 					elev = this->max_elev;
 				}
+			}
 
+			if (this->dem_type == DEM_TYPE_GRADIENT) {
+				/* Calculate and sum gradient in all directions. */
+				int16_t change = 0;
+				int32_t new_y;
 
-				{
-					tmp = Coord(counter, viewport->get_coord_mode());
-					const ScreenPos pos = viewport->coord_to_screen_pos(tmp);
-
-					int idx = 0; /* Default index for color of 'sea'. */
-					if (elev > 0) {
-						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
-					}
-					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-					viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+				/* Calculate gradient from height points all around the current one. */
+				new_y = y - gradient_skip_factor;
+				if (new_y < 0) {
+					new_y = y;
 				}
-			} /* for y= */
-		} /* for x= */
+				change += get_height_difference(elev, prevcolumn->points[new_y]);
+				change += get_height_difference(elev, column->points[new_y]);
+				change += get_height_difference(elev, nextcolumn->points[new_y]);
+
+				change += get_height_difference(elev, prevcolumn->points[y]);
+				change += get_height_difference(elev, nextcolumn->points[y]);
+
+				new_y = y + gradient_skip_factor;
+				if (new_y >= column->n_points) {
+					new_y = y;
+				}
+				change += get_height_difference(elev, prevcolumn->points[new_y]);
+				change += get_height_difference(elev, column->points[new_y]);
+				change += get_height_difference(elev, nextcolumn->points[new_y]);
+
+				change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); /* FIXME: better calc. */
+
+				if (change < this->min_elev) {
+					/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
+					change = ceil(this->min_elev);
+				}
+
+				if (change > this->max_elev) {
+					change = this->max_elev;
+				}
+
+				int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
+				//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
+				viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
+
+			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
+				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
+				if (elev > 0 && !below_minimum) {
+					idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
+				}
+				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
+				viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
+			} else {
+				; /* No other dem type to process. */
+			}
+		} /* for y= */
+	} /* for x= */
+
+	return;
+}
+
+
+
+
+void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
+{
+	unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
+
+	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
+	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
+	Coord bleft =  viewport->screen_pos_to_coord(0,                     viewport->get_height());
+	Coord bright = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+
+	tleft.change_mode(CoordMode::UTM);
+	tright.change_mode(CoordMode::UTM);
+	bleft.change_mode(CoordMode::UTM);
+	bright.change_mode(CoordMode::UTM);
+
+	double max_nor = MAX(tleft.utm.northing, tright.utm.northing);
+	double min_nor = MIN(bleft.utm.northing, bright.utm.northing);
+	double max_eas = MAX(bright.utm.easting, tright.utm.easting);
+	double min_eas = MIN(bleft.utm.easting, tleft.utm.easting);
+
+	double start_eas, end_eas;
+	double start_nor = MAX(min_nor, dem->min_north);
+	double end_nor   = MIN(max_nor, dem->max_north);
+	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
+	    && (tleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')
+	    && (bleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+
+		start_eas = MAX(min_eas, dem->min_east);
+	} else {
+		start_eas = dem->min_east;
 	}
+
+	if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
+	    && (tright.utm.letter >= 'N') == (dem->utm_letter >= 'N')
+	    && (bright.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+
+		end_eas = MIN(max_eas, dem->max_east);
+	} else {
+		end_eas = dem->max_east;
+	}
+
+	start_nor = floor(start_nor / dem->north_scale) * dem->north_scale;
+	end_nor   = ceil(end_nor / dem->north_scale) * dem->north_scale;
+	start_eas = floor(start_eas / dem->east_scale) * dem->east_scale;
+	end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
+
+	unsigned int start_x, start_y;
+	dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
+
+	/* TODO: why start_x and start_y are -1 -- rounding error from above? */
+
+	UTM counter;
+	counter.zone = dem->utm_zone;
+	counter.letter = dem->utm_letter;
+
+	unsigned int x;
+	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
+		if (x <= 0 || x >= dem->n_columns) { /* kamilTODO: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
+			continue;
+		}
+
+		DEMColumn * column = dem->columns[x];
+		unsigned int y;
+		for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
+			if (y > column->n_points) {
+				continue;
+			}
+
+			int16_t elev = column->points[y];
+			if (elev == DEM_INVALID_ELEVATION) {
+				continue; /* don't draw it */
+			}
+
+
+			if (elev < this->min_elev) {
+				elev = this->min_elev;
+			}
+			if (elev > this->max_elev) {
+				elev = this->max_elev;
+			}
+
+
+			{
+				/* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport->get_coord_mode()));
+
+				int idx = 0; /* Default index for color of 'sea'. */
+				if (elev > 0) {
+					idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
+				}
+				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
+				viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+			}
+		} /* for y= */
+	} /* for x= */
+
+	return;
 }
 
 
@@ -1027,7 +1059,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	QString continent_dir;
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
 		if (dl_job->layer) {
-			dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
+			dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
 		}
 		return;
 	}
@@ -1042,11 +1074,11 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
 		break;
 	}
 	case DownloadResult::FILE_WRITE_ERROR: {
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(dl_job->dest_file_path));
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
 	}
 	case DownloadResult::SUCCESS:
@@ -1293,7 +1325,7 @@ static int dem_download_thread(BackgroundJob * bg_job)
 		dl_job->layer->weak_unref(LayerDEM::weak_ref_cb, dl_job);
 
 		if (dl_job->layer->add_file(dl_job->dest_file_path)) {
-			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' A";
+			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' on downloading file";
 			dl_job->layer->emit_layer_changed(); /* NB update from background thread. */
 		}
 	}
@@ -1435,7 +1467,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, failed to add the file, downloading it";
-			const QString job_description = QString(tr("Downloading DEM  %1")).arg(cache_file_name);
+			const QString job_description = QObject::tr("Downloading DEM  %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
 		} else {
