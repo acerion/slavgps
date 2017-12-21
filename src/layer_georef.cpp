@@ -17,8 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,11 +46,11 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "layer_map.h"
 #include "layer_georef.h"
 #include "widget_file_entry.h"
+#include "widget_slider.h"
 #include "dialog.h"
 #include "file.h"
 #include "application_state.h"
 #include "globals.h"
-//#include "layers_panel.h"
 #include "util.h"
 #include "viewport_zoom.h"
 
@@ -66,12 +68,6 @@ using namespace SlavGPS;
 
 
 extern Tree * g_tree;
-/*
-static SGVariant image_default(void)
-{
-	return SGVariant("");
-}
-*/
 
 
 
@@ -161,10 +157,6 @@ static ParameterSpecification io_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_IO, "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 
-typedef struct {
-	LayerGeoref * layer;
-} georef_data_t;
-
 
 
 
@@ -186,15 +178,15 @@ QString LayerGeoref::get_tooltip()
 
 Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
-	LayerGeoref * grl = new LayerGeoref();
-	grl->configure_from_viewport(viewport);
+	LayerGeoref * layer = new LayerGeoref();
+	layer->configure_from_viewport(viewport);
 
-	grl->unmarshall_params(data, data_len);
+	layer->unmarshall_params(data, data_len);
 
-	if (!grl->image.isEmpty()) {
-		grl->post_read(viewport, true);
+	if (!layer->image.isEmpty()) {
+		layer->post_read(viewport, true);
 	}
-	return (Layer *) grl;
+	return layer;
 }
 
 
@@ -489,12 +481,12 @@ static void double2spinwidget(QDoubleSpinBox * spinbox, double val)
 
 
 
-static void set_widget_values(changeable_widgets *cw, double values[4])
+static void set_widget_values(widgets_group * cw, double values[4])
 {
-	double2spinwidget(cw->x_spin, values[0]);
-	double2spinwidget(cw->y_spin, values[1]);
-	double2spinwidget(cw->ce_spin, values[2]);
-	double2spinwidget(cw->cn_spin, values[3]);
+	double2spinwidget(cw->x_scale_spin, values[0]);
+	double2spinwidget(cw->y_scale_spin, values[1]);
+	double2spinwidget(cw->easting_spin, values[2]);
+	double2spinwidget(cw->northing_spin, values[3]);
 }
 
 
@@ -555,7 +547,7 @@ static int world_file_read_file(const QString & full_path, double values[4])
 
 
 
-static void georef_layer_dialog_load(changeable_widgets *cw)
+static void georef_layer_dialog_load(widgets_group * cw)
 {
 	Window * window = g_tree->tree_get_main_window();
 	QFileDialog file_selector(window, QObject::tr("Choose World file"));
@@ -586,9 +578,8 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 
 
 
-static void georef_layer_export_params(georef_data_t * data)
+void LayerGeoref::export_params_cb(void)
 {
-	LayerGeoref * layer = data->layer;
 	Window * window = g_tree->tree_get_main_window();
 
 	QFileDialog file_selector(window, QObject::tr("Choose World file"));
@@ -613,7 +604,7 @@ static void georef_layer_export_params(georef_data_t * data)
 		return;
 	}
 
-	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
+	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->corner.easting, this->corner.northing);
 	fclose(f);
 	f = NULL;
 }
@@ -634,7 +625,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 		double values[4];
 		if (filename && user_data) {
 
-			changeable_widgets *cw = (changeable_widgets *) user_data;
+			widgets_group *cw = (widgets_group *) user_data;
 
 			bool upper = g_ascii_isupper(filename[strlen(filename)-1]);
 			char* filew = g_strconcat(filename, (upper ? "W" : "w") , NULL);
@@ -665,8 +656,8 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 LatLon LayerGeoref::get_ll_tl()
 {
 	LatLon ll_result;
-	ll_result.lat = this->cw.lat_tl_spin.value();
-	ll_result.lon = this->cw.lon_tl_spin.value();
+	ll_result.lat = this->cw.lat_tl_spin->value();
+	ll_result.lon = this->cw.lon_tl_spin->value();
 	return ll_result;
 }
 
@@ -676,8 +667,8 @@ LatLon LayerGeoref::get_ll_tl()
 LatLon LayerGeoref::get_ll_br()
 {
 	LatLon ll_result;
-	ll_result.lat = this->cw.lat_br_spin.value();
-	ll_result.lon = this->cw.lon_br_spin.value();
+	ll_result.lat = this->cw.lat_br_spin->value();
+	ll_result.lon = this->cw.lon_br_spin->value();
 	return ll_result;
 }
 
@@ -689,15 +680,15 @@ void LayerGeoref::align_utm2ll()
 {
 	const UTM utm = LatLon::to_utm(this->get_ll_tl());
 
-	this->cw.ce_spin->setValue(utm.easting);
-	this->cw.cn_spin->setValue(utm.northing);
+	this->cw.easting_spin->setValue(utm.easting);
+	this->cw.northing_spin->setValue(utm.northing);
 
 	char tmp_letter[2];
 	tmp_letter[0] = utm.letter;
 	tmp_letter[1] = '\0';
-	this->cw.utm_letter_entry.setText(QString(tmp_letter));
+	this->cw.utm_letter_entry->setText(QString(tmp_letter));
 
-	this->cw.utm_zone_spin.setValue(utm.zone);
+	this->cw.utm_zone_spin->setValue(utm.zone);
 
 }
 
@@ -709,19 +700,19 @@ void LayerGeoref::align_ll2utm()
 {
 	UTM corner;
 
-	const QString letter = this->cw.utm_letter_entry.text();
+	const QString letter = this->cw.utm_letter_entry->text();
 	if (1 == letter.size()) {
 		corner.letter = letter.at(0).toUpper().toLatin1();
 		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "UTM letter conversion" << letter << "->" << corner.letter;
 	}
 
-	corner.zone = this->cw.utm_zone_spin.value();
-	corner.easting = this->cw.ce_spin->value();
-	corner.northing = this->cw.cn_spin->value();
+	corner.zone = this->cw.utm_zone_spin->value();
+	corner.easting = this->cw.easting_spin->value();
+	corner.northing = this->cw.northing_spin->value();
 
 	const LatLon ll = UTM::to_latlon(corner);
-	this->cw.lat_tl_spin.setValue(ll.lat);
-	this->cw.lon_tl_spin.setValue(ll.lon);
+	this->cw.lat_tl_spin->setValue(ll.lat);
+	this->cw.lon_tl_spin->setValue(ll.lon);
 }
 
 
@@ -779,7 +770,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 void LayerGeoref::calculate_mpp_from_coords_cb(void)
 {
-	const QString filename = this->cw.imageentry->get_filename();
+	const QString filename = this->cw.map_image_file_entry->get_filename();
 	if (!filename.length()) {
 		return;
 	}
@@ -804,8 +795,8 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		double xmpp, ympp;
 		georef_layer_mpp_from_coords(CoordMode::LATLON, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
 
-		this->cw.x_spin->setValue(xmpp);
-		this->cw.y_spin->setValue(ympp);
+		this->cw.x_scale_spin->setValue(xmpp);
+		this->cw.y_scale_spin->setValue(ympp);
 
 		this->check_br_is_good_or_msg_user();
 	}
@@ -830,178 +821,167 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	dialog.setWindowTitle(QObject::tr("Layer Properties"));
 
 
-	dialog.button_box->button(QDialogButtonBox::Discard)->setDefault(true);
+	dialog.button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
 	QPushButton * cancel_button = dialog.button_box->button(QDialogButtonBox::Cancel);
 
-#ifdef K
-	GtkWidget *table, *wfp_hbox, *wfp_button;
-	changeable_widgets cw;
+	int row = 0;
 
-	GtkBox *dgbox = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	table = gtk_table_new (4, 2, false);
-	dgbox->addWidget(table);
-
-	wfp_hbox = gtk_hbox_new (false, 0);
-	QLabel * wfp_label = new QLabel(QObject::tr("World File Parameters:"));
-	wfp_button = gtk_button_new_with_label (_("Load From File..."));
-
-	gtk_box_pack_start (GTK_BOX(wfp_hbox), wfp_label, true, true, 0);
-	gtk_box_pack_start (GTK_BOX(wfp_hbox), wfp_button, false, false, 3);
-#endif
-
-	QLabel * ce_label = new QLabel(QObject::tr("Corner pixel easting:"));
-	cw.ce_spin->setMinimum(0.0);
-	cw.ce_spin->setMaximum(1500000.0);
-	cw.ce_spin->setSingleStep(1);
-	cw.ce_spin->setValue(4);
-	cw.ce_spin->setToolTip(QObject::tr("the UTM \"easting\" value of the upper-left corner pixel of the map"));
-
-	QLabel * cn_label = new QLabel(QObject::tr("Corner pixel northing:"));
-	cw.cn_spin->setMinimum(0.0);
-	cw.cn_spin->setMaximum(9000000.0);
-	cw.cn_spin->setSingleStep(1);
-	cw.cn_spin->setValue(4);
-	cw.cn_spin->setToolTip(QObject::tr("the UTM \"northing\" value of the upper-left corner pixel of the map"));
-
-	QLabel * xlabel = new QLabel(QObject::tr("X (easting) scale (mpp): "));
-	QLabel * ylabel = new QLabel(QObject::tr("Y (northing) scale (mpp): "));
-
-	cw.x_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.x_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.x_spin->setSingleStep(1);
-	cw.x_spin->setValue(4);
-	cw.x_spin->setToolTip(QObject::tr("the scale of the map in the X direction (meters per pixel)"));
-
-	cw.y_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.y_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.y_spin->setSingleStep(1);
-	cw.y_spin->setValue(4);
-	cw.y_spin->setToolTip(QObject::tr("the scale of the map in the Y direction (meters per pixel)"));
-
-
-	QLabel * imagelabel = new QLabel(QObject::tr("Map Image:"));
-	cw.imageentry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, QObject::tr("Select image file"), window_);
+	cw.map_image_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, QObject::tr("Select image file"), window_);
 	// vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
+	dialog.grid->addWidget(new QLabel(QObject::tr("Map Image:")), row, 0);
+	dialog.grid->addWidget(cw.map_image_file_entry, row, 1);
+	row++;
 
-	cw.ce_spin->setValue(this->corner.easting);
-	cw.cn_spin->setValue(this->corner.northing);
-	cw.x_spin->setValue(this->mpp_easting);
-	cw.y_spin->setValue(this->mpp_northing);
-	if (!this->image.isEmpty()) {
-		cw.imageentry->set_filename(this->image);
+	cw.world_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, QObject::tr("Select world file"), window_);
+	dialog.grid->addWidget(new QLabel(QObject::tr("World File Parameters:")), row, 0);
+	dialog.grid->addWidget(cw.world_file_entry, row, 1);
+	row++;
+
+	cw.x_scale_spin = new QDoubleSpinBox();
+	cw.x_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.x_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	cw.x_scale_spin->setSingleStep(1);
+	cw.x_scale_spin->setValue(4);
+	cw.x_scale_spin->setToolTip(QObject::tr("The scale of the map in the X direction (meters per pixel)"));
+	dialog.grid->addWidget(new QLabel(QObject::tr("X (easting) scale (mpp): ")), row, 0);
+	dialog.grid->addWidget(cw.x_scale_spin, row, 1);
+	row++;
+
+	cw.y_scale_spin = new QDoubleSpinBox();
+	cw.y_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	cw.y_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	cw.y_scale_spin->setSingleStep(1);
+	cw.y_scale_spin->setValue(4);
+	cw.y_scale_spin->setToolTip(QObject::tr("The scale of the map in the Y direction (meters per pixel)"));
+	dialog.grid->addWidget(new QLabel(QObject::tr("Y (northing) scale (mpp): ")), row, 0);
+	dialog.grid->addWidget(cw.y_scale_spin, row, 1);
+	row++;
+
+
+	/* This should go into UTM tab of notebook. */
+	{
+
+		cw.easting_spin = new QDoubleSpinBox();
+		cw.easting_spin->setMinimum(0.0);
+		cw.easting_spin->setMaximum(1500000.0);
+		cw.easting_spin->setSingleStep(1);
+		cw.easting_spin->setValue(4);
+		cw.easting_spin->setValue(this->corner.easting);
+		cw.easting_spin->setToolTip(QObject::tr("The UTM \"easting\" value of the upper-left corner pixel of the map"));
+		dialog.grid->addWidget(new QLabel(QObject::tr("Corner pixel easting:")), row, 0);
+		dialog.grid->addWidget(cw.easting_spin, row, 1);
+		row++;
+
+		cw.northing_spin = new QDoubleSpinBox();
+		cw.northing_spin->setMinimum(0.0);
+		cw.northing_spin->setMaximum(9000000.0);
+		cw.northing_spin->setSingleStep(1);
+		cw.northing_spin->setValue(4);
+		cw.northing_spin->setValue(this->corner.northing);
+		cw.northing_spin->setToolTip(QObject::tr("The UTM \"northing\" value of the upper-left corner pixel of the map"));
+		dialog.grid->addWidget(new QLabel(QObject::tr("Corner pixel northing:")), row, 0);
+		dialog.grid->addWidget(cw.northing_spin, row, 1);
+		row++;
+
+
+		cw.utm_zone_spin = new QSpinBox();
+		cw.utm_zone_spin->setMinimum(1);
+		cw.utm_zone_spin->setMaximum(60);
+		cw.utm_zone_spin->setSingleStep(1);
+		cw.utm_zone_spin->setValue(this->corner.zone);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Zone:")), row, 0);
+		dialog.grid->addWidget(cw.utm_zone_spin, row, 1);
+		row++;
+
+		cw.utm_letter_entry = new QLineEdit();
+		cw.utm_letter_entry->setMaxLength(1);
+		//gtk_entry_set_width_chars (GTK_ENTRY(cw.utm_letter_entry), 2);
+		char tmp_letter[2];
+		tmp_letter[0] = this->corner.letter;
+		tmp_letter[1] = '\0';
+		cw.utm_letter_entry->setText(tmp_letter);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Letter:")), row, 0);
+		dialog.grid->addWidget(cw.utm_letter_entry, row, 1);
+		row++;
 	}
 
-#ifdef K
-	gtk_table_attach_defaults (GTK_TABLE(table), imagelabel, 0, 1, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table), cw.imageentry, 1, 2, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table), wfp_hbox, 0, 2, 1, 2);
-	gtk_table_attach_defaults (GTK_TABLE(table), xlabel, 0, 1, 2, 3);
-	gtk_table_attach_defaults (GTK_TABLE(table), cw.x_spin, 1, 2, 2, 3);
-	gtk_table_attach_defaults (GTK_TABLE(table), ylabel, 0, 1, 3, 4);
-	gtk_table_attach_defaults (GTK_TABLE(table), cw.y_spin, 1, 2, 3, 4);
+	cw.x_scale_spin->setValue(this->mpp_easting);
+	cw.y_scale_spin->setValue(this->mpp_northing);
+	if (!this->image.isEmpty()) {
+		cw.map_image_file_entry->set_filename(this->image);
+	}
 
-	cw.tabs = gtk_notebook_new();
-	GtkWidget *table_utm = gtk_table_new (3, 2, false);
+	/* This should go into Lat/Lon tab of notebook. */
+	{
 
-	gtk_table_attach_defaults (GTK_TABLE(table_utm), ce_label, 0, 1, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table_utm), cw.ce_spin, 1, 2, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table_utm), cn_label, 0, 1, 1, 2);
-	gtk_table_attach_defaults (GTK_TABLE(table_utm), cw.cn_spin, 1, 2, 1, 2);
+		cw.lat_tl_spin = new QDoubleSpinBox();
+		cw.lat_tl_spin->setMinimum(-90.0);
+		cw.lat_tl_spin->setMaximum(90.0);
+		cw.lat_tl_spin->setSingleStep(0.05);
+		cw.lat_tl_spin->setValue(0.0);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Upper left latitude:")), row, 0);
+		dialog.grid->addWidget(cw.lat_tl_spin, row, 1);
+		row++;
 
-	GtkWidget *utm_hbox = gtk_hbox_new (false, 0);
-	cw.utm_zone_spin.setMinimum(1);
-	cw.utm_zone_spin.setMaximum(60);
-	cw.utm_zone_spin.setSingleStep(1);
-	cw.utm_zone_spin.setValue(this->corner.zone);
+		cw.lon_tl_spin = new QDoubleSpinBox();
+		cw.lon_tl_spin->setMinimum(-180.0);
+		cw.lon_tl_spin->setMaximum(180.0);
+		cw.lon_tl_spin->setSingleStep(0.05);
+		cw.lon_tl_spin->setValue(0.0);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Upper left longitude:")), row, 0);
+		dialog.grid->addWidget(cw.lon_tl_spin, row, 1);
+		row++;
 
-	gtk_box_pack_start (GTK_BOX(utm_hbox), new QLabel(QObject::tr("Zone:")), true, true, 0);
-	gtk_box_pack_start (GTK_BOX(utm_hbox), cw.utm_zone_spin, true, true, 0);
-	gtk_box_pack_start (GTK_BOX(utm_hbox), new QLabel(QObject::tr("Letter:")), true, true, 0);
-	cw.utm_letter_entry.setMaxLength(1);
-	gtk_entry_set_width_chars (GTK_ENTRY(cw.utm_letter_entry), 2);
-	char tmp_letter[2];
-	tmp_letter[0] = this->corner.letter;
-	tmp_letter[1] = '\0';
-	cw.utm_letter_entry.setText(tmp_letter);
-	gtk_box_pack_start (GTK_BOX(utm_hbox), cw.utm_letter_entry, true, true, 0);
+		cw.lat_br_spin = new QDoubleSpinBox();
+		cw.lat_br_spin->setMinimum(-90.0);
+		cw.lat_br_spin->setMaximum(90.0);
+		cw.lat_br_spin->setSingleStep(0.05);
+		cw.lat_br_spin->setValue(0.0);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Lower right latitude:")), row, 0);
+		dialog.grid->addWidget(cw.lat_br_spin, row, 1);
+		row++;
 
-	gtk_table_attach_defaults (GTK_TABLE(table_utm), utm_hbox, 0, 2, 2, 3);
+		cw.lon_br_spin = new QDoubleSpinBox();
+		cw.lon_br_spin->setMinimum(-180.0);
+		cw.lon_br_spin->setMaximum(180.0);
+		cw.lon_br_spin->setSingleStep(0.05);
+		cw.lon_br_spin->setValue(0.0);
+		dialog.grid->addWidget(new QLabel(QObject::tr("Lower right longitude:")), row, 0);
+		dialog.grid->addWidget(cw.lon_br_spin, row, 1);
+		row++;
 
-	/* Lat/Lon. */
-	GtkWidget *table_ll = gtk_table_new (5, 2, false);
-#endif
+		QPushButton * calc_mpp_button = new QPushButton(QObject::tr("Calculate MPP values from coordinates"));
+		calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
+		dialog.grid->addWidget(calc_mpp_button, row, 0, 1, 2);
+		row++;
 
-	QLabel * lat_tl_label = new QLabel(QObject::tr("Upper left latitude:"));
-	cw.lat_tl_spin.setMinimum(-90.0);
-	cw.lat_tl_spin.setMaximum(90.0);
-	cw.lat_tl_spin.setSingleStep(0.05);
-	cw.lat_tl_spin.setValue(0.0);
+		const Coord coord(this->corner, CoordMode::LATLON);
+		cw.lat_tl_spin->setValue(coord.ll.lat);
+		cw.lon_tl_spin->setValue(coord.ll.lon);
+		cw.lat_br_spin->setValue(this->ll_br.lat);
+		cw.lon_br_spin->setValue(this->ll_br.lon);
+	}
 
-	QLabel * lon_tl_label = new QLabel(QObject::tr("Upper left longitude:"));
-	cw.lon_tl_spin.setMinimum(-180.0);
-	cw.lon_tl_spin.setMaximum(180.0);
-	cw.lon_tl_spin.setSingleStep(0.05);
-	cw.lon_tl_spin.setValue(0.0);
 
-	QLabel * lat_br_label = new QLabel(QObject::tr("Lower right latitude:"));
-	cw.lat_br_spin.setMinimum(-90.0);
-	cw.lat_br_spin.setMaximum(90.0);
-	cw.lat_br_spin.setSingleStep(0.05);
-	cw.lat_br_spin.setValue(0.0);
+	ParameterScale alpha_scale = { 0, 255, SGVariant((int32_t) this->alpha), 1, 0 };
+	SGSlider * alpha_slider = new SGSlider(alpha_scale, Qt::Horizontal);
+	dialog.grid->addWidget(new QLabel(QObject::tr("Alpha:")), row, 0);
+	dialog.grid->addWidget(alpha_slider, row, 1);
+	row++;
 
-	QLabel * lon_br_label = new QLabel(QObject::tr("Lower right longitude:"));
-	cw.lon_br_spin.setMinimum(-180.0);
-	cw.lon_br_spin.setMaximum(180.0);
-	cw.lon_br_spin.setSingleStep(0.05);
-	cw.lon_br_spin.setValue(0.0);
-
-#ifdef K
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), lat_tl_label, 0, 1, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lat_tl_spin, 1, 2, 0, 1);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), lon_tl_label, 0, 1, 1, 2);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lon_tl_spin, 1, 2, 1, 2);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), lat_br_label, 0, 1, 2, 3);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lat_br_spin, 1, 2, 2, 3);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), lon_br_label, 0, 1, 3, 4);
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), cw.lon_br_spin, 1, 2, 3, 4);
-
-	GtkWidget *calc_mpp_button = gtk_button_new_with_label (_("Calculate MPP values from coordinates"));
-	calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
-	gtk_table_attach_defaults (GTK_TABLE(table_ll), calc_mpp_button, 0, 2, 4, 5);
-#endif
-
-	const Coord coord(this->corner, CoordMode::LATLON);
-	cw.lat_tl_spin.setValue(coord.ll.lat);
-	cw.lon_tl_spin.setValue(coord.ll.lon);
-	cw.lat_br_spin.setValue(this->ll_br.lat);
-	cw.lon_br_spin.setValue(this->ll_br.lon);
 
 #ifdef K
 	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_utm), new QLabel(QObject::tr("UTM")));
 	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_ll), new QLabel(QObject::tr("Latitude/Longitude")));
 	dgbox->addWidget(cw.tabs);
 
-	GtkWidget *alpha_hbox = gtk_hbox_new (false, 0);
-	// GTK3 => GtkWidget *alpha_scale = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 255, 1);
-	GtkWidget *alpha_scale = gtk_hscale_new_with_range (0, 255, 1);
-	gtk_scale_set_digits (GTK_SCALE(alpha_scale), 0);
-	gtk_range_set_value (GTK_RANGE(alpha_scale), this->alpha);
-	gtk_box_pack_start (GTK_BOX(alpha_hbox), new QLabel(QObject::tr("Alpha:")), true, true, 0);
-	gtk_box_pack_start (GTK_BOX(alpha_hbox), alpha_scale, true, true, 0);
-	dgbox->addWidget(alpha_hbox);
-
-	this->cw = cw;
-
 	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab));
 	QObject::connect(calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
-
-	QObject::connect(wfp_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
-
+	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
+#endif
 	if (cancel_button) {
 		cancel_button->setFocus();
 	}
-
-	gtk_widget_show_all (dialog);
 
 	/* Remember setting the notebook page must be done after the widget is visible. */
 	int page_num = 0;
@@ -1010,42 +990,48 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 			page_num = 0;
 		}
 	}
+#ifdef K
 	gtk_notebook_set_current_page (GTK_NOTEBOOK(cw.tabs), page_num);
 #endif
 	if (dialog.exec() == QDialog::Accepted) {
 
 		this->align_coords();
 
-		this->corner.easting = cw.ce_spin->value();
-		this->corner.northing = cw.cn_spin->value();
-		this->corner.zone = cw.utm_zone_spin.value();
+		this->corner.easting = cw.easting_spin->value();
+		this->corner.northing = cw.northing_spin->value();
+		this->corner.zone = cw.utm_zone_spin->value();
 #ifdef K
-		const char *letter = cw.utm_letter_entry.text();
+		const char *letter = cw.utm_letter_entry->text();
 		if (*letter) {
 			this->corner.letter = toupper(*letter);
 		}
 #endif
-		this->mpp_easting = cw.x_spin->value();
-		this->mpp_northing = cw.y_spin->value();
+		this->mpp_easting = cw.x_scale_spin->value();
+		this->mpp_northing = cw.y_scale_spin->value();
 		this->ll_br = this->get_ll_br();
 		this->check_br_is_good_or_msg_user();
 		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 		if (!this->pixmap) {
-			if (this->image != cw.imageentry->get_filename()) {
-				this->set_image(cw.imageentry->get_filename());
+			if (this->image != cw.map_image_file_entry->get_filename()) {
+				this->set_image(cw.map_image_file_entry->get_filename());
 				this->post_read(viewport, false);
 			}
 		}
-#ifdef K
-		this->alpha = (uint8_t) gtk_range_get_value (GTK_RANGE(alpha_scale));
+
+		this->alpha = alpha_slider->get_value();
 		if (this->pixmap && this->alpha < 255) {
+#ifdef K
 			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
+#endif
 		}
 
 		if (this->scaled && this->alpha < 255) {
+#ifdef K
 			this->scaled = ui_pixmap_set_alpha(this->scaled, this->alpha);
+#endif
 		}
 
+#ifdef K
 		ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
 #endif
 		return true;
@@ -1057,13 +1043,11 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 
 
-static void georef_layer_zoom_to_fit(georef_data_t * data)
+void LayerGeoref::zoom_to_fit_cb(void)
 {
-	LayerGeoref * layer = data->layer;
-
 	Viewport * viewport = g_tree->tree_get_main_viewport();
-	viewport->set_xmpp(layer->mpp_easting);
-	viewport->set_ympp(layer->mpp_northing);
+	viewport->set_xmpp(this->mpp_easting);
+	viewport->set_ympp(this->mpp_northing);
 
 	g_tree->emit_update_window();
 }
@@ -1071,16 +1055,13 @@ static void georef_layer_zoom_to_fit(georef_data_t * data)
 
 
 
-static void georef_layer_goto_center(georef_data_t * data)
+void LayerGeoref::goto_center_cb(void)
 {
-	LayerGeoref * layer = data->layer;
-
 	Viewport * viewport = g_tree->tree_get_main_viewport();
-
 	UTM utm = viewport->get_center()->get_utm();
 
-	utm.easting = layer->corner.easting + (layer->width * layer->mpp_easting / 2); /* Only an approximation. */
-	utm.northing = layer->corner.northing - (layer->height * layer->mpp_northing / 2);
+	utm.easting = this->corner.easting + (this->width * this->mpp_easting / 2); /* Only an approximation. */
+	utm.northing = this->corner.northing - (this->height * this->mpp_northing / 2);
 
 	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
 
@@ -1092,31 +1073,21 @@ static void georef_layer_goto_center(georef_data_t * data)
 
 void LayerGeoref::add_menu_items(QMenu & menu)
 {
-
-	static georef_data_t pass_along;
-	pass_along.layer = this;
-
 	QAction * action = NULL;
 
 	action = new QAction(QObject::tr("&Zoom to Fit Map"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_ZOOM_FIT"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_zoom_to_fit));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (zoom_to_fit_cb(void)));
 	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&Goto Map Center"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_JUMP_TO"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_goto_center));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (goto_center_cb(void)));
 	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&Export to World File"), this);
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_HARDDISK"));
-#ifdef K
-	QObject::connect(action, SIGNAL (triggered(bool)), &pass_along, SLOT (georef_layer_export_params));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (export_params_cb(void)));
 	menu.addAction(action);
 }
 

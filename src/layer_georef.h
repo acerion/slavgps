@@ -32,6 +32,8 @@
 #include <QLineEdit>
 
 #include "layer.h"
+#include "layer_interface.h"
+#include "layer_tool.h"
 
 
 
@@ -52,23 +54,26 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		QDoubleSpinBox * x_spin = NULL;
-		QDoubleSpinBox * y_spin = NULL;
+	class widgets_group {
+	public:
+		QDoubleSpinBox * x_scale_spin = NULL;
+		QDoubleSpinBox * y_scale_spin = NULL;
 		/* UTM widgets. */
-		QDoubleSpinBox * ce_spin = NULL; /* Top left. */
-		QDoubleSpinBox * cn_spin = NULL;
-		QSpinBox utm_zone_spin;
-		QLineEdit utm_letter_entry;
+		QDoubleSpinBox * easting_spin = NULL;
+		QDoubleSpinBox * northing_spin = NULL;
 
-		QDoubleSpinBox lat_tl_spin;
-		QDoubleSpinBox lon_tl_spin;
-		QDoubleSpinBox lat_br_spin;
-		QDoubleSpinBox lon_br_spin;
+		QSpinBox * utm_zone_spin = NULL;
+		QLineEdit * utm_letter_entry = NULL;
 
-		GtkWidget * tabs = NULL;
-		SGFileEntry * imageentry = NULL;
-	} changeable_widgets;
+		QDoubleSpinBox * lat_tl_spin = NULL;
+		QDoubleSpinBox * lon_tl_spin = NULL;
+		QDoubleSpinBox * lat_br_spin = NULL;
+		QDoubleSpinBox * lon_br_spin = NULL;
+
+		//GtkWidget * tabs = NULL;
+		SGFileEntry * map_image_file_entry = NULL;
+		SGFileEntry * world_file_entry = NULL;
+	};
 
 
 
@@ -84,6 +89,7 @@ namespace SlavGPS {
 
 
 	class LayerGeoref : public Layer {
+		Q_OBJECT
 	public:
 		LayerGeoref();
 		LayerGeoref(Viewport * viewport);
@@ -120,6 +126,9 @@ namespace SlavGPS {
 
 	public slots:
 		void calculate_mpp_from_coords_cb(void);
+		void zoom_to_fit_cb(void);
+		void goto_center_cb(void);
+		void export_params_cb(void);
 
 
 	public:
@@ -141,7 +150,7 @@ namespace SlavGPS {
 
 		int click_x = -1;
 		int click_y = -1;
-		changeable_widgets cw;
+		widgets_group cw;
 	};
 
 
