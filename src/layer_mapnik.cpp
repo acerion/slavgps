@@ -308,7 +308,7 @@ void LayerMapnik::set_file_xml(const QString & name_)
 {
 	/* Mapnik doesn't seem to cope with relative filenames. */
 	if (name_ != "") {
-		this->filename_xml = QString(vu_get_canonical_filename(this, name_.toUtf8().constData(), this->get_window()->get_current_document_full_path().toUtf8().constData()));
+		this->filename_xml = QString(vu_get_canonical_filename(this, name_, this->get_window()->get_current_document_full_path()));
 	} else {
 		this->filename_xml = name_;
 	}

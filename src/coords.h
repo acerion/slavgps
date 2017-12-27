@@ -48,6 +48,12 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
+/* Number of UTM zones */
+#define UTM_ZONES 60
+
+
+
+
 namespace SlavGPS {
 
 

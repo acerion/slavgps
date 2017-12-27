@@ -73,14 +73,14 @@ extern Tree * g_tree;
 
 
 enum {
-	PARAM_IMAGE = 0,
-	PARAM_CE,
-	PARAM_CN,
-	PARAM_ME,
-	PARAM_MN,
-	PARAM_CZ,
-	PARAM_CL,
-	PARAM_AA,
+	PARAM_IMAGE_FULL_PATH = 0,
+	PARAM_CORNER_UTM_EASTING,
+	PARAM_CORNER_UTM_NORTHING,
+	PARAM_MPP_EASTING,
+	PARAM_MPP_NORTHING,
+	PARAM_CORNER_UTM_ZONE,
+	PARAM_CORNER_UTM_BAND_LETTER,
+	PARAM_ALPHA,
 	NUM_PARAMS
 };
 
@@ -88,16 +88,16 @@ enum {
 
 
 ParameterSpecification georef_layer_param_specs[] = {
-	{ PARAM_IMAGE, NULL, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CE,    NULL, "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CN,    NULL, "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_ME,    NULL, "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_MN,    NULL, "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CZ,    NULL, "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CL,    NULL, "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_AA,    NULL, "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE_FULL_PATH,         NULL, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_EASTING,      NULL, "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_NORTHING,     NULL, "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_MPP_EASTING,             NULL, "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_MPP_NORTHING,            NULL, "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_ZONE,         NULL, "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,  NULL, NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -170,7 +170,7 @@ void SlavGPS::vik_georef_layer_init(void)
 
 QString LayerGeoref::get_tooltip()
 {
-	return this->image;
+	return this->image_full_path;
 }
 
 
@@ -183,7 +183,7 @@ Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewpo
 
 	layer->unmarshall_params(data, data_len);
 
-	if (!layer->image.isEmpty()) {
+	if (!layer->image_full_path.isEmpty()) {
 		layer->post_read(viewport, true);
 	}
 	return layer;
@@ -195,34 +195,40 @@ Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewpo
 bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (id) {
-	case PARAM_IMAGE:
-		this->set_image(param_value.val_string);
+	case PARAM_IMAGE_FULL_PATH:
+		this->set_image_full_path(param_value.val_string);
 		break;
-	case PARAM_CN:
-		this->corner.northing = param_value.val_double;
+	case PARAM_CORNER_UTM_EASTING:
+		this->utm_tl.easting = param_value.val_double;
 		break;
-	case PARAM_CE:
-		this->corner.easting = param_value.val_double;
+	case PARAM_CORNER_UTM_NORTHING:
+		this->utm_tl.northing = param_value.val_double;
 		break;
-	case PARAM_MN:
-		this->mpp_northing = param_value.val_double;
-		break;
-	case PARAM_ME:
+	case PARAM_MPP_EASTING:
 		this->mpp_easting = param_value.val_double;
 		break;
-	case PARAM_CZ:
-		if (param_value.val_uint <= 60) {
-			this->corner.zone = param_value.val_uint;
+	case PARAM_MPP_NORTHING:
+		this->mpp_northing = param_value.val_double;
+		break;
+	case PARAM_CORNER_UTM_ZONE:
+		if (param_value.val_uint <= UTM_ZONES) {
+			this->utm_tl.zone = param_value.val_uint;
+		} else {
+			qDebug() << "EE:" PREFIX << "invalid utm zone" << param_value.val_uint;
 		}
 		break;
-	case PARAM_CL:
+	case PARAM_CORNER_UTM_BAND_LETTER:
 		if (param_value.val_uint >= 65 || param_value.val_uint <= 90) {
-			this->corner.letter = param_value.val_uint;
+			this->utm_tl.letter = param_value.val_uint;
+		} else {
+			qDebug() << "EE:" PREFIX << "invalid utm band letter" << param_value.val_uint;
 		}
 		break;
-	case PARAM_AA:
+	case PARAM_ALPHA:
 		if (param_value.val_uint <= 255) {
 			this->alpha = param_value.val_uint;
+		} else {
+			qDebug() << "EE:" PREFIX << "invalid alpha value" << param_value.val_uint;
 		}
 		break;
 	default:
@@ -241,7 +247,7 @@ void LayerGeoref::create_image_file()
 	if (!this->pixmap->save(path, "jpeg")) {
 		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
 	} else {
-		this->image = path;
+		this->image_full_path = path;
 	}
 }
 
@@ -252,45 +258,45 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_IMAGE: {
-		bool set = false;
+	case PARAM_IMAGE_FULL_PATH: {
+		bool is_set = false;
 		if (is_file_operation) {
-			if (this->pixmap && this->image.isEmpty()) {
+			if (this->pixmap && this->image_full_path.isEmpty()) {
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					rv = SGVariant(file_GetRelativeFilename(cwd, this->image));
-					set = true;
+					rv = SGVariant(file_GetRelativeFilename(cwd, this->image_full_path));
+					is_set = true;
 				}
 			}
 		}
-		if (!set) {
-			rv = SGVariant(this->image);
+		if (!is_set) {
+			rv = SGVariant(this->image_full_path);
 		}
 		break;
 	}
-	case PARAM_CN:
-		rv = SGVariant(this->corner.northing);
+	case PARAM_CORNER_UTM_EASTING:
+		rv = SGVariant(this->utm_tl.easting);
 		break;
-	case PARAM_CE:
-		rv = SGVariant(this->corner.easting);
+	case PARAM_CORNER_UTM_NORTHING:
+		rv = SGVariant(this->utm_tl.northing);
 		break;
-	case PARAM_MN:
-		rv = SGVariant(this->mpp_northing);
-		break;
-	case PARAM_ME:
+	case PARAM_MPP_EASTING:
 		rv = SGVariant(this->mpp_easting);
 		break;
-	case PARAM_CZ:
-		rv = SGVariant((uint32_t) this->corner.zone); /* FIXME: why do we need to do cast here? */
+	case PARAM_MPP_NORTHING:
+		rv = SGVariant(this->mpp_northing);
 		break;
-	case PARAM_CL:
-		rv = SGVariant((uint32_t) this->corner.letter); /* FIXME: why do we need to do cast here? */
+	case PARAM_CORNER_UTM_ZONE:
+		rv = SGVariant((uint32_t) this->utm_tl.zone); /* FIXME: why do we need to do cast here? */
 		break;
-	case PARAM_AA:
+	case PARAM_CORNER_UTM_BAND_LETTER:
+		rv = SGVariant((uint32_t) this->utm_tl.letter); /* FIXME: why do we need to do cast here? */
+		break;
+	case PARAM_ALPHA:
 		rv = SGVariant((uint32_t) this->alpha); /* FIXME: why do we need to do cast here? */
 		break;
 	default:
@@ -328,7 +334,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 	*xmpp = (diffx / width) / factor;
 
 	double diffy = a_coords_latlon_diff(ll_tl, ll_bl);
-	*ympp =(diffy / height) / factor;
+	*ympp = (diffy / height) / factor;
 }
 
 
@@ -336,54 +342,66 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 
 void LayerGeoref::draw(Viewport * viewport)
 {
-	if (this->pixmap) {
-		double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
-		QPixmap * pixmap_ = this->pixmap;
-		int layer_width = this->width;
-		int layer_height = this->height;
+	if (!this->pixmap) {
+		return;
+	}
 
-		const int width_ = viewport->get_width();
-		const int height_ = viewport->get_height();
+	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
+	int layer_width = this->width;
+	int layer_height = this->height;
 
-		const Coord corner_coord(this->corner, viewport->get_coord_mode());
-		const ScreenPos corner_pos = viewport->coord_to_screen_pos(corner_coord);
+	const int viewport_width = viewport->get_width();
+	const int viewport_height = viewport->get_height();
 
-		/* Mark to scale the pixmap if it doesn't match our dimensions. */
-		bool scale = false;
-		if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
-			scale = true;
-			layer_width = round(this->width * this->mpp_easting / xmpp);
-			layer_height = round(this->height * this->mpp_northing / ympp);
-		}
+	const Coord corner_coord(this->utm_tl, viewport->get_coord_mode());
+	const ScreenPos corner_pos = viewport->coord_to_screen_pos(corner_coord);
 
-		/* If image not in viewport bounds - no need to draw it (or bother with any scaling). */
-		if ((corner_pos.x < 0 || corner_pos.x < width_)
-		    && (corner_pos.y < 0 || corner_pos.y < height_)
-		    && corner_pos.x + layer_width > 0
-		    && corner_pos.y + layer_height > 0) {
+	/* Mark to scale the pixmap if it doesn't match our dimensions. */
+	bool do_rescale = false;
+	if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
+		do_rescale = true;
+		layer_width = round(this->width * this->mpp_easting / xmpp);
+		layer_height = round(this->height * this->mpp_northing / ympp);
+	}
 
-			if (scale) {
-				/* Rescale if necessary. */
-				if (layer_width == this->scaled_width && layer_height == this->scaled_height && this->scaled != NULL) {
-					pixmap_ = this->scaled;
-				} else {
-#ifdef K
-					pixmap_ = this->pixmap->scaled(layer_width, layer_height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-#endif
+	/* If image not in viewport bounds - no need to draw it (or bother with any scaling). */
+	if ((corner_pos.x < 0 || corner_pos.x < viewport_width)
+	    && (corner_pos.y < 0 || corner_pos.y < viewport_height)
+	    && corner_pos.x + layer_width > 0
+	    && corner_pos.y + layer_height > 0) {
 
-					if (this->scaled != NULL) {
-#ifdef K
-						g_object_unref(this->scaled);
-#endif
-					}
+		QPixmap pixmap_to_draw = *this->pixmap;
+		QRect source;
+		QRect target;
 
-					this->scaled = pixmap_;
-					this->scaled_width = layer_width;
-					this->scaled_height = layer_height;
+		source.setTopLeft(QPoint(0, 0));
+		target.setTopLeft(QPoint(corner_pos.x, corner_pos.y));
+
+		if (do_rescale) {
+			/* Rescale if necessary. */
+			if (layer_width == this->scaled_image_width && layer_height == this->scaled_image_height && this->scaled_image != NULL) {
+				pixmap_to_draw = *this->scaled_image;
+			} else {
+				pixmap_to_draw = this->pixmap->scaled(layer_width, layer_height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+				if (this->scaled_image) {
+					delete this->scaled_image;
+					this->scaled_image = NULL;
 				}
+
+				this->scaled_image = new QPixmap(pixmap_to_draw);
+				this->scaled_image_width = layer_width;
+				this->scaled_image_height = layer_height;
 			}
-			viewport->draw_pixmap(*pixmap_, 0, 0, corner_pos.x, corner_pos.y, layer_width, layer_height); /* todo: draw only what we need to. */
 		}
+
+		source.setWidth(pixmap_to_draw.width());
+		source.setHeight(pixmap_to_draw.height());
+
+		target.setWidth(layer_width);
+		target.setHeight(layer_height);
+
+		viewport->draw_pixmap(pixmap_to_draw, target, source);
 	}
 }
 
@@ -392,10 +410,9 @@ void LayerGeoref::draw(Viewport * viewport)
 
 LayerGeoref::~LayerGeoref()
 {
-	if (this->scaled != NULL) {
-#ifdef K
-		g_object_unref(this->scaled);
-#endif
+	if (this->scaled_image) {
+		delete this->scaled_image;
+		this->scaled_image = NULL;
 	}
 }
 
@@ -414,7 +431,7 @@ bool LayerGeoref::properties_dialog(Viewport * viewport)
 void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 {
 	GError *gx = NULL;
-	if (this->image.isEmpty()) {
+	if (this->image_full_path.isEmpty()) {
 		return;
 	}
 
@@ -424,19 +441,17 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 #endif
 	}
 
-	if (this->scaled) {
-#ifdef K
-		g_object_unref(G_OBJECT(this->scaled));
-#endif
-		this->scaled = NULL;
+	if (this->scaled_image) {
+		delete this->scaled_image;
+		this->scaled_image = NULL;
 	}
 
 	this->pixmap = new QPixmap();
-	if (!pixmap->load(this->image)) {
+	if (!pixmap->load(this->image_full_path)) {
 		delete pixmap;
 		pixmap = NULL;
 		if (!from_file) {
-			Dialog::error(tr("Couldn't open image file %1").arg(this->image), this->get_window());
+			Dialog::error(tr("Couldn't open image file %1").arg(this->image_full_path), this->get_window());
 		}
 	} else {
 		this->width = this->pixmap->width();
@@ -453,19 +468,17 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 
 
-void LayerGeoref::set_image(const QString & image_)
+void LayerGeoref::set_image_full_path(const QString & image_path)
 {
-	if (this->scaled) {
-#ifdef K
-		g_object_unref(this->scaled);
-#endif
-		this->scaled = NULL;
+	if (this->scaled_image) {
+		delete this->scaled_image;
+		this->scaled_image = NULL;
 	}
 
-	if (image_ != "") {
-		this->image = image_;
+	if (image_path != "") {
+		this->image_full_path = image_path;
 	} else {
-		this->image = QString(vu_get_canonical_filename(this, image_.toUtf8().constData(), this->get_window()->get_current_document_full_path().toUtf8().constData()));
+		this->image_full_path = QString(vu_get_canonical_filename(this, image_path, this->get_window()->get_current_document_full_path()));
 	}
 }
 
@@ -485,8 +498,8 @@ static void set_widget_values(widgets_group * cw, double values[4])
 {
 	double2spinwidget(cw->x_scale_spin, values[0]);
 	double2spinwidget(cw->y_scale_spin, values[1]);
-	double2spinwidget(cw->easting_spin, values[2]);
-	double2spinwidget(cw->northing_spin, values[3]);
+	double2spinwidget(cw->utm_entry->easting_spin, values[2]);
+	double2spinwidget(cw->utm_entry->northing_spin, values[3]);
 }
 
 
@@ -604,7 +617,7 @@ void LayerGeoref::export_params_cb(void)
 		return;
 	}
 
-	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->corner.easting, this->corner.northing);
+	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->utm_tl.easting, this->utm_tl.northing);
 	fclose(f);
 	f = NULL;
 }
@@ -679,17 +692,7 @@ LatLon LayerGeoref::get_ll_br()
 void LayerGeoref::align_utm2ll()
 {
 	const UTM utm = LatLon::to_utm(this->get_ll_tl());
-
-	this->cw.easting_spin->setValue(utm.easting);
-	this->cw.northing_spin->setValue(utm.northing);
-
-	char tmp_letter[2];
-	tmp_letter[0] = utm.letter;
-	tmp_letter[1] = '\0';
-	this->cw.utm_letter_entry->setText(QString(tmp_letter));
-
-	this->cw.utm_zone_spin->setValue(utm.zone);
-
+	this->cw.utm_entry->set_value(utm);
 }
 
 
@@ -698,21 +701,11 @@ void LayerGeoref::align_utm2ll()
 /* Align displayed Lat/Lon values with displayed UTM values. */
 void LayerGeoref::align_ll2utm()
 {
-	UTM corner;
+	const UTM utm_corner = this->cw.utm_entry->get_value();
+	const LatLon lat_lon = UTM::to_latlon(utm_corner);
 
-	const QString letter = this->cw.utm_letter_entry->text();
-	if (1 == letter.size()) {
-		corner.letter = letter.at(0).toUpper().toLatin1();
-		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "UTM letter conversion" << letter << "->" << corner.letter;
-	}
-
-	corner.zone = this->cw.utm_zone_spin->value();
-	corner.easting = this->cw.easting_spin->value();
-	corner.northing = this->cw.northing_spin->value();
-
-	const LatLon ll = UTM::to_latlon(corner);
-	this->cw.lat_tl_spin->setValue(ll.lat);
-	this->cw.lon_tl_spin->setValue(ll.lon);
+	this->cw.lat_tl_spin->setValue(lat_lon.lat);
+	this->cw.lon_tl_spin->setValue(lat_lon.lon);
 }
 
 
@@ -726,26 +719,27 @@ void LayerGeoref::align_ll2utm()
  */
 void LayerGeoref::align_coords()
 {
+
+	if (true
 #ifdef K
-	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(this->cw.tabs)) == 0) {
+	    gtk_notebook_get_current_page(GTK_NOTEBOOK(this->cw.tabs)) == 0
+#endif
+	    ) {
 		this->align_ll2utm();
 	} else {
 		this->align_utm2ll();
 	}
-#endif
 }
 
 
 
 
-static void switch_tab(void *notebook, void * tab, unsigned int tab_num, void * user_data)
+void LayerGeoref::switch_tab_cb(int tab_num)
 {
-	LayerGeoref * layer = (LayerGeoref *) user_data;
-
 	if (tab_num == 0) {
-		layer->align_utm2ll();
+		this->align_utm2ll();
 	} else {
-		layer->align_ll2utm();
+		this->align_ll2utm();
 	}
 }
 
@@ -860,55 +854,21 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* This should go into UTM tab of notebook. */
 	{
+		cw.utm_entry = new SGUTMEntry();
+		cw.utm_entry->set_value(this->utm_tl);
+		cw.utm_entry->set_text(QObject::tr("Corner pixel easting:"),
+				       QObject::tr("The UTM \"easting\" value of the upper-left corner pixel of the map"),
+				       QObject::tr("Corner pixel northing:"),
+				       QObject::tr("The UTM \"northing\" value of the upper-left corner pixel of the map"));
 
-		cw.easting_spin = new QDoubleSpinBox();
-		cw.easting_spin->setMinimum(0.0);
-		cw.easting_spin->setMaximum(1500000.0);
-		cw.easting_spin->setSingleStep(1);
-		cw.easting_spin->setValue(4);
-		cw.easting_spin->setValue(this->corner.easting);
-		cw.easting_spin->setToolTip(QObject::tr("The UTM \"easting\" value of the upper-left corner pixel of the map"));
-		dialog.grid->addWidget(new QLabel(QObject::tr("Corner pixel easting:")), row, 0);
-		dialog.grid->addWidget(cw.easting_spin, row, 1);
-		row++;
-
-		cw.northing_spin = new QDoubleSpinBox();
-		cw.northing_spin->setMinimum(0.0);
-		cw.northing_spin->setMaximum(9000000.0);
-		cw.northing_spin->setSingleStep(1);
-		cw.northing_spin->setValue(4);
-		cw.northing_spin->setValue(this->corner.northing);
-		cw.northing_spin->setToolTip(QObject::tr("The UTM \"northing\" value of the upper-left corner pixel of the map"));
-		dialog.grid->addWidget(new QLabel(QObject::tr("Corner pixel northing:")), row, 0);
-		dialog.grid->addWidget(cw.northing_spin, row, 1);
-		row++;
-
-
-		cw.utm_zone_spin = new QSpinBox();
-		cw.utm_zone_spin->setMinimum(1);
-		cw.utm_zone_spin->setMaximum(60);
-		cw.utm_zone_spin->setSingleStep(1);
-		cw.utm_zone_spin->setValue(this->corner.zone);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Zone:")), row, 0);
-		dialog.grid->addWidget(cw.utm_zone_spin, row, 1);
-		row++;
-
-		cw.utm_letter_entry = new QLineEdit();
-		cw.utm_letter_entry->setMaxLength(1);
-		//gtk_entry_set_width_chars (GTK_ENTRY(cw.utm_letter_entry), 2);
-		char tmp_letter[2];
-		tmp_letter[0] = this->corner.letter;
-		tmp_letter[1] = '\0';
-		cw.utm_letter_entry->setText(tmp_letter);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Letter:")), row, 0);
-		dialog.grid->addWidget(cw.utm_letter_entry, row, 1);
+		dialog.grid->addWidget(cw.utm_entry, row, 0, 1, 2);
 		row++;
 	}
 
 	cw.x_scale_spin->setValue(this->mpp_easting);
 	cw.y_scale_spin->setValue(this->mpp_northing);
-	if (!this->image.isEmpty()) {
-		cw.map_image_file_entry->set_filename(this->image);
+	if (!this->image_full_path.isEmpty()) {
+		cw.map_image_file_entry->set_filename(this->image_full_path);
 	}
 
 	/* This should go into Lat/Lon tab of notebook. */
@@ -955,7 +915,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		dialog.grid->addWidget(calc_mpp_button, row, 0, 1, 2);
 		row++;
 
-		const Coord coord(this->corner, CoordMode::LATLON);
+		const Coord coord(this->utm_tl, CoordMode::LATLON);
 		cw.lat_tl_spin->setValue(coord.ll.lat);
 		cw.lon_tl_spin->setValue(coord.ll.lon);
 		cw.lat_br_spin->setValue(this->ll_br.lat);
@@ -975,7 +935,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_ll), new QLabel(QObject::tr("Latitude/Longitude")));
 	dgbox->addWidget(cw.tabs);
 
-	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab));
+	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab_cb(int)));
 	QObject::connect(calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
 	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
 #endif
@@ -997,23 +957,16 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 		this->align_coords();
 
-		this->corner.easting = cw.easting_spin->value();
-		this->corner.northing = cw.northing_spin->value();
-		this->corner.zone = cw.utm_zone_spin->value();
-#ifdef K
-		const char *letter = cw.utm_letter_entry->text();
-		if (*letter) {
-			this->corner.letter = toupper(*letter);
-		}
-#endif
+		this->utm_tl = cw.utm_entry->get_value();
+
 		this->mpp_easting = cw.x_scale_spin->value();
 		this->mpp_northing = cw.y_scale_spin->value();
 		this->ll_br = this->get_ll_br();
 		this->check_br_is_good_or_msg_user();
 		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 		if (!this->pixmap) {
-			if (this->image != cw.map_image_file_entry->get_filename()) {
-				this->set_image(cw.map_image_file_entry->get_filename());
+			if (this->image_full_path != cw.map_image_file_entry->get_filename()) {
+				this->set_image_full_path(cw.map_image_file_entry->get_filename());
 				this->post_read(viewport, false);
 			}
 		}
@@ -1025,9 +978,9 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 #endif
 		}
 
-		if (this->scaled && this->alpha < 255) {
+		if (this->scaled_image && this->alpha < 255) {
 #ifdef K
-			this->scaled = ui_pixmap_set_alpha(this->scaled, this->alpha);
+			this->scaled_image = ui_pixmap_set_alpha(this->scaled_image, this->alpha);
 #endif
 		}
 
@@ -1060,8 +1013,8 @@ void LayerGeoref::goto_center_cb(void)
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 	UTM utm = viewport->get_center()->get_utm();
 
-	utm.easting = this->corner.easting + (this->width * this->mpp_easting / 2); /* Only an approximation. */
-	utm.northing = this->corner.northing - (this->height * this->mpp_northing / 2);
+	utm.easting = this->utm_tl.easting + (this->width * this->mpp_easting / 2); /* Only an approximation. */
+	utm.northing = this->utm_tl.northing - (this->height * this->mpp_northing / 2);
 
 	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
 
@@ -1098,15 +1051,13 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 {
 	this->id_string = "sg.tool.layer_georef.move";
 
-	this->action_icon_path   = "vik-icon-Georef Move Map";
-	this->action_label       = QObject::tr("_Georef Move Map");
+	this->action_icon_path   = ":/icons/layer_tool/georef_move_18.png";
+	this->action_label       = QObject::tr("&Georef Move Map");
 	this->action_tooltip     = QObject::tr("Georef Move Map");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
-#ifdef K
-	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_geomove_pixmap;
-#endif
+	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
+	this->cursor_release = new QCursor(Qt::OpenHandCursor);
 }
 
 
@@ -1128,8 +1079,8 @@ bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (this->click_x != -1) {
-		this->corner.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
-		this->corner.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
+		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
+		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
 		this->emit_layer_changed();
 		return true;
 	}
@@ -1143,14 +1094,13 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 {
 	this->id_string = "sg.tool.layer_georef.zoom";
 
-	this->action_icon_path   = "vik-icon-Georef Zoom Tool";
+	this->action_icon_path   = ":/icons/layer_tool/georef_zoom_18.png";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
 	this->action_tooltip     = QObject::tr("Georef Zoom Tool");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-#ifdef K
-	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_geozoom_pixmap;
-#endif
+
+	this->cursor_click = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 
@@ -1230,7 +1180,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	grl->set_name(name);
 	grl->pixmap = pixmap;
 
-	grl->corner = coord_tl.get_utm();
+	grl->utm_tl = coord_tl.get_utm();
 	grl->ll_br = coord_br.get_latlon();
 
 	if (grl->pixmap) {
@@ -1288,5 +1238,5 @@ void LayerGeoref::configure_from_viewport(Viewport const * viewport)
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_ympp();
 	this->mpp_easting = viewport->get_xmpp();
-	this->corner = viewport->get_center()->get_utm();
+	this->utm_tl = viewport->get_center()->get_utm();
 }

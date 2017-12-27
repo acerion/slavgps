@@ -1432,6 +1432,15 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int des
 
 
 
+void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & target, const QRect & source)
+{
+	QPainter painter(this->scr_buffer);
+	painter.drawPixmap(target, pixmap, source);
+}
+
+
+
+
 void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int angle1, int angle2, bool filled)
 {
 	QPainter painter(this->scr_buffer);

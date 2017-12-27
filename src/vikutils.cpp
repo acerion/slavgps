@@ -503,17 +503,14 @@ void SGUtils::set_auto_features_on_first_run(void)
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to.
  * Then resolve the full path to get the normal canonical filename.
  */
-char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename, const char * reference_file_full_path)
+char * SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path)
 {
 	gchar *canonical = NULL;
-	if (!filename) {
-		return NULL;
-	}
 
-	if (g_path_is_absolute(filename)) {
-		canonical = g_strdup(filename);
+	if (g_path_is_absolute(path.toUtf8().constData())) {
+		canonical = g_strdup(path.toUtf8().constData());
 	} else {
-		const char * vw_filename = reference_file_full_path;
+		char * vw_filename = strdup(reference_file_full_path.toUtf8().constData());
 		char * dirpath = NULL;
 		if (vw_filename) {
 			dirpath = g_path_get_dirname(vw_filename);
@@ -523,14 +520,15 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename, 
 
 		char * full = NULL;
 		if (g_path_is_absolute(dirpath)) {
-			full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, filename, NULL);
+			full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, path.toUtf8().constData(), NULL);
 		} else {
-			full = g_strconcat(g_get_current_dir(), G_DIR_SEPARATOR_S, dirpath, G_DIR_SEPARATOR_S, filename, NULL);
+			full = g_strconcat(g_get_current_dir(), G_DIR_SEPARATOR_S, dirpath, G_DIR_SEPARATOR_S, path.toUtf8().constData(), NULL);
 		}
 
 		canonical = file_realpath_dup(full); // resolved
 		free(full);
 		free(dirpath);
+		free(vw_filename);
 	}
 
 	return canonical;

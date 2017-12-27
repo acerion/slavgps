@@ -23,5 +23,8 @@
 	<file>icons/layer_tool/trw_edit_wp_18.png</file>
 	<file>icons/layer_tool/trw_find_route_18.png</file>
 	<file>icons/layer_tool/trw_show_picture_18.png</file>
+
+	<file>icons/layer_tool/georef_move_18.png</file>
+	<file>icons/layer_tool/georef_zoom_18.png</file>
 </qresource>
 </RCC>

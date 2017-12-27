@@ -34,6 +34,7 @@
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"
+#include "widget_utm_entry.h"
 
 
 
@@ -58,17 +59,13 @@ namespace SlavGPS {
 	public:
 		QDoubleSpinBox * x_scale_spin = NULL;
 		QDoubleSpinBox * y_scale_spin = NULL;
-		/* UTM widgets. */
-		QDoubleSpinBox * easting_spin = NULL;
-		QDoubleSpinBox * northing_spin = NULL;
-
-		QSpinBox * utm_zone_spin = NULL;
-		QLineEdit * utm_letter_entry = NULL;
 
 		QDoubleSpinBox * lat_tl_spin = NULL;
 		QDoubleSpinBox * lon_tl_spin = NULL;
 		QDoubleSpinBox * lat_br_spin = NULL;
 		QDoubleSpinBox * lon_br_spin = NULL;
+
+		SGUTMEntry * utm_entry = NULL;
 
 		//GtkWidget * tabs = NULL;
 		SGFileEntry * map_image_file_entry = NULL;
@@ -111,7 +108,7 @@ namespace SlavGPS {
 
 
 		void create_image_file();
-		void set_image(const QString & image);
+		void set_image_full_path(const QString & full_path);
 		LatLon get_ll_tl();
 		LatLon get_ll_br();
 		void align_utm2ll();
@@ -129,24 +126,25 @@ namespace SlavGPS {
 		void zoom_to_fit_cb(void);
 		void goto_center_cb(void);
 		void export_params_cb(void);
+		void switch_tab_cb(int tab_num);
 
 
 	public:
 
-		QString image;
+		QString image_full_path;
 		QPixmap * pixmap = NULL;
 		uint8_t alpha = 255;
 
-		UTM corner; /* Top Left. */
+		UTM utm_tl; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
 		LatLon ll_br; /* Bottom Right. */
 		unsigned int width = 0;
 		unsigned int height = 0;
 
-		QPixmap * scaled = NULL;
-		int scaled_width = 0;
-		int scaled_height = 0;
+		QPixmap * scaled_image = NULL;
+		int scaled_image_width = 0;
+		int scaled_image_height = 0;
 
 		int click_x = -1;
 		int click_y = -1;
