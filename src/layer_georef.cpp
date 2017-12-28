@@ -244,7 +244,7 @@ void LayerGeoref::create_image_file()
 {
 	/* Create in .viking-maps. */
 	const QString path = maps_layer_default_dir() + this->get_name() + ".jpg"; /* maps_layer_default_dir() should return string with trailing separator. */
-	if (!this->pixmap->save(path, "jpeg")) {
+	if (!this->image->save(path, "jpeg")) {
 		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
 	} else {
 		this->image_full_path = path;
@@ -261,7 +261,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 	case PARAM_IMAGE_FULL_PATH: {
 		bool is_set = false;
 		if (is_file_operation) {
-			if (this->pixmap && this->image_full_path.isEmpty()) {
+			if (this->image && this->image_full_path.isEmpty()) {
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
@@ -342,67 +342,83 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 
 void LayerGeoref::draw(Viewport * viewport)
 {
-	if (!this->pixmap) {
+	if (!this->image) {
 		return;
 	}
-
-	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
-	int layer_width = this->width;
-	int layer_height = this->height;
-
-	const int viewport_width = viewport->get_width();
-	const int viewport_height = viewport->get_height();
 
 	const Coord corner_coord(this->utm_tl, viewport->get_coord_mode());
 	const ScreenPos corner_pos = viewport->coord_to_screen_pos(corner_coord);
 
-	/* Mark to scale the pixmap if it doesn't match our dimensions. */
-	bool do_rescale = false;
+	QRect sub_viewport_rect;
+	sub_viewport_rect.setTopLeft(QPoint(corner_pos.x, corner_pos.y));
+	sub_viewport_rect.setWidth(this->image_width);
+	sub_viewport_rect.setHeight(this->image_height);
+
+	bool scale_mismatch = false; /* Flag to scale the pixmap if it doesn't match our dimensions. */
+	const double xmpp = viewport->get_xmpp();
+	const double ympp = viewport->get_ympp();
 	if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
-		do_rescale = true;
-		layer_width = round(this->width * this->mpp_easting / xmpp);
-		layer_height = round(this->height * this->mpp_northing / ympp);
+		scale_mismatch = true;
+		sub_viewport_rect.setWidth(round(this->image_width * this->mpp_easting / xmpp));
+		sub_viewport_rect.setHeight(round(this->image_height * this->mpp_northing / ympp));
 	}
 
-	/* If image not in viewport bounds - no need to draw it (or bother with any scaling). */
-	if ((corner_pos.x < 0 || corner_pos.x < viewport_width)
-	    && (corner_pos.y < 0 || corner_pos.y < viewport_height)
-	    && corner_pos.x + layer_width > 0
-	    && corner_pos.y + layer_height > 0) {
 
-		QPixmap pixmap_to_draw = *this->pixmap;
-		QRect source;
-		QRect target;
+	/* If image not in viewport bounds - no need to draw it (or bother with any scaling).
+	   TODO: rewrite this section in terms of two rectangles intersecting? */
+	const QRect full_viewport_rect(0, 0, viewport->get_width(), viewport->get_height());
+	if (!(corner_pos.x < 0 || corner_pos.x < full_viewport_rect.width())) {
+		/* Upper-left corner of image is located beyond right border of viewport. */
+		return;
+	}
+	if (!(corner_pos.y < 0 || corner_pos.y < full_viewport_rect.height())) {
+		/* Upper-left corner of image is located below bottom border of viewport. */
+		return;
+	}
+	if (!(corner_pos.x + sub_viewport_rect.width() > 0)) {
+		/* Upper-right corner of image is located beyond left border of viewport. */
+		return;
+	}
+	if (!(corner_pos.y + sub_viewport_rect.height() > 0)) {
+		/* Upper-right corner of image is located above upper border of viewport. */
+		return;
+	}
 
-		source.setTopLeft(QPoint(0, 0));
-		target.setTopLeft(QPoint(corner_pos.x, corner_pos.y));
 
-		if (do_rescale) {
-			/* Rescale if necessary. */
-			if (layer_width == this->scaled_image_width && layer_height == this->scaled_image_height && this->scaled_image != NULL) {
-				pixmap_to_draw = *this->scaled_image;
-			} else {
-				pixmap_to_draw = this->pixmap->scaled(layer_width, layer_height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	QPixmap image_to_draw = *this->image;
 
-				if (this->scaled_image) {
-					delete this->scaled_image;
-					this->scaled_image = NULL;
-				}
+	if (scale_mismatch) {
+		/* Rescale image only if really necessary, i.e. if we don't have a valid copy of scaled image. */
 
-				this->scaled_image = new QPixmap(pixmap_to_draw);
-				this->scaled_image_width = layer_width;
-				this->scaled_image_height = layer_height;
+		const int intended_width = sub_viewport_rect.width();
+		const int intended_heigth = sub_viewport_rect.height();
+
+		if (intended_width == this->scaled_image_width && intended_heigth == this->scaled_image_height && this->scaled_image != NULL) {
+			/* Reuse existing scaled image. */
+			image_to_draw = *this->scaled_image;
+		} else {
+			image_to_draw = this->image->scaled(intended_width, intended_heigth, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+			if (this->scaled_image) {
+				delete this->scaled_image;
+				this->scaled_image = NULL;
 			}
+
+			this->scaled_image = new QPixmap(image_to_draw);
+			this->scaled_image_width = intended_width;
+			this->scaled_image_height = intended_heigth;
 		}
-
-		source.setWidth(pixmap_to_draw.width());
-		source.setHeight(pixmap_to_draw.height());
-
-		target.setWidth(layer_width);
-		target.setHeight(layer_height);
-
-		viewport->draw_pixmap(pixmap_to_draw, target, source);
 	}
+
+	QRect image_rect;
+	image_rect.setTopLeft(QPoint(0, 0));
+	image_rect.setWidth(image_to_draw.width());
+	image_rect.setHeight(image_to_draw.height());
+
+	/* This should always print "0 0" */
+	qDebug() << "+++++++++++++++" << (image_to_draw.width() - sub_viewport_rect.width()) << (image_to_draw.height() - sub_viewport_rect.height());
+
+	viewport->draw_pixmap(sub_viewport_rect, image_to_draw, image_rect);
 }
 
 
@@ -435,9 +451,9 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		return;
 	}
 
-	if (this->pixmap) {
+	if (this->image) {
 #ifdef K
-		g_object_unref(G_OBJECT(this->pixmap));
+		g_object_unref(G_OBJECT(this->image));
 #endif
 	}
 
@@ -446,19 +462,19 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		this->scaled_image = NULL;
 	}
 
-	this->pixmap = new QPixmap();
-	if (!pixmap->load(this->image_full_path)) {
-		delete pixmap;
-		pixmap = NULL;
+	this->image = new QPixmap();
+	if (!this->image->load(this->image_full_path)) {
+		delete this->image;
+		this->image = NULL;
 		if (!from_file) {
 			Dialog::error(tr("Couldn't open image file %1").arg(this->image_full_path), this->get_window());
 		}
 	} else {
-		this->width = this->pixmap->width();
-		this->height = this->pixmap->height();
+		this->image_width = this->image->width();
+		this->image_height = this->image->height();
 
-		if (this->pixmap && this->alpha < 255) {
-			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
+		if (this->image && this->alpha < 255) {
+			*this->image = ui_pixmap_set_alpha(*this->image, this->alpha);
 		}
 	}
 
@@ -963,25 +979,24 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		this->mpp_northing = cw.y_scale_spin->value();
 		this->ll_br = this->get_ll_br();
 		this->check_br_is_good_or_msg_user();
+
+		/* Remember to get alpha value before calling post_read() that uses the alpha value. */
+		this->alpha = alpha_slider->get_value();
+
 		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
-		if (!this->pixmap) {
+		if (!this->image) {
 			if (this->image_full_path != cw.map_image_file_entry->get_filename()) {
 				this->set_image_full_path(cw.map_image_file_entry->get_filename());
 				this->post_read(viewport, false);
 			}
 		}
 
-		this->alpha = alpha_slider->get_value();
-		if (this->pixmap && this->alpha < 255) {
-#ifdef K
-			this->pixmap = ui_pixmap_set_alpha(this->pixmap, this->alpha);
-#endif
+		if (this->image && this->alpha < 255) {
+			*this->image = ui_pixmap_set_alpha(*this->image, this->alpha);
 		}
 
 		if (this->scaled_image && this->alpha < 255) {
-#ifdef K
-			this->scaled_image = ui_pixmap_set_alpha(this->scaled_image, this->alpha);
-#endif
+			*this->scaled_image = ui_pixmap_set_alpha(*this->scaled_image, this->alpha);
 		}
 
 #ifdef K
@@ -1013,8 +1028,8 @@ void LayerGeoref::goto_center_cb(void)
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 	UTM utm = viewport->get_center()->get_utm();
 
-	utm.easting = this->utm_tl.easting + (this->width * this->mpp_easting / 2); /* Only an approximation. */
-	utm.northing = this->utm_tl.northing - (this->height * this->mpp_northing / 2);
+	utm.easting = this->utm_tl.easting + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */
+	utm.northing = this->utm_tl.northing - (this->image_height * this->mpp_northing / 2);
 
 	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
 
@@ -1178,23 +1193,23 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	LayerGeoref * grl = new LayerGeoref();
 	grl->configure_from_viewport(viewport);
 	grl->set_name(name);
-	grl->pixmap = pixmap;
+	grl->image = pixmap;
 
 	grl->utm_tl = coord_tl.get_utm();
 	grl->ll_br = coord_br.get_latlon();
 
-	if (grl->pixmap) {
-		grl->width = grl->pixmap->width();
-		grl->height = grl->pixmap->height();
+	if (grl->image) {
+		grl->image_width = grl->image->width();
+		grl->image_height = grl->image->height();
 
-		if (grl->width > 0 && grl->height > 0) {
+		if (grl->image_width > 0 && grl->image_height > 0) {
 
 			const LatLon ll_tl = coord_tl.get_latlon();
 			const LatLon ll_br = coord_br.get_latlon();
 			const CoordMode mode = viewport->get_coord_mode();
 
 			double xmpp, ympp;
-			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, grl->width, grl->height, &xmpp, &ympp);
+			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, grl->image_width, grl->image_height, &xmpp, &ympp);
 			grl->mpp_easting = xmpp;
 			grl->mpp_northing = ympp;
 

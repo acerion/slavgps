@@ -30,6 +30,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDebug>
+#include <QPainter>
 
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -209,6 +210,21 @@ QPixmap * SlavGPS::ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 	}
 #endif
 	return pixmap;
+}
+
+
+
+
+QPixmap SlavGPS::ui_pixmap_set_alpha(const QPixmap & input, int alpha)
+{
+	QImage image(input.size(), QImage::Format_ARGB32_Premultiplied);
+	QPainter painter(&image);
+	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+	painter.setOpacity(alpha / 255.0);
+	painter.drawPixmap(0, 0, input);
+	QPixmap output = QPixmap::fromImage(image);
+
+	return output;
 }
 
 

@@ -37,7 +37,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Widget UTM Entry: "
+#define PREFIX " Widget UTM Entry:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -127,7 +127,7 @@ UTM SGUTMEntry::get_value(void) const
 	const QString text = this->band_letter_entry->text();
 	if (1 == text.size()) {
 		utm.letter = text.at(0).toUpper().toLatin1();
-		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "UTM letter conversion" << text << "->" << utm.letter;
+		qDebug() << "II:" PREFIX << "UTM letter conversion" << text << "->" << utm.letter;
 	}
 
 	return utm;

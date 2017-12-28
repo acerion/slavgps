@@ -86,7 +86,7 @@ namespace SlavGPS {
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
-		void draw_pixmap(QPixmap const & pixmap, const QRect & target, const QRect & source);
+		void draw_pixmap(const QRect & canvas_rect, QPixmap const & pixmap, const QRect & pixmap_rect);
 
 		void draw_simple_crosshair(const ScreenPos & pos);
 

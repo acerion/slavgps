@@ -56,8 +56,12 @@ namespace SlavGPS {
 	int ui_get_gtk_settings_integer(const char *property_name, int default_value);
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
+	/* @alpha should be in range 0-255 */
+	QPixmap ui_pixmap_set_alpha(const QPixmap & input, int alpha);
+
 	QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha);
 	QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha);
+
 	void ui_add_recent_file(const char * filename);
 
 

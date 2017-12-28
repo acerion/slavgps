@@ -1432,10 +1432,10 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int des
 
 
 
-void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & target, const QRect & source)
+void Viewport::draw_pixmap(const QRect & canvas_rect, QPixmap const & pixmap, const QRect & pixmap_rect)
 {
 	QPainter painter(this->scr_buffer);
-	painter.drawPixmap(target, pixmap, source);
+	painter.drawPixmap(canvas_rect, pixmap, pixmap_rect);
 }
 
 

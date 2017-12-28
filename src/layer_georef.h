@@ -130,17 +130,18 @@ namespace SlavGPS {
 
 
 	public:
-
+		QPixmap * image = NULL;
+		int image_width = 0;
+		int image_height = 0;
 		QString image_full_path;
-		QPixmap * pixmap = NULL;
+
 		uint8_t alpha = 255;
 
 		UTM utm_tl; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
 		LatLon ll_br; /* Bottom Right. */
-		unsigned int width = 0;
-		unsigned int height = 0;
+
 
 		QPixmap * scaled_image = NULL;
 		int scaled_image_width = 0;
