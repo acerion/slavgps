@@ -30,11 +30,13 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
+#include <QComboBox>
 
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"
 #include "widget_utm_entry.h"
+#include "widget_lat_lon_entry.h"
 
 
 
@@ -60,12 +62,21 @@ namespace SlavGPS {
 		QDoubleSpinBox * x_scale_spin = NULL;
 		QDoubleSpinBox * y_scale_spin = NULL;
 
-		QDoubleSpinBox * lat_tl_spin = NULL;
-		QDoubleSpinBox * lon_tl_spin = NULL;
-		QDoubleSpinBox * lat_br_spin = NULL;
-		QDoubleSpinBox * lon_br_spin = NULL;
 
+		QComboBox * coord_mode_combo = NULL;
+
+		/* Because of how I switch between two coordinate
+		   modes, and how I display them depending on state of
+		   "coord_mode_combo", I have to have equal number of
+		   widgets for UTM mode and for LatLon mode. */
 		SGUTMEntry * utm_entry = NULL;
+		QWidget * dummy_entry1 = NULL;
+		QWidget * dummy_entry2 = NULL;
+
+		SGLatLonEntry * lat_lon_tl_entry = NULL;
+		SGLatLonEntry * lat_lon_br_entry = NULL;
+		QPushButton * calc_mpp_button = NULL;
+
 
 		//GtkWidget * tabs = NULL;
 		SGFileEntry * map_image_file_entry = NULL;
@@ -126,7 +137,7 @@ namespace SlavGPS {
 		void zoom_to_fit_cb(void);
 		void goto_center_cb(void);
 		void export_params_cb(void);
-		void switch_tab_cb(int tab_num);
+		void coord_mode_changed_cb(int combo_index);
 
 
 	public:

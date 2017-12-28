@@ -71,6 +71,9 @@ extern Tree * g_tree;
 
 
 
+static BasicDialog * g_dialog = NULL;
+
+
 
 enum {
 	PARAM_IMAGE_FULL_PATH = 0,
@@ -684,10 +687,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 
 LatLon LayerGeoref::get_ll_tl()
 {
-	LatLon ll_result;
-	ll_result.lat = this->cw.lat_tl_spin->value();
-	ll_result.lon = this->cw.lon_tl_spin->value();
-	return ll_result;
+	return this->cw.lat_lon_tl_entry->get_value();
 }
 
 
@@ -695,10 +695,7 @@ LatLon LayerGeoref::get_ll_tl()
 
 LatLon LayerGeoref::get_ll_br()
 {
-	LatLon ll_result;
-	ll_result.lat = this->cw.lat_br_spin->value();
-	ll_result.lon = this->cw.lon_br_spin->value();
-	return ll_result;
+	return this->cw.lat_lon_br_entry->get_value();
 }
 
 
@@ -720,8 +717,7 @@ void LayerGeoref::align_ll2utm()
 	const UTM utm_corner = this->cw.utm_entry->get_value();
 	const LatLon lat_lon = UTM::to_latlon(utm_corner);
 
-	this->cw.lat_tl_spin->setValue(lat_lon.lat);
-	this->cw.lon_tl_spin->setValue(lat_lon.lon);
+	this->cw.lat_lon_tl_entry->set_value(lat_lon);
 }
 
 
@@ -750,12 +746,52 @@ void LayerGeoref::align_coords()
 
 
 
-void LayerGeoref::switch_tab_cb(int tab_num)
+void LayerGeoref::coord_mode_changed_cb(int combo_index)
 {
-	if (tab_num == 0) {
+	int current_coord_mode = this->cw.coord_mode_combo->currentData().toInt();
+
+	/* TODO: figure out how to delete widgets that were
+	   replaced. They are no longer owned by layout, so they have
+	   to be deleted. */
+
+	switch ((CoordMode) current_coord_mode) {
+	case CoordMode::UTM:
+		qDebug() << "II:" PREFIX << "current coordinate mode is UTM";
 		this->align_utm2ll();
-	} else {
+
+		g_dialog->grid->replaceWidget(this->cw.lat_lon_tl_entry, this->cw.utm_entry);
+		g_dialog->grid->replaceWidget(this->cw.lat_lon_br_entry, this->cw.dummy_entry1);
+		g_dialog->grid->replaceWidget(this->cw.calc_mpp_button, this->cw.dummy_entry2);
+
+		this->cw.utm_entry->show();
+		this->cw.dummy_entry1->show();
+		this->cw.dummy_entry2->show();
+
+		this->cw.lat_lon_tl_entry->hide();
+		this->cw.lat_lon_br_entry->hide();
+		this->cw.calc_mpp_button->hide();
+
+		break;
+	case CoordMode::LATLON:
+		qDebug() << "II:" PREFIX << "current coordinate mode is LatLon";
 		this->align_ll2utm();
+
+		g_dialog->grid->replaceWidget(this->cw.utm_entry, this->cw.lat_lon_tl_entry);
+		g_dialog->grid->replaceWidget(this->cw.dummy_entry1, this->cw.lat_lon_br_entry);
+		g_dialog->grid->replaceWidget(this->cw.dummy_entry2, this->cw.calc_mpp_button);
+
+		this->cw.lat_lon_tl_entry->show();
+		this->cw.lat_lon_br_entry->show();
+		this->cw.calc_mpp_button->show();
+
+		this->cw.utm_entry->hide();
+		this->cw.dummy_entry1->hide();
+		this->cw.dummy_entry2->hide();
+
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		break;
 	}
 }
 
@@ -830,6 +866,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	BasicDialog dialog(window_);
 	dialog.setWindowTitle(QObject::tr("Layer Properties"));
 
+	g_dialog = &dialog;
+
 
 	dialog.button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
 	QPushButton * cancel_button = dialog.button_box->button(QDialogButtonBox::Cancel);
@@ -867,8 +905,14 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	dialog.grid->addWidget(cw.y_scale_spin, row, 1);
 	row++;
 
+	this->cw.coord_mode_combo = new QComboBox();
+	this->cw.coord_mode_combo->addItem(QObject::tr("UTM"), (int) CoordMode::UTM);
+	this->cw.coord_mode_combo->addItem(QObject::tr("Latitude/Longitude"), (int) CoordMode::LATLON);
+	dialog.grid->addWidget(new QLabel(QObject::tr("Coordinate Mode")), row, 0);
+	dialog.grid->addWidget(this->cw.coord_mode_combo, row, 1);
+	row++;
 
-	/* This should go into UTM tab of notebook. */
+
 	{
 		cw.utm_entry = new SGUTMEntry();
 		cw.utm_entry->set_value(this->utm_tl);
@@ -879,6 +923,14 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 		dialog.grid->addWidget(cw.utm_entry, row, 0, 1, 2);
 		row++;
+
+		cw.dummy_entry1 = new QWidget();
+		dialog.grid->addWidget(cw.dummy_entry1, row, 0, 1, 2);
+		row++;
+
+		cw.dummy_entry2 = new QWidget();
+		dialog.grid->addWidget(cw.dummy_entry2, row, 0, 1, 2);
+		row++;
 	}
 
 	cw.x_scale_spin->setValue(this->mpp_easting);
@@ -887,55 +939,32 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		cw.map_image_file_entry->set_filename(this->image_full_path);
 	}
 
-	/* This should go into Lat/Lon tab of notebook. */
+
 	{
-
-		cw.lat_tl_spin = new QDoubleSpinBox();
-		cw.lat_tl_spin->setMinimum(-90.0);
-		cw.lat_tl_spin->setMaximum(90.0);
-		cw.lat_tl_spin->setSingleStep(0.05);
-		cw.lat_tl_spin->setValue(0.0);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Upper left latitude:")), row, 0);
-		dialog.grid->addWidget(cw.lat_tl_spin, row, 1);
-		row++;
-
-		cw.lon_tl_spin = new QDoubleSpinBox();
-		cw.lon_tl_spin->setMinimum(-180.0);
-		cw.lon_tl_spin->setMaximum(180.0);
-		cw.lon_tl_spin->setSingleStep(0.05);
-		cw.lon_tl_spin->setValue(0.0);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Upper left longitude:")), row, 0);
-		dialog.grid->addWidget(cw.lon_tl_spin, row, 1);
-		row++;
-
-		cw.lat_br_spin = new QDoubleSpinBox();
-		cw.lat_br_spin->setMinimum(-90.0);
-		cw.lat_br_spin->setMaximum(90.0);
-		cw.lat_br_spin->setSingleStep(0.05);
-		cw.lat_br_spin->setValue(0.0);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Lower right latitude:")), row, 0);
-		dialog.grid->addWidget(cw.lat_br_spin, row, 1);
-		row++;
-
-		cw.lon_br_spin = new QDoubleSpinBox();
-		cw.lon_br_spin->setMinimum(-180.0);
-		cw.lon_br_spin->setMaximum(180.0);
-		cw.lon_br_spin->setSingleStep(0.05);
-		cw.lon_br_spin->setValue(0.0);
-		dialog.grid->addWidget(new QLabel(QObject::tr("Lower right longitude:")), row, 0);
-		dialog.grid->addWidget(cw.lon_br_spin, row, 1);
-		row++;
-
-		QPushButton * calc_mpp_button = new QPushButton(QObject::tr("Calculate MPP values from coordinates"));
-		calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
-		dialog.grid->addWidget(calc_mpp_button, row, 0, 1, 2);
-		row++;
-
 		const Coord coord(this->utm_tl, CoordMode::LATLON);
-		cw.lat_tl_spin->setValue(coord.ll.lat);
-		cw.lon_tl_spin->setValue(coord.ll.lon);
-		cw.lat_br_spin->setValue(this->ll_br.lat);
-		cw.lon_br_spin->setValue(this->ll_br.lon);
+
+		cw.lat_lon_tl_entry = new SGLatLonEntry();
+		cw.lat_lon_tl_entry->set_text(QObject::tr("Upper left latitude:"),
+					      QObject::tr("Upper left latitude"),
+					      QObject::tr("Upper left longitude:"),
+					      QObject::tr("Upper left longitude"));
+		cw.lat_lon_tl_entry->set_value(coord.ll);
+		//dialog.grid->addWidget(cw.lat_lon_tl_entry, row, 0, 1, 2);
+		//row++;
+
+		cw.lat_lon_br_entry = new SGLatLonEntry();
+		cw.lat_lon_br_entry->set_text(QObject::tr("Lower right latitude:"),
+					      QObject::tr("Lower right latitude"),
+					      QObject::tr("Lower right longitude:"),
+					      QObject::tr("Lower right longitude"));
+		cw.lat_lon_br_entry->set_value(this->ll_br);
+		//dialog.grid->addWidget(cw.lat_lon_br_entry, row, 0, 1, 2);
+		//row++;
+
+		cw.calc_mpp_button = new QPushButton(QObject::tr("Calculate MPP values from coordinates"));
+		cw.calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
+		//dialog.grid->addWidget(cw.calc_mpp_button, row, 0, 1, 2);
+		//row++;
 	}
 
 
@@ -947,28 +976,31 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 
 #ifdef K
-	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_utm), new QLabel(QObject::tr("UTM")));
-	gtk_notebook_append_page(GTK_NOTEBOOK(cw.tabs), GTK_WIDGET(table_ll), new QLabel(QObject::tr("Latitude/Longitude")));
-	dgbox->addWidget(cw.tabs);
-
-	QObject::connect(this->cw.tabs, SIGNAL("switch-page"), this, SLOT (switch_tab_cb(int)));
-	QObject::connect(calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
+	QObject::connect(cw.calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
 	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
 #endif
+	QObject::connect(this->cw.coord_mode_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (coord_mode_changed_cb(int)));
+
 	if (cancel_button) {
 		cancel_button->setFocus();
 	}
 
-	/* Remember setting the notebook page must be done after the widget is visible. */
-	int page_num = 0;
-	if (ApplicationState::get_integer (VIK_SETTINGS_GEOREF_TAB, &page_num)) {
-		if (page_num < 0 || page_num > 1) {
-			page_num = 0;
+
+
+	/* Remember that selecting coord mode must be done after the widget is visible. */
+	int coord_mode = 0;
+	if (ApplicationState::get_integer(VIK_SETTINGS_GEOREF_TAB, &coord_mode)) {
+		if (coord_mode != (int) CoordMode::UTM && coord_mode != (int) CoordMode::LATLON) {
+			coord_mode = (int) CoordMode::UTM;
 		}
 	}
-#ifdef K
-	gtk_notebook_set_current_page (GTK_NOTEBOOK(cw.tabs), page_num);
-#endif
+	const int coord_index = this->cw.coord_mode_combo->findData(coord_mode);
+	if (coord_index != -1) {
+		this->cw.coord_mode_combo->setCurrentIndex(coord_index);
+	}
+
+
+
 	if (dialog.exec() == QDialog::Accepted) {
 
 		this->align_coords();
@@ -1002,9 +1034,11 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 #ifdef K
 		ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
 #endif
+		g_dialog = NULL;
 		return true;
 	}
 
+	g_dialog = NULL;
 	return false;
 }
 

@@ -119,6 +119,7 @@ SOURCES += main.cpp \
     widget_slider.cpp \
     widget_timestamp.cpp \
     widget_utm_entry.cpp \
+    widget_lat_lon_entry.cpp \
     date_time_dialog.cpp \
     dem.cpp \
     dem_cache.cpp \
@@ -253,6 +254,7 @@ HEADERS += window.h \
     widget_slider.h \
     widget_timestamp.h \
     widget_utm_entry.h \
+    widget_lat_lon_entry.h \
     date_time_dialog.h \
     dem.h \
     dem_cache.h \
