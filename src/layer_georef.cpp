@@ -46,8 +46,6 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "layer_map.h"
 #include "layer_georef.h"
 #include "widget_file_entry.h"
-#include "widget_slider.h"
-#include "dialog.h"
 #include "file.h"
 #include "application_state.h"
 #include "globals.h"
@@ -69,9 +67,6 @@ using namespace SlavGPS;
 
 extern Tree * g_tree;
 
-
-
-static BasicDialog * g_dialog = NULL;
 
 
 
@@ -312,8 +307,8 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 
 
 /**
- * Return mpp for the given coords, coord mode and image size.
- */
+   Return mpp for the given coords, coord mode and image size.
+*/
 static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, const LatLon & ll_br, unsigned int width, unsigned int height, double *xmpp, double *ympp)
 {
 	const LatLon ll_tr(ll_tl.lat, ll_br.lon);
@@ -513,12 +508,12 @@ static void double2spinwidget(QDoubleSpinBox * spinbox, double val)
 
 
 
-static void set_widget_values(widgets_group * cw, double values[4])
+void GeorefConfigDialog::set_widget_values(double values[4])
 {
-	double2spinwidget(cw->x_scale_spin, values[0]);
-	double2spinwidget(cw->y_scale_spin, values[1]);
-	double2spinwidget(cw->utm_entry->easting_spin, values[2]);
-	double2spinwidget(cw->utm_entry->northing_spin, values[3]);
+	double2spinwidget(this->x_scale_spin, values[0]);
+	double2spinwidget(this->y_scale_spin, values[1]);
+	double2spinwidget(this->utm_entry->easting_spin, values[2]);
+	double2spinwidget(this->utm_entry->northing_spin, values[3]);
 }
 
 
@@ -579,10 +574,10 @@ static int world_file_read_file(const QString & full_path, double values[4])
 
 
 
-static void georef_layer_dialog_load(widgets_group * cw)
+void GeorefConfigDialog::load_cb(void)
 {
 	Window * window = g_tree->tree_get_main_window();
-	QFileDialog file_selector(window, QObject::tr("Choose World file"));
+	QFileDialog file_selector(window, tr("Choose World file"));
 	file_selector.setFileMode(QFileDialog::ExistingFile);
 	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
 
@@ -598,12 +593,12 @@ static void georef_layer_dialog_load(widgets_group * cw)
 	double values[4];
 	int answer = world_file_read_file(selection.at(0), values);
 	if (answer == 1) {
-		Dialog::error(QObject::tr("The World file you requested could not be opened for reading."), window);
+		Dialog::error(tr("The World file you requested could not be opened for reading."), window);
 	} else if (answer == 2) {
-		Dialog::error(QObject::tr("Unexpected end of file reading World file."), window);
+		Dialog::error(tr("Unexpected end of file reading World file."), window);
 	} else {
 		/* NB answer should == 0 for success. */
-		set_widget_values(cw, values);
+		this->set_widget_values(values);
 	}
 }
 
@@ -657,19 +652,19 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 		double values[4];
 		if (filename && user_data) {
 
-			widgets_group *cw = (widgets_group *) user_data;
+			GeorefConfigDialog * dialog = (GeorefConfigDialog *) user_data;
 
 			bool upper = g_ascii_isupper(filename[strlen(filename)-1]);
 			char* filew = g_strconcat(filename, (upper ? "W" : "w") , NULL);
 
 			if (world_file_read_file(filew, values) == 0) {
-				set_widget_values(cw, values);
+				dialog->set_widget_values(values);
 			} else {
 				if (strlen(filename) > 3) {
 					char* file0 = g_strndup(filename, strlen(filename)-2);
 					char* file1 = g_strdup_printf("%s%c%c", file0, filename[strlen(filename)-1], (upper ? 'W' : 'w') );
 					if (world_file_read_file(file1, values) == 0) {
-						set_widget_values(cw, values);
+						dialog->set_widget_values(values);
 					}
 					free(file1);
 					free(file0);
@@ -685,70 +680,79 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 
 
 
-LatLon LayerGeoref::get_ll_tl()
+LatLon GeorefConfigDialog::get_ll_tl(void) const
 {
-	return this->cw.lat_lon_tl_entry->get_value();
+	return this->lat_lon_tl_entry->get_value();
 }
 
 
 
 
-LatLon LayerGeoref::get_ll_br()
+LatLon GeorefConfigDialog::get_ll_br(void) const
 {
-	return this->cw.lat_lon_br_entry->get_value();
+	return this->lat_lon_br_entry->get_value();
 }
 
 
 
 
 /* Align displayed UTM values with displayed Lat/Lon values. */
-void LayerGeoref::align_utm2ll()
+void GeorefConfigDialog::sync_from_utm_to_lat_lon(void)
 {
 	const UTM utm = LatLon::to_utm(this->get_ll_tl());
-	this->cw.utm_entry->set_value(utm);
+	this->utm_entry->set_value(utm);
 }
 
 
 
 
-/* Align displayed Lat/Lon values with displayed UTM values. */
-void LayerGeoref::align_ll2utm()
+/* Synchronize displayed Lat/Lon values with displayed UTM values. */
+void GeorefConfigDialog::sync_from_lat_lon_to_utm(void)
 {
-	const UTM utm_corner = this->cw.utm_entry->get_value();
+	const UTM utm_corner = this->utm_entry->get_value();
 	const LatLon lat_lon = UTM::to_latlon(utm_corner);
 
-	this->cw.lat_lon_tl_entry->set_value(lat_lon);
+	this->lat_lon_tl_entry->set_value(lat_lon);
 }
 
 
 
 
 /**
- * Align coordinates between tabs as the user may have changed the values.
- * Use this before acting on the user input.
- * This is easier then trying to use the 'value-changed' signal for each individual coordinate
- * especially since it tends to end up in an infinite loop continually updating each other.
- */
-void LayerGeoref::align_coords()
-{
+   Synchronize values of coordinates between UTM entry and LatLon
+   entries as the user may have changed the values in one of them.
 
-	if (true
-#ifdef K
-	    gtk_notebook_get_current_page(GTK_NOTEBOOK(this->cw.tabs)) == 0
-#endif
-	    ) {
-		this->align_ll2utm();
-	} else {
-		this->align_utm2ll();
+   Use this before acting on the user input.
+   This is easier then trying to use the 'value-changed' signal for each individual coordinate
+   especially since it tends to end up in an infinite loop continually updating each other.
+*/
+void GeorefConfigDialog::sync_coords_in_entries(void)
+{
+	const int current_coord_mode = this->coord_mode_combo->currentData().toInt();
+
+	switch ((CoordMode) current_coord_mode) {
+	case CoordMode::UTM:
+		qDebug() << "II:" PREFIX << "current coordinate mode is UTM";
+		this->sync_from_lat_lon_to_utm();
+		break;
+
+	case CoordMode::LATLON:
+		qDebug() << "II:" PREFIX << "current coordinate mode is LatLon";
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		this->sync_from_utm_to_lat_lon();
+		break;
 	}
 }
 
 
 
 
-void LayerGeoref::coord_mode_changed_cb(int combo_index)
+void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 {
-	int current_coord_mode = this->cw.coord_mode_combo->currentData().toInt();
+	const int current_coord_mode = this->coord_mode_combo->currentData().toInt();
 
 	/* TODO: figure out how to delete widgets that were
 	   replaced. They are no longer owned by layout, so they have
@@ -757,38 +761,40 @@ void LayerGeoref::coord_mode_changed_cb(int combo_index)
 	switch ((CoordMode) current_coord_mode) {
 	case CoordMode::UTM:
 		qDebug() << "II:" PREFIX << "current coordinate mode is UTM";
-		this->align_utm2ll();
+		this->sync_from_utm_to_lat_lon();
 
-		g_dialog->grid->replaceWidget(this->cw.lat_lon_tl_entry, this->cw.utm_entry);
-		g_dialog->grid->replaceWidget(this->cw.lat_lon_br_entry, this->cw.dummy_entry1);
-		g_dialog->grid->replaceWidget(this->cw.calc_mpp_button, this->cw.dummy_entry2);
+		this->grid->replaceWidget(this->lat_lon_tl_entry, this->utm_entry);
+		this->grid->replaceWidget(this->lat_lon_br_entry, this->dummy_entry1);
+		this->grid->replaceWidget(this->calc_mpp_button, this->dummy_entry2);
 
-		this->cw.utm_entry->show();
-		this->cw.dummy_entry1->show();
-		this->cw.dummy_entry2->show();
+		this->utm_entry->show();
+		this->dummy_entry1->show();
+		this->dummy_entry2->show();
 
-		this->cw.lat_lon_tl_entry->hide();
-		this->cw.lat_lon_br_entry->hide();
-		this->cw.calc_mpp_button->hide();
+		this->lat_lon_tl_entry->hide();
+		this->lat_lon_br_entry->hide();
+		this->calc_mpp_button->hide();
 
 		break;
+
 	case CoordMode::LATLON:
 		qDebug() << "II:" PREFIX << "current coordinate mode is LatLon";
-		this->align_ll2utm();
+		this->sync_from_lat_lon_to_utm();
 
-		g_dialog->grid->replaceWidget(this->cw.utm_entry, this->cw.lat_lon_tl_entry);
-		g_dialog->grid->replaceWidget(this->cw.dummy_entry1, this->cw.lat_lon_br_entry);
-		g_dialog->grid->replaceWidget(this->cw.dummy_entry2, this->cw.calc_mpp_button);
+		this->grid->replaceWidget(this->utm_entry, this->lat_lon_tl_entry);
+		this->grid->replaceWidget(this->dummy_entry1, this->lat_lon_br_entry);
+		this->grid->replaceWidget(this->dummy_entry2, this->calc_mpp_button);
 
-		this->cw.lat_lon_tl_entry->show();
-		this->cw.lat_lon_br_entry->show();
-		this->cw.calc_mpp_button->show();
+		this->lat_lon_tl_entry->show();
+		this->lat_lon_br_entry->show();
+		this->calc_mpp_button->show();
 
-		this->cw.utm_entry->hide();
-		this->cw.dummy_entry1->hide();
-		this->cw.dummy_entry2->hide();
+		this->utm_entry->hide();
+		this->dummy_entry1->hide();
+		this->dummy_entry2->hide();
 
 		break;
+
 	default:
 		qDebug() << "EE:" PREFIX << "unexpected coordinate mode" << current_coord_mode;
 		break;
@@ -798,25 +804,25 @@ void LayerGeoref::coord_mode_changed_cb(int combo_index)
 
 
 
-void LayerGeoref::check_br_is_good_or_msg_user()
+void GeorefConfigDialog::check_br_is_good_or_msg_user(void)
 {
 	/* If a 'blank' ll value that's alright. */
-	if (this->ll_br.lat == 0.0 && this->ll_br.lon == 0.0) {
+	if (this->layer->ll_br.lat == 0.0 && this->layer->ll_br.lon == 0.0) {
 		return;
 	}
 
-	LatLon ll_tl = this->get_ll_tl();
-	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
-		Dialog::warning(tr("Lower right corner values may not be consistent with upper right values"), this->get_window());
+	const LatLon ll_tl = this->get_ll_tl();
+	if (ll_tl.lat < this->layer->ll_br.lat || ll_tl.lon > this->layer->ll_br.lon) {
+		Dialog::warning(tr("Lower right corner values may not be consistent with upper right values"), this->layer->get_window());
 	}
 }
 
 
 
 
-void LayerGeoref::calculate_mpp_from_coords_cb(void)
+void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 {
-	const QString filename = this->cw.map_image_file_entry->get_filename();
+	const QString filename = this->map_image_file_entry->get_filename();
 	if (!filename.length()) {
 		return;
 	}
@@ -826,7 +832,7 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 		delete img_pixmap;
 		img_pixmap = NULL;
 
-		Dialog::error(tr("Couldn't open image file %1").arg(filename), this->get_window());
+		Dialog::error(tr("Couldn't open image file %1").arg(filename), this->layer->get_window());
 		return;
 	}
 
@@ -834,15 +840,15 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 	const int img_height = img_pixmap->height();
 
 	if (img_width == 0 || img_height == 0) {
-		Dialog::error(tr("Invalid image size: %1").arg(filename), this->get_window());
+		Dialog::error(tr("Invalid image size: %1").arg(filename), this->layer->get_window());
 	} else {
-		this->align_coords();
+		this->sync_coords_in_entries();
 
 		double xmpp, ympp;
 		georef_layer_mpp_from_coords(CoordMode::LATLON, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
 
-		this->cw.x_scale_spin->setValue(xmpp);
-		this->cw.y_scale_spin->setValue(ympp);
+		this->x_scale_spin->setValue(xmpp);
+		this->y_scale_spin->setValue(ympp);
 
 		this->check_br_is_good_or_msg_user();
 	}
@@ -859,127 +865,127 @@ void LayerGeoref::calculate_mpp_from_coords_cb(void)
 
 
 
-/* Returns true if OK was pressed. */
-bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
+
+GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent)
 {
+	this->layer = the_layer;
 
-	BasicDialog dialog(window_);
-	dialog.setWindowTitle(QObject::tr("Layer Properties"));
+	this->setWindowTitle(tr("Layer Properties"));
 
-	g_dialog = &dialog;
-
-
-	dialog.button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
-	QPushButton * cancel_button = dialog.button_box->button(QDialogButtonBox::Cancel);
+	this->button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
+	QPushButton * cancel_button = this->button_box->button(QDialogButtonBox::Cancel);
 
 	int row = 0;
 
-	cw.map_image_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, QObject::tr("Select image file"), window_);
-	// vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, &cw);
-	dialog.grid->addWidget(new QLabel(QObject::tr("Map Image:")), row, 0);
-	dialog.grid->addWidget(cw.map_image_file_entry, row, 1);
-	row++;
-
-	cw.world_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, QObject::tr("Select world file"), window_);
-	dialog.grid->addWidget(new QLabel(QObject::tr("World File Parameters:")), row, 0);
-	dialog.grid->addWidget(cw.world_file_entry, row, 1);
-	row++;
-
-	cw.x_scale_spin = new QDoubleSpinBox();
-	cw.x_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.x_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.x_scale_spin->setSingleStep(1);
-	cw.x_scale_spin->setValue(4);
-	cw.x_scale_spin->setToolTip(QObject::tr("The scale of the map in the X direction (meters per pixel)"));
-	dialog.grid->addWidget(new QLabel(QObject::tr("X (easting) scale (mpp): ")), row, 0);
-	dialog.grid->addWidget(cw.x_scale_spin, row, 1);
-	row++;
-
-	cw.y_scale_spin = new QDoubleSpinBox();
-	cw.y_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	cw.y_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
-	cw.y_scale_spin->setSingleStep(1);
-	cw.y_scale_spin->setValue(4);
-	cw.y_scale_spin->setToolTip(QObject::tr("The scale of the map in the Y direction (meters per pixel)"));
-	dialog.grid->addWidget(new QLabel(QObject::tr("Y (northing) scale (mpp): ")), row, 0);
-	dialog.grid->addWidget(cw.y_scale_spin, row, 1);
-	row++;
-
-	this->cw.coord_mode_combo = new QComboBox();
-	this->cw.coord_mode_combo->addItem(QObject::tr("UTM"), (int) CoordMode::UTM);
-	this->cw.coord_mode_combo->addItem(QObject::tr("Latitude/Longitude"), (int) CoordMode::LATLON);
-	dialog.grid->addWidget(new QLabel(QObject::tr("Coordinate Mode")), row, 0);
-	dialog.grid->addWidget(this->cw.coord_mode_combo, row, 1);
-	row++;
-
-
-	{
-		cw.utm_entry = new SGUTMEntry();
-		cw.utm_entry->set_value(this->utm_tl);
-		cw.utm_entry->set_text(QObject::tr("Corner pixel easting:"),
-				       QObject::tr("The UTM \"easting\" value of the upper-left corner pixel of the map"),
-				       QObject::tr("Corner pixel northing:"),
-				       QObject::tr("The UTM \"northing\" value of the upper-left corner pixel of the map"));
-
-		dialog.grid->addWidget(cw.utm_entry, row, 0, 1, 2);
-		row++;
-
-		cw.dummy_entry1 = new QWidget();
-		dialog.grid->addWidget(cw.dummy_entry1, row, 0, 1, 2);
-		row++;
-
-		cw.dummy_entry2 = new QWidget();
-		dialog.grid->addWidget(cw.dummy_entry2, row, 0, 1, 2);
-		row++;
-	}
-
-	cw.x_scale_spin->setValue(this->mpp_easting);
-	cw.y_scale_spin->setValue(this->mpp_northing);
-	if (!this->image_full_path.isEmpty()) {
-		cw.map_image_file_entry->set_filename(this->image_full_path);
-	}
-
-
-	{
-		const Coord coord(this->utm_tl, CoordMode::LATLON);
-
-		cw.lat_lon_tl_entry = new SGLatLonEntry();
-		cw.lat_lon_tl_entry->set_text(QObject::tr("Upper left latitude:"),
-					      QObject::tr("Upper left latitude"),
-					      QObject::tr("Upper left longitude:"),
-					      QObject::tr("Upper left longitude"));
-		cw.lat_lon_tl_entry->set_value(coord.ll);
-		//dialog.grid->addWidget(cw.lat_lon_tl_entry, row, 0, 1, 2);
-		//row++;
-
-		cw.lat_lon_br_entry = new SGLatLonEntry();
-		cw.lat_lon_br_entry->set_text(QObject::tr("Lower right latitude:"),
-					      QObject::tr("Lower right latitude"),
-					      QObject::tr("Lower right longitude:"),
-					      QObject::tr("Lower right longitude"));
-		cw.lat_lon_br_entry->set_value(this->ll_br);
-		//dialog.grid->addWidget(cw.lat_lon_br_entry, row, 0, 1, 2);
-		//row++;
-
-		cw.calc_mpp_button = new QPushButton(QObject::tr("Calculate MPP values from coordinates"));
-		cw.calc_mpp_button->setToolTip(QObject::tr("Enter all corner coordinates before calculating the MPP values from the image size"));
-		//dialog.grid->addWidget(cw.calc_mpp_button, row, 0, 1, 2);
-		//row++;
-	}
-
-
-	ParameterScale alpha_scale = { 0, 255, SGVariant((int32_t) this->alpha), 1, 0 };
-	SGSlider * alpha_slider = new SGSlider(alpha_scale, Qt::Horizontal);
-	dialog.grid->addWidget(new QLabel(QObject::tr("Alpha:")), row, 0);
-	dialog.grid->addWidget(alpha_slider, row, 1);
-	row++;
-
-
+	this->map_image_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, tr("Select image file"), this->layer->get_window());
 #ifdef K
-	QObject::connect(cw.calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
-	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), &cw, SLOT (georef_layer_dialog_load));
+	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
-	QObject::connect(this->cw.coord_mode_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (coord_mode_changed_cb(int)));
+	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);
+	this->grid->addWidget(this->map_image_file_entry, row, 1);
+	row++;
+
+	this->world_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, tr("Select world file"), this->layer->get_window());
+	this->grid->addWidget(new QLabel(tr("World File Parameters:")), row, 0);
+	this->grid->addWidget(this->world_file_entry, row, 1);
+	row++;
+
+	this->x_scale_spin = new QDoubleSpinBox();
+	this->x_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	this->x_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->x_scale_spin->setSingleStep(1);
+	this->x_scale_spin->setValue(4);
+	this->x_scale_spin->setToolTip(tr("The scale of the map in the X direction (meters per pixel)"));
+	this->grid->addWidget(new QLabel(tr("X (easting) scale (mpp): ")), row, 0);
+	this->grid->addWidget(this->x_scale_spin, row, 1);
+	row++;
+
+	this->y_scale_spin = new QDoubleSpinBox();
+	this->y_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
+	this->y_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->y_scale_spin->setSingleStep(1);
+	this->y_scale_spin->setValue(4);
+	this->y_scale_spin->setToolTip(tr("The scale of the map in the Y direction (meters per pixel)"));
+	this->grid->addWidget(new QLabel(tr("Y (northing) scale (mpp): ")), row, 0);
+	this->grid->addWidget(this->y_scale_spin, row, 1);
+	row++;
+
+	this->coord_mode_combo = new QComboBox();
+	this->coord_mode_combo->addItem(tr("UTM"), (int) CoordMode::UTM);
+	this->coord_mode_combo->addItem(tr("Latitude/Longitude"), (int) CoordMode::LATLON);
+	this->grid->addWidget(new QLabel(tr("Coordinate Mode")), row, 0);
+	this->grid->addWidget(this->coord_mode_combo, row, 1);
+	row++;
+
+
+	{
+		this->utm_entry = new SGUTMEntry();
+		this->utm_entry->set_value(this->layer->utm_tl);
+		this->utm_entry->set_text(tr("Corner pixel easting:"),
+					  tr("The UTM \"easting\" value of the upper-left corner pixel of the map"),
+					  tr("Corner pixel northing:"),
+					  tr("The UTM \"northing\" value of the upper-left corner pixel of the map"));
+
+		this->grid->addWidget(this->utm_entry, row, 0, 1, 2);
+		row++;
+
+		this->dummy_entry1 = new QWidget();
+		this->grid->addWidget(this->dummy_entry1, row, 0, 1, 2);
+		row++;
+
+		this->dummy_entry2 = new QWidget();
+		this->grid->addWidget(this->dummy_entry2, row, 0, 1, 2);
+		row++;
+	}
+
+	this->x_scale_spin->setValue(this->layer->mpp_easting);
+	this->y_scale_spin->setValue(this->layer->mpp_northing);
+	if (!this->layer->image_full_path.isEmpty()) {
+		this->map_image_file_entry->set_filename(this->layer->image_full_path);
+	}
+
+
+	{
+		/* We don't add these widget to grid (yet). Initial
+		   coord mode is UTM, so the dialog/grid will contain
+		   entry widgets for UTM coords, not for LatLon
+		   coords. Entry widgets for LatLon will be displayed
+		   after coord mode is changed to LatLon (replacing
+		   entry widgets for UTM).  */
+
+		const Coord coord(this->layer->utm_tl, CoordMode::LATLON);
+
+		this->lat_lon_tl_entry = new SGLatLonEntry();
+		this->lat_lon_tl_entry->set_text(tr("Upper left latitude:"),
+						 tr("Upper left latitude"),
+						 tr("Upper left longitude:"),
+						 tr("Upper left longitude"));
+		this->lat_lon_tl_entry->set_value(coord.ll);
+
+		this->lat_lon_br_entry = new SGLatLonEntry();
+		this->lat_lon_br_entry->set_text(tr("Lower right latitude:"),
+						 tr("Lower right latitude"),
+						 tr("Lower right longitude:"),
+						 tr("Lower right longitude"));
+		this->lat_lon_br_entry->set_value(this->layer->ll_br);
+
+		this->calc_mpp_button = new QPushButton(tr("Calculate MPP values from coordinates"));
+		this->calc_mpp_button->setToolTip(tr("Enter all corner coordinates before calculating the MPP values from the image size"));
+	}
+
+
+	ParameterScale alpha_scale = { 0, 255, SGVariant((int32_t) this->layer->alpha), 1, 0 };
+	this->alpha_slider = new SGSlider(alpha_scale, Qt::Horizontal);
+	this->grid->addWidget(new QLabel(tr("Alpha:")), row, 0);
+	this->grid->addWidget(this->alpha_slider, row, 1);
+	row++;
+
+
+	QObject::connect(this->calc_mpp_button, SIGNAL (triggered(bool)), this, SLOT (calculate_mpp_from_coords_cb));
+#ifdef K
+	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), this, SLOT (load_cb));
+#endif
+	QObject::connect(this->coord_mode_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (coord_mode_changed_cb(int)));
 
 	if (cancel_button) {
 		cancel_button->setFocus();
@@ -994,52 +1000,55 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 			coord_mode = (int) CoordMode::UTM;
 		}
 	}
-	const int coord_index = this->cw.coord_mode_combo->findData(coord_mode);
+	const int coord_index = this->coord_mode_combo->findData(coord_mode);
 	if (coord_index != -1) {
-		this->cw.coord_mode_combo->setCurrentIndex(coord_index);
+		this->coord_mode_combo->setCurrentIndex(coord_index);
+	}
+}
+
+
+
+
+/* Returns true if OK was pressed. */
+bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
+{
+	GeorefConfigDialog dialog(this, window_);
+	if (dialog.exec() != QDialog::Accepted) {
+		return false;
 	}
 
+	dialog.sync_coords_in_entries();
 
+	this->utm_tl = dialog.utm_entry->get_value();
 
-	if (dialog.exec() == QDialog::Accepted) {
+	this->mpp_easting = dialog.x_scale_spin->value();
+	this->mpp_northing = dialog.y_scale_spin->value();
+	this->ll_br = dialog.get_ll_br();
+	dialog.check_br_is_good_or_msg_user();
 
-		this->align_coords();
+	/* Remember to get alpha value before calling post_read() that uses the alpha value. */
+	this->alpha = dialog.alpha_slider->get_value();
 
-		this->utm_tl = cw.utm_entry->get_value();
-
-		this->mpp_easting = cw.x_scale_spin->value();
-		this->mpp_northing = cw.y_scale_spin->value();
-		this->ll_br = this->get_ll_br();
-		this->check_br_is_good_or_msg_user();
-
-		/* Remember to get alpha value before calling post_read() that uses the alpha value. */
-		this->alpha = alpha_slider->get_value();
-
-		/* TODO check if image has changed otherwise no need to regenerate pixmap. */
-		if (!this->image) {
-			if (this->image_full_path != cw.map_image_file_entry->get_filename()) {
-				this->set_image_full_path(cw.map_image_file_entry->get_filename());
-				this->post_read(viewport, false);
-			}
+	/* TODO check if image has changed otherwise no need to regenerate pixmap. */
+	if (!this->image) {
+		if (this->image_full_path != dialog.map_image_file_entry->get_filename()) {
+			this->set_image_full_path(dialog.map_image_file_entry->get_filename());
+			this->post_read(viewport, false);
 		}
-
-		if (this->image && this->alpha < 255) {
-			*this->image = ui_pixmap_set_alpha(*this->image, this->alpha);
-		}
-
-		if (this->scaled_image && this->alpha < 255) {
-			*this->scaled_image = ui_pixmap_set_alpha(*this->scaled_image, this->alpha);
-		}
-
-#ifdef K
-		ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, gtk_notebook_get_current_page(GTK_NOTEBOOK(cw.tabs)));
-#endif
-		g_dialog = NULL;
-		return true;
 	}
 
-	g_dialog = NULL;
-	return false;
+	if (this->image && this->alpha < 255) {
+		*this->image = ui_pixmap_set_alpha(*this->image, this->alpha);
+	}
+
+	if (this->scaled_image && this->alpha < 255) {
+		*this->scaled_image = ui_pixmap_set_alpha(*this->scaled_image, this->alpha);
+	}
+
+	const int current_coord_mode = dialog.coord_mode_combo->currentData().toInt();
+	ApplicationState::set_integer(VIK_SETTINGS_GEOREF_TAB, current_coord_mode);
+
+	return true;
 }
 
 

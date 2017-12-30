@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_GEOREFLAYER_H_
-#define _SG_GEOREFLAYER_H_
+#ifndef _SG_LAYER_GEOREF_H_
+#define _SG_LAYER_GEOREF_H_
 
 
 
@@ -32,11 +32,13 @@
 #include <QLineEdit>
 #include <QComboBox>
 
+#include "dialog.h"
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"
 #include "widget_utm_entry.h"
 #include "widget_lat_lon_entry.h"
+#include "widget_slider.h"
 
 
 
@@ -48,6 +50,7 @@ namespace SlavGPS {
 
 	class Viewport;
 	class SGFileEntry;
+	class LayerGeoref;
 
 
 
@@ -57,8 +60,19 @@ namespace SlavGPS {
 
 
 
-	class widgets_group {
+	class GeorefConfigDialog : public BasicDialog {
+		Q_OBJECT
 	public:
+		GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent = NULL);
+
+		void sync_coords_in_entries(void);
+		LatLon get_ll_tl(void) const;
+		LatLon get_ll_br(void) const;
+		void check_br_is_good_or_msg_user(void);
+
+		SGFileEntry * map_image_file_entry = NULL;
+		SGFileEntry * world_file_entry = NULL;
+
 		QDoubleSpinBox * x_scale_spin = NULL;
 		QDoubleSpinBox * y_scale_spin = NULL;
 
@@ -78,9 +92,20 @@ namespace SlavGPS {
 		QPushButton * calc_mpp_button = NULL;
 
 
-		//GtkWidget * tabs = NULL;
-		SGFileEntry * map_image_file_entry = NULL;
-		SGFileEntry * world_file_entry = NULL;
+		SGSlider * alpha_slider = NULL;
+
+	public slots:
+		void load_cb(void);
+		void coord_mode_changed_cb(int combo_index);
+		void calculate_mpp_from_coords_cb(void);
+
+	private:
+		void set_widget_values(double values[4]);
+		void sync_from_utm_to_lat_lon(void);
+		void sync_from_lat_lon_to_utm(void);
+
+
+		LayerGeoref * layer = NULL; /* Only a reference. */
 	};
 
 
@@ -120,12 +145,7 @@ namespace SlavGPS {
 
 		void create_image_file();
 		void set_image_full_path(const QString & full_path);
-		LatLon get_ll_tl();
-		LatLon get_ll_br();
-		void align_utm2ll();
-		void align_ll2utm();
-		void align_coords();
-		void check_br_is_good_or_msg_user();
+
 		bool dialog(Viewport * viewport, Window * window);
 		bool move_release(QMouseEvent * event, LayerTool * tool);
 		bool zoom_press(QMouseEvent * event, LayerTool * tool);
@@ -133,12 +153,9 @@ namespace SlavGPS {
 
 
 	public slots:
-		void calculate_mpp_from_coords_cb(void);
 		void zoom_to_fit_cb(void);
 		void goto_center_cb(void);
 		void export_params_cb(void);
-		void coord_mode_changed_cb(int combo_index);
-
 
 	public:
 		QPixmap * image = NULL;
@@ -160,7 +177,6 @@ namespace SlavGPS {
 
 		int click_x = -1;
 		int click_y = -1;
-		widgets_group cw;
 	};
 
 
@@ -194,4 +210,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_GEOREFLAYER_H_ */
+#endif /* #ifndef _SG_LAYER_GEOREF_H_ */
