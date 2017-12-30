@@ -27,6 +27,7 @@
 
 
 
+#include "measurements.h"
 #include "widget_lat_lon_entry.h"
 
 
@@ -55,20 +56,23 @@ SGLatLonEntry::SGLatLonEntry(QWidget * parent)
 	int row = 0;
 
 	this->lat_spin = new QDoubleSpinBox();
+	this->lat_spin->setDecimals(SG_PRECISION_LATITUDE);
 	this->lat_spin->setMinimum(-90.0);
 	this->lat_spin->setMaximum(90.0);
 	this->lat_spin->setSingleStep(0.05);
-	this->lat_spin->setValue(0.0);
+	this->lat_spin->setToolTip(QObject::tr("Coordinate: latitude")); /* Default tooltip. */
 	this->lat_label = new QLabel(QObject::tr("Latitude:")); /* Default label. */
 	this->grid->addWidget(this->lat_label, row, 0);
 	this->grid->addWidget(this->lat_spin, row, 1);
 	row++;
 
 	this->lon_spin = new QDoubleSpinBox();
+	this->lon_spin->setDecimals(SG_PRECISION_LONGITUDE);
 	this->lon_spin->setMinimum(-180.0);
 	this->lon_spin->setMaximum(180.0);
 	this->lon_spin->setSingleStep(0.05);
 	this->lon_spin->setValue(0.0);
+	this->lon_spin->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
 	this->lon_label = new QLabel(QObject::tr("Longitude:")); /* Default label. */
 	this->grid->addWidget(this->lon_label, row, 0);
 	this->grid->addWidget(this->lon_spin, row, 1);

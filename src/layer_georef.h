@@ -158,7 +158,7 @@ namespace SlavGPS {
 		void export_params_cb(void);
 
 	public:
-		QPixmap * image = NULL;
+		QPixmap image;
 		int image_width = 0;
 		int image_height = 0;
 		QString image_full_path;
@@ -171,7 +171,7 @@ namespace SlavGPS {
 		LatLon ll_br; /* Bottom Right. */
 
 
-		QPixmap * scaled_image = NULL;
+		QPixmap scaled_image;
 		int scaled_image_width = 0;
 		int scaled_image_height = 0;
 
