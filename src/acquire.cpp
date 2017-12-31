@@ -210,7 +210,7 @@ static void on_complete_process(AcquireGetterParams & getter_params)
 			if (getter_params.acquiring->source_interface->autoview) {
 				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
 			}
-			getter_params.acquiring->panel->emit_update_window_cb();
+			getter_params.acquiring->panel->emit_update_window_cb("acquire completed");
 		}
 	} else {
 		/* Cancelled. */

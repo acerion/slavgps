@@ -50,6 +50,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Tree View:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -126,7 +131,8 @@ void TreeView::select_cb(void) /* Slot. */
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
-		g_tree->tree_get_items_tree()->emit_update_window_cb();
+		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << layer->get_name();
+		g_tree->tree_get_items_tree()->emit_update_window_cb(layer->get_name());
 	}
 }
 

@@ -37,8 +37,8 @@
 #endif
 
 
-#include <glib/gstdio.h>
-#include <glib/gprintf.h>
+//#include <glib/gstdio.h>
+//#include <glib/gprintf.h>
 
 #ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
 #include <gps.h>
@@ -54,8 +54,8 @@
 #include "tree_view_internal.h"
 #include "application_state.h"
 #include "globals.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
+//typedef int GdkPixdata; /* TODO: remove sooner or later. */
+//#include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
 #include "util.h"
@@ -64,6 +64,11 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX " Layer GPS:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -83,12 +88,18 @@ typedef enum {
 	OLD_NUM_PROTOCOLS
 } vik_gps_proto;
 
+
+
+
 static std::vector<SGLabelID> protocols_args = {
 	SGLabelID("garmin",   0),
 	SGLabelID("magellan", 1),
 	SGLabelID("delbin",   2),
 	SGLabelID("navilink", 3)
 };
+
+
+
 
 #ifdef WINDOWS
 static std::vector<SGLabelID> params_ports = {
@@ -104,6 +115,9 @@ static std::vector<SGLabelID> params_ports = {
 	SGLabelID("usb:",         5),
 };
 #endif
+
+
+
 
 /* NUM_PORTS not actually used. */
 /* #define NUM_PORTS (sizeof(params_ports)/sizeof(params_ports[0]) - 1) */
@@ -126,33 +140,48 @@ static std::vector<SGLabelID> old_params_ports = {
 
 
 
-typedef struct {
+class GPSSession {
+public:
+	GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
+
+	void set_current_count(int cnt);
+	void set_total_count(int cnt);
+	void set_gps_device_info(const QString & info);
+	void process_line_for_gps_info(const char * line);
+
 	std::mutex mutex;
 	GPSDirection direction;
-	QString port; /* FIXME: this struct is malloced, so this field will be invalid in freshly allocated struct. */
-	bool ok;
-	int total_count;
-	int count;
+	QString port;
+	bool in_progress = false;
+	int total_count = 0;
+	int count = 0;
 	LayerTRW * trw = NULL;
 	Track * trk = NULL;
 	QString babel_args;
-	char * window_title = NULL;
+	QString window_title;
 	BasicDialog * dialog = NULL;
 	QLabel * status_label = NULL;
-	QLabel * gps_label = NULL;
+	QLabel * gps_device_label = NULL;
 	QLabel * ver_label = NULL;
 	QLabel * id_label = NULL;
 	QLabel * wp_label = NULL;
 	QLabel * trk_label = NULL;
 	QLabel * rte_label = NULL;
 	QLabel * progress_label = NULL;
-	GPSTransferType progress_type;
+	GPSTransferType progress_type = GPSTransferType::WPT;
 	Viewport * viewport = NULL;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	bool realtime_tracking;
+	bool realtime_tracking = false;
 #endif
-} GpsSession;
-static void gps_session_delete(GpsSession *sess);
+};
+
+
+
+
+enum {
+	GROUP_DATA_MODE,
+	GROUP_REALTIME_MODE
+};
 
 static const char * g_params_groups[] = {
 	"Data Mode",
@@ -160,8 +189,6 @@ static const char * g_params_groups[] = {
 	"Realtime Tracking Mode",
 #endif
 };
-
-enum { GROUP_DATA_MODE, GROUP_REALTIME_MODE };
 
 
 
@@ -194,10 +221,10 @@ static SGVariant gps_port_default(void)
 
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-static char *params_vehicle_position[] = {
-	(char *) N_("Keep vehicle at center"),
-	(char *) N_("Keep vehicle on screen"),
-	(char *) N_("Disable"),
+static const char * params_vehicle_position[] = {
+	N_("Keep vehicle at center"),
+	N_("Keep vehicle on screen"),
+	N_("Disable"),
 	NULL
 };
 enum {
@@ -271,6 +298,21 @@ static ParameterSpecification gps_layer_param_specs[] = {
 
 
 
+GPSSession::GPSSession(GPSDirection dir, LayerTRW * new_trw, Track * new_trk, const QString & new_port, Viewport * new_viewport, bool new_in_progress)
+{
+	this->direction = dir;
+	this->window_title = (this->direction == GPSDirection::DOWN) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
+	this->trw = new_trw;
+	this->trk = new_trk;
+	this->port = new_port;
+	this->viewport = new_viewport;
+	this->in_progress = new_in_progress;
+}
+
+
+
+
+
 LayerGPSInterface vik_gps_layer_interface;
 
 
@@ -321,7 +363,7 @@ void SlavGPS::layer_gps_init(void)
 		/* Should be using label property but use name for now
 		   thus don't need to mess around converting label to name later on. */
 		new_protocols[new_proto++] = (*iter)->name;
-		fprintf(stderr, "%s:%d: new_protocols: '%s'\n", __FUNCTION__, __LINE__, (*iter)->name);
+		qDebug() << "II:" PREFIX << "new protocol:" << (*iter)->name;
 	}
 	new_protocols[new_proto] = NULL;
 
@@ -336,6 +378,7 @@ QString LayerGPS::get_tooltip()
 {
 	return this->protocol;
 }
+
 
 
 
@@ -368,6 +411,7 @@ void LayerGPS::marshall(uint8_t ** data, size_t * data_len)
 	g_byte_array_free(b, false);
 }
 #undef alm_append
+
 
 
 
@@ -558,7 +602,7 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
-		fprintf(stderr, _("WARNING: %s: unknown parameter\n"), __FUNCTION__);
+		qDebug() << "WW:" PREFIX << "unknown parameter" << (int) id;
 	}
 
 	return rv;
@@ -633,7 +677,7 @@ void LayerGPS::add_menu_items(QMenu & menu)
 
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	action = new QAction(this->realtime_tracking ? QObject::tr("_Stop Realtime Tracking") : QObject::tr("_Start Realtime Tracking"), this);
+	action = new QAction(this->realtime_tracking ? QObject::tr("&Stop Realtime Tracking") : QObject::tr("&Start Realtime Tracking"), this);
 	action->setIcon(this->realtime_tracking ? QIcon::fromTheme("GTK_STOCK_MEDIA_STOP") : QIcon::fromTheme("GTK_STOCK_MEDIA_PLAY"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_start_stop_tracking_cb()));
 	menu.addAction(action);
@@ -690,6 +734,11 @@ void LayerGPS::add_children_to_tree(void)
 	           device = ((BabelDevice*)g_list_nth_data(Babel::devices, last_active))->name;
 	   Need to access uibuild widgets somehow.... */
 
+	if (!this->index.isValid()) {
+		qDebug() << "EE:" PREFIX  << "layer is not connected to tree";
+		return;
+	}
+
 	for (int ix = 0; ix < NUM_TRW; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
 
@@ -701,7 +750,7 @@ void LayerGPS::add_children_to_tree(void)
 		this->tree_view->set_tree_item_timestamp(trw->index, trw->get_timestamp());
 
 #ifdef K
-		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb));
+		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb(const QString &));
 #endif
 	}
 }
@@ -746,42 +795,34 @@ bool LayerGPS::is_empty()
 
 
 
-static void gps_session_delete(GpsSession *sess)
-{
-	free(sess);
-}
-
-
-
-
-static void set_total_count(int cnt, GpsSession *sess)
+void GPSSession::set_total_count(int cnt)
 {
 #ifdef K
 	gdk_threads_enter();
 #endif
-	sess->mutex.lock();
-	if (sess->ok) {
+	this->mutex.lock();
+	if (this->in_progress) {
 		QString msg;
-		if (sess->direction == GPSDirection::DOWN) {
-			switch (sess->progress_type) {
+		if (this->direction == GPSDirection::DOWN) {
+			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloading %n waypoints...", "", cnt);
-				sess->total_count = cnt;
+				this->total_count = cnt;
 				break;
 			case GPSTransferType::TRK:
 				msg = QObject::tr("Downloading %n trackpoints...", "", cnt);
-				sess->total_count = cnt;
+				this->total_count = cnt;
 				break;
 			default: {
 				/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints. */
 				int mycnt = (cnt / 2) + 1;
 				msg = QObject::tr("Downloading %n routepoints...", "", mycnt);
-				sess->total_count = mycnt;
+				this->total_count = mycnt;
 				break;
 			}
 			}
 		} else {
-			switch (sess->progress_type) {
+			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Uploading %n waypoints...", "", cnt);
 				break;
@@ -794,13 +835,13 @@ static void set_total_count(int cnt, GpsSession *sess)
 			}
 		}
 
-		sess->progress_label->setText(msg);
+		this->progress_label->setText(msg);
 #ifdef K
-		gtk_widget_show(sess->progress_label);
+		gtk_widget_show(this->progress_label);
 #endif
-		sess->total_count = cnt;
+		this->total_count = cnt;
 	}
-	sess->mutex.unlock();
+	this->mutex.unlock();
 #ifdef K
 	gdk_threads_leave();
 #endif
@@ -809,14 +850,14 @@ static void set_total_count(int cnt, GpsSession *sess)
 
 
 
-static void set_current_count(int cnt, GpsSession *sess)
+void GPSSession::set_current_count(int cnt)
 {
 #ifdef K
 	gdk_threads_enter();
 #endif
-	sess->mutex.lock();
-	if (!sess->ok) {
-		sess->mutex.unlock();
+	this->mutex.lock();
+	if (!this->in_progress) {
+		this->mutex.unlock();
 #ifdef K
 		gdk_threads_leave();
 #endif
@@ -825,37 +866,37 @@ static void set_current_count(int cnt, GpsSession *sess)
 
 	QString msg;
 
-	if (cnt < sess->total_count) {
+	if (cnt < this->total_count) {
 		QString fmt;
-		if (sess->direction == GPSDirection::DOWN) {
-			switch (sess->progress_type) {
+		if (this->direction == GPSDirection::DOWN) {
+			switch (this->progress_type) {
 			case GPSTransferType::WPT:
-				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", sess->total_count);
+				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", this->total_count);
 				break;
 			case GPSTransferType::TRK:
-				fmt = QObject::tr("Downloaded %1 out of %2 trackpoints...", "", sess->total_count);
+				fmt = QObject::tr("Downloaded %1 out of %2 trackpoints...", "", this->total_count);
 				break;
 			default:
-				fmt = QObject::tr("Downloaded %1 out of %2 routepoints...", "", sess->total_count);
+				fmt = QObject::tr("Downloaded %1 out of %2 routepoints...", "", this->total_count);
 				break;
 			}
 		} else {
-			switch (sess->progress_type) {
+			switch (this->progress_type) {
 			case GPSTransferType::WPT:
-				fmt = QObject::tr("Uploaded %1 out of %2 waypoints...", "", sess->total_count);
+				fmt = QObject::tr("Uploaded %1 out of %2 waypoints...", "", this->total_count);
 					break;
 			case GPSTransferType::TRK:
-				fmt = QObject::tr("Uploaded %1 out of %2 trackpoints...", "", sess->total_count);
+				fmt = QObject::tr("Uploaded %1 out of %2 trackpoints...", "", this->total_count);
 				break;
 			default:
-				fmt = QObject::tr("Uploaded %1 out of %2 routepoints...", "", sess->total_count);
+				fmt = QObject::tr("Uploaded %1 out of %2 routepoints...", "", this->total_count);
 				break;
 			}
 		}
-		msg = QString(fmt).arg(cnt).arg(sess->total_count);
+		msg = QString(fmt).arg(cnt).arg(this->total_count);
 	} else {
-		if (sess->direction == GPSDirection::DOWN) {
-			switch (sess->progress_type) {
+		if (this->direction == GPSDirection::DOWN) {
+			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloaded %n waypoints", "", cnt);
 				break;
@@ -867,7 +908,7 @@ static void set_current_count(int cnt, GpsSession *sess)
 				break;
 			}
 		} else {
-			switch (sess->progress_type) {
+			switch (this->progress_type) {
 				case GPSTransferType::WPT:
 					msg = QObject::tr("Uploaded %n waypoints", "", cnt);
 					break;
@@ -880,9 +921,9 @@ static void set_current_count(int cnt, GpsSession *sess)
 			}
 		}
 	}
-	sess->progress_label->setText(msg);
+	this->progress_label->setText(msg);
 
-	sess->mutex.unlock();
+	this->mutex.unlock();
 #ifdef K
 	gdk_threads_leave();
 #endif
@@ -891,16 +932,16 @@ static void set_current_count(int cnt, GpsSession *sess)
 
 
 
-static void set_gps_info(const char *info, GpsSession *sess)
+void GPSSession::set_gps_device_info(const QString & info)
 {
 #ifdef K
 	gdk_threads_enter();
 #endif
-	sess->mutex.lock();
-	if (sess->ok) {
-		sess->gps_label->setText(QObject::tr("GPS Device: %1").arg(info));
+	this->mutex.lock();
+	if (this->in_progress) {
+		this->gps_device_label->setText(QObject::tr("GPS Device: %1").arg(info));
 	}
-	sess->mutex.unlock();
+	this->mutex.unlock();
 #ifdef K
 	gdk_threads_leave();
 #endif
@@ -913,7 +954,7 @@ static void set_gps_info(const char *info, GpsSession *sess)
  * Common processing for GPS Device information.
  * It doesn't matter whether we're uploading or downloading.
  */
-static void process_line_for_gps_info(const char *line, GpsSession *sess)
+void GPSSession::process_line_for_gps_info(const char * line)
 {
 	if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in datasource_gps_progress() */
 		char **tokens = g_strsplit(line, " ", 0);
@@ -935,7 +976,7 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 				info[ilen++] = ch;
 			}
 			info[ilen++] = 0;
-			set_gps_info(info, sess);
+			this->set_gps_device_info(info);
 		}
 		g_strfreev(tokens);
 	}
@@ -949,7 +990,7 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 		}
 
 		if (n_tokens > 1) {
-			set_gps_info(tokens[1], sess);
+			this->set_gps_device_info(tokens[1]);
 		}
 		g_strfreev(tokens);
 	}
@@ -958,16 +999,16 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 
 
 
-static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSession * sess)
+static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
 {
 	char *line;
 #ifdef K
 	gdk_threads_enter();
 #endif
 	sess->mutex.lock();
-	if (!sess->ok) {
+	if (!sess->in_progress) {
 		sess->mutex.unlock();
-		gps_session_delete(sess);
+		delete sess;
 #ifdef K
 		gdk_threads_leave();
 		g_thread_exit(NULL);
@@ -985,7 +1026,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 		gdk_threads_enter();
 #endif
 		sess->mutex.lock();
-		if (sess->ok) {
+		if (sess->in_progress) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
@@ -1007,7 +1048,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 			sess->progress_type = GPSTransferType::RTE;
 		}
 
-		process_line_for_gps_info(line, sess);
+		sess->process_line_for_gps_info(line);
 
 		if (strstr(line, "RECORD")) {
 			if (strlen(line) > 20) {
@@ -1015,13 +1056,13 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
 				unsigned int cnt = lsb + msb * 256;
-				set_total_count(cnt, sess);
+				sess->set_total_count(cnt);
 				sess->count = 0;
 			}
 		}
 		if (strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
 			sess->count++;
-			set_current_count(sess->count, sess);
+			sess->set_current_count(sess->count);
 		}
 		break;
 	case BABEL_DONE:
@@ -1034,7 +1075,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 
 
 
-static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSession * sess)
+static void gps_upload_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
 {
 	char *line;
 	static unsigned int cnt = 0;
@@ -1043,9 +1084,9 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 	gdk_threads_enter();
 #endif
 	sess->mutex.lock();
-	if (!sess->ok) {
+	if (!sess->in_progress) {
 		sess->mutex.unlock();
-		gps_session_delete(sess);
+		delete sess;
 #ifdef K
 		gdk_threads_leave();
 		g_thread_exit(NULL);
@@ -1063,7 +1104,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 		gdk_threads_enter();
 #endif
 		sess->mutex.lock();
-		if (sess->ok) {
+		if (sess->in_progress) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
@@ -1071,7 +1112,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 		gdk_threads_leave();
 #endif
 
-		process_line_for_gps_info(line, sess);
+		sess->process_line_for_gps_info(line);
 
 		if (strstr(line, "RECORD")) {
 
@@ -1081,7 +1122,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
 				cnt = lsb + msb * 256;
-				/* set_total_count(cnt, sess); */
+				/* sess->set_total_count(cnt); */
 				sess->count = 0;
 			}
 		}
@@ -1089,10 +1130,10 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 			if (sess->count == 0) {
 				sess->progress_label = sess->wp_label;
 				sess->progress_type = GPSTransferType::WPT;
-				set_total_count(cnt, sess);
+				sess->set_total_count(cnt);
 			}
 			sess->count++;
-			set_current_count(sess->count, sess);
+			sess->set_current_count(sess->count);
 		}
 		if (strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
 			if (sess->count == 0) {
@@ -1101,19 +1142,19 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 				/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints.
 				   Anyway since we're uploading - we should know how many points we're going to put! */
 				cnt = (cnt / 2) + 1;
-				set_total_count(cnt, sess);
+				sess->set_total_count(cnt);
 			}
 			sess->count++;
-			set_current_count(sess->count, sess);
+			sess->set_current_count(sess->count);
 		}
 		if (strstr(line, "TRKHDR") || strstr(line, "TRKDAT")) {
 			if (sess->count == 0) {
 				sess->progress_label = sess->trk_label;
 				sess->progress_type = GPSTransferType::TRK;
-				set_total_count(cnt, sess);
+				sess->set_total_count(cnt);
 			}
 			sess->count++;
-			set_current_count(sess->count, sess);
+			sess->set_current_count(sess->count);
 		}
 		break;
 	case BABEL_DONE:
@@ -1126,7 +1167,7 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 
 
 
-static void gps_comm_thread(GpsSession *sess)
+static void gps_comm_thread(GPSSession * sess)
 {
 	bool result;
 
@@ -1142,7 +1183,7 @@ static void gps_comm_thread(GpsSession *sess)
 		sess->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
 	} else {
 		sess->mutex.lock();
-		if (sess->ok) {
+		if (sess->in_progress) {
 			sess->status_label->setText(QObject::tr("Done."));
 			sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
 			sess->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
@@ -1166,12 +1207,12 @@ static void gps_comm_thread(GpsSession *sess)
 	}
 
 	sess->mutex.lock();
-	if (sess->ok) {
-		sess->ok = false;
+	if (sess->in_progress) {
+		sess->in_progress = false;
 		sess->mutex.unlock();
 	} else {
 		sess->mutex.unlock();
-		gps_session_delete(sess);
+		delete sess;
 	}
 #ifdef K
 	g_thread_exit(NULL);
@@ -1210,18 +1251,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			  bool do_waypoints,
 			  bool turn_off)
 {
-	GpsSession *sess = (GpsSession *) malloc(sizeof(GpsSession));
-	char *tracks = NULL;
-	char *routes = NULL;
-	char *waypoints = NULL;
-
-	sess->direction = dir;
-	sess->trw = layer;
-	sess->trk = trk;
-	sess->port = port;
-	sess->ok = true;
-	sess->window_title = (dir == GPSDirection::DOWN) ? (char *) _("GPS Download") : (char *) _("GPS Upload");
-	sess->viewport = viewport;
+	GPSSession * sess = new GPSSession(dir, layer, trk, port, viewport, true);
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
 	   (originally performed this nearer the point of upload in the thread). */
@@ -1239,32 +1269,16 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	sess->realtime_tracking = tracking;
 #endif
 
-	if (do_tracks) {
-		tracks = (char *) "-t";
-	} else {
-		tracks = (char *) "";
-	}
+	const QString tracks_arg = do_tracks ? "-t" : "";
+	const QString routes_arg = do_routes ? "-r" : "";
+	const QString waypoints_arg = do_waypoints ? "-w" : "";
 
-	if (do_routes) {
-		routes = (char *) "-r";
-	} else {
-		routes = (char *) "";
-	}
-
-	if (do_waypoints) {
-		waypoints = (char *) "-w";
-	} else {
-		waypoints = (char *) "";
-	}
-
-	sess->babel_args = QString("-D 9 %s %s %s -%c %s")
-		.arg(tracks)
-		.arg(routes)
-		.arg(waypoints)
-		.arg((dir == GPSDirection::DOWN) ? 'i' : 'o')
+	sess->babel_args = QString("-D 9 %1 %2 %3 -%4 %5")
+		.arg(tracks_arg)
+		.arg(routes_arg)
+		.arg(waypoints_arg)
+		.arg((dir == GPSDirection::DOWN) ? "i" : "o")
 		.arg(protocol);
-	tracks = NULL;
-	waypoints = NULL;
 
 	/* Only create dialog if we're going to do some transferring. */
 	if (do_tracks || do_waypoints || do_routes) {
@@ -1273,38 +1287,43 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 		sess->dialog->setWindowTitle(sess->window_title);
 
+		int row = 0;
 
 		sess->status_label = new QLabel(QObject::tr("Status: detecting gpsbabel"));
-#ifdef K
-		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->status_label, false, false, 5);
-		gtk_widget_show_all(sess->status_label);
+		sess->dialog->grid->addWidget(sess->status_label, row, 0);
+		row++;
 
-		sess->gps_label = new QLabel(QObject::tr("GPS device: N/A"));
+		sess->gps_device_label = new QLabel(QObject::tr("GPS device: N/A"));
+		sess->dialog->grid->addWidget(sess->gps_device_label, row, 0);
+		row++;
+
 		sess->ver_label = new QLabel("");
+		sess->dialog->grid->addWidget(sess->ver_label, row, 0);
+		row++;
+
 		sess->id_label = new QLabel("");
+		sess->dialog->grid->addWidget(sess->id_label, row, 0);
+		row++;
+
 		sess->wp_label = new QLabel("");
+		sess->dialog->grid->addWidget(sess->wp_label, row, 0);
+		row++;
+
 		sess->trk_label = new QLabel("");
+		sess->dialog->grid->addWidget(sess->trk_label, row, 0);
+		row++;
+
 		sess->rte_label = new QLabel("");
-
-		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->gps_label, false, false, 5);
-		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->wp_label, false, false, 5);
-		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->trk_label, false, false, 5);
-		gtk_box_pack_start(gtk_dialog_get_content_area(sess->dialog), sess->rte_label, false, false, 5);
-
-		gtk_widget_show_all(sess->dialog);
+		sess->dialog->grid->addWidget(sess->rte_label, row, 0);
+		row++;
 
 		sess->progress_label = sess->wp_label;
 		sess->total_count = -1;
 
 		/* Starting gps read/write thread. */
-
+#ifdef K
 		/* Consider using QThreadPool and QRunnable. */
-#if GLIB_CHECK_VERSION (2, 32, 0)
-		g_thread_try_new("gps_comm_thread", (GThreadFunc)gps_comm_thread, sess, NULL);
-#else
 		g_thread_create((GThreadFunc)gps_comm_thread, sess, false, NULL);
-#endif
-
 #endif
 
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
@@ -1320,8 +1339,8 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 	sess->mutex.lock();
 
-	if (sess->ok) {
-		sess->ok = false;   /* Tell thread to stop. */
+	if (sess->in_progress) {
+		sess->in_progress = false;   /* Tell thread to stop. */
 		sess->mutex.unlock();
 	} else {
 		if (turn_off) {
@@ -1334,7 +1353,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			}
 		}
 		sess->mutex.unlock();
-		gps_session_delete(sess);
+		delete sess;
 	}
 
 	return 0;
@@ -1371,33 +1390,24 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[TRW_DOWNLOAD];
 
+	SlavGPS::vik_gps_comm(trw,
+			      NULL,
+			      GPSDirection::DOWN,
+			      this->protocol,
+			      this->serial_port,
+
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	SlavGPS::vik_gps_comm(trw,
-			      NULL,
-			      GPSDirection::DOWN,
-			      this->protocol,
-			      this->serial_port,
 			      this->realtime_tracking,
-			      viewport,
-			      NULL,
-			      this->download_tracks,
-			      this->download_routes,
-			      this->download_waypoints,
-			      false);
 #else
-	SlavGPS::vik_gps_comm(trw,
-			      NULL,
-			      GPSDirection::DOWN,
-			      this->protocol,
-			      this->serial_port,
 			      false,
+#endif
+
 			      viewport,
 			      NULL,
 			      this->download_tracks,
 			      this->download_routes,
 			      this->download_waypoints,
 			      false);
-#endif
 }
 
 
@@ -1613,7 +1623,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	LayerGPS * layer = vgpsd->gps_layer;
 
 	if (!layer->realtime_tracking) {
-		fprintf(stderr, "WARNING: %s: receiving GPS data while not in realtime mode\n", __PRETTY_FUNCTION__);
+		qDeug() << "WW:" PREFIX << "receiving GPS data while not in realtime mode";
 		return;
 	}
 
@@ -1696,7 +1706,7 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 #endif
 			return true;
 		} else {
-			fprintf(stderr, "WARNING: Disconnected from gpsd. Trying to reconnect\n");
+			qDebug() << "WW: Disconnected from gpsd. Trying to reconnect";
 			layer->rt_gpsd_disconnect();
 			layer->rt_gpsd_connect(false);
 		}
@@ -1811,7 +1821,7 @@ bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
 	this->realtime_retry_timer = 0;
 	if (rt_gpsd_try_connect((void * ) this)) {
 		if (this->gpsd_retry_interval <= 0) {
-			fprintf(stderr, "WARNING: Failed to connect to gpsd but will not retry because retry intervel was set to %d (which is 0 or negative)\n", this->gpsd_retry_interval);
+			qDebug() << "WW: Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
 			return false;
 		} else if (ask_if_failed && !this->rt_ask_retry()) {
 			return false;
@@ -1923,9 +1933,11 @@ LayerGPS::LayerGPS()
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW();
-		uint16_t new_value = ~((uint16_t) LayerMenuItem::CUT | (uint16_t) LayerMenuItem::DELETE);
-		new_value &= ((uint16_t) LayerMenuItem::ALL);
-		this->trw_children[i]->set_menu_selection((LayerMenuItem) new_value);
+
+		/* TODO: this doesn't work. */
+		uint16_t menu_items = (uint16_t) LayerMenuItem::ALL;
+		menu_items &= ~((uint16_t) LayerMenuItem::CUT | (uint16_t) LayerMenuItem::DELETE);
+		this->trw_children[i]->set_menu_selection((LayerMenuItem) menu_items);
 	}
 }
 

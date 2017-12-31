@@ -67,6 +67,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Layer TRW Tools:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern LayerTool * trw_layer_tools[];
 
 static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * trw, QKeyEvent * ev);
@@ -735,7 +740,8 @@ static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
 	if (1 /* trw->draw_sync_do*/ ) {
 		QPainter painter(drawable);
 		painter.drawPixmap(0, 0, *pixmap);
-		emit trw->layer_changed();
+		qDebug() << "SIGNAL:" PREFIX << "will emit 'layer_changed()' signal for" << trw->get_name();
+		emit trw->layer_changed(trw->get_name());
 #if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,

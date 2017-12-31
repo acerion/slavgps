@@ -125,7 +125,7 @@ Layer * LayerAggregateInterface::unmarshall(uint8_t * data, size_t data_len, Vie
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
-			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(void)));
+			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
 		alm_next;
 	}
@@ -186,7 +186,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 		this->children->push_back(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(layer_changed(void)), (Layer *) this, SLOT(child_layer_changed_cb(void)));
+	QObject::connect(layer, SIGNAL(layer_changed(const QString &)), (Layer *) this, SLOT(child_layer_changed_cb(const QString &)));
 }
 
 
@@ -220,6 +220,11 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		if (this->children->empty()) {
 			this->tree_view->expand(this->index);
 		}
+
+		if (layer->type == LayerType::GPS) {
+			/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
+			layer->add_children_to_tree();
+		}
 	} else {
 		qDebug() << "EE: Layer Aggregate: Aggregate Layer not connected to tree";
 	}
@@ -230,7 +235,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(layer_changed(void)), this, SLOT(child_layer_changed_cb(void)));
+	QObject::connect(layer, SIGNAL(layer_changed(const QString &)), this, SLOT(child_layer_changed_cb(const QString &)));
 }
 
 

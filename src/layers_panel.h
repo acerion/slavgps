@@ -113,7 +113,7 @@ namespace SlavGPS {
 		void copy_selected_cb(void);
 		bool paste_selected_cb(void);
 		void delete_selected_cb(void);
-		void emit_update_window_cb();
+		void emit_update_window_cb(const QString & trigger_name);
 
 		void move_item_up_cb(void);
 		void move_item_down_cb(void);

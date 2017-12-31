@@ -107,7 +107,7 @@ void Layer::emit_layer_changed()
 	if (this->visible && this->tree_view) {
 		Window::set_redraw_trigger(this);
 		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'layer changed' signal";
-		emit this->layer_changed();
+		emit this->layer_changed(this->get_name());
 	}
 }
 
@@ -122,21 +122,21 @@ void Layer::emit_layer_changed_although_invisible()
 {
 	Window::set_redraw_trigger(this);
 	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
-	emit this->layer_changed();
+	emit this->layer_changed(this->get_name());
 }
 
 
 
 
 /* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
-void Layer::child_layer_changed_cb(void) /* Slot. */
+void Layer::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
 {
-	qDebug() << "SLOT:" << this->name << "received 'child layer changed' signal";
+	qDebug() << "SLOT:" << this->name << "received 'child layer changed' signal from" << child_layer_name;
 	if (this->visible) {
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
-		emit this->layer_changed();
+		emit this->layer_changed(this->get_name());
 	}
 }
 

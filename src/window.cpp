@@ -1627,7 +1627,7 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	this->viewport->set_center_from_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
-	this->items_tree->emit_update_window_cb();
+	this->items_tree->emit_update_window_cb("go to default location");
 }
 
 
@@ -1636,7 +1636,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	goto_location(this, this->viewport);
-	this->items_tree->emit_update_window_cb();
+	this->items_tree->emit_update_window_cb("go to location");
 }
 
 
@@ -2426,7 +2426,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		free(name);
 
 		// Signal to redraw from the background
-		locator->window->items_tree->emit_update_window_cb();
+		locator->window->items_tree->emit_update_window_cb("determine location");
 	} else {
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}

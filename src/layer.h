@@ -212,14 +212,14 @@ namespace SlavGPS {
 		QMenu * right_click_menu = NULL;
 
 	public slots:
-		void child_layer_changed_cb(void);
+		void child_layer_changed_cb(const QString & child_layer_name);
 
 
 	protected slots:
 		virtual void location_info_cb(void);
 
 	signals:
-		void layer_changed(void);
+		void layer_changed(const QString & layer_name);
 
 	private:
 		sg_uid_t layer_instance_uid = SG_UID_INITIAL;

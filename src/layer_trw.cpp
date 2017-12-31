@@ -121,6 +121,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Layer TRW:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 extern DataSourceInterface datasource_gps_interface;
@@ -1815,7 +1820,8 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
 	if (this->auto_set_view(g_tree->tree_get_main_viewport())) {
-		g_tree->tree_get_items_tree()->emit_update_window_cb();
+		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << this->get_name();
+		g_tree->tree_get_items_tree()->emit_update_window_cb(this->get_name());
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -4451,7 +4457,8 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 		this->waypoints->uniquify(this->wp_sort_order);
 
 		/* Update. */
-		panel->emit_update_window_cb();
+		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << this->get_name();
+		panel->emit_update_window_cb(this->get_name());
 
 		return true;
 	}

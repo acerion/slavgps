@@ -34,6 +34,16 @@
 
 
 
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING)
+#undef VIK_CONFIG_REALTIME_GPS_TRACKING
+#endif
+
+#if defined (GPSD_API_MAJOR_VERSION)
+#undef GPSD_API_MAJOR_VERSION
+#endif
+
+
+
 namespace SlavGPS {
 
 
