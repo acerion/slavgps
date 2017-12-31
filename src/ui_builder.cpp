@@ -512,7 +512,10 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 					selected_idx = i;
 				}
 			} else if (param_spec->type == SGVariantType::STRING) {
-				/* TODO: implement. */
+				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
+				if (param_value.val_string == (*iter).label) {
+					selected_idx = i;
+				}
 			} else {
 				qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << (int) param_spec->type;
 			}
@@ -743,10 +746,11 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			rv = SGVariant((int32_t) ((QComboBox *) widget)->currentData().toInt());
 
 		} else if (param_spec->type == SGVariantType::STRING) {
-			/* TODO: implement */
+			rv = SGVariant(((QComboBox *) widget)->currentText());
 
+			/* TODO: look at old implementation below: */
 			/* Implementation in old code: */
-#if 0
+#ifdef K
 			if (param_spec->extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
 				int pos = widget->currentIndex();

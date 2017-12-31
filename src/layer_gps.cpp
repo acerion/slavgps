@@ -36,6 +36,7 @@
 #include <unistd.h>
 #endif
 
+#include <QRunnable>
 
 //#include <glib/gstdio.h>
 //#include <glib/gprintf.h>
@@ -140,7 +141,7 @@ static std::vector<SGLabelID> old_params_ports = {
 
 
 
-class GPSSession {
+class GPSSession : public QRunnable {
 public:
 	GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
 
@@ -148,6 +149,8 @@ public:
 	void set_total_count(int cnt);
 	void set_gps_device_info(const QString & info);
 	void process_line_for_gps_info(const char * line);
+
+	void run();
 
 	std::mutex mutex;
 	GPSDirection direction;
@@ -449,50 +452,54 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 
 
 
+static int get_legacy_index(const QString & string, int limit)
+{
+	int idx = -1;
+
+	if (!string.at(0).isNull() && string.at(0).isDigit() && string.at(1).isNull()) {
+		idx = string.at(0).digitValue();
+	}
+	if (idx >= 0 && idx < limit) {
+		return idx;
+	} else {
+		return -1;
+	}
+}
+
+
+
+
 bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
 		if (!data.val_string.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v1.4 stored protocol as an array index. */
-#ifdef K
-			int index_ = data.val_string[0] - '0';
-			if (data.val_string[0] != '\0' &&
-			    g_ascii_isdigit (data.val_string[0]) &&
-			    data.val_string[1] == '\0' &&
-			    index_ < OLD_NUM_PROTOCOLS) {
-
-				/* It is a single digit: activate compatibility. */
-				this->protocol = protocols_args[index_].label; /* FIXME: memory leak. */
+			const int idx = get_legacy_index(data.val_string, OLD_NUM_PROTOCOLS);
+			if (idx != -1) {
+				/* It is a valid index: activate compatibility. */
+				this->protocol = protocols_args[idx].label; /* FIXME: memory leak. */
 			} else {
 				this->protocol = data.val_string;
 			}
-#endif
-			qDebug() << "DD: Layer GPS: Protocol:" << this->protocol;
+			qDebug() << "DD:" PREFIX << "selected GPS Protocol is" << this->protocol;
 		} else {
-			qDebug() << "WW: Layer GPS: Protocol: unknown GPS Protocol";
+			qDebug() << "WW:" PREFIX << "unknown GPS Protocol";
 		}
 		break;
 	case PARAM_PORT:
 		if (!data.val_string.isEmpty()) {
 			/* Backwards Compatibility: previous versions <v0.9.91 stored serial_port as an array index. */
-#ifdef K
-			int index_ = data.val_string[0] - '0';
-			if (data.val_string[0] != '\0' &&
-			    g_ascii_isdigit(data.val_string[0]) &&
-			    data.val_string[1] == '\0' &&
-			    index_ < old_params_ports.size()) {
-
-				/* It is a single digit: activate compatibility. */
-				this->serial_port = old_params_ports[index_].label;
-
+			const int idx = get_legacy_index(data.val_string, old_params_ports.size());
+			if (idx != -1) {
+				/* It is a valid index: activate compatibility. */
+				this->serial_port = old_params_ports[idx].label;
 			} else {
 				this->serial_port = data.val_string;
 			}
-#endif
-			qDebug() << "DD: Layer GPS: Serial Port:" << this->serial_port;
+			qDebug() << "DD:" PREFIX << "selected Serial Port is" << this->serial_port;
 		} else {
-			qDebug() << "WW: Layer GPS: Serial Port: unknown serial port device";
+			qDebug() << "WW:" PREFIX << "unknown Serial Port device";
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
@@ -797,9 +804,6 @@ bool LayerGPS::is_empty()
 
 void GPSSession::set_total_count(int cnt)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	this->mutex.lock();
 	if (this->in_progress) {
 		QString msg;
@@ -836,15 +840,9 @@ void GPSSession::set_total_count(int cnt)
 		}
 
 		this->progress_label->setText(msg);
-#ifdef K
-		gtk_widget_show(this->progress_label);
-#endif
 		this->total_count = cnt;
 	}
 	this->mutex.unlock();
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
@@ -852,15 +850,9 @@ void GPSSession::set_total_count(int cnt)
 
 void GPSSession::set_current_count(int cnt)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	this->mutex.lock();
 	if (!this->in_progress) {
 		this->mutex.unlock();
-#ifdef K
-		gdk_threads_leave();
-#endif
 		return;
 	}
 
@@ -924,9 +916,6 @@ void GPSSession::set_current_count(int cnt)
 	this->progress_label->setText(msg);
 
 	this->mutex.unlock();
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
@@ -934,26 +923,20 @@ void GPSSession::set_current_count(int cnt)
 
 void GPSSession::set_gps_device_info(const QString & info)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	this->mutex.lock();
 	if (this->in_progress) {
 		this->gps_device_label->setText(QObject::tr("GPS Device: %1").arg(info));
 	}
 	this->mutex.unlock();
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
 
 
 /*
- * Common processing for GPS Device information.
- * It doesn't matter whether we're uploading or downloading.
- */
+  Common processing for GPS Device information.
+  It doesn't matter whether we're uploading or downloading.
+*/
 void GPSSession::process_line_for_gps_info(const char * line)
 {
 	if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in datasource_gps_progress() */
@@ -1001,38 +984,24 @@ void GPSSession::process_line_for_gps_info(const char * line)
 
 static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
 {
-	char *line;
-#ifdef K
-	gdk_threads_enter();
-#endif
+	char * line = NULL;
+
 	sess->mutex.lock();
 	if (!sess->in_progress) {
 		sess->mutex.unlock();
 		delete sess;
-#ifdef K
-		gdk_threads_leave();
-		g_thread_exit(NULL);
-#endif
 	}
 	sess->mutex.unlock();
-#ifdef K
-	gdk_threads_leave();
-#endif
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
-		line = (char *)data;
-#ifdef K
-		gdk_threads_enter();
-#endif
+		line = (char *) data;
+
 		sess->mutex.lock();
 		if (sess->in_progress) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
-#ifdef K
-		gdk_threads_leave();
-#endif
 
 		/* Tells us the type of items that will follow. */
 		if (strstr(line, "Xfer Wpt")) {
@@ -1077,40 +1046,25 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSess
 
 static void gps_upload_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
 {
-	char *line;
+	char * line = NULL;
 	static unsigned int cnt = 0;
 
-#ifdef K
-	gdk_threads_enter();
-#endif
 	sess->mutex.lock();
 	if (!sess->in_progress) {
 		sess->mutex.unlock();
 		delete sess;
-#ifdef K
-		gdk_threads_leave();
-		g_thread_exit(NULL);
-#endif
 	}
 	sess->mutex.unlock();
-#ifdef K
-	gdk_threads_leave();
-#endif
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
-		line = (char *)data;
-#ifdef K
-		gdk_threads_enter();
-#endif
+		line = (char *) data;
+
 		sess->mutex.lock();
 		if (sess->in_progress) {
 			sess->status_label->setText(QObject::tr("Status: Working..."));
 		}
 		sess->mutex.unlock();
-#ifdef K
-		gdk_threads_leave();
-#endif
 
 		sess->process_line_for_gps_info(line);
 
@@ -1167,56 +1121,54 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GPSSessio
 
 
 
-static void gps_comm_thread(GPSSession * sess)
+/* Re-implementation of QRunnable::run() */
+void GPSSession::run(void)
 {
 	bool result;
 
-	if (sess->direction == GPSDirection::DOWN) {
-		ProcessOptions po(sess->babel_args, sess->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
-		result = a_babel_convert_from(sess->trw, &po, (BabelCallback) gps_download_progress_func, sess, NULL);
+	if (this->direction == GPSDirection::DOWN) {
+		ProcessOptions po(this->babel_args, this->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+		result = a_babel_convert_from(this->trw, &po, (BabelCallback) gps_download_progress_func, this, NULL);
 	} else {
-		result = a_babel_convert_to(sess->trw, sess->trk, sess->babel_args, sess->port,
-					    (BabelCallback) gps_upload_progress_func, sess);
+		result = a_babel_convert_to(this->trw, this->trk, this->babel_args, this->port,
+					    (BabelCallback) gps_upload_progress_func, this);
 	}
 
 	if (!result) {
-		sess->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
+		this->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
 	} else {
-		sess->mutex.lock();
-		if (sess->in_progress) {
-			sess->status_label->setText(QObject::tr("Done."));
-			sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-			sess->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+		this->mutex.lock();
+		if (this->in_progress) {
+			this->status_label->setText(QObject::tr("Done."));
+			this->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+			this->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 
 			/* Do not change the view if we are following the current GPS position. */
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-			if (!sess->realtime_tracking)
+			if (!this->realtime_tracking)
 #endif
 			{
-				if (sess->viewport && sess->direction == GPSDirection::DOWN) {
-					sess->trw->post_read(sess->viewport, true);
+				if (this->viewport && this->direction == GPSDirection::DOWN) {
+					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
-					sess->trw->auto_set_view(sess->viewport) ;
-					sess->trw->emit_layer_changed(); /* NB update from background thread. */
+					this->trw->auto_set_view(this->viewport) ;
+					this->trw->emit_layer_changed(); /* NB update from background thread. */
 				}
 			}
 		} else {
 			/* Cancelled. */
 		}
-		sess->mutex.unlock();
+		this->mutex.unlock();
 	}
 
-	sess->mutex.lock();
-	if (sess->in_progress) {
-		sess->in_progress = false;
-		sess->mutex.unlock();
+	this->mutex.lock();
+	if (this->in_progress) {
+		this->in_progress = false;
+		this->mutex.unlock();
 	} else {
-		sess->mutex.unlock();
-		delete sess;
+		this->mutex.unlock();
+		delete this; /* TODO: is is valid? Can we delete ourselves here? */
 	}
-#ifdef K
-	g_thread_exit(NULL);
-#endif
 }
 
 
@@ -1252,6 +1204,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			  bool turn_off)
 {
 	GPSSession * sess = new GPSSession(dir, layer, trk, port, viewport, true);
+	sess->setAutoDelete(false);
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
 	   (originally performed this nearer the point of upload in the thread). */
@@ -1321,10 +1274,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->total_count = -1;
 
 		/* Starting gps read/write thread. */
-#ifdef K
-		/* Consider using QThreadPool and QRunnable. */
-		g_thread_create((GThreadFunc)gps_comm_thread, sess, false, NULL);
-#endif
+		sess->run();
 
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 		sess->dialog->exec();
@@ -1462,7 +1412,7 @@ void LayerGPS::gps_empty_realtime_cb(void)
 void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete All GPS data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), g_tree->tree_get_main_window())) {
 		return;
 	}
 
@@ -1718,20 +1668,20 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 
 
 
-static char *make_track_name(LayerTRW * trw)
+/* TODO: maybe we could have a common code in LayerTRW for this. */
+static QString make_track_name(LayerTRW * trw)
 {
-	const char basename[] = "REALTIME";
-	const int bufsize = sizeof(basename) + 5;
-	char *name = (char *) malloc(bufsize);
-	strcpy(name, basename);
+	const QString base_name = "REALTIME";
+
+	QString name = base_name;
 	int i = 2;
 
 	while (trw->get_tracks_node().find_track_by_name(name) != NULL) {
-		snprintf(name, bufsize, "%s#%d", basename, i);
+		name = QString("%1#%2").arg(basename).arg(i);
 		i++;
 	}
-	return(name);
 
+	return name;
 }
 
 
@@ -1774,9 +1724,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
 		layer->realtime_track = new Track(false);
 		layer->realtime_track->visible = true;
-		char * name = make_track_name(trw);
-		layer->realtime_track->set_name(name);
-		free(name);
+		layer->realtime_track->set_name(make_track_name(trw));
 		trw->add_track(layer->realtime_track);
 	}
 
