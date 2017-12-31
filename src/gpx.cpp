@@ -49,6 +49,8 @@
 
 #include <expat.h>
 
+#include <QDebug>
+
 #include "gpx.h"
 #include "globals.h"
 #include "preferences.h"
@@ -1325,7 +1327,7 @@ static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * op
 	/* Opening temporary file. */
 	int fd = g_file_open_tmp("viking_XXXXXX.gpx", &tmp_filename, &error);
 	if (fd < 0) {
-		fprintf(stderr, _("WARNING: failed to open temporary file: %s\n"), error->message);
+		qDebug() << QObject::tr("WARNING: failed to open temporary file: %1").arg(error->message);
 		g_clear_error(&error);
 		return NULL;
 	}

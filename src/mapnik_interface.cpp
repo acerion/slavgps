@@ -344,9 +344,9 @@ QStringList * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
  *
  * Free the returned string after use.
  */
-char * SlavGPS::mapnik_interface_about(void)
+QString SlavGPS::mapnik_interface_about(void)
 {
-	char * msg = NULL;
+	QString msg;
 #ifdef K
 	/* Normally about 10 plugins so list them all. */
 #if MAPNIK_VERSION >= 200200
@@ -361,11 +361,10 @@ char * SlavGPS::mapnik_interface_about(void)
 	str += '\n';
 	/* NB Can have a couple hundred fonts loaded when using system directories.
 	   So ATM don't list them all - otherwise need better GUI feedback display. */
-	msg = g_strdup_printf(_("%s %s\nPlugins=%sFonts loaded=%d"),
-			      _("Mapnik"),
-			      MAPNIK_VERSION_STRING,
-			      str.c_str(),
-			      (unsigned int) mapnik::freetype_engine::face_names().size());
+	msg = QObject::tr("Mapnik %1\nPlugins=%2Fonts loaded=%3")
+		.arg(MAPNIK_VERSION_STRING)
+		.arg(str.c_str())
+		.arg((unsigned int) mapnik::freetype_engine::face_names().size());
 #endif
 	return msg;
 }

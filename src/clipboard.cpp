@@ -132,7 +132,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 #ifdef K
 	LayersPanel * panel = (LayersPanel *) p;
 	if (gtk_selection_data_get_length(sd) == -1) {
-		fprintf(stderr, _("WARNING: paste failed\n"));
+		qDebug() << QObject::tr("WARNING: paste failed");
 		return;
 	}
 	//  fprintf(stdout, "clip receive: target = %s, type = %s\n", gdk_atom_name(gtk_selection_data_get_target(sd), gdk_atom_name(sd->type));
@@ -142,7 +142,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	//  fprintf(stdout, "  sd->data = %p, sd->length = %d, vc->len = %d\n", sd->data, sd->length, vc->len);
 
 	if (gtk_selection_data_get_length(sd) != sizeof(*vc) + vc->len) {
-		fprintf(stderr, _("WARNING: wrong clipboard data size\n"));
+		qDebug() << QObject::tr("WARNING: wrong clipboard data size");
 		return;
 	}
 

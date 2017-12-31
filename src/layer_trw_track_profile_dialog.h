@@ -134,11 +134,11 @@ namespace SlavGPS {
 
 		void draw_all_graphs(bool resized);
 		QWidget * create_graph_page(Viewport * viewport,
-					    const char * text1,
+					    const QString & text1,
 					    QLabel * value1,
-					    const char * text2,
+					    const QString & text2,
 					    QLabel * value2,
-					    const char * text3,
+					    const QString & text3,
 					    QLabel * value3,
 					    QCheckBox * checkbutton1,
 					    bool checkbutton1_default,

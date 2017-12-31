@@ -984,9 +984,7 @@ static void mapnik_layer_information(menu_array_values * values)
 static void mapnik_layer_about(menu_array_values * values)
 {
 	LayerMapnik * lmk = values->lmk;
-	char * msg = mapnik_interface_about();
-	Dialog::info(msg, lmk->get_window());
-	free(msg);
+	Dialog::info(mapnik_interface_about(), lmk->get_window());
 }
 
 

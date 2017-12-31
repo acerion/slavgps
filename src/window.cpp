@@ -1963,29 +1963,29 @@ void Window::open_file_cb(void)
 
 	/* File filters are listed this way for alphabetical ordering. */
 #ifdef VIK_CONFIG_GEOCACHES
-	filter << _("Geocaching (*.loc)");
+	filter << QObject::tr("Geocaching (*.loc)");
 #endif
 
 #ifdef K
-	gtk_file_filter_set_name(filter, _("Google Earth"));
+	gtk_file_filter_set_name(filter, QObject::tr("Google Earth"));
 	gtk_file_filter_add_mime_type(filter, "application/vnd.google-earth.kml+xml");
 #endif
 
-	filter << _("GPX (*.gpx)");
+	filter << QObject::tr("GPX (*.gpx)");
 
 #ifdef K
-	gtk_file_filter_set_name(filter, _("JPG"));
+	gtk_file_filter_set_name(filter, QObject::tr("JPG"));
 	gtk_file_filter_add_mime_type(filter, "image/jpeg");
 #endif
 
-	filter << _("Viking (*.vik *.viking)");
+	filter << QObject::tr("Viking (*.vik *.viking)");
 
 
 	/* Could have filters for gpspoint (*.gps,*.gpsoint?) + gpsmapper (*.gsm,*.gpsmapper?).
 	   However assume this are barely used and thus not worthy of inclusion
 	   as they'll just make the options too many and have no clear file pattern.
 	   One can always use the all option. */
-	filter << _("All (*)");
+	filter << QObject::tr("All (*)");
 
 	file_selector.setNameFilters(filter);
 
@@ -2398,8 +2398,8 @@ int determine_location_thread(BackgroundJob * bg_job)
 	LocatorJob * locator = (LocatorJob *) bg_job;
 
 	LatLon ll;
-	char * name = NULL;
-	int ans = a_vik_goto_where_am_i(locator->window->viewport, ll, &name);
+	QString name;
+	int ans = a_vik_goto_where_am_i(locator->window->viewport, ll, name);
 
 	int result = a_background_thread_progress(bg_job, 1.0);
 	if (result != 0) {
@@ -2423,7 +2423,6 @@ int determine_location_thread(BackgroundJob * bg_job)
 		locator->window->viewport->set_center_from_latlon(ll, false);
 
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
-		free(name);
 
 		// Signal to redraw from the background
 		locator->window->items_tree->emit_update_window_cb("determine location");
@@ -2789,7 +2788,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						    GTK_MESSAGE_INFO,
 						    GTK_BUTTONS_NONE,
-						    _("Generating image file..."));
+						    tr("Generating image file..."));
 
 	QObject::connect(msgbox, SIGNAL("response"), msgbox, SLOT (gtk_widget_destroy));
 	// Ensure dialog shown

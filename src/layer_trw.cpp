@@ -1628,14 +1628,14 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
  */
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
-	char tmp_buf1[64];
+	QString tmp_buf1;
 	switch (Preferences::get_unit_height()) {
 	case HeightUnit::FEET:
-		snprintf(tmp_buf1, sizeof(tmp_buf1), _("Wpt: Alt %dft"), (int) round(VIK_METERS_TO_FEET(wp->altitude)));
+		tmp_buf1 = QObject::tr("Wpt: Alt %1ft").arg((int) round(VIK_METERS_TO_FEET(wp->altitude)));
 		break;
 	default:
 		// HeightUnit::METRES:
-		snprintf(tmp_buf1, sizeof(tmp_buf1), _("Wpt: Alt %dm"), (int) round(wp->altitude));
+		tmp_buf1 = QObject::tr("Wpt: Alt %1m").arg((int) round(wp->altitude));
 	}
 
 	/* Position part.
@@ -2930,7 +2930,7 @@ void LayerTRW::delete_all_waypoints()
 void LayerTRW::delete_all_tracks_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (Dialog::yes_or_no(tr("Are you sure you want to delete all tracks in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
+	if (Dialog::yes_or_no(tr("Are you sure you want to delete all tracks in \"%1\"?").arg(this->get_name()), this->get_window())) {
 		this->delete_all_tracks();
 	}
 }
@@ -2941,7 +2941,7 @@ void LayerTRW::delete_all_tracks_cb(void) /* Slot. */
 void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (Dialog::yes_or_no(tr("Are you sure you want to delete all routes in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
+	if (Dialog::yes_or_no(tr("Are you sure you want to delete all routes in \"%1\"?").arg(this->get_name()), this->get_window())) {
 		this->delete_all_routes();
 	}
 }
@@ -2952,7 +2952,7 @@ void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (Dialog::yes_or_no(tr("Are you sure you want to delete all waypoints in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
+	if (Dialog::yes_or_no(tr("Are you sure you want to delete all waypoints in \"%1\"?").arg(this->get_name()), this->get_window())) {
 		this->delete_all_waypoints();
 	}
 }

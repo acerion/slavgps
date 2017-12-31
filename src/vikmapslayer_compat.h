@@ -24,6 +24,8 @@
 
 #include <cstdint>
 
+#include <QString>
+
 #include "coord.h"
 #include "mapcoord.h"
 
@@ -47,7 +49,7 @@ namespace SlavGPS {
 		/* TODO: constant size (yay!) */
 	} VikMapsLayer_MapType;
 
-	void maps_layer_register_type(char const * label, unsigned int id, VikMapsLayer_MapType * map_type);
+	void maps_layer_register_type(const QString * label, unsigned int id, VikMapsLayer_MapType * map_type);
 
 
 

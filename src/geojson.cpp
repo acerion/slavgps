@@ -23,6 +23,8 @@
 
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "geojson.h"
 #include "gpx.h"
 #include "globals.h"
@@ -159,7 +161,7 @@ char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 	/* Opening temporary file. */
 	int fd = g_file_open_tmp("vik_geojson_XXXXXX.gpx", &gpx_filename, &error);
 	if (fd < 0) {
-		fprintf(stderr, _("WARNING: failed to open temporary file: %s\n"), error->message);
+		qDebug() << QObject::tr("WARNING: failed to open temporary file: %1").arg(error->message);
 		g_clear_error(&error);
 		return NULL;
 	}

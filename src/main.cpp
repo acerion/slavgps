@@ -73,10 +73,9 @@ using namespace SlavGPS;
 #if HAVE_X11_XLIB_H
 static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 {
-	fprintf(stderr,
-		_("Ignoring Xlib error: error code %d request code %d\n"),
-		theEvent->error_code,
-		theEvent->request_code);
+	qDebug() << QObject::tr("Ignoring Xlib error: error code %1 request code %2")
+		.arg(theEvent->error_code)
+		.arg(theEvent->request_code);
 	/* No exit on X errors!
 	   Mainly to handle out of memory error when requesting large pixbuf from user request.
 	   See vikwindow.c::save_image_file() */

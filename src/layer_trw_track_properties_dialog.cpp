@@ -58,7 +58,7 @@ using namespace SlavGPS;
 
 void SlavGPS::track_properties_dialog(Window * parent, Track * trk, bool start_on_stats)
 {
-	TrackPropertiesDialog dialog(QString("Track Profile"), trk, start_on_stats, parent);
+	TrackPropertiesDialog dialog(QObject::tr("Track Profile"), trk, start_on_stats, parent);
 	dialog.create_properties_page();
 	dialog.create_statistics_page();
 	trk->set_properties_dialog(&dialog);
@@ -216,17 +216,17 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(QString("Max Speed:"), this->w_max_speed);
+	this->statistics_form->addRow(QObject::tr("Max Speed:"), this->w_max_speed);
 
 
 	tmp_speed = this->trk->get_average_speed();
 	if (tmp_speed == 0) {
-		tmp_string = QObject::tr("No Data");
+		tmp_string = tr("No Data");
 	} else {
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_avg_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(QString("Avg. Speed:"), this->w_avg_speed);
+	this->statistics_form->addRow(tr("Avg. Speed:"), this->w_avg_speed);
 
 
 	/* Use 60sec as the default period to be considered stopped.
@@ -235,30 +235,31 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	   so ATM just put in the number. */
 	tmp_speed = this->trk->get_average_speed_moving(60);
 	if (tmp_speed == 0) {
-		tmp_string = QObject::tr("No Data");
+		tmp_string = tr("No Data");
 	} else {
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(QString("Moving Avg. Speed:"), this->w_mvg_speed);
+	this->statistics_form->addRow(tr("Moving Avg. Speed:"), this->w_mvg_speed);
 
 
+	QString result;
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		/* Even though kilometres, the average distance between points is going to be quite small so keep in metres. */
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count));
+		result = tr("%1 m").arg((tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count), 0, 'f', 2);
 		break;
 	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f miles", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)));
+		result = tr("%1 miles").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)));
+		result = tr("%1 NM").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
 		break;
 	default:
 		qDebug() << "EE: Track Properties Dialog: can't get distance unit for 'avg. dist between tps.'; distance_unit = " << (int) distance_unit;
 	}
-	this->w_avg_dist = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Avg. Dist. Between TPs:"), this->w_avg_dist);
+	this->w_avg_dist = ui_label_new_selectable(result, this);
+	this->statistics_form->addRow(tr("Avg. Dist. Between TPs:"), this->w_avg_dist);
 
 
 	double min_alt, max_alt;
@@ -273,44 +274,46 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	free(altitudes);
 	altitudes = NULL;
 
+
+	result = "";
 	HeightUnit height_unit = Preferences::get_unit_height();
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		result = tr("No Data");
 	} else {
 		switch (height_unit) {
 		case HeightUnit::METRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt);
+			result = tr("%1 m - %2 m").arg(min_alt, 0, 'f', 0).arg(max_alt, 0, 'f', 0);
 			break;
 		case HeightUnit::FEET:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet - %.0f feet", VIK_METERS_TO_FEET(min_alt), VIK_METERS_TO_FEET(max_alt));
+			result = tr("%1 feet - %2 feet").arg(VIK_METERS_TO_FEET(min_alt), 0, 'f', 0).arg(VIK_METERS_TO_FEET(max_alt), 0, 'f', 0);
 			break;
 		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			result = tr("--");
 			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'elevation range'; height_unit = " << (int) height_unit;
 		}
 	}
-	this->w_elev_range = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Elevation Range:"), this->w_elev_range);
+	this->w_elev_range = ui_label_new_selectable(result, this);
+	this->statistics_form->addRow(tr("Elevation Range:"), this->w_elev_range);
 
 
 	this->trk->get_total_elevation_gain(&max_alt, &min_alt);
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		result = tr("No Data");
 	} else {
 		switch (height_unit) {
 		case HeightUnit::METRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt);
+			result = tr("%1 m / %2 m").arg(max_alt, 0, 'f', 0).arg(min_alt, 0, 'f', 0);
 			break;
 		case HeightUnit::FEET:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet / %.0f feet", VIK_METERS_TO_FEET(max_alt), VIK_METERS_TO_FEET(min_alt));
+			result = tr("%1 feet / %2 feet").arg(VIK_METERS_TO_FEET(max_alt), 0, 'f', 0).arg(VIK_METERS_TO_FEET(min_alt), 0, 'f', 0);
 			break;
 		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
+			result = tr("--");
 			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'total elevation gain/loss'; height_unit = " << (int) height_unit;
 		}
 	}
-	this->w_elev_gain = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(QString("Total Elevation Gain/Loss:"), this->w_elev_gain);
+	this->w_elev_gain = ui_label_new_selectable(result, this);
+	this->statistics_form->addRow(tr("Total Elevation Gain/Loss:"), this->w_elev_gain);
 
 
 	if (!this->trk->empty()
@@ -328,21 +331,21 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 		QString msg = SGUtils::get_time_string(t1, "%c", &coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg.toUtf8().constData(), this);
-		this->statistics_form->addRow(QString("Start:"), this->w_time_start);
+		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
 
 
 		msg = SGUtils::get_time_string(t2, "%c", &coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg.toUtf8().constData(), this);
-		this->statistics_form->addRow(QString("End:"), this->w_time_end);
+		this->statistics_form->addRow(tr("End:"), this->w_time_end);
 
 
 		int total_duration_s = (int)(t2-t1);
 		int segments_duration_s = (int) this->trk->get_duration(false);
 		int total_duration_m = total_duration_s/60;
 		int segments_duration_m = segments_duration_s/60;
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
-		this->w_time_dur = ui_label_new_selectable(tmp_buf, this);
-		this->statistics_form->addRow(QString("Duration:"), this->w_time_dur);
+		result = tr("%1 minutes - %2 minutes moving").arg(total_duration_m).arg(segments_duration_m);
+		this->w_time_dur = ui_label_new_selectable(result, this);
+		this->statistics_form->addRow(tr("Duration:"), this->w_time_dur);
 
 		/* A tooltip to show in more readable hours:minutes. */
 		char tip_buf_total[20];
@@ -353,18 +356,16 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		unsigned int h_seg = segments_duration_s/3600;
 		unsigned int m_seg = (segments_duration_s - h_seg*3600)/60;
 		snprintf(tip_buf_segments, sizeof(tip_buf_segments), "%d:%02d", h_seg, m_seg);
-		char * tip = g_strdup_printf(_("%s total - %s in segments"), tip_buf_total, tip_buf_segments);
-		this->w_time_dur->setToolTip(tip);
-		free(tip);
+		this->w_time_dur->setToolTip(tr("%1 total - %s in segments").arg(tip_buf_total).arg(tip_buf_segments));
 	} else {
 		this->w_time_start = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(QString("Start:"), this->w_time_start);
+		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
 
 		this->w_time_end = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(QString("End:"), this->w_time_end);
+		this->statistics_form->addRow(tr("End:"), this->w_time_end);
 
 		this->w_time_dur = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(QString("Duration:"), this->w_time_dur);
+		this->statistics_form->addRow(tr("Duration:"), this->w_time_dur);
 	}
 }
 

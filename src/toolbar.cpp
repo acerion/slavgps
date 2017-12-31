@@ -1162,7 +1162,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent,
 
 	TBEditorWidget *tbw = (TBEditorWidget *) malloc(1 * sizeof (TBEditorWidget));
 
-	dialog = gtk_dialog_new_with_buttons(_("Customize Toolbar"),
+	dialog = gtk_dialog_new_with_buttons(QObject::tr("Customize Toolbar"),
 	                                     GTK_WINDOW(parent),
 	                                     GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                     GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
@@ -1196,7 +1196,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent,
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_available), column);
 
 	text_renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Available Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Available Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_available), column);
 
 	swin_available = gtk_scrolled_window_new(NULL, NULL);
@@ -1214,7 +1214,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, Window * parent,
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_used), column);
 
 	text_renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Displayed Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Displayed Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_used), column);
 
 	swin_used = gtk_scrolled_window_new(NULL, NULL);

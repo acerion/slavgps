@@ -687,12 +687,12 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 void time_label_update(QLabel * label, time_t seconds_from_start)
 {
-	static char tmp_buf[20];
 	unsigned int h = seconds_from_start/3600;
 	unsigned int m = (seconds_from_start - h*3600)/60;
 	unsigned int s = seconds_from_start - (3600*h) - (60*m);
-	snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
-	label->setText(QString(tmp_buf));
+
+	const QString tmp_buf = QObject::tr("%1:%2:%3").arg(h, 2, 10, (QChar) '0').arg(m, 2, 10, (QChar) '0').arg(s, 2, 10, (QChar) '0');
+	label->setText(tmp_buf);
 
 	return;
 }
@@ -702,15 +702,17 @@ void time_label_update(QLabel * label, time_t seconds_from_start)
 
 void real_time_label_update(QLabel * label, Trackpoint * tp)
 {
-	static char tmp_buf[64];
+	QString result;
 	if (tp->has_timestamp) {
 		/* Alternatively could use %c format but I prefer a slightly more compact form here.
 		   The full date can of course be seen on the Statistics tab. */
-		strftime(tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&tp->timestamp));
+		static char tmp_buf[64];
+		strftime(tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&tp->timestamp)); /* TODO: translate the string. */
+		result = QString(tmp_buf);
 	} else {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+		result = QObject::tr("No Data");
 	}
-	label->setText(QString(tmp_buf));
+	label->setText(result);
 
 	return;
 }
@@ -1009,22 +1011,23 @@ void elevation_label_update(QLabel * label, Trackpoint * tp)
 
 
 
+/* TODO: don't we have a function for this kind of stuff in measurements.cpp? */
 void dist_dist_label_update(QLabel * label, double distance)
 {
-	static char tmp_buf[20];
+	static QString tmp_buf;
 	switch (Preferences::get_unit_distance()) {
 	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", distance);
+		tmp_buf = QObject::tr("%1 miles").arg(distance, 0, 'f', 2);
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", distance);
+		tmp_buf = QObject::tr("%1 NM").arg(distance, 0, 'f', 2);
 		break;
 	default:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance); /* kamilTODO: why not distance/1000? */
+		tmp_buf = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
 		break;
 	}
 
-	label->setText(QString(tmp_buf));
+	label->setText(tmp_buf);
 
 	return;
 }
@@ -2014,11 +2017,11 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
  *  Create the widgets for the given graph tab.
  */
 QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
-						const char * text1,
+						const QString & text1,
 						QLabel * value1,
-						const char * text2,
+						const QString & text2,
 						QLabel * value2,
-						const char * text3,
+						const QString & text3,
 						QLabel * value3,
 						QCheckBox * checkbutton1,
 						bool checkbutton1_default,
@@ -2074,7 +2077,7 @@ QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
 
 void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main_viewport)
 {
-	TrackProfileDialog dialog(QString("Track Profile"), trk, main_viewport, parent);
+	TrackProfileDialog dialog(QObject::tr("Track Profile"), trk, main_viewport, parent);
 	trk->set_profile_dialog(&dialog);
 	dialog.exec();
 	trk->clear_profile_dialog();
@@ -2161,13 +2164,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->track_length_inc_gaps = trk->get_length_including_gaps();
 
 	if (this->graph_ed->viewport) {
-		this->w_ed_current_distance = ui_label_new_selectable(_("No Data"), this);
-		this->w_ed_current_elevation = ui_label_new_selectable(_("No Data"), this);
+		this->w_ed_current_distance = ui_label_new_selectable(tr("No Data"), this);
+		this->w_ed_current_elevation = ui_label_new_selectable(tr("No Data"), this);
 		this->w_ed_show_dem = new QCheckBox(tr("Show D&EM"), this);
 		this->w_ed_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->graph_ed->viewport,
-							 _("Track Distance:"), this->w_ed_current_distance,
-							 _("Track Height:"),   this->w_ed_current_elevation,
+							 tr("Track Distance:"), this->w_ed_current_distance,
+							 tr("Track Height:"),   this->w_ed_current_elevation,
 							 NULL, NULL,
 							 this->w_ed_show_dem, show_dem,
 							 this->w_ed_show_gps_speed, show_alt_gps_speed);
@@ -2178,12 +2181,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 	if (this->graph_gd->viewport) {
-		this->w_gd_current_distance = ui_label_new_selectable(_("No Data"), this);
-		this->w_gd_current_gradient = ui_label_new_selectable(_("No Data"), this);
+		this->w_gd_current_distance = ui_label_new_selectable(tr("No Data"), this);
+		this->w_gd_current_gradient = ui_label_new_selectable(tr("No Data"), this);
 		this->w_gd_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->graph_gd->viewport,
-							 _("Track Distance:"), this->w_gd_current_distance,
-							 _("Track Gradient:"), this->w_gd_current_gradient,
+							 tr("Track Distance:"), this->w_gd_current_distance,
+							 tr("Track Gradient:"), this->w_gd_current_gradient,
 							 NULL, NULL,
 							 this->w_gd_show_gps_speed, show_gradient_gps_speed,
 							 NULL, false);
@@ -2193,14 +2196,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 	if (this->graph_st->viewport) {
-		this->w_st_current_time = ui_label_new_selectable(_("No Data"), this);
-		this->w_st_current_speed = ui_label_new_selectable(_("No Data"), this);
-		this->w_st_current_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_st_current_time = ui_label_new_selectable(tr("No Data"), this);
+		this->w_st_current_speed = ui_label_new_selectable(tr("No Data"), this);
+		this->w_st_current_time_real = ui_label_new_selectable(tr("No Data"), this);
 		this->w_st_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->graph_st->viewport,
-							 _("Track Time:"),  this->w_st_current_time,
-							 _("Track Speed:"), this->w_st_current_speed,
-							 _("Time/Date:"),   this->w_st_current_time_real,
+							 tr("Track Time:"),  this->w_st_current_time,
+							 tr("Track Speed:"), this->w_st_current_speed,
+							 tr("Time/Date:"),   this->w_st_current_time_real,
 							 this->w_st_show_gps_speed, show_gps_speed,
 							 NULL, false);
 		connect(this->w_st_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
@@ -2209,14 +2212,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 	if (this->graph_dt->viewport) {
-		this->w_dt_current_time = ui_label_new_selectable(_("No Data"), this);
-		this->w_dt_curent_distance = ui_label_new_selectable(_("No Data"), this);
-		this->w_dt_current_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_dt_current_time = ui_label_new_selectable(tr("No Data"), this);
+		this->w_dt_curent_distance = ui_label_new_selectable(tr("No Data"), this);
+		this->w_dt_current_time_real = ui_label_new_selectable(tr("No Data"), this);
 		this->w_dt_show_speed = new QCheckBox(tr("Show S&peed"), this);
 		QWidget * page = this->create_graph_page(this->graph_dt->viewport,
-							 _("Track Distance:"), this->w_dt_curent_distance,
-							 _("Track Time:"), this->w_dt_current_time,
-							 _("Time/Date:"), this->w_dt_current_time_real,
+							 tr("Track Distance:"), this->w_dt_curent_distance,
+							 tr("Track Time:"), this->w_dt_current_time,
+							 tr("Time/Date:"), this->w_dt_current_time_real,
 							 this->w_dt_show_speed, show_dist_speed,
 							 NULL, false);
 		connect(this->w_dt_show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
@@ -2225,15 +2228,15 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 	if (this->graph_et->viewport) {
-		this->w_et_current_time = ui_label_new_selectable(_("No Data"), this);
-		this->w_et_current_elevation = ui_label_new_selectable(_("No Data"), this);
-		this->w_et_current_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_et_current_time = ui_label_new_selectable(tr("No Data"), this);
+		this->w_et_current_elevation = ui_label_new_selectable(tr("No Data"), this);
+		this->w_et_current_time_real = ui_label_new_selectable(tr("No Data"), this);
 		this->w_et_show_speed = new QCheckBox(tr("Show S&peed"), this);
 		this->w_et_show_dem = new QCheckBox(tr("Show D&EM"), this);
 		QWidget * page = this->create_graph_page(this->graph_et->viewport,
-							 _("Track Time:"),   this->w_et_current_time,
-							 _("Track Height:"), this->w_et_current_elevation,
-							 _("Time/Date:"),    this->w_et_current_time_real,
+							 tr("Track Time:"),   this->w_et_current_time,
+							 tr("Track Height:"), this->w_et_current_elevation,
+							 tr("Time/Date:"),    this->w_et_current_time_real,
 							 this->w_et_show_dem, show_elev_dem,
 							 this->w_et_show_speed, show_elev_speed);
 		connect(this->w_et_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
@@ -2243,12 +2246,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 	if (this->graph_sd->viewport) {
-		this->w_sd_current_distance = ui_label_new_selectable(_("No Data"), this);
-		this->w_sd_current_speed = ui_label_new_selectable(_("No Data"), this);
+		this->w_sd_current_distance = ui_label_new_selectable(tr("No Data"), this);
+		this->w_sd_current_speed = ui_label_new_selectable(tr("No Data"), this);
 		this->w_sd_show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 		QWidget * page = this->create_graph_page(this->graph_sd->viewport,
-							 _("Track Distance:"), this->w_sd_current_distance,
-							 _("Track Speed:"), this->w_sd_current_speed,
+							 tr("Track Distance:"), this->w_sd_current_distance,
+							 tr("Track Speed:"), this->w_sd_current_speed,
 							 NULL, NULL,
 							 this->w_sd_show_gps_speed, show_sd_gps_speed,
 							 NULL, false);
@@ -2262,11 +2265,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->button_box = new QDialogButtonBox();
 
 
-	this->button_cancel = this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
-	this->button_split_at_marker = this->button_box->addButton("Split at &Marker", QDialogButtonBox::ActionRole);
-	this->button_split_segments = this->button_box->addButton("Split &Segments", QDialogButtonBox::ActionRole);
-	this->button_reverse = this->button_box->addButton("&Reverse", QDialogButtonBox::ActionRole);
-	this->button_ok = this->button_box->addButton("&OK", QDialogButtonBox::AcceptRole);
+	this->button_cancel = this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
+	this->button_split_at_marker = this->button_box->addButton(tr("Split at &Marker"), QDialogButtonBox::ActionRole);
+	this->button_split_segments = this->button_box->addButton(tr("Split &Segments"), QDialogButtonBox::ActionRole);
+	this->button_reverse = this->button_box->addButton(tr("&Reverse"), QDialogButtonBox::ActionRole);
+	this->button_ok = this->button_box->addButton(tr("&OK"), QDialogButtonBox::AcceptRole);
 
 	this->button_split_segments->setEnabled(trk->get_segment_count() > 1);
 	this->button_split_at_marker->setEnabled(this->selected_tp); /* Initially no trackpoint is selected. */

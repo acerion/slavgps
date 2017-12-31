@@ -603,7 +603,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 	}
 
 #if 0
-	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
+	int prop = a_uibuilder_properties_factory(QObject::tr("Layer Properties"),
 						  viewport->get_window(),
 						  layer->get_interface()->parameters_c,
 						  layer->get_interface()->parameters.size(),

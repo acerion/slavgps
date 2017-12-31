@@ -331,9 +331,9 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of location found. Free this string after use.
  */
-int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char **name)
+int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 {
-	*name = NULL;
+	name = "";
 
 	char * tmpname = Download::get_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
 	//char *tmpname = strdup("../test/hostip2.json");
@@ -424,7 +424,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char *
 		if (lat_lon.lat > -90.0 && lat_lon.lat < 90.0 && lat_lon.lon > -180.0 && lat_lon.lon < 180.0) {
 			// Found a 'sensible' & 'precise' location
 			result = 1;
-			*name = strdup(_("Locality")); //Albeit maybe not known by an actual name!
+			name = QObject::tr("Locality"); //Albeit maybe not known by an actual name!
 		}
 	} else {
 		/* Hopefully city name is unique enough to lookup position on.
@@ -443,7 +443,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char *
 					/* Got something. */
 					lat_lon = new_center.get_latlon();
 					result = 2;
-					*name = city;
+					name = city;
 					goto tidy;
 				}
 			}
@@ -458,7 +458,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, char *
 					/* Finally got something. */
 					lat_lon = new_center.get_latlon();
 					result = 3;
-					*name = country;
+					name = country;
 					goto tidy;
 				}
 			}

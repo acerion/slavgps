@@ -324,10 +324,9 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 
 
 
-
+/* Compare this function with GPSSession::set_current_count(int cnt) */
 static void set_current_count(int cnt, AcquireProcess * acquiring)
 {
-	char *s = NULL;
 #ifdef K
 	gdk_threads_enter();
 #endif
@@ -335,34 +334,36 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
 
 		if (cnt < gps_dialog->total_count) {
+			QString fmt;
 			switch (gps_dialog->progress_type) {
 			case GPSTransferType::WPT:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "waypoints");
+				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", gps_dialog->total_count);
 				break;
 			case GPSTransferType::TRK:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "trackpoints");
+				fmt = QObject::tr("Downloaded %1 out of %2 trackpoints...", "", gps_dialog->total_count);
 				break;
 			default:
-				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_dialog->total_count, "routepoints");
+				fmt = QObject::tr("Downloaded %1 out of %2 routepoints...", "", gps_dialog->total_count);
 				break;
 			}
+			gps_dialog->progress_label->setText(QString(fmt).arg(cnt).arg(gps_dialog->total_count));
+
 		} else {
+			QString s;
 			switch (gps_dialog->progress_type) {
 			case GPSTransferType::WPT:
-				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "waypoints");
+				s = QObject::tr("Downloaded %1 waypoints.").arg(cnt);
 				break;
 			case GPSTransferType::TRK:
-				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "trackpoints");
+				s = QObject::tr("Downloaded %1 trackpoints.").arg(cnt);
 				break;
 			default:
-				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "routepoints");
+				s = QObject::tr("Downloaded %1 routepoints.").arg(cnt);
 				break;
 			}
+			gps_dialog->progress_label->setText(s);
 		}
-		gps_dialog->progress_label->setText(s);
 	}
-	free(s);
-	s = NULL;
 #ifdef K
 	gdk_threads_leave();
 #endif

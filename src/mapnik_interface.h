@@ -54,7 +54,7 @@ namespace SlavGPS {
 
 	QStringList * mapnik_interface_get_parameters(MapnikInterface * mi);
 
-	char * mapnik_interface_about(void);
+	QString mapnik_interface_about(void);
 
 
 

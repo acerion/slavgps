@@ -107,7 +107,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog()
 {
 	const WebToolDatasource * web_tool = this->web_tool_datasource;
 
-	QLabel * user_string_label = new QLabel(QString("%1:").arg(web_tool->input_field_label_text), this);
+	QLabel * user_string_label = new QLabel(tr("%1:").arg(web_tool->input_field_label_text), this);
 
 	this->input_field.setText(get_last_user_string(this->web_tool_datasource));
 

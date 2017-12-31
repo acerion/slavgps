@@ -448,7 +448,7 @@ void LayerMap::set_map_type(MapTypeID map_type)
 {
 	int map_index_ = map_type_to_map_index(map_type);
 	if (map_index_ == -1) {
-		fprintf(stderr, _("WARNING: Unknown map type\n"));
+		qDebug() << QObject::tr("WARNING: Unknown map type");
 	} else {
 		this->map_index = map_index_;
 	}
@@ -650,7 +650,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_MAPTYPE: {
 		int map_index_ = map_type_to_map_index((MapTypeID) data.val_int);
 		if (map_index_ == -1) {
-			fprintf(stderr, _("WARNING: Unknown map type\n"));
+			qDebug() << QObject::tr("WARNING: Unknown map type");
 		} else {
 			this->map_index = (unsigned int) map_index_;
 
@@ -687,7 +687,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			this->xmapzoom = __mapzooms_x[data.val_int];
 			this->ymapzoom = __mapzooms_y[data.val_int];
 		} else {
-			fprintf(stderr, _("WARNING: Unknown Map Zoom\n"));
+			qDebug() << QObject::tr("WARNING: Unknown Map Zoom");
 		}
 		break;
 	default:
@@ -1937,38 +1937,45 @@ void LayerMap::tile_info_cb(void)
 	}
 
 	char * tile_filename = NULL;
-	char *source = NULL;
+	QString source;
 
 	if (map->is_direct_file_access()) {
 		if (map->is_mbtiles()) {
 			tile_filename = g_strdup(this->filename.toUtf8().constData());
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
-			char *exists = NULL;
+			QString exists;
 			int zoom = 17 - ulm.scale;
 			if (this->mbtiles) {
 				QPixmap *pixmap = get_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixmap) {
-					exists = strdup(_("YES"));
+					exists = QObject::tr("YES");
 					g_object_unref(G_OBJECT(pixmap));
 				} else {
-					exists = strdup(_("NO"));
+					exists = QObject::tr("NO");
 				}
 			} else {
-				exists = strdup(_("NO"));
+				exists = QObject::tr("NO");
 			}
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
 			/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
-			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", tile_filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
-			free(exists);
+			source = QObject::tr("Source: %1 (%2%3%4%5%6.%7 %8)")
+				.arg(tile_filename)
+				.arg(zoom)
+				.arg(G_DIR_SEPARATOR_S)
+				.arg(ulm.x)
+				.arg(G_DIR_SEPARATOR_S)
+				.arg(flip_y)
+				.arg("png")
+				.arg(exists);
 #else
-			source = strdup(_("Source: Not available"));
+			source = QObject::tr("Source: Not available");
 #endif
 		} else if (map->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
 			xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, 17-ulm.scale);
-			source = g_strdup(path);
+			source = path;
 			tile_filename = g_strdup(path);
 		} else {
 			unsigned int max_path_len = strlen(this->cache_dir.toUtf8().constData()) + 40;
@@ -1978,7 +1985,7 @@ void LayerMap::tile_info_cb(void)
 				     NULL,
 				     &ulm, tile_filename, max_path_len,
 				     map->get_file_extension());
-			source = g_strconcat("Source: file://", tile_filename, NULL);
+			source = QObject::tr("Source: file://%1").arg(tile_filename);
 		}
 	} else {
 		unsigned int max_path_len = strlen(this->cache_dir.toUtf8().constData()) + 40;
@@ -1988,12 +1995,11 @@ void LayerMap::tile_info_cb(void)
 			     map->get_name(),
 			     &ulm, tile_filename, max_path_len,
 			     map->get_file_extension());
-		const QString src = QString("Source: http://%1%2").arg(map->get_server_hostname()).arg(map->get_server_path(&ulm));
-		source = strdup(src.toUtf8().constData());
+		source = QObject::tr("Source: http://%1%2").arg(map->get_server_hostname()).arg(map->get_server_path(&ulm));
 	}
 
 	QStringList items;
-	items.push_back(QString(source));
+	items.push_back(source);
 
 	/* kamilTODO: you have very similar code in LayerMapnik::tile_info. */
 
@@ -2007,14 +2013,14 @@ void LayerMap::tile_info_cb(void)
 		if (stat(tile_filename, &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
-			time_message = QString(tr("Tile File Timestamp: %1")).arg(time_buf);
+			time_message = tr("Tile File Timestamp: %1").arg(time_buf);
 		} else {
-			time_message = QString(tr("Tile File Timestamp: Not Available"));
+			time_message = tr("Tile File Timestamp: Not Available");
 		}
 
 	} else {
-		file_message = QString(tr("Tile File: %1 [Not Available]")).arg(tile_filename);
-		time_message = QString("");
+		file_message = tr("Tile File: %1 [Not Available]").arg(tile_filename);
+		time_message = "";
 	}
 
 	items.push_back(file_message);
@@ -2022,7 +2028,6 @@ void LayerMap::tile_info_cb(void)
 
 	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
 
-	free(source);
 	free(tile_filename);
 }
 
@@ -2411,18 +2416,15 @@ void LayerMap::download_all_cb(void)
 
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
-		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
-		Dialog::error(str, this->get_window());
-		free(str);
+		const QString msg = QObject::tr("You are not allowed to download more than %1 tiles in one go (requested %2)").arg(REALLY_LARGE_AMOUNT_OF_TILES).arg(map_count);
+		Dialog::error(msg, this->get_window());
 		return;
 	}
 
 	/* Confirm really want to do this. */
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
-		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
-		bool ans = Dialog::yes_or_no(str, this->get_window());
-		free(str);
-		if (!ans) {
+		const QString msg = QObject::tr("Do you really want to download %1 tiles?").arg(map_count);
+		if (false == Dialog::yes_or_no(msg, this->get_window())) {
 			return;
 		}
 	}

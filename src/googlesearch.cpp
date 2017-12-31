@@ -25,6 +25,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include <QDebug>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -73,7 +75,7 @@ bool GotoToolGoogle::parse_file_for_latlon(char * file_name, LatLon & lat_lon)
 
 	GMappedFile *mf;
 	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
-		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
+		qDebug() << QObject::tr("CRITICAL: couldn't map temp file");
 		return false;
 	}
 	size_t len = g_mapped_file_get_length(mf);

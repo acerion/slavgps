@@ -139,7 +139,7 @@ SGDateTimeButton::SGDateTimeButton(QWidget * parent_widget) : QPushButton(parent
 	this->setText("");
 
 	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(0), true, parent_widget);
-	this->dialog->setWindowTitle(QString("Edit Date/Time"));
+	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }
 
@@ -150,7 +150,7 @@ SGDateTimeButton::SGDateTimeButton(QWidget * parent_widget) : QPushButton(parent
 SGDateTimeButton::SGDateTimeButton(time_t date_time, QWidget * parent_widget) : QPushButton(parent_widget)
 {
 	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(date_time), true, parent_widget);
-	this->dialog->setWindowTitle(QString("Edit Date/Time"));
+	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }
 

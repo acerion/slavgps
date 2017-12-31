@@ -82,7 +82,7 @@ TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & 
 	items.push_back(SGLabelID(QObject::tr("1 hour"), 1));
 	items.push_back(SGLabelID(QObject::tr("1 day"), 2));
 	items.push_back(SGLabelID(QObject::tr("Custom (in minutes):"), 3));
-	this->radio_group = new SGRadioGroup(QString(""), &items, NULL); /* kamilTODO: delete this widget in destructor? */
+	this->radio_group = new SGRadioGroup("", &items, NULL); /* kamilTODO: delete this widget in destructor? */
 
 
 	/* TODO: add some kind of validation and indication for values out of range. */

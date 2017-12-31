@@ -24,6 +24,8 @@
 
 #include <cstdint>
 
+#include <QString>
+
 #include "coord.h"
 #include "mapcoord.h"
 #include "map_source.h"
@@ -41,7 +43,7 @@ namespace SlavGPS {
 	public:
 		MapSourceSlippy();
 		~MapSourceSlippy();
-		MapSourceSlippy(MapTypeID map_type, char const * label, char const * hostname, char const * path);
+		MapSourceSlippy(MapTypeID map_type, const QString & label, char const * hostname, char const * path);
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 

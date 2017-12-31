@@ -63,9 +63,9 @@ namespace SlavGPS {
 
 
 
-#ifndef _
-#define _(s) s
-#endif
+//#ifndef _
+//#define _(s) s
+//#endif
 
 
 #ifndef N_

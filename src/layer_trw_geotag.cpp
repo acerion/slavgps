@@ -706,10 +706,10 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 #ifdef K
 
 	GtkFileFilter *filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("JPG"));
+	gtk_file_filter_set_name(filter, QObject::tr("JPG"));
 	gtk_file_filter_add_mime_type(filter, "image/jpeg");
 
-	widgets->files = VIK_FILE_LIST(vik_file_list_new(_("Images"), filter));
+	widgets->files = VIK_FILE_LIST(vik_file_list_new(QObject::tr("Images"), filter));
 	widgets->trw = trw;
 	widgets->wp = wp;
 	widgets->trk = trk;

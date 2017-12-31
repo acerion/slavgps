@@ -106,13 +106,13 @@ void SlavGPS::osm_init(void)
 	hot_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
 
 	/* No cache needed for this type. */
-	MapSource * direct_type = new MapSourceSlippy(MAP_ID_OSM_ON_DISK,_("On Disk OSM Tile Format"), NULL, NULL);
+	MapSource * direct_type = new MapSourceSlippy(MAP_ID_OSM_ON_DISK, QObject::tr("On Disk OSM Tile Format"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	direct_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
 	direct_type->is_direct_file_access_flag = true;
 
 	/* No cache needed for this type. */
-	MapSource * mbtiles_type = new MapSourceSlippy(MAP_ID_MBTILES, _("MBTiles File"), NULL, NULL);
+	MapSource * mbtiles_type = new MapSourceSlippy(MAP_ID_MBTILES, QObject::tr("MBTiles File"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	mbtiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
 	mbtiles_type->is_direct_file_access_flag = true;
@@ -120,7 +120,7 @@ void SlavGPS::osm_init(void)
 
 
 	/* No cache needed for this type. */
-	MapSource * metatiles_type = new MapSourceSlippy(MAP_ID_OSM_METATILES, _("OSM Metatiles"), NULL, NULL);
+	MapSource * metatiles_type = new MapSourceSlippy(MAP_ID_OSM_METATILES, QObject::tr("OSM Metatiles"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	metatiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
 	metatiles_type->is_direct_file_access_flag = true;

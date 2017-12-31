@@ -130,7 +130,7 @@ static std::list<Geoname *> get_entries_from_file(char * file_name)
 
 	GMappedFile * mf = NULL;
 	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
-		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
+		qDebug() << QObject::tr("CRITICAL: couldn't map temp file");
 		return found_places;
 	}
 	size_t len = g_mapped_file_get_length(mf);

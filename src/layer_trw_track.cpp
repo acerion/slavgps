@@ -3083,18 +3083,22 @@ void Track::rezoom_to_show_full_cb(void)
 QString Track::get_tooltip(void)
 {
 	/* Could be a better way of handling strings - but this works. */
-	char time_buf1[20] = { 0 };
-	char time_buf2[20] = { 0 };
+	char timestamp_string[20] = { 0 };
+	QString duration_string;
 
-	static char tmp_buf[100];
+	QString result; static char tmp_buf[100];
+
 	/* Compact info: Short date eg (11/20/99), duration and length.
 	   Hopefully these are the things that are most useful and so promoted into the tooltip. */
 	if (!this->empty() && this->get_tp_first()->has_timestamp) {
 		/* %x     The preferred date representation for the current locale without the time. */
-		strftime(time_buf1, sizeof(time_buf1), "%x: ", gmtime(&(this->get_tp_first()->timestamp)));
+		strftime(timestamp_string, sizeof(timestamp_string), "%x: ", gmtime(&(this->get_tp_first()->timestamp)));
 		time_t dur = this->get_duration(true);
 		if (dur > 0) {
-			snprintf(time_buf2, sizeof(time_buf2), _("- %d:%02d hrs:mins"), (int)(dur/3600), (int)round(dur/60.0)%60);
+			/* TODO: perhaps we could have a wrapper for code that creates duration string. */
+			const int duration1 = (int) (dur/3600);
+			const int duration2 = (int) (((int) round(dur / 60.0)) % 60);
+			duration_string = QObject::tr("- %1:%2 hrs:mins").arg(duration1).arg(duration2, 2, 10, (QChar) '0');
 		}
 	}
 	/* Get length and consider the appropriate distance units. */
@@ -3102,19 +3106,19 @@ QString Track::get_tooltip(void)
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
+		result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(tr_len/1000.0, 0, 'f', 1).arg(duration_string);
 		break;
 	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
+		result = QObject::tr("%1%2 miles %3").arg(timestamp_string).arg(VIK_METERS_TO_MILES(tr_len), 0, 'f', 1).arg(duration_string);
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
+		result = QObject::tr("%1%2 NM %3").arg(timestamp_string).arg(VIK_METERS_TO_NAUTICAL_MILES(tr_len), 0, 'f', 1).arg(duration_string);
 		break;
 	default:
 		break;
 	}
 
-	return QString(tmp_buf);
+	return result;
 }
 
 

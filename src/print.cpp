@@ -145,7 +145,7 @@ void SlavGPS::a_print(Window * parent, Viewport * viewport)
 	QObject::connect(print_oper, SIGNAL("draw_page"), &print_data, SLOT (draw_page));
 	QObject::connect(print_oper, SIGNAL("create-custom-widget"), &print_data, SLOT (create_custom_widget_cb));
 
-	gtk_print_operation_set_custom_tab_label(print_oper, _("Image Settings"));
+	gtk_print_operation_set_custom_tab_label(print_oper, QObject::tr("Image Settings"));
 
 	res = gtk_print_operation_run(print_oper,
 				      GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
@@ -566,7 +566,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	GtkWidget * layout = NULL;
 
 #ifdef K
-	QObject::connect(print_data->operation, _("done"), info, SLOT (custom_widgets_cleanup));
+	QObject::connect(print_data->operation, QObject::tr("done"), info, SLOT (custom_widgets_cleanup));
 
 	info->print_data = print_data;
 
@@ -594,8 +594,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_widget_show(vbox);
 
 	/* Page Size */
-	GtkWidget * button = gtk_button_new_with_mnemonic(_("_Adjust Page Size "
-						"and Orientation"));
+	GtkWidget * button = gtk_button_new_with_mnemonic(QObject::tr("&Adjust Page Size and Orientation"));
 	main_vbox->addWidget(button);
 	QObject::connect(button, SIGNAL (triggered(bool)), info, SLOT (page_setup_cb));
 	gtk_widget_show(button);

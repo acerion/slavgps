@@ -752,7 +752,7 @@ void LayerGPS::add_children_to_tree(void)
 		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->add_tree_item(this->index, trw, _(trw_names[ix]));
+		this->tree_view->add_tree_item(this->index, trw, QObject::tr(trw_names[ix]));
 
 		this->tree_view->set_tree_item_timestamp(trw->index, trw->get_timestamp());
 
@@ -848,6 +848,7 @@ void GPSSession::set_total_count(int cnt)
 
 
 
+/* Compare this function with set_current_count(int cnt, AcquireProcess * acquiring) */
 void GPSSession::set_current_count(int cnt)
 {
 	this->mutex.lock();
@@ -1214,7 +1215,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		   Thus this maintains the older code in built restriction. */
 		if (!sess->trw->uniquify(panel)) {
 			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
-						  _("Warning - GPS Upload items may overwrite each other"));
+									      QObject::tr("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
 

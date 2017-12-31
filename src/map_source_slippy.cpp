@@ -110,11 +110,11 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char const * hostname, char const * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, const QString & label_, char const * hostname, char const * path_format_)
 {
 	map_type = map_type_;
 	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", map_type_, map_type);
-	label = g_strdup(label_);
+	label = g_strdup(label_.toUtf8().constData());
 	this->server_hostname = QString(hostname);
 	server_path_format = g_strdup(path_format_);
 }

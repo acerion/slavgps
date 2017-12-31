@@ -476,34 +476,34 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 	column_runner = 0;
 	GtkTreeViewColumn *column;
 
-	column = gtk_tree_view_column_new_with_attributes (_("Name"), renderer, "text", column_runner, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Name"), renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes (_("Description"), renderer, "text", column_runner, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Description"), renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes (_("Time"), renderer, "text", column_runner, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Time"), renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes (_("Lat/Lon"), renderer, "text", column_runner, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Lat/Lon"), renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes (_("Privacy"), renderer, "text", column_runner, NULL); // AKA Visibility
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Privacy"), renderer, "text", column_runner, NULL); // AKA Visibility
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new ();
 	g_object_set (G_OBJECT (renderer_toggle), "activatable", false, NULL); // No user action - value is just for display
 	column_runner++;
-	column = gtk_tree_view_column_new_with_attributes (_("Within Current View"), renderer_toggle, "active", column_runner, NULL);
+	column = gtk_tree_view_column_new_with_attributes(QObject::tr("Within Current View"), renderer_toggle, "active", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 

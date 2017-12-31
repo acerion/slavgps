@@ -651,7 +651,7 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 {
 #ifdef K
 	char *s_dest = gtk_tree_path_to_string(path);
-	fprintf(stdout, _("delete data from %s\n"), s_dest);
+	fprintf(stdout, QObject::tr("delete data from %1\n").arg(s_dest);
 	free(s_dest);
 #endif
 	return false;

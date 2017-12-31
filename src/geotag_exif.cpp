@@ -661,7 +661,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 		e->size = sizeof (char) * e->components;
 		e->data = malloc(e->size);
 		if (!e->data) {
-			fprintf(stderr, _("WARNING: Not enough memory.\n"));
+			qDebug() << QObject::tr("WARNING: Not enough memory.");
 			return;
 		}
 		if (e->tag == EXIF_TAG_USER_COMMENT) {
@@ -679,7 +679,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 	 * Make sure we can handle this entry.
 	 */
 	if ((e->components == 0) && *set_value) {
-		fprintf(stderr, _("WARNING: Setting a value for this tag is unsupported!\n"));
+		qDebug() << QObject::tr("WARNING: Setting a value for this tag is unsupported!");
 		return;
 	}
 
@@ -699,11 +699,11 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 
 		if (use_string) {
 			if (!value_p) {
-				fprintf(stderr, _("WARNING: Too few components specified (need %d, found %d)\n"), numcomponents, i);
+				qDebug() << QObject::tr("WARNING: Too few components specified (need %1, found %2)").arg(numcomponents).arg(i);
 				return;
 			}
 			if (!isdigit(*value_p) && (*value_p != '+') && (*value_p != '-')) {
-				fprintf(stderr, _("WARNING: Numeric value expected\n"));
+				qDebug() << QObject::tr("WARNING: Numeric value expected");
 				return;
 			}
 		}
@@ -711,7 +711,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 		s = exif_format_get_size(e->format);
 		switch (e->format) {
 		case EXIF_FORMAT_ASCII:
-			fprintf(stderr, _("WARNING: This shouldn't happen!\n"));
+			qDebug() << QObject::tr("WARNING: This shouldn't happen!");
 			return;
 			break;
 		case EXIF_FORMAT_SHORT:
@@ -781,7 +781,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 		case EXIF_FORMAT_DOUBLE:
 		case EXIF_FORMAT_SRATIONAL:
 		default:
-			fprintf(stderr, _("WARNING: Not yet implemented!\n"));
+			qDebug() << QObject::tr("WARNING: Not yet implemented!");
 			return;
 		}
 
@@ -794,7 +794,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 
 	if (use_string) {
 		if (value_p) {
-			fprintf(stderr, _("WARNING: Warning; Too many components specified!\n"));
+			qDebug() << QObject::tr("WARNING: Warning; Too many components specified!");
 		}
 	}
 }
