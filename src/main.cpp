@@ -30,6 +30,7 @@
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layer_map.h"
+#include "layer_georef.h"
 #include "layer_interface.h"
 #include "layers_panel.h"
 #include "dem_cache.h"
@@ -190,9 +191,7 @@ int main(int argc, char ** argv)
 
 	/* Init modules/plugins. */
 	modules_init();
-#ifdef K
-	vik_georef_layer_init();
-#endif
+	layer_georef_init();
 	layer_map_init();
 	map_cache_init();
 	a_background_init();

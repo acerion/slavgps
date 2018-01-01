@@ -33,14 +33,22 @@
 
 
 
-
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING)
-#undef VIK_CONFIG_REALTIME_GPS_TRACKING
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#define REALTIME_GPS_TRACKING_ENABLED 1
+#else
+#define REALTIME_GPS_TRACKING_ENABLED 0
 #endif
 
-#if defined (GPSD_API_MAJOR_VERSION)
-#undef GPSD_API_MAJOR_VERSION
+#ifdef REALTIME_GPS_TRACKING_ENABLED
+#undef REALTIME_GPS_TRACKING_ENABLED
 #endif
+#define REALTIME_GPS_TRACKING_ENABLED 1
+
+
+#ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
+#include <gps.h>
+#endif
+
 
 
 
@@ -90,7 +98,7 @@ namespace SlavGPS {
 
 
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	typedef struct {
 		struct gps_data_t gpsd;
 		LayerGPS * gps_layer;
@@ -100,19 +108,19 @@ namespace SlavGPS {
 		struct gps_fix_t fix;
 		int satellites_used;
 		bool dirty;   /* Needs to be saved. */
-	} GpsFix;
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+	} GPSFix;
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 
 
 
 	enum {
-		TRW_DOWNLOAD = 0,
-		TRW_UPLOAD,
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-		TRW_REALTIME,
+		GPS_CHILD_LAYER_TRW_DOWNLOAD = 0,
+		GPS_CHILD_LAYER_TRW_UPLOAD,
+#if REALTIME_GPS_TRACKING_ENABLED
+		GPS_CHILD_LAYER_TRW_REALTIME,
 #endif
-		NUM_TRW
+		GPS_CHILD_LAYER_MAX
 	};
 
 
@@ -156,18 +164,18 @@ namespace SlavGPS {
 		void set_coord_mode(CoordMode mode);
 
 
-		LayerTRW * trw_children[NUM_TRW] = { 0 };
+		LayerTRW * trw_children[GPS_CHILD_LAYER_MAX] = { 0 };
 		int cur_read_child = 0;   /* Used only for reading file. */
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 		bool rt_gpsd_connect(bool ask_if_failed);
 		void rt_gpsd_disconnect();
 
 		VglGpsd * vgpsd = NULL;
-		bool realtime_tracking;  /* Set/reset only by the callback. */
+		bool realtime_tracking_in_progress;  /* Set/reset only by the callback. */
 		bool first_realtime_trackpoint = false;
-		GpsFix realtime_fix;
-		GpsFix last_fix;
+		GPSFix realtime_fix;
+		GPSFix last_fix;
 
 		Track * realtime_track = NULL;
 
@@ -175,13 +183,11 @@ namespace SlavGPS {
 		unsigned int realtime_io_watch_id = 0;
 		unsigned int realtime_retry_timer = 0;
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 		QPen realtime_track_pen;
 		QPen realtime_track_bg_pen;
 		QPen realtime_track_pt_pen;
 		QPen realtime_track_pt1_pen;
 		QPen realtime_track_pt2_pen;
-#endif
 
 		/* Params. */
 		QString gpsd_host;
@@ -193,7 +199,7 @@ namespace SlavGPS {
 		bool realtime_update_statusbar;
 		Trackpoint * tp = NULL;
 		Trackpoint * tp_prev = NULL;
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 		QString protocol;
 		QString serial_port;
@@ -211,7 +217,7 @@ namespace SlavGPS {
 		void gps_empty_all_cb(void);
 		void gps_empty_upload_cb(void);
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 		void gps_start_stop_tracking_cb(void);
 		void gps_empty_realtime_cb(void);
 #endif

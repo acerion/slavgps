@@ -55,7 +55,7 @@ namespace SlavGPS {
 
 
 
-	void vik_georef_layer_init(void);
+	void layer_georef_init(void);
 
 
 

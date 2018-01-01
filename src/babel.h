@@ -113,7 +113,7 @@ namespace SlavGPS {
 		~BabelDevice();
 
 		BabelMode mode;
-		QString identifier;  /* gpsbabel's identifier of the device. */
+		QString identifier;  /* gpsbabel's identifier of the device (is it a name of protocol as well?). */
 		QString label;       /* Human readable label. */
 	};
 

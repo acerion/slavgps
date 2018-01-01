@@ -37,12 +37,12 @@
 #endif
 
 #include <QRunnable>
+#include <QDebug>
 
 //#include <glib/gstdio.h>
 //#include <glib/gprintf.h>
 
 #ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
-#include <gps.h>
 #include "vikutils.h"
 #endif
 
@@ -102,6 +102,17 @@ static std::vector<SGLabelID> protocols_args = {
 
 
 
+static std::vector<SGLabelID> trw_names = {
+	SGLabelID(QObject::tr("GPS Download"),          GPS_CHILD_LAYER_TRW_DOWNLOAD),
+	SGLabelID(QObject::tr("GPS Upload"),            GPS_CHILD_LAYER_TRW_UPLOAD),
+#if REALTIME_GPS_TRACKING_ENABLED
+	SGLabelID(QObject::tr("GPS Realtime Tracking"), GPS_CHILD_LAYER_TRW_REALTIME)
+#endif
+};
+
+
+
+
 #ifdef WINDOWS
 static std::vector<SGLabelID> params_ports = {
 	SGLabelID("com1", 0),
@@ -120,9 +131,7 @@ static std::vector<SGLabelID> params_ports = {
 
 
 
-/* NUM_PORTS not actually used. */
-/* #define NUM_PORTS (sizeof(params_ports)/sizeof(params_ports[0]) - 1) */
-/* Compatibility with previous versions. */
+/* For compatibility with previous versions. */
 #ifdef WINDOWS
 static std::vector<SGLabelID> old_params_ports = {
 	SGLabelID("com1", 0),
@@ -173,8 +182,8 @@ public:
 	QLabel * progress_label = NULL;
 	GPSTransferType progress_type = GPSTransferType::WPT;
 	Viewport * viewport = NULL;
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	bool realtime_tracking = false;
+#if REALTIME_GPS_TRACKING_ENABLED
+	bool realtime_tracking_in_progress = false;
 #endif
 };
 
@@ -188,7 +197,7 @@ enum {
 
 static const char * g_params_groups[] = {
 	"Data Mode",
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	"Realtime Tracking Mode",
 #endif
 };
@@ -223,17 +232,17 @@ static SGVariant gps_port_default(void)
 
 
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-static const char * params_vehicle_position[] = {
-	N_("Keep vehicle at center"),
-	N_("Keep vehicle on screen"),
-	N_("Disable"),
-	NULL
-};
+#if REALTIME_GPS_TRACKING_ENABLED
+
 enum {
 	VEHICLE_POSITION_CENTERED = 0,
 	VEHICLE_POSITION_ON_SCREEN,
 	VEHICLE_POSITION_NONE,
+};
+static std::vector<SGLabelID> params_vehicle_position = {
+	SGLabelID(QObject::tr("Keep vehicle at center"), VEHICLE_POSITION_CENTERED),
+	SGLabelID(QObject::tr("Keep vehicle on screen"), VEHICLE_POSITION_ON_SCREEN),
+	SGLabelID(QObject::tr("Disable"),                VEHICLE_POSITION_NONE)
 };
 
 
@@ -258,7 +267,7 @@ enum {
 	PARAM_UPLOAD_ROUTES,
 	PARAM_DOWNLOAD_WAYPOINTS,
 	PARAM_UPLOAD_WAYPOINTS,
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	PARAM_REALTIME_REC,
 	PARAM_REALTIME_CENTER_START,
 	PARAM_VEHICLE_POSITION,
@@ -266,7 +275,7 @@ enum {
 	PARAM_GPSD_HOST,
 	PARAM_GPSD_PORT,
 	PARAM_GPSD_RETRY_INTERVAL,
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 	NUM_PARAMS
 };
 
@@ -285,15 +294,15 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	{ PARAM_UPLOAD_ROUTES,              NULL, "gps_upload_routes",         SGVariantType::BOOLEAN, GROUP_DATA_MODE,     QObject::tr("Upload Routes:"),                    WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_DOWNLOAD_WAYPOINTS,         NULL, "gps_download_waypoints",    SGVariantType::BOOLEAN, GROUP_DATA_MODE,     QObject::tr("Download Waypoints:"),               WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_UPLOAD_WAYPOINTS,           NULL, "gps_upload_waypoints",      SGVariantType::BOOLEAN, GROUP_DATA_MODE,     QObject::tr("Upload Waypoints:"),                 WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	{ PARAM_REALTIME_REC,               NULL, "record_tracking",           SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, QObject::tr("Recording tracks"),                  WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_REALTIME_CENTER_START,      NULL, "center_start_tracking",     SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, QObject::tr("Jump to current position on start"), WidgetType::CHECKBUTTON,   NULL,                    sg_variant_false,            NULL, NULL },
-	{ PARAM_VEHICLE_POSITION,           NULL, "moving_map_method",         SGVariantType::INT,     GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::RADIOGROUP,    params_vehicle_position, moving_map_method_default,   NULL, NULL },
+	{ PARAM_VEHICLE_POSITION,           NULL, "moving_map_method",         SGVariantType::INT,     GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::RADIOGROUP,    &params_vehicle_position,moving_map_method_default,   NULL, NULL },
 	{ PARAM_REALTIME_UPDATE_STATUSBAR,  NULL, "realtime_update_statusbar", SGVariantType::BOOLEAN, GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CHECKBUTTON,   NULL,                    sg_variant_true,             NULL, N_("Display information in the statusbar on GPS updates") },
 	{ PARAM_GPSD_HOST,                  NULL, "gpsd_host",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::ENTRY,         NULL,                    gpsd_host_default,           NULL, NULL },
 	{ PARAM_GPSD_PORT,                  NULL, "gpsd_port",                 SGVariantType::STRING,  GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::ENTRY,         NULL,                    gpsd_port_default,           NULL, NULL },
 	{ PARAM_GPSD_RETRY_INTERVAL,        NULL, "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,         NULL,                    gpsd_retry_interval_default, NULL, NULL },
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 	{ NUM_PARAMS,                       NULL, NULL,                        SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                                  WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
 };
@@ -323,8 +332,8 @@ LayerGPSInterface vik_gps_layer_interface;
 
 LayerGPSInterface::LayerGPSInterface()
 {
-	this->parameters_c = gps_layer_param_specs;       /* Parameters. */
-	this->parameter_groups = g_params_groups; /* Parameter groups. */
+	this->parameters_c = gps_layer_param_specs; /* Parameters. */
+	this->parameter_groups = g_params_groups;   /* Parameter groups. */
 
 	this->fixed_layer_type_string = "GPS"; /* Non-translatable. */
 
@@ -341,37 +350,21 @@ LayerGPSInterface::LayerGPSInterface()
 
 
 
-static char * trw_names[] = {
-	(char *) N_("GPS Download"),
-	(char *) N_("GPS Upload"),
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	(char *) N_("GPS Realtime Tracking"),
-#endif
-};
-
-
-
-
 /**
- * Overwrite the static setup with dynamically generated GPS Babel device list.
- */
+   Overwrite the static setup with dynamically generated GPS Babel device list.
+*/
 void SlavGPS::layer_gps_init(void)
 {
-	int new_proto = 0;
-#ifdef K
-	/* +1 for luck (i.e the NULL terminator) */
-	char **new_protocols = (char **) g_malloc_n(1 + Babel::devices.size(), sizeof(void *));
+	protocols_args.clear();
 
+	int i = 0;
 	for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
-		/* Should be using label property but use name for now
-		   thus don't need to mess around converting label to name later on. */
-		new_protocols[new_proto++] = (*iter)->name;
-		qDebug() << "II:" PREFIX << "new protocol:" << (*iter)->name;
+		/* Should be using 'label' property but use
+		   'identifier' for now thus don't need to mess around
+		   converting 'label' to 'identifier' later on. */
+		protocols_args.push_back(SGLabelID((*iter)->identifier, i));
+		qDebug() << "II:" PREFIX << "new protocol:" << (*iter)->identifier;
 	}
-	new_protocols[new_proto] = NULL;
-
-	vik_gps_layer_interface.params[PARAM_PROTOCOL].widget_data = new_protocols;
-#endif
 }
 
 
@@ -379,7 +372,7 @@ void SlavGPS::layer_gps_init(void)
 
 QString LayerGPS::get_tooltip()
 {
-	return this->protocol;
+	return QObject::tr("Protocol: %1").arg(this->protocol);
 }
 
 
@@ -402,7 +395,7 @@ void LayerGPS::marshall(uint8_t ** data, size_t * data_len)
 	alm_append(ld, ll);
 	free(ld);
 
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		Layer::marshall(this->trw_children[i], &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
@@ -433,7 +426,7 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 	alm_next;
 
 	int i = 0;
-	while (data_len > 0 && i < NUM_TRW) {
+	while (data_len > 0 && i < GPS_CHILD_LAYER_MAX) {
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
@@ -452,6 +445,13 @@ Layer * LayerGPSInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 
 
 
+/*
+  Extract an index value from the beginning of a string.
+  Index can't be equal to or larger than limit.
+
+  Return index value on success.
+  Return -1 on failure.
+*/
 static int get_legacy_index(const QString & string, int limit)
 {
 	int idx = -1;
@@ -520,7 +520,7 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_UPLOAD_WAYPOINTS:
 		this->upload_waypoints = data.val_bool;
 		break;
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	case PARAM_GPSD_HOST:
 		if (!data.val_string.isEmpty()) {
 			this->gpsd_host = data.val_string;
@@ -546,7 +546,7 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		this->realtime_update_statusbar = data.val_bool;
 		break;
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 	default:
 		qDebug() << "WW: Layer GPS: Set Param Value: unknown parameter" << id;
 	}
@@ -585,7 +585,7 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_UPLOAD_WAYPOINTS:
 		rv = SGVariant(this->upload_waypoints);
 		break;
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	case PARAM_GPSD_HOST:
 		rv = SGVariant(this->gpsd_host);
 		break;
@@ -607,7 +607,7 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		rv = SGVariant(this->realtime_update_statusbar); /* kamilkamil: in viking code there is a mismatch of data types. */
 		break;
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 	default:
 		qDebug() << "WW:" PREFIX << "unknown parameter" << (int) id;
 	}
@@ -622,7 +622,7 @@ void LayerGPS::draw(Viewport * viewport)
 {
 	Layer * trigger = viewport->get_trigger();
 
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
 		if (trw->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
@@ -636,8 +636,8 @@ void LayerGPS::draw(Viewport * viewport)
 			trw->draw_if_visible(viewport);
 		}
 	}
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	if (this->realtime_tracking) {
+#if REALTIME_GPS_TRACKING_ENABLED
+	if (this->realtime_tracking_in_progress) {
 		if (this->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
@@ -650,7 +650,7 @@ void LayerGPS::draw(Viewport * viewport)
 			this->realtime_tracking_draw(viewport);
 		}
 	}
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 }
 
 
@@ -658,7 +658,7 @@ void LayerGPS::draw(Viewport * viewport)
 
 void LayerGPS::change_coord_mode(CoordMode mode)
 {
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->change_coord_mode(mode);
 	}
 }
@@ -672,45 +672,45 @@ void LayerGPS::add_menu_items(QMenu & menu)
 
 
 	action = new QAction(QObject::tr("&Upload to GPS"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_UP"));
+	action->setIcon(QIcon::fromTheme("go-up"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_upload_cb(void)));
 	menu.addAction(action);
 
 
 	action = new QAction(QObject::tr("Download from &GPS"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_GO_DOWN"));
+	action->setIcon(QIcon::fromTheme("go-down"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_download_cb(void)));
 	menu.addAction(action);
 
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	action = new QAction(this->realtime_tracking ? QObject::tr("&Stop Realtime Tracking") : QObject::tr("&Start Realtime Tracking"), this);
-	action->setIcon(this->realtime_tracking ? QIcon::fromTheme("GTK_STOCK_MEDIA_STOP") : QIcon::fromTheme("GTK_STOCK_MEDIA_PLAY"));
+#if REALTIME_GPS_TRACKING_ENABLED
+	action = new QAction(this->realtime_tracking_in_progress ? QObject::tr("&Stop Realtime Tracking") : QObject::tr("&Start Realtime Tracking"), this);
+	action->setIcon(this->realtime_tracking_in_progress ? QIcon::fromTheme("media-playback-stop") : QIcon::fromTheme("media-playback-start"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_start_stop_tracking_cb()));
 	menu.addAction(action);
 
 
 	action = new QAction(QObject::tr("Empty &Realtime"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	action->setIcon(QIcon::fromTheme("edit-clear"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_realtime_cb(void)));
 	menu.addAction(action);
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 
 	action = new QAction(QObject::tr("E&mpty Upload"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	action->setIcon(QIcon::fromTheme("edit-clear"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_upload_cb(void)));
 	menu.addAction(action);
 
 
 	action = new QAction(QObject::tr("&Empty Download"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	action->setIcon(QIcon::fromTheme("edit-clear"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_download_cb(void)));
 	menu.addAction(action);
 
 
 	action = new QAction(QObject::tr("Empty &All"), this);
-	action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
+	action->setIcon(QIcon::fromTheme("edit-clear"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_all_cb()));
 	menu.addAction(action);
 }
@@ -720,15 +720,15 @@ void LayerGPS::add_menu_items(QMenu & menu)
 
 LayerGPS::~LayerGPS()
 {
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		if (this->tree_view) {
 			//this->disconnect_layer_signal(this->trw_children[i]);
 		}
 		this->trw_children[i]->unref();
 	}
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	this->rt_gpsd_disconnect();
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 }
 
 
@@ -746,19 +746,17 @@ void LayerGPS::add_children_to_tree(void)
 		return;
 	}
 
-	for (int ix = 0; ix < NUM_TRW; ix++) {
+	for (int ix = 0; ix < GPS_CHILD_LAYER_MAX; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
 
 		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->add_tree_item(this->index, trw, QObject::tr(trw_names[ix]));
+		this->tree_view->add_tree_item(this->index, trw, trw_names[ix].label);
 
 		this->tree_view->set_tree_item_timestamp(trw->index, trw->get_timestamp());
 
-#ifdef K
-		QObject::connect(trw, SIGNAL("update"), (Layer *) this, SLOT (Layer::child_layer_changed_cb(const QString &));
-#endif
+		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 	}
 }
 
@@ -768,7 +766,7 @@ void LayerGPS::add_children_to_tree(void)
 std::list<Layer const * > * LayerGPS::get_children()
 {
 	std::list<Layer const * > * children_ = new std::list<Layer const *>;
-	for (int i = NUM_TRW - 1; i >= 0; i--) {
+	for (int i = GPS_CHILD_LAYER_MAX - 1; i >= 0; i--) {
 		children_->push_front((Layer const *) this->trw_children[i]);
 	}
 	return children_;
@@ -779,10 +777,10 @@ std::list<Layer const * > * LayerGPS::get_children()
 
 LayerTRW * LayerGPS::get_a_child()
 {
-	assert ((this->cur_read_child >= 0) && (this->cur_read_child < NUM_TRW));
+	assert ((this->cur_read_child >= 0) && (this->cur_read_child < GPS_CHILD_LAYER_MAX));
 
 	LayerTRW * trw = this->trw_children[this->cur_read_child];
-	if (++(this->cur_read_child) >= NUM_TRW) {
+	if (++(this->cur_read_child) >= GPS_CHILD_LAYER_MAX) {
 		this->cur_read_child = 0;
 	}
 	return(trw);
@@ -1145,8 +1143,8 @@ void GPSSession::run(void)
 			this->dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 
 			/* Do not change the view if we are following the current GPS position. */
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-			if (!this->realtime_tracking)
+#if REALTIME_GPS_TRACKING_ENABLED
+			if (!this->realtime_tracking_in_progress)
 #endif
 			{
 				if (this->viewport && this->direction == GPSDirection::DOWN) {
@@ -1219,8 +1217,8 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		}
 	}
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	sess->realtime_tracking = tracking;
+#if REALTIME_GPS_TRACKING_ENABLED
+	sess->realtime_tracking_in_progress = tracking;
 #endif
 
 	const QString tracks_arg = do_tracks ? "-t" : "";
@@ -1317,7 +1315,7 @@ void LayerGPS::gps_upload_cb(void)
 {
 	LayersPanel * panel = g_tree->tree_get_items_tree();
 	Viewport * viewport = this->get_window()->get_viewport();
-	LayerTRW * trw = this->trw_children[TRW_UPLOAD];
+	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
@@ -1339,7 +1337,7 @@ void LayerGPS::gps_upload_cb(void)
 void LayerGPS::gps_download_cb(void) /* Slot. */
 {
 	Viewport * viewport = this->get_window()->get_viewport();
-	LayerTRW * trw = this->trw_children[TRW_DOWNLOAD];
+	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
@@ -1347,8 +1345,8 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 			      this->protocol,
 			      this->serial_port,
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-			      this->realtime_tracking,
+#if REALTIME_GPS_TRACKING_ENABLED
+			      this->realtime_tracking_in_progress,
 #else
 			      false,
 #endif
@@ -1371,9 +1369,9 @@ void LayerGPS::gps_empty_upload_cb(void)
 		return;
 	}
 
-	this->trw_children[TRW_UPLOAD]->delete_all_waypoints();
-	this->trw_children[TRW_UPLOAD]->delete_all_tracks();
-	this->trw_children[TRW_UPLOAD]->delete_all_routes();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_routes();
 }
 
 
@@ -1386,15 +1384,15 @@ void LayerGPS::gps_empty_download_cb(void)
 		return;
 	}
 
-	this->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
-	this->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
-	this->trw_children[TRW_DOWNLOAD]->delete_all_routes();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_routes();
 }
 
 
 
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 void LayerGPS::gps_empty_realtime_cb(void)
 {
 	/* Get confirmation from the user. */
@@ -1402,8 +1400,8 @@ void LayerGPS::gps_empty_realtime_cb(void)
 		return;
 	}
 
-	this->trw_children[TRW_REALTIME]->delete_all_waypoints();
-	this->trw_children[TRW_REALTIME]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_tracks();
 }
 #endif
 
@@ -1417,22 +1415,22 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 		return;
 	}
 
-	this->trw_children[TRW_UPLOAD]->delete_all_waypoints();
-	this->trw_children[TRW_UPLOAD]->delete_all_tracks();
-	this->trw_children[TRW_UPLOAD]->delete_all_routes();
-	this->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
-	this->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
-	this->trw_children[TRW_DOWNLOAD]->delete_all_routes();
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	this->trw_children[TRW_REALTIME]->delete_all_waypoints();
-	this->trw_children[TRW_REALTIME]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD]->delete_all_routes();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_tracks();
+	this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD]->delete_all_routes();
+#if REALTIME_GPS_TRACKING_ENABLED
+	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_waypoints();
+	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_tracks();
 #endif
 }
 
 
 
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 {
 	const Coord coord_nw = viewport->screen_pos_to_coord(-20, -20);
@@ -1536,7 +1534,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			tp_->fix_mode = (GPSFixMode) this->realtime_fix.fix.mode;
 
 			tp_->coord = Coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude),
-					   this->trw_children[TRW_REALTIME]->get_coord_mode());
+					   this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
 
 			this->realtime_track->add_trackpoint(tp_, true); /* Ensure bounds is recalculated. */
 			this->realtime_fix.dirty = false;
@@ -1573,8 +1571,8 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	bool update_all = false;
 	LayerGPS * layer = vgpsd->gps_layer;
 
-	if (!layer->realtime_tracking) {
-		qDeug() << "WW:" PREFIX << "receiving GPS data while not in realtime mode";
+	if (!layer->realtime_tracking_in_progress) {
+		qDebug() << "WW:" PREFIX << "receiving GPS data while not in realtime mode";
 		return;
 	}
 
@@ -1589,7 +1587,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		layer->realtime_fix.dirty = true;
 
 		const Coord vehicle_coord(LatLon(layer->realtime_fix.fix.latitude, layer->realtime_fix.fix.longitude),
-					  layer->trw_children[TRW_REALTIME]->get_coord_mode());
+					  layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {
@@ -1633,7 +1631,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		if (update_all) {
 			layer->emit_layer_changed();
 		} else {
-			layer->trw_children[TRW_REALTIME]->emit_layer_changed();
+			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_layer_changed();
 		}
 	}
 }
@@ -1644,7 +1642,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * gps_layer)
 {
 	LayerGPS * layer = (LayerGPS *) gps_layer;
-#ifdef K
+
 	if (condition == G_IO_IN) {
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
 		if (!gps_poll(&layer->vgpsd->gpsd)) {
@@ -1662,7 +1660,7 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 			layer->rt_gpsd_connect(false);
 		}
 	}
-#endif
+
 	return false; /* No further calling. */
 }
 
@@ -1678,7 +1676,7 @@ static QString make_track_name(LayerTRW * trw)
 	int i = 2;
 
 	while (trw->get_tracks_node().find_track_by_name(name) != NULL) {
-		name = QString("%1#%2").arg(basename).arg(i);
+		name = QString("%1#%2").arg(base_name).arg(i);
 		i++;
 	}
 
@@ -1691,7 +1689,7 @@ static QString make_track_name(LayerTRW * trw)
 static bool rt_gpsd_try_connect(void * gps_layer)
 {
 	LayerGPS * layer = (LayerGPS *) gps_layer;
-#ifdef K
+
 #if GPSD_API_MAJOR_VERSION == 3
 	struct gps_data_t *gpsd = gps_open(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData());
 
@@ -1722,7 +1720,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 	layer->realtime_fix.fix.speed = layer->last_fix.fix.speed = NAN;
 
 	if (layer->realtime_record) {
-		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
+		LayerTRW * trw = layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
 		layer->realtime_track = new Track(false);
 		layer->realtime_track->visible = true;
 		layer->realtime_track->set_name(make_track_name(trw));
@@ -1743,7 +1741,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 #if GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 	gps_stream(&layer->vgpsd->gpsd, WATCH_ENABLE, NULL);
 #endif
-#endif
+
 	return false;  /* No longer called by timeout. */
 }
 
@@ -1800,24 +1798,25 @@ void LayerGPS::rt_gpsd_disconnect()
 		g_io_channel_shutdown(this->realtime_io_channel, false, &error);
 		this->realtime_io_channel = NULL;
 	}
-#ifdef K
+
 	if (this->vgpsd) {
 #if GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 		gps_stream(&this->vgpsd->gpsd, WATCH_DISABLE, NULL);
 #endif
 		gps_close(&this->vgpsd->gpsd);
+
 #if GPSD_API_MAJOR_VERSION == 3
 		free(this->vgpsd);
 #elif GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 		free(this->vgpsd);
 #endif
+
 		this->vgpsd = NULL;
 	}
-#endif
 
 	if (this->realtime_record && this->realtime_track) {
 		if (!this->realtime_track->empty()) {
-			this->trw_children[TRW_REALTIME]->delete_track(this->realtime_track);
+			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_track(this->realtime_track);
 		}
 		this->realtime_track = NULL;
 	}
@@ -1828,16 +1827,16 @@ void LayerGPS::rt_gpsd_disconnect()
 
 void LayerGPS::gps_start_stop_tracking_cb(void)
 {
-	this->realtime_tracking = (this->realtime_tracking == false);
+	this->realtime_tracking_in_progress = (this->realtime_tracking_in_progress == false);
 
 	/* Make sure we are still in the boat with libgps. */
 	assert ((((int) GPSFixMode::FIX_2D) == MODE_2D) && (((int) GPSFixMode::FIX_3D) == MODE_3D));
 
-	if (this->realtime_tracking) {
+	if (this->realtime_tracking_in_progress) {
 		this->first_realtime_trackpoint = true;
 		if (!this->rt_gpsd_connect(true)) {
 			this->first_realtime_trackpoint = false;
-			this->realtime_tracking = false;
+			this->realtime_tracking_in_progress = false;
 			this->tp = NULL;
 		}
 	} else {  /* Stop realtime tracking. */
@@ -1846,7 +1845,7 @@ void LayerGPS::gps_start_stop_tracking_cb(void)
 		this->rt_gpsd_disconnect();
 	}
 }
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 
 
@@ -1857,7 +1856,7 @@ LayerGPS::LayerGPS()
 	strcpy(this->debug_string, "GPS");
 	this->interface = &vik_gps_layer_interface;
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+#if REALTIME_GPS_TRACKING_ENABLED
 	this->realtime_track_pen.setColor(QColor("#203070"));
 	this->realtime_track_pen.setWidth(2);
 
@@ -1875,12 +1874,12 @@ LayerGPS::LayerGPS()
 	this->gpsd_host = ""; //strdup("host"); TODO
 	this->gpsd_port = ""; //strdup("port"); TODO
 
-#endif // VIK_CONFIG_REALTIME_GPS_TRACKING
+#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i] = new LayerTRW();
 
 		/* TODO: this doesn't work. */
@@ -1896,7 +1895,7 @@ LayerGPS::LayerGPS()
 /* To be called right after constructor. */
 void LayerGPS::set_coord_mode(CoordMode new_mode)
 {
-	for (int i = 0; i < NUM_TRW; i++) {
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->set_coord_mode(new_mode);
 	}
 }

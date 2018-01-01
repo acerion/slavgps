@@ -59,6 +59,10 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " UI Builder:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
 
 extern Tree * g_tree;
 
@@ -471,6 +475,11 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 	if (param_spec->extra && param_spec->extra->convert_to_display) {
 		value = param_spec->extra->convert_to_display(param_value);
 	}
+
+	/* Print this debug before attempting to create a widget. If
+	   application crashes before a widget is created, this debug
+	   will tell us which widget caused problems. */
+	qDebug() << "II:" PREFIX << "will create new" <<  widget_type_get_label(param_spec->widget_type) << "for" << param_spec->ui_label;
 
 	QWidget * widget = NULL;
 	switch (param_spec->widget_type) {

@@ -309,4 +309,4 @@ MOC_DIR = ./moc/
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik -lgps
