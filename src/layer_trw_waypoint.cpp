@@ -102,7 +102,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_source(wp.source);
 	this->set_type(wp.type);
 	this->set_url(wp.url);
-	this->set_image(wp.image);
+	this->set_image_full_path(wp.image_full_path);
 	this->set_symbol_name(wp.symbol_name);
 
 	/* kamilTODO: what about image_width / image_height? */
@@ -168,9 +168,9 @@ void Waypoint::set_url(const QString & new_url)
 
 
 
-void Waypoint::set_image(const QString & new_image)
+void Waypoint::set_image_full_path(const QString & new_image_full_path)
 {
-	this->image = new_image;
+	this->image_full_path = new_image_full_path;
 	/* NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn. */
 }
 
@@ -247,7 +247,7 @@ void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 	vwm_append(source.toUtf8().constData());
 	vwm_append(type.toUtf8().constData());
 	vwm_append(url.toUtf8().constData());
-	vwm_append(image.toUtf8().constData());
+	vwm_append(image_full_path.toUtf8().constData());
 	vwm_append(symbol_name.toUtf8().constData());
 
 	*data = b->data;
@@ -358,7 +358,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 
-	if (!this->image.isEmpty()) {
+	if (!this->image_full_path.isEmpty()) {
 		qa = menu.addAction(QIcon::fromTheme("TODO-vik-icon-Show Picture"), tr("&Show Picture..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (show_wp_picture_cb()));
 
@@ -695,7 +695,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 {
 	/* Update directly - not changing the mtime. */
-	a_geotag_write_exif_gps(this->image, this->coord, this->altitude, true);
+	a_geotag_write_exif_gps(this->image_full_path, this->coord, this->altitude, true);
 }
 
 
@@ -704,7 +704,7 @@ void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 {
 	/* Update directly. */
-	a_geotag_write_exif_gps(this->image, this->coord, this->altitude, false);
+	a_geotag_write_exif_gps(this->image_full_path, this->coord, this->altitude, false);
 }
 
 

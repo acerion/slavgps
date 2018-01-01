@@ -420,12 +420,12 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 	if (this->line_image) {
 		/* Ensure the filename is absolute. */
 		if (g_path_is_absolute(this->line_image)) {
-			wp->set_image(this->line_image);
+			wp->set_image_full_path(this->line_image);
 		} else {
 			/* Otherwise create the absolute filename from the directory of the .vik file & and the relative filename. */
 			char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, this->line_image, NULL);
 			char *absolute = file_realpath_dup(full); // resolved into the canonical name
-			wp->set_image(absolute);
+			wp->set_image_full_path(absolute);
 			free(absolute);
 			free(full);
 		}
@@ -788,24 +788,24 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			fprintf(file, " xtype=\"%s\"", tmp_type);
 			free(tmp_type);
 		}
-		if (!wp->image.isEmpty()) {
-			QString tmp_image;
+		if (!wp->image_full_path.isEmpty()) {
+			QString tmp_image_full_path;
 			QString cwd;
 			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					tmp_image = file_GetRelativeFilename(cwd, wp->image);
+					tmp_image_full_path = file_GetRelativeFilename(cwd, wp->image_full_path);
 				}
 			}
 
 			/* If cwd not available - use image filename as is.
 			   This should be an absolute path as set in thumbnails. */
 			if (cwd.isEmpty()) {
-				tmp_image = QString(slashdup(wp->image));
+				tmp_image_full_path = QString(slashdup(wp->image_full_path));
 			}
 
-			if (!tmp_image.isEmpty()) {
-				fprintf(file, " image=\"%s\"", tmp_image.toUtf8().constData());
+			if (!tmp_image_full_path.isEmpty()) {
+				fprintf(file, " image=\"%s\"", tmp_image_full_path.toUtf8().constData());
 			}
 		}
 		if (!wp->symbol_name.isEmpty()) {

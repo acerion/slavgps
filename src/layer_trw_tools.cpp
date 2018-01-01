@@ -363,7 +363,7 @@ void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, 
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 	if (ev->modifiers() & Qt::ShiftModifier
-	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image.isEmpty())) {
+	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image_full_path.isEmpty())) {
 
 		/* Remember position at which selection occurred. */
 		tool->perform_selection(ScreenPos(ev->x(), ev->y()));
@@ -385,11 +385,11 @@ void LayerTRW::handle_select_tool_double_click_do_waypoint_selection(QMouseEvent
 	qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << __FUNCTION__ << __LINE__;
 
 	if (wp) {
-		qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << wp->image.isEmpty() << __FUNCTION__ << __LINE__;
+		qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << wp->image_full_path.isEmpty() << __FUNCTION__ << __LINE__;
 	}
 
 
-	if (wp && !wp->image.isEmpty()) {
+	if (wp && !wp->image_full_path.isEmpty()) {
 		qDebug() << "DD: Layer TRW: call call back" << __FUNCTION__ << __LINE__;
 		this->show_wp_picture_cb();
 	}

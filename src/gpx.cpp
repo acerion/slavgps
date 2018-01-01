@@ -497,7 +497,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_link:
-		c_wp->set_image(c_cdata->str);
+		c_wp->set_image_full_path(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -933,8 +933,8 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 		fprintf(f, "  <url>%s</url>\n", tmp);
 		free(tmp);
 	}
-	if (wp->image.isEmpty()) {
-		tmp = entitize(wp->image);
+	if (wp->image_full_path.isEmpty()) {
+		tmp = entitize(wp->image_full_path);
 		fprintf(f, "  <link>%s</link>\n", tmp);
 		free(tmp);
 	}

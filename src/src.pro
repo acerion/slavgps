@@ -3,7 +3,7 @@ TARGET = slavgps
 
 QT = core gui widgets printsupport
 
-RESOURCES = icons.qrc cursors.qrc
+RESOURCES = icons.qrc cursors.qrc thumbnails.qrc
 
 SOURCES += main.cpp \
     datasource.cpp \

@@ -413,7 +413,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification * param_specs,
 
 	/* TODO: perhaps add file filter for image files? */
 	param_spec = &param_specs[SG_WP_PARAM_IMAGE];
-	param_value = SGVariant(wp->image);
+	param_value = SGVariant(wp->image_full_path);
 	widget = this->new_widget(param_spec, param_value);
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));

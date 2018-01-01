@@ -169,7 +169,7 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 	char * quoted_file = g_shell_quote(wp->image);
 #endif
 	const QString viewer = Preferences::get_image_viewer();
-	const QString path = wp->image;
+	const QString path = wp->image_full_path;
 	const QString command = QString("%1 %2").arg(viewer).arg(path);
 
 	if (!QProcess::startDetached(command)) {
@@ -377,7 +377,7 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 		this->add_copy_menu_items(QMenu & menu);
 	}
 #else
-	this->add_menu_items(menu, !wp->image.isEmpty());
+	this->add_menu_items(menu, !wp->image_full_path.isEmpty());
 #endif
 
 	menu.exec(QCursor::pos());

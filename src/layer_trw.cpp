@@ -4957,14 +4957,14 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 	}
 
 	const QString program = Preferences::get_image_viewer();
-	const QString image_path = this->get_edited_wp()->image;
+	const QString image_full_path = this->get_edited_wp()->image_full_path;
 #ifdef K
-	char * quoted_file = g_shell_quote((char *) image_path);
+	char * quoted_file = g_shell_quote((char *) image_full_path);
 #endif
 	QStringList args;
-	args << image_path;
+	args << image_full_path;
 
-	qDebug() << "II: Layer TRW: Show WP picture:" << program << image_path;
+	qDebug() << "II: Layer TRW: Show WP picture:" << program << image_full_path;
 
 	/* "Fire and forget". The viewer will run detached from this application. */
 	QProcess::startDetached(program, args);

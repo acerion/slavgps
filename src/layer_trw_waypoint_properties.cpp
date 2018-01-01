@@ -27,12 +27,12 @@
 
 #include "degrees_converters.h"
 #include "preferences.h"
+#include "thumbnails.h"
 #if 0
 #include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif
-#include "thumbnails.h"
 #include "goto.h"
 #include "vikutils.h"
 #include "widget_file_entry.h"
@@ -139,21 +139,30 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		wp->set_description(param_value.val_string);
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
-		wp->set_image(param_value.val_string);
+		wp->set_image_full_path(param_value.val_string);
+		if (!wp->image_full_path.isEmpty() && (!Thumbnails::thumbnail_exists(wp->image_full_path))) {
+			Thumbnails::generate_thumbnail(wp->image_full_path);
+		}
+
+
+		if (!wp->image_full_path.isEmpty()) {
+			QImage image = QImage(wp->image_full_path);
+			qDebug() << "-----------------" << image.text();
+		}
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol_name(param_value.val_string);
+
 #ifdef K
-		if (g_strcmp0(wp->source, sourceentry->text())) {
+		if (wp->source != sourceentry->text()) {
 			wp->set_source(sourceentry->text());
 		}
-		if (g_strcmp0(wp->type, typeentry->text())) {
+		if (wp->type != typeentry->text()) {
 			wp->set_type(typeentry->text());
 		}
-		if (wp->image&& *(wp->image) && (!Thumbnails::thumbnail_exists(wp->image))) {
-			Thumbnails::generate_thumbnail(wp->image);
-		}
+#endif
 
+#ifdef K
 		GtkTreeIter iter, first;
 		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
 		if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {

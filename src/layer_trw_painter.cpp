@@ -839,7 +839,7 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 	const ScreenPos wp_screen_pos = this->viewport->coord_to_screen_pos(wp->coord);
 
-	if (this->trw->wp_image_draw && !wp->image.isEmpty() && this->draw_waypoint_image(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight)) {
+	if (this->trw->wp_image_draw && !wp->image_full_path.isEmpty() && this->draw_waypoint_image(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight)) {
 		return;
 	} else {
 		/* Draw appropriate symbol - either symbol image or simple types. */
@@ -870,20 +870,20 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 
 	QPixmap * pixmap = NULL;
 
-	auto iter = std::find_if(this->trw->wp_image_cache.begin(), this->trw->wp_image_cache.end(), CachedPixmapCompareByPath(wp->image));
+	auto iter = std::find_if(this->trw->wp_image_cache.begin(), this->trw->wp_image_cache.end(), CachedPixmapCompareByPath(wp->image_full_path));
 	if (iter != this->trw->wp_image_cache.end()) {
 		/* Found a matching pixmap in cache. */
 		pixmap = (*iter)->pixmap;
 	} else {
-		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image << "not found in cache";
+		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image_full_path << "not found in cache";
 
-		const QString image = wp->image;
-		QPixmap * regularthumb = Thumbnails::get_thumbnail(wp->image);
+		const QString image_full_path = wp->image_full_path;
+		QPixmap * regularthumb = Thumbnails::get_thumbnail(wp->image_full_path);
 
 #ifdef K
 		if (!regularthumb) {
 			regularthumb = Thumbnails::get_default_thumbnail(); /* cache one 'not yet loaded' for all thumbs not loaded */
-			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
+			image_full_path = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
 		}
 		if (regularthumb) {
 			CachedPixmap * cp = new CachedPixmap;
@@ -894,7 +894,7 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 				assert (cp->pixmap);
 				g_object_unref(G_OBJECT(regularthumb));
 			}
-			cp->image = g_strdup(image);
+			cp->image_file_path = g_strdup(image_full_path);
 
 			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
 			if (this->trw->wp_image_alpha != 255) {

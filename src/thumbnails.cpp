@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 /*
  * Large (and important) sections of this file were adapted from
  * ROX-Filer source code, Copyright (C) 2003, the ROX-Filer team,
  * originally licensed under the GPL v2 or greater (as above).
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,12 +40,12 @@
 #endif
 #include <errno.h>
 
+#include <QDebug>
+
 #include <glib.h>
 #include <glib/gstdio.h>
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
 #include "thumbnails.h"
 #include "file.h"
-#include "icons/icons.h"
 #include "globals.h"
 
 
@@ -55,16 +56,10 @@ using namespace SlavGPS;
 
 
 
-#ifdef __CYGWIN__
-#ifdef __CYGWIN_USE_BIG_TYPES__
-#define ST_SIZE_FMT "%lld"
-#else
-#define ST_SIZE_FMT "%ld"
-#endif
-#else
-/* FIXME -- on some systems this may need to me "lld", see ROX-Filer code */
-#define ST_SIZE_FMT "%ld"
-#endif
+#define PREFIX " Thumbnails:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
 
 #undef MIN /* quit yer whining, gcc */
 #undef MAX
@@ -88,9 +83,9 @@ using namespace SlavGPS;
 
 
 
-static char *md5_hash(const char * message);
-static QPixmap *save_thumbnail(const char * pathname, QPixmap * full);
-static QPixmap *child_create_thumbnail(const QString & file_full_path);
+static QString md5_hash(const char * message);
+static QString save_thumbnail(const char * pathname, QPixmap * full);
+static bool create_thumbnail_sub(const QString & file_full_path);
 
 
 
@@ -112,11 +107,7 @@ bool Thumbnails::thumbnail_exists(const QString & file_full_path)
 
 QPixmap * Thumbnails::get_default_thumbnail()
 {
-	QPixmap * pixmap = NULL;
-#ifdef K
-	pixmap = return gdk_pixbuf_from_pixdata(&thumbnails_pixmap, false, NULL);
-#endif
-	return pixmap;
+	return new QPixmap(":/thumbnails/not_loaded_yet.png");
 }
 
 
@@ -128,10 +119,8 @@ void Thumbnails::generate_thumbnail(const QString & file_full_path)
 	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
 
 	if (!pixmap) {
-		pixmap = child_create_thumbnail(file_full_path);
-	}
-
-	if (pixmap) {
+		create_thumbnail_sub(file_full_path);
+	} else {
 #ifdef K
 		g_object_unref(G_OBJECT (pixmap));
 #endif
@@ -141,14 +130,12 @@ void Thumbnails::generate_thumbnail(const QString & file_full_path)
 
 
 
-QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
+QPixmap a_thumbnails_scale_pixmap(const QPixmap & src, int max_w, int max_h)
 {
-	int w = src->width();
-	int h = src->height();
+	const int w = src.width();
+	const int h = src.height();
 
-#ifdef K
 	if (w <= max_w && h <= max_h) {
-		g_object_ref(G_OBJECT (src));
 		return src;
 	} else {
 		float scale_x = ((float) w) / max_w;
@@ -157,139 +144,115 @@ QPixmap * a_thumbnails_scale_pixmap(QPixmap * src, int max_w, int max_h)
 		int dest_w = w / scale;
 		int dest_h = h / scale;
 
-		return src->scaled(MAX(dest_w, 1), MAX(dest_h, 1), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+		return src.scaled(MAX(dest_w, 1), MAX(dest_h, 1), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
-#else
-	return NULL;
-#endif
 }
 
 
 
 
-static QPixmap * child_create_thumbnail(const QString & file_full_path)
+static bool create_thumbnail_sub(const QString & file_full_path)
 {
 	QPixmap * image = new QPixmap();
 	if (!image->load(file_full_path)) {
 		delete image;
 		image = NULL;
-		return NULL;
+		return false;
 	}
-#ifdef K
 
+#ifdef K
 	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
 	g_object_unref(G_OBJECT(image));
 	image = tmpbuf;
 
 	if (image) {
-		QPixmap * thumb = save_thumbnail(file_full_path, image);
+		const QString thumb_full_path = save_thumbnail(file_full_path, image);
 		g_object_unref(G_OBJECT (image));
-		return thumb;
+		return true;
 	}
 #endif
-	return NULL;
+	return false;
 }
 
 
 
 
-static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
+static QString save_thumbnail(const QString & original_full_path, QPixmap * original_image)
 {
 	struct stat info;
-	if (stat(pathname, &info) != 0) {
+	if (stat(original_full_path.toUtf8().constData(), &info) != 0) {
 		return NULL;
 	}
 
-	QPixmap * thumb = a_thumbnails_scale_pixmap(full, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
-#ifdef K
-	const char * orientation = gdk_pixbuf_get_option(full, "orientation");
+	QPixmap thumb = a_thumbnails_scale_pixmap(*original_image, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
 
-	int original_width = full->width();
-	int original_height = full->height();
+	char * real_path = file_realpath_dup(original_full_path.toUtf8().constData());
+	const QString original_uri = QString("file://%1").arg(real_path);
+	const QString md5 = md5_hash(original_uri.toUtf8().constData());
+	free(real_path);
 
 
-	char * swidth = g_strdup_printf("%d", original_width);
-	char * sheight = g_strdup_printf("%d", original_height);
-	char * ssize = g_strdup_printf(ST_SIZE_FMT, info.st_size);
-	char * smtime = g_strdup_printf("%ld", (long) info.st_mtime);
-
-	char * path = file_realpath_dup(pathname);
-	char * uri = g_strconcat("file://", path, NULL);
-	char * md5 = md5_hash(uri);
-	free(path);
-
-	GString * to = g_string_new(HOME_DIR);
-	g_string_append(to, THUMB_DIR);
-	g_string_append(to, THUMB_SUB_DIR);
-	if (g_mkdir_with_parents(to->str, 0700) != 0) {
-		fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, to->str);
+	QString target_full_path = QString("%1%2%3").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
+	if (g_mkdir_with_parents(target_full_path.toUtf8().constData(), 0700) != 0) {
+		qDebug() << "EE: Failed to mkdir" << target_full_path;
 	}
 
-	g_string_append(to, md5);
-	int name_len = to->len + 4; /* Truncate to this length when renaming. */
+	target_full_path += QString("%1.png").arg(md5);
+
+	/* Truncate final path to this length when renaming.
+	   We create the file ###.png.Viking-PID and rename it to avoid
+	   a race condition if two programs create the same thumb at
+	   once. */
+	const int final_path_len = target_full_path.length();
 #ifdef WINDOWS
-	g_string_append_printf(to, ".png.Viking");
+	target_full_path += ".Viking";
 #else
-	g_string_append_printf(to, ".png.Viking-%ld", (long) getpid());
+	target_full_path += QString(".Viking-%1").arg((long) getpid());
 #endif
 
-	free(md5);
 
-	/* Thumb::URI must be in ISO-8859-1 encoding otherwise gdk_pixbuf_save() will fail
-	   - e.g. if characters such as 'ě' are encountered.
-	   Also see http://en.wikipedia.org/wiki/ISO/IEC_8859-1.
-	   ATM GLIB Manual doesn't specify in which version this function became available,
-	   find out that it's fairly recent so may break builds without this test. */
-#if GLIB_CHECK_VERSION(2,40,0)
-	char *thumb_uri = g_str_to_ascii (uri, NULL);
-#else
-	char *thumb_uri = g_strdup(uri);
-#endif
 	mode_t old_mask = umask(0077);
-	GError *error = NULL;
-	gdk_pixbuf_save(thumb, to->str, "png", &error,
-	                "tEXt::Thumb::Image::Width", swidth,
-	                "tEXt::Thumb::Image::Height", sheight,
-	                "tEXt::Thumb::Size", ssize,
-	                "tEXt::Thumb::MTime", smtime,
-	                "tEXt::Thumb::URI", thumb_uri,
-	                "tEXt::Software", PROJECT,
-	                "tEXt::Software::Orientation", orientation ? orientation : "0",
-	                NULL);
+	const bool success = thumb.save(target_full_path, "png");
 	umask(old_mask);
-	free(thumb_uri);
-
-	if (error) {
-		fprintf(stderr, "WARNING: %s::%s\n", __FUNCTION__, error->message);
-		g_error_free(error);
-		g_object_unref(G_OBJECT(thumb));
-		thumb = NULL; /* return NULL */
-	} else {
-		/* We create the file ###.png.Viking-PID and rename it to avoid
-		 * a race condition if two programs create the same thumb at
-		 * once.
-		 */
-		char *final;
-
-		final = g_strndup(to->str, name_len);
-		if (rename(to->str, final)) {
-			int e = errno;
-			fprintf(stderr, "WARNING: Failed to rename '%s' to '%s': %s\n", to->str, final, strerror(e));
-			g_object_unref(G_OBJECT(thumb));
-			thumb = NULL; /* Return NULL */
-		}
-
-		free(final);
+	if (!success) {
+		qDebug() << "EE:" PREFIX << "failed to save thumbnail";
+		return "";
 	}
 
-	g_string_free(to, true);
-	free(swidth);
-	free(sheight);
-	free(ssize);
-	free(smtime);
-	free(uri);
+
+	const QString swidth = QString("%1").arg((int) original_image->width());
+	const QString sheight = QString("%1").arg((int) original_image->height());
+	const QString ssize = QString("%1").arg((long long) info.st_size);
+	const QString smtime = QString("%1").arg((long) info.st_mtime);
+#ifdef K
+	const char * orientation = gdk_pixbuf_get_option(original_image, "orientation");
+
+	/*
+	  Thumb::URI must be in ISO-8859-1 encoding otherwise gdk_pixbuf_save() will fail
+	  - e.g. if characters such as 'ě' are encountered.
+	  Also see http://en.wikipedia.org/wiki/ISO/IEC_8859-1.
+	*/
+
+	gdk_pixbuf_save(thumb, target_full_path, "png", &error,
+			"tEXt::Thumb::Image::Width", swidth,
+			"tEXt::Thumb::Image::Height", sheight,
+			"tEXt::Thumb::Size", ssize,
+			"tEXt::Thumb::MTime", smtime,
+			"tEXt::Thumb::URI", original_uri.toLatin1().constData(),
+			"tEXt::Software", PROJECT,
+			"tEXt::Software::Orientation", orientation ? orientation : "0",
+			NULL);
 #endif
-	return thumb;
+
+	const QString final_full_path = target_full_path.left(final_path_len);
+	if (rename(target_full_path.toUtf8().constData(), final_full_path.toUtf8().constData())) {
+		int e = errno;
+		qDebug() << "EE:" PREFIX "failed to rename" << target_full_path << "to" << final_full_path << ":" << strerror(e);
+		return "";
+	}
+
+
+	return final_full_path;
 }
 
 
@@ -297,17 +260,12 @@ static QPixmap * save_thumbnail(const char * pathname, QPixmap * full)
 
 QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 {
-	char * path = file_realpath_dup(file_full_path.toUtf8().constData());
-	char * uri = g_strconcat("file://", path, NULL);
-	char * md5 = md5_hash(uri);
+	char * real_path = file_realpath_dup(file_full_path.toUtf8().constData());
+	char * uri = g_strconcat("file://", real_path, NULL);
+	const QString md5 = md5_hash(uri);
 	free(uri);
 
-	char * thumb_path = g_strdup_printf("%s%s%s%s.png", HOME_DIR, THUMB_DIR, THUMB_SUB_DIR, md5);
-
-	free(md5);
-
-	const char * ssize;
-	const char * smtime;
+	const QString thumb_path = QString("%1%2%3%4.png").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR).arg(md5);
 
 
 	QPixmap * thumb = new QPixmap();
@@ -317,18 +275,18 @@ QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 
 #ifdef K
 	/* Note that these don't need freeing... */
-	ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
+	const char * ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
 	if (!ssize) {
 		goto err;
 	}
 
-	smtime = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::MTime");
+	const char * smtime = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::MTime");
 	if (!smtime) {
 		goto err;
 	}
 
 	struct stat info;
-	if (stat(path, &info) != 0) {
+	if (stat(real_path, &info) != 0) {
 		goto err;
 	}
 
@@ -340,14 +298,12 @@ QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 	goto out;
 err:
 	if (thumb) {
-#ifdef K
-		g_object_unref(G_OBJECT (thumb));
-#endif
+		delete thumb; /* Deleting because we are handling error here. */
+		thumb = NULL;
 	}
-	thumb = NULL;
+
 out:
-	free(path);
-	free(thumb_path);
+	free(real_path);
 
 	return thumb;
 
@@ -619,11 +575,16 @@ static void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 
 
 
-static char * md5_hash(const char * message)
+static QString md5_hash(const char * message)
 {
 	MD5Context ctx;
 
 	MD5Init(&ctx);
 	MD5Update(&ctx, (md5byte *) message, strlen(message));
-	return MD5Final(&ctx);
+
+	char * md5 = MD5Final(&ctx);
+	const QString md5hash(md5);
+	free(md5);
+
+	return md5hash;
 }

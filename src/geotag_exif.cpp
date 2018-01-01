@@ -333,7 +333,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 			}
 			wp->comment = geotag_get_exif_comment(gemd);
 
-			wp->set_image(filename);
+			wp->set_image_full_path(filename);
 		}
 	}
 	gexiv2_metadata_free(gemd);
@@ -476,7 +476,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 
 #endif /* #ifdef K */
 
-	wp->set_image(filename);
+	wp->set_image_full_path(filename);
 
 	return wp;
 }
