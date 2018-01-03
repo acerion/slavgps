@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 	QString vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 
-	char * vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path);
+	QString vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path);
 
 
 
@@ -107,6 +107,8 @@ namespace SlavGPS {
 
 		static void color_to_string(char * buffer, size_t buffer_size, const QColor & color);
 		static QPen new_pen(const QColor & color, int width);
+
+		static QString get_canonical_path(const QString & path);
 	};
 
 

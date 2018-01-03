@@ -45,8 +45,9 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include "thumbnails.h"
-#include "file.h"
+//#include "file.h"
 #include "globals.h"
+#include "vikutils.h"
 
 
 
@@ -84,7 +85,7 @@ using namespace SlavGPS;
 
 
 static QString md5_hash(const char * message);
-static QString save_thumbnail(const char * pathname, QPixmap * full);
+static QString save_thumbnail(const QString & original_full_path, QPixmap * original_image);
 static bool create_thumbnail_sub(const QString & file_full_path);
 
 
@@ -94,9 +95,7 @@ bool Thumbnails::thumbnail_exists(const QString & file_full_path)
 {
 	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
 	if (pixmap) {
-#ifdef K
-		g_object_unref(G_OBJECT (pixmap));
-#endif
+		delete pixmap;
 		return true;
 	}
 	return false;
@@ -113,17 +112,13 @@ QPixmap * Thumbnails::get_default_thumbnail()
 
 
 
-/* file_full_path must be absolute. you could have a function to make sure it exists and absolutize it. */
 void Thumbnails::generate_thumbnail(const QString & file_full_path)
 {
 	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
-
 	if (!pixmap) {
 		create_thumbnail_sub(file_full_path);
 	} else {
-#ifdef K
-		g_object_unref(G_OBJECT (pixmap));
-#endif
+		delete pixmap;
 	}
 }
 
@@ -164,13 +159,14 @@ static bool create_thumbnail_sub(const QString & file_full_path)
 	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
 	g_object_unref(G_OBJECT(image));
 	image = tmpbuf;
+#endif
 
 	if (image) {
 		const QString thumb_full_path = save_thumbnail(file_full_path, image);
-		g_object_unref(G_OBJECT (image));
-		return true;
+		delete image;
+		return !thumb_full_path.isEmpty();
 	}
-#endif
+
 	return false;
 }
 
@@ -186,10 +182,9 @@ static QString save_thumbnail(const QString & original_full_path, QPixmap * orig
 
 	QPixmap thumb = a_thumbnails_scale_pixmap(*original_image, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
 
-	char * real_path = file_realpath_dup(original_full_path.toUtf8().constData());
-	const QString original_uri = QString("file://%1").arg(real_path);
+	const QString canonical_path = SGUtils::get_canonical_path(original_full_path);
+	const QString original_uri = QString("file://%1").arg(canonical_path);
 	const QString md5 = md5_hash(original_uri.toUtf8().constData());
-	free(real_path);
 
 
 	QString target_full_path = QString("%1%2%3").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
@@ -260,10 +255,9 @@ static QString save_thumbnail(const QString & original_full_path, QPixmap * orig
 
 QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 {
-	char * real_path = file_realpath_dup(file_full_path.toUtf8().constData());
-	char * uri = g_strconcat("file://", real_path, NULL);
-	const QString md5 = md5_hash(uri);
-	free(uri);
+	const QString canonical_path = SGUtils::get_canonical_path(file_full_path);
+	const QString original_uri = QString("file://%1").arg(canonical_path);
+	const QString md5 = md5_hash(original_uri.toUtf8().constData());
 
 	const QString thumb_path = QString("%1%2%3%4.png").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR).arg(md5);
 
@@ -286,7 +280,7 @@ QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
 	}
 
 	struct stat info;
-	if (stat(real_path, &info) != 0) {
+	if (stat(canonical_path.toUtf8().constData(), &info) != 0) {
 		goto err;
 	}
 
@@ -303,10 +297,7 @@ err:
 	}
 
 out:
-	free(real_path);
-
 	return thumb;
-
 }
 
 

@@ -1105,7 +1105,7 @@ static const QString srtm_lat_lon_to_cache_file_name(double lat, double lon)
 	}
 
 	/* This is file in local maps cache dir. */
-	const QString file = QString("srtm3-%1%2").arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(intlat, intlon);
+	const QString file = QString("srtm3-%1%2").arg(continent_dir).arg(QDir::separator()) + srtm_file_name(intlat, intlon);
 
 	return file;
 }
@@ -1131,7 +1131,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				continue;
 			}
 
-			cache_file_path = QString("%1srtm3-%2%3").arg(map_cache_dir()).arg(continent_dir).arg(G_DIR_SEPARATOR_S) + srtm_file_name(lat, lon);
+			cache_file_path = QString("%1srtm3-%2%3").arg(map_cache_dir()).arg(continent_dir).arg(QDir::separator()) + srtm_file_name(lat, lon);
 			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 				continue;
 			}

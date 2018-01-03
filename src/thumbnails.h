@@ -39,7 +39,9 @@ namespace SlavGPS {
 		static bool thumbnail_exists(const QString & file_full_path);
 		static void generate_thumbnail(const QString & file_full_path);
 
+		/* Returns freshly allocated pixmap. Caller must delete the pointer. */
 		static QPixmap * get_thumbnail(const QString & file_full_path);
+
 		static QPixmap * get_default_thumbnail();
 	};
 

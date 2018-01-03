@@ -503,12 +503,12 @@ void SGUtils::set_auto_features_on_first_run(void)
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to.
  * Then resolve the full path to get the normal canonical filename.
  */
-char * SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path)
+QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path)
 {
-	gchar *canonical = NULL;
+	QString canonical;
 
 	if (g_path_is_absolute(path.toUtf8().constData())) {
-		canonical = g_strdup(path.toUtf8().constData());
+		canonical = path;
 	} else {
 		char * vw_filename = strdup(reference_file_full_path.toUtf8().constData());
 		char * dirpath = NULL;
@@ -518,15 +518,16 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, c
 			dirpath = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
 		}
 
-		char * full = NULL;
+
+		QString subpath = QString("%1%2%3").arg(dirpath).arg(QDir::separator()).arg(path);
+		QString full_path;
 		if (g_path_is_absolute(dirpath)) {
-			full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, path.toUtf8().constData(), NULL);
+			full_path = subpath;
 		} else {
-			full = g_strconcat(g_get_current_dir(), G_DIR_SEPARATOR_S, dirpath, G_DIR_SEPARATOR_S, path.toUtf8().constData(), NULL);
+			full_path = QString("%1%2%3").arg(g_get_current_dir()).arg(QDir::separator()).arg(subpath);
 		}
 
-		canonical = file_realpath_dup(full); // resolved
-		free(full);
+		canonical = SGUtils::get_canonical_path(full_path);
 		free(dirpath);
 		free(vw_filename);
 	}
@@ -1055,4 +1056,14 @@ QPen SGUtils::new_pen(const QColor & color, int width)
 #endif
 
 	return pen;
+}
+
+
+
+
+/* Just a very simple wrapper. */
+QString SGUtils::get_canonical_path(const QString & path)
+{
+	QDir dir(path);
+	return dir.canonicalPath();
 }

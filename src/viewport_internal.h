@@ -79,6 +79,7 @@ namespace SlavGPS {
 		/* Drawing primitives. */
 		void draw_line(QPen const & pen, int begin_x, int begin_y, int end_x, int end_y);
 		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
+		void draw_rectangle(QPen const & pen, const QRect & rect);
 		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);

@@ -423,11 +423,8 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 			wp->set_image_full_path(this->line_image);
 		} else {
 			/* Otherwise create the absolute filename from the directory of the .vik file & and the relative filename. */
-			char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, this->line_image, NULL);
-			char *absolute = file_realpath_dup(full); // resolved into the canonical name
-			wp->set_image_full_path(absolute);
-			free(absolute);
-			free(full);
+			const QString full_path = QString("%1%2%3").arg(dirpath).arg(QDir::separator()).arg(this->line_image);
+			wp->set_image_full_path(SGUtils::get_canonical_path(full_path));
 		}
 	}
 

@@ -69,6 +69,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Layer TRW Painter:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 static int pango_font_size_to_point_font_size(font_size_t font_size);
 
 
@@ -188,10 +193,10 @@ void TRWPainter::draw_track_label(const QString & text, const QColor & fg_color,
  */
 void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
-
-	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
-					 25.0, 40.0, 50.0, 75.0, 100.0,
-					 150.0, 200.0, 250.0, 500.0, 1000.0};
+	/* TODO: we already have distance intervals code in layer_trw_track_profile_dialog.cpp. Reuse it somehow? */
+	static const double distance_intervals[] = { 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
+						     25.0, 40.0, 50.0, 75.0, 100.0,
+						     150.0, 200.0, 250.0, 500.0, 1000.0};
 
 	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels + 1);
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -200,10 +205,11 @@ void TRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 	dist = convert_distance_meters_to(dist, distance_unit);
 
 	int index = 0;
-	for (size_t i = 0; i < (sizeof chunksd) / (sizeof chunksd[0]); i++) {
-		if (chunksd[i] > dist) {
+	const int n_intervals = (sizeof distance_intervals) / (sizeof distance_intervals[0]);
+	for (size_t i = 0; i < n_intervals; i++) {
+		if (distance_intervals[i] > dist) {
 			index = i;
-			dist = chunksd[index];
+			dist = distance_intervals[index];
 			break;
 		}
 	}
@@ -854,6 +860,60 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 
 
+QPixmap * TRWPainter::update_pixmap_cache(const QString & image_full_path, Waypoint & wp)
+{
+	QPixmap * pixmap = Thumbnails::get_thumbnail(image_full_path);
+
+#ifdef K
+	if (!pixmap) {
+		pixmap = Thumbnails::get_default_thumbnail(); /* cache one 'not yet loaded' for all thumbs not loaded */
+		image_full_path = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
+	}
+#endif
+	if (pixmap) {
+#ifdef K
+		CachedPixmap * cp = new CachedPixmap;
+		if (this->trw->wp_image_size == 128) {
+			cp->pixmap = pixmap;
+		} else {
+			cp->pixmap = a_thumbnails_scale_pixmap(pixmap, this->trw->wp_image_size, this->trw->wp_image_size);
+			assert (cp->pixmap);
+			g_object_unref(G_OBJECT(pixmap));
+		}
+		cp->image_file_path = g_strdup(image_full_path);
+
+		/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
+		if (this->trw->wp_image_alpha != 255) {
+			cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->wp_image_alpha);
+		}
+
+		/* Needed so 'click picture' tool knows how big the
+		   pic is; we don't store it in cp because they may
+		   have been freed already.
+		   TODO: shouldn't we do this outside of this
+		   function, with a size of pixmap returned by the
+		   function? */
+		wp.image_width = cp->pixmap->width();
+		wp.image_height = cp->pixmap->heigth();
+
+		this->trw->wp_image_cache.push_back(cp);
+		/* Keep size of queue under a limit. */
+		if (this->trw->wp_image_cache->length > this->trw->wp_image_cache_size) {
+			this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
+		}
+
+		pixmap = cp->pixmap;
+#endif
+	} else {
+		pixmap = Thumbnails::get_default_thumbnail(); /* thumbnail not yet loaded */
+	}
+
+	return pixmap;
+}
+
+
+
+
 /**
    @brief Draw waypoint's image
 
@@ -871,73 +931,40 @@ bool TRWPainter::draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highli
 	QPixmap * pixmap = NULL;
 
 	auto iter = std::find_if(this->trw->wp_image_cache.begin(), this->trw->wp_image_cache.end(), CachedPixmapCompareByPath(wp->image_full_path));
-	if (iter != this->trw->wp_image_cache.end()) {
+	if (iter == this->trw->wp_image_cache.end()) {
+		/* Cache miss. */
+		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image_full_path << "not found in cache";
+		pixmap = this->update_pixmap_cache(wp->image_full_path, *wp);
+	} else {
 		/* Found a matching pixmap in cache. */
 		pixmap = (*iter)->pixmap;
-	} else {
-		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image_full_path << "not found in cache";
-
-		const QString image_full_path = wp->image_full_path;
-		QPixmap * regularthumb = Thumbnails::get_thumbnail(wp->image_full_path);
-
-#ifdef K
-		if (!regularthumb) {
-			regularthumb = Thumbnails::get_default_thumbnail(); /* cache one 'not yet loaded' for all thumbs not loaded */
-			image_full_path = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
-		}
-		if (regularthumb) {
-			CachedPixmap * cp = new CachedPixmap;
-			if (this->trw->wp_image_size == 128) {
-				cp->pixmap = regularthumb;
-			} else {
-				cp->pixmap = a_thumbnails_scale_pixmap(regularthumb, this->trw->wp_image_size, this->trw->wp_image_size);
-				assert (cp->pixmap);
-				g_object_unref(G_OBJECT(regularthumb));
-			}
-			cp->image_file_path = g_strdup(image_full_path);
-
-			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-			if (this->trw->wp_image_alpha != 255) {
-				cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->wp_image_alpha);
-			}
-
-			/* Needed so 'click picture' tool knows how big the pic is; we don't
-			   store it in cp because they may have been freed already. */
-			wp->image_width = cp->pixmap->width();
-			wp->image_height = cp->pixmap->heigth();
-
-			this->trw->wp_image_cache.push_back(cp);
-			/* Keep size of queue under a limit. */
-			if (this->trw->wp_image_cache->length > this->trw->wp_image_cache_size) {
-				this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
-			}
-
-			pixmap = cp->pixmap;
-		} else {
-			pixmap = Thumbnails::get_default_thumbnail(); /* thumbnail not yet loaded */
-		}
-#endif
 	}
 
-	if (pixmap) {
-		int w = pixmap->width();
-		int h = pixmap->height();
-
-		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < this->width && y - (h / 2) < this->height) { /* always draw within boundaries */
-			if (do_highlight) {
-				/* Highlighted - so draw a little border around the chosen one
-				   single line seems a little weak so draw 2 of them. */
-				this->viewport->draw_rectangle(this->viewport->get_highlight_pen(),
-							       x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
-				this->viewport->draw_rectangle(this->viewport->get_highlight_pen(),
-							       x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
-			}
-			this->viewport->draw_pixmap(*pixmap, 0, 0, x - (w / 2), y - (h / 2), w, h);
-		}
-		return true;
+	if (!pixmap) {
+		qDebug() << "EE:" PREFIX << "failed to get wp pixmap from any source";
+		return false;
 	}
 
-	return false;
+	const int w = pixmap->width();
+	const int h = pixmap->height();
+
+	const QRect target_rect(x - (w / 2), y - (h / 2), w, h);
+
+	/* Always draw within boundaries. TODO: Replace this condition with "rectangles intersect" condition? */
+	if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < this->width && y - (h / 2) < this->height) {
+		if (do_highlight) {
+			/* Highlighted - so draw a little border around selected waypoint's image.
+			   Single width seems a little weak so draw 2 times wider. */
+			QPen pen = this->viewport->get_highlight_pen();
+			const int pen_width = pen.width() * 2;
+			const int delta = pen_width / 2;
+			pen.setWidth(pen_width);
+
+			this->viewport->draw_rectangle(pen, target_rect.adjusted(-delta, -delta, delta, delta));
+		}
+		this->viewport->draw_pixmap(target_rect, *pixmap, QRect(0, 0, w, h));
+	}
+	return true;
 }
 
 

@@ -478,7 +478,7 @@ void LayerGeoref::set_image_full_path(const QString & image_path)
 	if (image_path != "") {
 		this->image_full_path = image_path;
 	} else {
-		this->image_full_path = QString(vu_get_canonical_filename(this, image_path, this->get_window()->get_current_document_full_path()));
+		this->image_full_path = vu_get_canonical_filename(this, image_path, this->get_window()->get_current_document_full_path());
 	}
 }
 

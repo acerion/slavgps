@@ -305,9 +305,8 @@ QStringList * LayerTRWWaypoints::image_wp_make_list(void)
 {
 	QStringList * pics = new QStringList;
 
-	Waypoint * wp = NULL;
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		wp = i->second;
+		const Waypoint * wp = i->second;
 		if (!wp->image_full_path.isEmpty() && !Thumbnails::thumbnail_exists(wp->image_full_path)) {
 			pics->push_back(wp->image_full_path);
 		}

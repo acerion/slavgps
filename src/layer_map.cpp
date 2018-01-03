@@ -560,15 +560,14 @@ void LayerMap::set_cache_dir(const QString & dir)
 		}
 	}
 
-	char * canonical_dir = vu_get_canonical_filename(this, mydir, this->get_window()->get_current_document_full_path());
+	const QString canonical_dir = vu_get_canonical_filename(this, mydir, this->get_window()->get_current_document_full_path());
 
 	/* Ensure cache_dir always ends with a separator. */
-	unsigned int len = strlen(canonical_dir);
+	const int len = canonical_dir.length();
 	/* Unless the dir is not valid. */
 	if (len > 0) {
-		if (canonical_dir[len-1] != G_DIR_SEPARATOR) {
-			this->cache_dir = QString(canonical_dir) + QString(G_DIR_SEPARATOR_S);
-			free(canonical_dir);
+		if (canonical_dir.at(len - 1) != QDir::separator()) {
+			this->cache_dir = canonical_dir + QDir::separator();
 		} else {
 			this->cache_dir = canonical_dir;
 		}
@@ -1963,9 +1962,9 @@ void LayerMap::tile_info_cb(void)
 			source = QObject::tr("Source: %1 (%2%3%4%5%6.%7 %8)")
 				.arg(tile_filename)
 				.arg(zoom)
-				.arg(G_DIR_SEPARATOR_S)
+				.arg(QDir::separator())
 				.arg(ulm.x)
-				.arg(G_DIR_SEPARATOR_S)
+				.arg(QDir::separator())
 				.arg(flip_y)
 				.arg("png")
 				.arg(exists);

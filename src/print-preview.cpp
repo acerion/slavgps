@@ -289,7 +289,7 @@ static bool vik_print_preview_event(GtkWidget * widget, QEvent * ev, PrintPrevie
 
 
 
-static QPixmap * get_thumbnail(QPixmap * drawable, int thumb_width, int thumb_height)
+static QPixmap * get_preview_thumbnail(QPixmap * drawable, int thumb_width, int thumb_height)
 {
 	int width, height;
 	QPixmap * thumbnail = NULL;
@@ -364,7 +364,7 @@ static bool vik_print_preview_expose_event(GtkWidget * widget, GdkEventExpose * 
 			int width  = MIN (allocation.width, 1024);
 			int height = MIN (allocation.height, 1024);
 
-			preview->pixmap = get_thumbnail(drawable, width, height);
+			preview->pixmap = get_preview_thumbnail(drawable, width, height);
 		}
 
 		if (preview->pixmap != NULL) {

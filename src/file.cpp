@@ -980,38 +980,6 @@ bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file
 
 
 /**
- * Just a wrapper around realpath, which itself is platform dependent.
- */
-char * SlavGPS::file_realpath(char const * path, char * real)
-{
-	return realpath(path, real);
-}
-
-
-
-
-/**
- * Always return the canonical filename in a newly allocated string.
- */
-char * SlavGPS::file_realpath_dup(char const * path)
-{
-	char real[MAXPATHLEN];
-
-	if (!path) {
-		return NULL;
-	}
-
-	if (file_realpath(path, real)) {
-		return g_strdup(real);
-	}
-
-	return g_strdup(path);
-}
-
-
-
-
-/**
  * Permission granted to use this code after personal correspondance.
  * Slightly reworked for better cross platform use, glibisms, function rename and a compacter format.
  *

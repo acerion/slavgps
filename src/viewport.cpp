@@ -1299,6 +1299,20 @@ void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left
 
 
 
+void Viewport::draw_rectangle(const QPen & pen, const QRect & rect)
+{
+	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
+	if (rect.x() > -32 && rect.x() < this->size_width + 32 && rect.y() > -32 && rect.y() < this->size_height + 32) {
+
+		QPainter painter(this->scr_buffer);
+		painter.setPen(pen);
+		painter.drawRect(rect);
+	}
+}
+
+
+
+
 void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
