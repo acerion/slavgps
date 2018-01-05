@@ -1415,7 +1415,7 @@ void LayerTRW::add_children_to_tree(void)
 		this->waypoints->add_children_to_tree();
 	}
 
-	this->verify_thumbnails();
+	this->generate_missing_thumbnails();
 
 	this->sort_all();
 }
@@ -1984,8 +1984,8 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 #ifdef VIK_CONFIG_GEOTAG
 void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
-	/* Unset so can be reverified later if necessary. */
-	this->has_verified_thumbnails = false;
+	/* Set to true so that thumbnails are generate later if necessary. */
+	this->has_missing_thumbnails = true;
 	trw_layer_geotag_dialog(this->get_window(), this, NULL, NULL);
 }
 #endif
@@ -2089,9 +2089,9 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
 	this->acquire_handler(&datasource_geotag_interface);
 
-	/* Re-verify thumbnails as they may have changed. */
-	this->has_verified_thumbnails = false;
-	this->verify_thumbnails();
+	/* Re-generate thumbnails as they may have changed. */
+	this->has_missing_thumbnails = true;
+	this->generate_missing_thumbnails();
 }
 #endif
 
@@ -4260,22 +4260,22 @@ static int create_thumbnails_thread(BackgroundJob * bg_job);
 /* Structure for thumbnail creating data used in the background thread. */
 class ThumbnailCreator : public BackgroundJob {
 public:
-	ThumbnailCreator(LayerTRW * layer, const QStringList & pictures);
+	ThumbnailCreator(LayerTRW * layer, const QStringList & original_image_files_paths);
 
 	LayerTRW * layer = NULL;  /* Layer needed for redrawing. */
-	QStringList pictures_list;
+	QStringList original_image_files_paths;
 };
 
 
 
 
-ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, const QStringList & pictures)
+ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, const QStringList & new_original_image_files_paths)
 {
 	this->thread_fn = create_thumbnails_thread;
-	this->n_items = pictures.size();
+	this->n_items = new_original_image_files_paths.size();
 
 	this->layer = layer_;
-	this->pictures_list = pictures;
+	this->original_image_files_paths = new_original_image_files_paths;
 }
 
 
@@ -4285,11 +4285,9 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 {
 	ThumbnailCreator * creator = (ThumbnailCreator *) bg_job;
 
-	const int n = creator->pictures_list.size();
+	const int n = creator->original_image_files_paths.size();
 	for (int i = 0; i < n; i++) {
-		const QString path = creator->pictures_list.at(i);
-
-		Thumbnails::generate_thumbnail(path);
+		Thumbnails::generate_thumbnail_if_missing(creator->original_image_files_paths.at(i));
 		if (0 != a_background_thread_progress(bg_job, (i + 1.0) / n)) {
 			return -1; /* Abort thread. */
 		}
@@ -4306,24 +4304,20 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 
 
 
-void LayerTRW::verify_thumbnails(void)
+void LayerTRW::generate_missing_thumbnails(void)
 {
-	if (this->has_verified_thumbnails) {
+	if (!this->has_missing_thumbnails) {
 		return;
 	}
 
-	QStringList * pics = this->waypoints->image_wp_make_list();
-	int len = pics->size();
-	if (!len) {
-		delete pics;
+	QStringList original_image_files_paths = this->waypoints->get_list_of_missing_thumbnails();
+	const int n_images = original_image_files_paths.size();
+	if (0 == n_images) {
 		return;
 	}
 
-	const QString job_description = tr("Creating %1 Image Thumbnails...").arg(len);
-	ThumbnailCreator * creator = new ThumbnailCreator(this, *pics);
-	a_background_thread(creator, ThreadPoolType::LOCAL, job_description);
-
-	delete pics; /* The list of pictures has been copied to Thumbnail creator, so it's safe to delete it here. */
+	ThumbnailCreator * creator = new ThumbnailCreator(this, original_image_files_paths);
+	a_background_thread(creator, ThreadPoolType::LOCAL, tr("Creating %1 Image Thumbnails...").arg(n_images));
 }
 
 
@@ -4386,7 +4380,7 @@ time_t LayerTRW::get_timestamp()
 void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
 	if (this->tree_view) {
-		this->verify_thumbnails();
+		this->generate_missing_thumbnails();
 	}
 	this->tracks->assign_colors(this->track_drawing_mode, this->track_color_common);
 	this->routes->assign_colors(-1, this->track_color_common);

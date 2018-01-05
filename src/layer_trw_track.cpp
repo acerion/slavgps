@@ -3457,8 +3457,8 @@ void Track::geotagging_track_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	/* Unset so can be reverified later if necessary. */
-	parent_layer->has_verified_thumbnails = false;
+	/* Set to true so that thumbnails are generate later if necessary. */
+	parent_layer->has_missing_thumbnails = true;
 	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), parent_layer, NULL, this);
 }
 

@@ -157,7 +157,7 @@ namespace SlavGPS {
 		void toggle_items_visibility();
 		void search_closest_wp(WaypointSearch * search);
 		QString tool_show_picture_wp(int event_x, int event_y, Viewport * viewport);
-		QStringList * image_wp_make_list();
+		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);
 
 

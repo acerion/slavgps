@@ -29,6 +29,11 @@
 
 
 
+#define PIXMAP_THUMB_SIZE  128
+
+
+
+
 namespace SlavGPS {
 
 
@@ -36,13 +41,21 @@ namespace SlavGPS {
 
 	class Thumbnails {
 	public:
-		static bool thumbnail_exists(const QString & file_full_path);
-		static void generate_thumbnail(const QString & file_full_path);
+		static bool thumbnail_exists(const QString & original_file_full_path);
+
+		/* Generate a thumbnail, but only if it doesn't exist yet. */
+		static void generate_thumbnail_if_missing(const QString & original_file_full_path);
 
 		/* Returns freshly allocated pixmap. Caller must delete the pointer. */
-		static QPixmap * get_thumbnail(const QString & file_full_path);
+		static QPixmap * get_thumbnail(const QString & original_file_full_path);
 
-		static QPixmap * get_default_thumbnail();
+		static QPixmap * get_default_thumbnail(void);
+
+		static QPixmap scale_pixmap(const QPixmap & src, int max_w, int max_h);
+
+	private:
+		/* Unconditionally generate a thumbnail. */
+		static bool generate_thumbnail(const QString & original_file_full_path);
 	};
 
 

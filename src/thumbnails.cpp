@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include <QDebug>
+#include <QDir>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -79,21 +80,17 @@ using namespace SlavGPS;
 #define THUMB_SUB_DIR "normal/"
 #endif
 
-#define PIXMAP_THUMB_SIZE  128
-
 
 
 
 static QString md5_hash(const char * message);
-static QString save_thumbnail(const QString & original_full_path, QPixmap * original_image);
-static bool create_thumbnail_sub(const QString & file_full_path);
 
 
 
 
-bool Thumbnails::thumbnail_exists(const QString & file_full_path)
+bool Thumbnails::thumbnail_exists(const QString & original_file_full_path)
 {
-	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
+	QPixmap * pixmap = Thumbnails::get_thumbnail(original_file_full_path);
 	if (pixmap) {
 		delete pixmap;
 		return true;
@@ -112,20 +109,17 @@ QPixmap * Thumbnails::get_default_thumbnail()
 
 
 
-void Thumbnails::generate_thumbnail(const QString & file_full_path)
+void Thumbnails::generate_thumbnail_if_missing(const QString & original_file_full_path)
 {
-	QPixmap * pixmap = Thumbnails::get_thumbnail(file_full_path);
-	if (!pixmap) {
-		create_thumbnail_sub(file_full_path);
-	} else {
-		delete pixmap;
+	if (!Thumbnails::thumbnail_exists(original_file_full_path)) {
+		Thumbnails::generate_thumbnail(original_file_full_path);
 	}
 }
 
 
 
 
-QPixmap a_thumbnails_scale_pixmap(const QPixmap & src, int max_w, int max_h)
+QPixmap Thumbnails::scale_pixmap(const QPixmap & src, int max_w, int max_h)
 {
 	const int w = src.width();
 	const int h = src.height();
@@ -146,50 +140,37 @@ QPixmap a_thumbnails_scale_pixmap(const QPixmap & src, int max_w, int max_h)
 
 
 
-static bool create_thumbnail_sub(const QString & file_full_path)
+bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 {
-	QPixmap * image = new QPixmap();
-	if (!image->load(file_full_path)) {
-		delete image;
-		image = NULL;
+	QPixmap original_image;
+	if (!original_image.load(original_file_full_path)) {
 		return false;
 	}
 
 #ifdef K
-	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
-	g_object_unref(G_OBJECT(image));
-	image = tmpbuf;
+	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(original_image);
+	g_object_unref(G_OBJECT(original_image));
+	original_image = tmpbuf;
 #endif
 
-	if (image) {
-		const QString thumb_full_path = save_thumbnail(file_full_path, image);
-		delete image;
-		return !thumb_full_path.isEmpty();
-	}
-
-	return false;
-}
-
-
-
-
-static QString save_thumbnail(const QString & original_full_path, QPixmap * original_image)
-{
 	struct stat info;
-	if (stat(original_full_path.toUtf8().constData(), &info) != 0) {
-		return NULL;
+	if (stat(original_file_full_path.toUtf8().constData(), &info) != 0) {
+		return false;
 	}
 
-	QPixmap thumb = a_thumbnails_scale_pixmap(*original_image, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
+	QPixmap thumb = Thumbnails::scale_pixmap(original_image, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
 
-	const QString canonical_path = SGUtils::get_canonical_path(original_full_path);
+	const QString canonical_path = SGUtils::get_canonical_path(original_file_full_path);
 	const QString original_uri = QString("file://%1").arg(canonical_path);
 	const QString md5 = md5_hash(original_uri.toUtf8().constData());
 
 
 	QString target_full_path = QString("%1%2%3").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
-	if (g_mkdir_with_parents(target_full_path.toUtf8().constData(), 0700) != 0) {
-		qDebug() << "EE: Failed to mkdir" << target_full_path;
+	const QDir thumbs_dir(target_full_path); /* Here we are still using path to a directory, not a final-final path. */
+	/* Create thumbnails directory (with all parent dirs if necessary).
+	   TODO: viking used 0700 permissions for the directory. What should we do? Use umask? */
+	if (!thumbs_dir.mkpath(".")) {
+		qDebug() << "EE: Failed to create thumbnails directory" << target_full_path;
 	}
 
 	target_full_path += QString("%1.png").arg(md5);
@@ -211,12 +192,12 @@ static QString save_thumbnail(const QString & original_full_path, QPixmap * orig
 	umask(old_mask);
 	if (!success) {
 		qDebug() << "EE:" PREFIX << "failed to save thumbnail";
-		return "";
+		return false;
 	}
 
 
-	const QString swidth = QString("%1").arg((int) original_image->width());
-	const QString sheight = QString("%1").arg((int) original_image->height());
+	const QString swidth = QString("%1").arg((int) original_image.width());
+	const QString sheight = QString("%1").arg((int) original_image.height());
 	const QString ssize = QString("%1").arg((long long) info.st_size);
 	const QString smtime = QString("%1").arg((long) info.st_mtime);
 #ifdef K
@@ -243,19 +224,18 @@ static QString save_thumbnail(const QString & original_full_path, QPixmap * orig
 	if (rename(target_full_path.toUtf8().constData(), final_full_path.toUtf8().constData())) {
 		int e = errno;
 		qDebug() << "EE:" PREFIX "failed to rename" << target_full_path << "to" << final_full_path << ":" << strerror(e);
-		return "";
+		return false;
 	}
 
-
-	return final_full_path;
+	return true;
 }
 
 
 
 
-QPixmap * Thumbnails::get_thumbnail(const QString & file_full_path)
+QPixmap * Thumbnails::get_thumbnail(const QString & original_file_full_path)
 {
-	const QString canonical_path = SGUtils::get_canonical_path(file_full_path);
+	const QString canonical_path = SGUtils::get_canonical_path(original_file_full_path);
 	const QString original_uri = QString("file://%1").arg(canonical_path);
 	const QString md5 = md5_hash(original_uri.toUtf8().constData());
 

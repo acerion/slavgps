@@ -140,8 +140,8 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_param_specs[SG_WP_PARAM_IMAGE]);
 		wp->set_image_full_path(param_value.val_string);
-		if (!wp->image_full_path.isEmpty() && (!Thumbnails::thumbnail_exists(wp->image_full_path))) {
-			Thumbnails::generate_thumbnail(wp->image_full_path);
+		if (!wp->image_full_path.isEmpty()) {
+			Thumbnails::generate_thumbnail_if_missing(wp->image_full_path);
 		}
 
 

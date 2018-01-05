@@ -845,12 +845,15 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 	const ScreenPos wp_screen_pos = this->viewport->coord_to_screen_pos(wp->coord);
 
-	if (this->trw->wp_image_draw && !wp->image_full_path.isEmpty() && this->draw_waypoint_image(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight)) {
-		return;
-	} else {
-		/* Draw appropriate symbol - either symbol image or simple types. */
-		this->draw_waypoint_symbol(wp, wp_screen_pos.x, wp_screen_pos.y);
+	if (this->trw->wp_image_draw && !wp->image_full_path.isEmpty()) {
+		if (this->draw_waypoint_image(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight)) {
+			return;
+		}
+		/* Fall back to drawing a symbol (icon or geometric shape). */
 	}
+
+	/* Draw appropriate symbol - either symbol image or simple types. */
+	this->draw_waypoint_symbol(wp, wp_screen_pos.x, wp_screen_pos.y);
 
 	if (this->trw->drawlabels) {
 		this->draw_waypoint_label(wp, wp_screen_pos.x, wp_screen_pos.y, do_highlight);
@@ -862,53 +865,63 @@ void TRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 QPixmap * TRWPainter::update_pixmap_cache(const QString & image_full_path, Waypoint & wp)
 {
-	QPixmap * pixmap = Thumbnails::get_thumbnail(image_full_path);
-
-#ifdef K
-	if (!pixmap) {
-		pixmap = Thumbnails::get_default_thumbnail(); /* cache one 'not yet loaded' for all thumbs not loaded */
-		image_full_path = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
-	}
-#endif
-	if (pixmap) {
-#ifdef K
-		CachedPixmap * cp = new CachedPixmap;
-		if (this->trw->wp_image_size == 128) {
-			cp->pixmap = pixmap;
-		} else {
-			cp->pixmap = a_thumbnails_scale_pixmap(pixmap, this->trw->wp_image_size, this->trw->wp_image_size);
-			assert (cp->pixmap);
-			g_object_unref(G_OBJECT(pixmap));
-		}
-		cp->image_file_path = g_strdup(image_full_path);
-
-		/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-		if (this->trw->wp_image_alpha != 255) {
-			cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->wp_image_alpha);
-		}
-
-		/* Needed so 'click picture' tool knows how big the
-		   pic is; we don't store it in cp because they may
-		   have been freed already.
-		   TODO: shouldn't we do this outside of this
-		   function, with a size of pixmap returned by the
-		   function? */
-		wp.image_width = cp->pixmap->width();
-		wp.image_height = cp->pixmap->heigth();
-
-		this->trw->wp_image_cache.push_back(cp);
-		/* Keep size of queue under a limit. */
-		if (this->trw->wp_image_cache->length > this->trw->wp_image_cache_size) {
-			this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
-		}
-
-		pixmap = cp->pixmap;
-#endif
-	} else {
-		pixmap = Thumbnails::get_default_thumbnail(); /* thumbnail not yet loaded */
+	bool success = false;
+	CachedPixmap * cp = new CachedPixmap;
+	if (this->trw->wp_image_size == PIXMAP_THUMB_SIZE) {
+		/* What a coincidence! Perhaps the image has already been "thumbnailed"
+		   and we can read it from thumbnails dir. */
+		cp->pixmap = Thumbnails::get_thumbnail(image_full_path);
 	}
 
-	return pixmap;
+	if (!cp->pixmap) {
+		/* We didn't manage to read the file from thumbnails file.
+		   Either because the expected pixmap size (trw->wp_image_size)
+		   is not equal to thumbnail size, or because there was no thumbnail on disc.
+		   TODO: I'm not sure if the first argument to scale_pixmap() is passed correctly. */
+
+		QPixmap original_image;
+		if (original_image.load(image_full_path)) {
+			cp->pixmap = new QPixmap();
+			*cp->pixmap = Thumbnails::scale_pixmap(original_image, this->trw->wp_image_size, this->trw->wp_image_size);
+			assert (!cp->pixmap->isNull());
+			cp->image_file_path = image_full_path;
+		}
+	}
+
+	if (!cp->pixmap) {
+		/* Last resort. */
+		cp->pixmap = Thumbnails::get_default_thumbnail();
+		cp->image_file_path = "";
+	}
+
+
+	/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
+	if (this->trw->wp_image_alpha != 255) {
+		cp->pixmap = ui_pixmap_set_alpha(cp->pixmap, this->trw->wp_image_alpha);
+	}
+
+
+	/* Needed so 'click picture' tool knows how big the pic is; we
+	   don't store it in cp because they may have been freed
+	   already.
+	   TODO: shouldn't we do this outside of this function, with a
+	   size of pixmap returned by the function? */
+	wp.image_width = cp->pixmap->width();
+	wp.image_height = cp->pixmap->height();
+
+	this->trw->wp_image_cache.push_back(cp);
+	/* Keep size of queue under a limit. */
+	if (this->trw->wp_image_cache.size() > this->trw->wp_image_cache_size) {
+		/* TODO: review management of cache and watching its
+		   limit. Make sure that it really works. */
+		/* FIXME: we are deleting pixmap object. What
+		   about the validity of deleted pointer that
+		   has been returned by
+		   update_pixmap_cache()? */
+		this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
+	}
+
+	return cp->pixmap;
 }
 
 

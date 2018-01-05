@@ -301,18 +301,18 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 
 
 
-QStringList * LayerTRWWaypoints::image_wp_make_list(void)
+QStringList LayerTRWWaypoints::get_list_of_missing_thumbnails(void) const
 {
-	QStringList * pics = new QStringList;
+	QStringList paths;
 
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		const Waypoint * wp = i->second;
 		if (!wp->image_full_path.isEmpty() && !Thumbnails::thumbnail_exists(wp->image_full_path)) {
-			pics->push_back(wp->image_full_path);
+			paths.push_back(wp->image_full_path);
 		}
 	}
 
-	return pics;
+	return paths;
 }
 
 

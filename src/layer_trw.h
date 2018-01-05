@@ -351,7 +351,7 @@ namespace SlavGPS {
 		void set_metadata(TRWMetadata * metadata);
 
 		/* Intended only for use by other trw_layer subwindows. */
-		void verify_thumbnails(void);
+		void generate_missing_thumbnails(void);
 
 
 
@@ -483,7 +483,9 @@ namespace SlavGPS {
 		int32_t wp_image_cache_size;
 
 
-		bool has_verified_thumbnails;
+		/* Whether the program needs to generate thumbnails of
+		   images that are part of this layer. */
+		bool has_missing_thumbnails = true;
 
 		/* Menu. */
 		LayerMenuItem menu_selection;
