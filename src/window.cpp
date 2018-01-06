@@ -1034,7 +1034,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 void Window::draw_redraw()
 {
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = *(this->viewport->get_center());
+	this->trigger_center = this->viewport->get_center2();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
 	Layer * old_trigger = this->viewport->get_trigger();
@@ -1490,17 +1490,17 @@ void Window::menu_copy_centre_cb(void)
 	QString first;
 	QString second;
 
-	const Coord * coord = this->viewport->get_center();
+	const Coord coord = this->viewport->get_center2();
 
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
 
 	if (full_format) {
 		/* Bells & Whistles - may include degrees, minutes and second symbols. */
-		coord->to_strings(first, second);
+		coord.to_strings(first, second);
 	} else {
 		/* Simple x.xx y.yy format. */
-		const LatLon lat_lon = UTM::to_latlon(coord->get_utm());
+		const LatLon lat_lon = UTM::to_latlon(coord.get_utm());
 		first = LatLon::lat_to_string_raw(lat_lon);
 		second = LatLon::lon_to_string_raw(lat_lon);
 	}

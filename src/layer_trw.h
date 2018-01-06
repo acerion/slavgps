@@ -40,6 +40,7 @@
 #include "layer.h"
 #include "layer_tool.h"
 #include "layer_interface.h"
+#include "layer_trw_definitions.h"
 #include "layer_trw_dialogs.h"
 #include "layer_trw_track.h"
 #include "layer_trw_tracks.h"
@@ -411,7 +412,7 @@ namespace SlavGPS {
 
 		bool track_draw_labels;
 
-		int track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
+		LayerTRWTrackDrawingMode track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
 	        bool draw_trackpoints;
 		int32_t trackpoint_size;
 		uint8_t drawelevation;
@@ -429,7 +430,7 @@ namespace SlavGPS {
 
 		font_size_t trk_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
 
-		int wp_marker_type;
+		GraphicMarker wp_marker_type;
 		int32_t wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
 		bool wp_draw_symbols;
 		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */

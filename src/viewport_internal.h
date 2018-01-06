@@ -105,6 +105,7 @@ namespace SlavGPS {
 
 
 		const Coord * get_center() const;
+		Coord get_center2() const;
 		std::list<QString> get_centers_list(void) const;
 		void show_centers(Window * parent) const;
 		void print_centers(const QString & label) const;
@@ -180,7 +181,7 @@ namespace SlavGPS {
 		const QColor & get_background_color(void) const;
 
 
-		bool is_one_zone(void) const;
+		bool get_is_one_utm_zone(void) const;
 
 
 		void draw_decorations(void);

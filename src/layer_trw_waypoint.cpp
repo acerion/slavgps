@@ -684,7 +684,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 		&& (hl_is_required /* Parent code requires us to do highlight. */
 		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
 
-	static TRWPainter painter(parent_layer, viewport);
+	TRWPainter painter(parent_layer, viewport);
 	painter.draw_waypoint(this, allowed && required);
 }
 

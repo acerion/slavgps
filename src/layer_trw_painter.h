@@ -28,51 +28,9 @@
 
 
 
-#include <cstdint>
-
-
-
-
+#include "layer_trw_definitions.h"
 #include "layer_trw_waypoints.h"
 #include "layer_trw_tracks.h"
-
-
-
-
-#define VIK_TRW_LAYER_TRACK_GC 6
-#define TRW_LAYER_TRACK_COLORS_MAX 10
-#define VIK_TRW_LAYER_TRACK_GC_BLACK 0
-#define VIK_TRW_LAYER_TRACK_GC_SLOW 1
-#define VIK_TRW_LAYER_TRACK_GC_AVER 2
-#define VIK_TRW_LAYER_TRACK_GC_FAST 3
-#define VIK_TRW_LAYER_TRACK_GC_STOP 4
-#define VIK_TRW_LAYER_TRACK_GC_SINGLE 5
-
-#define DRAWMODE_BY_TRACK 0
-#define DRAWMODE_BY_SPEED 1
-#define DRAWMODE_ALL_SAME_COLOR 2
-/* Note using DRAWMODE_BY_SPEED may be slow especially for vast numbers of trackpoints
-   as we are (re)calculating the color for every point. */
-
-
-
-
-#define DRAW_ELEVATION_FACTOR 30 /* Height of elevation plotting, sort of relative to zoom level ("mpp" that isn't mpp necessarily). */
-                                 /* This is multiplied by user-inputted value from 1-100. */
-
-
-
-/* These symbols are used for Waypoints, but there is no reason to not
-   to use them elsewhere. */
-enum {
-	/* There were four symbols originally in Viking. */
-	SYMBOL_FILLED_SQUARE,
-	SYMBOL_SQUARE,
-	SYMBOL_CIRCLE,
-	SYMBOL_X,
-
-	SYMBOL_NUM_SYMBOLS
-};
 
 
 
@@ -96,42 +54,8 @@ namespace SlavGPS {
 	public:
 		TRWPainter(LayerTRW * trw, Viewport * viewport);
 
-
 		void draw_waypoint(Waypoint * wp, bool do_highlight);
-		void draw_waypoint_label(Waypoint * wp, int x, int y, bool do_highlight);
-		bool draw_waypoint_image(Waypoint * wp, int x, int y, bool do_highlight);
-		void draw_waypoint_symbol(Waypoint * wp, int x, int y);
-
-
 		void draw_track(Track * trk, bool do_highlight);
-		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord * coord);
-		void draw_track_dist_labels(Track * trk, bool do_highlight);
-		void draw_track_point_names(Track * trk, bool do_highlight);
-		void draw_track_name_labels(Track * trk, bool do_highlight);
-		void draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
-		void draw_track_draw_midarrow(const ScreenPos & begin, const ScreenPos & end, QPen & pen);
-
-
-		Viewport * viewport = NULL;
-		LayerTRW * trw = NULL;
-		Window * window = NULL;
-
-		double xmpp = 0;
-		double ympp = 0;
-		uint16_t width = 0;
-		uint16_t height = 0;
-		double cc = 0;      /* Cosine factor in track directions. */
-		double ss = 0;      /* Sine factor in track directions. */
-		const Coord * center = NULL;
-		CoordMode coord_mode; /* UTM or Lat/Lon. */
-		bool one_utm_zone = false;       /* Viewport shows only one UTM zone. */
-
-		double ce1 = 0;
-		double ce2 = 0;
-		double cn1 = 0;
-		double cn2 = 0;
-
-		LatLonBBox bbox;
 
 	private:
 		QColor get_fg_color(const Track * trk) const;
@@ -140,9 +64,42 @@ namespace SlavGPS {
 		QPixmap * update_pixmap_cache(const QString & image_full_path, Waypoint & wp);
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
+		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos);
+		bool draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
+		void draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
+
 		void draw_track_fg_sub(Track * trk, bool do_highlight);
 		void draw_track_bg_sub(Track * trk, bool do_highlight);
+		void draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord & coord);
+		void draw_track_dist_labels(Track * trk, bool do_highlight);
+		void draw_track_point_names(Track * trk, bool do_highlight);
+		void draw_track_name_labels(Track * trk, bool do_highlight);
+		void draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
+		void draw_track_draw_midarrow(const ScreenPos & begin, const ScreenPos & end, QPen & pen);
 
+		Viewport * viewport = NULL;
+		LayerTRW * trw = NULL;
+		Window * window = NULL;
+
+		/* Properties of viewport (copied from viewport). */
+		int vp_width = 0;
+		int vp_height = 0;
+		double vp_xmpp = 0.0;
+		double vp_ympp = 0.0;
+		Coord vp_center;
+		CoordMode vp_coord_mode;    /* UTM or Lat/Lon. */
+		bool vp_is_one_utm_zone = false;  /* Viewport shows only one UTM zone. */
+		LatLonBBox vp_bbox;
+
+		double cosine_factor = 0.0;    /* Cosine factor in track directions. */
+		double sine_factor = 0.0;      /* Sine factor in track directions. */
+
+
+		/* Variables used to decide whether an element that should be drawn is inside of visible area. */
+		double coord_leftmost = 0.0;   /* Longitude or easting of leftmost point visible. */
+		double coord_rightmost = 0.0;  /* Longitude or easting of rightmost point visible. */
+		double coord_bottommost = 0.0; /* Latitude or northing of lowest point visible. */
+		double coord_topmost = 0.0;    /* Latitude or northing of highest point visible. */
 
 	}; /* class TRWPainter */
 

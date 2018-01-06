@@ -1250,7 +1250,7 @@ static QPixmap * get_pixmap_from_file(LayerMap * layer, const char * full_path)
 
 static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 {
-	const Coord * center = viewport->get_center();
+	const Coord center = viewport->get_center2();
 
 	if (layer->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
@@ -1267,7 +1267,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 
 	if (layer->last_center == NULL) {
 		Coord * new_center = new Coord();
-		*new_center = *center; /* KamilFIXME: can we do it this way? */
+		*new_center = center;
 		layer->last_center = new_center;
 		layer->last_xmpp = viewport->get_xmpp();
 		layer->last_ympp = viewport->get_ympp();
@@ -1275,13 +1275,13 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 	}
 
 	/* TODO: perhaps Coord::distance() */
-	if ((*layer->last_center == *center)
+	if ((*layer->last_center == center)
 	    && (layer->last_xmpp == viewport->get_xmpp())
 	    && (layer->last_ympp == viewport->get_ympp())) {
 		return false;
 	}
 
-	*(layer->last_center) = *center;
+	*(layer->last_center) = center;
 	layer->last_xmpp = viewport->get_xmpp();
 	layer->last_ympp = viewport->get_ympp();
 	return true;
@@ -1568,7 +1568,7 @@ void LayerMap::draw(Viewport * viewport)
 		viewport->add_logo(logo);
 
 		/* Get corner coords. */
-		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->is_one_zone()) {
+		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {
 			/* UTM multi-zone stuff by Kit Transue. */
 			const char leftmost_zone = viewport->get_leftmost_zone();
 			const char rightmost_zone = viewport->get_rightmost_zone();
@@ -2120,7 +2120,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 
 	MapSource *map = map_sources[layer->map_index];
 	if (map->get_drawmode() == this->viewport->get_drawmode()
-	    && map->coord_to_tile(*this->viewport->get_center(),
+	    && map->coord_to_tile(this->viewport->get_center2(),
 				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_xmpp(),
 				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
 				  &tmp)) {

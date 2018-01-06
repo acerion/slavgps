@@ -537,10 +537,9 @@ QString LayerTRWTracks::new_unique_element_name(const QString & old_name)
 
 
 
-
-static const char * my_track_colors(int ii)
+static QString my_track_colors(int ii)
 {
-	static const char * colors[TRW_LAYER_TRACK_COLORS_MAX] = {
+	static const QString colors[LAYER_TRW_TRACK_COLORS_MAX] = {
 		"#2d870a",
 		"#135D34",
 		"#0a8783",
@@ -553,59 +552,59 @@ static const char * my_track_colors(int ii)
 		"#96059f"
 	};
 	/* Fast and reliable way of returning a color. */
-	return colors[(ii % TRW_LAYER_TRACK_COLORS_MAX)];
+	return colors[(ii % LAYER_TRW_TRACK_COLORS_MAX)];
 }
 
 
 
 
-void LayerTRWTracks::assign_colors(int track_drawing_mode, const QColor & track_color_common)
+void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common)
 {
 	if (this->type_id == "sg.trw.tracks") {
 
-		int ii = 0;
-		for (auto i = this->items.begin(); i != this->items.end(); i++) {
+		int color_i = 0;
+		for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
 
-			Track * trk = i->second;
+			Track * trk = iter->second;
 
 			/* Tracks get a random spread of colors if not already assigned. */
 			if (!trk->has_color) {
-				if (track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
+				if (track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
 					trk->color = track_color_common;
 				} else {
-					trk->color.setNamedColor(QString(my_track_colors(ii)));
+					trk->color.setNamedColor(my_track_colors(color_i));
 				}
 				trk->has_color = true;
 			}
 
 			this->update_tree_view(trk);
 
-			ii++;
-			if (ii > TRW_LAYER_TRACK_COLORS_MAX) {
-				ii = 0;
+			color_i++;
+			if (color_i > LAYER_TRW_TRACK_COLORS_MAX) {
+				color_i = 0;
 			}
 		}
 
 	} else { /* Routes. */
 
-		int ii = 0;
-		for (auto i = this->items.begin(); i != this->items.end(); i++) {
+		bool use_dark = false;
+		for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
 
-			Track * trk = i->second;
+			Track * trk = iter->second;
 
 			/* Routes get an intermix of reds. */
 			if (!trk->has_color) {
-				if (ii) {
-					trk->color.setNamedColor("#FF0000"); /* Red. */
-				} else {
+				if (use_dark) {
 					trk->color.setNamedColor("#B40916"); /* Dark Red. */
+				} else {
+					trk->color.setNamedColor("#FF0000"); /* Red. */
 				}
 				trk->has_color = true;
 			}
 
 			this->update_tree_view(trk);
 
-			ii = !ii;
+			use_dark = !use_dark;
 		}
 	}
 }

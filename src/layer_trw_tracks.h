@@ -42,6 +42,7 @@
 
 
 
+#include "layer_trw_definitions.h"
 #include "layer_trw_track.h"
 #include "tree_view.h"
 #include "bbox.h"
@@ -141,7 +142,7 @@ namespace SlavGPS {
 		/* Update the tree view of the track id - primarily to update the icon. */
 		void update_tree_view(Track * trk);
 
-		void assign_colors(int track_drawing_mode, const QColor & track_color_common);
+		void assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common);
 
 
 		time_t get_earliest_timestamp();

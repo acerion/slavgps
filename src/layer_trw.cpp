@@ -164,16 +164,16 @@ enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_META
 
 
 static std::vector<SGLabelID> params_track_drawing_modes = {
-	SGLabelID("Draw by Track",                  DRAWMODE_BY_TRACK),
-	SGLabelID("Draw by Speed",                  DRAWMODE_BY_SPEED),
-	SGLabelID("All Tracks Have The Same Color", DRAWMODE_ALL_SAME_COLOR),
+	SGLabelID(QObject::tr("Draw by Track"),                  (int) LayerTRWTrackDrawingMode::BY_TRACK),
+	SGLabelID(QObject::tr("Draw by Speed"),                  (int) LayerTRWTrackDrawingMode::BY_SPEED),
+	SGLabelID(QObject::tr("All Tracks Have The Same Color"), (int) LayerTRWTrackDrawingMode::ALL_SAME_COLOR),
 };
 
 static std::vector<SGLabelID> params_wpsymbols = {
-	SGLabelID("Filled Square", SYMBOL_FILLED_SQUARE),
-	SGLabelID("Square",        SYMBOL_SQUARE),
-	SGLabelID("Circle",        SYMBOL_CIRCLE),
-	SGLabelID("X",             SYMBOL_X),
+	SGLabelID(QObject::tr("Filled Square"), (int) GraphicMarker::FILLED_SQUARE),
+	SGLabelID(QObject::tr("Square"),        (int) GraphicMarker::SQUARE),
+	SGLabelID(QObject::tr("Circle"),        (int) GraphicMarker::CIRCLE),
+	SGLabelID(QObject::tr("X"),             (int) GraphicMarker::X),
 };
 
 #define MIN_POINT_SIZE 2
@@ -219,13 +219,13 @@ static std::vector<SGLabelID> params_sort_order = {
 };
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
-static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) DRAWMODE_BY_TRACK); }
+static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) LayerTRWTrackDrawingMode::BY_TRACK); }
 static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
 static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
 static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
-static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) SYMBOL_FILLED_SQUARE); }
+static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) (int) GraphicMarker::FILLED_SQUARE); }
 static SGVariant sort_order_default(void)        { return SGVariant((int32_t) 0); }
 static SGVariant string_default(void)            { return SGVariant(""); }
 
@@ -783,7 +783,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_TRACK_DRAWING_MODE:
-		this->track_drawing_mode = data.val_int;
+		this->track_drawing_mode = (LayerTRWTrackDrawingMode) data.val_int;
 		break;
 	case PARAM_TRACK_COLOR_COMMON:
 		this->track_color_common = data.val_color;
@@ -912,8 +912,8 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 #endif
 		break;
 	case PARAM_WP_MARKER_TYPE:
-		if (data.val_int < SYMBOL_NUM_SYMBOLS) {
-			this->wp_marker_type = data.val_int;
+		if (data.val_int < (int) GraphicMarker::MAX) {
+			this->wp_marker_type = (GraphicMarker) data.val_int;
 		}
 		break;
 	case PARAM_WP_MARKER_SIZE:
@@ -1090,7 +1090,7 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
-		bool sensitive = (var.i == DRAWMODE_ALL_SAME_COLOR);
+		bool sensitive = (var.i == LayerTRWTrackDrawingMode::ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_TRACK_COLOR_COMMON];
@@ -1361,25 +1361,25 @@ void LayerTRW::new_track_pens(void)
 	//gdk_gc_set_line_attributes(this->current_trk_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
 	this->track_pens.clear();
-	this->track_pens.resize(VIK_TRW_LAYER_TRACK_GC);
+	this->track_pens.resize(LAYER_TRW_TRACK_GRAPHICS_MAX);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP] = QPen(QColor("#874200"));
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP] = QPen(QColor("#874200"));
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_BLACK] = QPen(QColor("#000000")); /* Black. */
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_BLACK].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK] = QPen(QColor("#000000")); /* Black. */
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SLOW] = QPen(QColor("#E6202E")); /* Red-ish. */
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SLOW].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW] = QPen(QColor("#E6202E")); /* Red-ish. */
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_AVER] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_AVER].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST].setWidth(width);
 
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->track_color_common));
-	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE].setWidth(width);
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE] = QPen(QColor(this->track_color_common));
+	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE].setWidth(width);
 }
 
 
@@ -2190,7 +2190,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (this->new_waypoint(this->get_window(), *g_tree->tree_get_main_viewport()->get_center())) {
+	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center2())) {
 		this->waypoints->calculate_bounds();
 		if (this->visible) {
 			g_tree->emit_update_window();
@@ -2209,7 +2209,7 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 	track->set_defaults();
 	track->visible = true; /* TODO: verify if this is necessary. Tracks are visible by default. */
 
-	if (this->track_drawing_mode == DRAWMODE_ALL_SAME_COLOR) {
+	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
 		/* Create track with the preferred color from the layer properties. */
 		track->color = this->track_color_common;
 	} else {
@@ -4383,7 +4383,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 		this->generate_missing_thumbnails();
 	}
 	this->tracks->assign_colors(this->track_drawing_mode, this->track_color_common);
-	this->routes->assign_colors(-1, this->track_color_common);
+	this->routes->assign_colors(this->track_drawing_mode, this->track_color_common); /* For routes the first argument is ignored. */
 
 	this->waypoints->calculate_bounds();
 	this->tracks->calculate_bounds();

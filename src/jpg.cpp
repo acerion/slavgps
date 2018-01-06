@@ -146,7 +146,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		trw->add_waypoint_from_file(wp, file_base_name(file_full_path));
 		wp->set_image_full_path(file_full_path);
 		/* Simply set position to the current center. */
-		wp->coord = *(viewport->get_center());
+		wp->coord = viewport->get_center2();
 		auto_zoom = false;
 	}
 

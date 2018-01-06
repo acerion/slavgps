@@ -634,9 +634,17 @@ void Viewport::set_ympp(double new_ympp)
 
 
 
-const Coord * Viewport::get_center() const
+const Coord * Viewport::get_center(void) const
 {
-	return &center;
+	return &this->center;
+}
+
+
+
+
+Coord Viewport::get_center2(void) const
+{
+	return this->center;
 }
 
 
@@ -1593,7 +1601,7 @@ double calcR(double lat)
 
 
 
-bool Viewport::is_one_zone(void) const
+bool Viewport::get_is_one_utm_zone(void) const
 {
 	return coord_mode == CoordMode::UTM && this->is_one_utm_zone;
 }
