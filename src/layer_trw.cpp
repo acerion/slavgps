@@ -245,11 +245,11 @@ enum {
 	PARAM_TRACK_COLOR_COMMON,
 	PARAM_DRAW_TRACK_LINES,
 	PARAM_TRACK_THICKNESS,
-	PARAM_DD,
+	PARAM_DRAW_TRACK_DIRECTIONS,
 	PARAM_TRACK_DIRECTION_SIZE,
 	PARAM_DRAW_TRACKPOINTS,
 	PARAM_TRACKPOINT_SIZE,
-	PARAM_DE,
+	PARAM_DRAW_TRACK_ELEVATION,
 	PARAM_TRACK_ELEVATION_FACTOR,
 	PARAM_DRAW_TRACK_STOPS,
 	PARAM_TRACK_MIN_STOP_LENGTH,
@@ -258,7 +258,7 @@ enum {
 	PARAM_TRACK_DRAW_SPEED_FACTOR,
 	PARAM_TRACK_SORT_ORDER,
 	// Waypoints
-	PARAM_DLA,
+	PARAM_WP_LABELS,
 	PARAM_WP_LABEL_FONT_SIZE,
 	PARAM_WP_MARKER_COLOR,
 	PARAM_WP_LABEL_FG_COLOR,
@@ -266,10 +266,10 @@ enum {
 	PARAM_WPBA,
 	PARAM_WP_MARKER_TYPE,
 	PARAM_WP_MARKER_SIZE,
-	PARAM_WPSYMS,
+	PARAM_DRAW_WP_SYMBOLS,
 	PARAM_WP_SORT_ORDER,
 	// WP images
-	PARAM_WP_IMAGE_DRAW,
+	PARAM_DRAW_WP_IMAGES,
 	PARAM_WP_IMAGE_SIZE,
 	PARAM_WP_IMAGE_ALPHA,
 	PARAM_WP_IMAGE_CACHE_SIZE,
@@ -293,11 +293,11 @@ ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_TRACK_COLOR_COMMON,      NULL, "trackcolor",        SGVariantType::COLOR,   GROUP_TRACKS,            QObject::tr("All Tracks Color:"),                WidgetType::COLOR,        NULL,                        black_color_default,        NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected") },
 	{ PARAM_DRAW_TRACK_LINES,        NULL, "drawlines",         SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Track Lines"),                 WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_TRACK_THICKNESS,         NULL, "line_thickness",    SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Track Thickness:"),                 WidgetType::SPINBOX_INT,  &scale_track_thickness,      NULL,                       NULL, NULL },
-	{ PARAM_DD,                      NULL, "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Track Direction"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
+	{ PARAM_DRAW_TRACK_DIRECTIONS,   NULL, "drawdirections",    SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Track Directions:"),           WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
 	{ PARAM_TRACK_DIRECTION_SIZE,    NULL, "trkdirectionsize",  SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Direction Size:"),                  WidgetType::SPINBOX_INT,  &scale_track_direction_size, NULL,                       NULL, NULL },
 	{ PARAM_DRAW_TRACKPOINTS,        NULL, "drawpoints",        SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Trackpoints:"),                WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_TRACKPOINT_SIZE,         NULL, "trkpointsize",      SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Trackpoint Size:"),                 WidgetType::SPINBOX_INT,  &scale_trackpoint_size,      NULL,                       NULL, NULL },
-	{ PARAM_DE,                      NULL, "drawelevation",     SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Elevation"),                   WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
+	{ PARAM_DRAW_TRACK_ELEVATION,    NULL, "drawelevation",     SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Track Elevation"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
 	{ PARAM_TRACK_ELEVATION_FACTOR,  NULL, "elevation_factor",  SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Draw Elevation Height %:"),         WidgetType::HSCALE,       &scale_track_elevation_factor, NULL,                     NULL, NULL },
 	{ PARAM_DRAW_TRACK_STOPS,        NULL, "drawstops",         SGVariantType::BOOLEAN, GROUP_TRACKS,            QObject::tr("Draw Track Stops:"),                WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
 	{ PARAM_TRACK_MIN_STOP_LENGTH,   NULL, "stop_length",       SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length (seconds):"),       WidgetType::SPINBOX_INT,  &scale_track_min_stop_length,NULL,                       NULL, NULL },
@@ -307,7 +307,7 @@ ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_TRACK_DRAW_SPEED_FACTOR, NULL, "speed_factor",      SGVariantType::DOUBLE,  GROUP_TRACKS_ADV,        QObject::tr("Draw by Speed Factor (%):"),        WidgetType::HSCALE,       &scale_track_draw_speed_factor, NULL,                    NULL, N_("The percentage factor away from the average speed determining the color used") },
 	{ PARAM_TRACK_SORT_ORDER,        NULL, "tracksortorder",    SGVariantType::INT,     GROUP_TRACKS_ADV,        QObject::tr("Track Sort Order:"),                WidgetType::COMBOBOX,     &params_sort_order,          sort_order_default,         NULL, NULL },
 
-	{ PARAM_DLA,                     NULL, "drawlabels",        SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         QObject::tr("Draw Labels"),                      WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_WP_LABELS,               NULL, "drawlabels",        SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Labels"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_LABEL_FONT_SIZE,      NULL, "wpfontsize",        SGVariantType::INT,     GROUP_WAYPOINTS,         QObject::tr("Font Size of Waypoint's Label:"),   WidgetType::COMBOBOX,     &params_font_sizes,          wpfontsize_default,         NULL, NULL },
 	{ PARAM_WP_MARKER_COLOR,         NULL, "wpcolor",           SGVariantType::COLOR,   GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Marker:"),      WidgetType::COLOR,        NULL,                        black_color_default,        NULL, NULL },
 	{ PARAM_WP_LABEL_FG_COLOR,       NULL, "wptextcolor",       SGVariantType::COLOR,   GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Label:"),       WidgetType::COLOR,        NULL,                        wptextcolor_default,        NULL, NULL },
@@ -315,10 +315,10 @@ ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_WPBA,                    NULL, "wpbgand",           SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         QObject::tr("Fake BG Color Translucency:"),      WidgetType::CHECKBUTTON,  NULL,                        sg_variant_false,           NULL, NULL },
 	{ PARAM_WP_MARKER_TYPE,          NULL, "wpsymbol",          SGVariantType::INT,     GROUP_WAYPOINTS,         QObject::tr("Type of Waypoint's Marker:"),       WidgetType::COMBOBOX,     &params_wpsymbols,           wpsymbol_default,           NULL, NULL },
 	{ PARAM_WP_MARKER_SIZE,          NULL, "wpsize",            SGVariantType::INT,     GROUP_WAYPOINTS,         QObject::tr("Size of Waypoint's Marker:"),       WidgetType::SPINBOX_INT,  &scale_wp_marker_size,       NULL,                       NULL, NULL },
-	{ PARAM_WPSYMS,                  NULL, "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Symbols:"),           WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_DRAW_WP_SYMBOLS,         NULL, "wpsyms",            SGVariantType::BOOLEAN, GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Symbols:"),           WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_SORT_ORDER,           NULL, "wpsortorder",       SGVariantType::INT,     GROUP_WAYPOINTS,         QObject::tr("Waypoint Sort Order:"),             WidgetType::COMBOBOX,     &params_sort_order,          sort_order_default,         NULL, NULL },
 
-	{ PARAM_WP_IMAGE_DRAW,           NULL, "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_DRAW_WP_IMAGES,          NULL, "drawimages",        SGVariantType::BOOLEAN, GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),             WidgetType::CHECKBUTTON,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_IMAGE_SIZE,           NULL, "image_size",        SGVariantType::INT,     GROUP_IMAGES,            QObject::tr("Waypoint Image Size (pixels):"),    WidgetType::HSCALE,       &scale_wp_image_size,        NULL,                       NULL, NULL },
 	{ PARAM_WP_IMAGE_ALPHA,          NULL, "image_alpha",       SGVariantType::INT,     GROUP_IMAGES,            QObject::tr("Waypoint Image Alpha:"),            WidgetType::HSCALE,       &scale_wp_image_alpha,       NULL,                       NULL, NULL },
 	{ PARAM_WP_IMAGE_CACHE_SIZE,     NULL, "image_cache_size",  SGVariantType::INT,     GROUP_IMAGES,            QObject::tr("Waypoint Images' Memory Cache Size:"),WidgetType::HSCALE,       &scale_wp_image_cache_size,  NULL,                       NULL, NULL },
@@ -775,80 +775,80 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		this->routes->visible = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LABELS:
-		this->track_draw_labels = data.val_bool;
+		this->painter->draw_track_labels = data.val_bool;
 		break;
 	case PARAM_TRACK_LABEL_FONT_SIZE:
 		if (data.val_int < FS_NUM_SIZES) {
-			this->trk_label_font_size = (font_size_t) data.val_int;
+			this->painter->track_label_font_size = (font_size_t) data.val_int;
 		}
 		break;
 	case PARAM_TRACK_DRAWING_MODE:
-		this->track_drawing_mode = (LayerTRWTrackDrawingMode) data.val_int;
+		this->painter->track_drawing_mode = (LayerTRWTrackDrawingMode) data.val_int;
 		break;
 	case PARAM_TRACK_COLOR_COMMON:
-		this->track_color_common = data.val_color;
-		this->new_track_pens();
+		this->painter->track_color_common = data.val_color;
+		this->painter->make_track_pens();
 		break;
 	case PARAM_DRAW_TRACKPOINTS:
-		this->draw_trackpoints = data.val_bool;
+		this->painter->draw_trackpoints = data.val_bool;
 		break;
 	case PARAM_TRACKPOINT_SIZE:
 		if (data.val_int >= scale_trackpoint_size.min && data.val_int <= scale_trackpoint_size.max) {
-			this->trackpoint_size = data.val_int;
+			this->painter->trackpoint_size = data.val_int;
 		}
 		break;
-	case PARAM_DE:
-		this->drawelevation = data.val_bool;
+	case PARAM_DRAW_TRACK_ELEVATION:
+		this->painter->draw_track_elevation = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_STOPS:
-		this->draw_track_stops = data.val_bool;
+		this->painter->draw_track_stops = data.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LINES:
-		this->draw_track_lines = data.val_bool;
+		this->painter->draw_track_lines = data.val_bool;
 		break;
-	case PARAM_DD:
-		this->drawdirections = data.val_bool;
+	case PARAM_DRAW_TRACK_DIRECTIONS:
+		this->painter->draw_track_directions = data.val_bool;
 		break;
 	case PARAM_TRACK_DIRECTION_SIZE:
 		if (data.val_int >= scale_track_direction_size.min && data.val_int <= scale_track_direction_size.max) {
-			this->drawdirections_size = data.val_int;
+			this->painter->draw_track_directions_size = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_MIN_STOP_LENGTH:
 		if (data.val_int >= scale_track_min_stop_length.min && data.val_int <= scale_track_min_stop_length.max) {
-			this->stop_length = data.val_int;
+			this->painter->track_min_stop_length = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_ELEVATION_FACTOR:
 		if (data.val_int >= scale_track_elevation_factor.min && data.val_int <= scale_track_elevation_factor.max) {
-			this->elevation_factor = data.val_int;
+			this->painter->track_elevation_factor = data.val_int;
 		}
 		break;
 	case PARAM_TRACK_THICKNESS:
 		if (data.val_int >= scale_track_thickness.min && data.val_int <= scale_track_thickness.max) {
-			if (data.val_int != this->track_thickness) {
-				this->track_thickness = data.val_int;
-				this->new_track_pens();
+			if (data.val_int != this->painter->track_thickness) {
+				this->painter->track_thickness = data.val_int;
+				this->painter->make_track_pens();
 			}
 		}
 		break;
 	case PARAM_TRACK_BG_THICKNESS:
 		if (data.val_int >= scale_track_bg_thickness.min && data.val_int <= scale_track_bg_thickness.max) {
-			if (data.val_int != this->track_bg_thickness) {
-				this->track_bg_thickness = data.val_int;
-				this->new_track_pens();
+			if (data.val_int != this->painter->track_bg_thickness) {
+				this->painter->track_bg_thickness = data.val_int;
+				this->painter->make_track_pens();
 			}
 		}
 		break;
 
 	case PARAM_TRK_BG_COLOR:
-		this->track_bg_color = data.val_color;
-		this->track_bg_pen.setColor(this->track_bg_color);
+		this->painter->track_bg_color = data.val_color;
+		this->painter->track_bg_pen.setColor(this->painter->track_bg_color);
 		break;
 
 	case PARAM_TRACK_DRAW_SPEED_FACTOR:
 		if (data.val_double >= scale_track_draw_speed_factor.min && data.val_double <= scale_track_draw_speed_factor.max) {
-			this->track_draw_speed_factor = data.val_double;
+			this->painter->track_draw_speed_factor = data.val_double;
 		}
 		break;
 	case PARAM_TRACK_SORT_ORDER:
@@ -856,24 +856,24 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			this->track_sort_order = (sort_order_t) data.val_int;
 		}
 		break;
-	case PARAM_DLA:
-		this->drawlabels = data.val_bool;
+	case PARAM_WP_LABELS:
+		this->painter->draw_wp_labels = data.val_bool;
 		break;
-	case PARAM_WP_IMAGE_DRAW:
-		this->wp_image_draw = data.val_bool;
+	case PARAM_DRAW_WP_IMAGES:
+		this->painter->draw_wp_images = data.val_bool;
 		break;
 	case PARAM_WP_IMAGE_SIZE:
 		if (data.val_int >= scale_wp_image_size.min && data.val_int <= scale_wp_image_size.max) {
-			if (data.val_int != this->wp_image_size) {
-				this->wp_image_size = data.val_int;
+			if (data.val_int != this->painter->wp_image_size) {
+				this->painter->wp_image_size = data.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
 		break;
 	case PARAM_WP_IMAGE_ALPHA:
 		if (data.val_int >= scale_wp_image_alpha.min && data.val_int <= scale_wp_image_alpha.max) {
-			if (data.val_int != this->wp_image_alpha) {
-				this->wp_image_alpha = data.val_int;
+			if (data.val_int != this->painter->wp_image_alpha) {
+				this->painter->wp_image_alpha = data.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
@@ -889,18 +889,18 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 
 	case PARAM_WP_MARKER_COLOR:
-		this->wp_marker_color = data.val_color;
-		this->wp_marker_pen.setColor(this->wp_marker_color);
+		this->painter->wp_marker_color = data.val_color;
+		this->painter->wp_marker_pen.setColor(this->painter->wp_marker_color);
 		break;
 
 	case PARAM_WP_LABEL_FG_COLOR:
-		this->wp_label_fg_color = data.val_color;
-		this->wp_label_fg_pen.setColor(this->wp_label_fg_color);
+		this->painter->wp_label_fg_color = data.val_color;
+		this->painter->wp_label_fg_pen.setColor(this->painter->wp_label_fg_color);
 		break;
 
 	case PARAM_WP_LABEL_BG_COLOR:
-		this->wp_label_bg_color = data.val_color;
-		this->wp_label_bg_pen.setColor(this->wp_label_bg_color);
+		this->painter->wp_label_bg_color = data.val_color;
+		this->painter->wp_label_bg_pen.setColor(this->painter->wp_label_bg_color);
 		break;
 
 	case PARAM_WPBA:
@@ -913,20 +913,20 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 	case PARAM_WP_MARKER_TYPE:
 		if (data.val_int < (int) GraphicMarker::MAX) {
-			this->wp_marker_type = (GraphicMarker) data.val_int;
+			this->painter->wp_marker_type = (GraphicMarker) data.val_int;
 		}
 		break;
 	case PARAM_WP_MARKER_SIZE:
 		if (data.val_int >= scale_wp_marker_size.min && data.val_int <= scale_wp_marker_size.max) {
-			this->wp_marker_size = data.val_int;
+			this->painter->wp_marker_size = data.val_int;
 		}
 		break;
-	case PARAM_WPSYMS:
-		this->wp_draw_symbols = data.val_bool;
+	case PARAM_DRAW_WP_SYMBOLS:
+		this->painter->draw_wp_symbols = data.val_bool;
 		break;
 	case PARAM_WP_LABEL_FONT_SIZE:
 		if (data.val_int < FS_NUM_SIZES) {
-			this->wp_label_font_size = (font_size_t) data.val_int;
+			this->painter->wp_label_font_size = (font_size_t) data.val_int;
 		}
 		break;
 	case PARAM_WP_SORT_ORDER:
@@ -967,42 +967,42 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (id) {
-	case PARAM_TRACKS_VISIBLE:          rv = SGVariant(this->tracks->visible);               break;
-	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints->visible);            break;
-	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes->visible);               break;
-	case PARAM_DRAW_TRACK_LABELS:       rv = SGVariant(this->track_draw_labels);             break;
-	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->trk_label_font_size); break;
-	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->track_drawing_mode);  break;
-	case PARAM_TRACK_COLOR_COMMON:      rv = SGVariant(this->track_color_common);            break;
-	case PARAM_DRAW_TRACKPOINTS:        rv = SGVariant(this->draw_trackpoints);              break;
-	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->trackpoint_size);     break;
-	case PARAM_DE:                      rv = SGVariant(this->drawelevation);                 break;
-	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->elevation_factor);    break;
-	case PARAM_DRAW_TRACK_STOPS:        rv = SGVariant(this->draw_track_stops);              break;
-	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->stop_length);         break;
-	case PARAM_DRAW_TRACK_LINES:        rv = SGVariant(this->draw_track_lines);              break;
-	case PARAM_DD:                      rv = SGVariant(this->drawdirections);                break;
-	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->drawdirections_size); break;
-	case PARAM_TRACK_THICKNESS:         rv = SGVariant((int32_t) this->track_thickness);     break;
-	case PARAM_TRACK_BG_THICKNESS:      rv = SGVariant((int32_t) this->track_bg_thickness);  break;
-	case PARAM_DLA:                     rv = SGVariant(this->drawlabels);                    break;
-	case PARAM_TRK_BG_COLOR:            rv = SGVariant(this->track_bg_color);                break;
-	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv = SGVariant(this->track_draw_speed_factor);       break;
-	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order);    break;
+	case PARAM_TRACKS_VISIBLE:          rv = SGVariant(this->tracks->visible);                           break;
+	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints->visible);                        break;
+	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes->visible);                           break;
+	case PARAM_DRAW_TRACK_LABELS:       rv = SGVariant(this->painter->draw_track_labels);                break;
+	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->painter->track_label_font_size);  break;
+	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->painter->track_drawing_mode);     break;
+	case PARAM_TRACK_COLOR_COMMON:      rv = SGVariant(this->painter->track_color_common);               break;
+	case PARAM_DRAW_TRACKPOINTS:        rv = SGVariant(this->painter->draw_trackpoints);                 break;
+	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->painter->trackpoint_size);        break;
+	case PARAM_DRAW_TRACK_ELEVATION:    rv = SGVariant(this->painter->draw_track_elevation);             break;
+	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->painter->track_elevation_factor); break;
+	case PARAM_DRAW_TRACK_STOPS:        rv = SGVariant(this->painter->draw_track_stops);                 break;
+	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->painter->track_min_stop_length);  break;
+	case PARAM_DRAW_TRACK_LINES:        rv = SGVariant(this->painter->draw_track_lines);                 break;
+	case PARAM_DRAW_TRACK_DIRECTIONS:   rv = SGVariant(this->painter->draw_track_directions);            break;
+	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->painter->draw_track_directions_size); break;
+	case PARAM_TRACK_THICKNESS:         rv = SGVariant((int32_t) this->painter->track_thickness);        break;
+	case PARAM_TRACK_BG_THICKNESS:      rv = SGVariant((int32_t) this->painter->track_bg_thickness);     break;
+	case PARAM_WP_LABELS:               rv = SGVariant(this->painter->draw_wp_labels);                   break;
+	case PARAM_TRK_BG_COLOR:            rv = SGVariant(this->painter->track_bg_color);                   break;
+	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv = SGVariant(this->painter->track_draw_speed_factor);          break;
+	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order);                break;
 
-	case PARAM_WP_IMAGE_DRAW:           rv = SGVariant(this->wp_image_draw);                 break;
-	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->wp_image_size);       break;
-	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->wp_image_alpha);      break;
+	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
+	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size);       break;
+	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha);      break;
 	case PARAM_WP_IMAGE_CACHE_SIZE:     rv = SGVariant((int32_t) this->wp_image_cache_size); break;
 
-	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->wp_marker_color);               break;
-	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->wp_label_fg_color);             break;
-	case PARAM_WP_LABEL_BG_COLOR:       rv = SGVariant(this->wp_label_bg_color);             break;
-	case PARAM_WPBA:                    rv = SGVariant(this->wpbgand);                       break;
-	case PARAM_WP_MARKER_TYPE:          rv = SGVariant((int32_t) this->wp_marker_type);      break;
-	case PARAM_WP_MARKER_SIZE:          rv = SGVariant((int32_t) this->wp_marker_size);      break;
-	case PARAM_WPSYMS:                  rv = SGVariant(this->wp_draw_symbols);               break;
-	case PARAM_WP_LABEL_FONT_SIZE:      rv = SGVariant((int32_t) this->wp_label_font_size);  break;
+	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->painter->wp_marker_color);      break;
+	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->painter->wp_label_fg_color);    break;
+	case PARAM_WP_LABEL_BG_COLOR:       rv = SGVariant(this->painter->wp_label_bg_color);    break;
+	case PARAM_WPBA:                    rv = SGVariant(this->painter->wpbgand);              break;
+	case PARAM_WP_MARKER_TYPE:          rv = SGVariant((int32_t) this->painter->wp_marker_type);      break;
+	case PARAM_WP_MARKER_SIZE:          rv = SGVariant((int32_t) this->painter->wp_marker_size);      break;
+	case PARAM_DRAW_WP_SYMBOLS:         rv = SGVariant(this->painter->draw_wp_symbols);               break;
+	case PARAM_WP_LABEL_FONT_SIZE:      rv = SGVariant((int32_t) this->painter->wp_label_font_size);  break;
 	case PARAM_WP_SORT_ORDER:           rv = SGVariant((int32_t) this->wp_sort_order);       break;
 
 	/* Metadata. */
@@ -1043,7 +1043,7 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 #ifdef K
 	switch (values->param_id) {
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
-	case PARAM_WP_IMAGE_DRAW: {
+	case PARAM_DRAW_WP_IMAGES: {
 		// Get new value
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
@@ -1063,7 +1063,7 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 		break;
 	}
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
-	case PARAM_DLA: {
+	case PARAM_WP_LABELS: {
 		// Get new value
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
@@ -1303,6 +1303,11 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	}
 #endif
 
+	/* This will copy viewport's parameters (size, coords, etc.)
+	   to painter, so that painter knows whether, what and how to
+	   paint. */
+	this->painter->set_viewport(viewport);
+
 	const bool allowed = hl_is_allowed;
 	const bool required = allowed
 		&& (hl_is_required /* Parent code requires us to do highlight. */
@@ -1333,53 +1338,6 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 void LayerTRW::draw(Viewport * viewport)
 {
 	this->draw_tree_item(viewport, false, false);
-}
-
-
-
-
-void LayerTRW::new_track_pens(void)
-{
-	int32_t width = this->track_thickness;
-
-
-	this->track_bg_pen = QPen(this->track_bg_color);
-	this->track_bg_pen.setWidth(width + this->track_bg_thickness);
-
-
-	/* Ensure new track drawing heeds line thickness setting,
-	   however always have a minium of 2, as 1 pixel is really narrow. */
-	int new_track_width = (this->track_thickness < 2) ? 2 : this->track_thickness;
-	this->current_trk_pen = QPen(QColor("#FF0000"));
-	this->current_trk_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_trk_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-
-
-	/* 'new_point' pen is exactly the same as the current track pen. */
-	this->current_trk_new_point_pen = QPen(QColor("#FF0000"));
-	this->current_trk_new_point_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_trk_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-
-	this->track_pens.clear();
-	this->track_pens.resize(LAYER_TRW_TRACK_GRAPHICS_MAX);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP] = QPen(QColor("#874200"));
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP].setWidth(width);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK] = QPen(QColor("#000000")); /* Black. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK].setWidth(width);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW] = QPen(QColor("#E6202E")); /* Red-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW].setWidth(width);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER].setWidth(width);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST].setWidth(width);
-
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE] = QPen(QColor(this->track_color_common));
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE].setWidth(width);
 }
 
 
@@ -1426,9 +1384,9 @@ void LayerTRW::add_children_to_tree(void)
 /*
  * Return a property about tracks for this layer.
  */
-int32_t LayerTRW::get_property_track_thickness()
+int32_t LayerTRW::get_track_thickness()
 {
-	return this->track_thickness;
+	return this->painter->track_thickness;
 }
 
 
@@ -2209,9 +2167,9 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 	track->set_defaults();
 	track->visible = true; /* TODO: verify if this is necessary. Tracks are visible by default. */
 
-	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
+	if (this->painter->track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
 		/* Create track with the preferred color from the layer properties. */
-		track->color = this->track_color_common;
+		track->color = this->painter->track_color_common;
 	} else {
 		track->color = QColor("#aa22dd"); //QColor("#000000");
 	}
@@ -4382,8 +4340,8 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	if (this->tree_view) {
 		this->generate_missing_thumbnails();
 	}
-	this->tracks->assign_colors(this->track_drawing_mode, this->track_color_common);
-	this->routes->assign_colors(this->track_drawing_mode, this->track_color_common); /* For routes the first argument is ignored. */
+	this->tracks->assign_colors(this->painter->track_drawing_mode, this->painter->track_color_common);
+	this->routes->assign_colors(this->painter->track_drawing_mode, this->painter->track_color_common); /* For routes the first argument is ignored. */
 
 	this->waypoints->calculate_bounds();
 	this->tracks->calculate_bounds();
@@ -4715,6 +4673,8 @@ LayerTRW::LayerTRW() : Layer()
 	this->routes->owning_layer = this;
 	this->waypoints->owning_layer = this;
 
+	this->painter = new LayerTRWPainter(this);
+
 	memset(&coord_mode, 0, sizeof (CoordMode)); /* TODO: change it into some assignment? */
 
 	this->set_initial_parameter_values();
@@ -4729,26 +4689,12 @@ LayerTRW::LayerTRW() : Layer()
 	this->draw_sync_do = true;
 	/* Everything else is 0, false or NULL. */
 
-
-#ifdef K
-	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
-	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
-#endif
-
-	this->new_track_pens();
-
-	this->wp_marker_pen = QPen(this->wp_marker_color);
-	this->wp_marker_pen.setWidth(2);
-
-	this->wp_label_fg_pen = QPen(this->wp_label_fg_color);
-	this->wp_label_fg_pen.setWidth(1);
-
-	this->wp_label_bg_pen = QPen(this->wp_label_bg_color);
-	this->wp_label_bg_pen.setWidth(1);
-#ifdef K
-	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
-#endif
-
+	/* This should be called after set_initial_parameter_values().
+	   Notice that call to make_wp_pens() is done only once, but
+	   make_track_pens() is used more than once in the code
+	   base. */
+	this->painter->make_track_pens();
+	this->painter->make_wp_pens();
 
 	this->menu_selection = this->interface->menu_items_selection;
 }
@@ -4766,6 +4712,7 @@ LayerTRW::~LayerTRW()
 	delete this->routes;
 	delete this->waypoints;
 
+	delete this->painter;
 }
 
 
@@ -4791,7 +4738,7 @@ bool LayerTRW::handle_selection_in_tree()
 	g_tree->selected_tree_item = this;
 
 	/* Set highlight thickness. */
-	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_property_track_thickness());
+	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_track_thickness());
 
 	/* Mark for redraw. */
 	return true;

@@ -101,7 +101,7 @@ Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 
 Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
 {
-	WaypointSearch search(x, y, viewport, this->wp_image_draw);
+	WaypointSearch search(x, y, viewport, this->painter->draw_wp_images);
 
 	this->waypoints->search_closest_wp(&search);
 
@@ -228,7 +228,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, viewport_bbox)) {
 		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->wp_image_draw);
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->painter->draw_wp_images);
 		this->waypoints->search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
@@ -517,7 +517,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		   have any waypoint to operate on - yet. Try to find
 		   one close to click coordinates. */
 
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->wp_image_draw);
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->painter->draw_wp_images);
 		trw->get_waypoints_node().search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
@@ -886,7 +886,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		*pixmap = *tool->viewport->get_pixmap();
 #if 0
 		gdk_draw_drawable(pixmap,
-				  trw->current_trk_new_point_pen,
+				  trw->painter->current_track_new_point_pen,
 				  tool->viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 #endif
@@ -899,7 +899,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		   otherwise using Viewport::draw_* functions puts the data into the base pixmap,
 		   thus when we come to reset to the background it would include what we have already drawn!! */
 		QPainter painter(pixmap);
-		painter.setPen(trw->current_trk_new_point_pen);
+		painter.setPen(trw->painter->current_track_new_point_pen);
 		qDebug() << "II: Layer TRW: drawing line" << x1 << y1 << ev->x() << ev->y();
 		painter.drawLine(x1, y1, ev->x(), ev->y());
 
@@ -951,7 +951,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 			/* Create a background block to make the text easier to read over the background map. */
 			QPen background_block_pen = SGUtils::new_pen(QColor("#cccccc"), 1);
 			fill_rectangle(pixmap, background_block_pen, xd-2, yd-2, wd+4, hd+2);
-			gdk_draw_layout(pixmap, trw->current_trk_new_point_pen, xd, yd, pl);
+			gdk_draw_layout(pixmap, trw->painter->current_track_new_point_pen, xd, yd, pl);
 
 			g_object_unref(G_OBJECT (pl));
 #endif
@@ -964,7 +964,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Update statusbar with full gain/loss information. */
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, trw);
 
-		//passalong->pen = new QPen(trw->current_trk_new_point_pen);
+		//passalong->pen = new QPen(trw->painter->current_track_new_point_pen);
 		draw_sync(trw, tool->viewport->scr_buffer, pixmap);
 		trw->draw_sync_done = false;
 

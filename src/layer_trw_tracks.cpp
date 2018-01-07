@@ -69,6 +69,9 @@ extern Tree * g_tree;
 /* This is how it knows when you click if you are clicking close to a trackpoint. */
 #define TRACKPOINT_SIZE_APPROX 5
 
+#define LAYER_TRW_TRACK_COLORS_MAX 10
+
+
 
 
 LayerTRWTracks::LayerTRWTracks()
@@ -91,7 +94,7 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes) : LayerTRWTracks()
 		this->accepted_child_type_ids << "sg.trw.route";
 	} else {
 		this->type_id = "sg.trw.tracks";
-		this->accepted_child_type_ids << "sg.trw.tracks";
+		this->accepted_child_type_ids << "sg.trw.track";
 	}
 }
 
@@ -959,9 +962,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 
 
 #ifdef K
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
-
-	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
+	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
 		for (auto i = this->items.begin(); i != this->items.end(); i++) {
 			i->second->draw_tree_item(viewport, allowed, required);

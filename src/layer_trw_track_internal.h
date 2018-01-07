@@ -173,7 +173,7 @@ namespace SlavGPS {
 
 		double get_max_speed() const;
 		double get_average_speed() const;
-		double get_average_speed_moving(int stop_length_seconds) const;
+		double get_average_speed_moving(int track_min_stop_length_seconds) const;
 
 		void convert(CoordMode dest_mode);
 

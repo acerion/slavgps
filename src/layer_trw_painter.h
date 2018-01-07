@@ -28,9 +28,21 @@
 
 
 
+#include <vector>
+#include <cstdint>
+
+
+
+#include <QColor>
+#include <QPixmap>
+#include <QPen>
+
+
+
+
+#include "coord.h"
+#include "bbox.h"
 #include "layer_trw_definitions.h"
-#include "layer_trw_waypoints.h"
-#include "layer_trw_tracks.h"
 
 
 
@@ -40,6 +52,13 @@ namespace SlavGPS {
 
 
 
+	/* To be removed. */
+	typedef int GdkFunction;
+
+
+
+
+	class ScreenPos;
 	class Track;
 	class Trackpoint;
 	class LayerTRW;
@@ -50,12 +69,19 @@ namespace SlavGPS {
 
 
 
-	class TRWPainter {
-	public:
-		TRWPainter(LayerTRW * trw, Viewport * viewport);
+	class LayerTRWPainter {
 
-		void draw_waypoint(Waypoint * wp, bool do_highlight);
-		void draw_track(Track * trk, bool do_highlight);
+	public:
+		LayerTRWPainter(LayerTRW * trw);
+
+		/* Call this every time the viewport changes (e.g. on zoom). */
+		void set_viewport(Viewport * viewport);
+
+		void make_track_pens(void);
+		void make_wp_pens(void);
+
+		void draw_waypoint(Waypoint * wp, Viewport * viewport, bool do_highlight);
+		void draw_track(Track * trk, Viewport * viewport, bool do_highlight);
 
 	private:
 		QColor get_fg_color(const Track * trk) const;
@@ -64,7 +90,7 @@ namespace SlavGPS {
 		QPixmap * update_pixmap_cache(const QString & image_full_path, Waypoint & wp);
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
-		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos);
+		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
 		bool draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
 		void draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
 
@@ -89,7 +115,6 @@ namespace SlavGPS {
 		Coord vp_center;
 		CoordMode vp_coord_mode;    /* UTM or Lat/Lon. */
 		bool vp_is_one_utm_zone = false;  /* Viewport shows only one UTM zone. */
-		LatLonBBox vp_bbox;
 
 		double cosine_factor = 0.0;    /* Cosine factor in track directions. */
 		double sine_factor = 0.0;      /* Sine factor in track directions. */
@@ -101,7 +126,69 @@ namespace SlavGPS {
 		double coord_bottommost = 0.0; /* Latitude or northing of lowest point visible. */
 		double coord_topmost = 0.0;    /* Latitude or northing of highest point visible. */
 
-	}; /* class TRWPainter */
+
+
+		std::vector<QPen> track_pens;
+
+
+	public: /* TODO: make it private. */
+
+		double track_draw_speed_factor;
+		QColor track_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
+		QPen current_track_pen;
+		/* Separate pen for a track's potential new point as drawn via separate method
+		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
+		QPen current_track_new_point_pen;
+
+		QPen track_bg_pen;
+		QColor track_bg_color;
+
+		QPen wp_marker_pen;
+		QColor wp_marker_color;
+
+		QPen wp_label_fg_pen;
+		QColor wp_label_fg_color;
+
+		QPen wp_label_bg_pen;
+		QColor wp_label_bg_color;
+
+		bool draw_track_labels;
+		font_size_t track_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
+
+		LayerTRWTrackDrawingMode track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
+
+	        bool draw_trackpoints;
+		int32_t trackpoint_size;
+
+		bool draw_track_lines;
+
+		bool draw_track_stops;
+		int32_t track_min_stop_length; /* TODO: shouldn't this be the same type as timestamp? */
+
+		int32_t track_thickness;
+		int32_t track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
+
+		bool draw_track_elevation;
+		int32_t track_elevation_factor;
+
+		bool draw_track_directions;
+		int32_t draw_track_directions_size;
+
+		bool draw_wp_symbols; /* Draw Garmin symbols of waypoints. */
+
+		GraphicMarker wp_marker_type;
+		int32_t wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
+
+		bool draw_wp_labels;
+		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
+
+		bool draw_wp_images;
+		int32_t wp_image_alpha;
+		int32_t wp_image_size;
+
+		GdkFunction wpbgand;
+
+	}; /* class LayerTRWPainter */
 
 
 

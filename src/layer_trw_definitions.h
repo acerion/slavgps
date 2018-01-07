@@ -30,25 +30,6 @@
 
 
 
-enum {
-	LAYER_TRW_TRACK_GRAPHICS_BLACK,
-	LAYER_TRW_TRACK_GRAPHICS_SLOW,
-	LAYER_TRW_TRACK_GRAPHICS_AVER,
-	LAYER_TRW_TRACK_GRAPHICS_FAST,
-	LAYER_TRW_TRACK_GRAPHICS_STOP,
-	LAYER_TRW_TRACK_GRAPHICS_SINGLE,
-
-	LAYER_TRW_TRACK_GRAPHICS_MAX
-};
-
-
-
-
-/* This #define is not related to enum above. */
-#define LAYER_TRW_TRACK_COLORS_MAX 10
-
-
-
 
 /* Note that using LayerTRWTrackDrawingMode::BY_SPEED may be slow especially for vast
    numbers of trackpoints as we are (re)calculating the color for
@@ -72,6 +53,20 @@ enum class GraphicMarker {
 
 	MAX
 };
+
+
+
+/* See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html */
+typedef enum {
+	FS_XX_SMALL = 0,
+	FS_X_SMALL,
+	FS_SMALL,
+	FS_MEDIUM, // DEFAULT
+	FS_LARGE,
+	FS_X_LARGE,
+	FS_XX_LARGE,
+	FS_NUM_SIZES
+} font_size_t;
 
 
 

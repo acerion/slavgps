@@ -230,7 +230,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 
 	/* Use 60sec as the default period to be considered stopped.
-	   This is the TrackWaypoint draw stops default value 'trw->stop_length'.
+	   This is the TrackWaypoint draw stops default value 'LayerTRWPainter::track_min_stop_length'.
 	   However this variable is not directly accessible - and I don't expect it's often changed from the default
 	   so ATM just put in the number. */
 	tmp_speed = this->trk->get_average_speed_moving(60);

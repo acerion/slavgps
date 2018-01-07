@@ -58,6 +58,7 @@ namespace SlavGPS {
 
 
 	class LayerTRW;
+	class LayerTRWPainter;
 	class LayersPanel;
 	class Track;
 	class TrackpointSearch;
@@ -72,7 +73,6 @@ namespace SlavGPS {
 
 
 	/* To be removed. */
-	typedef int GdkFunction;
 	typedef int PangoLayout;
 
 
@@ -117,22 +117,6 @@ namespace SlavGPS {
 		bool has_timestamp;
 		QString timestamp; /* TODO: Consider storing as proper time_t. */
 	};
-
-
-
-
-
-	/* See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html */
-	typedef enum {
-		FS_XX_SMALL = 0,
-		FS_X_SMALL,
-		FS_SMALL,
-		FS_MEDIUM, // DEFAULT
-		FS_LARGE,
-		FS_X_LARGE,
-		FS_XX_LARGE,
-		FS_NUM_SIZES
-	} font_size_t;
 
 
 
@@ -344,7 +328,7 @@ namespace SlavGPS {
 		void dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical);
 
 
-		int32_t get_property_track_thickness();
+		int32_t get_track_thickness();
 
 		static TRWMetadata * metadata_new();
 		static void metadata_free(TRWMetadata * metadata);
@@ -357,7 +341,6 @@ namespace SlavGPS {
 
 
 		/* This should be private. */
-		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
 		void update_statusbar();
@@ -410,54 +393,14 @@ namespace SlavGPS {
 
 
 
-		bool track_draw_labels;
-
-		LayerTRWTrackDrawingMode track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
-	        bool draw_trackpoints;
-		int32_t trackpoint_size;
-		uint8_t drawelevation;
-		int32_t elevation_factor;
-		bool draw_track_stops;
-		int32_t stop_length;
-		bool draw_track_lines;
-		uint8_t drawdirections;
-		int32_t drawdirections_size;
-		int32_t track_thickness;
-		int32_t track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
 		sort_order_t track_sort_order;
+		sort_order_t wp_sort_order;
 
 		TRWMetadata * metadata = NULL;
 
-		font_size_t trk_label_font_size; /* Font size of track's label, in Pango's "absolute size" units. */
-
-		GraphicMarker wp_marker_type;
-		int32_t wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
-		bool wp_draw_symbols;
-		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
-		sort_order_t wp_sort_order;
 
 
-		double track_draw_speed_factor;
-		std::vector<QPen> track_pens;
-		QColor track_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
-		QPen current_trk_pen;
-		/* Separate pen for a track's potential new point as drawn via separate method
-		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
-		QPen current_trk_new_point_pen;
-
-		QPen track_bg_pen;
-		QColor track_bg_color;
-
-		QPen wp_marker_pen;
-		QColor wp_marker_color;
-
-		QPen wp_label_fg_pen;
-		QColor wp_label_fg_color;
-
-		QPen wp_label_bg_pen;
-		QColor wp_label_bg_color;
-
-		GdkFunction wpbgand;
+		LayerTRWPainter * painter = NULL;
 
 
 		uint16_t ct_x1;
@@ -474,10 +417,6 @@ namespace SlavGPS {
 		bool route_finder_append;
 
 
-		bool drawlabels;
-		bool wp_image_draw;
-		int32_t wp_image_alpha;
-		int32_t wp_image_size;
 		/* Viking has been using queue to be able to easily remove (pop()) oldest images (the ones that
 		   are the longest in queue) when size of cached images goes over cache size limit. */
 		std::deque<CachedPixmap *> wp_image_cache;

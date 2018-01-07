@@ -957,7 +957,7 @@ double Track::get_average_speed() const
  *
  * Suggest to use 60 seconds as the stop length (as the default used in the TrackWaypoint draw stops factor).
  */
-double Track::get_average_speed_moving(int stop_length_seconds) const
+double Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 {
 	if (this->trackpoints.empty()) {
 		return 0.0;
@@ -971,7 +971,7 @@ double Track::get_average_speed_moving(int stop_length_seconds) const
 		    && (*std::prev(iter))->has_timestamp
 		    && !(*iter)->newsegment) {
 
-			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < stop_length_seconds) {
+			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < track_min_stop_length_seconds) {
 				len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
 				time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
@@ -3381,8 +3381,7 @@ void Track::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_r
 		&& (hl_is_required /* Parent code requires us to do highlight. */
 		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
 
-	TRWPainter painter(parent_layer, viewport);
-	painter.draw_track(this, allowed && required);
+	parent_layer->painter->draw_track(this, viewport, allowed && required);
 }
 
 
