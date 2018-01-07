@@ -23,6 +23,8 @@
 
 
 
+#include <cmath>
+
 #include <QDebug>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -39,6 +41,19 @@ using namespace SlavGPS;
 
 SGSlider::SGSlider(const ParameterScale & scale, Qt::Orientation orientation, QWidget * parent) : QWidget(parent)
 {
+	/* Set minimum width of label, so that width of label widget
+	   doesn't change when number of digits in the label changes. */
+	/* One additional digit just to make sure that initial label
+	   width will be large enough, so that label will never change
+	   its size. We may be using non-monospace font, I want to
+	   avoid any surprises. */
+	const int n_digits = log10(scale.max) + 1 + 1;
+	const int w = this->label.fontMetrics().width(QString(n_digits, '9')); /* '9' is quite wide, wider than '1' */
+	this->label.setMinimumWidth(w);
+
+	this->label.setAlignment(Qt::AlignRight);
+
+
 	this->slider.setRange(scale.min, scale.max);
 	this->slider.setSingleStep(scale.step);
 	// gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
@@ -62,9 +77,17 @@ SGSlider::SGSlider(const ParameterScale & scale, Qt::Orientation orientation, QW
 	layout->addWidget(&this->slider);
 	layout->addWidget(&this->label);
 
+	/* When this widget is put into a layout together with other
+	   widgets, I want it to be nicely aligned with other widgets
+	   in the layout. Therefore zero margins. */
+	layout->setContentsMargins(0, 0, 0, 0);
+
 	this->setLayout(layout);
 
 	connect(&this->slider, SIGNAL(valueChanged(int)), this, SLOT(value_changed_cb(int)));
+
+	/* Initial update of label. */
+	this->value_changed_cb(this->slider.value());
 }
 
 
