@@ -115,7 +115,7 @@ static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * v
 
 
 
-DataSourceOSMDialog::DataSourceOSMDialog(Viewport * viewport_)
+DataSourceOSMDialog::DataSourceOSMDialog(Viewport * new_viewport)
 {
 	/* Page selector. */
 	QLabel * label = new QLabel(tr("Page Number:"));
@@ -130,7 +130,7 @@ DataSourceOSMDialog::DataSourceOSMDialog(Viewport * viewport_)
 
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMDialog::accept_cb);
 
-	this->viewport = viewport;
+	this->viewport = new_viewport;
 }
 
 

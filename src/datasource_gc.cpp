@@ -204,14 +204,17 @@ void DataSourceGCDialog::draw_circle_cb(void)
 
 static DataSourceDialog * datasource_gc_create_setup_dialog(Viewport * viewport, void * user_data)
 {
-	return new DataSourceGCDialog();
+	return new DataSourceGCDialog(viewport);
 }
 
 
 
 
-DataSourceGCDialog::DataSourceGCDialog()
+DataSourceGCDialog::DataSourceGCDialog(Viewport * new_viewport)
 {
+	this->viewport = new_viewport;
+
+
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"), this);
 	this->num_spin.setMinimum(1);
 	this->num_spin.setMaximum(1000);
@@ -228,11 +231,10 @@ DataSourceGCDialog::DataSourceGCDialog()
 	this->miles_radius_spin.setSingleStep(1);
 	this->miles_radius_spin.setValue(5);
 
-	const LatLon lat_lon = viewport->get_center()->get_latlon();
+	const LatLon lat_lon = this->viewport->get_center()->get_latlon();
 	this->center_entry.setText(QString("%1,%2").arg(lat_lon.lat).arg(lat_lon.lon)); /* TODO: creating lat,lon string should be extracted to separate method. */
 
 
-	this->viewport = viewport;
 	this->circle_pen.setColor(QColor("#000000"));
 	this->circle_pen.setWidth(3);
 #ifdef K

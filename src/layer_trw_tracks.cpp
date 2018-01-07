@@ -1020,10 +1020,10 @@ void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 
 
 
-TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * viewport_)
+TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * new_viewport)
 {
 	this->x = ev_x;
 	this->y = ev_y;
-	this->viewport = viewport_;
+	this->viewport = new_viewport;
 	this->bbox = this->viewport->get_bbox();
 }

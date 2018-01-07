@@ -49,7 +49,7 @@ namespace SlavGPS {
 	class DataSourceGCDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceGCDialog();
+		DataSourceGCDialog(Viewport * viewport);
 		~DataSourceGCDialog();
 
 		ProcessOptions * get_process_options(DownloadOptions & dl_options);

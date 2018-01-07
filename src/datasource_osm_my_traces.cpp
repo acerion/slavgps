@@ -110,12 +110,13 @@ DataSourceInterface datasource_osm_my_traces_interface = {
 
 
 
-static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data)
+static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * new_viewport, void * user_data)
 {
 	DataSourceMyOSMDialog * setup_dialog = new DataSourceMyOSMDialog();
 
 	/* Keep reference to viewport. */
-	setup_dialog->viewport = viewport;
+	setup_dialog->viewport = new_viewport;
+
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
 	setup_dialog->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));

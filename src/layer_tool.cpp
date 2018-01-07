@@ -45,11 +45,12 @@ using namespace SlavGPS;
 
 
 
-LayerTool::LayerTool(Window * window_, Viewport * viewport_, LayerType layer_type_)
+LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new_layer_type)
 {
-	this->window = window_;
-	this->viewport = viewport_;
-	this->layer_type = layer_type_;
+	this->window = new_window;
+	this->viewport = new_viewport;
+	this->layer_type = new_layer_type;
+
 	if (layer_type == LayerType::NUM_TYPES) {
 		strcpy(this->debug_string, "LayerType::generic");
 	} else {

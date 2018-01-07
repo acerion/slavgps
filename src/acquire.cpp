@@ -616,11 +616,11 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
  *
  * Process the given DataSourceInterface for sources with no input data.
  */
-void Acquire::acquire_from_source(Window * window, LayersPanel * panel, Viewport * viewport, DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function)
+void Acquire::acquire_from_source(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function)
 {
-	g_acquiring->window = window;
-	g_acquiring->panel = panel;
-	g_acquiring->viewport = viewport;
+	g_acquiring->window = new_window;
+	g_acquiring->panel = new_panel;
+	g_acquiring->viewport = new_viewport;
 	g_acquiring->trw = NULL;
 	g_acquiring->trk = NULL;
 
@@ -675,11 +675,11 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DatasourceInpu
  *
  * Returns: %NULL if no filters.
  */
-QMenu * Acquire::create_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * Acquire::create_trwlayer_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * trw)
 {
-	g_acquiring->window = window;
-	g_acquiring->panel = panel;
-	g_acquiring->viewport = viewport;
+	g_acquiring->window = new_window;
+	g_acquiring->panel = new_panel;
+	g_acquiring->viewport = new_viewport;
 	g_acquiring->trw = trw;
 	g_acquiring->trk = NULL;
 
@@ -694,15 +694,15 @@ QMenu * Acquire::create_trwlayer_menu(Window * window, LayersPanel * panel, View
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-QMenu * Acquire::create_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+QMenu * Acquire::create_trwlayer_track_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
 	} else {
-		g_acquiring->window = window;
-		g_acquiring->panel = panel;
-		g_acquiring->viewport = viewport;
-		g_acquiring->trw = trw;
+		g_acquiring->window = new_window;
+		g_acquiring->panel = new_panel;
+		g_acquiring->viewport = new_viewport;
+		g_acquiring->trw = new_trw;
 		g_acquiring->trk = filter_track;
 
 		const QString submenu_label = QObject::tr("Filter with %1").arg(filter_track->name);
@@ -718,13 +718,13 @@ QMenu * Acquire::create_trwlayer_track_menu(Window * window, LayersPanel * panel
  *
  * Returns: %NULL if no applicable filters
  */
-QMenu * Acquire::create_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
+QMenu * Acquire::create_track_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, Track * new_trk)
 {
-	g_acquiring->window = window;
-	g_acquiring->panel = panel;
-	g_acquiring->viewport = viewport;
+	g_acquiring->window = new_window;
+	g_acquiring->panel = new_panel;
+	g_acquiring->viewport = new_viewport;
 	g_acquiring->trw = NULL;
-	g_acquiring->trk = trk;
+	g_acquiring->trk = new_trk;
 
 	return g_acquiring->build_menu(QObject::tr("&Filter"), DatasourceInputtype::TRACK);
 }
