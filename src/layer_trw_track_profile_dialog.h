@@ -40,6 +40,7 @@
 
 #include "globals.h"
 #include "viewport.h"
+#include "layer_trw_track_internal.h"
 
 
 
@@ -256,7 +257,7 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), double * (*y_values_creator)(Track *, int));
+		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), void (*representation_creator)(TrackRepresentation &, Track *, int));
 		~ProfileGraph();
 
 		double get_pos_y(double pos_x, const double * interval_values);
@@ -286,8 +287,8 @@ namespace SlavGPS {
 		double y_range_max = 0.0;
 		double y_range_min_drawable = 0.0;
 
-		double * y_values = NULL;
-		double * (*y_values_creator_fn)(Track *, int);
+		TrackRepresentation rep;
+		void (*representation_creator_fn)(TrackRepresentation &, Track *, int);
 	};
 
 

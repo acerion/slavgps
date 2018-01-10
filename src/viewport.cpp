@@ -415,7 +415,7 @@ bool Viewport::reconfigure_drawing_area_cb(void)
 */
 void Viewport::clear(void)
 {
-	qDebug() << "II:" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string;
+	qDebug() << "II:" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 

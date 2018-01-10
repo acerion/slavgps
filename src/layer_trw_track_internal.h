@@ -98,6 +98,53 @@ namespace SlavGPS {
 
 
 
+	/* To be used to represent values of track (altitude, speed) in Track Profile Dialog. */
+	class TrackRepresentation {
+	public:
+		TrackRepresentation();
+		~TrackRepresentation();
+
+		void invalidate(void);
+		void calculate_min_max(double initial_min, double initial_max);
+		void allocate_vector(int n_data_points);
+
+		bool valid = false;
+		double * y_values = NULL;
+		double min = 0.0;
+		double max = 0.0;
+
+		int n_data_points = 0;
+	};
+
+
+
+
+	/*
+	  Convenience class for pair of vectors representing track's
+	  Speed/Timestamp or Altitude/Timestamp information.
+
+	  The two vectors are put in one data structure because
+	  values in the vectors are calculated during one iteration
+	  over the same trackpoint list. If I decided to split the
+	  two vectors, I would have to collect data in the vectors
+	  during two separate iterations over trackpoint list. This
+	  would take twice as much time.
+	*/
+	class TData {
+	public:
+		TData() {};
+		TData(int vector_size);
+		~TData();
+
+		double * y = NULL;
+		double * t = NULL;
+
+		int n_data_points = 0;
+	};
+
+
+
+
 	/*
 	  Instead of having a separate Route type, routes are
 	  considered tracks.  Thus all track operations must cope with
@@ -189,12 +236,14 @@ namespace SlavGPS {
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
 		bool get_minmax_alt(double * min_alt, double * max_alt) const;
 
-		double * make_values_vector_altitude_distance(uint16_t num_chunks) const;
-		double * make_values_vector_gradient_distance(uint16_t num_chunks) const;
-		double * make_values_vector_speed_time(uint16_t num_chunks) const;
-		double * make_values_vector_distance_time(uint16_t num_chunks) const;
-		double * make_values_vector_altitude_time(uint16_t num_chunks) const;
-		double * make_values_vector_speed_distance(uint16_t num_chunks) const;
+		void make_values_vector_altitude_distance(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_gradient_distance(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_speed_time(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_distance_time(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_altitude_time(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_speed_distance(TrackRepresentation & rep, int n_data_points) const;
+		TData make_values_st(void) const;
+		TData make_values_at(void) const;
 
 
 		void marshall(uint8_t ** data, size_t * data_len);

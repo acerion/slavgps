@@ -262,30 +262,27 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	this->statistics_form->addRow(tr("Avg. Dist. Between TPs:"), this->w_avg_dist);
 
 
-	double min_alt, max_alt;
 	int elev_points = 100; /* this->trk->size()? */
-	double * altitudes = this->trk->make_values_vector_altitude_distance(elev_points);
-	if (!altitudes) {
-		min_alt = VIK_DEFAULT_ALTITUDE;
-		max_alt = VIK_DEFAULT_ALTITUDE;
+	TrackRepresentation altitudes;
+	this->trk->make_values_vector_altitude_distance(altitudes, elev_points);
+	if (!altitudes.valid) {
+		altitudes.min = VIK_DEFAULT_ALTITUDE;
+		altitudes.max = VIK_DEFAULT_ALTITUDE;
 	} else {
-		minmax_array(altitudes, &min_alt, &max_alt, true, elev_points);
+		altitudes.calculate_min_max(10000.0, -10000.0);
 	}
-	free(altitudes);
-	altitudes = NULL;
-
 
 	result = "";
 	HeightUnit height_unit = Preferences::get_unit_height();
-	if (min_alt == VIK_DEFAULT_ALTITUDE) {
+	if (altitudes.min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");
 	} else {
 		switch (height_unit) {
 		case HeightUnit::METRES:
-			result = tr("%1 m - %2 m").arg(min_alt, 0, 'f', 0).arg(max_alt, 0, 'f', 0);
+			result = tr("%1 m - %2 m").arg(altitudes.min, 0, 'f', 0).arg(altitudes.max, 0, 'f', 0);
 			break;
 		case HeightUnit::FEET:
-			result = tr("%1 feet - %2 feet").arg(VIK_METERS_TO_FEET(min_alt), 0, 'f', 0).arg(VIK_METERS_TO_FEET(max_alt), 0, 'f', 0);
+			result = tr("%1 feet - %2 feet").arg(VIK_METERS_TO_FEET(altitudes.min), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.max), 0, 'f', 0);
 			break;
 		default:
 			result = tr("--");
@@ -296,16 +293,16 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	this->statistics_form->addRow(tr("Elevation Range:"), this->w_elev_range);
 
 
-	this->trk->get_total_elevation_gain(&max_alt, &min_alt);
-	if (min_alt == VIK_DEFAULT_ALTITUDE) {
+	this->trk->get_total_elevation_gain(&altitudes.max, &altitudes.min);
+	if (altitudes.min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");
 	} else {
 		switch (height_unit) {
 		case HeightUnit::METRES:
-			result = tr("%1 m / %2 m").arg(max_alt, 0, 'f', 0).arg(min_alt, 0, 'f', 0);
+			result = tr("%1 m / %2 m").arg(altitudes.max, 0, 'f', 0).arg(altitudes.min, 0, 'f', 0);
 			break;
 		case HeightUnit::FEET:
-			result = tr("%1 feet / %2 feet").arg(VIK_METERS_TO_FEET(max_alt), 0, 'f', 0).arg(VIK_METERS_TO_FEET(min_alt), 0, 'f', 0);
+			result = tr("%1 feet / %2 feet").arg(VIK_METERS_TO_FEET(altitudes.max), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.min), 0, 'f', 0);
 			break;
 		default:
 			result = tr("--");
