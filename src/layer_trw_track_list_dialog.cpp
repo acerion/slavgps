@@ -341,14 +341,14 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 
 	double max_alt = 0.0;
 	/* TODO - make this a function to get min / max values? */
-	TrackRepresentation altitudes;
+	TrackData altitudes;
 	trk->make_values_vector_altitude_distance(altitudes, 500);
 	if (altitudes.valid) {
 		max_alt = -1000;
 		for (unsigned int i = 0; i < 500; i++) {
-			if (altitudes.y_values[i] != VIK_DEFAULT_ALTITUDE) {
-				if (altitudes.y_values[i] > max_alt) {
-					max_alt = altitudes.y_values[i];
+			if (altitudes.y[i] != VIK_DEFAULT_ALTITUDE) {
+				if (altitudes.y[i] > max_alt) {
+					max_alt = altitudes.y[i];
 				}
 			}
 		}

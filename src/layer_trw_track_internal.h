@@ -98,27 +98,6 @@ namespace SlavGPS {
 
 
 
-	/* To be used to represent values of track (altitude, speed) in Track Profile Dialog. */
-	class TrackRepresentation {
-	public:
-		TrackRepresentation();
-		~TrackRepresentation();
-
-		void invalidate(void);
-		void calculate_min_max(double initial_min, double initial_max);
-		void allocate_vector(int n_data_points);
-
-		bool valid = false;
-		double * y_values = NULL;
-		double min = 0.0;
-		double max = 0.0;
-
-		int n_data_points = 0;
-	};
-
-
-
-
 	/*
 	  Convenience class for pair of vectors representing track's
 	  Speed/Timestamp or Altitude/Timestamp information.
@@ -132,14 +111,22 @@ namespace SlavGPS {
 	*/
 	class TrackData {
 	public:
-		TrackData() {};
-		TrackData(int vector_size);
+		TrackData();
+		TrackData(int n_data_points);
 		~TrackData();
 
-		double * y = NULL;
-		double * t = NULL;
+		void invalidate(void);
+		void calculate_min_max(double initial_min, double initial_max);
+		void allocate_vector(int n_data_points);
 
-		int n_data_points = 0;
+		double * x = NULL;
+		double * y = NULL;
+
+		double min = 0.0;
+		double max = 0.0;
+
+		bool valid = false;
+		int n_points = 0;
 	};
 
 
@@ -236,14 +223,14 @@ namespace SlavGPS {
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
 		bool get_minmax_alt(double * min_alt, double * max_alt) const;
 
-		void make_values_vector_altitude_distance(TrackRepresentation & rep, int n_data_points) const;
-		void make_values_vector_gradient_distance(TrackRepresentation & rep, int n_data_points) const;
-		void make_values_vector_speed_time(TrackRepresentation & rep, int n_data_points) const;
-		void make_values_vector_distance_time(TrackRepresentation & rep, int n_data_points) const;
-		void make_values_vector_altitude_time(TrackRepresentation & rep, int n_data_points) const;
-		void make_values_vector_speed_distance(TrackRepresentation & rep, int n_data_points) const;
+		void make_values_vector_altitude_distance(TrackData & data, int compressed_n_points) const;
+		void make_values_vector_gradient_distance(TrackData & data, int compressed_n_points) const;
+		void make_values_vector_speed_time(TrackData & data, int compressed_n_points) const;
+		void make_values_vector_distance_time(TrackData & data, int compressed_n_points) const;
+		void make_values_vector_altitude_time(TrackData & data, int compressed_n_points) const;
+		void make_values_vector_speed_distance(TrackData & data, int compressed_n_points) const;
 		TrackData make_values_distance_time(void) const;
-		TrackData make_values_at(void) const;
+		TrackData make_values_altitude_time(void) const;
 
 
 		void marshall(uint8_t ** data, size_t * data_len);

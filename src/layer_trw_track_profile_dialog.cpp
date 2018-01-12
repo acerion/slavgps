@@ -211,34 +211,34 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-void representation_creator_ed(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_ed(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_altitude_distance(rep, graph_width);
+	trk->make_values_vector_altitude_distance(data, graph_width);
 }
 
-void representation_creator_gd(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_gd(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_gradient_distance(rep, graph_width);
+	trk->make_values_vector_gradient_distance(data, graph_width);
 }
 
-void representation_creator_st(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_st(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_speed_time(rep, graph_width);
+	trk->make_values_vector_speed_time(data, graph_width);
 }
 
-void representation_creator_dt(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_dt(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_distance_time(rep, graph_width);
+	trk->make_values_vector_distance_time(data, graph_width);
 }
 
-void representation_creator_et(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_et(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_altitude_time(rep, graph_width);
+	trk->make_values_vector_altitude_time(data, graph_width);
 }
 
-void representation_creator_sd(TrackRepresentation & rep, Track * trk, int graph_width)
+void representation_creator_sd(TrackData & data, Track * trk, int graph_width)
 {
-	trk->make_values_vector_speed_distance(rep, graph_width);
+	trk->make_values_vector_speed_distance(data, graph_width);
 }
 
 
@@ -586,7 +586,7 @@ double ProfileGraph::get_pos_y(double pos_x, const double * interval_values)
 		ix--;
 	}
 
-	return this->height * (this->rep.y_values[ix] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y);
+	return this->height * (this->rep.y[ix] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y);
 }
 
 
@@ -661,7 +661,7 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 	/* Show track gradient for this position - to the nearest whole number. */
 	if (this->current_tp && this->w_gd_current_gradient) {
-		gradient_label_update(this->w_gd_current_gradient, this->graph_gd->rep.y_values[current_pos_x]);
+		gradient_label_update(this->w_gd_current_gradient, this->graph_gd->rep.y[current_pos_x]);
 	}
 
 	double current_pos_y = this->graph_gd->get_pos_y(current_pos_x, gradient_intervals->values);
@@ -766,7 +766,7 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 	/* Show track speed for this position. */
 	if (this->current_tp && this->w_st_current_speed) {
-		speed_label_update(this->w_st_current_speed, this->graph_st->rep.y_values[current_pos_x]);
+		speed_label_update(this->w_st_current_speed, this->graph_st->rep.y[current_pos_x]);
 	}
 
 	double current_pos_y = this->graph_st->get_pos_y(current_pos_x, speed_intervals->values);
@@ -818,7 +818,7 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 	}
 
 	if (this->current_tp && this->w_dt_curent_distance) {
-		dist_dist_label_update(this->w_dt_curent_distance, this->graph_dt->rep.y_values[current_pos_x]);
+		dist_dist_label_update(this->w_dt_curent_distance, this->graph_dt->rep.y[current_pos_x]);
 	}
 
 	double current_pos_y = this->graph_dt->get_pos_y(current_pos_x, distance_intervals->values);
@@ -916,7 +916,7 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 	/* Show track speed for this position. */
 	if (this->w_sd_current_speed) {
-		speed_label_update(this->w_sd_current_speed, this->graph_sd->rep.y_values[current_pos_x]);
+		speed_label_update(this->w_sd_current_speed, this->graph_sd->rep.y[current_pos_x]);
 	}
 
 	double current_pos_y = this->graph_sd->get_pos_y(current_pos_x, speed_intervals->values);
@@ -1160,12 +1160,12 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	if (height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y_values[i] = VIK_METERS_TO_FEET(graph->rep.y_values[i]);
+			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
 		}
 	}
 	/* Otherwise leave in metres. */
 
-	minmax_array(graph->rep.y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
@@ -1180,14 +1180,14 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	/* Draw values of 'elevation = f(distance)' function. */
 	QPen no_alt_info_pen(QColor("yellow"));
 	for (int i = 0; i < graph->width; i++) {
-		if (graph->rep.y_values[i] == VIK_DEFAULT_ALTITUDE) {
+		if (graph->rep.y[i] == VIK_DEFAULT_ALTITUDE) {
 			graph->viewport->draw_line(no_alt_info_pen,
 						   i, 0,
 						   i, 0 + graph->height);
 		} else {
 			graph->viewport->draw_line(this->main_pen,
 						   i, graph->height,
-						   i, graph->height - graph->height * (graph->rep.y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
+						   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 		}
 	}
 
@@ -1266,7 +1266,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 		return;
 	}
 
-	minmax_array(graph->rep.y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
@@ -1282,7 +1282,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
+					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -1364,10 +1364,10 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	/* Convert into appropriate units. */
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y_values[i] = convert_speed_mps_to(graph->rep.y_values[i], speed_unit);
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], speed_unit);
 	}
 
-	minmax_array(graph->rep.y_values, &graph->y_range_min, &graph->y_range_max, false, graph->width);
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
 	if (graph->y_range_min < 0.0) {
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
@@ -1386,7 +1386,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
+					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -1440,7 +1440,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	/* Convert into appropriate units. */
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y_values[i] = convert_distance_meters_to(graph->rep.y_values[i], distance_unit);
+		graph->rep.y[i] = convert_distance_meters_to(graph->rep.y[i], distance_unit);
 	}
 
 	this->duration = this->trk->get_duration(true);
@@ -1466,7 +1466,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y_values[i]) / (graph->y_interval * graph->n_intervals_y));
+					   i, graph->height - graph->height * (graph->rep.y[i]) / (graph->y_interval * graph->n_intervals_y));
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -1481,7 +1481,7 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 
 		/* This is just an indicator - no actual values can be inferred by user. */
 		for (int i = 0; i < graph->width; i++) {
-			int y_speed = graph->bottom_edge - (graph->height * graph->rep.y_values[i]) / max_speed_;
+			int y_speed = graph->bottom_edge - (graph->height * graph->rep.y[i]) / max_speed_;
 			graph->viewport->fill_rectangle(QColor("red"), graph->left_edge + i - 2, y_speed - 2, 4, 4);
 		}
 	}
@@ -1514,12 +1514,12 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	if (height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y_values[i] = VIK_METERS_TO_FEET(graph->rep.y_values[i]);
+			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
 		}
 	}
 	/* Otherwise leave in metres. */
 
-	minmax_array(graph->rep.y_values, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
@@ -1541,7 +1541,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
+					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -1586,7 +1586,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 		double max_speed_ = this->max_speed * 110 / 100;
 
 		for (int i = 0; i < graph->width; i++) {
-			int y_speed = graph->bottom_edge - (graph->height * graph->rep.y_values[i]) / max_speed_;
+			int y_speed = graph->bottom_edge - (graph->height * graph->rep.y[i]) / max_speed_;
 			graph->viewport->fill_rectangle(elev_speed_pen.color(), graph->left_edge + i - 2, y_speed - 2, 4, 4);
 		}
 	}
@@ -1617,10 +1617,10 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	/* Convert into appropriate units. */
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y_values[i] = convert_speed_mps_to(graph->rep.y_values[i], speed_unit);
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], speed_unit);
 	}
 
-	minmax_array(graph->rep.y_values, &graph->y_range_min, &graph->y_range_max, false, graph->width);
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
 	if (graph->y_range_min < 0.0) {
 		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
 	}
@@ -1639,7 +1639,7 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	for (int i = 0; i < graph->width; i++) {
 		graph->viewport->draw_line(this->main_pen,
 					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y_values[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
+					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -2455,7 +2455,7 @@ QString get_time_grid_label(int interval_index, int value)
 
 
 
-ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), void (*representation_creator)(TrackRepresentation &, Track *, int))
+ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), void (*representation_creator)(TrackData &, Track *, int))
 {
 	this->is_time_graph = time_graph;
 	this->draw_graph_fn = draw_graph;
