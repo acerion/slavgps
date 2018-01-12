@@ -93,6 +93,7 @@ static QUrl last_directory_url;
 #define VIK_SETTINGS_TRACK_NUM_DIST_LABELS "track_number_dist_labels"
 
 
+void compress(TrackRepresentation & rep, int out_points_count, const TrackData & track_data);
 
 
 /**
@@ -1019,11 +1020,11 @@ double Track::get_max_speed() const
 
 
 
-TData Track::make_values_st(void) const
+TrackData Track::make_values_distance_time(void) const
 {
 	const int tp_count = this->get_tp_count();
 
-	TData data(tp_count);
+	TrackData data(tp_count);
 
 	/* No special handling of segments ATM... */
 	int i = 0;
@@ -1044,11 +1045,11 @@ TData Track::make_values_st(void) const
 
 
 
-TData Track::make_values_at(void) const
+TrackData Track::make_values_at(void) const
 {
 	const int tp_count = this->get_tp_count();
 
-	TData data(tp_count);
+	TrackData data(tp_count);
 
 	int i = 0;
 	auto iter = this->trackpoints.begin();
@@ -1314,11 +1315,23 @@ void Track::make_values_vector_speed_time(TrackRepresentation & rep, int n_data_
 		return;
 	}
 
-	const double delta_t = duration / (n_data_points - 1);
 	const int tp_count = this->get_tp_count();
 
 	rep.allocate_vector(n_data_points);
-	TData st_data = this->make_values_st();
+	TrackData dt_data = this->make_values_distance_time();
+
+#if 1
+	TrackData speed_data(dt_data.n_data_points);
+	speed_data.y[0] = 0.0;
+	for (int i = 1; i < tp_count; i++) {
+		const double distance_ = (dt_data.y[i] - dt_data.y[i - 1]);
+		const double time_ = (dt_data.t[i] - dt_data.t[i - 1]);
+		speed_data.y[i] = distance_ / time_;
+	}
+
+	compress(rep, n_data_points, speed_data);
+#else
+	const double delta_t = duration / (n_data_points - 1);
 
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
@@ -1326,16 +1339,22 @@ void Track::make_values_vector_speed_time(TrackRepresentation & rep, int n_data_
 	int i = 0;
 	for (i = 0; i < n_data_points; i++) {
 #if 1
-		rep.y_values[i] = i;
+		if (i + 1 < n_data_points) {
+			double acc_s = (dt_data.y[i + 1] - dt_data.y[i]);
+			double acc_t = (dt_data.t[i + 1] - dt_data.t[i]);
+			rep.y_values[i] = acc_s / acc_t;
+		} else {
+			rep.y_values[i] = rep.y_values[i - 1];
+		}
 #else
 		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
 		   Find the first trackpoint outside the current interval, averaging the speeds between intermediate trackpoints. */
-		if (st_data.t[0] + i * delta_t >= st_data.t[tp_index]) {
+		if (dt_data.t[0] + i * delta_t >= dt_data.t[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;
-			while (st_data.t[0] + i * delta_t >= st_data.t[tp_index]) {
-				acc_s += (st_data.y[tp_index + 1] - st_data.y[tp_index]);
-				acc_t += (st_data.t[tp_index + 1] - st_data.t[tp_index]);
+			while (dt_data.t[0] + i * delta_t >= dt_data.t[tp_index]) {
+				acc_s += (dt_data.y[tp_index + 1] - dt_data.y[tp_index]);
+				acc_t += (dt_data.t[tp_index + 1] - dt_data.t[tp_index]);
 				tp_index++;
 			}
 			rep.y_values[i] = acc_s / acc_t;
@@ -1348,6 +1367,7 @@ void Track::make_values_vector_speed_time(TrackRepresentation & rep, int n_data_
 	}
 
 	assert(i == n_data_points);
+#endif
 
 	rep.n_data_points = n_data_points;
 	rep.valid = true;
@@ -1373,7 +1393,18 @@ void Track::make_values_vector_distance_time(TrackRepresentation & rep, int n_da
 	const int tp_count = this->get_tp_count();
 
 	rep.allocate_vector(n_data_points);
-	TData st_data = this->make_values_st();
+	TrackData dt_data = this->make_values_distance_time();
+
+#if 1
+	TrackData distance_data(dt_data.n_data_points);
+	distance_data.y[0] = 0.0;
+	for (int i = 1; i < dt_data.n_data_points; i++) {
+		distance_data.y[i] = distance_data.y[i - 1] + (dt_data.y[i] - dt_data.y[i - 1]);
+	}
+
+	compress(rep, n_data_points, distance_data);
+
+#else
 
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
@@ -1381,15 +1412,22 @@ void Track::make_values_vector_distance_time(TrackRepresentation & rep, int n_da
 	int i = 0;
 	for (i = 0; i < n_data_points; i++) {
 #if 1
-		rep.y_values[i] = i;
+		if (i + 1 < n_data_points) {
+			/* No need for acc_t. */
+			double acc_s = (dt_data.y[i + 1] - dt_data.y[i]);
+			/* The only bit that's really different from the speed map - just keep an accumulative record distance. */
+			rep.y_values[i] = i ? rep.y_values[i - 1] + acc_s : acc_s;
+		} else {
+			rep.y_values[i] = rep.y_values[i - 1];
+		}
 #else
 		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
 		   find the first trackpoint outside the current interval, averaging the distance between intermediate trackpoints. */
-		if (st_data.t[0] + i * delta_t >= st_data.t[tp_index]) {
+		if (dt_data.t[0] + i * delta_t >= dt_data.t[tp_index]) {
 			double acc_s = 0;
 			/* No need for acc_t. */
-			while (st_data.t[0] + i * delta_t >= st_data.t[tp_index]) {
-				acc_s += (st_data.y[tp_index + 1] - st_data.y[tp_index]);
+			while (dt_data.t[0] + i * delta_t >= dt_data.t[tp_index]) {
+				acc_s += (dt_data.y[tp_index + 1] - dt_data.y[tp_index]);
 				tp_index++;
 			}
 			/* The only bit that's really different from the speed map - just keep an accumulative record distance. */
@@ -1403,9 +1441,61 @@ void Track::make_values_vector_distance_time(TrackRepresentation & rep, int n_da
 	}
 
 	assert(i == n_data_points);
+#endif
 
 	rep.n_data_points = n_data_points;
 	rep.valid = true;
+	return;
+}
+
+
+
+void compress(TrackRepresentation & rep, int out_points_count, const TrackData & track_data)
+{
+	const double tps_per_data_point = 1.0 * track_data.n_data_points / out_points_count;
+	const int floor_ = floor(tps_per_data_point);
+	const int ceil_ = ceil(tps_per_data_point);
+	int n_tps_compressed = 0;
+
+	qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << track_data.n_data_points << out_points_count;
+
+	/* In the following computation, we iterate through periods of time of duration delta_t.
+	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
+	int tp_index = 0; /* index of the current trackpoint. */
+	int i = 0;
+	for (i = 0; i < out_points_count; i++) {
+
+		int sampling_size;
+		if ((i + 1) * tps_per_data_point > n_tps_compressed + floor_) {
+		        sampling_size = ceil_;
+		} else {
+			sampling_size = floor_;
+		}
+
+		/* This may happen at the very end of loop, when
+		   attempting to calculate last output data point. */
+		if (n_tps_compressed + sampling_size > track_data.n_data_points) {
+			const int fix = (n_tps_compressed + sampling_size) - track_data.n_data_points;
+			qDebug() << "oooooooooooo truncating from" << n_tps_compressed + sampling_size
+				 << "to" << n_tps_compressed + sampling_size - fix
+				 << "(sampling_size = " << sampling_size << " -> " << sampling_size - fix << ")";
+			sampling_size -= fix;
+		}
+
+		double acc = 0.0;
+		for (int j = n_tps_compressed; j < n_tps_compressed + sampling_size; j++) {
+			acc += track_data.y[j];
+			tp_index++;
+		}
+
+		//qDebug() << "------- i =" << i << "/" << out_points_count << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc << acc / sampling_size;
+
+		rep.y_values[i] = acc / sampling_size;
+		n_tps_compressed += sampling_size;
+	}
+
+	assert(i == out_points_count);
+
 	return;
 }
 
@@ -1443,18 +1533,25 @@ void Track::make_values_vector_altitude_time(TrackRepresentation & rep, int n_da
 		return;
 	}
 
-	const double delta_t = duration / (n_data_points - 1);
 
 	rep.allocate_vector(n_data_points); /* The return altitude values. */
-	TData data_at = this->make_values_at();
+	TrackData data_at = this->make_values_at();
 
+#if 1
+	compress(rep, n_data_points, data_at);
+#else
+
+	const double delta_t = duration / (n_data_points - 1);
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int tp_index = 0; /* index of the current trackpoint. */
 	int i = 0;
 	for (i = 0; i < n_data_points; i++) {
 #if 1
-		rep.y_values[i] = i;
+		if (i + 1 < n_data_points) {
+			rep.y_values[i] = data_at.y[i];
+		} else {
+			rep.y_values[i] = rep.y_values[i - 1];
+		}
 #else
 		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
 		   find the first trackpoint outside the current interval, averaging the heights between intermediate trackpoints. */
@@ -1462,8 +1559,7 @@ void Track::make_values_vector_altitude_time(TrackRepresentation & rep, int n_da
 			double acc_s = data_at.y[tp_index]; /* Initialise to first point. */
 
 			while (data_at.t[0] + i * delta_t >= data_at.t[tp_index]) {
-				acc_s += (data_at.y[tp_index + 1] - data_at.y[tp_index]);
-				tp_index++;
+
 			}
 
 			rep.y_values[i] = acc_s;
@@ -1474,8 +1570,8 @@ void Track::make_values_vector_altitude_time(TrackRepresentation & rep, int n_da
 		}
 #endif
 	}
-
 	assert(i == n_data_points);
+#endif
 
 	rep.n_data_points = n_data_points;
 	rep.valid = true;
@@ -1498,10 +1594,9 @@ void Track::make_values_vector_speed_distance(TrackRepresentation & rep, int n_d
 	}
 
 	const double delta_d = total_length / (n_data_points - 1);
-	const int tp_count = this->get_tp_count();
 
 	rep.allocate_vector(n_data_points);
-	TData st_data = this->make_values_st();
+	TrackData dt_data = this->make_values_distance_time();
 
 	/* Iterate through a portion of the track to get an average speed for that part.
 	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
@@ -1509,15 +1604,21 @@ void Track::make_values_vector_speed_distance(TrackRepresentation & rep, int n_d
 	int i = 0;
 	for (i = 0; i < n_data_points; i++) {
 #if 1
-		rep.y_values[i] = i;
+		if (i + 1 < n_data_points) {
+			double acc_s = (dt_data.y[i + 1] - dt_data.y[i]);
+			double acc_t = (dt_data.t[i + 1] - dt_data.t[i]);
+			rep.y_values[i] = acc_s / acc_t;
+		} else {
+			rep.y_values[i] = rep.y_values[i - 1];
+		}
 #else
 		/* Similar to the make_values_vector_speed_time(), but instead of using a time chunk, use a distance chunk. */
-		if (st_data.y[0] + i * delta_d >= st_data.y[tp_index]) {
+		if (dt_data.y[0] + i * delta_d >= dt_data.y[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;
-			while (st_data.y[0] + i * delta_d >= st_data.y[tp_index]) {
-				acc_s += (st_data.y[tp_index + 1] - st_data.y[tp_index]);
-				acc_t += (st_data.t[tp_index + 1] - st_data.t[tp_index]);
+			while (dt_data.y[0] + i * delta_d >= dt_data.y[tp_index]) {
+				acc_s += (dt_data.y[tp_index + 1] - dt_data.y[tp_index]);
+				acc_t += (dt_data.t[tp_index + 1] - dt_data.t[tp_index]);
 				tp_index++;
 			}
 			rep.y_values[i] = acc_s / acc_t;
@@ -4127,7 +4228,7 @@ void TrackRepresentation::allocate_vector(int vector_size)
 
 
 
-TData::TData(int vector_size)
+TrackData::TrackData(int vector_size)
 {
 	this->y = (double *) malloc(sizeof (double) * vector_size);
 	this->t = (double *) malloc(sizeof (double) * vector_size);
@@ -4138,7 +4239,7 @@ TData::TData(int vector_size)
 
 
 
-TData::~TData()
+TrackData::~TrackData()
 {
 	if (this->y) {
 		free(this->y);

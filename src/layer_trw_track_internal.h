@@ -130,11 +130,11 @@ namespace SlavGPS {
 	  during two separate iterations over trackpoint list. This
 	  would take twice as much time.
 	*/
-	class TData {
+	class TrackData {
 	public:
-		TData() {};
-		TData(int vector_size);
-		~TData();
+		TrackData() {};
+		TrackData(int vector_size);
+		~TrackData();
 
 		double * y = NULL;
 		double * t = NULL;
@@ -242,8 +242,8 @@ namespace SlavGPS {
 		void make_values_vector_distance_time(TrackRepresentation & rep, int n_data_points) const;
 		void make_values_vector_altitude_time(TrackRepresentation & rep, int n_data_points) const;
 		void make_values_vector_speed_distance(TrackRepresentation & rep, int n_data_points) const;
-		TData make_values_st(void) const;
-		TData make_values_at(void) const;
+		TrackData make_values_distance_time(void) const;
+		TrackData make_values_at(void) const;
 
 
 		void marshall(uint8_t ** data, size_t * data_len);
