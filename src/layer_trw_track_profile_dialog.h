@@ -95,6 +95,25 @@ namespace SlavGPS {
 
 
 
+	enum class GeoCanvasDomain {
+		Time,
+		Elevation,
+		Distance,
+		Speed,
+		Gradient,
+	};
+
+
+
+
+	class GeoCanvas {
+	public:
+		GeoCanvasDomain x_domain;
+		GeoCanvasDomain y_domain;
+	};
+
+
+
 
 	class ProfileWidgets {
 	public:
@@ -164,6 +183,7 @@ namespace SlavGPS {
 		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
+		void configure_widgets(int index);
 		QWidget * create_graph_page(Viewport * viewport, ProfileWidgets & widgets);
 
 
@@ -224,7 +244,7 @@ namespace SlavGPS {
 
 		Trackpoint * selected_tp = NULL; /* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
 		bool  is_selected_drawn = false;
-		Trackpoint * current_tp = NULL; /* Trackpoint that is closest to current position of cursor. */
+		Trackpoint * current_tp = NULL; /* Trackpoint that is closest to current position of *hovering* cursor. */
 		bool  is_current_drawn = false;
 
 		time_t    duration = 0;
@@ -240,8 +260,8 @@ namespace SlavGPS {
 		QSignalMapper * signal_mapper = NULL;
 
 	private:
-		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, const Intervals <double> * intervals, double & meters_from_start, int & current_pos_x);
-		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, const Intervals <double> * intervals, time_t & seconds_from_start, int & current_pos_x);
+		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
+		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
 		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
 	};
 
@@ -250,13 +270,15 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int));
+		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int));
 		~ProfileGraph();
 
-		double get_pos_y(double pos_x, const double * interval_values);
+		double get_pos_y(double pos_x);
 		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
+
+		QPointF get_position_of_tp(Trackpoint * tp, Track * trk, double track_length_inc_gaps);
 
 		bool regenerate_y_values(Track * trk);
 		void regenerate_sizes(void);
@@ -264,7 +286,6 @@ namespace SlavGPS {
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_MAX;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
-		bool is_time_graph = false;
 
 		void (TrackProfileDialog::*draw_graph_fn)(ProfileGraph *, Track *) = NULL;
 
@@ -284,6 +305,8 @@ namespace SlavGPS {
 
 		TrackData rep;
 		TrackData (*representation_creator_fn)(Track *, int);
+
+		GeoCanvas geocanvas;
 	};
 
 
