@@ -75,11 +75,41 @@ namespace SlavGPS {
 		SG_TRACK_PROFILE_TYPE_DT, /* dt = distance-time. */
 		SG_TRACK_PROFILE_TYPE_ET, /* et = elevation-time. */
 		SG_TRACK_PROFILE_TYPE_SD, /* sd = speed-distance. */
-		SG_TRACK_PROFILE_TYPE_END,
+
+		SG_TRACK_PROFILE_TYPE_MAX,
 	} TrackProfileType;
 
 
 
+
+	template <class T>
+	class Intervals {
+	public:
+		Intervals(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
+		int get_interval_index(T min, T max, int n_intervals);
+		T get_interval_value(int index);
+
+		const T * values = NULL;
+		int n_values = 0;
+	};
+
+
+
+
+	class ProfileWidgets {
+	public:
+		QLabel * x_value = NULL;
+		QLabel * y_value = NULL;
+		QLabel * t_value = NULL; /* Actual clock time, only for time-based graphs. */
+
+		QString x_label;
+		QString y_label;
+		QString t_label;
+
+		QCheckBox * show_dem = NULL;
+		QCheckBox * show_gps_speed = NULL;
+		QCheckBox * show_speed = NULL;
+	};
 
 
 
@@ -134,17 +164,7 @@ namespace SlavGPS {
 		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
-		QWidget * create_graph_page(Viewport * viewport,
-					    const QString & text1,
-					    QLabel * value1,
-					    const QString & text2,
-					    QLabel * value2,
-					    const QString & text3,
-					    QLabel * value3,
-					    QCheckBox * checkbutton1,
-					    bool checkbutton1_default,
-					    QCheckBox * checkbutton2,
-					    bool checkbutton2_default);
+		QWidget * create_graph_page(Viewport * viewport, ProfileWidgets & widgets);
 
 
 		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
@@ -190,41 +210,12 @@ namespace SlavGPS {
 		int profile_width_offset;
 		int profile_height_offset;
 
-		QLabel * w_ed_current_distance = NULL; /*< Current distance. */
-		QLabel * w_ed_current_elevation = NULL;
-		QLabel * w_gd_current_distance = NULL; /*< Current distance on gradient graph. */
-		QLabel * w_gd_current_gradient = NULL; /*< Current gradient on gradient graph. */
-		QLabel * w_st_current_time = NULL; /*< Current track time. */
-		QLabel * w_st_current_time_real = NULL; /*< Actual time as on a clock. */
-		QLabel * w_st_current_speed = NULL;
-		QLabel * w_dt_curent_distance = NULL; /*< Current distance on distance graph. */
-		QLabel * w_dt_current_time = NULL; /*< Current track time on distance graph. */
-		QLabel * w_dt_current_time_real = NULL; /* Clock time. */
-		QLabel * w_et_current_elevation = NULL;
-		QLabel * w_et_current_time = NULL; /* Track time. */
-		QLabel * w_et_current_time_real = NULL; /* Clock time. */
-		QLabel * w_sd_current_distance = NULL;
-		QLabel * w_sd_current_speed = NULL;
-
-		QCheckBox * w_ed_show_dem = NULL;
-		QCheckBox * w_ed_show_gps_speed = NULL;
-		QCheckBox * w_gd_show_gps_speed = NULL;
-		QCheckBox * w_st_show_gps_speed = NULL;
-		QCheckBox * w_dt_show_speed = NULL;
-		QCheckBox * w_et_show_speed = NULL;
-		QCheckBox * w_et_show_dem = NULL;
-		QCheckBox * w_sd_show_gps_speed = NULL;
-
 		double   track_length;
 		double   track_length_inc_gaps;
 
 
-		ProfileGraph * graph_ed = NULL;
-		ProfileGraph * graph_gd = NULL;
-		ProfileGraph * graph_st = NULL;
-		ProfileGraph * graph_dt = NULL;
-		ProfileGraph * graph_et = NULL;
-		ProfileGraph * graph_sd = NULL;
+		ProfileGraph * graphs[SG_TRACK_PROFILE_TYPE_MAX] = { NULL };
+		ProfileWidgets widgets[SG_TRACK_PROFILE_TYPE_MAX];
 
 
 		double   max_speed = 0.0;
@@ -249,6 +240,8 @@ namespace SlavGPS {
 		QSignalMapper * signal_mapper = NULL;
 
 	private:
+		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, const Intervals <double> * intervals, double & meters_from_start, int & current_pos_x);
+		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, const Intervals <double> * intervals, time_t & seconds_from_start, int & current_pos_x);
 		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
 	};
 
@@ -263,10 +256,12 @@ namespace SlavGPS {
 		double get_pos_y(double pos_x, const double * interval_values);
 		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
 
+		int get_cursor_pos_x(QMouseEvent * ev) const;
+
 		bool regenerate_y_values(Track * trk);
 		void regenerate_sizes(void);
 
-		TrackProfileType type = SG_TRACK_PROFILE_TYPE_END;
+		TrackProfileType type = SG_TRACK_PROFILE_TYPE_MAX;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
 		bool is_time_graph = false;
