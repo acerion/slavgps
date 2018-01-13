@@ -211,34 +211,34 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-void representation_creator_ed(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_ed(Track * trk, int graph_width)
 {
-	trk->make_values_vector_altitude_distance(data, graph_width);
+	return trk->make_values_vector_altitude_distance(graph_width);
 }
 
-void representation_creator_gd(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_gd(Track * trk, int graph_width)
 {
-	trk->make_values_vector_gradient_distance(data, graph_width);
+	return trk->make_values_vector_gradient_distance(graph_width);
 }
 
-void representation_creator_st(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_st(Track * trk, int graph_width)
 {
-	trk->make_values_vector_speed_time(data, graph_width);
+	return trk->make_values_vector_speed_time(graph_width);
 }
 
-void representation_creator_dt(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_dt(Track * trk, int graph_width)
 {
-	trk->make_values_vector_distance_time(data, graph_width);
+	return trk->make_values_vector_distance_time(graph_width);
 }
 
-void representation_creator_et(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_et(Track * trk, int graph_width)
 {
-	trk->make_values_vector_altitude_time(data, graph_width);
+	return trk->make_values_vector_altitude_time(graph_width);
 }
 
-void representation_creator_sd(TrackData & data, Track * trk, int graph_width)
+TrackData representation_creator_sd(Track * trk, int graph_width)
 {
-	trk->make_values_vector_speed_distance(data, graph_width);
+	return trk->make_values_vector_speed_distance(graph_width);
 }
 
 
@@ -2455,7 +2455,7 @@ QString get_time_grid_label(int interval_index, int value)
 
 
 
-ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), void (*representation_creator)(TrackData &, Track *, int))
+ProfileGraph::ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int))
 {
 	this->is_time_graph = time_graph;
 	this->draw_graph_fn = draw_graph;
@@ -2479,7 +2479,7 @@ bool ProfileGraph::regenerate_y_values(Track * trk)
 
 	/* Ask a track to generate a vector of values representing some parameter
 	   of a track as a function of either time or distance. */
-	this->representation_creator_fn(this->rep, trk, this->width);
+	this->rep = this->representation_creator_fn(trk, this->width);
 	if (!this->rep.valid) {
 		return false;
 	}

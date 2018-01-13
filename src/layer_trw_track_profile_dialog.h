@@ -257,7 +257,7 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), void (*representation_creator)(TrackData &, Track *, int));
+		ProfileGraph(bool time_graph, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int));
 		~ProfileGraph();
 
 		double get_pos_y(double pos_x, const double * interval_values);
@@ -288,7 +288,7 @@ namespace SlavGPS {
 		double y_range_min_drawable = 0.0;
 
 		TrackData rep;
-		void (*representation_creator_fn)(TrackData &, Track *, int);
+		TrackData (*representation_creator_fn)(Track *, int);
 	};
 
 

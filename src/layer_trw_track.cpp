@@ -1088,13 +1088,13 @@ void Track::convert(CoordMode dest_mode)
    I understood this when I wrote it ... maybe ... Basically it eats up the
    proper amounts of length on the track and averages elevation over that.
 */
-void Track::make_values_vector_altitude_distance(TrackData & compressed_ad, int compressed_n_points) const
+TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) const
 {
-	compressed_ad.invalidate();
+	TrackData compressed_ad;
 
 	assert (compressed_n_points < 16000);
 	if (this->trackpoints.size() < 2) {
-		return;
+		return compressed_ad;
 	}
 
 	{ /* Test if there's anything worth calculating. */
@@ -1115,7 +1115,7 @@ void Track::make_values_vector_altitude_distance(TrackData & compressed_ad, int 
 			}
 		}
 		if (!correct) {
-			return;
+			return compressed_ad;
 		}
 	}
 
@@ -1124,7 +1124,7 @@ void Track::make_values_vector_altitude_distance(TrackData & compressed_ad, int 
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash */
 	if (delta_d <= 0) {
-		return;
+		return compressed_ad;
 	}
 
 	compressed_ad.allocate_vector(compressed_n_points);
@@ -1225,7 +1225,7 @@ void Track::make_values_vector_altitude_distance(TrackData & compressed_ad, int 
 
 	compressed_ad.n_points = compressed_n_points;
 	compressed_ad.valid = true;
-	return;
+	return compressed_ad;
 }
 
 
@@ -1264,9 +1264,9 @@ bool Track::get_total_elevation_gain(double * up, double * down) const
 
 
 
-void Track::make_values_vector_gradient_distance(TrackData & compressed_gd, int compressed_n_points) const
+TrackData Track::make_values_vector_gradient_distance(int compressed_n_points) const
 {
-	compressed_gd.invalidate();
+	TrackData compressed_gd;
 
 	assert (compressed_n_points < 16000);
 
@@ -1275,13 +1275,12 @@ void Track::make_values_vector_gradient_distance(TrackData & compressed_gd, int 
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash. */
 	if (delta_d <= 0) {
-		return;
+		return compressed_gd;
 	}
 
-	TrackData compressed_ad;
-	this->make_values_vector_altitude_distance(compressed_ad, compressed_n_points);
+	TrackData compressed_ad = this->make_values_vector_altitude_distance(compressed_n_points);
 	if (!compressed_ad.valid) {
-		return;
+		return compressed_gd;
 	}
 
 	compressed_gd.allocate_vector(compressed_n_points);
@@ -1301,22 +1300,22 @@ void Track::make_values_vector_gradient_distance(TrackData & compressed_gd, int 
 
 	compressed_gd.n_points = compressed_n_points;
 	compressed_gd.valid = true;
-	return;
+	return compressed_gd;
 }
 
 
 
 
 /* By Alex Foobarian. */
-void Track::make_values_vector_speed_time(TrackData & compressed_st, int compressed_n_points) const
+TrackData Track::make_values_vector_speed_time(int compressed_n_points) const
 {
-	compressed_st.invalidate();
+	TrackData compressed_st;
 
 	assert (compressed_n_points < 16000);
 
 	double duration = this->get_duration();
 	if (duration < 0) {
-		return;
+		return compressed_st;
 	}
 
 	const int tp_count = this->get_tp_count();
@@ -1375,7 +1374,7 @@ void Track::make_values_vector_speed_time(TrackData & compressed_st, int compres
 
 	compressed_st.n_points = compressed_n_points;
 	compressed_st.valid = true;
-	return;
+	return compressed_st;
 }
 
 
@@ -1384,13 +1383,13 @@ void Track::make_values_vector_speed_time(TrackData & compressed_st, int compres
 /**
    Make a distance/time map, heavily based on the Track::make_values_vector_speed_time() method.
 */
-void Track::make_values_vector_distance_time(TrackData & compressed_dt, int compressed_n_points) const
+TrackData Track::make_values_vector_distance_time(int compressed_n_points) const
 {
-	compressed_dt.invalidate();
+	TrackData compressed_dt;
 
 	double duration = this->get_duration();
 	if (duration < 0) {
-		return;
+		return compressed_dt;
 	}
 
 	const double delta_t = duration / (compressed_n_points - 1);
@@ -1448,7 +1447,7 @@ void Track::make_values_vector_distance_time(TrackData & compressed_dt, int comp
 
 	compressed_dt.n_points = compressed_n_points;
 	compressed_dt.valid = true;
-	return;
+	return compressed_dt;
 }
 
 
@@ -1511,12 +1510,12 @@ void compress(TrackData & compressed_data, const TrackData & raw_data)
    NB Somehow the elevation/distance applies some kind of smoothing algorithm,
    but I don't think any one understands it any more (I certainly don't ATM).
 */
-void Track::make_values_vector_altitude_time(TrackData & compressed_at, int compressed_n_points) const
+TrackData Track::make_values_vector_altitude_time(int compressed_n_points) const
 {
-	compressed_at.invalidate();
+	TrackData compressed_at;
 
 	if (this->trackpoints.size() < 2) {
-		return;
+		return compressed_at;
 	}
 
 	/* Test if there's anything worth calculating. */
@@ -1528,12 +1527,12 @@ void Track::make_values_vector_altitude_time(TrackData & compressed_at, int comp
 		}
 	}
 	if (!okay) {
-		return;
+		return compressed_at;
 	}
 
 	double duration = this->get_duration();
 	if (duration < 0) {
-		return;
+		return compressed_at;
 	}
 
 
@@ -1578,7 +1577,7 @@ void Track::make_values_vector_altitude_time(TrackData & compressed_at, int comp
 
 	compressed_at.n_points = compressed_n_points;
 	compressed_at.valid = true;
-	return;
+	return compressed_at;
 }
 
 
@@ -1587,13 +1586,13 @@ void Track::make_values_vector_altitude_time(TrackData & compressed_at, int comp
 /**
    Make a speed/distance map.
 */
-void Track::make_values_vector_speed_distance(TrackData & compressed_sd, int compressed_n_points) const
+TrackData Track::make_values_vector_speed_distance(int compressed_n_points) const
 {
-	compressed_sd.invalidate();
+	TrackData compressed_sd;
 
 	double total_length = this->get_length_including_gaps();
 	if (total_length <= 0) {
-		return;
+		return compressed_sd;
 	}
 
 	const double delta_d = total_length / (compressed_n_points - 1);
@@ -1637,7 +1636,7 @@ void Track::make_values_vector_speed_distance(TrackData & compressed_sd, int com
 
 	compressed_sd.n_points = compressed_n_points;
 	compressed_sd.valid = true;
-	return;
+	return compressed_sd;
 }
 
 
@@ -4254,4 +4253,43 @@ TrackData::~TrackData()
 		free(this->y);
 		this->y = NULL;
 	}
+}
+
+
+
+
+TrackData & TrackData::operator=(const TrackData & other)
+{
+	if (&other == this) {
+		return *this;
+	}
+
+	/* TODO: compare size of vectors in both objects to see if
+	   reallocation is necessary? */
+
+	if (other.x) {
+		if (this->x) {
+			free(this->x);
+			this->x = NULL;
+		}
+		this->x = (double *) malloc(sizeof (double) * other.n_points);
+		memcpy(this->x, other.x, sizeof (double) * other.n_points);
+	}
+
+	if (other.y) {
+		if (this->y) {
+			free(this->y);
+			this->y = NULL;
+		}
+		this->y = (double *) malloc(sizeof (double) * other.n_points);
+		memcpy(this->y, other.y, sizeof (double) * other.n_points);
+	}
+
+	this->min = other.min;
+	this->max = other.max;
+
+	this->valid = other.valid;
+	this->n_points = other.n_points;
+
+	return *this;
 }
