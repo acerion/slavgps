@@ -174,20 +174,9 @@ namespace SlavGPS {
 
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
 
-
-
-		/* "Draw" functions. */
-		void draw_ed(ProfileGraph * graph, Track * trk);
-		void draw_gd(ProfileGraph * graph, Track * trk);
-		void draw_st(ProfileGraph * graph, Track * trk);
-		void draw_dt(ProfileGraph * graph, Track * trk);
-		void draw_et(ProfileGraph * graph, Track * trk);
-		void draw_sd(ProfileGraph * graph, Track * trk);
-
-
-
 		void clear_image(QPixmap * pix);
 
+		void draw_graph(ProfileGraph * graph, Track * trk);
 		void draw_all_graphs(bool resized);
 		void configure_widgets(int index);
 		QWidget * create_graph_page(Viewport * viewport, ProfileWidgets & widgets);
@@ -277,7 +266,7 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int));
+		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 		~ProfileGraph();
 
 		double get_pos_y(double pos_x);
@@ -287,8 +276,10 @@ namespace SlavGPS {
 
 		QPointF get_position_of_tp(Trackpoint * tp, Track * trk, double track_length_inc_gaps);
 
-		bool regenerate_y_values(Track * trk);
+		bool regenerate_data(Track * trk);
 		void regenerate_sizes(void);
+
+		void draw_function_values(void);
 
 		void draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk, double max_speed_in, bool do_speed);
@@ -298,6 +289,7 @@ namespace SlavGPS {
 		PropSaved saved_img;
 
 		void (TrackProfileDialog::*draw_graph_fn)(ProfileGraph *, Track *) = NULL;
+		void (*draw_additional_indicators_fn)(TrackProfileDialog *, ProfileGraph *, Track *) = NULL;
 
 		int width = 0;
 		int height = 0;
@@ -314,10 +306,11 @@ namespace SlavGPS {
 		double y_range_min_drawable = 0.0;
 
 		TrackData rep;
-		TrackData (*representation_creator_fn)(Track *, int);
+		bool (*track_data_creator_fn)(ProfileGraph *, Track *) = NULL;
 
 		GeoCanvas geocanvas;
 
+		QPen main_pen;
 		QPen gps_speed_pen;
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;

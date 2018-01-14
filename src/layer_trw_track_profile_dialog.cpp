@@ -193,34 +193,150 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-TrackData representation_creator_ed(Track * trk, int graph_width)
+bool track_data_creator_ed(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_altitude_distance(graph_width);
+	graph->rep = trk->make_values_vector_altitude_distance(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+	/* Convert into appropriate units. */
+	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
+		/* Convert altitudes into feet units. */
+		for (int i = 0; i < graph->width; i++) {
+			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
+		}
+	}
+	/* Otherwise leave in metres. */
+
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+        graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
+
+	return true;
 }
 
-TrackData representation_creator_gd(Track * trk, int graph_width)
+bool track_data_creator_gd(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_gradient_distance(graph_width);
+	graph->rep = trk->make_values_vector_gradient_distance(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
+
+	return true;
 }
 
-TrackData representation_creator_st(Track * trk, int graph_width)
+bool track_data_creator_st(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_speed_time(graph_width);
+	graph->rep = trk->make_values_vector_speed_time(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+	/* Convert into appropriate units. */
+	for (int i = 0; i < graph->width; i++) {
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
+	}
+
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
+	if (graph->y_range_min < 0.0) {
+		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
+	}
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
+
+	return true;
 }
 
-TrackData representation_creator_dt(Track * trk, int graph_width)
+bool track_data_creator_dt(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_distance_time(graph_width);
+	graph->rep = trk->make_values_vector_distance_time(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+	/* Convert into appropriate units. */
+	for (int i = 0; i < graph->width; i++) {
+		graph->rep.y[i] = convert_distance_meters_to(graph->rep.y[i], graph->geocanvas.distance_unit);
+	}
+
+	graph->y_range_min = 0;
+	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), graph->geocanvas.distance_unit);
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
+
+	return true;
 }
 
-TrackData representation_creator_et(Track * trk, int graph_width)
+bool track_data_creator_et(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_altitude_time(graph_width);
+	graph->rep = trk->make_values_vector_altitude_time(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+	/* Convert into appropriate units. */
+	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
+		/* Convert altitudes into feet units. */
+		for (int i = 0; i < graph->width; i++) {
+			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
+		}
+	}
+	/* Otherwise leave in metres. */
+
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
+
+
+
+	return true;
 }
 
-TrackData representation_creator_sd(Track * trk, int graph_width)
+bool track_data_creator_sd(ProfileGraph * graph, Track * trk)
 {
-	return trk->make_values_vector_speed_distance(graph_width);
+	graph->rep = trk->make_values_vector_speed_distance(graph->width);
+	if (!graph->rep.valid) {
+		return false;
+	}
+
+	/* Convert into appropriate units. */
+	for (int i = 0; i < graph->width; i++) {
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
+	}
+
+	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
+	if (graph->y_range_min < 0.0) {
+		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
+	}
+
+	graph->n_intervals_y = GRAPH_Y_INTERVALS;
+
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
+	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
+
+
+	return true;
 }
 
 
@@ -1058,6 +1174,7 @@ void TrackProfileDialog::draw_grid_vertical_line(ProfileGraph * graph, const QSt
 
 
 
+
 void TrackProfileDialog::draw_x_grid_distance(ProfileGraph * graph, int n_intervals)
 {
 	/* Set to display units from length in metres. */
@@ -1083,67 +1200,248 @@ void TrackProfileDialog::draw_x_grid_distance(ProfileGraph * graph, int n_interv
 
 
 
-/**
- * Draw the elevation-distance image.
- */
-void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
+void ProfileGraph::draw_function_values(void)
 {
+	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation) {
+		for (int i = 0; i < this->width; i++) {
+			if (this->rep.y[i] == VIK_DEFAULT_ALTITUDE) {
+				this->viewport->draw_line(this->no_alt_info_pen,
+							   i, 0,
+							   i, 0 + this->height);
+			} else {
+				this->viewport->draw_line(this->main_pen,
+							   i, this->height,
+							   i, this->height - this->height * (this->rep.y[i] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y));
+			}
+		}
+	} else {
+		for (int i = 0; i < this->width; i++) {
+			this->viewport->draw_line(this->main_pen,
+						   i, this->height,
+						   i, this->height - this->height * (this->rep.y[i] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y));
+		}
+	}
+}
+
+
+
+static void draw_additional_indicators_et(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_ET;
+	/* Show DEMS. */
+	if (dialog->widgets[index].show_dem && dialog->widgets[index].show_dem->checkState())  {
+
+		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+
+		const QColor color = graph->dem_alt_pen.color();
+
+		for (int i = 0; i < graph->width; i++) {
+			/* This could be slow doing this each time... */
+			Trackpoint * tp = dialog->trk->get_closest_tp_by_percentage_time(((double) i / (double) graph->width), NULL);
+			if (tp) {
+				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
+				if (elev != DEM_INVALID_ELEVATION) {
+					/* Convert into height units. */
+					if (Preferences::get_unit_height() == HeightUnit::FEET) {
+						elev = VIK_METERS_TO_FEET(elev);
+					}
+					/* No conversion needed if already in metres. */
+
+					/* offset is in current height units. */
+					const double current_function_value = elev - graph->y_range_min_drawable;
+
+					const int x = graph->left_edge + i;
+					const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
+					graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+				}
+			}
+		}
+	}
+
+
+	/* Show speeds. */
+	if (dialog->widgets[index].show_speed && dialog->widgets[index].show_speed->checkState()) {
+		/* This is just an indicator - no actual values can be inferred by user. */
+
+		const double max_function_value = dialog->max_speed * 110 / 100;
+
+		const QColor color = graph->gps_speed_pen.color();
+		for (int i = 0; i < graph->width; i++) {
+
+			const double current_function_value = graph->rep.y[i];
+
+			const int x = graph->left_edge + i;
+			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
+			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		}
+	}
+
+	return;
+}
+
+
+
+
+static void draw_additional_indicators_sd(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_SD;
+
+	if (dialog->widgets[index].show_gps_speed && dialog->widgets[index].show_gps_speed->checkState()) {
+
+		const double max_function_arg = trk->get_length_including_gaps();
+		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+		double current_function_arg = 0.0;
+		double current_function_value = 0.0;
+
+		const QColor color = graph->gps_speed_pen.color();
+		for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
+			double gps_speed = (*iter)->speed;
+			if (std::isnan(gps_speed)) {
+				continue;
+			}
+
+			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
+
+			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+			current_function_value = gps_speed - graph->y_range_min_drawable;
+
+			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
+			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
+			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		}
+	}
+}
+
+
+
+
+void draw_additional_indicators_ed(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_ED;
+
+	const bool do_show_dem = dialog->widgets[index].show_dem && dialog->widgets[index].show_dem->checkState();
+	const bool do_show_gps_speed = dialog->widgets[index].show_gps_speed && dialog->widgets[index].show_gps_speed->checkState();
+
+	if (do_show_dem || do_show_gps_speed) {
+
+		/* Ensure somekind of max speed when not set. */
+		if (dialog->max_speed < 0.01) {
+			dialog->max_speed = trk->get_max_speed();
+		}
+
+		graph->draw_dem_alt_speed_dist(trk, dialog->max_speed, do_show_dem, do_show_gps_speed);
+	}
+}
+
+
+
+
+static void draw_additional_indicators_gd(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_GD;
+
+	const bool do_show_gps_speed = dialog->widgets[index].show_gps_speed && dialog->widgets[index].show_gps_speed->checkState();
+
+	if (do_show_gps_speed) {
+		/* Ensure somekind of max speed when not set. */
+		if (dialog->max_speed < 0.01) {
+			dialog->max_speed = trk->get_max_speed();
+		}
+		graph->draw_speed_dist(trk, dialog->max_speed, do_show_gps_speed);
+	}
+}
+
+
+
+
+static void draw_additional_indicators_st(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_ST;
+
+	if (dialog->widgets[index].show_gps_speed && dialog->widgets[index].show_gps_speed->checkState()) {
+
+		time_t beg_time = (*trk->trackpoints.begin())->timestamp;
+		const time_t max_function_arg = (*std::prev(trk->trackpoints.end()))->timestamp - beg_time;
+		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+
+		const QColor color = graph->gps_speed_pen.color();
+
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
+			double gps_speed = (*iter)->speed;
+			if (std::isnan(gps_speed)) {
+				continue;
+			}
+
+			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
+
+			const time_t current_function_arg = (*iter)->timestamp - beg_time;
+			const double current_function_value = gps_speed - graph->y_range_min_drawable;
+
+			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
+			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
+			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		}
+	}
+}
+
+
+
+
+static void draw_additional_indicators_dt(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
+{
+	const int index = SG_TRACK_PROFILE_TYPE_DT;
+
+	/* Show speed indicator. */
+	if (dialog->widgets[index].show_speed && dialog->widgets[index].show_speed->checkState()) {
+
+		const double max_function_value = dialog->max_speed * 110 / 100;
+
+		const QColor color = graph->gps_speed_pen.color();
+		/* This is just an indicator - no actual values can be inferred by user. */
+		for (int i = 0; i < graph->width; i++) {
+
+			const double current_function_value = graph->rep.y[i];
+
+			const int x = graph->left_edge + i;
+			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
+			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		}
+	}
+}
+
+
+
+
+/**
+   \brief Draw the y = f(x) graph
+*/
+void TrackProfileDialog::draw_graph(ProfileGraph * graph, Track * trk_)
+{
+	if (graph->geocanvas.x_domain == GeoCanvasDomain::Time) {
+		this->duration = trk_->get_duration(true);
+		if (this->duration <= 0) {
+			return;
+		}
+	}
+
 	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
+
+	if (!graph->regenerate_data(trk_)) {
 		return;
 	}
 
-	/* Convert into appropriate units. */
-	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
-		/* Convert altitudes into feet units. */
-		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
-		}
-	}
-	/* Otherwise leave in metres. */
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-        graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
-
-
-	/* Reset before redrawing. */
+	/* Clear before redrawing. */
 	graph->viewport->clear();
 
-
-	/* Draw values of 'elevation = f(distance)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		if (graph->rep.y[i] == VIK_DEFAULT_ALTITUDE) {
-			graph->viewport->draw_line(graph->no_alt_info_pen,
-						   i, 0,
-						   i, 0 + graph->height);
-		} else {
-			graph->viewport->draw_line(this->main_pen,
-						   i, graph->height,
-						   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
-		}
-	}
+	graph->draw_function_values();
 
 	/* Draw grid on top of graph of values. */
 	this->draw_x_grid(graph);
 	this->draw_y_grid(graph);
 
-
-	const bool do_show_dem = this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_dem && this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_dem->checkState();
-	const bool do_show_gps_speed = this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_gps_speed->checkState();
-	if (do_show_dem || do_show_gps_speed) {
-
-		/* Ensure somekind of max speed when not set. */
-		if (this->max_speed < 0.01) {
-			this->max_speed = trk_->get_max_speed();
-		}
-
-		graph->draw_dem_alt_speed_dist(trk_, this->max_speed, do_show_dem, do_show_gps_speed);
+	if (graph->draw_additional_indicators_fn) {
+		graph->draw_additional_indicators_fn(this, graph, trk_);
 	}
-
 
 	//graph->viewport->draw_border();
 	graph->viewport->update();
@@ -1194,62 +1492,6 @@ void ProfileGraph::draw_speed_dist(Track * trk, double max_speed_in, bool do_spe
 
 
 
-/**
- * Draw the gradient-distance image.
- */
-void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
-{
-	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
-		return;
-	}
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
-
-
-	/* Reset before redrawing. */
-	graph->viewport->clear();
-
-
-	/* Draw values of 'gradient = f(distance)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->viewport->draw_line(this->main_pen,
-					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
-	}
-
-	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(graph);
-	this->draw_y_grid(graph);
-
-
-	const bool do_show_gps_speed = this->widgets[SG_TRACK_PROFILE_TYPE_GD].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_GD].show_gps_speed->checkState();
-	if (do_show_gps_speed) {
-		/* Ensure somekind of max speed when not set. */
-		if (this->max_speed < 0.01) {
-			this->max_speed = trk_->get_max_speed();
-		}
-		graph->draw_speed_dist(trk_, this->max_speed, do_show_gps_speed);
-	}
-
-
-	//graph->viewport->draw_border();
-	graph->viewport->update();
-
-	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << graph->viewport->type_string;
-	graph->saved_img.img = *graph->viewport->get_pixmap();
-	graph->saved_img.valid = true;
-}
-
-
-
-
 void TrackProfileDialog::draw_x_grid_time(ProfileGraph * graph, int n_intervals)
 {
 	const int interval_index = time_intervals->get_interval_index(0, this->duration, n_intervals);
@@ -1271,360 +1513,6 @@ void TrackProfileDialog::draw_x_grid_time(ProfileGraph * graph, int n_intervals)
 		const int pos_x = (int) (interval_idx * per_interval_value);
 		this->draw_grid_vertical_line(graph, label, pos_x);
 	}
-}
-
-
-
-
-/**
- * Draw the speed/time image.
- */
-void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
-{
-	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
-		return;
-	}
-
-	this->duration = trk_->get_duration(true);
-	/* Negative time or other problem. */
-	if (this->duration <= 0) {
-		return;
-	}
-
-	/* Convert into appropriate units. */
-	SpeedUnit speed_unit = Preferences::get_unit_speed();
-	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
-	}
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
-	if (graph->y_range_min < 0.0) {
-		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
-	}
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
-
-
-	/* Reset before redrawing. */
-	graph->viewport->clear();
-
-
-	/* Draw values of 'speed = f(time)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->viewport->draw_line(this->main_pen,
-					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
-	}
-
-	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(graph);
-	this->draw_y_grid(graph);
-
-
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_ST].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_ST].show_gps_speed->checkState()) {
-
-		time_t beg_time = (*trk_->trackpoints.begin())->timestamp;
-		const time_t max_function_arg = (*std::prev(trk_->trackpoints.end()))->timestamp - beg_time;
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
-
-		const QColor color = graph->gps_speed_pen.color();
-
-		for (auto iter = trk_->trackpoints.begin(); iter != trk_->trackpoints.end(); iter++) {
-			double gps_speed = (*iter)->speed;
-			if (std::isnan(gps_speed)) {
-				continue;
-			}
-
-			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
-
-			const time_t current_function_arg = (*iter)->timestamp - beg_time;
-			const double current_function_value = gps_speed - graph->y_range_min_drawable;
-
-			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
-	}
-
-
-	//graph->viewport->draw_border();
-	graph->viewport->update();
-
-	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << graph->viewport->type_string;
-	graph->saved_img.img = *graph->viewport->get_pixmap();
-	graph->saved_img.valid = true;
-}
-
-
-
-
-/**
- * Draw the distance-time image.
- */
-void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
-{
-	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
-		return;
-	}
-
-	/* Convert into appropriate units. */
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
-	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_distance_meters_to(graph->rep.y[i], distance_unit);
-	}
-
-	this->duration = this->trk->get_duration(true);
-	/* Negative time or other problem. */
-	if (this->duration <= 0) {
-		return;
-	}
-
-	graph->y_range_min = 0;
-	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), distance_unit);
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
-
-
-	/* Reset before redrawing. */
-	graph->viewport->clear();
-
-
-	/* Draw values of 'distance = f(time)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->viewport->draw_line(this->main_pen,
-					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y[i]) / (graph->y_interval * graph->n_intervals_y));
-	}
-
-	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(graph);
-	this->draw_y_grid(graph);
-
-
-	/* Show speed indicator. */
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_DT].show_speed && this->widgets[SG_TRACK_PROFILE_TYPE_DT].show_speed->checkState()) {
-
-		const double max_function_value = this->max_speed * 110 / 100;
-
-		const QColor color = graph->gps_speed_pen.color();
-		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < graph->width; i++) {
-
-			const double current_function_value = graph->rep.y[i];
-
-			const int x = graph->left_edge + i;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
-	}
-
-
-	//graph->viewport->draw_border();
-	graph->viewport->update();
-
-	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << graph->viewport->type_string;
-	graph->saved_img.img = *graph->viewport->get_pixmap();
-	graph->saved_img.valid = true;
-}
-
-
-
-
-/**
- * Draw the elevation-time image.
- */
-void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
-{
-	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
-		return;
-	}
-
-	/* Convert into appropriate units. */
-	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
-		/* Convert altitudes into feet units. */
-		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
-		}
-	}
-	/* Otherwise leave in metres. */
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
-
-
-	this->duration = this->trk->get_duration(true);
-	/* Negative time or other problem. */
-	if (this->duration <= 0) {
-		return;
-	}
-
-	/* Reset before redrawing. */
-	graph->viewport->clear();
-
-
-	/* Draw values of 'elevation = f(time)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->viewport->draw_line(this->main_pen,
-					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
-	}
-
-	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(graph);
-	this->draw_y_grid(graph);
-
-
-	/* Show DEMS. */
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_ET].show_dem && this->widgets[SG_TRACK_PROFILE_TYPE_ET].show_dem->checkState())  {
-
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
-
-		const QColor color = graph->dem_alt_pen.color();
-
-		for (int i = 0; i < graph->width; i++) {
-			/* This could be slow doing this each time... */
-			Trackpoint * tp = this->trk->get_closest_tp_by_percentage_time(((double) i / (double) graph->width), NULL);
-			if (tp) {
-				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
-				if (elev != DEM_INVALID_ELEVATION) {
-					/* Convert into height units. */
-					if (Preferences::get_unit_height() == HeightUnit::FEET) {
-						elev = VIK_METERS_TO_FEET(elev);
-					}
-					/* No conversion needed if already in metres. */
-
-					/* offset is in current height units. */
-					const double current_function_value = elev - graph->y_range_min_drawable;
-
-					const int x = graph->left_edge + i;
-					const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-					graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-				}
-			}
-		}
-	}
-
-
-	/* Show speeds. */
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_ET].show_speed && this->widgets[SG_TRACK_PROFILE_TYPE_ET].show_speed->checkState()) {
-		/* This is just an indicator - no actual values can be inferred by user. */
-
-		const double max_function_value = this->max_speed * 110 / 100;
-
-		const QColor color = graph->gps_speed_pen.color();
-		for (int i = 0; i < graph->width; i++) {
-
-			const double current_function_value = graph->rep.y[i];
-
-			const int x = graph->left_edge + i;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
-	}
-
-
-	//graph->viewport->draw_border();
-	graph->viewport->update();
-
-	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << graph->viewport->type_string;
-	graph->saved_img.img = *graph->viewport->get_pixmap();
-	graph->saved_img.valid = true;
-}
-
-
-
-
-/**
- * Draw the speed-distance image.
- */
-void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
-{
-	graph->regenerate_sizes();
-	if (!graph->regenerate_y_values(trk_)) {
-		return;
-	}
-
-	/* Convert into appropriate units. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
-	}
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
-	if (graph->y_range_min < 0.0) {
-		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
-	}
-
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
-
-
-	/* Reset before redrawing. */
-	graph->viewport->clear();
-
-
-	/* Draw values of 'speed = f(distance)' function. */
-	for (int i = 0; i < graph->width; i++) {
-		graph->viewport->draw_line(this->main_pen,
-					   i, graph->height,
-					   i, graph->height - graph->height * (graph->rep.y[i] - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y));
-	}
-
-	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(graph);
-	this->draw_y_grid(graph);
-
-
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_SD].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_SD].show_gps_speed->checkState()) {
-
-		const double max_function_arg = trk_->get_length_including_gaps();
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
-		double current_function_arg = 0.0;
-		double current_function_value = 0.0;
-
-		const QColor color = graph->gps_speed_pen.color();
-		for (auto iter = std::next(trk_->trackpoints.begin()); iter != trk_->trackpoints.end(); iter++) {
-			double gps_speed = (*iter)->speed;
-			if (std::isnan(gps_speed)) {
-				continue;
-			}
-
-			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
-
-			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			current_function_value = gps_speed - graph->y_range_min_drawable;
-
-			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
-	}
-
-
-	//graph->viewport->draw_border();
-	graph->viewport->update();
-
-	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << graph->viewport->type_string;
-	graph->saved_img.img = *graph->viewport->get_pixmap();
-	graph->saved_img.valid = true;
 }
 
 
@@ -2074,12 +1962,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, &TrackProfileDialog::draw_ed, representation_creator_ed);
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  &TrackProfileDialog::draw_gd, representation_creator_gd);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     &TrackProfileDialog::draw_st, representation_creator_st);
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  &TrackProfileDialog::draw_dt, representation_creator_dt);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, &TrackProfileDialog::draw_et, representation_creator_et);
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     &TrackProfileDialog::draw_sd, representation_creator_sd);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation);
+	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed);
+	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation);
+	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed);
 
 	this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport = this->create_viewport("Viewport, elevation-over-distance");
 	this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport = this->create_viewport("Viewport, gradient-over-distance");
@@ -2167,9 +2055,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	vbox->addWidget(this->tabs);
 	vbox->addWidget(this->button_box);
 
-
-	this->main_pen.setColor("lightsteelblue");
-	this->main_pen.setWidth(1);
 
 	this->labels_pen.setColor("black");
 
@@ -2412,13 +2297,51 @@ QString get_time_grid_label(int interval_index, int value)
 
 
 
-ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, void (TrackProfileDialog::*draw_graph)(ProfileGraph *, Track *), TrackData (*representation_creator)(Track *, int))
+ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
 {
 	this->geocanvas.x_domain = x_domain;
 	this->geocanvas.y_domain = y_domain;
 
-	this->draw_graph_fn = draw_graph;
-	this->representation_creator_fn = representation_creator;
+
+	if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Elevation) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_ed;
+		this->draw_additional_indicators_fn = draw_additional_indicators_ed;
+
+	} else if (x_domain == GeoCanvasDomain::Distance&& y_domain == GeoCanvasDomain::Gradient) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_gd;
+		this->draw_additional_indicators_fn = draw_additional_indicators_gd;
+
+	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Speed) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_st;
+		this->draw_additional_indicators_fn = draw_additional_indicators_st;
+
+	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Distance) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_dt;
+		this->draw_additional_indicators_fn = draw_additional_indicators_dt;
+
+	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Elevation) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_et;
+		this->draw_additional_indicators_fn = draw_additional_indicators_et;
+
+	} else if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Speed) {
+		this->draw_graph_fn = &TrackProfileDialog::draw_graph;
+		this->track_data_creator_fn = track_data_creator_sd;
+		this->draw_additional_indicators_fn = draw_additional_indicators_sd;
+	} else {
+		qDebug() << "EE" PREFIX << "unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
+		this->draw_graph_fn = NULL;
+		this->track_data_creator_fn = NULL;
+		this->draw_additional_indicators_fn = NULL;
+	}
+
+
+	this->main_pen.setColor("lightsteelblue");
+	this->main_pen.setWidth(1);
 
 	this->gps_speed_pen.setColor(QColor("red"));
 	this->dem_alt_pen.setColor(QColor("green"));
@@ -2436,18 +2359,13 @@ ProfileGraph::~ProfileGraph()
 
 
 
-bool ProfileGraph::regenerate_y_values(Track * trk)
+bool ProfileGraph::regenerate_data(Track * trk)
 {
 	this->rep.invalidate();
 
 	/* Ask a track to generate a vector of values representing some parameter
 	   of a track as a function of either time or distance. */
-	this->rep = this->representation_creator_fn(trk, this->width);
-	if (!this->rep.valid) {
-		return false;
-	}
-
-	return true;
+	return this->track_data_creator_fn(this, trk);
 }
 
 
