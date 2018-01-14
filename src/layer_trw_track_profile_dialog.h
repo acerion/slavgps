@@ -290,6 +290,9 @@ namespace SlavGPS {
 		bool regenerate_y_values(Track * trk);
 		void regenerate_sizes(void);
 
+		void draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed);
+		void draw_speed_dist(Track * trk, double max_speed_in, bool do_speed);
+
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_MAX;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
@@ -314,6 +317,10 @@ namespace SlavGPS {
 		TrackData (*representation_creator_fn)(Track *, int);
 
 		GeoCanvas geocanvas;
+
+		QPen gps_speed_pen;
+		QPen dem_alt_pen;
+		QPen no_alt_info_pen;
 	};
 
 
