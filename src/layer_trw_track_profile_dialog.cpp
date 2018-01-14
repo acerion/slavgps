@@ -652,7 +652,9 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 
 void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_ED];
+	const int index = SG_TRACK_PROFILE_TYPE_ED;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	double meters_from_start = 0.0;
@@ -661,14 +663,12 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ED].x_value) {
-		distance_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ED].x_value, meters_from_start);
+	if (this->current_tp && this->widgets[index].x_value) {
+		distance_label_update(this->widgets[index].x_value, meters_from_start);
 	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ED].y_value) {
-		elevation_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ED].y_value, this->current_tp);
+	if (this->current_tp && this->widgets[index].y_value) {
+		elevation_label_update(this->widgets[index].y_value, this->current_tp);
 	}
-
-
 }
 
 
@@ -676,7 +676,9 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_GD];
+	const int index = SG_TRACK_PROFILE_TYPE_GD;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	double meters_from_start = 0.0;
@@ -685,11 +687,11 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_GD].x_value) {
-		distance_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_GD].x_value, meters_from_start);
+	if (this->current_tp && this->widgets[index].x_value) {
+		distance_label_update(this->widgets[index].x_value, meters_from_start);
 	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_GD].y_value) {
-		gradient_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_GD].y_value, graph->rep.y[current_pos_x]);
+	if (this->current_tp && this->widgets[index].y_value) {
+		gradient_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
 	}
 }
 
@@ -753,7 +755,9 @@ void gradient_label_update(QLabel * label, double gradient)
 
 void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_ST];
+	const int index = SG_TRACK_PROFILE_TYPE_ST;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	time_t seconds_from_start = 0;
@@ -762,14 +766,16 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ST].x_value) {
-		time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ST].x_value, seconds_from_start);
-	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ST].y_value) {
-		speed_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ST].y_value, graph->rep.y[current_pos_x]);
-	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ST].t_value) {
-		real_time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ST].t_value, this->current_tp);
+	if (this->current_tp) {
+		if (this->widgets[index].x_value) {
+			time_label_update(this->widgets[index].x_value, seconds_from_start);
+		}
+		if (this->widgets[index].y_value) {
+			speed_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
+		}
+		if (this->widgets[index].t_value) {
+			real_time_label_update(this->widgets[index].t_value, this->current_tp);
+		}
 	}
 }
 
@@ -781,7 +787,9 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
  */
 void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_DT];
+	const int index = SG_TRACK_PROFILE_TYPE_DT;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	time_t seconds_from_start = 0;
@@ -790,16 +798,17 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_DT].x_value) {
-		time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_DT].x_value, seconds_from_start);
+	if (this->current_tp) {
+		if (this->widgets[index].x_value) {
+			time_label_update(this->widgets[index].x_value, seconds_from_start);
+		}
+		if (this->widgets[index].y_value) {
+			dist_dist_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
+		}
+		if (this->widgets[index].t_value) {
+			real_time_label_update(this->widgets[index].t_value, this->current_tp);
+		}
 	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_DT].y_value) {
-		dist_dist_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_DT].y_value, graph->rep.y[current_pos_x]);
-	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_DT].t_value) {
-		real_time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_DT].t_value, this->current_tp);
-	}
-
 }
 
 
@@ -810,7 +819,9 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
  */
 void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_ET];
+	const int index = SG_TRACK_PROFILE_TYPE_ET;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	time_t seconds_from_start = 0;
@@ -819,16 +830,17 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ET].x_value) {
-		time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ET].x_value, seconds_from_start);
+	if (this->current_tp) {
+		if (this->widgets[index].x_value) {
+			time_label_update(this->widgets[index].x_value, seconds_from_start);
+		}
+		if (this->widgets[index].y_value) {
+			elevation_label_update(this->widgets[index].y_value, this->current_tp);
+		}
+		if (this->widgets[index].t_value) {
+			real_time_label_update(this->widgets[index].t_value, this->current_tp);
+		}
 	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ET].y_value) {
-		elevation_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ET].y_value, this->current_tp);
-	}
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_ET].t_value) {
-		real_time_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_ET].t_value, this->current_tp);
-	}
-
 }
 
 
@@ -836,7 +848,9 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
 
 void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileGraph * graph = this->graphs[SG_TRACK_PROFILE_TYPE_SD];
+	const int index = SG_TRACK_PROFILE_TYPE_SD;
+
+	ProfileGraph * graph = this->graphs[index];
 	assert (graph->viewport == viewport);
 
 	double meters_from_start = 0.0;
@@ -845,11 +859,13 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
 		return;
 	}
 
-	if (this->current_tp && this->widgets[SG_TRACK_PROFILE_TYPE_SD].x_value) {
-		distance_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_SD].x_value, meters_from_start);
-	}
-	if (this->widgets[SG_TRACK_PROFILE_TYPE_SD].y_value) {
-		speed_label_update(this->widgets[SG_TRACK_PROFILE_TYPE_SD].y_value, graph->rep.y[current_pos_x]);
+	if (this->current_tp) {
+		if (this->widgets[index].x_value) {
+			distance_label_update(this->widgets[index].x_value, meters_from_start);
+		}
+		if (this->widgets[index].y_value) {
+			speed_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
+		}
 	}
 }
 
@@ -976,7 +992,7 @@ static void draw_dem_alt_speed_dist(Track * trk, ProfileGraph * graph, QPen & al
 			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
 			if (elev != DEM_INVALID_ELEVATION) {
 				/* Convert into height units. */
-				if (Preferences::get_unit_height() == HeightUnit::FEET) {
+				if (graph->geocanvas.height_unit == HeightUnit::FEET) {
 					elev = VIK_METERS_TO_FEET(elev);
 				}
 				/* No conversion needed if already in metres. */
@@ -1036,11 +1052,11 @@ void TrackProfileDialog::draw_grid_vertical_line(ProfileGraph * graph, const QSt
 
 
 
-void TrackProfileDialog::draw_distance_grid(ProfileGraph * graph, DistanceUnit distance_unit, int n_intervals)
+void TrackProfileDialog::draw_x_grid_distance(ProfileGraph * graph, int n_intervals)
 {
 	/* Set to display units from length in metres. */
 	double full_distance = this->track_length_inc_gaps;
-	full_distance = convert_distance_meters_to(full_distance, distance_unit);
+	full_distance = convert_distance_meters_to(full_distance, graph->geocanvas.distance_unit);
 
 	const int interval_index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
 	const double distance_interval = distance_intervals->get_interval_value(interval_index);
@@ -1051,7 +1067,7 @@ void TrackProfileDialog::draw_distance_grid(ProfileGraph * graph, DistanceUnit d
 	for (int interval_idx = 1; distance_interval * interval_idx <= full_distance; interval_idx++) {
 
 		const double distance_value = distance_interval * interval_idx;
-		const QString label = get_distance_grid_label_2(distance_unit, interval_index, distance_value);
+		const QString label = get_distance_grid_label_2(graph->geocanvas.distance_unit, interval_index, distance_value);
 
 		const int pos_x = (int) (interval_idx * per_interval_value);
 		this->draw_grid_vertical_line(graph, label, pos_x);
@@ -1072,8 +1088,7 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_unit = Preferences::get_unit_height();
-	if (height_unit == HeightUnit::FEET) {
+	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
 			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
@@ -1108,7 +1123,8 @@ void TrackProfileDialog::draw_ed(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_ed_grid(graph, height_unit);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
 
 
 	if ((this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_dem && this->widgets[SG_TRACK_PROFILE_TYPE_ED].show_dem->checkState())
@@ -1202,7 +1218,9 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_gd_grid(graph);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
+
 
 
 	if (this->widgets[SG_TRACK_PROFILE_TYPE_GD].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_GD].show_gps_speed->checkState()) {
@@ -1235,7 +1253,7 @@ void TrackProfileDialog::draw_gd(ProfileGraph * graph, Track * trk_)
 
 
 
-void TrackProfileDialog::draw_time_grid(ProfileGraph * graph, int n_intervals)
+void TrackProfileDialog::draw_x_grid_time(ProfileGraph * graph, int n_intervals)
 {
 	const int interval_index = time_intervals->get_interval_index(0, this->duration, n_intervals);
 	const time_t time_interval = time_intervals->get_interval_value(interval_index);
@@ -1280,7 +1298,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	/* Convert into appropriate units. */
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], speed_unit);
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
 	}
 
 	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
@@ -1306,7 +1324,8 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_st_grid(graph, speed_unit);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
 
 
 	if (this->widgets[SG_TRACK_PROFILE_TYPE_ST].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_ST].show_gps_speed->checkState()) {
@@ -1322,7 +1341,7 @@ void TrackProfileDialog::draw_st(ProfileGraph * graph, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
+			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
 
 			int pos_x = graph->left_edge + graph->width * ((*iter)->timestamp - beg_time) / dur;
 			int pos_y = graph->bottom_edge - graph->height * (gps_speed - graph->y_range_min_drawable) / (graph->y_interval * graph->n_intervals_y);
@@ -1386,7 +1405,8 @@ void TrackProfileDialog::draw_dt(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_dt_grid(graph, distance_unit);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
 
 
 	/* Show speed indicator. */
@@ -1426,8 +1446,7 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Convert into appropriate units. */
-	HeightUnit height_unit = Preferences::get_unit_height();
-	if (height_unit == HeightUnit::FEET) {
+	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
 			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
@@ -1461,7 +1480,8 @@ void TrackProfileDialog::draw_et(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_et_grid(graph, height_unit);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
 
 
 	/* Show DEMS. */
@@ -1531,9 +1551,8 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Convert into appropriate units. */
-	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], speed_unit);
+		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
 	}
 
 	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
@@ -1559,7 +1578,8 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_sd_grid(graph, speed_unit);
+	this->draw_x_grid(graph);
+	this->draw_y_grid(graph);
 
 
 	if (this->widgets[SG_TRACK_PROFILE_TYPE_SD].show_gps_speed && this->widgets[SG_TRACK_PROFILE_TYPE_SD].show_gps_speed->checkState()) {
@@ -1575,7 +1595,7 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, speed_unit);
+			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
 
 			dist_tp += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			int pos_x = graph->left_edge + (graph->width * dist_tp / dist);
@@ -1598,50 +1618,16 @@ void TrackProfileDialog::draw_sd(ProfileGraph * graph, Track * trk_)
 
 
 /**
- * Draw all graphs.
- */
+   Draw all graphs
+*/
 void TrackProfileDialog::draw_all_graphs(bool resized)
 {
-	/* ed = elevation-distance. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_ED]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_ED], altitude_intervals->values);
-	}
-
-	/* gd = gradient-distance. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_GD]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_GD], gradient_intervals->values);
-	}
-
-	/* st = speed-time. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_ST]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_ST], speed_intervals->values);
-	}
-
-	/* dt = distance-time. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_DT]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_DT], distance_intervals->values);
-	}
-
-	/* et = elevation-time. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_ET]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_ET], altitude_intervals->values);
-	}
-
-	/* sd = speed-distance. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport) {
-		/* If dialog window is resized then saved image is no longer valid. */
-		this->graphs[SG_TRACK_PROFILE_TYPE_SD]->saved_img.valid = !resized;
-		this->draw_single_graph(this->graphs[SG_TRACK_PROFILE_TYPE_SD], speed_intervals->values);
+	for (int i = SG_TRACK_PROFILE_TYPE_ED; i < SG_TRACK_PROFILE_TYPE_MAX; i++) {
+		if (this->graphs[i]->viewport) {
+			/* If dialog window is resized then saved image is no longer valid. */
+			this->graphs[i]->saved_img.valid = !resized;
+			this->draw_single_graph(this->graphs[i]);
+		}
 	}
 }
 
@@ -1680,7 +1666,7 @@ QPointF ProfileGraph::get_position_of_tp(Trackpoint * tp, Track * trk, double tr
 
 
 
-void TrackProfileDialog::draw_single_graph(ProfileGraph * graph, const double * interval_values)
+void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();
@@ -2001,6 +1987,46 @@ void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main
 
 
 
+QString get_page_title(int index)
+{
+	QString result;
+
+	switch (index) {
+	case SG_TRACK_PROFILE_TYPE_ED:
+		result = QObject::tr("Elevation over distance");
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_GD:
+		result = QObject::tr("Gradient over distance");
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_ST:
+		result = QObject::tr("Speed over time");
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_DT:
+		result = QObject::tr("Distance over time");
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_ET:
+		result = QObject::tr("Elevation over time");
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_SD:
+		result = QObject::tr("Speed over distance");
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled track profile type" << (int) index;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
 TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent) : QDialog(a_parent)
 {
 	time_intervals = new Intervals<time_t>(time_interval_values, sizeof (time_interval_values) / sizeof (time_interval_values[0]));
@@ -2042,12 +2068,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, &TrackProfileDialog::draw_et, representation_creator_et);
 	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     &TrackProfileDialog::draw_sd, representation_creator_sd);
 
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport = this->create_viewport("Viewport, elevation-distance");
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport = this->create_viewport("Viewport, gradient-distance");
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport = this->create_viewport("Viewport, speed-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport = this->create_viewport("Viewport, distance-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport = this->create_viewport("Viewport, elevation-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport = this->create_viewport("Viewport, speed-distance");
+	this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport = this->create_viewport("Viewport, elevation-over-distance");
+	this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport = this->create_viewport("Viewport, gradient-over-distance");
+	this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport = this->create_viewport("Viewport, speed-over-time");
+	this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport = this->create_viewport("Viewport, distance-over-time");
+	this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport = this->create_viewport("Viewport, elevation-over-time");
+	this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport = this->create_viewport("Viewport, speed-over-distance");
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
@@ -2078,71 +2104,19 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	/* NB This value not shown yet - but is used by internal calculations. */
 	this->track_length_inc_gaps = trk->get_length_including_gaps();
 
-	int index = SG_TRACK_PROFILE_TYPE_ED;
-	if (this->graphs[index]->viewport) {
+
+	for (int index = SG_TRACK_PROFILE_TYPE_ED; index < SG_TRACK_PROFILE_TYPE_MAX; index++) {
+		if (!this->graphs[index]->viewport) {
+			continue;
+		}
 
 		this->configure_widgets(index);
 
 		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Elevation over distance"));
-	}
-
-	index = SG_TRACK_PROFILE_TYPE_GD;
-	if (this->graphs[index]->viewport) {
-
-		this->configure_widgets(index);
-
-		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
+		this->tabs->addTab(page, get_page_title(index));
 
 		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Gradient over distance"));
 	}
-
-	index = SG_TRACK_PROFILE_TYPE_ST;
-	if (this->graphs[index]->viewport) {
-
-		this->configure_widgets(index);
-
-		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
-
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Speed over time"));
-	}
-
-	index = SG_TRACK_PROFILE_TYPE_DT;
-	if (this->graphs[index]->viewport) {
-
-		this->configure_widgets(index);
-
-		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
-
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Distance over time"));
-	}
-
-	index = SG_TRACK_PROFILE_TYPE_ET;
-	if (this->graphs[index]->viewport) {
-
-		this->configure_widgets(index);
-
-		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
-
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Elevation over time"));
-	}
-
-	index = SG_TRACK_PROFILE_TYPE_SD;
-	if (this->graphs[index]->viewport) {
-
-		this->configure_widgets(index);
-
-		QWidget * page = this->create_graph_page(this->graphs[index]->viewport, this->widgets[index]);
-
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
-		this->tabs->addTab(page, tr("Speed over distance"));
-	}
-
 
 
 	this->button_box = new QDialogButtonBox();
@@ -2473,97 +2447,39 @@ void ProfileGraph::regenerate_sizes(void)
 
 
 
-void TrackProfileDialog::draw_st_grid(ProfileGraph * graph, SpeedUnit speed_unit)
+void TrackProfileDialog::draw_y_grid_elevation(ProfileGraph * graph)
 {
 	const double per_interval_value = graph->height / graph->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
-		const QString label = get_speed_grid_label(speed_unit, value);
+		const QString label = get_elevation_grid_label(graph->geocanvas.height_unit, value);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
 		this->draw_grid_horizontal_line(graph, label, pos_y);
 	}
-
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
 }
 
 
 
 
-void TrackProfileDialog::draw_dt_grid(ProfileGraph * graph, DistanceUnit distance_unit)
+void TrackProfileDialog::draw_y_grid_speed(ProfileGraph * graph)
 {
 	const double per_interval_value = graph->height / graph->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
 		/* No need to recalculate values based on units, it has been already done. */
 		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
-		const QString label = get_distance_grid_label(distance_unit, value);
+		const QString label = get_speed_grid_label(graph->geocanvas.speed_unit, value);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
 		this->draw_grid_horizontal_line(graph, label, pos_y);
 	}
-
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
 }
 
 
 
 
-void TrackProfileDialog::draw_et_grid(ProfileGraph * graph, HeightUnit height_unit)
-{
-	const double per_interval_value = graph->height / graph->n_intervals_y;
-	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
-		const QString label = get_elevation_grid_label(height_unit, value);
-
-		const int pos_y = (int) (interval_idx * per_interval_value);
-		this->draw_grid_horizontal_line(graph, label, pos_y);
-	}
-
-	this->draw_time_grid(graph, GRAPH_X_INTERVALS);
-}
-
-
-
-
-void TrackProfileDialog::draw_sd_grid(ProfileGraph * graph, SpeedUnit speed_unit)
-{
-	const double per_interval_value = graph->height / graph->n_intervals_y;
-	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
-		const QString label = get_speed_grid_label(speed_unit, value);
-
-		const int pos_y = (int) (interval_idx * per_interval_value);
-		this->draw_grid_horizontal_line(graph, label, pos_y);
-	}
-
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
-}
-
-
-
-
-void TrackProfileDialog::draw_ed_grid(ProfileGraph * graph, HeightUnit height_unit)
-{
-	const double per_interval_value = graph->height / graph->n_intervals_y;
-	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
-		/* No need to recalculate values based on units, it has been already done. */
-		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
-		const QString label = get_elevation_grid_label(height_unit, value);
-
-		const int pos_y = (int) (interval_idx * per_interval_value);
-		this->draw_grid_horizontal_line(graph, label, pos_y);
-	}
-
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
-}
-
-
-
-
-void TrackProfileDialog::draw_gd_grid(ProfileGraph * graph)
+void TrackProfileDialog::draw_y_grid_gradient(ProfileGraph * graph)
 {
 	const double per_interval_value = graph->height / graph->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
@@ -2574,6 +2490,79 @@ void TrackProfileDialog::draw_gd_grid(ProfileGraph * graph)
 		const int pos_y = (int) (interval_idx * per_interval_value);
 		this->draw_grid_horizontal_line(graph, label, pos_y);
 	}
+}
 
-	this->draw_distance_grid(graph, Preferences::get_unit_distance(), GRAPH_X_INTERVALS);
+
+
+
+void TrackProfileDialog::draw_y_grid_distance(ProfileGraph * graph)
+{
+	const double per_interval_value = graph->height / graph->n_intervals_y;
+	for (int interval_idx = 0; interval_idx <= graph->n_intervals_y; interval_idx++) {
+		/* No need to recalculate values based on units, it has been already done. */
+		const double value = graph->y_range_min_drawable + interval_idx * graph->y_interval;
+		const QString label = get_distance_grid_label(graph->geocanvas.distance_unit, value);
+
+		const int pos_y = (int) (interval_idx * per_interval_value);
+		this->draw_grid_horizontal_line(graph, label, pos_y);
+	}
+}
+
+
+
+
+void TrackProfileDialog::draw_x_grid(ProfileGraph * graph)
+{
+	switch (graph->geocanvas.x_domain) {
+	case GeoCanvasDomain::Time:
+		this->draw_x_grid_time(graph, GRAPH_X_INTERVALS);
+		break;
+
+	case GeoCanvasDomain::Distance:
+		this->draw_x_grid_distance(graph, GRAPH_X_INTERVALS);
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected x domain" << (int) graph->geocanvas.x_domain;
+		break;
+	}
+}
+
+
+
+void TrackProfileDialog::draw_y_grid(ProfileGraph * graph)
+{
+	switch (graph->geocanvas.y_domain) {
+
+	case GeoCanvasDomain::Elevation:
+		this->draw_y_grid_elevation(graph);
+		break;
+
+	case GeoCanvasDomain::Distance:
+		this->draw_y_grid_distance(graph);
+		break;
+
+	case GeoCanvasDomain::Speed:
+		this->draw_y_grid_speed(graph);
+		break;
+
+	case GeoCanvasDomain::Gradient:
+		this->draw_y_grid_gradient(graph);
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected y domain" << (int) graph->geocanvas.y_domain;
+		break;
+	}
+}
+
+
+
+
+GeoCanvas::GeoCanvas()
+{
+	this->height_unit = Preferences::get_unit_height();
+	this->distance_unit = Preferences::get_unit_distance();
+	this->speed_unit = Preferences::get_unit_speed();
+
 }

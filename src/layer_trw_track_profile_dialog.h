@@ -108,8 +108,14 @@ namespace SlavGPS {
 
 	class GeoCanvas {
 	public:
+		GeoCanvas();
+
 		GeoCanvasDomain x_domain;
 		GeoCanvasDomain y_domain;
+
+		HeightUnit height_unit;
+		DistanceUnit distance_unit;
+		SpeedUnit speed_unit;
 	};
 
 
@@ -186,23 +192,12 @@ namespace SlavGPS {
 		void configure_widgets(int index);
 		QWidget * create_graph_page(Viewport * viewport, ProfileWidgets & widgets);
 
-
-		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
-		void draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x);
-
-		void draw_time_grid(ProfileGraph * graph, int n_intervals);
-		void draw_distance_grid(ProfileGraph * graph, DistanceUnit distance_unit, int n_intervals);
-
-		void draw_st_grid(ProfileGraph * graph, SpeedUnit speed_unit);
-		void draw_dt_grid(ProfileGraph * graph, DistanceUnit distance_unit);
-		void draw_et_grid(ProfileGraph * graph, HeightUnit height_unit);
-		void draw_sd_grid(ProfileGraph * graph, SpeedUnit speed_unit);
-		void draw_ed_grid(ProfileGraph * graph, HeightUnit height_unit);
-		void draw_gd_grid(ProfileGraph * graph);
+		void draw_x_grid(ProfileGraph * graph);
+		void draw_y_grid(ProfileGraph * graph);
 
 		void save_values(void);
 
-		void draw_single_graph(ProfileGraph * graph, const double * interval_values);
+		void draw_single_graph(ProfileGraph * graph);
 
 
 		Window * parent = NULL;
@@ -263,6 +258,18 @@ namespace SlavGPS {
 		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
 		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
 		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
+
+		void draw_x_grid_time(ProfileGraph * graph, int n_intervals);
+		void draw_x_grid_distance(ProfileGraph * graph, int n_intervals);
+
+		void draw_y_grid_elevation(ProfileGraph * graph);
+		void draw_y_grid_speed(ProfileGraph * graph);
+		void draw_y_grid_gradient(ProfileGraph * graph);
+		void draw_y_grid_distance(ProfileGraph * graph);
+
+		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
+		void draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x);
+
 	};
 
 
