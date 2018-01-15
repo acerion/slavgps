@@ -152,13 +152,12 @@ namespace SlavGPS {
 		void destroy_cb(void);
 		bool paint_to_viewport_cb(Viewport * viewport);
 
-
-		void track_ed_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_gd_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_st_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_dt_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_et_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_sd_move_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_ed_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_gd_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_st_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_dt_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_et_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_sd_cb(Viewport * viewport, QMouseEvent * event);
 
 		bool track_ed_release_cb(Viewport * viewport, QMouseEvent * event);
 		bool track_gd_release_cb(Viewport * viewport, QMouseEvent * event);
@@ -259,6 +258,7 @@ namespace SlavGPS {
 		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
 		void draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x);
 
+		void handle_cursor_move(ProfileGraph * graph, ProfileWidgets & widgets, QMouseEvent * ev);
 	};
 
 

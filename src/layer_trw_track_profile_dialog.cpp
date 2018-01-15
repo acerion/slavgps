@@ -147,13 +147,9 @@ static bool g_show_sd_gps_speed       = true;
 
 
 
-static void distance_label_update(QLabel * label, double meters_from_start);
-static void elevation_label_update(QLabel * label, Trackpoint * tp);
 static void time_label_update(QLabel * label, time_t seconds_from_start);
 static void real_time_label_update(QLabel * label, Trackpoint * tp);
-static void speed_label_update(QLabel * label, double value);
-static void dist_dist_label_update(QLabel * label, double distance);
-static void gradient_label_update(QLabel * label, double gradient);
+static QString get_y_distance_string(double distance);
 
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
 static QString get_elevation_grid_label(HeightUnit height_unit, double value);
@@ -766,49 +762,25 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 
 
 
-void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_ed_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_ED;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
-
-	double meters_from_start = 0.0;
-	int unused = 0;
-	if (!this->draw_cursor_by_distance(ev, graph, meters_from_start, unused)) {
-		return;
-	}
-
-	if (this->current_tp && this->widgets[index].x_value) {
-		distance_label_update(this->widgets[index].x_value, meters_from_start);
-	}
-	if (this->current_tp && this->widgets[index].y_value) {
-		elevation_label_update(this->widgets[index].y_value, this->current_tp);
-	}
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
 }
 
 
 
 
-void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_gd_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_GD;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
-
-	double meters_from_start = 0.0;
-	int current_pos_x = 0;
-	if (!this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
-		return;
-	}
-
-	if (this->current_tp && this->widgets[index].x_value) {
-		distance_label_update(this->widgets[index].x_value, meters_from_start);
-	}
-	if (this->current_tp && this->widgets[index].y_value) {
-		gradient_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
-	}
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
 }
 
 
@@ -849,50 +821,13 @@ void real_time_label_update(QLabel * label, Trackpoint * tp)
 
 
 
-void speed_label_update(QLabel * label, double value)
-{
-	/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
-	   No conversions needed as already in appropriate units. */
-	label->setText(Measurements::get_speed_string_dont_recalculate(value));
-	return;
-}
-
-
-
-
-void gradient_label_update(QLabel * label, double gradient)
-{
-	label->setText(QObject::tr("%1").arg((int) gradient));
-	return;
-}
-
-
-
-
-void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_st_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_ST;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
-
-	time_t seconds_from_start = 0;
-	int current_pos_x = 0;
-	if (!this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
-		return;
-	}
-
-	if (this->current_tp) {
-		if (this->widgets[index].x_value) {
-			time_label_update(this->widgets[index].x_value, seconds_from_start);
-		}
-		if (this->widgets[index].y_value) {
-			speed_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
-		}
-		if (this->widgets[index].t_value) {
-			real_time_label_update(this->widgets[index].t_value, this->current_tp);
-		}
-	}
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
 }
 
 
@@ -901,30 +836,13 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * ev)
 /**
  * Update labels and marker on mouse moves in the distance/time graph.
  */
-void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_dt_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_DT;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
-
-	time_t seconds_from_start = 0;
-	int current_pos_x = 0;
-	if (!this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
-		return;
-	}
-
-	if (this->current_tp) {
-		if (this->widgets[index].x_value) {
-			time_label_update(this->widgets[index].x_value, seconds_from_start);
-		}
-		if (this->widgets[index].y_value) {
-			dist_dist_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
-		}
-		if (this->widgets[index].t_value) {
-			real_time_label_update(this->widgets[index].t_value, this->current_tp);
-		}
-	}
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
 }
 
 
@@ -933,56 +851,94 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * ev)
 /**
  * Update labels and marker on mouse moves in the elevation/time graph.
  */
-void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_et_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_ET;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
-
-	time_t seconds_from_start = 0;
-	int unused = 0;
-	if (!this->draw_cursor_by_time(ev, graph, seconds_from_start, unused)) {
-		return;
-	}
-
-	if (this->current_tp) {
-		if (this->widgets[index].x_value) {
-			time_label_update(this->widgets[index].x_value, seconds_from_start);
-		}
-		if (this->widgets[index].y_value) {
-			elevation_label_update(this->widgets[index].y_value, this->current_tp);
-		}
-		if (this->widgets[index].t_value) {
-			real_time_label_update(this->widgets[index].t_value, this->current_tp);
-		}
-	}
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
 }
 
 
 
 
-void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_sd_cb(Viewport * viewport, QMouseEvent * ev)
 {
 	const int index = SG_TRACK_PROFILE_TYPE_SD;
+	assert (this->graphs[index]->viewport == viewport);
 
-	ProfileGraph * graph = this->graphs[index];
-	assert (graph->viewport == viewport);
+	this->handle_cursor_move(this->graphs[index], this->widgets[index], ev);
+	return;
+}
 
+
+
+
+void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, ProfileWidgets & the_widgets, QMouseEvent * ev)
+{
 	double meters_from_start = 0.0;
+	time_t seconds_from_start = 0;
 	int current_pos_x = 0;
-	if (!this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
-		return;
-	}
 
-	if (this->current_tp) {
-		if (this->widgets[index].x_value) {
-			distance_label_update(this->widgets[index].x_value, meters_from_start);
+	switch (graph->geocanvas.x_domain) {
+	case GeoCanvasDomain::Distance:
+		if (!this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
+			return;
 		}
-		if (this->widgets[index].y_value) {
-			speed_label_update(this->widgets[index].y_value, graph->rep.y[current_pos_x]);
+		if (the_widgets.x_value) {
+			the_widgets.x_value->setText(get_distance_string(meters_from_start, Preferences::get_unit_distance()));
 		}
-	}
+		break;
+
+	case GeoCanvasDomain::Time:
+		if (!this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
+			return;
+		}
+		if (the_widgets.x_value) {
+			time_label_update(the_widgets.x_value, seconds_from_start);
+		}
+		if (this->current_tp && the_widgets.t_value) {
+			real_time_label_update(the_widgets.t_value, this->current_tp);
+		}
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) graph->geocanvas.x_domain;
+		break;
+	};
+
+
+	double y = graph->rep.y[current_pos_x];
+	switch (graph->geocanvas.y_domain) {
+	case GeoCanvasDomain::Speed:
+		if (the_widgets.y_value) {
+			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
+			   No conversions needed as already in appropriate units. */
+			the_widgets.y_value->setText(Measurements::get_speed_string_dont_recalculate(y));
+		}
+		break;
+	case GeoCanvasDomain::Elevation:
+		if (this->current_tp && the_widgets.y_value) {
+			/* Recalculate value into target unit. */
+			the_widgets.y_value->setText(Measurements::get_altitude_string(this->current_tp->altitude, 0));
+		}
+		break;
+	case GeoCanvasDomain::Distance:
+		if (the_widgets.y_value) {
+			the_widgets.y_value->setText(get_y_distance_string(y));
+		}
+		break;
+	case GeoCanvasDomain::Gradient:
+		if (the_widgets.y_value) {
+			the_widgets.y_value->setText(QObject::tr("%1").arg((int) y));
+		}
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) graph->geocanvas.x_domain;
+		break;
+	};
+
+	return;
 }
 
 
@@ -1037,47 +993,24 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
 
 
 
-void distance_label_update(QLabel * label, double meters_from_start)
-{
-	const QString tmp_string = get_distance_string(meters_from_start, Preferences::get_unit_distance());
-	label->setText(tmp_string);
-
-	return;
-}
-
-
-
-
-void elevation_label_update(QLabel * label, Trackpoint * tp)
-{
-	/* Recalculate value into target unit. */
-	label->setText(Measurements::get_altitude_string(tp->altitude, 0));
-
-	return;
-}
-
-
-
-
 /* TODO: don't we have a function for this kind of stuff in measurements.cpp? */
-void dist_dist_label_update(QLabel * label, double distance)
+QString get_y_distance_string(double distance)
 {
-	static QString tmp_buf;
+	QString result;
+
 	switch (Preferences::get_unit_distance()) {
 	case DistanceUnit::MILES:
-		tmp_buf = QObject::tr("%1 miles").arg(distance, 0, 'f', 2);
+		result = QObject::tr("%1 miles").arg(distance, 0, 'f', 2);
 		break;
 	case DistanceUnit::NAUTICAL_MILES:
-		tmp_buf = QObject::tr("%1 NM").arg(distance, 0, 'f', 2);
+		result = QObject::tr("%1 NM").arg(distance, 0, 'f', 2);
 		break;
 	default:
-		tmp_buf = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
+		result = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
 		break;
 	}
 
-	label->setText(tmp_buf);
-
-	return;
+	return result;
 }
 
 
@@ -1977,22 +1910,22 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport = this->create_viewport("Viewport, speed-over-distance");
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_ed_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_ed_cb(Viewport *, QMouseEvent *)));
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_gd_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_gd_cb(Viewport *, QMouseEvent *)));
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_st_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_st_cb(Viewport *, QMouseEvent *)));
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_dt_cb(Viewport *, QMouseEvent *)));
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_et_cb(Viewport *, QMouseEvent *)));
 
 	connect(this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));
+	connect(this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_sd_cb(Viewport *, QMouseEvent *)));
 
 
 
