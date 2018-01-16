@@ -37,6 +37,7 @@
 #include <QPen>
 #include <QSignalMapper>
 #include <QDialogButtonBox>
+#include <QGridLayout>
 
 #include "globals.h"
 #include "viewport.h"
@@ -121,7 +122,7 @@ namespace SlavGPS {
 
 
 
-	class ProfileWidgets {
+	class GeoCanvasLabels {
 	public:
 		QLabel * x_value = NULL;
 		QLabel * y_value = NULL;
@@ -130,7 +131,13 @@ namespace SlavGPS {
 		QString x_label;
 		QString y_label;
 		QString t_label;
+	};
 
+
+
+
+	class GeoCanvasControls {
+	public:
 		QCheckBox * show_dem = NULL;
 		QCheckBox * show_gps_speed = NULL;
 		QCheckBox * show_speed = NULL;
@@ -178,7 +185,7 @@ namespace SlavGPS {
 		void draw_graph(ProfileGraph * graph, Track * trk);
 		void draw_all_graphs(bool resized);
 		void configure_widgets(int index);
-		QWidget * create_graph_page(Viewport * viewport, ProfileWidgets & widgets);
+		QWidget * create_graph_page(ProfileGraph * graph);
 
 		void draw_x_grid(ProfileGraph * graph);
 		void draw_y_grid(ProfileGraph * graph);
@@ -218,8 +225,6 @@ namespace SlavGPS {
 
 
 		ProfileGraph * graphs[SG_TRACK_PROFILE_TYPE_MAX] = { NULL };
-		ProfileWidgets widgets[SG_TRACK_PROFILE_TYPE_MAX];
-
 
 		double   max_speed = 0.0;
 
@@ -258,7 +263,7 @@ namespace SlavGPS {
 		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
 		void draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x);
 
-		void handle_cursor_move(ProfileGraph * graph, ProfileWidgets & widgets, QMouseEvent * ev);
+		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
 	};
 
 
@@ -314,6 +319,12 @@ namespace SlavGPS {
 		QPen gps_speed_pen;
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
+
+		GeoCanvasControls controls;
+		GeoCanvasLabels labels;
+
+		QGridLayout * labels_grid = NULL;
+		QVBoxLayout * controls_vbox = NULL;
 	};
 
 
