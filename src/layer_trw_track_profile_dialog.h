@@ -70,12 +70,12 @@ namespace SlavGPS {
 
 
 	typedef enum {
-		SG_TRACK_PROFILE_TYPE_ED, /* ed = elevation-distance. */
-		SG_TRACK_PROFILE_TYPE_GD, /* gd = gradient-distance. */
-		SG_TRACK_PROFILE_TYPE_ST, /* st = speed-time. */
-		SG_TRACK_PROFILE_TYPE_DT, /* dt = distance-time. */
-		SG_TRACK_PROFILE_TYPE_ET, /* et = elevation-time. */
-		SG_TRACK_PROFILE_TYPE_SD, /* sd = speed-distance. */
+		SG_TRACK_PROFILE_TYPE_ED, /* ed = elevation as a function of -distance. */
+		SG_TRACK_PROFILE_TYPE_GD, /* gd = gradient as a function of distance. */
+		SG_TRACK_PROFILE_TYPE_ST, /* st = speed as a function of time. */
+		SG_TRACK_PROFILE_TYPE_DT, /* dt = distance as a function of time. */
+		SG_TRACK_PROFILE_TYPE_ET, /* et = elevation as a function of time. */
+		SG_TRACK_PROFILE_TYPE_SD, /* sd = speed as a function of distance. */
 
 		SG_TRACK_PROFILE_TYPE_MAX,
 	} TrackProfileType;
@@ -175,9 +175,6 @@ namespace SlavGPS {
 
 
 	public:
-
-		Viewport * create_viewport(const char * debug_label);
-
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
 
 		void clear_image(QPixmap * pix);
@@ -271,8 +268,10 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
+		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog);
 		~ProfileGraph();
+
+		void create_viewport(int index, TrackProfileDialog * dialog);
 
 		double get_pos_y(double pos_x);
 		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);

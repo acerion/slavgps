@@ -157,6 +157,8 @@ static QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
 static QString get_time_grid_label(int interval_index, int value);
 
+static QString get_page_title(int index);
+
 
 
 
@@ -1160,7 +1162,6 @@ void ProfileGraph::draw_function_values(void)
 
 static void draw_additional_indicators_et(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ET;
 	/* Show DEMS. */
 	if (graph->controls.show_dem && graph->controls.show_dem->checkState())  {
 
@@ -1217,8 +1218,6 @@ static void draw_additional_indicators_et(TrackProfileDialog * dialog, ProfileGr
 
 static void draw_additional_indicators_sd(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_SD;
-
 	if (graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState()) {
 
 		const double max_function_arg = trk->get_length_including_gaps();
@@ -1250,8 +1249,6 @@ static void draw_additional_indicators_sd(TrackProfileDialog * dialog, ProfileGr
 
 void draw_additional_indicators_ed(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ED;
-
 	const bool do_show_dem = graph->controls.show_dem && graph->controls.show_dem->checkState();
 	const bool do_show_gps_speed = graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState();
 
@@ -1271,8 +1268,6 @@ void draw_additional_indicators_ed(TrackProfileDialog * dialog, ProfileGraph * g
 
 static void draw_additional_indicators_gd(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_GD;
-
 	const bool do_show_gps_speed = graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState();
 
 	if (do_show_gps_speed) {
@@ -1289,8 +1284,6 @@ static void draw_additional_indicators_gd(TrackProfileDialog * dialog, ProfileGr
 
 static void draw_additional_indicators_st(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ST;
-
 	if (graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState()) {
 
 		time_t beg_time = (*trk->trackpoints.begin())->timestamp;
@@ -1322,8 +1315,6 @@ static void draw_additional_indicators_st(TrackProfileDialog * dialog, ProfileGr
 
 static void draw_additional_indicators_dt(TrackProfileDialog * dialog, ProfileGraph * graph, Track * trk)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_DT;
-
 	/* Show speed indicator. */
 	if (graph->controls.show_speed && graph->controls.show_speed->checkState()) {
 
@@ -1577,21 +1568,54 @@ bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 
 
 
-/**
- * Create distance-time viewport.
- */
-Viewport * TrackProfileDialog::create_viewport(const char * debug_label)
+void ProfileGraph::create_viewport(int index, TrackProfileDialog * dialog)
 {
 	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
 	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
-	Viewport * viewport = new Viewport(this->parent);
-	strcpy(viewport->type_string, debug_label);
-	viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	viewport->resize(initial_width, initial_height);
-	viewport->reconfigure_drawing_area(initial_width, initial_height);
+	this->viewport = new Viewport(dialog->parent);
+	strcpy(this->viewport->type_string, get_page_title(index).toUtf8().constData());
+	this->viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
+	this->viewport->resize(initial_width, initial_height);
+	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
 
-	return viewport;
+	switch (index) {
+	case SG_TRACK_PROFILE_TYPE_ED:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_ed_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_GD:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_gd_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_ST:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_st_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_DT:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_dt_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_ET:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_et_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	case SG_TRACK_PROFILE_TYPE_SD:
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_sd_cb(Viewport *, QMouseEvent *)));
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled index" << index;
+		break;
+	}
+
+	return;
 }
 
 
@@ -1897,40 +1921,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation);
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed);
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation);
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed);
-
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport = this->create_viewport("Viewport, elevation-over-distance");
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport = this->create_viewport("Viewport, gradient-over-distance");
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport = this->create_viewport("Viewport, speed-over-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport = this->create_viewport("Viewport, distance-over-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport = this->create_viewport("Viewport, elevation-over-time");
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport = this->create_viewport("Viewport, speed-over-distance");
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ED]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_ed_cb(Viewport *, QMouseEvent *)));
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_GD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_gd_cb(Viewport *, QMouseEvent *)));
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ST]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_st_cb(Viewport *, QMouseEvent *)));
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_DT]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_dt_cb(Viewport *, QMouseEvent *)));
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_ET]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_et_cb(Viewport *, QMouseEvent *)));
-
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
-	connect(this->graphs[SG_TRACK_PROFILE_TYPE_SD]->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    this, SLOT (handle_cursor_move_sd_cb(Viewport *, QMouseEvent *)));
-
-
-
+	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ED, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  SG_TRACK_PROFILE_TYPE_GD, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_ST, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  SG_TRACK_PROFILE_TYPE_DT, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ET, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_SD, this);
 
 
 	this->tabs = new QTabWidget();
@@ -2233,7 +2229,7 @@ QString get_time_grid_label(int interval_index, int value)
 
 
 
-ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
+ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog)
 {
 	this->geocanvas.x_domain = x_domain;
 	this->geocanvas.y_domain = y_domain;
@@ -2282,6 +2278,8 @@ ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
 	this->gps_speed_pen.setColor(QColor("red"));
 	this->dem_alt_pen.setColor(QColor("green"));
 	this->no_alt_info_pen.setColor(QColor("yellow"));
+
+	this->create_viewport(index, dialog);
 }
 
 
