@@ -267,6 +267,10 @@ namespace SlavGPS {
 		ViewportDrawMode drawmode;
 
 
+		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
+		QPen labels_pen;
+		QFont labels_font;
+
 		QPen background_pen;
 		QColor background_color;
 

@@ -241,6 +241,10 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 	this->scale_visibility = true;
 
+	this->labels_pen.setColor("black");
+	this->labels_font.setFamily("Helvetica");
+	this->labels_font.setPointSize(11);
+
 	this->border_pen.setColor(QColor("black"));
 	this->border_pen.setWidth(2);
 

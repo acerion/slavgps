@@ -146,6 +146,17 @@ namespace SlavGPS {
 
 
 
+	class TrackInfo {
+	public:
+		Track * trk = NULL;
+		double max_speed = 0.0;
+		double track_length_including_gaps = 0.0;
+		time_t duration = 0;
+	};
+
+
+
+
 	class TrackProfileDialog : public QDialog {
 		Q_OBJECT
 	public:
@@ -179,13 +190,9 @@ namespace SlavGPS {
 
 		void clear_image(QPixmap * pix);
 
-		void draw_graph(ProfileGraph * graph, Track * trk);
 		void draw_all_graphs(bool resized);
 		void configure_widgets(int index);
 		QWidget * create_graph_page(ProfileGraph * graph);
-
-		void draw_x_grid(ProfileGraph * graph);
-		void draw_y_grid(ProfileGraph * graph);
 
 		void save_values(void);
 
@@ -194,8 +201,8 @@ namespace SlavGPS {
 
 		Window * parent = NULL;
 		LayerTRW * trw = NULL;
-		Track * trk = NULL;
 		Viewport * main_viewport = NULL;
+		TrackInfo track_info;
 
 		QTabWidget * tabs = NULL;
 
@@ -217,30 +224,17 @@ namespace SlavGPS {
 		int profile_width_offset;
 		int profile_height_offset;
 
-		double   track_length;
-		double   track_length_inc_gaps;
-
-
 		ProfileGraph * graphs[SG_TRACK_PROFILE_TYPE_MAX] = { NULL };
-
-		double   max_speed = 0.0;
-
-
 
 		Trackpoint * selected_tp = NULL; /* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
 		bool  is_selected_drawn = false;
 		Trackpoint * current_tp = NULL; /* Trackpoint that is closest to current position of *hovering* cursor. */
 		bool  is_current_drawn = false;
 
-		time_t    duration = 0;
 		//char     * tz = NULL; /* TimeZone at track's location. */
 
 		/* Pen used to draw main parts of graphs (i.e. the values of functions y = f(x)). */
 		QPen main_pen;
-
-		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
-		QPen labels_pen;
-		QFont labels_font;
 
 		QSignalMapper * signal_mapper = NULL;
 
@@ -249,16 +243,6 @@ namespace SlavGPS {
 		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
 		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
 
-		void draw_x_grid_time(ProfileGraph * graph, int n_intervals);
-		void draw_x_grid_distance(ProfileGraph * graph, int n_intervals);
-
-		void draw_y_grid_elevation(ProfileGraph * graph);
-		void draw_y_grid_speed(ProfileGraph * graph);
-		void draw_y_grid_gradient(ProfileGraph * graph);
-		void draw_y_grid_distance(ProfileGraph * graph);
-
-		void draw_grid_horizontal_line(ProfileGraph * graph, const QString & label, int pos_y);
-		void draw_grid_vertical_line(ProfileGraph * graph, const QString & label, int pos_x);
 
 		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
 	};
@@ -278,22 +262,38 @@ namespace SlavGPS {
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
 
-		QPointF get_position_of_tp(Trackpoint * tp, Track * trk, double track_length_inc_gaps);
+		QPointF get_position_of_tp(TrackInfo & track_info, Trackpoint * tp);
 
 		bool regenerate_data(Track * trk);
 		void regenerate_sizes(void);
+
+		void draw_graph(TrackInfo & track_info);
 
 		void draw_function_values(void);
 
 		void draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk, double max_speed_in, bool do_speed);
 
+		void draw_grid_horizontal_line(int pos_y, const QString & label);
+		void draw_grid_vertical_line(int pos_x, const QString & label);
+
+
+		void draw_x_grid(const TrackInfo & track_info);
+		void draw_y_grid(void);
+
+		void draw_x_grid_time(double max_function_arg, int n_intervals);
+		void draw_x_grid_distance(double max_function_arg, int n_intervals);
+
+		void draw_y_grid_elevation(void);
+		void draw_y_grid_speed(void);
+		void draw_y_grid_gradient(void);
+		void draw_y_grid_distance(void);
+
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_MAX;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
 
-		void (TrackProfileDialog::*draw_graph_fn)(ProfileGraph *, Track *) = NULL;
-		void (*draw_additional_indicators_fn)(TrackProfileDialog *, ProfileGraph *, Track *) = NULL;
+		void (*draw_additional_indicators_fn)(ProfileGraph *, TrackInfo &) = NULL;
 
 		int width = 0;
 		int height = 0;
