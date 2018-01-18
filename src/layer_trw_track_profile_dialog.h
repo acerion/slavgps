@@ -281,8 +281,8 @@ namespace SlavGPS {
 		void draw_x_grid(const TrackInfo & track_info);
 		void draw_y_grid(void);
 
-		void draw_x_grid_time(double max_function_arg, int n_intervals);
-		void draw_x_grid_distance(double max_function_arg, int n_intervals);
+		void draw_x_grid_time(time_t visible_begin, time_t visible_end);
+		void draw_x_grid_distance(double visible_begin, double visible_end);
 
 		void draw_y_grid_elevation(void);
 		void draw_y_grid_speed(void);

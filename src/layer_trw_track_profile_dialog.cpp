@@ -108,7 +108,7 @@ static const double speed_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.
 					       750.0, 1000.0, 10000.0};
 
 /* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double distance_interval_values[] = {0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
+static const double distance_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
 						  15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
 						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
 						  750.0, 1000.0, 10000.0};
@@ -1096,10 +1096,8 @@ void ProfileGraph::draw_grid_horizontal_line(int pos_y, const QString & label)
 
 void ProfileGraph::draw_grid_vertical_line(int pos_x, const QString & label)
 {
-	float x_interval_px = 1.0 * this->width / GRAPH_X_INTERVALS; /* TODO: this needs to be fixed. */
-
-	const QPointF text_anchor(this->left_edge + pos_x, GRAPH_MARGIN_TOP + this->height);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), x_interval_px - 3, GRAPH_MARGIN_BOTTOM - 10);
+	const QPointF text_anchor(this->left_edge + pos_x, this->viewport->margin_top + this->height);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), this->width, this->viewport->margin_bottom - 10);
 	this->viewport->draw_text(this->viewport->labels_font, this->viewport->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 
 	this->viewport->draw_line(this->viewport->grid_pen,
@@ -1110,15 +1108,18 @@ void ProfileGraph::draw_grid_vertical_line(int pos_x, const QString & label)
 
 
 
-void ProfileGraph::draw_x_grid_distance(double max_function_arg, int n_intervals)
+void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end)
 {
-	/* Set to display units from length in metres. */
-	double full_distance = max_function_arg;
-	full_distance = convert_distance_meters_to(full_distance, this->geocanvas.distance_unit);
+	const int n_intervals = GRAPH_X_INTERVALS;
 
-	const int interval_index = distance_intervals->get_interval_index(0, full_distance, n_intervals);
+	/* Set to display units from length in metres. */
+	visible_begin = convert_distance_meters_to(visible_begin, this->geocanvas.distance_unit);
+	visible_end = convert_distance_meters_to(visible_end, this->geocanvas.distance_unit);
+
+	const int interval_index = distance_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
 	const double distance_interval = distance_intervals->get_interval_value(interval_index);
 
+#if 0
 	//double dist_per_pixel = full_distance / this->width;
 
 	const double per_interval_value = distance_interval * this->width / full_distance;
@@ -1129,6 +1130,19 @@ void ProfileGraph::draw_x_grid_distance(double max_function_arg, int n_intervals
 
 		const int pos_x = (int) (interval_idx * per_interval_value);
 		this->draw_grid_vertical_line(pos_x, label);
+	}
+#endif
+
+	/* For last iteration of 'for' loop this denominator will be
+	   equal to numerator, giving 'x = this->width * 1' as a result. */
+	const int n = visible_end - visible_begin;
+
+	for (int i = visible_begin; i <= visible_end; i++) {
+		if (i % ((int) distance_interval) == 0) {
+			const QString label = get_distance_grid_label_2(this->geocanvas.distance_unit, interval_index, i);
+			const int x = this->width * (i - visible_begin) / n;
+			this->draw_grid_vertical_line(x, label);
+		}
 	}
 }
 
@@ -1416,26 +1430,32 @@ void ProfileGraph::draw_speed_dist(Track * trk, double max_speed_in, bool do_spe
 
 
 
-void ProfileGraph::draw_x_grid_time(double max_function_arg, int n_intervals)
+void ProfileGraph::draw_x_grid_time(time_t visible_begin, time_t visible_end)
 {
-	const int interval_index = time_intervals->get_interval_index(0, max_function_arg, n_intervals);
+	const int n_intervals = GRAPH_Y_INTERVALS;
+
+	const int interval_index = time_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
 	const time_t time_interval = time_intervals->get_interval_value(interval_index);
 
-	//double time_per_pixel = (double)(1.0 * max_function_arg) / graph->width;
-
+#ifdef K
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if (max_function_arg > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
+	if ((visible_end - visible_begin + 1) > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
 		return;
 	}
+#endif
 
-	const double per_interval_value = time_interval * this->width / (1.0 * max_function_arg);
-	for (int interval_idx = 1; time_interval * interval_idx <= max_function_arg; interval_idx++) {
+	/* For last iteration of 'for' loop this denominator will be
+	   equal to numerator, giving 'x = this->width * 1' as a result. */
+	const time_t n = visible_end - visible_begin;
 
-		const int time_value = time_interval * interval_idx;
-		const QString label = get_time_grid_label(interval_index, time_value);
-
-		const int pos_x = (int) (interval_idx * per_interval_value);
-		this->draw_grid_vertical_line(pos_x, label);
+	/* TODO: optimise this: do we really need to go through N
+	   timestamps? Can't we increase loop incrementation after
+	   drawing first vertical line? */
+	for (time_t i = visible_begin; i <= visible_end; i++) {
+		if (i % time_interval == 0) {
+			const int x = this->width * (i - visible_begin) / n;
+			this->draw_grid_vertical_line(x, get_time_grid_label(interval_index, i));
+		}
 	}
 }
 
@@ -2186,7 +2206,7 @@ QString get_time_grid_label(int interval_index, int value)
 	case 2:
 	case 3:
 		/* Minutes. */
-		result = QObject::tr("%1 %m").arg((int) (value / 60));
+		result = QObject::tr("%1 m").arg((int) (value / 60));
 		break;
 	case 4:
 	case 5:
@@ -2369,11 +2389,11 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 {
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Time:
-		this->draw_x_grid_time(track_info.duration, GRAPH_X_INTERVALS);
+		this->draw_x_grid_time(0, track_info.duration);
 		break;
 
 	case GeoCanvasDomain::Distance:
-		this->draw_x_grid_distance(track_info.track_length_including_gaps, GRAPH_X_INTERVALS);
+		this->draw_x_grid_distance(0, track_info.track_length_including_gaps);
 		break;
 
 	default:
