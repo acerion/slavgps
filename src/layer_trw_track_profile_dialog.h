@@ -256,9 +256,10 @@ namespace SlavGPS {
 		~ProfileGraph();
 
 		void create_viewport(int index, TrackProfileDialog * dialog);
+		QString get_graph_title(void) const;
 
 		double get_pos_y(double pos_x);
-		void set_visible_range(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
+		void set_initial_visible_range_y();
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
 
@@ -305,14 +306,7 @@ namespace SlavGPS {
 		int bottom_edge = 0;
 		int left_edge = 0;
 
-		/* Number of intervals on y-axis. */
-		int n_intervals_y = 0;
-
 		double y_interval = 0.0;
-
-		//double y_range_min = 0.0;
-		//double y_range_max = 0.0;
-
 		double y_min_visible = 0.0;
 		double y_max_visible = 0.0;
 

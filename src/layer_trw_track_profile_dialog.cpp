@@ -86,7 +86,7 @@ static Intervals <double> * speed_intervals;
 
 
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double altitude_interval_values[] = {2.0, 5.0, 10.0, 15.0, 20.0,
+static const double altitude_interval_values[] = {1.0, 2.0, 4.0, 5.0, 10.0, 15.0, 20.0,
 						  25.0, 40.0, 50.0, 75.0, 100.0,
 						  150.0, 200.0, 250.0, 375.0, 500.0,
 						  750.0, 1000.0, 2000.0, 5000.0, 10000.0, 100000.0};
@@ -108,7 +108,8 @@ static const double speed_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.
 					       750.0, 1000.0, 10000.0};
 
 /* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double distance_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
+static const double distance_interval_values[] = {0.1, 0.2, 0.5,
+						  1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
 						  15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
 						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
 						  750.0, 1000.0, 10000.0};
@@ -157,7 +158,7 @@ static QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
 static QString get_time_grid_label(int interval_index, int value);
 
-static QString get_page_title(int index);
+static QString get_graph_title(void);
 
 
 
@@ -210,10 +211,7 @@ bool track_data_creator_ed(ProfileGraph * graph, Track * trk)
 	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
 	graph->track_data.calculate_min_max();
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-        graph->set_visible_range(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -228,10 +226,7 @@ bool track_data_creator_gd(ProfileGraph * graph, Track * trk)
 	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
 	graph->track_data.calculate_min_max();
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = gradient_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-	graph->set_visible_range(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -254,10 +249,7 @@ bool track_data_creator_st(ProfileGraph * graph, Track * trk)
 		graph->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-	graph->set_visible_range(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -277,10 +269,7 @@ bool track_data_creator_dt(ProfileGraph * graph, Track * trk)
 	graph->track_data.y_min = 0;
 	graph->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), graph->geocanvas.distance_unit);
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = distance_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-	graph->set_visible_range(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -304,12 +293,7 @@ bool track_data_creator_et(ProfileGraph * graph, Track * trk)
 	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
 	graph->track_data.calculate_min_max();
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-	graph->set_visible_range(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
-
-
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -332,11 +316,7 @@ bool track_data_creator_sd(ProfileGraph * graph, Track * trk)
 		graph->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
-	graph->n_intervals_y = GRAPH_Y_INTERVALS;
-
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
-	graph->set_visible_range(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
-
+	graph->set_initial_visible_range_y();
 
 	return true;
 }
@@ -344,6 +324,10 @@ bool track_data_creator_sd(ProfileGraph * graph, Track * trk)
 
 
 
+/* This method is used for purposes of determining how large a
+   distance - an interval of values - will be if we split min-max
+   range into n_intervals. Then there will be n_interval grid lines
+   drawn on a graph, each spaced at interval. */
 template <class T>
 int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
 {
@@ -357,13 +341,18 @@ int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
 		if (index == this->n_values) {
 			/* Return the last valid value. */
 			index--;
+			qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index1 =" << index << this->values[index];
 			return index;
 		}
 	}
 
 	if (index != 0) {
+		/* To cancel out the last index++ in the loop above:
+		   that one last increment was one too many. */
 		index--;
 	}
+
+	qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index2 =" << index << this->values[index];
 
 	return index;
 }
@@ -380,13 +369,59 @@ T Intervals<T>::get_interval_value(int index)
 
 
 
-void ProfileGraph::set_visible_range(int interval_index, const double * interval_values, int n_interval_values, int n_intervals)
+void ProfileGraph::set_initial_visible_range_y(void)
 {
+	/* When user will be zooming in and out, and (in particular)
+	   moving graph up and down, the y_min/max_visible values will
+	   be non-rounded (i.e. random).  Make them non-rounded from
+	   the start, and be prepared to handle non-rounded
+	   y_min/max_visible from the start. */
+	const double total = abs(this->track_data.y_max - this->track_data.y_min);
+	if (this->track_data.y_min != 0.0) {
+		/* Some graphs better start at zero, e.g. speed graph
+		   or distance graph. Showing negative speed values on
+		   a graph wouldn't make sense. */
+		this->y_min_visible = this->track_data.y_min - total * 0.00;
+	}
+	this->y_max_visible = this->track_data.y_max + total * 0.00;
+
+	/* Now, given the n_intervals_y value, find a suitable
+	   interval index and value that will nicely cover visible
+	   range of data. */
+
+
+	static Intervals<double> * intervals = NULL;
+	int n_intervals = 0;
+
+	switch (this->geocanvas.y_domain) {
+	case GeoCanvasDomain::Speed:
+		intervals = speed_intervals;
+		n_intervals = GRAPH_Y_INTERVALS;
+		break;
+	case GeoCanvasDomain::Elevation:
+		intervals = altitude_intervals;
+		n_intervals = GRAPH_Y_INTERVALS;
+		break;
+	case GeoCanvasDomain::Distance:
+		intervals = distance_intervals;
+		n_intervals = GRAPH_Y_INTERVALS;
+		break;
+	case GeoCanvasDomain::Gradient:
+		intervals = gradient_intervals;
+		n_intervals = GRAPH_Y_INTERVALS;
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
+		return;
+	};
+
+	int interval_index = intervals->get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+#if 0
 	/* Ensure adjusted minimum .. maximum covers min->max. */
 
 	/* Now work out adjusted minimum point to the nearest lowest interval divisor value.
 	   When negative ensure logic uses lowest value. */
-	double interval = interval_values[interval_index];
+	double interval = intervals->values[interval_index];
 
 	if (this->track_data.y_min < 0) {
 		this->y_min_visible = (double) ((int)((this->track_data.y_min - interval) / interval) * interval);
@@ -395,12 +430,12 @@ void ProfileGraph::set_visible_range(int interval_index, const double * interval
 	}
 
 	/* Range not big enough - as new minimum has lowered. */
-	if ((this->y_min_visible + (interval_values[interval_index] * n_intervals) < this->track_data.y_max)) {
+	if ((this->y_min_visible + (interval * intervals) < this->track_data.y_max)) {
 		/* Next interval should cover it. */
-		if (interval_index < n_interval_values - 1) {
+		if (interval_index < intervals->n_values - 1) {
 			interval_index++;
 			/* Remember to adjust the minimum too... */
-			interval = interval_values[interval_index];
+			interval = intervals->values[interval_index];
 			if (this->track_data.y_min < 0) {
 				this->y_min_visible = (double) ((int)((this->track_data.y_min - interval) / interval) * interval);
 			} else {
@@ -408,10 +443,13 @@ void ProfileGraph::set_visible_range(int interval_index, const double * interval
 			}
 		}
 	}
+#endif
+	this->y_interval = intervals->values[interval_index];
 
-	this->y_interval = interval_values[interval_index];
-
-	this->y_max_visible = this->y_min_visible + this->n_intervals_y * this->y_interval;
+	qDebug() << "++++" << this->get_graph_title() << "y interval =" << this->y_interval;
+#if 0
+	this->y_max_visible = this->y_min_visible + intervals * this->y_interval;
+#endif
 }
 
 
@@ -680,7 +718,7 @@ double ProfileGraph::get_pos_y(double pos_x)
 		ix--;
 	}
 
-	return this->height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_interval * this->n_intervals_y);
+	return this->height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 }
 
 
@@ -928,7 +966,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 	case GeoCanvasDomain::Elevation:
 		if (this->current_tp && graph->labels.y_value) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(Measurements::get_altitude_string(this->current_tp->altitude, 0));
+			graph->labels.y_value->setText(Measurements::get_altitude_string(this->current_tp->altitude));
 		}
 		break;
 	case GeoCanvasDomain::Distance:
@@ -1039,7 +1077,7 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, boo
 	}
 
 	double current_function_arg = 0.0;
-	const double max_function_value_dem = this->y_interval * this->n_intervals_y;
+	const double max_function_value_dem = this->y_max_visible;
 
 	const QColor dem_color = this->dem_alt_pen.color();
 	const QColor speed_color = this->gps_speed_pen.color();
@@ -1086,7 +1124,7 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, boo
  */
 void ProfileGraph::draw_grid_horizontal_line(int pos_y, const QString & label)
 {
-	const float y_interval_px = 1.0 * this->height / this->n_intervals_y;
+	const float y_interval_px = 1.0 * this->height;
 
 	QPointF text_anchor(0, this->viewport->get_graph_top_edge() + this->height - pos_y);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + this->left_edge - 10, y_interval_px - 3);
@@ -1125,11 +1163,11 @@ void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end
 	const int interval_index = distance_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
 	const double distance_interval = distance_intervals->get_interval_value(interval_index);
 
-#if 0
+#if 1
 	//double dist_per_pixel = full_distance / this->width;
 
-	const double per_interval_value = distance_interval * this->width / full_distance;
-	for (int interval_idx = 1; distance_interval * interval_idx <= full_distance; interval_idx++) {
+	const double per_interval_value = distance_interval * this->width / this->track_data.y_max;
+	for (int interval_idx = 1; distance_interval * interval_idx <= this->track_data.y_max; interval_idx++) {
 
 		const double distance_value = distance_interval * interval_idx;
 		const QString label = get_distance_grid_label_2(this->geocanvas.distance_unit, interval_index, distance_value);
@@ -1137,7 +1175,7 @@ void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end
 		const int pos_x = (int) (interval_idx * per_interval_value);
 		this->draw_grid_vertical_line(pos_x, label);
 	}
-#endif
+#else
 
 	/* For last iteration of 'for' loop this denominator will be
 	   equal to numerator, giving 'x = this->width * 1' as a result. */
@@ -1150,6 +1188,7 @@ void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end
 			this->draw_grid_vertical_line(x, label);
 		}
 	}
+#endif
 }
 
 
@@ -1157,6 +1196,8 @@ void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end
 
 void ProfileGraph::draw_function_values(void)
 {
+	const double total = this->y_max_visible - this->y_min_visible;
+
 	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation) {
 		for (int i = 0; i < this->width; i++) {
 			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
@@ -1166,14 +1207,14 @@ void ProfileGraph::draw_function_values(void)
 			} else {
 				this->viewport->draw_line(this->main_pen,
 							   i, this->height,
-							   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / (this->y_interval * this->n_intervals_y));
+							   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / total);
 			}
 		}
 	} else {
 		for (int i = 0; i < this->width; i++) {
 			this->viewport->draw_line(this->main_pen,
 						   i, this->height,
-						   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / (this->y_interval * this->n_intervals_y));
+						   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / total);
 		}
 	}
 }
@@ -1185,7 +1226,7 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 	/* Show DEMS. */
 	if (graph->controls.show_dem && graph->controls.show_dem->checkState())  {
 
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+		const double max_function_value = graph->y_max_visible;
 
 		const QColor color = graph->dem_alt_pen.color();
 
@@ -1241,7 +1282,7 @@ static void draw_additional_indicators_sd(ProfileGraph * graph, TrackInfo & trac
 	if (graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState()) {
 
 		const double max_function_arg = track_info.trk->get_length_including_gaps();
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+		const double max_function_value = graph->y_max_visible;
 		double current_function_arg = 0.0;
 		double current_function_value = 0.0;
 
@@ -1308,7 +1349,7 @@ static void draw_additional_indicators_st(ProfileGraph * graph, TrackInfo & trac
 
 		time_t beg_time = (*track_info.trk->trackpoints.begin())->timestamp;
 		const time_t max_function_arg = (*std::prev(track_info.trk->trackpoints.end()))->timestamp - beg_time;
-		const double max_function_value = graph->y_interval * graph->n_intervals_y;
+		const double max_function_value = graph->y_max_visible;
 
 		const QColor color = graph->gps_speed_pen.color();
 
@@ -1598,7 +1639,7 @@ void ProfileGraph::create_viewport(int index, TrackProfileDialog * dialog)
 	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	this->viewport = new Viewport(dialog->parent);
-	strcpy(this->viewport->type_string, get_page_title(index).toUtf8().constData());
+	strcpy(this->viewport->type_string, this->get_graph_title().toUtf8().constData());
 	this->viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	this->viewport->resize(initial_width, initial_height);
 	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
@@ -1871,38 +1912,30 @@ void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main
 
 
 
-QString get_page_title(int index)
+QString ProfileGraph::get_graph_title(void) const
 {
 	QString result;
 
-	switch (index) {
-	case SG_TRACK_PROFILE_TYPE_ED:
+	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Elevation over distance");
-		break;
 
-	case SG_TRACK_PROFILE_TYPE_GD:
+	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Gradient && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Gradient over distance");
-		break;
 
-	case SG_TRACK_PROFILE_TYPE_ST:
+	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Speed && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Speed over time");
-		break;
 
-	case SG_TRACK_PROFILE_TYPE_DT:
+	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Distance && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Distance over time");
-		break;
 
-	case SG_TRACK_PROFILE_TYPE_ET:
+	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Elevation over time");
-		break;
 
-	case SG_TRACK_PROFILE_TYPE_SD:
+	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Speed && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Speed over distance");
-		break;
 
-	default:
-		qDebug() << "EE:" PREFIX << "unhandled track profile type" << (int) index;
-		break;
+	} else {
+		qDebug() << "EE:" PREFIX << "unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
 	}
 
 	return result;
@@ -1969,7 +2002,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 		this->configure_widgets(index);
 
 		QWidget * page = this->create_graph_page(this->graphs[index]);
-		this->tabs->addTab(page, get_page_title(index));
+		this->tabs->addTab(page, this->graphs[index]->get_graph_title());
 
 		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
 	}
@@ -2395,8 +2428,10 @@ void ProfileGraph::draw_y_grid_distance(void)
 
 void ProfileGraph::draw_y_grid_sub(void)
 {
-	const int min = this->y_min_visible;
-	const int max = this->y_max_visible;
+	const double min = this->y_min_visible;
+	const double max = this->y_max_visible;
+
+#if 0
 
 	if (max - min == 0) {
 		return;
@@ -2410,6 +2445,34 @@ void ProfileGraph::draw_y_grid_sub(void)
 		const int y = this->height * (i - min)  / (max - min);
 		this->draw_grid_horizontal_line(y, this->get_y_grid_label(i));
 	}
+#else
+	double begin = 0.0;
+	if (this->y_min_visible <= 0) {
+		while (begin > this->y_min_visible) {
+			begin -= this->y_interval;
+		}
+	} else {
+		while (begin + this->y_interval < this->y_min_visible) {
+			begin += this->y_interval;
+		}
+	}
+
+	double end = 0.0;
+	if (this->y_max_visible <= 0) {
+		while (end - this->y_interval > this->y_max_visible) {
+			end -= this->y_interval;
+		}
+	} else {
+		while (end < this->y_max_visible) {
+			end += this->y_interval;
+		}
+	}
+
+	for (double i = begin; i <= end; i += this->y_interval) {
+		const int y = this->height * (i - begin)  / (end - begin);
+		this->draw_grid_horizontal_line(y, this->get_y_grid_label(i));
+	}
+#endif
 }
 
 
