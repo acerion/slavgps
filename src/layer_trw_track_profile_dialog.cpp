@@ -193,8 +193,8 @@ TrackProfileDialog::~TrackProfileDialog()
 
 bool track_data_creator_ed(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_altitude_distance(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_altitude_distance(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
@@ -202,91 +202,93 @@ bool track_data_creator_ed(ProfileGraph * graph, Track * trk)
 	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
+			graph->track_data.y[i] = VIK_METERS_TO_FEET(graph->track_data.y[i]);
 		}
 	}
 	/* Otherwise leave in metres. */
 
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
+	graph->track_data.calculate_min_max();
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-        graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+        graph->set_visible_range(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
 
 	return true;
 }
 
 bool track_data_creator_gd(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_gradient_distance(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_gradient_distance(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
-
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
+	graph->track_data.calculate_min_max();
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = gradient_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = gradient_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+	graph->set_visible_range(initial_interval_index, gradient_intervals->values, gradient_intervals->n_values, graph->n_intervals_y);
 
 	return true;
 }
 
 bool track_data_creator_st(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_speed_time(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_speed_time(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
 	/* Convert into appropriate units. */
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
+		graph->track_data.y[i] = convert_speed_mps_to(graph->track_data.y[i], graph->geocanvas.speed_unit);
 	}
 
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
-	if (graph->y_range_min < 0.0) {
-		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
+	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, false, graph->width);
+	graph->track_data.calculate_min_max();
+	if (graph->track_data.y_min < 0.0) {
+		graph->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+	graph->set_visible_range(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
 
 	return true;
 }
 
 bool track_data_creator_dt(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_distance_time(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_distance_time(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
 	/* Convert into appropriate units. */
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_distance_meters_to(graph->rep.y[i], graph->geocanvas.distance_unit);
+		graph->track_data.y[i] = convert_distance_meters_to(graph->track_data.y[i], graph->geocanvas.distance_unit);
 	}
 
-	graph->y_range_min = 0;
-	graph->y_range_max = convert_distance_meters_to(trk->get_length_including_gaps(), graph->geocanvas.distance_unit);
+	graph->track_data.y_min = 0;
+	graph->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), graph->geocanvas.distance_unit);
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = distance_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = distance_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+	graph->set_visible_range(initial_interval_index, distance_intervals->values, distance_intervals->n_values, graph->n_intervals_y);
 
 	return true;
 }
 
 bool track_data_creator_et(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_altitude_time(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_altitude_time(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
@@ -294,17 +296,18 @@ bool track_data_creator_et(ProfileGraph * graph, Track * trk)
 	if (graph->geocanvas.height_unit == HeightUnit::FEET) {
 		/* Convert altitudes into feet units. */
 		for (int i = 0; i < graph->width; i++) {
-			graph->rep.y[i] = VIK_METERS_TO_FEET(graph->rep.y[i]);
+			graph->track_data.y[i] = VIK_METERS_TO_FEET(graph->track_data.y[i]);
 		}
 	}
 	/* Otherwise leave in metres. */
 
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, true, graph->width);
+	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, true, graph->width);
+	graph->track_data.calculate_min_max();
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = altitude_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = altitude_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+	graph->set_visible_range(initial_interval_index, altitude_intervals->values, altitude_intervals->n_values, graph->n_intervals_y);
 
 
 
@@ -313,25 +316,26 @@ bool track_data_creator_et(ProfileGraph * graph, Track * trk)
 
 bool track_data_creator_sd(ProfileGraph * graph, Track * trk)
 {
-	graph->rep = trk->make_values_vector_speed_distance(graph->width);
-	if (!graph->rep.valid) {
+	graph->track_data = trk->make_values_vector_speed_distance(graph->width);
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
 	/* Convert into appropriate units. */
 	for (int i = 0; i < graph->width; i++) {
-		graph->rep.y[i] = convert_speed_mps_to(graph->rep.y[i], graph->geocanvas.speed_unit);
+		graph->track_data.y[i] = convert_speed_mps_to(graph->track_data.y[i], graph->geocanvas.speed_unit);
 	}
 
-	minmax_array(graph->rep.y, &graph->y_range_min, &graph->y_range_max, false, graph->width);
-	if (graph->y_range_min < 0.0) {
-		graph->y_range_min = 0; /* Splines sometimes give negative speeds. */
+	//minmax_array(graph->track_data.y, &graph->track_data.y_min, &graph->track_data.y_max, false, graph->width);
+	graph->track_data.calculate_min_max();
+	if (graph->track_data.y_min < 0.0) {
+		graph->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
 	}
 
 	graph->n_intervals_y = GRAPH_Y_INTERVALS;
 
-	const int initial_interval_index = speed_intervals->get_interval_index(graph->y_range_min, graph->y_range_max, graph->n_intervals_y);
-	graph->set_y_range_min_drawable(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
+	const int initial_interval_index = speed_intervals->get_interval_index(graph->track_data.y_min, graph->track_data.y_max, graph->n_intervals_y);
+	graph->set_visible_range(initial_interval_index, speed_intervals->values, speed_intervals->n_values, graph->n_intervals_y);
 
 
 	return true;
@@ -376,7 +380,7 @@ T Intervals<T>::get_interval_value(int index)
 
 
 
-void ProfileGraph::set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals)
+void ProfileGraph::set_visible_range(int interval_index, const double * interval_values, int n_interval_values, int n_intervals)
 {
 	/* Ensure adjusted minimum .. maximum covers min->max. */
 
@@ -384,28 +388,30 @@ void ProfileGraph::set_y_range_min_drawable(int interval_index, const double * i
 	   When negative ensure logic uses lowest value. */
 	double interval = interval_values[interval_index];
 
-	if (this->y_range_min < 0) {
-		this->y_range_min_drawable = (double) ((int)((this->y_range_min - interval) / interval) * interval);
+	if (this->track_data.y_min < 0) {
+		this->y_min_visible = (double) ((int)((this->track_data.y_min - interval) / interval) * interval);
 	} else {
-		this->y_range_min_drawable = (double) ((int)(this->y_range_min / interval) * interval);
+		this->y_min_visible = (double) ((int)(this->track_data.y_min / interval) * interval);
 	}
 
 	/* Range not big enough - as new minimum has lowered. */
-	if ((this->y_range_min_drawable + (interval_values[interval_index] * n_intervals) < this->y_range_max)) {
+	if ((this->y_min_visible + (interval_values[interval_index] * n_intervals) < this->track_data.y_max)) {
 		/* Next interval should cover it. */
 		if (interval_index < n_interval_values - 1) {
 			interval_index++;
 			/* Remember to adjust the minimum too... */
 			interval = interval_values[interval_index];
-			if (this->y_range_min < 0) {
-				this->y_range_min_drawable = (double) ((int)((this->y_range_min - interval) / interval) * interval);
+			if (this->track_data.y_min < 0) {
+				this->y_min_visible = (double) ((int)((this->track_data.y_min - interval) / interval) * interval);
 			} else {
-				this->y_range_min_drawable = (double) ((int)(this->y_range_min / interval) * interval);
+				this->y_min_visible = (double) ((int)(this->track_data.y_min / interval) * interval);
 			}
 		}
 	}
 
 	this->y_interval = interval_values[interval_index];
+
+	this->y_max_visible = this->y_min_visible + this->n_intervals_y * this->y_interval;
 }
 
 
@@ -674,7 +680,7 @@ double ProfileGraph::get_pos_y(double pos_x)
 		ix--;
 	}
 
-	return this->height * (this->rep.y[ix] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y);
+	return this->height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_interval * this->n_intervals_y);
 }
 
 
@@ -683,7 +689,7 @@ double ProfileGraph::get_pos_y(double pos_x)
 /* Draw cursor marks on a graph that is a function of distance. */
 bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x)
 {
-	if (!graph->rep.valid) {
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
@@ -725,7 +731,7 @@ bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph 
 /* Draw cursor marks on a graph that is a function of time. */
 bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x)
 {
-	if (!graph->rep.valid) {
+	if (!graph->track_data.valid) {
 		return false;
 	}
 
@@ -910,7 +916,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 	};
 
 
-	double y = graph->rep.y[current_pos_x];
+	double y = graph->track_data.y[current_pos_x];
 	switch (graph->geocanvas.y_domain) {
 	case GeoCanvasDomain::Speed:
 		if (graph->labels.y_value) {
@@ -1051,7 +1057,7 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, boo
 				/* No conversion needed if already in metres. */
 
 				/* offset is in current height units. */
-				const double current_function_value = elev - this->y_range_min_drawable;
+				const double current_function_value = elev - this->y_min_visible;
 
 				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
 				const int y = this->bottom_edge - this->height * current_function_value / max_function_value_dem;
@@ -1153,21 +1159,21 @@ void ProfileGraph::draw_function_values(void)
 {
 	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation) {
 		for (int i = 0; i < this->width; i++) {
-			if (this->rep.y[i] == VIK_DEFAULT_ALTITUDE) {
+			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
 				this->viewport->draw_line(this->no_alt_info_pen,
 							   i, 0,
 							   i, 0 + this->height);
 			} else {
 				this->viewport->draw_line(this->main_pen,
 							   i, this->height,
-							   i, this->height - this->height * (this->rep.y[i] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y));
+							   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / (this->y_interval * this->n_intervals_y));
 			}
 		}
 	} else {
 		for (int i = 0; i < this->width; i++) {
 			this->viewport->draw_line(this->main_pen,
 						   i, this->height,
-						   i, this->height - this->height * (this->rep.y[i] - this->y_range_min_drawable) / (this->y_interval * this->n_intervals_y));
+						   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / (this->y_interval * this->n_intervals_y));
 		}
 	}
 }
@@ -1196,7 +1202,7 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 					/* No conversion needed if already in metres. */
 
 					/* offset is in current height units. */
-					const double current_function_value = elev - graph->y_range_min_drawable;
+					const double current_function_value = elev - graph->y_min_visible;
 
 					const int x = graph->left_edge + i;
 					const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
@@ -1216,7 +1222,7 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 		const QColor color = graph->gps_speed_pen.color();
 		for (int i = 0; i < graph->width; i++) {
 
-			const double current_function_value = graph->rep.y[i];
+			const double current_function_value = graph->track_data.y[i];
 
 			const int x = graph->left_edge + i;
 			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
@@ -1249,7 +1255,7 @@ static void draw_additional_indicators_sd(ProfileGraph * graph, TrackInfo & trac
 			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
 
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			current_function_value = gps_speed - graph->y_range_min_drawable;
+			current_function_value = gps_speed - graph->y_min_visible;
 
 			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
 			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
@@ -1315,7 +1321,7 @@ static void draw_additional_indicators_st(ProfileGraph * graph, TrackInfo & trac
 			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
 
 			const time_t current_function_arg = (*iter)->timestamp - beg_time;
-			const double current_function_value = gps_speed - graph->y_range_min_drawable;
+			const double current_function_value = gps_speed - graph->y_min_visible;
 
 			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
 			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
@@ -1338,7 +1344,7 @@ static void draw_additional_indicators_dt(ProfileGraph * graph, TrackInfo & trac
 		/* This is just an indicator - no actual values can be inferred by user. */
 		for (int i = 0; i < graph->width; i++) {
 
-			const double current_function_value = graph->rep.y[i];
+			const double current_function_value = graph->track_data.y[i];
 
 			const int x = graph->left_edge + i;
 			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
@@ -2300,7 +2306,7 @@ ProfileGraph::~ProfileGraph()
 
 bool ProfileGraph::regenerate_data(Track * trk)
 {
-	this->rep.invalidate();
+	this->track_data.invalidate();
 
 	/* Ask a track to generate a vector of values representing some parameter
 	   of a track as a function of either time or distance. */
@@ -2321,12 +2327,13 @@ void ProfileGraph::regenerate_sizes(void)
 
 
 
+#if 0
 void ProfileGraph::draw_y_grid_elevation(void)
 {
 	const double per_interval_value = this->height / this->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= this->n_intervals_y; interval_idx++) {
 		/* No need to recalculate values based on units, it has been already done. */
-		const double value = this->y_range_min_drawable + interval_idx * this->y_interval;
+		const double value = this->y_min_visible + interval_idx * this->y_interval;
 		const QString label = get_elevation_grid_label(this->geocanvas.height_unit, value);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
@@ -2342,7 +2349,7 @@ void ProfileGraph::draw_y_grid_speed(void)
 	const double per_interval_value = this->height / this->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= this->n_intervals_y; interval_idx++) {
 		/* No need to recalculate values based on units, it has been already done. */
-		const double value = this->y_range_min_drawable + interval_idx * this->y_interval;
+		const double value = this->y_min_visible + interval_idx * this->y_interval;
 		const QString label = get_speed_grid_label(this->geocanvas.speed_unit, value);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
@@ -2358,7 +2365,7 @@ void ProfileGraph::draw_y_grid_gradient(void)
 	const double per_interval_value = this->height / this->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= this->n_intervals_y; interval_idx++) {
 
-		const double value = this->y_range_min_drawable + interval_idx * this->y_interval;
+		const double value = this->y_min_visible + interval_idx * this->y_interval;
 		const QString label = QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
@@ -2374,11 +2381,58 @@ void ProfileGraph::draw_y_grid_distance(void)
 	const double per_interval_value = this->height / this->n_intervals_y;
 	for (int interval_idx = 0; interval_idx <= this->n_intervals_y; interval_idx++) {
 		/* No need to recalculate values based on units, it has been already done. */
-		const double value = this->y_range_min_drawable + interval_idx * this->y_interval;
+		const double value = this->y_min_visible + interval_idx * this->y_interval;
 		const QString label = get_distance_grid_label(this->geocanvas.distance_unit, value);
 
 		const int pos_y = (int) (interval_idx * per_interval_value);
 		this->draw_grid_horizontal_line(pos_y, label);
+	}
+}
+#endif
+
+
+
+
+void ProfileGraph::draw_y_grid_sub(void)
+{
+	const int min = this->y_min_visible;
+	const int max = this->y_max_visible;
+
+	if (max - min == 0) {
+		return;
+	}
+
+	for (int i = min; i <= max; i++) {
+		if (i % ((int) this->y_interval) != 0) {
+			continue;
+		}
+
+		const int y = this->height * (i - min)  / (max - min);
+		this->draw_grid_horizontal_line(y, this->get_y_grid_label(i));
+	}
+}
+
+
+
+
+QString ProfileGraph::get_y_grid_label(float value)
+{
+	switch (this->geocanvas.y_domain) {
+	case GeoCanvasDomain::Elevation:
+		return get_elevation_grid_label(this->geocanvas.height_unit, value);
+
+	case GeoCanvasDomain::Distance:
+		return get_distance_grid_label(this->geocanvas.distance_unit, value);
+
+	case GeoCanvasDomain::Speed:
+		return get_speed_grid_label(this->geocanvas.speed_unit, value);
+
+	case GeoCanvasDomain::Gradient:
+		return QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
+
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected y domain" << (int) this->geocanvas.y_domain;
+		return "";
 	}
 }
 
@@ -2406,6 +2460,9 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 
 void ProfileGraph::draw_y_grid(void)
 {
+#if 1
+	this->draw_y_grid_sub();
+#else
 	switch (this->geocanvas.y_domain) {
 
 	case GeoCanvasDomain::Elevation:
@@ -2428,6 +2485,7 @@ void ProfileGraph::draw_y_grid(void)
 		qDebug() << "EE:" PREFIX << "unexpected y domain" << (int) this->geocanvas.y_domain;
 		break;
 	}
+#endif
 }
 
 

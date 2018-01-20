@@ -118,14 +118,17 @@ namespace SlavGPS {
 		TrackData & operator=(const TrackData & other);
 
 		void invalidate(void);
-		void calculate_min_max(double initial_min, double initial_max);
+		void calculate_min_max(void);
 		void allocate_vector(int n_data_points);
 
 		double * x = NULL;
 		double * y = NULL;
 
-		double min = 0.0;
-		double max = 0.0;
+		double x_min = 0.0;
+		double x_max = 0.0;
+
+		double y_min = 0.0;
+		double y_max = 0.0;
 
 		bool valid = false;
 		int n_points = 0;

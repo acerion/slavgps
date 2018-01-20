@@ -1143,7 +1143,7 @@ TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) c
 	bool ignore_it = false;
 	int current_chunk = 0;
 	while (current_chunk < compressed_n_points) {
-#if 1
+#if 0
 		compressed_ad.y[current_chunk] = current_chunk;
 		current_chunk++;
 #else
@@ -1221,7 +1221,9 @@ TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) c
 #endif
 	}
 
+#ifdef K
 	assert(current_chunk == compressed_n_points);
+#endif
 
 	compressed_ad.n_points = compressed_n_points;
 	compressed_ad.valid = true;
@@ -4191,18 +4193,29 @@ void TrackData::invalidate(void)
 
 
 
-void TrackData::calculate_min_max(double initial_min, double initial_max)
+void TrackData::calculate_min_max(void)
 {
-	this->min = initial_min;
-	this->max = initial_max;
-
+	this->x_min = this->x[0];
+	this->x_max = this->x[0];
 	for (int i = 0; i < this->n_points; i++) {
-		if (this->y[i] > this->max) {
-			this->max = this->y[i];
+		if (this->x[i] > this->x_max) {
+			this->x_max = this->x[i];
 		}
 
-		if (this->y[i] < this->min) {
-			this->min = this->y[i];
+		if (this->x[i] < this->x_min) {
+			this->x_min = this->x[i];
+		}
+	}
+
+	this->y_min = this->y[0];
+	this->y_max = this->y[0];
+	for (int i = 0; i < this->n_points; i++) {
+		if (this->y[i] > this->y_max) {
+			this->y_max = this->y[i];
+		}
+
+		if (this->y[i] < this->y_min) {
+			this->y_min = this->y[i];
 		}
 	}
 }
@@ -4285,8 +4298,11 @@ TrackData & TrackData::operator=(const TrackData & other)
 		memcpy(this->y, other.y, sizeof (double) * other.n_points);
 	}
 
-	this->min = other.min;
-	this->max = other.max;
+	this->x_min = other.x_min;
+	this->x_max = other.x_max;
+
+	this->y_min = other.y_min;
+	this->y_max = other.y_max;
 
 	this->valid = other.valid;
 	this->n_points = other.n_points;

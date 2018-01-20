@@ -258,7 +258,7 @@ namespace SlavGPS {
 		void create_viewport(int index, TrackProfileDialog * dialog);
 
 		double get_pos_y(double pos_x);
-		void set_y_range_min_drawable(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
+		void set_visible_range(int interval_index, const double * interval_values, int n_interval_values, int n_intervals);
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
 
@@ -284,10 +284,15 @@ namespace SlavGPS {
 		void draw_x_grid_time(time_t visible_begin, time_t visible_end);
 		void draw_x_grid_distance(double visible_begin, double visible_end);
 
+		void draw_y_grid_sub(void);
+#if 0
 		void draw_y_grid_elevation(void);
 		void draw_y_grid_speed(void);
 		void draw_y_grid_gradient(void);
 		void draw_y_grid_distance(void);
+#endif
+
+		QString get_y_grid_label(float value);
 
 		TrackProfileType type = SG_TRACK_PROFILE_TYPE_MAX;
 		Viewport * viewport = NULL;
@@ -305,11 +310,13 @@ namespace SlavGPS {
 
 		double y_interval = 0.0;
 
-		double y_range_min = 0.0;
-		double y_range_max = 0.0;
-		double y_range_min_drawable = 0.0;
+		//double y_range_min = 0.0;
+		//double y_range_max = 0.0;
 
-		TrackData rep;
+		double y_min_visible = 0.0;
+		double y_max_visible = 0.0;
+
+		TrackData track_data;
 		bool (*track_data_creator_fn)(ProfileGraph *, Track *) = NULL;
 
 		GeoCanvas geocanvas;
