@@ -4203,13 +4203,9 @@ void TrackData::calculate_min_max(void)
 	this->x_min = this->x[0];
 	this->x_max = this->x[0];
 
-	qDebug() << "ooooooooooooooo" << this->x_max;
-
 	for (int i = 0; i < this->n_points; i++) {
-		qDebug() << "ooooooo" << this->x[i] << i;
 		if (this->x[i] > this->x_max) {
 			this->x_max = this->x[i];
-			qDebug() << "ooooooooooooooo" << this->x_max << i;
 		}
 
 		if (this->x[i] < this->x_min) {

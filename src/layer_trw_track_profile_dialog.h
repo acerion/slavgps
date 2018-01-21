@@ -241,8 +241,6 @@ namespace SlavGPS {
 	private:
 		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
 		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
-		void draw_marks(ProfileGraph * graph, const ScreenPos & selected_pos, const ScreenPos & current_pos);
-
 
 		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
 	};
@@ -272,6 +270,7 @@ namespace SlavGPS {
 		void regenerate_sizes(void);
 
 		void draw_graph(TrackInfo & track_info);
+		void draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
 
 		void draw_function_values(void);
 
@@ -290,12 +289,6 @@ namespace SlavGPS {
 
 		void draw_x_grid_sub(void);
 		void draw_y_grid_sub(void);
-#if 0
-		void draw_y_grid_elevation(void);
-		void draw_y_grid_speed(void);
-		void draw_y_grid_gradient(void);
-		void draw_y_grid_distance(void);
-#endif
 
 		QString get_y_grid_label(float value);
 
@@ -320,7 +313,7 @@ namespace SlavGPS {
 		double y_max_visible = 0.0;
 
 		TrackData track_data;
-		bool (*track_data_creator_fn)(ProfileGraph *, Track *) = NULL;
+
 
 		GeoCanvas geocanvas;
 
@@ -334,6 +327,9 @@ namespace SlavGPS {
 
 		QGridLayout * labels_grid = NULL;
 		QVBoxLayout * controls_vbox = NULL;
+
+	private:
+		bool regenerate_data_from_scratch(Track * trk);
 	};
 
 
