@@ -1294,8 +1294,13 @@ TrackData Track::make_values_vector_gradient_distance(int compressed_n_points) c
 		const double altitude2 = compressed_ad.y[i + 1];
 		current_gradient = 100.0 * (altitude2 - altitude1) / delta_d;
 
+		if (i > 0) {
+			compressed_gd.x[i] = compressed_gd.x[i - 1] + delta_d;
+		}
 		compressed_gd.y[i] = current_gradient;
+
 	}
+	compressed_gd.x[i] = compressed_gd.x[i - 1] + delta_d;
 	compressed_gd.y[i] = current_gradient;
 
 	assert (i + 1 == compressed_n_points);
@@ -4197,9 +4202,14 @@ void TrackData::calculate_min_max(void)
 {
 	this->x_min = this->x[0];
 	this->x_max = this->x[0];
+
+	qDebug() << "ooooooooooooooo" << this->x_max;
+
 	for (int i = 0; i < this->n_points; i++) {
+		qDebug() << "ooooooo" << this->x[i] << i;
 		if (this->x[i] > this->x_max) {
 			this->x_max = this->x[i];
+			qDebug() << "ooooooooooooooo" << this->x_max << i;
 		}
 
 		if (this->x[i] < this->x_min) {
@@ -4238,6 +4248,9 @@ void TrackData::allocate_vector(int n_data_points)
 	this->x = (double *) malloc(sizeof (double) * n_data_points);
 	this->y = (double *) malloc(sizeof (double) * n_data_points);
 
+	memset(this->x, 0, sizeof (double) * n_data_points);
+	memset(this->y, 0, sizeof (double) * n_data_points);
+
 	this->n_points = n_data_points;
 }
 
@@ -4246,10 +4259,7 @@ void TrackData::allocate_vector(int n_data_points)
 
 TrackData::TrackData(int n_data_points)
 {
-	this->x = (double *) malloc(sizeof (double) * n_data_points);
-	this->y = (double *) malloc(sizeof (double) * n_data_points);
-
-	this->n_points = n_data_points;
+	this->allocate_vector(n_data_points);
 }
 
 

@@ -259,7 +259,10 @@ namespace SlavGPS {
 		QString get_graph_title(void) const;
 
 		double get_pos_y(double pos_x);
-		void set_initial_visible_range_y();
+
+		void set_initial_visible_range_x_distance(void);
+		void set_initial_visible_range_x_time(void);
+		void set_initial_visible_range_y(void);
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
 
@@ -285,6 +288,7 @@ namespace SlavGPS {
 		void draw_x_grid_time(time_t visible_begin, time_t visible_end);
 		void draw_x_grid_distance(double visible_begin, double visible_end);
 
+		void draw_x_grid_sub(void);
 		void draw_y_grid_sub(void);
 #if 0
 		void draw_y_grid_elevation(void);
@@ -305,6 +309,11 @@ namespace SlavGPS {
 		int height = 0;
 		int bottom_edge = 0;
 		int left_edge = 0;
+
+		/* For distance-based graphs. */
+		double x_interval_d = 0.0;
+		double x_min_visible_d = 0.0;
+		double x_max_visible_d = 0.0;
 
 		double y_interval = 0.0;
 		double y_min_visible = 0.0;
