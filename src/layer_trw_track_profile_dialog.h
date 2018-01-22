@@ -287,7 +287,8 @@ namespace SlavGPS {
 		void draw_x_grid_time(time_t visible_begin, time_t visible_end);
 		void draw_x_grid_distance(double visible_begin, double visible_end);
 
-		void draw_x_grid_sub(void);
+		void draw_x_grid_sub_d(void);
+		void draw_x_grid_sub_t(void);
 		void draw_y_grid_sub(void);
 
 		QString get_y_grid_label(float value);
@@ -307,6 +308,11 @@ namespace SlavGPS {
 		double x_interval_d = 0.0;
 		double x_min_visible_d = 0.0;
 		double x_max_visible_d = 0.0;
+
+		/* For time-based graphs. */
+		time_t x_interval_t = 0;
+		time_t x_min_visible_t = 0;
+		time_t x_max_visible_t = 0;
 
 		double y_interval = 0.0;
 		double y_min_visible = 0.0;

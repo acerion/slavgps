@@ -1029,14 +1029,15 @@ TrackData Track::make_values_distance_time(void) const
 	/* No special handling of segments ATM... */
 	int i = 0;
 	auto iter = this->trackpoints.begin();
+	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp;
+	data.x[i] = (*iter)->timestamp - first; // FIXME it should be 'data.x[i] = (*iter)->timestamp;'
 	data.y[i] = 0;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp;
+		data.x[i] = (*iter)->timestamp - first; //FIXME it should be 'data.x[i] = (*iter)->timestamp;'
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 		i++;
 		iter++;
@@ -1055,14 +1056,15 @@ TrackData Track::make_values_altitude_time(void) const
 
 	int i = 0;
 	auto iter = this->trackpoints.begin();
+	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp;
+	data.x[i] = (*iter)->timestamp - first; // FIXME: it should be 'data.x[i] = (*iter)->timestamp;'
 	data.y[i] = (*iter)->altitude;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp;
+		data.x[i] = (*iter)->timestamp - first; // FIXME: it should be 'data.x[i] = (*iter)->timestamp;'
 		data.y[i] = (*iter)->altitude;
 		i++;
 		iter++;
@@ -1332,11 +1334,14 @@ TrackData Track::make_values_vector_speed_time(int compressed_n_points) const
 
 #if 1
 	TrackData speed_data(raw_dt.n_points);
+	time_t first = raw_dt.x[0];
 	speed_data.y[0] = 0.0;
+	speed_data.x[0] = raw_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
 	for (int i = 1; i < tp_count; i++) {
-		const double time_ = (raw_dt.x[i] - raw_dt.x[i - 1]);
-		const double distance_ = (raw_dt.y[i] - raw_dt.y[i - 1]);
-		speed_data.y[i] = distance_ / time_;
+		const double delta_t = (raw_dt.x[i] - raw_dt.x[i - 1]);
+		const double delta_d = (raw_dt.y[i] - raw_dt.y[i - 1]);
+		speed_data.y[i] = delta_d / delta_t;
+		speed_data.x[i] = raw_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
 	}
 
 	compress(compressed_st, speed_data);
@@ -1407,9 +1412,12 @@ TrackData Track::make_values_vector_distance_time(int compressed_n_points) const
 
 #if 1
 	TrackData raw_distance(raw_dt.n_points);
+	time_t first = raw_dt.x[0];
 	raw_distance.y[0] = 0.0;
+	raw_distance.x[0] = raw_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
 	for (int i = 1; i < raw_dt.n_points; i++) {
 		raw_distance.y[i] = raw_distance.y[i - 1] + (raw_dt.y[i] - raw_dt.y[i - 1]);
+		raw_distance.x[i] = raw_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
 	}
 
 	compress(compressed_dt, raw_distance);
@@ -1491,16 +1499,21 @@ void compress(TrackData & compressed_data, const TrackData & raw_data)
 			sampling_size -= fix;
 		}
 
-		double acc = 0.0;
+		double acc_x = 0.0;
+		double acc_y = 0.0;
 		for (int j = n_tps_compressed; j < n_tps_compressed + sampling_size; j++) {
-			acc += raw_data.y[j];
+			acc_x += raw_data.x[j];
+			acc_y += raw_data.y[j];
 			tp_index++;
 		}
 
-		//qDebug() << "------- i =" << i << "/" << compressed_data.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc << acc / sampling_size;
+		//qDebug() << "------- i =" << i << "/" << compressed_data.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc_y << acc_y / sampling_size;
 
-		compressed_data.y[i] = acc / sampling_size;
+		compressed_data.x[i] = acc_x / sampling_size;
+		compressed_data.y[i] = acc_y / sampling_size;
+
 		n_tps_compressed += sampling_size;
+
 	}
 
 	assert(i == compressed_data.n_points);
@@ -4204,12 +4217,15 @@ void TrackData::calculate_min_max(void)
 	this->x_max = this->x[0];
 
 	for (int i = 0; i < this->n_points; i++) {
+		qDebug() << "i / x" << i << this->x[i];
 		if (this->x[i] > this->x_max) {
 			this->x_max = this->x[i];
+			qDebug() << "         max = " << this->x_max;
 		}
 
 		if (this->x[i] < this->x_min) {
 			this->x_min = this->x[i];
+			qDebug() << "         min = " << this->x_min;
 		}
 	}
 

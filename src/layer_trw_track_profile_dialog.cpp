@@ -157,6 +157,7 @@ static QString get_elevation_grid_label(HeightUnit height_unit, double value);
 static QString get_distance_grid_label(DistanceUnit distance_unit, double value);
 static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
 static QString get_time_grid_label(int interval_index, int value);
+static QString get_time_grid_label_2(time_t interval_value, time_t value);
 
 static QString get_graph_title(void);
 
@@ -217,6 +218,8 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	}
 
 
+	qDebug() << "II:" PREFIX << "generated value vector for" << this->get_graph_title() << ", will now adjust y values";
+
 
 	/* Do necessary adjustments to y values. */
 
@@ -227,6 +230,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = convert_speed_mps_to(this->track_data.y[i], this->geocanvas.speed_unit);
 		}
 
+		qDebug() << "kamil calculating min/max y speed for" << this->get_graph_title();
 		this->track_data.calculate_min_max();
 		if (this->track_data.y_min < 0.0) {
 			this->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
@@ -265,6 +269,10 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 
 
+	qDebug() << "II:" PREFIX << "after calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_graph_title();
+
+
+
 	/* Prepare x/y-range values. */
 
 	switch (this->geocanvas.x_domain) {
@@ -280,6 +288,8 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	};
 
 	this->set_initial_visible_range_y();
+
+	qDebug() << "II:" PREFIX << "return";
 
 
 	return true;
@@ -305,7 +315,7 @@ int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
 		if (index == this->n_values) {
 			/* Return the last valid value. */
 			index--;
-			qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index1 =" << index << this->values[index];
+			qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index1 =" << index << ", interval =" << this->values[index];
 			return index;
 		}
 	}
@@ -316,7 +326,7 @@ int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
 		index--;
 	}
 
-	qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index2 =" << index << this->values[index];
+	qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index2 =" << index << ", interval =" << this->values[index];
 
 	return index;
 }
@@ -341,6 +351,12 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	this->x_min_visible_d = convert_distance_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
 	this->x_max_visible_d = convert_distance_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
 
+	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
+		/* TODO: verify what happens if we return here. */
+		qDebug() << "EE:" PREFIX << "zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
+		return;
+	}
+
 	/* Now, given the n_intervals value, find a suitable interval
 	   index and value that will nicely cover visible range of
 	   data. */
@@ -357,7 +373,27 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 
 void ProfileGraph::set_initial_visible_range_x_time(void)
 {
+	/* We won't display any x values outside of
+	   track_data.x_min/max. We will never be able to zoom out to
+	   show e.g. negative times. */
+	this->x_min_visible_t = this->track_data.x_min;
+	this->x_max_visible_t = this->track_data.x_max;
 
+	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
+		/* TODO: verify what happens if we return here. */
+		qDebug() << "EE:" PREFIX << "zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
+		return;
+	}
+
+	/* Now, given the n_intervals value, find a suitable interval
+	   index and value that will nicely cover visible range of
+	   data. */
+
+	static Intervals<time_t> * intervals = time_intervals;
+	const int n_intervals = GRAPH_X_INTERVALS;
+
+	int interval_index = intervals->get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
+	this->x_interval_t = intervals->values[interval_index];
 }
 
 
@@ -2236,6 +2272,51 @@ QString get_time_grid_label(int interval_index, int value)
 
 
 
+QString get_time_grid_label_2(time_t interval_value, time_t value)
+{
+	QString result;
+
+	switch (interval_value) {
+	case 60:
+	case 120:
+	case 300:
+	case 900:
+		/* Minutes. */
+		result = QObject::tr("%1 m").arg((int) (value / 60));
+		break;
+	case 1800:
+	case 3600:
+	case 10800:
+	case 21600:
+		/* Hours. */
+		result = QObject::tr("%1 h").arg(((double) (value / (60 * 60))), 0, 'f', 1);
+		break;
+	case 43200:
+	case 86400:
+	case 172800:
+		/* Days. */
+		result = QObject::tr("%1 d").arg(((double) value / (60 *60 * 24)), 0, 'f', 1);
+		break;
+	case 604800:
+	case 1209600:
+		/* Weeks. */
+		result = QObject::tr("%1 w").arg(((double) value / (60 * 60 * 24 * 7)), 0, 'f', 1);
+		break;
+	case 2419200:
+		/* Months. */
+		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled time interval value" << interval_value;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
 ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog)
 {
 	this->geocanvas.x_domain = x_domain;
@@ -2325,7 +2406,8 @@ void ProfileGraph::regenerate_sizes(void)
    and/or at multiples of y-interval (depending whether they
    will fall within graph's main area).
 */
-void find_grid_line_indices(double min_visible, double max_visible, double interval, int * first_line, int * last_line)
+template <typename T>
+void find_grid_line_indices(T min_visible, T max_visible, T interval, int * first_line, int * last_line)
 {
 	/* 'first_line * y_interval' will be below y_min_visible. */
 	if (min_visible <= 0) {
@@ -2366,7 +2448,7 @@ void ProfileGraph::draw_y_grid_sub(void)
 
 #if 0
 	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << this->height;
-	qDebug() << "      min/max visible:" << this->y_min_visible << this->y_max_visible;
+	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_line/last_line =" << first_line << last_line;
 #endif
 
@@ -2388,7 +2470,7 @@ void ProfileGraph::draw_y_grid_sub(void)
 
 
 
-void ProfileGraph::draw_x_grid_sub(void)
+void ProfileGraph::draw_x_grid_sub_d(void)
 {
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
 		qDebug() << "EE:" PREFIX << "zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
@@ -2401,7 +2483,7 @@ void ProfileGraph::draw_x_grid_sub(void)
 
 #if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
-	qDebug() << "      min/max visible:" << this->x_min_visible_d << this->x_max_visible_d;
+	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_line/last_line =" << first_line << last_line;
 #endif
 
@@ -2415,6 +2497,43 @@ void ProfileGraph::draw_x_grid_sub(void)
 			qDebug() << "      value (inside) =" << value << ", col =" << col;
 			/* TODO: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
 			this->draw_grid_vertical_line(col, get_distance_grid_label(this->geocanvas.distance_unit, value));
+		} else {
+			qDebug() << "      value (outside) =" << value << ", col =" << col;
+		}
+	}
+}
+
+
+
+
+void ProfileGraph::draw_x_grid_sub_t(void)
+{
+	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
+		qDebug() << "EE:" PREFIX << "zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		return;
+	}
+
+	int first_line = 0;
+	int last_line = 0;
+	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, &first_line, &last_line);
+
+#if 1
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
+	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
+	qDebug() << "      interval =" << this->x_interval_t << ", first_line/last_line =" << first_line << last_line;
+#endif
+
+	for (int i = first_line; i <= last_line; i++) {
+		const time_t value = i * this->x_interval_t;
+
+		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int col = 1.0 * this->width * (value - this->x_min_visible_t) / (1.0 * (this->x_max_visible_t - this->x_min_visible_t));
+
+		if (col >= 0 && col < this->width) {
+			qDebug() << "      value (inside) =" << value << ", col =" << col;
+			this->draw_grid_vertical_line(col, get_time_grid_label_2(this->x_interval_t, value));
 		} else {
 			qDebug() << "      value (outside) =" << value << ", col =" << col;
 		}
@@ -2452,11 +2571,12 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 {
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Time:
-		this->draw_x_grid_time(0, track_info.duration);
+		this->draw_x_grid_sub_t();
+		//this->draw_x_grid_time(0, track_info.duration);
 		break;
 
 	case GeoCanvasDomain::Distance:
-		this->draw_x_grid_sub();
+		this->draw_x_grid_sub_d();
 		//this->draw_x_grid_distance(0, track_info.track_length_including_gaps);
 		break;
 
