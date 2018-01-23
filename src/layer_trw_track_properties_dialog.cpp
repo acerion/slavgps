@@ -263,7 +263,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 
 	int elev_points = 100; /* this->trk->size()? */
-	TrackData altitudes = this->trk->make_values_vector_altitude_distance(elev_points);
+	TrackData altitudes = this->trk->make_track_data_altitude_over_distance(elev_points);
 	if (!altitudes.valid) {
 		altitudes.y_min = VIK_DEFAULT_ALTITUDE;
 		altitudes.y_max = VIK_DEFAULT_ALTITUDE;

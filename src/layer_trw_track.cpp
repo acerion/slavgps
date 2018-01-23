@@ -93,7 +93,7 @@ static QUrl last_directory_url;
 #define VIK_SETTINGS_TRACK_NUM_DIST_LABELS "track_number_dist_labels"
 
 
-void compress(TrackData & compressed_data, const TrackData & raw_data);
+void do_compress(TrackData & compressed_data, const TrackData & raw_data);
 
 
 /**
@@ -901,7 +901,7 @@ time_t Track::get_duration(bool segment_gaps) const
 
 
 
-/* Code extracted from make_values_vector_speed_time() and similar functions. */
+/* Code extracted from make_track_data_speed_over_time() and similar functions. */
 double Track::get_duration() const
 {
 	if (this->trackpoints.empty()) {
@@ -1020,7 +1020,8 @@ double Track::get_max_speed() const
 
 
 
-TrackData Track::make_values_distance_time(void) const
+/* Simple method for copying "distance over time" information from Track to TrackData. */
+TrackData Track::make_values_distance_over_time_helper(void) const
 {
 	const int tp_count = this->get_tp_count();
 
@@ -1048,7 +1049,8 @@ TrackData Track::make_values_distance_time(void) const
 
 
 
-TrackData Track::make_values_altitude_time(void) const
+/* Simple method for copying "altitude over time" information from Track to TrackData. */
+TrackData Track::make_values_altitude_over_time_helper(void) const
 {
 	const int tp_count = this->get_tp_count();
 
@@ -1090,7 +1092,7 @@ void Track::convert(CoordMode dest_mode)
    I understood this when I wrote it ... maybe ... Basically it eats up the
    proper amounts of length on the track and averages elevation over that.
 */
-TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) const
+TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points) const
 {
 	TrackData compressed_ad;
 
@@ -1166,8 +1168,16 @@ TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) c
 			if (ignore_it) {
 				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
 				compressed_ad.y[current_chunk] = altitude1;
+				if (current_chunk > 0) {
+					/* FIXME: verify this. */
+					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
+				}
 			} else {
 				compressed_ad.y[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
+				if (current_chunk > 0) {
+					/* FIXME: verify this. */
+					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
+				}
 			}
 
 			current_chunk++;
@@ -1206,15 +1216,27 @@ TrackData Track::make_values_vector_altitude_distance(int compressed_n_points) c
 				&& std::next(iter) == this->trackpoints.end())) {
 
 				compressed_ad.y[current_chunk] = current_area_under_curve / current_dist;
+				if (current_chunk > 0) {
+					/* FIXME: verify this. */
+					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
+				}
 				if (std::next(iter) == this->trackpoints.end()) {
 					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
 						compressed_ad.y[i] = compressed_ad.y[current_chunk];
+						if (current_chunk > 0) {
+							/* FIXME: verify this. */
+							compressed_ad.x[i] = compressed_ad.x[current_chunk - 1] + delta_d;
+						}
 					}
 					break;
 				}
 			} else {
 				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
 				compressed_ad.y[current_chunk] = current_area_under_curve / delta_d;
+				if (current_chunk > 0) {
+					/* FIXME: verify this. */
+					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
+				}
 			}
 
 			current_dist = 0;
@@ -1268,7 +1290,7 @@ bool Track::get_total_elevation_gain(double * up, double * down) const
 
 
 
-TrackData Track::make_values_vector_gradient_distance(int compressed_n_points) const
+TrackData Track::make_track_data_gradient_over_distance(int compressed_n_points) const
 {
 	TrackData compressed_gd;
 
@@ -1282,7 +1304,7 @@ TrackData Track::make_values_vector_gradient_distance(int compressed_n_points) c
 		return compressed_gd;
 	}
 
-	TrackData compressed_ad = this->make_values_vector_altitude_distance(compressed_n_points);
+	TrackData compressed_ad = this->make_track_data_altitude_over_distance(compressed_n_points);
 	if (!compressed_ad.valid) {
 		return compressed_gd;
 	}
@@ -1316,158 +1338,77 @@ TrackData Track::make_values_vector_gradient_distance(int compressed_n_points) c
 
 
 /* By Alex Foobarian. */
-TrackData Track::make_values_vector_speed_time(int compressed_n_points) const
+TrackData Track::make_track_data_speed_over_time(void) const
 {
-	TrackData compressed_st;
-
-	assert (compressed_n_points < 16000);
+	TrackData result;
 
 	double duration = this->get_duration();
 	if (duration < 0) {
-		return compressed_st;
+		return result;
 	}
 
 	const int tp_count = this->get_tp_count();
+	const TrackData data_dt = this->make_values_distance_over_time_helper();
+	assert (data_dt.n_points == (int) this->get_tp_count());
 
-	compressed_st.allocate_vector(compressed_n_points);
-	TrackData raw_dt = this->make_values_distance_time();
+	result.allocate_vector(tp_count);
 
-#if 1
-	TrackData speed_data(raw_dt.n_points);
-	time_t first = raw_dt.x[0];
-	speed_data.y[0] = 0.0;
-	speed_data.x[0] = raw_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
+	time_t first = data_dt.x[0];
+	result.y[0] = 0.0;
+	result.x[0] = data_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
 	for (int i = 1; i < tp_count; i++) {
-		const double delta_t = (raw_dt.x[i] - raw_dt.x[i - 1]);
-		const double delta_d = (raw_dt.y[i] - raw_dt.y[i - 1]);
-		speed_data.y[i] = delta_d / delta_t;
-		speed_data.x[i] = raw_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
+		const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
+		const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
+		result.y[i] = delta_d / delta_t;
+		result.x[i] = data_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
 	}
 
-	compress(compressed_st, speed_data);
-#else
-	const double delta_t = duration / (compressed_n_points - 1);
-
-	/* In the following computation, we iterate through periods of time of duration delta_t.
-	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int tp_index = 0; /* index of the current trackpoint. */
-	int i = 0;
-	for (i = 0; i < compressed_n_points; i++) {
-#if 1
-		if (i + 1 < compressed_n_points) {
-			double acc_s = (raw_dt.y[i + 1] - raw_dt.y[i]);
-			double acc_t = (raw_dt.x[i + 1] - raw_dt.x[i]);
-			compressed_st.y[i] = acc_s / acc_t;
-		} else {
-			compressed_st.y[i] = compressed_st.y[i - 1];
-		}
-#else
-		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
-		   Find the first trackpoint outside the current interval, averaging the speeds between intermediate trackpoints. */
-		if (raw_dt.x[0] + i * delta_t >= raw_dt.x[tp_index]) {
-			double acc_t = 0;
-			double acc_s = 0;
-			while (raw_dt.x[0] + i * delta_t >= raw_dt.x[tp_index]) {
-				acc_s += (raw_dt.y[tp_index + 1] - raw_dt.y[tp_index]);
-				acc_t += (raw_dt.x[tp_index + 1] - raw_dt.x[tp_index]);
-				tp_index++;
-			}
-			compressed_st.y[i] = acc_s / acc_t;
-		} else if (i) {
-			compressed_st.y[i] = compressed_st.y[i - 1];
-		} else {
-			compressed_st.y[i] = 0;
-		}
-#endif
-	}
-
-	assert(i == compressed_n_points);
-#endif
-
-	compressed_st.n_points = compressed_n_points;
-	compressed_st.valid = true;
-	return compressed_st;
+	result.n_points = tp_count;
+	result.valid = true;
+	return result;
 }
 
 
 
 
 /**
-   Make a distance/time map, heavily based on the Track::make_values_vector_speed_time() method.
+   Make a distance/time map, heavily based on the Track::make_track_data_speed_over_time() method.
 */
-TrackData Track::make_values_vector_distance_time(int compressed_n_points) const
+TrackData Track::make_track_data_distance_over_time(void) const
 {
-	TrackData compressed_dt;
+	TrackData result;
 
 	double duration = this->get_duration();
 	if (duration < 0) {
-		return compressed_dt;
+		return result;
 	}
 
-	const double delta_t = duration / (compressed_n_points - 1);
 	const int tp_count = this->get_tp_count();
+	const TrackData data_dt = this->make_values_distance_over_time_helper();
 
-	compressed_dt.allocate_vector(compressed_n_points);
-	TrackData raw_dt = this->make_values_distance_time();
+	assert (data_dt.n_points == tp_count);
 
-#if 1
-	TrackData raw_distance(raw_dt.n_points);
-	time_t first = raw_dt.x[0];
-	raw_distance.y[0] = 0.0;
-	raw_distance.x[0] = raw_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
-	for (int i = 1; i < raw_dt.n_points; i++) {
-		raw_distance.y[i] = raw_distance.y[i - 1] + (raw_dt.y[i] - raw_dt.y[i - 1]);
-		raw_distance.x[i] = raw_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
+	result.allocate_vector(tp_count);
+
+	/* TODO: not much is going on here. Once we move "- first" to
+	   caller (i.e. to Track Profile), the loop will have to be
+	   converted to memcpy. */
+
+	time_t first = data_dt.x[0];
+	result.x[0] = data_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
+	result.y[0] = result.y[0];
+	for (int i = 1; i < data_dt.n_points; i++) {
+		result.x[i] = data_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
+		result.y[i] = data_dt.y[i - 1];
 	}
 
-	compress(compressed_dt, raw_distance);
-#else
-
-	/* In the following computation, we iterate through periods of time of duration delta_t.
-	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int tp_index = 0; /* index of the current trackpoint. */
-	int i = 0;
-	for (i = 0; i < compressed_n_points; i++) {
-#if 1
-		if (i + 1 < compressed_n_points) {
-			/* No need for acc_t. */
-			double acc_s = (raw_dt.y[i + 1] - raw_dt.y[i]);
-			/* The only bit that's really different from the speed map - just keep an accumulative record distance. */
-			compressed_dt.y[i] = i ? compressed_dt.y[i - 1] + acc_s : acc_s;
-		} else {
-			compressed_dt.y[i] = compressed_dt.y[i - 1];
-		}
-#else
-		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
-		   find the first trackpoint outside the current interval, averaging the distance between intermediate trackpoints. */
-		if (raw_dt.x[0] + i * delta_t >= raw_dt.x[tp_index]) {
-			double acc_s = 0;
-			/* No need for acc_t. */
-			while (raw_dt.x[0] + i * delta_t >= raw_dt.x[tp_index]) {
-				acc_s += (raw_dt.y[tp_index + 1] - raw_dt.y[tp_index]);
-				tp_index++;
-			}
-			/* The only bit that's really different from the speed map - just keep an accumulative record distance. */
-			compressed_dt.y[i] = i ? compressed_dt.y[i - 1] + acc_s : acc_s;
-		} else if (i) {
-			compressed_dt.y[i] = compressed_dt.y[i - 1];
-		} else {
-			compressed_dt.y[i] = 0;
-		}
-#endif
-	}
-
-	assert(i == compressed_n_points);
-#endif
-
-	compressed_dt.n_points = compressed_n_points;
-	compressed_dt.valid = true;
-	return compressed_dt;
+	result.valid = true;
+	return result;
 }
 
 
 
-void compress(TrackData & compressed_data, const TrackData & raw_data)
+void do_compress(TrackData & compressed_data, const TrackData & raw_data)
 {
 	const double tps_per_data_point = 1.0 * raw_data.n_points / compressed_data.n_points;
 	const int floor_ = floor(tps_per_data_point);
@@ -1524,18 +1465,38 @@ void compress(TrackData & compressed_data, const TrackData & raw_data)
 
 
 
+TrackData TrackData::compress(int compressed_n_points) const
+{
+	TrackData compressed(compressed_n_points);
+
+	do_compress(compressed, *this);
+
+	compressed.n_points = compressed_n_points;
+	compressed.valid = true;
+
+	return compressed;
+}
+
+
+
+
 /**
    This uses the 'time' based method to make the graph, (which is a simpler compared to the elevation/distance).
    This results in a slightly blocky graph when it does not have many trackpoints: <60.
    NB Somehow the elevation/distance applies some kind of smoothing algorithm,
    but I don't think any one understands it any more (I certainly don't ATM).
 */
-TrackData Track::make_values_vector_altitude_time(int compressed_n_points) const
+TrackData Track::make_track_data_altitude_over_time(void) const
 {
-	TrackData compressed_at;
+	TrackData result;
+
+	double duration = this->get_duration();
+	if (duration < 0) {
+		return result;
+	}
 
 	if (this->trackpoints.size() < 2) {
-		return compressed_at;
+		return result;
 	}
 
 	/* Test if there's anything worth calculating. */
@@ -1547,57 +1508,14 @@ TrackData Track::make_values_vector_altitude_time(int compressed_n_points) const
 		}
 	}
 	if (!okay) {
-		return compressed_at;
+		return result;
 	}
 
-	double duration = this->get_duration();
-	if (duration < 0) {
-		return compressed_at;
-	}
+	result = this->make_values_altitude_over_time_helper();
 
+	assert (result.n_points == (int) this->get_tp_count());
 
-	compressed_at.allocate_vector(compressed_n_points); /* The return altitude values. */
-	TrackData raw_at = this->make_values_altitude_time();
-
-#if 1
-	compress(compressed_at, raw_at);
-#else
-
-	const double delta_t = duration / (compressed_n_points - 1);
-	/* In the following computation, we iterate through periods of time of duration delta_t.
-	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
-	int i = 0;
-	for (i = 0; i < compressed_n_points; i++) {
-#if 1
-		if (i + 1 < compressed_n_points) {
-			compressed_at.y[i] = raw_at.y[i];
-		} else {
-			compressed_at.y[i] = compressed_at.y[i - 1];
-		}
-#else
-		/* We are now covering the interval from t[0] + i * delta_t to t[0] + (i + 1) * delta_t.
-		   find the first trackpoint outside the current interval, averaging the heights between intermediate trackpoints. */
-		if (raw_at.x[0] + i * delta_t >= raw_at.x[tp_index]) {
-			double acc_s = raw_at.y[tp_index]; /* Initialise to first point. */
-
-			while (raw_at.x[0] + i * delta_t >= raw_at.x[tp_index]) {
-
-			}
-
-			compressed_at.y[i] = acc_s;
-		} else if (i) {
-			compressed_at.y[i] = compressed_at.y[i - 1];
-		} else {
-			compressed_at.y[i] = 0;
-		}
-#endif
-	}
-	assert(i == compressed_n_points);
-#endif
-
-	compressed_at.n_points = compressed_n_points;
-	compressed_at.valid = true;
-	return compressed_at;
+	return result;
 }
 
 
@@ -1606,7 +1524,7 @@ TrackData Track::make_values_vector_altitude_time(int compressed_n_points) const
 /**
    Make a speed/distance map.
 */
-TrackData Track::make_values_vector_speed_distance(int compressed_n_points) const
+TrackData Track::make_track_data_speed_over_distance(int compressed_n_points) const
 {
 	TrackData compressed_sd;
 
@@ -1615,10 +1533,10 @@ TrackData Track::make_values_vector_speed_distance(int compressed_n_points) cons
 		return compressed_sd;
 	}
 
-	const double delta_d = total_length / (compressed_n_points - 1);
+	const double delta_d_A = total_length / (compressed_n_points - 1);
 
 	compressed_sd.allocate_vector(compressed_n_points);
-	TrackData raw_dt = this->make_values_distance_time();
+	TrackData raw_dt = this->make_values_distance_over_time_helper();
 
 	/* Iterate through a portion of the track to get an average speed for that part.
 	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
@@ -1627,18 +1545,24 @@ TrackData Track::make_values_vector_speed_distance(int compressed_n_points) cons
 	for (i = 0; i < compressed_n_points; i++) {
 #if 1
 		if (i + 1 < compressed_n_points) {
-			double acc_s = (raw_dt.y[i + 1] - raw_dt.y[i]);
-			double acc_t = (raw_dt.x[i + 1] - raw_dt.x[i]);
-			compressed_sd.y[i] = acc_s / acc_t;
+			const double delta_d = (raw_dt.y[i + 1] - raw_dt.y[i]);
+			const double delta_t = (raw_dt.x[i + 1] - raw_dt.x[i]);
+			compressed_sd.y[i] = delta_d / delta_t;
+			if (i > 0) {
+				compressed_sd.x[i] = compressed_sd.x[i - 1] + delta_d;
+			}
 		} else {
 			compressed_sd.y[i] = compressed_sd.y[i - 1];
+			if (i > 0) {
+				compressed_sd.x[i] = compressed_sd.x[i - 1];
+			}
 		}
 #else
-		/* Similar to the make_values_vector_speed_time(), but instead of using a time chunk, use a distance chunk. */
-		if (raw_dt.y[0] + i * delta_d >= raw_dt.y[tp_index]) {
+		/* Similar to the make_track_data_speed_over_time(), but instead of using a time chunk, use a distance chunk. */
+		if (raw_dt.y[0] + i * delta_d_A >= raw_dt.y[tp_index]) {
 			double acc_t = 0;
 			double acc_s = 0;
-			while (raw_dt.y[0] + i * delta_d >= raw_dt.y[tp_index]) {
+			while (raw_dt.y[0] + i * delta_d_A >= raw_dt.y[tp_index]) {
 				acc_s += (raw_dt.y[tp_index + 1] - raw_dt.y[tp_index]);
 				acc_t += (raw_dt.x[tp_index + 1] - raw_dt.x[tp_index]);
 				tp_index++;

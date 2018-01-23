@@ -121,6 +121,8 @@ namespace SlavGPS {
 		void calculate_min_max(void);
 		void allocate_vector(int n_data_points);
 
+		TrackData compress(int compressed_size) const;
+
 		double * x = NULL;
 		double * y = NULL;
 
@@ -228,14 +230,15 @@ namespace SlavGPS {
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
 		bool get_minmax_alt(double * min_alt, double * max_alt) const;
 
-		TrackData make_values_vector_altitude_distance(int compressed_n_points) const;
-		TrackData make_values_vector_gradient_distance(int compressed_n_points) const;
-		TrackData make_values_vector_speed_time(int compressed_n_points) const;
-		TrackData make_values_vector_distance_time(int compressed_n_points) const;
-		TrackData make_values_vector_altitude_time(int compressed_n_points) const;
-		TrackData make_values_vector_speed_distance(int compressed_n_points) const;
-		TrackData make_values_distance_time(void) const;
-		TrackData make_values_altitude_time(void) const;
+		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
+		TrackData make_track_data_gradient_over_distance(int compressed_n_points) const;
+		TrackData make_track_data_speed_over_time(void) const;
+		TrackData make_track_data_distance_over_time(void) const;
+		TrackData make_track_data_altitude_over_time(void) const;
+		TrackData make_track_data_speed_over_distance(int compressed_n_points) const;
+
+		TrackData make_values_distance_over_time_helper(void) const;
+		TrackData make_values_altitude_over_time_helper(void) const;
 
 
 		void marshall(uint8_t ** data, size_t * data_len);

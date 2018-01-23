@@ -318,7 +318,8 @@ namespace SlavGPS {
 		double y_min_visible = 0.0;
 		double y_max_visible = 0.0;
 
-		TrackData track_data;
+		TrackData track_data;     /* Compressed. */
+		TrackData track_data_raw; /* Raw = uncompressed. */
 
 
 		GeoCanvas geocanvas;

@@ -198,17 +198,25 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	/* First create track data using appropriate Track method. */
 
 	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_values_vector_altitude_distance(this->width);
+		this->track_data = trk->make_track_data_altitude_over_distance(this->width);
+
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Gradient && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_values_vector_gradient_distance(this->width);
+		this->track_data = trk->make_track_data_gradient_over_distance(this->width);
+
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Speed && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
-		this->track_data = trk->make_values_vector_speed_time(this->width);
+		this->track_data_raw = trk->make_track_data_speed_over_time();
+		this->track_data = this->track_data_raw.compress(this->width);
+
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Distance && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
-		this->track_data = trk->make_values_vector_distance_time(this->width);
+		this->track_data_raw = trk->make_track_data_distance_over_time();
+		this->track_data = this->track_data_raw.compress(this->width);
+
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation && this->geocanvas.x_domain == GeoCanvasDomain::Time) {
-		this->track_data = trk->make_values_vector_altitude_time(this->width);
+		this->track_data_raw = trk->make_track_data_altitude_over_time();
+		this->track_data = this->track_data_raw.compress(this->width);
+
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Speed && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_values_vector_speed_distance(this->width);
+		this->track_data = trk->make_track_data_speed_over_distance(this->width);
 	} else {
 		qDebug() << "EE:" PREFIX << "unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
 	}
@@ -254,9 +262,12 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = convert_distance_meters_to(this->track_data.y[i], this->geocanvas.distance_unit);
 		}
 
+#if 0
 		this->track_data.y_min = 0;
 		this->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), this->geocanvas.distance_unit);
+#endif
 
+		this->track_data.calculate_min_max();
 		break;
 	case GeoCanvasDomain::Gradient:
 		/* No unit conversion needed. */
@@ -406,14 +417,27 @@ void ProfileGraph::set_initial_visible_range_y(void)
 	   be non-rounded (i.e. random).  Make them non-rounded from
 	   the start, and be prepared to handle non-rounded
 	   y_min/max_visible from the start. */
+	const double over = 0.05; /* There is no deep reasoning behind this particular value. */
 	const double range = abs(this->track_data.y_max - this->track_data.y_min);
-	if (this->track_data.y_min != 0.0) {
+
+	switch (this->geocanvas.y_domain) {
+	case GeoCanvasDomain::Speed:
+	case GeoCanvasDomain::Distance:
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
 		   a graph wouldn't make sense. */
-		this->y_min_visible = this->track_data.y_min - range * 0.05;
+		this->y_min_visible = this->track_data.y_min;
+		break;
+	case GeoCanvasDomain::Elevation:
+	case GeoCanvasDomain::Gradient:
+		this->y_min_visible = this->track_data.y_min - range * over;
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		/* TODO: see what happens when we return here. */
+		return;
 	}
-	this->y_max_visible = this->track_data.y_max + range * 0.05;
+	this->y_max_visible = this->track_data.y_max + range * over;
 
 
 
