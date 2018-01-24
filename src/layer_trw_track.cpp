@@ -1524,63 +1524,48 @@ TrackData Track::make_track_data_altitude_over_time(void) const
 /**
    Make a speed/distance map.
 */
-TrackData Track::make_track_data_speed_over_distance(int compressed_n_points) const
+TrackData Track::make_track_data_speed_over_distance(void) const
 {
-	TrackData compressed_sd;
+	TrackData result;
 
 	double total_length = this->get_length_including_gaps();
 	if (total_length <= 0) {
-		return compressed_sd;
+		return result;
 	}
 
-	const double delta_d_A = total_length / (compressed_n_points - 1);
+	const int tp_count = this->get_tp_count();
+	const TrackData data_dt = this->make_values_distance_over_time_helper();
 
-	compressed_sd.allocate_vector(compressed_n_points);
-	TrackData raw_dt = this->make_values_distance_over_time_helper();
+	result.allocate_vector(tp_count);
 
-	/* Iterate through a portion of the track to get an average speed for that part.
-	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
-	int tp_index = 0; /* Index of the current trackpoint. */
 	int i = 0;
-	for (i = 0; i < compressed_n_points; i++) {
-#if 1
-		if (i + 1 < compressed_n_points) {
-			const double delta_d = (raw_dt.y[i + 1] - raw_dt.y[i]);
-			const double delta_t = (raw_dt.x[i + 1] - raw_dt.x[i]);
-			compressed_sd.y[i] = delta_d / delta_t;
-			if (i > 0) {
-				compressed_sd.x[i] = compressed_sd.x[i - 1] + delta_d;
-			}
-		} else {
-			compressed_sd.y[i] = compressed_sd.y[i - 1];
-			if (i > 0) {
-				compressed_sd.x[i] = compressed_sd.x[i - 1];
+	result.x[i] = 0;
+	result.y[i] = 0;
+	i++;
+	for (; i < tp_count; i++) {
+		/* Iterate over 'n + 1 + n' points of a track to get
+		   an average speed for that part.  This will
+		   essentially interpolate between segments, which I
+		   think is right given the usage of
+		   'get_length_including_gaps'. n == 0 is no averaging. */
+		const int n = 0;
+		double delta_d = 0.0;
+		double delta_t = 0.0;
+		for (int j = i - n; j <= i + n; j++) {
+			if (j - 1 >= 0 && j < tp_count) {
+				delta_d += (data_dt.y[j] - data_dt.y[j - 1]);
+				delta_t += (data_dt.x[j] - data_dt.x[j - 1]);
 			}
 		}
-#else
-		/* Similar to the make_track_data_speed_over_time(), but instead of using a time chunk, use a distance chunk. */
-		if (raw_dt.y[0] + i * delta_d_A >= raw_dt.y[tp_index]) {
-			double acc_t = 0;
-			double acc_s = 0;
-			while (raw_dt.y[0] + i * delta_d_A >= raw_dt.y[tp_index]) {
-				acc_s += (raw_dt.y[tp_index + 1] - raw_dt.y[tp_index]);
-				acc_t += (raw_dt.x[tp_index + 1] - raw_dt.x[tp_index]);
-				tp_index++;
-			}
-			compressed_sd.y[i] = acc_s / acc_t;
-		} else if (i) {
-			compressed_sd.y[i] = compressed_sd.y[i - 1];
-		} else {
-			compressed_sd.y[i] = 0;
-		}
-#endif
+
+		result.y[i] = delta_d / delta_t;
+		result.x[i] = result.x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
 	}
 
-	assert(i == compressed_n_points);
+	assert(i == tp_count);
 
-	compressed_sd.n_points = compressed_n_points;
-	compressed_sd.valid = true;
-	return compressed_sd;
+	result.valid = true;
+	return result;
 }
 
 

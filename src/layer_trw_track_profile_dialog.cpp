@@ -216,7 +216,8 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		this->track_data = this->track_data_raw.compress(this->width);
 
 	} else if (this->geocanvas.y_domain == GeoCanvasDomain::Speed && this->geocanvas.x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_track_data_speed_over_distance(this->width);
+		this->track_data_raw = trk->make_track_data_speed_over_distance();
+		this->track_data = this->track_data_raw.compress(this->width);
 	} else {
 		qDebug() << "EE:" PREFIX << "unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
 	}

@@ -235,11 +235,7 @@ namespace SlavGPS {
 		TrackData make_track_data_speed_over_time(void) const;
 		TrackData make_track_data_distance_over_time(void) const;
 		TrackData make_track_data_altitude_over_time(void) const;
-		TrackData make_track_data_speed_over_distance(int compressed_n_points) const;
-
-		TrackData make_values_distance_over_time_helper(void) const;
-		TrackData make_values_altitude_over_time_helper(void) const;
-
+		TrackData make_track_data_speed_over_distance(void) const;
 
 		void marshall(uint8_t ** data, size_t * data_len);
 		static Track * unmarshall(uint8_t * data, size_t data_len);
@@ -330,6 +326,8 @@ namespace SlavGPS {
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
+		TrackData make_values_distance_over_time_helper(void) const;
+		TrackData make_values_altitude_over_time_helper(void) const;
 
 	public slots:
 		void goto_startpoint_cb(void);
