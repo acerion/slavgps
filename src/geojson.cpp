@@ -72,7 +72,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	/* geojson program should be on the $PATH. */
 	char ** argv;
 	argv = (char **) malloc(5 * sizeof (char *));
-	argv[0] = g_strdup(geojson_program_export());
+	argv[0] = g_strdup(geojson_program_export().toUtf8().constData());
 	argv[1] = strdup("-f");
 	argv[2] = strdup("gpx");
 	argv[3] = g_strdup(tmp_filename);
@@ -125,7 +125,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 
    Tested with version 0.7.0.
 */
-const char * SlavGPS::geojson_program_export(void)
+QString SlavGPS::geojson_program_export(void)
 {
 	return "togeojson";
 }
@@ -139,7 +139,7 @@ const char * SlavGPS::geojson_program_export(void)
 
   Tested with version 0.3.1.
 */
-const char * SlavGPS::geojson_program_import(void)
+QString SlavGPS::geojson_program_import(void)
 {
 	return "togpx";
 }
@@ -173,7 +173,7 @@ char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 	/* geojson program should be on the $PATH. */
 	char ** argv;
 	argv = (char **) malloc(3 * sizeof (char *));
-	argv[0] = g_strdup(geojson_program_import());
+	argv[0] = g_strdup(geojson_program_import().toUtf8().constData());
 	argv[1] = g_strdup(file_full_path.toUtf8().constData());
 	argv[2] = NULL;
 

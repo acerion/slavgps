@@ -99,6 +99,17 @@ QString LatLon::lon_to_string_raw(const LatLon & lat_lon)
 
 
 
+QString LatLon::to_string(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return QString("%1,%2")
+		.arg(c_locale.toString(this->lat, 'f', SG_PRECISION_LATITUDE))
+		.arg(c_locale.toString(this->lon, 'f', SG_PRECISION_LONGITUDE));
+}
+
+
+
+
 /**
  * Convert a double to a string WITHOUT LOCALE.
  *

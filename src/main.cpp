@@ -233,9 +233,6 @@ int main(int argc, char ** argv)
 	SGUtils::set_auto_features_on_first_run();
 
 
-	QColor c("red");
-	qDebug() << "---------------" << c.red() << c.green();
-
 	/* Create the first window. */
 	Window * first_window = Window::new_window();
 

@@ -75,6 +75,9 @@ namespace SlavGPS {
 		static QString lat_to_string_raw(const LatLon & lat_lon);
 		static QString lon_to_string_raw(const LatLon & lat_lon);
 
+		/* Returns "lat,lon" string. */
+		QString to_string(void) const;
+
 		/**
 		   Convert a LatLon to strings using preferred representation
 		*/

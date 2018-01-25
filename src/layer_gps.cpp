@@ -55,7 +55,6 @@
 #include "tree_view_internal.h"
 #include "application_state.h"
 #include "globals.h"
-//typedef int GdkPixdata; /* TODO: remove sooner or later. */
 //#include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"

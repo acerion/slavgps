@@ -50,7 +50,7 @@ namespace SlavGPS {
 
 	QPixmap * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
 
-	char * mapnik_interface_get_copyright(MapnikInterface * mi);
+	QString mapnik_interface_get_copyright(MapnikInterface * mi);
 
 	QStringList * mapnik_interface_get_parameters(MapnikInterface * mi);
 

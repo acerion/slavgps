@@ -46,7 +46,7 @@ using namespace SlavGPS;
 /************************************ Simplify (Count) *****************************/
 
 /* Spin button scales. */
-ParameterScale scale_simplify = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardwired default value. */
+ParameterScale scale_simplify = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardcoded default value. */
 
 ParameterSpecification bfilter_simplify_params[] = {
 	{ 0, NULL, "numberofpoints", SGVariantType::INT, PARAMETER_GROUP_GENERIC, QObject::tr("Max number of points:"), WidgetType::SPINBOX_INT, &scale_simplify, NULL, NULL, NULL },
@@ -135,7 +135,7 @@ DataSourceInterface datasource_bfilter_simplify_interface = {
 
 
 
-static ParameterScale scale_compress = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardwired default value. */
+static ParameterScale scale_compress = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardcoded default value. */
 
 ParameterSpecification bfilter_compress_params[] = {
 	// { 1, NULL, "compressmethod", SGVariantType::INT,   PARAMETER_GROUP_GENERIC, QObject::tr("Simplify Method:"), WidgetType::COMBOBOX,   compress_method,      NULL, NULL, NULL },

@@ -174,11 +174,11 @@ namespace SlavGPS {
 		QString get_type_ui_label(void) const;
 
 
-		static bool compare_timestamp_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
-		static bool compare_timestamp_ascending(Layer * first, Layer * second);
+		static bool compare_timestamp_descending(const Layer * first, const Layer * second);
+		static bool compare_timestamp_ascending(const Layer * first, const Layer * second);
 
-		static bool compare_name_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
-		static bool compare_name_ascending(Layer * first, Layer * second);
+		static bool compare_name_descending(const Layer * first, const Layer * second);
+		static bool compare_name_ascending(const Layer * first, const Layer * second);
 
 
 

@@ -232,8 +232,7 @@ DataSourceGCDialog::DataSourceGCDialog(Viewport * new_viewport)
 	this->miles_radius_spin.setValue(5);
 
 	const LatLon lat_lon = this->viewport->get_center()->get_latlon();
-	this->center_entry.setText(QString("%1,%2").arg(lat_lon.lat).arg(lat_lon.lon)); /* TODO: creating lat,lon string should be extracted to separate method. */
-
+	this->center_entry.setText(lat_lon.to_string()); /* "lat,lon" string. */
 
 	this->circle_pen.setColor(QColor("#000000"));
 	this->circle_pen.setWidth(3);

@@ -753,7 +753,7 @@ bool Layer::set_param_value(uint16_t id, const SGVariant & param_value, bool is_
 
 
 
-bool Layer::compare_timestamp_descending(Layer * first, Layer * second)
+bool Layer::compare_timestamp_descending(const Layer * first, const Layer * second)
 {
 	return first->get_timestamp() > second->get_timestamp();
 }
@@ -761,7 +761,7 @@ bool Layer::compare_timestamp_descending(Layer * first, Layer * second)
 
 
 
-bool Layer::compare_timestamp_ascending(Layer * first, Layer * second)
+bool Layer::compare_timestamp_ascending(const Layer * first, const Layer * second)
 {
 	return !Layer::compare_timestamp_descending(first, second);
 }
@@ -769,7 +769,7 @@ bool Layer::compare_timestamp_ascending(Layer * first, Layer * second)
 
 
 
-bool Layer::compare_name_descending(Layer * first, Layer * second)
+bool Layer::compare_name_descending(const Layer * first, const Layer * second)
 {
 	/* TODO: is it '>' or '<'? */
 	return (first->name > second->name);
@@ -778,7 +778,7 @@ bool Layer::compare_name_descending(Layer * first, Layer * second)
 
 
 
-bool Layer::compare_name_ascending(Layer * first, Layer * second)
+bool Layer::compare_name_ascending(const Layer * first, const Layer * second)
 {
 	return !Layer::compare_name_descending(first, second);
 }

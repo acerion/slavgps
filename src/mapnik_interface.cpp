@@ -78,7 +78,7 @@ using namespace SlavGPS;
 class SlavGPS::MapnikInterface {
 public:
 	mapnik::Map * myMap = NULL;
-	char * copyright = NULL; /* Cached Mapnik parameter to save looking it up each time. */
+	QString copyright; /* Cached Mapnik parameter to save looking it up each time. */
 };
 
 
@@ -94,7 +94,6 @@ SlavGPS::MapnikInterface * SlavGPS::mapnik_interface_new()
 {
 	MapnikInterface * mi = new MapnikInterface;
 	mi->myMap = new mapnik::Map;
-	mi->copyright = NULL;
 	return mi;
 }
 
@@ -104,9 +103,6 @@ SlavGPS::MapnikInterface * SlavGPS::mapnik_interface_new()
 void SlavGPS::mapnik_interface_free(MapnikInterface * mi)
 {
 	if (mi) {
-		if (mi->copyright) {
-			free(mi->copyright);
-		}
 		delete mi->myMap;
 	}
 	delete mi;
@@ -148,10 +144,9 @@ void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char *
  */
 static void set_copyright(MapnikInterface * mi)
 {
-#ifdef K
-	g_free(mi->copyright);
-	mi->copyright = NULL;
+	mi->copyright = "";
 
+#ifdef K
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 #if MAPNIK_VERSION < 300000
 	for (mapnik::parameters::const_iterator ii = pmts.begin(); ii != pmts.end(); ii++) {
@@ -159,18 +154,18 @@ static void set_copyright(MapnikInterface * mi)
 			std::stringstream ss;
 			ss << ii->second;
 			// Copy it
-			mi->copyright = g_strdup((char *)ss.str().c_str());
+			mi->copyright = QString::fromStdString(ss);
 			break;
 		}
 	}
 #else
 	if (pmts.get<std::string>("attribution")) {
-		mi->copyright = g_strdup((*pmts.get<std::string>("attribution")).c_str());
+		mi->copyright = QString::fromStdString(*pmts.get<std::string>("attribution"));
 	}
 
-	if (!mi->copyright) {
+	if (mi->copyright.isEmpty()) {
 		if (pmts.get<std::string>("copyright")) {
-			mi->copyright = g_strdup((*pmts.get<std::string>("copyright")).c_str());
+			mi->copyright = QString::fromStdString(*pmts.get<std::string>("copyright"));
 		}
 	}
 #endif
@@ -297,10 +292,10 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
  *
  * Free returned string  after use.
  */
-char * SlavGPS::mapnik_interface_get_copyright(MapnikInterface * mi)
+QString SlavGPS::mapnik_interface_get_copyright(MapnikInterface * mi)
 {
 	if (!mi) {
-		return NULL;
+		return "";
 	}
 	return mi->copyright;
 }

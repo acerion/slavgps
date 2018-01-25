@@ -1482,7 +1482,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 						}
 
 						if (0 == access(path_buf, F_OK)) {
-							const QPen pen (QColor("#E6202E")); /* kamilTODO: This should be black. */
+							const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
 							viewport->draw_line(pen, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
 						}
 					} else {
@@ -1521,7 +1521,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				   Thus loop around x & y again, but this time separately.
 				   Only showing grid for the current scale */
 
-				const QPen pen (QColor("#E6202E")); /* kamilTODO: This should be black. */
+				const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
 
 				/* Draw single grid lines across the whole screen. */
 				int width = viewport->get_width();

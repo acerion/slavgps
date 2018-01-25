@@ -334,9 +334,6 @@ void SlavGPS::modules_post_init()
 	layer_mapnik_init();
 #endif
 	viewport_init();
-#ifdef K
-	window_init();
-#endif
 }
 
 

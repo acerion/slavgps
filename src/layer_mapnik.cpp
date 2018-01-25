@@ -819,9 +819,9 @@ void LayerMapnik::draw(Viewport * viewport)
 	}
 
 	if (this->mi) {
-		char * copyright = mapnik_interface_get_copyright(this->mi);
-		if (copyright) {
-			viewport->add_copyright(QString(copyright));
+		const QString copyright = mapnik_interface_get_copyright(this->mi);
+		if (!copyright.isEmpty()) {
+			viewport->add_copyright(copyright);
 		}
 	}
 
@@ -1117,7 +1117,7 @@ void LayerMapnik::tile_info()
 
 	/* Show the info. */
 	if (extra.duration > 0.0) {
-		QString render_message = QString(tr("Rendering time %1 seconds")).arg(extra.duration); /* kamilTODO: ensure that this argument is formatted as "%.2f". */
+		QString render_message = QObject::tr("Rendering time %1 seconds").arg(extra.duration, 0, 'f', 2);
 		items.push_back(render_message);
 	}
 

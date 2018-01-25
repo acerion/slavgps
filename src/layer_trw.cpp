@@ -85,7 +85,7 @@
 #include "garminsymbols.h"
 #include "background.h"
 #include "gpx.h"
-#include "geojson.h"
+
 #include "babel.h"
 #include "acquire.h"
 #include "datasources.h"
@@ -96,6 +96,7 @@
 #include "icons/icons.h"
 #endif
 
+#include "geojson.h"
 #include "clipboard.h"
 #include "gpspoint.h"
 #include "widget_list_selection.h"
@@ -476,11 +477,10 @@ void SlavGPS::layer_trw_init(void)
 		free(mystderr);
 		free(cmd);
 	}
-#ifdef K
+
 	if (!QStandardPaths::findExecutable(geojson_program_export()).isEmpty()) {
 		have_geojson_export = true;
 	}
-#endif
 
 	/* Astronomy Domain. */
 	if (!ApplicationState::get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, astro_program)) {
