@@ -61,8 +61,6 @@ namespace SlavGPS {
 
 		BabelFileType * get_file_type_selection(void);
 
-		void add_file_type_filter(BabelFileType * babel_file_type);
-
 	private slots:
 		void file_type_changed_cb(int index);
 		void on_accept_cb(void);

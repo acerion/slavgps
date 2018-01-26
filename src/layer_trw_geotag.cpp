@@ -704,12 +704,10 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	widgets->dialog->setWindowTitle(QObject::tr("Geotag Images"));
 
 #ifdef K
+	QStringList mime_type_filters;
+	mime_type_filters << "image/jpeg";
 
-	GtkFileFilter *filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, QObject::tr("JPG"));
-	gtk_file_filter_add_mime_type(filter, "image/jpeg");
-
-	widgets->files = VIK_FILE_LIST(vik_file_list_new(QObject::tr("Images"), filter));
+	widgets->files = VIK_FILE_LIST(vik_file_list_new(QObject::tr("Images"), mime_type_filters));
 	widgets->trw = trw;
 	widgets->wp = wp;
 	widgets->trk = trk;
@@ -749,39 +747,39 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	create_waypoints_b_cb(GTK_WIDGET(widgets->create_waypoints_b), widgets);
 	QObject::connect(widgets->create_waypoints_b, SIGNAL("toggled"), widgets, SLOT (create_waypoints_b_cb));
 
-	GtkWidget *cw_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * cw_hbox = new QHBoxLayout();
 	QLabel * create_waypoints_l = new QLabel(QObject::tr("Create Waypoints:"));
 	cw_hbox->addWidget(create_waypoints_l);
 	cw_hbox->addWidget(widgets->create_waypoints_b);
 
-	GtkWidget *ow_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * ow_hbox = new QHBoxLayout();
 	ow_hbox->addWidget(widgets->overwrite_waypoints_l);
 	ow_hbox->addWidget(widgets->overwrite_waypoints_b);
 
-	GtkWidget *we_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * we_hbox = new QHBoxLayout();
 	we_hbox->addWidget(new QLabel(QObject::tr("Write EXIF:")));
 	we_hbox->addWidget(widgets->write_exif_b);
 
-	GtkWidget *og_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * og_hbox = new QHBoxLayout();
 	og_hbox->addWidget(widgets->overwrite_gps_exif_l);
 	og_hbox->addWidget(widgets->overwrite_gps_exif_b);
 
-	GtkWidget *fm_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * fm_hbox = new QHBoxLayout();
 	fm_hbox->addWidget(widgets->no_change_mtime_l);
 	fm_hbox->addWidget(widgets->no_change_mtime_b);
 
-	GtkWidget *is_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * is_hbox = new QHBoxLayout();
 	QLabel * interpolate_segments_l = new QLabel(QObject::tr("Interpolate Between Track Segments:"));
 	is_hbox->addWidget(widgets->interpolate_segments_l);
 	is_hbox->addWidget(widgets->interpolate_segments_b);
 
-	GtkWidget *to_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * to_hbox = new QHBoxLayout();
 	QLabel * time_offset_l = new QLabel(QObject::tr("Image Time Offset (Seconds):"));
 	to_hbox->addWidget(time_offset_l);
 	to_hbox->addWidget(&widgets->time_offset_b);
 	widgets->time_offset_b.setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
 
-	GtkWidget *tz_hbox = gtk_hbox_new(false, 0);
+	QHBoxLayout * tz_hbox = new QHBoxLayout();
 	QLabel * time_zone_l = new QLabel(QObject::tr("Image Timezone:"));
 	tz_hbox->addWidget(time_zone_l);
 	tz_hbox->addWidget(&widgets->time_zone_b);
@@ -823,7 +821,5 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	QObject::connect(widgets->dialog, SIGNAL("response"), widgets, SLOT (trw_layer_geotag_response_cb));
 
 	widgets->dialog->button_box->button(QDialogButtonBox::Discard)->setDefault(true);
-
-	gtk_widget_show_all(widgets->dialog);
 #endif
 }

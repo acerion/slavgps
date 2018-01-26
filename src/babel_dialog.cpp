@@ -39,6 +39,9 @@ using namespace SlavGPS;
 /* The last file format selected. */
 static int g_last_file_type_index = 0;
 
+/* TODO: verify how to implement "last used directory" here. Look at
+   g_last_directory_url in datasource_file.cpp. */
+
 
 
 
@@ -344,19 +347,23 @@ void BabelDialog::file_type_changed_cb(int index)
 	/* Update file type filters in file selection dialog according
 	   to currently selected babel file type. */
 	QStringList filters;
+	QString selected;
+
 	filters << tr("All files (*)");
 
 	BabelFileType * selection = this->get_file_type_selection();
 	if (selection) {
 		if (!selection->extension.isEmpty()) {
-
-			QString filter = QString(selection->label + " (*." + QString(selection->extension) + ")");
-			qDebug() << "II: Babel Dialog: adding file filter " << filter;
-			filters << filter;
+			selected = selection->label + " (*." + selection->extension + ")";
+			qDebug() << "II: Babel Dialog: using" << selected << "as selected file filter";
+			filters << selected;
 		}
 	}
 
 	this->file_entry->file_selector->setNameFilters(filters);
+	if (!selected.isEmpty()) {
+		this->file_entry->file_selector->selectNameFilter(selected);
+	}
 }
 
 
@@ -371,39 +378,4 @@ void BabelDialog::on_accept_cb(void)
 	} else {
 		qDebug() << "SLOT: Babel Dialog: On Accept: last file type index =" << g_last_file_type_index;
 	}
-}
-
-
-
-
-void BabelDialog::add_file_type_filter(BabelFileType * file_type)
-{
-	if (file_type->extension.isEmpty()) {
-		/* No file extension => no filter. */
-		return;
-	}
-	const QString pattern = QString("*.%1").arg(file_type->extension);
-
-#ifdef K
-	GtkFileFilter * filter = gtk_file_filter_new();
-	gtk_file_filter_add_pattern(filter, pattern);
-	if (strstr(file_type->label, pattern+1)) {
-		gtk_file_filter_set_name(filter, file_type->label);
-	} else {
-		/* Ensure displayed label contains file pattern. */
-		/* NB: we skip the '*' in the pattern. */
-		char * name = g_strdup_printf("%s (%s)", file_type->label, pattern+1);
-		gtk_file_filter_set_name(filter, name);
-		free(name);
-	}
-
-	g_object_set_data(G_OBJECT(filter), "Babel", file_type);
-	gtk_file_chooser_add_filter(this->file_entry, filter);
-	if (last_file_type == file_type) {
-		/* Previous selection used this filter. */
-		this->file_entry->selectNameFilter(filter);
-	}
-
-	free(pattern);
-#endif
 }

@@ -48,7 +48,12 @@ public:
 
 
 /* The last used directory. */
-static QUrl last_directory_url;
+static QUrl g_last_directory_url;
+
+/* The last used file filter. */
+/* TODO: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
+// static QString g_last_filter;
+
 
 
 
@@ -100,14 +105,19 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
 	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFiles, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
 
-	if (last_directory_url.isValid()) {
-		this->file_entry->file_selector->setDirectoryUrl(last_directory_url);
+	if (g_last_directory_url.isValid()) {
+		this->file_entry->file_selector->setDirectoryUrl(g_last_directory_url);
 	}
+#ifdef K
+	if (!g_last_filter.isEmpty()) {
+		this->file_entry->file_selector->selectNameFilter(g_last_filter);
+	}
+#endif
 
 	const QString filter1 = QObject::tr("GeoJSON (*.geojson)");
 	const QString filter2 = QObject::tr("All (*)");
-	const QStringList filter = { filter1, filter2 };
-	this->file_entry->file_selector->setNameFilters(filter);
+	const QStringList filters = { filter1, filter2 };
+	this->file_entry->file_selector->setNameFilters(filters);
 	this->file_entry->file_selector->selectNameFilter(filter1); /* Default to geojson. */
 
 	this->setMinimumWidth(400); /* TODO: perhaps this value should be #defined somewhere. */
@@ -124,10 +134,11 @@ ProcessOptions * DataSourceGeoJSONDialog::get_process_options(DownloadOptions & 
 
 	this->selected_files = this->file_entry->file_selector->selectedFiles();
 
-	last_directory_url = this->file_entry->file_selector->directoryUrl();
+	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
 
-	/* TODO Memorize the file filter for later reuse? */
-	//GtkFileFilter *filter = gtk_file_chooser_get_filter(this->file_entry);
+#ifdef K /* TODO Memorize the file filter for later reuse? */
+	g_last_filter = this->file_entry->file_selector->selectedNameFilter();
+#endif
 
 	/* Return some value so *thread* processing will continue. */
 	po->babel_args = "fake command"; /* Not really used, thus no translations. */

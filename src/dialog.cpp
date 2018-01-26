@@ -148,7 +148,6 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
 	for (int i = 0; i < items.size(); i++) {
 		QLabel * label = ui_label_new_selectable(items.at(i), &box);
 		vbox.addWidget(label);
-		// gtk_box_pack_start(GTK_BOX(vbox), label, false, true, padding);
 	}
 
 	box.exec();

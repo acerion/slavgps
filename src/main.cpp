@@ -115,38 +115,21 @@ static MapTypeID startup_map_type_id = MAP_TYPE_ID_INITIAL;
 int main(int argc, char ** argv)
 {
 
-#if 0
+#ifdef K
 	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
-
-#if ! GLIB_CHECK_VERSION (2, 32, 0)
-	g_thread_init(NULL);
 #endif
-	gdk_threads_init();
 
-	GError *error = NULL;
-	bool gui_initialized = gtk_init_with_args(&argc, &argv, "files+", entries, NULL, &error);
-	if (!gui_initialized) {
-		/* Check if we have an error message. */
-		if (error == NULL) {
-			/* No error message, the GUI initialization failed. */
-			const char *display_name = gdk_get_display_arg_name();
-			fprintf(stderr, "Failed to open display: %s\n", (display_name != NULL) ? display_name : " ");
-		} else {
-			/* Yep, there's an error, so print it. */
-			fprintf(stderr, "Parsing command line options failed: %s\n", error->message);
-			g_error_free(error);
-			fprintf(stderr, "Run \"%s --help\" to see the list of recognized options.\n",argv[0]);
-		}
-		return EXIT_FAILURE;
-	}
 
 	if (vik_version) {
-		g_printf ("%s %s\nCopyright (c) 2003-2008 Evan Battaglia\nCopyright (c) 2008-" THEYEAR" Viking's contributors\n", PACKAGE_NAME, PACKAGE_VERSION);
+		qDebug() << QObject::tr("%1 %2\nCopyright (c) 2003-2008 Evan Battaglia\nCopyright (c) 2008-%3 Viking's contributors\n")
+			.arg(PACKAGE_NAME).arg(PACKAGE_VERSION).arg(THEYEAR);
 		return EXIT_SUCCESS;
 	}
 
+
+#ifdef K
 #if GLIB_CHECK_VERSION (2, 32, 0)
 	if (vik_debug) {
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
@@ -215,12 +198,6 @@ int main(int argc, char ** argv)
 	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
 		vu_setup_lat_lon_tz_lookup();
 	}
-
-#ifdef K
-	/* Set the icon. */
-	QPixmap * main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
-	gtk_window_set_default_icon(main_icon);
-#endif
 
 	QApplication app(argc, argv);
 

@@ -46,14 +46,12 @@ using namespace SlavGPS;
 
 
 /* The last used directory. */
-static QUrl last_directory_url;
+static QUrl g_last_directory_url;
 
 
 /* The last used file filter. */
-/* Nb: we use a complex strategy for this because the UI is rebuild each
-   time, so it is not possible to reuse directly the GtkFileFilter as they are
-   differents. */
-static BabelFileType * last_file_type = NULL;
+/* TODO: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
+static QString g_last_filter;
 
 
 
@@ -103,8 +101,11 @@ static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, vo
 DataSourceFileDialog::DataSourceFileDialog(const QString & title) : BabelDialog(title)
 {
 	this->build_ui();
-	if (last_directory_url.isValid()) {
-		this->file_entry->file_selector->setDirectoryUrl(last_directory_url);
+	if (g_last_directory_url.isValid()) {
+		this->file_entry->file_selector->setDirectoryUrl(g_last_directory_url);
+	}
+	if (!g_last_filter.isEmpty()) {
+		this->file_entry->file_selector->selectNameFilter(g_last_filter);
 	}
 
 	this->file_entry->setFocus();
@@ -126,13 +127,8 @@ ProcessOptions * DataSourceFileDialog::get_process_options(DownloadOptions & dl_
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	last_directory_url = this->file_entry->file_selector->directoryUrl();
-
-#ifdef K
-	/* Memorize the file filter for later use. */
-	GtkFileFilter *filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(this->file_entry));
-	last_file_type = (BabelFileType *) g_object_get_data(G_OBJECT(filter), "Babel");
-#endif
+	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
+	g_last_filter = this->file_entry->file_selector->selectedNameFilter();
 
 
 	const QString selected = this->get_file_type_selection()->identifier;
@@ -154,7 +150,7 @@ void DataSourceFileDialog::accept_cb(void)
 	const BabelFileType * file_type = this->get_file_type_selection();
 
 	qDebug() << "II: Datasource File: dialog result: accepted";
-	qDebug() << "II: Datasource File: selected format type identifier: '" << file_type->identifier  << "'";
-	qDebug() << "II: Datasource File: selected format type label: '" << file_type->label << "'";
-	qDebug() << "II: Datasource File: selected file path: '" << this->file_entry->get_filename() << "'";
+	qDebug() << "II: Datasource File: selected format type identifier:" << file_type->identifier;
+	qDebug() << "II: Datasource File: selected format type label:" << file_type->label;
+	qDebug() << "II: Datasource File: selected file path:" << this->file_entry->get_filename();
 }

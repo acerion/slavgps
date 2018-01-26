@@ -312,7 +312,6 @@ GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : Lay
 	//shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_ruler_pixbuf;
 
-	//gtk_widget_get_style(this->viewport)->black_gc,
 	this->pen.setColor("black");
 	this->pen.setWidth(1);
 }

@@ -486,15 +486,15 @@ void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const S
 	points[3] = QPoint(end.x, end.y);
 
 	QPen tmp_pen;
-#ifndef K
-	tmp_pen.setColor("green");
-	tmp_pen.setWidth(1);
-#else
+#ifdef K
 	if (((begin.x - x) > 0 && (begin.y - y) > 0) || ((begin.x - x) < 0 && (begin.y - y) < 0)) {
 		tmp_pen = gtk_widget_get_style(this->viewport)->light_gc[3];
 	} else {
 		tmp_pen = gtk_widget_get_style(this->viewport)->dark_gc[0];
 	}
+#else
+	tmp_pen.setColor("green");
+	tmp_pen.setWidth(1);
 #endif
 	this->viewport->draw_polygon(tmp_pen, points, 4, true);
 

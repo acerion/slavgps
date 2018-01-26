@@ -880,7 +880,7 @@ void draw_loaded_dem_box(Viewport * viewport)
 
 	qDebug() << "II: Layer DEM: drawing loaded DEM box";
 #if 0
-	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 #endif
 #endif
 	return;

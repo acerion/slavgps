@@ -325,6 +325,10 @@ Window::Window()
 	const QString accel_file_full_path = get_viking_dir() + QDir::separator() + VIKING_ACCELERATOR_KEY_FILE;
 	gtk_accel_map_load(accel_file_full_path.toUtf8().constData());
 #endif
+
+
+	/* Set the application icon. */
+	this->setWindowIcon(QIcon(":/icons/application.png"));
 }
 
 
