@@ -60,6 +60,8 @@ using namespace SlavGPS;
 #define GC_PROGRAM1 "geo-nearest"
 #define GC_PROGRAM2 "geo-html2gpx"
 
+#define METERSPERMILE 1609.344
+
 /* Params will be geocaching.username, geocaching.password
    We have to make sure these don't collide. */
 #define PREFERENCES_NAMESPACE_GC "geocaching"
@@ -67,42 +69,30 @@ using namespace SlavGPS;
 
 
 
-static DataSourceDialog * datasource_gc_create_setup_dialog(Viewport * viewport, void * user_data);
-static bool datasource_gc_check_existence(QString error_msg);
+#ifdef VIK_CONFIG_GEOCACHES
+//DataSourceInterface datasource_gc_interface;
+#endif
 
 
 
 
-#define METERSPERMILE 1609.344
+DataSourceGeoCache::DataSourceGeoCache()
+{
+	this->window_title = QObject::tr("Download Geocaches");
+	this->layer_title = QObject::tr("Geocaching.com Caches");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;         /* true = automatically update the display - otherwise we won't see the geocache waypoints! */
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+}
 
 
 
-
-DataSourceInterface datasource_gc_interface = {
-	N_("Download Geocaches"),
-	N_("Geocaching.com Caches"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,  /* Yes automatically update the display - otherwise we won't see the geocache waypoints! */
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
-
-	(DataSourceInitFunc)		      NULL,
-	(DataSourceCheckExistenceFunc)        datasource_gc_check_existence,
-	(DataSourceCreateSetupDialogFunc)     datasource_gc_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+bool DataSourceGeoCache::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
+}
 
 
 
@@ -115,7 +105,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-void a_datasource_gc_init()
+void DataSourceGeoCache::init(void)
 {
 	Preferences::register_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
@@ -126,7 +116,7 @@ void a_datasource_gc_init()
 
 
 
-static bool datasource_gc_check_existence(QString error_msg)
+bool DataSourceGeoCache::have_programs(void)
 {
 	const QString location1 = QStandardPaths::findExecutable(GC_PROGRAM1);
 	const bool OK1 = !location1.isEmpty();
@@ -138,7 +128,8 @@ static bool datasource_gc_check_existence(QString error_msg)
 		return true;
 	}
 
-	error_msg = QObject::tr("Can't find %1 or %2 in path! Check that you have installed it correctly.").arg(GC_PROGRAM1).arg(GC_PROGRAM2);
+	const QString error_msg = QObject::tr("Can't find %1 or %2 in standard location! Check that you have installed it correctly.").arg(GC_PROGRAM1).arg(GC_PROGRAM2);
+	Dialog::error(error_msg, NULL);
 
 	return false;
 }
@@ -202,7 +193,7 @@ void DataSourceGCDialog::draw_circle_cb(void)
 
 
 
-static DataSourceDialog * datasource_gc_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceGeoCache::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceGCDialog(viewport);
 }

@@ -60,38 +60,24 @@ using namespace SlavGPS;
 
 
 
-static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * get_process_options(void * user_data, DownloadOptions * dl_options, const char *notused1, const char *notused2);
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
+#ifdef VIK_CONFIG_OPENSTREETMAP
+// DataSourceInterface datasource_osm_my_traces_interface;
+#endif
 
 
 
 
-DataSourceInterface datasource_osm_my_traces_interface = {
-	N_("OSM My Traces"),
-	N_("OSM My Traces"),
-	DataSourceMode::MANUAL_LAYER_MANAGEMENT, /* We'll do this ourselves. */
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	false, /* false = don't run as thread. */
+DataSourceOSMMyTraces::DataSourceOSMMyTraces()
+{
+	this->window_title = QObject::tr("OSM My Traces");
+	this->layer_title = QObject::tr("OSM My Traces");
+	this->mode = DataSourceMode::MANUAL_LAYER_MANAGEMENT; /* We'll do this ourselves. */
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = false;
+}
 
-	(DataSourceInitFunc)	              NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_osm_my_traces_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               datasource_osm_my_traces_process,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
 
 
 
@@ -110,7 +96,7 @@ DataSourceInterface datasource_osm_my_traces_interface = {
 
 
 
-static DataSourceDialog * datasource_osm_my_traces_create_setup_dialog(Viewport * new_viewport, void * user_data)
+DataSourceDialog * DataSourceOSMMyTraces::create_setup_dialog(Viewport * new_viewport, void * user_data)
 {
 	DataSourceMyOSMDialog * setup_dialog = new DataSourceMyOSMDialog();
 
@@ -599,7 +585,7 @@ void DataSourceMyOSMDialog::set_in_current_view_property(std::list<struct _gpx_m
 
 
 
-static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
+bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 
@@ -637,7 +623,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
-		if (!datasource_osm_my_traces_interface.is_thread) {
+		if (!this->is_thread) {
 			Dialog::info(QObject::tr("No GPS Traces found"), acquiring->window);
 		}
 		free(xd);
@@ -648,21 +634,21 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	((DataSourceMyOSMDialog *) acquiring->user_data)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
-	if (datasource_osm_my_traces_interface.is_thread) {
+	if (this->is_thread) {
 #ifdef K
 		gdk_threads_enter();
 #endif
 	}
 
 	std::list<gpx_meta_data_t *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
-	if (datasource_osm_my_traces_interface.is_thread) {
+	if (this->is_thread) {
 #ifdef K
 		gdk_threads_leave();
 #endif
 	}
 
 	/* If non thread - show program is 'doing something...' */
-	if (!datasource_osm_my_traces_interface.is_thread) {
+	if (!this->is_thread) {
 		acquiring->window->set_busy_cursor();
 	}
 
@@ -703,7 +689,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 				/* NB download type is GPX (or a compressed version). */
 				ProcessOptions my_po = *process_options;
 				my_po.url = url;
-				convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, acquiring, &dl_options);
+				convert_result = a_babel_convert_from(target_layer, &my_po, cb, acquiring, &dl_options);
 				/* TODO investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
@@ -758,7 +744,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		result = true;
 	}
 
-	if (!datasource_osm_my_traces_interface.is_thread) {
+	if (!this->is_thread) {
 		acquiring->window->clear_busy_cursor();
 	}
 

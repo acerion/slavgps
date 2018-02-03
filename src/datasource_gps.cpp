@@ -83,7 +83,6 @@ DataSourceInterface datasource_gps_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)		      NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_gps_create_setup_dialog,
 	(DataSourceGetProcessOptionsFunc)     NULL,
 	(DataSourceProcessFunc)               a_babel_convert_from,

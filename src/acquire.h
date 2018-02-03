@@ -112,11 +112,6 @@ namespace SlavGPS {
 	typedef void * (* DataSourceInitFunc)(acq_vik_t * avt);
 
 	/**
-	   Returns: true on success, false on failure; on failure error message is returned through function's argument.
-	*/
-	typedef bool (* DataSourceCheckExistenceFunc)(QString & error_msg);
-
-	/**
 	   Create a dialog for configuring/setting up access to data source
 	*/
 	typedef DataSourceDialog * (* DataSourceCreateSetupDialogFunc)(Viewport * viewport, void * user_data);
@@ -166,7 +161,6 @@ namespace SlavGPS {
 		bool is_thread;
 
 		DataSourceInitFunc init_func;
-		DataSourceCheckExistenceFunc check_existence_func;
 		DataSourceCreateSetupDialogFunc create_setup_dialog_func;
 		DataSourceGetProcessOptionsFunc get_process_options;
 		DataSourceProcessFunc process_func;

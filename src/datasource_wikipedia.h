@@ -34,6 +34,7 @@ namespace SlavGPS {
 
 
 
+
 	class DataSourceWikipedia : public DataSource {
 	public:
 		DataSourceWikipedia();

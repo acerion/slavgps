@@ -36,6 +36,7 @@ namespace SlavGPS {
 
 
 
+
 	class DataSourceFile : public DataSource {
 	public:
 		DataSourceFile();

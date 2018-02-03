@@ -199,7 +199,6 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		true,  /* true = run as thread. */
 
 		(DataSourceInitFunc)                  datasource_init,
-		(DataSourceCheckExistenceFunc)        NULL,
 		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
 		(DataSourceGetProcessOptionsFunc)     NULL,
 		(DataSourceProcessFunc)               a_babel_convert_from,

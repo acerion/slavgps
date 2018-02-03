@@ -111,7 +111,6 @@ DataSourceInterface datasource_bfilter_simplify_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)                  datasource_bfilter_simplify_init,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_simplify_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,
@@ -213,7 +212,6 @@ DataSourceInterface datasource_bfilter_compress_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)                  datasource_bfilter_compress_init,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_compress_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,
@@ -261,7 +259,6 @@ DataSourceInterface datasource_bfilter_dup_interface = {
 	true,  /* true = run as thread.*/
 
 	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_dup_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,
@@ -316,7 +313,6 @@ DataSourceInterface datasource_bfilter_manual_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_manual_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,
@@ -363,7 +359,6 @@ DataSourceInterface datasource_bfilter_polygon_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_polygon_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,
@@ -409,7 +404,6 @@ DataSourceInterface datasource_bfilter_exclude_polygon_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     NULL,
 	(DataSourceGetProcessOptionsFunc)     datasource_bfilter_exclude_polygon_get_process_options,
 	(DataSourceProcessFunc)               a_babel_convert_from,

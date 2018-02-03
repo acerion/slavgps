@@ -82,7 +82,6 @@ DataSourceInterface datasource_geotag_interface = {
 	true,  /* true = run as thread. */
 
 	(DataSourceInitFunc)		      NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_geotag_create_setup_dialog,
 	(DataSourceGetProcessOptionsFunc)     NULL,
 	(DataSourceProcessFunc)               datasource_geotag_process,

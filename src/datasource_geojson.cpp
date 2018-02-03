@@ -74,7 +74,6 @@ DataSourceInterface datasource_geojson_interface = {
 	false, /* false = don't run as thread. Open each file in the main loop. */
 
 	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
 	(DataSourceCreateSetupDialogFunc)     datasource_geojson_create_setup_dialog,
 	(DataSourceGetProcessOptionsFunc)     NULL,
 	(DataSourceProcessFunc)               datasource_geojson_process,

@@ -295,7 +295,7 @@ void SlavGPS::modules_init()
 #endif
 #ifdef K
 #ifdef VIK_CONFIG_GEOCACHES
-	a_datasource_gc_init();
+	DataSourceGeoCache::init();
 #endif
 
 #ifdef HAVE_LIBMAPNIK

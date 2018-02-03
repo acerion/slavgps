@@ -18,8 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef _SG_DATASOURCE_GC_H_
-#define _SG_DATASOURCE_GC_H_
+
+#ifndef _SG_DATASOURCE_GEOCACHE_H_
+#define _SG_DATASOURCE_GEOCACHE_H_
 
 
 
@@ -32,6 +33,7 @@
 
 
 #include "datasource.h"
+#include "acquire.h"
 
 
 
@@ -41,7 +43,17 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class DataSourceGeoCache : public DataSource {
+	public:
+		DataSourceGeoCache();
+		~DataSourceGeoCache();
+
+		static void init(void);
+		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */
+
+		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
+	};
 
 
 
@@ -78,4 +90,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DATASOURCE_GC_H_ */
+#endif /* #ifndef _SG_DATASOURCE_GEOCACHE_H_ */

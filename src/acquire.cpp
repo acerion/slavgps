@@ -67,7 +67,6 @@ using namespace SlavGPS;
 extern DataSourceInterface datasource_gps_interface;
 extern DataSourceInterface datasource_geojson_interface;
 extern DataSourceInterface datasource_routing_interface;
-extern DataSourceInterface datasource_osm_my_traces_interface;
 extern DataSourceInterface datasource_geotag_interface;
 
 
@@ -300,15 +299,6 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	void * pass_along_data = this->user_data;
 
 
-	if (interface->check_existence_func) {
-		QString error_msg;
-		if (!interface->check_existence_func(error_msg)) {
-			Dialog::error(error_msg, this->window);
-			return;
-		}
-	}
-
-
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
 
 
@@ -320,7 +310,6 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 		  Data interfaces that have "create_setup_dialog_func":
 		  datasource_gps_interface;
 		  datasource_routing_interface;
-		  datasource_osm_my_traces_interface;
 		  datasource_geojson_interface;
 		  datasource_geotag_interface;
 
@@ -783,6 +772,9 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		/*
 		  DataSourceFile
 		  DataSourceOSMTraces
+  		  DataSourceOSMMyTraces
+		  DataSourceURL
+		  DataSourceGeoCache
 
 		  DataSourceWikipedia is also of type None, but it
 		  doesn't provide setup dialog and doesn't implement

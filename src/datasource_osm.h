@@ -42,10 +42,6 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
-
-
-
 	class DataSourceOSMTraces : public DataSource {
 	public:
 		DataSourceOSMTraces();
