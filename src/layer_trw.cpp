@@ -130,10 +130,8 @@ using namespace SlavGPS;
 extern Tree * g_tree;
 
 extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_file_interface;
 extern DataSourceInterface datasource_routing_interface;
 #ifdef VIK_CONFIG_OPENSTREETMAP
-extern DataSourceInterface datasource_osm_interface;
 extern DataSourceInterface datasource_osm_my_traces_interface;
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
@@ -2008,7 +2006,9 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
+#ifdef K
 	this->acquire_handler(&datasource_osm_interface);
+#endif
 }
 
 
@@ -2061,7 +2061,9 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
+#ifdef K
 	this->acquire_handler(&datasource_file_interface);
+#endif
 }
 
 

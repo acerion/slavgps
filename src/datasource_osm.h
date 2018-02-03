@@ -30,6 +30,8 @@
 
 
 
+
+#include "acquire.h"
 #include "datasource.h"
 
 
@@ -41,6 +43,17 @@ namespace SlavGPS {
 
 
 	class Viewport;
+
+
+
+	class DataSourceOSMTraces : public DataSource {
+	public:
+		DataSourceOSMTraces();
+		~DataSourceOSMTraces();
+
+		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
+	};
 
 
 

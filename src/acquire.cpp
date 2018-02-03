@@ -54,26 +54,7 @@ using namespace SlavGPS;
 
 
 
-/* Passed along to worker thread. */
-typedef struct {
-	AcquireProcess * acquiring = NULL;
-	ProcessOptions * po = NULL;
-	bool creating_new_layer = false;
-	LayerTRW * trw = NULL;
-	DownloadOptions * dl_options = NULL;
-} AcquireGetterParams;
-
-
-
-
-/* Remember that by default QRunnable is auto-deleted on thread exit. */
-class AcquireGetter : public QRunnable {
-public:
-	AcquireGetter(AcquireGetterParams & getter_params) : params(getter_params) {}
-	void run(); /* Re-implementation of QRunnable::get(). */
-
-	AcquireGetterParams params;
-};
+#define PREFIX " Acquire:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -81,12 +62,10 @@ public:
 extern DataSourceInterface datasource_gps_interface;
 extern DataSourceInterface datasource_geojson_interface;
 extern DataSourceInterface datasource_routing_interface;
-extern DataSourceInterface datasource_osm_interface;
 extern DataSourceInterface datasource_osm_my_traces_interface;
 extern DataSourceInterface datasource_geotag_interface;
 extern DataSourceInterface datasource_wikipedia_interface;
 extern DataSourceInterface datasource_url_interface;
-extern DataSourceInterface datasource_file_interface;
 
 
 
@@ -119,8 +98,6 @@ const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
 Track * filter_track = NULL;
 
 
-static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data);
-
 
 
 /********************************************************/
@@ -136,28 +113,21 @@ static AcquireProcess * g_acquiring = NULL;
 
 
 
-static void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
+void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
-	if (acquiring->source_interface->is_thread) {
-#ifdef K
-		gdk_threads_enter();
-#endif
+	if (acquiring->source_interface && acquiring->source_interface->is_thread) {
 		if (!acquiring->running) {
 			if (acquiring->source_interface->cleanup_func) {
 				acquiring->source_interface->cleanup_func(acquiring->user_data);
 			}
-#ifdef K
-			gdk_threads_leave();
-			g_thread_exit(NULL);
-#endif
 		}
-#ifdef K
-		gdk_threads_leave();
-#endif
 	}
 
-	if (acquiring->source_interface->progress_func) {
+	if (acquiring->source_interface && acquiring->source_interface->progress_func) {
 		acquiring->source_interface->progress_func(c, data, acquiring);
+
+	} else if (acquiring->data_source) {
+		acquiring->data_source->progress_func(c, data, acquiring);
 	}
 }
 
@@ -170,7 +140,7 @@ static void progress_func(BabelProgressCode c, void * data, AcquireProcess * acq
  *  . Update dialog info
  *  . Update main dsisplay
  */
-static void on_complete_process(AcquireGetterParams & getter_params)
+void SlavGPS::on_complete_process(AcquireGetterParams & getter_params)
 {
 	if (
 #ifdef K
@@ -207,7 +177,9 @@ static void on_complete_process(AcquireGetterParams & getter_params)
 		if (getter_params.trw) {
 			getter_params.trw->post_read(getter_params.acquiring->viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
-			if (getter_params.acquiring->source_interface->autoview) {
+			if (getter_params.acquiring->source_interface && getter_params.acquiring->source_interface->autoview) {
+				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
+			} else if (getter_params.acquiring->data_source && getter_params.acquiring->data_source->autoview) {
 				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
 			}
 			getter_params.acquiring->panel->emit_update_window_cb("acquire completed");
@@ -263,10 +235,14 @@ void AcquireGetter::run(void)
 	bool result = true;
 
 	DataSourceInterface * source_interface = this->params.acquiring->source_interface;
+	DataSource * data_source = this->params.acquiring->data_source;
 
-	if (source_interface->process_func) {
+	if (source_interface && source_interface->process_func) {
 		result = source_interface->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
+	} else if (data_source) {
+		result = data_source->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
 	}
+
 	delete this->params.po;
 	delete this->params.dl_options;
 
@@ -279,7 +255,7 @@ void AcquireGetter::run(void)
 		on_complete_process(this->params);
 	}
 
-	if (source_interface->cleanup_func) {
+	if (source_interface && source_interface->cleanup_func) {
 		source_interface->cleanup_func(this->params.acquiring->user_data);
 	}
 
@@ -339,10 +315,8 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 
 		/*
 		  Data interfaces that have "create_setup_dialog_func":
-		  datasource_file_interface;
 		  datasource_gps_interface;
 		  datasource_routing_interface;
-		  datasource_osm_interface;
 		  datasource_url_interface;
 		  datasource_osm_my_traces_interface;
 		  datasource_geojson_interface;
@@ -542,7 +516,165 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 
 
 
-ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data)
+void AcquireProcess::acquire(DataSource * new_data_source)
+{
+	/* For manual dialogs. */
+	DownloadOptions * dl_options = new DownloadOptions;
+
+	this->data_source = new_data_source;
+
+	/* For UI builder. */
+	SGVariant * param_table = NULL;
+
+
+	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->user_data);
+	setup_dialog->setWindowTitle(new_data_source->window_title);
+	/* TODO: set focus on "OK/Accept" button. */
+
+	if (setup_dialog->exec() != QDialog::Accepted) {
+		delete setup_dialog;
+		return;
+	}
+
+	/* CREATE INPUT DATA & GET OPTIONS */
+	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, new_data_source);
+
+
+	if (setup_dialog) {
+		delete setup_dialog;
+		setup_dialog = NULL;
+	}
+
+	AcquireGetterParams getter_params;
+	getter_params.acquiring = this;
+	getter_params.po = po;
+	getter_params.dl_options = dl_options;
+	getter_params.trw = this->trw;
+	getter_params.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
+
+
+	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
+	this->running = true;
+	this->status = new QLabel(QObject::tr("Working..."));
+
+	DataSourceDialog * progress_dialog = NULL;
+#if 0
+	if (new_data_source->create_progress_dialog) {
+		progress_dialog = new_data_source->create_progress_dialog(this->user_data);
+	}
+#endif
+
+
+	switch (new_data_source->mode) {
+	case DataSourceMode::CREATE_NEW_LAYER:
+		getter_params.creating_new_layer = true;
+		break;
+
+	case DataSourceMode::ADD_TO_LAYER: {
+		Layer * selected_layer = this->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			getter_params.trw = (LayerTRW *) selected_layer;
+			getter_params.creating_new_layer = false;
+		}
+		}
+		break;
+
+	case DataSourceMode::AUTO_LAYER_MANAGEMENT:
+		/* NOOP */
+		break;
+
+	case DataSourceMode::MANUAL_LAYER_MANAGEMENT: {
+		/* Don't create in acquire - as datasource will perform the necessary actions. */
+		getter_params.creating_new_layer = false;
+		Layer * selected_layer = this->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			getter_params.trw = (LayerTRW *) selected_layer;
+		}
+		}
+		break;
+	default:
+		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) new_data_source->mode;
+		break;
+	};
+
+
+	if (getter_params.creating_new_layer) {
+		getter_params.trw = new LayerTRW();
+		getter_params.trw->set_coord_mode(this->viewport->get_coord_mode());
+		getter_params.trw->set_name(new_data_source->layer_title);
+
+		/* We need to have that layer when completing acquisition
+		   process: we need to do few operations on it. */
+		this->trw = getter_params.trw;
+	}
+
+	if (new_data_source->is_thread) {
+		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
+
+			AcquireGetter getter(getter_params);
+			getter.run();
+
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
+
+			if (this->running) {
+				/* Cancel and mark for thread to finish. */
+				this->running = false;
+				/* NB Thread will free memory. */
+			} else {
+#ifdef K
+				/* Get data for Off command. */
+				if (new_data_source->off_func) {
+					QString babel_args_off;
+					QString file_path_off;
+					interface->off_func(pass_along_data, babel_args_off, file_path_off);
+
+					if (!babel_args_off.isEmpty()) {
+						/* Turn off. */
+						ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
+						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
+					}
+				}
+#endif
+			}
+		} else {
+			/* This shouldn't happen... */
+			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
+		}
+	} else {
+		/* Bypass thread method malarkly - you'll just have to wait... */
+
+		bool success = new_data_source->process_func(getter_params.trw, po, (BabelCallback) progress_func, this, dl_options);
+		if (!success) {
+			Dialog::error(QObject::tr("Error: acquisition failed."), this->window);
+		}
+
+		delete po;
+		delete dl_options;
+
+		on_complete_process(getter_params);
+
+		/* Actually show it if necessary. */
+		if (new_data_source->keep_dialog_open) {
+			if (progress_dialog) {
+				progress_dialog->exec();
+			}
+		}
+	}
+
+
+	delete progress_dialog;
+	delete setup_dialog;
+}
+
+
+
+
+ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data)
 {
 	ProcessOptions * po = NULL;
 
@@ -579,8 +711,6 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 
 	case DatasourceInputtype::NONE:
 		if (interface == &datasource_routing_interface
-		    || interface == &datasource_file_interface
-		    || interface == &datasource_osm_interface
 		    || interface == &datasource_gps_interface
 		    || interface == &datasource_geojson_interface
 		    || interface == &datasource_geotag_interface
@@ -596,6 +726,69 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 
 	default:
 		qDebug() << "EE: Acquire: unsupported Datasource Input Type" << (int) interface->inputtype;
+		break;
+	};
+
+	return po;
+}
+
+
+
+
+ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSource * data_source)
+{
+	ProcessOptions * po = NULL;
+	void * pass_along_data = NULL;
+
+	switch (data_source->inputtype) {
+
+	case DatasourceInputtype::TRWLAYER: {
+		qDebug() << "II:" PREFIX << "input type: TRWLayer";
+
+		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
+		po = data_source->get_process_options(pass_along_data, NULL, name_src, NULL);
+		util_add_to_deletion_list(name_src);
+		free(name_src);
+		}
+		break;
+
+	case DatasourceInputtype::TRWLAYER_TRACK: {
+		qDebug() << "II:" PREFIX << "input type: TRWLayerTrack";
+
+		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
+		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+
+		po = data_source->get_process_options(pass_along_data, NULL, name_src, name_src_track);
+
+		util_add_to_deletion_list(name_src);
+		util_add_to_deletion_list(name_src_track);
+
+		free(name_src);
+		free(name_src_track);
+		}
+		break;
+
+	case DatasourceInputtype::TRACK: {
+		qDebug() << "II:" PREFIX << "input type: Track";
+
+		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+		po = data_source->get_process_options(pass_along_data, NULL, NULL, name_src_track);
+		free(name_src_track);
+		}
+		break;
+
+	case DatasourceInputtype::NONE:
+		/*
+		  DataSourceFile
+		  DataSourceOSMTraces
+		*/
+		qDebug() << "II:" PREFIX << "input type: None";
+
+		po = setup_dialog->get_process_options(*dl_options);
+		break;
+
+	default:
+		qDebug() << "EE:" PREFIX << "unsupported Datasource Input Type" << (int) data_source->inputtype;
 		break;
 	};
 

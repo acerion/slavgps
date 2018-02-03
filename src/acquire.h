@@ -31,6 +31,7 @@
 #include <QMenu>
 #include <QDialog>
 #include <QLabel>
+#include <QRunnable>
 
 #include "babel.h"
 #include "ui_builder.h"
@@ -49,6 +50,7 @@ namespace SlavGPS {
 	class Window;
 	class LayerTRW;
 	class Track;
+	class DataSource;
 
 
 
@@ -77,7 +79,11 @@ namespace SlavGPS {
 	class AcquireProcess : public QObject {
 		Q_OBJECT
 	public:
+		AcquireProcess() {};
+		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
+
 		void acquire(DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function);
+		void acquire(DataSource * new_data_source);
 		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
 
 		QLabel * status = NULL;
@@ -90,6 +96,7 @@ namespace SlavGPS {
 		DataSourceDialog * dialog_ = NULL;
 		bool running = false;
 		DataSourceInterface * source_interface = NULL;
+		DataSource * data_source = NULL;
 		void * user_data = NULL;
 
 	public slots:
@@ -176,6 +183,62 @@ namespace SlavGPS {
 	};
 
 
+
+
+
+	class DataSource {
+	public:
+		DataSource() {};
+		~DataSource() {};
+
+		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
+		virtual ProcessOptions * get_process_options(void * user_data, DownloadOptions * download_options, const char * input_file_name, const char * input_track_file_name) { return NULL; };
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options) { return false; };
+		virtual void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring) { return; };
+
+		QString window_title;
+		QString layer_title;
+		DataSourceMode mode;
+		DatasourceInputtype inputtype;
+		bool autoview;
+		bool keep_dialog_open; /* ... when done. */
+
+		bool is_thread;
+	};
+
+
+
+
+	/* Passed along to worker thread. */
+	typedef struct {
+		AcquireProcess * acquiring = NULL;
+		ProcessOptions * po = NULL;
+		bool creating_new_layer = false;
+		LayerTRW * trw = NULL;
+		DownloadOptions * dl_options = NULL;
+	} AcquireGetterParams;
+
+
+
+	/* Remember that by default QRunnable is auto-deleted on thread exit. */
+	class AcquireGetter : public QRunnable {
+	public:
+	AcquireGetter(AcquireGetterParams & getter_params) : params(getter_params) {}
+		void run(); /* Re-implementation of QRunnable::get(). */
+
+		AcquireGetterParams params;
+	};
+
+
+
+
+
+
+
+	ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data);
+	ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSource * data_source);
+	void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
+	void on_complete_process(AcquireGetterParams & getter_params);
 
 
 	class Acquire {

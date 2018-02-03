@@ -6,7 +6,19 @@ QT = core gui widgets printsupport
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc
 
 SOURCES += main.cpp \
+    acquire.cpp \
+    window.cpp \
     datasource.cpp \
+    datasource_bfilter.cpp \
+    datasource_gc.cpp \
+    datasource_geojson.cpp \
+    datasource_geotag.cpp \
+    datasource_gps.cpp \
+    datasource_osm.cpp \
+    datasource_osm_my_traces.cpp \
+    datasource_routing.cpp \
+    datasource_url.cpp \
+    datasource_wikipedia.cpp \
     garminsymbols.cpp \
     version_check.cpp \
     geotag_exif.cpp \
@@ -42,16 +54,6 @@ SOURCES += main.cpp \
     bbox.cpp \
     osm.cpp \
     osm-traces.cpp \
-    datasource_bfilter.cpp \
-    datasource_gc.cpp \
-    datasource_geojson.cpp \
-    datasource_geotag.cpp \
-    datasource_gps.cpp \
-    datasource_osm.cpp \
-    datasource_osm_my_traces.cpp \
-    datasource_routing.cpp \
-    datasource_url.cpp \
-    datasource_wikipedia.cpp \
     layer_trw_stats.cpp \
     layer_trw_export.cpp \
     layer_trw_geotag.cpp \
@@ -73,8 +75,6 @@ SOURCES += main.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
     geonames.cpp \
-    window.cpp \
-    acquire.cpp \
     datasource_file.cpp \
     babel.cpp \
     babel_dialog.cpp \

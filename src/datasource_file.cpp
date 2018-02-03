@@ -56,45 +56,36 @@ static QString g_last_filter;
 
 
 
-static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, void * user_data);
+// DataSourceInterface datasource_file_interface;
 
 
 
 
-DataSourceInterface datasource_file_interface = {
-	N_("Import file with GPSBabel"),
-	N_("Imported file"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
-
-	(DataSourceInitFunc)	              NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+DataSourceFile::DataSourceFile()
+{
+	this->window_title = QObject::tr("Import file with GPSBabel");
+	this->layer_title = QObject::tr("Imported file");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+}
 
 
 
 
-static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceFile::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceFileDialog("");
 }
 
+
+
+bool DataSourceFile::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
+}
 
 
 
@@ -123,7 +114,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-ProcessOptions * DataSourceFileDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceFileDialog::get_process_options(DownloadOptions & download_options)
 {
 	ProcessOptions * po = new ProcessOptions();
 

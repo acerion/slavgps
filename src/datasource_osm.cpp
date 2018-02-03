@@ -42,8 +42,8 @@ using namespace SlavGPS;
 
 
 /**
- * See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
- */
+   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
+*/
 #define DOWNLOAD_URL_FMT "api.openstreetmap.org/api/0.6/trackpoints?bbox=%1,%2,%3,%4&page=%5"
 
 
@@ -51,36 +51,35 @@ using namespace SlavGPS;
 
 static int g_last_page_number = 0;
 
-static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data);
+
+
+
+DataSourceOSMTraces::DataSourceOSMTraces(void)
+{
+	this->window_title = QObject::tr("OSM traces");
+	this->layer_title = QObject::tr("OSM traces");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true;  /* true = keep dialog open after success. */
+	this->is_thread = true;         /* true = run as thread. */
+}
 
 
 
 
-DataSourceInterface datasource_osm_interface = {
-	N_("OSM traces"),
-	N_("OSM traces"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
+DataSourceDialog * DataSourceOSMTraces::create_setup_dialog(Viewport * viewport, void * user_data)
+{
+	return new DataSourceOSMDialog(viewport);
+}
 
-	(DataSourceInitFunc)		      NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_osm_traces_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
 
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+
+
+bool DataSourceOSMTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
+}
 
 
 
@@ -102,15 +101,6 @@ ProcessOptions * DataSourceOSMDialog::get_process_options(DownloadOptions & dl_o
 
 	return po;
 }
-
-
-
-
-static DataSourceDialog * datasource_osm_traces_create_setup_dialog(Viewport * viewport, void * user_data)
-{
-	return new DataSourceOSMDialog(viewport);
-}
-
 
 
 

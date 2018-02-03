@@ -287,7 +287,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, const QString & input_file_path, const QString & babel_filters, BabelCallback cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, const QString & input_file_path, const QString & babel_filters, BabelCallback cb, void * cb_data)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -363,7 +363,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, con
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_command, const QString & input_file_type, BabelCallback cb, void * cb_data, void * not_used)
+bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_command, const QString & input_file_type, BabelCallback cb, void * cb_data)
 {
 	QTemporaryFile intermediate_file;
 	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
@@ -429,7 +429,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src.toUtf8().constData(), &babel_dl_options, NULL)) {
 		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
 			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
-			ret = a_babel_convert_from_filter(trw, babel_args, name_src.toUtf8().constData(), babel_filters, NULL, NULL, NULL);
+			ret = a_babel_convert_from_filter(trw, babel_args, name_src.toUtf8().constData(), babel_filters, NULL, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
@@ -476,12 +476,12 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 
 	if (!process_options->babel_args.isEmpty()) {
 		qDebug() << "II: Babel: convert from: babel args";
-		return a_babel_convert_from_filter(trw, process_options->babel_args, process_options->input_file_name, process_options->babel_filters, cb, cb_data, dl_options);
+		return a_babel_convert_from_filter(trw, process_options->babel_args, process_options->input_file_name, process_options->babel_filters, cb, cb_data);
 	}
 
 	if (!process_options->shell_command.isEmpty()) {
 		qDebug() << "II: Babel: convert from: shell command";
-		return a_babel_convert_from_shell_command(trw, process_options->shell_command, process_options->input_file_type, cb, cb_data, dl_options);
+		return a_babel_convert_from_shell_command(trw, process_options->shell_command, process_options->input_file_type, cb, cb_data);
 	}
 
 	qDebug() << "II: Babel: convert from: no process option found";

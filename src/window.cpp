@@ -65,6 +65,8 @@
 #include "tree_view_internal.h"
 #include "measurements.h"
 #include "garminsymbols.h"
+#include "datasource_file.h"
+#include "datasource_osm.h"
 
 
 
@@ -96,10 +98,8 @@ Tree * g_tree = NULL;
 
 
 extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_file_interface;
 extern DataSourceInterface datasource_routing_interface;
 #ifdef VIK_CONFIG_OPENSTREETMAP
-extern DataSourceInterface datasource_osm_interface;
 extern DataSourceInterface datasource_osm_my_traces_interface;
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
@@ -2567,7 +2567,18 @@ void Window::acquire_from_gps_cb(void)
 
 void Window::acquire_from_file_cb(void)
 {
-	this->acquire_handler(&datasource_file_interface);
+	DataSource * data_source = new DataSourceFile();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 
@@ -2592,7 +2603,18 @@ void Window::acquire_from_routing_cb(void)
 #ifdef VIK_CONFIG_OPENSTREETMAP
 void Window::acquire_from_osm_cb(void)
 {
-	this->acquire_handler(&datasource_osm_interface);
+	DataSource * data_source = new DataSourceOSMTraces();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 
