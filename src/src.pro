@@ -19,6 +19,7 @@ SOURCES += main.cpp \
     datasource_routing.cpp \
     datasource_url.cpp \
     datasource_wikipedia.cpp \
+    datasource_file.cpp \
     garminsymbols.cpp \
     version_check.cpp \
     geotag_exif.cpp \
@@ -75,7 +76,6 @@ SOURCES += main.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
     geonames.cpp \
-    datasource_file.cpp \
     babel.cpp \
     babel_dialog.cpp \
     generic_tools.cpp \
@@ -187,6 +187,7 @@ HEADERS += window.h \
     datasource_osm_my_traces.h \
     datasource_url.h \
     datasource_file.h \
+    datasource_wikipedia.h \
     layer_trw_definitions.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \

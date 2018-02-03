@@ -16,10 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-
-#include <cstdlib>
 
 #include <QDebug>
 
@@ -27,6 +24,7 @@
 #include "acquire.h"
 #include "geonamessearch.h"
 #include "util.h"
+#include "datasource_wikipedia.h"
 
 
 
@@ -36,44 +34,31 @@ using namespace SlavGPS;
 
 
 
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
+#ifdef VIK_CONFIG_GEONAMES
+//DataSourceInterface datasource_wikipedia_interface;
+#endif
 
 
 
 
-DataSourceInterface datasource_wikipedia_interface = {
-	N_("Create Waypoints from Wikipedia Articles"),
-	N_("Wikipedia Waypoints"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	false,
-	false, /* false = don't keep dialog open after success. Not even using the dialog. */
-	false, /* false = don't run as thread. Own method for getting data - does not fit encapsulation with current thread logic. */
-
-	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
-	(DataSourceCreateSetupDialogFunc)     NULL,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               datasource_wikipedia_process,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+DataSourceWikipedia::DataSourceWikipedia()
+{
+	this->window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
+	this->layer_title = QObject::tr("Wikipedia Waypoints");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = false;
+	this->keep_dialog_open = false; /* false = don't keep dialog open after success. Not even using the dialog. */
+	this->is_thread = false; /* false = don't run as thread. Own method for getting data - does not fit encapsulation with current thread logic. */
+}
 
 
 
 
 /**
- * Process selected files and try to generate waypoints storing them in the given trw.
- */
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
+   Process selected files and try to generate waypoints storing them in the given trw.
+*/
+bool DataSourceWikipedia::process_func(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	if (!trw) {
 		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";

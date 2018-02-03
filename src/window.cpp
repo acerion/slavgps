@@ -65,8 +65,11 @@
 #include "tree_view_internal.h"
 #include "measurements.h"
 #include "garminsymbols.h"
+
 #include "datasource_file.h"
 #include "datasource_osm.h"
+#include "datasource_wikipedia.h"
+#include "datasource_url.h"
 
 
 
@@ -108,10 +111,6 @@ extern DataSourceInterface datasource_gc_interface;
 #ifdef VIK_CONFIG_GEOTAG
 extern DataSourceInterface datasource_geotag_interface;
 #endif
-#ifdef VIK_CONFIG_GEONAMES
-extern DataSourceInterface datasource_wikipedia_interface;
-#endif
-extern DataSourceInterface datasource_url_interface;
 extern DataSourceInterface datasource_geojson_interface;
 
 
@@ -2652,7 +2651,18 @@ void Window::acquire_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void Window::acquire_from_wikipedia_cb(void)
 {
-	this->acquire_handler(&datasource_wikipedia_interface);
+	DataSource * data_source = new DataSourceWikipedia();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 #endif
 
@@ -2661,7 +2671,18 @@ void Window::acquire_from_wikipedia_cb(void)
 
 void Window::acquire_from_url_cb(void)
 {
-	this->acquire_handler(&datasource_url_interface);
+	DataSource * data_source = new DataSourceURL();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 

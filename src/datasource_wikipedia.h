@@ -1,7 +1,7 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2013-2015, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,20 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DATASOURCE_URL_H_
-#define _SG_DATASOURCE_URL_H_
+#ifndef _SG_DATASOURCE_WIKIPEDIA_H_
+#define _SG_DATASOURCE_WIKIPEDIA_H_
 
 
 
 
-#include <QComboBox>
-#include <QLineEdit>
-
-
-
-
-#include "datasource.h"
 #include "acquire.h"
+#include "datasource.h"
 
 
 
@@ -40,30 +34,13 @@ namespace SlavGPS {
 
 
 
-
-	class DataSourceURL : public DataSource {
+	class DataSourceWikipedia : public DataSource {
 	public:
-		DataSourceURL();
-		~DataSourceURL();
+		DataSourceWikipedia();
+		~DataSourceWikipedia();
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		/* This data source does not provide configuration dialog. */
 		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
-	};
-
-
-
-
-	class DataSourceURLDialog : public DataSourceDialog {
-		Q_OBJECT
-	public:
-		DataSourceURLDialog();
-		~DataSourceURLDialog();
-
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
-
-	private:
-		QLineEdit url_input;
-		QComboBox file_type_combo;
 	};
 
 
@@ -74,4 +51,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DATASOURCE_URL_H_ */
+#endif /* #ifndef _SG_DATASOURCE_WIKIPEDIA_H_ */

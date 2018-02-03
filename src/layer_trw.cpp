@@ -140,10 +140,6 @@ extern DataSourceInterface datasource_gc_interface;
 #ifdef VIK_CONFIG_GEOTAG
 extern DataSourceInterface datasource_geotag_interface;
 #endif
-#ifdef VIK_CONFIG_GEONAMES
-extern DataSourceInterface datasource_wikipedia_interface;
-#endif
-extern DataSourceInterface datasource_url_interface;
 extern DataSourceInterface datasource_geojson_interface;
 
 
@@ -1994,7 +1990,9 @@ void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
+#ifdef K
 	this->acquire_handler(&datasource_url_interface);
+#endif
 }
 
 

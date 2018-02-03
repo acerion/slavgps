@@ -36,14 +36,16 @@ using namespace SlavGPS;
 
 
 
+#define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
+
+
+
+
 /*
   Initially was just going to be a URL and always in GPX format.
   But might as well specify the file type as per datasource_file.c.
   However in this version we'll cope with no GPSBabel available and in this case just try GPX.
 */
-
-
-
 
 #define INVALID_ENTRY_INDEX -1
 
@@ -53,49 +55,36 @@ static int g_last_file_type_index = INVALID_ENTRY_INDEX;
 
 
 
-static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data);
-static ProcessOptions * datasource_url_get_process_options(DownloadOptions & dl_options, char const * not_used2, char const * not_used3);
 static int find_initial_file_type_index(void);
 
 
 
 
-DataSourceInterface datasource_url_interface = {
-	N_("Acquire from URL"),
-	N_("URL"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
-
-	(DataSourceInitFunc)                  NULL,
-	(DataSourceCheckExistenceFunc)        NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_url_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+DataSourceURL::DataSourceURL()
+{
+	this->window_title = QObject::tr("Acquire data from URL");
+	this->layer_title = QObject::tr("From URL");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+}
 
 
 
 
-#define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
-
-
-
-
-static DataSourceDialog * datasource_url_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceURL::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceURLDialog();
+}
+
+
+
+
+bool DataSourceURL::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
 }
 
 
@@ -118,10 +107,13 @@ DataSourceURLDialog::DataSourceURLDialog()
 		this->file_type_combo.addItem(QObject::tr("GPX"));
 	}
 
+
 	this->grid->addWidget(new QLabel(QObject::tr("URL:")), 0, 0);
 	this->grid->addWidget(&this->url_input, 1, 0);
 	this->grid->addWidget(new QLabel(QObject::tr("File type:")), 2, 0);
 	this->grid->addWidget(&this->file_type_combo, 3, 0);
+
+	this->url_input.setFocus();
 }
 
 

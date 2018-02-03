@@ -29,6 +29,11 @@
 
 
 
+#include <cassert>
+
+
+
+
 #include <QRunnable>
 
 
@@ -64,8 +69,6 @@ extern DataSourceInterface datasource_geojson_interface;
 extern DataSourceInterface datasource_routing_interface;
 extern DataSourceInterface datasource_osm_my_traces_interface;
 extern DataSourceInterface datasource_geotag_interface;
-extern DataSourceInterface datasource_wikipedia_interface;
-extern DataSourceInterface datasource_url_interface;
 
 
 
@@ -317,13 +320,11 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 		  Data interfaces that have "create_setup_dialog_func":
 		  datasource_gps_interface;
 		  datasource_routing_interface;
-		  datasource_url_interface;
 		  datasource_osm_my_traces_interface;
 		  datasource_geojson_interface;
 		  datasource_geotag_interface;
 
 		  Data interfaces that don't "use" this branch of code (yet?):
-		  datasource_wikipedia_interface;
 		  filters (bfilters)?
 		*/
 
@@ -528,12 +529,14 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 
 
 	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->user_data);
-	setup_dialog->setWindowTitle(new_data_source->window_title);
-	/* TODO: set focus on "OK/Accept" button. */
+	if (setup_dialog) {
+		setup_dialog->setWindowTitle(new_data_source->window_title); /* TODO: move this to dialog class. */
+		/* TODO: set focus on "OK/Accept" button. */
 
-	if (setup_dialog->exec() != QDialog::Accepted) {
-		delete setup_dialog;
-		return;
+		if (setup_dialog->exec() != QDialog::Accepted) {
+			delete setup_dialog;
+			return;
+		}
 	}
 
 	/* CREATE INPUT DATA & GET OPTIONS */
@@ -713,8 +716,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		if (interface == &datasource_routing_interface
 		    || interface == &datasource_gps_interface
 		    || interface == &datasource_geojson_interface
-		    || interface == &datasource_geotag_interface
-		    || interface == &datasource_url_interface) {
+		    || interface == &datasource_geotag_interface) {
 
 			po = setup_dialog->get_process_options(*dl_options);
 		} else {
@@ -781,9 +783,15 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		/*
 		  DataSourceFile
 		  DataSourceOSMTraces
+
+		  DataSourceWikipedia is also of type None, but it
+		  doesn't provide setup dialog and doesn't implement
+		  this method, so we will call empty method in base
+		  class.
 		*/
 		qDebug() << "II:" PREFIX << "input type: None";
 
+		assert (setup_dialog);
 		po = setup_dialog->get_process_options(*dl_options);
 		break;
 
