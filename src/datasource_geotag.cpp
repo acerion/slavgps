@@ -32,25 +32,12 @@
 #include "window.h"
 #include "statusbar.h"
 #include "viewport_internal.h"
-#include "widget_file_entry.h"
+#include "datasource_geotag.h"
 
 
 
 
 using namespace SlavGPS;
-
-
-
-
-class DataSourceGeoTagDialog : public DataSourceDialog {
-public:
-	DataSourceGeoTagDialog();
-
-	ProcessOptions * get_process_options(DownloadOptions & dl_options);
-
-	SGFileEntry * file_entry = NULL;
-	QStringList selected_files;
-};
 
 
 
@@ -65,42 +52,28 @@ static QUrl g_last_directory_url;
 
 
 
-
-static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data);
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used);
-
-
-
-
-DataSourceInterface datasource_geotag_interface = {
-	N_("Create Waypoints from Geotagged Images"),
-	N_("Geotagged Images"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
-	true,  /* true = run as thread. */
-
-	(DataSourceInitFunc)		      NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_geotag_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               datasource_geotag_process,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+#ifdef VIK_CONFIG_GEOTAG
+// DataSourceInterface datasource_geotag_interface;
+#endif
 
 
 
 
-static DataSourceDialog * datasource_geotag_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceGeoTag::DataSourceGeoTag()
+{
+	this->window_title = QObject::tr("Create Waypoints from Geotagged Images");
+	this->layer_title = QObject::tr("Geotagged Images");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	this->is_thread = true;
+}
+
+
+
+
+DataSourceDialog * DataSourceGeoTag::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceGeoTagDialog;
 }
@@ -167,7 +140,7 @@ ProcessOptions * DataSourceGeoTagDialog::get_process_options(DownloadOptions & d
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * not_used)
+bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
 {
 	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->user_data;
 

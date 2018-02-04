@@ -97,10 +97,6 @@ Tree * g_tree = NULL;
 
 extern DataSourceInterface datasource_gps_interface;
 extern DataSourceInterface datasource_routing_interface;
-#ifdef VIK_CONFIG_GEOTAG
-extern DataSourceInterface datasource_geotag_interface;
-#endif
-extern DataSourceInterface datasource_geojson_interface;
 
 
 
@@ -2574,7 +2570,18 @@ void Window::acquire_from_file_cb(void)
 
 void Window::acquire_from_geojson_cb(void)
 {
-	this->acquire_handler(&datasource_geojson_interface);
+	DataSource * data_source = new DataSourceGeoJSON();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 
@@ -2656,7 +2663,18 @@ void Window::acquire_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void Window::acquire_from_geotag_cb(void)
 {
-	this->acquire_handler(&datasource_geotag_interface);
+	DataSource * data_source = new DataSourceGeoTag();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 #endif
 

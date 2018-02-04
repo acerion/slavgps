@@ -41,6 +41,8 @@
 #include "datasource_wikipedia.h"
 #include "datasource_url.h"
 #include "datasource_gc.h"
+#include "datasource_geotag.h"
+#include "datasource_geojson.h"
 
 
 

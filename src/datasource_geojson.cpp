@@ -24,25 +24,12 @@
 #include "geojson.h"
 #include "window.h"
 #include "util.h"
-#include "widget_file_entry.h"
+#include "datasource_geojson.h"
 
 
 
 
 using namespace SlavGPS;
-
-
-
-
-class DataSourceGeoJSONDialog : public DataSourceDialog {
-public:
-	DataSourceGeoJSONDialog();
-
-	ProcessOptions * get_process_options(DownloadOptions & dl_options);
-
-	SGFileEntry * file_entry = NULL;
-	QStringList selected_files;
-};
 
 
 
@@ -57,44 +44,30 @@ static QUrl g_last_directory_url;
 
 
 
-
-static DataSourceDialog * datasource_geojson_create_setup_dialog(Viewport * viewport, void * user_data);
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused);
+// DataSourceInterface datasource_geojson_interface;
 
 
 
 
-DataSourceInterface datasource_geojson_interface = {
-	N_("Acquire from GeoJSON"),
-	N_("GeoJSON"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	false, /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
-	false, /* false = don't run as thread. Open each file in the main loop. */
-
-	(DataSourceInitFunc)                  NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_geojson_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               datasource_geojson_process,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+DataSourceGeoJSON::DataSourceGeoJSON()
+{
+	this->window_title = QObject::tr("Acquire from GeoJSON");
+	this->layer_title = QObject::tr("GeoJSON");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	this->is_thread = false; /* false = don't run as thread. Open each file in the main loop. */
+}
 
 
 
 
-static DataSourceDialog * datasource_geojson_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceGeoJSON::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceGeoJSONDialog();
 }
+
 
 
 
@@ -122,6 +95,8 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
 	this->setMinimumWidth(400); /* TODO: perhaps this value should be #defined somewhere. */
 
 	this->grid->addWidget(this->file_entry, 0, 0);
+
+	this->file_entry->setFocus();
 }
 
 
@@ -149,9 +124,9 @@ ProcessOptions * DataSourceGeoJSONDialog::get_process_options(DownloadOptions & 
 
 
 /**
- * Process selected files and try to generate waypoints storing them in the given trw.
- */
-static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
+   Process selected files and try to generate waypoints storing them in the given trw.
+*/
+bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
 	DataSourceGeoJSONDialog * config_dialog = (DataSourceGeoJSONDialog *) acquiring->user_data;
 

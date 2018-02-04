@@ -132,11 +132,6 @@ extern Tree * g_tree;
 extern DataSourceInterface datasource_gps_interface;
 extern DataSourceInterface datasource_routing_interface;
 
-#ifdef VIK_CONFIG_GEOTAG
-extern DataSourceInterface datasource_geotag_interface;
-#endif
-extern DataSourceInterface datasource_geojson_interface;
-
 
 
 
@@ -2042,11 +2037,13 @@ void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
+#ifdef K
 	this->acquire_handler(&datasource_geotag_interface);
 
 	/* Re-generate thumbnails as they may have changed. */
 	this->has_missing_thumbnails = true;
 	this->generate_missing_thumbnails();
+#endif
 }
 #endif
 

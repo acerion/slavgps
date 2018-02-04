@@ -65,9 +65,7 @@ using namespace SlavGPS;
 
 
 extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_geojson_interface;
 extern DataSourceInterface datasource_routing_interface;
-extern DataSourceInterface datasource_geotag_interface;
 
 
 
@@ -310,8 +308,6 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 		  Data interfaces that have "create_setup_dialog_func":
 		  datasource_gps_interface;
 		  datasource_routing_interface;
-		  datasource_geojson_interface;
-		  datasource_geotag_interface;
 
 		  Data interfaces that don't "use" this branch of code (yet?):
 		  filters (bfilters)?
@@ -703,9 +699,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 	case DatasourceInputtype::NONE:
 		if (interface == &datasource_routing_interface
-		    || interface == &datasource_gps_interface
-		    || interface == &datasource_geojson_interface
-		    || interface == &datasource_geotag_interface) {
+		    || interface == &datasource_gps_interface) {
 
 			po = setup_dialog->get_process_options(*dl_options);
 		} else {
@@ -775,6 +769,8 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
   		  DataSourceOSMMyTraces
 		  DataSourceURL
 		  DataSourceGeoCache
+		  DataSourceGeoTag
+		  DataSourceGeoJSON
 
 		  DataSourceWikipedia is also of type None, but it
 		  doesn't provide setup dialog and doesn't implement
