@@ -18,14 +18,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
 #include <QComboBox>
 #include <QLineEdit>
+
+
+
 
 #include "datasource_routing.h"
 #include "babel.h"
@@ -33,6 +39,7 @@
 #include "acquire.h"
 #include "routing.h"
 #include "util.h"
+
 
 
 
@@ -46,42 +53,34 @@ static int last_engine = 0;
 static QString last_from_str;
 static QString last_to_str;
 
-static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data);
+
+
+
+DataSourceRouting::DataSourceRouting()
+{
+	this->window_title = QObject::tr("Directions");
+	this->layer_title = QObject::tr("Directions");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+}
 
 
 
 
-DataSourceInterface datasource_routing_interface = {
-	N_("Directions"),
-	N_("Directions"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
-
-	(DataSourceInitFunc)                  NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_routing_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              NULL,
-	(DataSourceCreateProgressDialogFunc)  NULL,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               NULL,
-
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
-
-
-
-
-static DataSourceDialog * datasource_routing_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceRouting::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceRoutingDialog();
+}
+
+
+
+
+bool DataSourceRouting::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
 }
 
 

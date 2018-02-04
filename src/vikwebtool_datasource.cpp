@@ -45,6 +45,7 @@
 #include "dialog.h"
 #include "util.h"
 #include "tree_view.h"
+#include "layer_trw.h"
 
 
 
@@ -202,10 +203,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
 		(DataSourceGetProcessOptionsFunc)     NULL,
 		(DataSourceProcessFunc)               a_babel_convert_from,
-		(DataSourceProgressFunc)              NULL,
-		(DataSourceCreateProgressDialogFunc)  NULL,
 		(DataSourceCleanupFunc)               cleanup,
-		(DataSourceTurnOffFunc)               NULL,
 		NULL,
 		0,
 		NULL,
@@ -214,7 +212,12 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 	};
 	memcpy(datasource_interface, &data, sizeof(DataSourceInterface));
 
-	Acquire::acquire_from_source(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport(), data.mode, datasource_interface, this, cleanup);
+	AcquireProcess acquiring(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport());
+	acquiring.acquire(datasource_interface->mode, datasource_interface, this, cleanup);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 

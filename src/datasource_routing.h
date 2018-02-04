@@ -31,12 +31,26 @@
 
 
 
+
+#include "acquire.h"
 #include "datasource.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class DataSourceRouting : public DataSource {
+	public:
+		DataSourceRouting();
+		~DataSourceRouting();
+
+		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
+	};
 
 
 

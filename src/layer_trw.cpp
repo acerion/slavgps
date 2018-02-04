@@ -129,15 +129,10 @@ using namespace SlavGPS;
 
 extern Tree * g_tree;
 
-extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_routing_interface;
-
 
 
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
-
-
 
 
 
@@ -1958,7 +1953,9 @@ void LayerTRW::acquire_handler(DataSourceInterface * source_interface)
  */
 void LayerTRW::acquire_from_gps_cb(void)
 {
+#ifdef K
 	this->acquire_handler(&datasource_gps_interface);
+#endif
 }
 
 
@@ -1969,7 +1966,9 @@ void LayerTRW::acquire_from_gps_cb(void)
  */
 void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
+#ifdef K
 	this->acquire_handler(&datasource_routing_interface);
+#endif
 }
 
 

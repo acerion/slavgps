@@ -95,12 +95,6 @@ Tree * g_tree = NULL;
 
 
 
-extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_routing_interface;
-
-
-
-
 /* The last used directories. */
 static QUrl last_folder_files_url;
 
@@ -2543,7 +2537,18 @@ void Window::acquire_handler(DataSourceInterface * source_interface)
 
 void Window::acquire_from_gps_cb(void)
 {
-	this->acquire_handler(&datasource_gps_interface);
+	DataSource * data_source = new DataSourceGPS();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 
@@ -2589,7 +2594,18 @@ void Window::acquire_from_geojson_cb(void)
 
 void Window::acquire_from_routing_cb(void)
 {
-	this->acquire_handler(&datasource_routing_interface);
+	DataSource * data_source = new DataSourceRouting();
+
+	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	}
+
+	AcquireProcess acquiring(this, this->items_tree, this->viewport);
+	acquiring.acquire(data_source);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
 }
 
 

@@ -63,40 +63,30 @@ static bool gps_acquire_in_progress = false;
 /* Index of the last device selected. */
 static int g_last_device_index = INVALID_ENTRY_INDEX;
 
-static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring);
-static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data);
-static DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data);
-static void datasource_gps_off(void * add_widgets_data_not_used, QString & babel_args, QString & file_path);
 static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog);
 static int find_initial_device_index(void);
 
 
 
 
-DataSourceInterface datasource_gps_interface = {
-	N_("Acquire from GPS"),
-	N_("Acquired from GPS"),
-	DataSourceMode::AUTO_LAYER_MANAGEMENT,
-	DatasourceInputtype::NONE,
-	true,
-	true,  /* true = keep dialog open after success. */
-	true,  /* true = run as thread. */
+DataSourceGPS::DataSourceGPS()
+{
+	this->window_title = QObject::tr("Acquire from GPS");
+	this->layer_title = QObject::tr("Acquired from GPS");
+	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = true;
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+}
 
-	(DataSourceInitFunc)		      NULL,
-	(DataSourceCreateSetupDialogFunc)     datasource_gps_create_setup_dialog,
-	(DataSourceGetProcessOptionsFunc)     NULL,
-	(DataSourceProcessFunc)               a_babel_convert_from,
-	(DataSourceProgressFunc)              datasource_gps_progress,
-	(DataSourceCreateProgressDialogFunc)  datasource_gps_create_progress_dialog,
-	(DataSourceCleanupFunc)               NULL,
-	(DataSourceTurnOffFunc)               datasource_gps_off,
 
-	NULL,
-	0,
-	NULL,
-	NULL,
-	0
-};
+
+
+bool DataSourceGPS::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
+}
 
 
 
@@ -246,7 +236,7 @@ ProcessOptions * DatasourceGPSSetup::get_process_options(DownloadOptions & dl_op
 
 
 
-static void datasource_gps_off(void * user_data, QString & babel_args, QString & file_path)
+void DataSourceGPS::off(void * user_data, QString & babel_args, QString & file_path)
 {
 	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
 
@@ -392,7 +382,7 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-static void datasource_gps_progress(BabelProgressCode c, void * data, AcquireProcess * acquiring)
+void DataSourceGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
 	char *line;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
@@ -486,9 +476,7 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, AcquirePro
 
 
 
-
-
-static DataSourceDialog * datasource_gps_create_setup_dialog(Viewport * viewport, void * user_data)
+DataSourceDialog * DataSourceGPS::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and
@@ -682,7 +670,7 @@ DatasourceGPSSetup::DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWid
 
 
 
-DataSourceDialog * datasource_gps_create_progress_dialog(void * user_data)
+DataSourceDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 {
 	DataSourceDialog * progress_dialog = NULL;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) user_data;

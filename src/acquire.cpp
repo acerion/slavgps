@@ -64,14 +64,7 @@ using namespace SlavGPS;
 
 
 
-extern DataSourceInterface datasource_gps_interface;
-extern DataSourceInterface datasource_routing_interface;
-
-
-
-
 /************************ FILTER LIST *******************/
-// extern DataSourceInterface datasource_gps_interface;
 /*** Input is LayerTRW. ***/
 extern DataSourceInterface datasource_bfilter_simplify_interface;
 extern DataSourceInterface datasource_bfilter_compress_interface;
@@ -82,8 +75,11 @@ extern DataSourceInterface datasource_bfilter_manual_interface;
 extern DataSourceInterface datasource_bfilter_polygon_interface;
 extern DataSourceInterface datasource_bfilter_exclude_polygon_interface;
 
+
+
+
 /*** Input is a track. ***/
-const DataSourceInterface * filters[] = {
+static const DataSourceInterface * filters[] = {
 	&datasource_bfilter_simplify_interface,
 	&datasource_bfilter_compress_interface,
 	&datasource_bfilter_dup_interface,
@@ -92,23 +88,10 @@ const DataSourceInterface * filters[] = {
 	&datasource_bfilter_exclude_polygon_interface,
 
 };
+static const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
 
-const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
-
-Track * filter_track = NULL;
-
-
-
-
-/********************************************************/
-
-
+static Track * filter_track = NULL;
 static AcquireProcess * g_acquiring = NULL;
-
-
-/*********************************************************
- * Definitions and routines for acquiring data from Data Sources in general.
- *********************************************************/
 
 
 
@@ -123,12 +106,14 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
 		}
 	}
 
+#ifdef K   /* See DataSourceGPS::progress_func(). */
 	if (acquiring->source_interface && acquiring->source_interface->progress_func) {
 		acquiring->source_interface->progress_func(c, data, acquiring);
 
 	} else if (acquiring->data_source) {
 		acquiring->data_source->progress_func(c, data, acquiring);
 	}
+#endif
 }
 
 
@@ -304,15 +289,6 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	/* POSSIBILITY 1: create "setup" dialog. */
 	if (interface->create_setup_dialog_func) {
 
-		/*
-		  Data interfaces that have "create_setup_dialog_func":
-		  datasource_gps_interface;
-		  datasource_routing_interface;
-
-		  Data interfaces that don't "use" this branch of code (yet?):
-		  filters (bfilters)?
-		*/
-
 		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->user_data);
 		setup_dialog->setWindowTitle(QObject::tr(interface->window_title.toUtf8().constData()));
 		/* TODO: set focus on "OK/Accept" button. */
@@ -386,9 +362,11 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 
 
 	DataSourceDialog * progress_dialog = NULL;
+#ifdef K
 	if (interface->create_progress_dialog_func) {
 		progress_dialog = interface->create_progress_dialog_func(this->user_data);
 	}
+#endif
 
 
 	switch (mode) {
@@ -450,6 +428,8 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 				/* NB Thread will free memory. */
 			} else {
 				/* Get data for Off command. */
+
+#ifdef K /* See DataSourceGPS::off() */
 				if (interface->off_func) {
 					QString babel_args_off;
 					QString file_path_off;
@@ -461,6 +441,7 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
 					}
 				}
+#endif
 			}
 		} else {
 			/* This shouldn't happen... */
@@ -698,14 +679,8 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		break;
 
 	case DatasourceInputtype::NONE:
-		if (interface == &datasource_routing_interface
-		    || interface == &datasource_gps_interface) {
-
-			po = setup_dialog->get_process_options(*dl_options);
-		} else {
-			if (interface->get_process_options) {
-				po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
-			}
+		if (interface->get_process_options) {
+			po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
 		}
 		break;
 
@@ -771,6 +746,8 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		  DataSourceGeoCache
 		  DataSourceGeoTag
 		  DataSourceGeoJSON
+		  DataSourceRouting
+		  DataSourceGPS
 
 		  DataSourceWikipedia is also of type None, but it
 		  doesn't provide setup dialog and doesn't implement

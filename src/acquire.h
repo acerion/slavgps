@@ -138,17 +138,8 @@ namespace SlavGPS {
 	*/
 	typedef bool (* DataSourceProcessFunc)(void * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, void * download_options);
 
-	/* Same as BabelCallback. */
-	typedef void  (* DataSourceProgressFunc)(BabelProgressCode c, void * data, AcquireProcess * acquiring);
-
-	/**
-	   Create a dialog for showing progress of accessing a data source
-	*/
-	typedef DataSourceDialog * (* DataSourceCreateProgressDialogFunc)(void * user_data);
 
 
-
-	typedef void (* DataSourceTurnOffFunc) (void * user_data, QString & babel_args, QString & file_path);
 
 	struct _DataSourceInterface {
 		QString window_title;
@@ -164,10 +155,7 @@ namespace SlavGPS {
 		DataSourceCreateSetupDialogFunc create_setup_dialog_func;
 		DataSourceGetProcessOptionsFunc get_process_options;
 		DataSourceProcessFunc process_func;
-		DataSourceProgressFunc progress_func;
-		DataSourceCreateProgressDialogFunc create_progress_dialog_func;
 		DataSourceCleanupFunc cleanup_func;
-		DataSourceTurnOffFunc off_func;
 
 		ParameterSpecification * param_specs;
 		uint16_t                 param_specs_count;

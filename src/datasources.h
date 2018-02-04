@@ -43,6 +43,8 @@
 #include "datasource_gc.h"
 #include "datasource_geotag.h"
 #include "datasource_geojson.h"
+#include "datasource_routing.h"
+#include "datasource_gps.h"
 
 
 

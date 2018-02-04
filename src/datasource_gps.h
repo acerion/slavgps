@@ -32,6 +32,7 @@
 
 
 
+#include "acquire.h"
 #include "datasource.h"
 #include "layer_gps.h"
 
@@ -39,6 +40,24 @@
 
 
 namespace SlavGPS {
+
+
+
+
+	class DataSourceGPS : public DataSource {
+	public:
+		DataSourceGPS();
+		~DataSourceGPS();
+
+		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
+
+		/* FIXME: these are most probably unused. */
+		void off(void * user_data, QString & babel_args, QString & file_path);
+		void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
+		DataSourceDialog * create_progress_dialog(void * user_data);
+	};
+
 
 
 
