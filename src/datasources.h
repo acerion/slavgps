@@ -45,6 +45,7 @@
 #include "datasource_geojson.h"
 #include "datasource_routing.h"
 #include "datasource_gps.h"
+#include "datasource_bfilter.h"
 
 
 

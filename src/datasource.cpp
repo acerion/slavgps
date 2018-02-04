@@ -41,3 +41,11 @@ ProcessOptions * DataSourceDialog::get_process_options(DownloadOptions & dl_opti
 {
 	return NULL;
 }
+
+
+
+
+ProcessOptions * DataSourceDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
+{
+	return NULL;
+}

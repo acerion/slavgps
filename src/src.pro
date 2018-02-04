@@ -190,6 +190,7 @@ HEADERS += window.h \
     datasource_wikipedia.h \
     datasource_geotag.h \
     datasource_geojson.h \
+    datasource_bfilter.h \
     layer_trw_definitions.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \

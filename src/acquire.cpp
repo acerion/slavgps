@@ -30,6 +30,7 @@
 
 
 #include <cassert>
+#include <vector>
 
 
 
@@ -50,6 +51,7 @@
 #include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
+#include "datasources.h"
 
 
 
@@ -65,30 +67,10 @@ using namespace SlavGPS;
 
 
 /************************ FILTER LIST *******************/
-/*** Input is LayerTRW. ***/
-extern DataSourceInterface datasource_bfilter_simplify_interface;
-extern DataSourceInterface datasource_bfilter_compress_interface;
-extern DataSourceInterface datasource_bfilter_dup_interface;
-extern DataSourceInterface datasource_bfilter_manual_interface;
-
-/*** Input is a track and a LayerTRW. ***/
-extern DataSourceInterface datasource_bfilter_polygon_interface;
-extern DataSourceInterface datasource_bfilter_exclude_polygon_interface;
 
 
 
-
-/*** Input is a track. ***/
-static const DataSourceInterface * filters[] = {
-	&datasource_bfilter_simplify_interface,
-	&datasource_bfilter_compress_interface,
-	&datasource_bfilter_dup_interface,
-	&datasource_bfilter_manual_interface,
-	&datasource_bfilter_polygon_interface,
-	&datasource_bfilter_exclude_polygon_interface,
-
-};
-static const int N_FILTERS = sizeof(filters) / sizeof(filters[0]);
+static std::vector<DataSource *> g_bfilters;
 
 static Track * filter_track = NULL;
 static AcquireProcess * g_acquiring = NULL;
@@ -609,7 +591,7 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 			}
 		} else {
 			/* This shouldn't happen... */
-			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
+			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
 			if (progress_dialog) {
 				progress_dialog->exec();
 			}
@@ -703,6 +685,12 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 	switch (data_source->inputtype) {
 
 	case DatasourceInputtype::TRWLAYER: {
+		/*
+		  BFilterSimplify
+		  BFilterCompress
+		  BFilterDuplicates
+		  BFilterManual
+		*/
 		qDebug() << "II:" PREFIX << "input type: TRWLayer";
 
 		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
@@ -713,6 +701,10 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		break;
 
 	case DatasourceInputtype::TRWLAYER_TRACK: {
+		/*
+		  BFilterPolygon
+		  BFilterExcludePolygon
+		*/
 		qDebug() << "II:" PREFIX << "input type: TRWLayerTrack";
 
 		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
@@ -805,9 +797,7 @@ void AcquireProcess::acquire_trwlayer_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	int idx = qa->data().toInt();
 
-	DataSourceInterface * iface = (DataSourceInterface *) filters[idx];
-
-	this->acquire(iface->mode, iface, NULL, NULL);
+	this->acquire(g_bfilters[idx]);
 }
 
 
@@ -816,18 +806,22 @@ void AcquireProcess::acquire_trwlayer_cb(void)
 QMenu * AcquireProcess::build_menu(const QString & submenu_label, DatasourceInputtype inputtype)
 {
 	QMenu * menu = NULL;
+	int i = 0;
 
-	for (int i = 0; i < N_FILTERS; i++) {
-		if (filters[i]->inputtype == inputtype) {
+	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
+		DataSource * filter = *iter;
+
+		if (filter->inputtype == inputtype) {
 			if (!menu) { /* Do this just once, but return NULL if no filters. */
 				menu = new QMenu(submenu_label);
 			}
 
-			QAction * action = new QAction(filters[i]->window_title, this);
+			QAction * action = new QAction(filter->window_title, this);
 			action->setData(i);
 			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (acquire_trwlayer_cb(void)));
 			menu->addAction(action);
 		}
+		i++;
 	}
 
 	return menu;
@@ -916,6 +910,15 @@ void Acquire::set_filter_track(Track * trk)
 
 void Acquire::init(void)
 {
+	/*** Input is LayerTRW. ***/
+	g_bfilters.push_back(new BFilterSimplify());
+	g_bfilters.push_back(new BFilterCompress());
+	g_bfilters.push_back(new BFilterDuplicates());
+	g_bfilters.push_back(new BFilterManual());
+	/*** Input is a track and a LayerTRW. ***/
+	g_bfilters.push_back(new BFilterPolygon());
+	g_bfilters.push_back(new BFilterExcludePolygon());
+
 	g_acquiring = new AcquireProcess();
 }
 
@@ -925,4 +928,6 @@ void Acquire::init(void)
 void Acquire::uninit(void)
 {
 	delete g_acquiring;
+
+	/* TODO: clean up g_bfilters array. */
 }
