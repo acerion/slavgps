@@ -64,6 +64,7 @@ namespace SlavGPS {
 	class TrackpointSearch;
 	class WaypointSearch;
 	class PropertiesDialogTP;
+	class DataSource;
 
 
 
@@ -306,7 +307,7 @@ namespace SlavGPS {
 
 		/* General handler of acquire requests.
 		   Called by all acquire_from_X_cb() with specific data source. */
-		void acquire_handler(DataSourceInterface * source_interface);
+		void acquire_handler(DataSource * data_source);
 
 
 		void set_coord_mode(CoordMode mode);

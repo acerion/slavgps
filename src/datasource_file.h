@@ -37,13 +37,12 @@ namespace SlavGPS {
 
 
 
-	class DataSourceFile : public DataSource {
+	class DataSourceFile : public DataSourceBabel {
 	public:
 		DataSourceFile();
 		~DataSourceFile();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 

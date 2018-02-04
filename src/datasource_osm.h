@@ -42,13 +42,12 @@ namespace SlavGPS {
 
 
 
-	class DataSourceOSMTraces : public DataSource {
+	class DataSourceOSMTraces : public DataSourceBabel {
 	public:
 		DataSourceOSMTraces();
 		~DataSourceOSMTraces();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 

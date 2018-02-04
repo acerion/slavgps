@@ -83,14 +83,6 @@ DataSourceGPS::DataSourceGPS()
 
 
 
-bool DataSourceGPS::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 /*********************************************************
  * Definitions and routines for acquiring data from GPS.
  *********************************************************/
@@ -280,7 +272,7 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
+		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 		QString msg;
 
 		switch (gps_dialog->progress_type) {
@@ -320,7 +312,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
+		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
 		if (cnt < gps_dialog->total_count) {
 			QString fmt;
@@ -367,7 +359,7 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
 	gdk_threads_enter();
 #endif
 	if (acquiring->running) {
-		((DatasourceGPSProgress *) acquiring->user_data)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
+		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
 	}
 #ifdef K
 	gdk_threads_leave();
@@ -385,7 +377,7 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
 void DataSourceGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
 	char *line;
-	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->user_data;
+	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:

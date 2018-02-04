@@ -56,11 +56,6 @@ static QString g_last_filter;
 
 
 
-// DataSourceInterface datasource_file_interface;
-
-
-
-
 DataSourceFile::DataSourceFile()
 {
 	this->window_title = QObject::tr("Import file with GPSBabel");
@@ -78,13 +73,6 @@ DataSourceFile::DataSourceFile()
 DataSourceDialog * DataSourceFile::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new DataSourceFileDialog("");
-}
-
-
-
-bool DataSourceFile::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
 }
 
 

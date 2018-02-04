@@ -83,7 +83,7 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
 	if (acquiring->source_interface && acquiring->source_interface->is_thread) {
 		if (!acquiring->running) {
 			if (acquiring->source_interface->cleanup_func) {
-				acquiring->source_interface->cleanup_func(acquiring->user_data);
+				acquiring->source_interface->cleanup_func(acquiring->parent_data_source_dialog);
 			}
 		}
 	}
@@ -223,7 +223,7 @@ void AcquireGetter::run(void)
 	}
 
 	if (source_interface && source_interface->cleanup_func) {
-		source_interface->cleanup_func(this->params.acquiring->user_data);
+		source_interface->cleanup_func(this->params.acquiring->parent_data_source_dialog);
 	}
 
 	if (this->params.acquiring->running) {
@@ -233,11 +233,11 @@ void AcquireGetter::run(void)
 
 
 
-
+#if 0
 /* Depending on type of filter, often only trw or track will be given.
  * The other can be NULL.
  */
-void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_interface_, void * userdata, DataSourceCleanupFunc cleanup_function)
+void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_interface_, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function)
 {
 	/* For manual dialogs. */
 	DataSourceDialog * setup_dialog = NULL;
@@ -246,22 +246,11 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	this->source_interface = source_interface_;
 	DataSourceInterface * interface = source_interface;
 
-	acq_vik_t avt;
-	avt.panel = this->panel;
-	avt.viewport = this->viewport;
-	avt.window = this->window;
-	avt.userdata = userdata;
-
 	/* For UI builder. */
 	SGVariant * param_table = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
-	if (interface->init_func) {
-		this->user_data = interface->init_func(&avt);
-	} else {
-		this->user_data = NULL;
-	}
-	void * pass_along_data = this->user_data;
+	void * pass_along_data_source_web_tool_dialog = this->parent_data_source_dialog;
 
 
 	/* BUILD UI & GET OPTIONS IF NECESSARY. */
@@ -271,35 +260,21 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	/* POSSIBILITY 1: create "setup" dialog. */
 	if (interface->create_setup_dialog_func) {
 
-		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->user_data);
+		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->parent_data_source_dialog);
 		setup_dialog->setWindowTitle(QObject::tr(interface->window_title.toUtf8().constData()));
 		/* TODO: set focus on "OK/Accept" button. */
 
 		if (setup_dialog->exec() != QDialog::Accepted) {
 			if (interface->cleanup_func) {
-				interface->cleanup_func(this->user_data);
+				interface->cleanup_func(this->parent_data_source_dialog);
 			}
 			delete setup_dialog;
 			return;
 		}
 	}
-	/* POSSIBILITY 2: UI BUILDER */
-	else if (interface->param_specs) {
-#ifdef K
-		param_table = a_uibuilder_run_dialog(interface->window_title, this->window,
-						     interface->param_specs, interface->param_specs_count,
-						     interface->parameter_groups, interface->params_groups_count,
-						     interface->params_defaults);
-#endif
-		if (param_table) {
-			pass_along_data = param_table;
-		} else {
-			return; /* TODO: do we have to free anything here? */
-		}
-	}
 
 	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, interface, pass_along_data);
+	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, interface, pass_along_data_source_web_tool_dialog);
 
 
 
@@ -307,8 +282,6 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 	if (interface->create_setup_dialog_func) {
 		delete setup_dialog;
 		setup_dialog = NULL;
-	} else if (interface->param_specs) {
-		a_uibuilder_free_paramdatas(param_table, interface->param_specs, interface->param_specs_count);
 	}
 
 	AcquireGetterParams getter_params;
@@ -415,7 +388,7 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 				if (interface->off_func) {
 					QString babel_args_off;
 					QString file_path_off;
-					interface->off_func(pass_along_data, babel_args_off, file_path_off);
+					interface->off_func(pass_along_data_source_web_tool_dialog, babel_args_off, file_path_off);
 
 					if (!babel_args_off.isEmpty()) {
 						/* Turn off. */
@@ -461,12 +434,14 @@ void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_i
 		cleanup_function(interface);
 	}
 }
+#endif
 
 
 
-
-void AcquireProcess::acquire(DataSource * new_data_source)
+void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, void * new_parent_data_source_dialog)
 {
+	this->parent_data_source_dialog = (DataSourceDialog *) new_parent_data_source_dialog;
+
 	/* For manual dialogs. */
 	DownloadOptions * dl_options = new DownloadOptions;
 
@@ -476,7 +451,7 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 	SGVariant * param_table = NULL;
 
 
-	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->user_data);
+	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->parent_data_source_dialog);
 	if (setup_dialog) {
 		setup_dialog->setWindowTitle(new_data_source->window_title); /* TODO: move this to dialog class. */
 		/* TODO: set focus on "OK/Accept" button. */
@@ -516,7 +491,7 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 #endif
 
 
-	switch (new_data_source->mode) {
+	switch (mode) {
 	case DataSourceMode::CREATE_NEW_LAYER:
 		getter_params.creating_new_layer = true;
 		break;
@@ -544,7 +519,7 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 		}
 		break;
 	default:
-		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) new_data_source->mode;
+		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
 		break;
 	};
 
@@ -624,7 +599,7 @@ void AcquireProcess::acquire(DataSource * new_data_source)
 
 
 
-
+#if 0
 ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data)
 {
 	ProcessOptions * po = NULL;
@@ -633,7 +608,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 	case DatasourceInputtype::TRWLAYER: {
 		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
-		po = interface->get_process_options(pass_along_data, NULL, name_src, NULL);
+		po = data_source->get_process_options(pass_along_data, NULL, name_src, NULL);
 		util_add_to_deletion_list(name_src);
 		free(name_src);
 		}
@@ -643,7 +618,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
 		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
 
-		po = interface->get_process_options(pass_along_data, NULL, name_src, name_src_track);
+		po = data_source->get_process_options(pass_along_data, NULL, name_src, name_src_track);
 
 		util_add_to_deletion_list(name_src);
 		util_add_to_deletion_list(name_src_track);
@@ -655,14 +630,14 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 	case DatasourceInputtype::TRACK: {
 		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
-		po = interface->get_process_options(pass_along_data, NULL, NULL, name_src_track);
+		po = data_source->get_process_options(pass_along_data, NULL, NULL, name_src_track);
 		free(name_src_track);
 		}
 		break;
 
 	case DatasourceInputtype::NONE:
-		if (interface->get_process_options) {
-			po = interface->get_process_options(pass_along_data, dl_options, NULL, NULL);
+		if (data_source->get_process_options) {
+			po = data_source->get_process_options(pass_along_data, dl_options, NULL, NULL);
 		}
 		break;
 
@@ -673,7 +648,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 	return po;
 }
-
+#endif
 
 
 
@@ -740,6 +715,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		  DataSourceGeoJSON
 		  DataSourceRouting
 		  DataSourceGPS
+		  DataSourceWebTool
 
 		  DataSourceWikipedia is also of type None, but it
 		  doesn't provide setup dialog and doesn't implement
@@ -762,7 +738,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 
 
-
+#if 0
 /**
  * @window: The #Window to work with
  * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
@@ -774,7 +750,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
  *
  * Process the given DataSourceInterface for sources with no input data.
  */
-void Acquire::acquire_from_source(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceMode mode, DataSourceInterface * source_interface, void * userdata, DataSourceCleanupFunc cleanup_function)
+void Acquire::acquire_from_source(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceMode mode, DataSourceInterface * source_interface, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function)
 {
 	g_acquiring->window = new_window;
 	g_acquiring->panel = new_panel;
@@ -782,13 +758,13 @@ void Acquire::acquire_from_source(Window * new_window, LayersPanel * new_panel, 
 	g_acquiring->trw = NULL;
 	g_acquiring->trk = NULL;
 
-	g_acquiring->acquire(mode, source_interface, userdata, cleanup_function);
+	g_acquiring->acquire(mode, source_interface, web_tool_data_source, cleanup_function);
 
 	if (g_acquiring->trw) {
 		g_acquiring->trw->add_children_to_tree();
 	}
 }
-
+#endif
 
 
 
@@ -797,7 +773,7 @@ void AcquireProcess::acquire_trwlayer_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	int idx = qa->data().toInt();
 
-	this->acquire(g_bfilters[idx]);
+	this->acquire(g_bfilters[idx], g_bfilters[idx]->mode, NULL);
 }
 
 
@@ -930,4 +906,12 @@ void Acquire::uninit(void)
 	delete g_acquiring;
 
 	/* TODO: clean up g_bfilters array. */
+}
+
+
+
+
+bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+{
+	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
 }

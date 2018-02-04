@@ -44,11 +44,6 @@ static QUrl g_last_directory_url;
 
 
 
-// DataSourceInterface datasource_geojson_interface;
-
-
-
-
 DataSourceGeoJSON::DataSourceGeoJSON()
 {
 	this->window_title = QObject::tr("Acquire from GeoJSON");
@@ -128,7 +123,7 @@ ProcessOptions * DataSourceGeoJSONDialog::get_process_options(DownloadOptions & 
 */
 bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
 {
-	DataSourceGeoJSONDialog * config_dialog = (DataSourceGeoJSONDialog *) acquiring->user_data;
+	DataSourceGeoJSONDialog * config_dialog = (DataSourceGeoJSONDialog *) acquiring->parent_data_source_dialog;
 
 	/* Process selected files. */
 	for (int i = 0; i < config_dialog->selected_files.size(); i++) {

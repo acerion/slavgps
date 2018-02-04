@@ -45,12 +45,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterSimplify : public DataSource {
+	class BFilterSimplify : public DataSourceBabel {
 	public:
 		BFilterSimplify();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterSimplifyDialog : public DataSourceDialog {
@@ -64,12 +63,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterCompress : public DataSource {
+	class BFilterCompress : public DataSourceBabel {
 	public:
 		BFilterCompress();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterCompressDialog : public DataSourceDialog {
@@ -83,12 +81,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterDuplicates : public DataSource {
+	class BFilterDuplicates : public DataSourceBabel {
 	public:
 		BFilterDuplicates();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterDuplicatesDialog : public DataSourceDialog {
@@ -101,12 +98,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterManual : public DataSource {
+	class BFilterManual : public DataSourceBabel {
 	public:
 		BFilterManual();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterManualDialog : public DataSourceDialog {
@@ -120,11 +116,9 @@ namespace SlavGPS {
 
 
 
-	class BFilterPolygon : public DataSource {
+	class BFilterPolygon : public DataSourceBabel {
 	public:
 		BFilterPolygon();
-
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterPolygonDialog : public DataSourceDialog {
@@ -137,11 +131,9 @@ namespace SlavGPS {
 
 
 
-	class BFilterExcludePolygon : public DataSource {
+	class BFilterExcludePolygon : public DataSourceBabel {
 	public:
 		BFilterExcludePolygon();
-
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 	class BFilterExcludePolygonDialog : public DataSourceDialog {

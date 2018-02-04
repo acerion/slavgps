@@ -84,33 +84,15 @@ static QString get_last_user_string(const WebToolDatasource * web_tool_datasourc
 
 
 
-static void * datasource_init(acq_vik_t * avt)
+DataSourceWebToolDialog::DataSourceWebToolDialog(Viewport * new_viewport, void * new_web_tool_data_source)
 {
-	DataSourceWebToolDialog * data = (DataSourceWebToolDialog *) malloc(sizeof (*data));
-	data->web_tool_datasource = (WebToolDatasource *) avt->userdata;
-	data->window = avt->window;
-	data->viewport = avt->viewport;
-	return data;
-}
+	this->viewport = new_viewport;
+	this->web_tool_data_source = (WebToolDatasource * ) new_web_tool_data_source;
 
 
+	QLabel * user_string_label = new QLabel(tr("%1:").arg(this->web_tool_data_source->input_field_label_text), this);
 
-
-static DataSourceDialog * datasource_create_setup_dialog(Viewport * viewport, void * user_data)
-{
-	return new DataSourceWebToolDialog;
-}
-
-
-
-
-DataSourceWebToolDialog::DataSourceWebToolDialog()
-{
-	const WebToolDatasource * web_tool = this->web_tool_datasource;
-
-	QLabel * user_string_label = new QLabel(tr("%1:").arg(web_tool->input_field_label_text), this);
-
-	this->input_field.setText(get_last_user_string(this->web_tool_datasource));
+	this->input_field.setText(get_last_user_string(this->web_tool_data_source));
 
 #ifdef K
 	/* 'ok' when press return in the entry. */
@@ -133,17 +115,17 @@ ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & 
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	if (this->web_tool_datasource->webtool_needs_user_string()) {
-		this->web_tool_datasource->user_string = this->input_field.text();
+	if (this->web_tool_data_source->webtool_needs_user_string()) {
+		this->web_tool_data_source->user_string = this->input_field.text();
 
-		if (this->web_tool_datasource->user_string[0] != '\0') {
-			const QString tool_label = this->web_tool_datasource->get_label();
-			last_user_strings.insert(tool_label, this->web_tool_datasource->user_string);
+		if (this->web_tool_data_source->user_string[0] != '\0') {
+			const QString tool_label = this->web_tool_data_source->get_label();
+			last_user_strings.insert(tool_label, this->web_tool_data_source->user_string);
 		}
 	}
 
 
-	po->url = this->web_tool_datasource->get_url_at_current_position(this->viewport);
+	po->url = this->web_tool_data_source->get_url_at_current_position(this->viewport);
 	qDebug() << "DD: Web Tool Datasource: url =" << po->url;
 
 	/* Only use first section of the file_type string.
@@ -151,8 +133,8 @@ ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & 
 	   since it won't be in the right order for the overall GPSBabel command.
 	   So prevent any potentially dangerous behaviour. */
 	char **parts = NULL;
-	if (this->web_tool_datasource->file_type) {
-		parts = g_strsplit(this->web_tool_datasource->file_type, " ", 0);
+	if (this->web_tool_data_source->file_type) {
+		parts = g_strsplit(this->web_tool_data_source->file_type, " ", 0);
 	}
 
 	if (parts) {
@@ -163,7 +145,7 @@ ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & 
 	g_strfreev(parts);
 
 
-	po->babel_filters = this->web_tool_datasource->babel_filter_args;
+	po->babel_filters = this->web_tool_data_source->babel_filter_args;
 
 	return po;
 
@@ -172,11 +154,36 @@ ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & 
 
 
 
-static void cleanup(void * data)
+void DataSourceWebTool::cleanup(void * data)
 {
 	free(data);
 }
 
+
+
+DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window_title, const QString & new_layer_title)
+{
+	this->window_title = new_window_title;
+	this->layer_title = new_layer_title;
+	this->mode = DataSourceMode::ADD_TO_LAYER;
+	this->inputtype = DatasourceInputtype::NONE;
+	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
+	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->is_thread = true;
+
+	this->search = new_search;
+}
+
+
+
+DataSourceDialog * DataSourceWebTool::create_setup_dialog(Viewport * viewport, void * web_tool_data_source)
+{
+	if (this->search) {
+		return new DataSourceWebToolDialog(viewport, web_tool_data_source);
+	} else {
+		return NULL;
+	}
+}
 
 
 
@@ -184,36 +191,10 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 {
 	bool search = this->webtool_needs_user_string();
 
-	/* Use DataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request). */
-
-	/* Can now create a 'DataSourceInterface' on the fly... */
-	DataSourceInterface * datasource_interface = (DataSourceInterface *) malloc(sizeof(DataSourceInterface));
-
-	/* An 'easy' way of assigning values. */
-	DataSourceInterface data = {
-		this->get_label(),
-		this->get_label(),
-		DataSourceMode::ADD_TO_LAYER,
-		DatasourceInputtype::NONE,
-		false, /* Maintain current view - rather than setting it to the acquired points. */
-		true,  /* true = keep dialog open after success. */
-		true,  /* true = run as thread. */
-
-		(DataSourceInitFunc)                  datasource_init,
-		(DataSourceCreateSetupDialogFunc)     (search ? datasource_create_setup_dialog : NULL),
-		(DataSourceGetProcessOptionsFunc)     NULL,
-		(DataSourceProcessFunc)               a_babel_convert_from,
-		(DataSourceCleanupFunc)               cleanup,
-		NULL,
-		0,
-		NULL,
-		NULL,
-		0
-	};
-	memcpy(datasource_interface, &data, sizeof(DataSourceInterface));
+	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label());
 
 	AcquireProcess acquiring(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport());
-	acquiring.acquire(datasource_interface->mode, datasource_interface, this, cleanup);
+	acquiring.acquire(data_source, data_source->mode, this);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();

@@ -82,14 +82,6 @@ DataSourceDialog * DataSourceURL::create_setup_dialog(Viewport * viewport, void 
 
 
 
-bool DataSourceURL::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 DataSourceURLDialog::DataSourceURLDialog()
 {
 	if (g_last_file_type_index == INVALID_ENTRY_INDEX) {

@@ -41,13 +41,12 @@ namespace SlavGPS {
 
 
 
-	class DataSourceURL : public DataSource {
+	class DataSourceURL : public DataSourceBabel {
 	public:
 		DataSourceURL();
 		~DataSourceURL();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 

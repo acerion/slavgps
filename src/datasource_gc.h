@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class DataSourceGeoCache : public DataSource {
+	class DataSourceGeoCache : public DataSourceBabel {
 	public:
 		DataSourceGeoCache();
 		~DataSourceGeoCache();
@@ -52,7 +52,6 @@ namespace SlavGPS {
 		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 	};
 
 

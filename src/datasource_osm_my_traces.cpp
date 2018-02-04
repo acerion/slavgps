@@ -632,7 +632,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	xd->list_of_gpx_meta_data.reverse();
 
-	((DataSourceMyOSMDialog *) acquiring->user_data)->set_in_current_view_property(xd->list_of_gpx_meta_data);
+	((DataSourceMyOSMDialog *) acquiring->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
 	if (this->is_thread) {
 #ifdef K

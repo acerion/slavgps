@@ -142,7 +142,7 @@ ProcessOptions * DataSourceGeoTagDialog::get_process_options(DownloadOptions & d
 */
 bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
 {
-	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->user_data;
+	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->parent_data_source_dialog;
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */

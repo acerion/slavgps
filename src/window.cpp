@@ -2529,7 +2529,9 @@ void Window::acquire_handler(DataSourceInterface * source_interface)
 	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
+#ifdef K
 	Acquire::acquire_from_source(this, this->items_tree, this->viewport, mode, source_interface, NULL, NULL);
+#endif
 }
 
 
@@ -2539,12 +2541,13 @@ void Window::acquire_from_gps_cb(void)
 {
 	DataSource * data_source = new DataSourceGPS();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2558,12 +2561,13 @@ void Window::acquire_from_file_cb(void)
 {
 	DataSource * data_source = new DataSourceFile();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2577,12 +2581,13 @@ void Window::acquire_from_geojson_cb(void)
 {
 	DataSource * data_source = new DataSourceGeoJSON();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2596,12 +2601,13 @@ void Window::acquire_from_routing_cb(void)
 {
 	DataSource * data_source = new DataSourceRouting();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2616,12 +2622,13 @@ void Window::acquire_from_osm_cb(void)
 {
 	DataSource * data_source = new DataSourceOSMTraces();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2635,12 +2642,13 @@ void Window::acquire_from_my_osm_cb(void)
 {
 	DataSource * data_source = new DataSourceOSMMyTraces();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2660,12 +2668,13 @@ void Window::acquire_from_gc_cb(void)
 
 	DataSource * data_source = new DataSourceGeoCache();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = source_interface->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2681,12 +2690,13 @@ void Window::acquire_from_geotag_cb(void)
 {
 	DataSource * data_source = new DataSourceGeoTag();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2702,12 +2712,13 @@ void Window::acquire_from_wikipedia_cb(void)
 {
 	DataSource * data_source = new DataSourceWikipedia();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();
@@ -2722,12 +2733,13 @@ void Window::acquire_from_url_cb(void)
 {
 	DataSource * data_source = new DataSourceURL();
 
-	if (data_source->mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		data_source->mode = DataSourceMode::CREATE_NEW_LAYER;
+	DataSourceMode mode = data_source->mode;
+	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source);
+	acquiring.acquire(data_source, mode, NULL);
 
 	if (acquiring.trw) {
 		acquiring.trw->add_children_to_tree();

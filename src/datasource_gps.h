@@ -44,13 +44,12 @@ namespace SlavGPS {
 
 
 
-	class DataSourceGPS : public DataSource {
+	class DataSourceGPS : public DataSourceBabel {
 	public:
 		DataSourceGPS();
 		~DataSourceGPS();
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
 
 		/* FIXME: these are most probably unused. */
 		void off(void * user_data, QString & babel_args, QString & file_path);

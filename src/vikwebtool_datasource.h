@@ -30,6 +30,7 @@
 
 
 
+#include "acquire.h"
 #include "datasource.h"
 #include "vikwebtool.h"
 
@@ -37,6 +38,19 @@
 
 
 namespace SlavGPS {
+
+
+
+
+	class DataSourceWebTool : public DataSourceBabel {
+	public:
+		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title);
+		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+
+		void cleanup(void * data); /* TODO: this method is unused at the moment. */
+
+		bool search = false;
+	};
 
 
 
@@ -80,12 +94,11 @@ namespace SlavGPS {
 	class DataSourceWebToolDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceWebToolDialog();
+		DataSourceWebToolDialog(Viewport * viewport, void * new_web_tool_data_source);
 
 		ProcessOptions * get_process_options(DownloadOptions & dl_options);
 
-		WebToolDatasource * web_tool_datasource = NULL;
-		Window * window = NULL;
+		WebToolDatasource * web_tool_data_source = NULL;
 		Viewport * viewport = NULL;
 		QLineEdit input_field;
 	};

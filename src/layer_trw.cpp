@@ -1932,17 +1932,24 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
 /* TODO: when this function is really called? */
-void LayerTRW::acquire_handler(DataSourceInterface * source_interface)
+void LayerTRW::acquire_handler(DataSource * data_source)
 {
 	Window * window = this->get_window();
-	LayersPanel * items_tree = g_tree->tree_get_items_tree();
+	LayersPanel * panel = g_tree->tree_get_items_tree();
 	Viewport * viewport =  g_tree->tree_get_main_viewport();
 
-	DataSourceMode mode = source_interface->mode;
+	DataSourceMode mode = data_source->mode;
 	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DataSourceMode::ADD_TO_LAYER;
 	}
-	Acquire::acquire_from_source(window, items_tree, viewport, mode, source_interface, NULL, NULL);
+
+	AcquireProcess acquiring(window, panel, viewport);
+	acquiring.acquire(data_source, mode, NULL);
+
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
+	}
+	//Acquire::acquire_from_source(window, items_tree, viewport, mode, data_source, NULL, NULL);
 }
 
 

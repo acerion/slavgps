@@ -91,14 +91,6 @@ DataSourceDialog * BFilterSimplify::create_setup_dialog(Viewport * viewport, voi
 
 
 
-bool BFilterSimplify::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 BFilterSimplifyDialog::BFilterSimplifyDialog()
 {
 	static const ParameterScale scale = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardcoded default value. */
@@ -182,14 +174,6 @@ DataSourceDialog * BFilterCompress::create_setup_dialog(Viewport * viewport, voi
 
 
 
-bool BFilterCompress::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 BFilterCompressDialog::BFilterCompressDialog()
 {
 	static const ParameterScale scale = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardcoded default value. */
@@ -258,13 +242,6 @@ BFilterDuplicates::BFilterDuplicates()
 
 
 
-bool BFilterDuplicates::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
 DataSourceDialog * BFilterDuplicates::create_setup_dialog(Viewport * viewport, void * user_data)
 {
 	return new BFilterDuplicatesDialog();
@@ -321,14 +298,6 @@ DataSourceDialog * BFilterManual::create_setup_dialog(Viewport * viewport, void 
 
 
 
-bool BFilterManual::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 BFilterManualDialog::BFilterManualDialog()
 {
 	this->grid->addWidget(new QLabel(tr("Manual filter:")), 0, 0);
@@ -375,14 +344,6 @@ BFilterPolygon::BFilterPolygon()
 
 
 
-bool BFilterPolygon::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 /* TODO: shell_escape stuff. */
 ProcessOptions * BFilterPolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
 {
@@ -410,14 +371,6 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 	this->autoview = true;
 	this->keep_dialog_open = false;
 	this->is_thread = true;
-}
-
-
-
-
-bool BFilterExcludePolygon::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
 }
 
 

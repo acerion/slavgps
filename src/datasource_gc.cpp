@@ -89,14 +89,6 @@ DataSourceGeoCache::DataSourceGeoCache()
 
 
 
-bool DataSourceGeoCache::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
-{
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
-}
-
-
-
-
 static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GC, "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_GC, "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
