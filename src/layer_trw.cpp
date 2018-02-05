@@ -1934,22 +1934,13 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 /* TODO: when this function is really called? */
 void LayerTRW::acquire_handler(DataSource * data_source)
 {
-	Window * window = this->get_window();
-	LayersPanel * panel = g_tree->tree_get_items_tree();
-	Viewport * viewport =  g_tree->tree_get_main_viewport();
-
+	/* Override mode. */
 	DataSourceMode mode = data_source->mode;
 	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DataSourceMode::ADD_TO_LAYER;
 	}
 
-	AcquireProcess acquiring(window, panel, viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
-	//Acquire::acquire_from_source(window, items_tree, viewport, mode, data_source, NULL, NULL);
+	Acquire::acquire_from_source(data_source, mode, this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL);
 }
 
 

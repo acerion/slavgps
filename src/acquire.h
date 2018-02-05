@@ -57,18 +57,6 @@ namespace SlavGPS {
 
 
 
-	typedef struct _DataSourceInterface DataSourceInterface;
-
-	typedef struct {
-		Window * window;
-		LayersPanel * panel;
-		Viewport * viewport;
-		void * userdata;
-	} acq_vik_t;
-
-
-
-
 	/**
 	   Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
 	*/
@@ -84,7 +72,6 @@ namespace SlavGPS {
 		AcquireProcess() {};
 		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
 
-		//void acquire(DataSourceMode mode, DataSourceInterface * source_interface, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function);
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
 		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
 
@@ -95,59 +82,15 @@ namespace SlavGPS {
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 
-		DataSourceDialog * dialog_ = NULL;
 		bool running = false;
-		DataSourceInterface * source_interface = NULL;
+
 		DataSource * data_source = NULL;
+		DataSourceDialog * data_source_dialog = NULL;
 		DataSourceDialog * parent_data_source_dialog = NULL;
 
 	public slots:
 		void acquire_trwlayer_cb(void);
 	};
-
-
-
-
-	/**
-	   Returns: pointer to state if OK, otherwise %NULL.
-	*/
-	typedef DataSourceWebToolDialog * (* DataSourceInitFunc)(LayersPanel * panel, Viewport * viewport, WebToolDatasource * data_source);
-
-	/**
-	   Create a dialog for configuring/setting up access to data source
-	*/
-	typedef DataSourceDialog * (* DataSourceCreateSetupDialogFunc)(Viewport * viewport, void * user_data);
-
-	/**
-	  @trw:
-	  @process_options: options to control the behaviour of this function (see #ProcessOptions)
-	  @status_cb: the #DataSourceInterface.progress_func
-	  @acquiring: the widgets and data used by #DataSourceInterface.progress_func
-	  @download_options: Optional options used if downloads from URLs is used.
-
-	  The actual function to do stuff - must report success/failure.
-	*/
-	typedef bool (* DataSourceProcessFunc)(void * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, void * download_options);
-
-
-
-
-	struct _DataSourceInterface {
-		QString window_title;
-		QString layer_title;
-		DataSourceMode mode;
-		DatasourceInputtype inputtype;
-		bool autoview;
-		bool keep_dialog_open; /* ... when done. */
-
-		bool is_thread;
-
-		DataSourceInitFunc init_func;
-		DataSourceCreateSetupDialogFunc create_setup_dialog_func;
-		DataSourceProcessFunc process_func;
-		DataSourceCleanupFunc cleanup_func;
-	};
-
 
 
 
@@ -164,12 +107,13 @@ namespace SlavGPS {
 
 		QString window_title;
 		QString layer_title;
+
 		DataSourceMode mode;
 		DatasourceInputtype inputtype;
-		bool autoview;
-		bool keep_dialog_open; /* ... when done. */
 
-		bool is_thread;
+		bool autoview = false;
+		bool keep_dialog_open = false; /* ... when done. */
+		bool is_thread = false;
 	};
 
 
@@ -190,36 +134,27 @@ namespace SlavGPS {
 
 
 
-	/* Passed along to worker thread. */
-	typedef struct {
-		AcquireProcess * acquiring = NULL;
-		ProcessOptions * po = NULL;
-		bool creating_new_layer = false;
-		LayerTRW * trw = NULL;
-		DownloadOptions * dl_options = NULL;
-	} AcquireGetterParams;
-
-
-
 	/* Remember that by default QRunnable is auto-deleted on thread exit. */
 	class AcquireGetter : public QRunnable {
 	public:
-	AcquireGetter(AcquireGetterParams & getter_params) : params(getter_params) {}
+		AcquireGetter() {};
 		void run(); /* Re-implementation of QRunnable::get(). */
+		void on_complete_process(void);
 
-		AcquireGetterParams params;
+
+		AcquireProcess * acquiring = NULL;
+		ProcessOptions * po = NULL;
+		bool creating_new_layer = false;
+		DownloadOptions * dl_options = NULL;
 	};
 
 
 
 
-
-
-
-	//ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data);
 	ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSource * data_source);
 	void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
-	void on_complete_process(AcquireGetterParams & getter_params);
+
+
 
 
 	class Acquire {
@@ -227,8 +162,7 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		//static void acquire_from_source(Window * window, LayersPanel * panel, Viewport * viewport, DataSourceMode mode, DataSourceInterface * source_interface, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function);
-
+		static void acquire_from_source(DataSource * new_data_source, DataSourceMode new_mode, Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceDialog * new_parent_data_source_dialog);
 
 		static QMenu * create_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
 		static QMenu * create_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);

@@ -69,10 +69,6 @@ namespace SlavGPS {
 
 
 
-	struct _DataSourceInterface;
-	typedef struct _DataSourceInterface DataSourceInterface;
-
-
 	/* To be removed. */
 	typedef int PangoLayout;
 

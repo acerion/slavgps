@@ -66,12 +66,7 @@ using namespace SlavGPS;
 
 
 
-/************************ FILTER LIST *******************/
-
-
-
 static std::vector<DataSource *> g_bfilters;
-
 static Track * filter_track = NULL;
 static AcquireProcess * g_acquiring = NULL;
 
@@ -80,21 +75,23 @@ static AcquireProcess * g_acquiring = NULL;
 
 void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
 {
-	if (acquiring->source_interface && acquiring->source_interface->is_thread) {
+	DataSource * data_source = acquiring->data_source;
+	assert (data_source);
+
+	if (data_source->is_thread) {
 		if (!acquiring->running) {
-			if (acquiring->source_interface->cleanup_func) {
-				acquiring->source_interface->cleanup_func(acquiring->parent_data_source_dialog);
+#ifdef K
+			/* See DataSourceWebTool::cleanup(). */
+			if (data_source->cleanup_func) {
+				data_source->cleanup_func(acquiring->parent_data_source_dialog);
 			}
+#endif
 		}
 	}
 
-#ifdef K   /* See DataSourceGPS::progress_func(). */
-	if (acquiring->source_interface && acquiring->source_interface->progress_func) {
-		acquiring->source_interface->progress_func(c, data, acquiring);
-
-	} else if (acquiring->data_source) {
-		acquiring->data_source->progress_func(c, data, acquiring);
-	}
+#ifdef K
+	/* See DataSourceGPS::progress_func(). */
+	data_source->progress_func(c, data, acquiring);
 #endif
 }
 
@@ -107,54 +104,51 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
  *  . Update dialog info
  *  . Update main dsisplay
  */
-void SlavGPS::on_complete_process(AcquireGetterParams & getter_params)
+void AcquireGetter::on_complete_process(void)
 {
 	if (
 #ifdef K
-	    getter_params.acquiring->running
+	    this->acquiring->running
 #else
 	    true
 #endif
 	    ) {
-		getter_params.acquiring->status->setText(QObject::tr("Done."));
-		if (getter_params.creating_new_layer) {
+		this->acquiring->status->setText(QObject::tr("Done."));
+		if (this->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
-			if (!getter_params.trw->is_empty()) {
-				getter_params.trw->post_read(getter_params.acquiring->viewport, true);
-				Layer * layer = getter_params.trw;
-				getter_params.acquiring->panel->get_top_layer()->add_layer(layer, true);
+			if (!this->acquiring->trw->is_empty()) {
+				this->acquiring->trw->post_read(this->acquiring->viewport, true);
+				this->acquiring->panel->get_top_layer()->add_layer(this->acquiring->trw, true);
 			} else {
-				getter_params.acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
+				this->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
 			}
 		}
 
-		if (getter_params.acquiring->dialog_) {
-			if (getter_params.acquiring->source_interface->keep_dialog_open) {
+		if (this->acquiring->data_source_dialog) {
+			if (this->acquiring->data_source->keep_dialog_open) {
 				/* Only allow dialog's validation when format selection is done. */
-				getter_params.acquiring->dialog_->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-				getter_params.acquiring->dialog_->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+				this->acquiring->data_source_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+				this->acquiring->data_source_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 			} else {
 				/* Call 'accept()' slot to close the dialog. */
-				getter_params.acquiring->dialog_->accept();
+				this->acquiring->data_source_dialog->accept();
 			}
 		}
 
 		/* Main display update. */
-		if (getter_params.trw) {
-			getter_params.trw->post_read(getter_params.acquiring->viewport, true);
+		if (this->acquiring->trw) {
+			this->acquiring->trw->post_read(this->acquiring->viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
-			if (getter_params.acquiring->source_interface && getter_params.acquiring->source_interface->autoview) {
-				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
-			} else if (getter_params.acquiring->data_source && getter_params.acquiring->data_source->autoview) {
-				getter_params.trw->auto_set_view(getter_params.acquiring->viewport);
+			if (this->acquiring->data_source && this->acquiring->data_source->autoview) {
+				this->acquiring->trw->auto_set_view(this->acquiring->viewport);
 			}
-			getter_params.acquiring->panel->emit_update_window_cb("acquire completed");
+			this->acquiring->panel->emit_update_window_cb("acquire completed");
 		}
 	} else {
 		/* Cancelled. */
-		if (getter_params.creating_new_layer) {
-			getter_params.trw->unref();
+		if (this->creating_new_layer) {
+			this->acquiring->trw->unref();
 		}
 	}
 }
@@ -199,242 +193,33 @@ ProcessOptions::~ProcessOptions()
 /* Re-implementation of QRunnable::run() */
 void AcquireGetter::run(void)
 {
-	bool result = true;
+	DataSource * data_source = this->acquiring->data_source;
+	assert (data_source);
 
-	DataSourceInterface * source_interface = this->params.acquiring->source_interface;
-	DataSource * data_source = this->params.acquiring->data_source;
+	bool result = data_source->process_func(this->acquiring->trw, this->po, (BabelCallback) progress_func, this->acquiring, this->dl_options);
 
-	if (source_interface && source_interface->process_func) {
-		result = source_interface->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
-	} else if (data_source) {
-		result = data_source->process_func(this->params.trw, this->params.po, (BabelCallback) progress_func, this->params.acquiring, this->params.dl_options);
-	}
+	delete this->po;
+	delete this->dl_options;
 
-	delete this->params.po;
-	delete this->params.dl_options;
-
-	if (this->params.acquiring->running && !result) {
-		this->params.acquiring->status->setText(QObject::tr("Error: acquisition failed."));
-		if (this->params.creating_new_layer) {
-			this->params.trw->unref();
+	if (this->acquiring->running && !result) {
+		this->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
+		if (this->creating_new_layer) {
+			this->acquiring->trw->unref();
 		}
 	} else {
-		on_complete_process(this->params);
+		this->on_complete_process();
 	}
 
-	if (source_interface && source_interface->cleanup_func) {
-		source_interface->cleanup_func(this->params.acquiring->parent_data_source_dialog);
-	}
+#ifdef K
+	/* Not implemented in base class. See DataSourceWebTool::cleanup() */
+	data_source->cleanup_func(this->acquiring->parent_data_source_dialog);
+#endif
 
-	if (this->params.acquiring->running) {
-		this->params.acquiring->running = false;
+	if (this->acquiring->running) {
+		this->acquiring->running = false;
 	}
 }
 
-
-
-#if 0
-/* Depending on type of filter, often only trw or track will be given.
- * The other can be NULL.
- */
-void AcquireProcess::acquire(DataSourceMode mode, DataSourceInterface * source_interface_, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function)
-{
-	/* For manual dialogs. */
-	DataSourceDialog * setup_dialog = NULL;
-	DownloadOptions * dl_options = new DownloadOptions;
-
-	this->source_interface = source_interface_;
-	DataSourceInterface * interface = source_interface;
-
-	/* For UI builder. */
-	SGVariant * param_table = NULL;
-
-	/*** INIT AND CHECK EXISTENCE ***/
-	void * pass_along_data_source_web_tool_dialog = this->parent_data_source_dialog;
-
-
-	/* BUILD UI & GET OPTIONS IF NECESSARY. */
-
-
-	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
-	/* POSSIBILITY 1: create "setup" dialog. */
-	if (interface->create_setup_dialog_func) {
-
-		setup_dialog = interface->create_setup_dialog_func(this->viewport, this->parent_data_source_dialog);
-		setup_dialog->setWindowTitle(QObject::tr(interface->window_title.toUtf8().constData()));
-		/* TODO: set focus on "OK/Accept" button. */
-
-		if (setup_dialog->exec() != QDialog::Accepted) {
-			if (interface->cleanup_func) {
-				interface->cleanup_func(this->parent_data_source_dialog);
-			}
-			delete setup_dialog;
-			return;
-		}
-	}
-
-	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions * po = acquire_create_process_options(this, setup_dialog, dl_options, interface, pass_along_data_source_web_tool_dialog);
-
-
-
-	/* Cleanup for setup dialog. */
-	if (interface->create_setup_dialog_func) {
-		delete setup_dialog;
-		setup_dialog = NULL;
-	}
-
-	AcquireGetterParams getter_params;
-	getter_params.acquiring = this;
-	getter_params.po = po;
-	getter_params.dl_options = dl_options;
-	getter_params.trw = this->trw;
-	getter_params.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
-
-#ifdef K
-	setup_dialog = new BasicDialog(this->window);
-	setup_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
-	setup_dialog->setWindowTitle(QObject::tr(interface->window_title));
-	setup_dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
-#endif
-
-	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
-	this->running = true;
-	this->status = new QLabel(tr("Working..."));
-
-#ifdef K
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(setup_dialog))), status, false, false, 5);
-#endif
-
-
-
-	/* May not want to see the dialog at all. */
-	if (interface->is_thread || interface->keep_dialog_open) {
-#ifdef K
-		gtk_widget_show_all(setup_dialog);
-#endif
-	}
-
-
-	DataSourceDialog * progress_dialog = NULL;
-#ifdef K
-	if (interface->create_progress_dialog_func) {
-		progress_dialog = interface->create_progress_dialog_func(this->user_data);
-	}
-#endif
-
-
-	switch (mode) {
-	case DataSourceMode::CREATE_NEW_LAYER:
-		getter_params.creating_new_layer = true;
-		break;
-
-	case DataSourceMode::ADD_TO_LAYER: {
-		Layer * selected_layer = this->panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter_params.trw = (LayerTRW *) selected_layer;
-			getter_params.creating_new_layer = false;
-		}
-		}
-		break;
-
-	case DataSourceMode::AUTO_LAYER_MANAGEMENT:
-		/* NOOP */
-		break;
-
-	case DataSourceMode::MANUAL_LAYER_MANAGEMENT: {
-		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		getter_params.creating_new_layer = false;
-		Layer * selected_layer = this->panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter_params.trw = (LayerTRW *) selected_layer;
-		}
-		}
-		break;
-	default:
-		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
-		break;
-	};
-
-
-	if (getter_params.creating_new_layer) {
-		getter_params.trw = new LayerTRW();
-		getter_params.trw->set_coord_mode(this->viewport->get_coord_mode());
-		getter_params.trw->set_name(QObject::tr(interface->layer_title.toUtf8().constData()));
-
-		/* We need to have that layer when completing acquisition
-		   process: we need to do few operations on it. */
-		this->trw = getter_params.trw;
-	}
-
-	if (interface->is_thread) {
-		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
-
-			AcquireGetter getter(getter_params);
-			getter.run();
-
-			if (progress_dialog) {
-				progress_dialog->exec();
-			}
-
-			if (this->running) {
-				/* Cancel and mark for thread to finish. */
-				this->running = false;
-				/* NB Thread will free memory. */
-			} else {
-				/* Get data for Off command. */
-
-#ifdef K /* See DataSourceGPS::off() */
-				if (interface->off_func) {
-					QString babel_args_off;
-					QString file_path_off;
-					interface->off_func(pass_along_data_source_web_tool_dialog, babel_args_off, file_path_off);
-
-					if (!babel_args_off.isEmpty()) {
-						/* Turn off. */
-						ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
-						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
-					}
-				}
-#endif
-			}
-		} else {
-			/* This shouldn't happen... */
-			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed."));
-			if (progress_dialog) {
-				progress_dialog->exec();
-			}
-		}
-	} else {
-		/* Bypass thread method malarkly - you'll just have to wait... */
-		if (interface->process_func) {
-			bool success = interface->process_func(getter_params.trw, po, (BabelCallback) progress_func, this, dl_options);
-			if (!success) {
-				Dialog::error(tr("Error: acquisition failed."), this->window);
-			}
-		}
-		delete po;
-		delete dl_options;
-
-		on_complete_process(getter_params);
-
-		/* Actually show it if necessary. */
-		if (interface->keep_dialog_open) {
-			if (progress_dialog) {
-				progress_dialog->exec();
-			}
-		}
-	}
-
-
-	delete progress_dialog;
-	delete setup_dialog;
-
-	if (cleanup_function) {
-		cleanup_function(interface);
-	}
-}
-#endif
 
 
 
@@ -471,15 +256,14 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		setup_dialog = NULL;
 	}
 
-	AcquireGetterParams getter_params;
-	getter_params.acquiring = this;
-	getter_params.po = po;
-	getter_params.dl_options = dl_options;
-	getter_params.trw = this->trw;
-	getter_params.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
+	AcquireGetter getter;
+	getter.acquiring = this;
+	getter.po = po;
+	getter.dl_options = dl_options;
+	getter.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 
-	this->dialog_ = setup_dialog; /* TODO: setup or progress dialog? */
+	this->data_source_dialog = setup_dialog; /* TODO: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(QObject::tr("Working..."));
 
@@ -493,14 +277,14 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 	switch (mode) {
 	case DataSourceMode::CREATE_NEW_LAYER:
-		getter_params.creating_new_layer = true;
+		getter.creating_new_layer = true;
 		break;
 
 	case DataSourceMode::ADD_TO_LAYER: {
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			getter_params.trw = (LayerTRW *) selected_layer;
-			getter_params.creating_new_layer = false;
+			getter.acquiring->trw = (LayerTRW *) selected_layer;
+			getter.creating_new_layer = false;
 		}
 		}
 		break;
@@ -511,10 +295,10 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 	case DataSourceMode::MANUAL_LAYER_MANAGEMENT: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		getter_params.creating_new_layer = false;
+		getter.creating_new_layer = false;
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			getter_params.trw = (LayerTRW *) selected_layer;
+			getter.acquiring->trw = (LayerTRW *) selected_layer;
 		}
 		}
 		break;
@@ -524,20 +308,16 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	};
 
 
-	if (getter_params.creating_new_layer) {
-		getter_params.trw = new LayerTRW();
-		getter_params.trw->set_coord_mode(this->viewport->get_coord_mode());
-		getter_params.trw->set_name(new_data_source->layer_title);
-
-		/* We need to have that layer when completing acquisition
-		   process: we need to do few operations on it. */
-		this->trw = getter_params.trw;
+	if (getter.creating_new_layer) {
+		getter.acquiring->trw = new LayerTRW();
+		getter.acquiring->trw->set_coord_mode(this->viewport->get_coord_mode());
+		getter.acquiring->trw->set_name(new_data_source->layer_title);
 	}
+
 
 	if (new_data_source->is_thread) {
 		if (!po->babel_args.isEmpty() || !po->url.isEmpty() || !po->shell_command.isEmpty()) {
 
-			AcquireGetter getter(getter_params);
 			getter.run();
 
 			if (progress_dialog) {
@@ -574,7 +354,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
 
-		bool success = new_data_source->process_func(getter_params.trw, po, (BabelCallback) progress_func, this, dl_options);
+		bool success = new_data_source->process_func(getter.acquiring->trw, po, (BabelCallback) progress_func, this, dl_options);
 		if (!success) {
 			Dialog::error(QObject::tr("Error: acquisition failed."), this->window);
 		}
@@ -582,7 +362,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		delete po;
 		delete dl_options;
 
-		on_complete_process(getter_params);
+		getter.on_complete_process();
 
 		/* Actually show it if necessary. */
 		if (new_data_source->keep_dialog_open) {
@@ -597,58 +377,6 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	delete setup_dialog;
 }
 
-
-
-#if 0
-ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSourceInterface * interface, void * pass_along_data)
-{
-	ProcessOptions * po = NULL;
-
-	switch (interface->inputtype) {
-
-	case DatasourceInputtype::TRWLAYER: {
-		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
-		po = data_source->get_process_options(pass_along_data, NULL, name_src, NULL);
-		util_add_to_deletion_list(name_src);
-		free(name_src);
-		}
-		break;
-
-	case DatasourceInputtype::TRWLAYER_TRACK: {
-		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
-		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
-
-		po = data_source->get_process_options(pass_along_data, NULL, name_src, name_src_track);
-
-		util_add_to_deletion_list(name_src);
-		util_add_to_deletion_list(name_src_track);
-
-		free(name_src);
-		free(name_src_track);
-		}
-		break;
-
-	case DatasourceInputtype::TRACK: {
-		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
-		po = data_source->get_process_options(pass_along_data, NULL, NULL, name_src_track);
-		free(name_src_track);
-		}
-		break;
-
-	case DatasourceInputtype::NONE:
-		if (data_source->get_process_options) {
-			po = data_source->get_process_options(pass_along_data, dl_options, NULL, NULL);
-		}
-		break;
-
-	default:
-		qDebug() << "EE: Acquire: unsupported Datasource Input Type" << (int) interface->inputtype;
-		break;
-	};
-
-	return po;
-}
-#endif
 
 
 
@@ -738,33 +466,17 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 
 
-#if 0
-/**
- * @window: The #Window to work with
- * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
- * @viewport: The #Viewport defining the current view
- * @mode: How layers should be managed
- * @source_interface: The #DataSourceInterface determining how and what actions to take
- * @userdata: External data to be passed into the #DataSourceInterface
- * @cleanup_function: The function to dispose the #DataSourceInterface if necessary
- *
- * Process the given DataSourceInterface for sources with no input data.
- */
-void Acquire::acquire_from_source(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceMode mode, DataSourceInterface * source_interface, WebToolDatasource * web_tool_data_source, DataSourceCleanupFunc cleanup_function)
+
+void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode new_mode, Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceDialog * new_parent_data_source_dialog)
 {
-	g_acquiring->window = new_window;
-	g_acquiring->panel = new_panel;
-	g_acquiring->viewport = new_viewport;
-	g_acquiring->trw = NULL;
-	g_acquiring->trk = NULL;
+	AcquireProcess acquiring(new_window, new_panel, new_viewport);
+	acquiring.acquire(new_data_source, new_mode, new_parent_data_source_dialog);
 
-	g_acquiring->acquire(mode, source_interface, web_tool_data_source, cleanup_function);
-
-	if (g_acquiring->trw) {
-		g_acquiring->trw->add_children_to_tree();
+	if (acquiring.trw) {
+		acquiring.trw->add_children_to_tree();
 	}
 }
-#endif
+
 
 
 

@@ -2523,15 +2523,15 @@ void Window::help_about_cb(void) /* Slot. */
 
 
 
-void Window::acquire_handler(DataSourceInterface * source_interface)
+void Window::acquire_handler(DataSource * data_source)
 {
-	DataSourceMode mode = source_interface->mode;
+	/* Override mode. */
+	DataSourceMode mode = data_source->mode;
 	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
 		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
-#ifdef K
-	Acquire::acquire_from_source(this, this->items_tree, this->viewport, mode, source_interface, NULL, NULL);
-#endif
+
+	Acquire::acquire_from_source(data_source, mode, this, this->items_tree, this->viewport, NULL);
 }
 
 
@@ -2539,19 +2539,7 @@ void Window::acquire_handler(DataSourceInterface * source_interface)
 
 void Window::acquire_from_gps_cb(void)
 {
-	DataSource * data_source = new DataSourceGPS();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceGPS());
 }
 
 
@@ -2559,19 +2547,7 @@ void Window::acquire_from_gps_cb(void)
 
 void Window::acquire_from_file_cb(void)
 {
-	DataSource * data_source = new DataSourceFile();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceFile());
 }
 
 
@@ -2579,19 +2555,7 @@ void Window::acquire_from_file_cb(void)
 
 void Window::acquire_from_geojson_cb(void)
 {
-	DataSource * data_source = new DataSourceGeoJSON();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceGeoJSON());
 }
 
 
@@ -2599,19 +2563,7 @@ void Window::acquire_from_geojson_cb(void)
 
 void Window::acquire_from_routing_cb(void)
 {
-	DataSource * data_source = new DataSourceRouting();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceRouting());
 }
 
 
@@ -2620,19 +2572,7 @@ void Window::acquire_from_routing_cb(void)
 #ifdef VIK_CONFIG_OPENSTREETMAP
 void Window::acquire_from_osm_cb(void)
 {
-	DataSource * data_source = new DataSourceOSMTraces();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceOSMTraces());
 }
 
 
@@ -2640,19 +2580,7 @@ void Window::acquire_from_osm_cb(void)
 
 void Window::acquire_from_my_osm_cb(void)
 {
-	DataSource * data_source = new DataSourceOSMMyTraces();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceOSMMyTraces());
 }
 #endif
 
@@ -2666,19 +2594,7 @@ void Window::acquire_from_gc_cb(void)
 		return;
 	}
 
-	DataSource * data_source = new DataSourceGeoCache();
-
-	DataSourceMode mode = source_interface->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceGeoCache());
 }
 #endif
 
@@ -2688,19 +2604,7 @@ void Window::acquire_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void Window::acquire_from_geotag_cb(void)
 {
-	DataSource * data_source = new DataSourceGeoTag();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceGeoTag());
 }
 #endif
 
@@ -2710,19 +2614,7 @@ void Window::acquire_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void Window::acquire_from_wikipedia_cb(void)
 {
-	DataSource * data_source = new DataSourceWikipedia();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceWikipedia());
 }
 #endif
 
@@ -2731,19 +2623,7 @@ void Window::acquire_from_wikipedia_cb(void)
 
 void Window::acquire_from_url_cb(void)
 {
-	DataSource * data_source = new DataSourceURL();
-
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
-	}
-
-	AcquireProcess acquiring(this, this->items_tree, this->viewport);
-	acquiring.acquire(data_source, mode, NULL);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
+	this->acquire_handler(new DataSourceURL());
 }
 
 

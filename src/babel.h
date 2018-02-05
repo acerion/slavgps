@@ -137,9 +137,7 @@ namespace SlavGPS {
 
 
 
-	/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 	bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * user_data, DownloadOptions * dl_options);
-
 	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelCallback cb, void * cb_data);
 
 

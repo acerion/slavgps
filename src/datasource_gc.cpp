@@ -70,7 +70,7 @@ using namespace SlavGPS;
 
 
 #ifdef VIK_CONFIG_GEOCACHES
-//DataSourceInterface datasource_gc_interface;
+// DataSourceInterface datasource_gc_interface;
 #endif
 
 
