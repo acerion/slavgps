@@ -74,7 +74,7 @@ static ParameterSpecification coord_layer_param_specs[] = {
 	{ PARAM_MIN_INC,        NULL, "min_inc",        SGVariantType::DOUBLE, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),               WidgetType::SPINBOX_DOUBLE, &scale_minutes_width,  NULL,               NULL, NULL },
 	{ PARAM_LINE_THICKNESS, NULL, "line_thickness", SGVariantType::INT,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"),              WidgetType::SPINBOX_INT,    &scale_line_thickness, NULL,               NULL, NULL },
 
-	{ PARAM_MAX,            NULL, NULL,             SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                                 WidgetType::NONE,           NULL,                  NULL,               NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL, NULL,             SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                                 WidgetType::NONE,           NULL,                  NULL,               NULL, NULL }, /* Guard. */
 };
 
 

@@ -39,7 +39,7 @@ namespace SlavGPS {
 
 	/* id is index. */
 	enum class SGVariantType {
-		EMPTY = 0,
+		Empty = 0,
 		DOUBLE,
 		UINT,
 		INT,
@@ -72,7 +72,7 @@ namespace SlavGPS {
 		SGVariant(SGVariantType type_id, double d);            /* For constructing values of type SGVariantType::LATITUDE/LONGITUDE/ALTITUDE. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
-		SGVariant()                           { type_id = SGVariantType::EMPTY; }
+		SGVariant()                           { type_id = SGVariantType::Empty; }
 		SGVariant(double d)                   { type_id = SGVariantType::DOUBLE; val_double = d; }
 		SGVariant(uint32_t u)                 { type_id = SGVariantType::UINT; val_uint = u; }
 		SGVariant(int32_t i)                  { type_id = SGVariantType::INT; val_int = i; }

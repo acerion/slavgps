@@ -92,7 +92,7 @@ ParameterSpecification georef_layer_param_specs[] = {
 	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
 	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::Empty,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -637,7 +637,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 	}
 	GeorefConfigDialog * dialog = (GeorefConfigDialog *) user_data;
 
-	if (!Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file")->val_bool) {
+	if (!Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file").val_bool) {
 		return;
 	}
 

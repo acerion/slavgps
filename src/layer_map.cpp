@@ -163,11 +163,11 @@ static SGVariant id_default(void)
 
 static SGVariant directory_default(void)
 {
-	const SGVariant * pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir");
-	if (pref_value) {
-		return SGVariant(pref_value->val_string); /* TODO: why we can't just return *pref_value? */
-	} else {
+	const SGVariant pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir");
+	if (pref_value.type_id == SGVariantType::Empty) {
 		return SGVariant("");
+	} else {
+		return SGVariant(pref_value.val_string); /* TODO: why we can't just return pref_value? */
 	}
 }
 
@@ -234,7 +234,7 @@ ParameterSpecification maps_layer_param_specs[] = {
 	{ PARAM_ONLYMISSING,   NULL, "adlonlymissing", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
 	{ PARAM_MAPZOOM,       NULL, "mapzoom",        SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          NULL, NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                                         WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL, NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                         WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -555,8 +555,9 @@ void LayerMap::set_cache_dir(const QString & dir)
 
 	QString mydir = dir;
 	if (dir.isEmpty()) {
-		if (Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir")) {
-			mydir = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir")->val_string;
+		SGVariant var = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".maplayer_default_dir");
+		if (var.type_id != SGVariantType::Empty) {
+			mydir = var.val_string;
 		}
 	}
 

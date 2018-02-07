@@ -117,7 +117,7 @@ namespace SlavGPS {
 		param_id_t id;
 		const char * name_space;
 		const char * name;
-		SGVariantType type;
+		SGVariantType type_id;
 		param_id_t group_id; /* Every parameter belongs to a group of related parameters. Related parameters are put into the same tab in UI dialog. */
 		QString ui_label;
 		WidgetType widget_type;

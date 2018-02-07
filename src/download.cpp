@@ -439,7 +439,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 			return DownloadResult::NOT_REQUIRED;
 		}
 
-		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".download_tile_age")->u;
+		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".download_tile_age").u;
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);

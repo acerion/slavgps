@@ -308,7 +308,7 @@ ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_MDTIME,                  NULL, "metadatatime",      SGVariantType::STRING,  GROUP_METADATA,          QObject::tr("Creation Time"),                    WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 	{ PARAM_MDKEYS,                  NULL, "metadatakeywords",  SGVariantType::STRING,  GROUP_METADATA,          QObject::tr("Keywords"),                         WidgetType::ENTRY,        NULL,                        string_default,             NULL, NULL },
 
-	{ NUM_PARAMS,                    NULL, NULL,                SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                                     WidgetType::NONE,         NULL,                        NULL,                       NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                    NULL, NULL,                SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                     WidgetType::NONE,         NULL,                        NULL,                       NULL, NULL }, /* Guard. */
 };
 
 

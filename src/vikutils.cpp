@@ -474,13 +474,13 @@ void SGUtils::set_auto_features_on_first_run(void)
 
 
 		/* Enable auto add map + Enable IP lookup. */
-		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariant((bool) true));
-		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION));
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP ".add_default_map_layer", SGVariant((bool) true));
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method",        SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION));
 
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
-		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP "check_version", SGVariant((bool) true));
+		Preferences::set_param_value(PREFERENCES_NAMESPACE_STARTUP ".check_version", SGVariant((bool) true));
 #endif
 
 		/* Ensure settings are saved for next time. */

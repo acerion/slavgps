@@ -232,11 +232,11 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 		bool success = false;
 		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
-		read_parameter_value(layer_type, param_spec->name, param_spec->type, &success);
+		read_parameter_value(layer_type, param_spec->name, param_spec->type_id, &success);
 		if (!success) {
 			SGVariant value;
 			if (parameter_get_hardwired_value(value, *param_spec)) {
-				write_parameter_value(value, layer_type, param_spec->name, param_spec->type);
+				write_parameter_value(value, layer_type, param_spec->name, param_spec->type_id);
 			}
 		}
 	}
@@ -323,7 +323,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
-			write_parameter_value(param_value, layer_type, iter->second->name, iter->second->type);
+			write_parameter_value(param_value, layer_type, iter->second->name, iter->second->type_id);
 		}
 
 		layer_defaults_save_to_file();
@@ -351,7 +351,7 @@ void LayerDefaults::set(LayerType layer_type, ParameterSpecification * layer_par
 	*new_param = *layer_param_spec;
 	default_parameters_specifications.push_back(new_param);
 
-	write_parameter_value(default_value, layer_type, layer_param_spec->name, layer_param_spec->type);
+	write_parameter_value(default_value, layer_type, layer_param_spec->name, layer_param_spec->type_id);
 }
 
 

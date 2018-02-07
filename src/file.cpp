@@ -215,7 +215,7 @@ static void write_layer_params_and_data(FILE * file, Layer const * layer)
 
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
 		param_value = ((Layer * ) layer)->get_param_value(iter->first, true); /* TODO: get rid of cast. */
-		file_write_layer_param(file, iter->second->name, iter->second->type, param_value);
+		file_write_layer_param(file, iter->second->name, iter->second->type_id, param_value);
 	}
 
 	layer->write_layer_data(file);
@@ -553,7 +553,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					if (strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0) {
 
 						line += eq_pos+1;
-						if (param_spec->type == SGVariantType::STRING_LIST) {
+						if (param_spec->type_id == SGVariantType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -561,7 +561,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							SGVariant new_val;
-							switch (param_spec->type) {
+							switch (param_spec->type_id) {
 							case SGVariantType::DOUBLE:
 								new_val = SGVariant((double) strtod_i8n(line, NULL));
 								break;

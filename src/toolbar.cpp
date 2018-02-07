@@ -154,7 +154,7 @@ static ParameterSpecification prefs[] = {
 	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
 	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
 	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, QObject::tr("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
-	{ 4, NULL,                     NULL,             SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
+	{ 4, NULL,                     NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -227,7 +227,7 @@ void a_toolbar_uninit(void)
 
 static bool prefs_get_append_to_menu(void)
 {
-	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".append_to_menu")->b;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".append_to_menu").b;
 }
 
 
@@ -235,7 +235,7 @@ static bool prefs_get_append_to_menu(void)
 
 static unsigned int prefs_get_icon_size(void)
 {
-	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_size")->u;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_size").u;
 }
 
 
@@ -243,7 +243,7 @@ static unsigned int prefs_get_icon_size(void)
 
 static unsigned int prefs_get_icon_style(void)
 {
-	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_style")->u;
+	return Preferences::get_param_value(TOOLBAR_PARAMS_NAMESPACE ".icon_style").u;
 }
 
 

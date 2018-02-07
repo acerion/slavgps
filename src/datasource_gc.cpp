@@ -247,8 +247,8 @@ ProcessOptions * DataSourceGCDialog::get_process_options(DownloadOptions & dl_op
 	ProcessOptions * po = new ProcessOptions();
 
 	//char *safe_string = g_shell_quote (this->center_entry.text());
-	char *safe_user = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username")->val_string.toUtf8().constData());
-	char *safe_pass = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password")->val_string.toUtf8().constData());
+	char *safe_user = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string.toUtf8().constData());
+	char *safe_pass = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string.toUtf8().constData());
 
 	double lat, lon;
 	if (2 != sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {

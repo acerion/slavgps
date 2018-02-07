@@ -44,7 +44,7 @@ SGVariant::SGVariant(const SGVariant & val)
 {
 	*this = val;
 
-	if (val.type_id == SGVariantType::EMPTY) {
+	if (val.type_id == SGVariantType::Empty) {
 		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with empty type to copy constructor";
 	}
 }
@@ -160,7 +160,7 @@ SGVariant::SGVariant(SGVariantType type_id_, double d)
 
 SGVariant::~SGVariant()
 {
-	if (this->type_id == SGVariantType::EMPTY) {
+	if (this->type_id == SGVariantType::Empty) {
 		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with type id empty to destructor";
 	}
 }
@@ -189,7 +189,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	debug << value.type_id;
 
 	switch (value.type_id) {
-	case SGVariantType::EMPTY:
+	case SGVariantType::Empty:
 		break;
 	case SGVariantType::DOUBLE:
 		debug << value.val_double;
@@ -244,7 +244,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 {
 	switch (type_id) {
-	case SGVariantType::EMPTY:
+	case SGVariantType::Empty:
 		debug << "<empty type>";
 		break;
 	case SGVariantType::DOUBLE:
@@ -335,7 +335,7 @@ QString SGVariant::to_string() const
 	static QLocale c_locale = QLocale::c();
 
 	switch (this->type_id) {
-	case SGVariantType::EMPTY:
+	case SGVariantType::Empty:
 		return QString("<empty value>");
 
 	case SGVariantType::DOUBLE:

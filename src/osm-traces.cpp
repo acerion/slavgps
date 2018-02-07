@@ -129,7 +129,7 @@ public:
 static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES, "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES, "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                             NULL,       SGVariantType::EMPTY,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::NONE,     NULL, NULL, NULL, NULL } /* Guard. */
+	{ 2, NULL,                             NULL,       SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::NONE,     NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 
@@ -393,8 +393,8 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const char *default_user = get_default_user();
-	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username")->val_string;
-	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password")->val_string;
+	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username").val_string;
+	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password").val_string;
 
 
 	if (!osm_user.isEmpty()) {

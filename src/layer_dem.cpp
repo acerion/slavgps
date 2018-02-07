@@ -178,7 +178,7 @@ static ParameterSpecification dem_layer_param_specs[] = {
 	{ PARAM_MIN_ELEV,   NULL, "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
 	{ PARAM_MAX_ELEV,   NULL, "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
 
-	{ NUM_PARAMS,       NULL, NULL,       SGVariantType::EMPTY,       PARAMETER_GROUP_GENERIC, QString(""),                     WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL, NULL,       SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, QString(""),                     WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
 

@@ -204,7 +204,7 @@ void Layer::preconfigure_interfaces(void)
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
 			/* kamilTODO: what if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
-			param_value = LayerDefaults::get(type, param_spec->name, param_spec->type);
+			param_value = LayerDefaults::get(type, param_spec->name, param_spec->type_id);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}
 	}
@@ -413,7 +413,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 		qDebug() << "DD: Layer: Marshalling parameter" << iter->second->name;
 
 		param_value = this->get_param_value(iter->first, false);
-		switch (iter->second->type) {
+		switch (iter->second->type_id) {
 		case SGVariantType::STRING:
 			/* Remember need braces as these are macro calls, not single statement functions! */
 			if (!param_value.val_string.isEmpty()) {
@@ -475,7 +475,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 	SGVariant param_value;
 	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
 		qDebug() << "DD: Layer: Unmarshalling parameter" << iter->second->name;
-		switch (iter->second->type) {
+		switch (iter->second->type_id) {
 		case SGVariantType::STRING:
 			s = (char *) malloc(vlm_size + 1);
 			s[vlm_size] = 0;
@@ -663,7 +663,7 @@ void Layer::set_initial_parameter_values(void)
 		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
-			if (iter->second->type != SGVariantType::STRING_LIST) {
+			if (iter->second->type_id != SGVariantType::STRING_LIST) {
 				param_value = defaults->at(iter->first);
 				this->set_param_value(iter->first, param_value, true); /* Possibly comes from a file. */
 			}
@@ -739,7 +739,7 @@ void Layer::add_menu_items(QMenu & menu)
 
 SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	 return SGVariant(); /* Type ID will be ::EMPTY. */
+	 return SGVariant(); /* Type ID will be ::Empty. */
 }
 
 

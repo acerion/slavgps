@@ -79,7 +79,7 @@ ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecif
 	this->id = other.id;
 	this->name_space = strdup(other.name_space);
 	this->name = strdup(other.name);
-	this->type = other.type;
+	this->type_id = other.type_id;
 	this->group_id = other.group_id;
 	this->ui_label = other.ui_label;
 	this->widget_type = other.widget_type;
@@ -485,7 +485,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 	switch (param_spec->widget_type) {
 
 	case WidgetType::COLOR:
-		if (param_spec->type == SGVariantType::COLOR) {
+		if (param_spec->type_id == SGVariantType::COLOR) {
 			qDebug() << "II: UI Builder: creating color button with colors" << value;
 			SGColorButton * widget_ = new SGColorButton(value.val_color, NULL);
 
@@ -495,7 +495,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::CHECKBUTTON:
-		if (param_spec->type == SGVariantType::BOOLEAN) {
+		if (param_spec->type_id == SGVariantType::BOOLEAN) {
 			QCheckBox * widget_ = new QCheckBox;
 			if (value.val_bool) {
 				widget_->setCheckState(Qt::Checked);
@@ -506,7 +506,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 
 	case WidgetType::COMBOBOX: {
 		assert (param_spec->widget_data);
-		assert (param_spec->type == SGVariantType::INT || param_spec->type == SGVariantType::STRING);
+		assert (param_spec->type_id == SGVariantType::INT || param_spec->type_id == SGVariantType::STRING);
 
 		QComboBox * widget_ = new QComboBox(this);
 
@@ -515,18 +515,18 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		int selected_idx = 0;
 
 		for (auto iter = items->begin(); iter != items->end(); iter++) {
-			if (param_spec->type == SGVariantType::INT) {
+			if (param_spec->type_id == SGVariantType::INT) {
 				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
 				if (param_value.val_int == (int32_t) (*iter).id) {
 					selected_idx = i;
 				}
-			} else if (param_spec->type == SGVariantType::STRING) {
+			} else if (param_spec->type_id == SGVariantType::STRING) {
 				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
 				if (param_value.val_string == (*iter).label) {
 					selected_idx = i;
 				}
 			} else {
-				qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << (int) param_spec->type;
+				qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << param_spec->type_id;
 			}
 
 			i++;
@@ -539,7 +539,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::RADIOGROUP:
-		if (param_spec->type == SGVariantType::INT && param_spec->widget_data) {
+		if (param_spec->type_id == SGVariantType::INT && param_spec->widget_data) {
 			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec->widget_data;
 			assert (items);
 			SGRadioGroup * widget_ = new SGRadioGroup("", items, this);
@@ -549,8 +549,8 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 
 	case WidgetType::SPINBOX_INT:
 
-		assert (param_spec->type == SGVariantType::INT);
-		if (param_spec->type == SGVariantType::INT && param_spec->widget_data) {
+		assert (param_spec->type_id == SGVariantType::INT);
+		if (param_spec->type_id == SGVariantType::INT && param_spec->widget_data) {
 
 			int32_t init_val = value.val_int;
 			ParameterScale * scale = (ParameterScale *) param_spec->widget_data;
@@ -567,8 +567,8 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 
 	case WidgetType::SPINBOX_DOUBLE:
 
-		assert (param_spec->type == SGVariantType::DOUBLE);
-		if (param_spec->type == SGVariantType::DOUBLE && param_spec->widget_data) {
+		assert (param_spec->type_id == SGVariantType::DOUBLE);
+		if (param_spec->type_id == SGVariantType::DOUBLE && param_spec->widget_data) {
 
 			const double init_val = value.val_double;
 			ParameterScale * scale = (ParameterScale *) param_spec->widget_data;
@@ -590,7 +590,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::PASSWORD:
-		if (param_spec->type == SGVariantType::STRING) {
+		if (param_spec->type_id == SGVariantType::STRING) {
 			QLineEdit * widget_ = new QLineEdit();
 			widget_->setEchoMode(QLineEdit::Password);
 			if (!value.val_string.isEmpty()) {
@@ -601,7 +601,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 
 		break;
 	case WidgetType::FILEENTRY:
-		if (param_spec->type == SGVariantType::STRING) {
+		if (param_spec->type_id == SGVariantType::STRING) {
 
 			SGFileTypeFilter file_type_filter = SGFileTypeFilter::ANY;
 			if (param_spec->widget_data) {
@@ -618,7 +618,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::FOLDERENTRY:
-		if (param_spec->type == SGVariantType::STRING) {
+		if (param_spec->type_id == SGVariantType::STRING) {
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
 				widget_->set_filename(value.val_string);
@@ -629,7 +629,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::FILELIST:
-		if (param_spec->type == SGVariantType::STRING_LIST) {
+		if (param_spec->type_id == SGVariantType::STRING_LIST) {
 			SGFileList * widget_ = new SGFileList(param_spec->ui_label, value.val_string_list, this);
 
 			widget = widget_;
@@ -637,15 +637,15 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::HSCALE:
-		assert (param_spec->type == SGVariantType::INT || param_spec->type == SGVariantType::DOUBLE);
-		if ((param_spec->type == SGVariantType::INT || param_spec->type == SGVariantType::DOUBLE) && param_spec->widget_data) {
+		assert (param_spec->type_id == SGVariantType::INT || param_spec->type_id == SGVariantType::DOUBLE);
+		if ((param_spec->type_id == SGVariantType::INT || param_spec->type_id == SGVariantType::DOUBLE) && param_spec->widget_data) {
 
 			ParameterScale * scale = (ParameterScale *) param_spec->widget_data;
 
 			/* TODO: implement a slider for values of type 'double'. */
 			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 
-			if (param_spec->type == SGVariantType::INT) {
+			if (param_spec->type_id == SGVariantType::INT) {
 				widget_->set_value(value.val_int);
 				widget = widget_;
 			} else {
@@ -656,7 +656,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification * param_spec
 		break;
 
 	case WidgetType::BUTTON:
-		if (param_spec->type == SGVariantType::PTR && param_spec->widget_data) {
+		if (param_spec->type_id == SGVariantType::PTR && param_spec->widget_data) {
 #ifdef K
 			rv = gtk_button_new_with_label((const char *) param_spec->widget_data);
 			QObject::connect(rv, SIGNAL (triggered(bool)), param_spec->extra_widget_data, SLOT (value.val_pointer));
@@ -749,12 +749,12 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::COMBOBOX:
-		assert (param_spec->type == SGVariantType::INT || param_spec->type == SGVariantType::STRING);
+		assert (param_spec->type_id == SGVariantType::INT || param_spec->type_id == SGVariantType::STRING);
 
-		if (param_spec->type == SGVariantType::INT) {
+		if (param_spec->type_id == SGVariantType::INT) {
 			rv = SGVariant((int32_t) ((QComboBox *) widget)->currentData().toInt());
 
-		} else if (param_spec->type == SGVariantType::STRING) {
+		} else if (param_spec->type_id == SGVariantType::STRING) {
 			rv = SGVariant(((QComboBox *) widget)->currentText());
 
 			/* TODO: look at old implementation below: */
@@ -770,7 +770,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			}
 #endif
 		} else {
-			qDebug() << "EE: UI Builder: saving value of widget" << widget_type_get_label(param_spec->widget_type) << ", unsupported parameter spec type for combobox:" << (int) param_spec->type;
+			qDebug() << "EE: UI Builder: saving value of widget" << widget_type_get_label(param_spec->widget_type) << ", unsupported parameter spec type for combobox:" << param_spec->type_id;
 		}
 
 		break;
@@ -781,17 +781,17 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::SPINBOX_INT:
-		assert (param_spec->type == SGVariantType::INT);
+		assert (param_spec->type_id == SGVariantType::INT);
 		rv = SGVariant((int32_t) ((QSpinBox *) widget)->value());
 		break;
 
 	case WidgetType::SPINBOX_DOUBLE:
-		assert (param_spec->type == SGVariantType::DOUBLE);
+		assert (param_spec->type_id == SGVariantType::DOUBLE);
 		rv = SGVariant((double) ((QDoubleSpinBox *) widget)->value());
 		break;
 
 	case WidgetType::ENTRY:
-		rv = SGVariant(param_spec->type, ((QLineEdit *) widget)->text());
+		rv = SGVariant(param_spec->type_id, ((QLineEdit *) widget)->text());
 		break;
 
 	case WidgetType::PASSWORD:
@@ -812,10 +812,10 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::HSCALE:
-		assert (param_spec->type == SGVariantType::INT || param_spec->type == SGVariantType::DOUBLE);
-		if (param_spec->type == SGVariantType::INT) {
+		assert (param_spec->type_id == SGVariantType::INT || param_spec->type_id == SGVariantType::DOUBLE);
+		if (param_spec->type_id == SGVariantType::INT) {
 			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
-		} else if (param_spec->type == SGVariantType::DOUBLE) {
+		} else if (param_spec->type_id == SGVariantType::DOUBLE) {
 #ifdef K
 			rv = SGVariant((double) gtk_range_get_value(GTK_RANGE(widget)));
 #endif
@@ -835,7 +835,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = param_spec->extra->convert_to_internal(rv);
 	}
 
-	qDebug() << "II: UI Builder:" << __FUNCTION__ << "widget type =" << widget_type_get_label(param_spec->widget_type) << ", label =" << param_spec->ui_label << ", saved value =" << rv << ", expected value type =" << param_spec->type;
+	qDebug() << "II: UI Builder:" << __FUNCTION__ << "widget type =" << widget_type_get_label(param_spec->widget_type) << ", label =" << param_spec->ui_label << ", saved value =" << rv << ", expected value type =" << param_spec->type_id;
 
 	return rv;
 }
@@ -846,7 +846,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, ParameterSpecification * param_specs)
 {
 	/* Could have to copy it if it's a string! */
-	switch (param_specs[i].type) {
+	switch (param_specs[i].type_id) {
 	case SGVariantType::STRING:
 		paramdatas[i] = SGVariant(data.val_string);
 		break;
@@ -872,7 +872,7 @@ void SlavGPS::a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpec
 	int i;
 	/* May have to free strings, etc. */
 	for (i = 0; i < param_specs_count; i++) {
-		switch (param_specs[i].type) {
+		switch (param_specs[i].type_id) {
 		case SGVariantType::STRING_LIST:
 			param_table[i].val_string_list.clear();
 			break;

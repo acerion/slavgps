@@ -312,7 +312,7 @@ void SlavGPS::a_background_post_init()
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
 #if 0
 #ifdef HAVE_LIBMAPNIK
-	unsigned int mapnik_threads = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".background_max_threads_local_mapnik")->u;
+	unsigned int mapnik_threads = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".background_max_threads_local_mapnik").u;
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif
 

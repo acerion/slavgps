@@ -189,7 +189,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 	cache_add(key, pixmap, extra);
 
 	/* TODO: that should be done on preference change only... */
-	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size")->val_uint * 1024 * 1024;
+	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size").val_uint * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();

@@ -303,7 +303,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	{ PARAM_GPSD_RETRY_INTERVAL,        NULL, "gpsd_retry_interval",       SGVariantType::STRING,  GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,         NULL,                    gpsd_retry_interval_default, NULL, NULL },
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
-	{ NUM_PARAMS,                       NULL, NULL,                        SGVariantType::EMPTY,   PARAMETER_GROUP_GENERIC, QString(""),                                  WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                       NULL, NULL,                        SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                  WidgetType::NONE,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */
 };
 
 
