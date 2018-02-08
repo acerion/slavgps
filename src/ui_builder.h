@@ -146,8 +146,10 @@ namespace SlavGPS {
 
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
+#if 0
 	/* Frees data from last (if necessary). */
 	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * param_specs, uint16_t param_specs_count);
+#endif
 
 	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec);
 
@@ -172,10 +174,10 @@ namespace SlavGPS {
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, ParameterSpecification * param_specs, const QString & default_name);
+		void fill(Waypoint * wp, ParameterSpecification (&param_specs)[10 /* SG_WP_PARAM_MAX */], const QString & default_name); /* FIXME: magic number. */
 
-		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification * param_spec);
-		SGVariant get_param_value(const QString & param_name, const ParameterSpecification * param_spec);
+		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification & param_spec);
+		SGVariant get_param_value(const QString & param_name, const ParameterSpecification & param_spec);
 
 		/* Referencing parameters (and widgets that are
 		   related to the parameters) can be done through
@@ -185,12 +187,12 @@ namespace SlavGPS {
 		std::map<param_id_t, QWidget *> widgets;
 
 	private:
-		QWidget * new_widget(const ParameterSpecification * param_spec, const SGVariant & param_value);
+		QWidget * new_widget(const ParameterSpecification & param_spec, const SGVariant & param_value);
 
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
 
-		SGVariant get_param_value_from_widget(QWidget * widget, const ParameterSpecification * param_spec);
+		SGVariant get_param_value_from_widget(QWidget * widget, const ParameterSpecification & param_spec);
 
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * ok = NULL;

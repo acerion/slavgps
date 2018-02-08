@@ -414,7 +414,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 
 		param_value = this->get_param_value(iter->first, false);
 		switch (iter->second->type_id) {
-		case SGVariantType::STRING:
+		case SGVariantType::String:
 			/* Remember need braces as these are macro calls, not single statement functions! */
 			if (!param_value.val_string.isEmpty()) {
 				vlm_append(param_value.val_string.toUtf8().constData(), param_value.val_string.length());
@@ -424,7 +424,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 			}
 			break;
 			/* Print out the string list in the array. */
-		case SGVariantType::STRING_LIST: {
+		case SGVariantType::StringList: {
 			/* Write length of list (# of strings). */
 			const int listlen = param_value.val_string_list.size();
 			g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
@@ -476,7 +476,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
 		qDebug() << "DD: Layer: Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type_id) {
-		case SGVariantType::STRING:
+		case SGVariantType::String:
 			s = (char *) malloc(vlm_size + 1);
 			s[vlm_size] = 0;
 			vlm_read(s);
@@ -484,7 +484,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 			this->set_param_value(iter->first, param_value, false);
 			free(s);
 			break;
-		case SGVariantType::STRING_LIST: {
+		case SGVariantType::StringList: {
 			int listlen = vlm_size;
 			b += sizeof(int); /* Skip listlen. */;
 
@@ -588,7 +588,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 		bool must_redraw = false;
 
 		for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
-			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
+			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
 				must_redraw = true;
@@ -663,7 +663,7 @@ void Layer::set_initial_parameter_values(void)
 		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
-			if (iter->second->type_id != SGVariantType::STRING_LIST) {
+			if (iter->second->type_id != SGVariantType::StringList) {
 				param_value = defaults->at(iter->first);
 				this->set_param_value(iter->first, param_value, true); /* Possibly comes from a file. */
 			}

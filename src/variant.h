@@ -40,23 +40,23 @@ namespace SlavGPS {
 	/* id is index. */
 	enum class SGVariantType {
 		Empty = 0,
-		DOUBLE,
-		UINT,
-		INT,
+		Double,
+		Uint,
+		Int,
 
 		/* In my_layer_set_param, if you want to use the string, you should dup it.
 		 * In my_layer_get_param, the string returned will NOT be free'd, you are responsible for managing it (I think). */
-		STRING,
-		BOOLEAN,
-		COLOR,
-		STRING_LIST,  /* SGVariant stores a copy of string list. */
-		PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
+		String,
+		Boolean,
+		Color,
+		StringList,  /* SGVariant stores a copy of string list. */
+		Pointer, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
 
 		/* These types are more abstract, closer to application domain than to machine language. */
-		TIMESTAMP,
-		LATITUDE,
-		LONGITUDE,
-		ALTITUDE
+		Timestamp,
+		Latitude,
+		Longitude,
+		Altitude
 	};
 
 	QDebug operator<<(QDebug debug, const SGVariantType type_id);
@@ -70,19 +70,21 @@ namespace SlavGPS {
 		SGVariant(SGVariantType type_id, const QString & str); /* Construct value of given type using data from given string. */
 		SGVariant(SGVariantType type_id, time_t timestamp);    /* For constructing values of type SGVariantType::TIMESTAMP. */
 		SGVariant(SGVariantType type_id, double d);            /* For constructing values of type SGVariantType::LATITUDE/LONGITUDE/ALTITUDE. */
+		SGVariant(SGVariantType type_id, bool b);              /* For constructing values of type SGVariantType::Bool. */
+		SGVariant(SGVariantType type_id, int32_t i);           /* For constructing values of type SGVariantType::Int. */
 		SGVariant(const SGVariant & val); /* Copy constructor. */
 
 		SGVariant()                           { type_id = SGVariantType::Empty; }
-		SGVariant(double d)                   { type_id = SGVariantType::DOUBLE; val_double = d; }
-		SGVariant(uint32_t u)                 { type_id = SGVariantType::UINT; val_uint = u; }
-		SGVariant(int32_t i)                  { type_id = SGVariantType::INT; val_int = i; }
-		SGVariant(const QString & s)          { type_id = SGVariantType::STRING; val_string = s; }
-		SGVariant(const char * s)             { type_id = SGVariantType::STRING; val_string = QString(s); }
-		SGVariant(bool b)                     { type_id = SGVariantType::BOOLEAN; val_bool = b; }
-		SGVariant(int r, int g, int b, int a) { type_id = SGVariantType::COLOR; val_color = QColor(r, g, b, a); }
-		SGVariant(const QColor & color)       { type_id = SGVariantType::COLOR; val_color = color; }
-		SGVariant(const QStringList & sl)     { type_id = SGVariantType::STRING_LIST; val_string_list = sl; }
-		/* Notice that there is no separate one-argument constructor for TIMESTAMP data type.
+		SGVariant(double d)                   { type_id = SGVariantType::Double; val_double = d; }
+		SGVariant(uint32_t u)                 { type_id = SGVariantType::Uint; val_uint = u; }
+		SGVariant(int32_t i)                  { type_id = SGVariantType::Int; val_int = i; }
+		SGVariant(const QString & s)          { type_id = SGVariantType::String; val_string = s; }
+		SGVariant(const char * s)             { type_id = SGVariantType::String; val_string = QString(s); }
+		SGVariant(bool b)                     { type_id = SGVariantType::Boolean; val_bool = b; }
+		SGVariant(int r, int g, int b, int a) { type_id = SGVariantType::Color; val_color = QColor(r, g, b, a); }
+		SGVariant(const QColor & color)       { type_id = SGVariantType::Color; val_color = color; }
+		SGVariant(const QStringList & sl)     { type_id = SGVariantType::StringList; val_string_list = sl; }
+		/* Notice that there is no separate one-argument constructor for Timestamp data type.
 		   It would be too similar to SGVariant(uint32_t u). Use SGVariant(SGVariantType, time_t) instead. */
 
 		~SGVariant();

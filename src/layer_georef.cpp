@@ -83,14 +83,14 @@ enum {
 
 
 ParameterSpecification georef_layer_param_specs[] = {
-	{ PARAM_IMAGE_FULL_PATH,         NULL, "image",                SGVariantType::STRING, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_EASTING,      NULL, "corner_easting",       SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_NORTHING,     NULL, "corner_northing",      SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_MPP_EASTING,             NULL, "mpp_easting",          SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_MPP_NORTHING,            NULL, "mpp_northing",         SGVariantType::DOUBLE, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_ZONE,         NULL, "corner_zone",          SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
-	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::UINT,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE_FULL_PATH,         NULL, "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_EASTING,      NULL, "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_NORTHING,     NULL, "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_MPP_EASTING,             NULL, "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_MPP_NORTHING,            NULL, "mpp_northing",         SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_ZONE,         NULL, "corner_zone",          SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
+	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL },
 
 	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::Empty,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::NONE, NULL, NULL, NULL, NULL }, /* Guard. */
 };
@@ -149,7 +149,7 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewpor
 
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "georef_auto_read_world_file", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
+	{ 0, PREFERENCES_NAMESPACE_IO, "georef_auto_read_world_file", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 
 
@@ -157,7 +157,7 @@ static ParameterSpecification io_prefs[] = {
 
 void SlavGPS::layer_georef_init(void)
 {
-	Preferences::register_parameter(&io_prefs[0], SGVariant(true));
+	Preferences::register_parameter(io_prefs[0], SGVariant(io_prefs[0].type_id, true));
 }
 
 

@@ -90,8 +90,8 @@ DataSourceGeoCache::DataSourceGeoCache()
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GC, "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GC, "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GC, "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GC, "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::ENTRY, NULL, NULL, NULL, NULL },
 };
 
 
@@ -99,10 +99,13 @@ static ParameterSpecification prefs[] = {
 
 void DataSourceGeoCache::init(void)
 {
+	int i = 0;
 	Preferences::register_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
-	Preferences::register_parameter(prefs + 0, SGVariant("username"));
-	Preferences::register_parameter(prefs + 1, SGVariant("password"));
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, "username"));
+	i++;
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, "password"));
+	i++;
 }
 
 

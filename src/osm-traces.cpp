@@ -127,8 +127,8 @@ public:
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES, "username", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES, "password", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES, "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::ENTRY,    NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES, "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::PASSWORD, NULL, NULL, NULL, NULL },
 	{ 2, NULL,                             NULL,       SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::NONE,     NULL, NULL, NULL, NULL } /* Guard. */
 };
 
@@ -198,10 +198,14 @@ QString SlavGPS::osm_get_current_credentials()
 /* Initialization. */
 void SlavGPS::osm_traces_init()
 {
+	int i = 0;
+
 	Preferences::register_group(PREFERENCES_NAMESPACE_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
 
-	Preferences::register_parameter(prefs + 0, SGVariant(""));
-	Preferences::register_parameter(prefs + 1, SGVariant(""));
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, ""));
+	i++;
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, ""));
+	i++;
 }
 
 

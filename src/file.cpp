@@ -160,7 +160,7 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 	   be freed) back for get_param and if it is empty we shouldn't write
 	   anything at all (otherwise we'd read in a list with an empty string,
 	   not an empty string list). */
-	if (type == SGVariantType::STRING_LIST) {
+	if (type == SGVariantType::StringList) {
 		for (auto iter = data.val_string_list.constBegin(); iter != data.val_string_list.constEnd(); iter++) {
 			fprintf(file, "%s=", param_name);
 			fprintf(file, "%s\n", (*iter).toUtf8().constData());
@@ -168,29 +168,29 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 	} else {
 		fprintf(file, "%s=", param_name);
 		switch (type)	{
-		case SGVariantType::DOUBLE: {
+		case SGVariantType::Double: {
 			// char buf[15]; /* Locale independent. */
 			// fprintf(file, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
 			fprintf(file, "%f\n", data.val_double);
 			break;
 		}
-		case SGVariantType::UINT:
+		case SGVariantType::Uint:
 			fprintf(file, "%u\n", data.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
 			break;
 
-		case SGVariantType::INT:
+		case SGVariantType::Int:
 			fprintf(file, "%d\n", data.val_int);
 			break;
 
-		case SGVariantType::BOOLEAN:
+		case SGVariantType::Boolean:
 			fprintf(file, "%c\n", data.val_bool ? 't' : 'f');
 			break;
 
-		case SGVariantType::STRING:
+		case SGVariantType::String:
 			fprintf(file, "%s\n", data.val_string.isEmpty() ? "" : data.val_string.toUtf8().constData());
 			break;
 
-		case SGVariantType::COLOR:
+		case SGVariantType::Color:
 			fprintf(file, "#%.2x%.2x%.2x\n", data.val_color.red(), data.val_color.green(), data.val_color.blue());
 			break;
 
@@ -553,7 +553,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					if (strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0) {
 
 						line += eq_pos+1;
-						if (param_spec->type_id == SGVariantType::STRING_LIST) {
+						if (param_spec->type_id == SGVariantType::StringList) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -562,23 +562,23 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 						} else {
 							SGVariant new_val;
 							switch (param_spec->type_id) {
-							case SGVariantType::DOUBLE:
+							case SGVariantType::Double:
 								new_val = SGVariant((double) strtod_i8n(line, NULL));
 								break;
 
-							case SGVariantType::UINT:
+							case SGVariantType::Uint:
 								new_val = SGVariant((uint32_t) strtoul(line, NULL, 10));
 								break;
 
-							case SGVariantType::INT:
+							case SGVariantType::Int:
 								new_val = SGVariant((int32_t) strtol(line, NULL, 10));
 								break;
 
-							case SGVariantType::BOOLEAN:
+							case SGVariantType::Boolean:
 								new_val = SGVariant((bool) TEST_BOOLEAN(line));
 								break;
 
-							case SGVariantType::COLOR:
+							case SGVariantType::Color:
 								new_val.val_color.setNamedColor(line);
 								if (!new_val.val_color.isValid()) {
 									new_val.val_color.setNamedColor("black"); /* Fallback value. */

@@ -150,10 +150,10 @@ typedef struct {
 static config_t extra_widget_data;
 
 static ParameterSpecification prefs[] = {
-	{ 0, TOOLBAR_PARAMS_NAMESPACE, "append_to_menu", SGVariantType::BOOLEAN, PARAMETER_GROUP_GENERIC, QObject::tr("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
-	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
-	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::INT,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
-	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::PTR,     PARAMETER_GROUP_GENERIC, QObject::tr("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE, "append_to_menu", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                             NULL, NULL, N_("Pack the toolbar to the main menu to save vertical space") },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE, "icon_size",      SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Size:"),      WidgetType::COMBOBOX,    &params_icon_size,                NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE, "icon_style",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Icon Style:"),     WidgetType::COMBOBOX,    &params_icon_style,               NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE, "NOTSAVED1",      SGVariantType::Pointer, PARAMETER_GROUP_GENERIC, QObject::tr("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL },
 	{ 4, NULL,                     NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                    WidgetType::NONE,        NULL,                             NULL, NULL, NULL } /* Guard. */
 };
 
@@ -190,20 +190,25 @@ void a_toolbar_init(void)
 	Preferences::register_group(TOOLBAR_PARAMS_GROUP_KEY, QObject::tr("Toolbar"));
 
 	unsigned int i = 0;
-	Preferences::register_parameter(&prefs[i++], SGVariant(false));
-	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 0));
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, false));
+	i++;
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 0));
+	i++;
 
 #ifdef WINDOWS
 	/* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
-	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 1));
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 1));
+	i++;
 #else
-	Preferences::register_parameter(&prefs[i++], SGVariant((int32_t) 0));
+	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 0));
+	i++;
 #endif
 
 	SGVariant param_value;
 	param_value.val_pointer = (void *) toolbar_configure_cb;
-	param_value->type_id = SGVariantType::PTR; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
-	Preferences::register_parameter(&prefs[i++], param_value);
+	param_value->type_id = SGVariantType::Pointer; /* TODO: "manually" setting type of variant. Not the best idea, but we make an exception for ::PTR type. Improve this. */
+	Preferences::register_parameter(prefs[i], param_value);
+	i++;
 
 	/* Signal data hash. */
 	signal_data = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);

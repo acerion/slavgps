@@ -82,7 +82,7 @@ static int file_type_id = 0;
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "gpsbabel", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
+	{ 0, PREFERENCES_NAMESPACE_IO, "gpsbabel", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("GPSBabel:"), WidgetType::FILEENTRY, NULL, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect.") },
 };
 
 
@@ -94,7 +94,7 @@ void Babel::get_gpsbabel_path_from_system(void)
 	/* The path may be empty string. */
 	this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 
-	Preferences::register_parameter(&prefs[0], SGVariant(this->gpsbabel_path));
+	Preferences::register_parameter(prefs[0], SGVariant(prefs[0].type_id, this->gpsbabel_path));
 
 	if (this->gpsbabel_path.isEmpty()) {
 		qDebug() << "WW: Babel: gpsbabel not found in PATH";

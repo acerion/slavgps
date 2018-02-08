@@ -265,7 +265,7 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 #ifdef HAVE_LIBMAPNIK
 ParameterScale scale_threads = { 1, 64, SGVariant((int32_t) 1), 1, 0 }; /* 64 threads should be enough for anyone...; TODO: verify the hardcoded default value. */
 static ParameterSpecification prefs_mapnik[] = {
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "background_max_threads_local_mapnik", SGVariantType::INT, PARAMETER_GROUP_GENERIC, QObject::tr("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "background_max_threads_local_mapnik", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Threads:"), WidgetType::SPINBOX_INT, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
 };
 #endif
 
@@ -280,7 +280,7 @@ void SlavGPS::a_background_init()
 #if 0
 #ifdef HAVE_LIBMAPNIK
 	/* Default to 1 thread due to potential crashing issues. */
-	Preferences::register_parameter(&prefs_mapnik[0], SGVariant((int32_t) 1));
+	Preferences::register_parameter(prefs_mapnik[0], SGVariant(prefs_mapnik[0].type_id, (int32_t) 1));
 #endif
 #endif
 }

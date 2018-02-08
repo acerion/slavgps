@@ -171,12 +171,12 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      NULL, "files",    SGVariantType::STRING_LIST, PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FILELIST,        NULL,             NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     NULL, "source",   SGVariantType::INT,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
-	{ PARAM_COLOR,      NULL, "color",    SGVariantType::COLOR,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },
-	{ PARAM_TYPE,       NULL, "type",     SGVariantType::INT,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RADIOGROUP,      &params_type,     type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   NULL, "min_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
-	{ PARAM_MAX_ELEV,   NULL, "max_elev", SGVariantType::DOUBLE,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
+	{ PARAM_FILES,      NULL, "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FILELIST,        NULL,             NULL,             NULL, NULL },
+	{ PARAM_SOURCE,     NULL, "source",   SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
+	{ PARAM_COLOR,      NULL, "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },
+	{ PARAM_TYPE,       NULL, "type",     SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RADIOGROUP,      &params_type,     type_default,     NULL, NULL },
+	{ PARAM_MIN_ELEV,   NULL, "min_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
+	{ PARAM_MAX_ELEV,   NULL, "max_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
 
 	{ NUM_PARAMS,       NULL, NULL,       SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, QString(""),                     WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
@@ -470,7 +470,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 		/* Save in relative format if necessary. */
 		if (is_file_operation && Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 			dem_layer_convert_to_relative_filenaming(rv.val_string_list, this->files);
-			rv.type_id = SGVariantType::STRING_LIST; /* TODO: direct assignment of variant type - fix (hide) this. */
+			rv.type_id = SGVariantType::StringList; /* TODO: direct assignment of variant type - fix (hide) this. */
 		} else {
 			rv = SGVariant(this->files);
 		}

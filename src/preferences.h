@@ -67,7 +67,7 @@ namespace SlavGPS {
 		   so pref key is not copied. default param data IS copied. */
 		/* Group field (integer) will be overwritten. */
 		/* \param param_spec should be persistent through the life of the preference. */
-		static void register_parameter(ParameterSpecification * param_spec, const SGVariant & default_param_value);
+		static void register_parameter(const ParameterSpecification & param_spec, const SGVariant & default_param_value);
 
 		/* Set value of a single parameter. */
 		static bool set_param_value(const char * param_name, const SGVariant & param_value);
@@ -77,8 +77,8 @@ namespace SlavGPS {
 		static SGVariant get_param_value(const QString & param_name);
 
 
-		QHash<QString, ParameterSpecification *>::iterator begin();
-		QHash<QString, ParameterSpecification *>::iterator end();
+		QHash<QString, ParameterSpecification>::iterator begin();
+		QHash<QString, ParameterSpecification>::iterator end();
 
 		static bool get_restore_window_state(void);
 
@@ -99,17 +99,17 @@ namespace SlavGPS {
 #ifndef WINDOWS
 		/* Windows automatically uses the system defined viewer.
 		   ATM for other systems need to specify the program to use. */
-		static const QString get_image_viewer(void);
+		static QString get_image_viewer(void);
 #endif
-		static const QString get_external_gpx_program_1(void);
-		static const QString get_external_gpx_program_2(void);
+		static QString get_external_gpx_program_1(void);
+		static QString get_external_gpx_program_2(void);
 		static vik_file_ref_format_t get_file_ref_format();
 		static bool get_ask_for_create_track_name();
 		static bool get_create_track_tooltip();
 		static int get_recent_number_files();
 		static bool get_add_default_map_layer();
 		static vik_startup_method_t get_startup_method();
-		static const QString get_startup_file(void);
+		static QString get_startup_file(void);
 		static bool get_check_version();
 
 		bool loaded = false; /* Have the preferences been loaded from file? */

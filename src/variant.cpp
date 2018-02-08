@@ -57,33 +57,33 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	this->type_id = type_id_;
 
 	switch (type_id_) {
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		this->val_double = (double) strtod(str, NULL);
 		break;
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		this->val_uint = strtoul(str, NULL, 10);
 		break;
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		this->val_int = strtol(str, NULL, 10);
 		break;
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		this->val_bool = TEST_BOOLEAN(str);
 		break;
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		this->val_color = QColor(str);
 		break;
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		this->val_string = str;
 		break;
-	case SGVariantType::STRING_LIST:
+	case SGVariantType::StringList:
 		this->val_string = str; /* TODO: improve this assignment of string list. */
 		break;
-	case SGVariantType::TIMESTAMP:
+	case SGVariantType::Timestamp:
 		this->val_timestamp = (time_t) strtoul(str, NULL, 10);
 		break;
-	case SGVariantType::LATITUDE:
-	case SGVariantType::LONGITUDE:
-	case SGVariantType::ALTITUDE:
+	case SGVariantType::Latitude:
+	case SGVariantType::Longitude:
+	case SGVariantType::Altitude:
 		this->val_lat_lon_alt = strtod(str, NULL);
 		break;
 	default:
@@ -100,33 +100,33 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	this->type_id = type_id_;
 
 	switch (type_id_) {
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		this->val_double = str.toDouble();
 		break;
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		this->val_uint = str.toULong();
 		break;
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		this->val_int = str.toLong();
 		break;
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		this->val_bool = TEST_BOOLEAN(str.toUtf8().constData());
 		break;
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		this->val_color = QColor(str);
 		break;
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		this->val_string = str;
 		break;
-	case SGVariantType::STRING_LIST:
+	case SGVariantType::StringList:
 		this->val_string = str; /* TODO: improve this assignment of string list. */
 		break;
-	case SGVariantType::TIMESTAMP:
+	case SGVariantType::Timestamp:
 		this->val_timestamp = (time_t) str.toULong();
 		break;
-	case SGVariantType::LATITUDE:
-	case SGVariantType::LONGITUDE:
-	case SGVariantType::ALTITUDE:
+	case SGVariantType::Latitude:
+	case SGVariantType::Longitude:
+	case SGVariantType::Altitude:
 		this->val_lat_lon_alt = str.toDouble();
 		break;
 	default:
@@ -140,7 +140,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 
 SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
 {
-	assert (type_id_ == SGVariantType::TIMESTAMP);
+	assert (type_id_ == SGVariantType::Timestamp);
 	this->type_id = type_id_;
 	this->val_timestamp = timestamp;
 }
@@ -150,9 +150,29 @@ SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
 
 SGVariant::SGVariant(SGVariantType type_id_, double d)
 {
-	assert (type_id_ == SGVariantType::LATITUDE || type_id_ == SGVariantType::LONGITUDE || type_id_ == SGVariantType::ALTITUDE);
+	assert (type_id_ == SGVariantType::Latitude || type_id_ == SGVariantType::Longitude || type_id_ == SGVariantType::Altitude);
 	this->type_id = type_id_;
 	this->val_lat_lon_alt = d;
+}
+
+
+
+
+SGVariant::SGVariant(SGVariantType type_id_, int32_t i)
+{
+	assert (type_id_ == SGVariantType::Int);
+	this->type_id = type_id_;
+	this->val_int = i;
+}
+
+
+
+
+SGVariant::SGVariant(SGVariantType type_id_, bool b)
+{
+	assert (type_id_ == SGVariantType::Boolean);
+	this->type_id = type_id_;
+	this->val_bool = b;
 }
 
 
@@ -191,42 +211,42 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	switch (value.type_id) {
 	case SGVariantType::Empty:
 		break;
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		debug << value.val_double;
 		break;
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		debug << value.val_uint;
 		break;
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		debug << value.val_int;
 		break;
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		debug << value.val_string;
 		break;
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		debug << value.val_bool;
 		break;
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		debug << value.val_color.red() << value.val_color.green() << value.val_color.blue() << value.val_color.alpha();
 		break;
-	case SGVariantType::STRING_LIST:
+	case SGVariantType::StringList:
 		debug << value.val_string_list;
 		break;
-	case SGVariantType::PTR:
+	case SGVariantType::Pointer:
 		debug << QString("0x%1").arg((qintptr) value.val_pointer);
 		break;
-	case SGVariantType::TIMESTAMP:
+	case SGVariantType::Timestamp:
 		debug << value.get_timestamp();
 		break;
-	case SGVariantType::LATITUDE:
+	case SGVariantType::Latitude:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_latitude();
 		break;
-	case SGVariantType::LONGITUDE:
+	case SGVariantType::Longitude:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_longitude();
 		break;
-	case SGVariantType::ALTITUDE:
+	case SGVariantType::Altitude:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_altitude();
 		break;
@@ -245,43 +265,43 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 {
 	switch (type_id) {
 	case SGVariantType::Empty:
-		debug << "<empty type>";
+		debug << "<Empty type>";
 		break;
-	case SGVariantType::DOUBLE:
-		debug << "double";
+	case SGVariantType::Double:
+		debug << "Double";
 		break;
-	case SGVariantType::UINT:
-		debug << "uint";
+	case SGVariantType::Uint:
+		debug << "Uint";
 		break;
-	case SGVariantType::INT:
-		debug << "int";
+	case SGVariantType::Int:
+		debug << "Int";
 		break;
-	case SGVariantType::STRING:
-		debug << "string";
+	case SGVariantType::String:
+		debug << "String";
 		break;
-	case SGVariantType::BOOLEAN:
-		debug << "bool";
+	case SGVariantType::Boolean:
+		debug << "Bool";
 		break;
-	case SGVariantType::COLOR:
-		debug << "color";
+	case SGVariantType::Color:
+		debug << "Color";
 		break;
-	case SGVariantType::STRING_LIST:
-		debug << "string list";
+	case SGVariantType::StringList:
+		debug << "String List";
 		break;
-	case SGVariantType::PTR:
-		debug << "pointer";
+	case SGVariantType::Pointer:
+		debug << "Pointer";
 		break;
-	case SGVariantType::TIMESTAMP:
-		debug << "timestamp";
+	case SGVariantType::Timestamp:
+		debug << "Timestamp";
 		break;
-	case SGVariantType::LATITUDE:
-		debug << "latitude";
+	case SGVariantType::Latitude:
+		debug << "Latitude";
 		break;
-	case SGVariantType::LONGITUDE:
-		debug << "longitude";
+	case SGVariantType::Longitude:
+		debug << "Longitude";
 		break;
-	case SGVariantType::ALTITUDE:
-		debug << "altitude";
+	case SGVariantType::Altitude:
+		debug << "Altitude";
 		break;
 	default:
 		debug << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) type_id;
@@ -304,7 +324,7 @@ time_t SGVariant::get_timestamp() const
 
 double SGVariant::get_latitude() const
 {
-	assert (this->type_id == SGVariantType::LATITUDE);
+	assert (this->type_id == SGVariantType::Latitude);
 
 	return this->val_lat_lon_alt;
 }
@@ -314,7 +334,7 @@ double SGVariant::get_latitude() const
 
 double SGVariant::get_longitude() const
 {
-	assert (this->type_id == SGVariantType::LONGITUDE);
+	assert (this->type_id == SGVariantType::Longitude);
 	return this->val_lat_lon_alt;
 }
 
@@ -323,7 +343,7 @@ double SGVariant::get_longitude() const
 
 double SGVariant::get_altitude() const
 {
-	assert (this->type_id == SGVariantType::ALTITUDE);
+	assert (this->type_id == SGVariantType::Altitude);
 	return this->val_lat_lon_alt;
 }
 
@@ -338,40 +358,40 @@ QString SGVariant::to_string() const
 	case SGVariantType::Empty:
 		return QString("<empty value>");
 
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		return QString("%1").arg(this->val_double, 0, 'f', 20);
 
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		return QString("%1").arg(this->val_uint);
 
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		return QString("%1").arg(this->val_int);
 
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		return this->val_string;
 
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		return QString("%1").arg(this->val_bool);
 
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		return QString("%1 %2 %3 %4").arg(this->val_color.red()).arg(this->val_color.green()).arg(this->val_color.blue()).arg(this->val_color.alpha());
 
-	case SGVariantType::STRING_LIST:
+	case SGVariantType::StringList:
 		return this->val_string_list.join(" / ");
 
-	case SGVariantType::PTR:
+	case SGVariantType::Pointer:
 		return QString("0x%1").arg((qintptr) this->val_pointer);
 
-	case SGVariantType::TIMESTAMP:
+	case SGVariantType::Timestamp:
 		return QString("%1").arg(this->get_timestamp());
 
-	case SGVariantType::LATITUDE:
+	case SGVariantType::Latitude:
 		return c_locale.toString(this->get_latitude(), 'f', SG_PRECISION_LATITUDE);
 
-	case SGVariantType::LONGITUDE:
+	case SGVariantType::Longitude:
 		return c_locale.toString(this->get_longitude(), 'f', SG_PRECISION_LONGITUDE);
 
-	case SGVariantType::ALTITUDE:
+	case SGVariantType::Altitude:
 		return c_locale.toString(this->get_altitude(), 'f', SG_PRECISION_ALTITUDE);
 
 	default:

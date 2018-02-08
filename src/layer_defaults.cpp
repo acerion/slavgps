@@ -90,34 +90,34 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 	*success = true;
 
 	switch (type_id) {
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		value = SGVariant((double) variant.toDouble());
 		break;
 
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		value = SGVariant((uint32_t) variant.toULongLong());
 		break;
 
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		value = SGVariant((int32_t) variant.toLongLong());
 		break;
 
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		value = SGVariant((bool) variant.toBool());
 		break;
 
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		value = SGVariant(variant.toString());
 		break;
 
-	case SGVariantType::STRING_LIST:
+	case SGVariantType::StringList:
 #ifdef K
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value = SGVariant(str_to_glist(str)); /* TODO convert. */
 #endif
 		break;
 
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		value = SGVariant(variant.value<QColor>());
 		break;
 
@@ -157,22 +157,22 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 	QVariant variant;
 
 	switch (ptype) {
-	case SGVariantType::DOUBLE:
+	case SGVariantType::Double:
 		variant = QVariant((double) value.val_double);
 		break;
-	case SGVariantType::UINT:
+	case SGVariantType::Uint:
 		variant = QVariant((qulonglong) value.val_uint);
 		break;
-	case SGVariantType::INT:
+	case SGVariantType::Int:
 		variant = QVariant((qlonglong) value.val_int);
 		break;
-	case SGVariantType::BOOLEAN:
+	case SGVariantType::Boolean:
 		variant = QVariant((bool) value.val_bool);
 		break;
-	case SGVariantType::STRING:
+	case SGVariantType::String:
 		variant = value.val_string;
 		break;
-	case SGVariantType::COLOR:
+	case SGVariantType::Color:
 		variant = value.val_color;
 		break;
 	default:
@@ -321,7 +321,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
 		for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
-			const SGVariant param_value = dialog.get_param_value(iter->first, iter->second);
+			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
 			values->at(iter->first) = param_value;
 			write_parameter_value(param_value, layer_type, iter->second->name, iter->second->type_id);
 		}

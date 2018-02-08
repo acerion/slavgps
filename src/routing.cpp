@@ -68,7 +68,7 @@ static std::vector<QString> routing_engine_ids; /* These are string IDs. */
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING, "default", SGVariantType::STRING, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::COMBOBOX, &routing_engine_combo_items, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING, "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::COMBOBOX, &routing_engine_combo_items, NULL, NULL, NULL },
 };
 
 
@@ -80,7 +80,7 @@ static ParameterSpecification prefs[] = {
 void SlavGPS::routing_prefs_init()
 {
 	Preferences::register_group(PREFERENCES_NAMESPACE_ROUTING, QObject::tr("Routing"));
-	Preferences::register_parameter(prefs, SGVariant((char *) NULL));
+	Preferences::register_parameter(prefs[0], SGVariant(prefs[0].type_id, ""));
 }
 
 
