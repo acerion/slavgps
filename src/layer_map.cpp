@@ -324,7 +324,7 @@ static ParameterSpecification prefs[] = {
 
 void layer_map_init(void)
 {
-	Preferences::register_parameter(prefs[0], SGVariant(prefs[0].type_id, maps_layer_default_dir()));
+	Preferences::register_parameter(prefs[0], SGVariant(maps_layer_default_dir(), prefs[0].type_id));
 
 	int max_tiles = MAX_TILES;
 	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_MAX_TILES, &max_tiles)) {

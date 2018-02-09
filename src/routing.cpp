@@ -80,7 +80,7 @@ static ParameterSpecification prefs[] = {
 void SlavGPS::routing_prefs_init()
 {
 	Preferences::register_group(PREFERENCES_NAMESPACE_ROUTING, QObject::tr("Routing"));
-	Preferences::register_parameter(prefs[0], SGVariant(prefs[0].type_id, ""));
+	Preferences::register_parameter(prefs[0], SGVariant("", prefs[0].type_id));
 }
 
 

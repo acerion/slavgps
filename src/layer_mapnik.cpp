@@ -237,11 +237,11 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	i++;
 	Preferences::register_parameter(prefs[i], fonts_default());
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, true));
+	Preferences::register_parameter(prefs[i], SGVariant(true, prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(prefs[i], scale_timeout.initial);
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, "carto"));
+	Preferences::register_parameter(prefs[i], SGVariant("carto", prefs[i].type_id));
 	i++;
 }
 

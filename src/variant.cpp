@@ -138,27 +138,34 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 
 
 
-SGVariant::SGVariant(SGVariantType type_id_, time_t timestamp)
+SGVariant::SGVariant(double d, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::Timestamp);
+	assert (type_id_ == SGVariantType::Double
+		|| type_id_ == SGVariantType::Latitude
+		|| type_id_ == SGVariantType::Longitude
+		|| type_id_ == SGVariantType::Altitude);
+
 	this->type_id = type_id_;
-	this->val_timestamp = timestamp;
+
+	switch (type_id_) {
+	case SGVariantType::Double:
+		this->val_double = d;
+		break;
+	case SGVariantType::Latitude:
+	case SGVariantType::Longitude:
+	case SGVariantType::Altitude:
+		this->val_lat_lon_alt = d;
+		break;
+	default:
+		assert (0);
+		break;
+	}
 }
 
 
 
 
-SGVariant::SGVariant(SGVariantType type_id_, double d)
-{
-	assert (type_id_ == SGVariantType::Latitude || type_id_ == SGVariantType::Longitude || type_id_ == SGVariantType::Altitude);
-	this->type_id = type_id_;
-	this->val_lat_lon_alt = d;
-}
-
-
-
-
-SGVariant::SGVariant(SGVariantType type_id_, int32_t i)
+SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Int);
 	this->type_id = type_id_;
@@ -168,7 +175,37 @@ SGVariant::SGVariant(SGVariantType type_id_, int32_t i)
 
 
 
-SGVariant::SGVariant(SGVariantType type_id_, bool b)
+SGVariant::SGVariant(uint32_t u, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Uint);
+	this->type_id = type_id_;
+	this->val_uint = u;
+}
+
+
+
+
+SGVariant::SGVariant(const char * str, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::String);
+	this->type_id = type_id_;
+	this->val_string = QString(str);
+}
+
+
+
+
+SGVariant::SGVariant(const QString & str, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::String);
+	this->type_id = type_id_;
+	this->val_string = str;
+}
+
+
+
+
+SGVariant::SGVariant(bool b, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Boolean);
 	this->type_id = type_id_;
@@ -178,11 +215,48 @@ SGVariant::SGVariant(SGVariantType type_id_, bool b)
 
 
 
+SGVariant::SGVariant(const QColor & color, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Color);
+	this->type_id = type_id_;
+	this->val_color = color;
+}
+
+
+
+
+SGVariant::SGVariant(int r, int g, int b, int a, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Color);
+	this->type_id = type_id_;
+	this->val_color = QColor(r, g, b, a);
+}
+
+
+
+
+SGVariant::SGVariant(const QStringList & string_list, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::StringList);
+	this->type_id = type_id_;
+	this->val_string_list = string_list;
+}
+
+
+
+
+SGVariant::SGVariant(time_t timestamp, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Timestamp);
+	this->type_id = type_id_;
+	this->val_timestamp = timestamp;
+}
+
+
+
+
 SGVariant::~SGVariant()
 {
-	if (this->type_id == SGVariantType::Empty) {
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with type id empty to destructor";
-	}
 }
 
 

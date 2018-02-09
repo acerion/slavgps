@@ -282,7 +282,7 @@ static bool preferences_load_from_file()
 				qDebug() << "EE: Preferences: Load from File: 'string list' not implemented";
 			}
 
-			const SGVariant new_val = SGVariant(old_val_iter.value().type_id, val);
+			const SGVariant new_val = SGVariant(old_val_iter.value().type_id, val); /* String representation -> variant. */
 			registered_parameter_values.insert(QString(key), new_val);
 
 			free(key);
@@ -530,59 +530,59 @@ void Preferences::register_default_values()
 	Preferences::register_group(PREFERENCES_NAMESPACE_GENERAL, QObject::tr("General"));
 
 	i = 0;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, (int32_t) DegreeFormat::DMS));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DegreeFormat::DMS, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, (int32_t) DistanceUnit::KILOMETRES));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DistanceUnit::KILOMETRES, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, (int32_t) SpeedUnit::KILOMETRES_PER_HOUR));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SpeedUnit::KILOMETRES_PER_HOUR, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, (int32_t) HeightUnit::METRES));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) HeightUnit::METRES, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, true));
+	Preferences::register_parameter(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(general_prefs[i], scale_lat.initial);
 	i++;
 	Preferences::register_parameter(general_prefs[i], scale_lon.initial);
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(general_prefs[i].type_id, (int32_t) VIK_TIME_REF_LOCALE));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) VIK_TIME_REF_LOCALE, general_prefs[i].type_id));
 
 
 	/* New Tab. */
 	Preferences::register_group(PREFERENCES_NAMESPACE_STARTUP, QObject::tr("Startup"));
 
 	i = 0;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(startup_prefs[i].type_id, false));
+	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(startup_prefs[i].type_id, false));
+	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(startup_prefs[i].type_id, (int32_t) VIK_STARTUP_METHOD_HOME_LOCATION));
+	Preferences::register_parameter(startup_prefs[i], SGVariant((int32_t) VIK_STARTUP_METHOD_HOME_LOCATION, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(startup_prefs[i].type_id, ""));
+	Preferences::register_parameter(startup_prefs[i], SGVariant("", startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(startup_prefs[i].type_id, false));
+	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 
 
 	/* New Tab. */
 	Preferences::register_group(PREFERENCES_NAMESPACE_IO, QObject::tr("Export/External"));
 
 	i = 0;
-	Preferences::register_parameter(io_prefs[i], SGVariant(io_prefs[i].type_id, (int32_t) VIK_KML_EXPORT_UNITS_METRIC));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_KML_EXPORT_UNITS_METRIC, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant(io_prefs[i].type_id, (int32_t) VIK_GPX_EXPORT_TRK_SORT_TIME));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_GPX_EXPORT_TRK_SORT_TIME, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant(io_prefs[i].type_id, (int32_t) VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE, io_prefs[i].type_id));
 	i++;
 
 #ifndef WINDOWS
-	Preferences::register_parameter(io_prefs_non_windows[0], SGVariant(io_prefs_non_windows[0].type_id, "xdg-open"));
+	Preferences::register_parameter(io_prefs_non_windows[0], SGVariant("xdg-open", io_prefs_non_windows[0].type_id));
 #endif
 
 	i = 0;
 	/* JOSM for OSM editing around a GPX track. */
-	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant(io_prefs_external_gpx[i].type_id, "josm"));
+	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant("josm", io_prefs_external_gpx[i].type_id));
 	i++;
 	/* Add a second external program - another OSM editor by default. */
-	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant(io_prefs_external_gpx[i].type_id, "merkaartor"));
+	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant("merkaartor", io_prefs_external_gpx[i].type_id));
 	i++;
 
 
@@ -590,11 +590,11 @@ void Preferences::register_default_values()
 	Preferences::register_group(PREFERENCES_NAMESPACE_ADVANCED, QObject::tr("Advanced"));
 
 	i = 0;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant(prefs_advanced[i].type_id, (int32_t) VIK_FILE_REF_FORMAT_ABSOLUTE));
+	Preferences::register_parameter(prefs_advanced[i], SGVariant((int32_t) VIK_FILE_REF_FORMAT_ABSOLUTE, prefs_advanced[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant(prefs_advanced[i].type_id, true));
+	Preferences::register_parameter(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant(prefs_advanced[i].type_id, true));
+	Preferences::register_parameter(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
 	i++;
 	Preferences::register_parameter(prefs_advanced[i], scale_recent_files.initial);
 	i++;

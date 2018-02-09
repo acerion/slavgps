@@ -102,9 +102,9 @@ void DataSourceGeoCache::init(void)
 	int i = 0;
 	Preferences::register_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, "username"));
+	Preferences::register_parameter(prefs[i], SGVariant("username", prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, "password"));
+	Preferences::register_parameter(prefs[i], SGVariant("password", prefs[i].type_id));
 	i++;
 }
 

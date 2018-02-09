@@ -94,7 +94,7 @@ void Babel::get_gpsbabel_path_from_system(void)
 	/* The path may be empty string. */
 	this->gpsbabel_path = QStandardPaths::findExecutable("gpsbabel");
 
-	Preferences::register_parameter(prefs[0], SGVariant(prefs[0].type_id, this->gpsbabel_path));
+	Preferences::register_parameter(prefs[0], SGVariant(this->gpsbabel_path, prefs[0].type_id));
 
 	if (this->gpsbabel_path.isEmpty()) {
 		qDebug() << "WW: Babel: gpsbabel not found in PATH";

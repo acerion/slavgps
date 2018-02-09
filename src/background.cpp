@@ -280,7 +280,7 @@ void SlavGPS::a_background_init()
 #if 0
 #ifdef HAVE_LIBMAPNIK
 	/* Default to 1 thread due to potential crashing issues. */
-	Preferences::register_parameter(prefs_mapnik[0], SGVariant(prefs_mapnik[0].type_id, (int32_t) 1));
+	Preferences::register_parameter(prefs_mapnik[0], SGVariant((int32_t) 1, prefs_mapnik[0].type_id));
 #endif
 #endif
 }

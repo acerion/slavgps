@@ -157,7 +157,7 @@ static ParameterSpecification io_prefs[] = {
 
 void SlavGPS::layer_georef_init(void)
 {
-	Preferences::register_parameter(io_prefs[0], SGVariant(io_prefs[0].type_id, true));
+	Preferences::register_parameter(io_prefs[0], SGVariant(true, io_prefs[0].type_id));
 }
 
 

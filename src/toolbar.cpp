@@ -190,17 +190,17 @@ void a_toolbar_init(void)
 	Preferences::register_group(TOOLBAR_PARAMS_GROUP_KEY, QObject::tr("Toolbar"));
 
 	unsigned int i = 0;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, false));
+	Preferences::register_parameter(prefs[i], SGVariant(false, prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 0));
+	Preferences::register_parameter(prefs[i], SGVariant((int32_t) 0, prefs[i].type_id));
 	i++;
 
 #ifdef WINDOWS
 	/* Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven. */
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 1));
+	Preferences::register_parameter(prefs[i], SGVariant((int32_t) 1, prefs[i].type_id));
 	i++;
 #else
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, (int32_t) 0));
+	Preferences::register_parameter(prefs[i], SGVariant((int32_t) 0, prefs[i].type_id));
 	i++;
 #endif
 

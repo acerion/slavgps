@@ -202,9 +202,9 @@ void SlavGPS::osm_traces_init()
 
 	Preferences::register_group(PREFERENCES_NAMESPACE_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
 
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, ""));
+	Preferences::register_parameter(prefs[i], SGVariant("", prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant(prefs[i].type_id, ""));
+	Preferences::register_parameter(prefs[i], SGVariant("", prefs[i].type_id));
 	i++;
 }
 

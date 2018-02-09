@@ -337,14 +337,14 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 
 
 	param_spec = param_specs[SG_WP_PARAM_LAT];
-	widget = this->new_widget(param_spec, SGVariant(SGVariantType::Latitude, lat_lon.lat));
+	widget = this->new_widget(param_spec, SGVariant(lat_lon.lat, SGVariantType::Latitude));
 	form->addRow(param_spec.ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
 
 
 
 	param_spec = param_specs[SG_WP_PARAM_LON];
-	widget = this->new_widget(param_spec, SGVariant(SGVariantType::Longitude, lat_lon.lon));
+	widget = this->new_widget(param_spec, SGVariant(lat_lon.lon, SGVariantType::Longitude));
 	form->addRow(param_spec.ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
 
@@ -352,7 +352,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 
 	/* TODO: Consider if there should be a remove time button... */
 	param_spec = param_specs[SG_WP_PARAM_TIME];
-	widget = this->new_widget(param_spec, SGVariant(SGVariantType::Timestamp, wp->timestamp));
+	widget = this->new_widget(param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
 	form->addRow(param_spec.ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
 #ifdef K
@@ -790,7 +790,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::ENTRY:
-		rv = SGVariant(param_spec.type_id, ((QLineEdit *) widget)->text());
+		rv = SGVariant(param_spec.type_id, ((QLineEdit *) widget)->text()); /* String representation -> variant. */
 		break;
 
 	case WidgetType::PASSWORD:
@@ -823,7 +823,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		}
 		break;
 	case WidgetType::DATETIME:
-		rv = SGVariant(SGVariantType::Timestamp, ((SGDateTimeButton *) widget)->get_value());
+		rv = SGVariant(((SGDateTimeButton *) widget)->get_value(), SGVariantType::Timestamp);
 		break;
 	default:
 		break;
