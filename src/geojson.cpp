@@ -61,8 +61,8 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 {
 	bool result = false;
 
-	char *tmp_filename = a_gpx_write_tmp_file(trw, NULL);
-	if (!tmp_filename) {
+	const QString tmp_filename = GPX::write_tmp_file(trw, NULL);
+	if (tmp_filename.isEmpty()) {
 		return result;
 	}
 
@@ -75,7 +75,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	argv[0] = g_strdup(geojson_program_export().toUtf8().constData());
 	argv[1] = strdup("-f");
 	argv[2] = strdup("gpx");
-	argv[3] = g_strdup(tmp_filename);
+	argv[3] = g_strdup(tmp_filename.toUtf8().constData());
 	argv[4] = NULL;
 
 	GError * error = NULL;
@@ -109,8 +109,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	g_strfreev(argv);
 
 	/* Delete the temporary file. */
-	(void) remove(tmp_filename);
-	free(tmp_filename);
+	(void) remove(tmp_filename.toUtf8().constData());
 
 	return result;
 }

@@ -57,16 +57,16 @@ enum class PrintCenterMode {
 };
 
 typedef struct {
-	char *name;
+	QString name;
 	PrintCenterMode mode;
 } PrintCenterName;
 
 static const PrintCenterName center_modes[] = {
-	{ (char *) N_("None"),          PrintCenterMode::NONE },
-	{ (char *) N_("Horizontally"),  PrintCenterMode::HORIZONTALLY },
-	{ (char *) N_("Vertically"),    PrintCenterMode::VERTICALLY },
-	{ (char *) N_("Both"),          PrintCenterMode::BOTH },
-	{ NULL,            (PrintCenterMode) -1}
+	{ QObject::tr("None"),          PrintCenterMode::NONE         },
+	{ QObject::tr("Horizontally"),  PrintCenterMode::HORIZONTALLY },
+	{ QObject::tr("Vertically"),    PrintCenterMode::VERTICALLY   },
+	{ QObject::tr("Both"),          PrintCenterMode::BOTH         },
+	{ "",                           (PrintCenterMode) -1          }
 };
 
 typedef struct {
@@ -612,8 +612,8 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 	gtk_widget_show(label);
 
 	QComboBox * combo = new QComboBox();
-	for (center = center_modes; center->name; center++) {
-		combo->addItem(QObject::tr(center->name));
+	for (center = center_modes; center->mode != -1; center++) {
+		combo->addItem(center->name);
 	}
 	combo->setCurrentIndex(PrintCenterMode::BOTH);
 	hbox->addWidget(combo);

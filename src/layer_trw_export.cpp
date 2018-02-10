@@ -96,18 +96,17 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 void LayerTRW::open_layer_with_external_program(const QString & external_program)
 {
 	/* Don't Export invisible items. */
-	static GpxWritingOptions options = { true, true, false, false };
-	char * name_used = a_gpx_write_tmp_file(this, &options);
+	static GPXWriteOptions options(true, true, false, false);
+	const QString name_used = GPX::write_tmp_file(this, &options);
 
-	if (name_used) {
-		char * quoted_file = g_shell_quote(name_used);
+	if (!name_used.isEmpty()) {
+		char * quoted_file = g_shell_quote(name_used.toUtf8().constData());
 		const QString command = QString("%1 %2").arg(external_program).arg(quoted_file);
 		free(quoted_file);
 		if (!QProcess::startDetached(command)) {
 			Dialog::error(QObject::QObject::tr("Could not launch %1.").arg(external_program), this->get_window());
 		}
 		util_add_to_deletion_list(name_used);
-		free(name_used);
 	} else {
 		Dialog::error(QObject::QObject::tr("Could not create temporary file for export."), this->get_window());
 	}

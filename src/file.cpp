@@ -796,7 +796,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
 		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			if (! (success = a_gpx_read_file(file, layer))) {
+			if (! (success = GPX::read_file(file, layer))) {
 				load_answer = FileLoadResult::GPX_FAILURE;
 			}
 		} else {
@@ -872,7 +872,7 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 
 bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
-	GpxWritingOptions options = { false, false, write_hidden, false };
+	GPXWriteOptions options(false, false, write_hidden, false);
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
 	if (!file) {
 		return false;
@@ -882,7 +882,7 @@ bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileTy
 	case SGFileType::GPX:
 		/* trk defined so can set the option. */
 		options.is_route = trk->type_id == "sg.trw.route";
-		a_gpx_write_track_file(file, trk, &options);
+		GPX::write_track_file(file, trk, &options);
 		fclose(file);
 		return true;
 	default:
@@ -898,7 +898,7 @@ bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileTy
 /* Call it when @trk argument to VikFile::export() is NULL. */
 bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
-	GpxWritingOptions options = { false, false, write_hidden, false };
+	GPXWriteOptions options(false, false, write_hidden, false);
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
 	if (!file) {
 		return false;
@@ -911,7 +911,7 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
 		gpsmapper_write_file(file, trw);
 		break;
 	case SGFileType::GPX:
-		a_gpx_write_file(file, trw, &options);
+		GPX::write_file(file, trw, &options);
 		break;
 	case SGFileType::GPSPOINT:
 		a_gpspoint_write_file(file, trw);

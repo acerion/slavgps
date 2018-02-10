@@ -396,10 +396,9 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		*/
 		qDebug() << "II:" PREFIX << "input type: TRWLayer";
 
-		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
+		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
 		po = data_source->get_process_options(pass_along_data, NULL, name_src, NULL);
 		util_add_to_deletion_list(name_src);
-		free(name_src);
 		}
 		break;
 
@@ -410,25 +409,21 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 		*/
 		qDebug() << "II:" PREFIX << "input type: TRWLayerTrack";
 
-		char * name_src = a_gpx_write_tmp_file(acq->trw, NULL);
-		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
+		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
 
 		po = data_source->get_process_options(pass_along_data, NULL, name_src, name_src_track);
 
 		util_add_to_deletion_list(name_src);
 		util_add_to_deletion_list(name_src_track);
-
-		free(name_src);
-		free(name_src_track);
 		}
 		break;
 
 	case DatasourceInputtype::TRACK: {
 		qDebug() << "II:" PREFIX << "input type: Track";
 
-		char * name_src_track = a_gpx_write_track_tmp_file(acq->trk, NULL);
+		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
 		po = data_source->get_process_options(pass_along_data, NULL, NULL, name_src_track);
-		free(name_src_track);
 		}
 		break;
 

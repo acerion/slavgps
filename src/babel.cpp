@@ -183,13 +183,12 @@ bool a_babel_convert(LayerTRW * trw, const char * babel_args, BabelCallback cb, 
 {
 	bool ret = false;
 	char *bargs = g_strconcat(babel_args, " -i gpx", NULL);
-	char *name_src = a_gpx_write_tmp_file(trw, NULL);
+	const QString name_src = GPX::write_tmp_file(trw, NULL);
 
-	if (name_src) {
+	if (!name_src.isEmpty()) {
 		ProcessOptions po(bargs, name_src, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 		ret = a_babel_convert_from(trw, &po, cb, cb_data, (DownloadOptions *) unused);
-		(void) remove(name_src);
-		free(name_src);
+		(void) remove(name_src.toUtf8().constData());
 	}
 
 	free(bargs);
@@ -259,7 +258,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
 		return false;
 	}
 
-	bool read_success = a_gpx_read_file(file, trw);
+	bool read_success = GPX::read_file(file, trw);
 	if (!read_success) {
 		qDebug() << "EE: Babel: convert through intermediate file: failed to read intermediate gpx file" << intermediate_file_path;
 	}
@@ -435,7 +434,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
 			FILE * file = fopen(name_src.toUtf8().constData(), "r");
 			if (file) {
-				ret = a_gpx_read_file(file, trw);
+				ret = GPX::read_file(file, trw);
 				fclose(file);
 				file = NULL;
 			}

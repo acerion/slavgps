@@ -101,7 +101,7 @@ namespace SlavGPS {
 		~DataSource() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual ProcessOptions * get_process_options(void * user_data, DownloadOptions * download_options, const char * input_file_name, const char * input_track_file_name) { return NULL; };
+		virtual ProcessOptions * get_process_options(void * user_data, DownloadOptions * download_options, const QString & input_file_name, const QString & input_track_file_name) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options) { return false; };
 		virtual void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring) { return; };
 

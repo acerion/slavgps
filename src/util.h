@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 	bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
 
-	void util_add_to_deletion_list(char const * filename);
+	void util_add_to_deletion_list(const QString & full_file_path);
 	void util_remove_all_in_deletion_list(void);
 
 	char * util_str_remove_chars(char * string, char const * chars);
@@ -52,8 +52,6 @@ namespace SlavGPS {
 	int util_remove(char const * filename);
 
 	char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
-
-	void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size);
 
 
 
@@ -63,14 +61,10 @@ namespace SlavGPS {
 
 
 
-//#ifndef _
-//#define _(s) s
-//#endif
-
-
 #ifndef N_
 #define N_(s) s
 #endif
+
 
 
 

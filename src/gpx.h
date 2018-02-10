@@ -40,26 +40,33 @@ namespace SlavGPS {
 
 
 
-	/**
-	 * Options adapting GPX writing.
-	 */
-	typedef struct {
-		/* NB force options only apply to trackpoints. */
-		bool force_ele;  /* Force ele field. */
-		bool force_time; /* Force time field. */
-		bool hidden;     /* Write invisible tracks/waypoints (default is yes). */
-		bool is_route;   /* For internal convience. */
-	} GpxWritingOptions;
+	class GPXWriteOptions {
+	public:
+		GPXWriteOptions(bool new_force_ele, bool new_force_time, bool new_hidden, bool new_is_route)
+			: force_ele(new_force_ele), force_time(new_force_time), hidden(new_hidden), is_route(new_is_route) {};
+
+		/* 'force' options only apply to trackpoints. */
+		bool force_ele = false;  /* Force ele field. */
+		bool force_time = false; /* Force time field. */
+		bool hidden = false;     /* Write invisible tracks/waypoints (default is yes). */
+		bool is_route = false;   /* For internal convience. */
+	};
 
 
 
 
-	bool a_gpx_read_file(FILE * file, LayerTRW * trw);
-	void a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * options);
-	void a_gpx_write_track_file(FILE * file, Track * trk, GpxWritingOptions * options);
+	class GPX {
+	public:
+		static bool read_file(FILE * file, LayerTRW * trw);
+		static void write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options);
+		static void write_track_file(FILE * file, Track * trk, GPXWriteOptions * options);
 
-	char * a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options);
-	char * a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options);
+		static QString write_tmp_file(LayerTRW * trw, GPXWriteOptions * options);
+		static QString write_track_tmp_file(Track * trk, GPXWriteOptions * options);
+
+	private:
+		static QString write_tmp_file(LayerTRW * trw, Track * trk, GPXWriteOptions * options);
+	};
 
 
 

@@ -82,20 +82,24 @@ static QString osm_password;
  */
 static std::mutex login_mutex;
 
-/**
- * Different type of trace visibility.
- */
-typedef struct _OsmTraceVis_t {
-	const char *combostr;
-	const char *apistr;
-} OsmTraceVis_t;
 
-static const OsmTraceVis_t OsmTraceVis[] = {
-	{ N_("Identifiable (public w/ timestamps)"),	"identifiable" },
-	{ N_("Trackable (private w/ timestamps)"),	"trackable" },
-	{ N_("Public"),					"public" },
-	{ N_("Private"),				"private" },
-	{ NULL, NULL },
+
+
+/**
+   Different type of trace visibility.
+*/
+class OsmTraceVisibility {
+public:
+	const QString combostr;
+	const QString apistr;
+};
+
+static const OsmTraceVisibility trace_visibilities[] = {
+	{ QObject::tr("Identifiable (public w/ timestamps)"), "identifiable" },
+	{ QObject::tr("Trackable (private w/ timestamps)"),   "trackable"    },
+	{ QObject::tr("Public"),                              "public"       },
+	{ QObject::tr("Private"),                             "private"      },
+	{ "", "" },
 };
 
 
@@ -106,19 +110,17 @@ static int find_initial_visibility_index(void);
 
 
 
-/**
- * Struct hosting needed info.
- */
+
 class OsmTracesInfo : public BackgroundJob {
 public:
-	OsmTracesInfo(LayerTRW * trw_, Track * trk_);
+	OsmTracesInfo(LayerTRW * trw, Track * trk);
 	~OsmTracesInfo();
 
 	QString name;
 	QString description;
 	QString tags;
 	bool anonymize_times = false; /* ATM only available on a single track. */
-	const OsmTraceVis_t * vistype = NULL;
+	const OsmTraceVisibility * visibility = NULL;
 	LayerTRW * trw = NULL;
 	Track * trk = NULL;
 };
@@ -227,11 +229,11 @@ void SlavGPS::osm_traces_uninit()
   */
 static int osm_traces_upload_file(const QString & user,
 				  const QString & password,
-				  const char *file,
+				  const QString & file_full_path,
 				  const char *filename,
 				  const char *description,
 				  const char *tags,
-				  const OsmTraceVis_t *vistype)
+				  const OsmTraceVisibility * visibility)
 {
 	CURL *curl;
 	CURLcode res;
@@ -247,7 +249,7 @@ static int osm_traces_upload_file(const QString & user,
 
 	int result = 0; /* Default to it worked! */
 
-	qDebug() << "DD: OSM Traces:" << __FUNCTION__ << user << password << file << filename << description << tags;
+	qDebug() << "DD: OSM Traces:" << __FUNCTION__ << user << password << file_full_path << filename << description << tags;
 
 	/* Init CURL. */
 	curl = curl_easy_init();
@@ -261,10 +263,10 @@ static int osm_traces_upload_file(const QString & user,
 		     CURLFORM_COPYCONTENTS, tags, CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "visibility",
-		     CURLFORM_COPYCONTENTS, vistype->apistr, CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, visibility->apistr, CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "file",
-		     CURLFORM_FILE, file,
+		     CURLFORM_FILE, file_full_path.toUtf8().constData(), /* TODO: verify whether we can pass string like that. */
 		     CURLFORM_FILENAME, filename,
 		     CURLFORM_CONTENTTYPE, "text/xml", CURLFORM_END);
 
@@ -322,13 +324,13 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 	OsmTracesInfo * oti = (OsmTracesInfo *) bg_job;
 	/* Due to OSM limits, we have to enforce ele and time fields
 	   also don't upload invisible tracks. */
-	static GpxWritingOptions options = { true, true, false, false };
+	static GPXWriteOptions options(true, true, false, false);
 
 	if (!oti) {
 		return -1;
 	}
 
-	char *filename = NULL;
+	QString filename;
 
 	/* Writing gpx file. */
 	if (oti->trk != NULL) {
@@ -336,22 +338,22 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 		if (oti->anonymize_times) {
 			Track * trk = new Track(*oti->trk);
 			trk->anonymize_times();
-			filename = a_gpx_write_track_tmp_file(trk, &options);
+			filename = GPX::write_track_tmp_file(trk, &options);
 			trk->free();
 		} else {
-			filename = a_gpx_write_track_tmp_file(oti->trk, &options);
+			filename = GPX::write_track_tmp_file(oti->trk, &options);
 		}
 	} else {
 		/* Upload the whole LayerTRW. */
-		filename = a_gpx_write_tmp_file(oti->trw, &options);
+		filename = GPX::write_tmp_file(oti->trw, &options);
 	}
 
-	if (!filename) {
+	if (filename.isEmpty()) {
 		return -1;
 	}
 
 	/* Finally, upload it. */
-	int ans = osm_traces_upload_file(osm_user, osm_password, filename, oti->name.toUtf8().constData(), oti->description.toUtf8().constData(), oti->tags.toUtf8().constData(), oti->vistype);
+	int ans = osm_traces_upload_file(osm_user, osm_password, filename, oti->name.toUtf8().constData(), oti->description.toUtf8().constData(), oti->tags.toUtf8().constData(), oti->visibility);
 
 	/* Show result in statusbar or failure in dialog for user feedback. */
 
@@ -384,7 +386,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 		w->statusbar_update(StatusBarField::INFO, msg);
 	}
 	/* Removing temporary file. */
-	int ret = g_unlink(filename);
+	int ret = g_unlink(filename.toUtf8().constData());
 	if (ret != 0) {
 		qDebug() << "EE: OSM Traces: failed to unlink temporary file:" << strerror(errno);
 	}
@@ -523,7 +525,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 	QLabel * visibility_label = new QLabel(QObject::tr("Visibility:"));
 	visibility_combo = new QComboBox();
-	for (const OsmTraceVis_t * vis = OsmTraceVis; vis->combostr != NULL; vis++) {
+	for (const OsmTraceVisibility * vis = trace_visibilities; !vis->combostr.isEmpty(); vis++) {
 		visibility_combo->addItem(vis->combostr);
 	}
 
@@ -555,7 +557,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		info->description = description_entry->text();
 		/* TODO Normalize tags: they will be used as URL part. */
 		info->tags        = tags_entry->text();
-		info->vistype     = &OsmTraceVis[visibility_combo->currentIndex()];
+		info->visibility  = &trace_visibilities[visibility_combo->currentIndex()];
 
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = anonymize_checkbutton->isChecked();
@@ -565,7 +567,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 		/* Save visibility value for default reuse. */
 		g_last_visibility_index = visibility_combo->currentIndex();
-		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[g_last_visibility_index].apistr);
+		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, trace_visibilities[g_last_visibility_index].apistr);
 
 		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
 
@@ -589,7 +591,7 @@ int find_initial_visibility_index(void)
 	int entry_index = INVALID_ENTRY_INDEX;
 	bool found = false;
 	if (!visibility.isEmpty()) {
-		for (const OsmTraceVis_t * vis = OsmTraceVis; vis->apistr != NULL; vis++) {
+		for (const OsmTraceVisibility * vis = trace_visibilities; !vis->apistr.isEmpty(); vis++) {
 			entry_index++;
 			if (QString(vis->apistr) == visibility) {
 				found = true;
@@ -599,7 +601,7 @@ int find_initial_visibility_index(void)
 	}
 
 	if (!found) {
-		/* First entry in OsmTraceVis. */
+		/* First entry in trace_visibilities. */
 		entry_index = 0;
 	}
 

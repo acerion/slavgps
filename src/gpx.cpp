@@ -24,8 +24,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -122,10 +125,15 @@ typedef struct tag_mapping {
         const char *tag_name;             /* xpath-ish tag name. */
 } tag_mapping;
 
-typedef struct {
-	GpxWritingOptions *options;
-	FILE *file;
-} GpxWritingContext;
+
+
+
+class GPXWriteContext {
+public:
+	GPXWriteContext(GPXWriteOptions * new_options, FILE * new_file) : options(new_options), file(new_file) {};
+	GPXWriteOptions * options = NULL;
+	FILE * file = NULL;
+};
 
 
 
@@ -648,7 +656,7 @@ static void gpx_cdata(void * dta, const XML_Char * s, int len)
 
 /* Make like a "stack" of tag names like gpspoint's separated like /gpx/wpt/whatever. */
 
-bool SlavGPS::a_gpx_read_file(FILE * file, LayerTRW * trw)
+bool GPX::read_file(FILE * file, LayerTRW * trw)
 {
 	assert (file != NULL && trw != NULL);
 
@@ -861,7 +869,7 @@ static char * entitize(const QString & input)
 
 /* Export GPX. */
 
-static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
+static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 {
 	/* Don't write invisible waypoints when specified. */
 	if (context->options && !context->options->hidden && !wp->visible) {
@@ -957,7 +965,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 
 
 
-static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
+static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 {
 	FILE * f = context->file;
 
@@ -1070,7 +1078,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 
 
 
-static void gpx_write_track(Track * trk, GpxWritingContext * context)
+static void gpx_write_track(Track * trk, GPXWriteContext * context)
 {
 	/* Don't write invisible tracks when specified. */
 	if (context->options && !context->options->hidden && !trk->visible) {
@@ -1188,9 +1196,9 @@ static int gpx_track_compare_name(const void * x, const void * y)
 
 
 
-void SlavGPS::a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * options)
+void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 {
-	GpxWritingContext context = { options, file };
+	GPXWriteContext context(options, file);
 
 	gpx_write_header(file);
 
@@ -1278,8 +1286,8 @@ void SlavGPS::a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * 
 
 	/* g_list_concat doesn't copy memory properly so process each list separately. */
 
-	GpxWritingContext context_tmp = context;
-	GpxWritingOptions opt_tmp = { false, false, false, false };
+	GPXWriteContext context_tmp = context;
+	GPXWriteOptions opt_tmp(false, false, false, false);
 	/* Force trackpoints on tracks. */
 	if (!context.options) {
 		context_tmp.options = &opt_tmp;
@@ -1306,9 +1314,9 @@ void SlavGPS::a_gpx_write_file(FILE * file, LayerTRW * trw, GpxWritingOptions * 
 
 
 
-void SlavGPS::a_gpx_write_track_file(FILE * file, Track * trk, GpxWritingOptions * options)
+void GPX::write_track_file(FILE * file, Track * trk, GPXWriteOptions * options)
 {
-	GpxWritingContext context = { options, file };
+	GPXWriteContext context(options, file);
 	gpx_write_header(file);
 	gpx_write_track(trk, &context);
 	gpx_write_footer(file);
@@ -1320,7 +1328,7 @@ void SlavGPS::a_gpx_write_track_file(FILE * file, Track * trk, GpxWritingOptions
 /**
  * Common write of a temporary GPX file.
  */
-static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * options)
+QString GPX::write_tmp_file(LayerTRW * trw, Track * trk, GPXWriteOptions * options)
 {
 	char * tmp_filename = NULL;
 	GError * error = NULL;
@@ -1335,14 +1343,16 @@ static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * op
 
 	FILE * file = fdopen(fd, "w");
 	if (trk) {
-		a_gpx_write_track_file(file, trk, options);
+		GPX::write_track_file(file, trk, options);
 	} else {
-		a_gpx_write_file(file, trw, options);
+		GPX::write_file(file, trw, options);
 	}
-
 	fclose(file);
 
-	return tmp_filename;
+	QString result(tmp_filename);
+	free(tmp_filename);
+
+	return result;
 }
 
 
@@ -1356,9 +1366,9 @@ static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * op
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * SlavGPS::a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options)
+QString GPX::write_tmp_file(LayerTRW * trw, GPXWriteOptions * options)
 {
-	return write_tmp_file(trw, NULL, options);
+	return GPX::write_tmp_file(trw, NULL, options);
 }
 
 
@@ -1372,7 +1382,7 @@ char * SlavGPS::a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * SlavGPS::a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options)
+QString GPX::write_track_tmp_file(Track * trk, GPXWriteOptions * options)
 {
-	return write_tmp_file(NULL, trk, options);
+	return GPX::write_tmp_file(NULL, trk, options);
 }

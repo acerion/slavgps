@@ -155,7 +155,7 @@ bool SlavGPS::split_string_from_file_on_equals(char const * buf, char ** key, ch
 
 
 
-static std::list<char *> deletion_list;
+static std::list<QString> deletion_list;
 
 
 
@@ -165,10 +165,9 @@ static std::list<char *> deletion_list;
  * Normally this is for files that get used asynchronously,
  * so we don't know when it's time to delete them - other than at this program's end.
  */
-void SlavGPS::util_add_to_deletion_list(char const * filename)
+void SlavGPS::util_add_to_deletion_list(const QString & full_file_path)
 {
-	char * tmp = strdup(filename);
-	deletion_list.push_back(tmp);
+	deletion_list.push_back(full_file_path);
 }
 
 
@@ -181,10 +180,9 @@ void SlavGPS::util_add_to_deletion_list(char const * filename)
 void SlavGPS::util_remove_all_in_deletion_list(void)
 {
 	for (auto iter = deletion_list.begin(); iter != deletion_list.end(); iter++) {
-		if (0 != remove(*iter)) {
+		if (0 != remove((*iter).toUtf8().constData())) {
 			qDebug() << "WW: Utils: Failed to remove" << *iter;
 		}
-		free(*iter);
 	}
 	deletion_list.clear();
 }
@@ -299,24 +297,4 @@ char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count
 	g_object_unref(gios);
 
 	return tmpname;
-}
-
-
-
-
-void SlavGPS::minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size)
-{
-	*max = -1000;
-	*min = 20000;
-
-	for (unsigned int i = 0; i < array_size; i++) {
-		if (NO_ALT_TEST || (array[i] != VIK_DEFAULT_ALTITUDE)) {
-			if (array[i] > *max) {
-				*max = array[i];
-			}
-			if (array[i] < *min) {
-				*min = array[i];
-			}
-		}
-	}
 }
