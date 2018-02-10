@@ -40,18 +40,18 @@ namespace SlavGPS {
 
 	unsigned int util_get_number_of_cpus(void);
 
-	char * uri_escape(char * str);
+	char * uri_escape(const char * str);
 
 	bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
 
-	void util_add_to_deletion_list(const QString & full_file_path);
+	void util_add_to_deletion_list(const QString & file_full_path);
 	void util_remove_all_in_deletion_list(void);
 
 	char * util_str_remove_chars(char * string, char const * chars);
 
-	int util_remove(char const * filename);
+	bool util_remove(const QString & file_full_path);
 
-	char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
+	QString util_write_tmp_file_from_bytes(const void * buffer, size_t count);
 
 
 

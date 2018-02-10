@@ -43,6 +43,7 @@
 #endif
 
 #include <QDebug>
+#include <QDir>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -59,6 +60,11 @@ typedef int GdkPixdata; /* TODO: remove sooner or later. */
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX " MapSourceBing:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -260,13 +266,13 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 
 
 
-bool MapSourceBing::parse_file_for_attributions(char *filename)
+bool MapSourceBing::parse_file_for_attributions(const QString & file_full_path)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 
-	FILE *file = fopen(filename, "r");
+	FILE *file = fopen(file_full_path.toUtf8().constData(), "r");
 	if (file == NULL) {
 		/* TODO emit warning. */
 		return false;
@@ -338,19 +344,19 @@ int MapSourceBing::load_attributions()
 	this->loading_attributions = true;
 	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key);
 
-	char * tmpname = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
-	if (!tmpname) {
+	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
+	if (tmp_file_full_path.isEmpty()) {
 		ret = -1;
 		goto done;
 	}
 
-	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, tmpname);
-	if (!this->parse_file_for_attributions(tmpname)) {
+	qDebug() << "DD:" PREFIX << "load attributions from" << tmp_file_full_path;
+	if (!this->parse_file_for_attributions(tmp_file_full_path)) {
 		ret = -1;
 	}
 
-	(void) remove(tmpname);
-	free(tmpname);
+	QDir::root().remove(tmp_file_full_path);
+
 done:
 	this->loading_attributions = false;
 	free(uri);

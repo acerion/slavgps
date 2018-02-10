@@ -32,6 +32,7 @@
 
 #include <QDebug>
 #include <QLineEdit>
+#include <QDir>
 
 #include "window.h"
 #include "goto_tool.h"
@@ -67,7 +68,7 @@ static QString goto_location_dialog(Window * window);
 
 
 
-void SlavGPS::vik_goto_register(GotoTool * goto_tool)
+void GoTo::register_tool(GotoTool * goto_tool)
 {
 	goto_tools.push_back(goto_tool);
 }
@@ -75,7 +76,7 @@ void SlavGPS::vik_goto_register(GotoTool * goto_tool)
 
 
 
-void SlavGPS::vik_goto_unregister_all()
+void GoTo::unregister_all_tools()
 {
 	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 		/* kamilFIXME: delete objects? */
@@ -85,7 +86,7 @@ void SlavGPS::vik_goto_unregister_all()
 
 
 
-QString SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
+QString GoTo::get_search_string_for_this_location(Window * window)
 {
 	const QString empty_string("");
 	if (!last_coord) {
@@ -103,7 +104,7 @@ QString SlavGPS::a_vik_goto_get_search_string_for_this_location(Window * window)
 
 
 
-static bool prompt_try_again(Window * parent, QString const & msg)
+static bool prompt_try_again(QString const & msg, Window * parent)
 {
 	return QMessageBox::Yes == QMessageBox::question(parent, QObject::tr("goto"), msg,
 							 QMessageBox::No | QMessageBox::Yes,
@@ -248,30 +249,38 @@ QString goto_location_dialog(Window * window)
 
 
 /**
- * Goto a location when we already have a string to search on.
- *
- * Returns: %true if a successful lookup
- */
-static bool vik_goto_location(Viewport * viewport, char* name, Coord * coord)
+   \brief Get a coordinate of specified name
+
+   Returns: %true if a successful lookup
+*/
+static bool get_coordinate_of(Viewport * viewport, const QString & name, /* in/out */ Coord * coord)
 {
+	if (goto_tools.empty()) {
+		return false;
+	}
+
 	/* Ensure last_goto_idx is given a value. */
 	last_goto_idx = get_last_provider_index();
-
-	if (!goto_tools.empty() && last_goto_idx >= 0) {
-		GotoTool * goto_tool = goto_tools[last_goto_idx];
-		if (goto_tool) {
-			if (goto_tool->get_coord(viewport, name, coord) == 0) {
-				return true;
-			}
-		}
+	if (last_goto_idx < 0) {
+		return false;
 	}
-	return false;
+
+	GotoTool * goto_tool = goto_tools[last_goto_idx];
+	if (!goto_tool) {
+		return false;
+	}
+
+	if (goto_tool->get_coord(viewport, name, coord) != GotoToolResult::Found) {
+		return false;
+	}
+
+	return true;
 }
 
 
 
 
-void SlavGPS::goto_location(Window * window, Viewport * viewport)
+void GoTo::goto_location(Window * window, Viewport * viewport)
 {
 	if (goto_tools.empty()) {
 		Dialog::warning(QObject::tr("No goto tool available."), window);
@@ -285,8 +294,9 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 			more = false;
 		} else {
 			Coord location_coord;
-			int ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
-			if (ans == 0) {
+			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
+			switch (ans) {
+			case GotoToolResult::Found:
 				if (last_coord) {
 					delete last_coord;
 				}
@@ -295,12 +305,14 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
 				last_successful_location = last_location;
 				viewport->set_center_from_coord(location_coord, true);
 				more = false;
-			} else if (ans == -1) {
-				if (!prompt_try_again(window, QObject::tr("I don't know that location. Do you want another goto?"))) {
-					more = false;
-				}
-			} else if (!prompt_try_again(window, QObject::tr("Service request failure. Do you want another goto?"))) {
-				more = false;
+				break;
+			case GotoToolResult::NotFound:
+				more = prompt_try_again(QObject::tr("I don't know that location. Do you want another goto?"), window);
+				break;
+			case GotoToolResult::Error:
+			default:
+				more = prompt_try_again(QObject::tr("Service request failure. Do you want another goto?"), window);
+				break;
 			}
 		}
 	} while (more);
@@ -331,13 +343,13 @@ void SlavGPS::goto_location(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of location found. Free this string after use.
  */
-int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
+int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 {
 	name = "";
 
-	char * tmpname = Download::get_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
+	const QString tmp_file_full_path = Download::get_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
 	//char *tmpname = strdup("../test/hostip2.json");
-	if (!tmpname) {
+	if (tmp_file_full_path.isEmpty()) {
 		return 0;
 	}
 
@@ -345,12 +357,11 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QStrin
 	lat_lon.lon = 0.0;
 
 	GMappedFile *mf;
-	if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
+	if ((mf = g_mapped_file_new(tmp_file_full_path.toUtf8().constData(), false, NULL)) == NULL) {
 		qCritical() << QObject::tr("CRITICAL: couldn't map temp file\n");
 
 		g_mapped_file_unref(mf);
-		(void) remove(tmpname);
-		free(tmpname);
+		QDir::root().remove(tmp_file_full_path);
 		return 0;
 	}
 
@@ -439,7 +450,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QStrin
 			fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city);
 			if (strcmp(city, "(Unknown city)") != 0) {
 				Coord new_center;
-				if (vik_goto_location(viewport, city, &new_center)) {
+				if (get_coordinate_of(viewport, city, &new_center)) {
 					/* Got something. */
 					lat_lon = new_center.get_latlon();
 					result = 2;
@@ -454,7 +465,7 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QStrin
 			fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country);
 			if (strcmp(country, "(Unknown Country)") != 0) {
 				Coord new_center;
-				if (vik_goto_location(viewport, country, &new_center)) {
+				if (get_coordinate_of(viewport, country, &new_center)) {
 					/* Finally got something. */
 					lat_lon = new_center.get_latlon();
 					result = 3;
@@ -467,15 +478,14 @@ int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QStrin
 
  tidy:
 	g_mapped_file_unref(mf);
-	(void) remove(tmpname);
-	free(tmpname);
+	QDir::root().remove(tmp_file_full_path);
 	return result;
 }
 
 
 
 
-void SlavGPS::goto_latlon(Window * window, Viewport * viewport)
+void GoTo::goto_latlon(Window * window, Viewport * viewport)
 {
 	LatLon new_lat_lon;
 	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
@@ -535,7 +545,7 @@ bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Wi
 
 
 
-void SlavGPS::goto_utm(Window * window, Viewport * viewport)
+void GoTo::goto_utm(Window * window, Viewport * viewport)
 {
 	UTM new_utm;
 	const UTM initial_utm = viewport->get_center()->get_utm();

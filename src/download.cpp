@@ -46,6 +46,7 @@
 #include <gio/gio.h>
 
 #include <QDebug>
+#include <QDir>
 
 #if 1 //#ifdef HAVE_MAGIC_H // kamilFIXME: check dependency during configuration
 #include <magic.h>
@@ -297,7 +298,7 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 	} else if (bzip2) {
 		char* bz2_name = uncompress_bzip2(file_path);
 		if (bz2_name) {
-			if (remove(file_path.toUtf8().constData())) {
+			if (!QDir::root().remove(file_path)) {
 				qDebug() << "EE: Download: remove file failed (" << file_path << ")";
 			}
 			if (g_rename (bz2_name, file_path.toUtf8().constData())) {
@@ -499,7 +500,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 
 	if (failure) {
 		qDebug() << "WW: Download: Download error for file:" << dest_file_path;
-		if (remove(tmp_file_path.toUtf8().constData()) != 0) {
+		if (!QDir::root().remove(tmp_file_path)) {
 			qDebug() << "WW: Download: Failed to remove" << tmp_file_path;
 		}
 		unlock_file(tmp_file_path);
@@ -507,7 +508,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 	}
 
 	if (ret == CurlDownloadStatus::NO_NEWER_FILE)  {
-		(void) remove(tmp_file_path.toUtf8().constData());
+		QDir::root().remove(tmp_file_path);
 		/* Wpdate mtime of local copy.
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
 		   coverity[toctou] */
@@ -582,28 +583,30 @@ void Download::uninit_handle(void * handle)
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-char * Download::get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
+QString Download::get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
 {
-	int tmp_fd;
-	char * tmpname;
+	QString tmp_file_full_path;
 
+	char * tmpname = NULL;
+	int tmp_fd;
 	if ((tmp_fd = g_file_open_tmp("viking-download.XXXXXX", &tmpname, NULL)) == -1) {
 		qDebug() << "EE: Download: couldn't open temp file";
-		return NULL;
+		return tmp_file_full_path;
 	}
+	tmp_file_full_path = QString(tmpname);
+	free(tmpname);
 
 	FILE * tmp_file = fdopen(tmp_fd, "r+");
 	if (!tmp_file) {
-		return NULL;
+		return tmp_file_full_path;
 	}
 
 	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, tmp_file, dl_options, NULL, NULL)) {
-		fclose (tmp_file);
-		(void) remove(tmpname);
-		free(tmpname);
-		return NULL;
+		fclose(tmp_file);
+		QDir::root().remove(tmp_file_full_path);
+		return tmp_file_full_path;
 	}
-	fclose (tmp_file);
+	fclose(tmp_file);
 
-	return tmpname;
+	return tmp_file_full_path;
 }

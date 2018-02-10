@@ -318,7 +318,7 @@ void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 
 
 #if 1
-bool DEM::read_srtm_hgt(const QString & full_file_path, const QString & file_name, bool zip)
+bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip)
 {
 	const int num_rows_3sec = 1201;
 	const int num_rows_1sec = 3601;
@@ -343,9 +343,9 @@ bool DEM::read_srtm_hgt(const QString & full_file_path, const QString & file_nam
 	this->n_columns = 0;
 
 
-	QFile file(full_file_path);
+	QFile file(file_full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't open file" << full_file_path << file.error();
+		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't open file" << file_full_path << file.error();
 		return false;
 	}
 
@@ -536,18 +536,18 @@ static bool is_zip_file(const QString & file_name)
 
 
 
-bool DEM::read(const QString & full_file_path)
+bool DEM::read(const QString & file_full_path)
 {
-	if (access(full_file_path.toUtf8().constData(), R_OK) != 0) {
+	if (access(file_full_path.toUtf8().constData(), R_OK) != 0) {
 		return false;
 	}
 
-	const QString & file_name = file_base_name(full_file_path);
+	const QString & file_name = file_base_name(file_full_path);
 
 	if (is_strm_hgt(file_name)) {
-		return this->read_srtm_hgt(full_file_path, file_name, is_zip_file(file_name));
+		return this->read_srtm_hgt(file_full_path, file_name, is_zip_file(file_name));
 	} else {
-		return this->read_other(full_file_path.toUtf8().constData());
+		return this->read_other(file_full_path.toUtf8().constData());
 	}
 }
 

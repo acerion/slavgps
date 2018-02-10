@@ -40,6 +40,7 @@
 #include <cstring>
 
 #include <QDebug>
+#include <QDir>
 
 #include "util.h"
 #include "globals.h"
@@ -83,7 +84,7 @@ unsigned int SlavGPS::util_get_number_of_cpus()
 
 
 
-char * SlavGPS::uri_escape(char * str)
+char * SlavGPS::uri_escape(const char * str)
 {
 	char * esc_str = (char *) malloc(3 * strlen(str));
 	char * dst = esc_str;
@@ -165,9 +166,9 @@ static std::list<QString> deletion_list;
  * Normally this is for files that get used asynchronously,
  * so we don't know when it's time to delete them - other than at this program's end.
  */
-void SlavGPS::util_add_to_deletion_list(const QString & full_file_path)
+void SlavGPS::util_add_to_deletion_list(const QString & file_full_path)
 {
-	deletion_list.push_back(full_file_path);
+	deletion_list.push_back(file_full_path);
 }
 
 
@@ -180,7 +181,7 @@ void SlavGPS::util_add_to_deletion_list(const QString & full_file_path)
 void SlavGPS::util_remove_all_in_deletion_list(void)
 {
 	for (auto iter = deletion_list.begin(); iter != deletion_list.end(); iter++) {
-		if (0 != remove((*iter).toUtf8().constData())) {
+		if (!QDir::root().remove((*iter))) {
 			qDebug() << "WW: Utils: Failed to remove" << *iter;
 		}
 	}
@@ -234,13 +235,13 @@ char * util_str_remove_chars(char * string, char const * chars)
  * interpretation, rather than large volume items such as Bing
  * attributions.
  */
-int SlavGPS::util_remove(char const * filename)
+bool SlavGPS::util_remove(const QString & file_full_path)
 {
 	if (1 /* vik_debug && vik_verbose */) {
-		qDebug() << "WW: Util: Remove: not removing file" << filename;
+		qDebug() << "WW: Util: Remove: not removing file" << file_full_path;
 		return 0;
 	} else {
-		return remove(filename);
+		return QDir::root().remove(file_full_path);
 	}
 }
 
@@ -255,8 +256,10 @@ int SlavGPS::util_remove(char const * filename)
  *
  * @return the filename of the buffer that was written
  */
-char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count)
+QString SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count)
 {
+	QString result;
+
 	GFileIOStream * gios;
 	GError * error = NULL;
 	char * tmpname = NULL;
@@ -269,13 +272,13 @@ char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count
 	if (error) {
 		fprintf(stderr, "WARNING: %s\n", error->message);
 		g_error_free(error);
-		return NULL;
+		return result;
 	}
-	gios = g_file_open_readwrite(g_file_new_for_path (tmpname), NULL, &error);
+	gios = g_file_open_readwrite(g_file_new_for_path(tmpname), NULL, &error);
 	if (error) {
 		fprintf(stderr, "WARNING: %s\n", error->message);
 		g_error_free(error);
-		return NULL;
+		return result;
 	}
 #endif
 
@@ -283,7 +286,7 @@ char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count
 	if (error) {
 		fprintf(stderr, "WARNING: %s\n", error->message);
 		g_error_free(error);
-		return NULL;
+		return result;
 	}
 
 	GOutputStream * gos = g_io_stream_get_output_stream(G_IO_STREAM(gios));
@@ -296,5 +299,8 @@ char * SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t count
 	g_output_stream_close(gos, NULL, &error);
 	g_object_unref(gios);
 
-	return tmpname;
+	result = QString(tmpname);
+	free(tmpname);
+
+	return result;
 }

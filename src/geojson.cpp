@@ -24,6 +24,7 @@
 #include <cstdlib>
 
 #include <QDebug>
+#include <QDir>
 
 #include "geojson.h"
 #include "gpx.h"
@@ -109,7 +110,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	g_strfreev(argv);
 
 	/* Delete the temporary file. */
-	(void) remove(tmp_filename.toUtf8().constData());
+	QDir::root().remove(tmp_filename);
 
 	return result;
 }

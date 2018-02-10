@@ -83,7 +83,7 @@ namespace SlavGPS {
 			   void                * user_data,
 			   GError             ** error);
 
-		bool parse_file_for_attributions(char *filename);
+		bool parse_file_for_attributions(const QString & file_full_path);
 		int emit_update(void * data);
 		background_thread_fn thread_fn = NULL;
 	};

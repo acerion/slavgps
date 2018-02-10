@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,6 +31,14 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+
+
+
+#include <QDebug>
+
+
+
+
 #include "goto_tool.h"
 #include "util.h"
 #include "viewport_internal.h"
@@ -38,6 +48,10 @@
 
 using namespace SlavGPS;
 
+
+
+
+#define PREFIX " GoTo Tool:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -109,35 +123,34 @@ const DownloadOptions * GotoTool::get_download_options(void) const
  *  1  = search unavailable in the #GotoTool due to communication issue
  *
  */
-int GotoTool::get_coord(Viewport * viewport, char * srch_str, Coord * coord)
+GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Coord * coord)
 {
-	int ret = 0;  /* OK */
+	GotoToolResult ret = GotoToolResult::Error;
 	LatLon lat_lon;
 
-	fprintf(stderr, "DEBUG: %s: raw goto: %s\n", __FUNCTION__, srch_str);
-	char * escaped_srch_str = uri_escape(srch_str);
-	fprintf(stderr, "DEBUG: %s: escaped goto: %s\n", __FUNCTION__, escaped_srch_str);
+	qDebug() << "DD" PREFIX << "raw goto name:" << name;
+	char * escaped_srch_str = uri_escape(name.toUtf8().constData());
+	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_srch_str;
 
 	char * uri = g_strdup_printf(this->get_url_format(), escaped_srch_str);
-	char * tmpname = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
-	if (!tmpname) {
-		// Some kind of download error, so no tmp file
-		ret = 1;
+	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
+	if (tmp_file_full_path.isEmpty()) {
+		/* Some kind of download error, so no tmp file. */
+		ret = GotoToolResult::Error;
 		goto done_no_file;
 	}
 
-	fprintf(stderr, "DEBUG: %s: %s\n", __FILE__, tmpname);
+	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file_full_path;
 
-	if (!this->parse_file_for_latlon(tmpname, lat_lon)) {
-		ret = -1;
-		goto done;
+	if (this->parse_file_for_latlon(tmp_file_full_path, lat_lon)) {
+		*coord = Coord(lat_lon, viewport->get_coord_mode());
+		ret = GotoToolResult::Found;
+	} else {
+		ret = GotoToolResult::NotFound;
 	}
-	*coord = Coord(lat_lon, viewport->get_coord_mode());
+	util_remove(tmp_file_full_path);
 
- done:
-	(void) util_remove(tmpname);
  done_no_file:
-	free(tmpname);
 	free(escaped_srch_str);
 	free(uri);
 	return ret;

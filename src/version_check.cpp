@@ -89,9 +89,9 @@ void VersionCheck::run()
 {
 	/* Need to allow a few redirects, as SF file is often served from different server. */
 	DownloadOptions dl_options(5);
-	const char * file_full_path = Download::get_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);  /* TODO: provide correct URL for SlavGPS. */
+	const QString file_full_path = Download::get_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);  /* TODO: provide correct URL for SlavGPS. */
 	// const char *file_full_path = strdup("VERSION");
-	if (!file_full_path) {
+	if (file_full_path.isEmpty()) {
 		return;
 	}
 

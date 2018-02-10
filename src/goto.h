@@ -19,6 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifndef _SG_GOTO_H_
 #define _SG_GOTO_H_
 
@@ -28,6 +31,8 @@
 #include <QString>
 #include <QComboBox>
 #include <QLineEdit>
+
+
 
 #include "dialog.h"
 #include "goto_tool.h"
@@ -46,15 +51,19 @@ namespace SlavGPS {
 
 
 
-	void vik_goto_register(GotoTool * tool);
-	void vik_goto_unregister_all(void);
+	class GoTo {
+	public:
+		static void register_tool(GotoTool * tool);
+		static void unregister_all_tools(void); /* FIXME: this is unused at the moment. */
 
-	int a_vik_goto_where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name);
-	QString a_vik_goto_get_search_string_for_this_location(Window * window);
+		static void goto_location(Window * window, Viewport * viewport);
+		static void goto_latlon(Window * window, Viewport * viewport);
+		static void goto_utm(Window * window, Viewport * viewport);
 
-	void goto_location(Window * window, Viewport * viewport);
-	void goto_latlon(Window * window, Viewport * viewport);
-	void goto_utm(Window * window, Viewport * viewport);
+		static int where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name);
+		static QString get_search_string_for_this_location(Window * window);
+	};
+
 
 
 

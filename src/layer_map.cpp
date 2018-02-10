@@ -1696,7 +1696,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 						/* See if this one is bad or what. */
 						QPixmap tmp_pixmap; /* Apparently this will pixmap is only for test of some kind. */
 						if (!tmp_pixmap.load(mdj->filename_buf)) {
-							if (remove(mdj->filename_buf)) {
+							if (!QDir::root().remove(mdj->filename_buf)) {
 								qDebug() << "WW: Layer Map: Redownload Bad failed to remove", mdj->filename_buf;
 							}
 							need_download = true;
@@ -1712,7 +1712,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 					case REDOWNLOAD_ALL:
 						/* FIXME: need a better way than to erase file in case of server/network problem. */
-						if (remove(mdj->filename_buf)) {
+						if (!QDir::root().remove(mdj->filename_buf)) {
 							qDebug() << "WW: Layer Map: Redownload All failed to remove", mdj->filename_buf;
 						}
 						need_download = true;
@@ -1791,7 +1791,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 				   &this->mapcoord, this->filename_buf, this->maxlen,
 				   map_sources[this->map_index]->get_file_extension());
 		if (0 == access(this->filename_buf, F_OK)) {
-			if (remove(this->filename_buf)) {
+			if (!QDir::root().remove(this->filename_buf)) {
 				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", this->filename_buf);
 			}
 		}

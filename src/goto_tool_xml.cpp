@@ -201,7 +201,7 @@ char * GotoToolXML::get_url_format()
 
 
 
-bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon & lat_lon)
+bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
@@ -212,7 +212,7 @@ bool GotoToolXML::parse_file_for_latlon(char *filename, LatLon & lat_lon)
 		this->lat_path, this->lat_attr,
 		this->lon_path, this->lon_attr);
 
-	FILE *file = fopen(filename, "r");
+	FILE *file = fopen(file_full_path.toUtf8().constData(), "r");
 	if (file == NULL) {
 		/* TODO emit warning */
 		return false;

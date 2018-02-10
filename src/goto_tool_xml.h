@@ -46,7 +46,7 @@ namespace SlavGPS {
 		~GotoToolXML();
 
 		char * get_url_format();
-		bool parse_file_for_latlon(char * filename, LatLon & lat_lon);
+		bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon);
 
 
 		void set_url_format(char const * new_format);

@@ -24,7 +24,7 @@
 
 
 
-#include <cstdint>
+#include <QString>
 
 #include "coord.h"
 #include "coords.h"
@@ -43,6 +43,15 @@ namespace SlavGPS {
 
 
 
+	enum class GotoToolResult {
+		Found,
+		NotFound,
+		Error
+	};
+
+
+
+
 	class GotoTool {
 
 	public:
@@ -53,9 +62,9 @@ namespace SlavGPS {
 		virtual char * get_label();
 		virtual char * get_url_format() = 0;
 		virtual const DownloadOptions * get_download_options(void) const;
-		virtual bool parse_file_for_latlon(char * filename, LatLon & lat_lon) = 0;
+		virtual bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon) = 0;
 
-		int get_coord(Viewport * viewport, char * srch_str, Coord * coord);
+		GotoToolResult get_coord(Viewport * viewport, const QString & name, Coord * coord);
 
 	protected:
 

@@ -131,7 +131,7 @@ static void modules_register_gototools(VikGobjectBuilder * self, void * object)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	GotoTool * goto_tool = (GotoTool *) object;
-	vik_goto_register(goto_tool);
+	GoTo::register_tool(goto_tool);
 }
 
 

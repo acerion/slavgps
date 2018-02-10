@@ -763,7 +763,9 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			if (this->alpha < 255) {
 				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
-			map_cache_add(pixmap, (map_cache_extra_t) { -42.0 }, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+			map_cache_extra_t arg;
+			arg.duration = -42.0;
+			map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < stat_buf.st_mtime) {

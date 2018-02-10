@@ -388,7 +388,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 	param_value = SGVariant("");
 	if (wp->comment.isEmpty()) {
 		/* Put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
-		const QString last = a_vik_goto_get_search_string_for_this_location(g_tree->tree_get_main_window());
+		const QString last = GoTo::get_search_string_for_this_location(g_tree->tree_get_main_window());
 		if (!last.isEmpty()) {
 			param_value = SGVariant(last);
 		}

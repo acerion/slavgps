@@ -40,5 +40,5 @@ void SlavGPS::geonames_init()
 						 "http://api.geonames.org/search?q=%s&maxRows=1&lang=en&style=short&username=viking",
 						 "/geonames/geoname/lat",
 						 "/geonames/geoname/lng");
-	vik_goto_register(geonames);
+	GoTo::register_tool(geonames);
 }

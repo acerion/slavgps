@@ -134,7 +134,7 @@ bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_op
 			/* Important that this process is run in the main thread. */
 			acquiring->window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
-			(void) remove(gpx_filename);
+			QDir::root().remove(gpx_filename);
 			free(gpx_filename);
 		} else {
 			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));

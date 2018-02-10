@@ -50,7 +50,7 @@ void SlavGPS::google_init()
 #if 0   /* Google no longer supports the API we used. */
 
 	 GoogleGotoTool * gototool = google_goto_tool_new();
-	 vik_goto_register(VIK_GOTO_TOOL(gototool));
+	 GoTo::register_tool(gototool);
 	 g_object_unref(gototool);
 #endif
 }

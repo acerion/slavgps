@@ -41,7 +41,7 @@ namespace SlavGPS {
 		GotoToolGoogle();
 		~GotoToolGoogle();
 
-		bool parse_file_for_latlon(char * file_name, LatLon & lat_lon);
+		bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon);
 		char * get_url_format();
 		const DownloadOptions * get_download_options(void) const;
 

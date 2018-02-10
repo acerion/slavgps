@@ -1617,7 +1617,7 @@ void Window::goto_default_location_cb(void)
 
 void Window::goto_location_cb()
 {
-	goto_location(this, this->viewport);
+	GoTo::goto_location(this, this->viewport);
 	this->items_tree->emit_update_window_cb("go to location");
 }
 
@@ -1627,7 +1627,7 @@ void Window::goto_location_cb()
 void Window::goto_latlon_cb(void)
 {
 	/* TODO: call draw_update() conditionally? */
-	goto_latlon(this, this->viewport);
+	GoTo::goto_latlon(this, this->viewport);
 	this->draw_update();
 }
 
@@ -1637,7 +1637,7 @@ void Window::goto_latlon_cb(void)
 void Window::goto_utm_cb(void)
 {
 	/* TODO: call draw_update() conditionally? */
-	goto_utm(this, this->viewport);
+	GoTo::goto_utm(this, this->viewport);
 	this->draw_update();
 }
 
@@ -2381,7 +2381,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 
 	LatLon ll;
 	QString name;
-	int ans = a_vik_goto_where_am_i(locator->window->viewport, ll, name);
+	int ans = GoTo::where_am_i(locator->window->viewport, ll, name);
 
 	int result = a_background_thread_progress(bg_job, 1.0);
 	if (result != 0) {
@@ -3404,16 +3404,16 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		const Layer * layer = *iter;
-		QString full_file_path = full_dir_path + QDir::separator() + layer->name + extension;
+		QString file_full_path = full_dir_path + QDir::separator() + layer->name + extension;
 
 		/* Some protection in attempting to write too many same named files.
 		   As this will get horribly slow... */
 		bool safe = false;
 		int ii = 2;
 		while (ii < 5000) {
-			if (0 == access(full_file_path.toUtf8().constData(), F_OK)) {
+			if (0 == access(file_full_path.toUtf8().constData(), F_OK)) {
 				/* Try rename. */
-				full_file_path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
+				file_full_path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
 			} else {
 				safe = true;
 				break;
@@ -3426,12 +3426,12 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = VikFile::export_layer((LayerTRW *) layer, full_file_path, file_type, true);
+			bool this_success = VikFile::export_layer((LayerTRW *) layer, file_full_path, file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {
 				export_count++;
-				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(full_file_path));
+				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(file_full_path));
 #ifdef K
 				while (gtk_events_pending()) {
 					gtk_main_iteration();

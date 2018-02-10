@@ -188,7 +188,7 @@ bool a_babel_convert(LayerTRW * trw, const char * babel_args, BabelCallback cb, 
 	if (!name_src.isEmpty()) {
 		ProcessOptions po(bargs, name_src, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
 		ret = a_babel_convert_from(trw, &po, cb, cb_data, (DownloadOptions *) unused);
-		(void) remove(name_src.toUtf8().constData());
+		QDir::root().remove(name_src);
 	}
 
 	free(bargs);
@@ -440,7 +440,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 			}
 		}
 	}
-	(void) util_remove(name_src.toUtf8().constData());
+	util_remove(name_src);
 
 
 	return ret;

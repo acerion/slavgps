@@ -167,7 +167,7 @@ void SlavGPS::osm_init(void)
 						  "lat",
 						  "/searchresults/place",
 						  "lon");
-	vik_goto_register(nominatim);
+	GoTo::register_tool(nominatim);
 	//g_object_unref ( nominatim );
 
 	GotoToolXML * namefinder = new GotoToolXML("OSM Name finder",
@@ -176,7 +176,7 @@ void SlavGPS::osm_init(void)
 						   "lat",
 						   "/searchresults/named",
 						   "lon");
-	vik_goto_register(namefinder);
+	GoTo::register_tool(namefinder);
 	//g_object_unref ( namefinder );
 
 
