@@ -633,18 +633,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	((DataSourceMyOSMDialog *) acquiring->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
-	if (this->is_thread) {
-#ifdef K
-		gdk_threads_enter();
-#endif
-	}
-
 	std::list<gpx_meta_data_t *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
-	if (this->is_thread) {
-#ifdef K
-		gdk_threads_leave();
-#endif
-	}
 
 	/* If non thread - show program is 'doing something...' */
 	if (!this->is_thread) {

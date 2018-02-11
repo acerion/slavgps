@@ -45,6 +45,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": ApplicationState:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 static QSettings * settings_file = NULL;
 
 
@@ -178,31 +183,37 @@ void ApplicationState::set_double(const char * name, double val)
 /*
   The returned list of integers should be freed when no longer needed.
 */
-bool ApplicationState::get_integer_list(const char * name, int ** vals, size_t * length)
+bool ApplicationState::get_integer_list(const char * name, std::vector<int> & integers)
 {
-#ifdef K
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
 		qDebug() << "EE: ApplicationState: invalid integer list value read for key" << name;
 		return false;
 	} else {
-		*vals = value.to();
-		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		qDebug() << "II" PREFIX << "getting list of integers from file for key name" << name;
+		QList<QVariant> list = value.toList();
+		integers.resize(list.size());
+		for (int i = 0; i < list.size(); i++) {
+			const int data = list.at(i).toInt();
+			integers.push_back(data);
+			qDebug() << data;
+		}
 		return true;
 	}
-#else
 	return false;
-#endif
 }
 
 
 
 
-void ApplicationState::set_integer_list(const char * name, int vals[], size_t length)
+void ApplicationState::set_integer_list(const char * name, std::vector<int> & integers)
 {
-#ifdef K
-	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(val));
-#endif
+	QList<QVariant> list;
+	for (auto iter = integers.begin(); iter != integers.end(); iter++) {
+		list.append(QVariant(*iter));
+	}
+
+	settings_file->setValue(VIKING_SETTINGS_GROUP + name, QVariant(list));
 }
 
 
@@ -210,26 +221,13 @@ void ApplicationState::set_integer_list(const char * name, int vals[], size_t le
 
 bool ApplicationState::get_integer_list_contains(const char * name, int val)
 {
-	int * vals = NULL;
-	size_t length;
-	/* Get current list and see if the value supplied is in the list. */
+	std::vector<int> integers;
 	bool contains = false;
 
-	/* Get current list. */
-	if (ApplicationState::get_integer_list(name, &vals, &length)) {
-		/* See if it's not already there. */
-		size_t ii = 0;
-		if (vals && length) {
-			while (ii < length) {
-				if (vals[ii] == val) {
-					contains = true;
-					break;
-				}
-				ii++;
-			}
-			/* Free old array. */
-			free(vals);
-		}
+	/* Get current list and see if the value supplied is in the list. */
+	if (ApplicationState::get_integer_list(name, integers)) {
+		auto iter = std::find(integers.begin(), integers.end(), val);
+		contains = iter != integers.end();
 	}
 
 	return contains;
@@ -240,37 +238,21 @@ bool ApplicationState::get_integer_list_contains(const char * name, int val)
 
 void ApplicationState::set_integer_list_containing(const char * name, int val)
 {
-	int * vals = NULL;
-	size_t length = 0;
+	std::vector<int> integers;
 	bool need_to_add = true;
 
 	/* Get current list. */
-	if (ApplicationState::get_integer_list(name, &vals, &length)) {
+	if (ApplicationState::get_integer_list(name, integers)) {
 		/* See if it's not already there. */
-		if (vals) {
-			size_t ii = 0;
-			while (ii < length) {
-				if (vals[ii] == val) {
-					need_to_add = false;
-					break;
-				}
-				ii++;
-			}
-		}
+		auto iter = std::find(integers.begin(), integers.end(), val);
+		need_to_add = iter == integers.end();
 	}
+
 	/* Add value into array if necessary. */
-	if (vals && need_to_add) {
-		/* NB not bothering to sort this 'list' ATM as there is not much to be gained. */
-		unsigned int new_length = length + 1;
-		int new_vals[new_length];
-		/* Copy array. */
-		for (unsigned int ii = 0; ii < length; ii++) {
-			new_vals[ii] = vals[ii];
-		}
-		new_vals[length] = val; /* Set the new value. */
-		/* Apply. */
-		ApplicationState::set_integer_list(name, new_vals, new_length);
-		/* Free old array. */
-		free(vals);
+	if (need_to_add) {
+		/* Not bothering to sort this list ATM as there is not much to be gained. */
+		integers.push_back(val);
+		/* Save. */
+		ApplicationState::set_integer_list(name, integers);
 	}
 }

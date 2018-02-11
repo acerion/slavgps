@@ -293,11 +293,12 @@ void SlavGPS::modules_init()
 #if 1 //#ifdef VIK_CONFIG_GEONAMES
 	geonames_init();
 #endif
-#ifdef K
+
 #ifdef VIK_CONFIG_GEOCACHES
 	DataSourceGeoCache::init();
 #endif
 
+#ifdef K
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_init();
 #endif

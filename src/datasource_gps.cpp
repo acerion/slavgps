@@ -268,9 +268,6 @@ void DataSourceGPS::off(void * user_data, QString & babel_args, QString & file_p
 
 static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	if (acquiring->running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 		QString msg;
@@ -293,14 +290,7 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 		}
 		}
 		gps_dialog->progress_label->setText(msg);
-#ifdef K
-		gtk_widget_show(gps_dialog->progress_label);
-#endif
 	}
-
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
@@ -308,9 +298,6 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 /* Compare this function with GPSSession::set_current_count(int cnt) */
 static void set_current_count(int cnt, AcquireProcess * acquiring)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	if (acquiring->running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
@@ -345,9 +332,6 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 			gps_dialog->progress_label->setText(s);
 		}
 	}
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
@@ -355,15 +339,9 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 
 static void set_gps_info(const char * info, AcquireProcess * acquiring)
 {
-#ifdef K
-	gdk_threads_enter();
-#endif
 	if (acquiring->running) {
 		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
 	}
-#ifdef K
-	gdk_threads_leave();
-#endif
 }
 
 
@@ -382,15 +360,10 @@ void DataSourceGPS::progress_func(BabelProgressCode c, void * data, AcquireProce
 	switch(c) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *)data;
-#ifdef K
-		gdk_threads_enter();
-#endif
+
 		if (acquiring->running) {
 			acquiring->status->setText(QObject::tr("Status: Working..."));
 		}
-#ifdef K
-		gdk_threads_leave();
-#endif
 
 		/* Tells us the type of items that will follow. */
 		if (strstr(line, "Xfer Wpt")) {

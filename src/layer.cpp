@@ -369,7 +369,6 @@ void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
 {
 	layer->marshall(data, data_len);
 	if (*data) {
-#ifdef K
 		header_t * header = (header_t *) malloc(*data_len + sizeof (*header));
 		header->layer_type = layer->type;
 		header->len = *data_len;
@@ -377,7 +376,6 @@ void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
 		free(*data);
 		*data = (uint8_t *) header;
 		*data_len = *data_len + sizeof (*header);
-#endif
 	}
 }
 

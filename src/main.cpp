@@ -130,16 +130,12 @@ int main(int argc, char ** argv)
 
 
 #ifdef K
-#if GLIB_CHECK_VERSION (2, 32, 0)
 	if (vik_debug) {
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
 	}
-#else
-	if (!vik_debug) {
-		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, mute_log, NULL);
-	}
 #endif
 
+#ifdef K
 #if HAVE_X11_XLIB_H
 	XSetErrorHandler(myXErrorHandler);
 #endif
@@ -182,13 +178,14 @@ int main(int argc, char ** argv)
 #ifdef K
 	a_toolbar_init();
 	routing_prefs_init();
+#endif
 
 	/*
 	  Second stage initialization.
 
 	  Can now use Preferences::get_param_value()
 	*/
-#endif
+
 	a_background_post_init();
 	Babel::post_init();
 

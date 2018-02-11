@@ -84,9 +84,7 @@ MapSourceBing::MapSourceBing()
                                      "<no-set>" /* default value */,
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 #endif
-#ifdef K
-	logo = gdk_pixbuf_from_pixdata(&bing_maps_pixbuf, true, NULL);
-#endif
+	this->logo = new QPixmap(":/icons/bing_maps.png");
 }
 
 

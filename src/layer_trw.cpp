@@ -67,6 +67,7 @@
 #include "generic_tools.h"
 #include "toolbox.h"
 #include "thumbnails.h"
+#include "datasources.h"
 
 
 #include "layer_gps.h"
@@ -88,7 +89,6 @@
 
 #include "babel.h"
 #include "acquire.h"
-#include "datasources.h"
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
@@ -100,7 +100,6 @@
 #include "clipboard.h"
 #include "gpspoint.h"
 #include "widget_list_selection.h"
-#include "datasource_gps.h"
 
 
 
@@ -1937,7 +1936,7 @@ void LayerTRW::acquire_handler(DataSource * data_source)
 	/* Override mode. */
 	DataSourceMode mode = data_source->mode;
 	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::ADD_TO_LAYER;
+		mode = DataSourceMode::CREATE_NEW_LAYER;
 	}
 
 	Acquire::acquire_from_source(data_source, mode, this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL);
@@ -1951,9 +1950,7 @@ void LayerTRW::acquire_handler(DataSource * data_source)
  */
 void LayerTRW::acquire_from_gps_cb(void)
 {
-#ifdef K
-	this->acquire_handler(&datasource_gps_interface);
-#endif
+	this->acquire_handler(new DataSourceGPS());
 }
 
 
@@ -1964,9 +1961,7 @@ void LayerTRW::acquire_from_gps_cb(void)
  */
 void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_routing_interface);
-#endif
+	this->acquire_handler(new DataSourceRouting());
 }
 
 
@@ -1977,9 +1972,7 @@ void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_url_interface);
-#endif
+	this->acquire_handler(new DataSourceURL());
 }
 
 
@@ -1991,9 +1984,7 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_osm_interface);
-#endif
+	this->acquire_handler(new DataSourceOSMTraces());
 }
 
 
@@ -2004,9 +1995,7 @@ void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_osm_my_traces_interface);
-#endif
+	this->acquire_handler(new DataSourceOSMMyTraces());
 }
 #endif
 
@@ -2019,9 +2008,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_gc_interface);
-#endif
+	this->acquire_handler(new DataSourceGeoCache());
 }
 #endif
 
@@ -2034,13 +2021,12 @@ void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_geotag_interface);
+	this->acquire_handler(new DataSourceGeoTag());
 
-	/* Re-generate thumbnails as they may have changed. */
+	/* Re-generate thumbnails as they may have changed.
+	   TODO: move this somewhere else, where we are sure that the acquisition has been completed? */
 	this->has_missing_thumbnails = true;
 	this->generate_missing_thumbnails();
-#endif
 }
 #endif
 
@@ -2052,9 +2038,7 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
-#ifdef K
-	this->acquire_handler(&datasource_file_interface);
-#endif
+	this->acquire_handler(new DataSourceFile());
 }
 
 

@@ -24,6 +24,11 @@
 
 
 
+#include <vector>
+
+
+
+
 #include <QString>
 
 
@@ -55,8 +60,8 @@ namespace SlavGPS {
 		static void set_integer_list_containing(const char * name, int val);
 
 	private:
-		static bool get_integer_list(const char * name, int ** vals, size_t * length);
-		static void set_integer_list(const char * name, int vals[], size_t length);
+		static bool get_integer_list(const char * name, std::vector<int> & integers);
+		static void set_integer_list(const char * name, std::vector<int> & integers);
 	}; /* class ApplicationState */
 
 
