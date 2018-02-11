@@ -228,11 +228,11 @@ typedef enum {
 
 
 
-typedef enum {
-	VIK_GPX_EXPORT_TRK_SORT_ALPHA,
-	VIK_GPX_EXPORT_TRK_SORT_TIME,
-	VIK_GPX_EXPORT_TRK_SORT_CREATION,
-} vik_gpx_export_trk_sort_t;
+enum class GPXExportTrackSort {
+	Alpha,
+	Time,
+	Creation
+};
 
 
 typedef enum {

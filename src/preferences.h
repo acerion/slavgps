@@ -94,7 +94,7 @@ namespace SlavGPS {
 		static double get_default_lon();
 		static vik_time_ref_frame_t get_time_ref_frame();
 		static vik_kml_export_units_t get_kml_export_units();
-		static vik_gpx_export_trk_sort_t get_gpx_export_trk_sort();
+		static GPXExportTrackSort get_gpx_export_trk_sort();
 		static vik_gpx_export_wpt_sym_name_t get_gpx_export_wpt_sym_name();
 #ifndef WINDOWS
 		/* Windows automatically uses the system defined viewer.

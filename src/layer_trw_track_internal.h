@@ -254,7 +254,8 @@ namespace SlavGPS {
 
 		Coord * cut_back_to_double_point();
 
-		static int compare_timestamp(const void * x, const void * y);
+		static int compare_timestamp(const Track * a, const Track * b);
+		static bool compare_name(const Track * a, const Track * b);
 
 		void set_properties_dialog(TrackPropertiesDialog * dialog);
 		void update_properties_dialog(void);

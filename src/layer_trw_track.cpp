@@ -2337,13 +2337,12 @@ Coord * Track::cut_back_to_double_point()
 
 
 /**
- * Function to compare two tracks by their first timestamp.
- **/
-int Track::compare_timestamp(const void * x, const void * y)
-{
-	Track * a = (Track *) x;
-	Track * b = (Track *) y;
+   \brief Function to compare two tracks by their first timestamp
 
+   TODO: fix return value of this function: it should be bool when passing the function to std::list::sort().
+**/
+int Track::compare_timestamp(const Track * a, const Track * b)
+{
 	Trackpoint * tpa = NULL;
 	Trackpoint * tpb = NULL;
 
@@ -2373,6 +2372,14 @@ int Track::compare_timestamp(const void * x, const void * y)
 	}
 
 	return 0;
+}
+
+
+
+
+bool Track::compare_name(const Track * a, const Track * b)
+{
+	return a->name < b->name;
 }
 
 

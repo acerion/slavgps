@@ -568,7 +568,7 @@ void Preferences::register_default_values()
 	i = 0;
 	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_KML_EXPORT_UNITS_METRIC, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_GPX_EXPORT_TRK_SORT_TIME, io_prefs[i].type_id));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::Time, io_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE, io_prefs[i].type_id));
 	i++;
@@ -677,9 +677,9 @@ vik_kml_export_units_t Preferences::get_kml_export_units()
 
 
 
-vik_gpx_export_trk_sort_t Preferences::get_gpx_export_trk_sort()
+GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 {
-	return (vik_gpx_export_trk_sort_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_track_sort").val_int;
+	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_track_sort").val_int;
 }
 
 

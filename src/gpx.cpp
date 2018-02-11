@@ -42,9 +42,9 @@
 #include <cstring>
 #endif
 
-#ifdef HAVE_MATH_H
+#include <vector>
+#include <list>
 #include <cmath>
-#endif
 #include <time.h>
 
 #include <glib.h>
@@ -1186,24 +1186,14 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 
 
 
-static int gpx_track_compare_name(const void * x, const void * y)
-{
-	Track * a = (Track *) x;
-	Track * b = (Track *) y;
-	return strcmp(a->name.toUtf8().constData(), b->name.toUtf8().constData());
-}
-
-
-
-
 void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 {
 	GPXWriteContext context(options, file);
 
 	gpx_write_header(file);
 
-	char *tmp;
-	const char *name = trw->get_name().toUtf8().constData();
+	char * tmp;
+	const char * name = trw->get_name().toUtf8().constData();
 	if (name) {
 		tmp = entitize(name);
 		fprintf(file, "  <name>%s</name>\n", tmp);
@@ -1235,78 +1225,75 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 	}
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
-		/* Gather waypoints in a list, then sort. */
+		/* Gather waypoints in a vector, sort them and write to file. */
 		Waypoints & waypoints = trw->get_waypoint_items();
-		int index = 0;
-		GList * gl = NULL;
+		std::vector<Waypoint *> copy;
+		copy.resize(waypoints.size());
+
 		for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
-			gl = g_list_insert(gl, iter->second, index++);
+			copy.push_back(iter->second);
 		}
 
-		gl = g_list_sort(gl, gpx_waypoint_compare);
+		sort(copy.begin(), copy.end(), gpx_waypoint_compare);
 
-		for (GList * iter = g_list_first(gl); iter != NULL; iter = g_list_next(iter)) {
-			gpx_write_waypoint((Waypoint *) iter->data, &context);
-		}
-		g_list_free(gl);
-	}
-
-	GList * gl = NULL;
-	if (trw->get_tracks_visibility() || (options && options->hidden)) {
-		//gl = g_hash_table_get_values(vik_trw_layer_get_tracks (trw));
-		/* Forming the list manually seems to produce one that is more likely to be nearer to the creation order. */
-
-		Tracks & tracks = trw->get_track_items();
-		for (auto i = tracks.begin(); i != tracks.end(); i++) {
-			gl = g_list_prepend(gl, i->second);
-		}
-		gl = g_list_reverse(gl);
-
-		/* Sort method determined by preference. */
-		if (Preferences::get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME) {
-			gl = g_list_sort(gl, Track::compare_timestamp);
-		} else if (Preferences::get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA) {
-			gl = g_list_sort(gl, gpx_track_compare_name);
-		} else {
-			;
+		for (auto iter = copy.begin(); iter != copy.end(); iter++) {
+			gpx_write_waypoint(*iter, &context);
 		}
 	}
 
-	GList * glrte = NULL;
-	/* Routes sorted by name. */
-	if (trw->get_routes_visibility() || (options && options->hidden)) {
 
-		Tracks & routes = trw->get_route_items();
-		int index = 0;
-		for (auto i = routes.begin(); i != routes.end(); i++) {
-			glrte = g_list_insert(glrte, i->second, index);
-		}
-		glrte = g_list_sort(glrte, gpx_track_compare_name);
-	}
-
-	/* g_list_concat doesn't copy memory properly so process each list separately. */
-
-	GPXWriteContext context_tmp = context;
-	GPXWriteOptions opt_tmp(false, false, false, false);
+	GPXWriteOptions trk_options(false, false, false, false);
 	/* Force trackpoints on tracks. */
 	if (!context.options) {
-		context_tmp.options = &opt_tmp;
-	}
-	context_tmp.options->is_route = false;
-
-	/* Loop around each list and write each one. */
-	for (GList *iter = g_list_first(gl); iter != NULL; iter = g_list_next(iter)) {
-		gpx_write_track((Track *) iter->data, &context_tmp);
+		context.options = &trk_options;
 	}
 
-	/* Routes (to get routepoints). */
-	context_tmp.options->is_route = true;
-	for (GList * iter = g_list_first(glrte); iter != NULL; iter = g_list_next(iter)) {
-		gpx_write_track((Track *) iter->data, &context_tmp);
+
+	/* Tracks sorted according to preferences. */
+	if (trw->tracks && (trw->get_tracks_visibility() || (options && options->hidden))) {
+		std::list<Track *> * track_values = NULL;
+		track_values = trw->tracks->get_track_values(track_values); /* TODO: make trw->tracks non-pointer? */
+
+		if (track_values && track_values->size()) {
+
+			switch (Preferences::get_gpx_export_trk_sort()) {
+			case GPXExportTrackSort::Time:
+				track_values->sort(Track::compare_timestamp);
+				break;
+			case GPXExportTrackSort::Alpha:
+				track_values->sort(Track::compare_name);
+				break;
+			default:
+				break;
+			}
+
+			/* Loop around each list and write each one. */
+			context.options->is_route = false;
+			for (auto iter = track_values->begin(); iter != track_values->end(); iter++) {
+				gpx_write_track(*iter, &context);
+			}
+		}
+		delete track_values;
 	}
 
-	g_list_free(gl);
-	g_list_free(glrte);
+
+	/* Routes always sorted by name. */
+	if (trw->routes && (trw->get_routes_visibility() || (options && options->hidden))) {
+
+		std::list<Track *> * route_values = NULL;
+		route_values = trw->routes->get_track_values(route_values); /* TODO: make trw->routes non-pointer? */
+		if (route_values && route_values->size()) {
+
+			route_values->sort(Track::compare_name);
+
+			context.options->is_route = true;
+			for (auto iter = route_values->begin(); iter != route_values->end(); iter++) {
+				gpx_write_track(*iter, &context);
+			}
+		}
+		delete route_values;
+	}
+
 
 	gpx_write_footer(file);
 }
