@@ -66,7 +66,6 @@ SOURCES += main.cpp \
     layer_gps.cpp \
     layer_mapnik.cpp \
     print.cpp \
-    print-preview.cpp \
     layer_map.cpp \
     map_source.cpp \
     map_cache.cpp \
@@ -202,7 +201,6 @@ HEADERS += window.h \
     layer_gps.h \
     layer_mapnik.h \
     print.h \
-    print-preview.h \
     layer_map.h \
     map_source.h \
     map_utils.h \
