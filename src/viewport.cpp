@@ -63,7 +63,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Viewport: "
+#define PREFIX ": Viewport: "
 
 
 
@@ -144,7 +144,7 @@ double Viewport::calculate_utm_zone_width(void) const
 		return 0.0;
 
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected coord mode" << (int) this->coord_mode;
+		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected coord mode" << (int) this->coord_mode;
 		return 0.0;
 	}
 }
@@ -363,23 +363,23 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
+		qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
 		delete this->scr_buffer;
 	}
 
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		qDebug() << "DD:" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
+		qDebug() << "DD" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 
-	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "sending \"drawing area reconfigured\" from" << this->type_string;
+	qDebug() << "SIGNAL" PREFIX << __FUNCTION__ << __LINE__ << "sending \"drawing area reconfigured\" from" << this->type_string;
 	emit this->drawing_area_reconfigured(this);
 }
 
@@ -406,7 +406,7 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 
 bool Viewport::reconfigure_drawing_area_cb(void)
 {
-	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << __LINE__;
+	qDebug() << "SLOT" PREFIX << __FUNCTION__ << __LINE__;
 	this->reconfigure_drawing_area();
 	return true;
 }
@@ -419,7 +419,7 @@ bool Viewport::reconfigure_drawing_area_cb(void)
 */
 void Viewport::clear(void)
 {
-	qDebug() << "II:" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
+	qDebug() << "II" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
@@ -495,7 +495,7 @@ bool Viewport::get_scale_visibility(void) const
 
 void Viewport::sync(void)
 {
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "sync (will call ->render())";
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "sync (will call ->render())";
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 	this->render(this->scr_buffer);
 }
@@ -720,7 +720,7 @@ void Viewport::save_current_center(void)
 
 	this->print_centers("Viewport::save_current_center()");
 
-	qDebug() << "SIGNAL:" PREFIX << __FUNCTION__ << __LINE__ << "emitting center_updated()";
+	qDebug() << "SIGNAL" PREFIX << __FUNCTION__ << __LINE__ << "emitting center_updated()";
 	emit this->center_updated();
 }
 
@@ -1832,7 +1832,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 void Viewport::paintEvent(QPaintEvent * ev)
 {
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__;
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__;
 
 	QPainter painter(this);
 
@@ -2101,15 +2101,44 @@ void Viewport::draw_border(void)
 bool Viewport::print_cb(QPrinter * printer)
 {
 	//QPageLayout page_layout = printer->pageLayout();
-	printer->setPaperSize(QPrinter::A4);
+	//printer->setPaperSize(QPrinter::A4);
+
 	QRectF page_rect = printer->pageRect(QPrinter::DevicePixel);
 	QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
 
-	qDebug() << "II: Viewport: print callback: page:" << page_rect << ", paper:" << paper_rect;
+	qDebug() << "II" PREFIX << "---- Printer Info ----";
+	qDebug() << "II" PREFIX << "printer name:" << printer->printerName();
+	qDebug() << "II" PREFIX << "page rectangle:" << printer->pageRect(QPrinter::DevicePixel);
+	qDebug() << "II" PREFIX << "paper rectangle:" << printer->paperRect(QPrinter::DevicePixel);
+	qDebug() << "II" PREFIX << "resolution:" << printer->resolution();
+	qDebug() << "II" PREFIX << "supported resolutions:" << printer->supportedResolutions();
+
+	qDebug() << "II" PREFIX << "---- Page Layout ----";
+	QPageLayout layout = printer->pageLayout();
+	qDebug() << "II" PREFIX << "full rectangle (points):" << layout.fullRect(QPageLayout::Point);
+	qDebug() << "II" PREFIX << "paint rectangle (points):" << layout.paintRect(QPageLayout::Point);
+	qDebug() << "II" PREFIX << "margins (points):" << layout.margins(QPageLayout::Point);
+
+	QPageLayout::Orientation orientation = layout.orientation();
+	switch (orientation) {
+	case QPrinter::Portrait:
+		qDebug() << "II" PREFIX << "orientation: Portrait";
+		break;
+	case QPrinter::Landscape:
+		qDebug() << "II" PREFIX << "orientation: Landscape";
+		break;
+	default:
+		qDebug() << "II" PREFIX << "orientation: unknown";
+		break;
+	}
 
 
-	QPainter painter(printer);
-	//painter.drawPixmap(0, 0, *this->scr_buffer);
+	QPainter painter;
+
+	if (!painter.begin(printer)) { // failed to open file
+		qWarning("Failed to open file, is it writable (viewport.cpp)?");
+		return false;
+	}
 
 	QPen pen;
 
@@ -2125,6 +2154,17 @@ bool Viewport::print_cb(QPrinter * printer)
 	painter.drawRect(new_rect);
 	new_rect = QRectF(16, 16, 40, 40);
 	painter.drawRect(new_rect);
+
+	painter.drawPixmap(0, 0, *this->scr_buffer);
+
+
+	painter.drawText(10, 10, "Test");
+	if (!printer->newPage()) {
+		qWarning("failed in flushing page to disk, disk full?");
+		return false;
+	}
+	painter.drawText(10, 10, "Test 2");
+	painter.end();
 
 	return true;
 }
@@ -2208,7 +2248,7 @@ QString ViewportDrawModes::get_name(ViewportDrawMode mode)
 	case ViewportDrawMode::LATLON:
 		return QObject::tr("&Lat/Lon Mode");
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
 		return "";
 	}
 }
@@ -2233,7 +2273,7 @@ QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
 		mode_id_string = "latlon";
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
 		break;
 	}
 
@@ -2255,11 +2295,11 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 	} else if (0 == strcasecmp(line, "google")) {
 		success = false;
-		qDebug() << "WW:" PREFIX << QObject::tr("Read file: draw mode 'google' no longer supported");
+		qDebug() << "WW" PREFIX << QObject::tr("Read file: draw mode 'google' no longer supported");
 
 	} else if (0 == strcasecmp(line, "kh")) {
 		success = false;
-		qDebug() << "WW:" PREFIX << QObject::tr("Read file: draw mode 'kh' no more supported");
+		qDebug() << "WW" PREFIX << QObject::tr("Read file: draw mode 'kh' no more supported");
 
 	} else if (0 == strcasecmp(line, "mercator")) {
 		viewport->set_drawmode(ViewportDrawMode::MERCATOR);
@@ -2267,7 +2307,7 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 	} else if (0 == strcasecmp(line, "latlon")) {
 		viewport->set_drawmode(ViewportDrawMode::LATLON);
 	} else {
-		qDebug() << "EE:" PREFIX << QObject::tr("Read file: unexpected draw mode") << line;
+		qDebug() << "EE" PREFIX << QObject::tr("Read file: unexpected draw mode") << line;
 		success = false;
 	}
 
