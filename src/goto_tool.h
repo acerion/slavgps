@@ -56,10 +56,10 @@ namespace SlavGPS {
 
 	public:
 		GotoTool();
-		GotoTool(char const * label);
+		GotoTool(const QString & new_label);
 		~GotoTool();
 
-		virtual char * get_label();
+		virtual QString get_label(void) const;
 		virtual char * get_url_format() = 0;
 		virtual const DownloadOptions * get_download_options(void) const;
 		virtual bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon) = 0;
@@ -69,7 +69,7 @@ namespace SlavGPS {
 	protected:
 
 		int id;
-		char * label = NULL;
+		QString label;
 
 		DownloadOptions dl_options;
 

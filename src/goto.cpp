@@ -133,7 +133,7 @@ static int get_last_provider_index(void)
 			int i = 0;
 			for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 				GotoTool * goto_tool = *iter;
-				if (QString(goto_tool->get_label()) == provider) {
+				if (goto_tool->get_label() == provider) {
 					found_entry = i;
 					break;
 				}
@@ -232,8 +232,7 @@ QString goto_location_dialog(Window * window)
 
 	/* TODO check if list is empty. */
 	last_goto_idx = dialog.providers_combo.currentIndex();
-	char * provider = goto_tools[last_goto_idx]->get_label();
-	ApplicationState::set_string(VIK_SETTINGS_GOTO_PROVIDER, QString(provider));
+	ApplicationState::set_string(VIK_SETTINGS_GOTO_PROVIDER, goto_tools[last_goto_idx]->get_label());
 	const QString location = dialog.input_field.text();
 	if (location.isEmpty()) {
 		qDebug() << "EE: goto: can't get string" << dialog.input_field.text();

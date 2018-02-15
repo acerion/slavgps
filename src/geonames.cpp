@@ -36,9 +36,9 @@ void SlavGPS::geonames_init()
 {
 	/* Goto */
 
-	GotoToolXML * geonames = new GotoToolXML("Geonames",
+	GotoToolXML * geonames = new GotoToolXML(QObject::tr("Geonames"),
 						 "http://api.geonames.org/search?q=%s&maxRows=1&lang=en&style=short&username=viking",
-						 "/geonames/geoname/lat",
-						 "/geonames/geoname/lng");
+						 "geonames/geoname/lat",
+						 "geonames/geoname/lng");
 	GoTo::register_tool(geonames);
 }

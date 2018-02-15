@@ -25,6 +25,12 @@
 
 
 
+#include <QStringList>
+#include <QXmlDefaultHandler>
+
+
+
+
 #include "goto_tool.h"
 #include "coords.h"
 
@@ -36,13 +42,37 @@ namespace SlavGPS {
 
 
 
+	class MyHandler : public QXmlDefaultHandler {
+	public:
+		MyHandler(const QString & lat_path, const QString & lon_path);
+
+		bool startDocument(void);
+		bool endDocument(void);
+		bool startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts);
+		bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName);
+		bool characters(const QString & ch);
+		bool fatalError(const QXmlParseException & exception);
+
+		/* Stack to which all currently opened xml tags are
+		   pushed.  I'm using QStringList to implement stack
+		   because lat_path_ and lon_path_ are also
+		   QStringList. */
+		QStringList stack;
+
+		QStringList lat_path;
+		QStringList lon_path;
+	};
+
+
+
+
 	class GotoToolXML : public GotoTool {
 
 	public:
 
 		GotoToolXML();
-		GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lan_path, char const * new_lon_path);
-		GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr);
+		GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lan_path, const QString & new_lon_path);
+		GotoToolXML(const QString & new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr);
 		~GotoToolXML();
 
 		char * get_url_format();
@@ -64,6 +94,8 @@ namespace SlavGPS {
 		char * lon_attr = NULL;   /* XML attribute of the longitude. */
 
 		LatLon ll;
+
+		MyHandler * xml_handler = NULL;
 
 	}; /* class GotoToolXML */
 

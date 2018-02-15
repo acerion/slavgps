@@ -59,20 +59,15 @@ using namespace SlavGPS;
 GotoTool::GotoTool()
 {
 	this->id = 0;
-	this->label = NULL;
 }
 
 
 
 
 
-GotoTool::GotoTool(char const * new_label)
+GotoTool::GotoTool(const QString & new_label)
 {
-	if (new_label) {
-		this->label = strdup(new_label);
-	} else {
-		this->label = strdup("<no-set>");
-	}
+	this->label = new_label;
 }
 
 
@@ -81,19 +76,15 @@ GotoTool::GotoTool(char const * new_label)
 
 GotoTool::~GotoTool()
 {
-	if (this->label) {
-		free(this->label);
-		this->label = NULL;
-	}
 }
 
 
 
 
 
-char * GotoTool::get_label()
+QString GotoTool::get_label(void) const
 {
-	return this->label ? strdup(this->label) : NULL;
+	return this->label;
 }
 
 

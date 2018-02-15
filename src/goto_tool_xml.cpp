@@ -35,8 +35,11 @@
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
-#include "goto_tool_xml.h"
+#include <QDebug>
+#include <QXmlSimpleReader>
+#include <QXmlInputSource>
 
+#include "goto_tool_xml.h"
 
 
 
@@ -46,11 +49,95 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": GoTo XML:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
 
 static bool stack_is_path(const GSList * stack, const char * path);
-static void _start_element(GMarkupParseContext * context, const char * element_name, const char ** attribute_names, const char ** attribute_values, void * user_data, GError ** error);
-static void _text(GMarkupParseContext * context, const char * text, size_t text_len, void * user_data, GError ** error);
 
+static void start_element_handler(GMarkupParseContext * context, const char * element_name, const char ** attribute_names, const char ** attribute_values, void * user_data, GError ** error);
+static void text_handler(GMarkupParseContext * context, const char * text, size_t text_len, void * user_data, GError ** error);
+
+
+
+
+MyHandler::MyHandler(const QString & new_lat_path, const QString & new_lon_path)
+{
+	/* We will know that we found lat/lon values when, during
+	   traversal of xml tree, we descend into place with given
+	   "path", i.e. list of nested xml tags. */
+	this->lat_path = QString(new_lat_path).split('/');
+	this->lon_path = QString(new_lon_path).split('/');
+
+	qDebug() << "II" PREFIX << "latitude path =" << this->lat_path;
+	qDebug() << "II" PREFIX << "longitude path =" << this->lon_path;
+}
+
+
+
+
+bool MyHandler::startDocument(void)
+{
+	qDebug() << "II" PREFIX;
+	return true;
+}
+
+
+
+
+bool MyHandler::endDocument(void)
+{
+	qDebug() << "II" PREFIX;
+	return true;
+}
+
+
+
+
+bool MyHandler::startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts)
+{
+	this->stack.push_back(localName);
+	qDebug() << "II" PREFIX << "localName =" << localName << "qName =" << qName;
+	qDebug() << "II" PREFIX << "stack after pushing =" << this->stack;
+	return true;
+}
+
+
+
+
+bool MyHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
+{
+	qDebug() << "II" PREFIX << "localName =" << localName << "qName =" << qName;
+	this->stack.pop_back();
+	qDebug() << "II" PREFIX << "stack after popping =" << this->stack;
+	return true;
+}
+
+
+
+
+bool MyHandler::characters(const QString & ch)
+{
+	if (this->stack == this->lat_path) {
+		qDebug() << "II" PREFIX << "---- found latitude =" << ch;
+	} else if (this->stack == this->lon_path) {
+		qDebug() << "II" PREFIX << "---- found longitude =" << ch;
+	} else {
+		qDebug() << "II" PREFIX << "found other characters string =" << ch;
+	}
+
+	return true;
+}
+
+
+
+
+bool MyHandler::fatalError(const QXmlParseException & exception)
+{
+	qDebug() << "EE" PREFIX;
+	return true;
+}
 
 
 
@@ -70,23 +157,20 @@ GotoToolXML::GotoToolXML()
 
 
 
-
-GotoToolXML::GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lat_path, char const * new_lon_path)
+GotoToolXML::GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lat_path, const QString & new_lon_path)
 {
-	this->label = strdup(new_label);
+	this->label = new_label;
 	this->set_url_format(new_url_format);
 
-	this->set_lat_path(new_lat_path);
-	this->set_lon_path(new_lon_path);
+	this->xml_handler = new MyHandler(new_lat_path, new_lon_path);
 }
 
 
 
 
-
-GotoToolXML::GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr)
+GotoToolXML::GotoToolXML(const QString & new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr)
 {
-	this->label = strdup(new_label);
+	this->label = new_label;
 	this->set_url_format(new_url_format);
 
 	this->set_lat_path(new_lat_path);
@@ -98,11 +182,10 @@ GotoToolXML::GotoToolXML(char const * new_label, char const * new_url_format, ch
 
 
 
-
 GotoToolXML::~GotoToolXML()
 {
+	delete this->xml_handler;
 }
-
 
 
 
@@ -115,7 +198,6 @@ void GotoToolXML::set_url_format(char const * new_format)
 	this->url_format = strdup(new_format);
 	return;
 }
-
 
 
 
@@ -138,7 +220,6 @@ void GotoToolXML::set_lat_path(char const * new_value)
 
 
 
-
 void GotoToolXML::set_lat_attr(char const * new_value)
 {
 	/* Avoid to overwrite XPATH value */
@@ -151,7 +232,6 @@ void GotoToolXML::set_lat_attr(char const * new_value)
 	this->lat_attr = strdup(new_value);
 	return;
 }
-
 
 
 
@@ -174,7 +254,6 @@ void GotoToolXML::set_lon_path(char const * new_value)
 
 
 
-
 void GotoToolXML::set_lon_attr(char const * new_value)
 {
 	/* Avoid to overwrite XPATH value */
@@ -191,7 +270,6 @@ void GotoToolXML::set_lon_attr(char const * new_value)
 
 
 
-
 char * GotoToolXML::get_url_format()
 {
 	return this->url_format;
@@ -200,17 +278,31 @@ char * GotoToolXML::get_url_format()
 
 
 
-
 bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon)
 {
+	qDebug() << "DD" PREFIX << "paths/attributes" << this->lat_path << this->lat_attr << this->lon_path << this->lon_attr;
+#if 1
+
+	QFile file(file_full_path);
+	QXmlSimpleReader xml_reader;
+	QXmlInputSource source(&file);
+	xml_reader.setContentHandler(this->xml_handler);
+	xml_reader.setErrorHandler(this->xml_handler);
+
+
+	if (!xml_reader.parse(&source)) {
+		qDebug() << "EE" PREFIX << "failed to parse xml file";
+		return false;
+	}
+
+	return true;
+
+#else
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
 	GError * error = NULL;
 
-	fprintf(stderr, "DEBUG: %s: %s@%s, %s@%s\n",
-		__FUNCTION__,
-		this->lat_path, this->lat_attr,
-		this->lon_path, this->lon_attr);
+
 
 	FILE *file = fopen(file_full_path.toUtf8().constData(), "r");
 	if (file == NULL) {
@@ -221,7 +313,7 @@ bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon &
 	/* setup context parse (ie callbacks) */
 	if (this->lat_attr != NULL || this->lon_attr != NULL) {
 		// At least one coordinate uses an attribute
-		xml_parser.start_element = &_start_element;
+		xml_parser.start_element = start_element_handler;
 	} else {
 		xml_parser.start_element = NULL;
 	}
@@ -229,7 +321,7 @@ bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon &
 	xml_parser.end_element = NULL;
 	if (this->lat_attr == NULL || this->lon_attr == NULL) {
 		// At least one coordinate uses a raw element
-		xml_parser.text = &_text;
+		xml_parser.text = text_handler;
 	} else {
 		xml_parser.text = NULL;
 	}
@@ -273,9 +365,8 @@ bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon &
 	} else {
 		return true;
 	}
+#endif
 }
-
-
 
 
 
@@ -309,9 +400,8 @@ static bool stack_is_path(const GSList * stack, const char * path)
 
 
 
-
 /* Called for open tags <foo bar="baz"> */
-static void _start_element(GMarkupParseContext * context,
+static void start_element_handler(GMarkupParseContext * context,
 			   const char          * element_name,
 			   const char         ** attribute_names,
 			   const char         ** attribute_values,
@@ -345,14 +435,9 @@ static void _start_element(GMarkupParseContext * context,
 
 
 
-
 /* Called for character data */
 /* text is not nul-terminated */
-static void _text(GMarkupParseContext * context,
-		  const char          * text,
-		  size_t                text_len,
-		  void                * user_data,
-		  GError             ** error)
+static void text_handler(GMarkupParseContext * context, const char * text, size_t text_len, void * user_data, GError ** error)
 {
 	GotoToolXML * self = (GotoToolXML *) user_data;
 

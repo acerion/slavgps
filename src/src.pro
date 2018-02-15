@@ -1,7 +1,7 @@
 TEMPLATE = app
 TARGET = slavgps
 
-QT = core gui widgets printsupport
+QT = core gui widgets printsupport xml
 
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc
 
