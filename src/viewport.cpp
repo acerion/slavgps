@@ -506,7 +506,7 @@ void Viewport::sync(void)
 void Viewport::pan_sync(int x_off, int y_off)
 {
 	qDebug() << "II: Viewport: Pan Sync";
-#ifdef K
+#ifdef K_TODO
 	int x, y, wid, hei;
 
 	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
@@ -1446,7 +1446,8 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int des
 	QPainter painter(this->scr_buffer);
 	/* TODO: This clearly needs to be improved. */
 	painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
-#if 0
+
+#ifdef K_OLD_IMPLEMENTATION
 	gdk_draw_pixbuf(this->scr_buffer,
 			NULL,
 			pixbuf,
@@ -1657,7 +1658,8 @@ void Viewport::snapshot_save(void)
 	qDebug() << "II: Viewport: save snapshot";
 	*this->snapshot_buffer = *this->scr_buffer;
 
-#if 0   /* Not used anymore. Keeping it for reference. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Not used anymore. Keeping it for reference. */
 	gdk_draw_drawable(this->snapshot_buffer, this->background_pen, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
@@ -1670,7 +1672,8 @@ void Viewport::snapshot_load(void)
 	qDebug() << "II: Viewport: load snapshot";
 	*this->scr_buffer = *this->snapshot_buffer;
 
-#if 0   /* Not used anymore. Keeping it for reference. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Not used anymore. Keeping it for reference. */
 	gdk_draw_drawable(this->scr_buffer, this->background_pen, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
@@ -1759,7 +1762,7 @@ void Viewport::add_copyright(QString const & copyright)
 
 
 
-#ifdef K
+#ifdef K_TODO
 void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright)
 {
 	viewport->add_copyright(copyright);
@@ -2039,7 +2042,8 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 
 
-#if 0 /* kamil: no longer used. */
+#ifdef K_OLD_IMPLEMENTATION
+/* No longer used. */
 /**
  * Utility function to get positional strings for the given location
  * lat and lon strings will get allocated and so need to be freed after use

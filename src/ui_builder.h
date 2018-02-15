@@ -146,7 +146,8 @@ namespace SlavGPS {
 
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
-#if 0
+
+#ifdef K_OLD_IMPLEMENTATION
 	/* Frees data from last (if necessary). */
 	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * param_specs, uint16_t param_specs_count);
 #endif
@@ -218,7 +219,7 @@ namespace SlavGPS {
 
 
 
-#ifdef K
+#ifdef K_OLD_IMPLEMENTATION
 	GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data);
 	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, ParameterSpecification *param);
 	int a_uibuilder_properties_factory(const char *dialog_name,

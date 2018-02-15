@@ -115,7 +115,7 @@ static MapTypeID startup_map_type_id = MAP_TYPE_ID_INITIAL;
 int main(int argc, char ** argv)
 {
 
-#ifdef K
+#ifdef K_TODO
 	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
@@ -129,13 +129,13 @@ int main(int argc, char ** argv)
 	}
 
 
-#ifdef K
+#ifdef K_TODO
 	if (vik_debug) {
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
 	}
 #endif
 
-#ifdef K
+#ifdef K_TODO
 #if HAVE_X11_XLIB_H
 	XSetErrorHandler(myXErrorHandler);
 #endif
@@ -175,7 +175,7 @@ int main(int argc, char ** argv)
 	map_cache_init();
 	a_background_init();
 
-#ifdef K
+#ifdef K_TODO
 	a_toolbar_init();
 	routing_prefs_init();
 #endif
@@ -240,7 +240,7 @@ int main(int argc, char ** argv)
 	int rv = app.exec();
 
 	Babel::uninit();
-#ifdef K
+#ifdef K_TODO
 	a_toolbar_uninit();
 #endif
 	a_background_uninit();

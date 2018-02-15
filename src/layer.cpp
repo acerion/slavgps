@@ -528,7 +528,7 @@ Layer::~Layer()
 
 bool Layer::handle_selection_in_tree(void)
 {
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 	/* A generic layer doesn't want anyone know that it is
 	   selected - no one would be interested in knowing that.
 	   So we don't set it here. */
@@ -600,7 +600,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 		return false;
 	}
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 	int prop = a_uibuilder_properties_factory(QObject::tr("Layer Properties"),
 						  viewport->get_window(),
 						  layer->get_interface()->parameters_c,
@@ -794,7 +794,7 @@ Window * Layer::get_window(void)
 
 void Layer::ref(void)
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_ref(this->vl);
 #endif
 }
@@ -804,7 +804,7 @@ void Layer::ref(void)
 
 void Layer::unref(void)
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_unref(this->vl);
 	return;
 #endif
@@ -815,7 +815,7 @@ void Layer::unref(void)
 
 void Layer::weak_ref(LayerRefCB cb, void * obj)
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_weak_ref(G_OBJECT (this->vl), cb, obj);
 	return;
 #endif
@@ -826,7 +826,7 @@ void Layer::weak_ref(LayerRefCB cb, void * obj)
 
 void Layer::weak_unref(LayerRefCB cb, void * obj)
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
 	return;
 #endif

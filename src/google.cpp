@@ -47,11 +47,12 @@ void SlavGPS::google_init()
 	external_tools_register(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%s,%s,%dz"));
 
 	/* Goto. */
-#if 0   /* Google no longer supports the API we used. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Google no longer supports the API we used. */
 
-	 GoogleGotoTool * gototool = google_goto_tool_new();
-	 GoTo::register_tool(gototool);
-	 g_object_unref(gototool);
+	GoogleGotoTool * gototool = google_goto_tool_new();
+	GoTo::register_tool(gototool);
+	g_object_unref(gototool);
 #endif
 }
 
@@ -72,7 +73,8 @@ void SlavGPS::google_post_init()
 	 * gpsbabel supports this format.
 	 */
 
-#if 0    /* Google no longer supports the API we used. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Google no longer supports the API we used. */
 
 	if (Babel::is_available()) {
 		 RoutingEngine * routing = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,

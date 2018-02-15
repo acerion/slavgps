@@ -355,7 +355,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 	widget = this->new_widget(param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
 	form->addRow(param_spec.ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
-#ifdef K
+#ifdef K_TODO
 	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 #endif
 
@@ -656,7 +656,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::BUTTON:
 		if (param_spec.type_id == SGVariantType::Pointer && param_spec.widget_data) {
-#ifdef K
+#ifdef K_TODO
 			rv = gtk_button_new_with_label((const char *) param_spec.widget_data);
 			QObject::connect(rv, SIGNAL (triggered(bool)), param_spec.extra_widget_data, SLOT (value.val_pointer));
 
@@ -758,7 +758,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 			/* TODO: look at old implementation below: */
 			/* Implementation in old code: */
-#ifdef K
+#ifdef K_TODO
 			if (param_spec.extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
 				int pos = widget->currentIndex();
@@ -815,7 +815,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		if (param_spec.type_id == SGVariantType::Int) {
 			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
 		} else if (param_spec.type_id == SGVariantType::Double) {
-#ifdef K
+#ifdef K_TODO
 			rv = SGVariant((double) gtk_range_get_value(GTK_RANGE(widget)));
 #endif
 		} else {
@@ -841,7 +841,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, ParameterSpecification & param_specs)
 {
 	/* Could have to copy it if it's a string! */
@@ -864,7 +864,7 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 /* Frees data from last (if necessary). */
 void SlavGPS::a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpecification & param_specs, uint16_t param_specs_count)
 {
@@ -910,7 +910,7 @@ bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const ParameterSp
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 
 
 

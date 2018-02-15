@@ -138,7 +138,7 @@ typedef struct {
 
 
 
-#ifdef K
+#ifdef K_TODO
 
 
 
@@ -191,7 +191,7 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 void TrackListDialog::copy_selected_cb(void)
 {
 	copy_data_t cd;
-#ifdef K
+#ifdef K_TODO
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
@@ -568,7 +568,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->setMinimumSize(750, 400);
 
-#ifdef K
+#ifdef K_TODO
 	/* TODO: The callback worked by exposing selected item in tree view. */
 	QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
 
@@ -643,7 +643,7 @@ TrackListDialog::~TrackListDialog()
 void TrackListDialog::accept_cb(void) /* Slot. */
 {
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
-#ifdef K
+#ifdef K_TODO
 
 	/* Here we save in track objects changes made in the dialog. */
 

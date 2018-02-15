@@ -95,7 +95,7 @@ LayerTRWPainter::LayerTRWPainter(LayerTRW * new_trw)
 	this->trw = new_trw;
 	this->window = this->trw->get_window();
 
-#ifdef K
+#ifdef K_TODO
 	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
 	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
 #endif
@@ -486,7 +486,7 @@ void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const S
 	points[3] = QPoint(end.x, end.y);
 
 	QPen tmp_pen;
-#ifdef K
+#ifdef K_TODO
 	if (((begin.x - x) > 0 && (begin.y - y) > 0) || ((begin.x - x) < 0 && (begin.y - y) < 0)) {
 		tmp_pen = gtk_widget_get_style(this->viewport)->light_gc[3];
 	} else {
@@ -624,7 +624,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			|| (tp->coord.utm.northing > this->coord_bottommost && tp->coord.utm.northing < this->coord_topmost);
 
 		bool second_condition = (second_condition_A && fits_horizontally && fits_vertically);
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 		if ((!this->vp_is_one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
 		    || (((!this->vp_is_one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
 			&& tp->coord.east_west < this->coord_rightmost && tp->coord.east_west > this->coord_leftmost /* Both UTM and lat lon. */
@@ -782,7 +782,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 		/* kamilTODO: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 		if ((!this->vp_is_one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
 		    || (((!this->vp_is_one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
 			&& tp->coord.east_west < this->coord_rightmost && tp->coord.east_west > this->coord_leftmost /* Both UTM and lat lon. */
@@ -1085,7 +1085,7 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, 
 {
 	/* Could this be stored in the waypoint rather than recreating each pass? */
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 	/* Unused. Leaving as reference. */
 	int label_x, label_y;
 	int label_width, label_height;
@@ -1148,7 +1148,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 
 CachedPixmap::~CachedPixmap()
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_unref(G_OBJECT(cp->pixmap));
 #endif
 }
@@ -1248,7 +1248,7 @@ void LayerTRWPainter::make_wp_pens(void)
 	this->wp_label_bg_pen = QPen(this->wp_label_bg_color);
 	this->wp_label_bg_pen.setWidth(1);
 
-#ifdef K
+#ifdef K_TODO
 	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif
 	return;

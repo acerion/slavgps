@@ -24,9 +24,6 @@
 
 #include <QDebug>
 
-#if 0
-#include <gdk-pixbuf/gdk-pixdata.h>
-#endif
 
 typedef int GdkPixdata;
 
@@ -52,7 +49,7 @@ static struct {
 	GdkPixdata const * data_large;
 	QPixmap * pixmap;
 } garmin_syms[] = {
-#ifdef K
+#ifdef K_TODO
 	/* "symbol_name" are in 'Title Case' like in gpsbabel. This is needed for
 	   devices like Garmin Oregon 450. Old exports with lower case
 	   identifiers will be automatically converted to the version defined
@@ -323,7 +320,7 @@ static struct {
 	{ "Glider Area",                     "glider",           16393,  "glider symbol",                     NULL,                       &wp_glider_large_pixbuf,          NULL },
 	{ "Ultralight Area",                 "ultralight",       16394,  "ultralight symbol",                 NULL,                       &wp_ultralight_large_pixbuf,      NULL },
 	{ "Parachute Area",                  "parachute",        16395,  "parachute symbol",                  NULL,                       &wp_parachute_large_pixbuf,       NULL },
-#endif /* #ifdef K */
+#endif /* #ifdef K_TODO */
 	{ "VOR/TACAN",                       "vortac",           16396,  "VOR/TACAN symbol",                  NULL,                       NULL,                             NULL },
 	{ "VOR-DME",                         "vordme",           16397,  "VOR-DME symbol",                    NULL,                       NULL,                             NULL },
 	{ "First approach fix",              "faf",              16398,  "first approach fix",                NULL,                       NULL,                             NULL },
@@ -404,12 +401,12 @@ static QPixmap * get_wp_sym_from_index(int i)
 		if (Preferences::get_use_large_waypoint_icons()) {
 			if (garmin_syms[i].data_large) {
 				/* Directly load pixmap. */
-#ifdef K
+#ifdef K_TODO
 				garmin_syms[i].pixmap = QPixmap(garmin_syms[i].data_large);
 #endif
 			} else {
 				/* Up sample from small image. */
-#ifdef K
+#ifdef K_TODO
 				/* TODO: simplify. */
 				const QPixmap pixmap(garmin_syms[i].data);
 				const QPixmap pixmap2 = pixmap.scaled(30, 30, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -419,13 +416,13 @@ static QPixmap * get_wp_sym_from_index(int i)
 		} else {
 			if (garmin_syms[i].data) {
 				/* Directly use small symbol. */
-#ifdef K
+#ifdef K_TODO
 				garmin_syms[i].pixmap = new QPixmap(garmin_syms[i].data);
 #endif
 			} else {
 				/* Down size large image. */
 				/* TODO: simplify. */
-#ifdef K
+#ifdef K_TODO
 				const QPixmap pixmap(garmin_syms[i].data);
 				const QPixmap pixmap2 = pixmap.scaled(18, 18, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 				garmin_syms[i].pixmap = new Pixmap(pixmap2);
@@ -490,7 +487,7 @@ void GarminSymbols::populate_symbols_list(GtkListStore *list)
 	for (int i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
 		/* Ensure at least one symbol available - the other can be auto generated. */
 		if (garmin_syms[i].data || garmin_syms[i].data_large) {
-#ifdef K
+#ifdef K_TODO
 			GtkTreeIter iter;
 			gtk_list_store_append(list, &iter);
 			gtk_list_store_set(list, &iter, 0, garmin_syms[i].symbol_name, 1, get_wp_sym_from_index(i), -1);

@@ -961,13 +961,13 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare items */
 
 
-#ifdef K
+#ifdef K_TODO
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
 		for (auto i = this->items.begin(); i != this->items.end(); i++) {
 			i->second->draw_tree_item(viewport, allowed, required);
 		}
-#ifdef K
+#ifdef K_TODO
 	}
 #endif
 }

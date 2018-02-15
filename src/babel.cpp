@@ -765,7 +765,9 @@ bool BabelConverter::run_conversion()
 		this->conversion_cb(BABEL_DONE, NULL, this->conversion_data);
 	}
 
-#if 0   /* Old implementation. New implementation uses QProcess and signal sent on new data appearing on stdout. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Old implementation. New implementation uses QProcess and signal sent on new data appearing on stdout. */
+
 	GPid pid;
 	GError *error = NULL;
 	int babel_stdout;

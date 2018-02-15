@@ -111,7 +111,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 		break;
 
 	case SGVariantType::StringList:
-#ifdef K
+#ifdef K_TODO
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value = SGVariant(str_to_glist(str)); /* TODO convert. */
 #endif
@@ -187,7 +187,7 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 
 
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec)

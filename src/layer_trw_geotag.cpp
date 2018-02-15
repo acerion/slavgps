@@ -210,7 +210,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 
 	this->ov.TimeZoneHours = 0;
 	this->ov.TimeZoneMins = 0;
-#ifdef K
+#ifdef K_TODO
 	const char * TZString = widgets->time_zone_b.text();
 	/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
 	 * If not, it's probably just a +/-xx format. In all other cases,
@@ -236,7 +236,7 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 	this->files->clear();
 	const QStringList a_list = widgets->files->get_list();
 
-#ifdef K
+#ifdef K_TODO
 	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
 #endif
 
@@ -627,7 +627,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
  */
 static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidgets *widgets)
 {
-#ifdef K
+#ifdef K_TODO
 	switch (resp) {
 	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
 	case GTK_RESPONSE_REJECT:
@@ -703,7 +703,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	widgets->dialog = new BasicDialog(parent);
 	widgets->dialog->setWindowTitle(QObject::tr("Geotag Images"));
 
-#ifdef K
+#ifdef K_TODO
 	QStringList mime_type_filters;
 	mime_type_filters << "image/jpeg";
 

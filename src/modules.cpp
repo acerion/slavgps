@@ -25,15 +25,15 @@
 
 #include <cstdlib>
 
-#ifdef K
 
+#ifdef K_INCLUDES
 #include <glib.h>
 #include <glib/gstdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
 #endif
+
 
 #include "modules.h"
 
@@ -41,12 +41,12 @@
 #include "layer_map.h"
 #include "osm.h"
 #include "osm-traces.h"
-#ifdef K
+
+#ifdef K_INCLUDES
 #include "bing.h"
 #include "google.h"
 #include "terraserver.h"
 #include "expedia.h"
-
 #include "bluemarble.h"
 #include "dir.h"
 #include "datasources.h"
@@ -93,7 +93,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K
+#ifdef K_TODO
 
 static void modules_register_map_source(VikGobjectBuilder * self, MapSource * mapsource)
 {
@@ -273,7 +273,7 @@ void SlavGPS::modules_init()
 	osm_traces_init();
 #endif
 
-#ifdef K
+#ifdef K_TODO
 #ifdef VIK_CONFIG_BING
 	bing_init();
 #endif
@@ -298,7 +298,7 @@ void SlavGPS::modules_init()
 	DataSourceGeoCache::init();
 #endif
 
-#ifdef K
+#ifdef K_TODO
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_init();
 #endif
@@ -319,7 +319,7 @@ void SlavGPS::modules_init()
  */
 void SlavGPS::modules_post_init()
 {
-#ifdef K
+#ifdef K_TODO
 #ifdef VIK_CONFIG_GOOGLE
 	google_post_init();
 #endif
@@ -331,7 +331,7 @@ void SlavGPS::modules_post_init()
 	layer_trw_init();
 
 	layer_gps_init();
-#ifdef K
+#ifdef K_TODO
 	layer_mapnik_init();
 #endif
 	viewport_init();
@@ -346,7 +346,7 @@ void SlavGPS::modules_uninit()
 	osm_traces_uninit();
 #endif
 
-#ifdef K
+#ifdef K_TODO
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_uninit();
 #endif

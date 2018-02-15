@@ -434,7 +434,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 
 	QLabel * label = new QLabel(msg);
 
-#ifdef K
+#ifdef K_TODO
 
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {

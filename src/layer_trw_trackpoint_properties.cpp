@@ -35,7 +35,8 @@
 #include "date_time_dialog.h"
 #include "util.h"
 #include "measurements.h"
-#if 0
+
+#ifdef K_INCLUDES
 #include "coords.h"
 #include "coord.h"
 #include "layer_trw_waypoint.h"
@@ -87,7 +88,7 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 	/* Don't redraw unless we really have to. */
 	if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
 		this->cur_tp->coord = coord;
-#ifdef K
+#ifdef K_TODO
 		gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
 #endif
 	}
@@ -275,7 +276,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->timestamp_widget->setEnabled(tp->has_timestamp);
 
 	/* Enable adding timestamps - but not on routepoints. */
-#ifdef K
+#ifdef K_TODO
 	if (!tp->has_timestamp && !is_route) {
 		this->timestamp_widget->timestamp_button->setEnabled(true);
 	} else {
@@ -416,7 +417,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->trkpt_name = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
 	this->grid->addWidget(this->trkpt_name, 0, 1);
-#ifdef K
+#ifdef K_TODO
 	connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
 #endif
 

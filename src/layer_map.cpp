@@ -757,7 +757,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 
-#ifdef K
+#ifdef K_TODO
 void LayerMapInterface::change_param(void * gtk_widget, ui_change_values * values)
 {
 	switch (values->param_id) {
@@ -959,7 +959,7 @@ static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double ysh
 	int height = pixmap->height();
 
 	QPixmap * tmp = NULL;
-#ifdef K
+#ifdef K_TODO
 	tmp = pixmap->scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	g_object_unref(G_OBJECT(pixmap));
 #endif
@@ -1104,7 +1104,7 @@ static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int 
 		/* Convert these buf bytes into a pixmap via these streaming operations. */
 		QPixmap * pixmap = NULL;
 
-#ifdef K
+#ifdef K_TODO
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
 		GError *error = NULL;
 		pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
@@ -1306,7 +1306,7 @@ bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, in
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 			viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-#ifdef K
+#ifdef K_TODO
 			g_object_unref(pixmap);
 #endif
 			return true;
@@ -1340,7 +1340,7 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
 					viewport->draw_pixmap(*pixmap, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
-#ifdef K
+#ifdef K_TODO
 					g_object_unref(pixmap);
 #endif
 					return true;
@@ -1440,7 +1440,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 						yy -= (height/2);
 
 						viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, width, height);
-#ifdef K
+#ifdef K_TODO
 						g_object_unref(pixmap);
 #endif
 					}
@@ -1494,7 +1494,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 							viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-#ifdef K
+#ifdef K_TODO
 							g_object_unref(pixmap);
 #endif
 						} else {
@@ -1559,7 +1559,8 @@ void LayerMap::draw(Viewport * viewport)
 		/* Copyright. */
 		double level = viewport->get_zoom();
 		const LatLonBBox bbox = viewport->get_bbox();
-#ifdef K /* linkage problem. */
+
+#ifdef K_TODO   /* linkage problem. */
 		map_sources[this->map_index]->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
 #endif
 
@@ -2101,7 +2102,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	/* kamilTODO: use correct values for these cursors. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-#ifdef K
+#ifdef K_TODO
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixmap;
 #endif

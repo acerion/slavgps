@@ -334,7 +334,9 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 
 
 
-#if 0 /* Saving original version of the function for possible future reference. */
+#ifdef K_OLD_IMPLEMENTATION
+/* Saving original version of the function for possible future reference. */
+
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
 bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
@@ -452,4 +454,4 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	return rv;
 }
-#endif /* #if 0 */
+#endif /* #ifdef K_OLD_IMPLEMENTATION */

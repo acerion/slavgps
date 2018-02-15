@@ -1147,10 +1147,6 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 	bool ignore_it = false;
 	int current_chunk = 0;
 	while (current_chunk < compressed_n_points) {
-#if 0
-		compressed_ad.y[current_chunk] = current_chunk;
-		current_chunk++;
-#else
 
 		/* Go along current seg. */
 		if (current_seg_length && (current_seg_length - dist_along_seg) > delta_d) {
@@ -1242,10 +1238,9 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			current_dist = 0;
 			current_chunk++;
 		}
-#endif
 	}
 
-#ifdef K
+#ifdef K_TODO
 	assert(current_chunk == compressed_n_points);
 #endif
 
@@ -1968,7 +1963,7 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
 	}					\
 	data += len;
 
-#ifdef K
+#ifdef K_TODO
 	Trackpoint * new_tp;
 	for (unsigned int i = 0; i < ntp; i++) {
 		new_tp = new Trackpoint();
@@ -2592,7 +2587,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	QAction * qa = NULL;
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-#ifdef K
+#ifdef K_TODO
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
 	parent_layer_->menu_data->misc = this;
@@ -3437,7 +3432,7 @@ bool Track::handle_selection_in_tree(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-#ifdef K
+#ifdef K_TODO
 	/* TODO: to be implemented? */
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
@@ -3670,7 +3665,7 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		rect->center = *cur_coord;
 		rects_to_download->push_front(rect);
 
-#ifdef K
+#ifdef K_TODO
 		/* TODO: do we need to do this? Can we do this? */
 		free(*iter);
 #endif
@@ -3881,7 +3876,7 @@ void Track::refine_route_cb(void)
 
 	QComboBox * combo = NULL;
 
-#ifdef K
+#ifdef K_TODO
 	gtk_widget_show_all(label);
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);

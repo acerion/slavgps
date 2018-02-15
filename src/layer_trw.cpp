@@ -82,7 +82,7 @@
 #include "osm-traces.h"
 #endif
 
-#if 0
+#ifdef K_INCLUDES
 #include "garminsymbols.h"
 #include "background.h"
 #include "gpx.h"
@@ -882,7 +882,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 
 	case PARAM_WPBA:
-#ifdef K
+#ifdef K_TODO
 		this->wpbgand = (GdkFunction) data.b;
 		if (this->waypoint_bg_gc) {
 			gdk_gc_set_function(this->waypoint_bg_gc, data.b ? GDK_AND : GDK_COPY);
@@ -1018,7 +1018,7 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 {
 	// This '-3' is to account for the first few parameters not in the properties
 	const int OFFSET = -3;
-#ifdef K
+#ifdef K_TODO
 	switch (values->param_id) {
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DRAW_WP_IMAGES: {
@@ -1257,7 +1257,7 @@ static unsigned int strcase_hash(gconstpointer v)
 void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
 
-#ifdef K
+#ifdef K_TODO
 	/* TODO: re-implement/re-enable this feature. */
 
 	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
@@ -2633,7 +2633,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *
 			}
 		}
 	} else {
-#ifdef K
+#ifdef K_TODO
 		trw_src->move_item(trw_dest, sublayer->name, sublayer->type_id);
 #endif
 	}
@@ -3002,7 +3002,7 @@ void LayerTRW::edit_trackpoint_cb(void)
 
 /* comparison function used to sort tracks; a and b are hash table keys */
 /* Not actively used - can be restored if needed. */
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 static int track_compare(gconstpointer a, gconstpointer b, void * user_data)
 {
 	GHashTable *tracks = user_data;
@@ -4726,7 +4726,7 @@ bool LayerTRW::handle_selection_in_tree()
 
 bool LayerTRW::clear_highlight()
 {
-#ifdef K
+#ifdef K_TODO
 	/* TODO: this is not used anymore. What to do with this code? When to return true and when false? */
 	if (this->selected_sublayer_index) {
 		this->selected_sublayer_index = NULL;
@@ -4876,7 +4876,7 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 
 	const QString program = Preferences::get_image_viewer();
 	const QString image_full_path = this->get_edited_wp()->image_full_path;
-#ifdef K
+#ifdef K_TODO
 	char * quoted_file = g_shell_quote((char *) image_full_path);
 #endif
 	QStringList args;

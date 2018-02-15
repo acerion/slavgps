@@ -261,7 +261,7 @@ void LayerAggregate::move_layer(TreeIndex & child_index, bool up)
 		std::swap(*theone, *std::prev(theone));
 	}
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 	/* the old switcheroo */
 	if (up && theone + 1 != val->children->end()) {
 
@@ -813,7 +813,9 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 
 	return has_been_handled;
 
-#if 0   /* Leaving the code here for future reference, to see how GPS layer has been handled. */
+#ifdef K_OLD_IMPLEMENTATION
+	/* Leaving the code here for future reference, to see how GPS layer has been handled. */
+
 	auto child = this->children->begin();
 	/* Where appropriate *don't* include non-visible layers. */
 	while (child != this->children->end()) {
@@ -909,7 +911,7 @@ void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, 
 
 	Layer * layer = src->tree_view->get_tree_item(src_item_index)->to_layer();
 
-#ifdef K
+#ifdef K_TODO
 	char * dp = gtk_tree_path_to_string(dest_path);
 	TreeIndex * dest_index = src->tree_view->get_index_from_path_str(dp);
 

@@ -41,7 +41,7 @@
 #include "goto_tool_xml.h"
 #include "goto.h"
 #include "util.h"
-#ifdef K
+#ifdef K_INCLUDES
 #include "routing.h"
 #include "routing_engine_web.h"
 #endif
@@ -183,7 +183,7 @@ void SlavGPS::osm_init(void)
 	/* Not really OSM but can't be bothered to create somewhere else to put it... */
 	external_tools_register(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s"));
 
-#ifdef K
+#ifdef K_TODO
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
 	RoutingEngine * osrm = (RoutingEngine *) g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
 								    "id", "osrm",

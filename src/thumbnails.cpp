@@ -147,7 +147,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 		return false;
 	}
 
-#ifdef K
+#ifdef K_TODO
 	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(original_image);
 	g_object_unref(G_OBJECT(original_image));
 	original_image = tmpbuf;
@@ -200,7 +200,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	const QString sheight = QString("%1").arg((int) original_image.height());
 	const QString ssize = QString("%1").arg((long long) info.st_size);
 	const QString smtime = QString("%1").arg((long) info.st_mtime);
-#ifdef K
+#ifdef K_TODO
 	const char * orientation = gdk_pixbuf_get_option(original_image, "orientation");
 
 	/*
@@ -247,7 +247,7 @@ QPixmap * Thumbnails::get_thumbnail(const QString & original_file_full_path)
 		goto err;
 	}
 
-#ifdef K
+#ifdef K_TODO
 	/* Note that these don't need freeing... */
 	const char * ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
 	if (!ssize) {

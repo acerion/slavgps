@@ -28,7 +28,8 @@
 #include "degrees_converters.h"
 #include "preferences.h"
 #include "thumbnails.h"
-#if 0
+
+#ifdef K_INCLUDES
 #include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
@@ -37,6 +38,7 @@
 #include "vikutils.h"
 #include "widget_file_entry.h"
 #endif
+
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_waypoint.h"
 #include "dialog.h"
@@ -153,7 +155,7 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol_name(param_value.val_string);
 
-#ifdef K
+#ifdef K_TODO
 		if (wp->source != sourceentry->text()) {
 			wp->set_source(sourceentry->text());
 		}
@@ -162,7 +164,7 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		}
 #endif
 
-#ifdef K
+#ifdef K_TODO
 		GtkTreeIter iter, first;
 		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
 		if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {

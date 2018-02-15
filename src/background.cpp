@@ -35,13 +35,14 @@
 #include "background.h"
 #include "application_state.h"
 #include "util.h"
-
 #include "ui_builder.h"
 #include "globals.h"
-#if 0
+#include "window.h"
+
+#ifdef K_INCLUDES
 #include "preferences.h"
 #endif
-#include "window.h"
+
 
 
 

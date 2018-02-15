@@ -742,7 +742,7 @@ static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
 		painter.drawPixmap(0, 0, *pixmap);
 		qDebug() << "SIGNAL:" PREFIX << "will emit 'layer_changed()' signal for" << trw->get_name();
 		emit trw->layer_changed(trw->get_name());
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
@@ -884,7 +884,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		//QPainter painter2(ds->drawable);
 		//painter2.drawPixmap(0, 0, *ds->pixmap);
 		*pixmap = *tool->viewport->get_pixmap();
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 		gdk_draw_drawable(pixmap,
 				  trw->painter->current_track_new_point_pen,
 				  tool->viewport->get_pixmap(),
@@ -936,7 +936,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Display of the distance 'tooltip' during track creation is controlled by a preference. */
 		if (Preferences::get_create_track_tooltip()) {
 			const QString distance_label = distance_string(distance);
-#ifdef K
+#ifdef K_TODO
 			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport), NULL);
 			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport)->font_desc);
 			pango_layout_set_text(pl, distance_label, -1);
@@ -1600,7 +1600,7 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 
 	/* Remove last ' to:...' */
 	if (!track->comment.isEmpty()) {
-#ifdef K
+#ifdef K_TODO
 		char *last_to = strrchr(track->comment, 't');
 		if (last_to && (last_to - track->comment > 1)) {
 			char *new_comment = g_strndup(track->comment,
@@ -1660,7 +1660,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg1);
 		trw->get_window()->set_busy_cursor();
 
-#ifdef K
+#ifdef K_TODO
 		/* Give GTK a change to display the new status bar before querying the web. */
 		while (gtk_events_pending()) {
 			gtk_main_iteration();

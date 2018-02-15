@@ -86,7 +86,7 @@ void SlavGPS::open_url(const QString & url)
 
 void SlavGPS::new_email(Window * parent, const char * address)
 {
-#ifdef K
+#ifdef K_TODO
 	char * uri = g_strdup_printf("mailto:%s", address);
 	GError *error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
@@ -121,7 +121,7 @@ GtkWidget * SlavGPS::ui_button_new_with_image(const char * stock_id, const char 
 {
 	GtkWidget * image = NULL;
 	GtkWidget * button = NULL;
-#ifdef K
+#ifdef K_TODO
 	button = gtk_button_new_with_mnemonic(text);
 	gtk_widget_show(button);
 	image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON);
@@ -143,7 +143,7 @@ GtkWidget * SlavGPS::ui_button_new_with_image(const char * stock_id, const char 
 */
 int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
-#ifdef K
+#ifdef K_TODO
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
 		gtk_settings_get_default())), property_name)) {
 
@@ -153,7 +153,7 @@ int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default
 	} else {
 #endif
 		return default_value;
-#ifdef K
+#ifdef K_TODO
 	}
 #endif
 }
@@ -181,7 +181,7 @@ QLabel * SlavGPS::ui_label_new_selectable(QString const & text, QWidget * parent
  */
 QPixmap * SlavGPS::ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
 {
-#ifdef K
+#ifdef K_TODO
 	unsigned char *pixels;
 	int iii, jjj;
 
@@ -235,7 +235,7 @@ QPixmap SlavGPS::ui_pixmap_set_alpha(const QPixmap & input, int alpha)
  */
 QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 {
-#ifdef K
+#ifdef K_TODO
 	unsigned char *pixels;
 	int iii, jjj;
 
@@ -271,7 +271,7 @@ QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 
 void SlavGPS::ui_add_recent_file(const char * filename)
 {
-#ifdef K
+#ifdef K_TODO
 	if (filename) {
 		GtkRecentManager * manager = gtk_recent_manager_get_default();
 		GFile * file = g_file_new_for_commandline_arg(filename);

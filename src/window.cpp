@@ -180,7 +180,7 @@ Window::Window()
 
 
 
-#ifdef K
+#ifdef K_TODO
 	QObject::connect(this, SIGNAL("delete_event"), NULL, SLOT (delete_event));
 
 
@@ -278,12 +278,12 @@ Window::Window()
 		if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
 			position = -1;
 		}
-#ifdef K
+#ifdef K_TODO
 		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
 #endif
 	}
 
-#ifdef K
+#ifdef K_TODO
 	gtk_window_set_default_size(this, width, height);
 
 	// Only accept Drag and Drop of files onto the viewport
@@ -317,7 +317,7 @@ Window::~Window()
 	a_background_remove_window(this);
 
 	window_list.remove(this);
-#ifdef K
+#ifdef K_TODO
 	delete this->tb;
 
 	vik_toolbar_finalize(this->viking_vtb);
@@ -1537,7 +1537,7 @@ void Window::preferences_cb(void) /* Slot. */
 	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
 		vu_setup_lat_lon_tz_lookup();
 	}
-#ifdef K
+#ifdef K_TODO
 	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
 #endif
 }
@@ -1587,7 +1587,7 @@ void Window::closeEvent(QCloseEvent * ev)
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
-#ifdef K
+#ifdef K_TODO
 			ApplicationState::set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(this->hpaned)));
 #endif
 		}
@@ -1596,7 +1596,7 @@ void Window::closeEvent(QCloseEvent * ev)
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, this->draw_image_height);
 		ApplicationState::set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, this->save_viewport_as_png);
 
-#ifdef K
+#ifdef K_TODO
 		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
 		gtk_accel_map_save(accel_file_full_path.toUtf8().constData());
 #endif
@@ -1683,7 +1683,7 @@ void Window::set_full_screen_state_cb(bool new_state)
 	if (this->full_screen_state != new_state) {
 		this->full_screen_state = new_state;
 
-#ifdef K
+#ifdef K_TODO
 		/* TODO: Since this slot can be called explicitly (as a regular method),
 		   shouldn't we keep related quaction/checkbox in sync here? */
 
@@ -1948,14 +1948,14 @@ void Window::open_file_cb(void)
 	filter << QObject::tr("Geocaching (*.loc)");
 #endif
 
-#ifdef K
+#ifdef K_TODO
 	gtk_file_filter_set_name(filter, QObject::tr("Google Earth"));
 	gtk_file_filter_add_mime_type(filter, "application/vnd.google-earth.kml+xml");
 #endif
 
 	filter << QObject::tr("GPX (*.gpx)");
 
-#ifdef K
+#ifdef K_TODO
 	gtk_file_filter_set_name(filter, QObject::tr("JPG"));
 	gtk_file_filter_add_mime_type(filter, "image/jpeg");
 #endif
@@ -2144,7 +2144,7 @@ bool Window::menu_file_save_as_cb(void)
 		file_selector.setDirectoryUrl(last_folder_files_url);
 	}
 
-#ifdef K
+#ifdef K_TODO
 	gtk_window_set_transient_for(file_selector, this);
 	gtk_window_set_destroy_with_parent(file_selector, true);
 
@@ -2221,7 +2221,7 @@ void Window::update_recent_files(QString const & path)
 
 void Window::update_recently_used_document(const QString & file_full_path)
 {
-#ifdef K
+#ifdef K_TODO
 	/* Update Recently Used Document framework */
 	GtkRecentManager *manager = gtk_recent_manager_get_default();
 	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
@@ -2264,7 +2264,7 @@ void Window::set_busy_cursor()
 	/* Viewport has a separate cursor. TODO: verify this */
 	this->viewport->setCursor(Qt::WaitCursor);
 
-#ifdef K
+#ifdef K_TODO
 	/* Ensure cursor updated before doing stuff. TODO: do we need this? */
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
@@ -2423,7 +2423,7 @@ int determine_location_thread(BackgroundJob * bg_job)
  */
 void Window::finish_new(void)
 {
-#ifdef K
+#ifdef K_TODO
 	/* Don't add a map if we've loaded a Viking file already. */
 	if (!this->current_document_full_path.isEmpty()) {
 		return;
@@ -2492,7 +2492,7 @@ void Window::show_centers_cb() /* Slot. */
 
 void Window::help_help_cb(void)
 {
-#ifdef K
+#ifdef K_TODO
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", "" PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
@@ -2771,7 +2771,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 {
 	/* More efficient way: stuff draws directly to pixbuf (fork viewport). TODO: verify this comment. */
 
-#ifdef K
+#ifdef K_TODO
 	GtkWidget * msgbox = gtk_message_dialog_new(this,
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						    GTK_MESSAGE_INFO,
@@ -2823,7 +2823,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 		const double east = min_max.max.lon;
 		const double south = min_max.min.lat;
 		const double west = min_max.min.lon;
-#ifdef K
+#ifdef K_TODO
 		ans = kmz_save_file(pixmap, file_full_path, north, east, south, west);
 #endif
 	} else {
@@ -2834,7 +2834,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 		}
 	}
 
-#ifdef K
+#ifdef K_TODO
 	g_object_unref(G_OBJECT(pixmap));
 #endif
 
@@ -2912,7 +2912,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
 			}
 
-#ifdef K
+#ifdef K_TODO
 			g_object_unref(G_OBJECT(pixmap));
 #endif
 		}
@@ -3305,7 +3305,7 @@ void Window::configure_event_cb()
 
 void Window::draw_click_cb(QMouseEvent * ev)
 {
-#ifdef K
+#ifdef K_TODO
 	window->viewport->setFocus();
 
 	/* middle button pressed.  we reserve all middle button and scroll events
@@ -3332,7 +3332,7 @@ void Window::draw_click_cb(QMouseEvent * ev)
  */
 static bool window_pan_timeout(Window * window)
 {
-#ifdef K
+#ifdef K_TODO
 	if (!window->single_click_pending) {
 		/* Double click happened, so don't do anything. */
 		return false;
@@ -3355,7 +3355,7 @@ static bool window_pan_timeout(Window * window)
 
 void Window::draw_release_cb(QMouseEvent * ev)
 {
-#ifdef K
+#ifdef K_TODO
 	window->viewport->setFocus();
 
 	if (event->button() == Qt::MiddleButton) {  /* move / pan */
@@ -3432,7 +3432,7 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 			if (this_success) {
 				export_count++;
 				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(file_full_path));
-#ifdef K
+#ifdef K_TODO
 				while (gtk_events_pending()) {
 					gtk_main_iteration();
 				}
@@ -3468,7 +3468,7 @@ void Window::export_to_common(SGFileType file_type, char const * extension)
 	file_selector.setFileMode(QFileDialog::Directory);
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
-#ifdef K
+#ifdef K_TODO
 	gtk_window_set_transient_for(file_selector, this);
 	gtk_window_set_destroy_with_parent(file_selector, true);
 	gtk_window_set_modal(file_selector, true);
@@ -3608,7 +3608,7 @@ Window * Window::new_window()
 
 	Window * window = new Window();
 
-#ifdef K
+#ifdef K_TODO
 	QObject::connect(window, SIGNAL("destroy"), NULL, SLOT (destroy_window_cb));
 	QObject::connect(window, SIGNAL("newwindow"), NULL, SLOT (new_window_cb));
 #endif
@@ -3622,13 +3622,13 @@ Window * Window::new_window()
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
-#ifdef K
+#ifdef K_TODO
 			window->set_status_bar_visibility_cb(visibility);
 #endif
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &visibility)) {
-#ifdef K
+#ifdef K_TODO
 			gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
 #endif
 		}
@@ -3698,7 +3698,7 @@ void Window::destroy_window_cb(void)
  */
 bool Window::key_press_event_cb(QKeyEvent * event)
 {
-#ifdef K
+#ifdef K_TODO
 	// The keys handled here are not in the menuing system for a couple of reasons:
 	//  . Keeps the menu size compact (alebit at expense of discoverably)
 	//  . Allows differing key bindings to perform the same actions
@@ -3783,7 +3783,7 @@ enum {
 void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time)
 {
 	bool success = false;
-#ifdef K
+#ifdef K_TODO
 	if ((selection_data != NULL) && (gtk_selection_data_get_length(selection_data) > 0)) {
 		switch (target_type) {
 		case TARGET_URIS: {

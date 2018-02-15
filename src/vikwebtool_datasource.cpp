@@ -94,7 +94,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(Viewport * new_viewport, void *
 
 	this->input_field.setText(get_last_user_string(this->web_tool_data_source));
 
-#ifdef K
+#ifdef K_TODO
 	/* 'ok' when press return in the entry. */
 	QObject::connect(&this->input_field, SIGNAL("activate"), dialog, SLOT (accept));
 #endif

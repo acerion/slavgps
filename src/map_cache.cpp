@@ -87,7 +87,7 @@ static void flush_matching(std::string & key_part);
 
 static void cache_item_free(cache_item_t * ci)
 {
-#ifdef K
+#ifdef K_TODO
 	g_object_unref(ci->pixmap);
 #endif
 	free(ci);
@@ -182,7 +182,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 	std::string key(key_);
 
 	mc_mutex.lock();
-#ifdef K
+#ifdef K_TODO
 	g_object_ref(pixmap);
 #endif
 
@@ -221,7 +221,7 @@ QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_
 
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end()) {
-#ifdef K
+#ifdef K_TODO
 		g_object_ref(iter->second->pixmap);
 #endif
 		mc_mutex.unlock();

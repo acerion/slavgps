@@ -46,7 +46,8 @@
 #include "clipboard.h"
 #include "dialog.h"
 #include "ui_util.h"
-#if 0
+
+#ifdef K_INCLUDES
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
@@ -1048,7 +1049,7 @@ QPen SGUtils::new_pen(const QColor & color, int width)
 	QPen pen(color);
 	pen.setWidth(width);
 
-#ifdef K
+#ifdef K_TODO
 	/* TODO: apply these attributes to a pen. */
 	//GDK_LINE_SOLID
 	//GDK_CAP_ROUND

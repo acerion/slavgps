@@ -275,7 +275,7 @@ bool MapSourceBing::parse_file_for_attributions(const QString & file_full_path)
 		/* TODO emit warning. */
 		return false;
 	}
-#ifdef K
+#ifdef K_TODO
 	/* Setup context parse (i.e. callbacks). */
 	xml_parser.start_element = &bstart_element;
 	xml_parser.end_element = NULL;
@@ -366,7 +366,7 @@ done:
 
 int MapSourceBing::emit_update(void * data)
 {
-#ifdef K
+#ifdef K_TODO
 	gdk_threads_enter();
 	/* TODO
 	items_tree_emit_update(VIK_LAYERS_PANEL (data));
@@ -381,14 +381,14 @@ int MapSourceBing::emit_update(void * data)
 
 static int load_attributions_thread(BackgroundJob * bg_job)
 {
-#ifdef K
+#ifdef K_TODO
 	bg_job->load_attributions();
 #endif
 
 	if (0 != a_background_thread_progress(bg_job, 1)) {
 		return -1; /* Abort thread. */
 	}
-#ifdef K
+#ifdef K_TODO
 	/* Emit update. */
 	/* As we are on a download thread, it's better to fire the update from the main loop. */
 	g_idle_add((GSourceFunc)_emit_update, NULL /* FIXME */);
@@ -405,7 +405,7 @@ void MapSourceBing::async_load_attributions()
 	/* kamilFIXME: since object passed to a_background_thread() is of type BackgroundJob,
 	   and MapSourceBing does not inherit from BackgroundJob, we have a type error here. */
 	this->thread_fn = load_attributions_thread;
-#ifdef K
+#ifdef K_TODO
 	this->n_items = 1;
 
 	a_background_thread(this, ThreadPoolType::REMOTE, QString(QObject::tr("Bing attribution Loading")));

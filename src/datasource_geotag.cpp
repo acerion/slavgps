@@ -90,7 +90,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog()
 	if (g_last_directory_url.isValid()) {
 		this->file_entry->file_selector->setDirectoryUrl(g_last_directory_url);
 	}
-#ifdef K
+#ifdef K_TODO
 	if (!g_last_filter.isEmpty()) {
 		this->file_entry->file_selector->selectNameFilter(g_last_filter);
 	}
@@ -124,7 +124,8 @@ ProcessOptions * DataSourceGeoTagDialog::get_process_options(DownloadOptions & d
 
 	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
 
-#ifdef K /* TODO Memorize the file filter for later reuse? */
+#ifdef K_TODO
+	/* TODO Memorize the file filter for later reuse? */
 	g_last_filter = this->file_entry->file_selector->selectedNameFilter();
 #endif
 

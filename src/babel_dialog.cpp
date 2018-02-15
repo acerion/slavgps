@@ -265,7 +265,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	}
 	this->grid->addWidget(this->file_entry, 1, 0);
 
-#ifdef K
+#ifdef K_TODO
 	/* We don't do this because we don't have filename here. */
 	if (!filename.isEmpty()) {
 		this->file_entry->set_filename(filename);

@@ -80,7 +80,7 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
 
 	if (data_source->is_thread) {
 		if (!acquiring->running) {
-#ifdef K
+#ifdef K_TODO
 			/* See DataSourceWebTool::cleanup(). */
 			if (data_source->cleanup_func) {
 				data_source->cleanup_func(acquiring->parent_data_source_dialog);
@@ -89,7 +89,7 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
 		}
 	}
 
-#ifdef K
+#ifdef K_TODO
 	/* See DataSourceGPS::progress_func(). */
 	data_source->progress_func(c, data, acquiring);
 #endif
@@ -107,7 +107,7 @@ void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * a
 void AcquireGetter::on_complete_process(void)
 {
 	if (
-#ifdef K
+#ifdef K_TODO
 	    this->acquiring->running
 #else
 	    true
@@ -210,7 +210,7 @@ void AcquireGetter::run(void)
 		this->on_complete_process();
 	}
 
-#ifdef K
+#ifdef K_TODO
 	/* Not implemented in base class. See DataSourceWebTool::cleanup() */
 	data_source->cleanup_func(this->acquiring->parent_data_source_dialog);
 #endif
@@ -329,7 +329,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 				this->running = false;
 				/* NB Thread will free memory. */
 			} else {
-#ifdef K
+#ifdef K_TODO
 				/* Get data for Off command. */
 				if (new_data_source->off_func) {
 					QString babel_args_off;

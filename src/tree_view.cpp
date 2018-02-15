@@ -146,7 +146,7 @@ bool TreeView::move(TreeIndex const & item_index, bool up)
 		return false;
 	}
 
-#ifdef K
+#ifdef K_TODO
 	TreeIndex switch_index;
 	if (up) {
 		/* Iter to path to iter. */
@@ -363,7 +363,7 @@ void TreeView::select(TreeIndex const & index)
 
 void TreeView::unselect(TreeIndex const & index)
 {
-#ifdef K
+#ifdef K_TODO
 	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(this), iter);
 #endif
 }
@@ -466,7 +466,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
 	SortTuple *sb = (SortTuple *)b;
 
 	int answer = -1;
-#ifdef K
+#ifdef K_TODO
 	if (KPOINTER_TO_INT(order) < VL_SO_DATE_ASCENDING) {
 		/* Alphabetical comparison, default ascending order. */
 		answer = g_strcmp0(sa->name, sb->name);
@@ -517,7 +517,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 		return;
 	}
 
-#ifdef K
+#ifdef K_TODO
 	GtkTreeIter child;
 	if (!gtk_tree_model_iter_children(this->model, &child, parent_index)) {
 		return;
@@ -564,7 +564,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
 	bool retval = false;
-#ifdef K
+#ifdef K_TODO
 	QStandardItemModel *tree_model;
 	QStandardItemModel *src_model = NULL;
 	GtkTreePath *src_path = NULL, *dest_cp = NULL;
@@ -649,7 +649,7 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
  */
 static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path)
 {
-#ifdef K
+#ifdef K_TODO
 	char *s_dest = gtk_tree_path_to_string(path);
 	fprintf(stdout, QObject::tr("delete data from %1\n").arg(s_dest);
 	free(s_dest);
@@ -663,7 +663,7 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 TreeIndex const & TreeView::insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name)
 {
-#ifdef K
+#ifdef K_TODO
 	if (sibling_index.isValid()) {
 		if (above) {
 			gtk_tree_store_insert_before(this->model, iter, parent_iter, sibling_index);
@@ -938,7 +938,7 @@ static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, c
 	/* Get type and data. */
 	TreeIndex * index = tree_view->get_index_from_path_str(path_str);
 
-#ifdef K
+#ifdef K_TODO
 	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
 #endif
 }
@@ -965,7 +965,7 @@ static void vik_tree_view_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_vi
 TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 {
 	TreeIndex * index = NULL;
-#ifdef K
+#ifdef K_TODO
 	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->model), iter, path_str);
 #endif
 	return index;
@@ -974,7 +974,7 @@ TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 
 
 
-#ifdef K
+#ifdef K_TODO
 void TreeView::add_columns()
 {
 	QObject::connect(renderer, SIGNAL("edited"), this, SLOT (vik_tree_view_edited_cb));
@@ -990,7 +990,7 @@ void TreeView::add_columns()
 TreeIndex * TreeView::get_index_at_pos(int pos_x, int pos_y)
 {
 	TreeIndex * index = NULL;
-#ifdef K
+#ifdef K_TODO
 	GtkTreePath * path;
 	(void) gtk_tree_view_get_path_at_pos(this, pos_x, pos_y, &path, NULL, NULL, NULL);
 	if (!path) {
