@@ -45,6 +45,7 @@ namespace SlavGPS {
 	class MyHandler : public QXmlDefaultHandler {
 	public:
 		MyHandler(const QString & lat_path, const QString & lon_path);
+		MyHandler(const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr);
 
 		bool startDocument(void);
 		bool endDocument(void);
@@ -53,47 +54,41 @@ namespace SlavGPS {
 		bool characters(const QString & ch);
 		bool fatalError(const QXmlParseException & exception);
 
+		LatLon ll;
+
+	private:
 		/* Stack to which all currently opened xml tags are
 		   pushed.  I'm using QStringList to implement stack
 		   because lat_path_ and lon_path_ are also
 		   QStringList. */
 		QStringList stack;
 
-		QStringList lat_path;
-		QStringList lon_path;
+		QStringList lat_path; /* XPath of the latitude. */
+		QStringList lon_path; /* XPath of the longitude. */
+
+		QString lat_attr; /* XML attribute of the latitude. */
+		QString lon_attr; /* XML attribute of the longitude. */
+
+		bool use_attributes = false;
 	};
 
 
 
 
 	class GotoToolXML : public GotoTool {
-
 	public:
-
 		GotoToolXML();
 		GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lan_path, const QString & new_lon_path);
-		GotoToolXML(const QString & new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr);
+		GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr);
 		~GotoToolXML();
 
-		char * get_url_format();
-		bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon);
-
-
+		char * get_url_format(void) const;
 		void set_url_format(char const * new_format);
-		void set_lat_path(char const * new_value);
-		void set_lat_attr(char const * new_value);
-		void set_lon_path(char const * new_value);
-		void set_lon_attr(char const * new_value);
 
+		bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon);
 
 		/* This should be private. */
 		char * url_format = NULL; /* The format of the URL */
-		char * lat_path = NULL;   /* XPath of the latitude */
-		char * lat_attr = NULL;   /* XML attribute of the latitude. */
-		char * lon_path = NULL;   /* XPath of the longitude. */
-		char * lon_attr = NULL;   /* XML attribute of the longitude. */
-
-		LatLon ll;
 
 		MyHandler * xml_handler = NULL;
 

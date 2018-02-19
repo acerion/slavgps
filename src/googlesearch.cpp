@@ -144,7 +144,7 @@ bool GotoToolGoogle::parse_file_for_latlon(const QString & file_full_path, LatLo
 
 
 
-char * GotoToolGoogle::get_url_format()
+char * GotoToolGoogle::get_url_format(void) const
 {
 	return (char *) GOOGLE_GOTO_URL_FMT;
 }

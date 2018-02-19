@@ -163,9 +163,9 @@ void SlavGPS::osm_init(void)
 
 	GotoToolXML * nominatim = new GotoToolXML(QObject::tr("OSM Nominatim"),
 						  "http://nominatim.openstreetmap.org/search?q=%s&format=xml",
-						  "/searchresults/place",
+						  "searchresults/place",
 						  "lat",
-						  "/searchresults/place",
+						  "searchresults/place",
 						  "lon");
 	GoTo::register_tool(nominatim);
 	//g_object_unref ( nominatim );

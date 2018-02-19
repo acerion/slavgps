@@ -36,11 +36,14 @@
 #include <gio/gio.h>
 
 #include <list>
+#include <limits>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 
 #include <QDebug>
 #include <QDir>
+#include <QLocale>
 
 #include "util.h"
 #include "globals.h"
@@ -55,6 +58,11 @@
 
 
 #include "util.h"
+
+
+
+
+using namespace SlavGPS;
 
 
 
@@ -301,6 +309,21 @@ QString SlavGPS::util_write_tmp_file_from_bytes(const void * buffer, size_t coun
 
 	result = QString(tmpname);
 	free(tmpname);
+
+	return result;
+}
+
+
+
+
+double Util::c_to_double(const QString & string)
+{
+	static QLocale c_locale = QLocale::c();
+	bool ok = false;
+	double result = c_locale.toDouble(string, &ok);
+	if (!ok) {
+		result = NAN;
+	}
 
 	return result;
 }
