@@ -106,7 +106,7 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 		if (!QProcess::startDetached(command)) {
 			Dialog::error(QObject::QObject::tr("Could not launch %1.").arg(external_program), this->get_window());
 		}
-		util_add_to_deletion_list(name_used);
+		Util::add_to_deletion_list(name_used);
 	} else {
 		Dialog::error(QObject::QObject::tr("Could not create temporary file for export."), this->get_window());
 	}

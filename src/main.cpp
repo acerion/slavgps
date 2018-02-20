@@ -257,7 +257,7 @@ int main(int argc, char ** argv)
 	vu_finalize_lat_lon_tz_lookup();
 
 	/* Clean up any temporary files. */
-	util_remove_all_in_deletion_list();
+	Util::remove_all_in_deletion_list();
 
 	delete first_window;
 

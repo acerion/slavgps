@@ -120,10 +120,10 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	LatLon lat_lon;
 
 	qDebug() << "DD" PREFIX << "raw goto name:" << name;
-	char * escaped_srch_str = uri_escape(name.toUtf8().constData());
-	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_srch_str;
+	const QString escaped_name = Util::uri_escape(name);
+	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_name;
 
-	char * uri = g_strdup_printf(this->get_url_format(), escaped_srch_str);
+	char * uri = g_strdup_printf(this->get_url_format(), escaped_name.toUtf8().constData());
 	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
 	if (tmp_file_full_path.isEmpty()) {
 		/* Some kind of download error, so no tmp file. */
@@ -139,10 +139,9 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	} else {
 		ret = GotoToolResult::NotFound;
 	}
-	util_remove(tmp_file_full_path);
+	Util::remove(tmp_file_full_path);
 
  done_no_file:
-	free(escaped_srch_str);
 	free(uri);
 	return ret;
 }

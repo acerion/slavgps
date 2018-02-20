@@ -613,7 +613,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	// result = read_gpx_files_metadata_xml("/tmp/viking-download.GI47PW", xd);
 
 	if (!tmp_file_full_path.isEmpty()) {
-		util_remove(tmp_file_full_path);
+		Util::remove(tmp_file_full_path);
 	}
 
 	if (!read_result) {

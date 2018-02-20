@@ -446,7 +446,7 @@ typedef struct zip_file zip_file_t;
 						ans = 131;
 						fprintf(stderr, "WARNING: Unable to read %s from zip file\n", image);
 					} else {
-						const QString image_file = util_write_tmp_file_from_bytes(ibuffer, ilen);
+						const QString image_file = Util::write_tmp_file_from_bytes(ibuffer, ilen);
 						pixmap = new QPixmap();
 						if (!pixmap->load(image_file)) {
 							delete pixmap;
@@ -454,7 +454,7 @@ typedef struct zip_file zip_file_t;
 							qDebug() << "WW: KMZ: failed to load pixmap from" << image_file;
 							ans = 133;
 						} else {
-							util_remove(image_file);
+							Util::remove(image_file);
 						}
 					}
 					free(ibuffer);

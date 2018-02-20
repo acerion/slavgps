@@ -27,12 +27,6 @@
 
 
 
-#include <cstdint>
-#include <cstdbool>
-
-
-
-
 #include <QString>
 
 
@@ -43,29 +37,20 @@ namespace SlavGPS {
 
 
 
-	unsigned int util_get_number_of_cpus(void);
-
-	char * uri_escape(const char * str);
-
-	bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
-
-	void util_add_to_deletion_list(const QString & file_full_path);
-	void util_remove_all_in_deletion_list(void);
-
-	char * util_str_remove_chars(char * string, char const * chars);
-
-	bool util_remove(const QString & file_full_path);
-
-	QString util_write_tmp_file_from_bytes(const void * buffer, size_t count);
-
-
-
-
 	class Util {
 	public:
-		/* Convert contents of QString representing a double value in C locale into double.
-		   Return std::nan on errors. */
-		static double c_to_double(const QString & string);
+		static int get_number_of_threads(void);
+
+		static QString uri_escape(const QString & buffer);
+
+		static bool split_string_from_file_on_equals(const QString & line, QString & key, QString & val);
+
+		static void add_to_deletion_list(const QString & file_full_path);
+		static void remove_all_in_deletion_list(void);
+
+		static bool remove(const QString & file_full_path);
+
+		static QString write_tmp_file_from_bytes(const void * buffer, size_t count);
 	};
 
 

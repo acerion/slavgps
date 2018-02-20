@@ -306,8 +306,8 @@ void SlavGPS::a_background_post_init()
 	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL, &maxt)) {
 		max_threads = maxt;
 	} else {
-		unsigned int cpus = util_get_number_of_cpus();
-		max_threads = cpus > 1 ? cpus-1 : 1; /* Don't use all available CPUs! */
+		const int threads = Util::get_number_of_threads();
+		max_threads = threads > 1 ? threads - 1 : 1; /* Don't use all available CPUs! */
 	}
 
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);

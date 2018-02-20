@@ -440,7 +440,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 			}
 		}
 	}
-	util_remove(name_src);
+	Util::remove(name_src);
 
 
 	return ret;

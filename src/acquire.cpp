@@ -398,7 +398,7 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
 		po = data_source->get_process_options(pass_along_data, NULL, name_src, NULL);
-		util_add_to_deletion_list(name_src);
+		Util::add_to_deletion_list(name_src);
 		}
 		break;
 
@@ -414,8 +414,8 @@ ProcessOptions * SlavGPS::acquire_create_process_options(AcquireProcess * acq, D
 
 		po = data_source->get_process_options(pass_along_data, NULL, name_src, name_src_track);
 
-		util_add_to_deletion_list(name_src);
-		util_add_to_deletion_list(name_src_track);
+		Util::add_to_deletion_list(name_src);
+		Util::add_to_deletion_list(name_src_track);
 		}
 		break;
 

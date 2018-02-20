@@ -308,7 +308,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	}
 
 	std::list<Geoname *> wiki_places = get_entries_from_file(tmp_file_full_path);
-	util_remove(tmp_file_full_path);
+	Util::remove(tmp_file_full_path);
 
 	if (wiki_places.size() == 0) {
 		Dialog::info(QObject::tr("No entries found!"), window);

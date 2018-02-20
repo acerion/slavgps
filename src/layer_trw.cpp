@@ -3584,7 +3584,7 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 		fprintf(stderr, "WARNING: %s\n", err->message);
 		g_error_free(err);
 	}
-	util_add_to_deletion_list(QString(tmp));
+	Util::add_to_deletion_list(QString(tmp));
 	free(tmp);
 	free(cmd);
 }

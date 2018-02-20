@@ -43,7 +43,7 @@
 
 
 #include "goto_tool_xml.h"
-#include "util.h"
+#include "vikutils.h"
 
 
 
@@ -166,14 +166,14 @@ bool MyHandler::startElement(const QString &namespaceURI, const QString &localNa
 
 		if (this->stack == this->lat_path) {
 			if (std::isnan(this->ll.lat)) {
-				this->ll.lat = Util::c_to_double(atts.value("", this->lat_attr));
+				this->ll.lat = SGUtils::c_to_double(atts.value("", this->lat_attr));
 			}
 			qDebug() << "II" PREFIX << "---- found latitude =" << this->ll.lat;
 
 		}
 		if (this->stack == this->lon_path) {
 			if (std::isnan(this->ll.lon)) {
-				this->ll.lon = Util::c_to_double(atts.value("", this->lon_attr));
+				this->ll.lon = SGUtils::c_to_double(atts.value("", this->lon_attr));
 			}
 			qDebug() << "II" PREFIX << "---- found longitude =" << this->ll.lon;
 		}
@@ -211,13 +211,13 @@ bool MyHandler::characters(const QString & ch)
 
 	if (this->stack == this->lat_path) {
 		if (std::isnan(this->ll.lat)) {
-			this->ll.lat = Util::c_to_double(ch);
+			this->ll.lat = SGUtils::c_to_double(ch);
 		}
 		qDebug() << "II" PREFIX << "---- found latitude =" << this->ll.lat;
 
 	} else if (this->stack == this->lon_path) {
 		if (std::isnan(this->ll.lon)) {
-			this->ll.lon = Util::c_to_double(ch);
+			this->ll.lon = SGUtils::c_to_double(ch);
 		}
 		qDebug() << "II" PREFIX << "---- found longitude =" << this->ll.lat;
 	} else {

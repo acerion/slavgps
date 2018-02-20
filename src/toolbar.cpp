@@ -870,7 +870,7 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 
 		g_object_get(action, "label", &label, NULL);
 		if (label != NULL) {
-			label_clean = util_str_remove_chars(strdup(label), "_");
+			label_clean = strdup(QString.remove('_', Qt::CaseInsensitive).toUtf8().constData());
 		}
 	}
 

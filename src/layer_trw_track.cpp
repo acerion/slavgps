@@ -3691,10 +3691,9 @@ bool Track::is_valid_google_route()
 
 void Track::google_route_webpage_cb(void)
 {
-	char *escaped = uri_escape(this->comment.toUtf8().data());
+	const QString escaped = Util::uri_escape(this->comment);
 	QString webpage = QString("http://maps.google.com/maps?f=q&hl=en&q=%1").arg(escaped);
 	open_url(webpage);
-	std::free(escaped);
 }
 
 #endif

@@ -109,6 +109,10 @@ namespace SlavGPS {
 		static QPen new_pen(const QColor & color, int width);
 
 		static QString get_canonical_path(const QString & path);
+
+		/* Convert contents of QString representing a double value in C locale into double.
+		   Return std::nan on errors. */
+		static double c_to_double(const QString & string);
 	};
 
 

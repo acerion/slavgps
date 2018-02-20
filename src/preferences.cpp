@@ -257,19 +257,17 @@ static bool preferences_load_from_file()
 	}
 
 	char buf[4096];
-	char * key = NULL;
-	char * val = NULL;
+	QString key;
+	QString val;
 	while (!feof(file)) {
 		if (fgets(buf,sizeof (buf), file) == NULL) {
 			break;
 		}
-		if (split_string_from_file_on_equals(buf, &key, &val)) {
+		if (Util::split_string_from_file_on_equals(QString(buf), key, val)) {
 			/* If it's not in there, ignore it. */
 			auto old_val_iter = registered_parameter_values.find(key);
 			if (old_val_iter == registered_parameter_values.end()) {
 				qDebug() << "II: Preferences: load from file: ignoring key/val" << key << val;
-				free(key);
-				free(val);
 				continue;
 			} else {
 				qDebug() << "II: Preferences: load from file: modifying key/val" << key << val;
@@ -283,10 +281,7 @@ static bool preferences_load_from_file()
 			}
 
 			const SGVariant new_val = SGVariant(old_val_iter.value().type_id, val); /* String representation -> variant. */
-			registered_parameter_values.insert(QString(key), new_val);
-
-			free(key);
-			free(val);
+			registered_parameter_values.insert(key, new_val);
 			/* Change value. */
 		}
 	}
