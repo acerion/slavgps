@@ -132,7 +132,7 @@ ProcessOptions * DataSourceRoutingDialog::get_process_options(DownloadOptions & 
 		return NULL; /* kamil FIXME: this needs to be handled in caller. */
 	}
 
-	po->url = engine->get_url_from_directions(from.toUtf8().constData(), to.toUtf8().constData());
+	po->url = engine->get_url_from_directions(from, to);
 	po->input_file_type = QString(engine->get_format());
 	/* Don't modify dl_options, i.e. use the default download settings. */
 

@@ -168,7 +168,7 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap->isNull()) {
 		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
@@ -177,7 +177,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
 
 	static char key_[MC_KEY_SIZE];
 
-	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
@@ -210,10 +210,10 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	static char key_[MC_KEY_SIZE];
-	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
@@ -236,10 +236,10 @@ QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_
 
 
 
-map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	static char key_[MC_KEY_SIZE];
-	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
@@ -300,10 +300,10 @@ void flush_matching(std::string & key_part)
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, char const * name)
+void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const QString & file_name)
 {
 	char key_[MC_KEY_SIZE];
-	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
 	std::string key(key_);
 

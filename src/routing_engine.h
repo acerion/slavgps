@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+#include <QString>
+
 #include "coords.h"
 #include "download.h"
 
@@ -49,7 +51,7 @@ namespace SlavGPS {
 		~RoutingEngine();
 
 		virtual bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
-		virtual char * get_url_from_directions(const char * start, const char * end);
+		virtual char * get_url_from_directions(const QString & start, const QString & end);
 		virtual bool supports_direction(void);
 		virtual bool refine(LayerTRW * trw, Track * trk);
 		virtual bool supports_refine(void);

@@ -568,7 +568,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	} else {
 		this->loaded = true;
 		if (!from_file) {
-			ui_add_recent_file(this->filename_xml.toUtf8().constData());
+			ui_add_recent_file(this->filename_xml);
 		}
 	}
 }
@@ -673,7 +673,7 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	}
 	map_cache_extra_t arg;
 	arg.duration = tt;
-	map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+	map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 #ifdef K_TODO
 	g_object_unref(pixmap);
 #endif
@@ -712,10 +712,10 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, char const * name_)
+void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name)
 {
 	/* Create request. */
-	unsigned int nn = name_ ? g_str_hash(name_) : 0;
+	unsigned int nn = (file_name.isEmpty() ? 0 : g_str_hash(file_name.toUtf8().constData()));
 	char *request = g_strdup_printf(REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn);
 
 	tp_mutex.lock();
@@ -733,7 +733,7 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
 #endif
 	tp_mutex.unlock();
 
-	const QString base_name = FileUtils::get_base_name(name_);
+	const QString base_name = FileUtils::get_base_name(file_name);
 	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(zoom).arg(x).arg(y).arg(base_name);
 	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
 }
@@ -765,7 +765,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			}
 			map_cache_extra_t arg;
 			arg.duration = -42.0;
-			map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+			map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (planet_import_time < stat_buf.st_mtime) {
@@ -789,7 +789,7 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 	const Coord coord_ul = map_utils_iTMS_to_coord(ti_ul);
 	const Coord coord_br = map_utils_iTMS_to_coord(ti_br);
 
-	QPixmap * pixmap = map_cache_get(ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+	QPixmap * pixmap = map_cache_get(ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (pixmap) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
@@ -1095,7 +1095,7 @@ void LayerMapnik::tile_info()
 	/* Requested position to map coord. */
 	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
 
-	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml.toUtf8().constData());
+	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 
 	char * tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
 

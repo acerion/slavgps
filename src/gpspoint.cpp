@@ -611,13 +611,13 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 
 	case 4:
 		if (0 == strncasecmp(key, "hdop", key_len)) { /* Trackpoint's extended attribute. */
-			this->line_hdop = g_ascii_strtod(value, NULL);
+			this->line_hdop = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "vdop", key_len)) { /* Trackpoint's extended attribute. */
-			this->line_vdop = g_ascii_strtod(value, NULL);
+			this->line_vdop = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "pdop", key_len)) { /* Trackpoint's extended attribute. */
-			this->line_pdop = g_ascii_strtod(value, NULL);
+			this->line_pdop = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "name", key_len)) {
 			if (this->line_name == NULL) {
@@ -629,7 +629,7 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 	case 5:
 
 		if (0 == strncasecmp(key, "speed", key_len)) { /* Trackpoint's extended attribute. */
-			this->line_speed = g_ascii_strtod(value, NULL);
+			this->line_speed = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "xtype", key_len)) {
 			/* NB using 'xtype' to differentiate from our own 'type' key. */
@@ -650,7 +650,7 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 
 	case 6:
 		if (0 == strncasecmp(key, "course", key_len)) { /* Trackpoint's extended attribute. */
-			this->line_course = g_ascii_strtod(value, NULL);
+			this->line_course = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "symbol", key_len)) {
 			this->line_symbol = strndup(value, value_len);
@@ -675,13 +675,13 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 
 	case 8:
 		if (0 == strncasecmp(key, "latitude", key_len)) {
-			this->line_latlon.lat = g_ascii_strtod(value, NULL);
+			this->line_latlon.lat = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "altitude", key_len)) {
-			this->line_altitude = g_ascii_strtod(value, NULL);
+			this->line_altitude = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
-			this->line_timestamp = g_ascii_strtod(value, NULL);
+			this->line_timestamp  = g_ascii_strtod(value, NULL); /* TODO: replace with non-glib function. */
 			if (this->line_timestamp != 0x80000000) {
 				this->line_has_timestamp = true;
 			}
@@ -693,7 +693,7 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 
 	case 9:
 		if (key_len == 9 && 0 == strncasecmp(key, "longitude", key_len)) {
-			this->line_latlon.lon = g_ascii_strtod(value, NULL);
+			this->line_latlon.lon = SGUtils::c_to_double(value);
 		}
 		break;
 

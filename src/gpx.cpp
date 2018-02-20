@@ -273,8 +273,8 @@ static char const * get_attr(char const ** attr, char const * key)
 static bool set_c_ll(char const ** attr)
 {
 	if ((c_slat = get_attr(attr, "lat")) && (c_slon = get_attr(attr, "lon"))) {
-		c_ll.lat = g_ascii_strtod(c_slat, NULL);
-		c_ll.lon = g_ascii_strtod(c_slon, NULL);
+		c_ll.lat = SGUtils::c_to_double(c_slat);
+		c_ll.lon = SGUtils::c_to_double(c_slon);
 		return true;
 	}
 	return false;
@@ -469,12 +469,12 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_ele:
-		c_wp->altitude = g_ascii_strtod(c_cdata->str, NULL);
+		c_wp->altitude = SGUtils::c_to_double(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_ele:
-		c_tp->altitude = g_ascii_strtod(c_cdata->str, NULL);
+		c_tp->altitude = SGUtils::c_to_double(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -557,12 +557,12 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		c_tp->course = g_ascii_strtod(c_cdata->str, NULL);
+		c_tp->course = SGUtils::c_to_double(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_speed:
-		c_tp->speed = g_ascii_strtod(c_cdata->str, NULL);
+		c_tp->speed = SGUtils::c_to_double(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 

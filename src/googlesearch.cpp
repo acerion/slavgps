@@ -33,6 +33,7 @@
 
 #include "googlesearch.h"
 #include "util.h"
+#include "vikutils.h"
 
 
 
@@ -132,8 +133,8 @@ bool GotoToolGoogle::parse_file_for_latlon(const QString & file_full_path, LatLo
 		goto done;
 	}
 
-	lat_lon.lat = g_ascii_strtod(lat_buf, NULL);
-	lat_lon.lon = g_ascii_strtod(lon_buf, NULL);
+	lat_lon.lat = SGUtils::c_to_double(lat_buf);
+	lat_lon.lon = SGUtils::c_to_double(lon_buf);
 
  done:
 	g_mapped_file_unref(mf);

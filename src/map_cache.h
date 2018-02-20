@@ -50,11 +50,11 @@ namespace SlavGPS {
 	void map_cache_init(void);
 	void map_cache_uninit(void);
 
-	void map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-	QPixmap * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+	void map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+	QPixmap * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
 
-	void map_cache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, char const * name);
+	void map_cache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const QString & file_name);
 	void map_cache_flush();
 	void map_cache_flush_type(MapTypeID map_type);
 

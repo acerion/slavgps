@@ -547,7 +547,7 @@ bool DEM::read(const QString & file_full_path)
 	if (is_strm_hgt(file_name)) {
 		return this->read_srtm_hgt(file_full_path, file_name, is_zip_file(file_name));
 	} else {
-		return this->read_other(file_full_path.toUtf8().constData());
+		return this->read_other(file_full_path);
 	}
 }
 

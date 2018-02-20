@@ -61,6 +61,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Map Source Slippy:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 MapSourceSlippy::MapSourceSlippy()
 {
 	fprintf(stderr, "MapSourceSlippy constructor called\n");
@@ -110,13 +115,14 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, const QString & label_, char const * hostname, char const * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type, const QString & new_label, char const * hostname, char const * path_format_)
 {
-	map_type = map_type_;
-	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", map_type_, map_type);
-	label = g_strdup(label_.toUtf8().constData());
+	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type;
+
+	this->map_type = new_map_type;
+	this->label = new_label;
 	this->server_hostname = QString(hostname);
-	server_path_format = g_strdup(path_format_);
+	this->server_path_format = g_strdup(path_format_);
 }
 
 

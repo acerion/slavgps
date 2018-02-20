@@ -2049,7 +2049,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path.toUtf8().constData())));
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
 		}
 		/* No break, carry on to show any data. */
 	case FileLoadResult::VIK_SUCCESS:

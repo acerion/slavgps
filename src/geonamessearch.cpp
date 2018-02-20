@@ -175,7 +175,7 @@ static std::list<Geoname *> get_entries_from_file(const QString & file_full_path
 			if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
 				more = false;
 			}
-			geoname->ll.lon = g_ascii_strtod(lon_buf, NULL);
+			geoname->ll.lon = SGUtils::c_to_double(lon_buf);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_ELEVATION_PATTERN))) {
 			pat += strlen(GEONAMES_ELEVATION_PATTERN);
@@ -188,7 +188,7 @@ static std::list<Geoname *> get_entries_from_file(const QString & file_full_path
 				*s++ = *pat++;
 			}
 			*s = '\0';
-			geoname->elevation = g_ascii_strtod(elev_buf, NULL);
+			geoname->elevation = SGUtils::c_to_double(elev_buf);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_NAME_PATTERN))) {
 			pat += strlen(GEONAMES_NAME_PATTERN);
@@ -248,7 +248,7 @@ static std::list<Geoname *> get_entries_from_file(const QString & file_full_path
 			if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
 				more = false;
 			}
-			geoname->ll.lat = g_ascii_strtod(lat_buf, NULL);
+			geoname->ll.lat = SGUtils::c_to_double(lat_buf);
 		}
 		if (!more) {
 			if (geoname) {
@@ -326,7 +326,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 		wiki_wp->coord = Coord(wiki_geoname->ll, trw->get_coord_mode());
 		wiki_wp->altitude = wiki_geoname->elevation;
 		wiki_wp->set_comment(wiki_geoname->comment);
-		wiki_wp->set_description(wiki_geoname->desc.toUtf8().constData());
+		wiki_wp->set_description(wiki_geoname->desc);
 
 		/* Use the featue type to generate a suitable waypoint icon
 		   http://www.geonames.org/wikipedia/wikipedia_features.html

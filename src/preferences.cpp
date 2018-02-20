@@ -330,7 +330,7 @@ bool Preferences::set_param_value(const char * param_name, const SGVariant & par
 
 bool Preferences::set_param_value(const QString & param_name, const SGVariant & param_value)
 {
-	return Preferences::set_param_value(param_name.toUtf8().constData(), param_value);
+	return Preferences::set_param_value(param_name, param_value);
 }
 
 

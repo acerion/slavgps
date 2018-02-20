@@ -46,18 +46,18 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Map Source:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 MapSource::MapSource()
 {
 	fprintf(stderr, "MapSource regular constructor called\n");
 
-	copyright = NULL;
-	license = NULL;
-	license_url = NULL;
-	logo = NULL;
-
-	name = strdup("Unknown");
-	map_type = MAP_TYPE_ID_INITIAL;
-	label = strdup("<no-set>");
+	this->name = QObject::tr("Unknown");
+	this->map_type = MAP_TYPE_ID_INITIAL;
+	this->label = "<no-set>";
 
 	tilesize_x = 256;
 	tilesize_y = 256;
@@ -90,13 +90,7 @@ MapSource::~MapSource()
 {
 	fprintf(stderr, "MapSource destructor called\n");
 
-	free(copyright);
-	free(license);
-	free(license_url);
 	free(logo);
-
-	free(name);
-	free(label);
 
 	free(file_extension);
 
@@ -112,14 +106,14 @@ MapSource & MapSource::operator=(MapSource map)
 {
 	fprintf(stderr, "MapSource copy assignment called\n");
 
-	this->copyright   = g_strdup(map.copyright);
-	this->license     = g_strdup(map.license);
-	this->license_url = g_strdup(map.license_url);
+	this->copyright   = map.copyright;
+	this->license     = map.license;
+	this->license_url = map.license_url;
 	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name       = g_strdup(map.name);
+	this->name       = map.name;
 	this->map_type   = map.map_type;
-	this->label      = g_strdup(map.label);
+	this->label      = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -155,14 +149,14 @@ MapSource::MapSource(MapSource & map)
 {
 	fprintf(stderr, "MapSource copy constructor called\n");
 
-	this->copyright   = g_strdup(map.copyright);
-	this->license     = g_strdup(map.license);
-	this->license_url = g_strdup(map.license_url);
+	this->copyright   = map.copyright;
+	this->license     = map.license;
+	this->license_url = map.license_url;
 	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name       = g_strdup(map.name);
+	this->name       = map.name;
 	this->map_type   = map.map_type;
-	this->label      = g_strdup(map.label);
+	this->label      = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -192,32 +186,31 @@ MapSource::MapSource(MapSource & map)
 
 
 
-void MapSource::set_name(char * name_)
+void MapSource::set_name(const QString & new_name)
 {
+	this->name = new_name;
+
+#ifdef K_TODO
 	/* Sanitize the name here for file usage.
 	   A simple check just to prevent containing slashes ATM. */
-	free(name);
-	if (name_) {
-		name = strdup(name_);
-		g_strdelimit(name, "\\/", 'x' );
-	}
+	g_strdelimit(name, "\\/", 'x' );
+#endif
 }
 
 
 
 
-void MapSource::set_map_type(MapTypeID map_type_)
+void MapSource::set_map_type(MapTypeID new_map_type)
 {
-	map_type = map_type_;
+	this->map_type = new_map_type;
 }
 
 
 
 
-void MapSource::set_label(char * label_)
+void MapSource::set_label(const QString & new_label)
 {
-	free(label);
-	label = g_strdup(label_);
+	this->label = new_label;
 }
 
 
@@ -246,28 +239,25 @@ void MapSource::set_drawmode(ViewportDrawMode new_drawmode)
 
 
 
-void MapSource::set_copyright(char * copyright_)
+void MapSource::set_copyright(const QString & new_copyright)
 {
-	free(copyright);
-	copyright = g_strdup(copyright_);
+	this->copyright = new_copyright;
 }
 
 
 
 
-void MapSource::set_license(char * license_)
+void MapSource::set_license(const QString & new_license)
 {
-	free(license);
-	license = g_strdup(license_);
+	this->license = new_license;
 }
 
 
 
 
-void MapSource::set_license_url(char * license_url_)
+void MapSource::set_license_url(const QString & new_license_url)
 {
-	free(license_url);
-	license_url = g_strdup(license_url_);
+	this->license_url = new_license_url;
 }
 
 
@@ -299,23 +289,23 @@ void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewpor
 
 
 
-const char * MapSource::get_license()
+QString MapSource::get_license(void) const
 {
-	return license;
+	return this->license;
 }
 
 
 
 
-const char * MapSource::get_license_url()
+QString MapSource::get_license_url(void) const
 {
-	return license_url;
+	return this->license_url;
 }
 
 
 
 
-const QPixmap * MapSource::get_logo()
+const QPixmap * MapSource::get_logo(void) const
 {
 	return logo;
 }
@@ -323,26 +313,26 @@ const QPixmap * MapSource::get_logo()
 
 
 
-const char * MapSource::get_name()
+QString MapSource::get_name(void) const
 {
-	return name;
+	return this->name;
 }
 
 
 
 
-MapTypeID MapSource::get_map_type()
+MapTypeID MapSource::get_map_type(void) const
 {
-	fprintf(stderr, "MapSource get_map_type returns %u, '%s'\n", map_type, label);
-	return map_type;
+	qDebug() << "DD" PREFIX << "returning map type" << (int) this->map_type << "for map" << this->label;
+	return this->map_type;
 }
 
 
 
 
-const char * MapSource::get_label()
+QString MapSource::get_label(void) const
 {
-	return label;
+	return this->label;
 }
 
 

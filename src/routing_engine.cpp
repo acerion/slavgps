@@ -169,7 +169,7 @@ bool RoutingEngine::supports_direction(void)
  *
  * Returns: the computed URL.
  */
-char * RoutingEngine::get_url_from_directions(const char * start, const char * end)
+char * RoutingEngine::get_url_from_directions(const QString & start, const QString & end)
 {
 	return NULL;
 }

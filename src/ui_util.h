@@ -62,7 +62,7 @@ namespace SlavGPS {
 	QPixmap * ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha);
 	QPixmap * ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha);
 
-	void ui_add_recent_file(const char * filename);
+	void ui_add_recent_file(const QString & file_full_path);
 
 
 

@@ -326,12 +326,12 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 
 		QString msg = SGUtils::get_time_string(t1, "%c", &coord, this->tz);
-		this->w_time_start = ui_label_new_selectable(msg.toUtf8().constData(), this);
+		this->w_time_start = ui_label_new_selectable(msg, this);
 		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
 
 
 		msg = SGUtils::get_time_string(t2, "%c", &coord, this->tz);
-		this->w_time_end = ui_label_new_selectable(msg.toUtf8().constData(), this);
+		this->w_time_end = ui_label_new_selectable(msg, this);
 		this->statistics_form->addRow(tr("End:"), this->w_time_end);
 
 

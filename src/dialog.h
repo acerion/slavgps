@@ -56,7 +56,7 @@ namespace SlavGPS {
 		static void error(QString const & message, QWidget * parent);
 		static bool yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = SG_APPLICATION_NAME);
 		static void about(QWidget * parent);
-		static void license(const char * map, const char * license, const char * url, QWidget * parent);
+		static void map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent);
 
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 	};

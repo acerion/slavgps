@@ -42,6 +42,7 @@
 #include "util.h"
 #include "degrees_converters.h"
 #include "viewport_internal.h"
+#include "vikutils.h"
 
 
 
@@ -410,7 +411,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			*ss++ = *pat++;
 		}
 		*ss = '\0';
-		lat_lon.lat = g_ascii_strtod(lat_buf, NULL);
+		lat_lon.lat = SGUtils::c_to_double(lat_buf);
 	}
 
 	if ((pat = g_strstr_len(text, len, HOSTIP_LONGITUDE_PATTERN))) {
@@ -426,7 +427,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			*ss++ = *pat++;
 		}
 		*ss = '\0';
-		lat_lon.lon = g_ascii_strtod(lon_buf, NULL);
+		lat_lon.lon = SGUtils::c_to_double(lon_buf);
 	}
 
 	int result = 0;

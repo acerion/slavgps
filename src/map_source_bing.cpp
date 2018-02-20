@@ -48,6 +48,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "vikutils.h"
 #include "globals.h"
 #include "map_source_bing.h"
 #include "map_utils.h"
@@ -99,20 +100,20 @@ MapSourceBing::MapSourceBing()
  *
  * Returns: a newly allocated MapSourceBing object.
  */
-MapSourceBing::MapSourceBing(MapTypeID map_type_, const QString & a_label, const char * key_)
+MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, const char * new_key)
 {
-	map_type = map_type_;
-	this->label = g_strdup(a_label.toUtf8().constData());
-	name = strdup("Bing-Aerial");
-	this->server_hostname = QString("ecn.t2.tiles.virtualearth.net");
+	this->map_type = new_map_type;
+	this->label = new_label;
+	this->name = "Bing-Aerial";
+	this->server_hostname = "ecn.t2.tiles.virtualearth.net";
 	server_path_format = strdup("/tiles/a%s.jpeg?g=587");
-	bing_api_key = g_strdup(key_);
+	bing_api_key = g_strdup(new_key);
 	this->dl_options.check_file_server_time = true;
 	zoom_min = 0;
 	zoom_max = 19; /* NB: Might be regionally different rather than the same across the world. */
-	copyright = strdup("© 2011 Microsoft Corporation and/or its suppliers");
-	license = strdup("Microsoft Bing Maps Specific");
-	license_url = strdup("http://www.microsoft.com/maps/assets/docs/terms.aspx");
+	this->copyright = "© 2011 Microsoft Corporation and/or its suppliers";
+	this->license = "Microsoft Bing Maps Specific";
+	this->license_url = "http://www.microsoft.com/maps/assets/docs/terms.aspx";
 }
 
 
@@ -247,13 +248,13 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 				}
 			} else if (parent != NULL && strcmp(parent, "BoundingBox") == 0) {
 				if (strcmp(element, "SouthLatitude") == 0) {
-					attr->bounds.south = g_ascii_strtod(textl, NULL);
+					attr->bounds.south = SGUtils::c_to_double(textl);
 				} else if (strcmp(element, "WestLongitude") == 0) {
-					attr->bounds.west = g_ascii_strtod(textl, NULL);
+					attr->bounds.west = SGUtils::c_to_double(textl);
 				} else if (strcmp(element, "NorthLatitude") == 0) {
-					attr->bounds.north = g_ascii_strtod(textl, NULL);
+					attr->bounds.north = SGUtils::c_to_double(textl);
 				} else if (strcmp(element, "EastLongitude") == 0) {
-					attr->bounds.east = g_ascii_strtod(textl, NULL);
+					attr->bounds.east = SGUtils::c_to_double(textl);
 				}
 			}
 		}

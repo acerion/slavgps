@@ -565,7 +565,7 @@ static int load_ll_tz_dir(const char * dir)
 		char **components = g_strsplit(buffer, " ", 3);
 		unsigned int nn = g_strv_length(components);
 		if (nn == 3) {
-			double pt[2] = { g_ascii_strtod(components[0], NULL), g_ascii_strtod(components[1], NULL) };
+			double pt[2] = { SGUtils::c_to_double(components[0]), SGUtils::c_to_double(components[1]) };
 			char * time_zone = g_strchomp(components[2]);
 			if (kd_insert(kd, pt, time_zone)) {
 				fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", time_zone, line_num);

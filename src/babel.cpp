@@ -305,40 +305,35 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, con
 	QStringList args; /* Args list won't contain main application's name. */
 	babel.set_program_name(program, args);
 
-	char **sub_args = g_strsplit(babel_args.toUtf8().constData(), " ", 0);
-	char **sub_filters = NULL;
-	for (int j = 0; sub_args[j]; j++) {
-		/* Some version of gpsbabel can not take extra blank arg. */
-		if (sub_args[j][0] != '\0') {
-			args << QString(sub_args[j]);
-		}
+
+	const QStringList sub_args = babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+	for (int i = 0; i < sub_args.size(); i++) { /* TODO: simplify concatenation of args and sub_args. */
+		args << sub_args.at(i);
 	}
+
 
 	args << QString("-f");
 	args << QString(input_file_path);
 
+
+	QStringList sub_filters;
 	if (!babel_filters.isEmpty()) {
-		sub_filters = g_strsplit(babel_filters.toUtf8().constData(), " ", 0);
-		for (int j = 0; sub_filters[j]; j++) {
-			/* Some version of gpsbabel can not take extra blank arg. */
-			if (sub_filters[j][0] != '\0') {
-				args << QString(sub_filters[j]);
-			}
+		sub_filters = babel_filters.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+		for (int i = 0; i < sub_filters.size(); i++) { /* TODO: simplify concatenation of args and sub_filters. */
+			args << sub_filters.at(i);
 		}
 	}
+
 
 	args << QString("-o");
 	args << QString("gpx");
 
+
 	args << QString("-F");
 	args << intermediate_file_path;
 
-	bool ret = babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_path);
 
-	g_strfreev(sub_args);
-	if (sub_filters) {
-		g_strfreev(sub_filters);
-	}
+	const bool ret = babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_path);
 
 	intermediate_file.remove(); /* Close and remove. */
 
@@ -425,10 +420,10 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 	tmp_file.remove(); /* Because we only needed to confirm that a path to temporary file is "available"? */
 
 
-	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src.toUtf8().constData(), &babel_dl_options, NULL)) {
+	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src, &babel_dl_options, NULL)) {
 		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
 			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
-			ret = a_babel_convert_from_filter(trw, babel_args, name_src.toUtf8().constData(), babel_filters, NULL, NULL);
+			ret = a_babel_convert_from_filter(trw, babel_args, name_src, babel_filters, NULL, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
@@ -524,17 +519,16 @@ bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & ba
 	QStringList args;
 	babel.set_program_name(program, args);
 
+
 	args << "-i";
 	args << "gpx";
 
-	char **sub_args = g_strsplit(babel_args.toUtf8().constData(), " ", 0);
-	for (int i = 0; sub_args[i]; i++) {
-		/* Some version of gpsbabel can not take extra blank arg. */
-		if (sub_args[i][0] != '\0') {
-			args << sub_args[i];
-		}
+
+	const QStringList sub_args = babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+	for (int i = 0; i < sub_args.size(); i++) { /* TODO: simplify concatenation of args and sub_args. */
+		args << sub_args.at(i);
 	}
-	g_strfreev(sub_args);
+
 
 	args << "-f";
 	args << tmp_file_full_path;

@@ -307,12 +307,12 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 
 		if ((tmp = get_attr (attr, "lat"))) {
 			g_strlcpy (buf, tmp, sizeof (buf));
-			xd->current_gpx_meta_data->ll.lat = g_ascii_strtod(buf, NULL);
+			xd->current_gpx_meta_data->ll.lat = SGUtils::c_to_double(buf);
 		}
 
 		if ((tmp = get_attr(attr, "lon"))) {
 			g_strlcpy(buf, tmp, sizeof (buf));
-			xd->current_gpx_meta_data->ll.lon = g_ascii_strtod(buf, NULL);
+			xd->current_gpx_meta_data->ll.lon = SGUtils::c_to_double(buf);
 		}
 
 		if ((tmp = get_attr(attr, "visibility"))) {

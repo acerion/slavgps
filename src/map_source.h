@@ -49,16 +49,16 @@ namespace SlavGPS {
 		virtual MapSource & operator=(MapSource map);
 
 		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data);
-		const char * get_license();
-		const char * get_license_url();
-		const QPixmap * get_logo();
+		QString get_license(void) const;
+		QString get_license_url(void) const;
+		const QPixmap * get_logo(void) const;
 
 		const QString get_server_hostname(void) const;
 		virtual const QString get_server_path(TileInfo * src) const;
 
-		const char * get_name();
-		MapTypeID get_map_type();
-		const char * get_label();
+		QString get_name(void) const;
+		MapTypeID get_map_type(void) const;
+		QString get_label(void) const;
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
 		ViewportDrawMode get_drawmode(void) const;
@@ -86,28 +86,28 @@ namespace SlavGPS {
 
 		const DownloadOptions * get_download_options(void) const;
 
-		void set_name(char * name);
+		void set_name(const QString & name);
 		void set_map_type(MapTypeID map_type);
-		void set_label(char * label);
+		void set_label(const QString & label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
 		void set_drawmode(ViewportDrawMode drawmode);
-		void set_copyright(char * copyright);
-		void set_license(char * license);
-		void set_license_url(char * license_url);
+		void set_copyright(const QString & copyright);
+		void set_license(const QString & license);
+		void set_license_url(const QString & license_url);
 		void set_file_extension(char * file_extension);
 
 
 
 
-		char * copyright = NULL; /* The copyright of the map source. */
-		char * license = NULL;   /* The license of the map source. */
-		char * license_url = NULL; /* The URL of the license of the map source. */
+		QString copyright;     /* The copyright of the map source. */
+		QString license;       /* The license of the map source. */
+		QString license_url;   /* The URL of the license of the map source. */
 		QPixmap * logo = NULL;
 
-		char * name = NULL; /* The name of the map that may be used as the file cache directory. */
+		QString name;       /* The name of the map that may be used as the file cache directory. */
 		MapTypeID map_type; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
-		char * label = NULL; /* The label of the map source. */
+		QString label;      /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */

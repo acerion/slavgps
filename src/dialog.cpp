@@ -159,26 +159,26 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void Dialog::license(const char * map, const char * license, const char * url, QWidget * parent)
+void Dialog::map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent)
 {
-	const QString primary_text = QString(QObject::tr("The map data is licensed: %1.")).arg(license);
+	const QString primary_text = QString(QObject::tr("The map data is licensed: %1.")).arg(map_license);
 	const QString secondary_text = QString(QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>."))
-		.arg(map)
-		.arg(license);
+		.arg(map_name)
+		.arg(map_license);
 
 	QMessageBox box;
 	box.setText(primary_text);
 	box.setInformativeText(secondary_text);
 	box.setStandardButtons(QMessageBox::Ok);
 
-	if (url != NULL) {
+	if (!map_license_url.isEmpty()) {
 		box.addButton(QObject::tr("Open license"), QMessageBox::HelpRole);
 	}
 	int response;
 	do {
 		response = box.exec();
 		if (response == QMessageBox::Help) {
-			open_url(url);
+			open_url(map_license_url);
 		}
 	} while (response != QMessageBox::Cancel && response != QMessageBox::Ok);
 }

@@ -269,12 +269,12 @@ QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 
 
 
-void SlavGPS::ui_add_recent_file(const char * filename)
+void SlavGPS::ui_add_recent_file(const QString & file_full_path)
 {
 #ifdef K_TODO
-	if (filename) {
+	if (!file_full_path.isEmpty()) {
 		GtkRecentManager * manager = gtk_recent_manager_get_default();
-		GFile * file = g_file_new_for_commandline_arg(filename);
+		GFile * file = g_file_new_for_commandline_arg(file_full_path);
 		char * uri = g_file_get_uri (file);
 		if (uri && manager) {
 			gtk_recent_manager_add_item(manager, uri);

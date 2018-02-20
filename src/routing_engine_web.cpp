@@ -241,7 +241,7 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 
 
 
-char * RoutingEngineWeb::get_url_from_directions(const char * start, const char * end)
+char * RoutingEngineWeb::get_url_from_directions(const QString & start, const QString & end)
 {
 	if (!this->url_base || !this->url_start_dir_fmt || !this->url_stop_dir_fmt) {
 		return NULL;
@@ -249,8 +249,8 @@ char * RoutingEngineWeb::get_url_from_directions(const char * start, const char 
 
 	char *from_quoted, *to_quoted;
 	char **from_split, **to_split;
-	from_quoted = g_shell_quote(start);
-	to_quoted = g_shell_quote(end);
+	from_quoted = g_shell_quote(start.toUtf8().constData());
+	to_quoted = g_shell_quote(end.toUtf8().constData());
 
 	from_split = g_strsplit(from_quoted, " ", 0);
 	to_split = g_strsplit(to_quoted, " ", 0);

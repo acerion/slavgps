@@ -279,19 +279,19 @@ static void kml_end(xml_data *xd, const char *el)
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	case tt_kml_go_latlonbox_n:
-		xd->north = g_ascii_strtod(xd->c_cdata->str, NULL);
+		xd->north = SGUtils::c_to_double(xd->c_cdata->str);
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	case tt_kml_go_latlonbox_s:
-		xd->south = g_ascii_strtod(xd->c_cdata->str, NULL);
+		xd->south = SGUtils::c_to_double(xd->c_cdata->str);
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	case tt_kml_go_latlonbox_e:
-		xd->east = g_ascii_strtod(xd->c_cdata->str, NULL);
+		xd->east = SGUtils::c_to_double(xd->c_cdata->str);
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	case tt_kml_go_latlonbox_w:
-		xd->west = g_ascii_strtod(xd->c_cdata->str, NULL);
+		xd->west = SGUtils::c_to_double(xd->c_cdata->str);
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	default:
