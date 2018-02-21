@@ -48,7 +48,7 @@ namespace SlavGPS {
 	class FileUtils {
 	public:
 		static QString get_base_name(const QString & file_name);
-		static bool has_extension(const QString & file_name, const char * file_extension);
+		static bool has_extension(const QString & file_name, const QString & file_extension);
 	};
 
 

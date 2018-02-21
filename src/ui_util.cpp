@@ -84,12 +84,12 @@ void SlavGPS::open_url(const QString & url)
 
 
 
-void SlavGPS::new_email(Window * parent, const char * address)
+void SlavGPS::new_email(const QString & address, Window * parent)
 {
 #ifdef K_TODO
-	char * uri = g_strdup_printf("mailto:%s", address);
+	const QString uri = QString("mailto:%1").arg(address);
 	GError *error = NULL;
-	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
+	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri.toUtf8().constData(), GDK_CURRENT_TIME, &error);
 	if (error) {
 		Dialog::error(tr("Could not create new email. %1").arg(QString(error->message)), parent);
 		g_error_free(error);
@@ -102,8 +102,6 @@ void SlavGPS::new_email(Window * parent, const char * address)
 	  Dialog::error(tr("Could not create new email."), parent);
 	  #endif
 	*/
-	free(uri);
-	uri = NULL;
 #endif
 }
 

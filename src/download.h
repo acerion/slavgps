@@ -78,7 +78,7 @@ namespace SlavGPS {
 		bool use_etag = false;
 
 		/* The REFERER string to use. Could be NULL. */
-		char * referer = NULL;
+		QString referer;
 
 		/* follow_location specifies the number of retries to
 		   follow a redirect while downloading a page. */

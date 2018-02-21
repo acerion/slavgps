@@ -40,17 +40,17 @@ namespace SlavGPS {
 		~VikMapType();
 
 
-		const char * get_name();
+		QString get_name(void) const;
 		uint16_t get_uniq_id();
-		char * map_type_get_label();
+		QString map_type_get_label(void) const;
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
 
 		ViewportDrawMode get_drawmode(void) const;
 
 
-		char * label = NULL;
-		char * name = NULL;
+		QString label;
+		QString name;
 		VikMapsLayer_MapType map_type;
 	};
 

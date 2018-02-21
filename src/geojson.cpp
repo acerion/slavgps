@@ -148,14 +148,16 @@ QString SlavGPS::geojson_program_import(void)
 
 
 /**
- * @file_full_path: The source GeoJSON file
- *
- * Returns: The name of newly created temporary GPX file.
- *          This file should be removed once used and the string freed.
- *          If NULL then the process failed.
- */
-char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
+   @file_full_path: The source GeoJSON file
+
+   Returns: The name of newly created temporary GPX file.
+            This file should be removed once used.
+            If returned string is empty then the process failed.
+*/
+QString SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 {
+	QString result;
+
 	char * gpx_filename = NULL;
 	GError * error = NULL;
 	/* Opening temporary file. */
@@ -163,7 +165,7 @@ char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 	if (fd < 0) {
 		qDebug() << QObject::tr("WARNING: failed to open temporary file: %1").arg(error->message);
 		g_clear_error(&error);
-		return NULL;
+		return result;
 	}
 	fprintf(stderr, "DEBUG: %s: temporary file = %s\n", __FUNCTION__, gpx_filename);
 
@@ -201,5 +203,7 @@ char * SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 
 	g_strfreev(argv);
 
-	return gpx_filename;
+	result = QString(gpx_filename);
+
+	return result;
 }

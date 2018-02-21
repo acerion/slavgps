@@ -349,7 +349,7 @@ ProcessOptions * BFilterPolygonDialog::get_process_options(const QString & input
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,file=- -o gpx -F -", input_track_filename.toUtf8().constData(), input_filename.toUtf8().constData());
+	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(input_track_filename).arg(input_filename);
 
 	return po;
 }
@@ -380,7 +380,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 ProcessOptions * BFilterExcludePolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
-	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,exclude,file=- -o gpx -F -", input_track_filename.toUtf8().constData(), input_filename.toUtf8().constData());
+	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(input_track_filename).arg(input_filename);
 
 	return po;
 }

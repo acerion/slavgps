@@ -561,10 +561,9 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			return;
 		}
 
-	char * ans = mapnik_interface_load_map_file(this->mi, this->filename_xml.toUtf8().constData(), this->tile_size_x, this->tile_size_x);
-	if (ans) {
-		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), this->get_window());
-		free(ans);
+	const QString ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
+	if (!ans.isEmpty()) {
+		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
 	} else {
 		this->loaded = true;
 		if (!from_file) {
@@ -959,10 +958,9 @@ static void mapnik_layer_carto(menu_array_values * values)
 	if (!lmk->carto_load()) {
 		return;
 	}
-	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml.toUtf8().constData(), lmk->tile_size_x, lmk->tile_size_x);
-	if (ans) {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(QString(ans)), lmk->get_window());
-		free(ans);
+	const QString ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
+	if (!ans.isEmpty()) {
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), lmk->get_window());
 	} else {
 		lmk->draw(viewport);
 	}

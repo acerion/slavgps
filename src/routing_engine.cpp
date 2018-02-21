@@ -57,13 +57,11 @@ static void vik_routing_engine_set_property(void      * object,
 
 	switch (property_id) {
 	case PROP_ID:
-		free(priv->id);
-		priv->id = g_strdup(g_value_get_string(value));
+		priv->id = g_value_get_string(value);
 		break;
 
 	case PROP_LABEL:
-		free(priv->label);
-		priv->label = g_strdup(g_value_get_string(value));
+		priv->label = g_value_get_string(value);
 		break;
 
 	case PROP_FORMAT:
@@ -120,12 +118,6 @@ RoutingEngine::RoutingEngine()
 
 RoutingEngine::~RoutingEngine()
 {
-	free(this->id);
-	this->id = NULL;
-
-	free(this->label);
-	this->label = NULL;
-
 	free(this->format);
 	this->format = NULL;
 }

@@ -132,17 +132,16 @@ ProcessOptions * DataSourceWebToolDialog::get_process_options(DownloadOptions & 
 	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
 	   since it won't be in the right order for the overall GPSBabel command.
 	   So prevent any potentially dangerous behaviour. */
-	char **parts = NULL;
-	if (this->web_tool_data_source->file_type) {
-		parts = g_strsplit(this->web_tool_data_source->file_type, " ", 0);
+	QStringList parts;
+	if (!this->web_tool_data_source->file_type.isEmpty()) {
+		parts = this->web_tool_data_source->file_type.split(" ");
 	}
 
-	if (parts) {
-		po->input_file_type = QString(parts[0]);
+	if (parts.size()) {
+		po->input_file_type = parts.at(0);
 	} else {
 		po->input_file_type = "";
 	}
-	g_strfreev(parts);
 
 
 	po->babel_filters = this->web_tool_data_source->babel_filter_args;
@@ -218,8 +217,8 @@ WebToolDatasource::WebToolDatasource()
 WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 				     const QString & new_url_format,
 				     const QString & new_url_format_code,
-				     const char * new_file_type,
-				     const char * new_babel_filter_args,
+				     const QString & new_file_type,
+				     const QString & new_babel_filter_args,
 				     const QString & new_input_field_label_text) : WebTool(new_tool_name)
 {
 	qDebug() << "II: Web Tool Datasource created with tool name" << new_tool_name;
@@ -228,11 +227,11 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 	this->q_url_format = new_url_format;
 	this->url_format_code = new_url_format_code;
 
-	if (new_file_type) {
-		this->file_type = strdup(new_file_type);
+	if (!new_file_type.isEmpty()) {
+		this->file_type = new_file_type;
 	}
-	if (new_babel_filter_args) {
-		this->babel_filter_args = strdup(new_babel_filter_args);
+	if (!new_babel_filter_args.isEmpty()) {
+		this->babel_filter_args = new_babel_filter_args;
 	}
 	if (!new_input_field_label_text.isEmpty()) {
 		this->input_field_label_text = new_input_field_label_text;
@@ -245,16 +244,6 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 WebToolDatasource::~WebToolDatasource()
 {
 	qDebug() << "II: Web Tool Datasource: delete tool with label" << this->label;
-
-	if (this->file_type) {
-		free(this->file_type);
-		this->file_type = NULL;
-	}
-
-	if (this->babel_filter_args) {
-		free(this->babel_filter_args);
-		this->babel_filter_args = NULL;
-	}
 }
 
 

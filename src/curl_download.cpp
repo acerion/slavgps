@@ -56,7 +56,7 @@ using namespace SlavGPS;
 
 
 
-char * curl_download_user_agent = NULL;
+static QString curl_download_user_agent;
 
 
 
@@ -108,7 +108,7 @@ static int curl_progress_func(void * clientp, double dltotal, double dlnow, doub
 void CurlDownload::init(void)
 {
 	curl_global_init(CURL_GLOBAL_ALL);
-	curl_download_user_agent = g_strdup_printf ("%s/%s %s", PACKAGE, VERSION, curl_version());
+	curl_download_user_agent = QString("%1/%2 %3").arg(PACKAGE).arg(VERSION).arg(curl_version());
 }
 
 
@@ -151,8 +151,8 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curl_progress_func);
 	if (dl_options != NULL) {
-		if (dl_options->referer != NULL) {
-			curl_easy_setopt(curl, CURLOPT_REFERER, dl_options->referer);
+		if (!dl_options->referer.isEmpty()) {
+			curl_easy_setopt(curl, CURLOPT_REFERER, dl_options->referer.toUtf8().constData());
 		}
 
 		if (dl_options->follow_location != 0) {
@@ -179,7 +179,7 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 			}
 		}
 	}
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, curl_download_user_agent);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, curl_download_user_agent.toUtf8().constData());
 
 	CurlDownloadStatus status;
 

@@ -39,10 +39,11 @@ namespace SlavGPS {
 
 
 
-	struct Attribution {
-		char * attribution = NULL;
-		int minZoom;
-		int maxZoom;
+	class Attribution {
+	public:
+		QString attribution;
+		int minZoom = 0;
+		int maxZoom = 0;
 		LatLonBBox bounds;
 	};
 
@@ -52,24 +53,24 @@ namespace SlavGPS {
 	class MapSourceBing : public MapSourceSlippy {
 	public:
 		MapSourceBing();
-		MapSourceBing(MapTypeID map_type_, const QString & a_label, const char * key_);
+		MapSourceBing(MapTypeID map_type, const QString & label, const QString & key);
 		~MapSourceBing();
 
 		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data);
 		const QString get_server_path(TileInfo * src) const;
 
 
-		char * bing_api_key = NULL;
+		QString bing_api_key;
 
 		std::list<Attribution *> attributions;
 		/* Current attribution, when parsing. */
-		char * attribution = NULL;
+		QString attribution;
 		bool loading_attributions = false;
 
 	private:
 		int load_attributions();
 		void async_load_attributions();
-		char * compute_quad_tree(int zoom, int tilex, int tiley) const;
+		QString compute_quad_tree(int zoom, int tilex, int tiley) const;
 		static void bstart_element(GMarkupParseContext * context,
 					   const char          * element_name,
 					   const char         ** attribute_names,

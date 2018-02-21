@@ -36,12 +36,12 @@ using namespace SlavGPS;
 void SlavGPS::bluemarble_init()
 {
 	MapSource * bluemarble_type = new MapSourceSlippy(MAP_ID_BLUE_MARBLE, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
-	bluemarble_type->set_name((char *) "BlueMarble");
+	bluemarble_type->set_name("BlueMarble");
 	bluemarble_type->zoom_min = 0;
 	bluemarble_type->zoom_max = 9;
-	bluemarble_type->set_copyright((char *) "© NASA's Earth Observatory");
-	bluemarble_type->set_license((char *) "NASA Terms of Use");
-	bluemarble_type->set_license_url((char *) "http://visibleearth.nasa.gov/useterms.php");
+	bluemarble_type->set_copyright("© NASA's Earth Observatory");
+	bluemarble_type->set_license("NASA Terms of Use");
+	bluemarble_type->set_license_url("http://visibleearth.nasa.gov/useterms.php");
 
 	/* Credit/Copyright from: http://earthobservatory.nasa.gov/Features/BlueMarble/ */
 	/* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */

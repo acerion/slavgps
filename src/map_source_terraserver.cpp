@@ -149,24 +149,24 @@ const QString MapSourceTerraserver::get_server_hostname(void) const
 
 
 
-MapSourceTerraserver::MapSourceTerraserver(MapTypeID type_, const char * label_)
+MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type, const QString & new_label)
 {
-	switch (type_) {
+	switch (new_type) {
 	case MAP_ID_TERRASERVER_AERIAL:
-		this->copyright = strdup("© DigitalGlobe");
+		this->copyright = "© DigitalGlobe";
 		break;
 	case MAP_ID_TERRASERVER_TOPO:
-		this->copyright = strdup("© LandVoyage");
+		this->copyright = "© LandVoyage";
 		break;
 	case MAP_ID_TERRASERVER_URBAN:
-		this->copyright = strdup("© DigitalGlobe");
+		this->copyright = "© DigitalGlobe";
 		break;
 	default:
-		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) type_;
+		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) new_type;
 	}
 
-	this->label = strdup(label_);
-	this->map_type = type_;
+	this->label = new_label;
+	this->map_type = new_type;
 
 	this->tilesize_x = 200;
 	this->tilesize_y = 200;

@@ -242,10 +242,10 @@ static int osm_traces_upload_file(const QString & user,
 	struct curl_httppost *post=NULL;
 	struct curl_httppost *last=NULL;
 
-	char *base_url = (char *) "http://www.openstreetmap.org/api/0.6/gpx/create";
+	const QString base_url = "http://www.openstreetmap.org/api/0.6/gpx/create";
 
 	/* TODO: why do we pass user and password to this function if we create user_pass here? */
-	char * user_pass = g_strdup(osm_get_current_credentials().toUtf8().constData());
+	const QString user_pass = osm_get_current_credentials();
 
 	int result = 0; /* Default to it worked! */
 
@@ -276,8 +276,8 @@ static int osm_traces_upload_file(const QString & user,
 	headers = curl_slist_append(headers, "Expect: ");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_URL, base_url);
-	curl_easy_setopt(curl, CURLOPT_USERPWD, user_pass);
+	curl_easy_setopt(curl, CURLOPT_URL, base_url.toUtf8().constData());
+	curl_easy_setopt(curl, CURLOPT_USERPWD, user_pass.toUtf8().constData());
 	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_error_buffer);
 	if (vik_verbose) {
@@ -305,11 +305,9 @@ static int osm_traces_upload_file(const QString & user,
 	}
 
 	/* Memory. */
-	free(user_pass);
-	user_pass = NULL;
-
 	curl_formfree(post);
 	curl_easy_cleanup(curl);
+
 	return result;
 }
 

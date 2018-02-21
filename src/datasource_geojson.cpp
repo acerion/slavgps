@@ -130,13 +130,12 @@ bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_op
 	for (int i = 0; i < config_dialog->selected_files.size(); i++) {
 		const QString file_full_path = config_dialog->selected_files.at(i);
 
-		char * gpx_filename = geojson_import_to_gpx(file_full_path);
-		if (gpx_filename) {
+		const QString gpx_filename = geojson_import_to_gpx(file_full_path);
+		if (!gpx_filename.isEmpty()) {
 			/* Important that this process is run in the main thread. */
 			acquiring->window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
-			free(gpx_filename);
 		} else {
 			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));
 		}

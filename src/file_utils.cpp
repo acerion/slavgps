@@ -70,13 +70,13 @@ QString FileUtils::get_base_name(const QString & file_name)
   Example:
   bool is_gpx = FileUtils::has_extension("a/b/c.gpx", ".gpx");
 */
-bool FileUtils::has_extension(const QString & file_name, const char * file_extension)
+bool FileUtils::has_extension(const QString & file_name, const QString & file_extension)
 {
 	if (file_name.isEmpty()) {
 		return false;
 	}
 
-	if (!file_extension || file_extension[0] != '.') {
+	if (file_extension.isEmpty() || file_extension[0] != '.') {
 		return false;
 	}
 
@@ -85,7 +85,7 @@ bool FileUtils::has_extension(const QString & file_name, const char * file_exten
 		return false;
 	}
 
-	const bool result = base_name.right(strlen(file_extension)) == QString(file_extension);
+	const bool result = base_name.right(file_extension.size()) == file_extension;
 	qDebug() << "DD: File: has extension:" << file_extension << "in" << base_name << ":" << result;
 	return result;
 }

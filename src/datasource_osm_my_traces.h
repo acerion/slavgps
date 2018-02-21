@@ -42,12 +42,12 @@
 
 
 
-typedef struct _gpx_meta_data_t gpx_meta_data_t;
-
-
-
-
 namespace SlavGPS {
+
+
+
+
+	class GPXMetaData;
 
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		DataSourceMyOSMDialog() {};
 
 		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
-		void set_in_current_view_property(std::list<gpx_meta_data_t *> & list);
+		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 
 		/* Actual user and password values are stored in oms-traces.c. */
 		QLineEdit user_entry;

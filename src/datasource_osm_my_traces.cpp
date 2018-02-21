@@ -153,70 +153,62 @@ typedef struct {
 	const char *tag_name;            /* xpath-ish tag name. */
 } xtag_mapping;
 
-typedef struct _gpx_meta_data_t {
-	unsigned int id;
-	char *name;
-	char *vis;
-	char *desc;
+class SlavGPS::GPXMetaData {
+public:
+	GPXMetaData();
+	~GPXMetaData();
+
+	unsigned int id = 0;
+	QString name;
+	QString visibility;
+	QString description;
 	LatLon ll;
-	bool in_current_view; /* Is the track LatLon start within the current viewport.
+	bool in_current_view = false; /* Is the track LatLon start within the current viewport.
 				 This is useful in deciding whether to download a track or not. */
 	/* ATM Only used for display - may want to convert to a time_t for other usage. */
-	char *timestamp;
+	char * timestamp = NULL;
 	/* user made up tags - not being used yet - would be nice to sort/select on these but display will get complicated. */
 	// GList *tag_list;
-} gpx_meta_data_t;
+};
 
 
 
 
-static gpx_meta_data_t * new_gpx_meta_data_t()
+GPXMetaData::GPXMetaData()
 {
-	gpx_meta_data_t * ret = (gpx_meta_data_t *) malloc(sizeof (gpx_meta_data_t));
-	ret->id = 0;
-	ret->name = NULL;
-	ret->vis  = NULL;
-	ret->desc = NULL;
-	ret->ll.lat = 0.0;
-	ret->ll.lon = 0.0;
-	ret->in_current_view = false;
-	ret->timestamp = NULL;
-
-	return ret;
+	this->ll.lat = 0.0; /* TODO: don't we have this already in constructor of LatLon? */
+	this->ll.lon = 0.0;
 }
 
 
 
 
-static void free_gpx_meta_data(gpx_meta_data_t * data)
+GPXMetaData::~GPXMetaData()
 {
-	free(data->name);
-	free(data->vis);
-	free(data->desc);
-	free(data->timestamp);
+	free(this->timestamp);
 }
 
 
 
 
-static void free_gpx_meta_data_list(std::list<gpx_meta_data_t *> & list)
+static void free_gpx_meta_data_list(std::list<GPXMetaData *> & list)
 {
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		free_gpx_meta_data(*iter);
+		delete *iter;
 	}
 }
 
 
 
 
-static gpx_meta_data_t * copy_gpx_meta_data_t(gpx_meta_data_t * src)
+static GPXMetaData * copy_gpx_meta_data_t(GPXMetaData * src)
 {
-	gpx_meta_data_t * dest = new_gpx_meta_data_t();
+	GPXMetaData * dest = new GPXMetaData();
 
 	dest->id = src->id;
-	dest->name = g_strdup(src->name);
-	dest->vis  = g_strdup(src->vis);
-	dest->desc = g_strdup(src->desc);
+	dest->name = src->name;
+	dest->visibility  = src->visibility;
+	dest->description = src->description;
 	dest->ll.lat = src->ll.lat;
 	dest->ll.lon = src->ll.lon;
 	dest->in_current_view = src->in_current_view;
@@ -232,8 +224,8 @@ typedef struct {
 	//GString *xpath;
 	GString *c_cdata;
 	xtag_type current_tag;
-	gpx_meta_data_t * current_gpx_meta_data;
-	std::list<gpx_meta_data_t *> list_of_gpx_meta_data;
+	GPXMetaData * current_gpx_meta_data = NULL;
+	std::list<GPXMetaData *> list_of_gpx_meta_data;
 } xml_data;
 
 
@@ -293,9 +285,9 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 	switch (xd->current_tag) {
 	case tt_gpx_file:
 		if (xd->current_gpx_meta_data) {
-			free_gpx_meta_data(xd->current_gpx_meta_data);
+			delete xd->current_gpx_meta_data;
 		}
-		xd->current_gpx_meta_data = new_gpx_meta_data_t();
+		xd->current_gpx_meta_data = new GPXMetaData();
 
 		if ((tmp = get_attr(attr, "id"))) {
 			xd->current_gpx_meta_data->id = atoi(tmp);
@@ -316,7 +308,7 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 		}
 
 		if ((tmp = get_attr(attr, "visibility"))) {
-			xd->current_gpx_meta_data->vis = g_strdup(tmp);
+			xd->current_gpx_meta_data->visibility = tmp;
 		}
 
 		if ((tmp = get_attr(attr, "timestamp"))) {
@@ -346,7 +338,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 	case tt_gpx_file: {
 		/* End of the individual file metadata, thus save what we have read in to the list.
 		   Copy it so we can reference it. */
-		gpx_meta_data_t * current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
+		GPXMetaData * current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
 		/* Stick in the list. */
 		xd->list_of_gpx_meta_data.push_front(current);
 		g_string_erase(xd->c_cdata, 0, -1);
@@ -357,7 +349,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 		if (xd->current_gpx_meta_data) {
 			/* NB Limit description size as it's displayed on a single line.
 			   Hopefully this will prevent the dialog getting too wide... */
-			xd->current_gpx_meta_data->desc = g_strndup(xd->c_cdata->str, 63);
+			xd->current_gpx_meta_data->description = QString(xd->c_cdata->str).left(63);
 		}
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
@@ -421,7 +413,7 @@ static bool read_gpx_files_metadata_xml(const QString & file_full_path, xml_data
 
 
 
-static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::list<gpx_meta_data_t *> & list, const char *title, const char *msg)
+static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GPXMetaData *> & list, const char *title, const char *msg)
 {
 	BasicDialog * dialog = new BasicDialog(parent);
 
@@ -438,16 +430,16 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		gpx_meta_data_t * gpx_meta_data = *iter;
+		GPXMetaData * gpx_meta_data = *iter;
 		/* To keep display compact three digits of precision for lat/lon should be plenty. */
 		char * latlon_string = g_strdup_printf("(%.3f,%.3f)", gpx_meta_data->ll.lat, gpx_meta_data->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
 		gtk_tree_store_set(store, &iter,
 				   0, gpx_meta_data->name,
-				   1, gpx_meta_data->desc,
+				   1, gpx_meta_data->descrition,
 				   2, gpx_meta_data->timestamp,
 				   3, latlon_string,
-				   4, gpx_meta_data->vis,
+				   4, gpx_meta_data->visibility,
 				   5, gpx_meta_data->in_current_view,
 				   -1);
 		free(latlon_string);
@@ -517,7 +509,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 
 		/* Possibily not the fastest method but we don't have thousands of entries to process... */
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-		std::list<gpx_meta_data_t *> * selected = new std::list<gpx_meta_data_t *>;
+		std::list<GPXMetaData *> * selected = new std::list<GPXMetaData *>;
 
 		/* Because we don't store the full data in the gtk model, we have to scan & look it up. */
 		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
@@ -530,7 +522,7 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 					/* I believe the name of these items to be always unique. */
 					for (auto iter = list.begin(); iter != list.end(); iter++) {
 						if (!strcmp ((*iter)->name, name)) {
-							gpx_meta_data_t * copied = copy_gpx_meta_data_t(*iter);
+							GPXMetaData * copied = copy_gpx_meta_data_t(*iter);
 							selected->push_front(copied);
 							break;
 						}
@@ -560,13 +552,13 @@ static std::list<gpx_meta_data_t *> * select_from_list(Window * parent, std::lis
 /**
    For each track - mark whether the start is in within the viewport.
 */
-void DataSourceMyOSMDialog::set_in_current_view_property(std::list<struct _gpx_meta_data_t *> & list)
+void DataSourceMyOSMDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
 {
 	/* Get Viewport bounding box. */
 	const LatLonBBox bbox = this->viewport->get_bbox();
 
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		gpx_meta_data_t * gmd = *iter;
+		GPXMetaData * gmd = *iter;
 		/* Convert point position into a 'fake' bounding box.
 		   TODO - probably should have function to see if point is within bounding box
 		   rather than constructing this fake bounding box for the test. */
@@ -605,7 +597,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	//xd->xpath = g_string_new ("");
 	xd->c_cdata = g_string_new ("");
 	xd->current_tag = tt_unknown;
-	xd->current_gpx_meta_data = new_gpx_meta_data_t();
+	xd->current_gpx_meta_data = new GPXMetaData();
 	xd->list_of_gpx_meta_data.clear();
 
 	bool read_result = read_gpx_files_metadata_xml(tmp_file_full_path, xd);
@@ -633,7 +625,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	((DataSourceMyOSMDialog *) acquiring->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
-	std::list<gpx_meta_data_t *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<GPXMetaData *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
 	/* If non thread - show program is 'doing something...' */
 	if (!this->is_thread) {
@@ -660,7 +652,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
 				target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
-				if ((*iter)->name) {
+				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
 					target_layer->set_name(QObject::tr("My OSM Traces"));
@@ -707,7 +699,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	/* Free memory. */
 	if (xd->current_gpx_meta_data) {
-		free_gpx_meta_data(xd->current_gpx_meta_data);
+		delete xd->current_gpx_meta_data;
 	}
 	free(xd->current_gpx_meta_data);
 	free_gpx_meta_data_list(xd->list_of_gpx_meta_data);

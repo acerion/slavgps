@@ -63,7 +63,7 @@ MapSource::MapSource()
 	tilesize_y = 256;
 
 	drawmode = ViewportDrawMode::MERCATOR; /* ViewportDrawMode::UTM */
-	file_extension = strdup(".png");
+	this->file_extension = ".png";
 
 	this->dl_options.check_file = a_check_map_file;
 
@@ -92,10 +92,6 @@ MapSource::~MapSource()
 
 	free(logo);
 
-	free(file_extension);
-
-	free(this->dl_options.referer);
-
 	free(server_path_format);
 }
 
@@ -119,7 +115,7 @@ MapSource & MapSource::operator=(MapSource map)
 	this->tilesize_y = map.tilesize_y;
 
 	this->drawmode   = map.drawmode;
-	this->file_extension = g_strdup(map.file_extension);
+	this->file_extension = map.file_extension;
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
@@ -162,7 +158,7 @@ MapSource::MapSource(MapSource & map)
 	this->tilesize_y = map.tilesize_y;
 
 	this->drawmode   = map.drawmode;
-	this->file_extension = g_strdup(map.file_extension);
+	this->file_extension = map.file_extension;
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
@@ -263,10 +259,9 @@ void MapSource::set_license_url(const QString & new_license_url)
 
 
 
-void MapSource::set_file_extension(char * file_extension_)
+void MapSource::set_file_extension(const QString & new_file_extension)
 {
-	free(file_extension);
-	file_extension = g_strdup(file_extension_);
+	this->file_extension = new_file_extension;
 }
 
 
@@ -469,9 +464,9 @@ double MapSource::get_lon_min()
  * Typically .png but may be .jpg or whatever the user defines.
  *
  */
-const char * MapSource::get_file_extension()
+QString MapSource::get_file_extension(void) const
 {
-	return file_extension;
+	return this->file_extension;
 }
 
 

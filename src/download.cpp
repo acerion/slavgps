@@ -347,13 +347,8 @@ static bool get_etag_xattr(const QString & file_path, CurlOptions * curl_options
 
 static bool get_etag_file(const QString & file_path, CurlOptions * curl_options)
 {
-	bool result = false;
-
-	char * etag_filename = g_strdup_printf("%s.etag", file_path.toUtf8().constData());
-	if (etag_filename) {
-		result = g_file_get_contents(etag_filename, &curl_options->etag, NULL, NULL);
-		free(etag_filename);
-	}
+	const QString etag_filename = QString("%1.etag").arg(file_path);
+	bool result = g_file_get_contents(etag_filename.toUtf8().constData(), &curl_options->etag, NULL, NULL);
 
 	if (result) {
 		qDebug() << "DD: Download: Get etag (file) from" << file_path << ":" << curl_options->etag;

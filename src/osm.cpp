@@ -56,65 +56,65 @@ using namespace SlavGPS;
 void SlavGPS::osm_init(void)
 {
 	MapSource * mapnik_type = new MapSourceSlippy(MAP_ID_OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%d/%d/%d.png");
-	mapnik_type->set_name((char *) "OSM-Mapnik");
+	mapnik_type->set_name("OSM-Mapnik");
 	mapnik_type->dl_options.check_file_server_time = false;
 	mapnik_type->dl_options.use_etag = true;
 	mapnik_type->zoom_min = 0;
 	mapnik_type->zoom_max = 19;
-	mapnik_type->set_copyright((char *) "© OpenStreetMap contributors");
-	mapnik_type->set_license((char *) "CC-BY-SA");
-	mapnik_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
+	mapnik_type->set_copyright("© OpenStreetMap contributors");
+	mapnik_type->set_license("CC-BY-SA");
+	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * cycle_type = new MapSourceSlippy(MAP_ID_OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%d/%d/%d.png");
-	cycle_type->set_name((char *) "OSM-Cycle");
+	cycle_type->set_name("OSM-Cycle");
 	cycle_type->dl_options.check_file_server_time = true;
 	cycle_type->dl_options.use_etag = false;
 	cycle_type->zoom_min = 0;
 	cycle_type->zoom_max = 18;
-	cycle_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
-	cycle_type->set_license((char *) "CC-BY-SA");
-	cycle_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
+	cycle_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	cycle_type->set_license("CC-BY-SA");
+	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * transport_type = new MapSourceSlippy(MAP_ID_OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%d/%d/%d.png");
-	transport_type->set_name((char *) "OSM-Transport");
+	transport_type->set_name("OSM-Transport");
 	transport_type->dl_options.check_file_server_time = true;
 	transport_type->dl_options.use_etag = false;
 	transport_type->zoom_min = 0;
 	transport_type->zoom_max = 18;
-	transport_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
-	transport_type->set_license((char *) "CC-BY-SA");
-	transport_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
+	transport_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	transport_type->set_license("CC-BY-SA");
+	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * mapquest_type = new MapSourceSlippy(MAP_ID_MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%d/%d/%d.png");
-	mapquest_type->set_name((char *) "OSM-MapQuest");
+	mapquest_type->set_name("OSM-MapQuest");
 	mapquest_type->dl_options.check_file_server_time = true;
 	mapquest_type->dl_options.use_etag = false;
 	mapquest_type->zoom_min = 0;
 	mapquest_type->zoom_max = 19;
-	mapquest_type->set_copyright((char *) "Tiles Courtesy of MapQuest © OpenStreetMap contributors");
-	mapquest_type->set_license((char *) "MapQuest Specific");
-	mapquest_type->set_license_url((char *) "http://developer.mapquest.com/web/info/terms-of-use");
+	mapquest_type->set_copyright("Tiles Courtesy of MapQuest © OpenStreetMap contributors");
+	mapquest_type->set_license("MapQuest Specific");
+	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
 
 	MapSource * hot_type = new MapSourceSlippy(MAP_ID_OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%d/%d/%d.png");
-	hot_type->set_name((char *) "OSM-Humanitarian");
+	hot_type->set_name("OSM-Humanitarian");
 	hot_type->dl_options.check_file_server_time = true;
 	hot_type->dl_options.use_etag = false;
 	hot_type->zoom_min = 0;
 	hot_type->zoom_max = 20; // Super detail!!
-	hot_type->set_copyright((char *) "© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
-	hot_type->set_license((char *) "CC-BY-SA");
-	hot_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
+	hot_type->set_copyright("© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
+	hot_type->set_license("CC-BY-SA");
+	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	/* No cache needed for this type. */
 	MapSource * direct_type = new MapSourceSlippy(MAP_ID_OSM_ON_DISK, QObject::tr("On Disk OSM Tile Format"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
-	direct_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	direct_type->set_copyright("© OpenStreetMap contributors"); // probably
 	direct_type->is_direct_file_access_flag = true;
 
 	/* No cache needed for this type. */
 	MapSource * mbtiles_type = new MapSourceSlippy(MAP_ID_MBTILES, QObject::tr("MBTiles File"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
-	mbtiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	mbtiles_type->set_copyright("© OpenStreetMap contributors"); // probably
 	mbtiles_type->is_direct_file_access_flag = true;
 	mbtiles_type->is_mbtiles_flag = true;
 
@@ -122,7 +122,7 @@ void SlavGPS::osm_init(void)
 	/* No cache needed for this type. */
 	MapSource * metatiles_type = new MapSourceSlippy(MAP_ID_OSM_METATILES, QObject::tr("OSM Metatiles"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
-	metatiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	metatiles_type->set_copyright("© OpenStreetMap contributors"); // probably
 	metatiles_type->is_direct_file_access_flag = true;
 	metatiles_type->is_osm_meta_tiles_flag = true;
 

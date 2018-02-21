@@ -419,8 +419,8 @@ void SlavGPS::layer_trw_init(void)
 		char *mystdout = NULL;
 		char *mystderr = NULL;
 		/* Needs RedNotebook 1.7.3+ for support of opening on a specified date. */
-		char *cmd = g_strconcat(diary_program.toUtf8().constData(), " --version", NULL); // "rednotebook --version"
-		if (g_spawn_command_line_sync(cmd, &mystdout, &mystderr, NULL, NULL)) {
+		const QString cmd = diary_program + " --version"; // "rednotebook --version"
+		if (g_spawn_command_line_sync(cmd.toUtf8().constData(), &mystdout, &mystderr, NULL, NULL)) {
 			/* Annoyingly 1.7.1|2|3 versions of RedNotebook prints the version to stderr!! */
 			if (mystdout) {
 				fprintf(stderr, "DEBUG: Diary: %s\n", mystdout); /* Should be something like 'RedNotebook 1.4'. */
@@ -453,7 +453,6 @@ void SlavGPS::layer_trw_init(void)
 		}
 		free(mystdout);
 		free(mystderr);
-		free(cmd);
 	}
 
 	if (!QStandardPaths::findExecutable(geojson_program_export()).isEmpty()) {
@@ -3549,12 +3548,11 @@ void LayerTRW::insert_point_before_cb(void)
 void LayerTRW::diary_open(char const * date_str)
 {
 	GError *err = NULL;
-	char * cmd = g_strdup_printf("%s %s%s", diary_program.toUtf8().constData(), "--date=", date_str);
-	if (!g_spawn_command_line_async(cmd, &err)) {
+	const QString cmd = QString("%1 %2%3").arg(diary_program).arg("--date=").arg(date_str);
+	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
 		Dialog::error(tr("Could not launch %1 to open file.").arg(diary_program), this->get_window());
 		g_error_free(err);
 	}
-	free(cmd);
 }
 
 

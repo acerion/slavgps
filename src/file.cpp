@@ -708,7 +708,7 @@ bool VikFile::has_vik_file_magic(const QString & file_full_path)
 */
 QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type)
 {
-	const char * ext = NULL;
+	QString ext;
 
 	/* Select an extension. */
 	switch (file_type) {
@@ -724,13 +724,13 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 	case SGFileType::GPSMAPPER:
 	case SGFileType::GPSPOINT:
 	default:
-		/* Do nothing, ext already set to NULL. */
+		/* Do nothing, ext will be empty. */
 		break;
 	}
 
 	/* Do. */
 	QString new_name;
-	if (ext != NULL && !FileUtils::has_extension(file_name, ext)) {
+	if (!ext.isEmpty() && !FileUtils::has_extension(file_name, ext)) {
 		new_name = file_name + ext;
 	} else {
 		/* Simply duplicate. */

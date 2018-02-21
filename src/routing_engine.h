@@ -56,12 +56,12 @@ namespace SlavGPS {
 		virtual bool refine(LayerTRW * trw, Track * trk);
 		virtual bool supports_refine(void);
 
-		char * get_id(void) { return this->id; }
-		char * get_label(void) { return this->label; }
-		char * get_format(void) { return this->format; }
+		QString get_id(void) const { return this->id; }
+		QString get_label(void) const { return this->label; }
+		char * get_format(void) const { return this->format; }
 
-		char * id = NULL;     /* The identifier of the routing engine. */
-		char * label = NULL;  /* The label of the routing engine. */
+		QString id;     /* The identifier of the routing engine. */
+		QString label;  /* The label of the routing engine. */
 		char * format = NULL; /* The format of the output (see gpsbabel). */
 	};
 }

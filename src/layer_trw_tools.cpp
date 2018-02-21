@@ -1601,11 +1601,9 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 	/* Remove last ' to:...' */
 	if (!track->comment.isEmpty()) {
 #ifdef K_TODO
-		char *last_to = strrchr(track->comment, 't');
+		char * last_to = strrchr(track->comment, 't');
 		if (last_to && (last_to - track->comment > 1)) {
-			char *new_comment = g_strndup(track->comment,
-						      last_to - track->comment - 1); /* FIXME: memory leak. */
-			track->set_comment(new_comment);
+			track->set_comment(track->comment.left(last_to - track->comment - 1));
 		}
 #endif
 	}

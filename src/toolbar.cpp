@@ -270,10 +270,9 @@ GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name)
 		return NULL;
 	}
 
-	path = g_strconcat("/ui/MainToolbar/", name, NULL);
-	widget = gtk_ui_manager_get_widget(vtb->uim, path);
+	const QString path = "/ui/MainToolbar/" + name;
+	widget = gtk_ui_manager_get_widget(vtb->uim, path.toUtf8().constData());
 
-	free(path);
 	return widget;
 }
 
@@ -850,14 +849,14 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 {
 	char *icon = NULL;
 	char *label = NULL;
-	char *label_clean = NULL;
+	QString label_clean;
 
 	/* Tries all action groups. */
 	GtkAction *action = get_action(vtb, name);
 
 	if (action == NULL) {
 		if (!g_strcmp0(name, TB_EDITOR_SEPARATOR)) {
-			label_clean = g_strdup(TB_EDITOR_SEPARATOR_LABEL);
+			label_clean = TB_EDITOR_SEPARATOR_LABEL;
 		} else {
 			return;
 		}
@@ -870,19 +869,18 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 
 		g_object_get(action, "label", &label, NULL);
 		if (label != NULL) {
-			label_clean = strdup(QString.remove('_', Qt::CaseInsensitive).toUtf8().constData());
+			label_clean = QString.remove('_', Qt::CaseInsensitive);
 		}
 	}
 
 	gtk_list_store_set(store, iter,
 			   TB_EDITOR_COL_ACTION, name,
-			   TB_EDITOR_COL_LABEL, label_clean,
+			   TB_EDITOR_COL_LABEL, label_clean.toUtf8().constData(),
 			   TB_EDITOR_COL_ICON, icon,
 			   -1);
 
 	free(icon);
 	free(label);
-	free(label_clean);
 }
 
 

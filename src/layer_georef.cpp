@@ -648,7 +648,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 
 #ifdef K_TODO
 	bool upper = g_ascii_isupper(filename[strlen(filename) - 1]);
-	char * filew = g_strconcat(filename, (upper ? "W" : "w") , NULL);
+	const QString filew = filename + (upper ? "W" : "w");
 
 	double values[4];
 	if (world_file_read_file(filew, values) == 0) {
@@ -664,7 +664,6 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 			free(file0);
 		}
 	}
-	free(filew);
 #endif
 }
 

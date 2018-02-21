@@ -61,8 +61,8 @@ namespace SlavGPS {
 		WebToolDatasource(const QString & new_tool_name,
 				  const QString & url_format,
 				  const QString & url_format_code,
-				  const char * file_type,
-				  const char * babel_filter_args,
+				  const QString & file_type,
+				  const QString & babel_filter_args,
 				  const QString & new_input_field_label);
 		~WebToolDatasource();
 
@@ -81,8 +81,8 @@ namespace SlavGPS {
 		QString q_url_format;
 		QString url_format_code;
 
-		char * file_type = NULL;         /* Default value NULL equates to internal GPX reading. */
-		char * babel_filter_args = NULL; /* Command line filter options for gpsbabel. */
+		QString file_type;               /* Default value NULL equates to internal GPX reading. */
+		QString babel_filter_args;       /* Command line filter options for gpsbabel. */
 		QString input_field_label_text;  /* Label to be shown next to the user input field if an input term is required. */
 		QString user_string;
 

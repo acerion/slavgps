@@ -100,14 +100,14 @@ MapSourceBing::MapSourceBing()
  *
  * Returns: a newly allocated MapSourceBing object.
  */
-MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, const char * new_key)
+MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, const QString & new_key)
 {
 	this->map_type = new_map_type;
 	this->label = new_label;
 	this->name = "Bing-Aerial";
 	this->server_hostname = "ecn.t2.tiles.virtualearth.net";
 	server_path_format = strdup("/tiles/a%s.jpeg?g=587");
-	bing_api_key = g_strdup(new_key);
+	this->bing_api_key = new_key;
 	this->dl_options.check_file_server_time = true;
 	zoom_min = 0;
 	zoom_max = 19; /* NB: Might be regionally different rather than the same across the world. */
@@ -121,14 +121,12 @@ MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, 
 
 MapSourceBing::~MapSourceBing()
 {
-	free(this->bing_api_key);
-	this->bing_api_key = NULL;
 }
 
 
 
 
-char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
+QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 {
 	/* Picked from http://trac.openstreetmap.org/browser/applications/editors/josm/plugins/slippymap/src/org/openstreetmap/josm/plugins/slippymap/SlippyMapPreferences.java?rev=24486 */
 	char k[20];
@@ -145,17 +143,19 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 		k[ik++] = digit;
 	}
 	k[ik] = '\0';
-	return g_strdup(k);
+	return QString(k);
 }
 
 
 
 const QString MapSourceBing::get_server_path(TileInfo * src) const
 {
-	char * quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
-	char * path = g_strdup_printf(server_path_format, quadtree); /* kamilFIXME: memory leak. */
-	free(quadtree);
-	return QString(path);
+	QString quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
+	char * path = g_strdup_printf(server_path_format, quadtree.toUtf8().constData());
+	const QString result(path);
+	free(path);
+
+	return result;
 }
 
 
@@ -168,7 +168,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 	const int scale = map_utils_mpp_to_scale(zoom);
 
 	/* Load attributions. */
-	if (0 == this->attributions.size() && strcmp("<no-set>", this->bing_api_key)) {
+	if (0 == this->attributions.size() && "<no-set>" != this->bing_api_key) { /* TODO: also check this->bing_api_key.isEmpty()? */
 		if (!this->loading_attributions) {
 			this->async_load_attributions();
 		} else {
@@ -179,7 +179,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 
 	/* Loop over all known attributions. */
 	for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
-		const struct Attribution * current = *iter;
+		const Attribution * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - scale) > current->minZoom &&
@@ -207,11 +207,10 @@ void MapSourceBing::bstart_element(GMarkupParseContext * context,
 	const char *element = g_markup_parse_context_get_element(context);
 	if (strcmp (element, "CoverageArea") == 0) {
 		/* New Attribution. */
-		struct Attribution * attribution = (struct Attribution *) malloc(sizeof (struct Attribution));
-		memset(attribution, 0, sizeof (struct Attribution));
+		Attribution * attribution = new Attribution;
 
 		self->attributions.push_back(attribution);
-		attribution->attribution = g_strdup(self->attribution);
+		attribution->attribution = self->attribution;
 	}
 }
 
@@ -228,23 +227,22 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 {
 	MapSourceBing * self = (MapSourceBing *) user_data;
 
-	struct Attribution * attr = self->attributions.size() == 0  ? NULL : self->attributions.back();
+	Attribution * attr = self->attributions.size() == 0  ? NULL : self->attributions.back();
 	const char * element = g_markup_parse_context_get_element(context);
-	char *textl = g_strndup(text, text_len);
+	const QString textl = QString(text).left(text_len);
 	const GSList *stack = g_markup_parse_context_get_element_stack(context);
 	int len = g_slist_length((GSList *)stack);
 
 	const char *parent = len > 1 ? (const char *) g_slist_nth_data((GSList *)stack, 1) : (const char *) NULL;
 	if (strcmp(element, "Attribution") == 0) {
-		free(self->attribution);
-		self->attribution = g_strdup(textl);
+		self->attribution = textl;
 	} else {
 		if (attr) {
 			if (parent != NULL && strcmp(parent, "CoverageArea") == 0) {
 				if (strcmp (element, "ZoomMin") == 0) {
-					attr->minZoom = atoi(textl);
+					attr->minZoom = atoi(textl.toUtf8().constData());
 				} else if (strcmp (element, "ZoomMax") == 0) {
-					attr->maxZoom = atoi(textl);
+					attr->maxZoom = atoi(textl.toUtf8().constData());
 				}
 			} else if (parent != NULL && strcmp(parent, "BoundingBox") == 0) {
 				if (strcmp(element, "SouthLatitude") == 0) {
@@ -259,7 +257,6 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 			}
 		}
 	}
-	free(textl);
 }
 
 
@@ -325,8 +322,8 @@ bool MapSourceBing::parse_file_for_attributions(const QString & file_full_path)
 
 	if (vik_debug) {
 		for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
-			const struct Attribution * aa = *iter;
-			fprintf(stderr, "DD: Map Source Bing: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
+			const Attribution * aa = *iter;
+			fprintf(stderr, "DD: Map Source Bing: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution.toUtf8().constData(), aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
 		}
 	}
 
@@ -341,7 +338,7 @@ int MapSourceBing::load_attributions()
 	int ret = 0;  /* OK. */
 
 	this->loading_attributions = true;
-	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key);
+	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key.toUtf8().constData());
 
 	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
 	if (tmp_file_full_path.isEmpty()) {

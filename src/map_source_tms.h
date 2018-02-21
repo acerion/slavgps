@@ -42,7 +42,7 @@ namespace SlavGPS {
 	public:
 
 		MapSourceTms();
-		MapSourceTms(MapTypeID map_type, char const * label_, char const * hostname_, const char * url_);
+		MapSourceTms(MapTypeID map_type, const QString & label, const QString & hostname, const char * url_);
 		~MapSourceTms();
 
 		bool is_direct_file_access();

@@ -184,9 +184,9 @@ static void set_copyright(MapnikInterface * mi)
  * Returns NULL on success otherwise a string about what went wrong.
  * This string should be freed once it has been used.
  */
-char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char * filename, unsigned int width, unsigned int height)
+QString SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const QString & filename, unsigned int width, unsigned int height)
 {
-	char * msg = NULL;
+	QString msg;
 	if (!mi) {
 		return strdup("Internal Error");
 	}
@@ -194,7 +194,7 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 	try {
 #ifdef K_TODO
 		mi->myMap->remove_all(); /* Support reloading. */
-		mapnik::load_map(*mi->myMap, filename);
+		mapnik::load_map(*mi->myMap, filename.toUtf8().constData());
 
 		mi->myMap->resize(width,height);
 		mi->myMap->set_srs(mapnik::MAPNIK_GMERC_PROJ); /* ONLY WEB MERCATOR output supported ATM. */
@@ -216,9 +216,9 @@ char * SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const char 
 
 		g_debug("%s layers: %d", __FUNCTION__, (unsigned int) mi->myMap->layer_count());
 	} catch (std::exception const& ex) {
-		msg = g_strdup(ex.what());
+		msg = ex.what();
 	} catch (...) {
-		msg = strdup("unknown error");
+		msg = QObject::tr("unknown error");
 	}
 	return msg;
 }

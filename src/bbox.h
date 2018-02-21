@@ -50,10 +50,10 @@ namespace SlavGPS {
 
 	class LatLonBBox  {
 	public:
-		double north; /* max_lat */
-		double south; /* min_lat */
-		double east;  /* max_lon */
-		double west;  /* min_lon */
+		double north = 0.0; /* max_lat */
+		double south = 0.0; /* min_lat */
+		double east = 0.0;  /* max_lon */
+		double west = 0.0;  /* min_lon */
 
 		static LatLonBBoxStrings to_strings(const LatLonBBox & bbox);
 	};

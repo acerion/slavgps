@@ -179,10 +179,10 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const char * babel_args, BabelCallback cb, void * cb_data, void * unused)
+bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelCallback cb, void * cb_data, void * unused)
 {
 	bool ret = false;
-	char *bargs = g_strconcat(babel_args, " -i gpx", NULL);
+	const QString bargs = babel_args + " -i gpx";
 	const QString name_src = GPX::write_tmp_file(trw, NULL);
 
 	if (!name_src.isEmpty()) {
@@ -191,7 +191,6 @@ bool a_babel_convert(LayerTRW * trw, const char * babel_args, BabelCallback cb, 
 		QDir::root().remove(name_src);
 	}
 
-	free(bargs);
 	return ret;
 }
 #endif

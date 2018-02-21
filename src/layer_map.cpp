@@ -1161,20 +1161,20 @@ static void get_cache_filename(const QString & cache_dir,
 			       const QString & map_name,
 			       TileInfo const * coord,
 			       QString & tile_file_full_path,
-			       const char * file_extension)
+			       const QString & file_extension)
 {
 	char buffer[PATH_MAX] = { 0 }; /* TODO: get rid of this. */
 	switch (cl) {
 	case MapsCacheLayout::OSM:
 		if (map_name.isEmpty()) {
-			snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension);
+			snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension.toUtf8().constData());
 		} else {
 			if (cache_dir != map_cache_dir()) {
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
-				snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension);
+				snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS, cache_dir.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension.toUtf8().constData());
 			} else {
 				/* Using default cache - so use the map name in the directory path. */
-				snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS_WITH_NAME, cache_dir.toUtf8().constData(), map_name.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension);
+				snprintf(buffer, sizeof (buffer), DIRECTDIRACCESS_WITH_NAME, cache_dir.toUtf8().constData(), map_name.toUtf8().constData(), (17 - coord->scale), coord->x, coord->y, file_extension.toUtf8().constData());
 			}
 		}
 		break;

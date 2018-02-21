@@ -75,7 +75,7 @@ namespace SlavGPS {
 		double get_lat_max();
 		double get_lon_min();
 		double get_lon_max();
-		const char * get_file_extension();
+		QString get_file_extension(void) const;
 
 		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
@@ -95,7 +95,7 @@ namespace SlavGPS {
 		void set_copyright(const QString & copyright);
 		void set_license(const QString & license);
 		void set_license_url(const QString & license_url);
-		void set_file_extension(char * file_extension);
+		void set_file_extension(const QString & file_extension);
 
 
 
@@ -113,7 +113,7 @@ namespace SlavGPS {
 		uint16_t tilesize_y; /* The size of the tile (x). */
 
 		ViewportDrawMode drawmode; /* The mode used to draw map. */
-		char * file_extension = NULL; /* The file extension of tile files on disk. */
+		QString file_extension;    /* The file extension of tile files on disk. */
 
 		DownloadOptions dl_options;
 

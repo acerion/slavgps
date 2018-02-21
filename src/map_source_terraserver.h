@@ -37,7 +37,7 @@ namespace SlavGPS {
 	class MapSourceTerraserver : public MapSource {
 	public:
 		MapSourceTerraserver();
-		MapSourceTerraserver(MapTypeID type_, const char * label_);
+		MapSourceTerraserver(MapTypeID type, const QString & label);
 
 
 		bool coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest);

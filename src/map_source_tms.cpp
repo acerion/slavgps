@@ -74,12 +74,12 @@ MapSourceTms::~MapSourceTms()
 
 
 
-MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const * hostname, char const * url_)
+MapSourceTms::MapSourceTms(MapTypeID map_type_, const QString & new_label, const QString & hostname, char const * url_)
 {
 	map_type = map_type_;
-	label = g_strdup(label_);
-	this->server_hostname = QString(hostname);
-	server_path_format = g_strdup(url_);
+	this->label = new_label;
+	this->server_hostname = hostname;
+	this->server_path_format = g_strdup(url_);
 }
 
 

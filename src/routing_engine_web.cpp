@@ -89,8 +89,7 @@ static void vik_routing_web_engine_set_property(void * object,
 		break;
 
 	case PROP_REFERER:
-		free(priv->options.referer);
-		priv->options.referer = g_value_dup_string (value);
+		priv->options.referer = value;
 		break;
 
 	case PROP_FOLLOW_LOCATION:
@@ -176,9 +175,6 @@ RoutingEngineWeb::~RoutingEngineWeb()
 	this->url_start_dir_fmt = NULL;
 	free(this->url_stop_dir_fmt);
 	this->url_stop_dir_fmt = NULL;
-
-	free(this->dl_options.referer);
-	this->dl_options.referer = NULL;
 }
 
 

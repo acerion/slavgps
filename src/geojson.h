@@ -49,7 +49,7 @@ namespace SlavGPS {
 	QString geojson_program_export(void);
 	QString geojson_program_import(void);
 
-	char * geojson_import_to_gpx(const QString & file_full_path);
+	QString geojson_import_to_gpx(const QString & file_full_path);
 
 
 
