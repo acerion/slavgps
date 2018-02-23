@@ -89,25 +89,24 @@ void VersionCheck::run()
 {
 	/* Need to allow a few redirects, as SF file is often served from different server. */
 	DownloadOptions dl_options(5);
-	const QString file_full_path = Download::get_uri_to_tmp_file("http://sourceforge.net/projects/viking/files/VERSION", &dl_options);  /* TODO: provide correct URL for SlavGPS. */
+	QTemporaryFile tmp_file;
 	// const char *file_full_path = strdup("VERSION");
-	if (file_full_path.isEmpty()) {
+	if (!Download::download_to_tmp_file(tmp_file, "http://sourceforge.net/projects/viking/files/VERSION", &dl_options)) { /* TODO: provide correct URL for SlavGPS. */
 		return;
 	}
 
-	QFile file(file_full_path);
-	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE: Version Check: Couldn't open file" << file_full_path << file.error();
+	if (!tmp_file.open()) {
+		qDebug() << "EE: Version Check: Couldn't open file" << tmp_file.fileName() << tmp_file.error();
 		return;
 	}
 
 	char latest_version_buffer[32 + 1] = { 0 };
-	off_t file_size = file.size();
+	off_t file_size = tmp_file.size();
 	if (file_size > (off_t) sizeof (latest_version_buffer) - 1) {
 		/* TODO: report very large files - this should never happen and may be a sign of problems. */
 		file_size = (off_t) sizeof (latest_version_buffer) - 1;
 	}
-	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+	unsigned char * file_contents = tmp_file.map(0, file_size, QFileDevice::MapPrivateOption);
 	for (size_t i = 0; i < sizeof (latest_version_buffer) - 1; i++) {
 		latest_version_buffer[i] = (char) file_contents[i];
 	}
@@ -123,8 +122,8 @@ void VersionCheck::run()
 		qDebug() << "II: Version Check: Running the lastest version:" << VIKING_VERSION;
 	}
 
-	file.unmap(file_contents);
-	file.close();
+	tmp_file.unmap(file_contents);
+	tmp_file.close();
 
 	/* Update last checked time. */
 	const QDateTime date_time_now = QDateTime::currentDateTime();

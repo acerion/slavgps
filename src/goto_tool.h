@@ -62,7 +62,7 @@ namespace SlavGPS {
 		virtual QString get_label(void) const;
 		virtual char * get_url_format(void) const = 0;
 		virtual const DownloadOptions * get_download_options(void) const;
-		virtual bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon) = 0;
+		virtual bool parse_file_for_latlon(QFile & file, LatLon & lat_lon) = 0;
 
 		GotoToolResult get_coord(Viewport * viewport, const QString & name, Coord * coord);
 

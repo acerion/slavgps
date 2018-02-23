@@ -262,13 +262,13 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 
 
 
-bool MapSourceBing::parse_file_for_attributions(const QString & file_full_path)
+bool MapSourceBing::parse_file_for_attributions(QFile & tmp_file)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 
-	FILE *file = fopen(file_full_path.toUtf8().constData(), "r");
+	FILE *file = fopen(tmp_file.fileName().toUtf8().constData(), "r");
 	if (file == NULL) {
 		/* TODO emit warning. */
 		return false;
@@ -340,18 +340,18 @@ int MapSourceBing::load_attributions()
 	this->loading_attributions = true;
 	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key.toUtf8().constData());
 
-	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(QString(uri), this->get_download_options());
-	if (tmp_file_full_path.isEmpty()) {
+	QTemporaryFile tmp_file;
+	if (!Download::download_to_tmp_file(tmp_file, QString(uri), this->get_download_options())) {
 		ret = -1;
 		goto done;
 	}
 
-	qDebug() << "DD:" PREFIX << "load attributions from" << tmp_file_full_path;
-	if (!this->parse_file_for_attributions(tmp_file_full_path)) {
+	qDebug() << "DD:" PREFIX << "load attributions from" << tmp_file.fileName();
+	if (!this->parse_file_for_attributions(tmp_file)) {
 		ret = -1;
 	}
 
-	QDir::root().remove(tmp_file_full_path);
+	tmp_file.remove();
 
 done:
 	this->loading_attributions = false;

@@ -380,9 +380,9 @@ static void gpx_meta_data_cdata(xml_data *xd, const XML_Char *s, int len)
 
 
 
-static bool read_gpx_files_metadata_xml(const QString & file_full_path, xml_data *xd)
+static bool read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 {
-	FILE *ff = fopen(file_full_path.toUtf8().constData(), "r");
+	FILE *ff = fopen(file.fileName().toUtf8().constData(), "r");
 	if (!ff) {
 		return false;
 	}
@@ -588,8 +588,8 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	dl_options.convert_file = a_try_decompress_file;
 	dl_options.user_pass = osm_get_current_credentials();
 
-	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(DS_OSM_TRACES_GPX_FILES, &dl_options);
-	if (tmp_file_full_path.isEmpty()) {
+	QTemporaryFile tmp_file;
+	if (!Download::download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES, &dl_options)) {
 		return false;
 	}
 
@@ -600,13 +600,10 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	xd->current_gpx_meta_data = new GPXMetaData();
 	xd->list_of_gpx_meta_data.clear();
 
-	bool read_result = read_gpx_files_metadata_xml(tmp_file_full_path, xd);
+	bool read_result = read_gpx_files_metadata_xml(tmp_file, xd);
 	/* Test already downloaded metadata file: eg: */
 	// result = read_gpx_files_metadata_xml("/tmp/viking-download.GI47PW", xd);
-
-	if (!tmp_file_full_path.isEmpty()) {
-		Util::remove(tmp_file_full_path);
-	}
+	Util::remove(tmp_file);
 
 	if (!read_result) {
 		free(xd);

@@ -68,11 +68,13 @@ GotoToolGoogle::~GotoToolGoogle()
 
 
 
-bool GotoToolGoogle::parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon)
+bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 {
 	char * s = NULL;
 	char lat_buf[32] = { 0 };
 	char lon_buf[32] = { 0 };
+
+	QString file_full_path = file.fileName();
 
 	GMappedFile *mf;
 	if ((mf = g_mapped_file_new(file_full_path.toUtf8().constData(), false, NULL)) == NULL) {

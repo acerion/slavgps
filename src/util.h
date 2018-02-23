@@ -28,6 +28,7 @@
 
 
 #include <QString>
+#include <QFile>
 
 
 
@@ -49,6 +50,7 @@ namespace SlavGPS {
 		static void remove_all_in_deletion_list(void);
 
 		static bool remove(const QString & file_full_path);
+		static bool remove(QFile & file);
 
 		static QString write_tmp_file_from_bytes(const void * buffer, size_t count);
 	};

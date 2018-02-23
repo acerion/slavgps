@@ -27,13 +27,10 @@
 
 #include <cstdio>
 #include <cstdlib>
-//#include <cctype>
-//#include <cstring>
 #include <mutex>
 #include <algorithm>
 #include <string>
-
-#include <errno.h>
+#include <cerrno>
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -47,6 +44,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QTemporaryFile>
 
 #if 1 //#ifdef HAVE_MAGIC_H // kamilFIXME: check dependency during configuration
 #include <magic.h>
@@ -59,11 +57,17 @@
 #include "preferences.h"
 #include "globals.h"
 #include "util.h"
+#include "vikutils.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX ": Download:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -569,7 +573,7 @@ void Download::uninit_handle(void * handle)
 
 
 
-
+#if 0
 /**
  * @uri:         The URI (Uniform Resource Identifier)
  * @options:     Download options (maybe NULL)
@@ -578,8 +582,9 @@ void Download::uninit_handle(void * handle)
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-QString Download::get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
+QString Download::download_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
 {
+#if 0
 	QString tmp_file_full_path;
 
 	char * tmpname = NULL;
@@ -604,4 +609,82 @@ QString Download::get_uri_to_tmp_file(const QString & uri, const DownloadOptions
 	fclose(tmp_file);
 
 	return tmp_file_full_path;
+#else
+	QTemporaryFile tmp_file;
+	if (!SGUtils::create_temporary_file(tmp_file, "viking-download.XXXXXX")) {
+		return "";
+	}
+	if (!tmp_file.open()) {
+		qDebug() << "EE" PREFIX << "failed to open temporary file, error =" << tmp_file.error();
+		return "";
+	}
+	tmp_file.setAutoRemove(false);
+
+	const QString tmp_file_full_path = tmp_file.fileName();
+	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file_full_path << "error:" << tmp_file.error();
+
+	FILE * file = fdopen(tmp_file.handle(), "r+");
+	if (!file) {
+		qDebug() << "EE" PREFIX << "fdopen()" << strerror(errno);
+		return "";
+	}
+
+	tmp_file.close();
+
+	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, file, dl_options, NULL, NULL)) {
+		fclose(file);
+		QDir::root().remove(tmp_file_full_path);
+		qDebug() << "EE" PREFIX << "download_uri()";
+		return "";
+	}
+
+	fclose(file);
+
+	return tmp_file_full_path;
+#endif
+}
+#endif
+
+
+
+/**
+ * @uri:         The URI (Uniform Resource Identifier)
+ * @options:     Download options (maybe NULL)
+ *
+ * Returns name of the temporary file created - NULL if unsuccessful.
+ * This string needs to be freed once used.
+ * The file needs to be removed once used.
+ */
+bool Download::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri, const DownloadOptions * dl_options)
+{
+	if (!SGUtils::create_temporary_file(tmp_file, "viking-download.XXXXXX")) {
+		return false;
+	}
+
+	if (!tmp_file.open()) {
+		qDebug() << "EE" PREFIX << "failed to open temporary file, error =" << tmp_file.error();
+		return false;
+	}
+
+	const QString tmp_file_full_path = tmp_file.fileName();
+	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file_full_path << "error:" << tmp_file.error();
+
+	FILE * file = fdopen(tmp_file.handle(), "r+");
+	if (!file) {
+		qDebug() << "EE" PREFIX << "fdopen()" << strerror(errno);
+		return false;
+	}
+
+	tmp_file.close();
+
+	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, file, dl_options, NULL, NULL)) {
+		fclose(file);
+		QDir::root().remove(tmp_file_full_path);
+		qDebug() << "EE" PREFIX << "download_uri()";
+		return false;
+	}
+
+	fclose(file);
+
+	return true;
 }

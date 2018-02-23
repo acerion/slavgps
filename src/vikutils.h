@@ -26,6 +26,7 @@
 #include <cstdint>
 
 #include <QString>
+#include <QFile>
 #include <QTemporaryFile>
 #include <QAbstractButton>
 #include <QColor>

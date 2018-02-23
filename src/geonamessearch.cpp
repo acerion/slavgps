@@ -118,7 +118,7 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 
 
 
-static std::list<Geoname *> get_entries_from_file(const QString & file_full_path)
+static std::list<Geoname *> get_entries_from_file(QFile & file)
 {
 	std::list<Geoname *> found_places;
 
@@ -129,7 +129,7 @@ static std::list<Geoname *> get_entries_from_file(const QString & file_full_path
 	char * thumbnail_url = NULL;
 
 	GMappedFile * mf = NULL;
-	if ((mf = g_mapped_file_new(file_full_path.toUtf8().constData(), false, NULL)) == NULL) {
+	if ((mf = g_mapped_file_new(file.fileName().toUtf8().constData(), false, NULL)) == NULL) {
 		qDebug() << QObject::tr("CRITICAL: couldn't map temp file");
 		return found_places;
 	}
@@ -301,14 +301,14 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	/* Encode doubles in a C locale; kamilTODO: see LatLonBBox::to_strings(). */
 	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
-	const QString tmp_file_full_path = Download::get_uri_to_tmp_file(uri, NULL);
-	if (tmp_file_full_path.isEmpty()) {
+	QTemporaryFile tmp_file;
+	if (!Download::download_to_tmp_file(tmp_file, uri, NULL)) {
 		Dialog::info(QObject::tr("No entries found!"), window);
 		return;
 	}
 
-	std::list<Geoname *> wiki_places = get_entries_from_file(tmp_file_full_path);
-	Util::remove(tmp_file_full_path);
+	std::list<Geoname *> wiki_places = get_entries_from_file(tmp_file);
+	Util::remove(tmp_file);
 
 	if (wiki_places.size() == 0) {
 		Dialog::info(QObject::tr("No entries found!"), window);

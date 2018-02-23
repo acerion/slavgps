@@ -205,6 +205,19 @@ bool Util::remove(const QString & file_full_path)
 
 
 
+bool Util::remove(QFile & file)
+{
+	if (1 /* vik_debug && vik_verbose */) {
+		qDebug() << "WW: Util: Remove: not removing file" << file.fileName();
+		return 0;
+	} else {
+		return file.remove();
+	}
+}
+
+
+
+
 /**
    Stream write buffer to a temporary file (in one go).
 

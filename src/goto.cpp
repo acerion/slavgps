@@ -347,9 +347,9 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 {
 	name = "";
 
-	const QString tmp_file_full_path = Download::get_uri_to_tmp_file("http://api.hostip.info/get_json.php?position=true", NULL);
+	QTemporaryFile tmp_file;
 	//char *tmpname = strdup("../test/hostip2.json");
-	if (tmp_file_full_path.isEmpty()) {
+	if (!Download::download_to_tmp_file(tmp_file, "http://api.hostip.info/get_json.php?position=true", NULL)) {
 		return 0;
 	}
 
@@ -357,11 +357,11 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 	lat_lon.lon = 0.0;
 
 	GMappedFile *mf;
-	if ((mf = g_mapped_file_new(tmp_file_full_path.toUtf8().constData(), false, NULL)) == NULL) {
+	if ((mf = g_mapped_file_new(tmp_file.fileName().toUtf8().constData(), false, NULL)) == NULL) {
 		qCritical() << QObject::tr("CRITICAL: couldn't map temp file\n");
 
 		g_mapped_file_unref(mf);
-		QDir::root().remove(tmp_file_full_path);
+		tmp_file.remove();
 		return 0;
 	}
 
@@ -478,7 +478,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
  tidy:
 	g_mapped_file_unref(mf);
-	QDir::root().remove(tmp_file_full_path);
+	tmp_file.remove();
 	return result;
 }
 

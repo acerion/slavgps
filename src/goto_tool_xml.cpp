@@ -232,7 +232,7 @@ bool MyHandler::characters(const QString & ch)
 
 bool MyHandler::fatalError(const QXmlParseException & exception)
 {
-	qDebug() << "EE" PREFIX;
+	qDebug() << "EE" PREFIX << exception.message() << exception.lineNumber() << exception.columnNumber();
 	return true;
 }
 
@@ -297,14 +297,14 @@ char * GotoToolXML::get_url_format(void) const
 
 
 
-bool GotoToolXML::parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon)
+bool GotoToolXML::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 {
-	QFile file(file_full_path);
+	QFile file2(file.fileName()); /* TODO: why do we need the intermediate file here? */
+
 	QXmlSimpleReader xml_reader;
-	QXmlInputSource source(&file);
+	QXmlInputSource source(&file2);
 	xml_reader.setContentHandler(this->xml_handler);
 	xml_reader.setErrorHandler(this->xml_handler);
-
 
 	/* We don't re-create xml handler on every query, so clear old found location. */
 	this->xml_handler->ll.lat = std::numeric_limits<double>::quiet_NaN();

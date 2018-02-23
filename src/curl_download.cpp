@@ -123,7 +123,7 @@ void CurlDownload::uninit(void)
 
 
 
-CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * file, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
 {
 	struct curl_slist * curl_send_headers = NULL;
 
@@ -145,7 +145,7 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 
 	/* "Strings passed to libcurl as 'char *' arguments, are copied by the library;" */
 	curl_easy_setopt(curl, CURLOPT_URL, full_url.toUtf8().constData());
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);

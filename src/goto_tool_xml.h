@@ -85,7 +85,7 @@ namespace SlavGPS {
 		char * get_url_format(void) const;
 		void set_url_format(char const * new_format);
 
-		bool parse_file_for_latlon(const QString & file_full_path, LatLon & lat_lon);
+		bool parse_file_for_latlon(QFile & file, LatLon & lat_lon);
 
 		/* This should be private. */
 		char * url_format = NULL; /* The format of the URL */

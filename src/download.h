@@ -30,6 +30,8 @@
 #include <string>
 
 #include <QString>
+#include <QFile>
+#include <QTemporaryFile>
 
 
 
@@ -109,7 +111,7 @@ namespace SlavGPS {
 		static DownloadResult get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
 		static DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
 
-		static QString get_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options);
+		static bool download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri, const DownloadOptions * dl_options);
 	};
 
 
