@@ -29,6 +29,8 @@
 #include <unistd.h>
 #endif
 
+#include <QDebug>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -42,7 +44,12 @@ using namespace SlavGPS;
 
 
 
-static char * viking_dir = NULL;
+#define PREFIX ": Dir:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
+static QString g_viking_dir;
 
 
 
@@ -51,31 +58,31 @@ static char * viking_dir = NULL;
  * For external use. Free the result.
  * Made externally available primarily to detect when Viking is first run.
  */
-char * SlavGPS::get_viking_dir_no_create()
+QString SlavGPS::get_viking_dir_no_create(void)
 {
 	/* TODO: use g_get_user_config_dir? */
 
-	char const * home = g_getenv("HOME");
-	if (!home || access(home, W_OK)) {
-		home = g_get_home_dir();
+	QString home = QString::fromLocal8Bit(("HOME"));
+	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
+		home = QString(g_get_home_dir());
 	}
 
 #ifdef HAVE_MKDTEMP
-	if (!home || access(home, W_OK)) {
+	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
 		static char temp[] = {"/tmp/vikXXXXXX"};
-		home = mkdtemp(temp);
+		home = QString(mkdtemp(temp)); /* TODO: memory leak? */
 	}
 #endif
-	if (!home || access(home, W_OK)) {
+	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
 		/* Fatal error. */
-		fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
+		qDebug() << "EE" PREFIX << "Unable to find a base directory";
 	}
 
 	/* Build the name of the directory. */
 #ifdef __APPLE__
-	return g_build_filename(home, "/Library/Application Support/Viking", NULL);
+	return home + "/Library/Application Support/Viking";
 #else
-	return g_build_filename(home, ".viking", NULL);
+	return home + "/.viking";
 #endif
 }
 
@@ -84,15 +91,15 @@ char * SlavGPS::get_viking_dir_no_create()
 
 QString SlavGPS::get_viking_dir(void)
 {
-	if (!viking_dir) {
-		viking_dir = get_viking_dir_no_create();
-		if (0 != access(viking_dir, F_OK)) {
-			if (g_mkdir(viking_dir, 0755) != 0) {
-				fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir);
+	if (g_viking_dir.isEmpty()) {
+		g_viking_dir = get_viking_dir_no_create();
+		if (0 != access(g_viking_dir.toUtf8().constData(), F_OK)) {
+			if (g_mkdir(g_viking_dir.toUtf8().constData(), 0755) != 0) {
+				qDebug() << "WW" PREFIX << "Failed to create directory" << g_viking_dir;
 			}
 		}
 	}
-	return QDir::toNativeSeparators(QString(viking_dir));
+	return QDir::toNativeSeparators(g_viking_dir);
 }
 
 
@@ -100,11 +107,11 @@ QString SlavGPS::get_viking_dir(void)
 
 QString SlavGPS::get_viking_data_home()
 {
-	char const * xdg_data_home = g_getenv("XDG_DATA_HOME");
-	if (xdg_data_home) {
-		return QDir::toNativeSeparators(QString(xdg_data_home)) + QDir::separator() + PACKAGE;
-	} else {
+	const QString xdg_data_home = QString::fromLocal8Bit(qgetenv("XDG_DATA_HOME"));
+	if (xdg_data_home.isEmpty()) {
 		return QString("");
+	} else {
+		return QDir::toNativeSeparators(xdg_data_home) + QDir::separator() + PACKAGE;
 	}
 }
 
@@ -112,7 +119,7 @@ QString SlavGPS::get_viking_data_home()
 
 
 /**
- * a_get_viking_data_path:
+ * get_viking_data_path:
  *
  * Retrieves the configuration path.
  *
@@ -123,18 +130,18 @@ char ** SlavGPS::get_viking_data_path()
 #ifdef WINDOWS
 	/* Try to use from the install directory - normally the working directory of Viking is where ever it's install location is. */
 	char const * xdg_data_dirs = "./data";
-	//const char *xdg_data_dirs = g_strdup( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE);
+	//const char *xdg_data_dirs = g_strdup( "%s/%s/data", qgetenv("ProgramFiles"), PACKAGE);
 #else
-	char const * xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
+	QString xdg_data_dirs = qgetenv("XDG_DATA_DIRS");
 #endif
-	if (xdg_data_dirs == NULL) {
+	if (xdg_data_dirs.isEmpty()) {
 		/* Default value specified in
 		   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
 		*/
 		xdg_data_dirs = "/usr/local/share/:/usr/share/";
 	}
 
-	char ** data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
+	char ** data_path = g_strsplit(xdg_data_dirs.toUtf8().constData(), G_SEARCHPATH_SEPARATOR_S, 0);
 
 #ifndef WINDOWS
 	/* Append the viking dir. */

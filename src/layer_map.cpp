@@ -514,9 +514,9 @@ const QString & maps_layer_default_dir(void)
 	if (default_dir.isEmpty()) {
 
 		/* Thanks to Mike Davison for the $VIKING_MAPS usage. */
-		const char * mapdir = g_getenv("VIKING_MAPS");
-		if (mapdir) {
-			default_dir = QString(mapdir);
+		const QString mapdir = qgetenv("VIKING_MAPS");
+		if (!mapdir.isEmpty()) {
+			default_dir = mapdir;
 		} else if (0 == access(GLOBAL_MAPS_DIR, W_OK)) {
 			default_dir = QString(GLOBAL_MAPS_DIR);
 		} else {

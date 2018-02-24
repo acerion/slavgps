@@ -68,17 +68,15 @@ using namespace SlavGPS;
 
 
 
-static Geoname * copy_geoname(Geoname * src)
+Geoname::Geoname(const Geoname & geoname) : Geoname()
 {
-	Geoname * dest = new Geoname();
-	dest->name = src->name;
-	dest->feature = src->feature;
-	dest->ll.lat = src->ll.lat;
-	dest->ll.lon = src->ll.lon;
-	dest->elevation = src->elevation;
-	dest->comment = src->comment;
-	dest->desc = src->desc;
-	return dest;
+	this->name      = geoname.name;
+	this->feature   = geoname.feature;
+	this->ll.lat    = geoname.ll.lat;
+	this->ll.lon    = geoname.ll.lon;
+	this->elevation = geoname.elevation;
+	this->comment   = geoname.comment;
+	this->desc      = geoname.desc;
 }
 
 
@@ -125,8 +123,8 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	char lat_buf[32] = { 0 };
 	char lon_buf[32] = { 0 };
 	char elev_buf[32] = { 0 };
-	char * wikipedia_url = NULL;
-	char * thumbnail_url = NULL;
+	QString wikipedia_url;
+	QString thumbnail_url;
 
 	GMappedFile * mf = NULL;
 	if ((mf = g_mapped_file_new(file.fileName().toUtf8().constData(), false, NULL)) == NULL) {
@@ -145,7 +143,7 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	int entry_runner = 0;
 	char * entry = found_entries[entry_runner];
 	char * pat = NULL;
-	char * s = NULL;
+	char * substring = NULL;
 	int fragment_len;
 	while (entry) {
 		more = true;
@@ -153,25 +151,25 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
 			pat += strlen(GEONAMES_FEATURE_PATTERN);
 			fragment_len = 0;
-			s = pat;
+			substring = pat;
 			while (*pat != '"') {
 				fragment_len++;
 				pat++;
 			}
-			geoname->feature = g_strndup(s, fragment_len);
+			geoname->feature = QString(substring).left(fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LONGITUDE_PATTERN)) == NULL) {
 			more = false;
 		} else {
 			pat += strlen(GEONAMES_LONGITUDE_PATTERN);
-			s = lon_buf;
+			substring = lon_buf;
 			if (*pat == '-')
-				*s++ = *pat++;
-			while ((s < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
+				*substring++ = *pat++;
+			while ((substring < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
 			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*s++ = *pat++;
+				*substring++ = *pat++;
 			}
-			*s = '\0';
+			*substring = '\0';
 			if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
 				more = false;
 			}
@@ -179,72 +177,72 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_ELEVATION_PATTERN))) {
 			pat += strlen(GEONAMES_ELEVATION_PATTERN);
-			s = elev_buf;
+			substring = elev_buf;
 			if (*pat == '-') {
-				*s++ = *pat++;
+				*substring++ = *pat++;
 			}
-			while ((s < (elev_buf + sizeof(elev_buf))) && (pat < (text + len)) &&
+			while ((substring < (elev_buf + sizeof(elev_buf))) && (pat < (text + len)) &&
 			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*s++ = *pat++;
+				*substring++ = *pat++;
 			}
-			*s = '\0';
+			*substring = '\0';
 			geoname->elevation = SGUtils::c_to_double(elev_buf);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_NAME_PATTERN))) {
 			pat += strlen(GEONAMES_NAME_PATTERN);
 			fragment_len = 0;
-			s = pat;
+			substring = pat;
 			while (*pat != '"') {
 				fragment_len++;
 				pat++;
 			}
-			geoname->name = g_strndup(s, fragment_len);
+			geoname->name = QString(substring).left(fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_TITLE_PATTERN))) {
 			pat += strlen(GEONAMES_TITLE_PATTERN);
 			fragment_len = 0;
-			s = pat;
+			substring = pat;
 			while (*pat != '"') {
 				fragment_len++;
 				pat++;
 			}
-			geoname->name = g_strndup(s, fragment_len);
+			geoname->name = QString(substring).left(fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_WIKIPEDIAURL_PATTERN))) {
 			pat += strlen(GEONAMES_WIKIPEDIAURL_PATTERN);
 			fragment_len = 0;
-			s = pat;
+			substring = pat;
 			while (*pat != '"') {
 				fragment_len++;
 				pat++;
 			}
-			wikipedia_url = g_strndup(s, fragment_len);
+			wikipedia_url = QString(substring).left(fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_THUMBNAILIMG_PATTERN))) {
 			pat += strlen(GEONAMES_THUMBNAILIMG_PATTERN);
 			fragment_len = 0;
-			s = pat;
+			substring = pat;
 			while (*pat != '"') {
 				fragment_len++;
 				pat++;
 			}
-			thumbnail_url = g_strndup(s, fragment_len);
+			thumbnail_url = QString(substring).left(fragment_len);
 		}
 		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LATITUDE_PATTERN)) == NULL) {
 			more = false;
 		} else {
 			pat += strlen(GEONAMES_LATITUDE_PATTERN);
-			s = lat_buf;
+			substring = lat_buf;
 			if (*pat == '-') {
-				*s++ = *pat++;
+				*substring++ = *pat++;
 			}
 
-			while ((s < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
+			while ((substring < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
 			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*s++ = *pat++;
+				*substring++ = *pat++;
 			}
 
-			*s = '\0';
+			*substring = '\0';
 			if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
 				more = false;
 			}
@@ -255,23 +253,20 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 				free(geoname);
 			}
 		} else {
-			if (wikipedia_url) {
+			if (!wikipedia_url.isEmpty()) {
 				/* Really we should support the GPX URL tag and then put that in there... */
 				geoname->comment = QString("http://%1").arg(wikipedia_url);
-				if (thumbnail_url) {
+				if (!thumbnail_url.isEmpty()) {
 					geoname->desc = QString("<a href=\"http://%1\" target=\"_blank\"><img src=\"%2\" border=\"0\"/></a>").arg(wikipedia_url).arg(thumbnail_url);
 				} else {
 					geoname->desc = QString("<a href=\"http://%1\" target=\"_blank\">%2</a>").arg(wikipedia_url).arg(geoname->name);
 				}
 			}
-			if (wikipedia_url) {
-				free(wikipedia_url);
-				wikipedia_url = NULL;
-			}
-			if (thumbnail_url) {
-				free(thumbnail_url);
-				thumbnail_url = NULL;
-			}
+
+			/* Reset. */
+			wikipedia_url = "";
+			thumbnail_url = "";
+
 			found_places.push_front(geoname);
 		}
 		entry_runner++;

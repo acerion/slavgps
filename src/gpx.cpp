@@ -283,7 +283,7 @@ static bool set_c_ll(char const ** attr)
 
 
 
-static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
+static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 {
 	static const char *tmp;
 
@@ -298,10 +298,10 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 		break;
 
 	case tt_wpt:
-		if (set_c_ll(attr)) {
+		if (set_c_ll(attributes)) {
 			c_wp = new Waypoint();
 			c_wp->visible = true;
-			if (get_attr(attr, "hidden")) {
+			if (get_attr(attributes, "hidden")) {
 				c_wp->visible = false;
 			}
 
@@ -314,7 +314,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 		c_tr = new Track(current_tag == tt_rte);
 		c_tr->set_defaults();
 		c_tr->visible = true;
-		if (get_attr(attr, "hidden"))
+		if (get_attr(attributes, "hidden"))
 			c_tr->visible = false;
 		break;
 
@@ -323,7 +323,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 		break;
 
 	case tt_trk_trkseg_trkpt:
-		if (set_c_ll(attr)) {
+		if (set_c_ll(attributes)) {
 			c_tp = new Trackpoint();
 			c_tp->coord = Coord(c_ll, trw->get_coord_mode());
 			if (f_tr_newseg) {
@@ -365,13 +365,13 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 		break;
 
 	case tt_waypoint_coord:
-		if (set_c_ll(attr)) {
+		if (set_c_ll(attributes)) {
 			c_wp->coord = Coord(c_ll, trw->get_coord_mode());
 		}
 		break;
 
 	case tt_waypoint_name:
-		if ((tmp = get_attr(attr, "id"))) {
+		if ((tmp = get_attr(attributes, "id"))) {
 			if (c_wp_name) {
 				free(c_wp_name);
 			}

@@ -62,6 +62,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": VikUtils:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -991,14 +996,15 @@ bool SGUtils::is_very_first_run(void)
 		return vik_very_first_run;
 	}
 
-	char * dir = get_viking_dir_no_create();
+	const QString dir = get_viking_dir_no_create();
 	/* NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking. */
-	if (dir) {
-		/* If directory exists - Viking has been run before. */
-		vik_very_first_run = (0 != access(dir, F_OK));
-		free(dir);
-	} else {
+	if (dir.isEmpty()) {
+		qDebug() << "II" PREFIX << "Viking dir is non-existent";
 		vik_very_first_run = true;
+	} else {
+		/* If directory exists - Viking has been run before. */
+		vik_very_first_run = (0 != access(dir.toUtf8().constData(), F_OK));
+		qDebug() << "II" PREFIX << "is Viking dir" << dir << "non-accessible?" << vik_very_first_run;
 	}
 	vik_very_first_run_known = true;
 

@@ -160,14 +160,9 @@ OsmTracesInfo::~OsmTracesInfo()
 
 
 
-static const char *get_default_user()
+static QString get_default_user(void)
 {
-	const char *default_user = NULL;
-
-	/* Retrieve "standard" EMAIL varenv. */
-	default_user = g_getenv("EMAIL");
-
-	return default_user;
+	return qgetenv("EMAIL");
 }
 
 
@@ -396,7 +391,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 
 void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
-	const char *default_user = get_default_user();
+	const QString default_user = get_default_user();
 	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username").val_string;
 	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password").val_string;
 
@@ -405,8 +400,8 @@ void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & p
 		user_entry.setText(osm_user);
 	} else if (!pref_user.isEmpty()) {
 		user_entry.setText(pref_user);
-	} else if (default_user != NULL) {
-		user_entry.setText(QString(default_user));
+	} else if (!default_user.isEmpty()) {
+		user_entry.setText(default_user);
 	}
 
 	if (!osm_password.isEmpty()) {

@@ -43,7 +43,7 @@ namespace SlavGPS {
 	*/
 	QString get_viking_dir(void);
 
-	char * get_viking_dir_no_create();
+	QString get_viking_dir_no_create();
 	char ** get_viking_data_path();
 
 	/**

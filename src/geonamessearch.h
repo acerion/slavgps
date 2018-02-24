@@ -48,6 +48,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		Geoname() {};
+		Geoname(const Geoname & geoname);
 		~Geoname() {};
 
 		QString name;

@@ -554,7 +554,7 @@ static void toolbar_reload(VikToolbar *vtb,
 		vtb->merge_id = gtk_ui_manager_add_ui_from_string(vtb->uim, markup, -1, &error);
 	} else {
 		/* Load the toolbar UI XML file from disk.
-		   Consider using a_get_viking_data_path() first. */
+		   Consider using get_viking_data_path() first. */
 		const QString full_path = get_viking_dir() + QDir::separator() + "ui_toolbar.xml";
 		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, full_path.toUtf8().constData(), &error);
 	}

@@ -47,6 +47,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Preferences:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 static std::vector<SGLabelID> params_degree_formats = {
 	SGLabelID("DDD", (int) DegreeFormat::DDD),
 	SGLabelID("DMM", (int) DegreeFormat::DMM),
@@ -250,17 +255,21 @@ static param_id_t preferences_group_key_to_group_id(const QString & key)
 static bool preferences_load_from_file()
 {
 	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
-	FILE * file = fopen(full_path.toUtf8().constData(), "r");
-
-	if (!file) {
+	QFile file(full_path);
+	if (!file.exists()) {
+		qDebug() << "EE" PREFIX << "failed to create file" << full_path << file.error();
+		return false;
+	}
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "EE" PREFIX << "failed to open file" << full_path << file.error();
 		return false;
 	}
 
 	char buf[4096];
 	QString key;
 	QString val;
-	while (!feof(file)) {
-		if (fgets(buf,sizeof (buf), file) == NULL) {
+	while (!file.atEnd()) {
+		if (0 >= file.readLine(buf, sizeof (buf))) {
 			break;
 		}
 		if (Util::split_string_from_file_on_equals(QString(buf), key, val)) {
@@ -285,8 +294,8 @@ static bool preferences_load_from_file()
 			/* Change value. */
 		}
 	}
-	fclose(file);
-	file = NULL;
+
+	/* ~QFile() closes the file if necessary. */
 
 	return true;
 }

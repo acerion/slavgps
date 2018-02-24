@@ -140,17 +140,17 @@ ProcessOptions * DataSourceMyOSMDialog::get_process_options(DownloadOptions & dl
 
 
 
-typedef enum {
-	tt_unknown = 0,
-	tt_osm,
-	tt_gpx_file,
-	tt_gpx_file_desc,
-	tt_gpx_file_tag,
-} xtag_type;
+enum class XTagID {
+	Unknown = 0,
+	OSM,
+	GPXFile,
+	GPXFileDesc,
+	GPXFileTag,
+};
 
 typedef struct {
-	xtag_type tag_type;              /* enum from above for this tag. */
-	const char *tag_name;            /* xpath-ish tag name. */
+	XTagID tag_id;
+	const QString tag_name;     /* xpath-ish tag name. */
 } xtag_mapping;
 
 class SlavGPS::GPXMetaData {
@@ -223,7 +223,7 @@ static GPXMetaData * copy_gpx_meta_data_t(GPXMetaData * src)
 typedef struct {
 	//GString *xpath;
 	GString *c_cdata;
-	xtag_type current_tag;
+	XTagID current_tag_id;
 	GPXMetaData * current_gpx_meta_data = NULL;
 	std::list<GPXMetaData *> list_of_gpx_meta_data;
 } xml_data;
@@ -248,30 +248,29 @@ static const char *get_attr(const char **attr, const char *key)
 
 /* ATM don't care about actual path as tags are all unique. */
 static xtag_mapping xtag_path_map[] = {
-	{ tt_osm,           "osm" },
-	{ tt_gpx_file,      "gpx_file" },
-	{ tt_gpx_file_desc, "description" },
-	{ tt_gpx_file_tag,  "tag" },
+	{ XTagID::OSM,           "osm" },
+	{ XTagID::GPXFile,      "gpx_file" },
+	{ XTagID::GPXFileDesc, "description" },
+	{ XTagID::GPXFileTag,  "tag" },
 };
 
 
 
 
-static xtag_type get_tag(const char *t)
+static XTagID get_tag_id(const QString & tag_name)
 {
-	xtag_mapping *tm;
-	for (tm = xtag_path_map; tm->tag_type != 0; tm++) {
-		if (0 == strcmp(tm->tag_name, t)) {
-			return tm->tag_type;
+	for (xtag_mapping * tm = xtag_path_map; tm->tag_id != XTagID::Unknown; tm++) {
+		if (tm->tag_name == tag_name) {
+			return tm->tag_id;
 		}
 	}
-	return tt_unknown;
+	return XTagID::Unknown;
 }
 
 
 
 
-static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
+static void gpx_meta_data_start(xml_data * xd, const char * element, const char ** attributes)
 {
 	const char *tmp;
 	char buf[G_ASCII_DTOSTR_BUF_SIZE];
@@ -279,46 +278,46 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 
 	/* Don't need to build a path - we can use the tag directly. */
 	// g_string_append_c(xd->xpath, '/');
-	// g_string_append(xd->xpath, el);
-	// xd->current_tag = get_tag(xd->xpath->str);
-	xd->current_tag = get_tag (el);
-	switch (xd->current_tag) {
-	case tt_gpx_file:
+	// g_string_append(xd->xpath, element);
+	// xd->current_tag_id = get_tag_id(xd->xpath->str);
+	xd->current_tag_id = get_tag_id(element);
+	switch (xd->current_tag_id) {
+	case XTagID::GPXFile:
 		if (xd->current_gpx_meta_data) {
 			delete xd->current_gpx_meta_data;
 		}
 		xd->current_gpx_meta_data = new GPXMetaData();
 
-		if ((tmp = get_attr(attr, "id"))) {
+		if ((tmp = get_attr(attributes, "id"))) {
 			xd->current_gpx_meta_data->id = atoi(tmp);
 		}
 
-		if ((tmp = get_attr(attr, "name"))) {
-			xd->current_gpx_meta_data->name = g_strdup(tmp);
+		if ((tmp = get_attr(attributes, "name"))) {
+			xd->current_gpx_meta_data->name = tmp;
 		}
 
-		if ((tmp = get_attr (attr, "lat"))) {
+		if ((tmp = get_attr(attributes, "lat"))) {
 			g_strlcpy (buf, tmp, sizeof (buf));
 			xd->current_gpx_meta_data->ll.lat = SGUtils::c_to_double(buf);
 		}
 
-		if ((tmp = get_attr(attr, "lon"))) {
+		if ((tmp = get_attr(attributes, "lon"))) {
 			g_strlcpy(buf, tmp, sizeof (buf));
 			xd->current_gpx_meta_data->ll.lon = SGUtils::c_to_double(buf);
 		}
 
-		if ((tmp = get_attr(attr, "visibility"))) {
+		if ((tmp = get_attr(attributes, "visibility"))) {
 			xd->current_gpx_meta_data->visibility = tmp;
 		}
 
-		if ((tmp = get_attr(attr, "timestamp"))) {
+		if ((tmp = get_attr(attributes, "timestamp"))) {
 			xd->current_gpx_meta_data->timestamp = g_strdup(tmp);
 		}
 
 		g_string_erase(xd->c_cdata, 0, -1); /* Clear the cdata buffer. */
 		break;
-	case tt_gpx_file_desc:
-	case tt_gpx_file_tag:
+	case XTagID::GPXFileDesc:
+	case XTagID::GPXFileTag:
 		g_string_erase(xd->c_cdata, 0, -1); /* Clear the cdata buffer. */
 		break;
 	default:
@@ -330,12 +329,12 @@ static void gpx_meta_data_start(xml_data *xd, const char *el, const char **attr)
 
 
 
-static void gpx_meta_data_end(xml_data *xd, const char *el)
+static void gpx_meta_data_end(xml_data *xd, const char * element)
 {
-	// g_string_truncate(xd->xpath, xd->xpath->len - strlen(el) - 1);
+	// g_string_truncate(xd->xpath, xd->xpath->len - strlen(element) - 1);
 	// switch (xd->current_tag) {
-	switch (get_tag(el)) {
-	case tt_gpx_file: {
+	switch (get_tag_id(element)) {
+	case XTagID::GPXFile: {
 		/* End of the individual file metadata, thus save what we have read in to the list.
 		   Copy it so we can reference it. */
 		GPXMetaData * current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
@@ -344,7 +343,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
 	}
-	case tt_gpx_file_desc:
+	case XTagID::GPXFileDesc:
 		/* Store the description: */
 		if (xd->current_gpx_meta_data) {
 			/* NB Limit description size as it's displayed on a single line.
@@ -353,7 +352,7 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 		}
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
-	case tt_gpx_file_tag:
+	case XTagID::GPXFileTag:
 		/* One day do something with this... */
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
@@ -365,11 +364,11 @@ static void gpx_meta_data_end(xml_data *xd, const char *el)
 
 
 
-static void gpx_meta_data_cdata(xml_data *xd, const XML_Char *s, int len)
+static void gpx_meta_data_cdata(xml_data * xd, const XML_Char *s, int len)
 {
-	switch (xd->current_tag) {
-	case tt_gpx_file_desc:
-	case tt_gpx_file_tag:
+	switch (xd->current_tag_id) {
+	case XTagID::GPXFileDesc:
+	case XTagID::GPXFileTag:
 		g_string_append_len(xd->c_cdata, s, len);
 		break;
 	default:
@@ -596,7 +595,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
 	//xd->xpath = g_string_new ("");
 	xd->c_cdata = g_string_new ("");
-	xd->current_tag = tt_unknown;
+	xd->current_tag_id = XTagID::Unknown;
 	xd->current_gpx_meta_data = new GPXMetaData();
 	xd->list_of_gpx_meta_data.clear();
 

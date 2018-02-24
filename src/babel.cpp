@@ -64,6 +64,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Babel:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /* TODO in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
@@ -569,51 +574,34 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 	if (!line_buffer) {
 		return;
 	}
-	char * line = (char *) line_buffer;
+	const QString line = QString((char *) line_buffer);
 
-	char **tokens = g_strsplit(line, "\t", 0);
-	if (tokens == NULL) {
-		qDebug() << "WW: Babel: Unexpected gpsbabel feature string" << line;
+	QStringList tokens = line.split('\t', QString::KeepEmptyParts);
+	if (tokens.size() == 0) {
+		qDebug() << "WW" PREFIX << "Unexpected gpsbabel feature string" << line;
 		return;
 	}
 
-	if (tokens[0] == NULL) {
-		qDebug() << "WW: Babel: Unexpected gpsbabel feature tokens" << line;
-		g_strfreev(tokens);
-		return;
-	}
-
-	if (0 == strcmp("serial", tokens[0])) {
-		if (tokens[1] != NULL
-		    && tokens[2] != NULL
-		    && tokens[3] != NULL
-		    && tokens[4] != NULL) {
-
-			BabelDevice * device = new BabelDevice(tokens[1], tokens[2], tokens[4]);
-			Babel::devices.push_back(device);
-
-
+	if ("serial" == tokens.at(0)) {
+		if (tokens.size() != 6) {
+			qDebug() << "WW" PREFIX << "Unexpected gpsbabel feature string" << line;
 		} else {
-			qDebug() << "WW: Babel: Unexpected gpsbabel feature string" << line;
+			BabelDevice * device = new BabelDevice(tokens.at(1), tokens.at(2), tokens.at(4));
+			Babel::devices.push_back(device);
 		}
-	} else if (0 == strcmp("file", tokens[0])) {
-		if (tokens[1] != NULL
-		    && tokens[2] != NULL
-		    && tokens[3] != NULL
-		    && tokens[4] != NULL) {
 
-			BabelFileType * file_type = new BabelFileType(tokens[1], tokens[2], tokens[3], tokens[4]);
+	} else if ("file" == tokens.at(0)) {
+		if (tokens.size() != 6) {
+			qDebug() << "WW" PREFIX << "Unexpected gpsbabel format string" << line;
+		} else {
+			BabelFileType * file_type = new BabelFileType(tokens.at(1), tokens.at(2), tokens.at(3), tokens.at(4));
 			Babel::file_types.insert({{ file_type_id, file_type }});
 
 			file_type_id++;
-		} else {
-			qDebug() << "WW: Babel: Unexpected gpsbabel format string" << line;
 		}
 	} else {
 		/* Ignore. */
 	}
-
-	g_strfreev(tokens);
 
 	return;
 }

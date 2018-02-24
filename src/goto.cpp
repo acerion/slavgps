@@ -52,6 +52,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": GoTo:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 static int last_goto_idx = -1;
 static QString last_location;
 static Coord * last_coord = NULL;
@@ -371,7 +376,8 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 	char *pat;
 	char *ss;
 	int fragment_len;
-	char *country = NULL;
+	QString country;
+
 	if ((pat = g_strstr_len(text, len, HOSTIP_COUNTRY_PATTERN))) {
 		pat += strlen(HOSTIP_COUNTRY_PATTERN);
 		fragment_len = 0;
@@ -380,10 +386,10 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			fragment_len++;
 			pat++;
 		}
-		country = g_strndup(ss, fragment_len);
+		country = QString(ss).left(fragment_len);
 	}
 
-	char *city = NULL;
+	QString city;
 	if ((pat = g_strstr_len(text, len, HOSTIP_CITY_PATTERN))) {
 		pat += strlen(HOSTIP_CITY_PATTERN);
 		fragment_len = 0;
@@ -392,7 +398,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			fragment_len++;
 			pat++;
 		}
-		city = g_strndup(ss, fragment_len);
+		city = QString(ss).left(fragment_len);
 	}
 
 	char lat_buf[32] = { 0 };
@@ -446,9 +452,9 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 		   Portsmouth, Viginia, USA. */
 
 		/* Try city name lookup. */
-		if (city) {
-			fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city);
-			if (strcmp(city, "(Unknown city)") != 0) {
+		if (!city.isEmpty()) {
+			qDebug() << "DD" PREFIX << "found city" << city;
+			if (city != "(Unknown city)") {
 				Coord new_center;
 				if (get_coordinate_of(viewport, city, &new_center)) {
 					/* Got something. */
@@ -461,9 +467,9 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 		}
 
 		/* Try country name lookup. */
-		if (country) {
-			fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country);
-			if (strcmp(country, "(Unknown Country)") != 0) {
+		if (!country.isEmpty()) {
+			qDebug() << "DD" PREFIX << "found country" << country;
+			if (country != "(Unknown Country)") {
 				Coord new_center;
 				if (get_coordinate_of(viewport, country, &new_center)) {
 					/* Finally got something. */
