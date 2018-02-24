@@ -59,11 +59,6 @@ using namespace SlavGPS;
 /* Hopefully image_filename will not break the XML file tag structure. */
 static char * doc_kml_str(const QString & file_name, const char * image_filename, double north, double south, double east, double west)
 {
-	char *tmp_n = a_coords_dtostr(north);
-	char *tmp_s = a_coords_dtostr(south);
-	char *tmp_e = a_coords_dtostr(east);
-	char *tmp_w = a_coords_dtostr(west);
-
 	char *doc_kml = g_strdup_printf(
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n"
@@ -81,12 +76,11 @@ static char * doc_kml_str(const QString & file_name, const char * image_filename
 		"  </LatLonBox>\n"
 		"</GroundOverlay>\n"
 		"</kml>\n",
-		file_name.toUtf8().constData(), image_filename, tmp_n, tmp_s, tmp_e, tmp_w);
-
-	free(tmp_n);
-	free(tmp_s);
-	free(tmp_e);
-	free(tmp_w);
+		file_name.toUtf8().constData(), image_filename,
+		SGUtils::double_to_c(north).toUtf8().constData(),
+		SGUtils::double_to_c(south).toUtf8().constData(),
+		SGUtils::double_to_c(east).toUtf8().constData(),
+		SGUtils::double_to_c(west).toUtf8().constData());
 
 	return doc_kml;
 }

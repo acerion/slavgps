@@ -181,11 +181,11 @@ static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
 	double lats, lons;
 	double latm, lonm;
 	double lat, lon;
-	char *s = g_strdup(text);
+	QString s = text;
 
 	//  fprintf(stdout, "parsing %s\n", s);
 
-	int len = strlen(s);
+	int len = s.size();
 #ifdef K
 
 	/* Remove non-digits following digits; gets rid of degree

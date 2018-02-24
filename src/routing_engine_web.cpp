@@ -177,7 +177,7 @@ static QString substitute_latlon(const QString & fmt, const LatLon & lat_lon)
 {
 	QString string_lat;
 	QString string_lon;
-	CoordUtils::to_strings(string_lat, string_lon, lat_lon);
+	lat_lon.to_strings_raw(string_lat, string_lon);
 
 	const QString result = QString(fmt).arg(string_lat).arg(string_lon);
 	return result;

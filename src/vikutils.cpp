@@ -1075,3 +1075,29 @@ double SGUtils::c_to_double(const QString & string)
 
 	return result;
 }
+
+
+
+
+/**
+   \brief Convert a double to a string in C locale
+
+   Following GPX specifications, decimal values are xsd:decimal
+   So, they must use the period separator, not the localized one.
+
+   This function re-implements glib-based a_coords_dtostr() function
+   from coords.cpp.
+*/
+QString SGUtils::double_to_c(double d, int precision)
+{
+	static QLocale c_locale = QLocale::c();
+	QString result;
+
+	if (d == NAN) {
+		return result;
+	} else {
+		result = c_locale.toString(d, 'f', precision);
+	}
+
+	return result;
+}

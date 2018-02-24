@@ -6,7 +6,6 @@ I (Evan Battaglia <viking@greentorch.org>) have only made some small changes suc
 renaming functions and defining LatLon and UTM structs.
 2004-02-10 -- I also added a function of my own -- a_coords_utm_diff() -- that I felt belonged in coords.c
 2004-02-21 -- I also added UTM::is_equal().
-2005-11-23 -- Added a_coords_dtostr() for lack of a better place.
 
 */
 /* coords.h - include file for coords routines
@@ -110,20 +109,24 @@ QString LatLon::to_string(void) const
 
 
 
-/**
- * Convert a double to a string WITHOUT LOCALE.
- *
- * Following GPX specifications, decimal values are xsd:decimal
- * So, they must use the period separator, not the localized one.
- *
- * The returned value must be freed by g_free.
- */
-char *a_coords_dtostr ( double d )
+/*
+  \brief Convert values from LatLon class to a pair of strings in C locale
+
+  Strings will have a non-localized, regular dot as a separator
+  between integer part and fractional part.
+*/
+void LatLon::to_strings_raw(QString & lat_string, QString & lon_string) const
 {
-  char *buffer = (char *) malloc(G_ASCII_DTOSTR_BUF_SIZE * sizeof (char));
-  g_ascii_dtostr (buffer, G_ASCII_DTOSTR_BUF_SIZE, (double) d);
-  return buffer;
+	static QLocale c_locale = QLocale::c();
+
+	lat_string = c_locale.toString(this->lat, 'f', SG_PRECISION_LATITUDE);
+	lon_string = c_locale.toString(this->lon, 'f', SG_PRECISION_LONGITUDE);
+
+	return;
 }
+
+
+
 
 #define PIOVER180 0.01745329252
 
@@ -348,7 +351,6 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 	lon = convert_lon_dec_to_ddd(lat_lon.lon);
 #endif
 }
-
 
 
 

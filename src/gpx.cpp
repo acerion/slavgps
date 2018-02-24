@@ -865,15 +865,10 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 	FILE *f = context->file;
 	char *tmp;
-	static LatLon ll = wp->coord.get_latlon();
-	char * s_lat = a_coords_dtostr(ll.lat);
-	char * s_lon = a_coords_dtostr(ll.lon);
+	static LatLon lat_lon = wp->coord.get_latlon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
-	fprintf(f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n",
-		 s_lat, s_lon, wp->visible ? "" : " hidden=\"hidden\"");
-	free(s_lat);
-	free(s_lon);
+	fprintf(f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->visible ? "" : " hidden=\"hidden\"");
 
 	/* Sanity clause. */
 	if (wp->name.isEmpty()) {
@@ -886,9 +881,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	free(tmp);
 
 	if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
-		tmp = a_coords_dtostr(wp->altitude);
-		fprintf(f, "  <ele>%s</ele>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <ele>%s</ele>\n", SGUtils::double_to_c(wp->altitude).toUtf8().constData());
 	}
 
 	if (wp->has_timestamp) {
@@ -956,20 +949,15 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 {
 	FILE * f = context->file;
 
-	char *s_alt, *s_dop;
 	char *time_iso8601;
-	static LatLon ll = tp->coord.get_latlon();
 
 	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {
 		fprintf(f, "  </trkseg>\n  <trkseg>\n");
 	}
 
-	char * s_lat = a_coords_dtostr(ll.lat);
-	char * s_lon = a_coords_dtostr(ll.lon);
-	fprintf(f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", s_lat, s_lon);
-	free(s_lat); s_lat = NULL;
-	free(s_lon); s_lon = NULL;
+	static LatLon lat_lon = tp->coord.get_latlon();
+	fprintf(f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
 		char *s_name = entitize(tp->name);
@@ -977,16 +965,15 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 		free(s_name);
 	}
 
-	s_alt = NULL;
+	QString s_alt;
 	if (tp->altitude != VIK_DEFAULT_ALTITUDE) {
-		s_alt = a_coords_dtostr(tp->altitude);
+		s_alt = SGUtils::double_to_c(tp->altitude);
 	} else if (context->options != NULL && context->options->force_ele) {
-		s_alt = a_coords_dtostr(0);
+		s_alt = SGUtils::double_to_c(0);
 	}
-	if (s_alt != NULL) {
-		fprintf(f, "    <ele>%s</ele>\n", s_alt);
+	if (!s_alt.isEmpty()) {
+		fprintf(f, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());
 	}
-	free(s_alt); s_alt = NULL;
 
 	time_iso8601 = NULL;
 	if (tp->has_timestamp) {
@@ -1008,14 +995,10 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	time_iso8601 = NULL;
 
 	if (!std::isnan(tp->course)) {
-		char *s_course = a_coords_dtostr(tp->course);
-		fprintf(f, "    <course>%s</course>\n", s_course);
-		free(s_course);
+		fprintf(f, "    <course>%s</course>\n", SGUtils::double_to_c(tp->course).toUtf8().constData());
 	}
 	if (!std::isnan(tp->speed)) {
-		char *s_speed = a_coords_dtostr(tp->speed);
-		fprintf(f, "    <speed>%s</speed>\n", s_speed);
-		free(s_speed);
+		fprintf(f, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());
 	}
 	if (tp->fix_mode == GPSFixMode::FIX_2D) {
 		fprintf(f, "    <fix>2d</fix>\n");
@@ -1033,31 +1016,28 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 		fprintf(f, "    <sat>%d</sat>\n", tp->nsats);
 	}
 
-	s_dop = NULL;
+	QString s_dop;
+
 	if (tp->hdop != VIK_DEFAULT_DOP) {
-		s_dop = a_coords_dtostr(tp->hdop);
+		s_dop = SGUtils::double_to_c(tp->hdop);
+		if (!s_dop.isEmpty()) {
+			fprintf(f, "    <hdop>%s</hdop>\n", s_dop.toUtf8().constData());
+		}
 	}
-	if (s_dop != NULL) {
-		fprintf(f, "    <hdop>%s</hdop>\n", s_dop);
-	}
-	free(s_dop); s_dop = NULL;
 
 	if (tp->vdop != VIK_DEFAULT_DOP) {
-		s_dop = a_coords_dtostr(tp->vdop);
+		s_dop = SGUtils::double_to_c(tp->vdop);
+		if (!s_dop.isEmpty()) {
+			fprintf(f, "    <vdop>%s</vdop>\n", s_dop.toUtf8().constData());
+		}
 	}
-	if (s_dop != NULL) {
-		fprintf(f, "    <vdop>%s</vdop>\n", s_dop);
-	}
-	free(s_dop);
-	s_dop = NULL;
 
 	if (tp->pdop != VIK_DEFAULT_DOP) {
-		s_dop = a_coords_dtostr(tp->pdop);
+		s_dop = SGUtils::double_to_c(tp->pdop);
+		if (!s_dop.isEmpty() != NULL) {
+			fprintf(f, "    <pdop>%s</pdop>\n", s_dop.toUtf8().constData());
+		}
 	}
-	if (s_dop != NULL) {
-		fprintf(f, "    <pdop>%s</pdop>\n", s_dop);
-	}
-	free(s_dop); s_dop = NULL;
 
 	fprintf(f, "  </%spt>\n", (context->options && context->options->is_route) ? "rte" : "trk");
 }

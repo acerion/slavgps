@@ -256,11 +256,11 @@ WebToolDatasource::~WebToolDatasource()
 QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 {
 	/* Center values. */
-	const LatLon ll = a_viewport->get_center()->get_latlon();
+	const LatLon lat_lon = a_viewport->get_center()->get_latlon();
 
 	QString center_lat;
 	QString center_lon;
-	CoordUtils::to_strings(center_lat, center_lon, ll);
+	lat_lon.to_strings_raw(center_lat, center_lon);
 
 	uint8_t zoom_level = 17; /* A zoomed in default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */

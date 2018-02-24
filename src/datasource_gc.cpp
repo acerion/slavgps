@@ -260,10 +260,6 @@ ProcessOptions * DataSourceGCDialog::get_process_options(DownloadOptions & dl_op
 		lon = Preferences::get_default_lon();
 	}
 
-	/* Convert double as string in C locale. */
-	char * slat = a_coords_dtostr(lat);
-	char * slon = a_coords_dtostr(lon);
-
 	/* Unix specific shell commands
 	   1. Remove geocache webpages (maybe be from different location).
 	   2, Gets upto n geocaches as webpages for the specified user in radius r Miles.
@@ -276,13 +272,12 @@ ProcessOptions * DataSourceGCDialog::get_process_options(DownloadOptions & dl_op
 					    this->miles_radius_spin.value(),
 					    safe_user,
 					    safe_pass,
-					    slat, slon,
+					    SGUtils::double_to_c(lat).toUtf8().constData(),
+					    SGUtils::double_to_c(lon).toUtf8().constData(),
 					    GC_PROGRAM2);
 	//free(safe_string);
 	free(safe_user);
 	free(safe_pass);
-	free(slat);
-	free(slon);
 
 	return po;
 }

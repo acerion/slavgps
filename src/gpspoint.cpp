@@ -747,19 +747,13 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			continue;
 		}
 
-		static LatLon ll = wp->coord.get_latlon();
-		char * s_lat = a_coords_dtostr(ll.lat);
-		char * s_lon = a_coords_dtostr(ll.lon);
+		static LatLon lat_lon = wp->coord.get_latlon();
 		char * tmp_name = slashdup(wp->name);
-		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name);
+		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);
-		free(s_lat);
-		free(s_lon);
 
 		if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
-			char * s_alt = a_coords_dtostr(wp->altitude);
-			fprintf(file, " altitude=\"%s\"", s_alt);
-			free(s_alt);
+			fprintf(file, " altitude=\"%s\"", SGUtils::double_to_c(wp->altitude).toUtf8().constData());
 		}
 		if (wp->has_timestamp) {
 			fprintf(file, " unixtime=\"%ld\"", wp->timestamp);
@@ -825,17 +819,11 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info)
 {
-	static LatLon ll = tp->coord.get_latlon();
+	static LatLon lat_lon = tp->coord.get_latlon();
 
 	FILE * file = write_info->f;
 
-	/* TODO: modify a_coords_dtostr() to accept (optional) buffer
-	   instead of doing malloc/free every time. */
-	char * s_lat = a_coords_dtostr(ll.lat);
-	char * s_lon = a_coords_dtostr(ll.lon);
-	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon);
-	free(s_lat);
-	free(s_lon);
+	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
 		char * name = slashdup(tp->name);
@@ -844,9 +832,7 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 	}
 
 	if (tp->altitude != VIK_DEFAULT_ALTITUDE) {
-		char * s_alt = a_coords_dtostr(tp->altitude);
-		fprintf(file, " altitude=\"%s\"", s_alt);
-		free(s_alt);
+		fprintf(file, " altitude=\"%s\"", SGUtils::double_to_c(tp->altitude).toUtf8().constData());
 	}
 	if (tp->has_timestamp) {
 		fprintf(file, " unixtime=\"%ld\"", tp->timestamp);
@@ -859,14 +845,10 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 	if (!std::isnan(tp->speed) || !std::isnan(tp->course) || tp->nsats > 0) {
 		fprintf(file, " extended=\"yes\"");
 		if (!std::isnan(tp->speed)) {
-			char * s_speed = a_coords_dtostr(tp->speed);
-			fprintf(file, " speed=\"%s\"", s_speed);
-			free(s_speed);
+			fprintf(file, " speed=\"%s\"", SGUtils::double_to_c(tp->speed).toUtf8().constData());
 		}
 		if (!std::isnan(tp->course)) {
-			char * s_course = a_coords_dtostr(tp->course);
-			fprintf(file, " course=\"%s\"", s_course);
-			free(s_course);
+			fprintf(file, " course=\"%s\"", SGUtils::double_to_c(tp->course).toUtf8().constData());
 		}
 		if (tp->nsats > 0) {
 			fprintf(file, " sat=\"%d\"", tp->nsats);
@@ -877,19 +859,13 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 		}
 
 		if (tp->hdop != VIK_DEFAULT_DOP) {
-			char * ss = a_coords_dtostr(tp->hdop);
-			fprintf(file, " hdop=\"%s\"", ss);
-			free(ss);
+			fprintf(file, " hdop=\"%s\"", SGUtils::double_to_c(tp->hdop).toUtf8().constData());
 		}
 		if (tp->vdop != VIK_DEFAULT_DOP) {
-			char * ss = a_coords_dtostr(tp->vdop);
-			fprintf(file, " vdop=\"%s\"", ss);
-			free(ss);
+			fprintf(file, " vdop=\"%s\"", SGUtils::double_to_c(tp->vdop).toUtf8().constData());
 		}
 		if (tp->pdop != VIK_DEFAULT_DOP) {
-			char * ss = a_coords_dtostr(tp->pdop);
-			fprintf(file, " pdop=\"%s\"", ss);
-			free(ss);
+			fprintf(file, " pdop=\"%s\"", SGUtils::double_to_c(tp->pdop).toUtf8().constData());
 		}
 	}
 	fprintf(file, "\n");

@@ -71,17 +71,18 @@ namespace SlavGPS {
 		double lat;
 		double lon;
 
-		/* Convert to string with DegreeFormat::RAW format. */
+		/* Convert value to string with DegreeFormat::RAW format. */
 		static QString lat_to_string_raw(const LatLon & lat_lon);
 		static QString lon_to_string_raw(const LatLon & lat_lon);
 
-		/* Returns "lat,lon" string. */
+		/* Convert value to "lat,lon" string with DegreeFormat::RAW format for each token in the string. */
 		QString to_string(void) const;
 
-		/**
-		   Convert a LatLon to strings using preferred representation
-		*/
+		/* Convert value to pair of strings using preferred representation. */
 		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
+
+		/* Convert value to strings with DegreeFormat::RAW format. */
+		void to_strings_raw(QString & lat, QString & lon) const;
 
 		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
 
@@ -140,15 +141,6 @@ extern "C" {
 double a_coords_utm_diff(const SlavGPS::UTM * utm1, const SlavGPS::UTM * utm2);
 double a_coords_latlon_diff(const SlavGPS::LatLon & lat_lon_1, const SlavGPS::LatLon & lat_lon_2);
 
-/**
- * Convert a double to a string WITHOUT LOCALE.
- *
- * Following GPX specifications, decimal values are xsd:decimal
- * So, they must use the period separator, not the localized one.
- *
- * The returned value must be freed by g_free.
- */
-char *a_coords_dtostr ( double d );
 
 #ifdef __cplusplus
 }

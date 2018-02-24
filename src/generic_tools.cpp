@@ -342,7 +342,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 		QString lat;
 		QString lon;
-		CoordUtils::to_strings(lat, lon, cursor_coord.get_latlon());
+		cursor_coord.get_latlon().to_strings_raw(lat, lon);
 
 		if (this->has_start_coord) {
 			DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -417,7 +417,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 	QString lat;
 	QString lon;
-	CoordUtils::to_strings(lat, lon, cursor_coord.get_latlon());
+	cursor_coord.get_latlon().to_strings_raw(lat, lon);
 
 	QString msg;
 	DistanceUnit distance_unit = Preferences::get_unit_distance();

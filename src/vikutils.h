@@ -115,6 +115,18 @@ namespace SlavGPS {
 		/* Convert contents of QString representing a double value in C locale into double.
 		   Return std::nan on errors. */
 		static double c_to_double(const QString & string);
+
+		/*
+		  Convert double value into a string representation in
+		  C locale.  Returns empty string if double value is
+		  std::nan or if conversion fails.
+
+		  In some context using dot as a decimal separator is
+		  essential.  E.g in GPX specifications, decimal
+		  values are xsd:decimal, so they must use the period
+		  separator, not the localized one.
+		*/
+		static QString double_to_c(double d, int precision = 6);
 	};
 
 

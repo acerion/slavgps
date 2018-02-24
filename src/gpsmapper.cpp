@@ -110,18 +110,12 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 
 static void write_waypoints(FILE * f, Waypoints & waypoints)
 {
-	static LatLon ll;
-
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
+		Waypoint * wp = i->second;
+		unsigned int len = print_rgn_stuff(wp->comment.toUtf8().constData(), f);
 		if (len) {
-			ll = i->second->coord.get_latlon();
-			char * s_lat = a_coords_dtostr(ll.lat);
-			char * s_lon = a_coords_dtostr(ll.lon);
-			fprintf(f, "Data0=(%s,%s)\n", s_lat, s_lon);
-			free(s_lat);
-			free(s_lon);
-			fprintf(f, "[END-%.5s]\n\n", i->second->comment.toUtf8().constData() + len + 1);
+			fprintf(f, "Data0=(%s)\n", wp->coord.get_latlon().to_string().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
+			fprintf(f, "[END-%.5s]\n\n", wp->comment.toUtf8().constData() + len + 1);
 		}
 	}
 }
@@ -131,12 +125,7 @@ static void write_waypoints(FILE * f, Waypoints & waypoints)
 
 static void write_trackpoint(Trackpoint * tp, FILE * f)
 {
-	static LatLon ll = tp->coord.get_latlon();
-	char * s_lat = a_coords_dtostr(ll.lat);
-	char * s_lon = a_coords_dtostr(ll.lon);
-	fprintf(f, "(%s,%s),", s_lat, s_lon);
-	free(s_lat);
-	free(s_lon);
+	fprintf(f, "(%s),", tp->coord.get_latlon().to_string().toUtf8().constData()); /* "(%s,%s)," */
 }
 
 

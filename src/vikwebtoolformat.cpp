@@ -78,21 +78,21 @@ uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
 QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
-	LatLon ll = a_viewport->get_center()->get_latlon();
+	LatLon lat_lon = a_viewport->get_center()->get_latlon();
 
 	QString center_lat;
 	QString center_lon;
-	CoordUtils::to_strings(center_lat, center_lon, ll);
+	lat_lon.to_strings_raw(center_lat, center_lon);
 
 	LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
 	if (a_coord) {
-		ll = a_coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
+		lat_lon = a_coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
 	}
 	QString point_lat;
 	QString point_lon;
-	CoordUtils::to_strings(point_lat, point_lon, llpt);
+	llpt.to_strings_raw(point_lat, point_lon);
 
 	uint8_t zoom_level = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
