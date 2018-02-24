@@ -221,29 +221,37 @@ static void unlock_file(const QString & file_path)
 /**
  * Unzip a file - replacing the file with the unzipped contents of the self.
  */
-static void uncompress_zip(const QString & file_path)
+static void uncompress_zip(const QString & file_full_path)
 {
 	GError * error = NULL;
 	GMappedFile * mf;
 
-	if ((mf = g_mapped_file_new(file_path.toUtf8().constData(), false, &error)) == NULL) {
-		qDebug() << "EE: Download: Couldn't map file" << file_path << ":" << error->message;
-		g_error_free(error);
+	QFile file(file_full_path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "EE" PREFIX << "Can't open file" << file_full_path << file.error();
 		return;
 	}
-	char * file_contents = g_mapped_file_get_contents(mf);
 
-	void * unzip_mem = NULL;
+	off_t file_size = file.size();
+	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+	if (!file_contents) {
+		qDebug() << "EE" PREFIX << "Can't map file" << file_full_path << file.error();
+		return;
+	}
+
+
 	unsigned long ucsize;
+	void * unzip_mem = unzip_file((char *) file_contents, &ucsize);
+	file.unmap(file_contents);
+	file.close();
 
-	if ((unzip_mem = unzip_file(file_contents, &ucsize)) == NULL) {
-		g_mapped_file_unref(mf);
+	if (unzip_mem == NULL) {
 		return;
 	}
 
 	/* This overwrites any previous file contents. */
-	if (!g_file_set_contents(file_path.toUtf8().constData(), (char const *) unzip_mem, ucsize, &error)) {
-		qDebug() << "EE: Download: Couldn't write file" << file_path << "because of" << error->message;
+	if (!g_file_set_contents(file.fileName().toUtf8().constData(), (char const *) unzip_mem, ucsize, &error)) {
+		qDebug() << "EE: Download: Couldn't write file" << file.fileName() << "because of" << error->message;
 		g_error_free(error);
 	}
 }

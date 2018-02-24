@@ -3567,24 +3567,31 @@ void LayerTRW::diary_open(char const * date_str)
 void LayerTRW::astro_open(char const * date_str,  char const * time_str, char const * lat_str, char const * lon_str, char const * alt_str)
 {
 	GError *err = NULL;
-	char *tmp;
-	int fd = g_file_open_tmp("vik-astro-XXXXXX.ini", &tmp, &err);
+	char * ini_file_path;
+	int fd = g_file_open_tmp("vik-astro-XXXXXX.ini", &ini_file_path, &err);
 	if (fd < 0) {
 		fprintf(stderr, "WARNING: %s: Failed to open temporary file: %s\n", __FUNCTION__, err->message);
 		g_clear_error(&err);
 		return;
 	}
-	char *cmd = g_strdup_printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-				    astro_program.toUtf8().constData(), "-c", tmp, "--full-screen no", "--sky-date", date_str, "--sky-time", time_str, "--latitude", lat_str, "--longitude", lon_str, "--altitude", alt_str);
-	fprintf(stderr, "WARNING: %s\n", cmd);
-	if (!g_spawn_command_line_async(cmd, &err)) {
+	const QString cmd = QString("%1 -c %2 --full-screen no --sky-date %3 --sky-time %4 --latitude %5 --longitude %6 --altitude %7")
+		.arg(astro_program)
+		.arg(ini_file_path)
+		.arg(date_str)
+		.arg(time_str)
+		.arg(lat_str)
+		.arg(lon_str)
+		.arg(alt_str);
+
+	qDebug() << "II" PREFIX << "command is " << cmd;
+
+	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
 		Dialog::error(tr("Could not launch %1").arg(astro_program), this->get_window());
 		fprintf(stderr, "WARNING: %s\n", err->message);
 		g_error_free(err);
 	}
-	Util::add_to_deletion_list(QString(tmp));
-	free(tmp);
-	free(cmd);
+	Util::add_to_deletion_list(QString(ini_file_path));
+	free(ini_file_path);
 }
 
 

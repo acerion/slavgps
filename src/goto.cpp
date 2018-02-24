@@ -361,17 +361,23 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 	lat_lon.lat = 0.0;
 	lat_lon.lon = 0.0;
 
-	GMappedFile *mf;
-	if ((mf = g_mapped_file_new(tmp_file.fileName().toUtf8().constData(), false, NULL)) == NULL) {
-		qCritical() << QObject::tr("CRITICAL: couldn't map temp file\n");
-
-		g_mapped_file_unref(mf);
+	if (!tmp_file.open()) {
+		qDebug() << "EE" PREFIX << "Can't open file" << tmp_file.fileName() << tmp_file.error();
 		tmp_file.remove();
 		return 0;
 	}
 
-	size_t len = g_mapped_file_get_length(mf);
-	char *text = g_mapped_file_get_contents(mf);
+	off_t file_size = tmp_file.size();
+	unsigned char * file_contents = tmp_file.map(0, file_size, QFileDevice::MapPrivateOption);
+	if (!file_contents) {
+		qDebug() << "EE" PREFIX << "Can't map file" << tmp_file.fileName() << tmp_file.error();
+		tmp_file.remove();
+		return 0;
+	}
+
+
+	size_t len = file_size;
+	char * text = (char *) file_contents;
 
 	char *pat;
 	char *ss;
@@ -483,7 +489,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 	}
 
  tidy:
-	g_mapped_file_unref(mf);
+	tmp_file.unmap(file_contents);
 	tmp_file.remove();
 	return result;
 }

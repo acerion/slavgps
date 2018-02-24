@@ -54,7 +54,7 @@ using namespace SlavGPS;
 /**
    See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
 */
-#define DS_OSM_TRACES_GPX_URL_FMT "api.openstreetmap.org/api/0.6/gpx/%d/data"
+#define DS_OSM_TRACES_GPX_URL_FMT "api.openstreetmap.org/api/0.6/gpx/%1/data"
 #define DS_OSM_TRACES_GPX_FILES "api.openstreetmap.org/api/0.6/user/gpx_files"
 
 
@@ -660,7 +660,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 			bool convert_result = false;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
-				char *url = g_strdup_printf(DS_OSM_TRACES_GPX_URL_FMT, gpx_id);
+				const QString url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
 				/* NB download type is GPX (or a compressed version). */
 				ProcessOptions my_po = *process_options;
@@ -674,7 +674,6 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 					/* Report errors to the status bar. */
 					acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
 				}
-				free(url);
 			}
 
 			if (convert_result) {

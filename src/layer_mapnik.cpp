@@ -571,15 +571,10 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 
 
-#define MAPNIK_LAYER_FILE_CACHE_LAYOUT "%s" G_DIR_SEPARATOR_S"%d" G_DIR_SEPARATOR_S"%d" G_DIR_SEPARATOR_S"%d.png"
-
-
-
-
 /* Free returned string after use. */
-static char *get_filename(char *dir, unsigned int x, unsigned int y, unsigned int z)
+static QString get_filename(const QString dir, unsigned int x, unsigned int y, unsigned int zoom)
 {
-	return g_strdup_printf(MAPNIK_LAYER_FILE_CACHE_LAYOUT, dir,(17-z), x, y);
+	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg((17 - zoom)).arg(x).arg(y));
 }
 
 
@@ -587,23 +582,26 @@ static char *get_filename(char *dir, unsigned int x, unsigned int y, unsigned in
 
 void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ti_ul)
 {
-	if (this->use_file_cache) {
-		if (!this->file_cache_dir.isEmpty()) {
-			char * filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul->x, ti_ul->y, ti_ul->scale);
+	if (!this->use_file_cache) {
+		return;
+	}
 
-			char *dir = g_path_get_dirname(filename);
-			if (0 != access(filename, F_OK)) {
-				if (g_mkdir_with_parents(dir , 0777) != 0) {
-					fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
-				}
-			}
-			free(dir);
+	if (this->file_cache_dir.isEmpty()) {
+		return;
+	}
 
-			if (!pixmap->save(filename, "png")) {
-				qDebug() << "WW: Layer Mapnik: failed to save pixmap to" << filename;
-			}
-			free(filename);
+	const QString filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
+
+	char *dir = g_path_get_dirname(filename.toUtf8().constData());
+	if (0 != access(filename.toUtf8().constData(), F_OK)) {
+		if (g_mkdir_with_parents(dir , 0777) != 0) {
+			fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
 		}
+	}
+	free(dir);
+
+	if (!pixmap->save(filename, "png")) {
+		qDebug() << "WW: Layer Mapnik: failed to save pixmap to" << filename;
 	}
 }
 
@@ -744,10 +742,10 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 {
 	*rerender_ = false;
 	QPixmap * pixmap = NULL;
-	char *filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul->x, ti_ul->y, ti_ul->scale);
+	const QString filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
 
 	struct stat stat_buf;
-	if (stat(filename, &stat_buf) == 0) {
+	if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
 		/* Get from disk. */
 		pixmap = new QPixmap();
 		if (!pixmap->load(filename)) {
@@ -767,7 +765,6 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			*rerender_ = true;
 		}
 	}
-	free(filename);
 
 	return pixmap;
 }
@@ -1091,7 +1088,7 @@ void LayerMapnik::tile_info()
 
 	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 
-	char * tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	QStringList items;
 
@@ -1100,11 +1097,11 @@ void LayerMapnik::tile_info()
 	QString file_message;
 	QString time_message;
 
-	if (0 == access(tile_filename, F_OK)) {
+	if (0 == access(tile_filename.toUtf8().constData(), F_OK)) {
 		file_message = QString(tr("Tile File: %1")).arg(tile_filename);
 		/* Get some timestamp information of the tile. */
 		struct stat stat_buf;
-		if (stat(tile_filename, &stat_buf) == 0) {
+		if (stat(tile_filename.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
 			time_message = QString(tr("Tile File Timestamp: %1")).arg(time_buf);
@@ -1126,8 +1123,6 @@ void LayerMapnik::tile_info()
 	}
 
 	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
-
-	free(tile_filename);
 }
 
 

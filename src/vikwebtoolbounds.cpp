@@ -62,14 +62,11 @@ QString WebToolBounds::get_url_at_current_position(Viewport * a_viewport)
 {
 	const LatLonBBoxStrings bbox_strings = LatLonBBox::to_strings(a_viewport->get_bbox());
 
-	char * url = g_strdup_printf(this->url_format, bbox_strings.min_lon.toUtf8().constData(), bbox_strings.max_lon.toUtf8().constData(), bbox_strings.min_lat.toUtf8().constData(), bbox_strings.max_lat.toUtf8().constData());
+	const QString url = QString(this->url_format).arg(bbox_strings.min_lon).arg(bbox_strings.max_lon).arg(bbox_strings.min_lat).arg(bbox_strings.max_lat);
 
-	QString result(url);
-	free(url);
+	qDebug() << "II: Web Tool Bounds: url at current position is" << url;
 
-	qDebug() << "II: Web Tool Bounds: url at current position is" << result;
-
-	return result;
+	return url;
 }
 
 

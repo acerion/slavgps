@@ -43,6 +43,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": GeoNames Search:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /**
  * See http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox
  */
@@ -126,13 +131,20 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	QString wikipedia_url;
 	QString thumbnail_url;
 
-	GMappedFile * mf = NULL;
-	if ((mf = g_mapped_file_new(file.fileName().toUtf8().constData(), false, NULL)) == NULL) {
-		qDebug() << QObject::tr("CRITICAL: couldn't map temp file");
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "EE" PREFIX << "Can't open file" << file.fileName() << file.error();
 		return found_places;
 	}
-	size_t len = g_mapped_file_get_length(mf);
-	char * text = g_mapped_file_get_contents(mf);
+
+	off_t file_size = file.size();
+	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+	if (!file_contents) {
+		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << file.error();
+		return found_places;
+	}
+
+	size_t len = file_size;
+	char * text = (char *) file_contents;
 
 	bool more = true;
 	if (g_strstr_len(text, len, GEONAMES_SEARCH_NOT_FOUND) != NULL) {
@@ -274,7 +286,7 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	}
 	g_strfreev(found_entries);
 	found_places.reverse();
-	g_mapped_file_unref(mf);
+	file.unmap(file_contents);
 
 	return found_places; /* Hopefully Named Return Value Optimization will work here. */
 }

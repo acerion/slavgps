@@ -60,10 +60,10 @@ static bool spawn_command_line_async(const char * cmd,
 	char * cmdline = NULL;
 	bool status;
 
-	cmdline = g_strdup_printf("%s '%s'", cmd, arg);
-	fprintf(stderr, "DEBUG: Running: %s\n", cmdline);
+	cmdline = QString("%1 '%2'").arg(cmd).arg(arg);
+	qDebug() << "DD" PREFIX << "Running command" << cmdline;
 
-	status = g_spawn_command_line_async(cmdline, NULL);
+	status = g_spawn_command_line_async(cmdline.toUtf8().constData(), NULL);
 
 	free(cmdline);
 

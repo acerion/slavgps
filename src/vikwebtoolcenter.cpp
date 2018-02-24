@@ -57,11 +57,6 @@ WebToolCenter::WebToolCenter(const QString & new_label, char const * new_url_for
 WebToolCenter::~WebToolCenter()
 {
 	qDebug() << "II: Web Tool Center: delete tool with" << this->label;
-
-	if (this->url_format) {
-		free(this->url_format);
-		this->url_format = NULL;
-	}
 }
 
 
@@ -89,13 +84,11 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString string_lon;
 	CoordUtils::to_strings(string_lat, string_lon, ll);
 
-	char * url = g_strdup_printf(this->url_format, string_lat.toUtf8().constData(), string_lon.toUtf8().constData(), zoom_level);
-	QString result(url);
-	free(url);
+	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(zoom_level);
 
-	qDebug() << "II: Web Tool Center: url at position is" << result;
+	qDebug() << "II: Web Tool Center: url at position is" << url;
 
-	return result;
+	return url;
 }
 
 

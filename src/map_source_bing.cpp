@@ -71,7 +71,7 @@ using namespace SlavGPS;
 
 
 /* Format for URL. */
-#define URL_ATTR_FMT "http://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial/0,0?zl=1&mapVersion=v1&key=%s&include=ImageryProviders&output=xml"
+#define URL_ATTR_FMT "http://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial/0,0?zl=1&mapVersion=v1&key=%1&include=ImageryProviders&output=xml"
 
 
 
@@ -106,7 +106,7 @@ MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, 
 	this->label = new_label;
 	this->name = "Bing-Aerial";
 	this->server_hostname = "ecn.t2.tiles.virtualearth.net";
-	server_path_format = strdup("/tiles/a%s.jpeg?g=587");
+	this->server_path_format = "/tiles/a%1.jpeg?g=587";
 	this->bing_api_key = new_key;
 	this->dl_options.check_file_server_time = true;
 	zoom_min = 0;
@@ -150,12 +150,10 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(TileInfo * src) const
 {
-	QString quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
-	char * path = g_strdup_printf(server_path_format, quadtree.toUtf8().constData());
-	const QString result(path);
-	free(path);
+	const QString quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
+	const QString uri = QString(this->server_path_format).arg(quadtree);
 
-	return result;
+	return uri;
 }
 
 
@@ -338,10 +336,10 @@ int MapSourceBing::load_attributions()
 	int ret = 0;  /* OK. */
 
 	this->loading_attributions = true;
-	char * uri = g_strdup_printf(URL_ATTR_FMT, this->bing_api_key.toUtf8().constData());
+	const QString uri = QString(URL_ATTR_FMT).arg(this->bing_api_key);
 
 	QTemporaryFile tmp_file;
-	if (!Download::download_to_tmp_file(tmp_file, QString(uri), this->get_download_options())) {
+	if (!Download::download_to_tmp_file(tmp_file, uri, this->get_download_options())) {
 		ret = -1;
 		goto done;
 	}
@@ -355,7 +353,6 @@ int MapSourceBing::load_attributions()
 
 done:
 	this->loading_attributions = false;
-	free(uri);
 	return ret;
 }
 

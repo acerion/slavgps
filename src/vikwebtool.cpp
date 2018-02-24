@@ -50,10 +50,6 @@ WebTool::WebTool()
 WebTool::~WebTool()
 {
 	qDebug() << "II: Web Tool deleted with label" << this->label;
-	if (this->url_format) {
-		free(this->url_format);
-		this->url_format = NULL;
-	}
 }
 
 
@@ -79,13 +75,9 @@ void WebTool::run_at_position(Window * a_window, const Coord * a_coord)
 
 
 
-void WebTool::set_url_format(char const * new_url_format)
+void WebTool::set_url_format(const QString & new_url_format)
 {
-	if (new_url_format) {
-		free(this->url_format);
-		this->url_format = strdup(new_url_format);
-	}
-	return;
+	this->url_format = new_url_format;
 }
 
 

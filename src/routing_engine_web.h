@@ -49,27 +49,30 @@ namespace SlavGPS {
 
 
 		const DownloadOptions * get_download_options(void) const;
-		char * get_url_for_coords(const LatLon & start, const LatLon & end);
-		bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
-		char * get_url_from_directions(const QString & start, const QString & end);
-		bool supports_direction(void);
-		char * get_url_for_track(Track * trk);
-		bool refine(LayerTRW * trw, Track * trk);
-		bool supports_refine(void);
 
-		char * url_base = NULL; /* URL's base. The base URL of the routing engine. */
+		bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
+
+		QString get_url_for_coords(const LatLon & start, const LatLon & end);
+		QString get_url_from_directions(const QString & start, const QString & end);
+		QString get_url_for_track(Track * trk);
+
+		bool refine(LayerTRW * trw, Track * trk);
+
+		bool supports_refine(void);
+		bool supports_direction(void);
+
+		QString url_base; /* URL's base. The base URL of the routing engine. */
 
 		/* LatLon. */
-		char * url_start_ll_fmt = NULL; /* Start part of the URL. The part of the request hosting the start point. */
-		char * url_stop_ll_fmt = NULL; /* Stop part of the URL. The part of the request hosting the end point. */
-		char * url_via_ll_fmt = NULL; /* Via part of the URL. The param of the request for setting a via point. */
+		QString url_start_ll_fmt; /* Start part of the URL. The part of the request hosting the start point. */
+		QString url_stop_ll_fmt;  /* Stop part of the URL. The part of the request hosting the end point. */
+		QString url_via_ll_fmt;   /* Via part of the URL. The param of the request for setting a via point. */
 
 		/* Directions. */
-		char * url_start_dir_fmt = NULL; /* Start part of the URL. The part of the request hosting the start point. */
-		char * url_stop_dir_fmt = NULL;  /* Stop part of the URL. The part of the request hosting the end point. */
+		QString url_start_dir_fmt; /* Start part of the URL. The part of the request hosting the start point. */
+		QString url_stop_dir_fmt;  /* Stop part of the URL. The part of the request hosting the end point. */
 
 		DownloadOptions dl_options;
-
 	};
 
 

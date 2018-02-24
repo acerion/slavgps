@@ -60,6 +60,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": DEM:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 #define DEM_BLOCK_SIZE 1024
 
 
@@ -317,7 +322,7 @@ void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 
 
 
-#if 1
+
 bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip)
 {
 	const int num_rows_3sec = 1201;
@@ -345,12 +350,16 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 	QFile file(file_full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't open file" << file_full_path << file.error();
+		qDebug() << "EE" PREFIX << "Can't open file" << file_full_path << file.error();
 		return false;
 	}
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+	if (!file_contents) {
+		qDebug() << "EE" PREFIX << "Can't map file" << file_full_path << file.error();
+		return false;
+	}
 
 	int16_t * dem_contents = NULL;
 	unsigned long dem_size = 0;
@@ -412,104 +421,10 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	return true;
 }
 
-#else
-
-
-bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
-{
-	const int num_rows_3sec = 1201;
-	const int num_rows_1sec = 3601;
-
-	this->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
-	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
-
-	/* TODO */
-	this->min_north = atoi(basename + 1) * 3600;
-	this->min_east = atoi(basename + 4) * 3600;
-	if (basename[0] == 'S') {
-		this->min_north = -this->min_north;
-	}
-
-	if (basename[3] == 'W') {
-		this->min_east = -this->min_east;
-	}
-
-	this->max_north = 3600 + this->min_north;
-	this->max_east = 3600 + this->min_east;
-
-	this->n_columns = 0;
-
-	GError * error = NULL;
-	GMappedFile * mf;
-	if ((mf = g_mapped_file_new(file_name, false, &error)) == NULL) {
-		qDebug() << "EE: DEM: Read SRTM HGT: Couldn't map file" << file_name << ":" << error->message;
-		g_error_free(error);
-		return false;
-	}
-	off_t file_size = g_mapped_file_get_length(mf);
-	char * dem_file = g_mapped_file_get_contents(mf);
-
-	int16_t * dem_mem = NULL;
-	if (zip) {
-		void * unzip_mem = NULL;
-		unsigned long ucsize;
-
-		if ((unzip_mem = unzip_file(dem_file, &ucsize)) == NULL) {
-			g_mapped_file_free(mf);
-			return false;
-		}
-
-		dem_mem = (int16_t *) unzip_mem;
-		file_size = ucsize;
-	} else {
-		dem_mem = (int16_t *) dem_file;
-	}
-
-	int arcsec;
-	if (file_size == (num_rows_3sec * num_rows_3sec * sizeof (int16_t))) {
-		arcsec = 3;
-	} else if (file_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
-		arcsec = 1;
-	} else {
-		qDebug() << "WW: DEM: Read SRTM HGT: file" << basename << "does not have right size";
-		g_mapped_file_free(mf);
-		return false;
-	}
-
-	int num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
-	this->east_scale = this->north_scale = arcsec;
-
-	for (int i = 0; i < num_rows; i++) {
-		this->n_columns++;
-		DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
-		this->columns.push_back(new_column);
-		this->columns[i]->east_west = this->min_east + arcsec * i;
-		this->columns[i]->south = this->min_north;
-		this->columns[i]->n_points = num_rows;
-		this->columns[i]->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
-	}
-
-	int ent = 0;
-	for (int i = (num_rows - 1); i >= 0; i--) {
-		for (int j = 0; j < num_rows; j++) {
-			this->columns[j]->points[i] = GINT16_FROM_BE(dem_mem[ent]);
-			ent++;
-		}
-	}
-
-	if (zip) {
-		free(dem_mem);
-	}
-	g_mapped_file_free(mf);
-	return true;
-}
-#endif
-
 
 
 
 #define IS_SRTM_HGT(fn) (strlen((fn))==11 && (fn)[7]=='.' && (fn)[8]=='h' && (fn)[9]=='g' && (fn)[10]=='t' && ((fn)[0]=='N' || (fn)[0]=='S') && ((fn)[3]=='E' || (fn)[3]=='W'))
-
 
 
 

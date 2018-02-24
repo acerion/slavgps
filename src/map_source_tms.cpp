@@ -74,12 +74,12 @@ MapSourceTms::~MapSourceTms()
 
 
 
-MapSourceTms::MapSourceTms(MapTypeID map_type_, const QString & new_label, const QString & hostname, char const * url_)
+MapSourceTms::MapSourceTms(MapTypeID new_map_type, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
-	map_type = map_type_;
+	this->map_type = new_map_type;
 	this->label = new_label;
-	this->server_hostname = hostname;
-	this->server_path_format = g_strdup(url_);
+	this->server_hostname = new_server_hostname;
+	this->server_path_format = new_server_path_format;
 }
 
 
@@ -177,7 +177,7 @@ const QString MapSourceTms::get_server_path(TileInfo * src) const
 	/* Note : nb tiles on Y axis */
 	int nb_tiles = VIK_GZ(17 - src->scale - 1);
 
-	char * uri = g_strdup_printf(server_path_format, 17 - src->scale - 1, src->x, nb_tiles - src->y - 1); /* kamilFIXME: memory leak. */
+	const QString uri = QString(this->server_path_format).arg(17 - src->scale - 1).arg(src->x).arg(nb_tiles - src->y - 1);
 
 	return QString(uri);
 }

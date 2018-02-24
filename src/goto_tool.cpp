@@ -123,13 +123,13 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	const QString escaped_name = Util::uri_escape(name);
 	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_name;
 
-	char * uri = g_strdup_printf(this->get_url_format(), escaped_name.toUtf8().constData());
+	const QString uri = QString(this->get_url_format()).arg(escaped_name);
 	QTemporaryFile tmp_file;
 	tmp_file.setAutoRemove(false);
-	if (!Download::download_to_tmp_file(tmp_file, QString(uri), this->get_download_options())) {
+	if (!Download::download_to_tmp_file(tmp_file, uri, this->get_download_options())) {
 		/* Some kind of download error, so no tmp file. */
 		ret = GotoToolResult::Error;
-		//goto done_no_file;
+		goto done_no_file;
 	}
 
 	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file.fileName();
@@ -143,6 +143,5 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	Util::remove(tmp_file);
 
  done_no_file:
-	free(uri);
 	return ret;
 }

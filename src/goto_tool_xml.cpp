@@ -247,7 +247,7 @@ GotoToolXML::GotoToolXML()
 
 
 
-GotoToolXML::GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lat_path, const QString & new_lon_path)
+GotoToolXML::GotoToolXML(const QString & new_label, const QString & new_url_format, const QString & new_lat_path, const QString & new_lon_path)
 {
 	this->label = new_label;
 	this->set_url_format(new_url_format);
@@ -258,7 +258,7 @@ GotoToolXML::GotoToolXML(const QString & new_label, char const * new_url_format,
 
 
 
-GotoToolXML::GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr)
+GotoToolXML::GotoToolXML(const QString & new_label, const QString & new_url_format, const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr)
 {
 	this->label = new_label;
 	this->set_url_format(new_url_format);
@@ -277,19 +277,15 @@ GotoToolXML::~GotoToolXML()
 
 
 
-void GotoToolXML::set_url_format(char const * new_format)
+void GotoToolXML::set_url_format(const QString & new_url_format)
 {
-	if (this->url_format) {
-		free(this->url_format);
-	}
-	this->url_format = strdup(new_format);
-	return;
+	this->url_format = new_url_format;
 }
 
 
 
 
-char * GotoToolXML::get_url_format(void) const
+QString GotoToolXML::get_url_format(void) const
 {
 	return this->url_format;
 }

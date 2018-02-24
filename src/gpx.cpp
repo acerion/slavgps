@@ -240,8 +240,8 @@ Waypoint * c_wp = NULL;
 Track * c_tr = NULL;
 TRWMetadata * c_md = NULL;
 
-char * c_wp_name = NULL;
-char * c_tr_name = NULL;
+static QString c_wp_name;
+static QString c_tr_name;
 
 /* Temporary things so we don't have to create them lots of times. */
 const char * c_slat, * c_slon;
@@ -372,10 +372,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 
 	case tt_waypoint_name:
 		if ((tmp = get_attr(attributes, "id"))) {
-			if (c_wp_name) {
-				free(c_wp_name);
-			}
-			c_wp_name = g_strdup(tmp);
+			c_wp_name = tmp;
 		}
 		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer for description. */
 		break;
@@ -428,43 +425,33 @@ static void gpx_end(LayerTRW * trw, char const * el)
 
 	case tt_waypoint:
 	case tt_wpt:
-		if (!c_wp_name) {
-			c_wp_name = g_strdup_printf("VIKING_WP%04d", unnamed_waypoints++);
+		if (c_wp_name.isEmpty()) {
+			c_wp_name = QString("VIKING_WP%1").arg(unnamed_waypoints++, 4, 10, (QChar) '0');
 		}
 		trw->add_waypoint_to_data_structure(c_wp, c_wp_name);
-		free(c_wp_name);
 		c_wp = NULL;
-		c_wp_name = NULL;
 		break;
 
 	case tt_trk:
-		if (!c_tr_name) {
-			c_tr_name = g_strdup_printf("VIKING_TR%03d", unnamed_tracks++);
+		if (c_tr_name.isEmpty()) {
+			c_tr_name = QString("VIKING_TR%1").arg(unnamed_tracks++, 3, 10, (QChar) '0');
 		}
 		/* Delibrate fall through. */
 	case tt_rte:
-		if (!c_tr_name) {
-			c_tr_name = g_strdup_printf("VIKING_RT%03d", unnamed_routes++);
+		if (c_tr_name.isEmpty()) {
+			c_tr_name = QString("VIKING_RT%1").arg(unnamed_routes++, 3, 10, (QChar) '0');
 		}
 		trw->add_track_from_file2(c_tr, c_tr_name);
-		free(c_tr_name);
 		c_tr = NULL;
-		c_tr_name = NULL;
 		break;
 
 	case tt_wpt_name:
-		if (c_wp_name) {
-			free(c_wp_name);
-		}
-		c_wp_name = g_strdup(c_cdata->str);
+		c_wp_name = c_cdata->str;
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_name:
-		if (c_tr_name) {
-			free(c_tr_name);
-		}
-		c_tr_name = g_strdup(c_cdata->str);
+		c_tr_name = c_cdata->str;
 		g_string_erase(c_cdata, 0, -1);
 		break;
 

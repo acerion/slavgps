@@ -215,16 +215,20 @@ static DownloadResult expedia_download(TileInfo * src, const QString & dest_file
 	height += 2 * REAL_HEIGHT_BUFFER;
 	width  += 2 * REAL_WIDTH_BUFFER;
 
-	/* kamilFIXME: "char" is not a correct data type for uri. */
-	char uri = g_strdup_printf("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
-				   lat_lon.lat, lat_lon.lon, (lat_lon.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
+	/* kamilFIXME: "char" is not a correct data type for uri. There was a "char" data type here. */
+	const QString uri = QString("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%1,%2&Lang=%3&Alti=%4&Size=%5,%6&Offs=0.000000,0.000000&BCheck&tpid=1")
+		.arg(lat_lon.lat)
+		.arg(lat_lon.lon)
+		.arg((lat_lon.lon > -30) ? "EUR0809" : "USA0409")
+		.arg(src->scale)
+		.arg(width)
+		.arg(height);
 
-	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, QString(uri), dest_file_path, &expedia_options, NULL);
+	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, uri, dest_file_path, &expedia_options, NULL);
 	if (res == DownloadResult::SUCCESS) {
 		expedia_snip(dest_file_path);
 	}
-	free(uri);
-	return(res);
+	return res;
 }
 
 

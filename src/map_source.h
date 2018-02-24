@@ -117,8 +117,8 @@ namespace SlavGPS {
 
 		DownloadOptions dl_options;
 
-		QString server_hostname = "";    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
-		char * server_path_format = NULL; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
+		QString server_hostname;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
+		QString server_path_format; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
 
 		// NB Probably best to keep the above fields in same order to be common across Slippy, TMS & WMS map definitions
 		uint8_t zoom_min; /* Minimum Zoom level supported by the map provider.  TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */

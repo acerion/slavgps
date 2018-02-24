@@ -78,17 +78,17 @@ namespace SlavGPS {
 	class GotoToolXML : public GotoTool {
 	public:
 		GotoToolXML();
-		GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lan_path, const QString & new_lon_path);
-		GotoToolXML(const QString & new_label, char const * new_url_format, const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr);
+		GotoToolXML(const QString & new_label, const QString & new_url_format, const QString & new_lan_path, const QString & new_lon_path);
+		GotoToolXML(const QString & new_label, const QString & new_url_format, const QString & new_lat_path, const QString & new_lat_attr, const QString & new_lon_path, const QString & new_lon_attr);
 		~GotoToolXML();
 
-		char * get_url_format(void) const;
-		void set_url_format(char const * new_format);
+		QString get_url_format(void) const;
+		void set_url_format(const QString & new_url_format);
 
 		bool parse_file_for_latlon(QFile & file, LatLon & lat_lon);
 
 		/* This should be private. */
-		char * url_format = NULL; /* The format of the URL */
+		QString url_format; /* The format of the URL */
 
 		MyHandler * xml_handler = NULL;
 

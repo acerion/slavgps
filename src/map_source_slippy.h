@@ -43,7 +43,7 @@ namespace SlavGPS {
 	public:
 		MapSourceSlippy();
 		~MapSourceSlippy();
-		MapSourceSlippy(MapTypeID map_type, const QString & label, char const * hostname, char const * path);
+		MapSourceSlippy(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 

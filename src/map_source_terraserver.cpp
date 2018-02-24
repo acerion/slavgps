@@ -134,8 +134,8 @@ void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coo
 
 const QString MapSourceTerraserver::get_server_path(TileInfo * src) const
 {
-	char * uri = g_strdup_printf("/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", (int) this->map_type, src->scale, src->x, src->y, src->z); /* kamilFIXME: memory leak. */
-	return QString(uri);
+	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type).arg(src->scale).arg(src->x).arg(src->y).arg(src->z);
+	return uri;
 }
 
 

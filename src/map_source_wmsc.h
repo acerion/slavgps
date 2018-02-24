@@ -41,7 +41,7 @@ namespace SlavGPS {
 	public:
 		MapSourceWmsc();
 		~MapSourceWmsc();
-		MapSourceWmsc(MapTypeID map_type, const QString & label, char const * hostname, char const * url);
+		MapSourceWmsc(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
 		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 		void tile_to_center_coord(TileInfo * src, Coord & dest_coord);

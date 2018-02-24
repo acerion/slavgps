@@ -43,7 +43,12 @@ using namespace SlavGPS;
 
 
 
-#define GOOGLE_GOTO_URL_FMT "http://maps.google.com/maps?q=%s&output=js"
+#define PREFIX ": Google Search:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
+#define GOOGLE_GOTO_URL_FMT "http://maps.google.com/maps?q=%1&output=js"
 #define GOOGLE_GOTO_PATTERN_1 "{center:{lat:"
 #define GOOGLE_GOTO_PATTERN_2 ",lng:"
 #define GOOGLE_GOTO_NOT_FOUND "not understand the location"
@@ -74,15 +79,21 @@ bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 	char lat_buf[32] = { 0 };
 	char lon_buf[32] = { 0 };
 
-	QString file_full_path = file.fileName();
-
-	GMappedFile *mf;
-	if ((mf = g_mapped_file_new(file_full_path.toUtf8().constData(), false, NULL)) == NULL) {
-		qDebug() << QObject::tr("CRITICAL: couldn't map temp file");
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << "EE" PREFIX << "Can't open file" << file.fileName() << file.error();
 		return false;
 	}
-	size_t len = g_mapped_file_get_length(mf);
-	char * text = g_mapped_file_get_contents(mf);
+
+	off_t file_size = file.size();
+	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
+	if (!file_contents) {
+		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << file.error();
+		return false;
+	}
+
+
+	size_t len = file_size;
+	char * text = (char *) file_contents;
 
 	bool found = true;
 	if (g_strstr_len(text, len, GOOGLE_GOTO_NOT_FOUND) != NULL) {
@@ -139,7 +150,7 @@ bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 	lat_lon.lon = SGUtils::c_to_double(lon_buf);
 
  done:
-	g_mapped_file_unref(mf);
+	file.unmap(file_contents);
 	return (found);
 
 }
@@ -147,9 +158,9 @@ bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 
 
 
-char * GotoToolGoogle::get_url_format(void) const
+QString GotoToolGoogle::get_url_format(void) const
 {
-	return (char *) GOOGLE_GOTO_URL_FMT;
+	return GOOGLE_GOTO_URL_FMT;
 }
 
 

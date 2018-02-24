@@ -44,7 +44,7 @@ using namespace SlavGPS;
 
 void SlavGPS::google_init()
 {
-	external_tools_register(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%s,%s,%dz"));
+	external_tools_register(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
 
 	/* Goto. */
 #ifdef K_OLD_IMPLEMENTATION

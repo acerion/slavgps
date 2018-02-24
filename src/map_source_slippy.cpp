@@ -93,8 +93,8 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = map.server_hostname;
-	this->server_path_format = g_strdup(map.server_path_format);
+	this->server_hostname    = map.server_hostname;
+	this->server_path_format = map.server_path_format;
 
 	this->zoom_min = map.zoom_min;
 	this->zoom_max = map.zoom_max;
@@ -115,14 +115,14 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type, const QString & new_label, char const * hostname, char const * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
 	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type;
 
 	this->map_type = new_map_type;
 	this->label = new_label;
-	this->server_hostname = QString(hostname);
-	this->server_path_format = g_strdup(path_format_);
+	this->server_hostname = new_server_hostname;
+	this->server_path_format = new_server_path_format;
 }
 
 
@@ -187,15 +187,15 @@ void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 
 const QString MapSourceSlippy::get_server_path(TileInfo * src) const
 {
+	QString uri;
 	if (switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		char * rv = g_strdup_printf(server_path_format, 17 - src->scale, src->y, src->x); /* kamilFIXME: memory leak. */
-		return QString(rv);
+		uri = QString(this->server_path_format).arg(17 - src->scale).arg(src->y).arg(src->x);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		char * rv = g_strdup_printf(server_path_format, 17 - src->scale, src->x, src->y); /* kamilFIXME: memory leak. */
-		return QString(rv);
+		uri = QString(this->server_path_format).arg(17 - src->scale).arg(src->x).arg(src->y);
 	}
+	return uri;
 }
 
 

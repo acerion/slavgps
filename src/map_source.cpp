@@ -67,8 +67,6 @@ MapSource::MapSource()
 
 	this->dl_options.check_file = a_check_map_file;
 
-	server_path_format = NULL;
-
 	zoom_min =  0;
 	zoom_max = 18;
 	lat_min =  -90.0;
@@ -90,9 +88,7 @@ MapSource::~MapSource()
 {
 	fprintf(stderr, "MapSource destructor called\n");
 
-	free(logo);
-
-	free(server_path_format);
+	delete logo; /* TODO: already done in parent class' destructor? */
 }
 
 
@@ -119,8 +115,8 @@ MapSource & MapSource::operator=(MapSource map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = map.server_hostname;
-	this->server_path_format = g_strdup(map.server_path_format);
+	this->server_hostname    = map.server_hostname;
+	this->server_path_format = map.server_path_format;
 
 	this->zoom_min = map.zoom_min;
 	this->zoom_max = map.zoom_max;
@@ -162,8 +158,8 @@ MapSource::MapSource(MapSource & map)
 
 	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname = map.server_hostname;
-	this->server_path_format = g_strdup(map.server_path_format);
+	this->server_hostname    = map.server_hostname;
+	this->server_path_format = map.server_path_format;
 
 	this->zoom_min = map.zoom_min;
 	this->zoom_max = map.zoom_max;
