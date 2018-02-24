@@ -548,7 +548,7 @@ void Preferences::register_default_values()
 	i++;
 	Preferences::register_parameter(general_prefs[i], scale_lon.initial);
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) VIK_TIME_REF_LOCALE, general_prefs[i].type_id));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SGTimeReference::Locale, general_prefs[i].type_id));
 
 
 	/* New Tab. */
@@ -663,9 +663,9 @@ double Preferences::get_default_lon()
 
 
 
-vik_time_ref_frame_t Preferences::get_time_ref_frame()
+SGTimeReference Preferences::get_time_ref_frame()
 {
-	return (vik_time_ref_frame_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".time_reference_frame").val_int;
+	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".time_reference_frame").val_int;
 }
 
 

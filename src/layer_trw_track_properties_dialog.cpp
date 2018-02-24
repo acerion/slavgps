@@ -325,12 +325,12 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		this->tz = vu_get_tz_at_location(&coord);
 
 
-		QString msg = SGUtils::get_time_string(t1, "%c", &coord, this->tz);
+		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, &coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
 		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
 
 
-		msg = SGUtils::get_time_string(t2, "%c", &coord, this->tz);
+		msg = SGUtils::get_time_string(t2, Qt::TextDate, &coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
 		this->statistics_form->addRow(tr("End:"), this->w_time_end);
 

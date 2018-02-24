@@ -217,7 +217,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-static time_t planet_import_time;
+static time_t g_planet_import_time;
 static std::mutex tp_mutex;
 static GHashTable *requests = NULL;
 
@@ -257,19 +257,15 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	requests = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after").val_uint;
-	GDateTime *now = g_date_time_new_now_local();
-	GDateTime *then = g_date_time_add_hours(now, -hours);
-	planet_import_time = g_date_time_to_unix(then);
-	g_date_time_unref(now);
-	g_date_time_unref(then);
+	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
 	const QString import_time_full_path = get_viking_dir() + QDir::separator() + "planet-import-complete";
 	struct stat stat_buf;
 	if (stat(import_time_full_path.toUtf8().constData(), &stat_buf) == 0) {
 		/* Only update if newer. */
-		if (planet_import_time > stat_buf.st_mtime) {
-			planet_import_time = stat_buf.st_mtime;
+		if (g_planet_import_time > stat_buf.st_mtime) {
+			g_planet_import_time = stat_buf.st_mtime;
 		}
 	}
 }
@@ -767,7 +763,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
-		if (planet_import_time < stat_buf.st_mtime) {
+		if (g_planet_import_time < stat_buf.st_mtime) {
 			*rerender_ = true;
 		}
 	}

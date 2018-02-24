@@ -192,7 +192,7 @@ int main(int argc, char ** argv)
 	modules_post_init();
 
 	/* May need to initialize the Positonal TimeZone lookup. */
-	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
+	if (Preferences::get_time_ref_frame() == SGTimeReference::World) {
 		vu_setup_lat_lon_tz_lookup();
 	}
 

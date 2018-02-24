@@ -31,6 +31,7 @@
 #include <QAbstractButton>
 #include <QColor>
 #include <QPen>
+#include <QDateTime>
 
 #include "map_ids.h"
 #include "preferences.h"
@@ -78,7 +79,7 @@ namespace SlavGPS {
 
 
 
-	char * vu_get_tz_at_location(const Coord * coord);
+	QTimeZone const * vu_get_tz_at_location(const Coord * coord);
 
 	void vu_setup_lat_lon_tz_lookup();
 	void vu_finalize_lat_lon_tz_lookup();
@@ -103,7 +104,7 @@ namespace SlavGPS {
 		static void command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
 		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
 		static void copy_label_menu(QAbstractButton * button);
-		static QString get_time_string(time_t time, const char * format, const Coord * coord, const char * gtz);
+		static QString get_time_string(time_t time, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz);
 
 
 		static void color_to_string(char * buffer, size_t buffer_size, const QColor & color);

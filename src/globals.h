@@ -211,11 +211,11 @@ typedef enum {
 
 
 /* Time display format. */
-typedef enum {
-	VIK_TIME_REF_LOCALE, /* User's locale. */
-	VIK_TIME_REF_WORLD,  /* Derive the local timezone at the object's position. */
-	VIK_TIME_REF_UTC,
-} vik_time_ref_frame_t;
+enum class SGTimeReference {
+	Locale, /* User's locale. */
+	World,  /* Derive the local timezone at the object's position. */
+	UTC,
+};
 
 
 

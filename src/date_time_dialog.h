@@ -79,7 +79,7 @@ namespace SlavGPS {
 		~SGDateTimeButton();
 		time_t get_value(void);
 
-		void set_label(time_t timestamp_value, const char * format, const Coord * coord, const char * tz);
+		void set_label(time_t timestamp_value, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz);
 		void clear_label(void);
 
 	protected:

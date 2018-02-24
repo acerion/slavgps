@@ -265,7 +265,7 @@ void SGDateTimeButton::clear_time_cb(void)
 
 
 /* TODO: perhaps "format" should be a member of this class, passed to constructor. */
-void SGDateTimeButton::set_label(time_t timestamp_value, const char * format, const Coord * coord, const char * tz)
+void SGDateTimeButton::set_label(time_t timestamp_value, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz)
 {
 	const QString msg = SGUtils::get_time_string(timestamp_value, format, coord, tz);
 

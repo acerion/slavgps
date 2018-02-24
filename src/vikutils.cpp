@@ -224,7 +224,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			QString time_string;
 			if (tp->has_timestamp) {
 				/* Compact date time format. */
-				time_string = SGUtils::get_time_string(tp->timestamp, "%x %X", &tp->coord, NULL);
+				time_string = SGUtils::get_time_string(tp->timestamp, Qt::TextDate, &tp->coord, NULL);
 			} else {
 				time_string = "--";
 			}
@@ -571,9 +571,9 @@ static int load_ll_tz_dir(const char * dir)
 		unsigned int nn = g_strv_length(components);
 		if (nn == 3) {
 			double pt[2] = { SGUtils::c_to_double(components[0]), SGUtils::c_to_double(components[1]) };
-			char * time_zone = g_strchomp(components[2]);
+			QTimeZone * time_zone = new QTimeZone(QByteArray(g_strchomp(components[2]))); /* FIXME: memory leak. */
 			if (kd_insert(kd, pt, time_zone)) {
-				fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", time_zone, line_num);
+				qDebug() << "EE" PREFIX << "Insertion problem of" << time_zone <<  "for line" << line_num << "of latlontz.txt";
 			} else {
 				inserted++;
 			}
@@ -666,24 +666,13 @@ static char * time_string_adjusted(time_t * time, int offset_s)
 
 
 
-static char * time_string_tz(time_t * time, const char * format, GTimeZone * tz)
+static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
 {
-	GDateTime * utc = g_date_time_new_from_unix_utc(*time);
-	if (!utc) {
-		fprintf(stderr, "WARNING: %s: result from g_date_time_new_from_unix_utc() is NULL\n", __FUNCTION__);
-		return NULL;
-	}
-	GDateTime * local = g_date_time_to_timezone(utc, tz);
-	if (!local) {
-		g_date_time_unref(utc);
-		fprintf(stderr, "WARNING: %s: result from g_date_time_to_timezone() is NULL\n", __FUNCTION__);
-		return NULL;
-	}
-	char * str = g_date_time_format(local, format);
+	// QDateTime utc = QDateTime::fromSecsSinceEpoch(*time, Qt::OffsetFromUTC, 0);
+	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+	QDateTime local = utc.toTimeZone(tz);
 
-	g_date_time_unref(local);
-	g_date_time_unref(utc);
-	return str;
+	return local.toString(format);
 }
 
 
@@ -702,9 +691,9 @@ static char * time_string_tz(time_t * time, const char * format, GTimeZone * tz)
  * Use the k-d tree method (http://en.wikipedia.org/wiki/Kd-tree) to quickly retrieve
  * the nearest location to the given position.
  */
-char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
+QTimeZone const * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 {
-	char * tz = NULL;
+	QTimeZone * tz = NULL;
 	if (!coord || !kd) {
 		return tz;
 	}
@@ -720,7 +709,7 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 	struct kdres * presults = kd_nearest_range(kd, pt, nearest);
 	while (!kd_res_end(presults)) {
 		double pos[2];
-		char *ans = (char*) kd_res_item(presults, pos);
+		QTimeZone * ans = (QTimeZone *) kd_res_item(presults, pos);
 		/* compute the distance of the current result from the pt. */
 		double dist = sqrt(dist_sq(pt, pos, 2));
 		if (dist < nearest) {
@@ -730,7 +719,8 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
 		}
 		kd_res_next(presults);
 	}
-	fprintf(stderr, "DEBUG: TZ lookup found %d results - picked %s\n", kd_res_size(presults), tz);
+
+	qDebug() << "DD" PREFIX << "TimeZOne lookup found" << kd_res_size(presults) << "results - picked" << tz->displayName(QDateTime::currentDateTime());
 	kd_res_free(presults);
 
 	return tz;
@@ -743,58 +733,54 @@ char * SlavGPS::vu_get_tz_at_location(const Coord * coord)
  * @time_t: The time of which the string is wanted
  * @format  The format of the time string - such as "%c"
  * @coord:  Position of object for the time output - maybe NULL
- *          (only applicable for VIK_TIME_REF_WORLD)
+ *          (only applicable for SGTimeReference::World)
  * @tz:     TimeZone string - maybe NULL.
- *          (only applicable for VIK_TIME_REF_WORLD)
+ *          (only applicable for SGTimeReference::World)
  *          Useful to pass in the cached value from vu_get_tz_at_location() to save looking it up again for the same position
  *
  * Returns: A string of the time according to the time display property.
  */
-QString SGUtils::get_time_string(time_t time, const char * format, const Coord * coord, const char * tz)
+QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz)
 {
-	if (!format) {
-		return NULL;
-	}
+	qDebug() << "DD" PREFIX << "timestamp =" << time;
 
-	qDebug() << "DD: Get Time String for timestamp" << time;
+	QString time_string;
 
-
-	char * str = NULL;
-	switch (Preferences::get_time_ref_frame()) {
-		case VIK_TIME_REF_UTC:
-			str = (char *) malloc(64);
-			strftime(str, 64, format, gmtime(&time)); /* Always 'GMT'. */
-			break;
-		case VIK_TIME_REF_WORLD:
-			if (coord && !tz) {
-				/* No timezone specified so work it out. */
-				char * mytz = vu_get_tz_at_location(coord);
-				if (mytz) {
-					GTimeZone * gtz = g_time_zone_new(mytz);
-					str = time_string_tz(&time, format, gtz);
-					g_time_zone_unref(gtz);
-				} else {
-					/* No results (e.g. could be in the middle of a sea).
-					   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-					const LatLon ll = coord->get_latlon();
-					str = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
-				}
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		// time_string = QDateTime::fromSecsSinceEpoch(time, QTimeZone::utc()).toString(format);
+		time_string = QDateTime::fromTime_t(time, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		break;
+	case SGTimeReference::World:
+		if (coord && !tz) {
+			/* No timezone specified so work it out. */
+			QTimeZone const * tz_from_location = vu_get_tz_at_location(coord);
+			if (tz_from_location) {
+				time_string = time_string_tz(time, format, *tz_from_location);
 			} else {
-				/* Use specified timezone. */
-				GTimeZone *gtz = g_time_zone_new(tz);
-				str = time_string_tz(&time, format, gtz);
-				g_time_zone_unref(gtz);
+				/* No results (e.g. could be in the middle of a sea).
+				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+				const LatLon ll = coord->get_latlon();
+				time_string = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
 			}
-			break;
-		default: /* VIK_TIME_REF_LOCALE */
-			str = (char *) malloc(64);
-			strftime(str, 64, format, localtime(&time));
-			break;
+		} else {
+			/* Use specified timezone. */
+			time_string = time_string_tz(time, format, *tz);
+		}
+		break;
+	case SGTimeReference::Locale:
+		// time_string = QDateTime::fromSecsSinceEpoch(time, QTimeZone::systemTimeZone()).toString(format);
+		time_string = QDateTime::fromTime_t(time, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "unexpected SGTimeReference value" << (int) ref;
+		break;
 	}
 
-	const QString result(str);
-	free(str);
-	return result;
+	qDebug() << "DD" PREFIX << "timestamp =" << time << "string =" << time_string;
+
+	return time_string;
 }
 
 

@@ -1534,7 +1534,7 @@ void Window::preferences_cb(void) /* Slot. */
 	}
 
 	/* Ensure TZ Lookup initialized. */
-	if (Preferences::get_time_ref_frame() == VIK_TIME_REF_WORLD) {
+	if (Preferences::get_time_ref_frame() == SGTimeReference::World) {
 		vu_setup_lat_lon_tz_lookup();
 	}
 #ifdef K_TODO

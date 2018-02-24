@@ -35,6 +35,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLineEdit>
+#include <QTimeZone>
 
 
 
@@ -112,7 +113,7 @@ namespace SlavGPS {
 		double   track_length;
 		double   track_length_inc_gaps;
 
-		char     * tz = NULL; /* TimeZone at track's location. */
+		QTimeZone const * tz = NULL; /* Time zone at track's location. */
 	};
 
 
