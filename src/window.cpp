@@ -1185,7 +1185,7 @@ void Window::create_ui(void)
 	{
 		QActionGroup * group = new QActionGroup(this);
 		group->setObjectName("webtools");
-		external_tools_add_action_items(group, this);
+		ExternalTools::add_action_items(group, this);
 
 		QMenu * submenu_webtools = this->menu_tools->addMenu(tr("&Webtools"));
 		submenu_webtools->addActions(group->actions());

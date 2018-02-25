@@ -24,9 +24,7 @@
 
 
 
-#include <cstdint>
-
-#include "vikwebtool.h"
+#include "webtool.h"
 
 
 
@@ -46,14 +44,13 @@ namespace SlavGPS {
 		WebToolFormat(const QString & label, const QString & url_format, const QString & url_format_code);
 		~WebToolFormat();
 
-		uint8_t mpp_to_zoom_level(double mpp);
+		int mpp_to_zoom_level(double mpp);
 
 		QString get_url_at_current_position(Viewport * viewport);
-		QString get_url_at_position(Viewport * a_viewport, const Coord * a_coord);
+		QString get_url_at_position(Viewport * viewport, const Coord * a_coord);
 
 	private:
 		QString url_format_code;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */
-		QString q_url_format;
 
 	}; /* class WebToolFormat */
 

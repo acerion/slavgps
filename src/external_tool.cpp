@@ -18,7 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "external_tool.h"
 
@@ -30,9 +36,9 @@ using namespace SlavGPS;
 
 
 
-ExternalTool::ExternalTool(const QString & new_tool_name)
+ExternalTool::ExternalTool(const QString & new_label)
 {
-	this->label = new_tool_name;
+	this->label = new_label;
 
 	qDebug() << "II: External Tool: new external tool" << this->label;
 }
@@ -72,15 +78,15 @@ void ExternalTool::run_at_position_cb(void)
 
 
 
-void ExternalTool::set_window(Window * a_window)
+void ExternalTool::set_window(Window * new_window)
 {
-	this->window = a_window;
+	this->window = new_window;
 }
 
 
 
 
-void ExternalTool::set_coord(const Coord * a_coord)
+void ExternalTool::set_coord(const Coord & new_coord)
 {
-	this->coord = *a_coord;
+	this->coord = new_coord;
 }

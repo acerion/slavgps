@@ -27,7 +27,7 @@
 #include "globals.h"
 #include "google.h"
 #include "external_tools.h"
-#include "vikwebtoolcenter.h"
+#include "webtool_center.h"
 #include "goto.h"
 #include "googlesearch.h"
 #include "routing.h"
@@ -44,7 +44,7 @@ using namespace SlavGPS;
 
 void SlavGPS::google_init()
 {
-	external_tools_register(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
 
 	/* Goto. */
 #ifdef K_OLD_IMPLEMENTATION

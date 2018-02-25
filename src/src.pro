@@ -29,11 +29,11 @@ SOURCES += main.cpp \
     routing.cpp \
     routing_engine.cpp \
     routing_engine_web.cpp \
-    vikwebtoolbounds.cpp \
-    vikwebtoolcenter.cpp \
-    vikwebtool.cpp \
-    vikwebtool_datasource.cpp \
-    vikwebtoolformat.cpp \
+    webtool_bounds.cpp \
+    webtool_center.cpp \
+    webtool.cpp \
+    webtool_datasource.cpp \
+    webtool_format.cpp \
     bluemarble.cpp \
     external_tool.cpp \
     vikexttool_datasources.cpp \
@@ -154,11 +154,11 @@ HEADERS += window.h \
     routing.h \
     routing_engine.h \
     routing_engine_web.h \
-    vikwebtoolbounds.h \
-    vikwebtoolcenter.h \
-    vikwebtool.h \
-    vikwebtool_datasource.h \
-    vikwebtoolformat.h \
+    webtool_bounds.h \
+    webtool_center.h \
+    webtool.h \
+    webtool_datasource.h \
+    webtool_format.h \
     bluemarble.h \
     external_tool.h \
     vikexttool_datasources.h \
@@ -293,7 +293,6 @@ HEADERS += window.h \
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp
 # expedia.cpp
-# vikenumtypes.cpp
 
 
 # For glib library.

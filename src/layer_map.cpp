@@ -1271,7 +1271,7 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 	/* Don't attempt to download unsupported zoom levels. */
 	double xzoom = viewport->get_xmpp();
 	MapSource *map = map_sources[layer->map_index];
-	uint8_t zl = map_utils_mpp_to_zoom_level(xzoom);
+	int zl = map_utils_mpp_to_zoom_level(xzoom);
 	if (zl < map->get_zoom_min() || zl > map->get_zoom_max()) {
 		return false;
 	}

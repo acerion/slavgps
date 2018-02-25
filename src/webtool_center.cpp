@@ -21,17 +21,14 @@
 
 
 
-#include <cstring>
-#include <cstdlib>
-#include <cstdint>
-
 #include <QDebug>
 
-#include <glib.h>
+
+
 
 #include "window.h"
 #include "viewport_internal.h"
-#include "vikwebtoolcenter.h"
+#include "webtool_center.h"
 #include "util.h"
 #include "globals.h"
 
@@ -43,12 +40,12 @@ using namespace SlavGPS;
 
 
 
-WebToolCenter::WebToolCenter(const QString & new_label, char const * new_url_format) : WebTool(new_label)
+WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_format) : WebTool(new_label)
 {
 	qDebug() << "II: Web Tool Center created with label" << new_label;
 
 	this->label = new_label;
-	this->url_format = strdup(new_url_format);
+	this->url_format = new_url_format;
 }
 
 
@@ -64,7 +61,7 @@ WebToolCenter::~WebToolCenter()
 
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	uint8_t zoom_level = 17;
+	int zoom_level = 17;
 	LatLon lat_lon;
 
 	/* Coords.
@@ -94,7 +91,7 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 
 
-QString WebToolCenter::get_url_at_current_position(Viewport * a_viewport)
+QString WebToolCenter::get_url_at_current_position(Viewport * viewport)
 {
-	return this->get_url_at_position(a_viewport, NULL);
+	return this->get_url_at_position(viewport, NULL);
 }

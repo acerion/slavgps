@@ -21,14 +21,14 @@
 
 
 
-#include <cstring>
-#include <cstdlib>
-
 #include <QDebug>
+
+
+
 
 #include "window.h"
 #include "viewport_internal.h"
-#include "vikwebtoolbounds.h"
+#include "webtool_bounds.h"
 #include "globals.h"
 
 

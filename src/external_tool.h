@@ -18,14 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_EXTERNAL_TOOL_H
-#define _SG_EXTERNAL_TOOL_H
+#ifndef _SG_EXTERNAL_TOOL_H_
+#define _SG_EXTERNAL_TOOL_H_
 
 
 
 
 #include <QObject>
 #include <QString>
+
+
+
 
 #include "coord.h"
 
@@ -45,11 +48,11 @@ namespace SlavGPS {
 	class ExternalTool : public QObject {
 		Q_OBJECT
 	public:
-		ExternalTool(const QString & new_tool_name);
+		ExternalTool(const QString & new_label);
 		~ExternalTool();
 
-		void set_window(Window * a_window);
-		void set_coord(const Coord * a_coord);
+		void set_window(Window * window);
+		void set_coord(const Coord & coord);
 
 		const QString & get_label(void) const;
 
@@ -74,4 +77,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_EXTERNAL_TOOL_H */
+#endif /* #ifndef _SG_EXTERNAL_TOOL_H_ */

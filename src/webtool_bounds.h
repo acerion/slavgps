@@ -24,7 +24,7 @@
 
 
 
-#include "vikwebtool.h"
+#include "webtool.h"
 
 
 

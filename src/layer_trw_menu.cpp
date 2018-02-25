@@ -300,7 +300,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	external_tools_add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
+	ExternalTools::add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
 }
 
 
@@ -313,7 +313,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	if (track && track->selected_tp.valid) {
 		/* For the selected Trackpoint. */
 		const Coord * coord = &(*track->selected_tp.iter)->coord;
-		external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
+		ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
 		return;
 	}
 
@@ -322,13 +322,13 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	if (wp) {
 		/* For the selected Waypoint. */
 		const Coord * coord = &wp->coord;
-		external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
+		ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
 		return;
 	}
 
 	/* Otherwise add submenu items with external tools pre-configured for selected sublayer.
 	   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
-	external_tools_add_menu_items_to_menu(parent_layer->get_window(), external_submenu, NULL);
+	ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, NULL);
 }
 
 

@@ -21,13 +21,13 @@
 
 
 
-#include <cstring>
-#include <cstdlib>
-
 #include <QDebug>
 
+
+
+
 #include "ui_util.h"
-#include "vikwebtool.h"
+#include "webtool.h"
 #include "map_utils.h"
 #include "window.h"
 
@@ -83,7 +83,7 @@ void WebTool::set_url_format(const QString & new_url_format)
 
 
 
-uint8_t WebTool::mpp_to_zoom_level(double mpp)
+int WebTool::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
 }

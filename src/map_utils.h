@@ -18,13 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifndef _SG_MAP_UTILS_H_
 #define _SG_MAP_UTILS_H_
 
 
 
-
-#include <cstdint>
 
 #include "mapcoord.h"
 #include "coord.h"
@@ -44,7 +45,7 @@ namespace SlavGPS {
 
 	int map_utils_mpp_to_scale(double mpp);
 
-	uint8_t map_utils_mpp_to_zoom_level(double mpp);
+	int map_utils_mpp_to_zoom_level(double mpp);
 
 	bool map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 

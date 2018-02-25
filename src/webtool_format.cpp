@@ -21,15 +21,19 @@
 
 
 
-#include <cstring>
-#include <cstdlib>
 #include <vector>
+
+
+
 
 #include <QDebug>
 
+
+
+
 #include "window.h"
 #include "viewport_internal.h"
-#include "vikwebtoolformat.h"
+#include "webtool_format.h"
 #include "util.h"
 #include "globals.h"
 #include "map_utils.h"
@@ -52,7 +56,7 @@ WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_
 	qDebug() << "II: Web Tool Format tool created with label" << new_label;
 
 	this->label = new_label;
-	this->q_url_format = new_url_format;
+	this->url_format = new_url_format;
 	this->url_format_code = new_url_format_code;
 }
 
@@ -67,7 +71,7 @@ WebToolFormat::~WebToolFormat()
 
 
 
-uint8_t WebToolFormat::mpp_to_zoom_level(double mpp)
+int WebToolFormat::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
 }
@@ -94,7 +98,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString point_lon;
 	llpt.to_strings_raw(point_lat, point_lon);
 
-	uint8_t zoom_level = 17; // A zoomed in default
+	int zoom_level = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
 	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
 		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
@@ -134,7 +138,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		}
 	}
 
-	QString url = QString(this->q_url_format)
+	QString url = QString(this->url_format)
 		.arg(values[0]).arg(values[1]).arg(values[2])
 		.arg(values[3]).arg(values[4]).arg(values[5])
 		.arg(values[6]).arg(values[7]).arg(values[8]);

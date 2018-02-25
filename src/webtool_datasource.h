@@ -32,7 +32,7 @@
 
 #include "acquire.h"
 #include "datasource.h"
-#include "vikwebtool.h"
+#include "webtool.h"
 
 
 
@@ -78,7 +78,6 @@ namespace SlavGPS {
 
 		bool webtool_needs_user_string();
 
-		QString q_url_format;
 		QString url_format_code;
 
 		QString file_type;               /* Default value NULL equates to internal GPX reading. */

@@ -59,10 +59,10 @@
 #include "map_source_slippy.h"
 #include "map_source_tms.h"
 #include "map_source_wmsc.h"
-#include "vikwebtoolcenter.h"
-#include "vikwebtoolbounds.h"
+#include "webtool_center.h"
+#include "webtool_bounds.h"
+#include "webtool_datasource.h"
 #include "goto_tool_xml.h"
-#include "vikwebtool_datasource.h"
 #include "routing_engine_web.h"
 
 #include "vikgobjectbuilder.h"
@@ -109,8 +109,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, void * object)
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	ExternalTool * ext_tool = (ExternalTool *) object;
-	external_tools_register(ext_tool);
+	ExternalTools::register_tool((ExternalTool *) object);
 }
 
 

@@ -16,18 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 
+
+
 #include <list>
 
-#include <cstring>
-#include <cstdlib>
+
+
 
 #include "external_tools.h"
 
@@ -44,7 +48,7 @@ static std::list<ExternalTool *> ext_tools;
 
 
 
-void SlavGPS::external_tools_register(ExternalTool * ext_tool)
+void ExternalTools::register_tool(ExternalTool * ext_tool)
 {
 	ext_tools.push_back(ext_tool);
 }
@@ -52,7 +56,7 @@ void SlavGPS::external_tools_register(ExternalTool * ext_tool)
 
 
 
-void external_tools_unregister_all()
+void ExternalTools::unregister_all(void) /* FIXME: this is unused at the moment. */
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
 		delete *iter;
@@ -62,7 +66,7 @@ void external_tools_unregister_all()
 
 
 
-void SlavGPS::external_tools_add_action_items(QActionGroup * action_group, Window * window)
+void ExternalTools::add_action_items(QActionGroup * action_group, Window * window)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
 
@@ -80,10 +84,9 @@ void SlavGPS::external_tools_add_action_items(QActionGroup * action_group, Windo
 
 
 /**
- * Add to any menu
- *  mostly for allowing to assign for TrackWaypoint layer menus
- */
-void SlavGPS::external_tools_add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord)
+   Add to any menu. Mostly for allowing to assign for TrackWaypoint layer menus.
+*/
+void ExternalTools::add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		ExternalTool * ext_tool = *iter;
@@ -91,7 +94,7 @@ void SlavGPS::external_tools_add_menu_items_to_menu(Window * window, QMenu * men
 
 		ext_tool->set_window(window);
 		if (coord) {
-			ext_tool->set_coord(coord);
+			ext_tool->set_coord(*coord);
 			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_position_cb(void)));
 		} else {
 			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));

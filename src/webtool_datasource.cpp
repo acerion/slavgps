@@ -25,20 +25,24 @@
 #include "config.h"
 #endif
 
-#include <cctype>
-#include <cstring>
-#include <cstdlib>
+
+
+
 #include <vector>
+
+
+
 
 #include <QDebug>
 #include <QLineEdit>
 #include <QHash>
 
-#include <glib.h>
+
+
 
 #include "window.h"
 #include "viewport_internal.h"
-#include "vikwebtool_datasource.h"
+#include "webtool_datasource.h"
 #include "globals.h"
 #include "acquire.h"
 #include "map_utils.h"
@@ -224,7 +228,7 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 	qDebug() << "II: Web Tool Datasource created with tool name" << new_tool_name;
 
 	this->label = new_tool_name;
-	this->q_url_format = new_url_format;
+	this->url_format = new_url_format;
 	this->url_format_code = new_url_format_code;
 
 	if (!new_file_type.isEmpty()) {
@@ -262,7 +266,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 	QString center_lon;
 	lat_lon.to_strings_raw(center_lat, center_lon);
 
-	uint8_t zoom_level = 17; /* A zoomed in default. */
+	int zoom_level = 17; /* A zoomed in default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
 		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
@@ -301,7 +305,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 		}
 	}
 
-	QString url = QString(this->q_url_format)
+	QString url = QString(this->url_format)
 		.arg(values[0])
 		.arg(values[1])
 		.arg(values[2])
@@ -326,36 +330,10 @@ QString WebToolDatasource::get_url_at_position(Viewport * a_viewport, const Coor
 
 
 
-/* NB Only works for ascii strings. */
-char* strcasestr2(const char *dst, const char *src)
-{
-	if (!dst || !src) {
-		return NULL;
-	}
-
-	if (src[0] == '\0') {
-		return (char*)dst;
-	}
-
-	int len = strlen(src) - 1;
-	char sc = tolower(src[0]);
-	for (char dc = *dst; (dc = *dst); dst++) {
-		dc = tolower(dc);
-		if (sc == dc && (len == 0 || !strncasecmp(dst+1, src+1, len))) {
-			return (char *) dst;
-		}
-	}
-
-	return NULL;
-}
-
-
-
-
 /**
- * Returns true if the URL format contains 'S' -- that is, a search term entry
- * box needs to be displayed.
- */
+   Returns true if the URL format contains 'S' -- that is, a search
+   term entry box needs to be displayed.
+*/
 bool WebToolDatasource::webtool_needs_user_string()
 {
 	return this->url_format_code.contains("S", Qt::CaseInsensitive);

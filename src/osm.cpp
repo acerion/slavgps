@@ -32,10 +32,10 @@
 #include "layer_map.h"
 #include "map_source_slippy.h"
 #include "map_source_wmsc.h"
-#include "vikwebtoolcenter.h"
-#include "vikwebtoolbounds.h"
-#include "vikwebtoolformat.h"
-#include "vikwebtool_datasource.h"
+#include "webtool_center.h"
+#include "webtool_bounds.h"
+#include "webtool_format.h"
+#include "webtool_datasource.h"
 #include "external_tools.h"
 #include "vikexttool_datasources.h"
 #include "goto_tool_xml.h"
@@ -136,22 +136,22 @@ void SlavGPS::osm_init(void)
 	maps_layer_register_map_source(metatiles_type);
 
 	/* Webtools. */
-	external_tools_register(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
 
-	external_tools_register(new WebToolCenter(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
 
 #ifdef K_TODO /* Correctly handle %d arguments in the string. */
 	/* Note the use of positional parameters. */
-	external_tools_register(new WebToolCenter(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
 #endif
 
-	external_tools_register(new WebToolCenter(QObject::tr("OSM (render)"), "http://www.informationfreeway.org/?lat=%1&lon=%2&zoom=%3&layers=B0000F000F"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (render)"), "http://www.informationfreeway.org/?lat=%1&lon=%2&zoom=%3&layers=B0000F000F"));
 
 	/* Example: http://127.0.0.1:8111/load_and_zoom?left=8.19&right=8.20&top=48.605&bottom=48.590&select=node413602999
 	   JOSM or merkaartor must already be running with remote interface enabled. */
-	external_tools_register(new WebToolBounds(QObject::tr("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%1&right=%2&bottom=%3&top=%4"));
+	ExternalTools::register_tool(new WebToolBounds(QObject::tr("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%1&right=%2&bottom=%3&top=%4"));
 
-	external_tools_register(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
+	ExternalTools::register_tool(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
 
 
 
@@ -183,7 +183,7 @@ void SlavGPS::osm_init(void)
 
 
 	/* Not really OSM but can't be bothered to create somewhere else to put it... */
-	external_tools_register(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
 #ifdef K_TODO
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */

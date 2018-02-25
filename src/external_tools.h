@@ -18,13 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_EXTERNAL_TOOLS_H
-#define _SG_EXTERNAL_TOOLS_H
+#ifndef _SG_EXTERNAL_TOOLS_H_
+#define _SG_EXTERNAL_TOOLS_H_
 
 
 
 
 #include <QMenu>
+
+
+
 
 #include "external_tool.h"
 
@@ -40,11 +43,13 @@ namespace SlavGPS {
 
 
 
-
-	void external_tools_register(ExternalTool * ext_tool);
-	void external_tools_unregister_all();
-	void external_tools_add_action_items(QActionGroup * action_group, Window * window);
-	void external_tools_add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord);
+	class ExternalTools {
+	public:
+		static void register_tool(ExternalTool * ext_tool);
+		static void unregister_all(void);
+		static void add_action_items(QActionGroup * action_group, Window * window);
+		static void add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord);
+	};
 
 
 
@@ -54,4 +59,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_EXTERNAL_TOOLS_H */
+#endif /* #ifndef _SG_EXTERNAL_TOOLS_H_ */

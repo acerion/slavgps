@@ -18,13 +18,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_WEBTOOL_H
-#define _SG_WEBTOOL_H
+
+
+
+#ifndef _SG_WEBTOOL_H_
+#define _SG_WEBTOOL_H_
 
 
 
 
 #include <QString>
+
+
+
 
 #include "external_tool.h"
 
@@ -53,10 +59,10 @@ namespace SlavGPS {
 
 		void set_url_format(const QString & new_url_format);
 
-		virtual QString get_url_at_current_position(Viewport * a_viewport) = 0;
-		virtual QString get_url_at_position(Viewport * a_viewport, const Coord * a_coord) = 0;
+		virtual QString get_url_at_current_position(Viewport * viewport) = 0;
+		virtual QString get_url_at_position(Viewport * viewport, const Coord * coord) = 0;
 
-		uint8_t mpp_to_zoom_level(double mpp);
+		int mpp_to_zoom_level(double mpp);
 
 
 
@@ -73,4 +79,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WEBTOOL_H */
+#endif /* #ifndef _SG_WEBTOOL_H_ */
