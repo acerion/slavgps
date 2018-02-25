@@ -59,7 +59,7 @@ DataSourceOSMTraces::DataSourceOSMTraces(void)
 	this->window_title = QObject::tr("OSM traces");
 	this->layer_title = QObject::tr("OSM traces");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true;  /* true = keep dialog open after success. */
 	this->is_thread = true;         /* true = run as thread. */
@@ -76,7 +76,7 @@ DataSourceDialog * DataSourceOSMTraces::create_setup_dialog(Viewport * viewport,
 
 
 
-ProcessOptions * DataSourceOSMDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceOSMDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

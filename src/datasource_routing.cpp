@@ -61,7 +61,7 @@ DataSourceRouting::DataSourceRouting()
 	this->window_title = QObject::tr("Directions");
 	this->layer_title = QObject::tr("Directions");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
 	this->is_thread = true;
@@ -116,7 +116,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog()
 
 
 
-ProcessOptions * DataSourceRoutingDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceRoutingDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

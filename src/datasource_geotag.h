@@ -53,7 +53,7 @@ namespace SlavGPS {
 	public:
 		DataSourceGeoTagDialog();
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
 
 		SGFileEntry * file_entry = NULL;
 		QStringList selected_files;

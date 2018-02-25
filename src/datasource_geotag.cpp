@@ -64,7 +64,7 @@ DataSourceGeoTag::DataSourceGeoTag()
 	this->window_title = QObject::tr("Create Waypoints from Geotagged Images");
 	this->layer_title = QObject::tr("Geotagged Images");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
 	this->is_thread = true;
@@ -116,7 +116,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog()
 
 
 
-ProcessOptions * DataSourceGeoTagDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceGeoTagDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -59,7 +59,7 @@ namespace SlavGPS {
 		DataSourceOSMDialog(Viewport * viewport);
 		~DataSourceOSMDialog();
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
 
 	public slots:
 		void accept_cb(void);

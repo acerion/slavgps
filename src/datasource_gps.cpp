@@ -74,7 +74,7 @@ DataSourceGPS::DataSourceGPS()
 	this->window_title = QObject::tr("Acquire from GPS");
 	this->layer_title = QObject::tr("Acquired from GPS");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
 	this->is_thread = true;
@@ -201,7 +201,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-ProcessOptions * DatasourceGPSSetup::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DatasourceGPSSetup::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

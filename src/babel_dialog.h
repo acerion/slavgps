@@ -59,6 +59,10 @@ namespace SlavGPS {
 
 		void get_write_mode(BabelMode & mode);
 
+		ProcessOptions * get_process_options(void) { return NULL; };
+		ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename) { return NULL; };
+		void adjust_download_options(DownloadOptions & dl_options) { return; };
+
 		BabelFileType * get_file_type_selection(void);
 
 	private slots:

@@ -40,11 +40,11 @@ namespace SlavGPS {
 
 
 
-	enum class DatasourceInputtype {
-		NONE = 0,
-		TRWLAYER,
-		TRACK,
-		TRWLAYER_TRACK
+	enum class DataSourceInputType {
+		None = 0,
+		TRWLayer,
+		Track,
+		TRWLayerTrack
 	};
 
 
@@ -66,8 +66,10 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		DataSourceDialog() {};
-		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
-		virtual ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename);
+
+		virtual ProcessOptions * get_process_options(void) { return NULL; };
+		virtual ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename) { return NULL; };
+		virtual void adjust_download_options(DownloadOptions & dl_options) { return; };
 	};
 
 

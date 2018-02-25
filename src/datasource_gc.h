@@ -63,7 +63,7 @@ namespace SlavGPS {
 		DataSourceGCDialog(Viewport * viewport);
 		~DataSourceGCDialog();
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
 
 		QSpinBox num_spin;
 		QLineEdit center_entry; /* TODO make separate widgets for lat/lon. */

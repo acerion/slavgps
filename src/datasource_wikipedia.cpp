@@ -46,7 +46,7 @@ DataSourceWikipedia::DataSourceWikipedia()
 	this->window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
 	this->layer_title = QObject::tr("Wikipedia Waypoints");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = false;
 	this->keep_dialog_open = false; /* false = don't keep dialog open after success. Not even using the dialog. */
 	this->is_thread = false; /* false = don't run as thread. Own method for getting data - does not fit encapsulation with current thread logic. */

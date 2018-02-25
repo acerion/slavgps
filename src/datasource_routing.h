@@ -60,7 +60,7 @@ namespace SlavGPS {
 		DataSourceRoutingDialog();
 		~DataSourceRoutingDialog();
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
 
 		QComboBox * engines_combo;
 		QLineEdit from_entry;

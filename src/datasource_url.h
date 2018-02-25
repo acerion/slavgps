@@ -58,7 +58,8 @@ namespace SlavGPS {
 		DataSourceURLDialog();
 		~DataSourceURLDialog();
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
+		void adjust_download_options(DownloadOptions & dl_options) const;
 
 	private:
 		QLineEdit url_input;

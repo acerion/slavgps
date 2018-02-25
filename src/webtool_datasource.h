@@ -95,7 +95,7 @@ namespace SlavGPS {
 	public:
 		DataSourceWebToolDialog(Viewport * viewport, void * new_web_tool_data_source);
 
-		ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
 
 		WebToolDatasource * web_tool_data_source = NULL;
 		Viewport * viewport = NULL;

@@ -65,7 +65,7 @@ DataSourceURL::DataSourceURL()
 	this->window_title = QObject::tr("Acquire data from URL");
 	this->layer_title = QObject::tr("From URL");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
 	this->is_thread = true;
@@ -118,7 +118,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceURLDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -133,12 +133,18 @@ ProcessOptions * DataSourceURLDialog::get_process_options(DownloadOptions & dl_o
 
 	po->url = this->url_input.text();
 
+	return po;
+}
+
+
+
+void DataSourceURLDialog::adjust_download_options(DownloadOptions & dl_options) const
+{
 	/* Support .zip + bzip2 files directly. */
 	dl_options.convert_file = a_try_decompress_file;
 	dl_options.follow_location = 5;
 
-	return po;
-
+	return;
 }
 
 

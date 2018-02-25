@@ -73,7 +73,7 @@ namespace SlavGPS {
 		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
 
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
-		QMenu * build_menu(const QString & submenu_label, DatasourceInputtype inputtype);
+		QMenu * build_menu(const QString & submenu_label, DataSourceInputType input_type);
 
 		QLabel * status = NULL;
 		Window * window = NULL;
@@ -101,7 +101,6 @@ namespace SlavGPS {
 		~DataSource() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual ProcessOptions * get_process_options(void * user_data, DownloadOptions * download_options, const QString & input_file_name, const QString & input_track_file_name) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options) { return false; };
 		virtual void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring) { return; };
 
@@ -109,7 +108,7 @@ namespace SlavGPS {
 		QString layer_title;
 
 		DataSourceMode mode;
-		DatasourceInputtype inputtype;
+		DataSourceInputType input_type;
 
 		bool autoview = false;
 		bool keep_dialog_open = false; /* ... when done. */
@@ -138,20 +137,21 @@ namespace SlavGPS {
 	class AcquireGetter : public QRunnable {
 	public:
 		AcquireGetter() {};
+		~AcquireGetter();
 		void run(); /* Re-implementation of QRunnable::get(). */
 		void on_complete_process(void);
 
 
 		AcquireProcess * acquiring = NULL;
-		ProcessOptions * po = NULL;
 		bool creating_new_layer = false;
+
+		ProcessOptions * po = NULL;
 		DownloadOptions * dl_options = NULL;
 	};
 
 
 
 
-	ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DownloadOptions * dl_options, DataSource * data_source);
 	void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 

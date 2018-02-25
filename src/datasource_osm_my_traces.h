@@ -68,7 +68,8 @@ namespace SlavGPS {
 	public:
 		DataSourceMyOSMDialog() {};
 
-		virtual ProcessOptions * get_process_options(DownloadOptions & dl_options);
+		ProcessOptions * get_process_options(void);
+
 		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 
 		/* Actual user and password values are stored in oms-traces.c. */

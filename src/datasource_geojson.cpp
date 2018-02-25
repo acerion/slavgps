@@ -49,7 +49,7 @@ DataSourceGeoJSON::DataSourceGeoJSON()
 	this->window_title = QObject::tr("Acquire from GeoJSON");
 	this->layer_title = QObject::tr("GeoJSON");
 	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
-	this->inputtype = DatasourceInputtype::NONE;
+	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
 	this->is_thread = false; /* false = don't run as thread. Open each file in the main loop. */
@@ -97,7 +97,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
 
 
 
-ProcessOptions * DataSourceGeoJSONDialog::get_process_options(DownloadOptions & dl_options)
+ProcessOptions * DataSourceGeoJSONDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
