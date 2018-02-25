@@ -86,7 +86,7 @@ void ExternalTools::add_action_items(QActionGroup * action_group, Window * windo
 /**
    Add to any menu. Mostly for allowing to assign for TrackWaypoint layer menus.
 */
-void ExternalTools::add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord)
+void ExternalTools::add_menu_items(QMenu * menu, Window * window, const Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		ExternalTool * ext_tool = *iter;

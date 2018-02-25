@@ -34,9 +34,12 @@ namespace SlavGPS {
 
 
 
-	void vik_ext_tool_datasources_register(ExternalTool * ext_tool);
-	void vik_ext_tool_datasources_unregister_all();
-	void vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * window);
+	class ExternalToolDataSource {
+	public:
+		static void register_tool(ExternalTool * ext_tool);
+		static void unregister_all(void);
+		static void add_menu_items(QMenu * menu, Window * window);
+	};
 
 
 

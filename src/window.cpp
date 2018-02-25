@@ -58,7 +58,7 @@
 #include "print.h"
 #include "kmz.h"
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 #include "preferences.h"
 #include "clipboard.h"
 #include "map_cache.h"
@@ -487,7 +487,7 @@ void Window::create_actions(void)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
 #endif
 
-			vik_ext_tool_datasources_add_menu_items(this->submenu_file_acquire, this);
+			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this);
 		}
 
 

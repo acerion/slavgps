@@ -33,6 +33,18 @@
 
 
 
+/*
+  A collection of external (remote) tools that perform some action on
+  remote server for specific coordinate selected on local machine.
+
+  The tools can be registered with ::register_tool() method.
+
+
+
+*/
+
+
+
 
 namespace SlavGPS {
 
@@ -48,7 +60,7 @@ namespace SlavGPS {
 		static void register_tool(ExternalTool * ext_tool);
 		static void unregister_all(void);
 		static void add_action_items(QActionGroup * action_group, Window * window);
-		static void add_menu_items_to_menu(Window * window, QMenu * menu, const Coord * coord);
+		static void add_menu_items(QMenu * menu, Window * window, const Coord * coord);
 	};
 
 

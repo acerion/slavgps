@@ -36,7 +36,7 @@ SOURCES += main.cpp \
     webtool_format.cpp \
     bluemarble.cpp \
     external_tool.cpp \
-    vikexttool_datasources.cpp \
+    external_tool_datasources.cpp \
     external_tools.cpp \
     bing.cpp \
     google.cpp \
@@ -161,7 +161,7 @@ HEADERS += window.h \
     webtool_format.h \
     bluemarble.h \
     external_tool.h \
-    vikexttool_datasources.h \
+    external_tool_datasources.h \
     external_tools.h \
     bing.h \
     google.h \

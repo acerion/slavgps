@@ -44,7 +44,7 @@
 #include "preferences.h"
 #include "acquire.h"
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 
 
 
@@ -234,7 +234,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
 		qa->setToolTip(tr("Import File With GPS_Babel..."));
 
-		vik_ext_tool_datasources_add_menu_items(acquire_submenu, this->get_window());
+		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window());
 	}
 
 
@@ -300,20 +300,20 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	ExternalTools::add_menu_items_to_menu(this->get_window(), external_submenu, NULL);
+	ExternalTools::add_menu_items(external_submenu, this->get_window(), NULL);
 }
 
 
 
 
-void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu & menu, QMenu * external_submenu)
+void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu * external_submenu)
 {
 	/* Try adding submenu items with external tools pre-configured for selected Trackpoint. */
 	const Track * track = parent_layer->get_edited_track();
 	if (track && track->selected_tp.valid) {
 		/* For the selected Trackpoint. */
 		const Coord * coord = &(*track->selected_tp.iter)->coord;
-		ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
+		ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), coord);
 		return;
 	}
 
@@ -322,13 +322,13 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	if (wp) {
 		/* For the selected Waypoint. */
 		const Coord * coord = &wp->coord;
-		ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, coord);
+		ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), coord);
 		return;
 	}
 
 	/* Otherwise add submenu items with external tools pre-configured for selected sublayer.
 	   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
-	ExternalTools::add_menu_items_to_menu(parent_layer->get_window(), external_submenu, NULL);
+	ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), NULL);
 }
 
 
@@ -426,7 +426,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	layer_trw_sublayer_menu_all_add_external_tools(this, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(this, external_submenu);
 
 
 #ifdef VIK_CONFIG_GOOGLE

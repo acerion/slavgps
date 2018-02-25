@@ -37,7 +37,7 @@
 #include "webtool_format.h"
 #include "webtool_datasource.h"
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 #include "goto_tool_xml.h"
 #include "goto.h"
 #include "util.h"
@@ -156,7 +156,7 @@ void SlavGPS::osm_init(void)
 
 
 	/* Datasource. */
-	vik_ext_tool_datasources_register(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", NULL, NULL, NULL));
+	ExternalToolDataSource::register_tool(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", NULL, NULL, NULL));
 
 
 

@@ -25,11 +25,16 @@
 #include "config.h"
 #endif
 
+
+
+
 #include <list>
-#include <cstdlib>
+
+
+
 
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 
 
 
@@ -46,7 +51,7 @@ static std::list<ExternalTool *> ext_tool_datasources;
 
 
 
-void SlavGPS::vik_ext_tool_datasources_register(ExternalTool * ext_tool)
+void ExternalToolDataSource::register_tool(ExternalTool * ext_tool)
 {
 	ext_tool_datasources.push_back(ext_tool);
 }
@@ -54,7 +59,7 @@ void SlavGPS::vik_ext_tool_datasources_register(ExternalTool * ext_tool)
 
 
 
-void vik_ext_tool_datasources_unregister_all()
+void ExternalToolDataSource::unregister_all()
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
 		delete *iter;
@@ -65,10 +70,9 @@ void vik_ext_tool_datasources_unregister_all()
 
 
 /**
- * Add to any menu.
- * Mostly for allowing to assign for TrackWaypoint layer menus.
- */
-void SlavGPS::vik_ext_tool_datasources_add_menu_items(QMenu * menu, Window * window)
+   Add to any menu. Mostly for allowing to assign for TrackWaypoint layer menus.
+*/
+void ExternalToolDataSource::add_menu_items(QMenu * menu, Window * window)
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
 		ExternalTool * ext_tool = *iter;

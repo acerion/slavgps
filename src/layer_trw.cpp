@@ -90,7 +90,7 @@
 #include "babel.h"
 #include "acquire.h"
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 #include "ui_util.h"
 #include "routing.h"
 #include "icons/icons.h"

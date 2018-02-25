@@ -51,7 +51,7 @@
 #include "dir.h"
 #include "datasources.h"
 #include "external_tools.h"
-#include "vikexttool_datasources.h"
+#include "external_tool_datasources.h"
 #include "goto.h"
 #include "routing.h"
 
@@ -119,8 +119,7 @@ static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, void
 {
 	/* kamilFIXME: I think that this no longer works. */
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	ExternalTool * ext_tool = (ExternalTool *) object;
-	vik_ext_tool_datasources_register(ext_tool);
+	ExternalToolDataSource::register_tool((ExternalTool *) object);
 }
 
 

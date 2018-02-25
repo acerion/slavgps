@@ -2920,7 +2920,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	LayerTRW * trw = (LayerTRW *) this->owning_layer;
 
 
-	layer_trw_sublayer_menu_all_add_external_tools(trw, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(trw, external_submenu);
 
 
 #ifdef VIK_CONFIG_GOOGLE

@@ -201,9 +201,6 @@ QString LayerTRWWaypoints::has_duplicate_waypoint_names(void)
 
 
 
-/**
- *
- */
 void LayerTRWWaypoints::set_items_visibility(bool on_off)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
@@ -270,8 +267,6 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 
 
 
-
-/* Params are: viewport, event, last match found or NULL. */
 QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewport * viewport)
 {
 	QString found;
@@ -394,10 +389,6 @@ QString LayerTRWWaypoints::new_unique_element_name(const QString & old_name)
 
 	return new_name;
 }
-
-
-
-
 
 
 
@@ -622,11 +613,6 @@ void LayerTRWWaypoints::sublayer_menu_sort(QMenu & menu)
 
 
 
-
-
-
-
-
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
 bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
@@ -658,7 +644,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, menu, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, external_submenu);
 
 
 	QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QObject::tr("&Transform"));
