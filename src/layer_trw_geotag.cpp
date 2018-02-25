@@ -425,7 +425,7 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 	if (options->ov.write_exif) {
 		bool has_gps_exif = false;
 
-		char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
+		const QString datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
 		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
 			int ans = a_geotag_write_exif_gps(options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime);
@@ -433,7 +433,6 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 				options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
 			}
 		}
-		free(datetime);
 	}
 }
 
@@ -460,109 +459,107 @@ static void trw_layer_geotag_process(GeotagJob * options)
 
 	bool has_gps_exif = false;
 
-	char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
-	if (datetime) {
+	const QString datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
+	if (datetime.isEmpty()) {
+		return;
+	}
 
-		/* If image already has gps info - don't attempt to change it. */
-		if (!options->ov.overwrite_gps_exif && has_gps_exif) {
-			if (options->ov.create_waypoints) {
-				/* Create waypoint with file information. */
-				QString file_name;
-				Waypoint * wp = a_geotag_create_waypoint_from_file(options->image,
-										   options->trw->get_coord_mode(),
-										   file_name);
-				if (!wp) {
-					/* Couldn't create Waypoint. */
-					free(datetime);
-					return;
+	/* If image already has gps info - don't attempt to change it. */
+	if (!options->ov.overwrite_gps_exif && has_gps_exif) {
+		if (options->ov.create_waypoints) {
+			/* Create waypoint with file information. */
+			QString file_name;
+			Waypoint * wp = a_geotag_create_waypoint_from_file(options->image,
+									   options->trw->get_coord_mode(),
+									   file_name);
+			if (!wp) {
+				/* Couldn't create Waypoint. */
+				return;
+			}
+			if (!file_name.size()) {
+				file_name = file_base_name(options->image);
+			}
+
+			bool updated_waypoint = false;
+
+			if (options->ov.overwrite_waypoints) {
+				Waypoint * current_wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+				if (current_wp) {
+					/* Existing wp found, so set new position, comment and image. */
+					(void) a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
+					updated_waypoint = true;
 				}
+			}
+
+			if (!updated_waypoint) {
+				options->trw->add_waypoint_from_file(wp, file_name);
+			}
+
+			/* Mark for redraw. */
+			options->redraw = true;
+		}
+		return;
+	}
+
+	options->PhotoTime = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
+
+	/* Apply any offset. */
+	options->PhotoTime = options->PhotoTime + options->ov.time_offset;
+
+	options->found_match = false;
+
+	if (options->trk) {
+		/* Single specified track. */
+		trw_layer_geotag_track(options->trk, options);
+	} else {
+		/* Try all tracks. */
+		std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_track_items();
+		if (tracks.size() > 0) {
+			trw_layer_geotag_tracks(tracks, options);
+		}
+	}
+
+	/* Match found? */
+	if (options->found_match) {
+
+		if (options->ov.create_waypoints) {
+
+			bool updated_waypoint = false;
+
+			if (options->ov.overwrite_waypoints) {
+
+				/* Update existing WP. */
+				/* Find a WP with current name. */
+				QString file_name = file_base_name(options->image);
+				Waypoint * wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+				if (wp) {
+					/* Found, so set new position, comment and image. */
+					/* TODO: how do we use file_name modified by the function below? */
+					(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
+					updated_waypoint = true;
+				}
+			}
+
+			if (!updated_waypoint) {
+				/* Create waypoint with found position. */
+				QString file_name;
+				/* TODO: how do we use file_name modified by the function below? */
+				Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, NULL);
 				if (!file_name.size()) {
 					file_name = file_base_name(options->image);
 				}
-
-				bool updated_waypoint = false;
-
-				if (options->ov.overwrite_waypoints) {
-					Waypoint * current_wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
-					if (current_wp) {
-						/* Existing wp found, so set new position, comment and image. */
-						(void) a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
-						updated_waypoint = true;
-					}
-				}
-
-				if (!updated_waypoint) {
-					options->trw->add_waypoint_from_file(wp, file_name);
-				}
-
-				/* Mark for redraw. */
-				options->redraw = true;
+				options->trw->add_waypoint_from_file(wp, file_name);
 			}
-			free(datetime);
-			return;
+
+			/* Mark for redraw. */
+			options->redraw = true;
 		}
 
-		options->PhotoTime = ConvertToUnixTime(datetime, (char *) EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
-		free(datetime);
-
-		/* Apply any offset. */
-		options->PhotoTime = options->PhotoTime + options->ov.time_offset;
-
-		options->found_match = false;
-
-		if (options->trk) {
-			/* Single specified track. */
-			trw_layer_geotag_track(options->trk, options);
-		} else {
-			/* Try all tracks. */
-			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_track_items();
-			if (tracks.size() > 0) {
-				trw_layer_geotag_tracks(tracks, options);
-			}
-		}
-
-		/* Match found? */
-		if (options->found_match) {
-
-			if (options->ov.create_waypoints) {
-
-				bool updated_waypoint = false;
-
-				if (options->ov.overwrite_waypoints) {
-
-					/* Update existing WP. */
-					/* Find a WP with current name. */
-					QString file_name = file_base_name(options->image);
-					Waypoint * wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
-					if (wp) {
-						/* Found, so set new position, comment and image. */
-						/* TODO: how do we use file_name modified by the function below? */
-						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
-						updated_waypoint = true;
-					}
-				}
-
-				if (!updated_waypoint) {
-					/* Create waypoint with found position. */
-					QString file_name;
-					/* TODO: how do we use file_name modified by the function below? */
-					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, NULL);
-					if (!file_name.size()) {
-						file_name = file_base_name(options->image);
-					}
-					options->trw->add_waypoint_from_file(wp, file_name);
-				}
-
-				/* Mark for redraw. */
-				options->redraw = true;
-			}
-
-			/* Write EXIF if specified. */
-			if (options->ov.write_exif) {
-				int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
-				if (ans != 0) {
-					options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
-				}
+		/* Write EXIF if specified. */
+		if (options->ov.write_exif) {
+			int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
+			if (ans != 0) {
+				options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
 			}
 		}
 	}

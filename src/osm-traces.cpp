@@ -151,8 +151,6 @@ OsmTracesInfo::OsmTracesInfo(LayerTRW * trw_, Track * trk_)
 
 OsmTracesInfo::~OsmTracesInfo()
 {
-	/* Fields have been g_strdup'ed. */
-
 	this->trw->unref();
 	this->trw = NULL;
 }
@@ -378,10 +376,12 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 		}
 		w->statusbar_update(StatusBarField::INFO, msg);
 	}
+
 	/* Removing temporary file. */
-	int ret = g_unlink(filename.toUtf8().constData());
-	if (ret != 0) {
-		qDebug() << "EE: OSM Traces: failed to unlink temporary file:" << strerror(errno);
+	int ret = 0;
+	if (!QFile::remove(filename)) {
+		qDebug() << "EE: OSM Traces: failed to remove temporary file" << filename;
+		ret = -1;
 	}
 	return ret;
 }

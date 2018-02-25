@@ -261,7 +261,7 @@ static void fill_engine_box(void * data, QComboBox * user_data)
 		const char *label = engine->get_label();
 		combo->addItem(label);
 		/* Save engine in internal list. */
-		GList *engines = (GList*) g_object_get_data(combo , "engines");
+		GList * engines = (GList *) g_object_get_data(combo , "engines");
 		engines = g_list_append(engines, engine);
 		g_object_set_data(combo, "engines", engines);
 	}
@@ -314,7 +314,7 @@ RoutingEngine * SlavGPS::routing_ui_selector_get_nth(QComboBox * combo, int pos)
 	RoutingEngine * engine = NULL;
 #ifdef K_TODO
 	/* Retrieve engine. */
-	GList *engines = (GList*) g_object_get_data (G_OBJECT (combo) , "engines");
+	GList * engines = (GList *) g_object_get_data(G_OBJECT (combo) , "engines");
 	RoutingEngine * engine = (RoutingEngine *) g_list_nth_data(engines, pos);
 #endif
 	return engine;

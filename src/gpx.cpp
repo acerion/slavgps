@@ -244,8 +244,9 @@ static QString c_wp_name;
 static QString c_tr_name;
 
 /* Temporary things so we don't have to create them lots of times. */
-const char * c_slat, * c_slon;
-LatLon c_ll;
+static QString g_slat;
+static QString g_slon;
+static LatLon g_lat_lon;
 
 /* Specialty flags / etc. */
 bool f_tr_newseg;
@@ -256,28 +257,36 @@ unsigned int unnamed_routes = 0;
 
 
 
-static char const * get_attr(char const ** attr, char const * key)
+static QString get_attr(char const ** attributes, char const * key)
 {
-	while (*attr) {
-		if (strcmp(*attr,key) == 0) {
-			return *(attr + 1);
+	while (*attributes) {
+		if (strcmp(*attributes, key) == 0) {
+			return QString(*(attributes + 1));
 		}
-		attr += 2;
+		attributes += 2;
 	}
-	return NULL;
+	return "";
 }
 
 
 
 
-static bool set_c_ll(char const ** attr)
+static bool set_g_lat_lon(char const ** attributes)
 {
-	if ((c_slat = get_attr(attr, "lat")) && (c_slon = get_attr(attr, "lon"))) {
-		c_ll.lat = SGUtils::c_to_double(c_slat);
-		c_ll.lon = SGUtils::c_to_double(c_slon);
-		return true;
+	g_slat = get_attr(attributes, "lat");
+	if (g_slat.isEmpty()) {
+		return false;
 	}
-	return false;
+
+	g_slon = get_attr(attributes, "lon");
+	if (g_slon.isEmpty()) {
+		return false;
+	}
+
+	g_lat_lon.lat = SGUtils::c_to_double(g_slat);
+	g_lat_lon.lon = SGUtils::c_to_double(g_slon);
+
+	return true;
 }
 
 
@@ -285,7 +294,7 @@ static bool set_c_ll(char const ** attr)
 
 static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 {
-	static const char *tmp;
+	QString tmp;
 
 	g_string_append_c(xpath, '/');
 	g_string_append(xpath, el);
@@ -298,14 +307,10 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 		break;
 
 	case tt_wpt:
-		if (set_c_ll(attributes)) {
+		if (set_g_lat_lon(attributes)) {
 			c_wp = new Waypoint();
-			c_wp->visible = true;
-			if (get_attr(attributes, "hidden")) {
-				c_wp->visible = false;
-			}
-
-			c_wp->coord = Coord(c_ll, trw->get_coord_mode());
+			c_wp->visible = get_attr(attributes, "hidden").isEmpty();
+			c_wp->coord = Coord(g_lat_lon, trw->get_coord_mode());
 		}
 		break;
 
@@ -313,9 +318,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 	case tt_rte:
 		c_tr = new Track(current_tag == tt_rte);
 		c_tr->set_defaults();
-		c_tr->visible = true;
-		if (get_attr(attributes, "hidden"))
-			c_tr->visible = false;
+		c_tr->visible = get_attr(attributes, "hidden").isEmpty();
 		break;
 
 	case tt_trk_trkseg:
@@ -323,9 +326,9 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 		break;
 
 	case tt_trk_trkseg_trkpt:
-		if (set_c_ll(attributes)) {
+		if (set_g_lat_lon(attributes)) {
 			c_tp = new Trackpoint();
-			c_tp->coord = Coord(c_ll, trw->get_coord_mode());
+			c_tp->coord = Coord(g_lat_lon, trw->get_coord_mode());
 			if (f_tr_newseg) {
 				c_tp->newsegment = true;
 				f_tr_newseg = false;
@@ -365,13 +368,14 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 		break;
 
 	case tt_waypoint_coord:
-		if (set_c_ll(attributes)) {
-			c_wp->coord = Coord(c_ll, trw->get_coord_mode());
+		if (set_g_lat_lon(attributes)) {
+			c_wp->coord = Coord(g_lat_lon, trw->get_coord_mode());
 		}
 		break;
 
 	case tt_waypoint_name:
-		if ((tmp = get_attr(attributes, "id"))) {
+		tmp = get_attr(attributes, "id");
+		if (!tmp.isEmpty()) {
 			c_wp_name = tmp;
 		}
 		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer for description. */
@@ -761,9 +765,11 @@ dodefault:
 
 
 
-static char * entitize(const QString & input)
+static QString entitize(const QString & input)
 {
 	char * str = strdup(input.toUtf8().constData());
+
+	QString result;
 
         char const * cp;
         char * p, * xstr;
@@ -805,7 +811,9 @@ static char * entitize(const QString & input)
 
         /* no entity replacements */
         if (ecount == 0 && nsecount == 0) {
-                return (tmp);
+		result = tmp;
+		free(tmp);
+                return result;
 	}
 
         if (ecount != 0) {
@@ -847,7 +855,9 @@ static char * entitize(const QString & input)
                         }
                 }
         }
-        return (tmp);
+	result = tmp;
+	free(tmp);
+        return result;
 }
 /**** End GPSBabel code. ****/
 
@@ -863,8 +873,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		return;
 	}
 
-	FILE *f = context->file;
-	char *tmp;
+	FILE * f = context->file;
 	static LatLon lat_lon = wp->coord.get_latlon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
@@ -872,13 +881,10 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 	/* Sanity clause. */
 	if (wp->name.isEmpty()) {
-		tmp = strdup("waypoint");
+		fprintf(f, "  <name>%s</name>\n", "waypoint"); /* TODO: localize? */
 	} else {
-		tmp = entitize(wp->name);
+		fprintf(f, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
 	}
-
-	fprintf(f, "  <name>%s</name>\n", tmp);
-	free(tmp);
 
 	if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
 		fprintf(f, "  <ele>%s</ele>\n", SGUtils::double_to_c(wp->altitude).toUtf8().constData());
@@ -897,46 +903,30 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	}
 
 	if (!wp->comment.isEmpty()) {
-		tmp = entitize(wp->comment);
-		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <cmt>%s</cmt>\n", entitize(wp->comment).toUtf8().constData());
 	}
 	if (!wp->description.isEmpty()) {
-		tmp = entitize(wp->description);
-		fprintf(f, "  <desc>%s</desc>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <desc>%s</desc>\n", entitize(wp->description).toUtf8().constData());
 	}
 	if (wp->source.isEmpty()) {
-		tmp = entitize(wp->source);
-		fprintf(f, "  <src>%s</src>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <src>%s</src>\n", entitize(wp->source).toUtf8().constData());
 	}
 	if (wp->type.isEmpty()) {
-		tmp = entitize(wp->type);
-		fprintf(f, "  <type>%s</type>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <type>%s</type>\n", entitize(wp->type).toUtf8().constData());
 	}
 	if (wp->url.isEmpty()) {
-		tmp = entitize(wp->url);
-		fprintf(f, "  <url>%s</url>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <url>%s</url>\n", entitize(wp->url).toUtf8().constData());
 	}
 	if (wp->image_full_path.isEmpty()) {
-		tmp = entitize(wp->image_full_path);
-		fprintf(f, "  <link>%s</link>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <link>%s</link>\n", entitize(wp->image_full_path).toUtf8().constData());
 	}
 	if (!wp->symbol_name.isEmpty()) {
-		tmp = entitize(wp->symbol_name);
 		if (Preferences::get_gpx_export_wpt_sym_name()) {
 			/* Lowercase the symbol name. */
-			char * tmp2 = g_utf8_strdown(tmp, -1);
-			fprintf(f, "  <sym>%s</sym>\n",  tmp2);
-			free(tmp2);
+			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
 		} else {
-			fprintf(f, "  <sym>%s</sym>\n", tmp);
+			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toUtf8().constData());
 		}
-		free(tmp);
 	}
 
 	fprintf(f, "</wpt>\n");
@@ -960,9 +950,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	fprintf(f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
-		char *s_name = entitize(tp->name);
-		fprintf(f, "    <name>%s</name>\n", s_name);
-		free(s_name);
+		fprintf(f, "    <name>%s</name>\n", entitize(tp->name).toUtf8().constData());
 	}
 
 	QString s_alt;
@@ -1034,7 +1022,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 
 	if (tp->pdop != VIK_DEFAULT_DOP) {
 		s_dop = SGUtils::double_to_c(tp->pdop);
-		if (!s_dop.isEmpty() != NULL) {
+		if (!s_dop.isEmpty()) {
 			fprintf(f, "    <pdop>%s</pdop>\n", s_dop.toUtf8().constData());
 		}
 	}
@@ -1053,11 +1041,11 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	}
 
 	FILE * f = context->file;
-	char * tmp;
 
+	QString tmp;
 	/* Sanity clause. */
 	if (trk->name.isEmpty()) {
-		tmp = strdup("track");
+		tmp = "track"; /* TODO: localize? */
 	} else {
 		tmp = entitize(trk->name);
 	}
@@ -1067,31 +1055,22 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	fprintf(f, "<%s%s>\n  <name>%s</name>\n",
 		trk->type_id == "sg.trw.route" ? "rte" : "trk",
 		trk->visible ? "" : " hidden=\"hidden\"",
-		tmp);
-	free(tmp);
+		tmp.toUtf8().constData());
 
 	if (!trk->comment.isEmpty()) {
-		tmp = entitize(trk->comment);
-		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <cmt>%s</cmt>\n", entitize(trk->comment).toUtf8().constData());
 	}
 
 	if (!trk->description.isEmpty()) {
-		tmp = entitize(trk->description);
-		fprintf(f, "  <desc>%s</desc>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <desc>%s</desc>\n", entitize(trk->description).toUtf8().constData());
 	}
 
 	if (!trk->source.isEmpty()) {
-		tmp = entitize(trk->source);
-		fprintf(f, "  <src>%s</src>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <src>%s</src>\n", entitize(trk->source).toUtf8().constData());
 	}
 
 	if (!trk->type.isEmpty()) {
-		tmp = entitize(trk->type);
-		fprintf(f, "  <type>%s</type>\n", tmp);
-		free(tmp);
+		fprintf(f, "  <type>%s</type>\n", entitize(trk->type).toUtf8().constData());
 	}
 
 	/* No such thing as a rteseg! */
@@ -1159,35 +1138,24 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 	gpx_write_header(file);
 
-	char * tmp;
-	const char * name = trw->get_name().toUtf8().constData();
-	if (name) {
-		tmp = entitize(name);
-		fprintf(file, "  <name>%s</name>\n", tmp);
-		free(tmp);
+	const QString name = trw->get_name();
+	if (!name.isEmpty()) {
+		fprintf(file, "  <name>%s</name>\n", entitize(name).toUtf8().constData());
 	}
 
 	TRWMetadata * md = trw->get_metadata();
 	if (md) {
 		if (!md->author.isEmpty()) {
-			tmp = entitize(md->author);
-			fprintf(file, "  <author>%s</author>\n", tmp);
-			free(tmp);
+			fprintf(file, "  <author>%s</author>\n", entitize(md->author).toUtf8().constData());
 		}
 		if (!md->description.isEmpty()) {
-			tmp = entitize(md->description);
-			fprintf(file, "  <desc>%s</desc>\n", tmp);
-			free(tmp);
+			fprintf(file, "  <desc>%s</desc>\n", entitize(md->description).toUtf8().constData());
 		}
 		if (!md->timestamp.isEmpty()) {
-			tmp = entitize(md->timestamp);
-			fprintf(file, "  <time>%s</time>\n", tmp);
-			free(tmp);
+			fprintf(file, "  <time>%s</time>\n", entitize(md->timestamp).toUtf8().constData());
 		}
 		if (!md->keywords.isEmpty()) {
-			tmp = entitize(md->keywords);
-			fprintf(file, "  <keywords>%s</keywords>\n", tmp);
-			free(tmp);
+			fprintf(file, "  <keywords>%s</keywords>\n", entitize(md->keywords).toUtf8().constData());
 		}
 	}
 

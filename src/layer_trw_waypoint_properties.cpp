@@ -281,8 +281,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 	hasGeotagCB = new QCheckBox(QObject::tr("Has Geotag"));
 	hasGeotagCB->setEnabled(false);
 	bool hasGeotag;
-	char *ignore = a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
-	free(ignore);
+	a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
 	hasGeotagCB->setChecked(hasGeotag);
 
 	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));

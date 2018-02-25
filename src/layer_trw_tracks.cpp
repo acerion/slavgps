@@ -314,19 +314,6 @@ std::list<QString> LayerTRWTracks::get_sorted_track_name_list_exclude_self(Track
 
 
 
-/* Currently unused
-static void trw_layer_sorted_name_list(void * key, void * value, void * udata)
-{
-	GList **list = (GList**)udata;
-	// *list = g_list_prepend(*all, key); //unsorted method
-	// Sort named list alphabetically
-	*list = g_list_insert_sorted_with_data (*list, key, sort_alphabetically, NULL);
-}
-*/
-
-
-
-
 std::list<QString> LayerTRWTracks::get_sorted_track_name_list(void)
 {
 	std::list<QString> result;

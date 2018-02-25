@@ -166,7 +166,7 @@ public:
 	bool in_current_view = false; /* Is the track LatLon start within the current viewport.
 				 This is useful in deciding whether to download a track or not. */
 	/* ATM Only used for display - may want to convert to a time_t for other usage. */
-	char * timestamp = NULL;
+	QString timestamp;
 	/* user made up tags - not being used yet - would be nice to sort/select on these but display will get complicated. */
 	// GList *tag_list;
 };
@@ -185,7 +185,6 @@ GPXMetaData::GPXMetaData()
 
 GPXMetaData::~GPXMetaData()
 {
-	free(this->timestamp);
 }
 
 
@@ -212,7 +211,7 @@ static GPXMetaData * copy_gpx_meta_data_t(GPXMetaData * src)
 	dest->ll.lat = src->ll.lat;
 	dest->ll.lon = src->ll.lon;
 	dest->in_current_view = src->in_current_view;
-	dest->timestamp = g_strdup(src->timestamp);
+	dest->timestamp = src->timestamp;
 
 	return dest;
 }
@@ -311,7 +310,7 @@ static void gpx_meta_data_start(xml_data * xd, const char * element, const char 
 		}
 
 		if ((tmp = get_attr(attributes, "timestamp"))) {
-			xd->current_gpx_meta_data->timestamp = g_strdup(tmp);
+			xd->current_gpx_meta_data->timestamp = tmp;
 		}
 
 		g_string_erase(xd->c_cdata, 0, -1); /* Clear the cdata buffer. */
@@ -430,18 +429,15 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
 		GPXMetaData * gpx_meta_data = *iter;
-		/* To keep display compact three digits of precision for lat/lon should be plenty. */
-		char * latlon_string = g_strdup_printf("(%.3f,%.3f)", gpx_meta_data->ll.lat, gpx_meta_data->ll.lon);
 		gtk_tree_store_append(store, &iter, NULL);
 		gtk_tree_store_set(store, &iter,
 				   0, gpx_meta_data->name,
 				   1, gpx_meta_data->descrition,
 				   2, gpx_meta_data->timestamp,
-				   3, latlon_string,
+				   3, gpx_meta_data->ll.to_string(),
 				   4, gpx_meta_data->visibility,
 				   5, gpx_meta_data->in_current_view,
 				   -1);
-		free(latlon_string);
 	}
 
 	GtkTreeIter iter;
@@ -593,8 +589,8 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	}
 
 	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
-	//xd->xpath = g_string_new ("");
-	xd->c_cdata = g_string_new ("");
+	//xd->xpath = g_string_new("");
+	xd->c_cdata = g_string_new("");
 	xd->current_tag_id = XTagID::Unknown;
 	xd->current_gpx_meta_data = new GPXMetaData();
 	xd->list_of_gpx_meta_data.clear();

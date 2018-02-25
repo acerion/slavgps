@@ -81,27 +81,24 @@ using namespace SlavGPS;
 /**
  * Attempt to get a single comment from the various exif fields.
  */
-static char * geotag_get_exif_comment(GExiv2Metadata * gemd)
+static QString geotag_get_exif_comment(GExiv2Metadata * gemd)
 {
+	QString result;
+
 	// Try various options to create a comment.
 	if (gexiv2_metadata_has_tag(gemd, "Exif.Image.ImageDescription")) {
-		return g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.ImageDescription"));
+		result = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.ImageDescription"));
+	} else if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPComment")) {
+		result = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPComment"));
+	} else if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPSubject")) {
+		result = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPSubject"));
+	} else if (gexiv2_metadata_has_tag(gemd, "Exif.Image.DateTimeOriginal")) {
+		result = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.DateTimeOriginal"));
+	} else {
+		; /* Otherwise nothing found. */
 	}
 
-	if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPComment")) {
-		return g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPComment"));
-	}
-
-	if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPSubject")) {
-		return g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPSubject"));
-	}
-
-	if (gexiv2_metadata_has_tag(gemd, "Exif.Image.DateTimeOriginal")) {
-		return g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.DateTimeOriginal"));
-	}
-
-	/* Otherwise nothing found. */
-	return NULL;
+	return result;
 }
 #endif
 
@@ -112,41 +109,38 @@ static char * geotag_get_exif_comment(GExiv2Metadata * gemd)
 /**
  * Attempt to get a single comment from the various exif fields.
  */
-static char* geotag_get_exif_comment(ExifData *ed)
+static QString geotag_get_exif_comment(ExifData *ed)
 {
-	char str[128];
+	char str[128] = { 0 };
+	QString result;
 	ExifEntry *ee;
 
 	/* Try various options to create a comment. */
-	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_IMAGE_DESCRIPTION);
-	if (ee) {
-		exif_entry_get_value(ee, str, 128);
-		return g_strdup(str);
-	}
+	if (NULL != (ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_IMAGE_DESCRIPTION))) {
+		exif_entry_get_value(ee, str, sizeof (128));
+		result = str;
 
-	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_COMMENT);
-	if (ee) {
-		exif_entry_get_value(ee, str, 128);
-		return g_strdup(str);
-	}
+	} else if (NULL != (ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_COMMENT))) {
+		exif_entry_get_value(ee, str, sizeof (128));
+		result = str;
 
-	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_SUBJECT);
-	if (ee) {
-		exif_entry_get_value(ee, str, 128);
-		return g_strdup(str);
+	} else if (NULL != (ee = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_SUBJECT))) {
+		exif_entry_get_value(ee, str, sizeof (128));
+		result = str;
+
+	} else if (NULL != (ee = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL))) {
+		exif_entry_get_value(ee, str, sizeof (128));
+		result = str;
+
+	} else {
+		; /* Otherwise nothing found. */
 	}
 
 	/* Consider using these for existing GPS info?? */
 	//#define EXIF_TAG_GPS_TIME_STAMP        0x0007
 	//#define EXIF_TAG_GPS_DATE_STAMP         0x001d
-	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL);
-	if (ee) {
-		exif_entry_get_value(ee, str, 128);
-		return g_strdup(str);
-	}
 
-	/* Otherwise nothing found. */
-	return NULL;
+	return result;
 }
 
 
@@ -492,30 +486,30 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
  *
  * Here EXIF processing is used to get time information.
  */
-char* SlavGPS::a_geotag_get_exif_date_from_file(const char *filename, bool *has_GPS_info)
+QString SlavGPS::a_geotag_get_exif_date_from_file(const QString & filename, bool * has_GPS_info)
 {
-	char* datetime = NULL;
+	QString datetime;
 	*has_GPS_info = false;
 
 #ifdef K_TODO
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
-	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
+	if (gexiv2_metadata_open_path(gemd, filename.toUtf8().constData(), NULL)) {
 		double lat, lon;
 		*has_GPS_info = (gexiv2_metadata_get_gps_longitude(gemd,&lon) && gexiv2_metadata_get_gps_latitude(gemd,&lat));
 
 		/* Prefer 'Photo' version over 'Image'. */
 		if (gexiv2_metadata_has_tag(gemd, "Exif.Photo.DateTimeOriginal")) {
-			datetime = g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Photo.DateTimeOriginal"));
+			datetime = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Photo.DateTimeOriginal"));
 		} else {
-			datetime = g_strdup(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.DateTimeOriginal"));
+			datetime = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.DateTimeOriginal"));
 		}
 	}
 	gexiv2_metadata_free(gemd);
 #else
 #ifdef HAVE_LIBEXIF
-	ExifData *ed = exif_data_new_from_file(filename);
+	ExifData *ed = exif_data_new_from_file(filename.toUtf8().constData());
 
 	/* Detect EXIF load failure. */
 	if (!ed) {
@@ -527,8 +521,8 @@ char* SlavGPS::a_geotag_get_exif_date_from_file(const char *filename, bool *has_
 
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL);
 	if (ee) {
-		exif_entry_get_value(ee, str, 128);
-		datetime = g_strdup(str);
+		exif_entry_get_value(ee, str, sizeof (str));
+		datetime = str;
 	}
 
 	/* Check GPS Info. */

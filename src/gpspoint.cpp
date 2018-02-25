@@ -681,8 +681,8 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 			this->line_altitude = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
-			this->line_timestamp  = g_ascii_strtod(value, NULL); /* TODO: replace with non-glib function. */
-			if (this->line_timestamp != 0x80000000) {
+			this->line_timestamp  = SGUtils::c_to_double(value); /* TODO: is it the best method to use here? */
+			if (this->line_timestamp != NAN) {
 				this->line_has_timestamp = true;
 			}
 
@@ -803,9 +803,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			/* Due to changes in garminsymbols - the symbol name is now in Title Case.
 			   However to keep newly generated .vik files better compatible with older Viking versions.
 			   The symbol names will always be lowercase. */
-			char * tmp_symbol = g_utf8_strdown(wp->symbol_name.toUtf8().constData(), -1);
-			fprintf(file, " symbol=\"%s\"", tmp_symbol);
-			free(tmp_symbol);
+			fprintf(file, " symbol=\"%s\"", wp->symbol_name.toLower().toUtf8().constData());
 		}
 		if (!wp->visible) {
 			fprintf(file, " visible=\"n\"");

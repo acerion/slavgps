@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 	Waypoint * a_geotag_waypoint_positioned(const char * filename, const Coord & coord, double alt, QString & name, Waypoint * wp);
 
-	char * a_geotag_get_exif_date_from_file(const char * filename, bool * has_GPS_info);
+	QString a_geotag_get_exif_date_from_file(const QString & filename, bool * has_GPS_info);
 
 	LatLon a_geotag_get_position(const char * filename);
 

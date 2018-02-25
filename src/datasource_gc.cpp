@@ -266,15 +266,19 @@ ProcessOptions * DataSourceGCDialog::get_process_options(DownloadOptions & dl_op
 	   3. Converts webpages into a single waypoint file, ignoring zero location waypoints '-z'.
 	      Probably as they are premium member only geocaches and user is only a basic member.
 	   Final output is piped into GPSbabel - hence removal of *html is done at beginning of the command sequence. */
-	po->shell_command = g_strdup_printf("rm -f ~/.geo/caches/*.html ; %s -H ~/.geo/caches -P -n%d -r%.1fM -u %s -p %s %s %s ; %s -z ~/.geo/caches/*.html ",
-					    GC_PROGRAM1,
-					    this->num_spin.value(),
-					    this->miles_radius_spin.value(),
-					    safe_user,
-					    safe_pass,
-					    SGUtils::double_to_c(lat).toUtf8().constData(),
-					    SGUtils::double_to_c(lon).toUtf8().constData(),
-					    GC_PROGRAM2);
+	const QString command1 = "rm -f ~/.geo/caches/*.html; ";
+	const QString command2 = QString("%1 -H ~/.geo/caches -P -n%2 -r%3M -u %4 -p %5 %6 %7; ")
+		.arg(GC_PROGRAM1)
+		.arg(this->num_spin.value())
+		.arg(this->miles_radius_spin.value(), 0, 'f', 1)
+		.arg(safe_user)
+		.arg(safe_pass)
+		.arg(SGUtils::double_to_c(lat).toUtf8().constData())
+		.arg(SGUtils::double_to_c(lon).toUtf8().constData());
+	const QString command3 = QString("%1 -z ~/.geo/caches/*.html").arg(GC_PROGRAM2);
+
+	po->shell_command = command1 + command2 + command3;
+
 	//free(safe_string);
 	free(safe_user);
 	free(safe_pass);
