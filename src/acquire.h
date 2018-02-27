@@ -66,7 +66,7 @@ namespace SlavGPS {
 	/**
 	   Global data structure used to expose the progress dialog to the worker thread.
 	*/
-	class AcquireProcess : public QObject {
+	class AcquireProcess : public BabelSomething {
 		Q_OBJECT
 	public:
 		AcquireProcess() {};
@@ -74,6 +74,8 @@ namespace SlavGPS {
 
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
 		QMenu * build_menu(const QString & submenu_label, DataSourceInputType input_type);
+
+		void import_progress_cb(BabelProgressCode code, void * data);
 
 		QLabel * status = NULL;
 		Window * window = NULL;
@@ -101,7 +103,7 @@ namespace SlavGPS {
 		~DataSource() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options) { return false; };
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something) { return false; };
 		virtual void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring) { return; };
 
 		QString window_title;
@@ -119,7 +121,7 @@ namespace SlavGPS {
 
 
 	/* Parent class for data sources that have the same process
-	   function: a_babel_convert_from(), called either directly or
+	   function: a_babel_convert_import(), called either directly or
 	   indirectly. */
 	class DataSourceBabel : public DataSource {
 	public:
@@ -127,7 +129,7 @@ namespace SlavGPS {
 		~DataSourceBabel() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options);
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);
 	};
 
 
@@ -148,11 +150,6 @@ namespace SlavGPS {
 		ProcessOptions * po = NULL;
 		DownloadOptions * dl_options = NULL;
 	};
-
-
-
-
-	void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
 
 
 

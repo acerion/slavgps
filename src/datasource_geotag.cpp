@@ -141,8 +141,9 @@ ProcessOptions * DataSourceGeoTagDialog::get_process_options(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something)
 {
+	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
 	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->parent_data_source_dialog;
 
 	/* Process selected files.

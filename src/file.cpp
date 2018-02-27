@@ -789,7 +789,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
 			ProcessOptions po("-i kml", full_path, NULL, NULL);
-			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
+			if (! (success = a_babel_convert_import(layer, &po, NULL, NULL))) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
 		}
@@ -923,14 +923,14 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
 		fclose(file);
 		switch (Preferences::get_kml_export_units()) {
 		case VIK_KML_EXPORT_UNITS_STATUTE:
-			return a_babel_convert_to(trw, NULL, "-o kml", file_full_path, NULL, NULL);
+			return a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
 			break;
 		case VIK_KML_EXPORT_UNITS_NAUTICAL:
-			return a_babel_convert_to(trw, NULL, "-o kml,units=n", file_full_path, NULL, NULL);
+			return a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
 			break;
 		default:
 			/* VIK_KML_EXPORT_UNITS_METRIC: */
-			return a_babel_convert_to(trw, NULL, "-o kml,units=m", file_full_path, NULL, NULL);
+			return a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
 			break;
 		}
 		break;
@@ -973,7 +973,7 @@ bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file
 		.arg(waypoints ? "-w" : "")
 		.arg(output_file_type);
 
-	return a_babel_convert_to(trw, NULL, babel_args, full_output_file_path, NULL, NULL);
+	return a_babel_convert_export(trw, NULL, babel_args, full_output_file_path, NULL);
 }
 
 

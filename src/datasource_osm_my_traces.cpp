@@ -572,8 +572,10 @@ void DataSourceMyOSMDialog::set_in_current_view_property(std::list<GPXMetaData *
 
 
 
-bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something)
 {
+	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
+
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
 
 	bool result = false;
@@ -661,7 +663,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 				/* NB download type is GPX (or a compressed version). */
 				ProcessOptions my_po = *process_options;
 				my_po.url = url;
-				convert_result = a_babel_convert_from(target_layer, &my_po, cb, acquiring, &dl_options);
+				convert_result = a_babel_convert_import(target_layer, &my_po, &dl_options, babel_something);
 				/* TODO investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 

@@ -184,7 +184,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelCallback cb, void * cb_data, void * unused)
+bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelCallback cb, BabelSomething * babel_something, void * unused)
 {
 	bool ret = false;
 	const QString bargs = babel_args + " -i gpx";
@@ -192,7 +192,7 @@ bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelCallback c
 
 	if (!name_src.isEmpty()) {
 		ProcessOptions po(bargs, name_src, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
-		ret = a_babel_convert_from(trw, &po, cb, cb_data, (DownloadOptions *) unused);
+		ret = a_babel_convert_import(trw, &po, (DownloadOptions *) unused, babel_something);
 		QDir::root().remove(name_src);
 	}
 
@@ -240,12 +240,12 @@ static void babel_watch(GPid pid, int status, void * cb_data)
    \return true on success
    \return false otherwise
 */
-bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path)
+bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, BabelSomething * babel_something, LayerTRW * trw, const QString & intermediate_file_path)
 {
 	qDebug().nospace() << "II: Babel: convert through intermediate file: will write to intermediate file '" << intermediate_file_path << "'";
 
-	BabelConverter converter(program, args, cb, cb_data);
-	if (!converter.run_conversion()) {
+	BabelConverter converter(program, args, babel_something);
+	if (!converter.run_conversion(true)) {
 		qDebug() << "EE: Babel: convert through intermediate file: conversion failed";
 		return false;
 	}
@@ -275,6 +275,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
 
 
 
+
 /**
  * @trw: The TRW layer to place data into. Duplicate items will be overwritten.
  * @babel_args: A string containing gpsbabel command line options. This string must include the input file type (-i) option.
@@ -290,7 +291,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, const QString & input_file_path, const QString & babel_filters, BabelCallback cb, void * cb_data)
+bool a_babel_convert_import_from_filter(LayerTRW * trw, const QString & babel_args, const QString & input_file_path, const QString & babel_filters, BabelSomething * babel_something)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -337,7 +338,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, con
 	args << intermediate_file_path;
 
 
-	const bool ret = babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_path);
+	const bool ret = babel.convert_through_intermediate_file(program, args, babel_something, trw, intermediate_file_path);
 
 	intermediate_file.remove(); /* Close and remove. */
 
@@ -361,7 +362,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const QString & babel_args, con
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_command, const QString & input_file_type, BabelCallback cb, void * cb_data)
+bool a_babel_convert_import_from_shell_command(LayerTRW * trw, const QString & shell_command, const QString & input_file_type, BabelSomething * babel_something)
 {
 	QTemporaryFile intermediate_file;
 	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
@@ -382,7 +383,7 @@ bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_co
 
 	const QString program(BASH_LOCATION);
 	const QStringList args(QStringList() << "-c" << full_shell_command);
-	return babel.convert_through_intermediate_file(program, args, cb, cb_data, trw, intermediate_file_fullpath);
+	return babel.convert_through_intermediate_file(program, args, babel_something, trw, intermediate_file_fullpath);
 }
 
 
@@ -402,7 +403,7 @@ bool a_babel_convert_from_shell_command(LayerTRW * trw, const QString & shell_co
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const QString & input_file_type, const QString & babel_filters, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
+bool a_babel_convert_import_from_url_filter(LayerTRW * trw, const QString & url, const QString & input_file_type, const QString & babel_filters, DownloadOptions * dl_options)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -427,7 +428,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src, &babel_dl_options, NULL)) {
 		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
 			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
-			ret = a_babel_convert_from_filter(trw, babel_args, name_src, babel_filters, NULL, NULL);
+			ret = a_babel_convert_import_from_filter(trw, babel_args, name_src, babel_filters, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
@@ -447,6 +448,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
 
 
 
+
 /**
  * @trw: The TRW layer to place data into. Duplicate items will be overwritten.
  * @process_options: The options to control the appropriate processing function. See #ProcessOptions for more detail.
@@ -460,7 +462,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const QString & url, const 
  *
  * Returns: %true on success.
  */
-bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * cb_data, DownloadOptions * dl_options)
+bool SlavGPS::a_babel_convert_import(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * dl_options, BabelSomething * babel_something)
 {
 	if (!process_options) {
 		qDebug() << "EE: Babel: convert from: no process options";
@@ -469,17 +471,17 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
 
 	if (!process_options->url.isEmpty()) {
 		qDebug() << "II: Babel: convert from: url";
-		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, cb_data, dl_options);
+		return a_babel_convert_import_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, dl_options);
 	}
 
 	if (!process_options->babel_args.isEmpty()) {
 		qDebug() << "II: Babel: convert from: babel args";
-		return a_babel_convert_from_filter(trw, process_options->babel_args, process_options->input_file_name, process_options->babel_filters, cb, cb_data);
+		return a_babel_convert_import_from_filter(trw, process_options->babel_args, process_options->input_file_name, process_options->babel_filters, babel_something);
 	}
 
 	if (!process_options->shell_command.isEmpty()) {
 		qDebug() << "II: Babel: convert from: shell command";
-		return a_babel_convert_from_shell_command(trw, process_options->shell_command, process_options->input_file_type, cb, cb_data);
+		return a_babel_convert_import_from_shell_command(trw, process_options->shell_command, process_options->input_file_type, babel_something);
 	}
 
 	qDebug() << "II: Babel: convert from: no process option found";
@@ -503,7 +505,7 @@ bool SlavGPS::a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_optio
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelCallback cb, void * cb_data)
+bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelSomething * babel_something)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -546,8 +548,8 @@ bool SlavGPS::a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & ba
 		return false;
 	}
 
-	BabelConverter converter(program, args, cb, cb_data);
-	return converter.run_conversion();
+	BabelConverter converter(program, args, babel_something);
+	return converter.run_conversion(false);
 }
 
 
@@ -567,14 +569,14 @@ static void set_mode(BabelMode * mode, const QString & mode_string)
 
 
 /**
- * Load a single feature stored in the given line.
- */
-static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * unused)
+   Load a single feature stored in the given line.
+*/
+void BabelFeatureLoader::import_progress_cb(BabelProgressCode code, void * data)
 {
-	if (!line_buffer) {
+	if (!data) {
 		return;
 	}
-	const QString line = QString((char *) line_buffer);
+	const QString line = QString((char *) data);
 
 	QStringList tokens = line.split('\t', QString::KeepEmptyParts);
 	if (tokens.size() == 0) {
@@ -609,10 +611,10 @@ static void load_feature_cb(BabelProgressCode code, void * line_buffer, void * u
 
 
 
-static bool load_feature()
+static bool load_babel_features(void)
 {
 	if (!babel.is_detected) {
-		qDebug() << "EE: Babel: gpsbabel not found in PATH";
+		qDebug() << "EE" PREFIX << "gpsbabel not found in PATH";
 		return false;
 	}
 
@@ -622,8 +624,10 @@ static bool load_feature()
 
 	args << QString("-^3");
 
-	BabelConverter converter(program, args, load_feature_cb, NULL);
-	return converter.run_conversion();
+	BabelFeatureLoader feature_loader;
+
+	BabelConverter converter(program, args, &feature_loader);
+	return converter.run_conversion(true);
 }
 
 
@@ -655,7 +659,7 @@ void Babel::post_init()
 {
 	babel.get_gpsbabel_path_from_preferences();
 
-	load_feature();
+	load_babel_features();
 }
 
 
@@ -701,15 +705,14 @@ bool Babel::is_available(void)
 
 
 
-BabelConverter::BabelConverter(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data)
+BabelConverter::BabelConverter(const QString & program, const QStringList & args, BabelSomething * new_babel_something)
 {
 	this->process = new QProcess(this);
 
 	this->process->setProgram(program);
 	this->process->setArguments(args);
 
-	this->conversion_cb = cb;
-	this->conversion_data = cb_data;
+	this->babel_something = new_babel_something;
 
 	QObject::connect(this->process, SIGNAL (started()), this, SLOT (started_cb()));
 	QObject::connect(this->process, SIGNAL (finished(int, QProcess::ExitStatus)), this, SLOT (finished_cb(int, QProcess::ExitStatus)));
@@ -735,15 +738,17 @@ BabelConverter::~BabelConverter()
 
 
 
-bool BabelConverter::run_conversion()
+bool BabelConverter::run_conversion(bool do_import)
 {
 	bool success = true;
 	this->process->start();
 	//this->process->waitForStarted(-1);
 	this->process->waitForFinished(-1);
 
-	if (this->conversion_cb) {
-		this->conversion_cb(BABEL_DONE, NULL, this->conversion_data);
+	if (do_import) {
+		this->babel_something->import_progress_cb(BABEL_DONE, NULL);
+	} else {
+		this->babel_something->export_progress_cb(BABEL_DONE, NULL);
 	}
 
 #ifdef K_OLD_IMPLEMENTATION
@@ -826,9 +831,7 @@ void BabelConverter::read_stdout_cb()
 		this->process->readLine(buffer, sizeof (buffer));
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
-		if (this->conversion_cb) {
-			this->conversion_cb(BABEL_DIAG_OUTPUT, buffer, this->conversion_data);
-		}
+		this->babel_something->import_progress_cb(BABEL_DONE, buffer);
 	}
 }
 

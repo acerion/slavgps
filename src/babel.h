@@ -45,6 +45,7 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class Track;
+	class BabelSomething;
 
 
 
@@ -137,8 +138,8 @@ namespace SlavGPS {
 
 
 
-	bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelCallback cb, void * user_data, DownloadOptions * dl_options);
-	bool a_babel_convert_to(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelCallback cb, void * cb_data);
+	bool a_babel_convert_import(LayerTRW * trw, ProcessOptions *process_options, DownloadOptions * dl_options, BabelSomething * babel_something);
+	bool a_babel_convert_export(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelSomething * babel_something);
 
 
 
@@ -160,7 +161,7 @@ namespace SlavGPS {
 		void get_gpsbabel_path_from_preferences(void);
 
 		bool set_program_name(QString & program, QStringList & args);
-		bool convert_through_intermediate_file(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data, LayerTRW * trw, const QString & intermediate_file_path);
+		bool convert_through_intermediate_file(const QString & program, const QStringList & args, BabelSomething * babel_something, LayerTRW * trw, const QString & intermediate_file_path);
 
 		QString gpsbabel_path; /* Path to gpsbabel. */
 		QString unbuffer_path; /* Path to unbuffer. */
@@ -180,10 +181,10 @@ namespace SlavGPS {
 	class BabelConverter : public QObject {
 		Q_OBJECT
 	public:
-		BabelConverter(const QString & program, const QStringList & args, BabelCallback cb, void * cb_data);
+		BabelConverter(const QString & program, const QStringList & args, BabelSomething * babel_something);
 		~BabelConverter();
 
-		bool run_conversion(void);
+		bool run_conversion(bool do_import);
 
 		QProcess * process = NULL;
 
@@ -194,8 +195,29 @@ namespace SlavGPS {
 		void read_stdout_cb(void);
 
 	private:
-		BabelCallback conversion_cb = NULL;
-		void * conversion_data = NULL;
+		BabelSomething * babel_something = NULL;
+	};
+
+
+
+
+	class BabelSomething : public QObject {
+		Q_OBJECT
+	public:
+		BabelSomething() {};
+		virtual void import_progress_cb(BabelProgressCode code, void * data) { return; };
+		virtual void export_progress_cb(BabelProgressCode code, void * data) { return; };
+	};
+
+
+
+
+	class BabelFeatureLoader : public BabelSomething {
+		Q_OBJECT
+	public:
+		BabelFeatureLoader() {};
+		void import_progress_cb(BabelProgressCode code, void * data);
+		void export_progress_cb(BabelProgressCode code, void * data) { return; };
 	};
 
 

@@ -26,10 +26,24 @@
 
 
 #include <list>
+#include <mutex>
+
+
+
+
+#include <QRunnable>
+#include <QLabel>
+
+
+
 
 #include "layer.h"
 #include "layer_interface.h"
 #include "variant.h"
+#include "babel.h"
+#include "dialog.h"
+
+
 
 
 
@@ -227,6 +241,54 @@ namespace SlavGPS {
 
 
 	void layer_gps_init(void);
+
+
+
+
+	class GPSSession : public QRunnable, public BabelSomething {
+	public:
+		GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
+
+		void set_current_count(int cnt);
+		void set_total_count(int cnt);
+		void set_gps_device_info(const QString & info);
+		void process_line_for_gps_info(const char * line);
+
+		void import_progress_cb(BabelProgressCode code, void * data);
+		void export_progress_cb(BabelProgressCode code, void * data);
+
+		void run();
+
+		std::mutex mutex;
+		GPSDirection direction;
+		QString port;
+		bool in_progress = false;
+		int total_count = 0;
+		int count = 0;
+		LayerTRW * trw = NULL;
+		Track * trk = NULL;
+		QString babel_args;
+		QString window_title;
+		BasicDialog * dialog = NULL;
+		QLabel * status_label = NULL;
+		QLabel * gps_device_label = NULL;
+		QLabel * ver_label = NULL;
+		QLabel * id_label = NULL;
+		QLabel * wp_label = NULL;
+		QLabel * trk_label = NULL;
+		QLabel * rte_label = NULL;
+		QLabel * progress_label = NULL;
+		GPSTransferType progress_type = GPSTransferType::WPT;
+		Viewport * viewport = NULL;
+#if REALTIME_GPS_TRACKING_ENABLED
+		bool realtime_tracking_in_progress = false;
+#endif
+};
+
+
+
+
+
 
 
 

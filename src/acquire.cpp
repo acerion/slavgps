@@ -79,31 +79,6 @@ static DownloadOptions * acquire_create_download_options(DataSourceDialog * setu
 
 
 
-void SlavGPS::progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring)
-{
-	DataSource * data_source = acquiring->data_source;
-	assert (data_source);
-
-	if (data_source->is_thread) {
-		if (!acquiring->running) {
-#ifdef K_TODO
-			/* See DataSourceWebTool::cleanup(). */
-			if (data_source->cleanup_func) {
-				data_source->cleanup_func(acquiring->parent_data_source_dialog);
-			}
-#endif
-		}
-	}
-
-#ifdef K_TODO
-	/* See DataSourceGPS::progress_func(). */
-	data_source->progress_func(c, data, acquiring);
-#endif
-}
-
-
-
-
 AcquireGetter::~AcquireGetter()
 {
 	delete this->po;
@@ -211,7 +186,7 @@ void AcquireGetter::run(void)
 	DataSource * data_source = this->acquiring->data_source;
 	assert (data_source);
 
-	bool result = data_source->process_func(this->acquiring->trw, this->po, (BabelCallback) progress_func, this->acquiring, this->dl_options);
+	bool result = data_source->process_func(this->acquiring->trw, this->po, this->dl_options, this->acquiring);
 
 	if (this->acquiring->running && !result) {
 		this->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
@@ -340,7 +315,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 					if (!babel_args_off.isEmpty()) {
 						/* Turn off. */
 						ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
-						a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
+						a_babel_convert_import(NULL, &off_po, NULL, NULL);
 					}
 				}
 #endif
@@ -355,7 +330,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
 
-		bool success = new_data_source->process_func(getter.acquiring->trw, getter.po, (BabelCallback) progress_func, this, getter.dl_options);
+		bool success = new_data_source->process_func(getter.acquiring->trw, getter.po, getter.dl_options, this);
 		if (!success) {
 			Dialog::error(QObject::tr("Error: acquisition failed."), this->window);
 		}
@@ -373,6 +348,30 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 	delete progress_dialog;
 	delete setup_dialog;
+}
+
+
+
+
+void AcquireProcess::import_progress_cb(BabelProgressCode code, void * data)
+{
+	assert (this->data_source);
+
+	if (this->data_source->is_thread) {
+		if (!this->running) {
+#ifdef K_TODO
+			/* See DataSourceWebTool::cleanup(). */
+			if (this->data_source->cleanup_func) {
+				this->data_source->cleanup_func(this->parent_data_source_dialog);
+			}
+#endif
+		}
+	}
+
+#ifdef K_TODO
+	/* See DataSourceGPS::progress_func(). */
+	this->data_source->progress_func(code, data, this);
+#endif
 }
 
 
@@ -625,7 +624,7 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * process_options, BabelCallback cb, AcquireProcess * acquiring, DownloadOptions * download_options)
+bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something)
 {
-	return a_babel_convert_from(trw, process_options, cb, acquiring, download_options);
+	return a_babel_convert_import(trw, process_options, download_options, babel_something);
 }

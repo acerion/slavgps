@@ -58,8 +58,10 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceWikipedia::process_func(LayerTRW * trw, ProcessOptions * po, BabelCallback status_cb, AcquireProcess * acquiring, DownloadOptions * unused)
+bool DataSourceWikipedia::process_func(LayerTRW * trw, ProcessOptions * po, DownloadOptions * unused, BabelSomething * babel_something)
 {
+	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
+
 	if (!trw) {
 		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";
 		return false;

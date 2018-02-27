@@ -24,7 +24,6 @@
 #endif
 
 
-#include <mutex>
 #include <vector>
 #include <list>
 #include <cstdlib>
@@ -36,7 +35,6 @@
 #include <unistd.h>
 #endif
 
-#include <QRunnable>
 #include <QDebug>
 
 //#include <glib/gstdio.h>
@@ -145,46 +143,6 @@ static std::vector<SGLabelID> old_params_ports = {
 	SGLabelID("usb:",         4)
 };
 #endif
-
-
-
-
-class GPSSession : public QRunnable {
-public:
-	GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
-
-	void set_current_count(int cnt);
-	void set_total_count(int cnt);
-	void set_gps_device_info(const QString & info);
-	void process_line_for_gps_info(const char * line);
-
-	void run();
-
-	std::mutex mutex;
-	GPSDirection direction;
-	QString port;
-	bool in_progress = false;
-	int total_count = 0;
-	int count = 0;
-	LayerTRW * trw = NULL;
-	Track * trk = NULL;
-	QString babel_args;
-	QString window_title;
-	BasicDialog * dialog = NULL;
-	QLabel * status_label = NULL;
-	QLabel * gps_device_label = NULL;
-	QLabel * ver_label = NULL;
-	QLabel * id_label = NULL;
-	QLabel * wp_label = NULL;
-	QLabel * trk_label = NULL;
-	QLabel * rte_label = NULL;
-	QLabel * progress_label = NULL;
-	GPSTransferType progress_type = GPSTransferType::WPT;
-	Viewport * viewport = NULL;
-#if REALTIME_GPS_TRACKING_ENABLED
-	bool realtime_tracking_in_progress = false;
-#endif
-};
 
 
 
@@ -980,42 +938,44 @@ void GPSSession::process_line_for_gps_info(const char * line)
 
 
 
-static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
+void GPSSession::import_progress_cb(BabelProgressCode code, void * data)
 {
 	char * line = NULL;
 
-	sess->mutex.lock();
-	if (!sess->in_progress) {
-		sess->mutex.unlock();
-		delete sess;
+	this->mutex.lock();
+	if (!this->in_progress) {
+		this->mutex.unlock();
+#ifdef K_TODO
+		delete this;
+#endif
 	}
-	sess->mutex.unlock();
+	this->mutex.unlock();
 
-	switch(c) {
+	switch (code) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *) data;
 
-		sess->mutex.lock();
-		if (sess->in_progress) {
-			sess->status_label->setText(QObject::tr("Status: Working..."));
+		this->mutex.lock();
+		if (this->in_progress) {
+			this->status_label->setText(QObject::tr("Status: Working..."));
 		}
-		sess->mutex.unlock();
+		this->mutex.unlock();
 
 		/* Tells us the type of items that will follow. */
 		if (strstr(line, "Xfer Wpt")) {
-			sess->progress_label = sess->wp_label;
-			sess->progress_type = GPSTransferType::WPT;
+			this->progress_label = this->wp_label;
+			this->progress_type = GPSTransferType::WPT;
 		}
 		if (strstr(line, "Xfer Trk")) {
-			sess->progress_label = sess->trk_label;
-			sess->progress_type = GPSTransferType::TRK;
+			this->progress_label = this->trk_label;
+			this->progress_type = GPSTransferType::TRK;
 		}
 		if (strstr(line, "Xfer Rte")) {
-			sess->progress_label = sess->rte_label;
-			sess->progress_type = GPSTransferType::RTE;
+			this->progress_label = this->rte_label;
+			this->progress_type = GPSTransferType::RTE;
 		}
 
-		sess->process_line_for_gps_info(line);
+		this->process_line_for_gps_info(line);
 
 		if (strstr(line, "RECORD")) {
 			if (strlen(line) > 20) {
@@ -1023,13 +983,13 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSess
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
 				unsigned int cnt = lsb + msb * 256;
-				sess->set_total_count(cnt);
-				sess->count = 0;
+				this->set_total_count(cnt);
+				this->count = 0;
 			}
 		}
 		if (strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
-			sess->count++;
-			sess->set_current_count(sess->count);
+			this->count++;
+			this->set_current_count(this->count);
 		}
 		break;
 	case BABEL_DONE:
@@ -1042,29 +1002,31 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GPSSess
 
 
 
-static void gps_upload_progress_func(BabelProgressCode c, void * data, GPSSession * sess)
+void GPSSession::export_progress_cb(BabelProgressCode code, void * data)
 {
 	char * line = NULL;
 	static unsigned int cnt = 0;
 
-	sess->mutex.lock();
-	if (!sess->in_progress) {
-		sess->mutex.unlock();
+	this->mutex.lock();
+	if (!this->in_progress) {
+		this->mutex.unlock();
+#ifdef K_TODO
 		delete sess;
+#endif
 	}
-	sess->mutex.unlock();
+	this->mutex.unlock();
 
-	switch(c) {
+	switch (code) {
 	case BABEL_DIAG_OUTPUT:
 		line = (char *) data;
 
-		sess->mutex.lock();
-		if (sess->in_progress) {
-			sess->status_label->setText(QObject::tr("Status: Working..."));
+		this->mutex.lock();
+		if (this->in_progress) {
+			this->status_label->setText(QObject::tr("Status: Working..."));
 		}
-		sess->mutex.unlock();
+		this->mutex.unlock();
 
-		sess->process_line_for_gps_info(line);
+		this->process_line_for_gps_info(line);
 
 		if (strstr(line, "RECORD")) {
 
@@ -1074,39 +1036,39 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GPSSessio
 				sscanf(line + 17, "%x", &lsb);
 				sscanf(line + 20, "%x", &msb);
 				cnt = lsb + msb * 256;
-				/* sess->set_total_count(cnt); */
-				sess->count = 0;
+				/* this->set_total_count(cnt); */
+				this->count = 0;
 			}
 		}
 		if (strstr(line, "WPTDAT")) {
-			if (sess->count == 0) {
-				sess->progress_label = sess->wp_label;
-				sess->progress_type = GPSTransferType::WPT;
-				sess->set_total_count(cnt);
+			if (this->count == 0) {
+				this->progress_label = this->wp_label;
+				this->progress_type = GPSTransferType::WPT;
+				this->set_total_count(cnt);
 			}
-			sess->count++;
-			sess->set_current_count(sess->count);
+			this->count++;
+			this->set_current_count(this->count);
 		}
 		if (strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
-			if (sess->count == 0) {
-				sess->progress_label = sess->rte_label;
-				sess->progress_type = GPSTransferType::RTE;
+			if (this->count == 0) {
+				this->progress_label = this->rte_label;
+				this->progress_type = GPSTransferType::RTE;
 				/* Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints.
 				   Anyway since we're uploading - we should know how many points we're going to put! */
 				cnt = (cnt / 2) + 1;
-				sess->set_total_count(cnt);
+				this->set_total_count(cnt);
 			}
-			sess->count++;
-			sess->set_current_count(sess->count);
+			this->count++;
+			this->set_current_count(this->count);
 		}
 		if (strstr(line, "TRKHDR") || strstr(line, "TRKDAT")) {
-			if (sess->count == 0) {
-				sess->progress_label = sess->trk_label;
-				sess->progress_type = GPSTransferType::TRK;
-				sess->set_total_count(cnt);
+			if (this->count == 0) {
+				this->progress_label = this->trk_label;
+				this->progress_type = GPSTransferType::TRK;
+				this->set_total_count(cnt);
 			}
-			sess->count++;
-			sess->set_current_count(sess->count);
+			this->count++;
+			this->set_current_count(this->count);
 		}
 		break;
 	case BABEL_DONE:
@@ -1126,10 +1088,9 @@ void GPSSession::run(void)
 
 	if (this->direction == GPSDirection::DOWN) {
 		ProcessOptions po(this->babel_args, this->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
-		result = a_babel_convert_from(this->trw, &po, (BabelCallback) gps_download_progress_func, this, NULL);
+		result = a_babel_convert_import(this->trw, &po, NULL, this);
 	} else {
-		result = a_babel_convert_to(this->trw, this->trk, this->babel_args, this->port,
-					    (BabelCallback) gps_upload_progress_func, this);
+		result = a_babel_convert_export(this->trw, this->trk, this->babel_args, this->port, this);
 	}
 
 	if (!result) {
@@ -1295,7 +1256,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
 			const QString device_off = QString("-i %1,%2").arg(protocol).arg("power_off");
 			ProcessOptions po(device_off, port, NULL, NULL);
-			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
+			bool result = a_babel_convert_import(NULL, &po, NULL, NULL);
 			if (!result) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}

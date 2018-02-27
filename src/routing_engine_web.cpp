@@ -208,7 +208,7 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 
 	char * format_ = this->get_format();
 	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, &this->dl_options);
+	bool ret = a_babel_convert_import(trw, &po, &this->dl_options, NULL);
 
 	return ret;
 }
@@ -322,7 +322,7 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 	/* Convert and insert data in model. */
 	char * format_ = this->get_format();
 	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
-	bool ret = a_babel_convert_from(trw, &po, NULL, NULL, &this->dl_options);
+	bool ret = a_babel_convert_import(trw, &po, &this->dl_options, NULL);
 
 	return ret;
 }
