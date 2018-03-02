@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 		/* FIXME: these are most probably unused. */
 		void off(void * user_data, QString & babel_args, QString & file_path);
-		void progress_func(BabelProgressCode c, void * data, AcquireProcess * acquiring);
+		void progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring);
 		DataSourceDialog * create_progress_dialog(void * user_data);
 	};
 

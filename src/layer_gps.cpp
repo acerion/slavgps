@@ -952,7 +952,7 @@ void GPSSession::import_progress_cb(BabelProgressCode code, void * data)
 	this->mutex.unlock();
 
 	switch (code) {
-	case BABEL_DIAG_OUTPUT:
+	case BabelProgressCode::DiagOutput:
 		line = (char *) data;
 
 		this->mutex.lock();
@@ -992,7 +992,7 @@ void GPSSession::import_progress_cb(BabelProgressCode code, void * data)
 			this->set_current_count(this->count);
 		}
 		break;
-	case BABEL_DONE:
+	case BabelProgressCode::Completed:
 		break;
 	default:
 		break;
@@ -1017,7 +1017,7 @@ void GPSSession::export_progress_cb(BabelProgressCode code, void * data)
 	this->mutex.unlock();
 
 	switch (code) {
-	case BABEL_DIAG_OUTPUT:
+	case BabelProgressCode::DiagOutput:
 		line = (char *) data;
 
 		this->mutex.lock();
@@ -1071,7 +1071,7 @@ void GPSSession::export_progress_cb(BabelProgressCode code, void * data)
 			this->set_current_count(this->count);
 		}
 		break;
-	case BABEL_DONE:
+	case BabelProgressCode::Completed:
 		break;
 	default:
 		break;

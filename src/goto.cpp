@@ -352,9 +352,10 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 {
 	name = "";
 
+	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;
 	//char *tmpname = strdup("../test/hostip2.json");
-	if (!Download::download_to_tmp_file(tmp_file, "http://api.hostip.info/get_json.php?position=true", NULL)) {
+	if (!dl_handle.download_to_tmp_file(tmp_file, "http://api.hostip.info/get_json.php?position=true")) {
 		return 0;
 	}
 

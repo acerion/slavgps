@@ -184,7 +184,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelCallback cb, BabelSomething * babel_something, void * unused)
+bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelSomething * babel_something)
 {
 	bool ret = false;
 	const QString bargs = babel_args + " -i gpx";
@@ -424,8 +424,9 @@ bool a_babel_convert_import_from_url_filter(LayerTRW * trw, const QString & url,
 	qDebug() << "DD: Babel: Convert from url filter: temporary file:" << name_src;
 	tmp_file.remove(); /* Because we only needed to confirm that a path to temporary file is "available"? */
 
+	DownloadHandle dl_handle(&babel_dl_options);
 
-	if (DownloadResult::SUCCESS == Download::get_url_http(url, "", name_src, &babel_dl_options, NULL)) {
+	if (DownloadResult::SUCCESS == dl_handle.get_url_http(url, "", name_src)) {
 		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
 			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
 			ret = a_babel_convert_import_from_filter(trw, babel_args, name_src, babel_filters, NULL);
@@ -746,9 +747,9 @@ bool BabelConverter::run_conversion(bool do_import)
 	this->process->waitForFinished(-1);
 
 	if (do_import) {
-		this->babel_something->import_progress_cb(BABEL_DONE, NULL);
+		this->babel_something->import_progress_cb(BabelProgressCode::Completed, NULL);
 	} else {
-		this->babel_something->export_progress_cb(BABEL_DONE, NULL);
+		this->babel_something->export_progress_cb(BabelProgressCode::Completed, NULL);
 	}
 
 #ifdef K_OLD_IMPLEMENTATION
@@ -771,11 +772,11 @@ bool BabelConverter::run_conversion(bool do_import)
 
 		while (fgets(line, sizeof(line), diag)) {
 			if (cb) {
-				cb(BABEL_DIAG_OUTPUT, line, cb_data);
+				cb(BabelProgressCode::DiagOutput, line, cb_data);
 			}
 		}
 		if (cb) {
-			cb(BABEL_DONE, NULL, cb_data);
+			cb(BabelProgressCode::Completed, NULL, cb_data);
 		}
 		fclose(diag);
 		diag = NULL;
@@ -831,7 +832,7 @@ void BabelConverter::read_stdout_cb()
 		this->process->readLine(buffer, sizeof (buffer));
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
-		this->babel_something->import_progress_cb(BABEL_DONE, buffer);
+		this->babel_something->import_progress_cb(BabelProgressCode::Completed, buffer);
 	}
 }
 

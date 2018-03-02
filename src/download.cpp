@@ -184,7 +184,16 @@ static ParameterSpecification prefs[] = {
 
 void Download::init(void)
 {
+	CurlDownload::init();
 	Preferences::register_parameter(prefs[0], scale_age.initial);
+}
+
+
+
+
+void Download::uninit()
+{
+	CurlDownload::uninit();
 }
 
 
@@ -433,16 +442,14 @@ static void set_etag(const QString & file_path, const QString & tmp_file_path, C
 
 
 
-static DownloadResult download(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, bool ftp, void * handle)
+DownloadResult DownloadHandle::download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp)
 {
 	bool failure = false;
 	CurlOptions curl_options;
 
 	/* Check file. */
 	if (0 == access(dest_file_path.toUtf8().constData(), F_OK)) {
-		if (dl_options == NULL
-		    || (!dl_options->check_file_server_time
-			&& !dl_options->use_etag)) {
+		if ((!this->dl_options.check_file_server_time && !this->dl_options.use_etag)) {
 			/* Nothing to do as file already exists and we don't want to check server. */
 			return DownloadResult::NOT_REQUIRED;
 		}
@@ -457,10 +464,10 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 			return DownloadResult::NOT_REQUIRED;
 		}
 
-		if (dl_options != NULL && dl_options->check_file_server_time) {
+		if (this->dl_options.check_file_server_time) {
 			curl_options.time_condition = file_time;
 		}
-		if (dl_options != NULL && dl_options->use_etag) {
+		if (this->dl_options.use_etag) {
 			get_etag(dest_file_path, &curl_options);
 		}
 
@@ -486,17 +493,17 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 	}
 
 	/* Call the backend function */
-	CurlDownloadStatus ret = CurlDownload::get_url(hostname, uri, f, dl_options, ftp, &curl_options, handle);
+	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, f, &this->dl_options, ftp, &curl_options);
 
 	DownloadResult result = DownloadResult::SUCCESS;
 
-	if (ret != CurlDownloadStatus::NO_ERROR && ret != CurlDownloadStatus::NO_NEWER_FILE) {
+	if (ret != CurlDownloadStatus::NoError && ret != CurlDownloadStatus::NoNewerFile) {
 		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
 		result = DownloadResult::HTTP_ERROR;
 	}
 
-	if (!failure && dl_options != NULL && dl_options->check_file != NULL && ! dl_options->check_file(f)) {
+	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(f)) {
 		qDebug() << "DD: Download: file content checking failed";
 		failure = true;
 		result = DownloadResult::CONTENT_ERROR;
@@ -514,7 +521,7 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 		return result;
 	}
 
-	if (ret == CurlDownloadStatus::NO_NEWER_FILE)  {
+	if (ret == CurlDownloadStatus::NoNewerFile)  {
 		QDir::root().remove(tmp_file_path);
 		/* Wpdate mtime of local copy.
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
@@ -522,11 +529,11 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
 		if (g_utime(dest_file_path.toUtf8().constData(), NULL) != 0)
 			qDebug() << "WW: Download: couldn't set time on" << dest_file_path;
 	} else {
-		if (dl_options != NULL && dl_options->convert_file) {
-			dl_options->convert_file(tmp_file_path);
+		if (this->dl_options.convert_file) {
+			this->dl_options.convert_file(tmp_file_path);
 		}
 
-		if (dl_options != NULL && dl_options->use_etag) {
+		if (this->dl_options.use_etag) {
 			if (curl_options.new_etag) {
 				/* Server returned an etag value. */
 				set_etag(dest_file_path, tmp_file_path, &curl_options);
@@ -550,108 +557,19 @@ static DownloadResult download(const QString & hostname, const QString & uri, co
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult Download::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle)
+DownloadResult DownloadHandle::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path)
 {
-	return download(hostname, uri, dest_file_path, dl_options, false, handle);
+	return this->download(hostname, uri, dest_file_path, false);
 }
 
 
 
 
-DownloadResult Download::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle)
+DownloadResult DownloadHandle::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path)
 {
-	return download(hostname, uri, dest_file_path, dl_options, true, handle);
+	return this->download(hostname, uri, dest_file_path, true);
 }
 
-
-
-
-void * Download::init_handle()
-{
-	return CurlDownload::init_handle();
-}
-
-
-
-
-void Download::uninit_handle(void * handle)
-{
-	CurlDownload::uninit_handle(handle);
-}
-
-
-
-#if 0
-/**
- * @uri:         The URI (Uniform Resource Identifier)
- * @options:     Download options (maybe NULL)
- *
- * Returns name of the temporary file created - NULL if unsuccessful.
- * This string needs to be freed once used.
- * The file needs to be removed once used.
- */
-QString Download::download_uri_to_tmp_file(const QString & uri, const DownloadOptions * dl_options)
-{
-#if 0
-	QString tmp_file_full_path;
-
-	char * tmpname = NULL;
-	int tmp_fd;
-	if ((tmp_fd = g_file_open_tmp("viking-download.XXXXXX", &tmpname, NULL)) == -1) {
-		qDebug() << "EE: Download: couldn't open temp file";
-		return tmp_file_full_path;
-	}
-	tmp_file_full_path = QString(tmpname);
-	free(tmpname);
-
-	FILE * tmp_file = fdopen(tmp_fd, "r+");
-	if (!tmp_file) {
-		return tmp_file_full_path;
-	}
-
-	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, tmp_file, dl_options, NULL, NULL)) {
-		fclose(tmp_file);
-		QDir::root().remove(tmp_file_full_path);
-		return tmp_file_full_path;
-	}
-	fclose(tmp_file);
-
-	return tmp_file_full_path;
-#else
-	QTemporaryFile tmp_file;
-	if (!SGUtils::create_temporary_file(tmp_file, "viking-download.XXXXXX")) {
-		return "";
-	}
-	if (!tmp_file.open()) {
-		qDebug() << "EE" PREFIX << "failed to open temporary file, error =" << tmp_file.error();
-		return "";
-	}
-	tmp_file.setAutoRemove(false);
-
-	const QString tmp_file_full_path = tmp_file.fileName();
-	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file_full_path << "error:" << tmp_file.error();
-
-	FILE * file = fdopen(tmp_file.handle(), "r+");
-	if (!file) {
-		qDebug() << "EE" PREFIX << "fdopen()" << strerror(errno);
-		return "";
-	}
-
-	tmp_file.close();
-
-	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, file, dl_options, NULL, NULL)) {
-		fclose(file);
-		QDir::root().remove(tmp_file_full_path);
-		qDebug() << "EE" PREFIX << "download_uri()";
-		return "";
-	}
-
-	fclose(file);
-
-	return tmp_file_full_path;
-#endif
-}
-#endif
 
 
 
@@ -663,7 +581,7 @@ QString Download::download_uri_to_tmp_file(const QString & uri, const DownloadOp
  * This string needs to be freed once used.
  * The file needs to be removed once used.
  */
-bool Download::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri, const DownloadOptions * dl_options)
+bool DownloadHandle::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri)
 {
 	if (!SGUtils::create_temporary_file(tmp_file, "viking-download.XXXXXX")) {
 		return false;
@@ -685,7 +603,7 @@ bool Download::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & u
 
 	tmp_file.close();
 
-	if (CurlDownloadStatus::NO_ERROR != CurlDownload::download_uri(uri, file, dl_options, NULL, NULL)) {
+	if (CurlDownloadStatus::NoError != this->curl_handle->download_uri(uri, file, &this->dl_options, NULL)) {
 		fclose(file);
 		QDir::root().remove(tmp_file_full_path);
 		qDebug() << "EE" PREFIX << "download_uri()";
@@ -695,4 +613,62 @@ bool Download::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & u
 	fclose(file);
 
 	return true;
+}
+
+
+
+
+DownloadHandle::DownloadHandle()
+{
+	this->curl_handle = new CurlHandle;
+}
+
+
+
+
+DownloadHandle::DownloadHandle(const DownloadOptions * new_dl_options)
+{
+	if (new_dl_options) {
+		this->dl_options = *new_dl_options;
+	}
+	this->curl_handle = new CurlHandle;
+}
+
+
+
+
+DownloadHandle::~DownloadHandle()
+{
+	delete this->curl_handle;
+	this->curl_handle = NULL;
+}
+
+
+
+
+bool DownloadHandle::is_valid(void) const
+{
+	return NULL != this->curl_handle;
+}
+
+
+
+
+void DownloadHandle::set_options(const DownloadOptions & new_dl_options)
+{
+	this->dl_options = new_dl_options;
+}
+
+
+
+
+DownloadOptions::DownloadOptions(const DownloadOptions & dl_options)
+{
+	this->check_file_server_time = dl_options.check_file_server_time;
+	this->use_etag               = dl_options.use_etag;
+	this->referer                = dl_options.referer;
+	this->follow_location        = dl_options.follow_location;
+	this->check_file             = dl_options.check_file;
+	this->user_pass              = dl_options.user_pass;
+	this->convert_file           = dl_options.convert_file;
 }

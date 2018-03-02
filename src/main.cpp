@@ -42,7 +42,6 @@
 #include "babel.h"
 #include "modules.h"
 #include "vikutils.h"
-#include "curl_download.h"
 #include "util.h"
 #include "version_check.h"
 
@@ -164,7 +163,6 @@ int main(int argc, char ** argv)
 	LayerDefaults::init();
 
 	Download::init();
-	CurlDownload::init();
 
 	Babel::init();
 
@@ -252,7 +250,7 @@ int main(int argc, char ** argv)
 	ApplicationState::uninit();
 	modules_uninit();
 
-	CurlDownload::uninit();
+	Download::uninit();
 
 	vu_finalize_lat_lon_tz_lookup();
 

@@ -3019,24 +3019,6 @@ static int track_compare(gconstpointer a, gconstpointer b, void * user_data)
 
 
 /**
- * Comparison function which can be used to sort tracks or waypoints by name.
- */
-int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
-{
-	const char* namea = (const char*) a;
-	const char* nameb = (const char*) b;
-	if (namea == NULL || nameb == NULL) {
-		return 0;
-	} else {
-		/* Same sort method as used in the vik_tree_view_*_alphabetize functions. */
-		return strcmp(namea, nameb);
-	}
-}
-
-
-
-
-/**
  * Attempt to merge selected track with other tracks specified by the user
  * Tracks to merge with must be of the same 'type' as the selected track -
  *  either all with timestamps, or all without timestamps
@@ -3840,9 +3822,9 @@ void LayerTRW::routes_stats_cb(void)
 
 
 
-bool is_valid_geocache_name(const char *str)
+bool SlavGPS::is_valid_geocache_name(const char * str)
 {
-	int len = strlen(str);
+	const size_t len = strlen(str);
 	return len >= 3 && len <= 7 && str[0] == 'G' && str[1] == 'C' && isalnum(str[2]) && (len < 4 || isalnum(str[3])) && (len < 5 || isalnum(str[4])) && (len < 6 || isalnum(str[5])) && (len < 7 || isalnum(str[6]));
 }
 

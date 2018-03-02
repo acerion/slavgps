@@ -585,8 +585,10 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	dl_options.convert_file = a_try_decompress_file;
 	dl_options.user_pass = osm_get_current_credentials();
 
+	DownloadHandle dl_handle(&dl_options);
+
 	QTemporaryFile tmp_file;
-	if (!Download::download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES, &dl_options)) {
+	if (!dl_handle.download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES)) {
 		return false;
 	}
 

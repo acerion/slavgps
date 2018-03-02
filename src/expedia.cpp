@@ -48,7 +48,7 @@
 
 static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 static void expedia_tile_to_center_coord(TileInfo * src, Coord & dest_coord);
-static DownloadResult expedia_download(TileInfo * src, char const * dest_fn, void * handle);
+static DownloadResult expedia_download(TileInfo * src, char const * dest_fn, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
@@ -205,7 +205,7 @@ static void expedia_tile_to_center_coord(TileInfo * src, Coord & dest_coord)
 
 
 
-static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, void * handle)
+static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle)
 {
 	const LatLon lat_lon = expedia_xy_to_latlon_middle(src->scale, src->x, src->y);
 
@@ -224,7 +224,8 @@ static DownloadResult expedia_download(TileInfo * src, const QString & dest_file
 		.arg(width)
 		.arg(height);
 
-	DownloadResult res = Download::get_url_http(EXPEDIA_SITE, uri, dest_file_path, &expedia_options, NULL);
+	dl_handle->set_options(expedia_options);
+	DownloadResult res = dl_handle->get_url_http(EXPEDIA_SITE, uri, dest_file_path);
 	if (res == DownloadResult::SUCCESS) {
 		expedia_snip(dest_file_path);
 	}

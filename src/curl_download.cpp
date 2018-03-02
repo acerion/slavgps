@@ -56,6 +56,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Curl Download:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 static QString curl_download_user_agent;
 
 
@@ -123,15 +128,15 @@ void CurlDownload::uninit(void)
 
 
 
-CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * file, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * file, const DownloadOptions * dl_options, CurlOptions * curl_options)
 {
 	struct curl_slist * curl_send_headers = NULL;
 
 	qDebug() << "DD: Curl Download: Download URL" << full_url;
 
-	CURL * curl = handle ? handle : curl_easy_init();
+	CURL * curl = (this->curl_handle) ? this->curl_handle : curl_easy_init();
 	if (!curl) {
-		return CurlDownloadStatus::ERROR;
+		return CurlDownloadStatus::Error;
 	}
 	if (1 /* vik_verbose */) {
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
@@ -187,7 +192,7 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 		long response;
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
 		if (response == 304) {         // 304 = Not Modified
-			status = CurlDownloadStatus::NO_NEWER_FILE;
+			status = CurlDownloadStatus::NoNewerFile;
 
 		} else if (response == 200        /* http: 200 = Ok */
 			   || response == 226) {  /* ftp:  226 = success */
@@ -196,18 +201,18 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 			   when the server has a (incorrect) time earlier than the time on the file we already have. */
 			curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
 			if (size == 0) {
-				status = CurlDownloadStatus::ERROR;
+				status = CurlDownloadStatus::Error;
 			} else {
-				status = CurlDownloadStatus::NO_ERROR;
+				status = CurlDownloadStatus::NoError;
 			}
 		} else {
 			qDebug().nospace() << "WW: Curl Download: Download URL: http response:" << response << "for URL '" << full_url << "'";
-			status = CurlDownloadStatus::ERROR;
+			status = CurlDownloadStatus::Error;
 		}
 	} else {
-		status = CurlDownloadStatus::ERROR;
+		status = CurlDownloadStatus::Error;
 	}
-	if (!handle) {
+	if (!this->curl_handle) {
 		curl_easy_cleanup(curl);
 	}
 	if (curl_send_headers) {
@@ -221,7 +226,7 @@ CurlDownloadStatus CurlDownload::download_uri(const QString & full_url, FILE * f
 
 
 
-CurlDownloadStatus CurlDownload::get_url(const QString & hostname, const QString & uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle)
+CurlDownloadStatus CurlHandle::get_url(const QString & hostname, const QString & uri, FILE * file, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options)
 {
 	QString full_url;
 
@@ -236,23 +241,25 @@ CurlDownloadStatus CurlDownload::get_url(const QString & hostname, const QString
 		full_url = QString("%1://%2%3").arg(ftp ? "ftp" : "http").arg(hostname).arg(uri);
 	}
 
-	return CurlDownload::download_uri(full_url, f, dl_options, curl_options, handle);
+	return this->download_uri(full_url, file, dl_options, curl_options);
 }
 
 
 
 
-void * CurlDownload::init_handle(void)
+CurlHandle::CurlHandle()
 {
-	return curl_easy_init();
+	this->curl_handle = curl_easy_init();
+	qDebug() << "DD" PREFIX << "initialized curl handle" << QString("%1").arg((unsigned long) this->curl_handle, 0, 16);
 }
 
 
 
 
-void CurlDownload::uninit_handle(void * handle)
+CurlHandle::~CurlHandle()
 {
-	curl_easy_cleanup(handle);
+	qDebug() << "DD" PREFIX << "cleaning curl handle" << QString("%1").arg((unsigned long) this->curl_handle, 0, 16);
+	curl_easy_cleanup(this->curl_handle);
 }
 
 

@@ -124,9 +124,10 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_name;
 
 	const QString uri = QString(this->get_url_format()).arg(escaped_name);
+	DownloadHandle dl_handle(this->get_download_options());
 	QTemporaryFile tmp_file;
 	tmp_file.setAutoRemove(false);
-	if (!Download::download_to_tmp_file(tmp_file, uri, this->get_download_options())) {
+	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
 		/* Some kind of download error, so no tmp file. */
 		ret = GotoToolResult::Error;
 		goto done_no_file;

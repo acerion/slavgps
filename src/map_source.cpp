@@ -272,7 +272,7 @@ void MapSource::set_file_extension(const QString & new_file_extension)
  *
  * Retrieve copyright(s) for the corresponding bounding box and zoom level.
  */
-void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data)
+void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), Viewport * viewport)
 {
 	return;
 }
@@ -494,26 +494,27 @@ void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
  *
  * Returns: How successful the download was as per the type #DownloadResult
  */
-DownloadResult MapSource::download(TileInfo * src, const QString & dest_file_path, void *handle)
+DownloadResult MapSource::download(TileInfo * src, const QString & dest_file_path, DownloadHandle * handle)
 {
 	qDebug() << "II: Map Source: download to" << dest_file_path;
-	return Download::get_url_http(get_server_hostname(), get_server_path(src), dest_file_path, &this->dl_options, handle);
+	handle->set_options(this->dl_options);
+	return handle->get_url_http(get_server_hostname(), get_server_path(src), dest_file_path);
 }
 
 
 
 
-void * MapSource::download_handle_init()
+DownloadHandle * MapSource::download_handle_init()
 {
-	return Download::init_handle();
+	return new DownloadHandle();
 }
 
 
 
 
-void MapSource::download_handle_cleanup(void * handle)
+void MapSource::download_handle_cleanup(DownloadHandle * dl_handle)
 {
-	Download::uninit_handle(handle);
+	delete dl_handle;
 }
 
 

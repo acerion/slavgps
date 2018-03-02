@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(MapSource map);
 
-		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data);
+		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), Viewport * viewport);
 		QString get_license(void) const;
 		QString get_license_url(void) const;
 		const QPixmap * get_logo(void) const;
@@ -80,9 +80,9 @@ namespace SlavGPS {
 		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
 		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
 
-		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, void * handle);
-		void * download_handle_init();
-		void download_handle_cleanup(void * handle);
+		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle);
+		DownloadHandle * download_handle_init();
+		void download_handle_cleanup(DownloadHandle * dl_handle);
 
 		const DownloadOptions * get_download_options(void) const;
 

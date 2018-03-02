@@ -52,6 +52,11 @@
 
 
 
+#define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -65,12 +70,6 @@ namespace SlavGPS {
 	class WaypointSearch;
 	class PropertiesDialogTP;
 	class DataSource;
-
-
-
-
-	/* To be removed. */
-	typedef int PangoLayout;
 
 
 
@@ -537,22 +536,12 @@ namespace SlavGPS {
 	void layer_trw_init(void);
 	char * convert_to_dms(double dec);
 
+	bool is_valid_geocache_name(const char * str);
+
 
 
 
 } /* namespace SlavGPS */
-
-
-
-
-int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data);
-int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata);
-bool is_valid_geocache_name(const char *str);
-
-
-
-
-#define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
 
 
 

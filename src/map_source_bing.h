@@ -56,7 +56,7 @@ namespace SlavGPS {
 		MapSourceBing(MapTypeID map_type, const QString & label, const QString & key);
 		~MapSourceBing();
 
-		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data);
+		void get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), Viewport * viewport);
 		const QString get_server_path(TileInfo * src) const;
 
 

@@ -1070,7 +1070,9 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
 	dl_options.check_file = a_check_map_file;
 
-	DownloadResult result = Download::get_url_http(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path, &dl_options, NULL);
+	DownloadHandle dl_handle(&dl_options);
+
+	const DownloadResult result = dl_handle.get_url_http(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path);
 	switch (result) {
 	case DownloadResult::CONTENT_ERROR:
 	case DownloadResult::HTTP_ERROR: {

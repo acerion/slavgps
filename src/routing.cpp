@@ -38,7 +38,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#include "curl_download.h"
 #include "babel.h"
 #include "preferences.h"
 #include "routing.h"

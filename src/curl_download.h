@@ -41,9 +41,9 @@ namespace SlavGPS {
 
 	/* Error messages returned by download functions. */
 	enum class CurlDownloadStatus {
-		NO_ERROR = 0,
-		NO_NEWER_FILE,
-		ERROR
+		NoError = 0,
+		NoNewerFile,
+		Error
 	};
 
 
@@ -62,7 +62,21 @@ namespace SlavGPS {
 
 		/* Etag sent by server on this download. */
 		char * new_etag = NULL;
-	} ;
+	};
+
+
+
+
+	class CurlHandle {
+	public:
+		CurlHandle();
+		~CurlHandle();
+
+		CurlDownloadStatus get_url(const QString & hostname, const QString & uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options);
+		CurlDownloadStatus download_uri(const QString & full_url, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options);
+	private:
+		void * curl_handle = NULL;
+	};
 
 
 
@@ -71,12 +85,6 @@ namespace SlavGPS {
 	public:
 		static void init(void);
 		static void uninit(void);
-
-		static void * init_handle(void);
-		static void uninit_handle(void * handle);
-
-		static CurlDownloadStatus get_url(const QString & hostname, const QString & uri, FILE * f, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options, void * handle);
-		static CurlDownloadStatus download_uri(const QString & full_url, FILE * f, const DownloadOptions * dl_options, CurlOptions * curl_options, void * handle);
 	};
 
 

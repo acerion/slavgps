@@ -41,6 +41,11 @@ namespace SlavGPS {
 
 
 
+	class CurlHandle;
+
+
+
+
 	enum class DownloadResult {
 		FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
 		HTTP_ERROR       = -2,
@@ -70,6 +75,7 @@ namespace SlavGPS {
 	public:
 		DownloadOptions() {};
 		DownloadOptions(long follows) { follow_location = follows; };
+		DownloadOptions(const DownloadOptions& dl_options);
 
 		/* Check if the server has a more recent file than the
 		   one we have before downloading it. This uses http
@@ -100,18 +106,35 @@ namespace SlavGPS {
 
 
 
+	class DownloadHandle {
+	public:
+		DownloadHandle();
+		DownloadHandle(const DownloadOptions * dl_options);
+		~DownloadHandle();
+
+		bool is_valid(void) const;
+		void set_options(const DownloadOptions & dl_options);
+
+		DownloadResult get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path);
+		DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path);
+
+		bool download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri);
+
+		DownloadOptions dl_options;
+
+	private:
+		DownloadResult download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp);
+
+		CurlHandle * curl_handle = NULL;
+	};
+
+
+
+
 	class Download {
 	public:
 		static void init(void);
-		/* There is no uninit() function (kamilTODO: perhaps there should be one, for the handle). */
-
-		static void * init_handle(void);
-		static void uninit_handle(void * handle);
-
-		static DownloadResult get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
-		static DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path, const DownloadOptions * dl_options, void * handle);
-
-		static bool download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri, const DownloadOptions * dl_options);
+		static void uninit();
 	};
 
 

@@ -304,8 +304,9 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	/* Encode doubles in a C locale; kamilTODO: see LatLonBBox::to_strings(). */
 	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
+	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;
-	if (!Download::download_to_tmp_file(tmp_file, uri, NULL)) {
+	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
 		Dialog::info(QObject::tr("No entries found!"), window);
 		return;
 	}

@@ -1666,7 +1666,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 {
 	MapDownloadJob * mdj = (MapDownloadJob *) bg_job;
 
-	void *handle = map_sources[mdj->map_index]->download_handle_init();
+	DownloadHandle * dl_handle = map_sources[mdj->map_index]->download_handle_init();
 	unsigned int donemaps = 0;
 	TileInfo mcoord = mdj->mapcoord;
 
@@ -1687,7 +1687,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 				int res = a_background_thread_progress(bg_job, ((double)donemaps) / mdj->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
-					map_sources[mdj->map_index]->download_handle_cleanup(handle);
+					map_sources[mdj->map_index]->download_handle_cleanup(dl_handle);
 					return -1;
 				}
 
@@ -1740,7 +1740,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 				mdj->mapcoord.y = mcoord.y;
 
 				if (need_download) {
-					DownloadResult dr = map_sources[mdj->map_index]->download(&(mdj->mapcoord), mdj->filename_buf, handle);
+					DownloadResult dr = map_sources[mdj->map_index]->download(&(mdj->mapcoord), mdj->filename_buf, dl_handle);
 					switch (dr) {
 					case DownloadResult::HTTP_ERROR:
 					case DownloadResult::CONTENT_ERROR: {
@@ -1778,7 +1778,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 			}
 		}
 	}
-	map_sources[mdj->map_index]->download_handle_cleanup(handle);
+	map_sources[mdj->map_index]->download_handle_cleanup(dl_handle);
 	mdj->mutex.lock();
 	if (mdj->map_layer_alive) {
 		mdj->layer->weak_unref(LayerMap::weak_ref_cb, mdj);

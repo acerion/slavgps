@@ -159,7 +159,7 @@ const QString MapSourceBing::get_server_path(TileInfo * src) const
 
 
 
-void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), void * data)
+void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), Viewport * viewport)
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
@@ -183,7 +183,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 		    (17 - scale) > current->minZoom &&
 		    (17 - scale) < current->maxZoom) {
 
-			(*fct)((Viewport *) data, current->attribution);
+			(*fct)(viewport, current->attribution);
 			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;
 		}
 	}
@@ -338,8 +338,9 @@ int MapSourceBing::load_attributions()
 	this->loading_attributions = true;
 	const QString uri = QString(URL_ATTR_FMT).arg(this->bing_api_key);
 
+	DownloadHandle dl_handle(this->get_download_options());
 	QTemporaryFile tmp_file;
-	if (!Download::download_to_tmp_file(tmp_file, uri, this->get_download_options())) {
+	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
 		ret = -1;
 		goto done;
 	}

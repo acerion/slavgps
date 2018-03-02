@@ -50,21 +50,10 @@ namespace SlavGPS {
 
 
 
-	/**
-	   Used when calling BabelCallback.
-	*/
-	typedef enum {
-		BABEL_DIAG_OUTPUT, /* A line of diagnostic output is available. The pointer is to a NULL-terminated line of diagnostic output from gpsbabel. */
-		BABEL_DONE,        /* gpsbabel finished, or NULL if no callback is needed. */
-	} BabelProgressCode;
-
-
-
-
-	/**
-	   Callback function.
-	*/
-	typedef void (* BabelCallback)(BabelProgressCode, void *, void *);
+	enum class BabelProgressCode {
+		DiagOutput, /* A line of diagnostic output is available. The pointer is to a NULL-terminated line of diagnostic output from gpsbabel. */
+		Completed,  /* gpsbabel finished, or NULL if no callback is needed. */
+	};
 
 
 
