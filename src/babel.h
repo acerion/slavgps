@@ -64,9 +64,9 @@ namespace SlavGPS {
 	*/
 	struct ProcessOptions {
 	public:
-		ProcessOptions();
+		ProcessOptions() {};
 		ProcessOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
-		~ProcessOptions();
+		~ProcessOptions() {};
 
 		QString babel_args;      /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
 		QString input_file_name; /* Input filename (or device port e.g. /dev/ttyS0). */

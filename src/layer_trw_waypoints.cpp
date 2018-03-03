@@ -689,7 +689,7 @@ void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
 
 	/* We have re-zoomed main viewport. Ask main application window to redraw the viewport. */
 	qDebug() << "SIGNAL: Layer TRW Waypoints: re-zoom to show all items (" << n_items << "item(s))";
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 
 	return;
 }

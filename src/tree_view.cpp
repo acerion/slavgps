@@ -50,7 +50,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Tree View:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Tree View:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -131,8 +131,8 @@ void TreeView::select_cb(void) /* Slot. */
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
-		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << layer->get_name();
-		g_tree->tree_get_items_tree()->emit_update_window_cb(layer->get_name());
+		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << layer->get_name();
+		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(layer->get_name());
 	}
 }
 
@@ -383,6 +383,8 @@ void TreeView::unselect(TreeIndex const & index)
 TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+
+	qDebug() << "II" PREFIX << "adding tree item" << name;
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;

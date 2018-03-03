@@ -64,7 +64,7 @@ DataSourceURL::DataSourceURL()
 {
 	this->window_title = QObject::tr("Acquire data from URL");
 	this->layer_title = QObject::tr("From URL");
-	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->mode = DataSourceMode::AutoLayerManagement;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */

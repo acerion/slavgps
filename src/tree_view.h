@@ -91,10 +91,10 @@ namespace SlavGPS {
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
 		TreeItem * selected_tree_item = NULL;
 
-		void emit_update_window(void) { emit this->update_window(); };
+		void emit_items_tree_updated(void) { emit this->items_tree_updated(); };
 
 	signals:
-		void update_window(void);
+		void items_tree_updated(void);
 	};
 
 

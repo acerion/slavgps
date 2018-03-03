@@ -57,6 +57,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /* Functions common to all layers. */
 /* TODO longone: rename interface free -> finalize. */
 
@@ -106,7 +111,7 @@ void Layer::emit_layer_changed()
 {
 	if (this->visible && this->tree_view) {
 		Window::set_redraw_trigger(this);
-		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'layer changed' signal";
+		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'layer changed' signal";
 		emit this->layer_changed(this->get_name());
 	}
 }
@@ -121,7 +126,7 @@ void Layer::emit_layer_changed()
 void Layer::emit_layer_changed_although_invisible()
 {
 	Window::set_redraw_trigger(this);
-	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
+	qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
 	emit this->layer_changed(this->get_name());
 }
 
@@ -131,11 +136,11 @@ void Layer::emit_layer_changed_although_invisible()
 /* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
 void Layer::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
 {
-	qDebug() << "SLOT:" << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
 	if (this->visible) {
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
+		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
 		emit this->layer_changed(this->get_name());
 	}
 }
@@ -182,7 +187,7 @@ void Layer::preconfigure_interfaces(void)
 		LayerInterface * interface = Layer::get_interface(type);
 
 		QString path = QString(":/icons/layer/") + Layer::get_type_id_string(type).toLower() + QString(".png");
-		qDebug() << "II: Layer: preconfiguring interface, action icon path is" << path;
+		qDebug() << "II" PREFIX << "preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
 		if (!interface->parameters_c) {
@@ -289,7 +294,7 @@ QString Layer::get_type_ui_label(LayerType type)
 
 Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool interactive)
 {
-	qDebug() << "II: Layer: will create new" << Layer::get_type_ui_label(layer_type) << "layer";
+	qDebug() << "II" PREFIX << "will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
 	static sg_uid_t layer_uid = SG_UID_INITIAL;
 
@@ -351,7 +356,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 void Layer::draw_if_visible(Viewport * viewport)
 {
 	if (this->visible) {
-		qDebug() << "II: Layer: calling draw() for" << this->name;
+		qDebug() << "II" PREFIX << "calling draw() for" << this->name;
 		this->draw(viewport);
 	}
 }
@@ -408,7 +413,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 	/* Now the actual parameters. */
 	SGVariant param_value;
 	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
-		qDebug() << "DD: Layer: Marshalling parameter" << iter->second->name;
+		qDebug() << "DD" PREFIX << "Marshalling parameter" << iter->second->name;
 
 		param_value = this->get_param_value(iter->first, false);
 		switch (iter->second->type_id) {
@@ -472,7 +477,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 
 	SGVariant param_value;
 	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
-		qDebug() << "DD: Layer: Unmarshalling parameter" << iter->second->name;
+		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type_id) {
 		case SGVariantType::String:
 			s = (char *) malloc(vlm_size + 1);
@@ -575,7 +580,7 @@ bool Layer::properties_dialog()
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
-	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_type_ui_label();
+	qDebug() << "II" PREFIX << "opening properties dialog for layer" << this->get_type_ui_label();
 
 	PropertiesDialog dialog(NULL);
 	dialog.fill(this);
@@ -676,7 +681,7 @@ void Layer::set_initial_parameter_values(void)
 
 Layer::Layer()
 {
-	qDebug() << "II: Layer::Layer()";
+	qDebug() << "II" PREFIX << "Layer::Layer()";
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 

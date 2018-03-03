@@ -57,7 +57,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layer Georef: "
+#define PREFIX ": Layer Georef: " << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -209,21 +209,21 @@ bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bo
 		if (param_value.val_uint <= UTM_ZONES) {
 			this->utm_tl.zone = param_value.val_uint;
 		} else {
-			qDebug() << "EE:" PREFIX << "invalid utm zone" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.val_uint;
 		}
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		if (param_value.val_uint >= 65 || param_value.val_uint <= 90) {
 			this->utm_tl.letter = param_value.val_uint;
 		} else {
-			qDebug() << "EE:" PREFIX << "invalid utm band letter" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm band letter" << param_value.val_uint;
 		}
 		break;
 	case PARAM_ALPHA:
 		if (param_value.val_uint <= 255) {
 			this->alpha = param_value.val_uint;
 		} else {
-			qDebug() << "EE:" PREFIX << "invalid alpha value" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.val_uint;
 		}
 		break;
 	default:
@@ -722,16 +722,16 @@ void GeorefConfigDialog::sync_coords_in_entries(void)
 
 	switch ((CoordMode) current_coord_mode) {
 	case CoordMode::UTM:
-		qDebug() << "II:" PREFIX << "current coordinate mode is UTM";
+		qDebug() << "II" PREFIX << "current coordinate mode is UTM";
 		this->sync_from_lat_lon_to_utm();
 		break;
 
 	case CoordMode::LATLON:
-		qDebug() << "II:" PREFIX << "current coordinate mode is LatLon";
+		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		qDebug() << "EE" PREFIX << "unexpected coordinate mode" << current_coord_mode;
 		this->sync_from_utm_to_lat_lon();
 		break;
 	}
@@ -750,7 +750,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 
 	switch ((CoordMode) current_coord_mode) {
 	case CoordMode::UTM:
-		qDebug() << "II:" PREFIX << "current coordinate mode is UTM";
+		qDebug() << "II" PREFIX << "current coordinate mode is UTM";
 		this->sync_from_utm_to_lat_lon();
 
 		this->grid->replaceWidget(this->lat_lon_tl_entry, this->utm_entry);
@@ -768,7 +768,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 		break;
 
 	case CoordMode::LATLON:
-		qDebug() << "II:" PREFIX << "current coordinate mode is LatLon";
+		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
 		this->sync_from_lat_lon_to_utm();
 
 		this->grid->replaceWidget(this->utm_entry, this->lat_lon_tl_entry);
@@ -786,7 +786,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		qDebug() << "EE" PREFIX << "unexpected coordinate mode" << current_coord_mode;
 		break;
 	}
 }
@@ -1050,7 +1050,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 	viewport->set_xmpp(this->mpp_easting);
 	viewport->set_ympp(this->mpp_northing);
 
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 }
 
 
@@ -1066,7 +1066,7 @@ void LayerGeoref::goto_center_cb(void)
 
 	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
 
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 }
 
 
@@ -1225,13 +1225,13 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 {
 	if (!pixmap || pixmap->isNull()) {
 		/* Bad image */
-		qDebug() << "EE:" PREFIX << "trying to create layer with invalid image";
+		qDebug() << "EE" PREFIX << "trying to create layer with invalid image";
 		return NULL;
 	}
 
 	if (pixmap->width() <= 0 || pixmap->width() <= 0) {
 		/* Bad image */
-		qDebug() << "EE:" PREFIX << "trying to create layer with invalid image";
+		qDebug() << "EE" PREFIX << "trying to create layer with invalid image";
 		return NULL;
 	}
 

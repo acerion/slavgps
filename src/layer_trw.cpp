@@ -121,7 +121,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layer TRW:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Layer TRW:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -1314,7 +1314,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 
 void LayerTRW::draw(Viewport * viewport)
 {
-	this->draw_tree_item(viewport, false, false);
+	this->draw_tree_item(viewport, true, false);
 }
 
 
@@ -1755,8 +1755,8 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void LayerTRW::full_view_cb(void) /* Slot. */
 {
 	if (this->auto_set_view(g_tree->tree_get_main_viewport())) {
-		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << this->get_name();
-		g_tree->tree_get_items_tree()->emit_update_window_cb(this->get_name());
+		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << this->get_name();
+		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(this->get_name());
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1852,7 +1852,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
 			g_tree->tree_get_main_viewport()->set_center_from_coord(wp->coord, true);
-			g_tree->emit_update_window();
+			g_tree->emit_items_tree_updated();
 			this->tree_view->select_and_expose(wp->index);
 
 			break;
@@ -1897,7 +1897,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 	a_geonames_wikipedia_box(this->get_window(), this, viewport->get_min_max_lat_lon());
 	this->waypoints->calculate_bounds();
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 }
 
 
@@ -1910,7 +1910,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 
 	a_geonames_wikipedia_box(this->get_window(), this, min_max);
 	this->waypoints->calculate_bounds();
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 }
 
 
@@ -1934,8 +1934,8 @@ void LayerTRW::acquire_handler(DataSource * data_source)
 {
 	/* Override mode. */
 	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
+	if (mode == DataSourceMode::AutoLayerManagement) {
+		mode = DataSourceMode::CreateNewLayer;
 	}
 
 	Acquire::acquire_from_source(data_source, mode, this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL);
@@ -2127,7 +2127,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center2())) {
 		this->waypoints->calculate_bounds();
 		if (this->visible) {
-			g_tree->emit_update_window();
+			g_tree->emit_items_tree_updated();
 		}
 	}
 }
@@ -3626,7 +3626,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 			this->tracks->uniquify(this->track_sort_order);
 
 			/* Update. */
-			g_tree->emit_update_window();
+			g_tree->emit_items_tree_updated();
 		} else {
 			return;
 		}
@@ -3678,7 +3678,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 			this->routes->uniquify(this->track_sort_order);
 
 			/* Update. */
-			g_tree->emit_update_window();
+			g_tree->emit_items_tree_updated();
 		} else {
 			return;
 		}
@@ -3726,7 +3726,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 			this->waypoints->uniquify(this->wp_sort_order);
 
 			/* Update. */
-			g_tree->emit_update_window();
+			g_tree->emit_items_tree_updated();
 		} else {
 			return;
 		}
@@ -4373,8 +4373,8 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 		this->waypoints->uniquify(this->wp_sort_order);
 
 		/* Update. */
-		qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << this->get_name();
-		panel->emit_update_window_cb(this->get_name());
+		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << this->get_name();
+		panel->emit_items_tree_updated_cb(this->get_name());
 
 		return true;
 	}

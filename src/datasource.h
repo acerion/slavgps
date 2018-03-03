@@ -52,10 +52,10 @@ namespace SlavGPS {
 
 	enum class DataSourceMode {
 		/* Generally Datasources shouldn't use these and let the HCI decide between the create or add to layer options. */
-		CREATE_NEW_LAYER,
-		ADD_TO_LAYER,
-		AUTO_LAYER_MANAGEMENT,
-		MANUAL_LAYER_MANAGEMENT,
+		CreateNewLayer,
+		AddToLayer,
+		AutoLayerManagement,
+		ManualLayerManagement,
 	};
 	/* TODO: replace track/layer? */
 

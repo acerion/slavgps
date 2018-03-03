@@ -49,7 +49,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layers Panel:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Layers Panel:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -136,7 +136,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_update_window_cb(const QString &)));
+	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
 
 
 #ifdef K_TODO
@@ -165,11 +165,11 @@ LayersPanel::~LayersPanel()
 
 
 
-void LayersPanel::emit_update_window_cb(const QString & trigger_name)
+void LayersPanel::emit_items_tree_updated_cb(const QString & trigger_name)
 {
 	qDebug() << "SLOT?: Layers Panel received 'changed' signal from top level layer?" << trigger_name;
 	qDebug() << "SIGNAL: Layers Panel emits 'update' signal";
-	emit this->update_window();
+	emit this->items_tree_updated();
 }
 
 
@@ -389,8 +389,8 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 		}
 	}
 
-	qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << layer->get_name();
-	this->emit_update_window_cb(layer->get_name());
+	qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << layer->get_name();
+	this->emit_items_tree_updated_cb(layer->get_name());
 }
 
 
@@ -412,8 +412,8 @@ void LayersPanel::move_item(bool up)
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Not toplevel. */
 			parent_layer->move_layer(selected_item->index, up);
-			qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << parent_layer->get_name();
-			this->emit_update_window_cb(parent_layer->get_name());
+			qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << parent_layer->get_name();
+			this->emit_items_tree_updated_cb(parent_layer->get_name());
 		}
 	}
 }
@@ -457,8 +457,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item->index)) {
-					qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << parent_layer->get_name();
-					this->emit_update_window_cb(parent_layer->get_name());
+					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << parent_layer->get_name();
+					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
 			}
 #endif
@@ -543,8 +543,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item->index)) {
-					qDebug() << "SIGNAL:" PREFIX << "will call 'emit_update_window_cb() for" << layer->get_name();
-					this->emit_update_window_cb(parent_layer->get_name());
+					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << layer->get_name();
+					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
 			}
 #endif

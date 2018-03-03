@@ -851,7 +851,7 @@ void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
 		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
 
 		qDebug() << "SIGNAL: Layer TRW Tracks: re-zooming to show all items (" << n_items << "items)";
-		g_tree->emit_update_window();
+		g_tree->emit_items_tree_updated();
 	}
 }
 

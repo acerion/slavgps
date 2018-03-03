@@ -149,7 +149,7 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL(center_updated(void)), this, SLOT(center_changed_cb(void)));
-	connect(this->items_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
+	connect(this->items_tree, SIGNAL(items_tree_updated()), this, SLOT(redraw_tree_items_wrapper_cb()));
 
 	g_tree = new Tree();
 	g_tree->tree_view = this->get_items_tree()->get_tree_view();
@@ -157,7 +157,7 @@ Window::Window()
 	g_tree->items_tree = this->items_tree;
 	g_tree->viewport = this->viewport;
 
-	connect(g_tree, SIGNAL(update_window()), this, SLOT(draw_update_cb()));
+	connect(g_tree, SIGNAL(items_tree_updated()), this, SLOT(redraw_tree_items_wrapper_cb()));
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
 
@@ -921,21 +921,21 @@ void Window::create_actions(void)
 
 
 
-void Window::draw_update_cb()
+void Window::redraw_tree_items_wrapper_cb()
 {
-	qDebug() << "SLOT: Window: received 'update' signal from Layers Panel";
-	this->draw_update();
+	qDebug() << "SLOT: Window: redraw_tree_items_wrapper_cb()";
+	this->redraw_tree_items_wrapper();
 }
 
 
 
 
-void Window::draw_update()
+void Window::redraw_tree_items_wrapper(void)
 {
-	qDebug() << "II: Window: redraw + sync begin" << __FUNCTION__ << __LINE__;
-	this->draw_redraw();
+	qDebug() << "II: Window: redraw_tree_items + sync begin" << __FUNCTION__ << __LINE__;
+	this->redraw_tree_items();
 	this->draw_sync();
-	qDebug() << "II: Window: redraw + sync end" << __FUNCTION__ << __LINE__;
+	qDebug() << "II: Window: redraw_tree_items + sync end" << __FUNCTION__ << __LINE__;
 }
 
 
@@ -954,29 +954,29 @@ void Window::draw_sync()
 	qDebug() << "II: Window: sync begin" << __FUNCTION__ << __LINE__;
 	//this->viewport->sync();
 	qDebug() << "II: Window: sync end" << __FUNCTION__ << __LINE__;
-	this->draw_status();
+	this->update_status_bar_on_redraw();
 }
 
 
 
 
-void Window::draw_status()
+void Window::update_status_bar_on_redraw(void)
 {
 	QString zoom_level;
 	const double xmpp = this->viewport->get_xmpp();
 	const double ympp = this->viewport->get_ympp();
 	const QString unit = this->viewport->get_coord_mode() == CoordMode::UTM ? "mpp" : "pixelfact";
 	if (xmpp != ympp) {
-		zoom_level = QString(tr("%1/%2f %3"))
+		zoom_level = tr("%1/%2f %3")
 			.arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
 			.arg(ympp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
 			.arg(unit);
 	} else {
 		if ((int)xmpp - xmpp < 0.0) {
-			zoom_level = QString(tr("%1 %2")).arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
+			zoom_level = tr("%1 %2").arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
 		} else {
 			/* xmpp should be a whole number so don't show useless .000 bit. */
-			zoom_level = QString(tr("%1 %2")).arg((int) xmpp).arg(unit);
+			zoom_level = tr("%1 %2").arg((int) xmpp).arg(unit);
 		}
 	}
 
@@ -1000,12 +1000,12 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	if (layer) {
 		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
 
-		this->viewport->reconfigure_drawing_area();
+		//this->viewport->reconfigure_drawing_area();
 		qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
 		layer->draw(this->viewport);
 
-		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
-		this->draw_update();
+		qDebug() << "II: Window: new layer, call redraw_tree_items_wrapper()" << __FUNCTION__ << __LINE__;
+		this->redraw_tree_items_wrapper();
 		this->contents_modified = true;
 	}
 }
@@ -1013,7 +1013,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 
 
-void Window::draw_redraw()
+void Window::redraw_tree_items(void)
 {
 	const Coord old_center = this->trigger_center;
 	this->trigger_center = this->viewport->get_center2();
@@ -1071,7 +1071,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
 	qDebug() << "SLOT: Window: draw_layer" << (qulonglong) uid;
 	/* TODO: draw only one layer, not all of them. */
-	this->draw_redraw();
+	this->redraw_tree_items();
 }
 
 
@@ -1342,7 +1342,7 @@ void Window::pan_move(QMouseEvent * ev)
 							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 		this->pan_move_flag = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1380,7 +1380,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 	this->pan_off();
 	if (do_draw) {
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1459,7 +1459,7 @@ void Window::menu_edit_delete_all_cb(void)
 		if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
 			this->items_tree->clear();
 			this->set_current_document_full_path("");
-			this->draw_update();
+			this->redraw_tree_items_wrapper();
 		}
 	}
 }
@@ -1609,7 +1609,7 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	this->viewport->set_center_from_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
-	this->items_tree->emit_update_window_cb("go to default location");
+	this->items_tree->emit_items_tree_updated_cb("go to default location");
 }
 
 
@@ -1618,7 +1618,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	GoTo::goto_location(this, this->viewport);
-	this->items_tree->emit_update_window_cb("go to location");
+	this->items_tree->emit_items_tree_updated_cb("go to location");
 }
 
 
@@ -1626,9 +1626,9 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	/* TODO: call draw_update() conditionally? */
+	/* TODO: call redraw_tree_items_wrapper() conditionally? */
 	GoTo::goto_latlon(this, this->viewport);
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -1636,9 +1636,9 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	/* TODO: call draw_update() conditionally? */
+	/* TODO: call redraw_tree_items_wrapper() conditionally? */
 	GoTo::goto_utm(this, this->viewport);
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -1654,7 +1654,7 @@ void Window::goto_previous_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1671,7 +1671,7 @@ void Window::goto_next_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1707,7 +1707,7 @@ void Window::set_scale_visibility_cb(bool new_state)
 	if (new_state != this->scale_visibility) {
 		this->scale_visibility = new_state;
 		this->viewport->set_scale_visibility(new_state);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1719,7 +1719,7 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 	if (new_state != this->center_mark_visibility) {
 		this->center_mark_visibility = new_state;
 		this->viewport->set_center_mark_visibility(new_state);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1730,8 +1730,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 	if (new_state != this->highlight_usage) {
 		this->highlight_usage = new_state;
 		this->viewport->set_highlight_usage(new_state);
-		this->draw_update();
-
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -1819,7 +1818,7 @@ void Window::zoom_cb(void)
 		window->viewport->set_zoom(what);
 	}
 #endif
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -1833,7 +1832,7 @@ void Window::zoom_to_cb(void)
 	if (a_dialog_custom_zoom(&xmpp, &ympp, this)) {
 		this->viewport->set_xmpp(xmpp);
 		this->viewport->set_ympp(ympp);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -2097,7 +2096,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		restore_original_filename = !restore_original_filename;
 		this->update_recently_used_document(new_document_full_path.toUtf8().constData());
 		this->update_recent_files(new_document_full_path);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 		break;
 	}
 
@@ -2407,7 +2406,7 @@ int determine_location_thread(BackgroundJob * bg_job)
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
 
 		// Signal to redraw from the background
-		locator->window->items_tree->emit_update_window_cb("determine location");
+		locator->window->items_tree->emit_items_tree_updated_cb("determine location");
 	} else {
 		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}
@@ -2443,7 +2442,7 @@ void Window::finish_new(void)
 
 		this->items_tree->get_top_layer()->add_layer(layer, true);
 
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 
 	/* If not loaded any file, maybe try the location lookup. */
@@ -2527,8 +2526,8 @@ void Window::acquire_handler(DataSource * data_source)
 {
 	/* Override mode. */
 	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AUTO_LAYER_MANAGEMENT) {
-		mode = DataSourceMode::CREATE_NEW_LAYER;
+	if (mode == DataSourceMode::AutoLayerManagement) {
+		mode = DataSourceMode::CreateNewLayer;
 	}
 
 	Acquire::acquire_from_source(data_source, mode, this, this->items_tree, this->viewport, NULL);
@@ -2751,7 +2750,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	}
 
 	if (has_xhair || has_scale) {
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 #endif
@@ -2794,7 +2793,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	this->viewport->reconfigure_drawing_area(image_width, image_height);
 
 	/* Redraw all layers at current position and zoom. */
-	this->draw_redraw();
+	this->redraw_tree_items();
 
 	/* Save buffer as file. */
 	QPixmap * pixmap = this->viewport->get_pixmap();
@@ -2809,7 +2808,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 		this->viewport->set_xmpp(old_xmpp);
 		this->viewport->set_ympp(old_ympp);
 		this->viewport->reconfigure_drawing_area();
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 
 		return;
 	}
@@ -2848,7 +2847,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->reconfigure_drawing_area();
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -2902,7 +2901,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 			this->viewport->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
-			this->draw_redraw();
+			this->redraw_tree_items();
 
 			/* Save buffer as file. */
 			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, image_width, image_height);
@@ -2922,7 +2921,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->reconfigure_drawing_area();
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 
 	return true;
 }
@@ -3016,7 +3015,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
 		this->viewport->set_zoom(zoom_request);
 		/* Force drawing update. */
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -3170,7 +3169,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::LATLON);
 		}
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -3197,7 +3196,7 @@ void Window::menu_view_set_highlight_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->viewport->set_highlight_color(selected_color);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -3212,7 +3211,7 @@ void Window::menu_view_set_bg_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->viewport->set_background_color(selected_color);
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 	}
 }
 
@@ -3256,7 +3255,7 @@ void Window::menu_view_pan_cb(void)
 		break;
 	}
 
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -3286,7 +3285,7 @@ void Window::simple_map_update(bool only_new)
 void Window::configure_event_cb()
 {
 	static int first = 1;
-	this->draw_redraw();
+	this->redraw_tree_items();
 	if (first) {
 		/* This is a hack to set the cursor corresponding to the first tool.
 		   FIXME find the correct way to initialize both tool and its cursor. */
@@ -3342,7 +3341,7 @@ static bool window_pan_timeout(Window * window)
 	window->pan_move_flag = false;
 	window->single_click_pending = false;
 	window->viewport->set_center_from_screen_pos(window->delayed_pan_pos);
-	window->draw_update();
+	window->redraw_tree_items_wrapper();
 
 	/* Really turn off the pan moving!! */
 	window->pan_off();
@@ -3586,7 +3585,7 @@ void Window::import_kmz_file_cb(void)
 		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
 	}
 
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -3674,7 +3673,7 @@ void Window::apply_new_preferences(void)
 
 	delete layers;
 
-	this->draw_update();
+	this->redraw_tree_items_wrapper();
 }
 
 
@@ -3726,12 +3725,12 @@ bool Window::key_press_event_cb(QKeyEvent * event)
 	// Standard Ctrl+KP+ / Ctrl+KP- to zoom in/out respectively
 	else if (ev->keyval == GDK_KEY_KP_Add && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		this->viewport->zoom_in();
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 		return true; // handled keypress
 	}
 	else if (ev->keyval == GDK_KEY_KP_Subtract && (ev->state & modifiers) == GDK_CONTROL_MASK) {
 		this->viewport->zoom_out();
-		this->draw_update();
+		this->redraw_tree_items_wrapper();
 		return true; // handled keypress
 	}
 

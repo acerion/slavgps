@@ -61,7 +61,7 @@ BFilterSimplify::BFilterSimplify()
 {
 	this->window_title = QObject::tr("Simplify All Tracks...");
 	this->layer_title = QObject::tr("Simplified Tracks");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
@@ -144,7 +144,7 @@ BFilterCompress::BFilterCompress()
 {
 	this->window_title = QObject::tr("Compress Tracks...");
 	this->layer_title = QObject::tr("Compressed Tracks");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
@@ -232,7 +232,7 @@ BFilterDuplicates::BFilterDuplicates()
 {
 	this->window_title = QObject::tr("Remove Duplicate Waypoints");
 	this->layer_title = QObject::tr("Remove Duplicate Waypoints");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
@@ -278,7 +278,7 @@ BFilterManual::BFilterManual()
 {
 	this->window_title = QObject::tr("Manual filter");
 	this->layer_title = QObject::tr("Manual filter");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
@@ -334,7 +334,7 @@ BFilterPolygon::BFilterPolygon()
 {
 	this->window_title = QObject::tr("Waypoints Inside This");
 	this->layer_title = QObject::tr("Polygonized Layer");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
@@ -366,7 +366,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 {
 	this->window_title = QObject::tr("Waypoints Outside This");
 	this->layer_title = QObject::tr("Polygonzied Layer");
-	this->mode = DataSourceMode::CREATE_NEW_LAYER;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;

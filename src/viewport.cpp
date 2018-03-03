@@ -419,7 +419,7 @@ bool Viewport::reconfigure_drawing_area_cb(void)
 */
 void Viewport::clear(void)
 {
-	qDebug() << "II" << PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
@@ -1855,7 +1855,7 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << "II: Viewport: resize event";
 	this->reconfigure_drawing_area();
-	g_tree->tree_get_main_window()->draw_redraw();
+	g_tree->tree_get_main_window()->redraw_tree_items();
 	//this->draw_scale();
 
 	return;
@@ -1980,8 +1980,8 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 						 center_y + (orig_pos.y - ev->y()));
 	}
 
-	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
-	this->window->draw_update_cb();
+	qDebug() << "II: Viewport: wheel event, call Window::redraw_tree_items_wrapper_cb()" << __FUNCTION__ << __LINE__;
+	this->window->redraw_tree_items_wrapper_cb();
 }
 
 
@@ -2188,7 +2188,7 @@ void Viewport::draw_simple_crosshair(const ScreenPos & pos)
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "crosshair at" << pos.x << pos.y;
+	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "crosshair at" << pos.x << pos.y;
 
 	if (pos.x < this->margin_left || pos.x > this->margin_left + graph_width) {
 		/* Position outside of graph area. */

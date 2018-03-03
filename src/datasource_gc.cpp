@@ -80,7 +80,7 @@ DataSourceGeoCache::DataSourceGeoCache()
 {
 	this->window_title = QObject::tr("Download Geocaches");
 	this->layer_title = QObject::tr("Geocaching.com Caches");
-	this->mode = DataSourceMode::AUTO_LAYER_MANAGEMENT;
+	this->mode = DataSourceMode::AutoLayerManagement;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;         /* true = automatically update the display - otherwise we won't see the geocache waypoints! */
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */

@@ -383,7 +383,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		this->start_coord = cursor_coord;
 	} else {
 		this->viewport->set_center_from_screen_pos(event_pos);
-		this->window->draw_update_cb();
+		this->window->redraw_tree_items_wrapper_cb();
 	}
 
 	return ToolStatus::ACK;
@@ -464,7 +464,7 @@ ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * e
 void GenericToolRuler::deactivate_tool(Layer * layer)
 {
 	qDebug() << "II: Generic Tool Ruler: ->deactivate_tool() called";
-	this->window->draw_update_cb();
+	this->window->redraw_tree_items_wrapper_cb();
 }
 
 
@@ -637,7 +637,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 	}
 
 	if (redraw_viewport) {
-		this->window->draw_update();
+		this->window->redraw_tree_items_wrapper();
 	}
 
 
@@ -759,7 +759,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	}
 
 	if (redraw_viewport) {
-		this->window->draw_update();
+		this->window->redraw_tree_items_wrapper();
 	}
 
 	/* Reset "zoom to rectangle" tool.
@@ -833,7 +833,7 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 		/* Ignore other mouse buttons. */
 	}
 
-	this->window->draw_update();
+	this->window->redraw_tree_items_wrapper();
 
 	return ToolStatus::ACK;
 }
@@ -926,7 +926,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 					tree_view->unselect(selected_item->index);
 					if (this->window->clear_highlight()) {
-						this->window->draw_update();
+						this->window->redraw_tree_items_wrapper();
 					}
 				}
 			}
@@ -978,7 +978,7 @@ ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent
 
 					tree_view->unselect(selected_item->index);
 					if (this->window->clear_highlight()) {
-						this->window->draw_update();
+						this->window->redraw_tree_items_wrapper();
 					}
 				}
 			}

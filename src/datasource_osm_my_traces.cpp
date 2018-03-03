@@ -71,7 +71,7 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces()
 {
 	this->window_title = QObject::tr("OSM My Traces");
 	this->layer_title = QObject::tr("OSM My Traces");
-	this->mode = DataSourceMode::MANUAL_LAYER_MANAGEMENT; /* We'll do this ourselves. */
+	this->mode = DataSourceMode::ManualLayerManagement; /* We'll do this ourselves. */
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */

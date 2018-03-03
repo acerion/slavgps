@@ -63,7 +63,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layer TRW Track:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Layer TRW Track:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -1113,7 +1113,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			if ((*iter)->altitude > 1E9) {
 				/* TODO: don't use magic number 1E9.
 				   TODO: clamp the invalid values, but still generate vector? */
-				qDebug() << "WW:" PREFIX << "track altitude" << (*iter)->altitude << "out of range; not generating vector";
+				qDebug() << "WW" PREFIX << "track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
 				break;
 			}
@@ -3159,7 +3159,7 @@ void Track::rezoom_to_show_full_cb(void)
 	this->find_maxmin(min_max);
 	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
 
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 }
 
 
@@ -3420,7 +3420,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->sort_children(tracks->get_index(), parent_layer->track_sort_order);
 
 
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 
 	return new_name;
 }

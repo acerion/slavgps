@@ -61,7 +61,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Acquire:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Acquire:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -110,6 +110,10 @@ void AcquireGetter::on_complete_process(void)
 			if (!this->acquiring->trw->is_empty()) {
 				this->acquiring->trw->post_read(this->acquiring->viewport, true);
 				this->acquiring->panel->get_top_layer()->add_layer(this->acquiring->trw, true);
+
+				/* Add any acquired tracks/routes/waypoints to tree view
+				   so that they can be displayed on "tree updated" event. */
+				this->acquiring->trw->add_children_to_tree();
 			} else {
 				this->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
 			}
@@ -133,7 +137,7 @@ void AcquireGetter::on_complete_process(void)
 			if (this->acquiring->data_source && this->acquiring->data_source->autoview) {
 				this->acquiring->trw->auto_set_view(this->acquiring->viewport);
 			}
-			this->acquiring->panel->emit_update_window_cb("acquire completed");
+			this->acquiring->panel->emit_items_tree_updated_cb("acquire completed");
 		}
 	} else {
 		/* Cancelled. */
@@ -146,34 +150,20 @@ void AcquireGetter::on_complete_process(void)
 
 
 
-ProcessOptions::ProcessOptions()
+ProcessOptions::ProcessOptions(const QString & new_babel_args, const QString & new_input_file_name, const QString & new_input_file_type, const QString & new_url)
 {
-}
-
-
-
-
-ProcessOptions::ProcessOptions(const QString & babel_args_, const QString & input_file_name_, const QString & input_file_type_, const QString & url_)
-{
-	if (!babel_args_.isEmpty()) {
-		this->babel_args = babel_args_;
+	if (!new_babel_args.isEmpty()) {
+		this->babel_args = new_babel_args;
 	}
-	if (!input_file_name_.isEmpty()) {
-		this->input_file_name = input_file_name_;
+	if (!new_input_file_name.isEmpty()) {
+		this->input_file_name = new_input_file_name;
 	}
-	if (!input_file_type_.isEmpty()) {
-		this->input_file_type = input_file_type_;
+	if (!new_input_file_type.isEmpty()) {
+		this->input_file_type = new_input_file_type;
 	}
-	if (!url_.isEmpty()) {
-		this->url = url_;
+	if (!new_url.isEmpty()) {
+		this->url = new_url;
 	}
-}
-
-
-
-
-ProcessOptions::~ProcessOptions()
-{
 }
 
 
@@ -252,11 +242,11 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 
 	switch (mode) {
-	case DataSourceMode::CREATE_NEW_LAYER:
+	case DataSourceMode::CreateNewLayer:
 		getter.creating_new_layer = true;
 		break;
 
-	case DataSourceMode::ADD_TO_LAYER: {
+	case DataSourceMode::AddToLayer: {
 		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
 			getter.acquiring->trw = (LayerTRW *) selected_layer;
@@ -265,11 +255,11 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		}
 		break;
 
-	case DataSourceMode::AUTO_LAYER_MANAGEMENT:
+	case DataSourceMode::AutoLayerManagement:
 		/* NOOP */
 		break;
 
-	case DataSourceMode::MANUAL_LAYER_MANAGEMENT: {
+	case DataSourceMode::ManualLayerManagement: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		getter.creating_new_layer = false;
 		Layer * selected_layer = this->panel->get_selected_layer();
@@ -390,7 +380,7 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		  BFilterDuplicates
 		  BFilterManual
 		*/
-		qDebug() << "II:" PREFIX << "input type: TRWLayer";
+		qDebug() << "II" PREFIX << "input type: TRWLayer";
 
 		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
 		po = setup_dialog->get_process_options(name_src, NULL);
@@ -403,7 +393,7 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		  BFilterPolygon
 		  BFilterExcludePolygon
 		*/
-		qDebug() << "II:" PREFIX << "input type: TRWLayerTrack";
+		qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
 
 		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
 		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
@@ -416,7 +406,7 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		break;
 
 	case DataSourceInputType::Track: {
-		qDebug() << "II:" PREFIX << "input type: Track";
+		qDebug() << "II" PREFIX << "input type: Track";
 
 		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
 		po = setup_dialog->get_process_options("", name_src_track);
@@ -441,14 +431,14 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		  this method, so we will call empty method in base
 		  class.
 		*/
-		qDebug() << "II:" PREFIX << "input type: None";
+		qDebug() << "II" PREFIX << "input type: None";
 
 		assert (setup_dialog);
 		po = setup_dialog->get_process_options();
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << "unsupported Datasource Input Type" << (int) data_source->input_type;
+		qDebug() << "EE" PREFIX << "unsupported Datasource Input Type" << (int) data_source->input_type;
 		break;
 	};
 
@@ -472,10 +462,6 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode n
 {
 	AcquireProcess acquiring(new_window, new_panel, new_viewport);
 	acquiring.acquire(new_data_source, new_mode, new_parent_data_source_dialog);
-
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
-	}
 }
 
 

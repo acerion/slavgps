@@ -168,7 +168,7 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 {
 	this->window_title = new_window_title;
 	this->layer_title = new_layer_title;
-	this->mode = DataSourceMode::ADD_TO_LAYER;
+	this->mode = DataSourceMode::AddToLayer;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */

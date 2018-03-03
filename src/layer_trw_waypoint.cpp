@@ -640,7 +640,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
 	parent_layer->tree_view->sort_children(parent_layer->waypoints->get_index(), parent_layer->wp_sort_order);
 
-	g_tree->emit_update_window();
+	g_tree->emit_items_tree_updated();
 
 	return new_name;
 }
