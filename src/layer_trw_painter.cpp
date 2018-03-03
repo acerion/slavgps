@@ -76,15 +76,16 @@ static int pango_font_size_to_point_font_size(font_size_t font_size);
 
 
 
-enum {
-	LAYER_TRW_TRACK_GRAPHICS_BLACK,
-	LAYER_TRW_TRACK_GRAPHICS_SLOW,
-	LAYER_TRW_TRACK_GRAPHICS_AVER,
-	LAYER_TRW_TRACK_GRAPHICS_FAST,
-	LAYER_TRW_TRACK_GRAPHICS_STOP,
-	LAYER_TRW_TRACK_GRAPHICS_SINGLE,
+enum class LayerTRWTrackGraphics {
+	Speed1,
+	Speed2,
+	Speed3,
 
-	LAYER_TRW_TRACK_GRAPHICS_MAX
+	StopPen,
+	SinglePen,
+	NeutralPen,
+
+	Max
 };
 
 
@@ -164,7 +165,7 @@ public:
 	SpeedColoring(double low, double average, double high) : low_speed(low), average_speed(average), high_speed(high) {};
 	SpeedColoring() {};
 	void set(double low, double average, double high) { low_speed = low; average_speed = average; high_speed = high; };
-	int get(const Trackpoint * tp1, const Trackpoint * tp2);
+	LayerTRWTrackGraphics get(const Trackpoint * tp1, const Trackpoint * tp2);
 private:
 	double low_speed = 0.0;
 	double average_speed = 0.0;
@@ -174,22 +175,22 @@ private:
 
 
 
-int SpeedColoring::get(const Trackpoint * tp1, const Trackpoint * tp2)
+LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoint * tp2)
 {
 	if (!tp1->has_timestamp || !tp2->has_timestamp) {
-		return LAYER_TRW_TRACK_GRAPHICS_BLACK;
+		return LayerTRWTrackGraphics::NeutralPen;
 	}
 	if (average_speed <= 0) {
-		return LAYER_TRW_TRACK_GRAPHICS_BLACK;
+		return LayerTRWTrackGraphics::NeutralPen;
 	}
 
 	const double speed = (Coord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
 	if (speed < low_speed) {
-		return LAYER_TRW_TRACK_GRAPHICS_SLOW;
+		return LayerTRWTrackGraphics::Speed1;
 	} else if (speed > high_speed) {
-		return LAYER_TRW_TRACK_GRAPHICS_FAST;
+		return LayerTRWTrackGraphics::Speed3;
 	} else {
-		return LAYER_TRW_TRACK_GRAPHICS_AVER;
+		return LayerTRWTrackGraphics::Speed2;
 	}
 }
 
@@ -328,7 +329,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 
 QColor LayerTRWPainter::get_fg_color(const Track * trk) const
 {
-	return this->track_drawing_mode == LayerTRWTrackDrawingMode::BY_TRACK ? trk->color : this->track_color_common;
+	return this->track_drawing_mode == LayerTRWTrackDrawingMode::ByTrack ? trk->color : this->track_color_common;
 }
 
 
@@ -354,8 +355,8 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 	char *ename = g_markup_escape_text(trk->name.toUtf8().constData(), -1);
 
-	if (trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE ||
-	    trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd ||
+	    trk->draw_name_mode == TrackDrawNameMode::Centre) {
 
 		LatLonMinMax min_max;
 		trk->find_maxmin(min_max);
@@ -365,7 +366,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 		this->draw_track_label(ename, fg_color, bg_color, coord);
 	}
 
-	if (trk->draw_name_mode == TrackDrawNameMode::CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::Centre) {
 		/* No other labels to draw. */
 		return;
 	}
@@ -383,8 +384,8 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 	bool done_start_end = false;
 
-	if (trk->draw_name_mode == TrackDrawNameMode::START_END ||
-	    trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
+	if (trk->draw_name_mode == TrackDrawNameMode::StartEnd ||
+	    trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
 
 		/* This number can be configured via the settings if you really want to change it. */
 		double distance_diff;
@@ -406,18 +407,18 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	}
 
 	if (!done_start_end) {
-		if (trk->draw_name_mode == TrackDrawNameMode::START
-		    || trk->draw_name_mode == TrackDrawNameMode::START_END
-		    || trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
+		if (trk->draw_name_mode == TrackDrawNameMode::Start
+		    || trk->draw_name_mode == TrackDrawNameMode::StartEnd
+		    || trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
 
 			const QString name_start = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start"));
 			this->draw_track_label(name_start, fg_color, bg_color, begin_coord);
 		}
 		/* Don't draw end label if this is the one being created. */
 		if (trk != this->trw->get_edited_track()) {
-			if (trk->draw_name_mode == TrackDrawNameMode::END
-			    || trk->draw_name_mode == TrackDrawNameMode::START_END
-			    || trk->draw_name_mode == TrackDrawNameMode::START_END_CENTRE) {
+			if (trk->draw_name_mode == TrackDrawNameMode::End
+			    || trk->draw_name_mode == TrackDrawNameMode::StartEnd
+			    || trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
 
 				const QString name_end = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("end"));
 				this->draw_track_label(name_end, fg_color, bg_color, end_coord);
@@ -518,14 +519,14 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 	} else {
 		/* Figure out the pen according to the drawing mode. */
 		switch (this->track_drawing_mode) {
-		case LayerTRWTrackDrawingMode::BY_TRACK:
+		case LayerTRWTrackDrawingMode::ByTrack:
 			result.setColor(trk->color);
 			result.setWidth(this->track_thickness);
 			break;
 		default:
-			/* Mostly for LayerTRWTrackDrawingMode::ALL_SAME_COLOR
-			   but includes LayerTRWTrackDrawingMode::BY_SPEED, the pen is set later on as necessary. */
-			result = this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE];
+			/* Mostly for LayerTRWTrackDrawingMode::AllSameColor
+			   but includes LayerTRWTrackDrawingMode::BySpeed, the pen is set later on as necessary. */
+			result = this->track_pens[(int) LayerTRWTrackGraphics::SinglePen];
 			break;
 		}
 	}
@@ -556,17 +557,17 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 
 	QPen main_pen = this->get_track_fg_pen(trk, do_highlight);
-	/* If track_drawing_mode == LayerTRWTrackDrawingMode::BY_SPEED, main_pen may be overwritten below. */
+	/* If track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed, main_pen may be overwritten below. */
 
 
 
-	const int32_t tp_size_reg = this->trackpoint_size;
-	const int32_t tp_size_cur = this->trackpoint_size * 2;
+	const int tp_size_reg = this->trackpoint_size;
+	const int tp_size_cur = this->trackpoint_size * 2;
 
 	auto iter = trk->trackpoints.begin();
 
 	Track * selected_track = this->trw->get_edited_track();
-	uint8_t tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
+	int tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 	ScreenPos curr_pos = this->viewport->coord_to_screen_pos((*iter)->coord);
 
@@ -581,7 +582,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 	SpeedColoring speed_coloring;
 	/* If necessary calculate these values - which is done only once per track redraw. */
-	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::BY_SPEED) {
+	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed) {
 		/* The percentage factor away from the average speed determines transistions between the levels. */
 		const double average_speed = trk->get_average_speed_moving(this->track_min_stop_length);
 		const double low_speed = average_speed - (average_speed * (this->track_draw_speed_factor/100.0));
@@ -651,7 +652,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->track_min_stop_length) {
 
-				this->viewport->draw_arc(this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP], curr_pos.x-(3*tp_size), curr_pos.y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
+				this->viewport->draw_arc(this->track_pens[(int) LayerTRWTrackGraphics::StopPen], curr_pos.x-(3*tp_size), curr_pos.y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
 			}
 
 			if (use_prev_pos && curr_pos == prev_pos) {
@@ -663,8 +664,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			if (do_draw_trackpoints || this->draw_track_lines) {
 				/* Setup main_pen for both point and line drawing. */
-				if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BY_SPEED)) {
-					main_pen = this->track_pens[speed_coloring.get(tp, prev_tp)];
+				if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed)) {
+					main_pen = this->track_pens[(int) speed_coloring.get(tp, prev_tp)];
 				}
 			}
 
@@ -715,8 +716,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->vp_center.utm.zone) {
 					curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
-					if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BY_SPEED)) {
-						main_pen = this->track_pens[speed_coloring.get(tp, prev_tp)];
+					if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed)) {
+						main_pen = this->track_pens[(int) speed_coloring.get(tp, prev_tp)];
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -882,7 +883,7 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 		}
 		this->draw_track_point_names(trk, do_highlight);
 
-		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
+		if (trk->draw_name_mode != TrackDrawNameMode::None) {
 			this->draw_track_name_labels(trk, do_highlight);
 		}
 	}
@@ -1058,13 +1059,13 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 		const QPen & pen = this->wp_marker_pen;
 
 		switch (this->wp_marker_type) {
-		case GraphicMarker::FILLED_SQUARE:
+		case GraphicMarker::FilledSquare:
 			this->viewport->fill_rectangle(pen.color(), x - size / 2, y - size / 2, size, size);
 			break;
-		case GraphicMarker::SQUARE:
+		case GraphicMarker::Square:
 			this->viewport->draw_rectangle(pen, x - size / 2, y - size / 2, size, size);
 			break;
-		case GraphicMarker::CIRCLE:
+		case GraphicMarker::Circle:
 			this->viewport->draw_arc(pen, x - size / 2, y - size / 2, size, size, 0, 360, true);
 			break;
 		case GraphicMarker::X:
@@ -1194,7 +1195,7 @@ int pango_font_size_to_point_font_size(font_size_t font_size)
 
 void LayerTRWPainter::make_track_pens(void)
 {
-	int32_t width = this->track_thickness;
+	const int width = this->track_thickness;
 
 
 	this->track_bg_pen = QPen(this->track_bg_color);
@@ -1215,25 +1216,25 @@ void LayerTRWPainter::make_track_pens(void)
 	//gdk_gc_set_line_attributes(this->current_trk_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
 	this->track_pens.clear();
-	this->track_pens.resize(LAYER_TRW_TRACK_GRAPHICS_MAX);
+	this->track_pens.resize((int) LayerTRWTrackGraphics::Max);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP] = QPen(QColor("#874200"));
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_STOP].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed1] = QPen(QColor("#E6202E")); /* Red-ish. */
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed1].setWidth(width);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK] = QPen(QColor("#000000")); /* Black. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_BLACK].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed2] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed2].setWidth(width);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW] = QPen(QColor("#E6202E")); /* Red-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SLOW].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed3] = QPen(QColor("#2B8700")); /* Green-ish. */
+	this->track_pens[(int) LayerTRWTrackGraphics::Speed3].setWidth(width);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_AVER].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::StopPen] = QPen(QColor("#874200"));
+	this->track_pens[(int) LayerTRWTrackGraphics::StopPen].setWidth(width);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_FAST].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::SinglePen] = QPen(QColor(this->track_color_common));
+	this->track_pens[(int) LayerTRWTrackGraphics::SinglePen].setWidth(width);
 
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE] = QPen(QColor(this->track_color_common));
-	this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE].setWidth(width);
+	this->track_pens[(int) LayerTRWTrackGraphics::NeutralPen] = QPen(QColor("#000000")); /* Black. */
+	this->track_pens[(int) LayerTRWTrackGraphics::NeutralPen].setWidth(width);
 }
 
 

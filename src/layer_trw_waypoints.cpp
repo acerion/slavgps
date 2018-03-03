@@ -52,6 +52,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Waypoints:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -560,7 +565,7 @@ void LayerTRWWaypoints::sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, Q
 	QAction * qa = NULL;
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Waypoints"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_all_items_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (move_viewport_to_show_all_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("Find &Waypoint..."));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (find_waypoint_dialog_cb()));
@@ -670,7 +675,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 /**
    \brief Re-adjust main viewport to show all items in this node
 */
-void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
+void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 	const unsigned int n_items = this->items.size();
@@ -682,7 +687,7 @@ void LayerTRWWaypoints::rezoom_to_show_all_items_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(viewport, LatLonMinMax(this->bbox));
+		viewport->show_latlons(LatLonMinMax(this->bbox));
 	} else {
 		return; /* Zero items. */
 	}

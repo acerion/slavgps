@@ -157,7 +157,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 	}
 
 	if (auto_zoom) {
-		trw->auto_set_view(viewport);
+		trw->move_viewport_to_show_all(viewport);
 	}
 
 	/* ATM This routine can't fail. */

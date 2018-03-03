@@ -222,9 +222,7 @@ namespace SlavGPS {
 		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
-		void zoom_to_show_latlons(Viewport * viewport, const LatLonMinMax & min_max);
-		bool auto_set_view(Viewport * viewport);
-
+		bool move_viewport_to_show_all(Viewport * viewport);
 
 
 		bool new_waypoint(Window * parent, const Coord & default_coord);
@@ -324,7 +322,7 @@ namespace SlavGPS {
 		void dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical);
 
 
-		int32_t get_track_thickness();
+		int get_track_thickness();
 
 		static TRWMetadata * metadata_new();
 		static void metadata_free(TRWMetadata * metadata);
@@ -440,7 +438,7 @@ namespace SlavGPS {
 		void finish_track_cb(void);
 		void finish_route_cb(void);
 
-		void full_view_cb(void);
+		void move_viewport_to_show_all_cb(void);
 
 		void centerize_cb(void);
 		void find_waypoint_dialog_cb(void);    /* In context menu for "Layer TRW" or "Waypoints" node in tree view. */

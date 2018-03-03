@@ -1110,7 +1110,7 @@ void GPSSession::run(void)
 				if (this->viewport && this->direction == GPSDirection::DOWN) {
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
-					this->trw->auto_set_view(this->viewport) ;
+					this->trw->move_viewport_to_show_all(this->viewport) ;
 					this->trw->emit_layer_changed(); /* NB update from background thread. */
 				}
 			}
@@ -1790,7 +1790,7 @@ void LayerGPS::gps_start_stop_tracking_cb(void)
 	this->realtime_tracking_in_progress = (this->realtime_tracking_in_progress == false);
 
 	/* Make sure we are still in the boat with libgps. */
-	assert ((((int) GPSFixMode::FIX_2D) == MODE_2D) && (((int) GPSFixMode::FIX_3D) == MODE_3D));
+	assert ((((int) GPSFixMode::Fix2D) == MODE_2D) && (((int) GPSFixMode::Fix3D) == MODE_3D));
 
 	if (this->realtime_tracking_in_progress) {
 		this->first_realtime_trackpoint = true;

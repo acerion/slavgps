@@ -919,7 +919,7 @@ static void a_gpspoint_write_track(FILE * file, Tracks & tracks)
 			fprintf(file, " color=#%.2x%.2x%.2x", (int)(trk->color.red()),(int)(trk->color.green()),(int)(trk->color.blue()));
 		}
 
-		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
+		if (trk->draw_name_mode != TrackDrawNameMode::None) {
 			fprintf(file, " draw_name_mode=\"%d\"", (int) trk->draw_name_mode);
 		}
 

@@ -2317,3 +2317,12 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 	return success;
 }
+
+
+
+
+bool Viewport::show_latlons(const LatLonMinMax & min_max)
+{
+	vu_zoom_to_show_latlons(this->get_coord_mode(), this, min_max);
+	return true;
+}

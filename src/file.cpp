@@ -816,7 +816,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			/* Complete the setup from the successful load. */
 			layer->post_read(viewport, true);
 			parent_layer->add_layer(layer, false);
-			layer->auto_set_view(viewport);
+			layer->move_viewport_to_show_all(viewport);
 		}
 	}
 	fclose(file);

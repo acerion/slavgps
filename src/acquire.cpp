@@ -135,7 +135,7 @@ void AcquireGetter::on_complete_process(void)
 			this->acquiring->trw->post_read(this->acquiring->viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
 			if (this->acquiring->data_source && this->acquiring->data_source->autoview) {
-				this->acquiring->trw->auto_set_view(this->acquiring->viewport);
+				this->acquiring->trw->move_viewport_to_show_all(this->acquiring->viewport);
 			}
 			this->acquiring->panel->emit_items_tree_updated_cb("acquire completed");
 		}

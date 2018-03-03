@@ -61,6 +61,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Tracks:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -559,7 +564,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 
 			/* Tracks get a random spread of colors if not already assigned. */
 			if (!trk->has_color) {
-				if (track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
+				if (track_drawing_mode == LayerTRWTrackDrawingMode::AllSameColor) {
 					trk->color = track_color_common;
 				} else {
 					trk->color.setNamedColor(my_track_colors(color_i));
@@ -687,7 +692,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Tracks"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_all_items_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (move_viewport_to_show_all_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Track"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_track_cb()));
@@ -741,7 +746,7 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View All Routes"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_all_items_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (move_viewport_to_show_all_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Route"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (new_route_cb()));
@@ -841,16 +846,18 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 /**
    \brief Re-adjust main viewport to show all items in this node
 */
-void LayerTRWTracks::rezoom_to_show_all_items_cb(void) /* Slot. */
+void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	const unsigned int n_items = this->items.size();
 
 	if (0 < n_items) {
 		LatLonMinMax min_max;
 		this->find_maxmin(min_max);
-		((LayerTRW *) this->owning_layer)->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
 
-		qDebug() << "SIGNAL: Layer TRW Tracks: re-zooming to show all items (" << n_items << "items)";
+		qDebug() << "II" PREFIX << "re-zooming to show all items (" << n_items << "items)";
+		g_tree->tree_get_main_viewport()->show_latlons(min_max);
+
+		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated()'";
 		g_tree->emit_items_tree_updated();
 	}
 }

@@ -31,13 +31,13 @@
 
 
 
-/* Note that using LayerTRWTrackDrawingMode::BY_SPEED may be slow especially for vast
+/* Note that using LayerTRWTrackDrawingMode::BySpeed may be slow especially for vast
    numbers of trackpoints as we are (re)calculating the color for
    every point. */
 enum class LayerTRWTrackDrawingMode {
-	BY_TRACK,
-	BY_SPEED,
-	ALL_SAME_COLOR
+	ByTrack,
+	BySpeed,
+	AllSameColor
 };
 
 
@@ -46,12 +46,12 @@ enum class LayerTRWTrackDrawingMode {
 /* These symbols are used for Waypoints, but they can be used elsewhere too. */
 enum class GraphicMarker {
 	/* There were four markers originally in Viking. */
-	FILLED_SQUARE,
-	SQUARE,
-	CIRCLE,
+	FilledSquare,
+	Square,
+	Circle,
 	X,
 
-	MAX
+	Max
 };
 
 

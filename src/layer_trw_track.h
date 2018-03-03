@@ -50,25 +50,25 @@ namespace SlavGPS {
 
 
 	enum class GPSFixMode {
-		NOT_SEEN = 0,     /* Mode update not seen yet. */
-		NO_FIX   = 1,     /* None. */
-		FIX_2D   = 2,     /* Good for latitude/longitude. */
-		FIX_3D   = 3,     /* Good for altitude/climb too. */
-		DGPS     = 4,
-		PPS      = 5      /* Military signal used. */
+		NotSeen = 0,     /* Mode update not seen yet. */
+		NoFix   = 1,     /* None. */
+		Fix2D   = 2,     /* Good for latitude/longitude. */
+		Fix3D   = 3,     /* Good for altitude/climb too. */
+		DGPS    = 4,
+		PPS     = 5      /* Military signal used. */
 	};
 
 
 
 
 	enum class TrackDrawNameMode {
-		NONE = 0,
-		CENTRE,
-		START,
-		END,
-		START_END,
-		START_END_CENTRE,
-		MAX
+		None = 0,
+		Centre,
+		Start,
+		End,
+		StartEnd,
+		StartCentreEnd,
+		Max
 	};
 
 

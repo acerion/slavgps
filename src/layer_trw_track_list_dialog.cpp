@@ -124,7 +124,7 @@ void TrackListDialog::track_view_cb(void)
 	Viewport * viewport = trw->get_window()->get_viewport();
 
 	/* TODO create common function to convert between LatLonMinMax and LatLonBBox or even change LatLonBBox to be 2 LatLons! */
-	trw->zoom_to_show_latlons(viewport, LatLonMinMax(trk->bbox));
+	viewport->show_latlons(LatLonMinMax(trk->bbox));
 
 	this->track_select(trw, trk);
 }

@@ -143,15 +143,15 @@ enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_META
 
 
 static std::vector<SGLabelID> params_track_drawing_modes = {
-	SGLabelID(QObject::tr("Draw by Track"),                  (int) LayerTRWTrackDrawingMode::BY_TRACK),
-	SGLabelID(QObject::tr("Draw by Speed"),                  (int) LayerTRWTrackDrawingMode::BY_SPEED),
-	SGLabelID(QObject::tr("All Tracks Have The Same Color"), (int) LayerTRWTrackDrawingMode::ALL_SAME_COLOR),
+	SGLabelID(QObject::tr("Draw by Track"),                  (int) LayerTRWTrackDrawingMode::ByTrack),
+	SGLabelID(QObject::tr("Draw by Speed"),                  (int) LayerTRWTrackDrawingMode::BySpeed),
+	SGLabelID(QObject::tr("All Tracks Have The Same Color"), (int) LayerTRWTrackDrawingMode::AllSameColor),
 };
 
 static std::vector<SGLabelID> params_wpsymbols = {
-	SGLabelID(QObject::tr("Filled Square"), (int) GraphicMarker::FILLED_SQUARE),
-	SGLabelID(QObject::tr("Square"),        (int) GraphicMarker::SQUARE),
-	SGLabelID(QObject::tr("Circle"),        (int) GraphicMarker::CIRCLE),
+	SGLabelID(QObject::tr("Filled Square"), (int) GraphicMarker::FilledSquare),
+	SGLabelID(QObject::tr("Square"),        (int) GraphicMarker::Square),
+	SGLabelID(QObject::tr("Circle"),        (int) GraphicMarker::Circle),
 	SGLabelID(QObject::tr("X"),             (int) GraphicMarker::X),
 };
 
@@ -198,13 +198,13 @@ static std::vector<SGLabelID> params_sort_order = {
 };
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
-static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) LayerTRWTrackDrawingMode::BY_TRACK); }
+static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) LayerTRWTrackDrawingMode::ByTrack); }
 static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
 static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
 static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
-static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) (int) GraphicMarker::FILLED_SQUARE); }
+static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) (int) GraphicMarker::FilledSquare); }
 static SGVariant sort_order_default(void)        { return SGVariant((int32_t) 0); }
 static SGVariant string_default(void)            { return SGVariant(""); }
 
@@ -559,7 +559,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
 	if (trk && select) {
 		LatLonMinMax min_max;
 		trk->find_maxmin(min_max);
-		this->zoom_to_show_latlons(viewport, min_max);
+		viewport->show_latlons(min_max);
 		this->tree_view->select_and_expose(trk->index);
 		this->emit_layer_changed();
 	}
@@ -889,7 +889,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 #endif
 		break;
 	case PARAM_WP_MARKER_TYPE:
-		if (data.val_int < (int) GraphicMarker::MAX) {
+		if (data.val_int < (int) GraphicMarker::Max) {
 			this->painter->wp_marker_type = (GraphicMarker) data.val_int;
 		}
 		break;
@@ -1067,7 +1067,7 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 	case PARAM_TRACK_DRAWING_MODE: {
 		// Get new value
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
-		bool sensitive = (var.i == LayerTRWTrackDrawingMode::ALL_SAME_COLOR);
+		bool sensitive = (var.i == LayerTRWTrackDrawingMode::AllSameColor);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_TRACK_COLOR_COMMON];
@@ -1361,7 +1361,7 @@ void LayerTRW::add_children_to_tree(void)
 /*
  * Return a property about tracks for this layer.
  */
-int32_t LayerTRW::get_track_thickness()
+int LayerTRW::get_track_thickness()
 {
 	return this->painter->track_thickness;
 }
@@ -1729,15 +1729,7 @@ void LayerTRW::centerize_cb(void)
 
 
 
-void LayerTRW::zoom_to_show_latlons(Viewport * viewport, const LatLonMinMax & min_max)
-{
-	vu_zoom_to_show_latlons(this->coord_mode, viewport, min_max);
-}
-
-
-
-
-bool LayerTRW::auto_set_view(Viewport * viewport)
+bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
 	LatLonMinMax min_max;
@@ -1745,7 +1737,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 	if (min_max.max.lat == 0.0 && min_max.max.lon == 0.0 && min_max.min.lat == 0.0 && min_max.min.lon == 0.0) {
 		return false;
 	} else {
-		this->zoom_to_show_latlons(viewport, min_max);
+		viewport->show_latlons(min_max);
 		return true;
 	}
 }
@@ -1753,13 +1745,19 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 
 
-void LayerTRW::full_view_cb(void) /* Slot. */
+void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	if (this->auto_set_view(g_tree->tree_get_main_viewport())) {
+	if ((!this->tracks || this->tracks->items.empty())
+	    && (!this->routes || this->routes->items.empty())
+	    && (!this->waypoints || this->waypoints->items.empty())) {
+
+		Dialog::info(tr("This layer has no tracks, routes or waypoints."), this->get_window());
+		return;
+	}
+
+	if (this->move_viewport_to_show_all(g_tree->tree_get_main_viewport())) {
 		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << this->get_name();
 		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(this->get_name());
-	} else {
-		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
 }
 
@@ -2144,7 +2142,7 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 	track->set_defaults();
 	track->visible = true; /* TODO: verify if this is necessary. Tracks are visible by default. */
 
-	if (this->painter->track_drawing_mode == LayerTRWTrackDrawingMode::ALL_SAME_COLOR) {
+	if (this->painter->track_drawing_mode == LayerTRWTrackDrawingMode::AllSameColor) {
 		/* Create track with the preferred color from the layer properties. */
 		track->color = this->painter->track_color_common;
 	} else {

@@ -105,19 +105,19 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View Layer"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (move_viewport_to_show_all_cb()));
 
 	{
 		QMenu * view_submenu = menu.addMenu(QIcon::fromTheme("edit-find"), tr("V&iew"));
 
 		qa = view_submenu->addAction(tr("View All &Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), this->tracks, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->tracks, SLOT (move_viewport_to_show_all_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Routes"));
-		connect(qa, SIGNAL (triggered(bool)), this->routes, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->routes, SLOT (move_viewport_to_show_all_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), this->waypoints, SLOT (rezoom_to_show_all_items_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this->waypoints, SLOT (move_viewport_to_show_all_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Goto Center of Layer"));

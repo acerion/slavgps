@@ -29,7 +29,6 @@
 
 
 #include <vector>
-#include <cstdint>
 
 
 
@@ -160,33 +159,33 @@ namespace SlavGPS {
 		LayerTRWTrackDrawingMode track_drawing_mode; /* Mostly about how a color(s) for track is/are selected, but in future perhaps other attributes will be variable as well. */
 
 	        bool draw_trackpoints;
-		int32_t trackpoint_size;
+		int trackpoint_size;
 
 		bool draw_track_lines;
 
 		bool draw_track_stops;
-		int32_t track_min_stop_length; /* TODO: shouldn't this be the same type as timestamp? */
+		int track_min_stop_length; /* TODO: shouldn't this be the same type as timestamp? */
 
-		int32_t track_thickness;
-		int32_t track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
+		int track_thickness;
+		int track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */
 
 		bool draw_track_elevation;
-		int32_t track_elevation_factor;
+		int track_elevation_factor;
 
 		bool draw_track_directions;
-		int32_t draw_track_directions_size;
+		int draw_track_directions_size;
 
 		bool draw_wp_symbols; /* Draw Garmin symbols of waypoints. */
 
 		GraphicMarker wp_marker_type;
-		int32_t wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
+		int wp_marker_size; /* In Variant data type this field is stored as uint8_t. */
 
 		bool draw_wp_labels;
 		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
 
 		bool draw_wp_images;
-		int32_t wp_image_alpha;
-		int32_t wp_image_size;
+		int wp_image_alpha;
+		int wp_image_size;
 
 		GdkFunction wpbgand;
 

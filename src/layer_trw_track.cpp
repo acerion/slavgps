@@ -670,7 +670,7 @@ void Track::to_routepoints(void)
 		(*iter)->vdop = VIK_DEFAULT_DOP;
 		(*iter)->pdop = VIK_DEFAULT_DOP;
 		(*iter)->nsats = 0;
-		(*iter)->fix_mode = GPSFixMode::NOT_SEEN;
+		(*iter)->fix_mode = GPSFixMode::NotSeen;
 	}
 
 }
@@ -3153,11 +3153,9 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-
 	LatLonMinMax min_max;
 	this->find_maxmin(min_max);
-	parent_layer_->zoom_to_show_latlons(g_tree->tree_get_main_viewport(), min_max);
+	g_tree->tree_get_main_viewport()->show_latlons(min_max);
 
 	g_tree->emit_items_tree_updated();
 }

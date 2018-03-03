@@ -121,7 +121,7 @@ void TreeView::select_cb(void) /* Slot. */
 	/* Clear statusbar. */
 	main_window->get_statusbar()->set_message(StatusBarField::INFO, "");
 
-	qDebug() << "II: Tree View: select CB: selected item is" << (selected_item->tree_item_type == TreeItemType::LAYER ? "layer" : "sublayer");
+	qDebug() << "II" PREFIX << "selected item is" << (selected_item->tree_item_type == TreeItemType::LAYER ? "layer" : "sublayer");
 
 	/* Either the selected layer itself, or an owner/parent of selected sublayer item. */
 	const Layer * layer = selected_item->to_layer();
@@ -131,8 +131,8 @@ void TreeView::select_cb(void) /* Slot. */
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
-		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << layer->get_name();
-		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(layer->get_name());
+		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << selected_item->name;
+		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(selected_item->name);
 	}
 }
 

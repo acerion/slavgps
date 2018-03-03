@@ -681,7 +681,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 				acquiring->panel->get_top_layer()->add_layer(target_layer, true);
 				/* Move to area of the track. */
 				target_layer->post_read(acquiring->window->get_viewport(), true);
-				target_layer->auto_set_view(acquiring->window->get_viewport());
+				target_layer->move_viewport_to_show_all(acquiring->window->get_viewport());
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {

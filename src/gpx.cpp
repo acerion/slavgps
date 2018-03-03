@@ -559,15 +559,15 @@ static void gpx_end(LayerTRW * trw, char const * el)
 
 	case tt_trk_trkseg_trkpt_fix:
 		if (!strcmp("2d", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::FIX_2D;
+			c_tp->fix_mode = GPSFixMode::Fix2D;
 		} else if (!strcmp("3d", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::FIX_3D;
+			c_tp->fix_mode = GPSFixMode::Fix3D;
 		} else if (!strcmp("dgps", c_cdata->str)) {
 			c_tp->fix_mode = GPSFixMode::DGPS;
 		} else if (!strcmp("pps", c_cdata->str)) {
 			c_tp->fix_mode = GPSFixMode::PPS;
 		} else {
-			c_tp->fix_mode = GPSFixMode::NOT_SEEN;
+			c_tp->fix_mode = GPSFixMode::NotSeen;
 		}
 		g_string_erase(c_cdata, 0, -1);
 		break;
@@ -988,10 +988,10 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	if (!std::isnan(tp->speed)) {
 		fprintf(f, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());
 	}
-	if (tp->fix_mode == GPSFixMode::FIX_2D) {
+	if (tp->fix_mode == GPSFixMode::Fix2D) {
 		fprintf(f, "    <fix>2d</fix>\n");
 	}
-	if (tp->fix_mode == GPSFixMode::FIX_3D) {
+	if (tp->fix_mode == GPSFixMode::Fix3D) {
 		fprintf(f, "    <fix>3d</fix>\n");
 	}
 	if (tp->fix_mode == GPSFixMode::DGPS) {

@@ -89,7 +89,7 @@ namespace SlavGPS {
 
 		unsigned int nsats = 0;     /* Number of satellites used. 0 if data unavailable. */
 
-		GPSFixMode fix_mode = GPSFixMode::NOT_SEEN; /* GPSFixMode::NOT_SEEN if data unavailable. */
+		GPSFixMode fix_mode = GPSFixMode::NotSeen;     /* GPSFixMode::NotSeen if data unavailable. */
 		double hdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 		double vdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
@@ -313,7 +313,7 @@ namespace SlavGPS {
 
 		TrackPoints trackpoints;
 		//bool visible = false;
-		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
+		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::None;
 		uint8_t max_number_dist_labels = 0;
 
 		uint8_t ref_count = 0;
