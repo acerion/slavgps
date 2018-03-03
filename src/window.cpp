@@ -1077,7 +1077,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 
 
-void Window::handle_selection_of_layer(Layer * layer)
+void Window::handle_selection_of_layer(const Layer * layer)
 {
 	qDebug() << "II: Window: selected layer type" << layer->get_type_ui_label();
 

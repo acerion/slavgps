@@ -907,7 +907,7 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	//parent_layer->set_statusbar_msg_info_trk(this);
-	parent_layer->reset_internal_selections();
+	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	g_tree->selected_tree_item = this;
 

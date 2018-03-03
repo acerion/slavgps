@@ -124,7 +124,7 @@ void TreeView::select_cb(void) /* Slot. */
 	qDebug() << "II: Tree View: select CB: selected item is" << (selected_item->tree_item_type == TreeItemType::LAYER ? "layer" : "sublayer");
 
 	/* Either the selected layer itself, or an owner/parent of selected sublayer item. */
-	Layer * layer = selected_item->to_layer();
+	const Layer * layer = selected_item->to_layer();
 
 	/* This should activate toolbox relevant to selected layer's type. */
 	main_window->handle_selection_of_layer(layer);

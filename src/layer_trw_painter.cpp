@@ -504,6 +504,38 @@ void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const S
 
 
 
+QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
+{
+	QPen result;
+
+	if (trk == this->trw->get_edited_track()) {
+		/* The track is being created by user, it gets a special pen. */
+		result = this->current_track_pen;
+	} else if (do_highlight) {
+		/* Draw all tracks of the layer in 'highlight' color.
+		   This supersedes the this->track_drawing_mode. */
+		result = this->viewport->get_highlight_pen();
+	} else {
+		/* Figure out the pen according to the drawing mode. */
+		switch (this->track_drawing_mode) {
+		case LayerTRWTrackDrawingMode::BY_TRACK:
+			result.setColor(trk->color);
+			result.setWidth(this->track_thickness);
+			break;
+		default:
+			/* Mostly for LayerTRWTrackDrawingMode::ALL_SAME_COLOR
+			   but includes LayerTRWTrackDrawingMode::BY_SPEED, the pen is set later on as necessary. */
+			result = this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE];
+			break;
+		}
+	}
+
+	return result;
+}
+
+
+
+
 void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 {
 	double min_alt, max_alt, alt_diff = 0;
@@ -514,46 +546,16 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		}
 	}
 
-	bool do_draw_trackpoints = false;
-	bool do_draw_track_stops = false;
-	if (!do_highlight) {
-		do_draw_trackpoints = this->draw_trackpoints;
-		do_draw_track_stops = this->draw_track_stops;
-	}
+	const bool do_draw_trackpoints = this->draw_trackpoints;
+	const bool do_draw_track_stops = do_highlight ? false : this->draw_track_stops;
+
 
 #if 1   /* Temporary test code. */
-	this->draw_track_label("some label", QColor("green"), QColor("black"), this->viewport->get_center2());
+	this->draw_track_label("test track label", QColor("green"), QColor("black"), this->viewport->get_center2());
 #endif
 
 
-#if 1
-	do_draw_track_stops = true;
-	this->track_min_stop_length = 1;
-	//this->track_drawing_mode = LayerTRWTrackDrawingMode::BY_SPEED;
-#endif
-
-	QPen main_pen;
-	if (trk == this->trw->get_edited_track()) {
-		/* The track is being created by user, it gets a special pen. */
-		main_pen = this->current_track_pen;
-	} else if (do_highlight) {
-		/* Draw all tracks of the layer in 'highlight' color.
-		   This supersedes the this->track_drawing_mode. */
-		main_pen = this->viewport->get_highlight_pen();
-	} else {
-		/* Figure out the pen according to the drawing mode. */
-		switch (this->track_drawing_mode) {
-		case LayerTRWTrackDrawingMode::BY_TRACK:
-			main_pen.setColor(trk->color);
-			main_pen.setWidth(this->track_thickness);
-			break;
-		default:
-			/* Mostly for LayerTRWTrackDrawingMode::ALL_SAME_COLOR
-			   but includes LayerTRWTrackDrawingMode::BY_SPEED, main_pen is set later on as necessary. */
-			main_pen = this->track_pens[LAYER_TRW_TRACK_GRAPHICS_SINGLE];
-			break;
-		}
-	}
+	QPen main_pen = this->get_track_fg_pen(trk, do_highlight);
 	/* If track_drawing_mode == LayerTRWTrackDrawingMode::BY_SPEED, main_pen may be overwritten below. */
 
 

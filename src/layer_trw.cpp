@@ -1314,7 +1314,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 
 void LayerTRW::draw(Viewport * viewport)
 {
-	this->draw_tree_item(viewport, true, false);
+	this->draw_tree_item(viewport, false, false);
 }
 
 
@@ -1597,6 +1597,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 void LayerTRW::reset_internal_selections(void)
 {
+	this->reset_edited_track();
 	this->reset_edited_wp();
 	this->cancel_current_tp(false);
 }
@@ -4695,8 +4696,7 @@ bool LayerTRW::handle_selection_in_tree()
 {
 	qDebug() << "II: LayerTRW: handle selection in tree: top";
 
-	/* Reset info about old selection. */
-	this->reset_internal_selections();
+	this->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	/* Set info about current selection. */
 	g_tree->selected_tree_item = this;
