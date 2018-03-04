@@ -320,8 +320,6 @@ Window::~Window()
 	window_list.remove(this);
 #ifdef K_TODO
 	delete this->tb;
-
-	vik_toolbar_finalize(this->viking_vtb);
 #endif
 	delete this->viewport;
 	delete this->items_tree;

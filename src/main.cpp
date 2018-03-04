@@ -177,7 +177,6 @@ int main(int argc, char ** argv)
 	a_background_init();
 
 #ifdef K_TODO
-	a_toolbar_init();
 	routing_prefs_init();
 #endif
 
@@ -241,9 +240,6 @@ int main(int argc, char ** argv)
 	int rv = app.exec();
 
 	Babel::uninit();
-#ifdef K_TODO
-	a_toolbar_uninit();
-#endif
 	a_background_uninit();
 
 	map_cache_uninit();

@@ -288,8 +288,6 @@ HEADERS += window.h \
 
 
 
-# toolbar.cpp
-
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp
 # expedia.cpp
