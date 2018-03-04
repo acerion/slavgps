@@ -234,7 +234,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	this->status = new QLabel(QObject::tr("Working..."));
 
 	DataSourceDialog * progress_dialog = NULL;
-#if 0
+#ifdef K_TODO
 	if (new_data_source->create_progress_dialog) {
 		progress_dialog = new_data_source->create_progress_dialog(this->user_data);
 	}

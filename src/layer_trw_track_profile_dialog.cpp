@@ -263,7 +263,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = convert_distance_meters_to(this->track_data.y[i], this->geocanvas.distance_unit);
 		}
 
-#if 0
+#ifdef K_TODO
 		this->track_data.y_min = 0;
 		this->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), this->geocanvas.distance_unit);
 #endif

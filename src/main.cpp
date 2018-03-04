@@ -53,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-#if 0
+#ifdef K_TODO
 
 
 /* FIXME LOCALEDIR must be configured by ./configure --localedir */
@@ -82,9 +82,12 @@ static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 	return 0;
 }
 #endif
+#endif
 
 
 
+
+#ifdef K_TODO
 /* Options. */
 static GOptionEntry entries[] = {
 	{ "debug",     'd', 0, G_OPTION_ARG_NONE,   &vik_debug,      N_("Enable debug output"), NULL },
@@ -96,9 +99,9 @@ static GOptionEntry entries[] = {
 	{ "map",       'm', 0, G_OPTION_ARG_INT,    &startup_map_type_id,    N_("Add a map layer by id value. Use 0 for the default map."), NULL },
 	{ NULL }
 };
-
-
 #endif
+
+
 
 
 /* Default values that won't actually get applied unless changed by command line parameter values. */

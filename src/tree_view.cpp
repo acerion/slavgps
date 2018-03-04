@@ -412,7 +412,7 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	/* Value in this column can be set with ::set_tree_item_icon(). */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-#if 0
+#ifdef K_TODO
 	item->setIcon();
 #endif
 	item->setEditable(false);
@@ -736,7 +736,7 @@ TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 	this->setAcceptDrops(true);
 
 
-#if 0
+#ifdef K_TODO
 	/* Can not specify 'auto' sort order with a 'GtkTreeSortable' on the name since we want to control the ordering of layers.
 	   Thus need to create special sort to operate on a subsection of tree_view (i.e. from a specific child either a layer or sublayer).
 	   See vik_tree_view_sort_children(). */
@@ -852,7 +852,7 @@ bool TreeModel::canDropMimeData(const QMimeData * data_, Qt::DropAction action, 
 	Q_UNUSED(row);
 	Q_UNUSED(parent_);
 
-#if 0
+#ifdef K_TODO
 	if (!data_->hasFormat("application/vnd.text.list")) {
 		return false;
 	}

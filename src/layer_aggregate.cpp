@@ -656,7 +656,7 @@ bool LayerAggregate::delete_layer(TreeIndex const & tree_index)
 
 
 
-#if 0
+#ifdef K_TODO
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
 unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
 {

@@ -4086,7 +4086,8 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 		}
 	}
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
+
 	int dest_x = 0;
 	int dest_y = 0;
 

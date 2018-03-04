@@ -67,7 +67,7 @@ namespace SlavGPS {
 		NEW        = 0x0020,
 		ALL        = 0xffff,
 	};
-#if 0
+#ifdef K_TODO
 	LayerMenuItem operator&(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
 	LayerMenuItem operator|(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
 	LayerMenuItem operator~(const LayerMenuItem& arg);

@@ -381,7 +381,7 @@ int SlavGPS::map_cache_get_count()
 
 const QString & SlavGPS::map_cache_dir()
 {
-#if 0
+#ifdef K_TODO
 	return maps_layer_default_dir();
 #else
 	static QString a_dir("/home/kamil/.viking-maps/");

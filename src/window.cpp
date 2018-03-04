@@ -202,7 +202,8 @@ Window::Window()
 	/* Allow key presses to be processed anywhere. */
 	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
 
-#if 0   /* I think that it's no longer necessary. */
+#ifdef K_TODO
+	/* I think that it's no longer necessary. */
 	/* Set initial button sensitivity. */
 	this->center_changed_cb();
 #endif
@@ -651,7 +652,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(this->qa_drawmode_latlon);
 
 		connect(group, SIGNAL (triggered(QAction *)), this, SLOT (change_coord_mode_cb(QAction *)));
-#if 0
+#ifdef K_TODO
 		for (unsigned int i = 0; i < G_N_ELEMENTS (mode_entries); i++) {
 			toolbar_action_mode_entry_register(window->viking_vtb, &mode_entries[i]);
 		}
@@ -1366,7 +1367,7 @@ void Window::pan_release(QMouseEvent * ev)
 			/* Give chance for a double click to occur. Viking used +50 instead of *1.1. */
 			interval *= 1.1;
 
-#if 0
+#ifdef K_TODO
 			g_timeout_add(interval, (GSourceFunc) window_pan_timeout, this);
 #endif
 			do_draw = false;
@@ -1785,7 +1786,7 @@ void Window::zoom_cb(void)
 		return;
 	}
 
-#if 0
+#ifdef K_TODO
 	unsigned int what = 128;
 
 	if (!strcmp(gtk_action_get_name(a), "ZoomIn")) {
@@ -3125,7 +3126,7 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 
 static int zoom_popup_handler(GtkWidget * widget)
 {
-#if 0
+#ifdef K_TODO
 	if (!widget) {
 		return false;
 	}
@@ -3825,7 +3826,7 @@ void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, 
 
 
 
-#if 0   /* Remnants of window_gtk.cpp */
+#ifdef K_TODO   /* Remnants of window_gtk.cpp */
 
 
 

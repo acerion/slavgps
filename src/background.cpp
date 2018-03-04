@@ -278,7 +278,7 @@ static ParameterSpecification prefs_mapnik[] = {
  */
 void SlavGPS::a_background_init()
 {
-#if 0
+#ifdef K_MAPNIK
 #ifdef HAVE_LIBMAPNIK
 	/* Default to 1 thread due to potential crashing issues. */
 	Preferences::register_parameter(prefs_mapnik[0], SGVariant((int32_t) 1, prefs_mapnik[0].type_id));
@@ -311,12 +311,15 @@ void SlavGPS::a_background_post_init()
 	}
 
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
-#if 0
+
+#ifdef K_MAPNIK
 #ifdef HAVE_LIBMAPNIK
 	unsigned int mapnik_threads = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".background_max_threads_local_mapnik").u;
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif
+#endif
 
+#ifdef K_TODO
 	/* Don't destroy win. */
 	QObject::connect(bgwindow, SIGNAL("delete-event"), NULL, SLOT (gtk_widget_hide_on_delete));
 #endif
@@ -346,7 +349,7 @@ void SlavGPS::a_background_uninit()
 #ifdef HAVE_LIBMAPNIK
 	g_thread_pool_free(thread_pool_local_mapnik, true, false);
 #endif
-#if 0
+#ifdef K_TODO
 	gtk_list_store_clear(bgstore);
 	g_object_unref(bgstore);
 #endif

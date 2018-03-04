@@ -978,7 +978,7 @@ static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double ysh
 
 
 #ifdef HAVE_SQLITE3_H
-#if 0
+#ifdef K_TODO
 static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **col_names)
 {
 	fprintf(stderr, "WARNING: Found %d columns\n", cols);

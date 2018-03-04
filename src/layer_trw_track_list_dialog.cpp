@@ -220,7 +220,8 @@ void TrackListDialog::add_menu_items(QMenu & menu)
 {
 	QAction * qa = NULL;
 
-#if 0   /* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
+#ifdef K_TODO
+	/* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
 	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("&Select"));
 	/* The callback worked by exposing selected item in tree view. */
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_select_cb()));
@@ -282,7 +283,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	this->selected_track = trk;
 
 	QMenu menu(this);
-#if 0
+#ifdef K_TODO
 	/* When multiple rows are selected, the number of applicable operation is lower. */
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
 	if (gtk_tree_selection_count_selected_rows (selection) != 1) {

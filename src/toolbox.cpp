@@ -115,7 +115,7 @@ void Toolbox::activate_tool(QAction * qa)
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
 	Layer * layer = this->window->items_tree->get_selected_layer();
-#if 0
+#ifdef K_TODO
 	if (!layer) {
 		return;
 	}
@@ -186,7 +186,7 @@ void Toolbox::activate_tool(const QString & tool_id)
 
 	qDebug() << "II: Toolbox: activating tool" << tool_id;
 	Layer * layer = this->window->items_tree->get_selected_layer();
-#if 0
+#ifdef K_TODO
 	if (!layer) {
 		return;
 	}
@@ -483,7 +483,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 	qDebug() << "II: Toolbox: move received, passing to tool" << this->active_tool->get_description();
 
 	if (ToolStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
-#if 0
+#ifdef K_TODO
 		this->window->viewport->setFocus();
 #endif
 	}

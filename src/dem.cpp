@@ -612,7 +612,7 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 		dists[i] = a_coords_latlon_diff(pos, ll[i]);
 	}
 
-#if 0  /* debug */
+#if 0   /* Debug. */
 	for (int i = 0; i < 4; i++) {
 		qDebug() << "DD: DEM:" << i << ":" << ll[i].lat << ll[i].lon << dists[i] << elevs[i];
 	}
@@ -670,7 +670,8 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 	double t = 0.0;
 	double b = 0.0;
 
-#if 0 /* derived method by Franke & Nielson. Does not seem to work too well here */
+#ifdef K_TODO
+	/* Derived method by Franke & Nielson. Does not seem to work too well here. */
 	for (int i = 0; i < 4; i++) {
 		tmp = pow((1.0 * (max_dist - dists[i]) / max_dist * dists[i]), 2);
 		t += tmp * elevs[i];

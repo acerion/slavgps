@@ -294,7 +294,7 @@ int16_t DEMCache::get_elev_by_coord(const Coord * coord, DemInterpolation method
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 
 
 

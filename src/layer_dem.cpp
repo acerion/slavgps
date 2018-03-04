@@ -555,7 +555,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	  we have dem for but don't want to cover the map (or maybe
 	  we just need translucent DEM?).
 	*/
-#if 0
+#ifdef K_TODO
 	draw_loaded_dem_box(viewport);
 #endif
 
@@ -854,7 +854,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 void draw_loaded_dem_box(Viewport * viewport)
 {
-#if 0
+#ifdef K_TODO
 	/* For getting values of dem_northeast and dem_southwest see vik_dem_overlap(). */
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
@@ -879,7 +879,7 @@ void draw_loaded_dem_box(Viewport * viewport)
 	}
 
 	qDebug() << "II: Layer DEM: drawing loaded DEM box";
-#if 0
+#ifdef K_TODO
 	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 #endif
 #endif

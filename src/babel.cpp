@@ -169,7 +169,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 /**
  * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
  * @babel_args: A string containing gpsbabel command line filter options. No file types or names should

@@ -827,7 +827,8 @@ void LayerMapnik::draw(Viewport * viewport)
 		}
 	}
 
-#if 0 /* kamilTODO: this code would be overwritten in screen_pos_to_coord() */
+#ifdef K_TODO
+	/* kamilTODO: this code would be overwritten in screen_pos_to_coord() */
 	ul.mode = CoordMode::LATLON;
 	br.mode = CoordMode::LATLON;
 #endif

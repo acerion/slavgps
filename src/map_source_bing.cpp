@@ -78,7 +78,7 @@ using namespace SlavGPS;
 
 MapSourceBing::MapSourceBing()
 {
-#if 0
+#ifdef K_TODO
 	pspec = g_param_spec_string("api-key",
 				    "API key",
 				    "The API key to access Bing",

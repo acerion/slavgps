@@ -281,7 +281,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		this->timestamp_widget->timestamp_button->setEnabled(true);
 	} else {
 		this->set_dialog_title(track->name);
-#if 0
+#ifdef K_TODO
 		if (!this->timestamp_widget->timestamp_button->icon().isNull()) {
 			this->timestamp_widget->timestamp_button->setIcon(QIcon());
 		}

@@ -220,7 +220,7 @@ void PropertiesDialogWaypoint::clear_timestamp_cb(void)
 
 
 
-#if 0
+#ifdef K_OLD_IMPLEMENTATION
 
 
 /* Specify if a new waypoint or not. */

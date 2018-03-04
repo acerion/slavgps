@@ -592,7 +592,7 @@ Layer * LayersPanel::get_selected_layer()
 
 
 
-#if 0
+#ifdef K_TODO
 bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
 {
 	Layer * layer = this->get_selected_layer();

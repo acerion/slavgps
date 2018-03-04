@@ -206,7 +206,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 
 
 
-#if 0
+#ifdef K_TODO
 WebToolDatasource::WebToolDatasource()
 {
 	qDebug() << "II: Web Tool Datasource created";
