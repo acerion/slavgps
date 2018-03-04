@@ -312,7 +312,7 @@ namespace SlavGPS {
 		QString type;
 
 		TrackPoints trackpoints;
-		//bool visible = false;
+		/* bool visible = true; */ /* Inherited from TreeItem. */
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::None;
 		uint8_t max_number_dist_labels = 0;
 

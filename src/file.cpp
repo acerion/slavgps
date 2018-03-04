@@ -203,7 +203,7 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 
 
 
-static void write_layer_params_and_data(FILE * file, Layer const * layer)
+static void write_layer_params_and_data(FILE * file, const Layer * layer)
 {
 	fprintf(file, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
 	if (!layer->visible) {
@@ -211,10 +211,10 @@ static void write_layer_params_and_data(FILE * file, Layer const * layer)
 	}
 
 	SGVariant param_value;
-	for (auto iter = ((Layer * ) layer)->get_interface()->parameter_specifications.begin(); iter != ((Layer * ) layer)->get_interface()->parameter_specifications.end(); iter++) { /* TODO: get rid of cast. */
+	for (auto iter = layer->get_interface().parameter_specifications.begin(); iter != layer->get_interface().parameter_specifications.end(); iter++) {
 
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
-		param_value = ((Layer * ) layer)->get_param_value(iter->first, true); /* TODO: get rid of cast. */
+		param_value = layer->get_param_value(iter->first, true);
 		file_write_layer_param(file, iter->second->name, iter->second->type_id, param_value);
 	}
 
@@ -631,7 +631,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 		pop(&stack);
 	}
 
-	if (latlon.lat != 0.0 || latlon.lon != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
+	if (latlon.is_valid()) {
 		viewport->set_center_from_latlon(latlon, true);
 	}
 

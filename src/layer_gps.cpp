@@ -1831,8 +1831,8 @@ LayerGPS::LayerGPS()
 
 	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
 
-	this->gpsd_host = ""; //strdup("host"); TODO
-	this->gpsd_port = ""; //strdup("port"); TODO
+	this->gpsd_host = QObject::tr("host");
+	this->gpsd_port = QObject::tr("port");
 
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 

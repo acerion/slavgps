@@ -32,16 +32,17 @@
 #include "viewport_internal.h"
 #include "layer_coord.h"
 #include "util.h"
-
-
-
-/* FIXME: this constant is duplicated. */
-#define DEGREE_SYMBOL "\302\260"
+#include "measurements.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX ": Layer Coord:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -180,14 +181,18 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 
 void LayerCoord::draw(Viewport * viewport)
 {
-	/* TODO: are these conditions optimal? Shouldn't we use switch() or if/else instead? */
-
-	if (viewport->get_coord_mode() != CoordMode::UTM) {
+	const CoordMode mode = viewport->get_coord_mode();
+	switch (mode) {
+	case CoordMode::LATLON:
 		this->draw_latlon(viewport);
-	}
-	if (viewport->get_coord_mode() == CoordMode::UTM) {
+		break;
+	case CoordMode::UTM:
 		this->draw_utm(viewport);
-	}
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "unhandled viewport coord mode" << (int) mode;
+		break;
+	};
 
 	/* Not really necessary, but keeping for now. */
 	// viewport->sync();

@@ -203,7 +203,7 @@ static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 25
 static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
 static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
-static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. kamilTODO: verify the hex values. */
+static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. */
 static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) (int) GraphicMarker::FilledSquare); }
 static SGVariant sort_order_default(void)        { return SGVariant((int32_t) 0); }
 static SGVariant string_default(void)            { return SGVariant(""); }
@@ -1704,11 +1704,11 @@ bool LayerTRW::find_center(Coord * dest)
 	LatLonMinMax min_max;
 	this->find_maxmin(min_max);
 
-	if (min_max.max.lat == 0.0 && min_max.max.lon == 0.0 && min_max.min.lat == 0.0 && min_max.min.lon == 0.0) {
-		return false;
-	} else {
+	if (min_max.is_valid()) {
 		*dest = Coord(LatLonMinMax::get_average(min_max), this->coord_mode);
 		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -1734,11 +1734,11 @@ bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
 	LatLonMinMax min_max;
 	this->find_maxmin(min_max);
-	if (min_max.max.lat == 0.0 && min_max.max.lon == 0.0 && min_max.min.lat == 0.0 && min_max.min.lon == 0.0) {
-		return false;
-	} else {
+	if (min_max.is_valid()) {
 		viewport->show_latlons(min_max);
 		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -1928,7 +1928,6 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
-/* TODO: when this function is really called? */
 void LayerTRW::acquire_handler(DataSource * data_source)
 {
 	/* Override mode. */
@@ -2140,7 +2139,6 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 
 	Track * track = new Track(false);
 	track->set_defaults();
-	track->visible = true; /* TODO: verify if this is necessary. Tracks are visible by default. */
 
 	if (this->painter->track_drawing_mode == LayerTRWTrackDrawingMode::AllSameColor) {
 		/* Create track with the preferred color from the layer properties. */
@@ -2182,7 +2180,6 @@ Track * LayerTRW::new_route_create_common(const QString & new_name)
 {
 	Track * route = new Track(true);
 	route->set_defaults();
-	route->visible = true; /* TODO: verify if this is necessary. Routes are visible by default. */
 
 	/* By default make all routes red. */
 	route->has_color = true;
@@ -4501,7 +4498,7 @@ void LayerTRW::download_map_along_track_cb(void)
 static int highest_wp_number_name_to_number(const QString & name)
 {
 	if (name.size() == 3) {
-		int n = atoi(name.toUtf8().constData()); /* TODO: Use QString method. */
+		int n = name.toInt(); /* TODO: use locale-aware conversion? */
 		if (n < 100 && name[0] != '0') {
 			return -1;
 		}

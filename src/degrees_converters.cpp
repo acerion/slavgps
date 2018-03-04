@@ -31,11 +31,7 @@
 #include <glib.h>
 
 #include "degrees_converters.h"
-
-
-
-
-#define DEGREE_SYMBOL "\302\260"
+#include "measurements.h"
 
 
 

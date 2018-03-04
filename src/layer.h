@@ -98,7 +98,7 @@ namespace SlavGPS {
 		void emit_layer_changed(void);
 		void emit_layer_changed_although_invisible(void);
 
-		LayerInterface * get_interface(void);
+		const LayerInterface & get_interface(void) const;
 		static LayerInterface * get_interface(LayerType layer_type);
 		void configure_interface(LayerInterface * intf, ParameterSpecification * param_specs);
 		static void preconfigure_interfaces(void);

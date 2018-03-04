@@ -144,7 +144,6 @@ void TrackPropertiesDialog::create_properties_page(void)
 	this->properties_form->addRow(tr("Type:"), this->w_type);
 
 
-	/* TODO: use this->trk->color. */
        	this->w_color = new SGColorButton(this->trk->color, NULL);
 	this->properties_form->addRow(tr("Color:"), this->w_color);
 

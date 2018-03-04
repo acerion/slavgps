@@ -1107,7 +1107,7 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, 
 	int label_height = 50;
 	this->wp_label_fg_pen = QPen(this->wp_label_fg_color);
 
-	if (/* this->highlight */ do_highlight) {
+	if (do_highlight) {
 
 		/* Draw waypoint's label with highlight background color. */
 
@@ -1115,7 +1115,7 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, 
 		QRectF bounding_rect(label_x + 3, label_y - 3, 300, -30);
 		this->viewport->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
 					  this->wp_label_fg_pen,
-					  QColor("pink"), /* TODO: this->viewport->get_highlight_pen().color() */
+					  this->viewport->get_highlight_pen().color(),
 					  bounding_rect,
 					  Qt::AlignBottom | Qt::AlignLeft,
 					  wp->name,

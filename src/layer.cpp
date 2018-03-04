@@ -172,9 +172,9 @@ LayerInterface * Layer::get_interface(LayerType layer_type)
 
 
 
-LayerInterface * Layer::get_interface(void)
+const LayerInterface & Layer::get_interface(void) const
 {
-	return this->interface;
+	return *this->interface;
 }
 
 
@@ -339,8 +339,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 			return NULL;
 		}
 
-		/* We translate the name here in order to avoid translating name set by user.
-		   TODO: translate the string. */
+		/* Layer::get_type_ui_label() returns localized string. */
 		layer->set_name(Layer::get_type_ui_label(layer_type));
 	}
 
@@ -412,7 +411,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 
 	/* Now the actual parameters. */
 	SGVariant param_value;
-	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
+	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Marshalling parameter" << iter->second->name;
 
 		param_value = this->get_param_value(iter->first, false);
@@ -476,7 +475,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 	free(s);
 
 	SGVariant param_value;
-	for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
+	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type_id) {
 		case SGVariantType::String:
@@ -551,7 +550,7 @@ LayerMenuItem Layer::get_menu_items_selection(void)
 	LayerMenuItem rv = this->get_menu_selection();
 	if (rv == LayerMenuItem::NONE) {
 		/* Perhaps this line could go to base class. */
-		return this->get_interface()->menu_items_selection;
+		return this->get_interface().menu_items_selection;
 	} else {
 		return rv;
 	}
@@ -562,7 +561,7 @@ LayerMenuItem Layer::get_menu_items_selection(void)
 
 QIcon Layer::get_icon(void)
 {
-	return this->get_interface()->action_icon;
+	return this->get_interface().action_icon;
 }
 
 
@@ -590,7 +589,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 		bool must_redraw = false;
 
-		for (auto iter = this->get_interface()->parameter_specifications.begin(); iter != this->get_interface()->parameter_specifications.end(); iter++) {
+		for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
@@ -608,16 +607,16 @@ bool Layer::properties_dialog(Viewport * viewport)
 #ifdef K_OLD_IMPLEMENTATION
 	int prop = a_uibuilder_properties_factory(QObject::tr("Layer Properties"),
 						  viewport->get_window(),
-						  layer->get_interface()->parameters_c,
-						  layer->get_interface()->parameters.size(),
-						  layer->get_interface()->parameter_groups,
-						  layer->get_interface()->parameter_groups_count,
+						  layer->get_interface().parameters_c,
+						  layer->get_interface().parameters.size(),
+						  layer->get_interface().parameter_groups,
+						  layer->get_interface().parameter_groups_count,
 						  (bool (*)(void*, uint16_t, SGVariant, void*, bool)) layer->set_param,
 						  layer,
 						  viewport,
 						  (SGVariant (*)(void*, uint16_t, bool)) layer->get_param,
 						  layer,
-						  layer->get_interface()->change_param)
+						  layer->get_interface().change_param)
 
 	switch (prop) {
 	case 0:

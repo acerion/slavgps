@@ -48,6 +48,9 @@ namespace SlavGPS {
 #define SG_PRECISION_GRADIENT   2
 
 
+#define DEGREE_SYMBOL "\302\260"
+
+
 
 
 	class Measurements {

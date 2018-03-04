@@ -97,7 +97,7 @@ namespace SlavGPS {
 		LayerTRW * get_parent_layer_trw() const;
 
 		Coord coord;
-		//bool visible = true;
+		/* bool visible = true; */ /* Inherited from TreeItem. */
 		bool has_timestamp = false;
 		time_t timestamp = 0;
 		double altitude = VIK_DEFAULT_ALTITUDE;

@@ -46,6 +46,7 @@
 #include "clipboard.h"
 #include "dialog.h"
 #include "ui_util.h"
+#include "measurements.h"
 
 #ifdef K_INCLUDES
 #include "globals.h"
@@ -193,7 +194,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 		case 'C': {
 			int heading = std::isnan(tp->course) ? 0 : (int)round(tp->course);
-			values[i] = QObject::tr("%1Course %2\302\260").arg(separator).arg(heading, 3, 10, (QChar) '0'); /* TODO: what does \302\260 mean? */
+			values[i] = QObject::tr("%1Course %2%3").arg(separator).arg(heading, 3, 10, (QChar) '0').arg(DEGREE_SYMBOL);
 			break;
 		}
 
@@ -668,7 +669,6 @@ static char * time_string_adjusted(time_t * time, int offset_s)
 
 static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
 {
-	// QDateTime utc = QDateTime::fromSecsSinceEpoch(*time, Qt::OffsetFromUTC, 0);
 	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	QDateTime local = utc.toTimeZone(tz);
 
@@ -749,7 +749,6 @@ QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord
 	const SGTimeReference ref = Preferences::get_time_ref_frame();
 	switch (ref) {
 	case SGTimeReference::UTC:
-		// time_string = QDateTime::fromSecsSinceEpoch(time, QTimeZone::utc()).toString(format);
 		time_string = QDateTime::fromTime_t(time, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		break;
 	case SGTimeReference::World:
@@ -770,7 +769,6 @@ QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord
 		}
 		break;
 	case SGTimeReference::Locale:
-		// time_string = QDateTime::fromSecsSinceEpoch(time, QTimeZone::systemTimeZone()).toString(format);
 		time_string = QDateTime::fromTime_t(time, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		break;
 	default:

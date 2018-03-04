@@ -229,7 +229,7 @@ void PropertiesDialog::fill(Layer * layer)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from layer" << layer->get_name();
 
-	for (auto iter = layer->get_interface()->parameter_specifications.begin(); iter != layer->get_interface()->parameter_specifications.end(); iter++) {
+	for (auto iter = layer->get_interface().parameter_specifications.begin(); iter != layer->get_interface().parameter_specifications.end(); iter++) {
 
 		const ParameterSpecification & param_spec = *(iter->second);
 
@@ -241,8 +241,8 @@ void PropertiesDialog::fill(Layer * layer)
 
 			/* Add new tab, but only for non-hidden parameters */
 
-			QString page_label = layer->get_interface()->parameter_groups
-				? layer->get_interface()->parameter_groups[group_id]
+			QString page_label = layer->get_interface().parameter_groups
+				? layer->get_interface().parameter_groups[group_id]
 				: tr("Properties");
 			form = this->insert_tab(page_label);
 

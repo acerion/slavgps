@@ -68,8 +68,12 @@ namespace SlavGPS {
 	public:
 		LatLon(double new_lat = 0, double new_lon = 0) : lat(new_lat), lon(new_lon) {};
 
-		double lat;
-		double lon;
+		/* TODO: initialize these values with 0.0 or with NaN? */
+		double lat = 0.0;
+		double lon = 0.0;
+
+		bool is_valid(void) const { return this->lat != 0.0 && this->lon != 0.0; };
+		void invalidate(void) { this->lat = 0.0; this->lon = 0.0; };
 
 		/* Convert value to string with DegreeFormat::RAW format. */
 		static QString lat_to_string_raw(const LatLon & lat_lon);
@@ -105,6 +109,9 @@ namespace SlavGPS {
 		LatLonMinMax(const LatLonBBox & bbox);
 
 		static LatLon get_average(const LatLonMinMax & min_max) { return LatLon::get_average(min_max.max, min_max.min); };
+
+		bool is_valid(void) const { return this->min.is_valid() && this->max.is_valid(); };
+		void invalidate(void) { this->min.invalidate(); this->max.invalidate(); };
 
 		LatLon min;
 		LatLon max;

@@ -155,8 +155,8 @@ typedef struct {
 
 class SlavGPS::GPXMetaData {
 public:
-	GPXMetaData();
-	~GPXMetaData();
+	GPXMetaData() {};
+	~GPXMetaData() {};
 
 	unsigned int id = 0;
 	QString name;
@@ -170,22 +170,6 @@ public:
 	/* user made up tags - not being used yet - would be nice to sort/select on these but display will get complicated. */
 	// GList *tag_list;
 };
-
-
-
-
-GPXMetaData::GPXMetaData()
-{
-	this->ll.lat = 0.0; /* TODO: don't we have this already in constructor of LatLon? */
-	this->ll.lon = 0.0;
-}
-
-
-
-
-GPXMetaData::~GPXMetaData()
-{
-}
 
 
 

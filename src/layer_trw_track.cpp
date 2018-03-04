@@ -264,7 +264,7 @@ Track::Track(bool is_route)
 		trk_uid_mutex.unlock();
 	}
 
-	memset(&bbox, 0, sizeof (LatLonBBox));
+	memset(&bbox, 0, sizeof (LatLonBBox)); /* TODO: why use memset? */
 
 	ref_count = 1;
 
