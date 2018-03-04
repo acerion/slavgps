@@ -522,7 +522,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 {
 	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_click() called";
 
-	const unsigned int modifiers = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier);
+	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
 	const ScreenPos center_pos(this->viewport->get_width() / 2, this->viewport->get_height() / 2);
 	const ScreenPos event_pos(event->x(), event->y());
@@ -532,109 +532,56 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 	this->ztr_is_active = false;
 
-	if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
+	const ZoomOperation zoom_operation = mouse_event_to_zoom_operation(event);
 
+	switch (modifiers) {
+	case (Qt::ControlModifier | Qt::ShiftModifier):
 		/* Location at the center of viewport will be
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
+		redraw_viewport = ViewportZoom::keep_coordinate_in_center(zoom_operation, this->viewport, this->window, center_pos);
+		break;
 
-		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_from_screen_pos(center_pos);
-			this->viewport->zoom_in();
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-
-		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_from_screen_pos(center_pos);
-			this->viewport->zoom_out();
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-		} else {
-			/* Ignore other buttons. */
-		}
-	} else if (modifiers == Qt::ControlModifier) {
-
+	case Qt::ControlModifier:
 		/* Clicked location will be put at the center of
 		   viewport (coordinate of a place under cursor before
 		   zoom will be placed at the center of viewport after
 		   zoom). */
+		redraw_viewport = ViewportZoom::move_coordinate_to_center(zoom_operation, this->viewport, this->window, event_pos);
+		break;
 
-		if (event->button() == Qt::LeftButton) {
-			this->viewport->set_center_from_screen_pos(event_pos);
-			this->viewport->zoom_in();
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-
-		} else if (event->button() == Qt::RightButton) {
-			this->viewport->set_center_from_screen_pos(event_pos);
-			this->viewport->zoom_out();
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-		} else {
-			/* Ignore other buttons. */
-		}
-	} else if (modifiers == Qt::ShiftModifier) {
-
+	case Qt::ShiftModifier:
 		/* Beginning of "zoom in to rectangle" operation.
 		   Notice that there is no "zoom out to rectangle"
 		   operation. Get start position of zoom bounds. */
 
-		if (event->button() == Qt::LeftButton) {
+		switch (zoom_operation) {
+		case ZoomOperation::In:
 			this->ztr_is_active = true;
 			this->ztr_start_x = event_pos.x;
 			this->ztr_start_y = event_pos.y;
 			this->ztr_orig_viewport_pixmap = *this->viewport->get_pixmap();
-		}
+			break;
+		default:
+			break;
+		};
 
 		/* No zoom action (yet), so no redrawing of viewport. */
+		break;
 
-	} else {
+	case Qt::NoModifier:
 		/* Clicked coordinate will be put after zoom at the same
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
+		redraw_viewport = ViewportZoom::keep_coordinate_under_cursor(zoom_operation, this->viewport, this->window, event_pos, center_pos);
+		break;
 
-		switch (event->button()) {
-		case Qt::LeftButton: {
-
-			/* TODO: see also code in Viewport::wheelEvent() */
-
-			/* Here we use event position before zooming in. */
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
-
-			this->viewport->zoom_in();
-
-			/* Position of event calculated in modified (zoomed in) viewport. */
-			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
-
-			this->viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-			break;
-		}
-		case Qt::RightButton: {
-
-			/* TODO: see also code in Viewport::wheelEvent() */
-
-			/* Here we use event position before zooming out. */
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
-
-			this->viewport->zoom_out();
-
-			/* Position of event calculated in modified (zoomed out) viewport. */
-			const ScreenPos orig_pos = this->viewport->coord_to_screen_pos(cursor_coord);
-
-			this->viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
-			this->window->contents_modified = true;
-			redraw_viewport = true;
-			break;
-		}
-		default:
-			/* Ignore other buttons. */
-			break;
-		}
-	}
+	default:
+		/* Other modifier. Just ignore. */
+		break;
+	};
 
 	if (redraw_viewport) {
 		this->window->redraw_tree_items_wrapper();

@@ -1940,45 +1940,49 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 	const int h = this->get_height();
 	const bool scroll_up = angle.y() > 0;
 
-	if (modifiers == Qt::ControlModifier) {
+
+	switch (modifiers) {
+	case Qt::ControlModifier:
 		/* Control == pan up & down. */
 		if (scroll_up) {
 			this->set_center_from_screen_pos(w / 2, h / 3);
 		} else {
 			this->set_center_from_screen_pos(w / 2, h * 2 / 3);
 		}
-	} else if (modifiers == Qt::ShiftModifier) {
+		break;
+
+	case Qt::ShiftModifier:
 		/* Shift == pan left & right. */
 		if (scroll_up) {
 			this->set_center_from_screen_pos(w / 3, h / 2);
 		} else {
 			this->set_center_from_screen_pos(w * 2 / 3, h / 2);
 		}
-	} else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
+		break;
+
+	case (Qt::ControlModifier | Qt::ShiftModifier):
 		/* This zoom is on the center position. */
 		if (scroll_up) {
 			this->zoom_in();
 		} else {
 			this->zoom_out();
 		}
-	} else {
-		/* TODO: see also code in GenericToolZoom::handle_mouse_click() */
+		break;
+	case Qt::NoModifier: {
+		const ScreenPos center_pos(this->get_width() / 2, this->get_height() / 2);
+		const ScreenPos event_pos(ev->x(), ev->y());
+		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
 
-		/* Make sure mouse is still over the same point on the map when we zoom. */
-		int center_x = w / 2;
-		int center_y = h / 2;
-		const Coord orig_coord = this->screen_pos_to_coord(ev->x(), ev->y());
-		const ScreenPos orig_pos = this->coord_to_screen_pos(orig_coord);
-
-		if (scroll_up) {
-			this->zoom_in();
-		} else {
-			this->zoom_out();
-		}
-
-		this->set_center_from_screen_pos(center_x + (orig_pos.x - ev->x()),
-						 center_y + (orig_pos.y - ev->y()));
+		/* Clicked coordinate will be put after zoom at the same
+		   position in viewport as before zoom.  Before zoom
+		   the coordinate was under cursor, and after zoom it
+		   will be still under cursor. */
+		ViewportZoom::keep_coordinate_under_cursor(zoom_operation, this, this->window, event_pos, center_pos);
 	}
+	default:
+		/* Other modifier. Just ignore. */
+		break;
+	};
 
 	qDebug() << "II: Viewport: wheel event, call Window::redraw_tree_items_wrapper_cb()" << __FUNCTION__ << __LINE__;
 	this->window->redraw_tree_items_wrapper_cb();

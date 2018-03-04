@@ -3,7 +3,8 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2008, Hein Ragas <viking@ragas.nl>
- * Copyright (C) 2010-2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2010-2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2005-2006, Alex Foobarian <foobarian@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +32,13 @@
 //#include <QInputDialog>
 #include <QObject>
 #include <QDebug>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
+#include "window.h"
 #include "viewport.h"
 #include "viewport_zoom.h"
+#include "viewport_internal.h"
 
 
 
@@ -132,4 +137,149 @@ void ViewportZoomDialog::spin_changed_cb(double new_value)
 			this->xspin.setValue(new_value);
 		}
 	}
+}
+
+
+
+ZoomOperation SlavGPS::mouse_event_to_zoom_operation(const QMouseEvent * event)
+{
+	ZoomOperation result;
+
+	switch (event->button()) {
+	case Qt::LeftButton:
+		result = ZoomOperation::In;
+		break;
+	case Qt::RightButton:
+		result = ZoomOperation::Out;
+		break;
+	default:
+		result = ZoomOperation::Noop;
+		break;
+	};
+
+	return result;
+}
+
+
+
+
+ZoomOperation SlavGPS::wheel_event_to_zoom_operation(const QWheelEvent * event)
+{
+	ZoomOperation result;
+
+	const QPoint angle = event->angleDelta();
+	const bool scroll_up = angle.y() > 0;
+
+	if (angle.y() > 0) {
+		result = ZoomOperation::In;
+	} else if (angle.y() < 0) {
+		result = ZoomOperation::Out;
+	} else {
+		result = ZoomOperation::Noop;
+	}
+
+	return result;
+}
+
+
+
+
+bool ViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos)
+{
+	bool redraw_viewport = false;
+
+	switch (zoom_operation) {
+	case ZoomOperation::In:
+		viewport->set_center_from_screen_pos(event_pos);
+		viewport->zoom_in();
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	case ZoomOperation::Out:
+		viewport->set_center_from_screen_pos(event_pos);
+		viewport->zoom_out();
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	default:
+		break; /* Ignore. */
+	};
+
+	return redraw_viewport;
+}
+
+
+
+
+bool ViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & center_pos)
+{
+	bool redraw_viewport = false;
+
+	switch (zoom_operation) {
+	case ZoomOperation::In:
+		viewport->set_center_from_screen_pos(center_pos);
+		viewport->zoom_in();
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	case ZoomOperation::Out:
+		viewport->set_center_from_screen_pos(center_pos);
+		viewport->zoom_out();
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	default:
+		break; /* Ignore. */
+	};
+
+	return redraw_viewport;
+}
+
+
+
+
+bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos)
+{
+	bool redraw_viewport = false;
+
+	switch (zoom_operation) {
+	case ZoomOperation::In: {
+
+		/* TODO: see also code in Viewport::wheelEvent() */
+
+		/* Here we use event position before zooming in. */
+		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);
+
+		viewport->zoom_in();
+
+		/* Position of event calculated in modified (zoomed in) viewport. */
+		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
+
+		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	}
+	case ZoomOperation::Out: {
+
+		/* TODO: see also code in Viewport::wheelEvent() */
+
+		/* Here we use event position before zooming out. */
+		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);
+
+		viewport->zoom_out();
+
+		/* Position of event calculated in modified (zoomed out) viewport. */
+		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
+
+		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		window->contents_modified = true;
+		redraw_viewport = true;
+		break;
+	}
+	default:
+		break;
+	}
+
+	return redraw_viewport;
 }
