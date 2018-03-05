@@ -952,7 +952,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 	const bool allowed = hl_is_allowed;
 	const bool required = allowed
 		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare items */
+		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
 
 
 #ifdef K_TODO

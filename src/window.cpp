@@ -1873,7 +1873,7 @@ bool Window::clear_highlight()
 {
 	bool need_redraw = false;
 	if (g_tree->selected_tree_item) {
-		if (g_tree->selected_tree_item->tree_item_type == TreeItemType::LAYER) { /* TODO: use UID to compare tree items. */
+		if (g_tree->selected_tree_item->tree_item_type == TreeItemType::LAYER) {
 			/* FIXME: we assume here that only LayerTRW can be a selected layer. */
 			need_redraw |= ((LayerTRW *) g_tree->selected_tree_item)->clear_highlight();
 		}

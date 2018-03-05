@@ -62,7 +62,7 @@ QString SlavGPS::get_viking_dir_no_create(void)
 {
 	/* TODO: use g_get_user_config_dir? */
 
-	QString home = QString::fromLocal8Bit(("HOME"));
+	QString home = QString::fromLocal8Bit("HOME");
 	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
 		home = QString(g_get_home_dir());
 	}

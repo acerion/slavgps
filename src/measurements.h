@@ -72,6 +72,8 @@ namespace SlavGPS {
 		static QString get_course_string(double value, int precision = SG_PRECISION_COURSE);
 
 		static QString get_file_size_string(size_t file_size);
+
+		static QString get_duration_string(time_t duration);
 	};
 
 

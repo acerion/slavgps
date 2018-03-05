@@ -40,7 +40,7 @@ namespace SlavGPS {
 	class DataSourceFile : public DataSourceBabel {
 	public:
 		DataSourceFile();
-		~DataSourceFile();
+		~DataSourceFile() {};
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 	};

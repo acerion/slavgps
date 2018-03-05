@@ -44,6 +44,11 @@ static QUrl g_last_directory_url;
 
 
 
+#define DIALOG_MIN_WIDTH 400
+
+
+
+
 DataSourceGeoJSON::DataSourceGeoJSON()
 {
 	this->window_title = QObject::tr("Acquire from GeoJSON");
@@ -87,7 +92,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
 	this->file_entry->file_selector->setNameFilters(filters);
 	this->file_entry->file_selector->selectNameFilter(filter1); /* Default to geojson. */
 
-	this->setMinimumWidth(400); /* TODO: perhaps this value should be #defined somewhere. */
+	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 
 	this->grid->addWidget(this->file_entry, 0, 0);
 

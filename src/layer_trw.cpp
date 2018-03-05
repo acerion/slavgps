@@ -1262,9 +1262,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
 	   This may seem slightly inefficient to test each time for every layer
 	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
-	if (viewport->get_highlight_usage()
-	    && g_tree->selected_tree_item && *g_tree->selected_tree_item == this) { /* TODO: use UID to compare tree items. */
-
+	if (viewport->get_highlight_usage() && TreeItem::the_same_object(g_tree->selected_tree_item, this)) {
 		return;
 	}
 #endif
@@ -1288,7 +1286,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	const bool allowed = hl_is_allowed;
 	const bool required = allowed
 		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
+		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
 
 	if (this->tracks->visible) {
 		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << allowed << required;
@@ -4635,8 +4633,6 @@ LayerTRW::LayerTRW() : Layer()
 	this->waypoints->owning_layer = this;
 
 	this->painter = new LayerTRWPainter(this);
-
-	memset(&coord_mode, 0, sizeof (CoordMode)); /* TODO: change it into some assignment? */
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));

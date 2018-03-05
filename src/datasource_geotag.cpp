@@ -52,6 +52,11 @@ static QUrl g_last_directory_url;
 
 
 
+#define DIALOG_MIN_WIDTH 400
+
+
+
+
 #ifdef VIK_CONFIG_GEOTAG
 // DataSourceInterface datasource_geotag_interface;
 #endif
@@ -103,7 +108,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog()
 	this->file_entry->file_selector->setNameFilters(filter);
 	this->file_entry->file_selector->selectNameFilter(filter1); /* Default to jpeg. */
 
-	this->setMinimumWidth(400); /* TODO: perhaps this value should be #defined somewhere. */
+	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 
 	/* TODO: Comment from Viking:
 	   Could add code to setup a default symbol (see dialog.c for symbol usage).

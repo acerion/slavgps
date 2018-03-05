@@ -245,8 +245,6 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 	switch (zoom_operation) {
 	case ZoomOperation::In: {
 
-		/* TODO: see also code in Viewport::wheelEvent() */
-
 		/* Here we use event position before zooming in. */
 		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);
 
@@ -261,8 +259,6 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 		break;
 	}
 	case ZoomOperation::Out: {
-
-		/* TODO: see also code in Viewport::wheelEvent() */
 
 		/* Here we use event position before zooming out. */
 		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);

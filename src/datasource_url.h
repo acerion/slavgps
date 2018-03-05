@@ -44,7 +44,7 @@ namespace SlavGPS {
 	class DataSourceURL : public DataSourceBabel {
 	public:
 		DataSourceURL();
-		~DataSourceURL();
+		~DataSourceURL() {};
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 	};

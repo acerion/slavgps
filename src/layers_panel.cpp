@@ -529,7 +529,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 
 		/* A layer can be owned only by Aggregate layer.
-		     TODO: what about TRW layers under GPS layer? */
+		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifdef K_TODO

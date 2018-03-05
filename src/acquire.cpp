@@ -604,7 +604,9 @@ void Acquire::uninit(void)
 {
 	delete g_acquiring;
 
-	/* TODO: clean up g_bfilters array. */
+	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
+		delete *iter;
+	}
 }
 
 

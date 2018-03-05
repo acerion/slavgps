@@ -109,6 +109,12 @@ namespace SlavGPS {
 		   Return one of these. */
 		Layer * to_layer(void) const;
 
+		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
+		   Return true if this condition is true.
+		   Return false otherwise.
+		   Return false if any of the pointers is NULL. */
+		static bool the_same_object(const TreeItem * item1, const TreeItem * item2);
+
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
 		TreeIndex index;             /* Set in TreeView::add_tree_item(). */

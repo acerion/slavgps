@@ -46,7 +46,7 @@ namespace SlavGPS {
 	class DataSourceGeoCache : public DataSourceBabel {
 	public:
 		DataSourceGeoCache();
-		~DataSourceGeoCache();
+		~DataSourceGeoCache() {};
 
 		static void init(void);
 		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */

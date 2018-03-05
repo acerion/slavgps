@@ -38,7 +38,7 @@ namespace SlavGPS {
 	class DataSourceWikipedia : public DataSource {
 	public:
 		DataSourceWikipedia();
-		~DataSourceWikipedia();
+		~DataSourceWikipedia() {};
 
 		/* This data source does not provide configuration dialog. */
 		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);

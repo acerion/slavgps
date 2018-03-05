@@ -55,7 +55,7 @@ namespace SlavGPS {
 	class DataSourceOSMMyTraces : public DataSource {
 	public:
 		DataSourceOSMMyTraces();
-		~DataSourceOSMMyTraces();
+		~DataSourceOSMMyTraces() {};
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);

@@ -239,3 +239,14 @@ QString Measurements::get_file_size_string(size_t file_size)
 
 	return QObject::tr("%1%2").arg(size, 0, 'f', show_fractional * 2).arg(unit);
 }
+
+
+
+
+QString Measurements::get_duration_string(time_t duration)
+{
+	const int hours = (int) (duration / 3600);
+	const int minutes = (int) (((int) round(duration / 60.0)) % 60);
+
+	return QObject::tr("%1 hrs %2 mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');
+}

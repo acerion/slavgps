@@ -341,17 +341,10 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	max_speed = convert_speed_mps_to(max_speed, speed_units);
 
 	double max_alt = 0.0;
-	/* TODO - make this a function to get min / max values? */
 	TrackData altitudes = trk->make_track_data_altitude_over_distance(500);
 	if (altitudes.valid) {
-		max_alt = -1000;
-		for (unsigned int i = 0; i < 500; i++) {
-			if (altitudes.y[i] != VIK_DEFAULT_ALTITUDE) {
-				if (altitudes.y[i] > max_alt) {
-					max_alt = altitudes.y[i];
-				}
-			}
-		}
+		altitudes.calculate_min_max();
+		max_alt = altitudes.y_max;
 	}
 
 	switch (height_units) {

@@ -46,7 +46,7 @@ namespace SlavGPS {
 	class DataSourceRouting : public DataSourceBabel {
 	public:
 		DataSourceRouting();
-		~DataSourceRouting();
+		~DataSourceRouting() {};
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 	};

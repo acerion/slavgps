@@ -54,6 +54,7 @@
 #include "layers_panel.h"
 #include "tree_view_internal.h"
 #include "routing.h"
+#include "measurements.h"
 
 
 
@@ -264,9 +265,7 @@ Track::Track(bool is_route)
 		trk_uid_mutex.unlock();
 	}
 
-	memset(&bbox, 0, sizeof (LatLonBBox)); /* TODO: why use memset? */
-
-	ref_count = 1;
+	this->ref_count = 1;
 
 	this->has_properties_dialog = true;
 }
@@ -3177,12 +3176,9 @@ QString Track::get_tooltip(void)
 	if (!this->empty() && this->get_tp_first()->has_timestamp) {
 		/* %x     The preferred date representation for the current locale without the time. */
 		strftime(timestamp_string, sizeof(timestamp_string), "%x: ", gmtime(&(this->get_tp_first()->timestamp)));
-		time_t dur = this->get_duration(true);
-		if (dur > 0) {
-			/* TODO: perhaps we could have a wrapper for code that creates duration string. */
-			const int duration1 = (int) (dur/3600);
-			const int duration2 = (int) (((int) round(dur / 60.0)) % 60);
-			duration_string = QObject::tr("- %1:%2 hrs:mins").arg(duration1).arg(duration2, 2, 10, (QChar) '0');
+		time_t duration = this->get_duration(true);
+		if (duration > 0) {
+			duration_string = QObject::tr("- %1").arg(Measurements::get_duration_string(duration));
 		}
 	}
 	/* Get length and consider the appropriate distance units. */
@@ -3463,7 +3459,7 @@ void Track::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_r
 	const bool allowed = hl_is_allowed;
 	const bool required = allowed
 		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || (g_tree->selected_tree_item && g_tree->selected_tree_item == this)); /* This item discovers that it is selected and decides to be highlighted. */ /* TODO: use UID to compare tree items. */
+		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
 
 	parent_layer->painter->draw_track(this, viewport, allowed && required);
 }

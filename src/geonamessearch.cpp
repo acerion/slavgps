@@ -301,7 +301,6 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	QString east = SGUtils::double_to_c(min_max.max.lon);
 	QString west = SGUtils::double_to_c(min_max.min.lon);
 
-	/* Encode doubles in a C locale; kamilTODO: see LatLonBBox::to_strings(). */
 	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
 	DownloadHandle dl_handle;

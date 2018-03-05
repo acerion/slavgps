@@ -45,7 +45,7 @@ namespace SlavGPS {
 	class DataSourceOSMTraces : public DataSourceBabel {
 	public:
 		DataSourceOSMTraces();
-		~DataSourceOSMTraces();
+		~DataSourceOSMTraces() {};
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 	};

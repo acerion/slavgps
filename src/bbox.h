@@ -50,6 +50,7 @@ namespace SlavGPS {
 
 	class LatLonBBox  {
 	public:
+		/* TODO: what should be the initial value? 0.0 or NaN? */
 		double north = 0.0; /* max_lat */
 		double south = 0.0; /* min_lat */
 		double east = 0.0;  /* max_lon */

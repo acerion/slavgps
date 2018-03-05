@@ -100,7 +100,7 @@ namespace SlavGPS {
 	class DataSource {
 	public:
 		DataSource() {};
-		~DataSource() {};
+		virtual ~DataSource() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something) { return false; };
