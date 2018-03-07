@@ -25,11 +25,15 @@
  */
 
 
-#include <cmath>
+
+
 #include <cstdlib>
 #include <unistd.h>
 
 #include <glib.h>
+
+
+
 
 #include "window.h"
 #include "viewport_zoom.h"
@@ -69,6 +73,13 @@ using namespace SlavGPS;
 
 
 extern Tree * g_tree;
+
+
+
+
+bool vik_debug = false;
+bool vik_verbose = false;
+bool vik_version = false;
 
 
 
@@ -311,6 +322,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 
 
+
 double SlavGPS::convert_speed_mps_to(double speed, SpeedUnit speed_units)
 {
 	switch (speed_units) {
@@ -499,7 +511,6 @@ void SGUtils::set_auto_features_on_first_run(void)
 		LayerDefaults::save();
 	}
 }
-
 
 
 
@@ -784,12 +795,7 @@ QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord
 
 
 
-
-/**
- * Apply any startup values that have been specified from the command line.
- * Values are defaulted in such a manner not to be applied when they haven't been specified.
- */
-void SGUtils::command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id)
+void CommandLineOptions::apply(Window * window)
 {
 	if (!window) {
 		return;
@@ -797,23 +803,23 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 
 	Viewport * viewport = window->get_viewport();
 
-	if (latitude != 0.0 || longitude != 0.0) { /* TODO: is this condition correct? Isn't 0.0/0.0 a correct coordinate? */
-		viewport->set_center_from_latlon(LatLon(latitude, longitude), true);
+	if (this->latitude != NAN && this->longitude != NAN) {
+		viewport->set_center_from_latlon(LatLon(this->latitude, this->longitude), true);
 	}
 
-	if (zoom_osm_level >= 0) {
+	if (this->zoom_level_osm >= 0) {
 		/* Convert OSM zoom level into Viking zoom level. */
-		double mpp = exp((17-zoom_osm_level) * log(2));
+		double mpp = exp((17 - this->zoom_level_osm) * log(2));
 		if (mpp > 1.0) {
 			mpp = round(mpp);
 		}
 		viewport->set_zoom(mpp);
 	}
 
-	if (cmdline_type_id != MAP_TYPE_ID_INITIAL) {
+	if (this->map_type_id != MAP_TYPE_ID_INITIAL) {
 		/* Some value selected in command line. */
 
-		MapTypeID the_type_id = cmdline_type_id;
+		MapTypeID the_type_id = this->map_type_id;
 		if (the_type_id == MAP_TYPE_ID_DEFAULT) {
 			the_type_id = LayerMap::get_default_map_type();
 		}
@@ -844,6 +850,90 @@ void SGUtils::command_line(Window * window, double latitude, double longitude, i
 }
 
 
+
+
+bool CommandLineOptions::parse(QCoreApplication & app)
+{
+	QCommandLineParser parser;
+
+	const QCommandLineOption opt_debug(QStringList() << "d" << "debug", QObject::tr("Enable debug output"));
+	parser.addOption(opt_debug);
+
+	const QCommandLineOption opt_verbose(QStringList() << "V" << "verbose", QObject::tr("Enable verbose output"));
+	parser.addOption(opt_verbose);
+
+	const QCommandLineOption opt_version(QStringList() << "v" << "version", QObject::tr("Show program version"));
+	parser.addOption(opt_version);
+
+	const QCommandLineOption opt_latitude(QStringList() << "y" << "latitude", QObject::tr("Latitude in decimal degrees"), "latitude");
+	parser.addOption(opt_latitude);
+
+	const QCommandLineOption opt_longitude(QStringList() << "x" << "longitude", QObject::tr("Longitude in decimal degrees"), "longitude");
+	parser.addOption(opt_longitude);
+
+	const QCommandLineOption opt_zoom(QStringList() << "z" << "zoom", QObject::tr("Zoom Level (OSM). Value can be 0 - 22"), "zoom");
+	parser.addOption(opt_zoom);
+
+	const QCommandLineOption opt_map(QStringList() << "m" << "map", QObject::tr("Add a map layer by id value. Use 0 for the default map."), "map");
+	parser.addOption(opt_map);
+
+
+	parser.process(app);
+
+
+	this->debug = parser.isSet(opt_debug);
+	qDebug() << "DD" PREFIX << "debug is" << this->debug;
+	if (this->debug) {
+#ifdef K_TODO
+		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
+#endif
+	}
+
+
+	this->verbose = parser.isSet(opt_verbose);
+	qDebug() << "DD" PREFIX << "verbose is" << this->verbose;
+
+	this->version = parser.isSet(opt_version);
+	qDebug() << "DD" PREFIX << "version is" << this->version;
+
+	if (parser.isSet(opt_latitude) != parser.isSet(opt_longitude)) {
+		qDebug() << "EE" PREFIX << "you need to specify both latitude and longitude";
+		return false;
+	}
+
+	if (parser.isSet(opt_latitude)) {
+		QLocale locale; /* System's locale. */
+		bool ok = true;
+		this->latitude = locale.toDouble(parser.value(opt_latitude), &ok);
+		if (ok) {
+			this->longitude = locale.toDouble(parser.value(opt_longitude), &ok);
+		}
+
+		if (ok) {
+			qDebug() << "DD" PREFIX << "lat/lon is" << this->latitude << this->longitude;
+		} else {
+			this->latitude = NAN;
+			this->longitude = NAN;
+			qDebug() << "EE" PREFIX << "invalid lat/lon";
+			return false;
+		}
+	}
+
+	if (parser.isSet(opt_zoom)) {
+		this->zoom_level_osm = parser.value(opt_zoom).toInt();
+		qDebug() << "DD" PREFIX << "zoom is" << this->zoom_level_osm;
+	}
+
+	if (parser.isSet(opt_map)) {
+		this->map_type_id = (MapTypeID) parser.value(opt_map).toInt();
+		qDebug() << "DD" PREFIX << "map type id is" << (int) this->map_type_id;
+	}
+
+	this->files = parser.positionalArguments(); /* Possibly .vik files passed in command line, to be opened by application. */
+	qDebug() << "DD" PREFIX << "list of files is" << this->files;
+
+	return true;
+}
 
 
 
@@ -932,10 +1022,6 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 
 
 
-
-bool vik_debug = false;
-bool vik_verbose = false;
-bool vik_version = false;
 
 /**
  * @version:  The string of the Viking version.
@@ -1031,6 +1117,7 @@ void SGUtils::color_to_string(char * buffer, size_t buffer_size, const QColor & 
 	snprintf(buffer, buffer_size, "#%.2x%.2x%.2x", (int) (color.red() / 256), (int) (color.green() / 256), (int) (color.blue() / 256));
 
 }
+
 
 
 

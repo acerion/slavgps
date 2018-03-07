@@ -23,8 +23,13 @@
 
 
 
-#include <cstdint>
 
+#include <cmath> /* NAN */
+
+
+
+
+#include <QApplication>
 #include <QString>
 #include <QFile>
 #include <QTemporaryFile>
@@ -32,6 +37,9 @@
 #include <QColor>
 #include <QPen>
 #include <QDateTime>
+
+
+
 
 #include "map_ids.h"
 #include "preferences.h"
@@ -56,6 +64,38 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
+
+
+
+
+	class CommandLineOptions {
+	public:
+		/**
+		   Parse command line options passed to application. Save results.
+		   @return false on errors
+		   @return true otherwise
+		*/
+		bool parse(QCoreApplication & app);
+
+		/**
+		   Apply any startup values that have been specified from the command line.
+		   Values are defaulted in such a manner not to be applied when they haven't been specified.
+		*/
+		void apply(Window * window);
+
+
+		/* Default values that won't actually get applied unless changed by command line parameter values. */
+		bool debug = false;
+		bool verbose = false;
+		bool version = false;
+
+		double latitude = NAN;
+		double longitude = NAN;
+		int zoom_level_osm = -1;
+		MapTypeID map_type_id = MAP_TYPE_ID_INITIAL;
+
+		QStringList files;
+	};
 
 
 
@@ -101,7 +141,7 @@ namespace SlavGPS {
 	public:
 		static bool is_very_first_run(void);
 		static void set_auto_features_on_first_run(void);
-		static void command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id);
+
 		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
 		static void copy_label_menu(QAbstractButton * button);
 		static QString get_time_string(time_t time, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz);

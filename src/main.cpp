@@ -22,8 +22,10 @@
 
 
 #include <QApplication>
-#include <QPushButton>
 #include <QResource>
+
+
+
 
 #include "acquire.h"
 #include "window.h"
@@ -44,6 +46,7 @@
 #include "vikutils.h"
 #include "util.h"
 #include "version_check.h"
+#include "routing.h"
 
 
 
@@ -87,55 +90,28 @@ static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 
 
 
-#ifdef K_TODO
-/* Options. */
-static GOptionEntry entries[] = {
-	{ "debug",     'd', 0, G_OPTION_ARG_NONE,   &vik_debug,      N_("Enable debug output"), NULL },
-	{ "verbose",   'V', 0, G_OPTION_ARG_NONE,   &vik_verbose,    N_("Enable verbose output"), NULL },
-	{ "version",   'v', 0, G_OPTION_ARG_NONE,   &vik_version,    N_("Show version"), NULL },
-	{ "latitude",   0,  0, G_OPTION_ARG_DOUBLE, &startup_latitude,       N_("Latitude in decimal degrees"), NULL },
-	{ "longitude",  0,  0, G_OPTION_ARG_DOUBLE, &startup_longitude,      N_("Longitude in decimal degrees"), NULL },
-	{ "zoom",      'z', 0, G_OPTION_ARG_INT,    &startup_zoom_level_osm, N_("Zoom Level (OSM). Value can be 0 - 22"), NULL },
-	{ "map",       'm', 0, G_OPTION_ARG_INT,    &startup_map_type_id,    N_("Add a map layer by id value. Use 0 for the default map."), NULL },
-	{ NULL }
-};
-#endif
-
-
-
-
-/* Default values that won't actually get applied unless changed by command line parameter values. */
-static double startup_latitude = 0.0;
-static double startup_longitude = 0.0;
-static int startup_zoom_level_osm = -1;
-static MapTypeID startup_map_type_id = MAP_TYPE_ID_INITIAL;
-
-
-
-
-
 int main(int argc, char ** argv)
 {
-
-#ifdef K_TODO
-	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
-	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
-	textdomain(GETTEXT_PACKAGE);
-#endif
+	QApplication app(argc, argv);
+	CommandLineOptions command_line_options;
 
 
-	if (vik_version) {
+	QTranslator translator;
+	/* Look up e.g. :/translations/myapp_de.qm. */
+	if (translator.load(QLocale(), QLatin1String(PACKAGE_NAME), QLatin1String("_"), QLatin1String(":/translations"))) {
+		app.installTranslator(&translator);
+	}
+
+
+	if (!command_line_options.parse(app)) {
+		return EXIT_FAILURE;
+	}
+	if (command_line_options.version) {
 		qDebug() << QObject::tr("%1 %2\nCopyright (c) 2003-2008 Evan Battaglia\nCopyright (c) 2008-%3 Viking's contributors\n")
 			.arg(PACKAGE_NAME).arg(PACKAGE_VERSION).arg(THEYEAR);
 		return EXIT_SUCCESS;
 	}
 
-
-#ifdef K_TODO
-	if (vik_debug) {
-		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
-	}
-#endif
 
 #ifdef K_TODO
 #if HAVE_X11_XLIB_H
@@ -175,10 +151,7 @@ int main(int argc, char ** argv)
 	layer_map_init();
 	map_cache_init();
 	a_background_init();
-
-#ifdef K_TODO
 	routing_prefs_init();
-#endif
 
 	/*
 	  Second stage initialization.
@@ -196,7 +169,7 @@ int main(int argc, char ** argv)
 		vu_setup_lat_lon_tz_lookup();
 	}
 
-	QApplication app(argc, argv);
+
 
 	QResource::registerResource("icons.rcc");
 	Layer::preconfigure_interfaces();
@@ -210,27 +183,23 @@ int main(int argc, char ** argv)
 	/* Create the first window. */
 	Window * first_window = Window::new_window();
 
-	int i = 0;
-	bool dashdash_already = false;
-	while (++i < argc) {
-		if (strcmp(argv[i], "--") == 0 && !dashdash_already) {
-			dashdash_already = true; /* Hack to open '-' */
-		} else {
-			Window * new_window = first_window;
-			bool set_as_current_document = (i == 1);
+	for (int i = 0; i < command_line_options.files.size(); i++) {
+		const QString & file_path = command_line_options.files.at(i);
 
-			/* Open any subsequent .vik files in their own window. */
-			if (i > 1 && VikFile::has_vik_file_magic(argv[i])) {
-				new_window = Window::new_window();
-				set_as_current_document = true;
-			}
+		Window * new_window = first_window;
+		bool set_as_current_document = (i == 1);
 
-			new_window->open_file(argv[i], set_as_current_document);
+		/* Open any subsequent .vik files in their own window. */
+		if (i > 1 && VikFile::has_vik_file_magic(file_path)) {
+			new_window = Window::new_window();
+			set_as_current_document = true;
 		}
+
+		new_window->open_file(file_path, set_as_current_document);
 	}
 
 	first_window->finish_new();
-	SGUtils::command_line(first_window, startup_latitude, startup_longitude, startup_zoom_level_osm, startup_map_type_id);
+	command_line_options.apply(first_window);
 	first_window->show();
 
 
