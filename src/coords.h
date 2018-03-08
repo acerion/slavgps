@@ -122,6 +122,9 @@ namespace SlavGPS {
 
 	class UTM {
 	public:
+		UTM() {};
+		UTM(const QString & northing_string, const QString & easting_string, int zone_value, const QString & letter_string);
+
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
 

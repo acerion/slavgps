@@ -53,20 +53,14 @@ using namespace SlavGPS;
 
 
 #define PREFIX ": GoTo:" << __FUNCTION__ << __LINE__ << ">"
+#define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
 
 
 
 
 static int last_goto_idx = -1;
 static QString last_location;
-static Coord * last_coord = NULL;
-static QString last_successful_location;
-
-std::vector<GotoTool *> goto_tools;
-
-#define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
-
-
+static std::vector<GotoTool *> goto_tools;
 
 static bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent);
 static bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent);
@@ -86,24 +80,6 @@ void GoTo::unregister_all_tools()
 {
 	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 		/* kamilFIXME: delete objects? */
-	}
-}
-
-
-
-
-QString GoTo::get_search_string_for_this_location(Window * window)
-{
-	const QString empty_string("");
-	if (!last_coord) {
-		return empty_string;
-	}
-
-	const Coord * cur_center = window->get_viewport()->get_center();
-	if (*cur_center == *last_coord) {
-		return last_successful_location;
-	} else {
-		return empty_string;
 	}
 }
 
@@ -229,6 +205,10 @@ QString goto_location_dialog(Window * window)
 
 
 	GotoDialog dialog;
+	if (0 == dialog.providers_combo.count()) {
+		Dialog::error(QObject::tr("There are no GoTo engines available."), window);
+		return empty_string;
+	}
 
 
 	if (dialog.exec() != QDialog::Accepted) {
@@ -236,7 +216,6 @@ QString goto_location_dialog(Window * window)
 	}
 
 
-	/* TODO check if list is empty. */
 	last_goto_idx = dialog.providers_combo.currentIndex();
 	ApplicationState::set_string(VIK_SETTINGS_GOTO_PROVIDER, goto_tools[last_goto_idx]->get_label());
 	const QString location = dialog.input_field.text();
@@ -302,12 +281,6 @@ void GoTo::goto_location(Window * window, Viewport * viewport)
 			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
 			switch (ans) {
 			case GotoToolResult::Found:
-				if (last_coord) {
-					delete last_coord;
-				}
-				last_coord = new Coord();
-				*last_coord = location_coord; /* kamilTODO: review this assignment. */
-				last_successful_location = last_location;
 				viewport->set_center_from_coord(location_coord, true);
 				more = false;
 				break;
@@ -639,13 +612,7 @@ bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 
 
 	if (dialog.exec() == QDialog::Accepted) {
-		new_utm.northing = atof(northing_input.text().toUtf8().constData()); /* kamilTODO: why atof()? */
-		new_utm.easting = atof(easting_input.text().toUtf8().constData());
-		new_utm.zone = zone_spinbox.value();
-		const char * letter = letter_input.text().toUtf8().constData();
-		if (*letter) {
-			new_utm.letter = toupper(*letter);
-		}
+		new_utm = UTM(northing_input.text(), easting_input.text(), zone_spinbox.value(), letter_input.text());
 		return true;
 	} else {
 		return false;

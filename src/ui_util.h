@@ -44,15 +44,9 @@ namespace SlavGPS {
 
 
 
-	typedef int GtkWidget; /* TODO: remove sooner or later. */
-
-
-
-
 	void open_url(const QString & url);
 	void new_email(const QString & address, Window * parent);
 
-	GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
 	int ui_get_gtk_settings_integer(const char *property_name, int default_value);
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 

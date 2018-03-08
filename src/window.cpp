@@ -1753,6 +1753,14 @@ void Window::set_side_panel_visibility_cb(bool new_state)
 
 
 
+bool Window::get_side_panel_visibility(void) const
+{
+	return this->panel_dock->isVisible();
+}
+
+
+
+
 void Window::set_status_bar_visibility_cb(bool new_state)
 {
 	this->status_bar_visibility = new_state;
@@ -2131,10 +2139,8 @@ bool Window::menu_file_save_as_cb(void)
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
-	/* TODO: make sure that Viking file format is default one. */
-	QStringList filter;
-	filter << tr("All (*)");
-	filter << tr("Viking (*.vik, *.viking)");
+	/* "*.vik" should be the default format, so it goes as first one on the list. */
+	const QStringList filter = QStringList() << tr("Viking (*.vik, *.viking)") << tr("All (*)");
 	file_selector.setNameFilters(filter);
 
 

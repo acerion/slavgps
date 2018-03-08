@@ -173,6 +173,8 @@ namespace SlavGPS {
 		bool save_current_document();
 		void apply_new_preferences(void);
 
+		bool get_side_panel_visibility(void) const;
+
 
 		QAction * qa_tree_item_properties = NULL;
 

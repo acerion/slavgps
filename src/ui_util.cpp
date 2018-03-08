@@ -109,30 +109,6 @@ void SlavGPS::new_email(const QString & address, Window * parent)
 
 
 /**
-   Creates a @c GtkButton with custom text and a stock image similar to gtk_button_new_from_stock().
-
-   @param stock_id A @c GTK_STOCK_NAME string.
-   @param text Button label text, can include mnemonics.
-   @return The new @c GtkButton.
-*/
-GtkWidget * SlavGPS::ui_button_new_with_image(const char * stock_id, const char * text)
-{
-	GtkWidget * image = NULL;
-	GtkWidget * button = NULL;
-#ifdef K_TODO
-	button = gtk_button_new_with_mnemonic(text);
-	gtk_widget_show(button);
-	image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON);
-	gtk_button_set_image(GTK_BUTTON(button), image);
-	/* Note: image is shown by gtk. */
-#endif
-	return button;
-}
-
-
-
-
-/**
    Reads an integer from the GTK default settings registry
    (see http://library.gnome.org/devel/gtk/stable/GtkSettings.html).
    @param property_name The property to read.

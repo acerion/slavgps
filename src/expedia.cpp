@@ -93,8 +93,7 @@ void SlavGPS::expedia_init()
 
 double expedia_altis_freq(int alti)
 {
-	static int i; /* kamilTODO: why static? */
-	for (i = 0; i < expedia_altis_count; i++) {
+	for (int i = 0; i < expedia_altis_count; i++) {
 		if (expedia_altis[i] == alti) {
 			return expedia_altis_degree_freq[i];
 		}

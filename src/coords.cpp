@@ -141,6 +141,25 @@ static char coords_utm_letter( double latitude );
 
 
 
+UTM::UTM(const QString & northing_string, const QString & easting_string, int zone_value, const QString & letter_string)
+{
+	/* TODO: revisit data types (double or int?) for northing/easting. */
+	/* TODO: add error checking. */
+	this->northing = northing_string.toDouble();
+	this->easting  = easting_string.toDouble();
+	this->zone = zone_value;
+	if (1 == letter_string.size()) {
+		this->letter = letter_string.at(0).toUpper().toLatin1();
+	}
+	qDebug() << "II:" PREFIX << "UTM northing conversion" << northing_string << "->" << this->northing;
+	qDebug() << "II:" PREFIX << "UTM easting conversion"  << easting_string  << "->" << this->easting;
+	qDebug() << "II:" PREFIX << "UTM zone conversion"     << zone_value      << "->" << (int) this->zone;
+	qDebug() << "II:" PREFIX << "UTM letter conversion"   << letter_string   << "->" << this->letter;
+}
+
+
+
+
 bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 {
 	return (utm1.easting == utm2.easting && utm1.northing == utm2.northing && utm1.zone == utm2.zone);

@@ -69,7 +69,7 @@ namespace SlavGPS {
 		bool has_any_layer_of_type(LayerType type);
 
 		void set_visible(bool visible);
-		bool get_visible(void);
+		bool get_visible(void) const;
 
 		LayerAggregate * get_top_layer();
 		TreeView * get_tree_view();

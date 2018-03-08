@@ -100,11 +100,6 @@ namespace SlavGPS {
 
 
 
-	typedef int GtkWidget; /* TODO: remove sooner or later. */
-
-
-
-
 	QString get_speed_unit_string(SpeedUnit speed_unit);
 	double convert_speed_mps_to(double speed, SpeedUnit speed_units);
 	QString get_speed_string(double speed, SpeedUnit speed_unit);

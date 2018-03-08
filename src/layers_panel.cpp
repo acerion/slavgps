@@ -692,9 +692,9 @@ void LayersPanel::set_visible(bool visible)
 
 
 
-bool LayersPanel::get_visible(void)
+bool LayersPanel::get_visible(void) const
 {
-	return true; /* kamilTODO: improve. */
+	return this->window->get_side_panel_visibility();
 }
 
 

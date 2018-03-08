@@ -61,7 +61,6 @@ namespace SlavGPS {
 		static void goto_utm(Window * window, Viewport * viewport);
 
 		static int where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name);
-		static QString get_search_string_for_this_location(Window * window);
 	};
 
 
