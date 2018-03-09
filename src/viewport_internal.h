@@ -124,8 +124,8 @@ namespace SlavGPS {
 		void get_center_for_zone(UTM & center, int zone);
 		void get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
 
-		char get_leftmost_zone(void) const;
-		char get_rightmost_zone(void) const;
+		int get_leftmost_zone(void) const;
+		int get_rightmost_zone(void) const;
 
 		bool show_latlons(const LatLonMinMax & min_max);
 

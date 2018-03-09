@@ -59,7 +59,7 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 	this->easting_spin->setMaximum(1500000.0);
 	this->easting_spin->setSingleStep(1);
 	this->easting_spin->setValue(0);
-	this->easting_label = new QLabel("");
+	this->easting_label = new QLabel(QObject::tr("Easting:"));
 	this->grid->addWidget(this->easting_label, row, 0);
 	this->grid->addWidget(this->easting_spin, row, 1);
 	row++;
@@ -69,7 +69,7 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 	this->northing_spin->setMaximum(9000000.0);
 	this->northing_spin->setSingleStep(1);
 	this->northing_spin->setValue(0);
-	this->northing_label = new QLabel("");
+	this->northing_label = new QLabel(QObject::tr("Northing:"));
 	this->grid->addWidget(this->northing_label, row, 0);
 	this->grid->addWidget(this->northing_spin, row, 1);
 	row++;
@@ -94,6 +94,12 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 	this->grid->addWidget(new QLabel(QObject::tr("Letter:")), row, 0);
 	this->grid->addWidget(this->band_letter_entry, row, 1);
 	row++;
+
+	/* Ensure the first entry field has focus so we can start
+	   typing straight away.  User of this widget has to call
+	   SGUtmEntry::setFocus() after putting the widget in
+	   layout. */
+	this->setFocusProxy(this->easting_spin);
 }
 
 
@@ -110,7 +116,6 @@ void SGUTMEntry::set_value(const UTM & utm)
 	tmp_letter[0] = utm.letter;
 	tmp_letter[1] = '\0';
 	this->band_letter_entry->setText(tmp_letter);
-
 }
 
 

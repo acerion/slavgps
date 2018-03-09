@@ -1580,11 +1580,11 @@ void LayerMap::draw(Viewport * viewport)
 		/* Get corner coords. */
 		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {
 			/* UTM multi-zone stuff by Kit Transue. */
-			const char leftmost_zone = viewport->get_leftmost_zone();
-			const char rightmost_zone = viewport->get_rightmost_zone();
+			const int leftmost_zone = viewport->get_leftmost_zone();
+			const int rightmost_zone = viewport->get_rightmost_zone();
 			Coord coord_ul;
 			Coord coord_br;
-			for (char zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
+			for (int zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
 				viewport->get_corners_for_zone(coord_ul, coord_br, zone);
 				this->draw_section(viewport, coord_ul, coord_br);
 			}

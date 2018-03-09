@@ -981,10 +981,10 @@ void Viewport::get_center_for_zone(UTM & center_utm, int zone)
 
 
 
-char Viewport::get_leftmost_zone(void) const
+int Viewport::get_leftmost_zone(void) const
 {
 	if (coord_mode != CoordMode::UTM) {
-		return '\0';
+		return 0;
 	}
 
 	const Coord coord = this->screen_pos_to_coord(0, 0);
@@ -994,10 +994,10 @@ char Viewport::get_leftmost_zone(void) const
 
 
 
-char Viewport::get_rightmost_zone(void) const
+int Viewport::get_rightmost_zone(void) const
 {
 	if (coord_mode != CoordMode::UTM) {
-		return '\0';
+		return 0;
 	}
 
 	const Coord coord = this->screen_pos_to_coord(this->size_width, 0);

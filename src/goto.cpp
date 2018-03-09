@@ -43,6 +43,8 @@
 #include "degrees_converters.h"
 #include "viewport_internal.h"
 #include "vikutils.h"
+#include "widget_utm_entry.h"
+#include "widget_lat_lon_entry.h"
 
 
 
@@ -493,35 +495,19 @@ bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Wi
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
 
-
-	QLabel lat_label(QObject::tr("Latitude:"));
-	dialog.grid->addWidget(&lat_label, 0, 0);
-
-
-	QLineEdit lat_input;
-	QObject::connect(&lat_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	lat_input.setText(LatLon::lat_to_string_raw(initial_lat_lon));
-	dialog.grid->addWidget(&lat_input, 0, 1);
-
-
-	QLabel lon_label(QObject::tr("Longitude:"));
-	dialog.grid->addWidget(&lon_label, 1, 0);
-
-
-	QLineEdit lon_input;
-	QObject::connect(&lon_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	lon_input.setText(LatLon::lon_to_string_raw(initial_lat_lon));
-	dialog.grid->addWidget(&lon_input, 1, 1);
-
-
-	/* Ensure the first text field has focus so we can start typing straight away. */
-	lat_input.setFocus(Qt::OtherFocusReason);
-
+	SGLatLonEntry entry;
+	entry.set_value(initial_lat_lon);
+	dialog.grid->addWidget(&entry, 0, 0);
+	entry.setFocus(); /* This will set keyboard focus in first field of entry widget. */
 
 	if (dialog.exec() == QDialog::Accepted) {
+#if 1
+		new_lat_lon = entry.get_value();
+#else
 		/* kamilTODO: what's going on here? Why we use these functions? */
 		new_lat_lon.lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
 		new_lat_lon.lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
+#endif
 		return true;
 	} else {
 		return false;
@@ -551,68 +537,16 @@ void GoTo::goto_utm(Window * window, Viewport * viewport)
 
 bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 {
-	char buffer[64] = { 0 };
-
-
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to UTM"));
 
-
-	QLabel northing_label(QObject::tr("Northing:"));
-	dialog.grid->addWidget(&northing_label, 0, 0);
-
-
-	QLineEdit northing_input;
-	QObject::connect(&northing_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", initial_utm.northing);
-	northing_input.setText(buffer);
-	dialog.grid->addWidget(&northing_input, 0, 1);
-
-
-	QLabel easting_label(QObject::tr("Easting:"));
-	dialog.grid->addWidget(&easting_label, 1, 0);
-
-
-	QLineEdit easting_input;
-	QObject::connect(&easting_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	snprintf(buffer, sizeof (buffer), "%f", initial_utm.easting);
-	easting_input.setText(buffer);
-	dialog.grid->addWidget(&easting_input, 1, 1);
-
-
-	QLabel zone_label(QObject::tr("Zone:"));
-	dialog.grid->addWidget(&zone_label, 2, 0);
-
-
-	QSpinBox zone_spinbox;
-	QObject::connect(&zone_spinbox, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	zone_spinbox.setMinimum(1);
-	zone_spinbox.setMaximum(60);
-	zone_spinbox.setSingleStep(1);
-	zone_spinbox.setValue(initial_utm.zone);
-	dialog.grid->addWidget(&zone_spinbox, 2, 1);
-
-
-	QLabel letter_label(QObject::tr("Letter:"));
-	dialog.grid->addWidget(&letter_label, 3, 0);
-
-
-	QLineEdit letter_input;
-	QObject::connect(&letter_input, SIGNAL (returnPressed(void)), &dialog, SLOT(accept()));
-	buffer[0] = initial_utm.letter;
-	buffer[1] = '\0';
-	letter_input.setText(buffer);
-	letter_input.setMaxLength(1);
-	letter_input.setInputMask("A");
-	dialog.grid->addWidget(&letter_input, 3, 1);
-
-
-	/* Ensure the first text field has focus so we can start typing straight away. */
-	northing_input.setFocus(Qt::OtherFocusReason);
-
+	SGUTMEntry entry;
+	entry.set_value(initial_utm);
+	dialog.grid->addWidget(&entry, 0, 0);
+	entry.setFocus(); /* This will set keyboard focus in first field of entry widget. */
 
 	if (dialog.exec() == QDialog::Accepted) {
-		new_utm = UTM(northing_input.text(), easting_input.text(), zone_spinbox.value(), letter_input.text());
+		new_utm = entry.get_value();
 		return true;
 	} else {
 		return false;

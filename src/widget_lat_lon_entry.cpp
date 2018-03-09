@@ -77,6 +77,12 @@ SGLatLonEntry::SGLatLonEntry(QWidget * parent)
 	this->grid->addWidget(this->lon_label, row, 0);
 	this->grid->addWidget(this->lon_spin, row, 1);
 	row++;
+
+	/* Ensure the first entry field has focus so we can start
+	   typing straight away.  User of this widget has to call
+	   SGLatLonEntry::setFocus() after putting the widget in
+	   layout. */
+	this->setFocusProxy(this->lat_spin);
 }
 
 

@@ -130,7 +130,7 @@ namespace SlavGPS {
 
 		double northing = 0;
 		double easting = 0;
-		char zone = 0;
+		int zone = 0;
 		char letter = 0;
 	};
 

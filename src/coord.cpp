@@ -316,7 +316,7 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		   format:
 		   ZONE[N|S] EASTING NORTHING */
 
-		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.letter); /* Zone is stored in a char but is an actual number. */
+		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.letter);
 		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
 		break;
 	case CoordMode::LATLON:

@@ -207,7 +207,7 @@ bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bo
 		break;
 	case PARAM_CORNER_UTM_ZONE:
 		if (param_value.val_uint <= UTM_ZONES) {
-			this->utm_tl.zone = param_value.val_uint;
+			this->utm_tl.zone = param_value.val_uint; /* FIXME: data type mismatch: int vs uint. */
 		} else {
 			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.val_uint;
 		}
@@ -286,7 +286,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		rv = SGVariant((uint32_t) this->utm_tl.zone); /* FIXME: why do we need to do cast here? */
+		rv = SGVariant((uint32_t) this->utm_tl.zone); /* FIXME: why do we need to do cast here? FIXME: data type mismatch: int vs uint */
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		rv = SGVariant((uint32_t) this->utm_tl.letter); /* FIXME: why do we need to do cast here? */

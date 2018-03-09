@@ -153,7 +153,7 @@ UTM::UTM(const QString & northing_string, const QString & easting_string, int zo
 	}
 	qDebug() << "II:" PREFIX << "UTM northing conversion" << northing_string << "->" << this->northing;
 	qDebug() << "II:" PREFIX << "UTM easting conversion"  << easting_string  << "->" << this->easting;
-	qDebug() << "II:" PREFIX << "UTM zone conversion"     << zone_value      << "->" << (int) this->zone;
+	qDebug() << "II:" PREFIX << "UTM zone conversion"     << zone_value      << "->" << this->zone;
 	qDebug() << "II:" PREFIX << "UTM letter conversion"   << letter_string   << "->" << this->letter;
 }
 
@@ -171,7 +171,7 @@ bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 double a_coords_utm_diff(const UTM * utm1, const UTM * utm2)
 {
   static LatLon tmp1, tmp2;
-  if ( utm1->zone == utm2->zone ) {
+  if (utm1->zone == utm2->zone) {
     return sqrt ( pow ( utm1->easting - utm2->easting, 2 ) + pow ( utm1->northing - utm2->northing, 2 ) );
   } else {
 	  tmp1 = UTM::to_latlon(*utm1);
