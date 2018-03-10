@@ -43,6 +43,7 @@
 #include "layer.h"
 #include "layer_trw_track.h"
 #include "file.h"
+#include "dialog.h"
 
 
 

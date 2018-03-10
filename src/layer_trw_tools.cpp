@@ -573,7 +573,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		   either globally, or for this tool. */
 		break;
 	default:
-		/* TODO: what should happen here? */
+		/* Ignore any other button. */
 		break;
 	}
 

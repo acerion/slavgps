@@ -115,7 +115,7 @@ void AcquireGetter::on_complete_process(void)
 				   so that they can be displayed on "tree updated" event. */
 				this->acquiring->trw->add_children_to_tree();
 			} else {
-				this->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display thins message? */
+				this->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display this message? */
 			}
 		}
 

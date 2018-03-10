@@ -24,17 +24,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
+
+
+
+//#include <cmath>
+//#include <cstdlib>
+//#include <cstring>
 #include <time.h>
+
+
+
 
 #include <QDebug>
 #include <QLineEdit>
+
+
+
 
 #include "window.h"
 #include "layer_trw_track_internal.h"
@@ -47,6 +59,7 @@
 #include "application_state.h"
 #include "globals.h"
 #include "preferences.h"
+#include "measurements.h"
 
 
 
@@ -56,11 +69,10 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::track_properties_dialog(Window * parent, Track * trk, bool start_on_stats)
+void SlavGPS::track_properties_dialog(Track * trk, Window * parent)
 {
-	TrackPropertiesDialog dialog(QObject::tr("Track Profile"), trk, start_on_stats, parent);
+	TrackPropertiesDialog dialog(QObject::tr("Track Properties"), trk, parent);
 	dialog.create_properties_page();
-	dialog.create_statistics_page();
 	trk->set_properties_dialog(&dialog);
 	dialog.exec();
 	trk->clear_properties_dialog();
@@ -69,46 +81,32 @@ void SlavGPS::track_properties_dialog(Window * parent, Track * trk, bool start_o
 
 
 
-TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
+void SlavGPS::track_statistics_dialog(Track * trk, Window * parent)
+{
+	TrackStatisticsDialog dialog(QObject::tr("Track Statistics"), trk, parent);
+	dialog.create_statistics_page();
+	dialog.exec();
+}
+
+
+
+
+TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
 {
 	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->name));
 
 	this->trk = a_trk;
-
-	this->button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &TrackPropertiesDialog::dialog_accept_cb);
-	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-	this->tabs = new QTabWidget();
-	this->vbox = new QVBoxLayout;
-
-	QLayout * old_layout = NULL;
-
-	this->properties_form = new QFormLayout();
-	this->properties_area = new QWidget();
-	old_layout = this->properties_area->layout();
-	delete old_layout;
-	this->properties_area->setLayout(properties_form);
-	this->tabs->addTab(this->properties_area, tr("Properties"));
-
-	this->statistics_form = new QFormLayout();
-	this->statistics_area = new QWidget();
-	old_layout = this->statistics_area->layout();
-	delete old_layout;
-	this->statistics_area->setLayout(statistics_form);
-	this->tabs->addTab(this->statistics_area, tr("Statistics"));
-
-	this->vbox->addWidget(this->tabs);
-	this->vbox->addWidget(this->button_box);
+}
 
 
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
 
-	if (start_on_stats) {
-		this->tabs->setCurrentIndex(1);
-	}
+
+
+TrackStatisticsDialog::TrackStatisticsDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
+{
+	this->setWindowTitle(tr("%1 - Track Statistics").arg(a_trk->name));
+
+	this->trk = a_trk;
 }
 
 
@@ -116,36 +114,48 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_tr
 
 void TrackPropertiesDialog::create_properties_page(void)
 {
+	int row = 0;
+
 	this->w_comment = new QLineEdit(this);
 	if (!this->trk->comment.isEmpty()) {
 		this->w_comment->insert(this->trk->comment);
 	}
-	this->properties_form->addRow(tr("Comment:"), this->w_comment);
+	this->grid->addWidget(new QLabel(tr("Comment:")), row, 0);
+	this->grid->addWidget(this->w_comment, row, 1);
+	row++;
 
 
 	this->w_description = new QLineEdit(this);
 	if (!this->trk->description.isEmpty()) {
 		this->w_description->insert(this->trk->description);
 	}
-	this->properties_form->addRow(tr("Description:"), this->w_description);
+	this->grid->addWidget(new QLabel(tr("Description:")), row, 0);
+	this->grid->addWidget(this->w_description, row, 1);
+	row++;
 
 
 	this->w_source = new QLineEdit(this);
 	if (!this->trk->source.isEmpty()) {
 		this->w_source->insert(this->trk->source);
 	}
-	this->properties_form->addRow(tr("Source:"), this->w_source);
+	this->grid->addWidget(new QLabel(tr("Source:")), row, 0);
+	this->grid->addWidget(this->w_source, row, 1);
+	row++;
 
 
 	this->w_type = new QLineEdit(this);
 	if (!this->trk->type.isEmpty()) {
 		this->w_type->insert(this->trk->type);
 	}
-	this->properties_form->addRow(tr("Type:"), this->w_type);
+	this->grid->addWidget(new QLabel(tr("Type:")), row, 0);
+	this->grid->addWidget(this->w_type, row, 1);
+	row++;
 
 
        	this->w_color = new SGColorButton(this->trk->color, NULL);
-	this->properties_form->addRow(tr("Color:"), this->w_color);
+	this->grid->addWidget(new QLabel(tr("Color:")), row, 0);
+	this->grid->addWidget(this->w_color, row, 1);
+	row++;
 
 
 	QStringList options;
@@ -158,7 +168,9 @@ void TrackPropertiesDialog::create_properties_page(void)
 	this->w_namelabel = new QComboBox(NULL);
 	this->w_namelabel->insertItems(0, options);
 	this->w_namelabel->setCurrentIndex((int) this->trk->draw_name_mode);
-	this->properties_form->addRow(tr("Draw Name:"), this->w_namelabel);
+	this->grid->addWidget(new QLabel(tr("Draw Name:")), row, 0);
+	this->grid->addWidget(this->w_namelabel, row, 1);
+	row++;
 
 
 	this->w_number_distlabels = new QSpinBox();
@@ -167,44 +179,58 @@ void TrackPropertiesDialog::create_properties_page(void)
 	this->w_number_distlabels->setSingleStep(1);
 	this->w_number_distlabels->setToolTip(tr("Maximum number of distance labels to be shown"));
 	this->w_number_distlabels->setValue(this->trk->max_number_dist_labels);
-	this->properties_form->addRow(tr("Distance Labels:"), this->w_number_distlabels);
+	this->grid->addWidget(new QLabel(tr("Distance Labels:")), row, 0);
+	this->grid->addWidget(this->w_number_distlabels, row, 1);
+	row++;
+
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &TrackPropertiesDialog::dialog_accept_cb);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
 }
 
 
 
 
-void TrackPropertiesDialog::create_statistics_page(void)
+void TrackStatisticsDialog::create_statistics_page(void)
 {
 	QString tmp_string;
+	int row = 0;
 
 	/* NB This value not shown yet - but is used by internal calculations. */
 	this->track_length = this->trk->get_length();
 	this->track_length_inc_gaps = this->trk->get_length_including_gaps();
 	DistanceUnit distance_unit = Preferences::get_unit_distance();
 
-	static char tmp_buf[50];
 
-	double tr_len = this->track_length;
+	const double tr_len = this->track_length;
 	tmp_string = get_distance_string(tr_len, distance_unit);
 	this->w_track_length = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(tr("Track Length:"), this->w_track_length);
+	this->grid->addWidget(new QLabel(tr("Track Length:")), row, 0);
+	this->grid->addWidget(this->w_track_length, row, 1);
+	row++;
 
 
-	unsigned long tp_count = this->trk->get_tp_count();
-	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count);
-	this->w_tp_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(tr("Trackpoints:"), this->w_tp_count);
+	const unsigned long tp_count = this->trk->get_tp_count();
+	tmp_string = QString("%1").arg(tp_count);
+	this->w_tp_count = ui_label_new_selectable(tmp_string, this);
+	this->grid->addWidget(new QLabel(tr("Trackpoints:")), row, 0);
+	this->grid->addWidget(this->w_tp_count, row, 1);
+	row++;
 
 
-	unsigned int seg_count = this->trk->get_segment_count() ;
-	snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count);
-	this->w_segment_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(tr("Segments:"), this->w_segment_count);
+	const unsigned int seg_count = this->trk->get_segment_count() ;
+	tmp_string = QString("%1").arg(seg_count);
+	this->w_segment_count = ui_label_new_selectable(tmp_string, this);
+	this->grid->addWidget(new QLabel(tr("Segments:")), row, 0);
+	this->grid->addWidget(this->w_segment_count, row, 1);
+	row++;
 
 
-	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", this->trk->get_dup_point_count());
-	this->w_duptp_count = ui_label_new_selectable(tmp_buf, this);
-	this->statistics_form->addRow(tr("Duplicate Points:"), this->w_duptp_count);
+	tmp_string = QString("%1").arg(this->trk->get_dup_point_count());
+	this->w_duptp_count = ui_label_new_selectable(tmp_string, this);
+	this->grid->addWidget(new QLabel(tr("Duplicate Points:")), row, 0);
+	this->grid->addWidget(this->w_duptp_count, row, 1);
+	row++;
 
 
 	SpeedUnit speed_units = Preferences::get_unit_speed();
@@ -215,7 +241,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(QObject::tr("Max Speed:"), this->w_max_speed);
+	this->grid->addWidget(new QLabel(QObject::tr("Max Speed:")), row, 0);
+	this->grid->addWidget(this->w_max_speed, row, 1);
+	row++;
 
 
 	tmp_speed = this->trk->get_average_speed();
@@ -225,7 +253,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_avg_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(tr("Avg. Speed:"), this->w_avg_speed);
+	this->grid->addWidget(new QLabel(tr("Average Speed:")), row, 0);
+	this->grid->addWidget(this->w_avg_speed, row, 1);
+	row++;
 
 
 	/* Use 60sec as the default period to be considered stopped.
@@ -239,7 +269,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		tmp_string = get_speed_string(tmp_speed, speed_units);
 	}
 	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
-	this->statistics_form->addRow(tr("Moving Avg. Speed:"), this->w_mvg_speed);
+	this->grid->addWidget(new QLabel(tr("Moving Average Speed:")), row, 0);
+	this->grid->addWidget(this->w_mvg_speed, row, 1);
+	row++;
 
 
 	QString result;
@@ -258,7 +290,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		qDebug() << "EE: Track Properties Dialog: can't get distance unit for 'avg. dist between tps.'; distance_unit = " << (int) distance_unit;
 	}
 	this->w_avg_dist = ui_label_new_selectable(result, this);
-	this->statistics_form->addRow(tr("Avg. Dist. Between TPs:"), this->w_avg_dist);
+	this->grid->addWidget(new QLabel(tr("Average Distance Between Trackpoints:")), row, 0);
+	this->grid->addWidget(this->w_avg_dist, row, 1);
+	row++;
 
 
 	int elev_points = 100; /* this->trk->size()? */
@@ -288,7 +322,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		}
 	}
 	this->w_elev_range = ui_label_new_selectable(result, this);
-	this->statistics_form->addRow(tr("Elevation Range:"), this->w_elev_range);
+	this->grid->addWidget(new QLabel(tr("Elevation Range:")), row, 0);
+	this->grid->addWidget(this->w_elev_range, row, 1);
+	row++;
 
 
 	this->trk->get_total_elevation_gain(&altitudes.y_max, &altitudes.y_min);
@@ -308,7 +344,9 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		}
 	}
 	this->w_elev_gain = ui_label_new_selectable(result, this);
-	this->statistics_form->addRow(tr("Total Elevation Gain/Loss:"), this->w_elev_gain);
+	this->grid->addWidget(new QLabel(tr("Total Elevation Gain/Loss:")), row, 0);
+	this->grid->addWidget(this->w_elev_gain, row, 1);
+	row++;
 
 
 	if (!this->trk->empty()
@@ -326,41 +364,42 @@ void TrackPropertiesDialog::create_statistics_page(void)
 
 		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, &coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
-		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
+		this->grid->addWidget(new QLabel(tr("Start:")), row, 0);
+		this->grid->addWidget(this->w_time_start, row, 1);
+		row++;
 
 
 		msg = SGUtils::get_time_string(t2, Qt::TextDate, &coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
-		this->statistics_form->addRow(tr("End:"), this->w_time_end);
+		this->grid->addWidget(new QLabel(tr("End:")), row, 0);
+		this->grid->addWidget(this->w_time_end, row, 1);
+		row++;
 
 
-		int total_duration_s = (int)(t2-t1);
-		int segments_duration_s = (int) this->trk->get_duration(false);
-		int total_duration_m = total_duration_s/60;
-		int segments_duration_m = segments_duration_s/60;
-		result = tr("%1 minutes - %2 minutes moving").arg(total_duration_m).arg(segments_duration_m);
+		const int total_duration_s = (int) (t2 - t1);
+		const int segments_duration_s = (int) this->trk->get_duration(false);
+		result = tr("%1 total - %2 in segments")
+			.arg(Measurements::get_duration_string(total_duration_s))
+			.arg(Measurements::get_duration_string(segments_duration_s));
 		this->w_time_dur = ui_label_new_selectable(result, this);
-		this->statistics_form->addRow(tr("Duration:"), this->w_time_dur);
-
-		/* A tooltip to show in more readable hours:minutes. */
-		char tip_buf_total[20];
-		unsigned int h_tot = total_duration_s/3600;
-		unsigned int m_tot = (total_duration_s - h_tot*3600)/60;
-		snprintf(tip_buf_total, sizeof(tip_buf_total), "%d:%02d", h_tot, m_tot);
-		char tip_buf_segments[20];
-		unsigned int h_seg = segments_duration_s/3600;
-		unsigned int m_seg = (segments_duration_s - h_seg*3600)/60;
-		snprintf(tip_buf_segments, sizeof(tip_buf_segments), "%d:%02d", h_seg, m_seg);
-		this->w_time_dur->setToolTip(tr("%1 total - %s in segments").arg(tip_buf_total).arg(tip_buf_segments));
+		this->grid->addWidget(new QLabel(tr("Duration:")), row, 0);
+		this->grid->addWidget(this->w_time_dur, row, 1);
+		row++;
 	} else {
 		this->w_time_start = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(tr("Start:"), this->w_time_start);
+		this->grid->addWidget(new QLabel(tr("Start:")), row, 0);
+		this->grid->addWidget(this->w_time_start, row, 1);
+		row++;
 
 		this->w_time_end = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(tr("End:"), this->w_time_end);
+		this->grid->addWidget(new QLabel(tr("End:")), row, 0);
+		this->grid->addWidget(this->w_time_end, row, 1);
+		row++;
 
 		this->w_time_dur = ui_label_new_selectable(tr("No Data"), this);
-		this->statistics_form->addRow(tr("Duration:"), this->w_time_dur);
+		this->grid->addWidget(new QLabel(tr("Duration:")), row, 0);
+		this->grid->addWidget(this->w_time_dur, row, 1);
+		row++;
 	}
 }
 

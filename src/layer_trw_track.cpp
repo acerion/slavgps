@@ -2670,9 +2670,6 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->type_id == "sg.trw.track" ? tr("&View Track") : tr("&View Route"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_full_cb()));
 
-	qa = menu.addAction(tr("&Statistics"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (statistics_dialog_cb()));
-
 	{
 		QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Goto"));
 
@@ -2880,6 +2877,10 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_dialog_cb()));
 
 
+	qa = menu.addAction(tr("&Statistics"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (statistics_dialog_cb()));
+
+
 	/* Common "Edit" items. */
 	{
 		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
@@ -3060,6 +3061,8 @@ void Track::interpolate_times_cb(void)
 }
 
 
+
+
 bool Track::properties_dialog(void)
 {
 	this->properties_dialog_cb();
@@ -3075,24 +3078,19 @@ void Track::properties_dialog_cb(void)
 		return;
 	}
 
-	track_properties_dialog(g_tree->tree_get_main_window(), this);
+	track_properties_dialog(this, g_tree->tree_get_main_window());
 }
 
 
 
 
-/**
- * Show track statistics.
- * ATM jump to the stats page in the properties
- * TODO: consider separating the stats into an individual dialog?
- */
 void Track::statistics_dialog_cb(void)
 {
 	if (this->name.isEmpty()) {
 		return;
 	}
 
-	track_properties_dialog(g_tree->tree_get_main_window(), this, true);
+	track_statistics_dialog(this, g_tree->tree_get_main_window());
 }
 
 

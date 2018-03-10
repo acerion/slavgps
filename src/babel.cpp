@@ -312,8 +312,8 @@ bool a_babel_convert_import_from_filter(LayerTRW * trw, const QString & babel_ar
 
 
 	const QStringList sub_args = babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
-	for (int i = 0; i < sub_args.size(); i++) { /* TODO: simplify concatenation of args and sub_args. */
-		args << sub_args.at(i);
+	if (sub_args.size()) {
+		args << sub_args;
 	}
 
 
@@ -321,11 +321,10 @@ bool a_babel_convert_import_from_filter(LayerTRW * trw, const QString & babel_ar
 	args << QString(input_file_path);
 
 
-	QStringList sub_filters;
 	if (!babel_filters.isEmpty()) {
-		sub_filters = babel_filters.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
-		for (int i = 0; i < sub_filters.size(); i++) { /* TODO: simplify concatenation of args and sub_filters. */
-			args << sub_filters.at(i);
+		const QStringList sub_filters = babel_filters.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+		if (sub_filters.size()) {
+			args << sub_filters;
 		}
 	}
 
@@ -532,8 +531,8 @@ bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString 
 
 
 	const QStringList sub_args = babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
-	for (int i = 0; i < sub_args.size(); i++) { /* TODO: simplify concatenation of args and sub_args. */
-		args << sub_args.at(i);
+	if (sub_args.size()) {
+		args << sub_args;
 	}
 
 

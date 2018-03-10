@@ -24,16 +24,11 @@
 
 
 
-#include <QObject>
-#include <QDialog>
-#include <QTabWidget>
-#include <QVBoxLayout>
 #include <QWidget>
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QSpinBox>
 #include <QComboBox>
-#include <QFormLayout>
 #include <QLineEdit>
 #include <QTimeZone>
 
@@ -41,6 +36,7 @@
 
 
 #include "widget_color_button.h"
+#include "dialog.h"
 
 
 
@@ -57,34 +53,20 @@ namespace SlavGPS {
 
 
 
-	class TrackPropertiesDialog : public QDialog {
+	class TrackPropertiesDialog : public BasicDialog {
 		Q_OBJECT
 	public:
 		TrackPropertiesDialog() {};
-		TrackPropertiesDialog(QString const & title, Track * a_trk, bool start_on_stats, Window * a_parent = NULL);
+		TrackPropertiesDialog(QString const & title, Track * trk, Window * parent = NULL);
 		~TrackPropertiesDialog() {};
 
 		void create_properties_page(void);
-		void create_statistics_page(void);
 
 	private slots:
 		void dialog_accept_cb(void);
 
 	private:
 		Track * trk = NULL;
-
-		QTabWidget * tabs = NULL;
-		QFormLayout * properties_form = NULL;
-		QFormLayout * statistics_form = NULL;
-		QWidget * properties_area = NULL;
-		QWidget * statistics_area = NULL;
-
-		QDialogButtonBox * button_box = NULL;
-
-		QPushButton * button_ok = NULL;
-		QPushButton * button_cancel = NULL;
-
-		QVBoxLayout * vbox = NULL;
 
 		/* Track properties. */
 		QLineEdit * w_comment = NULL;
@@ -94,6 +76,22 @@ namespace SlavGPS {
 		SGColorButton * w_color = NULL;
 		QComboBox * w_namelabel = NULL;
 		QSpinBox * w_number_distlabels = NULL;
+	};
+
+
+
+
+	class TrackStatisticsDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		TrackStatisticsDialog() {};
+		TrackStatisticsDialog(QString const & title, Track * trk, Window * parent = NULL);
+		~TrackStatisticsDialog() {};
+
+		void create_statistics_page(void);
+
+	private:
+		Track * trk = NULL;
 
 		/* Track statistics. */
 		QLabel * w_track_length = NULL;
@@ -119,7 +117,8 @@ namespace SlavGPS {
 
 
 
-	void track_properties_dialog(Window * parent, Track * trk, bool start_on_stats = false);
+	void track_properties_dialog(Track * trk, Window * parent = NULL);
+	void track_statistics_dialog(Track * trk, Window * parent = NULL);
 
 
 

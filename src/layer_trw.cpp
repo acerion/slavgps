@@ -1298,7 +1298,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 		this->routes->draw_tree_item(viewport, allowed, required);
 	}
 
-	if (this->waypoints->visible) { /* TODO: fix condition. */
+	if (this->waypoints->visible) {
 		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << allowed << required;
 		this->waypoints->draw_tree_item(viewport, allowed, required);
 	}
@@ -3862,7 +3862,6 @@ void LayerTRW::tpwin_update_dialog_data()
 	if (track) {
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		const LatLon ll_center((track->bbox.north + track->bbox.south) / 2, (track->bbox.east + track->bbox.west) / 2);
-		Coord coord(ll_center, this->coord_mode);  /* kamilTODO: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->selected_tp.iter, track->type_id == "sg.trw.route");
 	}
 }

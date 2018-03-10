@@ -296,7 +296,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			/* Convert for display. */
 			dist_i = convert_distance_meters_to(dist_i, distance_unit);
 
-			/* Make the precision of the output related to the unit size. TODO: don't we have utility function for that? */
+			/* TODO: Make the precision of the output related to the unit size. Don't we have utility function for that? */
 			if (index == 0) {
 				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(distance_unit_string);
 			} else if (index == 1) {

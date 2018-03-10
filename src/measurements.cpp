@@ -245,8 +245,11 @@ QString Measurements::get_file_size_string(size_t file_size)
 
 QString Measurements::get_duration_string(time_t duration)
 {
-	const int hours = (int) (duration / 3600);
-	const int minutes = (int) (((int) round(duration / 60.0)) % 60);
+	QString result;
 
-	return QObject::tr("%1 hrs %2 mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');
+	const int seconds = duration % 60;
+	const int minutes = (duration / 60) % 60;
+	const int hours  =  (duration / (60 * 60)) % 60;
+
+	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
 }

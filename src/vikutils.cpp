@@ -380,16 +380,16 @@ QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
 
 	switch (speed_unit) {
 	case SpeedUnit::KILOMETRES_PER_HOUR:
-		result = QObject::tr("%.2f km/h").arg(VIK_MPS_TO_KPH (speed), 0, 'f', fract);
+		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::MILES_PER_HOUR:
-		result = QObject::tr("%.2f mph").arg(VIK_MPS_TO_MPH (speed), 0, 'f', fract);
+		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::KNOTS:
-		result = QObject::tr("%.2f knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
 		break;
 	case SpeedUnit::METRES_PER_SECOND:
-		result = QObject::tr("%.2f m/s").arg(speed, 0, 'f', fract);
+		result = QObject::tr("%1 m/s").arg(speed, 0, 'f', fract);
 		break;
 	default:
 		result = "--";
