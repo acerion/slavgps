@@ -48,14 +48,14 @@ namespace SlavGPS {
 
 
 	enum class TreeViewColumn {
-		NAME           = 0, /* From item's name. Sortable column. */
-		VISIBLE        = 1, /* From item's visibility. */
-		ICON           = 2,
+		Name      = 0, /* From item's name. Sortable column. */
+		Visible   = 1, /* From item's visibility. */
+		Icon      = 2,
 
 		/* These columns are not visible in tree view. */
-		TREE_ITEM      = 3, /* Tree item to be stored in the tree. */
-		EDITABLE       = 4,
-		TIMESTAMP      = 5, /* Item's timestamp. Sortable column. */
+		TreeItem  = 3, /* Tree item to be stored in the tree. */
+		Editable  = 4,
+		Timestamp = 5, /* Item's timestamp. Sortable column. */
 	};
 
 

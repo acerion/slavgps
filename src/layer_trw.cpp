@@ -1013,11 +1013,12 @@ SGVariant LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 
-void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * values)
+#ifdef K_OLD_IMPLEMENTATION
+void LayerTRWInterface::change_param(void * gtk_widget, void * ui_change_values)
 {
 	// This '-3' is to account for the first few parameters not in the properties
 	const int OFFSET = -3;
-#ifdef K_TODO
+
 	switch (values->param_id) {
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DRAW_WP_IMAGES: {
@@ -1086,8 +1087,8 @@ void LayerTRWInterface::change_param(void * gtk_widget, ui_change_values * value
 		// I don't think it's useful to set sensitivities on widgets you can't immediately see
 	default: break;
 	}
-#endif
 }
+#endif
 
 
 

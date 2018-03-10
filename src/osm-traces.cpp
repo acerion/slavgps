@@ -409,8 +409,6 @@ void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & p
 	} else if (!pref_password.isEmpty()) {
 		password_entry.setText(pref_password);
 	}
-	/* This is a password -> invisible. kamilTODO: shouldn't this be already set elsewhere as invisible? */
-	password_entry.setEchoMode(QLineEdit::Password);
 }
 
 
@@ -446,7 +444,8 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	QLabel * password_label = new QLabel(QObject::tr("Password:"), &dialog);
 	QLineEdit * password_entry = new QLineEdit(&dialog);
 	password_entry->setToolTip(QObject::tr("The password used to login\n"
-					       "<small>Enter the password you use to login into www.openstreetmap.org.</small>"));
+					       "Enter the password you use to login into www.openstreetmap.org."));
+	password_entry->setEchoMode(QLineEdit::Password);
 	dialog.grid->addWidget(password_label, row, 0);
 	dialog.grid->addWidget(password_entry, row, 1);
 	row++;

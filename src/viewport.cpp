@@ -828,9 +828,10 @@ bool Viewport::go_back(void)
 	/* If we inserted a position above, then this will then move to the last saved position.
 	   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
 
+	/* This is safe because ::back_available() returned true. */
 	this->centers_iter--;
-	/* kamilTODO: add check of validity of iterator. */
 	this->set_center_from_coord(*this->centers_iter, false);
+
 	return true;
 }
 
@@ -850,9 +851,10 @@ bool Viewport::go_forward(void)
 		return false;
 	}
 
+	/* This is safe because ::forward_available() returned true. */
 	this->centers_iter++;
-	/* kamilTODO: add check of validity of iterator. */
 	this->set_center_from_coord(*this->centers_iter, false);
+
 	return true;
 }
 
@@ -1478,11 +1480,23 @@ void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w
 
 
 
-void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled) /* TODO: handle 'filled' arg. */
+void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled)
 {
 	QPainter painter(this->scr_buffer);
-	painter.setPen(pen);
-	painter.drawPolygon(points, npoints);
+
+	if (filled) {
+		QPainterPath path;
+		path.moveTo(points[0]);
+		for (int i = 1; i < npoints; i++) {
+			path.lineTo(points[i]);
+		}
+
+		painter.setPen(Qt::NoPen);
+		painter.fillPath(path, QBrush(QColor(pen.color())));
+	} else {
+		painter.setPen(pen);
+		painter.drawPolygon(points, npoints);
+	}
 }
 
 

@@ -100,8 +100,7 @@ namespace SlavGPS {
 
 		bool editing = false;
 
-		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
-		TreeModel * model = NULL;
+		TreeModel * tree_model = NULL;
 
 	private slots:
 		void select_cb(void);

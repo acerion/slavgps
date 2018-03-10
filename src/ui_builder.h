@@ -67,11 +67,6 @@ namespace SlavGPS {
 
 
 
-	typedef int GtkWidget; /* TODO: remove sooner or later. */
-
-
-
-
 	enum class WidgetType {
 		CHECKBUTTON = 0,
 		RADIOGROUP,
@@ -147,10 +142,6 @@ namespace SlavGPS {
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
 
-#ifdef K_OLD_IMPLEMENTATION
-	/* Frees data from last (if necessary). */
-	void a_uibuilder_free_paramdatas(SGVariant * paramdatas, ParameterSpecification * param_specs, uint16_t param_specs_count);
-#endif
 
 	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec);
 
@@ -204,42 +195,6 @@ namespace SlavGPS {
 
 		QTabWidget * tabs = NULL;
 	};
-
-
-
-
-	typedef struct {
-		void * layer;
-		ParameterSpecification * param_spec;
-		int param_id;
-		GtkWidget ** widgets;
-		GtkWidget ** labels;
-	} ui_change_values;
-
-
-
-
-#ifdef K_OLD_IMPLEMENTATION
-	GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data);
-	SGVariant a_uibuilder_widget_get_value(GtkWidget *widget, ParameterSpecification *param);
-	int a_uibuilder_properties_factory(const char *dialog_name,
-					   Window * parent,
-					   ParameterSpecification *params,
-					   uint16_t params_count,
-					   char **groups,
-					   uint8_t groups_count,
-					   bool (*setparam) (void *,uint16_t, SGVariant,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
-					   void * pass_along1,
-					   void * pass_along2,
-					   SGVariant (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
-					   void * pass_along_getparam,
-					   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
-	/* pass_along1 and pass_along2 are for set_param first and last params. */
-
-	SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, ParameterSpecification *params,
-					  uint16_t params_count, char **groups, uint8_t groups_count,
-					  SGVariant *params_defaults);
-#endif
 
 
 

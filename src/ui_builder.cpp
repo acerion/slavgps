@@ -16,14 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
 #include <cstdlib>
 #include <cassert>
+
+
+
 
 #include <QDebug>
 #include <QDialog>
@@ -36,6 +42,9 @@
 #include <QDoubleSpinBox>
 #include <QComboBox>
 #include <QSlider>
+
+
+
 
 #include "layer.h"
 #include "layer_interface.h"
@@ -56,6 +65,7 @@
 
 
 using namespace SlavGPS;
+
 
 
 
@@ -416,6 +426,7 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 	form->addRow(param_spec.ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
 }
+
 
 
 
@@ -832,47 +843,12 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 
 
-#ifdef K_OLD_IMPLEMENTATION
-void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, const SGVariant & data, ParameterSpecification & param_specs)
-{
-	/* Could have to copy it if it's a string! */
-	switch (param_specs[i].type_id) {
-	case SGVariantType::String:
-		paramdatas[i] = SGVariant(data.val_string);
-		break;
-	default:
-		paramdatas[i] = data; /* String list will have to be freed by layer. anything else not freed. */
-	}
-}
-#endif
-
-
 
 SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 {
 	return params_defaults[i];
 }
 
-
-
-#ifdef K_OLD_IMPLEMENTATION
-/* Frees data from last (if necessary). */
-void SlavGPS::a_uibuilder_free_paramdatas(SGVariant * param_table, ParameterSpecification & param_specs, uint16_t param_specs_count)
-{
-	int i;
-	/* May have to free strings, etc. */
-	for (i = 0; i < param_specs_count; i++) {
-		switch (param_specs[i].type_id) {
-		case SGVariantType::StringList:
-			param_table[i].val_string_list.clear();
-			break;
-		default:
-			break;
-		}
-	}
-	free(param_table);
-}
-#endif
 
 
 
@@ -897,328 +873,3 @@ bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const ParameterSp
 
 	return false;
 }
-
-
-
-
-#ifdef K_OLD_IMPLEMENTATION
-
-
-
-
-//static void draw_to_image_file_total_area_cb (QSpinBox * spinbutton, void * *pass_along)
-int a_uibuilder_properties_factory(const char * dialog_name,
-				   QWindow * parent,
-				   ParameterSpecification * params,
-				   uint16_t params_count,
-				   char ** groups,
-				   uint8_t groups_count,
-				   bool (* setparam) (void *, uint16_t, SGVariant, void *, bool),
-				   void * pass_along1,
-				   void * pass_along2,
-				   SGVariant (* getparam) (void *, uint16_t, bool),
-				   void * pass_along_getparam,
-				   void (* changeparam) (GtkWidget*, ui_change_values *))
-/* pass_along1 and pass_along2 are for set_param first and last params */
-{
-	uint16_t i, j, widget_count = 0;
-	bool must_redraw = false;
-
-	if (!params) {
-		return 1; /* No params == no options, so all is good. */
-	}
-
-	for (i = 0; i < params_count; i++) {
-		if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
-			widget_count++;
-		}
-	}
-
-	if (widget_count == 0) {
-		return 0; /* TODO -- should be one? */
-	} else {
-		/* Create widgets and titles; place in table. */
-		BasicDialog * dialog = new BasicDialog(parent);
-		dialog->setWindowTitle(dialog_name);
-		dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
-
-		QPushButton * ok_button = dialog->button_box.button(QDialogButtonBox::Ok);
-
-		int resp;
-
-		GtkWidget *table = NULL;
-		GtkWidget **tables = NULL; /* For more than one group. */
-
-		GtkWidget *notebook = NULL;
-		QLabel ** labels = (QLabel **) malloc(sizeof(QLabel *) * widget_count);
-		GtkWidget **widgets = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
-		ui_change_values * change_values = (ui_change_values *) malloc(sizeof (ui_change_values) * widget_count);
-
-		if (groups && groups_count > 1) {
-			uint8_t current_group;
-			uint16_t tab_widget_count;
-			notebook = gtk_notebook_new();
-			/* Switch to vertical notebook mode when many groups. */
-			if (groups_count > 4) {
-				gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_LEFT);
-			}
-			gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, false, false, 0);
-			tables = (GtkWidget **) malloc(sizeof(GtkWidget *) * groups_count);
-			for (current_group = 0; current_group < groups_count; current_group++) {
-				tab_widget_count = 0;
-				for (j = 0; j < params_count; j ++) {
-					if (params[j].group == current_group) {
-						tab_widget_count++;
-					}
-				}
-
-				if (tab_widget_count) {
-					tables[current_group] = gtk_table_new(tab_widget_count, 1, false);
-					gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tables[current_group], new QLabel(groups[current_group]));
-				}
-			}
-		} else {
-			table = gtk_table_new(widget_count, 1, false);
-			gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, false, false, 0);
-		}
-
-		for (i = 0, j = 0; i < params_count; i++) {
-			if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
-				if (tables) {
-					table = tables[MAX(0, params[i].group_id)]; /* Round up NOT_IN_GROUP, that's not reasonable here. */
-				}
-
-				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam(pass_along_getparam, i, false));
-
-				if (widgets[j]) {
-					labels[j] = new QLabel(QObject::tr(params[i].title));
-					gtk_table_attach(GTK_TABLE(table), labels[j], 0, 1, j, j+1, (GtkAttachOptions) 0, (GtkAttachOptions) 0, 0, 0);
-					gtk_table_attach(GTK_TABLE(table), widgets[j], 1, 2, j, j+1, (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) 0, 2, 2);
-
-					if (changeparam) {
-						change_values[j].layer = pass_along1;
-						change_values[j].param = &params[i];
-						change_values[j].param_id = (int) i;
-						change_values[j].widgets = widgets;
-						change_values[j].labels = labels;
-
-						switch (params[i].widget_type) {
-							/* Change conditions for other widget types can be added when needed. */
-						case WidgetType::COMBOBOX:
-							QObject::connect(widgets[j], SIGNAL("changed"), &change_values[j], SLOT (changeparam));
-							break;
-						case WidgetType::CHECKBUTTON:
-							QObject::connect(widgets[j], SIGNAL("toggled"), SLOT (changeparam));
-							break;
-						default:
-							break;
-						}
-					}
-				}
-				j++;
-			}
-		}
-
-		/* Repeat run through to force changeparam callbacks now that the widgets have been created.
-		   This primarily so the widget sensitivities get set up. */
-		if (changeparam) {
-			for (i = 0, j = 0; i < params_count; i++) {
-				if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
-					if (widgets[j]) {
-						changeparam(widgets[j], &change_values[j]);
-					}
-					j++;
-				}
-			}
-		}
-
-		if (ok_button) {
-			ok_button->setFocus();
-		}
-
-		gtk_widget_show_all(dialog);
-
-		resp = dialog.exec();
-		if (resp == QDialog::Accepted){
-			for (i = 0, j = 0; i < params_count; i++) {
-				if (params[i].group_id != PARAMETER_GROUP_HIDDEN) {
-					if (setparam(pass_along1,
-						     i,
-						     a_uibuilder_widget_get_value(widgets[j], &(params[i])),
-						     pass_along2,
-						     false)) {
-
-						must_redraw = true;
-					}
-					j++;
-				}
-			}
-
-			free(widgets);
-			free(labels);
-			free(change_values);
-			if (tables) {
-				free(tables);
-			}
-
-			gtk_widget_destroy(dialog); /* Hide before redrawing. */
-
-			return must_redraw ? 2 : 3; /* user clicked OK */
-		}
-
-		free(widgets);
-		free(labels);
-		free(change_values);
-		if (tables) {
-			free(tables);
-		}
-		gtk_widget_destroy(dialog);
-
-		return 0;
-	}
-}
-
-
-
-
-
-SGVariant *a_uibuilder_run_dialog(const char *dialog_name, Window * parent, ParameterSpecification *params,
-				       uint16_t params_count, char **groups, uint8_t groups_count,
-				       SGVariant *params_defaults)
-{
-	SGVariant * paramdatas = (SGVariant *) malloc(params_count * sizeof (SGVariant));
-	if (a_uibuilder_properties_factory(dialog_name,
-					   parent,
-					   params,
-					   params_count,
-					   groups,
-					   groups_count,
-					   (bool (*)(void*, uint16_t, SGVariant, void*, bool)) uibuilder_run_setparam,
-					   paramdatas,
-					   params,
-					   (SGVariant (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
-					   params_defaults,
-					   NULL) > 0) {
-
-		return paramdatas;
-	}
-	free(paramdatas);
-	return NULL;
-}
-
-
-
-
-GtkWidget *a_uibuilder_new_widget(ParameterSpecification *param, SGVariant data)
-{
-	/* Perform pre conversion if necessary. */
-	SGVariant var = data;
-	if (param->convert_to_display) {
-		var = param->convert_to_display(data);
-	}
-
-	GtkWidget *rv = NULL;
-	switch (param->widget_type) {
-	case WidgetType::COMBOBOX:
-		if (param->type == SGVariantType::UINT && param->widget_data) {
-			/* Build a simple combobox. */
-			char **pstr = (char **) param->widget_data;
-			rv = new QComboBox();
-			while (*pstr) {
-				rv->addItem(*(pstr++));
-			}
-
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				/* Set the effective default value. */
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == var.u) {
-						/* Match default value. */
-						rv->setCurrentIndex(i);
-						break;
-					}
-			} else {
-				rv->setCurrentIndex(var.u);
-			}
-		} else if (param->type == SGVariantType::String && param->widget_data && !param->extra_widget_data) {
-			/* Build a combobox with editable text. */
-			char **pstr = (char **) param->widget_data;
-			rv = new QComboBox();
-			if (var.s) {
-				rv->adItem(var.s);
-			}
-
-			while (*pstr) {
-				rv->addItem(*(pstr++));
-			}
-
-			if (var.s) {
-				rv->setCurrentIndex(0);
-			}
-		} else if (param->type == SGVariantType::String && param->widget_data && param->extra_widget_data) {
-			/* Build a combobox with fixed selections without editable text. */
-			char **pstr = (char **) param->widget_data;
-			rv = new QComboBox();
-			while (*pstr) {
-				rv->addItem(*(pstr++));
-			}
-			if (var.s) {
-				/* Set the effective default value. */
-				/* In case of value does not exist, set the first value. */
-				rv->setCurrentIndex(0);
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (strcmp(((const char **)param->extra_widget_data)[i], var.s) == 0) {
-						/* Match default value. */
-						rv->setCurrentIndex(i);
-						break;
-					}
-			} else {
-				rv->setCurrentIndex(0);
-			}
-		}
-		break;
-	case WidgetType::RADIO_unused_GROUP:
-		/* widget_data and extra_widget_data are GList. */
-		if (param->type == SGVariantType::UINT && param->widget_data) {
-			rv = vik_radio_group_new((GList *) param->widget_data);
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				int nb_elem = g_list_length((GList *) param->widget_data);
-				for (int i = 0; i < nb_elem; i++)
-					if (KPOINT_unused_ER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, i)) == var.u) {
-						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
-						break;
-					}
-			} else if (var.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), var.u);
-			}
-		}
-		break;
-	case WidgetType::RADIO_unused_GROUP_STATIC:
-		if (param->type == SGVariantType::UINT && param->widget_data) {
-			rv = vik_radio_group_new_static((const char **) param->widget_data);
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				for (int i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == var.u) {
-						vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), i);
-						break;
-					}
-			} else if (var.u) { /* Zero is already default. */
-				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), var.u);
-			}
-		}
-		break;
-	default: break;
-	}
-	if (rv && !gtk_widget_get_tooltip_text(rv)) {
-		if (param->tooltip) {
-			rv->setToolTip(param->tooltip);
-		}
-	}
-	return rv;
-}
-
-
-
-
-#endif

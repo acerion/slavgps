@@ -76,13 +76,13 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 {
-	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top tree item. */
 		qDebug() << "II: Tree View: get tree item: querying Top Tree Item for item" << item_index.row() << item_index.column();
-		parent_item = this->model->invisibleRootItem();
+		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::TREE_ITEM);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::TreeItem);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -94,16 +94,16 @@ TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 
 void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp)
 {
-	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top tree item. */
 		qDebug() << "II: Tree View: set tree item timestamp: querying Top Tree Item for item" << item_index.row() << item_index.column();
-		parent_item = this->model->invisibleRootItem();
+		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::TIMESTAMP);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Timestamp);
 
 	QVariant variant = QVariant::fromValue((qlonglong) timestamp);
-	this->model->setData(ch->index(), variant, RoleLayerData);
+	this->tree_model->setData(ch->index(), variant, RoleLayerData);
 }
 
 
@@ -150,19 +150,19 @@ bool TreeView::move(TreeIndex const & item_index, bool up)
 	TreeIndex switch_index;
 	if (up) {
 		/* Iter to path to iter. */
-		GtkTreePath *path = gtk_tree_model_get_path(this->model, item_index);
-		if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->model, &switch_index, path)) {
+		GtkTreePath *path = gtk_tree_model_get_path(this->tree_model, item_index);
+		if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->tree_model, &switch_index, path)) {
 			gtk_tree_path_free(path);
 			return false;
 		}
 		gtk_tree_path_free(path);
 	} else {
 		switch_index = *item_index;
-		if (!gtk_tree_model_iter_next(this->model, &switch_index)) {
+		if (!gtk_tree_model_iter_next(this->tree_model, &switch_index)) {
 			return false;
 		}
 	}
-	gtk_tree_store_swap(GTK_TREE_STORE(this->model), item_index, &switch_index);
+	gtk_tree_store_swap(GTK_TREE_STORE(this->tree_model), item_index, &switch_index);
 #endif
 	/* Now, the easy part. actually switching them, not the GUI. */
 	/* If item is map... */
@@ -201,7 +201,7 @@ TreeItem * TreeView::get_selected_tree_item(void)
 
 void TreeView::erase(TreeIndex const & index)
 {
-	this->model->removeRow(index.row(), index.parent());
+	this->tree_model->removeRow(index.row(), index.parent());
 }
 
 
@@ -219,15 +219,15 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 		return;
 	}
 
-	/* Item index may be pointing to first column. We want to update TreeViewColumn::ICON column. */
+	/* Item index may be pointing to first column. We want to update TreeViewColumn::Icon column. */
 
-	QStandardItem * parent_item = this->model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top-level item. */
 		qDebug() << "II: Tree View: set tree item icon: querying Top Level Item for item" << item_index.row() << item_index.column();
-		parent_item = this->model->invisibleRootItem();
+		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::ICON);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Icon);
 	ch->setIcon(icon);
 }
 
@@ -240,7 +240,7 @@ void TreeView::set_tree_item_name(TreeIndex const & item_index, QString const & 
 		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
 		return;
 	}
-	this->model->itemFromIndex(item_index)->setText(name);
+	this->tree_model->itemFromIndex(item_index)->setText(name);
 }
 
 
@@ -248,13 +248,13 @@ void TreeView::set_tree_item_name(TreeIndex const & item_index, QString const & 
 
 bool TreeView::get_tree_item_visibility(TreeIndex const & index)
 {
-	QStandardItem * parent_item = this->model->itemFromIndex(index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(index.parent());
 	if (!parent_item) {
 		/* "index" points at the top-level item. */
 		qDebug() << "II: Tree View: get tree item visibility: querying Top Level Item for item" << index.row() << index.column();
-		parent_item = this->model->invisibleRootItem();
+		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) TreeViewColumn::VISIBLE);
+	QStandardItem * ch = parent_item->child(index.row(), (int) TreeViewColumn::Visible);
 
 	QVariant variant = ch->data();
 	return ch->checkState() != Qt::Unchecked; /* See if Item is either checked (Qt::Checked) or partially checked (Qt::PartiallyChecked). */
@@ -310,8 +310,8 @@ void TreeView::set_tree_item_visibility(TreeIndex const & item_index, bool visib
 		return;
 	}
 	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::VISIBLE);
-	this->model->itemFromIndex(visible_index)->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::Visible);
+	this->tree_model->itemFromIndex(visible_index)->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 }
 
 
@@ -325,8 +325,8 @@ void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 	}
 
 	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::VISIBLE);
-	QStandardItem * item = this->model->itemFromIndex(visible_index);
+	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::Visible);
+	QStandardItem * item = this->tree_model->itemFromIndex(visible_index);
 	bool visible = item->checkState() == Qt::Checked;
 	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
 }
@@ -341,7 +341,7 @@ void TreeView::expand(TreeIndex const & index)
 		return;
 	}
 
-	QStandardItem * item = this->model->itemFromIndex(index);
+	QStandardItem * item = this->tree_model->itemFromIndex(index);
 	this->setExpanded(item->index(), true);
 }
 
@@ -394,21 +394,21 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	const QString tooltip = tree_item->get_tooltip();
 
 
-	/* TreeViewColumn::NAME */
+	/* TreeViewColumn::Name */
 	item = new QStandardItem(name);
 	item->setToolTip(tooltip);
 	item->setEditable(tree_item->editable);
 	first_item = item;
 	items << item;
 
-	/* TreeViewColumn::VISIBLE */
+	/* TreeViewColumn::Visible */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 	items << item;
 
-	/* TreeViewColumn::ICON */
+	/* TreeViewColumn::Icon */
 	/* Value in this column can be set with ::set_tree_item_icon(). */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
@@ -418,19 +418,19 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	item->setEditable(false);
 	items << item;
 
-	/* TreeViewColumn::TREE_ITEM */
+	/* TreeViewColumn::TreeItem */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(tree_item);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* TreeViewColumn::EDITABLE */
+	/* TreeViewColumn::Editable */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(tree_item->editable);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* TreeViewColumn::TIMESTAMP */
+	/* TreeViewColumn::Timestamp */
 	/* Value in this column can be set with ::set_tree_item_timestamp(). */
 	qlonglong timestamp = 0;
 	item = new QStandardItem((qlonglong) timestamp);
@@ -438,12 +438,12 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 
 
 	if (parent_index.isValid()) {
-		this->model->itemFromIndex(parent_index)->appendRow(items);
+		this->tree_model->itemFromIndex(parent_index)->appendRow(items);
 	} else {
 		/* Adding tree item just right under top-level item. */
-		this->model->invisibleRootItem()->appendRow(items);
+		this->tree_model->invisibleRootItem()->appendRow(items);
 	}
-	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
+	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
 
 	tree_item->index = QPersistentModelIndex(first_item->index());
 	tree_item->tree_view = this;
@@ -521,11 +521,11 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 
 #ifdef K_TODO
 	GtkTreeIter child;
-	if (!gtk_tree_model_iter_children(this->model, &child, parent_index)) {
+	if (!gtk_tree_model_iter_children(this->tree_model, &child, parent_index)) {
 		return;
 	}
 
-	unsigned int length = gtk_tree_model_iter_n_children(this->model, parent_index);
+	unsigned int length = gtk_tree_model_iter_n_children(this->tree_model, parent_index);
 
 	/* Create an array to store the position offsets. */
 	SortTuple *sort_array;
@@ -534,10 +534,10 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 	unsigned int ii = 0;
 	do {
 		sort_array[ii].offset = ii;
-		gtk_tree_model_get(this->model, &child, COLUMN_NAME, &(sort_array[ii].name), -1);
-		gtk_tree_model_get(this->model, &child, COLUMN_TIMESTAMP, &(sort_array[ii].timestamp), -1);
+		gtk_tree_model_get(this->tree_model, &child, COLUMN_NAME, &(sort_array[ii].name), -1);
+		gtk_tree_model_get(this->tree_model, &child, COLUMN_TIMESTAMP, &(sort_array[ii].timestamp), -1);
 		ii++;
-	} while (gtk_tree_model_iter_next(this->model, &child));
+	} while (gtk_tree_model_iter_next(this->tree_model, &child));
 
 	/* Sort list... */
 	g_qsort_with_data(sort_array,
@@ -555,7 +555,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 	free(sort_array);
 
 	/* This is extremely fast compared to the old alphabetical insertion. */
-	gtk_tree_store_reorder(GTK_TREE_STORE(this->model), parent_index, positions);
+	gtk_tree_store_reorder(GTK_TREE_STORE(this->tree_model), parent_index, positions);
 	free(positions);
 #endif
 }
@@ -668,9 +668,9 @@ TreeIndex const & TreeView::insert_tree_item(TreeIndex const & parent_index, Tre
 #ifdef K_TODO
 	if (sibling_index.isValid()) {
 		if (above) {
-			gtk_tree_store_insert_before(this->model, iter, parent_iter, sibling_index);
+			gtk_tree_store_insert_before(this->tree_model, iter, parent_iter, sibling_index);
 		} else {
-			gtk_tree_store_insert_after(this->model, iter, parent_iter, sibling_index);
+			gtk_tree_store_insert_after(this->tree_model, iter, parent_iter, sibling_index);
 		}
 	} else
 #endif
@@ -685,48 +685,48 @@ TreeIndex const & TreeView::insert_tree_item(TreeIndex const & parent_index, Tre
 
 TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 {
-	this->model = new TreeModel(this, NULL);
+	this->tree_model = new TreeModel(this, NULL);
 
 
 
 	QStandardItem * header_item = NULL;
 
 	header_item = new QStandardItem("Item Name");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::NAME, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Name, header_item);
 
 	header_item = new QStandardItem("Visible");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::VISIBLE, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Visible, header_item);
 
 	header_item = new QStandardItem("Type");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::ICON, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Icon, header_item);
 
 	header_item = new QStandardItem("Item");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::TREE_ITEM, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::TreeItem, header_item);
 
 	header_item = new QStandardItem("Editable");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::EDITABLE, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Editable, header_item);
 
 	header_item = new QStandardItem("Time stamp");
-	this->model->setHorizontalHeaderItem((int) TreeViewColumn::TIMESTAMP, header_item);
+	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Timestamp, header_item);
 
 
-	this->setModel(this->model);
+	this->setModel(this->tree_model);
 	this->expandAll();
 
 
 	this->setSelectionMode(QAbstractItemView::SingleSelection);
 
 
-	this->header()->setSectionResizeMode((int) TreeViewColumn::VISIBLE, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
-	this->header()->setSectionHidden((int) TreeViewColumn::TREE_ITEM, true);
-	this->header()->setSectionHidden((int) TreeViewColumn::EDITABLE, true);
-	this->header()->setSectionHidden((int) TreeViewColumn::TIMESTAMP, true);
+	this->header()->setSectionResizeMode((int) TreeViewColumn::Visible, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
+	this->header()->setSectionHidden((int) TreeViewColumn::TreeItem, true);
+	this->header()->setSectionHidden((int) TreeViewColumn::Editable, true);
+	this->header()->setSectionHidden((int) TreeViewColumn::Timestamp, true);
 
 
 	//connect(this, SIGNAL(activated(const QModelIndex &)), this, SLOT(select_cb(void)));
 	connect(this, SIGNAL(clicked(const QModelIndex &)), this, SLOT(select_cb(void)));
 	//connect(this, SIGNAL(pressed(const QModelIndex &)), this, SLOT(select_cb(void)));
-	connect(this->model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
+	connect(this->tree_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
 
 
 
@@ -772,57 +772,62 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 
 	TreeIndex * index = new QPersistentModelIndex(top_left);
 	if (!index) {
-		qDebug() << "EE: Tree View: invalid TreeIndex from valid index" << top_left;
+		qDebug() << "EE" PREFIX << "invalid TreeIndex from valid index" << top_left;
 		return;
 	}
 
 	TreeItem * tree_item = this->get_tree_item(*index);
 	if (!tree_item) {
-		qDebug() << "EE: Tree View: failed to get tree item from valid index";
+		qDebug() << "EE" PREFIX << "failed to get tree item from valid index";
 		return;
 	}
 
-	QStandardItem * item = this->model->itemFromIndex(*index);
+	QStandardItem * item = this->tree_model->itemFromIndex(*index);
 	if (!item) {
-		qDebug() << "EE: Tree View: failed to get standard item from valid index";
+		qDebug() << "EE" PREFIX << "failed to get standard item from valid index";
 		return;
 	}
 
+	const TreeViewColumn col = (TreeViewColumn) index->column();
+	switch (col) {
+	case TreeViewColumn::Name:
+		if (item->text().isEmpty()) {
+			qDebug() << "WW" PREFIX << "edited item in column Name: new name is empty, ignoring the change";
+			/* We have to undo the action of setting empty text label. */
+			item->setText(tree_item->name);
+		} else {
+			qDebug() << "II" PREFIX << "edited item in column Name: new name is" << item->text();
+			tree_item->name = item->text();
+		}
 
-	switch (index->column()) {
-	case (int) TreeViewColumn::NAME:
-		qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
-
-		/* TODO: reject empty new name. */
-		tree_item->name = item->text();
 		break;
 
-	case (int) TreeViewColumn::VISIBLE:
-		qDebug() << "II: Tree View: edited item in column VISIBLE: is checkable?" << item->isCheckable();
+	case TreeViewColumn::Visible:
+		qDebug() << "II" PREFIX << "edited item in column Visible: is checkable?" << item->isCheckable();
 
 		tree_item->visible = (bool) item->checkState();
-		qDebug() << "SIGNAL: Tree View tree_item_needs_redraw(), uid=", tree_item->uid;
+		qDebug() << "SIGNAL" PREFIX "emitting tree_item_needs_redraw(), uid=", tree_item->uid;
 		emit this->tree_item_needs_redraw(tree_item->uid);
 		break;
 
-	case (int) TreeViewColumn::ICON:
-		qDebug() << "WW: Tree View: edited item in column ICON";
+	case TreeViewColumn::Icon:
+		qDebug() << "WW" PREFIX << "edited item in column Icon";
 		break;
 
-	case (int) TreeViewColumn::TREE_ITEM:
-		qDebug() << "WW: Tree View: edited item in column TREE_ITEM";
+	case TreeViewColumn::TreeItem:
+		qDebug() << "WW" PREFIX << "edited item in column TreeItem";
 		break;
 
-	case (int) TreeViewColumn::EDITABLE:
-		qDebug() << "WW: Tree View: edited item in column EDITABLE";
+	case TreeViewColumn::Editable:
+		qDebug() << "WW" PREFIX << "edited item in column Editable";
 		break;
 
-	case (int) TreeViewColumn::TIMESTAMP:
-		qDebug() << "WW: Tree View: edited item in column EDITABLE";
+	case TreeViewColumn::Timestamp:
+		qDebug() << "WW" PREFIX << "edited item in column Timestamp";
 		break;
 
 	default:
-		qDebug() << "EE: Tree View: edited item in unknown column" << index->column();
+		qDebug() << "EE" PREFIX << "edited item in unknown column" << (int) col;
 		break;
 	}
 
@@ -968,7 +973,7 @@ TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 {
 	TreeIndex * index = NULL;
 #ifdef K_TODO
-	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->model), iter, path_str);
+	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->tree_model), iter, path_str);
 #endif
 	return index;
 }
@@ -999,7 +1004,7 @@ TreeIndex * TreeView::get_index_at_pos(int pos_x, int pos_y)
 		return NULL;
 	}
 
-	gtk_tree_model_get_iter(GTK_TREE_MODEL (this->model), iter, path);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL (this->tree_model), iter, path);
 	gtk_tree_path_free(path);
 #endif
 	return index;

@@ -763,7 +763,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 #ifdef K_TODO
-void LayerMapInterface::change_param(void * gtk_widget, ui_change_values * values)
+void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 {
 	switch (values->param_id) {
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
