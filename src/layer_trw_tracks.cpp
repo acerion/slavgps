@@ -1021,3 +1021,15 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * new_viewport)
 	this->viewport = new_viewport;
 	this->bbox = this->viewport->get_bbox();
 }
+
+
+
+
+void LayerTRWTracks::clear(void)
+{
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		delete (*iter).second;
+	}
+
+	this->items.clear();
+}

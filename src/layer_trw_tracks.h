@@ -179,6 +179,11 @@ namespace SlavGPS {
 
 		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
 
+		/* Similar to C++ container's ::clear() method: call
+		   destructor for all elements of this container,
+		   remove the elements, leaving zero elements in the
+		   container. */
+		void clear(void);
 
 		Tracks items;
 		LatLonBBox bbox;

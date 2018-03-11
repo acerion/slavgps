@@ -1037,7 +1037,8 @@ void Window::redraw_tree_items(void)
 	/* Main layer drawing. */
 	this->items_tree->draw_all(this->viewport);
 
-	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
+	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap).
+	   FIXME: we shouldn't draw things *again*. */
 	if (this->viewport->get_highlight_usage()) {
 		qDebug() << "II: Window:    selection: do draw with highlight";
 

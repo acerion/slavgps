@@ -868,3 +868,15 @@ void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 	((LayerTRW *) this->owning_layer)->wp_sort_order = VL_SO_DATE_DESCENDING;
 	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
 }
+
+
+
+
+void LayerTRWWaypoints::clear(void)
+{
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		delete (*iter).second;
+	}
+
+	this->items.clear();
+}

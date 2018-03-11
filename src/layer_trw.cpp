@@ -2800,12 +2800,18 @@ void LayerTRW::delete_all_routes()
 	}
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		tree_view->erase(i->second->index);
+		this->tree_view->erase(i->second->index);
 	}
-
-	this->routes->items.clear(); /* kamilTODO: call destructors of routes. */
-
 	this->tree_view->erase(this->routes->get_index());
+	this->routes->visible = false; /* There is no such item in tree anymore. */
+
+	/* Don't try (for now) to verify if ->selected_tree_item was
+	   set to this item or any of its children, or to anything
+	   else. Just clear the selection when deleting any item from
+	   the tree. */
+	g_tree->selected_tree_item = NULL;
+
+	this->routes->clear();
 
 	this->emit_layer_changed();
 }
@@ -2822,12 +2828,18 @@ void LayerTRW::delete_all_tracks()
 	}
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		tree_view->erase(i->second->index);
+		this->tree_view->erase(i->second->index);
 	}
-
-	this->tracks->items.clear(); /* kamilTODO: call destructors of tracks. */
-
 	this->tree_view->erase(this->tracks->get_index());
+	this->tracks->visible = false; /* There is no such item in tree anymore. */
+
+	/* Don't try (for now) to verify if ->selected_tree_item was
+	   set to this item or any of its children, or to anything
+	   else. Just clear the selection when deleting any item from
+	   the tree. */
+	g_tree->selected_tree_item = NULL;
+
+	this->tracks->clear();
 
 	this->emit_layer_changed();
 }
@@ -2843,12 +2855,18 @@ void LayerTRW::delete_all_waypoints()
 	this->highest_wp_number_reset();
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		tree_view->erase(i->second->index);
+		this->tree_view->erase(i->second->index);
 	}
-
-	this->waypoints->items.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
-
 	this->tree_view->erase(this->waypoints->get_index());
+	this->waypoints->visible = false; /* There is no such item in tree anymore. */
+
+	/* Don't try (for now) to verify if ->selected_tree_item was
+	   set to this item or any of its children, or to anything
+	   else. Just clear the selection when deleting any item from
+	   the tree. */
+	g_tree->selected_tree_item = NULL;
+
+	this->waypoints->clear();
 
 	this->emit_layer_changed();
 }

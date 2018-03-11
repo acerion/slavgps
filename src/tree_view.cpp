@@ -58,6 +58,8 @@ using namespace SlavGPS;
 extern Tree * g_tree;
 
 
+
+
 typedef int GtkTreeDragSource;
 typedef int GtkTreeDragDest;
 typedef int GtkCellRenderer;
@@ -76,10 +78,15 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 {
+	if (item_index.row() == -1 || item_index.column() == -1) {
+		qDebug() << "WW" PREFIX << "querying for item with -1 row or column";
+		return NULL;
+	}
+
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top tree item. */
-		qDebug() << "II: Tree View: get tree item: querying Top Tree Item for item" << item_index.row() << item_index.column();
+		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::TreeItem);
@@ -97,7 +104,7 @@ void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t time
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top tree item. */
-		qDebug() << "II: Tree View: set tree item timestamp: querying Top Tree Item for item" << item_index.row() << item_index.column();
+		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Timestamp);
@@ -142,7 +149,7 @@ void TreeView::select_cb(void) /* Slot. */
 bool TreeView::move(TreeIndex const & item_index, bool up)
 {
 	TreeItem * item = this->get_tree_item(item_index);
-	if (item->tree_item_type != TreeItemType::LAYER) {
+	if (!item || item->tree_item_type != TreeItemType::LAYER) {
 		return false;
 	}
 
@@ -210,7 +217,7 @@ void TreeView::erase(TreeIndex const & index)
 void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon)
 {
 	if (!item_index.isValid()) {
-		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "invalid item index";
 		return;
 	}
 
@@ -224,7 +231,7 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top-level item. */
-		qDebug() << "II: Tree View: set tree item icon: querying Top Level Item for item" << item_index.row() << item_index.column();
+		qDebug() << "II" PREFIX << "querying Top Level Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Icon);
@@ -237,7 +244,7 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 void TreeView::set_tree_item_name(TreeIndex const & item_index, QString const & name)
 {
 	if (!item_index.isValid()) {
-		qDebug() << "EE: TreeView: invalid item index in" << __FUNCTION__;
+		qDebug() << "EE: TreeView: invalid item index";
 		return;
 	}
 	this->tree_model->itemFromIndex(item_index)->setText(name);
@@ -251,7 +258,7 @@ bool TreeView::get_tree_item_visibility(TreeIndex const & index)
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(index.parent());
 	if (!parent_item) {
 		/* "index" points at the top-level item. */
-		qDebug() << "II: Tree View: get tree item visibility: querying Top Level Item for item" << index.row() << index.column();
+		qDebug() << "II" PREFIX << "querying Top Level Item for item" << index.row() << index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(index.row(), (int) TreeViewColumn::Visible);
@@ -277,6 +284,10 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 	do {
 #if 1           /* Debug. */
 		TreeItem * item = this->get_tree_item(this_item_index);
+		if (!item) {
+			return false; /* The item doesn't exist, so let's return 'is invisible' for it. */
+		}
+
 		qDebug() << "II: TreeView: Checking visibility of" << item->name << "in tree, forever loop depth =" << loop_depth++;
 #endif
 
@@ -306,7 +317,7 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 void TreeView::set_tree_item_visibility(TreeIndex const & item_index, bool visible)
 {
 	if (!!item_index.isValid()) {
-		qDebug() << "EE: Tree View: invalid item index in" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "invalid item index";
 		return;
 	}
 	/* kamilFIXME: this does not take into account third state. */
@@ -320,7 +331,7 @@ void TreeView::set_tree_item_visibility(TreeIndex const & item_index, bool visib
 void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 {
 	if (!item_index.isValid()) {
-		qDebug() << "EE: Tree View: invalid item index in" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "invalid item index";
 		return;
 	}
 
@@ -337,7 +348,7 @@ void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 void TreeView::expand(TreeIndex const & index)
 {
 	if (!index.isValid()) {
-		qDebug() << "EE: Tree View: invalid index in" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "invalid index";
 		return;
 	}
 
@@ -351,7 +362,7 @@ void TreeView::expand(TreeIndex const & index)
 void TreeView::select(TreeIndex const & index)
 {
 	if (!index.isValid()) {
-		qDebug() << "EE: Tree View: invalid index in" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "invalid index";
 		return;
 	}
 
@@ -874,14 +885,19 @@ bool TreeModel::canDropMimeData(const QMimeData * data_, Qt::DropAction action, 
 
 
 	TreeItem * parent_item = this->view->get_tree_item(parent_);
+	if (!parent_item) {
+		qDebug() << "EE" PREFIX << "can't find parent item";
+		return false;
+	}
+
 	if (parent_item->tree_item_type == TreeItemType::LAYER) {
-		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Layer";
+		qDebug() << "EE" PREFIX << "can drop on Layer";
 		return true;
 	} else if (parent_item->tree_item_type == TreeItemType::SUBLAYER) {
-		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: can drop on Sublayer";
+		qDebug() << "EE" PREFIX << "can drop on Sublayer";
 		return true;
 	} else {
-		qDebug() << "EE: Tree View: Drag&Drop: canDropMimeData: wrong type of parent:" << (int) parent_item->tree_item_type;
+		qDebug() << "EE" PREFIX << "wrong type of parent:" << (int) parent_item->tree_item_type;
 		return false;
 	}
 
@@ -911,17 +927,22 @@ bool TreeModel::dropMimeData(const QMimeData * data_, Qt::DropAction action, int
 		/* Drop onto an existing item. */
 		if (parent_.isValid()) {
 			TreeItem * parent_item = this->view->get_tree_item(parent_);
-			qDebug() << "II: Tree View: Drop Mime Data: dropping onto existing item, parent =" << parent_.row() << parent_.column() << parent_item->name << (int) parent_item->tree_item_type;
-			return true;
+			if (!parent_item) {
+				qDebug() << "II" PREFIX << "can't find parent item";
+				return false;
+			} else {
+				qDebug() << "II" PREFIX << "dropping onto existing item, parent =" << parent_.row() << parent_.column() << parent_item->name << (int) parent_item->tree_item_type;
+				return true;
+			}
 		} else {
 			return false;
 		}
 	} else {
-		qDebug() << "II: Tree View: Drop Mime Data: dropping as sibling, parent =" << parent_.row() << parent_.column() << row << column;
+		qDebug() << "II" PREFIX << "dropping as sibling, parent =" << parent_.row() << parent_.column() << row << column;
 		if (parent_.isValid()) {
 			return true;
 		} else {
-			qDebug() << "II: Tree View: Drop Mime Data: invalid parent";
+			qDebug() << "II" PREFIX << "invalid parent";
 			return false;
 		}
 	}
@@ -1034,7 +1055,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 	if (!selected_item->has_properties_dialog) {
 		Dialog::info(tr("This item has no configurable properties."), g_tree->tree_get_main_window());
-		qDebug() << "II: Tree View: selected item" << selected_item->type_id << "has no configurable properties";
+		qDebug() << "II" PREFIX << "selected item" << selected_item->type_id << "has no configurable properties";
 		return true;
 	}
 
