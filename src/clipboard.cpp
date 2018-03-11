@@ -294,7 +294,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 	Layer * selected = panel->get_selected_layer();
 
 	if (selected && selected->type == LayerType::TRW) {
-		((LayerTRW *) selected)->new_waypoint(selected->get_window(), Coord(lat_lon, CoordMode::LATLON));
+		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LATLON), selected->get_window());
 		((LayerTRW *) selected)->get_waypoints_node().calculate_bounds();
 		selected->emit_layer_changed();
 	} else {

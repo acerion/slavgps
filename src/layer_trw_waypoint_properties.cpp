@@ -54,8 +54,13 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Waypoint Properties:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 ParameterSpecification wp_param_specs[] = {
-	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),   WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),       WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
@@ -78,11 +83,32 @@ ParameterSpecification wp_param_specs[] = {
    Final name of the waypoint (accepted in the dialog) is returned. If
    user rejected the dialog (e.g by pressing Cancel button), the
    returned string is empty.
+
+   Return tuple:
+   SG_WP_DIALOG_OK: Dialog returns OK, values were correctly set/edited.
+   SG_WP_DIALOG_NAME: Waypoint's name has been edited and/or is different than @default_name
 */
-QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, bool is_new, bool * updated, QWidget * parent)
+std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, QWidget * parent)
 {
+	/* This function may be called on existing waypoint with
+	   existing name.  In that case @default_name argument refers
+	   to waypoint's member.  At the end of this function we
+	   compare value of default name with waypoint's name, so the
+	   two variables can't refer to the same thing. We need to
+	   make a copy here. */
+	const QString default_wp_name = default_name;
+
+	std::tuple<bool, bool> result(false, false);
+
+	std::vector<const ParameterSpecification *> param_specs;
+	for (int i = 0; i < SG_WP_PARAM_MAX; i++) {
+		param_specs.push_back(&wp_param_specs[i]);
+	}
+
+
 	PropertiesDialogWaypoint dialog(wp, QObject::tr("Waypoint Properties"), parent);
-	dialog.fill(wp, wp_param_specs, default_name);
+	dialog.fill(wp, param_specs, default_wp_name);
+
 
 	dialog.date_time_button = (SGDateTimeButton *) dialog.widgets[SG_WP_PARAM_TIME];
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
@@ -177,20 +203,15 @@ QString SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & defau
 		}
 #endif
 
-		if (is_new) {
-			return entered_name;
-		} else {
-			*updated = true;
-			/* See if name has been changed. */
-			if (default_name != entered_name) {
-				return entered_name;
-			} else {
-				return "";
-			}
-		}
+
+		std::get<SG_WP_DIALOG_OK>(result) = true;
+		std::get<SG_WP_DIALOG_NAME>(result) = default_wp_name != wp->name;
+
+
+		return result;
 	}
 
-	return "";
+	return result;
 }
 
 

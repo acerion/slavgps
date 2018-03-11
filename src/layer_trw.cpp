@@ -1862,7 +1862,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(Window * parent_window, const Coord & default_coord)
+bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
 {
 	const QString default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
@@ -1872,15 +1872,14 @@ bool LayerTRW::new_waypoint(Window * parent_window, const Coord & default_coord)
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	const QString returned_name = waypoint_properties_dialog(wp, default_name, this->coord_mode, true, &updated, parent_window);
-
-	if (returned_name.size()) {
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, default_name, this->coord_mode, parent_window);
+	if (std::get<SG_WP_DIALOG_OK>(result)) {
+		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 		wp->visible = true;
-		wp->set_name(returned_name);
 		this->add_waypoint(wp);
 		return true;
 	} else {
-		qDebug() << "II: LayerTRW:" << __FUNCTION__ << "empty name of new Waypoint, rejecting";
+		qDebug() << "II: LayerTRW:" << __FUNCTION__ << "failed to create new waypoint in dialog, rejecting";
 		delete wp;
 		return false;
 	}
@@ -2121,7 +2120,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (this->new_waypoint(this->get_window(), g_tree->tree_get_main_viewport()->get_center2())) {
+	if (this->new_waypoint(g_tree->tree_get_main_viewport()->get_center2()), this->get_window()) {
 		this->waypoints->calculate_bounds();
 		if (this->visible) {
 			g_tree->emit_items_tree_updated();

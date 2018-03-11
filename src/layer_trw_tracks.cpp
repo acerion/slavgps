@@ -116,8 +116,7 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes, TreeView * ref_tree_view) : Layer
 
 LayerTRWTracks::~LayerTRWTracks()
 {
-	/* kamilTODO: call destructors of Track objects? */
-	this->items.clear();
+	this->clear();
 }
 
 

@@ -118,18 +118,19 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	   Since the properties also allows waypoint manipulations it won't cause conflicts here. */
 	this->accept();
 
-	bool updated = false;
-	const QString new_name = waypoint_properties_dialog(wp, wp->name, trw->get_coord_mode(), false, &updated, g_tree->tree_get_main_window());
-	if (new_name.size()) {
-		trw->get_waypoints_node().rename_waypoint(wp, new_name);
-	}
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, wp->name, trw->get_coord_mode(), g_tree->tree_get_main_window());
+	if (std::get<SG_WP_DIALOG_OK>(result)) { /* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 
-	if (updated) {
+		if (std::get<SG_WP_DIALOG_NAME>(result)) {
+			/* Waypoint's name has been changed. */
+			trw->get_waypoints_node().propagate_new_waypoint_name(wp);
+		}
+
 		trw->get_waypoints_node().reset_waypoint_icon(wp);
-	}
 
-	if (updated && trw->visible) {
-		trw->emit_layer_changed();
+		if (trw->visible) {
+			trw->emit_layer_changed();
+		}
 	}
 }
 

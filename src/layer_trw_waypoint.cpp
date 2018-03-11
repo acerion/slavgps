@@ -475,20 +475,24 @@ void Waypoint::properties_dialog_cb(void)
 		return;
 	}
 
-	bool updated = false;
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	const QString new_name = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, false, &updated, g_tree->tree_get_main_window());
-	if (new_name.size()) {
-		parent_layer_->waypoints->rename_waypoint(this, new_name);
-	}
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, g_tree->tree_get_main_window());
+	if (std::get<SG_WP_DIALOG_OK>(result)) {
+		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 
-	if (updated && this->index.isValid()) {
-		this->tree_view->set_tree_item_icon(this->index, get_wp_icon_small(this->symbol_name));
-	}
+		if (std::get<SG_WP_DIALOG_NAME>(result)) {
+			/* Waypoint's name has been changed. */
+			parent_layer_->waypoints->propagate_new_waypoint_name(this);
+		}
 
-	if (updated && parent_layer_->visible) {
-		parent_layer_->emit_layer_changed();
+		if (this->index.isValid()) {
+			this->tree_view->set_tree_item_icon(this->index, get_wp_icon_small(this->symbol_name));
+		}
+
+		if (parent_layer_->visible) {
+			parent_layer_->emit_layer_changed();
+		}
 	}
 }
 

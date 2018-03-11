@@ -224,7 +224,7 @@ namespace SlavGPS {
 		bool move_viewport_to_show_all(Viewport * viewport);
 
 
-		bool new_waypoint(Window * parent, const Coord & default_coord);
+		bool new_waypoint(const Coord & default_coord, Window * parent = NULL);
 		Track * new_track_create_common(const QString & new_name);
 		Track * new_route_create_common(const QString & new_name);
 

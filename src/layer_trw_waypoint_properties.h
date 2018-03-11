@@ -23,7 +23,16 @@
 
 
 
+
+#include <tuple>
+
+
+
+
 #include <QWidget>
+
+
+
 
 #include "coord.h"
 #include "ui_builder.h"
@@ -58,7 +67,12 @@ namespace SlavGPS {
 
 
 
-	QString waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, bool is_new, bool * updated, QWidget * parent = NULL);
+	enum {
+		SG_WP_DIALOG_OK   = 0,
+		SG_WP_DIALOG_NAME = 1
+	};
+
+	std::tuple<bool, bool> waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, QWidget * parent = NULL);
 
 
 

@@ -89,8 +89,7 @@ LayerTRWWaypoints::LayerTRWWaypoints(TreeView * ref_tree_view) : LayerTRWWaypoin
 
 LayerTRWWaypoints::~LayerTRWWaypoints()
 {
-	/* kamilTODO: call destructors of Waypoint objects? */
-	this->items.clear();
+	this->clear();
 }
 
 
@@ -361,7 +360,8 @@ void LayerTRWWaypoints::uniquify(sort_order_t sort_order)
 
 		/* Rename it. */
 		const QString uniq_name = this->new_unique_element_name(wp->name);
-		this->rename_waypoint(wp, uniq_name);
+		wp->set_name(uniq_name);
+		this->propagate_new_waypoint_name(wp);
 		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
@@ -401,13 +401,11 @@ QString LayerTRWWaypoints::new_unique_element_name(const QString & old_name)
 /**
  *  Rename waypoint and maintain corresponding name of waypoint in the tree view.
  */
-void LayerTRWWaypoints::rename_waypoint(Waypoint * wp, const QString & new_name)
+void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
 {
-	wp->set_name(new_name);
-
-	/* Update the tree view as well. */
+	/* Update the tree view. */
 	if (wp->index.isValid()) {
-		this->tree_view->set_tree_item_name(wp->index, new_name);
+		this->tree_view->set_tree_item_name(wp->index, wp->name);
 		this->tree_view->sort_children(this->get_index(), ((LayerTRW *) this->owning_layer)->wp_sort_order);
 	} else {
 		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";

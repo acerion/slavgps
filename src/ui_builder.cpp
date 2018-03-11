@@ -87,7 +87,9 @@ ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecif
 	}
 
 	this->id = other.id;
-	this->name_space = strdup(other.name_space);
+	if (other.name_space) { /* .name_space may be NULL. */
+		this->name_space = strdup(other.name_space);
+	}
 	this->name = strdup(other.name);
 	this->type_id = other.type_id;
 	this->group_id = other.group_id;
@@ -322,23 +324,23 @@ void PropertiesDialog::fill(LayerInterface * interface)
 
 
 
-void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)[10], const QString & default_name)
+void PropertiesDialog::fill(Waypoint * wp, const std::vector<const ParameterSpecification *> & param_specs, const QString & default_name)
 {
 	qDebug() << "\nII: UI Builder: creating Properties Dialog from waypoint";
 
 	int i = 0;
 	QFormLayout * form = this->insert_tab(tr("Properties"));
-	this->forms.insert(std::pair<param_id_t, QFormLayout *>(param_specs[SG_WP_PARAM_NAME].group_id, form));
+	this->forms.insert(std::pair<param_id_t, QFormLayout *>(param_specs[SG_WP_PARAM_NAME]->group_id, form));
 	SGVariant param_value; // = layer->get_param_value(i, false);
 	QWidget * widget = NULL;
 
 
 
-	ParameterSpecification & param_spec = param_specs[SG_WP_PARAM_NAME];
+	const ParameterSpecification * param_spec = param_specs[SG_WP_PARAM_NAME];
 	param_value = SGVariant(default_name); /* TODO: This should be somehow taken from param_specs->default */
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
@@ -347,24 +349,24 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 
 
 	param_spec = param_specs[SG_WP_PARAM_LAT];
-	widget = this->new_widget(param_spec, SGVariant(lat_lon.lat, SGVariantType::Latitude));
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, SGVariant(lat_lon.lat, SGVariantType::Latitude));
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	param_spec = param_specs[SG_WP_PARAM_LON];
-	widget = this->new_widget(param_spec, SGVariant(lat_lon.lon, SGVariantType::Longitude));
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, SGVariant(lat_lon.lon, SGVariantType::Longitude));
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	/* TODO: Consider if there should be a remove time button... */
 	param_spec = param_specs[SG_WP_PARAM_TIME];
-	widget = this->new_widget(param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 #ifdef K_TODO
 	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 #endif
@@ -387,44 +389,44 @@ void PropertiesDialog::fill(Waypoint * wp, ParameterSpecification (&param_specs)
 
 	param_spec = param_specs[SG_WP_PARAM_ALT];
 	param_value = SGVariant(alt);
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	/* TODO: comment may contain URL. Make the label or input field clickable. */
 	param_spec = param_specs[SG_WP_PARAM_COMMENT];
 	param_value = SGVariant(wp->comment);
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	/* TODO: description may contain URL. Make the label or input field clickable. */
 	param_spec = param_specs[SG_WP_PARAM_DESC];
 	param_value = SGVariant(wp->description);
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	/* TODO: perhaps add file filter for image files? */
 	param_spec = param_specs[SG_WP_PARAM_IMAGE];
 	param_value = SGVariant(wp->image_full_path);
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 
 
 
 	param_spec = param_specs[SG_WP_PARAM_SYMBOL];
 	param_value = SGVariant(wp->symbol_name);
-	widget = this->new_widget(param_spec, param_value);
-	form->addRow(param_spec.ui_label, widget);
-	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec.id, widget));
+	widget = this->new_widget(*param_spec, param_value);
+	form->addRow(param_spec->ui_label, widget);
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
 }
 
 

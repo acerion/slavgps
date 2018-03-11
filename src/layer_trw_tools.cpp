@@ -1361,7 +1361,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 	}
 
 	const Coord coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
-	if (trw->new_waypoint(trw->get_window(), coord)) {
+	if (trw->new_waypoint(coord, trw->get_window())) {
 		trw->get_waypoints_node().calculate_bounds();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";

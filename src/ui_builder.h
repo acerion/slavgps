@@ -29,6 +29,7 @@
 #endif
 
 #include <map>
+#include <vector>
 #include <cstdint>
 
 #include <QObject>
@@ -166,7 +167,7 @@ namespace SlavGPS {
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, ParameterSpecification (&param_specs)[10 /* SG_WP_PARAM_MAX */], const QString & default_name); /* FIXME: magic number. */
+		void fill(Waypoint * wp, const std::vector<const ParameterSpecification *> & param_specs, const QString & default_name);
 
 		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification & param_spec);
 		SGVariant get_param_value(const QString & param_name, const ParameterSpecification & param_spec);
