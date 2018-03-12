@@ -43,11 +43,6 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
-#include "bbox.h"
-
-
-
-
 /* Number of UTM zones */
 #define UTM_ZONES 60
 
@@ -60,6 +55,7 @@ namespace SlavGPS {
 
 
 	class UTM;
+	class LatLonBBox;
 
 
 

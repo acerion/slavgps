@@ -53,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX "Trackpoint Properties: "
+#define PREFIX ": Trackpoint Properties: "
 
 
 
@@ -205,7 +205,8 @@ bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 
 void PropertiesDialogTP::reset_dialog_data(void)
 {
-	/* TODO: shouldn't we set ->cur_tp to NULL? */
+	this->cur_tp = NULL;
+
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
 
@@ -253,11 +254,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
-	if (tp->name.isEmpty()) { /* TODO: do we need these two branches at all? */
-		this->trkpt_name->insert("");
-	} else {
-		this->trkpt_name->insert(tp->name);
-	}
+	this->trkpt_name->insert(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous TP?). */
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
 	this->button_insert_tp_after->setEnabled(std::next(current_tp_iter) != track->end());
@@ -306,7 +303,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		this->alt->setValue(VIK_METERS_TO_FEET(tp->altitude));
 		break;
 	default:
-		qDebug() << "EE:" PREFIX "invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX "invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
 		this->alt->setValue(tp->altitude);
 		break;
 	}

@@ -32,6 +32,11 @@
 
 
 
+#include "coords.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -57,6 +62,7 @@ namespace SlavGPS {
 		double west = 0.0;  /* min_lon */
 
 		static LatLonBBoxStrings to_strings(const LatLonBBox & bbox);
+		LatLon get_center_coordinate(void) const;
 	};
 
 

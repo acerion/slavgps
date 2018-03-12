@@ -185,6 +185,13 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+		/*
+		  Delete a single track from container and from main items tree.
+		  Delete the passed object as well.
+		  Return value of track's "visible" property before it was deleted.
+		*/
+		bool delete_track(Track * trk);
+
 		Tracks items;
 		LatLonBBox bbox;
 

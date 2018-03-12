@@ -1032,3 +1032,42 @@ void LayerTRWTracks::clear(void)
 
 	this->items.clear();
 }
+
+
+
+
+bool LayerTRWTracks::delete_track(Track * trk)
+{
+	if (!trk) {
+		qDebug() << "EE" PREFIX << "NULL pointer to route";
+		return false;
+	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	if (trk->name.isEmpty()) {
+		qDebug() << "WW" PREFIX << "route with empty name, deleting anyway";
+	}
+
+	if (trk == parent_layer->get_edited_track()) {
+		parent_layer->reset_edited_track();
+		parent_layer->moving_tp = false;
+		parent_layer->route_finder_started = false;
+	}
+
+	const bool was_visible = trk->visible;
+
+	if (trk == parent_layer->route_finder_added_track) {
+		parent_layer->route_finder_added_track = NULL;
+	}
+
+	/* Could be current_tp, so we have to check. */
+	parent_layer->cancel_tps_of_track(trk);
+
+	this->tree_view->erase(trk->index);
+	this->items.erase(trk->uid); /* Erase by key. */
+
+	delete trk;
+
+	return was_visible;
+}

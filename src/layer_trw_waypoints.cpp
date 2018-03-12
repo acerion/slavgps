@@ -878,3 +878,37 @@ void LayerTRWWaypoints::clear(void)
 
 	this->items.clear();
 }
+
+
+
+
+bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	if (!wp) {
+		qDebug() << "EE" PREFIX << "NULL pointer to waypoint";
+		return false;
+	}
+
+	if (wp->name.isEmpty()) {
+		qDebug() << "WW" PREFIX << "waypoint with empty name, deleting anyway";
+	}
+
+	if (wp == parent_layer->get_edited_wp()) {
+		parent_layer->reset_edited_wp();
+		parent_layer->moving_wp = false;
+	}
+
+	const bool was_visible = wp->visible;
+
+	parent_layer->tree_view->erase(wp->index);
+
+	parent_layer->highest_wp_number_remove_wp(wp->name);
+
+	this->items.erase(wp->uid); /* Erase by key. */
+
+	delete wp;
+
+	return was_visible;
+}

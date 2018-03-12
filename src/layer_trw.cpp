@@ -2637,29 +2637,12 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *
 
 bool LayerTRW::delete_track(Track * trk)
 {
-	/* TODO: why check for trk->name here? */
-	if (!trk || trk->name.isEmpty()) {
+	if (!trk) {
+		qDebug() << "EE" PREFIX << "NULL pointer to track";
 		return false;
 	}
 
-	if (trk == this->get_edited_track()) {
-		this->reset_edited_track();
-		this->moving_tp = false;
-		this->route_finder_started = false;
-	}
-
-	bool was_visible = trk->visible;
-
-	if (trk == this->route_finder_added_track) {
-		this->route_finder_added_track = NULL;
-	}
-
-	/* Could be current_tp, so we have to check. */
-	this->cancel_tps_of_track(trk);
-
-	qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
-	this->tree_view->erase(trk->index);
-	this->tracks->items.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
+	const bool was_visible = this->tracks->delete_track(trk);
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->tracks->items.size() == 0) {
@@ -2676,27 +2659,12 @@ bool LayerTRW::delete_track(Track * trk)
 
 bool LayerTRW::delete_route(Track * trk)
 {
-	/* kamilTODO: why check for trk->name here? */
-	if (!trk || trk->name.isEmpty()) {
+	if (!trk) {
+		qDebug() << "EE" PREFIX << "NULL pointer to route";
 		return false;
 	}
 
-	if (trk == this->get_edited_track()) {
-		this->reset_edited_track();
-		this->moving_tp = false;
-	}
-
-	bool was_visible = trk->visible;
-
-	if (trk == this->route_finder_added_track) {
-		this->route_finder_added_track = NULL;
-	}
-
-	/* Could be current_tp, so we have to check. */
-	this->cancel_tps_of_track(trk);
-
-	this->tree_view->erase(trk->index);
-	this->routes->items.erase(trk->uid); /* kamilTODO: should this line be inside of "if (it)"? */
+	const bool was_visible = this->routes->delete_track(trk);
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->routes->items.size() == 0) {
@@ -2714,29 +2682,18 @@ bool LayerTRW::delete_route(Track * trk)
 
 bool LayerTRW::delete_waypoint(Waypoint * wp)
 {
-	/* TODO: why check for wp->name here? */
-	if (!wp || wp->name.isEmpty()) {
+	if (!wp) {
+		qDebug() << "EE" PREFIX << "NULL pointer to waypoint";
 		return false;
 	}
 
-	if (wp == this->get_edited_wp()) {
-		this->reset_edited_wp();
-		this->moving_wp = false;
-	}
-
-	bool was_visible = wp->visible;
-
-	this->tree_view->erase(wp->index);
-
-	this->highest_wp_number_remove_wp(wp->name);
-
-	/* kamilTODO: should this line be inside of "if (it)"? */
-	this->waypoints->items.erase(wp->uid); /* Last because this frees the name. */
+	const bool was_visible = this->waypoints->delete_waypoint(wp);
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->waypoints->items.size() == 0) {
 		this->tree_view->erase(this->waypoints->get_index());
 	}
+
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
 
@@ -3878,8 +3835,8 @@ void LayerTRW::tpwin_update_dialog_data()
 {
 	Track * track = this->get_edited_track();
 	if (track) {
-		/* Notional center of a track is simply an average of the bounding box extremities. */
-		const LatLon ll_center((track->bbox.north + track->bbox.south) / 2, (track->bbox.east + track->bbox.west) / 2);
+		/* Notional center of a track is simply an average of its bounding box extremities. */
+		const LatLon ll_center = track->bbox.get_center_coordinate(); /* TODO: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->selected_tp.iter, track->type_id == "sg.trw.route");
 	}
 }

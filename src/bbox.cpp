@@ -38,3 +38,11 @@ LatLonBBoxStrings LatLonBBox::to_strings(const LatLonBBox & bbox)
 	CoordUtils::to_strings(bbox_strings, bbox);
 	return bbox_strings;
 }
+
+
+
+
+LatLon LatLonBBox::get_center_coordinate(void) const
+{
+	return LatLon((this->north + this->south) / 2, (this->east + this->west) / 2);
+}

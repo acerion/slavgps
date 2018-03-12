@@ -176,6 +176,12 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+		/*
+		  Delete a single waypoint from container and from main items tree.
+		  Delete the passed object as well.
+		  Return value of waypoint's "visible" property before it was deleted.
+		*/
+		bool delete_waypoint(Waypoint * wp);
 
 		Waypoints items;
 		LatLonBBox bbox;

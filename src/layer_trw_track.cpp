@@ -1109,9 +1109,8 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
 			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
 
-			if ((*iter)->altitude > 1E9) {
-				/* TODO: don't use magic number 1E9.
-				   TODO: clamp the invalid values, but still generate vector? */
+			if ((*iter)->altitude > SG_ALTITUDE_RANGE_MAX) {
+				/* TODO: clamp the invalid values, but still generate vector? */
 				qDebug() << "WW" PREFIX << "track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
 				break;

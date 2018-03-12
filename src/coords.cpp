@@ -66,6 +66,7 @@ renaming functions and defining LatLon and UTM structs.
 #define RAD2DEG(x) ((x)*(180/M_PI))
 #endif
 #include "degrees_converters.h"
+#include "bbox.h"
 
 
 
