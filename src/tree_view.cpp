@@ -206,9 +206,10 @@ TreeItem * TreeView::get_selected_tree_item(void)
 
 
 
-void TreeView::erase(TreeIndex const & index)
+void TreeView::detach_item(TreeItem * item)
 {
-	this->tree_model->removeRow(index.row(), index.parent());
+	this->tree_model->removeRow(item->index.row(), item->index.parent());
+	item->tree_view = NULL;
 }
 
 

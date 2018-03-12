@@ -1323,7 +1323,7 @@ void LayerTRW::add_children_to_tree(void)
 {
 	qDebug() << "DD: Layer TRW: Add Children to Tree";
 
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		qDebug() << "EE: Layer TRW: Add Children to Tree: layer not connected to tree";
 		return;
 	}
@@ -2244,12 +2244,12 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		qDebug() << "EE: Layer TRW: add waypoint: layer not connected to tree";
 		return;
 	}
 
-	if (!this->waypoints->tree_view) {
+	if (!this->waypoints->is_in_tree()) {
 		/* "Waypoints" node has not been shown in tree view.
 		   That's because we start showing the node only after first waypoint is added. */
 
@@ -2287,12 +2287,12 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 void LayerTRW::add_track(Track * trk)
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		qDebug() << "EE: Layer TRW: add track: layer not connected to tree";
 		return;
 	}
 
-	if (!this->tracks->tree_view) {
+	if (!this->tracks->is_in_tree()) {
 		/* "Tracks" node has not been shown in tree view.
 		   That's because we start showing the node only after first track is added. */
 
@@ -2330,12 +2330,12 @@ void LayerTRW::add_track(Track * trk)
 
 void LayerTRW::add_route(Track * trk)
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		qDebug() << "EE: Layer TRW: add route: layer not connected to tree";
 		return;
 	}
 
-	if (!this->routes->tree_view) {
+	if (!this->routes->is_in_tree()) {
 		/* "Routes" node has not been shown in tree view.
 		   That's because we start showing the node only after first route is added. */
 
@@ -2646,7 +2646,7 @@ bool LayerTRW::delete_track(Track * trk)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->tracks->items.size() == 0) {
-		this->tree_view->erase(this->tracks->get_index());
+		this->tree_view->detach_item(this->tracks);
 	}
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
@@ -2668,7 +2668,7 @@ bool LayerTRW::delete_route(Track * trk)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->routes->items.size() == 0) {
-		this->tree_view->erase(this->routes->get_index());
+		this->tree_view->detach_item(this->routes);
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
@@ -2691,7 +2691,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->waypoints->items.size() == 0) {
-		this->tree_view->erase(this->waypoints->get_index());
+		this->tree_view->detach_item(this->waypoints);
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
@@ -2756,9 +2756,9 @@ void LayerTRW::delete_all_routes()
 	}
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		this->tree_view->erase(i->second->index);
+		this->tree_view->detach_item(i->second);
 	}
-	this->tree_view->erase(this->routes->get_index());
+	this->tree_view->detach_item(this->routes);
 	this->routes->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
@@ -2784,9 +2784,9 @@ void LayerTRW::delete_all_tracks()
 	}
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		this->tree_view->erase(i->second->index);
+		this->tree_view->detach_item(i->second);
 	}
-	this->tree_view->erase(this->tracks->get_index());
+	this->tree_view->detach_item(this->tracks);
 	this->tracks->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
@@ -2811,9 +2811,9 @@ void LayerTRW::delete_all_waypoints()
 	this->highest_wp_number_reset();
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		this->tree_view->erase(i->second->index);
+		this->tree_view->detach_item(i->second);
 	}
-	this->tree_view->erase(this->waypoints->get_index());
+	this->tree_view->detach_item(this->waypoints);
 	this->waypoints->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
@@ -4216,7 +4216,7 @@ void LayerTRW::generate_missing_thumbnails(void)
 
 void LayerTRW::sort_all()
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		return;
 	}
 

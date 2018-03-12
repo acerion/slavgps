@@ -104,6 +104,9 @@ namespace SlavGPS {
 
 		virtual bool properties_dialog() { return false; };
 
+		/* Is given tree item a member of a tree? */
+		bool is_in_tree(void) const;
+
 		/* Get layer associated with this tree item.
 		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
 		   Return one of these. */

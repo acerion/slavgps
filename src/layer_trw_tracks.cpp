@@ -930,7 +930,7 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
  */
 void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		/* This subnode hasn't been added to tree yet. */
 		return;
 	}
@@ -1064,7 +1064,7 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	/* Could be current_tp, so we have to check. */
 	parent_layer->cancel_tps_of_track(trk);
 
-	this->tree_view->erase(trk->index);
+	this->tree_view->detach_item(trk);
 	this->items.erase(trk->uid); /* Erase by key. */
 
 	delete trk;

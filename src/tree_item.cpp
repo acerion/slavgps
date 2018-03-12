@@ -103,3 +103,19 @@ bool TreeItem::the_same_object(const TreeItem * item1, const TreeItem * item2)
 
 	return true;
 }
+
+
+
+
+bool TreeItem::is_in_tree(void) const
+{
+	if (NULL == this->tree_view) {
+		return false;
+	}
+
+	if (!this->index.isValid()) {
+		return false;
+	}
+
+	return true;
+}

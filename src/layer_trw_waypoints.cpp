@@ -787,7 +787,7 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
  */
 void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
-	if (!this->tree_view) {
+	if (!this->is_in_tree()) {
 		/* This subnode hasn't been added to tree yet. */
 		return;
 	}
@@ -902,7 +902,7 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	const bool was_visible = wp->visible;
 
-	parent_layer->tree_view->erase(wp->index);
+	parent_layer->tree_view->detach_item(wp);
 
 	parent_layer->highest_wp_number_remove_wp(wp->name);
 

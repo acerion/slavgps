@@ -198,9 +198,14 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
  */
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
+	if (!this->is_in_tree()) {
+		qDebug() << "EE: Layer Aggregate: Aggregate Layer not connected to tree";
+		return;
+	}
+
+
 	/* By default layers go to the top. */
 	bool put_above = true;
-
 	if (allow_reordering) {
 		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::DEM
@@ -211,22 +216,18 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 
-	if (this->tree_view) {
-		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->add_tree_item(this->index, layer, layer->name);
+	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+	this->tree_view->add_tree_item(this->index, layer, layer->name);
 
-		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
-		if (this->children->empty()) {
-			this->tree_view->expand(this->index);
-		}
+	if (this->children->empty()) {
+		this->tree_view->expand(this->index);
+	}
 
-		if (layer->type == LayerType::GPS) {
-			/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
-			layer->add_children_to_tree();
-		}
-	} else {
-		qDebug() << "EE: Layer Aggregate: Aggregate Layer not connected to tree";
+	if (layer->type == LayerType::GPS) {
+		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
+		layer->add_children_to_tree();
 	}
 
 	if (put_above) {
@@ -619,10 +620,12 @@ LayerAggregate::~LayerAggregate()
 
 void LayerAggregate::clear()
 {
+	TreeView * tree = this->tree_view;
+
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		if (layer->tree_view) {
-			layer->tree_view->erase(layer->index);
+		if (layer->is_in_tree()) {
+			tree->detach_item(layer);
 		}
 		delete layer;
 	}
@@ -632,19 +635,26 @@ void LayerAggregate::clear()
 
 
 
-/* Delete a layer specified by \p index. */
-bool LayerAggregate::delete_layer(TreeIndex const & tree_index)
+/**
+   @brief Delete a layer specified by \p index
+
+   This method also calls destructor of \p layer.
+
+   @return true if layer was visible before being deleted
+   @return false otherwise
+*/
+bool LayerAggregate::delete_layer(Layer * layer)
 {
-	assert(tree_index.isValid());
+	assert (layer->is_in_tree());
+	assert (this->tree_view->get_tree_item(layer->index)->to_layer()->the_same_object(layer));
 
-	Layer * layer = this->tree_view->get_tree_item(tree_index)->to_layer();
-	bool was_visible = layer->visible;
+	const bool was_visible = layer->visible;
 
-	this->tree_view->erase(tree_index);
+	this->tree_view->detach_item(layer);
 
-	for (auto i = this->children->begin(); i != this->children->end(); i++) {
-		if (layer->the_same_object(*i)) {
-			this->children->erase(i);
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		if (layer->the_same_object(*iter)) {
+			this->children->erase(iter);
 			break;
 		}
 	}

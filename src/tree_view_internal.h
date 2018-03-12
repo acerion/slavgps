@@ -91,8 +91,9 @@ namespace SlavGPS {
 		void select(TreeIndex const & index);
 		void select_and_expose(TreeIndex  const & index);
 		void unselect(TreeIndex const & index);
-		void erase(TreeIndex const & index);
 		bool move(TreeIndex const & index, bool up);
+
+		void detach_item(TreeItem * item);
 
 		bool is_editing_in_progress();
 		void expand(TreeIndex const & index);

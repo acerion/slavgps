@@ -456,7 +456,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			if (parent_layer->type == LayerType::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent_layer->delete_layer(selected_item->index)) {
+				if (parent_layer->delete_layer(selected_item)) {
 					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
 					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
@@ -542,7 +542,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent_layer->delete_layer(selected_item->index)) {
+				if (parent_layer->delete_layer(selected_item)) {
 					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << layer->get_name();
 					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
