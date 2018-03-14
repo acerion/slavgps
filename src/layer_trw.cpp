@@ -3976,23 +3976,16 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 */
 void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical)
 {
+	/* https://doc.qt.io/archives/4.3/geometry.html */
+
 	Window * parent_window = this->get_window(); /* i.e. the main window. */
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	/* TODO: improve this code, it barely works. */
 
-	int win_pos_x = parent_window->x();
-	int win_pos_y = parent_window->y();
-	int win_size_x = parent_window->width();
-	int win_size_y = parent_window->height();
-
-	const QPoint global_dialog_pos = dialog->mapToGlobal(QPoint(0, 0));
-	int dialog_width = dialog->width();
-	int dialog_height = dialog->height();
-
-	/* Viewport's position relative to parent widget. */
-	int viewport_pos_x = viewport->x();
-	int viewport_pos_y = viewport->y();
+	const int dialog_width = dialog->frameGeometry().height(); /* Including window frame. */
+	const int dialog_height = dialog->frameGeometry().width(); /* Including window frame. */
+	const QPoint dialog_pos = dialog->pos();
 
 
 	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
@@ -4005,109 +3998,66 @@ void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool 
 	const ScreenPos exposed_pos = viewport->coord_to_screen_pos(exposed_coord); /* In viewport pixels. */
 	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(exposed_pos.x, exposed_pos.y));
 
-	if (global_coord_pos.x() < global_dialog_pos.x()) {
+	const int primary_screen = QApplication::desktop()->primaryScreen();
+	const QRect primary_screen_geo = QApplication::desktop()->availableGeometry(primary_screen);
+	const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(viewport);
+
+
+	qDebug() << "kamil primary screen" << primary_screen << "dialog begin" << dialog_pos << ", coord pos" << global_coord_pos;
+	qDebug() << "kamil available geometry of primary screen" << primary_screen_geo;
+	qDebug() << "kamil available geometry of screen containing widget" << containing_screen_geo;
+
+#if 0
+	if (global_coord_pos.x() < dialog_pos.x()) {
 		/* Point visible, on left side of dialog. */
+		qDebug() << "kamil point visible on left";
 		return;
 	}
-	if (global_coord_pos.y() < global_dialog_pos.y()) {
+	if (global_coord_pos.y() < dialog_pos.y()) {
 		/* Point visible, above dialog. */
+		qDebug() << "kamil point visible above";
 		return;
 	}
-	if (global_coord_pos.x() > (global_dialog_pos.x() + dialog_width)) {
+	if (global_coord_pos.x() > (dialog_pos.x() + dialog_width)) {
 		/* Point visible, on right side of dialog. */
+		qDebug() << "kamil point visible on right";
 		return;
 	}
-	if (global_coord_pos.y() > (global_dialog_pos.y() + dialog_height)) {
+	if (global_coord_pos.y() > (dialog_pos.y() + dialog_height)) {
 		/* Point visible, below dialog. */
+		qDebug() << "kamil point visible below";
 		return;
-	}
-
-	const QPoint in_window_coord_pos = parent_window->mapFromGlobal(global_coord_pos);
-
-	if (vertical) {
-		/* Shift up or down. */
-		const int viewport_height = viewport->get_height();
-		if (exposed_pos.y < viewport_height / 2) {
-			/* Point's coordinate is in upper half of viewport.
-			   Move dialog below the point. Don't change x coordinate of dialog. */
-			dialog->move(dialog->x(), in_window_coord_pos.y() + 10);
-		} else {
-			/* Point's coordinate is in lower half of viewport.
-			   Move dialog above the point. Don't change x coordinate of dialog. */
-			int dest_y = in_window_coord_pos.y() - dialog_height - 10;
-			if (dest_y < 0) {
-				/* TODO: rewrite it to check that dialog's title bar is still visible. */
-				dest_y = 0;
-			}
-			dialog->move(dialog->x(), dest_y);
-		}
-	} else {
-		/* Shift left or right. */
-		const int viewport_width = viewport->get_width();
-		if (exposed_pos.x < viewport_width / 2) {
-			/* Point's coordinate is in left half of viewport.
-			   Move dialog to the right of point. Don't change y coordinate of dialog. */
-			dialog->move(400, dialog->y());
-		} else {
-			/* Point's coordinate is in right half of viewport.
-			   Move dialog to the left of point. Don't change y coordinate of dialog. */
-			dialog->move(0, dialog->y());
-		}
-	}
-
-#ifdef K_OLD_IMPLEMENTATION
-
-	int dest_x = 0;
-	int dest_y = 0;
-
-	/* Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position. */
-	if (!gtk_widget_translate_coordinates(viewport->get_widget(), GTK_WIDGET(parent_window), 0, 0, &dest_x, &dest_y)) {
-		return;
-	}
-
-	/* Transform Viewport pixels into absolute pixels. */
-	int tmp_xx = exposed_pos.x + dest_x + win_pos_x - 10;
-	int tmp_yy = exposed_pos.y + dest_y + win_pos_y - 10;
-
-	/* Is dialog over the point (to within an  ^^ edge value). */
-	if ((tmp_xx > global_dialog_pos.x()) && (tmp_xx < (global_dialog_pos.x() + dialog_width))
-	    && (tmp_yy > global_dialog_pos.y()) && (tmp_yy < (global_dialog_pos.y() + dialog_height))) {
-
-		if (vertical) {
-			/* Shift up<->down. */
-			int hh = viewport->get_height();
-
-			/* Consider the difference in viewport to the full window. */
-			int offset_y = dest_y;
-			/* Add difference between dialog and window sizes. */
-			offset_y += win_pos_y + (hh/2 - dialog_height)/2;
-
-			if (exposed_pos.y > hh/2) {
-				/* Point in bottom half, move window to top half. */
-				dialog->move(global_dialog_pos.x(), offset_y);
-			} else {
-				/* Point in top half, move dialog down. */
-				dialog->move(global_dialog_pos.x(), hh/2 + offset_y);
-			}
-		} else {
-			/* Shift left<->right. */
-			int ww = viewport->get_width();
-
-			/* Consider the difference in viewport to the full window. */
-			int offset_x = dest_x;
-			/* Add difference between dialog and window sizes. */
-			offset_x += win_pos_x + (ww/2 - dialog_width)/2;
-
-			if (exposed_pos.x > ww/2) {
-				/* Point on right, move window to left. */
-				dialog->move(offset_x, global_dialog_pos.y());
-			} else {
-				/* Point on left, move right. */
-				dialog->move(ww/2 + offset_x, global_dialog_pos.y());
-			}
-		}
 	}
 #endif
+
+	QPoint new_position;
+
+	if (vertical) {
+		/* Move dialog up or down. */
+		if (global_coord_pos.y() > dialog_height + 10) {
+			/* Move above given screen position. */
+			qDebug() << "kamil move up";
+			new_position = QPoint(dialog_pos.x(), global_coord_pos.y() - dialog_height - 10);
+		} else {
+			/* Move below given screen position. */
+			qDebug() << "kamil move down";
+			new_position = QPoint(dialog_pos.x(), global_coord_pos.y() + 10);
+		}
+	} else {
+		/* Move dialog left or right. */
+		if (global_coord_pos.x() > dialog_width + 10) {
+			/* Move to the left of given screen position. */
+			qDebug() << "kamil move to the left";
+			new_position = QPoint(global_coord_pos.x() - dialog_width - 10, dialog_pos.y());
+		} else {
+			/* Move to the right of given screen position. */
+			qDebug() << "kamil move to the right";
+			new_position = QPoint(global_coord_pos.x() + 10, dialog_pos.y());
+		}
+	}
+
+	dialog->move(new_position);
+
 	return;
 }
 

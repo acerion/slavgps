@@ -5,5 +5,7 @@
 	<file>cursors/trw_add_wp.png</file>
 	<file>cursors/trw_edit_tr.png</file>
 	<file>cursors/trw_edit_wp.png</file>
+
+	<file>cursors/maps_download.png</file>
 </qresource>
 </RCC>

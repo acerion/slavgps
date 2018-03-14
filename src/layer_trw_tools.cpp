@@ -458,7 +458,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_E;
 
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 
 	this->layer_edit_info = new LayerEditInfo;
 }
@@ -713,7 +713,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport
 
 	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
 
 	this->layer_edit_info = new LayerEditInfo;
 }
@@ -1214,7 +1214,7 @@ LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, Viewport * viewport
 
 	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 
 	this->layer_edit_info = new LayerEditInfo;
 }
@@ -1344,7 +1344,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * vi
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_W;
 
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
 
 	this->layer_edit_info = new LayerEditInfo;
 }
@@ -1384,7 +1384,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewpor
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_K;
 
 	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_release = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 
 	this->layer_edit_info = new LayerEditInfo;
 }

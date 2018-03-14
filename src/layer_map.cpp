@@ -172,7 +172,7 @@ static SGVariant directory_default(void)
 	if (pref_value.type_id == SGVariantType::Empty) {
 		return SGVariant("");
 	} else {
-		return SGVariant(pref_value.val_string); /* TODO: why we can't just return pref_value? */
+		return pref_value;
 	}
 }
 
@@ -276,7 +276,7 @@ LayerMapInterface::LayerMapInterface()
 {
 	this->parameters_c = maps_layer_param_specs; /* Parameters. */
 
-	this->fixed_layer_type_string = "Map"; /* Non-translatable. kamilTODO: verify this line. */
+	this->fixed_layer_type_string = "Map"; /* Non-translatable. */
 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
@@ -2096,13 +2096,12 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	this->id_string = "sg.tool.layer_map.maps_download";
 
 	this->action_icon_path   = "vik-icon-Maps Download";
-	this->action_label       = QObject::tr("_Maps Download");
+	this->action_label       = QObject::tr("Maps Download");
 	this->action_tooltip     = QObject::tr("Maps Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
-	/* kamilTODO: use correct values for these cursors. */
-	this->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
+	this->cursor_click = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
+	this->cursor_release = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
 #ifdef K_TODO
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixmap;
