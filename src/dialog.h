@@ -49,6 +49,12 @@ namespace SlavGPS {
 
 
 
+	class Coord;
+	class Viewport;
+
+
+
+
 	class Dialog {
 	public:
 		static void info(QString const & message, QWidget * parent);
@@ -59,6 +65,8 @@ namespace SlavGPS {
 		static void map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent);
 
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
+
+		static void move_dialog(QDialog * dialog, Viewport * viewport, const Coord & exposed_coord, bool move_vertically);
 	};
 
 

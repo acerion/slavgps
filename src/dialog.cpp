@@ -38,11 +38,17 @@
 #include "date_time_dialog.h"
 #include "degrees_converters.h"
 #include "globals.h"
+#include "viewport_internal.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX ": Dialog:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -181,6 +187,109 @@ void Dialog::map_license(const QString & map_name, const QString & map_license, 
 			open_url(map_license_url);
 		}
 	} while (response != QMessageBox::Cancel && response != QMessageBox::Ok);
+}
+
+
+
+
+/**
+   @brief Move a dialog to expose given coordinate
+
+   Try to reposition a dialog if it's over the specified coord so to
+   not obscure the item of interest.
+
+   TODO: the function should accept something else than a Coord variable. Perhaps a screen number and a pixel coordinates.
+
+   @dialog - dialog to move
+   @viewport - viewport in which the coordinate exists
+   @exposed_coord - coordinate to be exposed by movement of the dialog
+   @move_vertically: The reposition strategy. move_vertically==true moves dialog vertically, otherwise moves it horizontally
+*/
+void Dialog::move_dialog(QDialog * dialog, Viewport * viewport, const Coord & exposed_coord, bool move_vertically)
+{
+	/* http://doc.qt.io/qt-5/application-windows.html#window-geometry */
+
+	/* TODO: there is one more improvement to be made: take into
+	   consideration that available geometry (as returned by
+	   ::availableGeometry()) may be smaller than geometry of full
+	   screen. */
+
+	const int dialog_width = dialog->frameGeometry().width(); /* Including window frame. */
+	const int dialog_height = dialog->frameGeometry().height(); /* Including window frame. */
+	const QPoint dialog_pos = dialog->pos();
+
+
+	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
+	if (dialog_width <= 2 || dialog_height <= 2) {
+		qDebug() << "WW: Layer TRW: can't position dialog window";
+		return;
+	}
+
+
+	const ScreenPos exposed_pos = viewport->coord_to_screen_pos(exposed_coord); /* In viewport's x/y coordinate system. */
+	const QPoint global_point_pos = viewport->mapToGlobal(QPoint(exposed_pos.x, exposed_pos.y)); /* In screen's x/y coordinate system. */
+
+
+#if 0   /* Debug. */
+	const int primary_screen = QApplication::desktop()->primaryScreen();
+	const QRect primary_screen_geo = QApplication::desktop()->availableGeometry(primary_screen);
+	const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(viewport);
+
+	qDebug() << "DD" PREFIX "primary screen:" << primary_screen << "dialog begin:" << dialog_pos << "coord pos:" << global_point_pos;
+	qDebug() << "DD" PREFIX "available geometry of primary screen:" << primary_screen_geo;
+	qDebug() << "DD" PREFIX "available geometry of screen containing widget:" << containing_screen_geo;
+#endif
+
+
+	if (global_point_pos.x() < dialog_pos.x()) {
+		/* Point visible, on left side of dialog. */
+		qDebug() << "DD" PREFIX "point visible on left";
+		return;
+	}
+	if (global_point_pos.y() < dialog_pos.y()) {
+		/* Point visible, above dialog. */
+		qDebug() << "DD" PREFIX "point visible above";
+		return;
+	}
+	if (global_point_pos.x() > (dialog_pos.x() + dialog_width)) {
+		/* Point visible, on right side of dialog. */
+		qDebug() << "DD" PREFIX "point visible on right";
+		return;
+	}
+	if (global_point_pos.y() > (dialog_pos.y() + dialog_height)) {
+		/* Point visible, below dialog. */
+		qDebug() << "DD" PREFIX "point visible below";
+		return;
+	}
+
+
+	QPoint new_position;
+	if (move_vertically) {
+		/* Move dialog up or down. */
+		if (global_point_pos.y() > dialog_height + 10) {
+			/* Move above given screen position. */
+			qDebug() << "DD" PREFIX "move up";
+			new_position = QPoint(dialog_pos.x(), global_point_pos.y() - dialog_height - 10);
+		} else {
+			/* Move below given screen position. */
+			qDebug() << "DD" PREFIX "move down";
+			new_position = QPoint(dialog_pos.x(), global_point_pos.y() + 10);
+		}
+	} else {
+		/* Move dialog left or right. */
+		if (global_point_pos.x() > dialog_width + 10) {
+			/* Move to the left of given screen position. */
+			qDebug() << "DD" PREFIX "move to the left";
+			new_position = QPoint(global_point_pos.x() - dialog_width - 10, dialog_pos.y());
+		} else {
+			/* Move to the right of given screen position. */
+			qDebug() << "DD" PREFIX "move to the right";
+			new_position = QPoint(global_point_pos.x() + 10, dialog_pos.y());
+		}
+	}
+	dialog->move(new_position);
+
+	return;
 }
 
 

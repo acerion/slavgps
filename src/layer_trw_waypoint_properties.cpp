@@ -323,7 +323,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 
 	if (!is_new) {
 		/* Shift left/right/up/down to try not to obscure the waypoint. */
-		trw->dialog_shift(GTK_WINDOW(dialog), wp->coord, false);
+		Dialog::move_dialog(GTK_WINDOW(dialog), wp->coord, false);
 	}
 
 	return NULL;

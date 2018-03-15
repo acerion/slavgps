@@ -318,9 +318,6 @@ namespace SlavGPS {
 		void tpwin_update_dialog_data();
 
 
-		void dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical);
-
-
 		int get_track_thickness();
 
 		static TRWMetadata * metadata_new();

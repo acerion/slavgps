@@ -3968,102 +3968,6 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 
 
-/**
-   @vertical: The reposition strategy. If Vertical moves dialog vertically, otherwise moves it horizontally
-
-   Try to reposition a dialog if it's over the specified coord
-   so to not obscure the item of interest
-*/
-void LayerTRW::dialog_shift(QDialog * dialog, const Coord & exposed_coord, bool vertical)
-{
-	/* https://doc.qt.io/archives/4.3/geometry.html */
-
-	Window * parent_window = this->get_window(); /* i.e. the main window. */
-	Viewport * viewport = g_tree->tree_get_main_viewport();
-
-	/* TODO: improve this code, it barely works. */
-
-	const int dialog_width = dialog->frameGeometry().height(); /* Including window frame. */
-	const int dialog_height = dialog->frameGeometry().width(); /* Including window frame. */
-	const QPoint dialog_pos = dialog->pos();
-
-
-	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
-	if (dialog_width <= 2 || dialog_height <= 2) {
-		qDebug() << "WW: Layer TRW: can't position dialog window";
-		return;
-	}
-
-
-	const ScreenPos exposed_pos = viewport->coord_to_screen_pos(exposed_coord); /* In viewport pixels. */
-	const QPoint global_coord_pos = viewport->mapToGlobal(QPoint(exposed_pos.x, exposed_pos.y));
-
-	const int primary_screen = QApplication::desktop()->primaryScreen();
-	const QRect primary_screen_geo = QApplication::desktop()->availableGeometry(primary_screen);
-	const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(viewport);
-
-
-	qDebug() << "kamil primary screen" << primary_screen << "dialog begin" << dialog_pos << ", coord pos" << global_coord_pos;
-	qDebug() << "kamil available geometry of primary screen" << primary_screen_geo;
-	qDebug() << "kamil available geometry of screen containing widget" << containing_screen_geo;
-
-#if 0
-	if (global_coord_pos.x() < dialog_pos.x()) {
-		/* Point visible, on left side of dialog. */
-		qDebug() << "kamil point visible on left";
-		return;
-	}
-	if (global_coord_pos.y() < dialog_pos.y()) {
-		/* Point visible, above dialog. */
-		qDebug() << "kamil point visible above";
-		return;
-	}
-	if (global_coord_pos.x() > (dialog_pos.x() + dialog_width)) {
-		/* Point visible, on right side of dialog. */
-		qDebug() << "kamil point visible on right";
-		return;
-	}
-	if (global_coord_pos.y() > (dialog_pos.y() + dialog_height)) {
-		/* Point visible, below dialog. */
-		qDebug() << "kamil point visible below";
-		return;
-	}
-#endif
-
-	QPoint new_position;
-
-	if (vertical) {
-		/* Move dialog up or down. */
-		if (global_coord_pos.y() > dialog_height + 10) {
-			/* Move above given screen position. */
-			qDebug() << "kamil move up";
-			new_position = QPoint(dialog_pos.x(), global_coord_pos.y() - dialog_height - 10);
-		} else {
-			/* Move below given screen position. */
-			qDebug() << "kamil move down";
-			new_position = QPoint(dialog_pos.x(), global_coord_pos.y() + 10);
-		}
-	} else {
-		/* Move dialog left or right. */
-		if (global_coord_pos.x() > dialog_width + 10) {
-			/* Move to the left of given screen position. */
-			qDebug() << "kamil move to the left";
-			new_position = QPoint(global_coord_pos.x() - dialog_width - 10, dialog_pos.y());
-		} else {
-			/* Move to the right of given screen position. */
-			qDebug() << "kamil move to the right";
-			new_position = QPoint(global_coord_pos.x() + 10, dialog_pos.y());
-		}
-	}
-
-	dialog->move(new_position);
-
-	return;
-}
-
-
-
-
 void LayerTRW::trackpoint_properties_show()
 {
 	if (!this->tpwin) {
@@ -4083,7 +3987,7 @@ void LayerTRW::trackpoint_properties_show()
 		Trackpoint * tp = *track->selected_tp.iter;
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		this->dialog_shift(this->tpwin, tp->coord, true);
+		Dialog::move_dialog(this->tpwin, g_tree->tree_get_main_viewport(), tp->coord, true);
 
 		this->tpwin_update_dialog_data();
 	}
