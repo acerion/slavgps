@@ -233,6 +233,9 @@ namespace SlavGPS {
 		bool get_half_drawn(void) const;
 
 
+		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, double zoom);
+
+
 		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;

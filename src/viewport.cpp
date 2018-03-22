@@ -2121,19 +2121,82 @@ void Viewport::draw_border(void)
 
 
 
-void copy_viewport_properties(Viewport * target, const Viewport * source, double scale_factor)
+Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, bool explicit_set_zoom, double zoom)
 {
-	target->set_drawmode(source->get_drawmode());
-	target->set_coord_mode(source->get_coord_mode());
-	target->set_center_from_coord(source->center, false);
+	/*
+	  We always want to print original viewport in its
+	  fullness. If necessary, we should scale our drawing so that
+	  it always covers the most of target device, but we want to
+	  keep proportions of original viewport. The question is how
+	  much should we scale our drawing?
 
+	  We need to look at how shapes of original viewport and
+	  target device match. In the example below the original
+	  viewport is more "height-ish" than target device. We will
+	  want to scale the drawing from original viewport by factor of
+	  ~2 (target device height / original height) before drawing it to
+	  target device. Scaling drawing from original viewport in
+	  this example to match width of target device would make
+	  the drawing too tall.
+
+	   +--------------------------------+
+	   |                                |
+	   |   +-----+                      |
+	   |   |     |original viewport     |
+	   |   |     |                      |
+	   |   |     |                      |target device
+	   |   +-----+                      |
+	   |                                |
+	   |                                |
+	   +--------------------------------+
+
+	   TODO: make sure that this works also for target device
+	   smaller than original viewport.
+	*/
+
+	Viewport * scaled_viewport = new Viewport(a_window);
+
+	const int orig_width = this->width();
+	const int orig_height = this->height();
+	const double orig_factor = 1.0 * orig_width / orig_height;
+
+	const double target_factor = 1.0 * target_width / target_height;
+
+	double scale_factor = 0.0;
+	if (orig_factor > target_factor) {
+		/* Original viewport is more "wide-ish" than target device. */
+		scale_factor = 1.0 * target_width / orig_width;
+	} else {
+		/* Original viewport is more "height-ish" than target device. */
+		scale_factor = 1.0 * target_height / orig_height;
+	}
+
+
+
+	/* Copy selected properties of viewport. */
+	scaled_viewport->set_drawmode(this->get_drawmode());
+	scaled_viewport->set_coord_mode(this->get_coord_mode());
+	scaled_viewport->set_center_from_coord(this->center, false);
 	/* FIXME: do we allow mpp values from outside of a specific subset? */
-	target->set_xmpp(source->xmpp / scale_factor);
-	target->set_ympp(source->ympp / scale_factor);
+	scaled_viewport->set_xmpp(this->xmpp / scale_factor);
+	scaled_viewport->set_ympp(this->ympp / scale_factor);
 
-	qDebug() << "II" PREFIX << "target viewport's bounding box set to" << target->get_bbox().north << target->get_bbox().south << target->get_bbox().west << target->get_bbox().east;
+	qDebug() << "II" PREFIX << "scaled viewport's bounding box set to" << scaled_viewport->get_bbox().north << scaled_viewport->get_bbox().south << scaled_viewport->get_bbox().west << scaled_viewport->get_bbox().east;
 
-	return;
+
+
+	strcpy(scaled_viewport->type_string, "Scaled Viewport");
+	if (explicit_set_zoom) {
+		scaled_viewport->set_zoom(zoom);
+	}
+	/* Notice that we configure size of the print viewport using
+	   size of scaled source, not size of target device (i.e. not
+	   of target paper or target image). The image that we will
+	   print to target device should cover the same area
+	   (i.e. have the same bounding box) as original viewport. */
+	scaled_viewport->reconfigure_drawing_area(orig_width * scale_factor, orig_height * scale_factor);
+
+	return scaled_viewport;
 }
 
 
@@ -2170,79 +2233,27 @@ bool Viewport::print_cb(QPrinter * printer)
 		break;
 	}
 
-
-	/*
-	  We always want to print source viewport in its fullness. If
-	  necessary, we should scale our drawing so that it always
-	  covers the most of target viewport, but we want to keep
-	  proportions of source viewport. The question is how much
-	  should we scale our drawing?
-
-	  We need to look at how shapes of source viewport and target
-	  viewport match. In the example below the source viewport is
-	  more "height-ish" than target viewport. We will want to
-	  scale the drawing from source viewport by factor of ~2
-	  (target height / source height) before drawing it to target
-	  viewport. Scaling drawing from source viewport in this
-	  example to match width of target viewport would make the
-	  drawing too tall.
-
-	   +--------------------------------+
-	   |                                |
-	   |   +-----+                      |
-	   |   |     |source viewport       |
-	   |   |     |                      |
-	   |   |     |                      |target viewport
-	   |   +-----+                      |
-	   |                                |
-	   |                                |
-	   +--------------------------------+
-
-	   TODO: make sure that this works also for target viewport
-	   smaller than source viewport.
-	*/
-
-	const int source_width = this->width();
-	const int source_height = this->height();
-	const double source_factor = 1.0 * source_width / source_height;
-
 	const QRectF target_rect(page_rect);
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
-	const double target_factor = 1.0 * target_width / target_height;
 
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, 0);
 
-	double scale_factor = 0.0;
-	if (source_factor > target_factor) {
-		/* Source viewport is more "wide-ish" than target viewport. */
-		scale_factor = 1.0 * target_width / source_width;
-	} else {
-		/* Source viewport is more "height-ish" than target viewport. */
-		scale_factor = 1.0 * target_height / source_height;
-	}
-
-
-	Viewport print_viewport(this->window);
-	strcpy(print_viewport.type_string, "Print Preview Viewport");
-	copy_viewport_properties(&print_viewport, this, scale_factor);
-	/* Notice that we configure size of the print viewport using
-	   size of scaled source, not size of target viewport
-	   (i.e. not of target paper). The image that we will print to
-	   target device should cover the same area (i.e. have the
-	   same bounding box) as source viewport. */
-	print_viewport.reconfigure_drawing_area(source_width * scale_factor, source_height * scale_factor);
-
-
-	g_tree->tree_get_items_tree()->draw_all(&print_viewport);
+	g_tree->tree_get_items_tree()->draw_all(scaled_viewport);
 
 
 	QPainter printer_painter;
 	printer_painter.begin(printer);
-	QPoint paint_begin; /* Beginning of rectangle, into which we will paint in target viewport. */
-	paint_begin.setX((target_width / 2.0) - (source_width * scale_factor / 2.0));
-	paint_begin.setY((target_height / 2.0) - (source_height * scale_factor / 2.0));
-	printer_painter.drawPixmap(paint_begin, *print_viewport.scr_buffer);
+	QPoint paint_begin; /* Beginning of rectangle, into which we will paint in target device. */
+	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->width() / 2.0));
+	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->height() / 2.0));
+	paint_begin.setX(0);
+	paint_begin.setY(0);
+
+	printer_painter.drawPixmap(paint_begin, *scaled_viewport->scr_buffer);
 	printer_painter.end();
+
+	delete scaled_viewport;
 
 	qDebug() << "II" PREFIX << "target rectangle:" << target_rect;
 	qDebug() << "II" PREFIX << "paint_begin:" << paint_begin;

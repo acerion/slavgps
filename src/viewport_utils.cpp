@@ -253,8 +253,8 @@ void ViewportToImageDialog::build_ui(ViewportSaveMode mode)
 
 
 	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton("&Ok", QDialogButtonBox::AcceptRole);
-	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
+	this->button_box->addButton(QDialogButtonBox::Ok);
+	this->button_box->addButton(QDialogButtonBox::Cancel);
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &ViewportToImageDialog::accept_cb);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 	this->vbox->addWidget(this->button_box);

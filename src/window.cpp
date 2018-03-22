@@ -37,6 +37,7 @@
 #include "window.h"
 #include "viewport.h"
 #include "viewport_zoom.h"
+#include "viewport_internal.h"
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
@@ -2774,36 +2775,16 @@ void Window::print_cb(void)
 
 void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, bool save_as_png, bool save_kmz)
 {
-	/* More efficient way: stuff draws directly to pixbuf (fork viewport). TODO: verify this comment. */
-
-#ifdef K_TODO
-	GtkWidget * msgbox = gtk_message_dialog_new(this,
-						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-						    GTK_MESSAGE_INFO,
-						    GTK_BUTTONS_NONE,
-						    tr("Generating image file..."));
-
-	QObject::connect(msgbox, SIGNAL("response"), msgbox, SLOT (gtk_widget_destroy));
-	// Ensure dialog shown
-	gtk_widget_show_all(msgbox);
-#endif
-
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
 
-	/* backup old zoom & set new */
-	double old_xmpp = this->viewport->get_xmpp();
-	double old_ympp = this->viewport->get_ympp();
-	this->viewport->set_zoom(zoom);
-
-	/* Set expected width and height. */
-	this->viewport->reconfigure_drawing_area(image_width, image_height);
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, zoom);
 
 	/* Redraw all layers at current position and zoom. */
-	this->redraw_tree_items();
+	g_tree->tree_get_items_tree()->draw_all(scaled_viewport);
+	//this->redraw_tree_items();
 
 	/* Save buffer as file. */
-	QPixmap * pixmap = this->viewport->get_pixmap();
-	//QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, image_width, image_height);
+	QPixmap * pixmap = scaled_viewport->get_pixmap();
 
 	if (!pixmap) {
 		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", image_width, image_height);
@@ -2811,10 +2792,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 		this->status_bar->set_message(StatusBarField::INFO, QString(""));
 		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
 
-		this->viewport->set_xmpp(old_xmpp);
-		this->viewport->set_ympp(old_ympp);
-		this->viewport->reconfigure_drawing_area();
-		this->redraw_tree_items_wrapper();
+		delete scaled_viewport;
 
 		return;
 	}
@@ -2842,6 +2820,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 #ifdef K_TODO
 	g_object_unref(G_OBJECT(pixmap));
 #endif
+	delete scaled_viewport;
 
 	const QString message = success ? tr("Image file generated.") : tr("Failed to generate image file.");
 
@@ -2849,11 +2828,6 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	this->status_bar->set_message(StatusBarField::INFO, QString(""));
 	Dialog::info(message, this);
-
-	this->viewport->set_xmpp(old_xmpp);
-	this->viewport->set_ympp(old_ympp);
-	this->viewport->reconfigure_drawing_area();
-	this->redraw_tree_items_wrapper();
 }
 
 
