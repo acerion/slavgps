@@ -37,7 +37,7 @@
 #include "file.h"
 #include "acquire.h"
 #include "viewport.h"
-#include "viewport_utils.h"
+#include "viewport_save_dialog.h"
 #include "layer_trw_track.h"
 #include "layer_trw_waypoints.h"
 #include "layer_trw_tracks.h"

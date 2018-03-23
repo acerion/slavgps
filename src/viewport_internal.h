@@ -34,7 +34,7 @@
 #include <QPrinter>
 
 #include "viewport.h"
-#include "viewport_utils.h"
+#include "viewport_save_dialog.h"
 #include "viewport_decorations.h"
 #include "coord.h"
 #include "bbox.h"

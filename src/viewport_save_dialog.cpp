@@ -34,7 +34,7 @@
 
 #include "window.h"
 #include "viewport_internal.h"
-#include "viewport_utils.h"
+#include "viewport_save_dialog.h"
 #include "preferences.h"
 #include "util.h"
 
