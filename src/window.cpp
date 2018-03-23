@@ -75,6 +75,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Window:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /* This seems rather arbitary, quite large and pointless.
    I mean, if you have a thousand windows open;
    why not be allowed to open a thousand more... */
@@ -84,9 +89,10 @@ static std::list<Window *> window_list;
 
 #define VIKING_WINDOW_WIDTH      400
 #define VIKING_WINDOW_HEIGHT     300
-#define DRAW_IMAGE_DEFAULT_WIDTH 1280
-#define DRAW_IMAGE_DEFAULT_HEIGHT 1024
-#define DRAW_IMAGE_DEFAULT_SAVE_AS_PNG true
+
+#define VIEWPORT_SAVE_DEFAULT_WIDTH    1280
+#define VIEWPORT_SAVE_DEFAULT_HEIGHT   1024
+#define VIEWPORT_SAVE_DEFAULT_FORMAT   ViewportSaveFormat::PNG
 
 
 
@@ -167,16 +173,16 @@ Window::Window()
 	this->set_current_document_full_path("");
 
 
-	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &this->draw_image_width)) {
-		this->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, &this->viewport_save_width)) {
+		this->viewport_save_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
 	}
 
-	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &this->draw_image_height)) {
-		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT, &this->viewport_save_height)) {
+		this->viewport_save_height = VIEWPORT_SAVE_DEFAULT_HEIGHT;
 	}
 
-	if (!ApplicationState::get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &this->save_viewport_as_png)) {
-		this->save_viewport_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int *) &this->viewport_save_format)) {
+		this->viewport_save_format = VIEWPORT_SAVE_DEFAULT_FORMAT;
 	}
 
 
@@ -1593,9 +1599,9 @@ void Window::closeEvent(QCloseEvent * ev)
 #endif
 		}
 
-		ApplicationState::set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, this->draw_image_width);
-		ApplicationState::set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, this->draw_image_height);
-		ApplicationState::set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, this->save_viewport_as_png);
+		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
+		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT, this->viewport_save_height);
+		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int) this->viewport_save_format);
 
 #ifdef K_TODO
 		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
@@ -2637,30 +2643,26 @@ void Window::acquire_from_url_cb(void)
 
 void Window::draw_viewport_to_image_file_cb(void)
 {
-	ViewportToImageDialog dialog(tr("Save Viewport to Image File"), this->get_viewport(), NULL);
-	dialog.build_ui(ViewportSaveMode::FILE);
+	ViewportSaveDialog dialog(tr("Save Viewport to Image File"), this->get_viewport(), NULL);
+	dialog.build_ui(ViewportSaveMode::File);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
 
-	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FILE);
+	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::File);
 	if (file_full_path.isEmpty()) {
 		return;
 	}
 
-	this->draw_image_width = dialog.width_spin->value();
-	this->draw_image_height = dialog.height_spin->value();
-	this->save_viewport_as_png = (dialog.output_format_radios->get_id_of_selected() == 0); /* FIXME: magic number. */
-
-	int active_z = dialog.zoom_combo->currentIndex();
-	double zoom = pow(2, active_z - 2);
-	qDebug() << "II: Viewport: Save: zoom index:" << active_z << ", zoom value:" << zoom;
+	this->viewport_save_width = dialog.get_width();
+	this->viewport_save_height = dialog.get_height();
+	this->viewport_save_format = dialog.get_image_format();
 
 	this->save_viewport_to_image(file_full_path,
-				     this->draw_image_width,
-				     this->draw_image_height,
-				     zoom,
-				     this->save_viewport_as_png,
+				     this->viewport_save_width,
+				     this->viewport_save_height,
+				     this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				     this->viewport_save_format,
 				     false);
 }
 
@@ -2669,31 +2671,27 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
-	ViewportToImageDialog dialog(tr("Save Viewport to Images in Directory"), this->get_viewport(), NULL);
-	dialog.build_ui(ViewportSaveMode::DIRECTORY);
+	ViewportSaveDialog dialog(tr("Save Viewport to Images in Directory"), this->get_viewport(), NULL);
+	dialog.build_ui(ViewportSaveMode::Directory);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
 
-	QString dir_full_path = this->save_viewport_get_full_path(ViewportSaveMode::DIRECTORY);
+	QString dir_full_path = this->save_viewport_get_full_path(ViewportSaveMode::Directory);
 	if (dir_full_path.isEmpty()) {
 		return;
 	}
 
-	this->draw_image_width = dialog.width_spin->value();
-	this->draw_image_height = dialog.height_spin->value();
-	this->save_viewport_as_png = (dialog.output_format_radios->get_id_of_selected() == 0); /* FIXME: magic number. */
-
-	int active_z = dialog.zoom_combo->currentIndex();
-	double zoom = pow(2, active_z - 2);
-	qDebug() << "II: Window: Viewport to image dir: zoom index:" << active_z << ", zoom value:" << zoom;
+	this->viewport_save_width = dialog.get_width();
+	this->viewport_save_height = dialog.get_height();
+	this->viewport_save_format = dialog.get_image_format();
 
 	/* UTM mode ATM. */
 	this->save_viewport_to_dir(dir_full_path,
-				   this->draw_image_width,
-				   this->draw_image_height,
-				   zoom,
-				   this->save_viewport_as_png,
+				   this->viewport_save_width,
+				   this->viewport_save_height,
+				   this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				   this->viewport_save_format,
 				   dialog.tiles_width_spin->value(),
 				   dialog.tiles_height_spin->value());
 }
@@ -2709,20 +2707,16 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		return;
 	}
 
-	ViewportToImageDialog dialog(tr("Save Viewport to KMZ File"), this->get_viewport(), NULL);
+	ViewportSaveDialog dialog(tr("Save Viewport to KMZ File"), this->get_viewport(), NULL);
 	dialog.build_ui(mode);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
 
-	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FILE_KMZ);
+	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FileKMZ);
 	if (file_full_path.isEmpty()) {
 		return;
 	}
-
-	int active_z = dialog.zoom_combo->currentIndex();
-	double zoom = pow(2, active_z - 2);
-	qDebug() << "II: Window: Viewport to kmz file: zoom index:" << active_z << ", zoom value:" << zoom;
 
 
 	/* ATM This only generates a KMZ file with the current
@@ -2744,8 +2738,8 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	this->save_viewport_to_image(file_full_path,
 				     dialog.width_spin->value(),
 				     dialog.height_spin->value(),
-				     zoom,
-				     false, // JPG
+				     this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				     ViewportSaveFromat::JPEG,
 				     true);
 
 	if (has_xhair) {
@@ -2773,7 +2767,7 @@ void Window::print_cb(void)
 
 
 
-void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, bool save_as_png, bool save_kmz)
+void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat save_format, bool save_kmz)
 {
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
 
@@ -2811,7 +2805,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 #endif
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
-		if (!pixmap->save(file_full_path, save_as_png ? "png" : "jpeg")) {
+		if (!pixmap->save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
 			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_full_path;
 			success = false;
 		}
@@ -2833,7 +2827,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 
 
-bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
 {
 	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
@@ -2859,7 +2853,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 
 	UTM utm;
 	UTM utm_orig = this->viewport->get_center()->utm;
-	const char * extension = save_as_png ? "png" : "jpg";
+	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
@@ -2924,7 +2918,7 @@ QString Window::save_viewport_get_full_path(ViewportSaveMode mode)
 	}
 
 	switch (mode) {
-	case ViewportSaveMode::DIRECTORY:
+	case ViewportSaveMode::Directory:
 
 		file_selector.setWindowTitle(tr("Select directory to save Viewport to"));
 		file_selector.setFileMode(QFileDialog::Directory);
@@ -2932,21 +2926,27 @@ QString Window::save_viewport_get_full_path(ViewportSaveMode mode)
 
 		break;
 
-	case ViewportSaveMode::FILE_KMZ:
-	case ViewportSaveMode::FILE: /* png or jpeg. */
+	case ViewportSaveMode::FileKMZ:
+	case ViewportSaveMode::File: /* png or jpeg. */
 
 		file_selector.setWindowTitle(tr("Select file to save Viewport to"));
 		file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 
 		mime << "application/octet-stream"; /* "All files (*)" */
-		if (mode == ViewportSaveMode::FILE_KMZ) {
+		if (mode == ViewportSaveMode::FileKMZ) {
 			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
 		} else {
-			if (this->save_viewport_as_png) {
+			switch (this->viewport_save_format) {
+			case ViewportSaveFormat::PNG:
 				mime << "image/png";
-			} else {
+				break;
+			case ViewportSaveFormat::JPEG:
 				mime << "image/jpeg";
-			}
+				break;
+			default:
+				qDebug() << "EE" PREFIX << "unhandled viewport save format" << (int) this->viewport_save_format;
+				break;
+			};
 		}
 		file_selector.setMimeTypeFilters(mime);
 		break;

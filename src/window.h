@@ -31,6 +31,7 @@
 #include <QCursor>
 #include <QCloseEvent>
 #include <QUrl>
+#include <QComboBox>
 
 #include "statusbar.h"
 #include "file.h"
@@ -49,10 +50,11 @@
 #define VIK_SETTINGS_WIN_WIDTH                   "window_width"
 #define VIK_SETTINGS_WIN_HEIGHT                  "window_height"
 #define VIK_SETTINGS_WIN_PANE_POSITION           "window_horizontal_pane_position"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH        "window_save_image_width"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT       "window_save_image_height"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_PNG          "window_save_image_as_png"
 #define VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT "window_copy_centre_full_format"
+
+#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH     "window_save_image_width"
+#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT    "window_save_image_height"
+#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT    "window_viewport_save_format"
 
 
 
@@ -149,8 +151,8 @@ namespace SlavGPS {
 		void finish_new(void);
 
 		QString save_viewport_get_full_path(ViewportSaveMode mode);
-		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, bool save_as_png, bool save_kmz);
-		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat viewport_save_format, bool save_kmz);
+		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat viewport_save_format, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);
@@ -179,9 +181,10 @@ namespace SlavGPS {
 		QAction * qa_tree_item_properties = NULL;
 
 
-		int draw_image_width;
-		int draw_image_height;
-		bool save_viewport_as_png = false;
+		/* For storing last selections. */
+		int viewport_save_width;
+		int viewport_save_height;
+		ViewportSaveFormat viewport_save_format = ViewportSaveFormat::JPEG;
 
 	public slots:
 		Window * new_window_cb(void);
