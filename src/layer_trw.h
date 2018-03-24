@@ -254,11 +254,8 @@ namespace SlavGPS {
 
 
 		bool delete_track(Track * trk);
-		bool delete_track_by_name(const QString & trk_name, bool is_route);
 		bool delete_route(Track * trk);
 		bool delete_waypoint(Waypoint * wp);
-		bool delete_waypoint_by_name(const QString & wp_name);
-
 
 		void delete_all_routes();
 		void delete_all_tracks();
@@ -278,7 +275,6 @@ namespace SlavGPS {
 
 
 		std::list<Waypoint *> * create_waypoints_list();
-
 		std::list<Track *> * create_tracks_list();
 		std::list<Track *> * create_tracks_list(const QString & type_id);
 

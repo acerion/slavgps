@@ -153,8 +153,11 @@ namespace SlavGPS {
 
 		std::list<sg_uid_t> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
 		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold);
-		std::list<QString> get_sorted_track_name_list();
-		std::list<QString> get_sorted_track_name_list_exclude_self(Track const * self);
+
+		/* Get list of pointers to tracks, sorted by name.  If
+		   @param exclude is not NULL, track specified by
+		   @exclude won't be included in returned list. */
+		std::list<Track *> get_sorted_by_name(const Track * exclude = NULL) const;
 
 		QString find_duplicate_track_name(void);
 

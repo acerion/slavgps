@@ -163,13 +163,13 @@ void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 
 
 
-std::list<QString> LayerTRWWaypoints::get_sorted_wp_name_list(void)
+std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void)
 {
-	std::list<QString> result;
+	std::list<Waypoint *> result;
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		result.push_back(i->second->name);
+		result.push_back(i->second);
 	}
-	result.sort();
+	result.sort(TreeItem::compare_name);
 
 	return result;
 }
@@ -188,11 +188,11 @@ QString LayerTRWWaypoints::find_duplicate_waypoint_name(void)
 		return QString("");
 	}
 
-	std::list<QString> waypoint_names = this->get_sorted_wp_name_list();
+	std::list<Waypoint *> waypoints = this->get_sorted_by_name();
 
-	for (auto iter = std::next(waypoint_names.begin()); iter != waypoint_names.end(); iter++) {
-		QString const this_one = *iter;
-		QString const previous = *(std::prev(iter));
+	for (auto iter = std::next(waypoints.begin()); iter != waypoints.end(); iter++) {
+		QString const this_one = (*iter)->name;
+		QString const previous = (*(std::prev(iter)))->name;
 
 		if (this_one == previous) {
 			return this_one;

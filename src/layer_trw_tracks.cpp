@@ -296,37 +296,19 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 
 
 
-/* c.f. get_sorted_track_name_list()
-   but don't add the specified track to the list (normally current track). */
-std::list<QString> LayerTRWTracks::get_sorted_track_name_list_exclude_self(Track const * self)
+std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) const
 {
-	std::list<QString> result;
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-
-		/* Skip self. */
-		if (i->second == self) {
+	std::list<Track *> result;
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		/* Skip given track. */
+		if (exclude && iter->second == exclude) {
 			continue;
 		}
-		result.push_back(i->second->name);
-	}
-
-	result.sort();
-
-	return result;
-}
-
-
-
-
-std::list<QString> LayerTRWTracks::get_sorted_track_name_list(void)
-{
-	std::list<QString> result;
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		result.push_back(i->second->name);
+		result.push_back(iter->second);
 	}
 
 	/* Sort list of names alphabetically. */
-	result.sort();
+	result.sort(TreeItem::compare_name);
 
 	return result;
 }
@@ -345,12 +327,12 @@ QString LayerTRWTracks::find_duplicate_track_name(void)
 		return QString("");
 	}
 
-	std::list<QString> track_names = this->get_sorted_track_name_list();
+	const std::list<Track *> tracks = this->get_sorted_by_name();
 
 	bool found = false;
-	for (auto iter = std::next(track_names.begin()); iter != track_names.end(); iter++) {
-		QString const this_one = *iter;
-		QString const previous = *(std::prev(iter));
+	for (auto iter = std::next(tracks.begin()); iter != tracks.end(); iter++) {
+		const QString this_one = (*iter)->name;
+		const QString previous = (*(std::prev(iter)))->name;
 
 		if (this_one == previous) {
 			return this_one;

@@ -2370,14 +2370,6 @@ int Track::compare_timestamp(const Track * a, const Track * b)
 
 
 
-bool Track::compare_name(const Track * a, const Track * b)
-{
-	return a->name < b->name;
-}
-
-
-
-
 TrackPoints::iterator Track::begin()
 {
 	return this->trackpoints.begin();

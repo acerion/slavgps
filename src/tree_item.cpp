@@ -119,3 +119,11 @@ bool TreeItem::is_in_tree(void) const
 
 	return true;
 }
+
+
+
+
+bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
+{
+	return a->name < b->name;
+}

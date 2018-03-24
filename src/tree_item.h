@@ -72,6 +72,8 @@ namespace SlavGPS {
 
 		sg_uid_t get_uid(void) const;
 
+		static bool compare_name(const TreeItem * a, const TreeItem * b);
+
 		virtual QString get_tooltip(void);
 
 		/* A TreeItem object needs to implement this method if it contains (is direct

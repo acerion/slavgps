@@ -39,6 +39,7 @@
 #include "ui_util.h"
 #include "dialog.h"
 #include "layer_trw_track_internal.h"
+#include "layer_trw_waypoint.h"
 
 #ifdef WINDOWS
 #include <windows.h>
@@ -293,6 +294,15 @@ SGItem::SGItem(Track * trk) : QStandardItem()
 {
 	this->setText(trk->name);
 	this->setData(QVariant::fromValue(trk), RoleLayerData);
+}
+
+
+
+
+SGItem::SGItem(Waypoint * wp) : QStandardItem()
+{
+	this->setText(wp->name);
+	this->setData(QVariant::fromValue(wp), RoleLayerData);
 }
 
 

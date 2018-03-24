@@ -40,6 +40,7 @@ namespace SlavGPS {
 
 
 	class Track;
+	class Waypoint;
 
 
 
@@ -65,6 +66,7 @@ namespace SlavGPS {
 	public:
 		SGItem();
 		SGItem(Track * trk);
+		SGItem(Waypoint * wp);
 		SGItem(Geoname * geoname);
 		SGItem(QString const & text);
 		~SGItem() {};

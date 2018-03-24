@@ -151,7 +151,7 @@ namespace SlavGPS {
 
 
 		void list_wp_uids(std::list<sg_uid_t> & list);
-		std::list<QString> get_sorted_wp_name_list();
+		std::list<Waypoint *> get_sorted_by_name();
 		QString find_duplicate_waypoint_name(void);
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();

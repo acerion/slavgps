@@ -56,6 +56,14 @@ namespace SlavGPS {
 	};
 
 
+	/* TODO: the list selection dialog should present items in
+	   such a way, as to be able to differentiate between items
+	   with the same name.
+
+	   E.g. two tracks with the same name can have different start
+	   times or durations - this should be presented in the list
+	   dialog to allow user recognize all tracks and decide which
+	   ones to select. */
 	template <typename T>
 	std::list<T> a_dialog_select_from_list(std::list<T> const & elements, bool multiple_selection, const QString & title, const QStringList & header_labels, QWidget * parent)
 	{

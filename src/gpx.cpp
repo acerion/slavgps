@@ -1196,7 +1196,7 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 				track_values->sort(Track::compare_timestamp);
 				break;
 			case GPXExportTrackSort::Alpha:
-				track_values->sort(Track::compare_name);
+				track_values->sort(TreeItem::compare_name);
 				break;
 			default:
 				break;
@@ -1219,7 +1219,7 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 		route_values = trw->routes->get_track_values(route_values); /* TODO: make trw->routes non-pointer? */
 		if (route_values && route_values->size()) {
 
-			route_values->sort(Track::compare_name);
+			route_values->sort(TreeItem::compare_name);
 
 			context.options->is_route = true;
 			for (auto iter = route_values->begin(); iter != route_values->end(); iter++) {
