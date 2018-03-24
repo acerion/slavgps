@@ -629,7 +629,11 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 {
 	assert (graph->viewport == viewport);
 
+#ifdef K_TODO
+	/* TODO: is this assignment necessary in this function?
+	   Shouldn't it be done only once, on resize? */
 	graph->width = viewport->get_graph_width();
+#endif
 
 	const int current_pos_x = graph->get_cursor_pos_x(ev);
 	this->selected_tp = set_center_at_graph_position(current_pos_x, this->trw, this->main_viewport, this->track_info, graph->geocanvas.x_domain, graph->width);
@@ -757,10 +761,12 @@ bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph 
 		return false;
 	}
 
+#ifdef K_TODO
 	/* TODO: are these assignments necessary in this function?
 	   Shouldn't they be done only once, on resize? */
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();
+#endif
 
 	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start);
 
@@ -796,10 +802,12 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 		return false;
 	}
 
+#ifdef K_TODO
 	/* TODO: are these assignments necessary in this function?
 	   Shouldn't they be done only once, on resize? */
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();
+#endif
 
 	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start);
 
@@ -1581,8 +1589,12 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 
 void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
+#ifdef K_TODO
+	/* TODO: are these assignments necessary in this function?
+	   Shouldn't they be done only once, on resize? */
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();
+#endif
 
 	graph->draw_graph(this->track_info);
 
@@ -2208,10 +2220,6 @@ QString get_elevation_grid_label(HeightUnit height_unit, double value)
 QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 {
 	QString result;
-
-	/* TODO: why those grid labels display value after comma,
-	   while grid labels for speed and elevation don't display
-	   values after comma? */
 
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:

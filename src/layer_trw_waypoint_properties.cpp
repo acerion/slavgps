@@ -248,7 +248,6 @@ void PropertiesDialogWaypoint::clear_timestamp_cb(void)
 /* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
    The name to use is returned.
 */
-/* TODO: less on this side, like add track. */
 char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, CoordMode coord_mode, bool is_new, bool * updated)
 {
 

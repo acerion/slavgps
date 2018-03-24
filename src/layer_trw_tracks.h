@@ -156,7 +156,7 @@ namespace SlavGPS {
 		std::list<QString> get_sorted_track_name_list();
 		std::list<QString> get_sorted_track_name_list_exclude_self(Track const * self);
 
-		QString has_duplicate_track_names(void);
+		QString find_duplicate_track_name(void);
 
 
 		void set_items_visibility(bool on_off);

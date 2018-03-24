@@ -178,9 +178,9 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 	} else if (tool->layer_edit_info->type_id == "sg.trw.track" || tool->layer_edit_info->type_id == "sg.trw.route") {
 
 		Track * track = this->get_edited_track();
-		if (track && track->selected_tp.valid) {
+		if (track && track->selected_tp_iter.valid) {
 			/* Don't reset the selected trackpoint, thus ensuring it's still presented in Trackpoint Properties window. */
-			(*track->selected_tp.iter)->coord = new_coord;
+			(*track->selected_tp_iter.iter)->coord = new_coord;
 
 			track->calculate_bounds();
 
@@ -338,7 +338,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 	/* Select the Trackpoint.
 	   Can move it immediately when control held or it's the previously selected tp. */
 	if (ev->modifiers() & Qt::ControlModifier
-	    || (current_selected_track && current_selected_track->selected_tp.iter == tp_iter)) {
+	    || (current_selected_track && current_selected_track->selected_tp_iter.iter == tp_iter)) {
 
 		/* Remember position at which selection occurred. */
 		tool->perform_selection(ScreenPos(ev->x(), ev->y()));
@@ -690,7 +690,7 @@ bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent *
 	bool snapped = false;
 	if (ev->modifiers() & Qt::ControlModifier) {
 		const Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
-		if (tp && tp != *this->get_edited_track()->selected_tp.iter) {
+		if (tp && tp != *this->get_edited_track()->selected_tp_iter.iter) {
 			point_coord = tp->coord;
 			snapped = true;
 		}
@@ -1419,14 +1419,14 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 	Track * track = trw->get_edited_track();
 
-	if (track && track->selected_tp.valid) {
+	if (track && track->selected_tp_iter.valid) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
 		if (!track) { /* TODO: there is a mismatch between this condition and upper if() condition. */
 			return ToolStatus::IGNORED;
 		}
 
-		Trackpoint * tp = *track->selected_tp.iter;
+		Trackpoint * tp = *track->selected_tp_iter.iter;
 		const ScreenPos tp_pos = this->viewport->coord_to_screen_pos(tp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
@@ -1489,7 +1489,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	/* Snap to Trackpoint */
 	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->viewport);
 
-	// trw->selected_tp.tp->coord = new_coord;
+	// trw->selected_tp_iter.tp->coord = new_coord;
 
 	/* Selected item is being moved to new position. */
 	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
@@ -1527,12 +1527,12 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *track->selected_tp.iter) {
+		if (tp && tp != *track->selected_tp_iter.iter) {
 			new_coord = tp->coord;
 		}
 	}
 
-	(*track->selected_tp.iter)->coord = new_coord;
+	(*track->selected_tp_iter.iter)->coord = new_coord;
 	track->calculate_bounds();
 
 	this->perform_release();

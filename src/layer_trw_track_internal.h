@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 
 
-	class Trackpoint2;
+	class TrackpointIter;
 	class Trackpoint;
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
@@ -197,7 +197,7 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 		std::list<Track *> * split_into_segments();
 
-		Track * split_at_trackpoint(const Trackpoint2 & tp);
+		Track * split_at_trackpoint(const TrackpointIter & tp);
 
 		void smooth_it(bool flat);
 
@@ -289,7 +289,7 @@ namespace SlavGPS {
 
 		std::list<Rect *> * get_map_rectangles(double zoom_level);
 
-		void create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool before);
+		void create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before);
 
 		void delete_sublayer(bool confirm);
 
@@ -304,7 +304,7 @@ namespace SlavGPS {
 		LayerTRW * get_parent_layer_trw() const;
 
 		/* Track editing tool. */
-		Trackpoint2 selected_tp;
+		TrackpointIter selected_tp_iter;
 
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;

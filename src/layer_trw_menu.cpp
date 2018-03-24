@@ -310,9 +310,9 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 {
 	/* Try adding submenu items with external tools pre-configured for selected Trackpoint. */
 	const Track * track = parent_layer->get_edited_track();
-	if (track && track->selected_tp.valid) {
+	if (track && track->selected_tp_iter.valid) {
 		/* For the selected Trackpoint. */
-		const Coord * coord = &(*track->selected_tp.iter)->coord;
+		const Coord * coord = &(*track->selected_tp_iter.iter)->coord;
 		ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), coord);
 		return;
 	}

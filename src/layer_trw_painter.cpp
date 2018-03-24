@@ -567,7 +567,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	auto iter = trk->trackpoints.begin();
 
 	Track * selected_track = this->trw->get_edited_track();
-	int tp_size = (selected_track && selected_track->selected_tp.valid && *iter == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
+	int tp_size = (selected_track && selected_track->selected_tp_iter.valid && *iter == *selected_track->selected_tp_iter.iter) ? tp_size_cur : tp_size_reg;
 
 	ScreenPos curr_pos = this->viewport->coord_to_screen_pos((*iter)->coord);
 
@@ -598,7 +598,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	for (; iter != trk->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
 
-		tp_size = (selected_track && selected_track->selected_tp.valid && tp == *selected_track->selected_tp.iter) ? tp_size_cur : tp_size_reg;
+		tp_size = (selected_track && selected_track->selected_tp_iter.valid && tp == *selected_track->selected_tp_iter.iter) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 

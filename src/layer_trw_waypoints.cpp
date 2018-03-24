@@ -180,7 +180,7 @@ std::list<QString> LayerTRWWaypoints::get_sorted_wp_name_list(void)
 /**
  * Find out if any waypoints have the same name in this layer.
  */
-QString LayerTRWWaypoints::has_duplicate_waypoint_names(void)
+QString LayerTRWWaypoints::find_duplicate_waypoint_name(void)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
@@ -346,7 +346,7 @@ void LayerTRWWaypoints::uniquify(sort_order_t sort_order)
 	*/
 
 	/* TODO: make the ::has_duplicate_waypoint_names() return the waypoint itself (or NULL). */
-	QString duplicate_name = this->has_duplicate_waypoint_names();
+	QString duplicate_name = this->find_duplicate_waypoint_name();
 	while (duplicate_name != "") {
 
 		/* Get that waypoint that has duplicate name. */
@@ -365,7 +365,7 @@ void LayerTRWWaypoints::uniquify(sort_order_t sort_order)
 		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
-		duplicate_name = this->has_duplicate_waypoint_names();
+		duplicate_name = this->find_duplicate_waypoint_name();
 	}
 
 	return;

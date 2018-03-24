@@ -111,11 +111,9 @@ namespace SlavGPS {
 		QString image_full_path;
 		QString symbol_name;
 
-		/* A rather misleading, ugly hack needed for trwlayer's click image.
-		   These are the height at which the thumbnail is being drawn, not the
-		   dimensions of the original image. */
-		uint8_t image_width;
-		uint8_t image_height;
+		/* A rather misleading, ugly hack needed for trwlayer's click image. */
+		int image_width = 0;
+		int image_height = 0;
 
 
 		/* Only for GUI display. */

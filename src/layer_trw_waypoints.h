@@ -152,7 +152,7 @@ namespace SlavGPS {
 
 		void list_wp_uids(std::list<sg_uid_t> & list);
 		std::list<QString> get_sorted_wp_name_list();
-		QString has_duplicate_waypoint_names();
+		QString find_duplicate_waypoint_name(void);
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
 		void search_closest_wp(WaypointSearch * search);

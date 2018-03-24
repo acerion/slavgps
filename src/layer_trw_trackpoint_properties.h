@@ -43,6 +43,7 @@
 
 
 #include "widget_timestamp.h"
+#include "layer_trw_track.h"
 
 
 
@@ -80,7 +81,7 @@ namespace SlavGPS {
 		PropertiesDialogTP(QWidget * parent);
 		~PropertiesDialogTP();
 
-		void set_dialog_data(Track * track, const std::list<Trackpoint *>::iterator & current_tp_iter, bool is_route); /* TODO: use typedef'ed type for second arg. */
+		void set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route);
 		void reset_dialog_data(void);
 		void set_dialog_title(const QString & track_name);
 

@@ -337,7 +337,7 @@ std::list<QString> LayerTRWTracks::get_sorted_track_name_list(void)
 /**
  * Find out if any tracks have the same name in this hash table.
  */
-QString LayerTRWTracks::has_duplicate_track_names(void)
+QString LayerTRWTracks::find_duplicate_track_name(void)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
@@ -476,8 +476,8 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 	  - repeat until all different
 	*/
 
-	/* TODO: make the ::has_duplicate_track_names() return the track/route itself (or NULL). */
-	QString duplicate_name = this->has_duplicate_track_names();
+	/* TODO: make the ::find_duplicate_track_name() return the track/route itself (or NULL). */
+	QString duplicate_name = this->find_duplicate_track_name();
 	while (duplicate_name != "") {
 
 		/* Get the track/route with duplicate name. */
@@ -500,7 +500,7 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 		}
 
 		/* Try to find duplicate names again in the updated set of tracks. */
-		QString duplicate_name_ = this->has_duplicate_track_names(); /* kamilTODO: there is a variable in this class with this name. */
+		duplicate_name = this->find_duplicate_track_name();
 	}
 }
 

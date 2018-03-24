@@ -750,7 +750,7 @@ std::list<Track *> * Track::split_into_segments()
    @return newly create track on success
    @return NULL on errors
 */
-Track * Track::split_at_trackpoint(const Trackpoint2 & tp2)
+Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 {
 	if (!tp2.valid) {
 		return NULL;
@@ -2469,16 +2469,19 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 		return;
 	}
 
-	/* std::list::insert() inserts element before position indicated by iter. */
+	/* std::list::insert() inserts element before position indicated by iter.
+	   Iterator can be end() - then element is inserted before end(). */
 
 	if (before) {
-		/* We can always perform this operation, even if iter is at ::begin(). */
-		this->trackpoints.insert(iter, tp_new);
+		/* insert() by its nature will insert element before given iterator.
+		   We can always perform this operation, even if iter is at ::begin(). */
 	} else {
-		/* TODO: Can we do this if we already are at the end of list? */
 		iter++;
-		this->trackpoints.insert(iter, tp_new);
+		/* Even if iter is at this moment at end(), insert()
+		   will safely insert element before the end(). */
 	}
+
+	this->trackpoints.insert(iter, tp_new);
 
 	return;
 }
@@ -2738,7 +2741,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
-		qa->setEnabled(track && track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp_iter.valid);
 	}
 
 
@@ -2749,12 +2752,12 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp_iter.valid);
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp_iter.valid);
 	}
 
 
@@ -2764,7 +2767,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_point_selected_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp.valid);
+		qa->setEnabled(track && track->selected_tp_iter.valid);
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_position_cb()));
@@ -2942,7 +2945,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	/* Only show in viewport context menu, and only when a trackpoint is selected. */
-	if (!tree_view_context_menu && this->selected_tp.valid) {
+	if (!tree_view_context_menu && this->selected_tp_iter.valid) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
@@ -3310,9 +3313,9 @@ void Track::open_diary_cb(void)
 void Track::open_astro_cb(void)
 {
 	Trackpoint * tp = NULL;
-	if (this->selected_tp.valid) {
+	if (this->selected_tp_iter.valid) {
 		/* Current trackpoint. */
-		tp = *this->selected_tp.iter;
+		tp = *this->selected_tp_iter.iter;
 
 	} else if (!this->empty()) {
 		/* Otherwise first trackpoint. */
@@ -3956,7 +3959,7 @@ void Track::split_by_segments_cb(void)
    The new trackpoint is created at center position between @param
    reference_tp and one of its neighbours: next tp or previous tp.
 */
-void Track::create_tp_next_to_reference_tp(Trackpoint2 * reference_tp, bool before)
+void Track::create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before)
 {
 	/* Sanity check. */
 	if (!reference_tp || !reference_tp->valid) {
