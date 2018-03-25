@@ -1,26 +1,23 @@
 /*
- *    Viking - GPS data editor
- *    Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- *    Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
+ * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, version 2.
+ * Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 2.
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
- /*
-  * Ideally dependencies should just be on Gtk,
-  * see vikutils for things that further depend on other Viking types
-  * see utils for things only depend on Glib
-  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -32,14 +29,13 @@
 #include <QDebug>
 #include <QPainter>
 
+#include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
 #include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
-#include "layer_trw_track_internal.h"
-#include "layer_trw_waypoint.h"
 
 #ifdef WINDOWS
 #include <windows.h>
@@ -258,57 +254,4 @@ void SlavGPS::ui_add_recent_file(const QString & file_full_path)
 		free(uri);
 	}
 #endif
-}
-
-
-
-
-
-SGItem::SGItem() : QStandardItem()
-{
-
-}
-
-
-
-
-SGItem::SGItem(QString const & text_) : QStandardItem(text_)
-{
-	this->setText(text_);
-	this->setData(QVariant::fromValue(text_), RoleLayerData);
-}
-
-
-
-
-SGItem::SGItem(Geoname * geoname) : QStandardItem()
-{
-	this->setText(QString(geoname->name));
-	this->setData(QVariant::fromValue(geoname), RoleLayerData);
-}
-
-
-
-
-SGItem::SGItem(Track * trk) : QStandardItem()
-{
-	this->setText(trk->name);
-	this->setData(QVariant::fromValue(trk), RoleLayerData);
-}
-
-
-
-
-SGItem::SGItem(Waypoint * wp) : QStandardItem()
-{
-	this->setText(wp->name);
-	this->setData(QVariant::fromValue(wp), RoleLayerData);
-}
-
-
-
-
-QStandardItem * SGItem::clone() const
-{
-	return new SGItem();
 }

@@ -2961,12 +2961,12 @@ void LayerTRW::merge_with_other_cb(void)
 
 	const bool is_route = track->type_id == "sg.trw.route";
 
-	LayerTRWTracks * ght_tracks = is_route ? this->routes : this->tracks;
+	LayerTRWTracks * source_sublayer = is_route ? this->routes : this->tracks;
 
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
 	bool with_timestamps = track->get_tp_first()->has_timestamp;
-	std::list<sg_uid_t> other_track_uids = ght_tracks->find_tracks_with_timestamp_type(with_timestamps, track);
+	std::list<sg_uid_t> other_track_uids = source_sublayer->find_tracks_with_timestamp_type(with_timestamps, track);
 
 	if (other_track_uids.empty()) {
 		if (with_timestamps) {
@@ -2982,17 +2982,16 @@ void LayerTRW::merge_with_other_cb(void)
 	   The dialog function will present tracks in a manner allowing differentiating between tracks with the same name. */
 	std::list<Track *> other_tracks;
 	for (auto iter = other_track_uids.begin(); iter != other_track_uids.end(); iter++) {
-		other_tracks.push_back(ght_tracks->items.at(*iter));
+		other_tracks.push_back(source_sublayer->items.at(*iter));
 	}
 
 	/* Sort alphabetically for user presentation. */
 	other_tracks.sort(TreeItem::compare_name);
 
-	const QStringList headers = { is_route ? tr("Select route to merge with") : tr("Select track to merge with") };
 	std::list<Track *> merge_list = a_dialog_select_from_list(other_tracks,
 								  true,
-								  tr("Merge with..."),
-								  headers,
+								  is_route ? tr("Select route to merge with") : tr("Select track to merge with"),
+								  SGListSelection::get_headers_for_track(),
 								  this->get_window());
 
 	if (merge_list.empty()) {
@@ -3044,11 +3043,10 @@ void LayerTRW::append_track_cb(void)
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	const QStringList headers = { is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track") };
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
 								    false,
-								    is_route ? tr("Append Route") : tr("Append Track"),
-								    headers,
+								    is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track"),
+								    SGListSelection::get_headers_for_track(),
 								    this->get_window());
 
 	/* It's a list, but shouldn't contain more than one other track! */
@@ -3105,11 +3103,10 @@ void LayerTRW::append_other_cb(void)
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	const QStringList headers = { target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track") };
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
 								    false,
-								    target_is_route ? tr("Append Track") : tr("Append Route"),
-								    headers,
+								    target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track"),
+								    SGListSelection::get_headers_for_track(),
 								    this->get_window());
 
 	if (sources_list.empty()) {
@@ -3529,18 +3526,10 @@ char * SlavGPS::convert_to_dms(double dec)
 
 void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 {
-	/* Ensure list of track names offered is unique. */
-	QString duplicate_name = this->tracks->find_duplicate_track_name();
-	if (duplicate_name != "") {
-		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")), this->get_window()) {
-			this->tracks->uniquify(this->track_sort_order);
-
-			/* Update. */
-			g_tree->emit_items_tree_updated();
-		} else {
-			return;
-		}
-	}
+	/* Usage of a_dialog_select_from_list() will ensure that even
+	   if each item has the same name, amount of information about
+	   the item displayed in the list dialog will be enough to
+	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
 	const std::list<Track *> all_tracks = this->tracks->get_sorted_by_name();
@@ -3551,11 +3540,10 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Get list of items to delete from the user. */
-	const QStringList headers = { tr("Select tracks to delete") };
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_tracks,
 								   true,
-								   tr("Delete Selection"),
-								   headers,
+								   tr("Select tracks to delete"),
+								   SGListSelection::get_headers_for_track(),
 								   this->get_window());
 
 	if (delete_list.empty()) {
@@ -3580,18 +3568,10 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 
 void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 {
-	/* Ensure list of track names offered is unique. */
-	QString duplicate_name = this->routes->find_duplicate_track_name();
-	if (duplicate_name != "") {
-		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), this->get_window())) {
-			this->routes->uniquify(this->track_sort_order);
-
-			/* Update. */
-			g_tree->emit_items_tree_updated();
-		} else {
-			return;
-		}
-	}
+	/* Usage of a_dialog_select_from_list() will ensure that even
+	   if each item has the same name, amount of information about
+	   the item displayed in the list dialog will be enough to
+	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
 	const std::list<Track *> all_routes = this->routes->get_sorted_by_name();
@@ -3602,11 +3582,11 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	/* Get list of items to delete from the user. */
-	const QStringList headers = { tr("Select routes to delete") };
+
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_routes,
 								   true,
-								   tr("Delete Selection"),
-								   headers,
+								   tr("Select routes to delete"),
+								   SGListSelection::get_headers_for_track(),
 								   this->get_window());
 
 	/* Delete requested routes.
@@ -3627,18 +3607,10 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 
 void LayerTRW::delete_selected_waypoints_cb(void)
 {
-	/* Ensure list of waypoint names offered is unique. */
-	QString duplicate_name = this->waypoints->find_duplicate_waypoint_name();
-	if (duplicate_name != "") {
-		if (Dialog::yes_or_no(tr("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), this->get_window())) {
-			this->waypoints->uniquify(this->wp_sort_order);
-
-			/* Update. */
-			g_tree->emit_items_tree_updated();
-		} else {
-			return;
-		}
-	}
+	/* Usage of a_dialog_select_from_list() will ensure that even
+	   if each item has the same name, amount of information about
+	   the item displayed in the list dialog will be enough to
+	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
 	std::list<Waypoint *> all_waypoints = this->waypoints->get_sorted_by_name();
@@ -3648,11 +3620,10 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	}
 
 	/* Get list of items to delete from the user. */
-	const QStringList headers = { tr("Select waypoints to delete") };
 	std::list<Waypoint *> delete_list = a_dialog_select_from_list(all_waypoints,
 								      true,
-								      tr("Delete Selection"),
-								      headers,
+								      tr("Select waypoints to delete"),
+								      SGListSelection::get_headers_for_waypoint(),
 								      this->get_window());
 
 	if (delete_list.empty()) {

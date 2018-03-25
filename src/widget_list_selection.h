@@ -26,6 +26,7 @@
 
 #include <list>
 
+#include <QList>
 #include <QString>
 #include <QStandardItemModel>
 #include <QDialog>
@@ -33,12 +34,17 @@
 #include <QTableView>
 #include <QDialogButtonBox>
 
-#include "ui_util.h"
-
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Geoname;
+	class Track;
+	class Waypoint;
 
 
 
@@ -53,7 +59,30 @@ namespace SlavGPS {
 
 		QStandardItemModel model;
 		QItemSelectionModel selection_model;
+
+		static QStringList get_headers_for_track(void);
+		static QStringList get_headers_for_waypoint(void);
+		static QStringList get_headers_for_geoname(void);
+		static QStringList get_headers_for_string(void);
+
 	};
+
+
+
+
+	class ListSelectionRow {
+	public:
+		ListSelectionRow();
+		ListSelectionRow(Track * trk);
+		ListSelectionRow(Waypoint * wp);
+		ListSelectionRow(Geoname * geoname);
+		ListSelectionRow(QString const & text);
+		~ListSelectionRow() {};
+
+		QList<QStandardItem *> items;
+	};
+
+
 
 
 	/* TODO: the list selection dialog should present items in
@@ -87,9 +116,8 @@ namespace SlavGPS {
 		dialog.setLayout(&vbox);
 
 		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
-			SlavGPS::SGItem * item = new SlavGPS::SGItem(*iter);
-			item->setEditable(false);
-			view.model.invisibleRootItem()->appendRow(item);
+			SlavGPS::ListSelectionRow row(*iter);
+			view.model.invisibleRootItem()->appendRow(row.items);
 		}
 		view.setVisible(false);
 		view.resizeRowsToContents();

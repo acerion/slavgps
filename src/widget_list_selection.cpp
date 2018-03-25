@@ -26,6 +26,10 @@
 #include <QHeaderView>
 
 #include "widget_list_selection.h"
+#include "tree_view.h"
+#include "geonamessearch.h"
+#include "layer_trw_track_internal.h"
+#include "layer_trw_waypoint.h"
 
 
 
@@ -62,7 +66,7 @@ SGListSelection::SGListSelection(bool multiple_selection, QWidget * a_parent) : 
 
 void SGListSelection::set_headers(const QStringList & header_labels)
 {
-	this->model.setItemPrototype(new SGItem());
+	//this->model.setItemPrototype(new SGItem());
 
 	for (int i = 0; i < header_labels.size(); i++) {
 		QStandardItem * header_item = new QStandardItem(header_labels.at(i));
@@ -74,4 +78,116 @@ void SGListSelection::set_headers(const QStringList & header_labels)
 	this->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
 
 	return;
+}
+
+
+
+
+QStringList SGListSelection::get_headers_for_track(void)
+{
+	QStringList headers;
+	headers << QObject::tr("Name") << QObject::tr("Comment");
+	return headers;
+}
+
+
+
+
+QStringList SGListSelection::get_headers_for_waypoint(void)
+{
+	QStringList headers;
+	headers << QObject::tr("Name") << QObject::tr("Comment");
+	return headers;
+}
+
+
+
+
+QStringList SGListSelection::get_headers_for_geoname(void)
+{
+	QStringList headers;
+	headers << QObject::tr("Name") << QObject::tr("Feature") << QObject::tr("Lat/Lon");
+	return headers;
+}
+
+
+
+
+QStringList SGListSelection::get_headers_for_string(void)
+{
+	QStringList headers;
+	headers << QObject::tr("Name");
+	return headers;
+}
+
+
+
+
+ListSelectionRow::ListSelectionRow()
+{
+
+}
+
+
+
+
+ListSelectionRow::ListSelectionRow(QString const & text_)
+{
+	QStandardItem * item = NULL;
+
+	item = new QStandardItem(text_);
+	item->setData(QVariant::fromValue(text_), RoleLayerData);
+	item->setToolTip(text_);
+	item->setEditable(false);
+	this->items << item;
+}
+
+
+
+
+ListSelectionRow::ListSelectionRow(Geoname * geoname)
+{
+	QStandardItem * item = NULL;
+
+	item = new QStandardItem(geoname->name);
+	item->setData(QVariant::fromValue(geoname), RoleLayerData);
+	item->setToolTip(geoname->name);
+	item->setEditable(false);
+	this->items << item;
+}
+
+
+
+
+ListSelectionRow::ListSelectionRow(Track * trk)
+{
+	QStandardItem * item = NULL;
+
+	item = new QStandardItem(trk->name);
+	item->setData(QVariant::fromValue(trk), RoleLayerData);
+	item->setToolTip(trk->get_tooltip());
+	item->setEditable(false);
+	this->items << item;
+
+	item = new QStandardItem(trk->comment);
+	item->setEditable(false);
+	this->items << item;
+}
+
+
+
+
+ListSelectionRow::ListSelectionRow(Waypoint * wp)
+{
+	QStandardItem * item = NULL;
+
+	item = new QStandardItem(wp->name);
+	item->setData(QVariant::fromValue(wp), RoleLayerData);
+	item->setToolTip(wp->get_tooltip());
+	item->setEditable(false);
+	this->items << item;
+
+	item = new QStandardItem(wp->comment);
+	item->setEditable(false);
+	this->items << item;
 }

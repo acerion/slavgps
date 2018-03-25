@@ -106,10 +106,11 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 */
 std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, bool multiple_selection, Window * parent)
 {
-	QStringList headers2;
-	headers2 << QObject::tr("Name") << QObject::tr("Feature") << QObject::tr("Lat/Lon");
-
-	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames, multiple_selection, title, headers2, parent);
+	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames,
+									   multiple_selection,
+									   title,
+									   SGListSelection::get_headers_for_geoname(),
+									   parent);
 
 	if (!selected_geonames.size()) {
 		Dialog::error(QObject::tr("Nothing was selected"), parent);

@@ -22,14 +22,17 @@
 #ifndef _SG_UI_UTIL_H_
 #define _SG_UI_UTIL_H_
 
+
+
+
 #include <cstdint>
+
+
+
 
 #include <QLabel>
 #include <QStandardItem>
 #include <QPixmap>
-
-#include <glib.h>
-#include "geonamessearch.h"
 
 
 
@@ -39,8 +42,7 @@ namespace SlavGPS {
 
 
 
-	class Track;
-	class Waypoint;
+	class Window;
 
 
 
@@ -48,7 +50,7 @@ namespace SlavGPS {
 	void open_url(const QString & url);
 	void new_email(const QString & address, Window * parent);
 
-	int ui_get_gtk_settings_integer(const char *property_name, int default_value);
+	int ui_get_gtk_settings_integer(const char * property_name, int default_value);
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
 	/* @alpha should be in range 0-255 */
@@ -59,20 +61,6 @@ namespace SlavGPS {
 
 	void ui_add_recent_file(const QString & file_full_path);
 
-
-
-
-	class SGItem : public QStandardItem {
-	public:
-		SGItem();
-		SGItem(Track * trk);
-		SGItem(Waypoint * wp);
-		SGItem(Geoname * geoname);
-		SGItem(QString const & text);
-		~SGItem() {};
-
-		virtual QStandardItem * clone() const;
-	};
 
 
 
