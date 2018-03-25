@@ -416,22 +416,8 @@ void Track::recalculate_bounds_last_tp()
 	Trackpoint * tp = *std::prev(this->trackpoints.end());
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
-		const LatLon ll = tp->coord.get_latlon();
-		if (ll.lat > bbox.north) {
-			bbox.north = ll.lat;
-		}
-
-		if (ll.lon < bbox.west) {
-			bbox.west = ll.lon;
-		}
-
-		if (ll.lat < bbox.south) {
-			bbox.south = ll.lat;
-		}
-
-		if (ll.lon > bbox.east) {
-			bbox.east = ll.lon;
-		}
+		const LatLon lat_lon = tp->coord.get_latlon();
+		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
 	}
 }
 
@@ -1984,52 +1970,24 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
 
 
 /**
- * (Re)Calculate the bounds of the given track,
- * updating the track's bounds data.
- * This should be called whenever a track's trackpoints are changed.
- */
+   (Re)Calculate the bounds of the given track,
+   updating the track's bounds data.
+   This should be called whenever a track's trackpoints are changed.
+*/
 void Track::calculate_bounds()
 {
-	LatLon topleft;
-	LatLon bottomright;
-
-	/* Set bounds to first point. */
-	auto iter = this->trackpoints.begin();
-	if (iter != this->trackpoints.end()) {
-		topleft = (*iter)->coord.get_latlon();
-		bottomright = (*iter)->coord.get_latlon();
+	if (0 == this->trackpoints.size()) {
+		return;
 	}
 
-	for (; iter != this->trackpoints.end(); iter++) {
-
-		/* See if this trackpoint increases the track bounds. */
-
-		const LatLon ll = (*iter)->coord.get_latlon();
-
-		if (ll.lat > topleft.lat) {
-			topleft.lat = ll.lat;
-		}
-
-		if (ll.lon < topleft.lon) {
-			topleft.lon = ll.lon;
-		}
-
-		if (ll.lat < bottomright.lat) {
-			bottomright.lat = ll.lat;
-		}
-
-		if (ll.lon > bottomright.lon) {
-			bottomright.lon = ll.lon;
-		}
+	this->bbox.invalidate();
+	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
+		const LatLon lat_lon = (*iter)->coord.get_latlon();
+		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
 	}
+	this->bbox.validate();
 
-	qDebug() << "DD: Track: Bounds of track:" << this->name << "is" << topleft.lat << topleft.lon << "to" << bottomright.lat << bottomright.lon;
-
-	bbox.north = topleft.lat;
-	bbox.east = bottomright.lon;
-	bbox.south = bottomright.lat;
-	bbox.west = topleft.lon;
-
+	qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
 }
 
 

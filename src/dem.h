@@ -21,12 +21,16 @@
 #ifndef _SG_DEM_H
 #define _SG_DEM_H
 
+
+
+
 #include <vector>
 #include <cstdint>
 
-#include <QString>
 
-#include "bbox.h"
+
+
+#include <QString>
 
 
 
@@ -46,6 +50,10 @@ namespace SlavGPS {
 
 #define VIK_DEM_VERT_METERS 1 /* Wrong in 250k? */
 
+
+
+
+	class LatLonBBox;
 
 
 

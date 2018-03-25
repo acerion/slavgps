@@ -35,7 +35,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX   " SGVariant"
+#define PREFIX ": Variant:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -45,7 +45,7 @@ SGVariant::SGVariant(const SGVariant & val)
 	*this = val;
 
 	if (val.type_id == SGVariantType::Empty) {
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": passed value with empty type to copy constructor";
+		qDebug() << "EE" PREFIX << "passed value with empty type to copy constructor";
 	}
 }
 
@@ -87,7 +87,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_lat_lon_alt = strtod(str, NULL);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
+		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -130,7 +130,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_lat_lon_alt = str.toDouble();
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
+		qDebug() << "EE" PREFIX "unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -325,7 +325,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		debug << value.get_altitude();
 		break;
 	default:
-		debug << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) value.type_id;
+		debug << "EE" PREFIX << "unsupported variant type id" << (int) value.type_id;
 		break;
 	};
 
@@ -378,7 +378,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 		debug << "Altitude";
 		break;
 	default:
-		debug << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) type_id;
+		debug << "EE" PREFIX << "unsupported variant type id" << (int) type_id;
 		break;
 	};
 
@@ -469,7 +469,7 @@ QString SGVariant::to_string() const
 		return c_locale.toString(this->get_altitude(), 'f', SG_PRECISION_ALTITUDE);
 
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << ": unsupported variant type id" << (int) this->type_id;
+		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
 		return QString("");
 	};
 }

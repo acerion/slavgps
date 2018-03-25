@@ -27,7 +27,13 @@
 
 
 
+#include <cmath>
+
+
+
+
 #include <QString>
+#include <QDebug>
 
 
 
@@ -61,9 +67,26 @@ namespace SlavGPS {
 		double east = 0.0;  /* max_lon */
 		double west = 0.0;  /* min_lon */
 
-		static LatLonBBoxStrings to_strings(const LatLonBBox & bbox);
+		bool valid = false;
+
+		LatLonBBoxStrings to_strings(void) const;
 		LatLon get_center_coordinate(void) const;
+
+		/* Set all fields of bbox (coordinates and 'valid'
+		   field) to initial, invalid values. */
+		void invalidate(void);
+
+		/* See if coordinate fields of bbox are all valid. Set
+		   'valid' field appropriately and return value of
+		   this field.
+
+		   If one of coordinate fields is invalid, set all
+		   coordinate fields to invalid. */
+		bool validate(void);
 	};
+
+
+	QDebug operator<<(QDebug debug, const LatLonBBox & bbox);
 
 
 
@@ -83,6 +106,25 @@ namespace SlavGPS {
  *       +-------+
  */
 #define BBOX_INTERSECT(a,b) ((a).south < (b).north && (a).north > (b).south && (a).east > (b).west && (a).west < (b).east)
+
+
+
+
+/* Make the given LatLonBBox larger by expanding it to include given LatLon. */
+#define BBOX_STRETCH_WITH_LATLON(m_bbox, m_lat_lon) {			\
+		if (std::isnan(m_bbox.north) || (m_lat_lon.lat > m_bbox.north)) { \
+			m_bbox.north = m_lat_lon.lat;			\
+		}							\
+		if (std::isnan(m_bbox.west) || (m_lat_lon.lon < m_bbox.west)) {	\
+			m_bbox.west = m_lat_lon.lon;			\
+		}							\
+		if (std::isnan(m_bbox.south) || (m_lat_lon.lat < m_bbox.south)) { \
+			m_bbox.south = m_lat_lon.lat;			\
+		}							\
+		if (std::isnan(m_bbox.east) || (m_lat_lon.lon > m_bbox.east)) { \
+			m_bbox.east = m_lat_lon.lon;			\
+		}							\
+	}
 
 
 

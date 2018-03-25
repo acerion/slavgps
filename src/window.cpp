@@ -2273,7 +2273,6 @@ void Window::update_recently_used_document(const QString & file_full_path)
 void Window::set_busy_cursor()
 {
 	this->setCursor(Qt::WaitCursor);
-	/* Viewport has a separate cursor. TODO: verify this */
 	this->viewport->setCursor(Qt::WaitCursor);
 
 #ifdef K_TODO

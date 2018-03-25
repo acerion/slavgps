@@ -432,56 +432,24 @@ void LayerTRWWaypoints::reset_waypoint_icon(Waypoint * wp)
 
 
 /*
- * (Re)Calculate the bounds of the waypoints in this layer.
- * This should be called whenever waypoints are changed.
- */
-void LayerTRWWaypoints::calculate_bounds()
+  (Re)Calculate the bounds of the waypoints in this layer.
+  This should be called whenever waypoints are changed (added/removed/moved).
+*/
+void LayerTRWWaypoints::calculate_bounds(void)
 {
-	LatLon topleft;
-	LatLon bottomright;
-
-
-	auto i = this->items.begin();
-	if (i == this->items.end()) {
-		/* E.g. after all waypoints have been removed from trw layer. */
+	if (0 == this->items.size()) {
+		/* E.g. after all waypoints have been removed from TRW layer. */
 		return;
 	}
-	Waypoint * wp = i->second;
-	/* Set bounds to first point. */
-	if (wp) {
-		topleft = wp->coord.get_latlon();
-		bottomright = wp->coord.get_latlon();
+
+	this->bbox.invalidate();
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		const LatLon lat_lon = iter->second->coord.get_latlon();
+		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
 	}
+	this->bbox.validate();
 
-	/* Ensure there is another point... */
-	if (this->items.size() > 1) {
-
-		while (++i != this->items.end()) { /* kamilTODO: check the conditon. */
-
-			wp = i->second;
-
-			/* See if this point increases the bounds. */
-			const LatLon ll = wp->coord.get_latlon();
-
-			if (ll.lat > topleft.lat) {
-				topleft.lat = ll.lat;
-			}
-			if (ll.lon < topleft.lon) {
-				topleft.lon = ll.lon;
-			}
-			if (ll.lat < bottomright.lat) {
-				bottomright.lat = ll.lat;
-			}
-			if (ll.lon > bottomright.lon){
-				bottomright.lon = ll.lon;
-			}
-		}
-	}
-
-	this->bbox.north = topleft.lat;
-	this->bbox.east = bottomright.lon;
-	this->bbox.south = bottomright.lat;
-	this->bbox.west = topleft.lon;
+	qDebug() << "DD" PREFIX << "Recalculated bounds of waypoints:" << this->bbox;
 
 	return;
 }

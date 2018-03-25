@@ -80,7 +80,7 @@ ProcessOptions * DataSourceOSMDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	const LatLonBBoxStrings bbox_strings = LatLonBBox::to_strings(this->viewport->get_bbox());
+	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().to_strings();
 
 	/* Retrieve the specified page number. */
 	const int page = this->spin_box.value();

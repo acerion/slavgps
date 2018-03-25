@@ -2181,7 +2181,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	scaled_viewport->set_xmpp(this->xmpp / scale_factor);
 	scaled_viewport->set_ympp(this->ympp / scale_factor);
 
-	qDebug() << "II" PREFIX << "scaled viewport's bounding box set to" << scaled_viewport->get_bbox().north << scaled_viewport->get_bbox().south << scaled_viewport->get_bbox().west << scaled_viewport->get_bbox().east;
+	qDebug() << "II" PREFIX << "scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
 
 
 

@@ -51,6 +51,7 @@
 #include "file_utils.h"
 #include "util.h"
 #include "vikutils.h"
+#include "bbox.h"
 
 
 

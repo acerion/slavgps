@@ -40,7 +40,6 @@
 
 
 #include "coord.h"
-#include "bbox.h"
 #include "layer_trw_definitions.h"
 
 
