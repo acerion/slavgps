@@ -128,6 +128,7 @@ namespace SlavGPS {
 		int get_rightmost_zone(void) const;
 
 		bool show_latlons(const LatLonMinMax & min_max);
+		bool show_bbox(const LatLonBBox & bbox);
 
 		LatLonMinMax get_min_max_lat_lon(void) const;
 		LatLonBBox get_bbox(void) const;

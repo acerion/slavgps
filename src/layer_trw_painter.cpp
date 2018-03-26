@@ -358,8 +358,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd ||
 	    trk->draw_name_mode == TrackDrawNameMode::Centre) {
 
-		LatLonMinMax min_max;
-		trk->find_maxmin(min_max);
+		const LatLonMinMax min_max(trk->get_bbox());
 
 		const Coord coord(LatLonMinMax::get_average(min_max), this->trw->coord_mode);
 
@@ -1143,7 +1142,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 		return;
 	}
 
-	if (BBOX_INTERSECT (this->trw->get_waypoints_node().bbox, a_viewport->get_bbox())) {
+	if (BBOX_INTERSECT (this->trw->get_waypoints_node().get_bbox(), a_viewport->get_bbox())) {
 		this->draw_waypoint_sub(wp, do_highlight);
 	}
 }

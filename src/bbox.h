@@ -111,18 +111,37 @@ namespace SlavGPS {
 
 
 /* Make the given LatLonBBox larger by expanding it to include given LatLon. */
-#define BBOX_STRETCH_WITH_LATLON(m_bbox, m_lat_lon) {			\
-		if (std::isnan(m_bbox.north) || (m_lat_lon.lat > m_bbox.north)) { \
+#define BBOX_EXPAND_WITH_LATLON(m_bbox, m_lat_lon) {			\
+		if ((m_lat_lon.lat > m_bbox.north) || std::isnan(m_bbox.north)) { \
 			m_bbox.north = m_lat_lon.lat;			\
 		}							\
-		if (std::isnan(m_bbox.west) || (m_lat_lon.lon < m_bbox.west)) {	\
-			m_bbox.west = m_lat_lon.lon;			\
-		}							\
-		if (std::isnan(m_bbox.south) || (m_lat_lon.lat < m_bbox.south)) { \
+		if ((m_lat_lon.lat < m_bbox.south) || std::isnan(m_bbox.south)) { \
 			m_bbox.south = m_lat_lon.lat;			\
 		}							\
-		if (std::isnan(m_bbox.east) || (m_lat_lon.lon > m_bbox.east)) { \
+		if ((m_lat_lon.lon > m_bbox.east) || std::isnan(m_bbox.east)) { \
 			m_bbox.east = m_lat_lon.lon;			\
+		}							\
+		if ((m_lat_lon.lon < m_bbox.west) || std::isnan(m_bbox.west)) {	\
+			m_bbox.west = m_lat_lon.lon;			\
+		}							\
+	}
+
+
+
+
+/* Make the first LatLonBBox larger by expanding it to include second LatLonBBox. */
+#define BBOX_EXPAND_WITH_BBOX(m_target, m_source) {			\
+		if (m_source.north > m_target.north || std::isnan(m_target.north)) { \
+			m_target.north = m_source.north;		\
+		}							\
+		if (m_source.south < m_target.south || std::isnan(m_target.south)) { \
+			m_target.south = m_source.south;		\
+		}							\
+		if (m_source.east > m_target.east || std::isnan(m_target.east)) { \
+			m_target.east = m_source.east;			\
+		}							\
+		if (m_source.west < m_target.west || std::isnan(m_target.west)) { \
+			m_target.west = m_source.west;			\
 		}							\
 	}
 

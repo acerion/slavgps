@@ -743,7 +743,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	}
 
 	bool was_visible = parent_layer->delete_waypoint(this);
-	parent_layer->waypoints->calculate_bounds();
+	parent_layer->waypoints->recalculate_bbox();
 
 	/* Reset layer timestamp in case it has now changed. */
 	parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());

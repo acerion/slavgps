@@ -557,9 +557,7 @@ bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bo
 {
 	Track * trk = this->tracks->find_track_by_date(date_str);
 	if (trk && select) {
-		LatLonMinMax min_max;
-		trk->find_maxmin(min_max);
-		viewport->show_latlons(min_max);
+		viewport->show_bbox(trk->get_bbox());
 		this->tree_view->select_and_expose(trk->index);
 		this->emit_layer_changed();
 	}
@@ -683,7 +681,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
 		this->add_waypoint(wp);
 
 		wp->convert(this->coord_mode);
-		this->waypoints->calculate_bounds();
+		this->waypoints->recalculate_bbox();
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->visible && this->waypoints->visible && wp->visible) {
@@ -1218,7 +1216,7 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, data_len);
 
 	// Not stored anywhere else so need to regenerate
-	trw->get_waypoints_node().calculate_bounds();
+	trw->get_waypoints_node().recalculate_bbox();
 
 	return trw;
 }
@@ -1330,22 +1328,33 @@ void LayerTRW::add_children_to_tree(void)
 
 	if (this->tracks->items.size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Tracks";
-		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
-		this->tree_view->add_tree_item(this->index, this->tracks, tr("Tracks"));
+
+		assert (!this->tracks->is_in_tree());
+		if (!this->tracks->is_in_tree()) {
+			this->tree_view->add_tree_item(this->index, this->tracks, tr("Tracks"));
+		}
 		this->tracks->add_children_to_tree();
 	}
 
 	if (this->routes->items.size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Routes";
-		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
-		this->tree_view->add_tree_item(this->index, this->routes, tr("Routes"));
+
+		assert (!this->routes->is_in_tree());
+		if (!this->routes->is_in_tree()) {
+			this->tree_view->add_tree_item(this->index, this->routes, tr("Routes"));
+		}
+
 		this->routes->add_children_to_tree();
 	}
 
 	if (this->waypoints->items.size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Waypoints";
-		/* TODO: verify that the node is not connected to tree yet, before calling this method. */
-		this->tree_view->add_tree_item(this->index, this->waypoints, tr("Waypoints"));
+
+		assert (!this->waypoints->is_in_tree());
+		if (!this->waypoints->is_in_tree()) {
+			this->tree_view->add_tree_item(this->index, this->waypoints, tr("Waypoints"));
+		}
+
 		this->waypoints->add_children_to_tree();
 	}
 
@@ -1684,14 +1693,34 @@ bool LayerTRW::get_waypoints_visibility()
 
 
 
-void LayerTRW::find_maxmin(LatLonMinMax & min_max)
+void LayerTRW::recalculate_bbox(void)
 {
-	/* Continually reuse min_max to find the latest maximum and minimum values.
-	   First set to waypoints bounds. */
+	this->tracks->recalculate_bbox();
+	this->routes->recalculate_bbox();
+	this->waypoints->recalculate_bbox();
+}
 
-	this->waypoints->find_maxmin(min_max);
-	this->tracks->find_maxmin(min_max);
-	this->routes->find_maxmin(min_max);
+
+
+
+LatLonBBox LayerTRW::get_bbox(void)
+{
+	/* Continually expand result bbox to find union of bboxes of
+	   three sublayers. */
+
+	LatLonBBox result;
+	LatLonBBox intermediate;
+
+	intermediate = this->tracks->get_bbox();
+	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+
+	intermediate = this->routes->get_bbox();
+	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+
+	intermediate = this->waypoints->get_bbox();
+	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+
+	return result;
 }
 
 
@@ -1700,8 +1729,7 @@ void LayerTRW::find_maxmin(LatLonMinMax & min_max)
 bool LayerTRW::find_center(Coord * dest)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. like I don't have more important things to worry about... */
-	LatLonMinMax min_max;
-	this->find_maxmin(min_max);
+	const LatLonMinMax min_max(this->get_bbox());
 
 	if (min_max.is_valid()) {
 		*dest = Coord(LatLonMinMax::get_average(min_max), this->coord_mode);
@@ -1731,10 +1759,8 @@ void LayerTRW::centerize_cb(void)
 bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
-	LatLonMinMax min_max;
-	this->find_maxmin(min_max);
-	if (min_max.is_valid()) {
-		viewport->show_latlons(min_max);
+	if (this->get_bbox().valid) {
+		viewport->show_bbox(this->get_bbox());
 		return true;
 	} else {
 		return false;
@@ -1893,7 +1919,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	a_geonames_wikipedia_box(this->get_window(), this, viewport->get_min_max_lat_lon());
-	this->waypoints->calculate_bounds();
+	this->waypoints->recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
 
@@ -1902,11 +1928,8 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	LatLonMinMax min_max;
-	this->find_maxmin(min_max);
-
-	a_geonames_wikipedia_box(this->get_window(), this, min_max);
-	this->waypoints->calculate_bounds();
+	a_geonames_wikipedia_box(this->get_window(), this, LatLonMinMax(this->get_bbox()));
+	this->waypoints->recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
 
@@ -2121,7 +2144,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
 	if (this->new_waypoint(g_tree->tree_get_main_viewport()->get_center2()), this->get_window()) {
-		this->waypoints->calculate_bounds();
+		this->waypoints->recalculate_bbox();
 		if (this->visible) {
 			g_tree->emit_items_tree_updated();
 		}
@@ -2263,9 +2286,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 	/* Now we can proceed with adding a waypoint to Waypoints node. */
 
-	wp->owning_layer = this;
-
-	this->waypoints->items.insert({{ wp->uid, wp }});
+	this->waypoints->add_waypoint(wp);
 
 	time_t timestamp = 0;
 	if (wp->has_timestamp) {
@@ -2306,9 +2327,7 @@ void LayerTRW::add_track(Track * trk)
 
 	/* Now we can proceed with adding a track to Tracks node. */
 
-	trk->owning_layer = this;
-
-	this->tracks->items.insert({{ trk->uid, trk }});
+	this->tracks->add_track(trk);
 
 	time_t timestamp = 0;
 	Trackpoint * tp = trk->get_tp_first();
@@ -2349,9 +2368,7 @@ void LayerTRW::add_route(Track * trk)
 
 	/* Now we can proceed with adding a route to Routes node. */
 
-	trk->owning_layer = this;
-
-	this->routes->items.insert({{ trk->uid, trk }});
+	this->routes->add_track(trk);
 
 	this->tree_view->add_tree_item(this->routes->index, trk, trk->name);
 
@@ -2421,34 +2438,15 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 
 
 
-void LayerTRW::add_waypoint_to_data_structure(Waypoint * wp, const QString & wp_name)
+void LayerTRW::add_waypoint_from_file2(Waypoint * wp, const QString & wp_name)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
 	wp->set_name(wp_name);
 
-	wp->owning_layer = this;
-
-	this->waypoints->items.insert({{ wp->uid, wp }});
+	this->add_waypoint(wp);
 
 	this->highest_wp_number_add_wp(wp->name);
-}
-
-
-
-
-void LayerTRW::add_track_to_data_structure(Track * trk)
-{
-	trk->owning_layer = this;
-	this->tracks->items.insert({{ trk->uid, trk }});
-}
-
-
-
-void LayerTRW::add_route_to_data_structure(Track * trk)
-{
-	trk->owning_layer = this;
-	this->routes->items.insert({{ trk->uid, trk }});
 }
 
 
@@ -2515,9 +2513,9 @@ void LayerTRW::add_track_from_file2(Track * incoming_track, const QString & inco
 		incoming_track->set_name(incoming_track_name);
 		/* No more uniqueness of name forced when loading from a file. */
 		if (incoming_track->type_id == "sg.trw.route") {
-			this->add_route_to_data_structure(incoming_track);
+			this->routes->add_track_to_data_structure_only(incoming_track);
 		} else {
-			this->add_track_to_data_structure(incoming_track);
+			this->tracks->add_track_to_data_structure_only(incoming_track);
 		}
 
 		if (this->route_finder_check_added_track) {
@@ -2584,8 +2582,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		this->delete_waypoint(wp);
 
 		/* Recalculate bounds even if not renamed as maybe dragged between layers. */
-		trw_dest->waypoints->calculate_bounds();
-		trw_src->waypoints->calculate_bounds();
+		trw_dest->waypoints->recalculate_bbox();
+		trw_src->waypoints->recalculate_bbox();
 		/* Reset layer timestamps in case they have now changed. */
 		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
 		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
@@ -3255,7 +3253,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 		} else {
 			this->add_track(copy);
 		}
-		copy->calculate_bounds();
+		copy->recalculate_bbox();
 	}
 
 	/* Remove original track and then update the display. */
@@ -3305,7 +3303,7 @@ void LayerTRW::delete_selected_tp(Track * track)
 	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
 		track->selected_tp_iter.iter = new_tp_iter;
-		track->calculate_bounds();
+		track->recalculate_bbox();
 	} else {
 		this->cancel_current_tp(false);
 	}
@@ -3637,7 +3635,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 		this->delete_waypoint(*iter);
 	}
 
-	this->waypoints->calculate_bounds();
+	this->waypoints->recalculate_bbox();
 	/* Reset layer timestamp in case it has now changed. */
 	this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
 	this->emit_layer_changed();
@@ -4040,9 +4038,9 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	this->tracks->assign_colors(this->painter->track_drawing_mode, this->painter->track_color_common);
 	this->routes->assign_colors(this->painter->track_drawing_mode, this->painter->track_color_common); /* For routes the first argument is ignored. */
 
-	this->waypoints->calculate_bounds();
-	this->tracks->calculate_bounds();
-	this->routes->calculate_bounds();
+	this->waypoints->recalculate_bbox();
+	this->tracks->recalculate_bbox();
+	this->routes->recalculate_bbox();
 
 
 	/*

@@ -172,7 +172,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 	/* Update information about new position of Waypoint/Trackpoint. */
 	if (tool->layer_edit_info->type_id == "sg.trw.waypoint") {
 		this->get_edited_wp()->coord = new_coord;
-		this->waypoints->calculate_bounds();
+		this->waypoints->recalculate_bbox();
 		this->reset_edited_wp();
 
 	} else if (tool->layer_edit_info->type_id == "sg.trw.track" || tool->layer_edit_info->type_id == "sg.trw.route") {
@@ -182,7 +182,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 			/* Don't reset the selected trackpoint, thus ensuring it's still presented in Trackpoint Properties window. */
 			(*track->selected_tp_iter.iter)->coord = new_coord;
 
-			track->calculate_bounds();
+			track->recalculate_bbox();
 
 			if (this->tpwin) {
 				this->tpwin_update_dialog_data();
@@ -226,7 +226,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->bbox, viewport_bbox)) {
+	if (this->waypoints->visible && BBOX_INTERSECT (this->waypoints->get_bbox(), viewport_bbox)) {
 		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
 		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->painter->draw_wp_images);
 		this->waypoints->search_closest_wp(&wp_search);
@@ -256,7 +256,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	/* Used for both track and route lists. */
 	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
 
-	if (this->tracks->visible && BBOX_INTERSECT (this->tracks->bbox, viewport_bbox)) {
+	if (this->tracks->visible && BBOX_INTERSECT (this->tracks->get_bbox(), viewport_bbox)) {
 		this->tracks->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
@@ -275,7 +275,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	}
 
 	/* Try again for routes. */
-	if (this->routes->visible && BBOX_INTERSECT (this->routes->bbox, viewport_bbox)) {
+	if (this->routes->visible && BBOX_INTERSECT (this->routes->get_bbox(), viewport_bbox)) {
 		this->routes->track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
@@ -634,7 +634,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		trw->get_edited_wp()->coord = new_coord;
 
-		trw->get_waypoints_node().calculate_bounds();
+		trw->get_waypoints_node().recalculate_bbox();
 		trw->emit_layer_changed();
 		return ToolStatus::ACK;
 		}
@@ -1362,7 +1362,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 
 	const Coord coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
 	if (trw->new_waypoint(coord, trw->get_window())) {
-		trw->get_waypoints_node().calculate_bounds();
+		trw->get_waypoints_node().recalculate_bbox();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
 			trw->emit_layer_changed();
@@ -1533,7 +1533,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	}
 
 	(*track->selected_tp_iter.iter)->coord = new_coord;
-	track->calculate_bounds();
+	track->recalculate_bbox();
 
 	this->perform_release();
 

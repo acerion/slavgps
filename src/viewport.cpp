@@ -2416,3 +2416,11 @@ bool Viewport::show_latlons(const LatLonMinMax & min_max)
 	vu_zoom_to_show_latlons(this->get_coord_mode(), this, min_max);
 	return true;
 }
+
+
+
+
+bool Viewport::show_bbox(const LatLonBBox & a_bbox)
+{
+	return this->show_latlons(LatLonMinMax(a_bbox));
+}

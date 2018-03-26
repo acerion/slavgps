@@ -143,16 +143,6 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_date(char const * date)
 
 
 
-void LayerTRWWaypoints::find_maxmin(LatLonMinMax & min_max)
-{
-	if (this->items.size() > 1) { /* kamil TODO this condition may have to be improved. */
-		min_max = LatLonMinMax(this->bbox);
-	}
-}
-
-
-
-
 void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
@@ -431,21 +421,23 @@ void LayerTRWWaypoints::reset_waypoint_icon(Waypoint * wp)
 
 
 
-/*
-  (Re)Calculate the bounds of the waypoints in this layer.
-  This should be called whenever waypoints are changed (added/removed/moved).
+/**
+   (Re)Calculate the bounds of the waypoints in this layer.
+   This should be called whenever waypoints are changed (added/removed/moved).
 */
-void LayerTRWWaypoints::calculate_bounds(void)
+void LayerTRWWaypoints::recalculate_bbox(void)
 {
+	this->bbox.invalidate();
+
 	if (0 == this->items.size()) {
 		/* E.g. after all waypoints have been removed from TRW layer. */
 		return;
 	}
 
-	this->bbox.invalidate();
+
 	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
 		const LatLon lat_lon = iter->second->coord.get_latlon();
-		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
+		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
 	}
 	this->bbox.validate();
 
@@ -653,7 +645,7 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		viewport->show_latlons(LatLonMinMax(this->bbox));
+		viewport->show_bbox(this->bbox);
 	} else {
 		return; /* Zero items. */
 	}
@@ -845,6 +837,17 @@ void LayerTRWWaypoints::clear(void)
 	}
 
 	this->items.clear();
+}
+
+
+
+
+void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
+{
+	wp->owning_layer = this->owning_layer;
+	this->items.insert({{ wp->uid, wp }});
+
+	return;
 }
 
 

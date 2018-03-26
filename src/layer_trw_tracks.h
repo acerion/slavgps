@@ -128,14 +128,11 @@ namespace SlavGPS {
 
 		void add_children_to_tree(void);
 
-		void calculate_bounds(void);
-
 
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);
 		Track * find_track_by_date(char const * date_str);
 
-		void find_maxmin(LatLonMinMax & min_max);
 		void uniquify(sort_order_t sort_order);
 		QString new_unique_element_name(const QString & old_name);
 
@@ -188,6 +185,10 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+
+		void add_track(Track * trk);
+		void add_track_to_data_structure_only(Track * trk);
+
 		/*
 		  Delete a single track from container and from main items tree.
 		  Delete the passed object as well.
@@ -195,8 +196,11 @@ namespace SlavGPS {
 		*/
 		bool delete_track(Track * trk);
 
+		void recalculate_bbox(void);
+		LatLonBBox get_bbox(void) const { return this->bbox; };
+
 		Tracks items;
-		LatLonBBox bbox;
+
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);
@@ -212,6 +216,9 @@ namespace SlavGPS {
 		void sort_order_z2a_cb(void);
 		void sort_order_timestamp_ascend_cb(void);
 		void sort_order_timestamp_descend_cb(void);
+
+	private:
+		LatLonBBox bbox;
 	};
 
 

@@ -241,8 +241,9 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, size_t * data_len);
 		static Track * unmarshall(uint8_t * data, size_t data_len);
 
-		void calculate_bounds();
-		void find_maxmin(LatLonMinMax & min_max);
+
+		void recalculate_bbox(void);
+		LatLonBBox get_bbox(void) const;
 
 		void anonymize_times();
 		void interpolate_times();
@@ -326,7 +327,7 @@ namespace SlavGPS {
 
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
-		void recalculate_bounds_last_tp();
+		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
 

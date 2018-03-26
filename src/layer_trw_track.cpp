@@ -407,7 +407,7 @@ void Trackpoint::set_name(const QString & new_name)
  *
  * A faster bounds check, since it only considers the last track point.
  */
-void Track::recalculate_bounds_last_tp()
+void Track::recalculate_bbox_last_tp()
 {
 	if (this->trackpoints.empty()) {
 		return;
@@ -417,7 +417,7 @@ void Track::recalculate_bounds_last_tp()
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
 		const LatLon lat_lon = tp->coord.get_latlon();
-		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
+		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
 	}
 }
 
@@ -429,7 +429,7 @@ void Track::recalculate_bounds_last_tp()
  * @tp:          The trackpoint to add
  * @recalculate: Whether to perform any associated properties recalculations
  *               Generally one should avoid recalculation via this method if adding lots of points
- *               (But ensure calculate_bounds() is called after adding all points!!)
+ *               (But ensure recalculate_bbox() is called after adding all points!!)
  *
  * The trackpoint is added to the end of the existing trackpoint list.
  */
@@ -439,9 +439,9 @@ void Track::add_trackpoint(Trackpoint * tp, bool recalculate)
 	bool adding_first_point = this->trackpoints.empty();
 	this->trackpoints.push_back(tp);
 	if (adding_first_point) {
-		this->calculate_bounds();
+		this->recalculate_bbox();
 	} else if (recalculate) {
-		this->recalculate_bounds_last_tp();
+		this->recalculate_bbox_last_tp();
 	}
 }
 
@@ -570,7 +570,7 @@ unsigned long Track::remove_dup_points()
 	}
 
 	/* NB isn't really be necessary as removing duplicate points shouldn't alter the bounds! */
-	this->calculate_bounds();
+	this->recalculate_bbox();
 
 	return num;
 }
@@ -629,7 +629,7 @@ unsigned long Track::remove_same_time_points()
 		}
 	}
 
-	this->calculate_bounds();
+	this->recalculate_bbox();
 
 	return num;
 }
@@ -705,7 +705,7 @@ std::list<Track *> * Track::split_into_segments()
 			/* kamilFIXME: first constructor of new_track copies all trackpoints from *this, and then we do new_track->assign(). Copying in constructor is unnecessary. */
 			Track * new_track = new Track(*this);
 			new_track->trackpoints.assign(first, last);
-			new_track->calculate_bounds();
+			new_track->recalculate_bbox();
 			tracks->push_back(new_track);
 
 			/* First will now point at either ->end() or beginning of next segment. */
@@ -768,10 +768,10 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 	Track * new_track = new Track(*this, std::next(tp2.iter), this->end());
 	new_track->push_front(selected_);
 	new_track->set_name(uniq_name);
-	new_track->calculate_bounds();
+	new_track->recalculate_bbox();
 
 	this->erase(std::next(tp2.iter), this->end());
-	this->calculate_bounds(); /* Bounds of original track changed due to the split. */
+	this->recalculate_bbox(); /* Bounds of original track changed due to the split. */
 
 	/* kamilTODO: how it's possible that a new track will already have an uid? */
 	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
@@ -1969,12 +1969,20 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
 
 
 
+LatLonBBox Track::get_bbox(void) const
+{
+	return this->bbox;
+}
+
+
+
+
 /**
    (Re)Calculate the bounds of the given track,
    updating the track's bounds data.
    This should be called whenever a track's trackpoints are changed.
 */
-void Track::calculate_bounds()
+void Track::recalculate_bbox(void)
 {
 	if (0 == this->trackpoints.size()) {
 		return;
@@ -1983,7 +1991,7 @@ void Track::calculate_bounds()
 	this->bbox.invalidate();
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		const LatLon lat_lon = (*iter)->coord.get_latlon();
-		BBOX_STRETCH_WITH_LATLON(this->bbox, lat_lon);
+		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
 	}
 	this->bbox.validate();
 
@@ -2230,7 +2238,7 @@ void Track::steal_and_append_trackpoints(Track * from)
 	from->trackpoints.clear();
 
 	/* Trackpoints updated - so update the bounds. */
-	this->calculate_bounds();
+	this->recalculate_bbox();
 }
 
 
@@ -2506,29 +2514,6 @@ bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 	/* kamilFIXME: shouldn't this be difftime()? */
 	return a->timestamp < b->timestamp;
 }
-
-
-
-
-void Track::find_maxmin(LatLonMinMax & min_max)
-{
-	if (this->bbox.north > min_max.max.lat || min_max.max.lat == 0.0) {
-		min_max.max.lat = this->bbox.north;
-	}
-
-	if (this->bbox.south < min_max.min.lat || min_max.min.lat == 0.0) {
-		min_max.min.lat = this->bbox.south;
-	}
-
-	if (this->bbox.east > min_max.max.lon || min_max.max.lon == 0.0) {
-		min_max.max.lon = this->bbox.east;
-	}
-
-	if (this->bbox.west < min_max.min.lon || min_max.min.lon == 0.0) {
-		min_max.min.lon = this->bbox.west;
-	}
-}
-
 
 
 
@@ -2929,8 +2914,7 @@ void Track::goto_center_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	LatLonMinMax min_max;
-	this->find_maxmin(min_max);
+	const LatLonMinMax min_max(this->get_bbox());
 
 	const Coord coord(LatLonMinMax::get_average(min_max), parent_layer_->coord_mode);
 	Viewport * viewport = g_tree->tree_get_main_viewport();
@@ -3102,9 +3086,7 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	LatLonMinMax min_max;
-	this->find_maxmin(min_max);
-	g_tree->tree_get_main_viewport()->show_latlons(min_max);
+	g_tree->tree_get_main_viewport()->show_bbox(this->get_bbox());
 
 	g_tree->emit_items_tree_updated();
 }
@@ -3850,7 +3832,7 @@ void Track::refine_route_cb(void)
 
 		/* FIXME: remove or rename this hack */
 		if (parent_layer->route_finder_added_track) {
-			parent_layer->route_finder_added_track->calculate_bounds();
+			parent_layer->route_finder_added_track->recalculate_bbox();
 		}
 
 		parent_layer->route_finder_added_track = NULL;
@@ -4019,7 +4001,7 @@ void Track::remove_last_trackpoint(void)
 
 	auto iter = this->get_last();
 	this->erase_trackpoint(iter);
-	this->calculate_bounds();
+	this->recalculate_bbox();
 }
 
 

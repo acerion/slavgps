@@ -2793,14 +2793,10 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	bool success = true;
 
 	if (save_kmz) {
+		const LatLonBBox bbox = this->viewport->get_bbox();
 
-		const LatLonMinMax min_max = this->viewport->get_min_max_lat_lon();
-		const double north = min_max.max.lat;
-		const double east = min_max.max.lon;
-		const double south = min_max.min.lat;
-		const double west = min_max.min.lon;
 #ifdef K_TODO
-		ans = kmz_save_file(pixmap, file_full_path, north, east, south, west);
+		ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west);
 #endif
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";

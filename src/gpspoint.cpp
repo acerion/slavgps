@@ -397,7 +397,7 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 
 	wp->coord = Coord(this->line_latlon, coordinate_mode);
 
-	trw->add_waypoint_to_data_structure(wp, this->line_name);
+	trw->add_waypoint_from_file2(wp, this->line_name);
 	free(this->line_name);
 	this->line_name = NULL;
 

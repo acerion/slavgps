@@ -130,7 +130,6 @@ namespace SlavGPS {
 		void add_children_to_tree(void);
 
 
-		void find_maxmin(LatLonMinMax & min_max);
 		void uniquify(sort_order_t sort_order);
 		QString new_unique_element_name(const QString & old_name);
 
@@ -142,7 +141,7 @@ namespace SlavGPS {
 
 		Waypoint * find_waypoint_by_date(char const * date);
 
-		void calculate_bounds();
+
 
 
 		time_t get_earliest_timestamp();
@@ -176,6 +175,9 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+
+		void add_waypoint(Waypoint * wp);
+
 		/*
 		  Delete a single waypoint from container and from main items tree.
 		  Delete the passed object as well.
@@ -183,8 +185,11 @@ namespace SlavGPS {
 		*/
 		bool delete_waypoint(Waypoint * wp);
 
+		void recalculate_bbox(void);
+		LatLonBBox get_bbox(void) const { return this->bbox; };
+
 		Waypoints items;
-		LatLonBBox bbox;
+
 
 
 	public slots:
@@ -203,6 +208,9 @@ namespace SlavGPS {
 		void sort_order_z2a_cb(void);
 		void sort_order_timestamp_ascend_cb(void);
 		void sort_order_timestamp_descend_cb(void);
+
+	private:
+		LatLonBBox bbox;
 	};
 
 

@@ -1795,7 +1795,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 				} else {
 					this->trw->add_track(*iter);
 				}
-				(*iter)->calculate_bounds();
+				(*iter)->recalculate_bbox();
 			}
 		}
 		if (tracks) {
@@ -1845,8 +1845,8 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		} else {
 			this->trw->add_track(trk_right);
 		}
-		this->track_info.trk->calculate_bounds();
-		trk_right->calculate_bounds();
+		this->track_info.trk->recalculate_bbox();
+		trk_right->recalculate_bbox();
 
 		this->trw->emit_layer_changed();
 	}

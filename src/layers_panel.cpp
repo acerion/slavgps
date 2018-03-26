@@ -152,11 +152,7 @@ LayersPanel::~LayersPanel()
 {
 	qDebug() << "II: Layers Panel: ~LayersPanel() called";
 
-#ifdef K_TODO
-	/* TODO: what to do with the toplayer? */
-	this->toplayer->unref();
-#endif
-
+	delete this->toplayer;
 	delete this->tree_view;
 	delete this->panel_box;
 	delete this->tool_bar;

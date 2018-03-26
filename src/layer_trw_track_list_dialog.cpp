@@ -123,8 +123,7 @@ void TrackListDialog::track_view_cb(void)
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	Viewport * viewport = trw->get_window()->get_viewport();
 
-	/* TODO create common function to convert between LatLonMinMax and LatLonBBox or even change LatLonBBox to be 2 LatLons! */
-	viewport->show_latlons(LatLonMinMax(trk->bbox));
+	viewport->show_bbox(trk->get_bbox());
 
 	this->track_select(trw, trk);
 }

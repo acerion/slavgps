@@ -605,7 +605,7 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
 
 	if (geotag->redraw) {
 		if (geotag->trw) {
-			geotag->trw->get_waypoints_node().calculate_bounds();
+			geotag->trw->get_waypoints_node().recalculate_bbox();
 			/* Ensure any new images get show. */
 			geotag->trw->generate_missing_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */

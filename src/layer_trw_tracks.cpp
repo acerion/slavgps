@@ -182,11 +182,17 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 
 
 
-void LayerTRWTracks::find_maxmin(LatLonMinMax & min_max)
+void LayerTRWTracks::recalculate_bbox(void)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->find_maxmin(min_max);
+	this->bbox.invalidate();
+
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		iter->second->recalculate_bbox();
+		const LatLonBBox trk_bbox = iter->second->get_bbox();
+		BBOX_EXPAND_WITH_BBOX(this->bbox, trk_bbox);
 	}
+
+	this->bbox.validate();
 }
 
 
@@ -424,16 +430,6 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		i->second->convert(dest_mode);
-	}
-}
-
-
-
-
-void LayerTRWTracks::calculate_bounds(void)
-{
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->calculate_bounds();
 	}
 }
 
@@ -830,13 +826,12 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	const unsigned int n_items = this->items.size();
+	this->recalculate_bbox();
 
-	if (0 < n_items) {
-		LatLonMinMax min_max;
-		this->find_maxmin(min_max);
+	if (n_items > 0) {
 
 		qDebug() << "II" PREFIX << "re-zooming to show all items (" << n_items << "items)";
-		g_tree->tree_get_main_viewport()->show_latlons(min_max);
+		g_tree->tree_get_main_viewport()->show_bbox(this->get_bbox());
 
 		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated()'";
 		g_tree->emit_items_tree_updated();
@@ -1014,6 +1009,23 @@ void LayerTRWTracks::clear(void)
 
 	this->items.clear();
 }
+
+
+
+
+void LayerTRWTracks::add_track(Track * trk)
+{
+	this->add_track_to_data_structure_only(trk);
+}
+
+
+
+void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
+{
+	trk->owning_layer = this->owning_layer;
+	this->items.insert({{ trk->uid, trk }});
+}
+
 
 
 
