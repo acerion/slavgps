@@ -50,10 +50,10 @@ namespace SlavGPS {
 
 	class LatLonBBoxStrings {
 	public:
-		QString min_lon;
-		QString max_lon;
-		QString min_lat;
-		QString max_lat;
+		QString north;
+		QString south;
+		QString east;
+		QString west;
 	};
 
 
@@ -61,14 +61,6 @@ namespace SlavGPS {
 
 	class LatLonBBox  {
 	public:
-		/* TODO: what should be the initial value? 0.0 or NaN? */
-		double north = 0.0; /* max_lat */
-		double south = 0.0; /* min_lat */
-		double east = 0.0;  /* max_lon */
-		double west = 0.0;  /* min_lon */
-
-		bool valid = false;
-
 		LatLonBBoxStrings to_strings(void) const;
 		LatLon get_center_coordinate(void) const;
 
@@ -83,6 +75,23 @@ namespace SlavGPS {
 		   If one of coordinate fields is invalid, set all
 		   coordinate fields to invalid. */
 		bool validate(void);
+
+		/* Is this bbox valid? */
+		bool is_valid(void) const;
+
+		/* Get coordinate of a point that is a simple
+		   arithmetic average of north/south, east/west
+		   values. */
+		LatLon get_center(void) const;
+
+
+		double north = NAN;
+		double south = NAN;
+		double east  = NAN;
+		double west  = NAN;
+
+	private:
+		bool valid = false;
 	};
 
 

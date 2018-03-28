@@ -104,10 +104,10 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
   list selection widget so that it can display properties of items in
   N columns.
 */
-std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, bool multiple_selection, Window * parent)
+std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
 {
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames,
-									   multiple_selection,
+									   ListSelectionMode::MultipleItems,
 									   title,
 									   SGListSelection::get_headers_for_geoname(),
 									   parent);
@@ -320,7 +320,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	}
 
 	const QStringList headers = { QObject::tr("Select the articles you want to add.") };
-	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), headers, wiki_places, true, window);
+	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), headers, wiki_places, window);
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 		const Geoname * wiki_geoname = *iter;

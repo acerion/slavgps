@@ -358,10 +358,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd ||
 	    trk->draw_name_mode == TrackDrawNameMode::Centre) {
 
-		const LatLonMinMax min_max(trk->get_bbox());
-
-		const Coord coord(LatLonMinMax::get_average(min_max), this->trw->coord_mode);
-
+		const Coord coord(trk->get_bbox().get_center(), this->trw->coord_mode);
 		this->draw_track_label(ename, fg_color, bg_color, coord);
 	}
 

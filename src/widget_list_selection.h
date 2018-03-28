@@ -26,6 +26,9 @@
 
 #include <list>
 
+
+
+
 #include <QList>
 #include <QString>
 #include <QStandardItemModel>
@@ -33,6 +36,11 @@
 #include <QVBoxLayout>
 #include <QTableView>
 #include <QDialogButtonBox>
+
+
+
+
+#include "dialog.h"
 
 
 
@@ -49,11 +57,19 @@ namespace SlavGPS {
 
 
 
+	enum class ListSelectionMode {
+		SingleItem,       /* List selection dialog allows selection of only one item. */
+		MultipleItems     /* List selection dialog allows selection of one or more items. */
+	};
+
+
+
+
 	class SGListSelection : public QTableView {
 		Q_OBJECT
 	public:
 		SGListSelection() {};
-		SGListSelection(bool multiple_selection, QWidget * a_parent = NULL);
+		SGListSelection(ListSelectionMode selection_mode, QWidget * a_parent = NULL);
 
 		void set_headers(const QStringList & header_labels);
 
@@ -70,6 +86,14 @@ namespace SlavGPS {
 
 
 
+	/* The list selection row should present items in such a way,
+	   as to be able to differentiate between items with the same
+	   name.
+
+	   E.g. two tracks with the same name can have different start
+	   times or durations - this should be presented in the list
+	   dialog to allow user recognize all tracks and decide which
+	   ones to select. */
 	class ListSelectionRow {
 	public:
 		ListSelectionRow();
@@ -85,52 +109,34 @@ namespace SlavGPS {
 
 
 
-	/* TODO: the list selection dialog should present items in
-	   such a way, as to be able to differentiate between items
-	   with the same name.
-
-	   E.g. two tracks with the same name can have different start
-	   times or durations - this should be presented in the list
-	   dialog to allow user recognize all tracks and decide which
-	   ones to select. */
 	template <typename T>
-	std::list<T> a_dialog_select_from_list(std::list<T> const & elements, bool multiple_selection, const QString & title, const QStringList & header_labels, QWidget * parent)
+	std::list<T> a_dialog_select_from_list(const std::list<T> & elements, ListSelectionMode selection_mode, const QString & title, const QStringList & header_labels, QWidget * parent)
 	{
-		QDialog dialog(parent);
-		SGListSelection view(multiple_selection, &dialog);
-		view.set_headers(header_labels);
-		QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		QVBoxLayout vbox;
+		BasicDialog dialog(parent);
+		SGListSelection list_widget(selection_mode, &dialog);
+		list_widget.set_headers(header_labels);
 
 		dialog.setWindowTitle(title);
 		dialog.setMinimumHeight(400);
 
-		QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-		QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-		vbox.addWidget(&view);
-		vbox.addWidget(&button_box);
-
-		QLayout * old = dialog.layout();
-		delete old;
-		dialog.setLayout(&vbox);
+		dialog.grid->addWidget(&list_widget, 0, 0);
 
 		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
 			SlavGPS::ListSelectionRow row(*iter);
-			view.model.invisibleRootItem()->appendRow(row.items);
+			list_widget.model.invisibleRootItem()->appendRow(row.items);
 		}
-		view.setVisible(false);
-		view.resizeRowsToContents();
-		view.resizeColumnsToContents();
-		view.setVisible(true);
-		view.show();
+		list_widget.setVisible(false);
+		list_widget.resizeRowsToContents();
+		list_widget.resizeColumnsToContents();
+		list_widget.setVisible(true);
+		list_widget.show();
 
 
 		std::list<T> result;
 		if (dialog.exec() == QDialog::Accepted) {
-			QModelIndexList selected = view.selection_model.selectedIndexes();
+			QModelIndexList selected = list_widget.selection_model.selectedIndexes();
 			for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-				QVariant variant = view.model.itemFromIndex(*iter)->data();
+				QVariant variant = list_widget.model.itemFromIndex(*iter)->data();
 				result.push_back(variant.value<T>());
 			}
 		}

@@ -2913,11 +2913,9 @@ void Track::goto_center_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-
-	const LatLonMinMax min_max(this->get_bbox());
-
-	const Coord coord(LatLonMinMax::get_average(min_max), parent_layer_->coord_mode);
 	Viewport * viewport = g_tree->tree_get_main_viewport();
+
+	const Coord coord(this->get_bbox().get_center(), parent_layer_->coord_mode);
 	parent_layer_->goto_coord(viewport, coord);
 }
 

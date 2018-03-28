@@ -291,10 +291,10 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 
 	for (int i = 0; i < len; i++) {
 		switch (this->url_format_code[i].toUpper().toLatin1()) {
-		case 'L': values[i] = bbox_strings.min_lon; break;
-		case 'R': values[i] = bbox_strings.max_lon; break;
-		case 'B': values[i] = bbox_strings.min_lat; break;
-		case 'T': values[i] = bbox_strings.max_lat; break;
+		case 'L': values[i] = bbox_strings.west;  break;
+		case 'R': values[i] = bbox_strings.east;  break;
+		case 'B': values[i] = bbox_strings.south; break;
+		case 'T': values[i] = bbox_strings.north; break;
 		case 'A': values[i] = center_lat; break;
 		case 'O': values[i] = center_lon; break;
 		case 'Z': values[i] = zoom; break;

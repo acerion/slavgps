@@ -772,15 +772,17 @@ void Viewport::show_centers(Window * parent_window) const
 	   but this doesn't matter much for debug purposes of showing stuff... */
 	const QStringList headers = { tr("Back/Forward Locations") };
 	std::list<QString> result = a_dialog_select_from_list(texts,
-							      false,
+							      ListSelectionMode::SingleItem,
 							      tr("Back/Forward Locations"),
 							      headers,
 							      parent_window);
 
-	/* TODO: why do we need result here? */
+	/* TODO: why do we allow any selection and why do we use result here? */
 
-	for (auto iter = result.begin(); iter != result.end(); iter++) {
-		qDebug() << "DD: Viewport: history center item:" << *iter;
+	/* Because we have used ListSelectionMode::SingleItem selection
+	   mode, this list has at most one element. */
+	if (!result.empty()) {
+		qDebug() << "DD: Viewport: history center item:" << *result.begin();
 	}
 }
 

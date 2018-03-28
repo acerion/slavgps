@@ -39,13 +39,24 @@ using namespace SlavGPS;
 
 
 
-SGListSelection::SGListSelection(bool multiple_selection, QWidget * a_parent) : QTableView(a_parent)
+#define PREFIX ": List Selection Widget:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
+SGListSelection::SGListSelection(ListSelectionMode selection_mode, QWidget * a_parent) : QTableView(a_parent)
 {
-	if (multiple_selection) {
-		this->setSelectionMode(QAbstractItemView::ExtendedSelection);
-	} else {
+	switch (selection_mode) {
+	case ListSelectionMode::SingleItem:
 		this->setSelectionMode(QAbstractItemView::SingleSelection);
-	}
+		break;
+	case ListSelectionMode::MultipleItems:
+		this->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "unhandled selection mode" << (int) selection_mode;
+		break;
+	};
 
 
 	this->horizontalHeader()->setStretchLastSection(true);

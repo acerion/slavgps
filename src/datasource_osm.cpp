@@ -86,7 +86,7 @@ ProcessOptions * DataSourceOSMDialog::get_process_options(void)
 	const int page = this->spin_box.value();
 
 	/* Download is of GPX type. */
-	po->url = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.min_lon).arg(bbox_strings.min_lat).arg(bbox_strings.max_lon).arg(bbox_strings.max_lat).arg(page);
+	po->url = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
 	/* Don't modify dl_options, use the default download settings. */
 
 	qDebug() << "DD: Datasource OSM: URL =" << po->url;

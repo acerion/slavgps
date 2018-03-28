@@ -1728,11 +1728,8 @@ LatLonBBox LayerTRW::get_bbox(void)
 
 bool LayerTRW::find_center(Coord * dest)
 {
-	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. like I don't have more important things to worry about... */
-	const LatLonMinMax min_max(this->get_bbox());
-
-	if (min_max.is_valid()) {
-		*dest = Coord(LatLonMinMax::get_average(min_max), this->coord_mode);
+	if (this->get_bbox().is_valid()) {
+		*dest = Coord(this->get_bbox().get_center(), this->coord_mode);
 		return true;
 	} else {
 		return false;
@@ -1758,8 +1755,7 @@ void LayerTRW::centerize_cb(void)
 
 bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 {
-	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
-	if (this->get_bbox().valid) {
+	if (this->get_bbox().is_valid()) {
 		viewport->show_bbox(this->get_bbox());
 		return true;
 	} else {
@@ -2987,7 +2983,7 @@ void LayerTRW::merge_with_other_cb(void)
 	other_tracks.sort(TreeItem::compare_name);
 
 	std::list<Track *> merge_list = a_dialog_select_from_list(other_tracks,
-								  true,
+								  ListSelectionMode::MultipleItems,
 								  is_route ? tr("Select route to merge with") : tr("Select track to merge with"),
 								  SGListSelection::get_headers_for_track(),
 								  this->get_window());
@@ -3042,33 +3038,37 @@ void LayerTRW::append_track_cb(void)
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
-								    false,
+								    ListSelectionMode::SingleItem,
 								    is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track"),
 								    SGListSelection::get_headers_for_track(),
 								    this->get_window());
-
 	/* It's a list, but shouldn't contain more than one other track! */
 	if (sources_list.empty()) {
 		return;
 	}
+	/* Because we have used ListSelectionMode::SingleItem selection
+	   mode, this list can't have more than one element. */
+	assert (sources_list.size() <= 1);
 
-	for (auto iter = sources_list.begin(); iter != sources_list.end(); iter++) {
-		Track * source_track = *iter;
-		if (source_track) {
-			track->steal_and_append_trackpoints(source_track);
 
-			/* All trackpoints have been moved from
-			   source_track to target_track. We don't need
-			   source_track anymore. */
-			if (source_track->type_id == "sg.trw.route") {
-				this->delete_route(source_track);
-			} else {
-				this->delete_track(source_track);
-			}
-		} else {
-			qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
-		}
+	Track * source_track = *sources_list.begin();
+	if (!source_track) {
+		qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
+		return;
 	}
+
+
+	track->steal_and_append_trackpoints(source_track);
+
+
+	/* All trackpoints have been moved from source_track to
+	   target_track. We don't need source_track anymore. */
+	if (source_track->type_id == "sg.trw.route") {
+		this->delete_route(source_track);
+	} else {
+		this->delete_track(source_track);
+	}
+
 
 	this->emit_layer_changed();
 }
@@ -3092,59 +3092,62 @@ void LayerTRW::append_other_cb(void)
 
 	const bool target_is_route = track->type_id == "sg.trw.route";
 
-	LayerTRWTracks * source_container = target_is_route ? this->tracks : this->routes;
+	/* We want to append a track of the *other* type, so use appropriate sublayer for this. */
+	LayerTRWTracks * source_sublayer = target_is_route ? this->tracks : this->routes;
 
 	/* Get list of names for usage with list selection dialog function.
 	   The dialog function will present tracks in a manner allowing differentiating between tracks with the same name. */
-	const std::list<Track *> source_tracks = source_container->get_sorted_by_name(track);
+	const std::list<Track *> source_tracks = source_sublayer->get_sorted_by_name(track);
 
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
-								    false,
+								    ListSelectionMode::SingleItem,
 								    target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track"),
 								    SGListSelection::get_headers_for_track(),
 								    this->get_window());
-
 	if (sources_list.empty()) {
 		return;
 	}
-
-	/* It's a list, but shouldn't contain more than one other track!
-	   TODO: verify that the list has only one member. The loop below would not be necessary anymore. */
-	for (auto iter = sources_list.begin(); iter != sources_list.end(); iter++) {
-		/* Get FROM THE OTHER TYPE list. */
-		Track * source_track = *iter;
-		if (source_track) {
-
-			if (source_track->type_id != "sg.trw.route"
-			    && ((source_track->get_segment_count() > 1)
-				|| (source_track->get_average_speed() > 0.0))) {
-
-				if (Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
-					source_track->merge_segments();
-					source_track->to_routepoints();
-				} else {
-					break;
-				}
-			}
-
-			track->steal_and_append_trackpoints(source_track);
+	/* Because we have used ListSelectionMode::SingleItem selection
+	   mode, this list can't have more than one element. */
+	assert (sources_list.size() <= 1);
 
 
-			/* All trackpoints have been moved from
-			   source_track to target_track. We don't need
-			   source_track anymore. */
-			if (source_track->type_id == "sg.trw.route") {
-				this->delete_route(source_track);
-			} else {
-				this->delete_track(source_track);
-			}
+	Track * source_track = *sources_list.begin();
+	if (!source_track) {
+		/* Very unlikely, but to be sure... */
+		qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
+		return;
+	}
+
+
+	if (source_track->type_id != "sg.trw.route"
+	    && ((source_track->get_segment_count() > 1)
+		|| (source_track->get_average_speed() > 0.0))) {
+
+		if (Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
+			source_track->merge_segments();
+			source_track->to_routepoints();
 		} else {
-			qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
+			return;
 		}
 	}
+
+
+	track->steal_and_append_trackpoints(source_track);
+
+
+	/* All trackpoints have been moved from
+	   source_track to target_track. We don't need
+	   source_track anymore. */
+	if (source_track->type_id == "sg.trw.route") {
+		this->delete_route(source_track);
+	} else {
+		this->delete_track(source_track);
+	}
+
 
 	this->emit_layer_changed();
 }
@@ -3539,7 +3542,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 
 	/* Get list of items to delete from the user. */
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_tracks,
-								   true,
+								   ListSelectionMode::MultipleItems,
 								   tr("Select tracks to delete"),
 								   SGListSelection::get_headers_for_track(),
 								   this->get_window());
@@ -3582,7 +3585,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	/* Get list of items to delete from the user. */
 
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_routes,
-								   true,
+								   ListSelectionMode::MultipleItems,
 								   tr("Select routes to delete"),
 								   SGListSelection::get_headers_for_track(),
 								   this->get_window());
@@ -3619,7 +3622,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	/* Get list of items to delete from the user. */
 	std::list<Waypoint *> delete_list = a_dialog_select_from_list(all_waypoints,
-								      true,
+								      ListSelectionMode::MultipleItems,
 								      tr("Select waypoints to delete"),
 								      SGListSelection::get_headers_for_waypoint(),
 								      this->get_window());

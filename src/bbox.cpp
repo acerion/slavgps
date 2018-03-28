@@ -40,6 +40,14 @@ LatLon LatLonBBox::get_center_coordinate(void) const
 
 
 
+bool LatLonBBox::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
 void LatLonBBox::invalidate(void)
 {
 	this->north = NAN;
@@ -87,10 +95,10 @@ LatLonBBoxStrings LatLonBBox::to_strings(void) const
 	static QLocale c_locale = QLocale::c();
 
 	LatLonBBoxStrings bbox_strings;
-	bbox_strings.max_lat = c_locale.toString(this->north);
-	bbox_strings.min_lat = c_locale.toString(this->south);
-	bbox_strings.max_lon = c_locale.toString(this->east);
-	bbox_strings.min_lon = c_locale.toString(this->west);
+	bbox_strings.north = c_locale.toString(this->north);
+	bbox_strings.south = c_locale.toString(this->south);
+	bbox_strings.east  = c_locale.toString(this->east);
+	bbox_strings.west  = c_locale.toString(this->west);
 
 	return bbox_strings;
 }
@@ -102,4 +110,18 @@ QDebug SlavGPS::operator<<(QDebug debug, const LatLonBBox & bbox)
 {
 	debug.nospace() << "North: " << bbox.north << ", South: " << bbox.south << ", East: " << bbox.east << ", West: " << bbox.west;
 	return debug;
+}
+
+
+
+
+LatLon LatLonBBox::get_center(void) const
+{
+	LatLon result;
+	if (this->valid) {
+		result = LatLon((this->north + this->south) / 2, (this->west + this->east) / 2);
+	} else {
+		; /* Return invalid latlon. */
+	}
+	return result;
 }
