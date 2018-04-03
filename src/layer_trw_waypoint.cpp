@@ -33,7 +33,7 @@
 #include "layer_trw_geotag.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoint_properties.h"
-#include "garminsymbols.h"
+#include "garmin_symbols.h"
 #include "dem_cache.h"
 #include "util.h"
 #include "window.h"

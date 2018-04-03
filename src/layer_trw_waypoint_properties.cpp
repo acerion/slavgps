@@ -28,10 +28,9 @@
 #include "degrees_converters.h"
 #include "preferences.h"
 #include "thumbnails.h"
-#include "garminsymbols.h"
+#include "garmin_symbols.h"
 
 #ifdef K_INCLUDES
-#include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif

@@ -800,7 +800,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			}
 		}
 		if (!wp->symbol_name.isEmpty()) {
-			/* Due to changes in garminsymbols - the symbol name is now in Title Case.
+			/* Due to changes in GarminSymbols - the symbol name is now in Title Case.
 			   However to keep newly generated .vik files better compatible with older Viking versions.
 			   The symbol names will always be lowercase. */
 			fprintf(file, " symbol=\"%s\"", wp->symbol_name.toLower().toUtf8().constData());

@@ -65,7 +65,7 @@
 #include "map_cache.h"
 #include "tree_view_internal.h"
 #include "measurements.h"
-#include "garminsymbols.h"
+#include "garmin_symbols.h"
 
 
 

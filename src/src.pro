@@ -20,7 +20,7 @@ SOURCES += main.cpp \
     datasource_url.cpp \
     datasource_wikipedia.cpp \
     datasource_file.cpp \
-    garminsymbols.cpp \
+    garmin_symbols.cpp \
     version_check.cpp \
     geotag_exif.cpp \
     clipboard.cpp \
@@ -147,7 +147,7 @@ SOURCES += main.cpp \
 
 HEADERS += window.h \
     datasource.h \
-    garminsymbols.h \
+    garmin_symbols.h \
     version_check.h \
     geotag_exif.h \
     clipboard.h \

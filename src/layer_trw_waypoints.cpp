@@ -42,7 +42,7 @@
 #include "layers_panel.h"
 #include "clipboard.h"
 #include "thumbnails.h"
-#include "garminsymbols.h"
+#include "garmin_symbols.h"
 
 
 

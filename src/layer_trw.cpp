@@ -83,7 +83,7 @@
 #endif
 
 #ifdef K_INCLUDES
-#include "garminsymbols.h"
+#include "garmin_symbols.h"
 #include "background.h"
 #include "gpx.h"
 
