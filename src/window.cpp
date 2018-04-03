@@ -737,8 +737,8 @@ void Window::create_actions(void)
 		this->qa_view_full_screen_state->setCheckable(true);
 		this->qa_view_full_screen_state->setChecked(this->full_screen_state);
 		this->qa_view_full_screen_state->setToolTip("Activate full screen mode");
+		this->qa_view_full_screen_state->setIcon(QIcon::fromTheme("view-fullscreen"));
 		connect(this->qa_view_full_screen_state, SIGNAL(triggered(bool)), this, SLOT(set_full_screen_state_cb(bool)));
-		/* TODO: icon: GTK_STOCK_FULLSCREEN */
 
 
 		this->menu_view->addAction(this->qa_view_full_screen_state);

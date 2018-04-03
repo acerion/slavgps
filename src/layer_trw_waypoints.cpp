@@ -454,7 +454,7 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 */
 QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 {
-	QPixmap * wp_pixmap = GarminSymbols::get_wp_symbol(symbol_name.toUtf8().constData());
+	QPixmap * wp_pixmap = GarminSymbols::get_wp_symbol(symbol_name);
 	/* ATM GarminSymbols::get_wp_symbol() returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the tree view may need some resizing: */
 	if (wp_pixmap && wp_pixmap->width() != SMALL_ICON_SIZE) {

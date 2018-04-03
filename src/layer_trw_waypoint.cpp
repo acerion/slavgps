@@ -185,14 +185,14 @@ void Waypoint::set_symbol_name(const QString & new_symbol_name)
 		this->symbol_name = "";
 		this->symbol_pixmap = NULL;
 	} else {
-		char const * hashed_symname = GarminSymbols::get_hashed_symbol_name(new_symbol_name.toUtf8().constData());
-		if (hashed_symname) {
-			this->symbol_name = QString(hashed_symname);
-		} else {
+		const QString normalized = GarminSymbols::get_normalized_symbol_name(new_symbol_name);
+		if (normalized.isEmpty()) {
 			this->symbol_name = new_symbol_name;
+		} else {
+			this->symbol_name = normalized;
 		}
 
-		this->symbol_pixmap = GarminSymbols::get_wp_symbol(this->symbol_name.toUtf8().constData());
+		this->symbol_pixmap = GarminSymbols::get_wp_symbol(this->symbol_name);
 	}
 }
 

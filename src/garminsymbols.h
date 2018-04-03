@@ -18,13 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_GARMINSYMBOLS_H_
-#define _SG_GARMINSYMBOLS_H_
+#ifndef _SG_GARMIN_SYMBOLS_H_
+#define _SG_GARMIN_SYMBOLS_H_
+
 
 
 
 #include <QPixmap>
-#include <glib.h>
+#include <QComboBox>
 
 
 
@@ -34,17 +35,12 @@ namespace SlavGPS {
 
 
 
-	typedef int GtkListStore;
-
-
-
-
 	class GarminSymbols {
 	public:
-		static QPixmap * get_wp_symbol(const char * symbol_name);
-		static const char * get_hashed_symbol_name(const char * sym);
+		static QPixmap * get_wp_symbol(const QString & symbol_name);
+		static QString get_normalized_symbol_name(const QString & symbol_name);
 
-		static void populate_symbols_list(GtkListStore * list);
+		static void populate_symbols_list(QComboBox * symbol_list);
 
 		/* Use when preferences have changed to reload icons. */
 		static void clear_symbols(void);
@@ -58,4 +54,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_GARMINSYMBOLS_H_ */
+#endif /* #ifndef _SG_GARMIN_SYMBOLS_H_ */

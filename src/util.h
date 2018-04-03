@@ -38,6 +38,28 @@ namespace SlavGPS {
 
 
 
+	/* Hash function for std::map<QString, T>, with case insensitivity. */
+	struct MyQStringKeyHashInsensitive {
+		std::size_t operator()(const QString & s) const {
+			using std::hash;
+			using std::string;
+
+			return hash<string>()(s.toLower().toUtf8().constData());
+		}
+	};
+
+
+	/* Equality function for std::map<QString, T>, with case insensitivity. */
+	struct MyQStringKeyEqualInsensitive
+	{
+		bool operator()(const QString & s1, const QString & s2) const {
+			return s1.toLower() == s2.toLower();
+		}
+	};
+
+
+
+
 	class Util {
 	public:
 		static int get_number_of_threads(void);

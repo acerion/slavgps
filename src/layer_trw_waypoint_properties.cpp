@@ -28,6 +28,7 @@
 #include "degrees_converters.h"
 #include "preferences.h"
 #include "thumbnails.h"
+#include "garminsymbols.h"
 
 #ifdef K_INCLUDES
 #include "garminsymbols.h"
@@ -60,16 +61,16 @@ using namespace SlavGPS;
 
 
 ParameterSpecification wp_param_specs[] = {
-	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),   WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),       WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::Altitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),   WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_MAX,      NULL, "",  SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,  "",                          WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::Altitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_MAX,      NULL, "",  SGVariantType::Empty,      PARAMETER_GROUP_GENERIC,  "",                          WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
 };
 
 
@@ -113,6 +114,12 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	dialog.date_time_button = (SGDateTimeButton *) dialog.widgets[SG_WP_PARAM_TIME];
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
+
+	dialog.symbol_combo = (QComboBox *) dialog.widgets[SG_WP_PARAM_SYMBOL];
+	QObject::connect(dialog.symbol_combo, SIGNAL (currentIndexChanged(int)), &dialog, SLOT (symbol_entry_changed_cb(int)));
+	GarminSymbols::populate_symbols_list(dialog.symbol_combo);
+
+
 
 	while (QDialog::Accepted == dialog.exec()) {
 
@@ -241,6 +248,25 @@ void PropertiesDialogWaypoint::clear_timestamp_cb(void)
 
 
 
+void PropertiesDialogWaypoint::symbol_entry_changed_cb(int index)
+{
+#if 0
+	GtkTreeIter iter;
+	gchar *sym;
+
+	if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo), &iter))
+		return;
+
+	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
+	/* Note: symm is NULL when "(none)" is select (first cell is empty) */
+	gtk_widget_set_tooltip_text(combo, sym);
+	g_free(sym);
+#endif
+}
+
+
+
+
 #ifdef K_OLD_IMPLEMENTATION
 
 
@@ -327,4 +353,6 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 
 	return NULL;
 }
+
+
 #endif

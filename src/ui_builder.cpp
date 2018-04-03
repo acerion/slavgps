@@ -508,31 +508,35 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		break;
 
 	case WidgetType::COMBOBOX: {
-		assert (param_spec.widget_data);
+
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::String);
 
 		QComboBox * widget_ = new QComboBox(this);
 
-		const std::vector<SGLabelID> * items = (std::vector<SGLabelID> *) param_spec.widget_data;
-		int i = 0;
 		int selected_idx = 0;
 
-		for (auto iter = items->begin(); iter != items->end(); iter++) {
-			if (param_spec.type_id == SGVariantType::Int) {
-				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
-				if (param_value.val_int == (int32_t) (*iter).id) {
-					selected_idx = i;
+		if (param_spec.widget_data) {
+			const std::vector<SGLabelID> * items = (std::vector<SGLabelID> *) param_spec.widget_data;
+			int i = 0;
+			for (auto iter = items->begin(); iter != items->end(); iter++) {
+				if (param_spec.type_id == SGVariantType::Int) {
+					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
+					if (param_value.val_int == (int32_t) (*iter).id) {
+						selected_idx = i;
+					}
+				} else if (param_spec.type_id == SGVariantType::String) {
+					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
+					if (param_value.val_string == (*iter).label) {
+						selected_idx = i;
+					}
+				} else {
+					qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << param_spec.type_id;
 				}
-			} else if (param_spec.type_id == SGVariantType::String) {
-				widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
-				if (param_value.val_string == (*iter).label) {
-					selected_idx = i;
-				}
-			} else {
-				qDebug() << "EE: UI Builder: set: unsupported parameter spec type for combobox:" << param_spec.type_id;
-			}
 
-			i++;
+				i++;
+			}
+		} else {
+			; /* For some combo boxes the algorithm of adding items may be  non-standard. */
 		}
 
 		widget_->setCurrentIndex(selected_idx);
