@@ -47,8 +47,6 @@
 #include "dem.h"
 #include "dem_cache.h"
 #include "map_cache.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
 #include "file.h"
 #include "dialog.h"
 #include "globals.h"

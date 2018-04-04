@@ -93,7 +93,6 @@
 #include "external_tool_datasources.h"
 #include "ui_util.h"
 #include "routing.h"
-#include "icons/icons.h"
 #endif
 
 #include "geojson.h"

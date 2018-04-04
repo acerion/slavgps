@@ -53,7 +53,6 @@
 #include "tree_view_internal.h"
 #include "application_state.h"
 #include "globals.h"
-//#include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
 #include "util.h"

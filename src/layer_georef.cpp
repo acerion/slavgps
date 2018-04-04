@@ -41,7 +41,6 @@
 #include "util.h"
 #include "preferences.h"
 #include "application_state.h"
-//#include "icons/icons.h"
 #include "layer_map.h"
 #include "layer_georef.h"
 #include "widget_file_entry.h"

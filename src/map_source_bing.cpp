@@ -54,8 +54,6 @@
 #include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
 
 
 

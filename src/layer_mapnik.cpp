@@ -46,8 +46,6 @@
 #include "util.h"
 #include "ui_util.h"
 #include "preferences.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
 #include "mapnik_interface.h"
 #include "background.h"
 #include "dialog.h"

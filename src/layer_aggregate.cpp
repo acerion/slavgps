@@ -38,8 +38,6 @@
 #include "viewport_internal.h"
 #include "util.h"
 #include "dialog.h"
-typedef int GdkPixdata; /* TODO: remove sooner or later. */
-#include "icons/icons.h"
 #include "globals.h"
 
 
