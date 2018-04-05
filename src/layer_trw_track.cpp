@@ -110,7 +110,7 @@ void Track::set_defaults()
 	}
 
 	if (ApplicationState::get_integer(VIK_SETTINGS_TRACK_NUM_DIST_LABELS, &tmp)) {
-		max_number_dist_labels = (uint8_t) (TrackDrawNameMode) tmp; /* TODO: why such cast? */
+		this->max_number_dist_labels = tmp;
 	}
 }
 
@@ -773,7 +773,6 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 	this->erase(std::next(tp2.iter), this->end());
 	this->recalculate_bbox(); /* Bounds of original track changed due to the split. */
 
-	/* kamilTODO: how it's possible that a new track will already have an uid? */
 	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
 
 	return new_track;
@@ -2297,40 +2296,26 @@ Coord * Track::cut_back_to_double_point()
 
 /**
    \brief Function to compare two tracks by their first timestamp
-
-   TODO: fix return value of this function: it should be bool when passing the function to std::list::sort().
 **/
-int Track::compare_timestamp(const Track * a, const Track * b)
+bool Track::compare_timestamp(const Track & a, const Track & b)
 {
 	Trackpoint * tpa = NULL;
 	Trackpoint * tpb = NULL;
 
-	if (!a->trackpoints.empty()) {
-		tpa = *a->trackpoints.begin();
+	if (!a.trackpoints.empty()) {
+		tpa = *a.trackpoints.begin();
 	}
 
-	if (!b->trackpoints.empty()) {
-		tpb = *b->trackpoints.begin();
+	if (!b.trackpoints.empty()) {
+		tpb = *b.trackpoints.begin();
 	}
 
 	if (tpa && tpb) {
-		if (tpa->timestamp < tpb->timestamp) {
-			return -1;
-		}
-		if (tpa->timestamp > tpb->timestamp) {
-			return 1;
-		}
+		return tpa->timestamp < tpb->timestamp;
 	}
 
-	if (tpa && !tpb) {
-		return 1;
-	}
-
-	if (!tpa && tpb) {
-		return -1;
-	}
-
-	return 0;
+	/* Any other combination of one or both trackpoints missing. */
+	return false;
 }
 
 

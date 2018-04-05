@@ -256,7 +256,7 @@ namespace SlavGPS {
 
 		Coord * cut_back_to_double_point();
 
-		static int compare_timestamp(const Track * a, const Track * b);
+		static bool compare_timestamp(const Track & a, const Track & b);
 
 		void set_properties_dialog(TrackPropertiesDialog * dialog);
 		void update_properties_dialog(void);
@@ -315,7 +315,7 @@ namespace SlavGPS {
 		TrackPoints trackpoints;
 		/* bool visible = true; */ /* Inherited from TreeItem. */
 		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::None;
-		uint8_t max_number_dist_labels = 0;
+		int max_number_dist_labels = 0;
 
 		uint8_t ref_count = 0;
 		bool has_color = false;
