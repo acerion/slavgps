@@ -406,7 +406,7 @@ void LayerGeoref::draw(Viewport * viewport)
 
 	qDebug() << "++++++++ EXPECT 0 0:" << (image_to_draw.width() - sub_viewport_rect.width()) << (image_to_draw.height() - sub_viewport_rect.height());
 
-	viewport->draw_pixmap(sub_viewport_rect, image_to_draw, image_rect);
+	viewport->draw_pixmap(image_to_draw, sub_viewport_rect, image_rect);
 }
 
 

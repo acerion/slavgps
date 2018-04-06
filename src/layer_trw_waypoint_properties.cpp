@@ -116,7 +116,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 	dialog.symbol_combo = (QComboBox *) dialog.widgets[SG_WP_PARAM_SYMBOL];
 	QObject::connect(dialog.symbol_combo, SIGNAL (currentIndexChanged(int)), &dialog, SLOT (symbol_entry_changed_cb(int)));
-	GarminSymbols::populate_symbols_list(dialog.symbol_combo);
+	GarminSymbols::populate_symbols_list(dialog.symbol_combo, wp->symbol_name);
 
 
 
@@ -181,11 +181,10 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		if (!wp->image_full_path.isEmpty()) {
 			QImage image = QImage(wp->image_full_path);
-			qDebug() << "-----------------" << image.text();
 		}
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, wp_param_specs[SG_WP_PARAM_SYMBOL]);
-		wp->set_symbol_name(param_value.val_string);
+		wp->set_symbol(param_value.val_string);
 
 #ifdef K_TODO
 		if (wp->source != sourceentry->text()) {

@@ -227,7 +227,7 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 		return;
 	}
 
-	/* Item index may be pointing to first column. We want to update TreeViewColumn::Icon column. */
+	/* Icon is a property of TreeViewColumn::Name column. */
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
@@ -235,7 +235,7 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 		qDebug() << "II" PREFIX << "querying Top Level Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Icon);
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Name);
 	ch->setIcon(icon);
 }
 
@@ -410,6 +410,9 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	item = new QStandardItem(name);
 	item->setToolTip(tooltip);
 	item->setEditable(tree_item->editable);
+	if (!tree_item->icon.isNull()) { /* Icon can be set with ::set_tree_item_icon(). */
+		item->setIcon(tree_item->icon);
+	}
 	first_item = item;
 	items << item;
 
@@ -418,16 +421,6 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
-	items << item;
-
-	/* TreeViewColumn::Icon */
-	/* Value in this column can be set with ::set_tree_item_icon(). */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-#ifdef K_TODO
-	item->setIcon();
-#endif
-	item->setEditable(false);
 	items << item;
 
 	/* TreeViewColumn::TreeItem */
@@ -709,9 +702,6 @@ TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 	header_item = new QStandardItem("Visible");
 	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Visible, header_item);
 
-	header_item = new QStandardItem("Type");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Icon, header_item);
-
 	header_item = new QStandardItem("Item");
 	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::TreeItem, header_item);
 
@@ -820,10 +810,6 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		tree_item->visible = (bool) item->checkState();
 		qDebug() << "SIGNAL" PREFIX "emitting tree_item_needs_redraw(), uid=", tree_item->uid;
 		emit this->tree_item_needs_redraw(tree_item->uid);
-		break;
-
-	case TreeViewColumn::Icon:
-		qDebug() << "WW" PREFIX << "edited item in column Icon";
 		break;
 
 	case TreeViewColumn::TreeItem:

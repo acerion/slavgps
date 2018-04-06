@@ -397,15 +397,18 @@ void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
 
 
 /**
- *  Maintain icon of waypoint in the tree view.
- */
-void LayerTRWWaypoints::reset_waypoint_icon(Waypoint * wp)
+   Use waypoint's ::symbol_name to set waypoint's icon. Make sure that
+   new icon of a waypoint (or lack of the icon) is shown wherever it
+   needs to be shown.
+*/
+void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
 {
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
-		this->tree_view->set_tree_item_icon(wp->index, get_wp_icon_small(wp->symbol_name));
+		this->icon = get_wp_icon_small(wp->symbol_name);
+		this->tree_view->set_tree_item_icon(wp->index, this->icon);
 	} else {
-		qDebug() << "EE: Layer TRW: trying to reset icon of waypoint with invalid index";
+		qDebug() << "EE" PREFIX << "Invalid index of a waypoint";
 	}
 }
 
@@ -447,13 +450,30 @@ QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 {
 	QIcon result;
 
+	if (symbol_name.isEmpty()) {
+		return result; /* Empty symbol name -> empty icon. */
+	}
+
 	QPixmap * wp_symbol = GarminSymbols::get_wp_symbol(symbol_name);
 	/* ATM GarminSymbols::get_wp_symbol() returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the tree view may need some resizing. */
-	if (wp_symbol && wp_symbol->width() != SMALL_ICON_SIZE) {
+	if (!wp_symbol) {
+		qDebug() << PREFIX << "No symbol from garmin symbols";
+		return result;
+	}
+
+	if (wp_symbol->width() == SMALL_ICON_SIZE) {
+		/* Symbol from GarminSymbols has just the right size. */
+		qDebug() << PREFIX << "Symbol from garmin symbols has correct size";
+		result = QIcon(*wp_symbol);
+	} else {
 		const QPixmap scaled = wp_symbol->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 		if (!scaled.isNull()) {
+			qDebug() << PREFIX << "Scaled symbol is non-empty";
 			result = QIcon(scaled);
+		} else {
+			/* Too bad, we will return empty icon. */
+			qDebug() << PREFIX << "Scaled symbol is empty";
 		}
 	}
 
@@ -837,6 +857,8 @@ void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 {
 	wp->owning_layer = this->owning_layer;
 	this->items.insert({{ wp->uid, wp }});
+
+	this->set_new_waypoint_icon(wp);
 
 	return;
 }

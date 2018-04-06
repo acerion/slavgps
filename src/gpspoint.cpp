@@ -429,7 +429,7 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 	}
 
 	if (this->line_symbol) {
-		wp->set_symbol_name(this->line_symbol);
+		wp->set_symbol(this->line_symbol);
 	}
 }
 

@@ -40,7 +40,7 @@ namespace SlavGPS {
 		static QPixmap * get_wp_symbol(const QString & symbol_name);
 		static QString get_normalized_symbol_name(const QString & symbol_name);
 
-		static void populate_symbols_list(QComboBox * symbol_list);
+		static void populate_symbols_list(QComboBox * symbol_list, const QString & preselected_symbol_name);
 
 		/* Use when preferences have changed to reload icons. */
 		static void clear_symbols(void);

@@ -126,7 +126,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 			trw->get_waypoints_node().propagate_new_waypoint_name(wp);
 		}
 
-		trw->get_waypoints_node().reset_waypoint_icon(wp);
+		trw->get_waypoints_node().set_new_waypoint_icon(wp);
 
 		if (trw->visible) {
 			trw->emit_layer_changed();

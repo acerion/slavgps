@@ -101,7 +101,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_type(wp.type);
 	this->set_url(wp.url);
 	this->set_image_full_path(wp.image_full_path);
-	this->set_symbol_name(wp.symbol_name);
+	this->set_symbol(wp.symbol_name);
 
 	/* kamilTODO: what about image_width / image_height? */
 }
@@ -175,7 +175,8 @@ void Waypoint::set_image_full_path(const QString & new_image_full_path)
 
 
 
-void Waypoint::set_symbol_name(const QString & new_symbol_name)
+/* Sets both symbol name and symbol pixmap. The pixmap is fetched from GarminSymbols. */
+void Waypoint::set_symbol(const QString & new_symbol_name)
 {
 	/* this->symbol_pixmap is just a reference, so no need to free it. */
 
@@ -476,6 +477,7 @@ void Waypoint::properties_dialog_cb(void)
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, g_tree->tree_get_main_window());
+
 	if (std::get<SG_WP_DIALOG_OK>(result)) {
 		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 
@@ -484,9 +486,7 @@ void Waypoint::properties_dialog_cb(void)
 			parent_layer_->waypoints->propagate_new_waypoint_name(this);
 		}
 
-		if (this->index.isValid()) {
-			this->tree_view->set_tree_item_icon(this->index, get_wp_icon_small(this->symbol_name));
-		}
+		parent_layer_->get_waypoints_node().set_new_waypoint_icon(this);
 
 		if (parent_layer_->visible) {
 			parent_layer_->emit_layer_changed();

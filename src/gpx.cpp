@@ -501,7 +501,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_sym: {
-		c_wp->set_symbol_name(c_cdata->str);
+		c_wp->set_symbol(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 	}

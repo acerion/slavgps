@@ -63,7 +63,7 @@ namespace SlavGPS {
 		void set_type(const QString & new_type);
 		void set_url(const QString & new_url);
 		void set_image_full_path(const QString & new_image_full_path);
-		void set_symbol_name(const QString & new_symbol_name);
+		void set_symbol(const QString & new_symbol_name);
 
 		bool apply_dem_data(bool skip_existing_elevations);
 		void apply_dem_data_common(bool skip_existing_elevations);
@@ -116,7 +116,7 @@ namespace SlavGPS {
 		int image_height = 0;
 
 
-		/* Only for GUI display. */
+		/* For display in viewport. This is only reference. */
 		QPixmap * symbol_pixmap = NULL;
 
 

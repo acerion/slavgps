@@ -134,7 +134,7 @@ namespace SlavGPS {
 		QString new_unique_element_name(const QString & old_name);
 
 		void propagate_new_waypoint_name(const Waypoint * wp);
-		void reset_waypoint_icon(Waypoint * wp);
+		void set_new_waypoint_icon(Waypoint * wp);
 
 		/* Uses a case sensitive find. Finds the first waypoint matching given name. */
 		Waypoint * find_waypoint_by_name(const QString & wp_name);

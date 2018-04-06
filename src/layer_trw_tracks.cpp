@@ -608,9 +608,14 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 void LayerTRWTracks::update_tree_view(Track * trk)
 {
 	if (trk->index.isValid()) {
-		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
-		pixmap.fill(trk->color);
-		this->tree_view->set_tree_item_icon(trk->index, QIcon(pixmap));
+		if (trk->has_color) {
+			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
+			pixmap.fill(trk->color);
+			trk->icon = QIcon(pixmap);
+		} else {
+			trk->icon = QIcon(); /* Invalidate icon. */
+		}
+		this->tree_view->set_tree_item_icon(trk->index, trk->icon);
 	}
 }
 
@@ -622,11 +627,12 @@ void LayerTRWTracks::add_children_to_tree(void)
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		Track * trk = i->second;
 
-		QIcon icon;
 		if (trk->has_color) {
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 			pixmap.fill(trk->color);
-			icon = QIcon(pixmap);
+			this->icon = QIcon(pixmap);
+		} else {
+			this->icon = QIcon(); /* Invalidate icon. */
 		}
 
 		time_t timestamp = 0;
@@ -638,7 +644,7 @@ void LayerTRWTracks::add_children_to_tree(void)
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
 		this->tree_view->add_tree_item(this->index, trk, trk->name);
-		this->tree_view->set_tree_item_icon(trk->index, icon);
+		this->tree_view->set_tree_item_icon(trk->index, this->icon);
 		this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
 	}
 }

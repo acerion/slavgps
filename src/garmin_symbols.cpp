@@ -461,7 +461,7 @@ QString GarminSymbols::get_normalized_symbol_name(const QString & symbol_name)
 
 
 
-void GarminSymbols::populate_symbols_list(QComboBox * symbol_list)
+void GarminSymbols::populate_symbols_list(QComboBox * symbol_list, const QString & preselected_symbol_name)
 {
 	if (!symbol_list) {
 		qDebug() << "EE" PREFIX << "NULL argument";
@@ -470,13 +470,21 @@ void GarminSymbols::populate_symbols_list(QComboBox * symbol_list)
 
 	symbol_list->addItem(QObject::tr("(none)"));
 
+	int selected_idx = -1;
 	int i = 0;
 	while (garmin_symbols[i].num != -1) {
 		/* Ensure at least one symbol available - the other can be auto generated. */
 		if (garmin_symbols[i].icon_small || garmin_symbols[i].icon_large) {
 			symbol_list->addItem(*get_wp_sym_from_index(i), garmin_symbols[i].symbol_name);
+			if (garmin_symbols[i].symbol_name == preselected_symbol_name) {
+				selected_idx = i + 1; /* +1 because one item has been already added before the loop. */
+			}
 		}
 		i++;
+	}
+
+	if (selected_idx != -1) {
+		symbol_list->setCurrentIndex(selected_idx);
 	}
 }
 

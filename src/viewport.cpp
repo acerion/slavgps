@@ -1446,28 +1446,28 @@ void Viewport::draw_text(QFont const & text_font, QPen const & pen, const QColor
 
 
 
-void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height)
+void Viewport::draw_pixmap(QPixmap const & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height)
 {
 	QPainter painter(this->scr_buffer);
-	/* TODO: This clearly needs to be improved. */
-	painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
-
-#ifdef K_OLD_IMPLEMENTATION
-	gdk_draw_pixbuf(this->scr_buffer,
-			NULL,
-			pixbuf,
-			src_x, src_y, dest_x, dest_y, region_width, region_height,
-			GDK_RGB_DITHER_NONE, 0, 0);
-#endif
+	painter.drawPixmap(viewport_x, viewport_y, pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
 }
 
 
 
 
-void Viewport::draw_pixmap(const QRect & canvas_rect, QPixmap const & pixmap, const QRect & pixmap_rect)
+void Viewport::draw_pixmap(QPixmap const & pixmap, int viewport_x, int viewport_y)
 {
 	QPainter painter(this->scr_buffer);
-	painter.drawPixmap(canvas_rect, pixmap, pixmap_rect);
+	painter.drawPixmap(viewport_x, viewport_y, pixmap);
+}
+
+
+
+
+void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
+{
+	QPainter painter(this->scr_buffer);
+	painter.drawPixmap(viewport_rect, pixmap, pixmap_rect);
 }
 
 

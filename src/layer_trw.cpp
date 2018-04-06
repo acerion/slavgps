@@ -2395,9 +2395,12 @@ void LayerTRW::reset_waypoints()
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
 		Waypoint * wp = i->second;
 		if (!wp->symbol_name.isEmpty()) {
-			/* Reapply symbol setting to update the pixbuf. TODO: what's does it really do? */
+			/* This function is called to re-get
+			   waypoint's symbol from GarminSymbols, with
+			   current "waypoint's symbol size" setting.
+			   The symbol is shown in viewport */
 			const QString tmp_symbol_name = wp->symbol_name;
-			wp->set_symbol_name(tmp_symbol_name);
+			wp->set_symbol(tmp_symbol_name);
 		}
 	}
 }
@@ -2427,6 +2430,7 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
 	wp->set_name(wp_name);
+
 	this->add_waypoint(wp);
 }
 

@@ -138,6 +138,8 @@ namespace SlavGPS {
 
 		Layer * owning_layer = NULL; /* Reference. */
 
+		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */
+
 		char debug_string[100] = { 0 };
 	};
 

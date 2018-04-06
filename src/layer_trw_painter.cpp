@@ -1036,7 +1036,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 
 			this->viewport->draw_rectangle(pen, target_rect.adjusted(-delta, -delta, delta, delta));
 		}
-		this->viewport->draw_pixmap(target_rect, *pixmap, QRect(0, 0, w, h));
+		this->viewport->draw_pixmap(*pixmap, target_rect, QRect(0, 0, w, h));
 	}
 	return true;
 }
@@ -1050,7 +1050,9 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 	const int y = pos.y;
 
 	if (this->draw_wp_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
-		this->viewport->draw_pixmap(*wp->symbol_pixmap, 0, 0, x - wp->symbol_pixmap->width()/2, y - wp->symbol_pixmap->height()/2, -1, -1);
+		const int viewport_x = x - wp->symbol_pixmap->width() / 2;
+		const int viewport_y = y - wp->symbol_pixmap->height() / 2;
+		this->viewport->draw_pixmap(*wp->symbol_pixmap, viewport_x, viewport_y);
 
 	} else {
 		int size = do_highlight ? this->wp_marker_size * 2 : this->wp_marker_size;

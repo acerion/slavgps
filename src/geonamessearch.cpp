@@ -337,23 +337,23 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 		   Only a few values supported as only a few symbols make sense. */
 		if (!wiki_geoname->feature.isEmpty()) {
 			if (wiki_geoname->feature == "city") {
-				wiki_wp->set_symbol_name("city (medium)");
+				wiki_wp->set_symbol("city (medium)");
 			}
 
 			if (wiki_geoname->feature == "edu") {
-				wiki_wp->set_symbol_name("school");
+				wiki_wp->set_symbol("school");
 			}
 
 			if (wiki_geoname->feature == "airport") {
-				wiki_wp->set_symbol_name("airport");
+				wiki_wp->set_symbol("airport");
 			}
 
 			if (wiki_geoname->feature == "mountain") {
-				wiki_wp->set_symbol_name("summit");
+				wiki_wp->set_symbol("summit");
 			}
 
 			if (wiki_geoname->feature == "forest") {
-				wiki_wp->set_symbol_name("forest");
+				wiki_wp->set_symbol("forest");
 			}
 		}
 		trw->add_waypoint_from_file(wiki_wp, wiki_geoname->name);
