@@ -78,8 +78,6 @@ Waypoint::Waypoint()
 	this->type_id = "sg.trw.waypoint";
 
 	this->has_properties_dialog = true;
-
-	/* kamilTODO: what about image_width / image_height? */
 }
 
 
@@ -359,7 +357,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 	if (!this->image_full_path.isEmpty()) {
-		qa = menu.addAction(QIcon::fromTheme("TODO-vik-icon-Show Picture"), tr("&Show Picture..."));
+		qa = menu.addAction(QIcon(":/icons/layer_tool/trw_show_picture_18.png"), tr("&Show Picture..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (show_wp_picture_cb()));
 
 #ifdef VIK_CONFIG_GEOTAG

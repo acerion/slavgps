@@ -156,7 +156,7 @@ namespace SlavGPS {
 		   @exclude won't be included in returned list. */
 		std::list<Track *> get_sorted_by_name(const Track * exclude = NULL) const;
 
-		QString find_duplicate_track_name(void);
+		Track * find_track_with_duplicate_name(void) const;
 
 
 		void set_items_visibility(bool on_off);

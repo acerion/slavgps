@@ -323,14 +323,16 @@ std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) con
 
 
 /**
- * Find out if any tracks have the same name in this hash table.
- */
-QString LayerTRWTracks::find_duplicate_track_name(void)
+   @brief Find out if any tracks have the same name in this sublayer
+
+   @return a track, which name is duplicated (i.e. some other track has the same name)
+*/
+Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
 	if (this->items.size() <= 1) {
-		return QString("");
+		return NULL;
 	}
 
 	const std::list<Track *> tracks = this->get_sorted_by_name();
@@ -341,11 +343,11 @@ QString LayerTRWTracks::find_duplicate_track_name(void)
 		const QString previous = (*(std::prev(iter)))->name;
 
 		if (this_one == previous) {
-			return this_one;
+			return *iter;
 		}
 	}
 
-	return QString("");
+	return NULL;
 }
 
 
@@ -442,31 +444,20 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 void LayerTRWTracks::uniquify(sort_order_t sort_order)
 {
 	if (this->items.empty()) {
-		qDebug() << "EE: Layer TRW: ::uniquify() called for empty tracks/routes set";
+		qDebug() << "EE" PREFIX << "called for empty tracks/routes set";
 		return;
 	}
 
 	/*
-	  - Search tracks set for an instance of repeated name
-	  - get track with this name
+	  - Search tracks set for an instance of duplicate name
+	  - get track with duplicate name
 	  - create new name
 	  - rename track & update equiv. tree view iter
-	  - repeat until all different
+	  - repeat until there are no tracks with duplicate names
 	*/
 
-	/* TODO: make the ::find_duplicate_track_name() return the track/route itself (or NULL). */
-	QString duplicate_name = this->find_duplicate_track_name();
-	while (duplicate_name != "") {
-
-		/* Get the track/route with duplicate name. */
-		Track * trk = this->find_track_by_name(duplicate_name);
-		if (!trk) {
-			/* Broken :( */
-			qDebug() << "EE: Layer TRW: can't retrieve track/route with duplicate name" << duplicate_name;
-			g_tree->tree_get_main_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making tracks/routes unique"));
-			return;
-		}
-
+	Track * trk = this->find_track_with_duplicate_name();
+	while (trk) {
 		/* Rename it. */
 		const QString uniq_name = this->new_unique_element_name(trk->name);
 		trk->set_name(uniq_name);
@@ -478,7 +469,7 @@ void LayerTRWTracks::uniquify(sort_order_t sort_order)
 		}
 
 		/* Try to find duplicate names again in the updated set of tracks. */
-		duplicate_name = this->find_duplicate_track_name();
+		trk = this->find_track_with_duplicate_name();
 	}
 }
 

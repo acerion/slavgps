@@ -153,7 +153,7 @@ void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 
 
 
-std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void)
+std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void) const
 {
 	std::list<Waypoint *> result;
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
@@ -168,14 +168,16 @@ std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void)
 
 
 /**
- * Find out if any waypoints have the same name in this layer.
- */
-QString LayerTRWWaypoints::find_duplicate_waypoint_name(void)
+   @brief Find out if any waypoints have the same name in this sublayer
+
+   @return a waypoint, which name is duplicated (i.e. some other waypoint has the same name)
+*/
+Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
 	if (this->items.size() <= 1) {
-		return QString("");
+		return NULL;
 	}
 
 	std::list<Waypoint *> waypoints = this->get_sorted_by_name();
@@ -185,11 +187,11 @@ QString LayerTRWWaypoints::find_duplicate_waypoint_name(void)
 		QString const previous = (*(std::prev(iter)))->name;
 
 		if (this_one == previous) {
-			return this_one;
+			return *iter;
 		}
 	}
 
-	return QString("");
+	return NULL;
 }
 
 
@@ -323,39 +325,28 @@ void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 void LayerTRWWaypoints::uniquify(sort_order_t sort_order)
 {
 	if (this->items.empty()) {
-		qDebug() << "EE: Layer TRW: ::uniquify() called for empty waypoints set";
+		qDebug() << "EE" PREFIX << "called for empty waypoints set";
 		return;
 	}
 
 	/*
-	  - Search waypoints set for an instance of repeated name
-	  - get waypoint with this name
+	  - Search waypoints set for an instance of duplicate name
+	  - get waypoint with duplicate name
 	  - create new name
 	  - rename waypoint
 	  - repeat until there are no waypoints with duplicate names
 	*/
 
-	/* TODO: make the ::has_duplicate_waypoint_names() return the waypoint itself (or NULL). */
-	QString duplicate_name = this->find_duplicate_waypoint_name();
-	while (duplicate_name != "") {
-
-		/* Get that waypoint that has duplicate name. */
-		Waypoint * wp = this->find_waypoint_by_name(duplicate_name);
-		if (!wp) {
-			/* Broken :( */
-			qDebug() << "EE: Layer TRW: can't retrieve waypoint with duplicate name" << duplicate_name;
-			g_tree->tree_get_main_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Internal Error during making waypoints unique"));
-			return;
-		}
-
+	Waypoint * wp = this->find_waypoint_with_duplicate_name();
+	while (wp) {
 		/* Rename it. */
-		const QString uniq_name = this->new_unique_element_name(wp->name);
-		wp->set_name(uniq_name);
+		const QString uniqe_name = this->new_unique_element_name(wp->name);
+		wp->set_name(uniqe_name);
 		this->propagate_new_waypoint_name(wp);
 		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
-		duplicate_name = this->find_duplicate_waypoint_name();
+		wp = this->find_waypoint_with_duplicate_name();
 	}
 
 	return;
@@ -454,19 +445,19 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 */
 QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 {
-	QPixmap * wp_pixmap = GarminSymbols::get_wp_symbol(symbol_name);
+	QIcon result;
+
+	QPixmap * wp_symbol = GarminSymbols::get_wp_symbol(symbol_name);
 	/* ATM GarminSymbols::get_wp_symbol() returns a cached icon, with the size dependent on the preferences.
-	   So needing a small icon for the tree view may need some resizing: */
-	if (wp_pixmap && wp_pixmap->width() != SMALL_ICON_SIZE) {
-		/* TODO: is this assignment safe? */
-		*wp_pixmap = wp_pixmap->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	   So needing a small icon for the tree view may need some resizing. */
+	if (wp_symbol && wp_symbol->width() != SMALL_ICON_SIZE) {
+		const QPixmap scaled = wp_symbol->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+		if (!scaled.isNull()) {
+			result = QIcon(scaled);
+		}
 	}
 
-	if (wp_pixmap) {
-		return QIcon(*wp_pixmap);
-	} else {
-		return QIcon();
-	}
+	return result;
 }
 
 
