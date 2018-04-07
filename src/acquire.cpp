@@ -208,8 +208,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->parent_data_source_dialog);
 	if (setup_dialog) {
-		setup_dialog->setWindowTitle(new_data_source->window_title); /* TODO: move this to dialog class. */
-		/* TODO: set focus on "OK/Accept" button. */
+		setup_dialog->setWindowTitle(new_data_source->window_title);
 
 		if (setup_dialog->exec() != QDialog::Accepted) {
 			delete setup_dialog;

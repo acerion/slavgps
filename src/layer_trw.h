@@ -242,7 +242,6 @@ namespace SlavGPS {
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
 		void add_waypoint_from_file(Waypoint * wp, const QString & wp_name);
-		void add_waypoint_from_file2(Waypoint * wp, const QString & wp_name);
 		void add_track_from_file(Track * trk, const QString & trk_name);
 		void add_track_from_file2(Track * trk, const QString & trk_name);
 
@@ -304,12 +303,6 @@ namespace SlavGPS {
 		bool uniquify(LayersPanel * panel);
 
 		void goto_coord(Viewport * viewport, const Coord & coord);
-
-		void highest_wp_number_reset();
-		void highest_wp_number_add_wp(const QString & new_wp_name);
-		void highest_wp_number_remove_wp(const QString & old_wp_name);
-		QString highest_wp_number_get();
-
 
 		void tpwin_update_dialog_data();
 
@@ -374,9 +367,6 @@ namespace SlavGPS {
 		bool moving_tp = false;
 
 		CoordMode coord_mode;
-
-		int highest_wp_number = 0;
-
 
 
 		sort_order_t track_sort_order;

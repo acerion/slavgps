@@ -74,6 +74,7 @@ LayerTRWWaypoints::LayerTRWWaypoints()
 	this->type_id = "sg.trw.waypoints";
 	this->accepted_child_type_ids << "sg.trw.waypoint";
 	this->editable = false;
+	this->name_generator.set_parent_sublayer(this);
 }
 
 
@@ -888,11 +889,95 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	parent_layer->tree_view->detach_item(wp);
 
-	parent_layer->highest_wp_number_remove_wp(wp->name);
+	this->name_generator.remove_name(wp->name);
 
 	this->items.erase(wp->uid); /* Erase by key. */
 
 	delete wp;
 
 	return was_visible;
+}
+
+
+
+
+int DefaultNameGenerator::name_to_number(const QString & name) const
+{
+	if (name.size() == 3) {
+		int n = name.toInt(); /* TODO: use locale-aware conversion? */
+		if (n < 100 && name[0] != '0') {
+			return -1;
+		}
+
+		if (n < 10 && name[0] != '0') {
+			return -1;
+		}
+		return n;
+	}
+	return -1;
+}
+
+
+
+
+QString DefaultNameGenerator::number_to_name(int number) const
+{
+	return QString("%1").arg((int) (number + 1), 3, 10, (QChar) '0');
+}
+
+
+
+
+void DefaultNameGenerator::reset(void)
+{
+	this->highest_item_number = 0;
+}
+
+
+
+
+void DefaultNameGenerator::add_name(const QString & new_item_name)
+{
+	/* If is bigger than top, add it. */
+	int number = this->name_to_number(new_item_name);
+	if (number > this->highest_item_number) {
+		this->highest_item_number = number;
+	}
+}
+
+
+
+
+void DefaultNameGenerator::remove_name(const QString & item_name)
+{
+	/* If wasn't top, do nothing. if was top, count backwards until we find one used. */
+	int number = this->name_to_number(item_name);
+	if (this->highest_item_number == number) {
+
+		this->highest_item_number--;
+		QString name = this->number_to_name(this->highest_item_number);
+
+		/* Search down until we find something that *does* exist. */
+		while (this->highest_item_number > 0 && !this->parent->find_waypoint_by_name(name)) {
+		       this->highest_item_number--;
+		       name = this->number_to_name(this->highest_item_number);
+		}
+	}
+}
+
+
+
+
+QString DefaultNameGenerator::try_new_name(void) const
+{
+	QString result;
+
+	if (this->highest_item_number < 0 /* TODO: handle overflow in different way. */
+	    || this->highest_item_number >= 999) { /* TODO: that's rather limiting, isn't it? */
+
+		return result;
+	}
+	result = this->number_to_name(this->highest_item_number);
+
+	return result;
 }

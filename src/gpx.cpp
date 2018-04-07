@@ -432,7 +432,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (c_wp_name.isEmpty()) {
 			c_wp_name = QString("VIKING_WP%1").arg(unnamed_waypoints++, 4, 10, (QChar) '0');
 		}
-		trw->add_waypoint_from_file2(c_wp, c_wp_name);
+		trw->add_waypoint_from_file(c_wp, c_wp_name);
 		c_wp = NULL;
 		break;
 

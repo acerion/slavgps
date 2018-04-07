@@ -61,6 +61,27 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Window;
 	class LayersPanel;
+	class LayerTRWWaypoints;
+
+
+
+
+	class DefaultNameGenerator {
+	public:
+		QString try_new_name(void) const;
+		void add_name(const QString & item_name);
+		void remove_name(const QString & item_name);
+		void reset();
+
+		void set_parent_sublayer(LayerTRWWaypoints * parent_sublayer) { this->parent = parent_sublayer; };
+
+	private:
+		int name_to_number(const QString & item_name) const;
+		QString number_to_name(int number) const;
+
+		int highest_item_number = 0;
+		LayerTRWWaypoints * parent = NULL;
+	};
 
 
 
@@ -189,6 +210,9 @@ namespace SlavGPS {
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
 		Waypoints items;
+
+
+		DefaultNameGenerator name_generator;
 
 
 

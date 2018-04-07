@@ -1422,10 +1422,6 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	if (track && track->selected_tp_iter.valid) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
-		if (!track) { /* TODO: there is a mismatch between this condition and upper if() condition. */
-			return ToolStatus::IGNORED;
-		}
-
 		Trackpoint * tp = *track->selected_tp_iter.iter;
 		const ScreenPos tp_pos = this->viewport->coord_to_screen_pos(tp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());

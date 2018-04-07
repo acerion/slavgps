@@ -1885,7 +1885,11 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
 {
-	const QString default_name = this->highest_wp_number_get();
+	/* Notice that we don't handle situation when returned default
+	   name is invalid. The new name in properties dialog will
+	   simply be empty. */
+	const QString default_name = this->waypoints->name_generator.try_new_name();
+
 	Waypoint * wp = new Waypoint();
 	bool updated;
 	wp->coord = default_coord;
@@ -2283,19 +2287,14 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 	this->waypoints->add_waypoint(wp);
 
-	time_t timestamp = 0;
-	if (wp->has_timestamp) {
-		timestamp = wp->timestamp;
-	}
-
 	this->tree_view->add_tree_item(this->waypoints->index, wp, wp->name);
 
-	this->tree_view->set_tree_item_timestamp(wp->index, timestamp);
+	this->tree_view->set_tree_item_timestamp(wp->index, wp->has_timestamp ? wp->timestamp : 0);
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
 	this->tree_view->sort_children(this->waypoints->get_index(), this->wp_sort_order);
 
-	this->highest_wp_number_add_wp(wp->name);
+	this->waypoints->name_generator.add_name(wp->name);
 }
 
 
@@ -2432,20 +2431,6 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 	wp->set_name(wp_name);
 
 	this->add_waypoint(wp);
-}
-
-
-
-
-void LayerTRW::add_waypoint_from_file2(Waypoint * wp, const QString & wp_name)
-{
-	/* No more uniqueness of name forced when loading from a file.
-	   This now makes this function a little redunant as we just flow the parameters through. */
-	wp->set_name(wp_name);
-
-	this->add_waypoint(wp);
-
-	this->highest_wp_number_add_wp(wp->name);
 }
 
 
@@ -2761,7 +2746,7 @@ void LayerTRW::delete_all_waypoints()
 	this->reset_edited_wp();
 	this->moving_wp = false;
 
-	this->highest_wp_number_reset();
+	this->waypoints->name_generator.reset();
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
 		this->tree_view->detach_item(i->second);
@@ -4229,81 +4214,6 @@ void LayerTRW::download_map_along_track_cb(void)
 
 	delete layers;
 	return;
-}
-
-
-
-
-/* Lowest waypoint number calculation. */
-static int highest_wp_number_name_to_number(const QString & name)
-{
-	if (name.size() == 3) {
-		int n = name.toInt(); /* TODO: use locale-aware conversion? */
-		if (n < 100 && name[0] != '0') {
-			return -1;
-		}
-
-		if (n < 10 && name[0] != '0') {
-			return -1;
-		}
-		return n;
-	}
-	return -1;
-}
-
-
-
-
-void LayerTRW::highest_wp_number_reset()
-{
-	this->highest_wp_number = -1;
-}
-
-
-
-
-void LayerTRW::highest_wp_number_add_wp(const QString & new_wp_name)
-{
-	/* If is bigger that top, add it. */
-	int new_wp_num = highest_wp_number_name_to_number(new_wp_name);
-	if (new_wp_num > this->highest_wp_number) {
-		this->highest_wp_number = new_wp_num;
-	}
-}
-
-
-
-
-void LayerTRW::highest_wp_number_remove_wp(const QString & old_wp_name)
-{
-	/* If wasn't top, do nothing. if was top, count backwards until we find one used. */
-	int old_wp_num = highest_wp_number_name_to_number(old_wp_name);
-	if (this->highest_wp_number == old_wp_num) {
-		char buf[4];
-		this->highest_wp_number--;
-
-		snprintf(buf,4,"%03d", this->highest_wp_number);
-		/* Search down until we find something that *does* exist. */
-
-		while (this->highest_wp_number > 0 && !this->waypoints->find_waypoint_by_name(buf)) {
-		       this->highest_wp_number--;
-		       snprintf(buf, 4, "%03d", this->highest_wp_number);
-		}
-	}
-}
-
-
-
-
-/* Get lowest unused number. */
-QString LayerTRW::highest_wp_number_get()
-{
-	QString result;
-	if (this->highest_wp_number < 0 || this->highest_wp_number >= 999) { /* TODO: that's rather limiting, isn't it? */
-		return result;
-	}
-	result = QString("%1").arg((int) (this->highest_wp_number + 1), 3, 10, (QChar) '0');
-	return result;
 }
 
 
