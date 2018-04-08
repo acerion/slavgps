@@ -561,10 +561,10 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
  *
  * Returns: The number of elements within the latlontz.txt loaded.
  */
-static int load_ll_tz_dir(const char * dir)
+static int load_ll_tz_dir(const QString & dir)
 {
 	int inserted = 0;
-	const QString path = QString(dir) + QDir::separator() + "latlontz.txt";
+	const QString path = dir + QDir::separator() + "latlontz.txt";
 	if (0 != access(path.toUtf8().constData(), R_OK)) {
 		return inserted;
 	}
@@ -619,18 +619,18 @@ void SlavGPS::vu_setup_lat_lon_tz_lookup()
 	kd = kd_create(2);
 
 	/* Look in the directories of data path. */
-	char **data_dirs = get_viking_data_path();
+	const QStringList data_dirs = SlavGPSLocations::get_data_dirs();
 	unsigned int loaded = 0;
-	/* Process directories in reverse order for priority. */
-	unsigned int n_data_dirs = g_strv_length(data_dirs);
-	for (; n_data_dirs > 0; n_data_dirs--) {
-		loaded += load_ll_tz_dir(data_dirs[n_data_dirs-1]);
-	}
-	g_strfreev(data_dirs);
 
-	fprintf(stderr, "DEBUG: %s: Loaded %d elements\n", __FUNCTION__, loaded);
+	/* Process directories in reverse order for priority. */
+	int n_data_dirs = data_dirs.size();
+	for (int i = n_data_dirs - 1; i >= 0; i--) {
+		loaded += load_ll_tz_dir(data_dirs.at(i));
+	}
+
+	qDebug() << "DD" PREFIX << "Loaded" << loaded << "elements";
 	if (loaded == 0) {
-		fprintf(stderr, "CRITICAL: %s: No lat/lon/timezones loaded\n", __FUNCTION__);
+		qDebug() << "EE" PREFIX << "No lat/lon/timezones loaded";
 	}
 }
 
@@ -1058,27 +1058,18 @@ int SlavGPS::viking_version_to_number(char const * version)
  */
 bool SGUtils::is_very_first_run(void)
 {
-	static bool vik_very_first_run_known = false;
-	static bool vik_very_first_run = false;
+	static bool very_first_run_known = false;
+	static bool very_first_run = false;
 
 	/* Use cached result if available. */
-	if (vik_very_first_run_known) {
-		return vik_very_first_run;
+	if (very_first_run_known) {
+		return very_first_run;
 	}
 
-	const QString dir = get_viking_dir_no_create();
-	/* NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking. */
-	if (dir.isEmpty()) {
-		qDebug() << "II" PREFIX << "Viking dir is non-existent";
-		vik_very_first_run = true;
-	} else {
-		/* If directory exists - Viking has been run before. */
-		vik_very_first_run = (0 != access(dir.toUtf8().constData(), F_OK));
-		qDebug() << "II" PREFIX << "is Viking dir" << dir << "non-accessible?" << vik_very_first_run;
-	}
-	vik_very_first_run_known = true;
+	very_first_run = !SlavGPSLocations::config_dir_exists();
+	very_first_run_known = true;
 
-	return vik_very_first_run;
+	return very_first_run;
 }
 
 

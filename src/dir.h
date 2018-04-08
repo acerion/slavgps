@@ -19,14 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DIR_H_
-#define _SG_DIR_H_
+#ifndef _SG_LOCATIONS_H_
+#define _SG_LOCATIONS_H_
 
 
 
 
 #include <QString>
-#include <QDir>
 
 
 
@@ -36,22 +35,44 @@ namespace SlavGPS {
 
 
 
-	/**
-	   \brief Get path to user's Viking directory
+	class SlavGPSLocations {
+	public:
 
-	   The path is without trailing separator. The path is with native (platform-dependent) separators.
-	*/
-	QString get_viking_dir(void);
+		/**
+		   \brief Get path to user's SlavGPS directory
 
-	QString get_viking_dir_no_create();
-	char ** get_viking_data_path();
+		   The path is without trailing separator. The path is with native (platform-dependent) separators.
+		*/
+		static QString get_config_dir(void);
 
-	/**
-	   \brief Get XDG compliant user's data directory
+		/**
+		   \brief Get path to specific file in SlavGPS's config directory
+		*/
+		static QString get_file_full_path(const QString & file_name);
 
-	   \return String with path (the string can be empty)
-	*/
-	QString get_viking_data_home();
+		/**
+		   \brief See whether SlavGPS's config directory exists
+		*/
+		static bool config_dir_exists(void);
+
+		/**
+		   Get list of directories to scan for application data.
+		*/
+		static QStringList get_data_dirs(void);
+
+
+		/**
+		   \brief Get XDG compliant user's data directory
+
+		   \return String with path (the string can be empty)
+		*/
+		static QString get_data_home(void);
+
+	private:
+		static QString get_config_dir_no_create(void);
+		static QString build_final_name(const QString & base_dir);
+		static QString config_dir;
+	};
 
 
 
@@ -61,4 +82,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DIR_H_ */
+#endif /* #ifndef _SG_LOCATIONS_H_ */

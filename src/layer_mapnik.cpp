@@ -258,7 +258,7 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
-	const QString import_time_full_path = get_viking_dir() + QDir::separator() + "planet-import-complete";
+	const QString import_time_full_path = SlavGPSLocations::get_file_full_path("planet-import-complete");
 	struct stat stat_buf;
 	if (stat(import_time_full_path.toUtf8().constData(), &stat_buf) == 0) {
 		/* Only update if newer. */

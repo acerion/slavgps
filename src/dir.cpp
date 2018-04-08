@@ -17,22 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cstdlib>
+//#include <cstdlib>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include <QDebug>
 
-#include <glib.h>
-#include <glib/gstdio.h>
+/* mkdir() */
+#include <sys/stat.h>
+#include <sys/types.h>
+
+
+#include <QDebug>
+#include <QDir>
+#include <QTemporaryDir>
 
 #include "dir.h"
 
@@ -44,72 +48,126 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Dir:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": SlavGPS Locations:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
 
-static QString g_viking_dir;
+/* Definitions of static data members from SlavGPSLocation class. */
+QString SlavGPSLocations::config_dir;
+
+
+
+
+bool SlavGPSLocations::config_dir_exists(void)
+{
+	const QString dir_path = SlavGPSLocations::get_config_dir_no_create();
+
+	if (dir_path.isEmpty()) {
+		/* This is an error situation, but we have to treat it as if the directory does not exist. */
+		return false;
+	}
+	if (0 != access(dir_path.toUtf8().constData(), F_OK)) {
+		return false;
+	}
+
+	return true;
+}
+
+
+
+
+/* Small utility function.
+   Build the name of the slavgps directory. */
+QString SlavGPSLocations::build_final_name(const QString & base_dir)
+{
+#ifdef __APPLE__
+	QString full_dir_path = QDir::toNativeSeparators(base_dir + "/Library/Application Support/Viking");
+#else
+	QString full_dir_path = QDir::toNativeSeparators(base_dir + "/.viking");
+#endif
+
+	qDebug() << "II" PREFIX << "Returning newly constructed directory path" << full_dir_path;
+	return full_dir_path;
+}
 
 
 
 
 /**
- * For external use. Free the result.
- * Made externally available primarily to detect when Viking is first run.
- */
-QString SlavGPS::get_viking_dir_no_create(void)
+   @Brief Return a path to viking directory
+
+   The function does not create the directory itself, but may create
+   parent directory/directories, in which the viking directory should
+   be located.
+*/
+QString SlavGPSLocations::get_config_dir_no_create(void)
 {
-	/* TODO: use g_get_user_config_dir? */
-
-	QString home = QString::fromLocal8Bit("HOME");
-	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
-		home = QString(g_get_home_dir());
+	if (!SlavGPSLocations::config_dir.isEmpty()) {
+		qDebug() << "II" PREFIX << "Returning cached directory path" << SlavGPSLocations::config_dir;
+		return SlavGPSLocations::config_dir;
 	}
 
-#ifdef HAVE_MKDTEMP
-	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
-		static char temp[] = {"/tmp/vikXXXXXX"};
-		home = QString(mkdtemp(temp)); /* TODO: memory leak? */
-	}
-#endif
-	if (home.isEmpty() || access(home.toUtf8().constData(), W_OK)) {
-		/* Fatal error. */
-		qDebug() << "EE" PREFIX << "Unable to find a base directory";
+	QString base_dir;
+
+
+	base_dir = QDir::homePath();
+	if (!base_dir.isEmpty() && base_dir != QDir::rootPath() && 0 == access(base_dir.toUtf8().constData(), W_OK)) {
+		SlavGPSLocations::config_dir = SlavGPSLocations::build_final_name(base_dir);
+		return SlavGPSLocations::config_dir;
 	}
 
-	/* Build the name of the directory. */
-#ifdef __APPLE__
-	return home + "/Library/Application Support/Viking";
-#else
-	return home + "/.viking";
-#endif
+
+	/* QDir::homePath() already uses $HOME, but let's try using qgetenv() directly anyway. */
+	base_dir = QString::fromLocal8Bit(qgetenv("HOME"));
+	if (!base_dir.isEmpty() && 0 == access(base_dir.toUtf8().constData(), W_OK)) {
+		SlavGPSLocations::config_dir = SlavGPSLocations::build_final_name(base_dir);
+		return SlavGPSLocations::config_dir;
+	}
+
+
+	QTemporaryDir tmp_dir("slavgpsXXXXXX");
+	tmp_dir.setAutoRemove(false);
+	if (tmp_dir.isValid() && 0 == access(base_dir.toUtf8().constData(), W_OK)) {
+		SlavGPSLocations::config_dir = SlavGPSLocations::build_final_name(tmp_dir.path());
+		return SlavGPSLocations::config_dir;
+	}
+
+
+	/* Fatal error. */
+	qDebug() << "EE" PREFIX << "Unable to find/create a base directory for .viking dir";
+	SlavGPSLocations::config_dir = "";
+	return SlavGPSLocations::config_dir;
 }
 
 
 
 
-QString SlavGPS::get_viking_dir(void)
+QString SlavGPSLocations::get_config_dir(void)
 {
-	if (g_viking_dir.isEmpty()) {
-		g_viking_dir = get_viking_dir_no_create();
-		if (0 != access(g_viking_dir.toUtf8().constData(), F_OK)) {
-			if (g_mkdir(g_viking_dir.toUtf8().constData(), 0755) != 0) {
-				qDebug() << "WW" PREFIX << "Failed to create directory" << g_viking_dir;
-			}
+	QString dir_path = SlavGPSLocations::get_config_dir_no_create();
+	if (dir_path.isEmpty()) {
+		qDebug() << "EE" PREFIX << "Returning empty directory path";
+		return dir_path;
+	}
+
+	if (0 != access(dir_path.toUtf8().constData(), F_OK)) {
+		qDebug() << "II" PREFIX << "Directory" << dir_path << "does not exist, will create one.";
+		if (0 != mkdir(dir_path.toUtf8().constData(), 0755)) {
+			qDebug() << "WW" PREFIX << "Failed to create directory" << dir_path;
 		}
 	}
-	return QDir::toNativeSeparators(g_viking_dir);
+	return dir_path;
 }
 
 
 
 
-QString SlavGPS::get_viking_data_home()
+QString SlavGPSLocations::get_data_home(void)
 {
 	const QString xdg_data_home = QString::fromLocal8Bit(qgetenv("XDG_DATA_HOME"));
 	if (xdg_data_home.isEmpty()) {
-		return QString("");
+		return xdg_data_home;
 	} else {
 		return QDir::toNativeSeparators(xdg_data_home) + QDir::separator() + PACKAGE;
 	}
@@ -118,38 +176,40 @@ QString SlavGPS::get_viking_data_home()
 
 
 
+QString SlavGPSLocations::get_file_full_path(const QString & file_name)
+{
+	return SlavGPSLocations::get_config_dir() + QDir::separator() + file_name;
+}
+
+
+
+
 /**
- * get_viking_data_path:
- *
- * Retrieves the configuration path.
- *
- * Returns: list of directories to scan for data. Should be freed with g_strfreev.
- */
-char ** SlavGPS::get_viking_data_path()
+   Get list of directories to scan for application data.
+*/
+QStringList SlavGPSLocations::get_data_dirs(void)
 {
 #ifdef WINDOWS
 	/* Try to use from the install directory - normally the working directory of Viking is where ever it's install location is. */
-	char const * xdg_data_dirs = "./data";
-	//const char *xdg_data_dirs = g_strdup( "%s/%s/data", qgetenv("ProgramFiles"), PACKAGE);
+	QString xdg_data_dirs = "./data";
+	//QString xdg_data_dirs = QString("%1/%2/data").arg(QString::fromLocal8Bit(qgetenv("ProgramFiles"))).arg(PACKAGE);
 #else
-	QString xdg_data_dirs = qgetenv("XDG_DATA_DIRS");
+	QString xdg_data_dirs = QString::fromLocal8Bit(qgetenv("XDG_DATA_DIRS"));
 #endif
 	if (xdg_data_dirs.isEmpty()) {
-		/* Default value specified in
-		   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
-		*/
+		/* Use default value specified in
+		   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html */
 		xdg_data_dirs = "/usr/local/share/:/usr/share/";
 	}
 
-	char ** data_path = g_strsplit(xdg_data_dirs.toUtf8().constData(), G_SEARCHPATH_SEPARATOR_S, 0);
+	QStringList data_dirs = xdg_data_dirs.split(":", QString::SkipEmptyParts);
 
 #ifndef WINDOWS
 	/* Append the viking dir. */
-	for (char ** path = data_path ; *path != NULL ; path++) {
-		char * dir = *path;
-		*path = g_build_filename(dir, PACKAGE, NULL);
-		free(dir);
+	for (int i = 0; i < data_dirs.size(); i++) {
+		const QString tmp = data_dirs[i] + QDir::separator() + PACKAGE;
+		data_dirs[i] = tmp;
 	}
 #endif
-	return data_path;
+	return data_dirs;
 }

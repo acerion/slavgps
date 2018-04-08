@@ -254,7 +254,7 @@ static param_id_t preferences_group_key_to_group_id(const QString & key)
 
 static bool preferences_load_from_file()
 {
-	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
+	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_PREFERENCES_FILE);
 	QFile file(full_path);
 	if (!file.exists()) {
 		qDebug() << "EE" PREFIX << "failed to create file" << full_path << file.error();
@@ -350,7 +350,7 @@ bool Preferences::set_param_value(const QString & param_name, const SGVariant & 
  */
 bool Preferences::save_to_file(void)
 {
-	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_PREFERENCES_FILE;
+	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_PREFERENCES_FILE);
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */

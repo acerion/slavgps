@@ -200,22 +200,22 @@ static void modules_load_config_dir(const QString & dir)
 static void modules_load_config(void)
 {
 	/* Look in the directories of data path. */
-	char ** data_dirs = get_viking_data_path();
+	const QString data_dirs = SlavGPSLocations::get_data_dirs();
+
 	/* Priority is standard one:
 	   left element is more important than right one.
 	   But our logic is to load all existing files and overwrite
 	   overlapping config with last recent one.
 	   So, we have to process directories in reverse order. */
-	int nb_data_dirs = g_strv_length(data_dirs);
-	for (; nb_data_dirs > 0 ; nb_data_dirs--) {
-		modules_load_config_dir(QString(data_dirs[nb_data_dirs-1]));
+	const int n_data_dirs = data_dirs.size();
+	for (int i = n_data_dirs - 1; i >= 0; i--) {
+		modules_load_config_dir(data_dirs.at(i));
 	}
-	g_strfreev(data_dirs);
 
 	/* Check if system config is set. */
 	modules_load_config_dir(VIKING_SYSCONFDIR);
 
-	QString data_home = get_viking_data_home();
+	QString data_home = SlavGPSLocations::get_data_home();
 	if (!data_home.isEmpty()) {
 		modules_load_config_dir(data_home);
 	}

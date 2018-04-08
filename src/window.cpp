@@ -308,7 +308,7 @@ Window::Window()
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "Pan"));
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "ModeMercator"));
 
-	const QString accel_file_full_path = get_viking_dir() + QDir::separator() + VIKING_ACCELERATOR_KEY_FILE;
+	const QString accel_file_full_path = SlavGPSLocations::get_file_full_path(VIKING_ACCELERATOR_KEY_FILE);
 	gtk_accel_map_load(accel_file_full_path.toUtf8().constData());
 #endif
 
@@ -1604,7 +1604,7 @@ void Window::closeEvent(QCloseEvent * ev)
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int) this->viewport_save_format);
 
 #ifdef K_TODO
-		const QString accel_file_full_path = get_viking_dir() + QDir::separator + VIKING_ACCELERATOR_KEY_FILE;
+		const QString accel_file_full_path = SlavGPSLocations::get_file_full_path(VIKING_ACCELERATOR_KEY_FILE);
 		gtk_accel_map_save(accel_file_full_path.toUtf8().constData());
 #endif
 	}

@@ -363,10 +363,10 @@ void LayerDefaults::set(LayerType layer_type, ParameterSpecification * layer_par
 void LayerDefaults::init(void)
 {
 	/* kamilFIXME: improve this section. Make sure that the file exists. */
-	const QString path = get_viking_dir() + QDir::separator() + VIKING_LAYER_DEFAULTS_INI_FILE;
-	keyfile = new QSettings(path, QSettings::IniFormat);
+	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_LAYER_DEFAULTS_INI_FILE);
+	keyfile = new QSettings(full_path, QSettings::IniFormat);
 
-	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << path;
+	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << full_path;
 
 	loaded = false;
 }

@@ -64,7 +64,7 @@ const QString VIKING_SETTINGS_GROUP("viking/");
 
 void ApplicationState::init()
 {
-	const QString full_path = get_viking_dir() + QDir::separator() + VIKING_INI_FILE;
+	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_INI_FILE);
 	settings_file = new QSettings(full_path, QSettings::IniFormat);
 }
 
