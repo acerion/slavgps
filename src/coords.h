@@ -38,6 +38,11 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
+#include <cmath>
+
+
+
+
 #include <QString>
 
 
@@ -62,14 +67,13 @@ namespace SlavGPS {
 
 	class LatLon {
 	public:
-		LatLon(double new_lat = 0, double new_lon = 0) : lat(new_lat), lon(new_lon) {};
+		LatLon(double new_lat = NAN, double new_lon = NAN) : lat(new_lat), lon(new_lon) {};
 
-		/* TODO: initialize these values with 0.0 or with NaN? */
-		double lat = 0.0;
-		double lon = 0.0;
+		double lat = NAN;
+		double lon = NAN;
 
-		bool is_valid(void) const { return this->lat != 0.0 && this->lon != 0.0; };
-		void invalidate(void) { this->lat = 0.0; this->lon = 0.0; };
+		bool is_valid(void) const { return !std::isnan(this->lat) && !std::isnan(this->lon); };
+		void invalidate(void) { this->lat = NAN; this->lon = NAN; };
 
 		/* Convert value to string with DegreeFormat::RAW format. */
 		static QString lat_to_string_raw(const LatLon & lat_lon);

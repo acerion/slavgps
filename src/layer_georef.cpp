@@ -795,8 +795,8 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 
 void GeorefConfigDialog::check_br_is_good_or_msg_user(void)
 {
-	/* If a 'blank' ll value that's alright. */
-	if (this->layer->ll_br.lat == 0.0 && this->layer->ll_br.lon == 0.0) {
+	/* If a 'blank' lat/lon value that's alright. */
+	if (!this->layer->ll_br.is_valid()) {
 		return;
 	}
 
@@ -1272,9 +1272,6 @@ LayerGeoref::LayerGeoref()
 	   way won't do anything yet... */
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
-
-	this->ll_br.lat = 0.0;
-	this->ll_br.lon = 0.0;
 }
 
 

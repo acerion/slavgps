@@ -88,9 +88,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString center_lon;
 	lat_lon.to_strings_raw(center_lat, center_lon);
 
-	LatLon llpt;
-	llpt.lat = 0.0;
-	llpt.lon = 0.0;
+	LatLon llpt(0.0, 0.0);
 	if (a_coord) {
 		lat_lon = a_coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
 	}

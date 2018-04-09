@@ -188,49 +188,51 @@ static double Rational2Double(unsigned char *data, int offset, ExifByteOrder ord
 
 
 
-static LatLon get_latlon(ExifData *ed)
+/* Returns invalid value on errors. */
+static LatLon get_latlon(ExifData * ed)
 {
-	LatLon ll;
-	const LatLon ll0(0.0, 0.0); /* Passing explicitly 0.0/0.0 to stress meaning of the variable. */
-
+	LatLon lat_lon;
 	char str[128];
 	ExifEntry *ee;
 
 	/* Lat & Long is necessary to form a waypoint. */
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LATITUDE);
-	if (!(ee && ee->components == 3 && ee->format == EXIF_FORMAT_RATIONAL))
-		return ll0;
+	if (!(ee && ee->components == 3 && ee->format == EXIF_FORMAT_RATIONAL)) {
+		lat_lon.invalidate();
+		return lat_lon;
+	}
 
-	ll.lat = Rational2Double(ee->data,
-				 exif_format_get_size(ee->format),
-				 exif_data_get_byte_order(ed));
+	lat_lon.lat = Rational2Double(ee->data,
+				      exif_format_get_size(ee->format),
+				      exif_data_get_byte_order(ed));
 
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LATITUDE_REF);
 	if (ee) {
 		exif_entry_get_value(ee, str, 128);
 		if (str[0] == 'S') {
-			ll.lat = -ll.lat;
+			lat_lon.lat = -lat_lon.lat;
 		}
 	}
 
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LONGITUDE);
 	if (!(ee && ee->components == 3 && ee->format == EXIF_FORMAT_RATIONAL)) {
-		return ll0;
+		lat_lon.invalidate();
+		return lat_lon;
 	}
 
-	ll.lon = Rational2Double(ee->data,
-				 exif_format_get_size(ee->format),
-				 exif_data_get_byte_order(ed));
+	lat_lon.lon = Rational2Double(ee->data,
+				      exif_format_get_size(ee->format),
+				      exif_data_get_byte_order(ed));
 
 	ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LONGITUDE_REF);
 	if (ee) {
 		exif_entry_get_value(ee, str, 128);
 		if (str[0] == 'W') {
-			ll.lon = -ll.lon;
+			lat_lon.lon = -lat_lon.lon;
 		}
 	}
 
-	return ll;
+	return lat_lon;
 }
 #endif
 #endif
@@ -241,7 +243,7 @@ static LatLon get_latlon(ExifData *ed)
  * @filename: The (JPG) file with EXIF information in it
  *
  * Returns: The position in LatLon format.
- * It will be 0,0 if some kind of failure occurs.
+ On errors the returned value will be invalid (LatLon::is_valid() will return false).
  */
 LatLon SlavGPS::a_geotag_get_position(const char *filename)
 {
@@ -267,16 +269,18 @@ LatLon SlavGPS::a_geotag_get_position(const char *filename)
 
 	/* Detect EXIF load failure. */
 	if (!ed) {
+		lat_lon.invalidate();
 		return lat_lon;
 	}
 
 	ExifEntry *ee = exif_content_get_entry(ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_VERSION_ID);
 	/* Confirm this has a GPS Id - normally "2.0.0.0" or "2.2.0.0". */
 	if (!(ee && ee->components == 4)) {
+		lat_lon.invalidate();
 		goto MyReturn0;
 	}
 
-	lat_lon = get_latlon(ed);
+	lat_lon = get_latlon(ed); /* This function may return invalid lat_lon on error. */
 
 MyReturn0:
 	/* Finished with EXIF. */
@@ -360,9 +364,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 	//}
 
 	const LatLon lat_lon = get_latlon(ed);
-
-	/* Hopefully won't have valid images at 0,0! */
-	if (lat_lon.lat == 0.0 && lat_lon.lon == 0.0) {
+	if (!lat_lon.is_valid()) {
 		goto MyReturn;
 	}
 
