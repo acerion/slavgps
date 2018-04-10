@@ -227,15 +227,15 @@ QString SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const QStr
 
 
 /**
- * Returns a QPixmap of the specified area. QPixmap may be NULL.
- */
+   Returns a pixmap of the specified area.
+*/
 QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
-	if (!mi) {
-		return NULL;
-	}
+	QPixmap * pixmap = NULL; /* Initially the pixmap returns true for ::isNull(). */
 
-	QPixmap * pixmap = NULL;
+	if (!mi) {
+		return pixmap;
+	}
 
 #ifdef K_TODO
 	/* Note prj & bbox want stuff in lon,lat order! */

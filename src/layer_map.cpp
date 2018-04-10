@@ -961,17 +961,13 @@ static QPixmap * get_pixmap_from_file(LayerMap * layer, const QString & tile_fil
 
 
 
-static QPixmap * pixmap_shrink(QPixmap *pixmap, double xshrinkfactor, double yshrinkfactor)
+static void pixmap_shrink(QPixmap & pixmap, double xshrinkfactor, double yshrinkfactor)
 {
-	int width = pixmap->width();
-	int height = pixmap->height();
+	const int width = pixmap.width();
+	const int height = pixmap.height();
 
-	QPixmap * tmp = NULL;
-#ifdef K_TODO
-	tmp = pixmap->scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-	g_object_unref(G_OBJECT(pixmap));
-#endif
-	return tmp;
+	const QPixmap scaled = pixmap.scaled(ceil(width * xshrinkfactor), ceil(height * yshrinkfactor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	pixmap = QPixmap(scaled);
 }
 
 
@@ -1134,22 +1130,18 @@ static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int 
 
 
 
-/**
- * Caller has to decrease reference counter of returned.
- * QPixmap, when buffer is no longer needed.
- */
-static QPixmap * pixmap_apply_settings(QPixmap * pixmap, uint8_t alpha, double xshrinkfactor, double yshrinkfactor)
+static void pixmap_apply_settings(QPixmap & pixmap, uint8_t alpha, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Apply alpha setting. */
-	if (pixmap && alpha < 255) {
-		pixmap = ui_pixmap_set_alpha(pixmap, alpha);
+	if (alpha < 255) {
+		ui_pixmap_set_alpha(pixmap, alpha);
 	}
 
-	if (pixmap && (xshrinkfactor != 1.0 || yshrinkfactor != 1.0)) {
-		pixmap = pixmap_shrink(pixmap, xshrinkfactor, yshrinkfactor);
+	if (xshrinkfactor != 1.0 || yshrinkfactor != 1.0) {
+		pixmap_shrink(pixmap, xshrinkfactor, yshrinkfactor);
 	}
 
-	return pixmap;
+	return;
 }
 
 
@@ -1222,7 +1214,7 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const QString 
 		}
 
 		if (pixmap) {
-			pixmap = pixmap_apply_settings(pixmap, layer->alpha, xshrinkfactor, yshrinkfactor);
+			pixmap_apply_settings(*pixmap, layer->alpha, xshrinkfactor, yshrinkfactor);
 
 			map_cache_extra_t arg;
 			arg.duration = 0.0;

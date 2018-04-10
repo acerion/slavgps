@@ -719,7 +719,7 @@ void LayerGPS::add_children_to_tree(void)
 
 
 
-std::list<Layer const * > * LayerGPS::get_children()
+std::list<Layer const * > * LayerGPS::get_children(void) const
 {
 	std::list<Layer const * > * children_ = new std::list<Layer const *>;
 	for (int i = GPS_CHILD_LAYER_MAX - 1; i >= 0; i--) {
@@ -745,7 +745,7 @@ LayerTRW * LayerGPS::get_a_child()
 
 
 
-bool LayerGPS::is_empty()
+bool LayerGPS::is_empty(void) const
 {
 	if (this->trw_children[0]) {
 		return false;

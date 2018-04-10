@@ -578,7 +578,7 @@ static QString get_filename(const QString dir, unsigned int x, unsigned int y, u
 
 
 
-void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ti_ul)
+void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, TileInfo * ti_ul)
 {
 	if (!this->use_file_cache) {
 		return;
@@ -598,7 +598,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap * pixmap, TileInfo * ti_ul)
 	}
 	free(dir);
 
-	if (!pixmap->save(filename, "png")) {
+	if (!pixmap.save(filename, "png")) {
 		qDebug() << "WW: Layer Mapnik: failed to save pixmap to" << filename;
 	}
 }
@@ -646,28 +646,25 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInfo * ti_ul)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap *pixmap = mapnik_interface_render(this->mi, coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
+	QPixmap * pixmap = mapnik_interface_render(this->mi, coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
-	if (!pixmap) {
+	if (pixmap->isNull()) {
 #ifdef K_TODO
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
 		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
 	}
-	this->possibly_save_pixmap(pixmap, ti_ul);
+	this->possibly_save_pixmap(*pixmap, ti_ul);
 
 	/* NB Mapnik can apply alpha, but use our own function for now. */
 	if (this->alpha < 255) {
-		pixmap = ui_pixmap_scale_alpha(pixmap, this->alpha);
+		ui_pixmap_scale_alpha(*pixmap, this->alpha);
 	}
 	map_cache_extra_t arg;
 	arg.duration = tt;
 	map_cache_add(pixmap, arg, ti_ul, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
-#ifdef K_TODO
-	g_object_unref(pixmap);
-#endif
 }
 
 
@@ -752,7 +749,7 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << filename;
 		} else {
 			if (this->alpha < 255) {
-				pixmap = ui_pixmap_set_alpha(pixmap, this->alpha);
+				ui_pixmap_set_alpha(*pixmap, this->alpha);
 			}
 			map_cache_extra_t arg;
 			arg.duration = -42.0;

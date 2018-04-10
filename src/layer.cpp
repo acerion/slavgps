@@ -62,9 +62,6 @@ using namespace SlavGPS;
 
 
 
-/* Functions common to all layers. */
-/* TODO longone: rename interface free -> finalize. */
-
 extern LayerAggregateInterface vik_aggregate_layer_interface;
 extern LayerTRWInterface vik_trw_layer_interface;
 extern LayerCoordInterface vik_coord_layer_interface;

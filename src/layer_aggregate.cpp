@@ -893,7 +893,7 @@ void LayerAggregate::add_children_to_tree(void)
 
 
 
-std::list<Layer const *> * LayerAggregate::get_children()
+std::list<Layer const *> * LayerAggregate::get_children(void) const
 {
 	std::list<Layer const *> * result = new std::list<Layer const *>;
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
@@ -906,7 +906,7 @@ std::list<Layer const *> * LayerAggregate::get_children()
 
 
 
-bool LayerAggregate::is_empty()
+bool LayerAggregate::is_empty(void) const
 {
 	return this->children->empty();
 }

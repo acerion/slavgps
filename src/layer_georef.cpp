@@ -456,7 +456,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		this->image_height = this->image.height();
 
 		if (!this->image.isNull() && this->alpha < 255) {
-			this->image = ui_pixmap_set_alpha(this->image, this->alpha);
+			ui_pixmap_set_alpha(this->image, this->alpha);
 		}
 	}
 
@@ -1027,11 +1027,11 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	}
 
 	if (!this->image.isNull() && this->alpha < 255) {
-		this->image = ui_pixmap_set_alpha(this->image, this->alpha);
+		ui_pixmap_set_alpha(this->image, this->alpha);
 	}
 
 	if (!this->scaled_image.isNull() && this->alpha < 255) {
-		this->scaled_image = ui_pixmap_set_alpha(this->scaled_image, this->alpha);
+		ui_pixmap_set_alpha(this->scaled_image, this->alpha);
 	}
 
 	const int current_coord_mode = dialog.coord_mode_combo->currentData().toInt();

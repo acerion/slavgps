@@ -187,14 +187,9 @@ void AcquireGetter::run(void)
 		this->on_complete_process();
 	}
 
-#ifdef K_TODO
-	/* Not implemented in base class. See DataSourceWebTool::cleanup() */
-	data_source->cleanup_func(this->acquiring->parent_data_source_dialog);
-#endif
+	data_source->cleanup(this->acquiring->parent_data_source_dialog);
 
-	if (this->acquiring->running) {
-		this->acquiring->running = false;
-	}
+	this->acquiring->running = false;
 }
 
 
@@ -348,12 +343,7 @@ void AcquireProcess::import_progress_cb(BabelProgressCode code, void * data)
 
 	if (this->data_source->is_thread) {
 		if (!this->running) {
-#ifdef K_TODO
-			/* See DataSourceWebTool::cleanup(). */
-			if (this->data_source->cleanup_func) {
-				this->data_source->cleanup_func(this->parent_data_source_dialog);
-			}
-#endif
+			this->data_source->cleanup(this->parent_data_source_dialog);
 		}
 	}
 

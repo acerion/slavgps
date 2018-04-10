@@ -147,55 +147,14 @@ QLabel * SlavGPS::ui_label_new_selectable(QString const & text, QWidget * parent
 
 
 
-/**
- * Apply the alpha value to the specified pixbuf.
- */
-QPixmap * SlavGPS::ui_pixmap_set_alpha(QPixmap * pixmap, uint8_t alpha)
+void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
 {
-#ifdef K_TODO
-	unsigned char *pixels;
-	int iii, jjj;
-
-	if (!pixmap->hasAlphaChannel()) {
-		QPixmap * tmp = gdk_pixbuf_add_alpha(pixmap, false,0,0,0);
-		g_object_unref(G_OBJECT(pixmap));
-		pixmap = tmp;
-	 	if (!pixmap) {
-			return NULL;
-		}
-	}
-
-	pixels = gdk_pixbuf_get_pixels(pixmap);
-	int width = pixmap->width();
-	int height = pixmap->height();
-
-	/* r,g,b,a,r,g,b,a.... */
-	for (iii = 0; iii < width; iii++) {
-		for (jjj = 0; jjj < height; jjj++) {
-			pixels += 3;
-			if (*pixels != 0) {
-				*pixels = alpha;
-			}
-			pixels++;
-		}
-	}
-#endif
-	return pixmap;
-}
-
-
-
-
-QPixmap SlavGPS::ui_pixmap_set_alpha(const QPixmap & input, int alpha)
-{
-	QImage image(input.size(), QImage::Format_ARGB32_Premultiplied);
+	QImage image(pixmap.size(), QImage::Format_ARGB32_Premultiplied);
 	QPainter painter(&image);
 	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 	painter.setOpacity(alpha / 255.0);
-	painter.drawPixmap(0, 0, input);
-	QPixmap output = QPixmap::fromImage(image);
-
-	return output;
+	painter.drawPixmap(0, 0, pixmap);
+	pixmap = QPixmap::fromImage(image);
 }
 
 
@@ -204,7 +163,7 @@ QPixmap SlavGPS::ui_pixmap_set_alpha(const QPixmap & input, int alpha)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
+void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
 {
 #ifdef K_TODO
 	unsigned char *pixels;
@@ -234,7 +193,7 @@ QPixmap * SlavGPS::ui_pixmap_scale_alpha(QPixmap * pixmap, uint8_t alpha)
 		}
 	}
 #endif
-	return pixmap;
+	return;
 }
 
 

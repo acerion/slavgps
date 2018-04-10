@@ -267,7 +267,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	aggregates->under = NULL;
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
-		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTODO: remove cast. */
+		const Layer * current = ((std::list<Layer const *> *) aggregates->data)->front();
 		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
 		write_layer_params_and_data(file, current);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {

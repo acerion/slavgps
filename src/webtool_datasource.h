@@ -47,7 +47,7 @@ namespace SlavGPS {
 		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title);
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 
-		void cleanup(void * data); /* TODO: this method is unused at the moment. */
+		void cleanup(void * data);
 
 		bool search = false;
 	};

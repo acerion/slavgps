@@ -105,6 +105,7 @@ namespace SlavGPS {
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something) { return false; };
 		virtual void progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring) { return; };
+		virtual void cleanup(void * data) { return; };
 
 		QString window_title;
 		QString layer_title;
@@ -130,6 +131,7 @@ namespace SlavGPS {
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);
+		virtual void cleanup(void * data) { return; };
 	};
 
 
