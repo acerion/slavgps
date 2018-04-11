@@ -205,6 +205,6 @@ DownloadResult MapSourceSlippy::download(TileInfo * src, const QString & dest_fi
 {
 	dl_handle->set_options(this->dl_options);
 	DownloadResult result = dl_handle->get_url_http(get_server_hostname(), get_server_path(src), dest_file_path);
-	qDebug() << "II: Map Source Slippy: download" << get_server_hostname() << get_server_path(src) << "->" << (int) result;
+	qDebug() << "II: Map Source Slippy: download" << get_server_hostname() << get_server_path(src) << "->" << result;
 	return result;
 }

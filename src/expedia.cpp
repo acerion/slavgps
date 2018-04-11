@@ -225,7 +225,7 @@ static DownloadResult expedia_download(TileInfo * src, const QString & dest_file
 
 	dl_handle->set_options(expedia_options);
 	DownloadResult res = dl_handle->get_url_http(EXPEDIA_SITE, uri, dest_file_path);
-	if (res == DownloadResult::SUCCESS) {
+	if (res == DownloadResult::Success) {
 		expedia_snip(dest_file_path);
 	}
 	return res;

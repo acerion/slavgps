@@ -47,12 +47,14 @@ namespace SlavGPS {
 
 
 	enum class DownloadResult {
-		FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
-		HTTP_ERROR       = -2,
-		CONTENT_ERROR    = -1,
-		SUCCESS          =  0,
-		NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
+		FileWriteError      = -4, /* Can't write downloaded file. */
+		HTTPError           = -2,
+		ContentError        = -1,
+		Success             =  0,
+		DownloadNotRequired =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
 	};
+
+	QDebug operator<<(QDebug debug, const DownloadResult result);
 
 
 

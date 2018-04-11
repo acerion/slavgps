@@ -52,6 +52,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Background:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /* TODO: remove this second definition. */
 #ifndef PREFERENCES_NAMESPACE_MAPNIK
 #define PREFERENCES_NAMESPACE_MAPNIK "mapnik."
@@ -158,13 +163,16 @@ static void thread_die(BackgroundJob * bg_job)
 int SlavGPS::a_background_testcancel(BackgroundJob * bg_job)
 {
 	if (stop_all_threads) {
+		qDebug() << "WW" PREFIX << "stop all threads";
 		return -1;
 	}
-
+#ifdef K_TODO
 	if (bg_job && bg_job->remove_from_list) {
 		bg_job->cleanup_on_cancel();
+		qDebug() << "WW" PREFIX << "remove from list";
 		return -1;
 	}
+#endif
 	return 0;
 }
 

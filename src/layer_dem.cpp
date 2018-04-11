@@ -1072,17 +1072,15 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 
 	const DownloadResult result = dl_handle.get_url_http(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path);
 	switch (result) {
-	case DownloadResult::CONTENT_ERROR:
-	case DownloadResult::HTTP_ERROR: {
+	case DownloadResult::ContentError:
+	case DownloadResult::HTTPError:
 		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
 		break;
-	}
-	case DownloadResult::FILE_WRITE_ERROR: {
+	case DownloadResult::FileWriteError:
 		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
-	}
-	case DownloadResult::SUCCESS:
-	case DownloadResult::NOT_REQUIRED:
+	case DownloadResult::Success:
+	case DownloadResult::DownloadNotRequired:
 	default:
 		qDebug() << "II: Layer DEM: layer download progress = 100";
 		dl_job->progress = 100;

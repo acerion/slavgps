@@ -451,7 +451,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	if (0 == access(dest_file_path.toUtf8().constData(), F_OK)) {
 		if ((!this->dl_options.check_file_server_time && !this->dl_options.use_etag)) {
 			/* Nothing to do as file already exists and we don't want to check server. */
-			return DownloadResult::NOT_REQUIRED;
+			return DownloadResult::DownloadNotRequired;
 		}
 
 		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".download_tile_age").u;
@@ -461,7 +461,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
-			return DownloadResult::NOT_REQUIRED;
+			return DownloadResult::DownloadNotRequired;
 		}
 
 		if (this->dl_options.check_file_server_time) {
@@ -482,31 +482,31 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	const QString tmp_file_path = dest_file_path + ".tmp";
 	if (!lock_file(tmp_file_path)) {
 		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmp_file_path;
-		return DownloadResult::FILE_WRITE_ERROR;
+		return DownloadResult::FileWriteError;
 	}
 
 	FILE * f = fopen(tmp_file_path.toUtf8().constData(), "w+b");  /* Truncate file and open it. */
 	int e = errno;
 	if (!f) {
 		qDebug() << "WW: Download: Couldn't open temporary file" << tmp_file_path << ":" << strerror(e);
-		return DownloadResult::FILE_WRITE_ERROR;
+		return DownloadResult::FileWriteError;
 	}
 
 	/* Call the backend function */
 	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, f, &this->dl_options, ftp, &curl_options);
 
-	DownloadResult result = DownloadResult::SUCCESS;
+	DownloadResult result = DownloadResult::Success;
 
 	if (ret != CurlDownloadStatus::NoError && ret != CurlDownloadStatus::NoNewerFile) {
 		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
-		result = DownloadResult::HTTP_ERROR;
+		result = DownloadResult::HTTPError;
 	}
 
 	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(f)) {
 		qDebug() << "DD: Download: file content checking failed";
 		failure = true;
-		result = DownloadResult::CONTENT_ERROR;
+		result = DownloadResult::ContentError;
 	}
 
 	fclose(f);
@@ -547,7 +547,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	}
 	unlock_file(tmp_file_path);
 
-	return DownloadResult::SUCCESS;
+	return DownloadResult::Success;
 }
 
 
@@ -671,4 +671,34 @@ DownloadOptions::DownloadOptions(const DownloadOptions & dl_options)
 	this->check_file             = dl_options.check_file;
 	this->user_pass              = dl_options.user_pass;
 	this->convert_file           = dl_options.convert_file;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const DownloadResult result)
+{
+	switch (result) {
+	case DownloadResult::FileWriteError:
+		debug << "FileWriteError";
+		break;
+	case DownloadResult::HTTPError:
+		debug << "HTTPError";
+		break;
+	case DownloadResult::ContentError:
+		debug << "ContentError";
+		break;
+	case DownloadResult::Success:
+		debug << "Success";
+		break;
+	case DownloadResult::DownloadNotRequired:
+		debug << "DownloadNotRequired";
+		break;
+	default:
+		debug << "Unknown";
+		qDebug() << "EE" PREFIX << "Unexpected download result" << (int) result;
+		break;
+	};
+
+	return debug;
 }

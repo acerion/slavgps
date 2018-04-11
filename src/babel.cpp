@@ -425,7 +425,7 @@ bool a_babel_convert_import_from_url_filter(LayerTRW * trw, const QString & url,
 
 	DownloadHandle dl_handle(&babel_dl_options);
 
-	if (DownloadResult::SUCCESS == dl_handle.get_url_http(url, "", name_src)) {
+	if (DownloadResult::Success == dl_handle.get_url_http(url, "", name_src)) {
 		if (!input_file_type.isEmpty() || !babel_filters.isEmpty()) {
 			const QString babel_args = (!input_file_type.isEmpty()) ? QString(" -i %1").arg(input_file_type) : "";
 			ret = a_babel_convert_import_from_filter(trw, babel_args, name_src, babel_filters, NULL);
