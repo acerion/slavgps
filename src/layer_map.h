@@ -147,6 +147,9 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 
+		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & tile_file_full_path);
+		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & path_buf);
+
 	public slots:
 		void download_all_cb(void);
 		void redownload_new_cb(void);

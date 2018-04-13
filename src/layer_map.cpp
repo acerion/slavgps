@@ -144,11 +144,10 @@ static double __mapzooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
 
 
-/**************************/
-
 
 
 static int map_type_to_map_index(MapTypeID map_type);
+static void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, int tilesize_x, int tilesize_y);
 
 
 
@@ -954,7 +953,7 @@ Layer * LayerMapInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 /****** DRAWING ******/
 /*********************/
 
-static QPixmap * get_pixmap_from_file(LayerMap * layer, const QString & tile_file_full_path);
+static QPixmap * create_pixmap_from_file(LayerMap * layer, const QString & tile_file_full_path);
 
 
 
@@ -986,13 +985,13 @@ static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **c
 
 
 
-static QPixmap *get_pixmap_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
+static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 {
-	QPixmap *pixmap = NULL;
+	QPixmap * pixmap = NULL;
 
 	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
 	int flip_y = (int) pow(2, zoom)-1 - yy;
-	char *statement = g_strdup_printf("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d;", zoom, xx, flip_y);
+	char * statement = g_strdup_printf("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d;", zoom, xx, flip_y);
 
 	bool finished = false;
 
@@ -1053,7 +1052,7 @@ static QPixmap *get_pixmap_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 
 
 
-static QPixmap *get_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
+static QPixmap * create_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
 {
 	QPixmap *pixmap = NULL;
 
@@ -1073,7 +1072,7 @@ static QPixmap *get_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		pixmap = get_pixmap_sql_exec(layer->mbtiles, xx, yy, zoom);
+		pixmap = create_pixmap_sql_exec(layer->mbtiles, xx, yy, zoom);
 	}
 #endif
 
@@ -1083,7 +1082,7 @@ static QPixmap *get_mbtiles_pixmap(LayerMap * layer, int xx, int yy, int zoom)
 
 
 
-static QPixmap * get_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int zz)
+static QPixmap * create_pixmap_from_metatile(LayerMap * layer, int xx, int yy, int zz)
 {
 	const int tile_max = METATILE_MAX_SIZE;
 	char err_msg[PATH_MAX] = { 0 };
@@ -1215,10 +1214,10 @@ static QString get_cache_filename(MapsCacheLayout layout,
 
 
 /**
- * Caller has to decrease reference counter of returned.
- * QPixmap, when buffer is no longer needed.
- */
-static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor)
+   Function returns only a reference (pointer) to pixmap existing in
+   pixmap cache.  Don't delete the pointer.
+*/
+static QPixmap * get_pixmap_ref(LayerMap * layer, MapTypeID map_type, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
 	QPixmap * pixmap = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
@@ -1230,22 +1229,22 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const QString 
 		if (map->is_direct_file_access()) {
 			/* ATM MBTiles must be 'a direct access type'. */
 			if (map->is_mbtiles()) {
-				pixmap = get_mbtiles_pixmap(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+				pixmap = create_mbtiles_pixmap(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else if (map->is_osm_meta_tiles()) {
-				pixmap = get_pixmap_from_metatile(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+				pixmap = create_pixmap_from_metatile(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else {
 				tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
 									 layer->cache_dir, map_type, "",
 									 mapcoord,
 									 map->get_file_extension());
-				pixmap = get_pixmap_from_file(layer, tile_file_full_path);
+				pixmap = create_pixmap_from_file(layer, tile_file_full_path);
 			}
 		} else {
 			tile_file_full_path = get_cache_filename(layer->cache_layout,
 								 layer->cache_dir, map_type, map_name,
 								 mapcoord,
 								 map->get_file_extension());
-			pixmap = get_pixmap_from_file(layer, tile_file_full_path);
+			pixmap = create_pixmap_from_file(layer, tile_file_full_path);
 		}
 
 		if (pixmap) {
@@ -1263,7 +1262,7 @@ static QPixmap * get_pixmap(LayerMap * layer, MapTypeID map_type, const QString 
 
 
 
-static QPixmap * get_pixmap_from_file(LayerMap * layer, const QString & tile_file_full_path)
+static QPixmap * create_pixmap_from_file(LayerMap * layer, const QString & tile_file_full_path)
 {
 	if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK | R_OK)) {
 		qDebug() << "EE" PREFIX << "can't access file" << tile_file_full_path;
@@ -1328,8 +1327,11 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 
 
 
-bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
-			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & tile_file_full_path)
+bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
+				   int viewport_x, int viewport_y,
+				   int tilesize_x_ceil, int tilesize_y_ceil,
+				   double xshrinkfactor, double yshrinkfactor,
+				   MapTypeID map_type, const QString & map_name, QString & tile_file_full_path)
 {
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
@@ -1338,15 +1340,13 @@ bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, in
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
-		QPixmap * pixmap = get_pixmap(layer, map_type, map_name, &ulm2, tile_file_full_path, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
-		qDebug() << "II" PREFIX << "Got pixmap?" << (quintptr) pixmap;
+		const QPixmap * pixmap = get_pixmap_ref(this, map_type, map_name, &ulm2, tile_file_full_path, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+		qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
 		if (pixmap) {
-			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
-			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-			viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-#ifdef K_TODO
-			g_object_unref(pixmap);
-#endif
+			const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
+			const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+			qDebug() << "II" PREFIX << "Calling draw_pixmap";
+			viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 			return true;
 		}
 	}
@@ -1356,8 +1356,11 @@ bool try_draw_scale_down(LayerMap * layer, Viewport * viewport, TileInfo ulm, in
 
 
 
-bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
-		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & path_buf)
+bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
+				 int viewport_x, int viewport_y,
+				 int tilesize_x_ceil, int tilesize_y_ceil,
+				 double xshrinkfactor, double yshrinkfactor,
+				 MapTypeID map_type, const QString & map_name, QString & path_buf)
 {
 	/* Try with bigger zooms. */
 	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
@@ -1371,17 +1374,15 @@ bool try_draw_scale_up(LayerMap * layer, Viewport * viewport, TileInfo ulm, int 
 				TileInfo ulm3 = ulm2;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
-				QPixmap * pixmap = get_pixmap(layer, map_type, map_name, &ulm3, path_buf, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
-				qDebug() << "II" PREFIX << "Got pixmap?" << (quintptr) pixmap;
+				const QPixmap * pixmap = get_pixmap_ref(this, map_type, map_name, &ulm3, path_buf, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
+				qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
 				if (pixmap) {
-					int src_x = 0;
-					int src_y = 0;
-					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
-					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
-					viewport->draw_pixmap(*pixmap, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
-#ifdef K_TODO
-					g_object_unref(pixmap);
-#endif
+					int pixmap_x = 0;
+					int pixmap_y = 0;
+					int dest_x = viewport_x + pict_x * (tilesize_x_ceil / scale_factor);
+					int dest_y = viewport_y + pict_y * (tilesize_y_ceil / scale_factor);
+					qDebug() << "II" PREFIX << "Calling draw_pixmap";
+					viewport->draw_pixmap(*pixmap, dest_x, dest_y, pixmap_x, pixmap_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					return true;
 				}
 			}
@@ -1426,167 +1427,182 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* coord -> ID */
 	TileInfo ulm, brm;
 	MapSource *map = (MapSource *) map_sources[this->map_index];
-	if (map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm) &&
-	     map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	if (!map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	    || !map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
-		/* Loop & draw. */
-		//int x, y;
-		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
-		int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
-		MapTypeID map_type = map->map_type;
-		const QString map_name = map->get_name();
+		return;
+	}
 
-		Coord coord;
-		int xx, yy;
-		QPixmap *pixmap;
 
-		/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
-		   which can happen when using a small fixed zoom level and viewing large areas.
-		   Also prevents very large number of tile download requests. */
-		int tiles = (xmax-xmin) * (ymax-ymin);
-		if (tiles > MAX_TILES) {
-			fprintf(stderr, "DEBUG: %s: existence_only due to wanting too many tiles (%d)", __FUNCTION__, tiles);
-			existence_only = true;
+	/* Loop & draw. */
+	int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
+	int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
+	MapTypeID map_type = map->map_type;
+	const QString map_name = map->get_name();
+
+	Coord coord;
+
+	/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
+	   which can happen when using a small fixed zoom level and viewing large areas.
+	   Also prevents very large number of tile download requests. */
+	int tiles = (xmax-xmin) * (ymax-ymin);
+	if (tiles > MAX_TILES) {
+		fprintf(stderr, "DEBUG: %s: existence_only due to wanting too many tiles (%d)", __FUNCTION__, tiles);
+		existence_only = true;
+	}
+
+	QString path_buf;
+
+	if ((!existence_only) && this->autodownload  && should_start_autodownload(this, viewport)) {
+		fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
+		if (!this->adl_only_missing && map->supports_download_only_new()) {
+			/* Try to download newer tiles. */
+			this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NEW);
+		} else {
+			/* Download only missing tiles. */
+			this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NONE);
 		}
+	}
 
-		QString path_buf;
+	if (map->get_tilesize_x() == 0 && !existence_only) {
+		for (int x = xmin; x <= xmax; x++) {
+			for (int y = ymin; y <= ymax; y++) {
+				ulm.x = x;
+				ulm.y = y;
+				const QPixmap * pixmap = get_pixmap_ref(this, map_type, map_name, &ulm, path_buf, xshrinkfactor, yshrinkfactor);
+				qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
+				if (pixmap) {
+					const int width = pixmap->width();
+					const int height = pixmap->height();
+					int viewport_x;
+					int viewport_y;
 
-		if ((!existence_only) && this->autodownload  && should_start_autodownload(this, viewport)) {
-			fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
-			if (!this->adl_only_missing && map->supports_download_only_new()) {
-				/* Try to download newer tiles. */
-				this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NEW);
-			} else {
-				/* Download only missing tiles. */
-				this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NONE);
-			}
-		}
+					map->tile_to_center_coord(&ulm, coord);
+					viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
+					viewport_x -= (width/2);
+					viewport_y -= (height/2);
 
-		if (map->get_tilesize_x() == 0 && !existence_only) {
-			for (int x = xmin; x <= xmax; x++) {
-				for (int y = ymin; y <= ymax; y++) {
-					ulm.x = x;
-					ulm.y = y;
-					pixmap = get_pixmap(this, map_type, map_name, &ulm, path_buf, xshrinkfactor, yshrinkfactor);
-					qDebug() << "II" PREFIX << "Got pixmap?" << (quintptr) pixmap;
-					if (pixmap) {
-						int width = pixmap->width();
-						int height = pixmap->height();
-
-						map->tile_to_center_coord(&ulm, coord);
-						viewport->coord_to_screen_pos(coord, &xx, &yy);
-						xx -= (width/2);
-						yy -= (height/2);
-
-						viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, width, height);
-#ifdef K_TODO
-						g_object_unref(pixmap);
-#endif
-					}
+					qDebug() << "II" PREFIX << "Calling draw_pixmap";
+					viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, 0, 0, width, height);
 				}
 			}
-		} else { /* tilesize is known, don't have to keep converting coords. */
-			double tilesize_x = map->get_tilesize_x() * xshrinkfactor;
-			double tilesize_y = map->get_tilesize_y() * yshrinkfactor;
-			/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
-			int tilesize_x_ceil = ceil (tilesize_x);
-			int tilesize_y_ceil = ceil(tilesize_y);
-			int8_t xinc = (ulm.x == xmin) ? 1 : -1;
-			int8_t yinc = (ulm.y == ymin) ? 1 : -1;
-			int xx_tmp, yy_tmp;
+		}
+	} else { /* tilesize is known, don't have to keep converting coords. */
+		const double tilesize_x = map->get_tilesize_x() * xshrinkfactor;
+		const double tilesize_y = map->get_tilesize_y() * yshrinkfactor;
+		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
+		const int tilesize_x_ceil = ceil(tilesize_x);
+		const int tilesize_y_ceil = ceil(tilesize_y);
 
-			int xend = (xinc == 1) ? (xmax+1) : (xmin-1);
-			int yend = (yinc == 1) ? (ymax+1) : (ymin-1);
+		const int delta_x = (ulm.x == xmin) ? 1 : -1;
+		const int delta_y = (ulm.y == ymin) ? 1 : -1;
+		const int x_begin = (delta_x == 1) ? xmin : xmax;
+		const int y_begin = (delta_y == 1) ? ymin : ymax;
+		const int x_end   = (delta_x == 1) ? (xmax + 1) : (xmin - 1);
+		const int y_end   = (delta_y == 1) ? (ymax + 1) : (ymin - 1);
 
-			map->tile_to_center_coord(&ulm, coord);
-			viewport->coord_to_screen_pos(coord, &xx_tmp, &yy_tmp);
-			xx = xx_tmp; yy = yy_tmp;
-			/* Above trick so xx,yy doubles. this is so shrinkfactors aren't rounded off
-			   e.g. if tile size 128, shrinkfactor 0.333. */
-			xx -= (tilesize_x/2);
-			int base_yy = yy - (tilesize_y/2);
+		int viewport_x;
+		int viewport_y;
+		map->tile_to_center_coord(&ulm, coord);
+		viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 
-			for (int x = ((xinc == 1) ? xmin : xmax); x != xend; x+=xinc) {
-				yy = base_yy;
-				for (int y = ((yinc == 1) ? ymin : ymax); y != yend; y+=yinc) {
-					ulm.x = x;
-					ulm.y = y;
+		const int viewport_x_grid = viewport_x;
+		const int viewport_y_grid = viewport_y;
 
-					if (existence_only) {
-						if (map_sources[this->map_index]->is_direct_file_access()) {
-							path_buf = get_cache_filename(MapsCacheLayout::OSM,
-										      this->cache_dir, map_type, map->get_name(),
-										      &ulm, map->get_file_extension());
-						} else {
-							path_buf = get_cache_filename(this->cache_layout,
-										      this->cache_dir, map_type, map->get_name(),
-										      &ulm, map->get_file_extension());
-						}
+		/* Above trick so viewport_x,viewport_y doubles. this is so shrinkfactors aren't rounded off
+		   e.g. if tile size 128, shrinkfactor 0.333. */
+		viewport_x -= (tilesize_x/2);
+		int base_viewport_y = viewport_y - (tilesize_y/2);
 
-						if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
-							const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
-							viewport->draw_line(pen, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
-						}
+		for (int x = x_begin; x != x_end; x += delta_x) {
+			viewport_y = base_viewport_y;
+			for (int y = y_begin; y != y_end; y += delta_y) {
+				ulm.x = x;
+				ulm.y = y;
+
+				if (existence_only) {
+					if (map_sources[this->map_index]->is_direct_file_access()) {
+						path_buf = get_cache_filename(MapsCacheLayout::OSM,
+									      this->cache_dir, map_type, map->get_name(),
+									      &ulm, map->get_file_extension());
 					} else {
-						/* Try correct scale first. */
-						int scale_factor = 1;
-						pixmap = get_pixmap(this, map_type, map_name, &ulm, path_buf, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
-						qDebug() << "II" PREFIX << "Got pixmap?" << (quintptr) pixmap;
-						if (pixmap) {
-							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
-							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-							viewport->draw_pixmap(*pixmap, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
-#ifdef K_TODO
-							g_object_unref(pixmap);
-#endif
+						path_buf = get_cache_filename(this->cache_layout,
+									      this->cache_dir, map_type, map->get_name(),
+									      &ulm, map->get_file_extension());
+					}
+
+					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
+						const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
+						viewport->draw_line(pen, viewport_x + tilesize_x_ceil, viewport_y, viewport_x, viewport_y + tilesize_y_ceil);
+					}
+				} else {
+					/* Try correct scale first. */
+					int scale_factor = 1;
+					const QPixmap * pixmap = get_pixmap_ref(this, map_type, map_name, &ulm, path_buf, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+					qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
+					if (pixmap) {
+						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
+						const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+						qDebug() << "II" PREFIX << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
+						viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
+					} else {
+						/* Otherwise try different scales. */
+						if (SCALE_SMALLER_ZOOM_FIRST) {
+							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type, map_name, path_buf)) {
+								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type, map_name, path_buf);
+							}
 						} else {
-							/* Otherwise try different scales. */
-							if (SCALE_SMALLER_ZOOM_FIRST) {
-								if (!try_draw_scale_down(this, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, map_name, path_buf)) {
-									try_draw_scale_up(this, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, map_name, path_buf);
-								}
-							} else {
-								if (!try_draw_scale_up(this, viewport, ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, map_name, path_buf)) {
-									try_draw_scale_down(this, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, map_name, path_buf);
-								}
+							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type, map_name, path_buf)) {
+								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type, map_name, path_buf);
 							}
 						}
 					}
-
-					yy += tilesize_y;
 				}
-				xx += tilesize_x;
+
+				viewport_y += tilesize_y;
 			}
-
-			/* ATM Only show tile grid lines in extreme debug mode. */
-			if (vik_debug && vik_verbose) {
-				/* Grid drawing here so it gets drawn on top of the map.
-				   Thus loop around x & y again, but this time separately.
-				   Only showing grid for the current scale */
-
-				const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
-
-				/* Draw single grid lines across the whole screen. */
-				int width = viewport->get_width();
-				int height = viewport->get_height();
-				xx = xx_tmp; yy = yy_tmp;
-				int base_xx = xx - (tilesize_x/2);
-				base_yy = yy - (tilesize_y/2);
-
-				xx = base_xx;
-				for (int x = ((xinc == 1) ? xmin : xmax); x != xend; x+=xinc) {
-					viewport->draw_line(pen, xx, base_yy, xx, height);
-					xx += tilesize_x;
-				}
-
-				yy = base_yy;
-				for (int y = ((yinc == 1) ? ymin : ymax); y != yend; y+=yinc) {
-					viewport->draw_line(pen, base_xx, yy, width, yy);
-					yy += tilesize_y;
-				}
-			}
-
+			viewport_x += tilesize_x;
 		}
+
+		/* ATM Only show tile grid lines in extreme debug mode. */
+		if (
+#if 1
+		    true
+#else
+		    vik_debug && vik_verbose
+#endif
+		    ) {
+			/* Grid drawing here so it gets drawn on top of the map.
+			   Thus loop around x & y again, but this time separately.
+			   Only showing grid for the current scale */
+			draw_grid(viewport, viewport_x_grid, viewport_y_grid, x_begin, delta_x, x_end, y_begin, delta_y, y_end, tilesize_x, tilesize_y);
+		}
+	}
+}
+
+
+
+
+void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, int tilesize_x, int tilesize_y)
+{
+	const QPen pen(QColor("#E6202E")); /* kamilTODO: This should be black. */
+
+	/* Draw single grid lines across the whole screen. */
+	const int width = viewport->get_width();
+	const int height = viewport->get_height();
+	const int base_viewport_x = viewport_x - (tilesize_x / 2);
+	const int base_viewport_y = viewport_y - (tilesize_y / 2);
+
+	viewport_x = base_viewport_x;
+	for (int x = x_begin; x != x_end; x += delta_x) {
+		viewport->draw_line(pen, viewport_x, base_viewport_y, viewport_x, height);
+		viewport_x += tilesize_x;
+	}
+
+	viewport_y = base_viewport_y;
+	for (int y = y_begin; y != y_end; y += delta_y) {
+		viewport->draw_line(pen, base_viewport_x, viewport_y, width, viewport_y);
+		viewport_y += tilesize_y;
 	}
 }
 
@@ -2010,7 +2026,7 @@ void LayerMap::tile_info_cb(void)
 			QString exists;
 			int zoom = 17 - ulm.scale;
 			if (this->mbtiles) {
-				QPixmap *pixmap = get_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
+				QPixmap * pixmap = create_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixmap) {
 					exists = QObject::tr("YES");
 					g_object_unref(G_OBJECT(pixmap));
