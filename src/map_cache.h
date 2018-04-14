@@ -47,9 +47,6 @@ namespace SlavGPS {
 
 
 
-	void map_cache_init(void);
-	void map_cache_uninit(void);
-
 	void map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
 	QPixmap * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
 	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
@@ -63,6 +60,17 @@ namespace SlavGPS {
 
 
 	const QString & map_cache_dir();
+
+
+
+	class MapCache {
+	public:
+		static void init(void);
+		static void uninit(void);
+
+		static const QString & get_default_maps_dir(void);
+	private:
+	};
 
 
 

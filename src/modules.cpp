@@ -95,11 +95,11 @@ using namespace SlavGPS;
 
 #ifdef K_TODO
 
-static void modules_register_map_source(VikGobjectBuilder * self, MapSource * mapsource)
+static void modules_register_map_source(VikGobjectBuilder * self, MapSource * map_source)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	/* FIXME label should be hosted by object. */
-	maps_layer_register_map_source(mapsource);
+	MapSources::register_map_source(map_source);
 }
 
 

@@ -148,8 +148,8 @@ int main(int argc, char ** argv)
 	/* Init modules/plugins. */
 	modules_init();
 	layer_georef_init();
-	layer_map_init();
-	map_cache_init();
+	LayerMap::init();
+	MapCache::init();
 	a_background_init();
 	routing_prefs_init();
 
@@ -211,7 +211,7 @@ int main(int argc, char ** argv)
 	Babel::uninit();
 	a_background_uninit();
 
-	map_cache_uninit();
+	MapCache::uninit();
 	DEMCache::uninit();
 	LayerDefaults::uninit();
 	Preferences::uninit();

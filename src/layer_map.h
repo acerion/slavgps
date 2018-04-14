@@ -57,9 +57,9 @@ namespace SlavGPS {
 
 
 	enum class MapsCacheLayout {
-		VIKING = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
+		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
 		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
-		NUM         /* Last enum. */
+		Num         /* Last enum. */
 	};
 
 
@@ -80,6 +80,7 @@ namespace SlavGPS {
 		LayerMap();
 		~LayerMap();
 
+		static void init(void);
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
@@ -96,9 +97,9 @@ namespace SlavGPS {
 		void mkdir_if_default_dir();
 		void set_file(const QString & name);
 
-		void set_map_type(MapTypeID type_id);
-		MapTypeID get_map_type();
-		static MapTypeID get_default_map_type(void);
+		void set_map_type_id(MapTypeID type_id);
+		MapTypeID get_map_type_id(void) const;
+		static MapTypeID get_default_map_type_id(void);
 
 		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, int redownload_mode);
 		void download(Viewport * viewport, bool only_new);
@@ -109,11 +110,13 @@ namespace SlavGPS {
 		static void weak_ref_cb(void * ptr, void * dead_vml);
 
 
+		static void set_autodownload_default(bool autodownload);
+		static void set_cache_default(MapsCacheLayout layout);
 
 
 		unsigned int map_index = 0;
 		QString cache_dir;
-		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
+		MapsCacheLayout cache_layout = MapsCacheLayout::Viking;
 		int32_t alpha = 0;
 
 		int mapzoom_id = 0;
@@ -147,8 +150,15 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 
-		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & tile_file_full_path);
-		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const QString & map_name, QString & path_buf);
+		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type_id, const QString & map_name, QString & tile_file_full_path);
+		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type_id, const QString & map_name, QString & path_buf);
+
+		bool should_start_autodownload(Viewport * viewport);
+
+		QPixmap * get_pixmap_ref(MapTypeID map_type_id, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor);
+		QPixmap * create_mbtiles_pixmap(int xx, int yy, int zoom);
+		QPixmap * create_pixmap_from_metatile(int xx, int yy, int zz);
+		QPixmap * create_pixmap_from_file(const QString & tile_file_full_path);
 
 	public slots:
 		void download_all_cb(void);
@@ -177,6 +187,15 @@ namespace SlavGPS {
 
 
 
+
+	class MapSources {
+	public:
+		static void register_map_source(MapSource * map_source);
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 
@@ -188,16 +207,6 @@ namespace SlavGPS {
   http://wiki.openstreetmap.org/wiki/TMS
   http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
 */
-
-void layer_map_init(void);
-void maps_layer_set_autodownload_default(bool autodownload);
-void maps_layer_set_cache_default(SlavGPS::MapsCacheLayout layout);
-void maps_layer_register_map_source(SlavGPS::MapSource * map);
-
-
-
-
-const QString & maps_layer_default_dir();
 
 
 

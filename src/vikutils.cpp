@@ -481,14 +481,14 @@ void SGUtils::set_auto_features_on_first_run(void)
 		auto_features = Dialog::yes_or_no(QObject::tr("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), NULL);
 
 		/* Default to more standard cache layout for new users (well new installs at least). */
-		maps_layer_set_cache_default(MapsCacheLayout::OSM);
+		LayerMap::set_cache_default(MapsCacheLayout::OSM);
 		set_defaults = true;
 	}
 
 	if (auto_features) {
 		/* Set Maps to autodownload. */
 		/* Ensure the default is true. */
-		maps_layer_set_autodownload_default(true);
+		LayerMap::set_autodownload_default(true);
 		set_defaults = true;
 
 
@@ -821,7 +821,7 @@ void CommandLineOptions::apply(Window * window)
 
 		MapTypeID the_type_id = this->map_type_id;
 		if (the_type_id == MapTypeID::Default) {
-			the_type_id = LayerMap::get_default_map_type();
+			the_type_id = LayerMap::get_default_map_type_id();
 		}
 
 		/* Don't add map layer if one already exists. */
@@ -830,7 +830,7 @@ void CommandLineOptions::apply(Window * window)
 
 		for (auto iter = maps->begin(); iter != maps->end(); iter++) {
 			LayerMap * map = (LayerMap *) *iter;
-			MapTypeID type_id = map->get_map_type();
+			MapTypeID type_id = map->get_map_type_id();
 			if (the_type_id == type_id) {
 				add_map = false;
 				break;
@@ -840,7 +840,7 @@ void CommandLineOptions::apply(Window * window)
 		if (add_map) {
 			LayerMap * layer = new LayerMap();
 
-			layer->set_map_type(the_type_id);
+			layer->set_map_type_id(the_type_id);
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
 			g_tree->tree_get_items_tree()->get_top_layer()->add_layer(layer, true);

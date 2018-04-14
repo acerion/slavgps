@@ -126,14 +126,14 @@ void SlavGPS::osm_init(void)
 	metatiles_type->is_direct_file_access_flag = true;
 	metatiles_type->is_osm_meta_tiles_flag = true;
 
-	maps_layer_register_map_source(mapquest_type);
-	maps_layer_register_map_source(mapnik_type);
-	maps_layer_register_map_source(cycle_type);
-	maps_layer_register_map_source(transport_type);
-	maps_layer_register_map_source(hot_type);
-	maps_layer_register_map_source(direct_type);
-	maps_layer_register_map_source(mbtiles_type);
-	maps_layer_register_map_source(metatiles_type);
+	MapSources::register_map_source(mapquest_type);
+	MapSources::register_map_source(mapnik_type);
+	MapSources::register_map_source(cycle_type);
+	MapSources::register_map_source(transport_type);
+	MapSources::register_map_source(hot_type);
+	MapSources::register_map_source(direct_type);
+	MapSources::register_map_source(mbtiles_type);
+	MapSources::register_map_source(metatiles_type);
 
 	/* Webtools. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));

@@ -26,9 +26,11 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <unistd.h>
 
 #include <glib.h>
 #include <QDebug>
+#include <QDir>
 
 #include "ui_builder.h"
 #include "globals.h"
@@ -96,7 +98,7 @@ static void cache_item_free(cache_item_t * ci)
 
 
 
-void SlavGPS::map_cache_init()
+void MapCache::init(void)
 {
 	Preferences::register_parameter(prefs[0], scale_cache_size.initial);
 }
@@ -168,17 +170,17 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap->isNull()) {
-		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
+		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
 		return;
 	}
 
 	static char key_[MC_KEY_SIZE];
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock();
@@ -210,11 +212,11 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock(); /* prevent returning pixmap when cache is being cleared */
@@ -236,11 +238,11 @@ QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_
 
 
 
-map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	auto iter = maps_cache.find(key);
@@ -300,11 +302,11 @@ void flush_matching(std::string & key_part)
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const QString & file_name)
+void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type_id, const QString & file_name)
 {
 	char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
 	std::string key(key_);
 
 	flush_matching(key);
@@ -341,10 +343,10 @@ void SlavGPS::map_cache_flush()
    Just remove cache items for the specified map type
    i.e. all related xyz+zoom+alpha+etc...
 */
-void SlavGPS::map_cache_flush_type(MapTypeID map_type)
+void SlavGPS::map_cache_flush_type(MapTypeID map_type_id)
 {
 	char key_[MC_KEY_SIZE];
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING_TYPE, map_type);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING_TYPE, (int) map_type_id);
 	std::string key(key_);
 	flush_matching(key);
 }
@@ -352,7 +354,7 @@ void SlavGPS::map_cache_flush_type(MapTypeID map_type)
 
 
 
-void SlavGPS::map_cache_uninit(void)
+void MapCache::uninit(void)
 {
 	maps_cache.clear();
 	/* free list */
@@ -382,9 +384,57 @@ int SlavGPS::map_cache_get_count()
 const QString & SlavGPS::map_cache_dir()
 {
 #ifdef K_TODO
-	return maps_layer_default_dir();
+	return MapCache::get_default_maps_dir();
 #else
 	static QString a_dir("/home/kamil/.viking-maps/");
 	return a_dir;
 #endif
+}
+
+
+
+
+#ifdef WINDOWS
+#include <io.h>
+#define GLOBAL_MAPS_DIR "C:\\VIKING-MAPS\\"
+#define LOCAL_MAPS_DIR "VIKING-MAPS"
+#elif defined __APPLE__
+#include <stdlib.h>
+#define GLOBAL_MAPS_DIR "/Library/cache/Viking/maps/"
+#define LOCAL_MAPS_DIR "/Library/Application Support/Viking/viking-maps"
+#else /* POSIX */
+#include <stdlib.h>
+#define GLOBAL_MAPS_DIR "/var/cache/maps/"
+#define LOCAL_MAPS_DIR ".viking-maps"
+#endif
+
+
+
+
+const QString & MapCache::get_default_maps_dir(void)
+{
+	static QString default_dir;
+	if (default_dir.isEmpty()) {
+
+		/* Thanks to Mike Davison for the $VIKING_MAPS usage. */
+		const QString mapdir = qgetenv("VIKING_MAPS");
+		if (!mapdir.isEmpty()) {
+			default_dir = mapdir;
+		} else if (0 == access(GLOBAL_MAPS_DIR, W_OK)) {
+			default_dir = QString(GLOBAL_MAPS_DIR);
+		} else {
+			const QString home_full_path = QDir::homePath();
+			if (!home_full_path.isEmpty() && 0 == access(home_full_path.toUtf8().constData(), W_OK)) {
+				default_dir = home_full_path + QDir::separator() + LOCAL_MAPS_DIR;
+			} else {
+				default_dir = QString(LOCAL_MAPS_DIR);
+			}
+		}
+		if (!default_dir.isEmpty() && !default_dir.endsWith(QDir::separator())) {
+			/* Add the separator at the end. */
+			default_dir += QDir::separator();
+		}
+		qDebug() << "DD: Layer Map: get default dir: dir is" << default_dir;
+	}
+	return default_dir;
 }

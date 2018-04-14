@@ -41,7 +41,7 @@
 #include "util.h"
 #include "preferences.h"
 #include "application_state.h"
-#include "layer_map.h"
+#include "map_cache.h"
 #include "layer_georef.h"
 #include "widget_file_entry.h"
 //#include "file.h"
@@ -237,7 +237,7 @@ bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bo
 void LayerGeoref::create_image_file()
 {
 	/* Create in .viking-maps. */
-	const QString path = maps_layer_default_dir() + this->get_name() + ".jpg"; /* maps_layer_default_dir() should return string with trailing separator. */
+	const QString path = MapCache::get_default_maps_dir() + this->get_name() + ".jpg"; /* LayerMap::get_default_maps_dir() should return string with trailing separator. */
 	if (!this->image.save(path, "jpeg")) {
 		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
 	} else {

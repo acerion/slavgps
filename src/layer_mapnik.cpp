@@ -72,7 +72,7 @@ extern Tree * g_tree;
 
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
-static SGVariant cache_dir_default(void) { return SGVariant(maps_layer_default_dir() + "MapnikRendering"); }
+static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
 static ParameterScale scale_alpha   = { 0,  255, SGVariant((int32_t) 255),  5, 0 }; /* PARAM_ALPHA */

@@ -46,5 +46,5 @@ void SlavGPS::bluemarble_init()
 	/* Credit/Copyright from: http://earthobservatory.nasa.gov/Features/BlueMarble/ */
 	/* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */
 
-	maps_layer_register_map_source(bluemarble_type);
+	MapSources::register_map_source(bluemarble_type);
 }
